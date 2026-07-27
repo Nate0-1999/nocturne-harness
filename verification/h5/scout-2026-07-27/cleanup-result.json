@@ -1,0 +1,106 @@
+{
+  "machine_id": "h5-sop-verification",
+  "principal_id": "local",
+  "fixture_count": 14,
+  "all_tombstoned": true,
+  "fixtures": [
+    {
+      "memory_id": "3454c5ef-b651-4576-8bac-23913ea1b903",
+      "label": "Scout-calibration-chartreuse-signal-alpha",
+      "principal_id": "local",
+      "revision": 8,
+      "status": "tombstoned"
+    },
+    {
+      "memory_id": "f475a273-28de-46dc-a989-4bd1a8622d67",
+      "label": "Scout calibration animal is a marmot",
+      "principal_id": "local",
+      "revision": 7,
+      "status": "tombstoned"
+    },
+    {
+      "memory_id": "6c2ff7a9-bb9f-4bbe-acf4-4558ccea8e81",
+      "label": "Scout86afGamma",
+      "principal_id": "local",
+      "revision": 8,
+      "status": "tombstoned"
+    },
+    {
+      "memory_id": "d36040b7-abee-4aca-99cd-df0199bffc8f",
+      "label": "Unicode round-trip fixture for Scout86af",
+      "principal_id": "local",
+      "revision": 3,
+      "status": "tombstoned"
+    },
+    {
+      "memory_id": "a0fd9cdd-c627-48c4-a5d4-c2cef8150711",
+      "label": "Project mascot: ibis (tag: Scout86afProject)",
+      "principal_id": "local",
+      "revision": 2,
+      "status": "tombstoned"
+    },
+    {
+      "memory_id": "ef8e37fc-8971-4a7d-82e8-71111eaee085",
+      "label": "Orchid731BasilLocation",
+      "principal_id": "local",
+      "revision": 2,
+      "status": "tombstoned"
+    },
+    {
+      "memory_id": "18b00cc0-6611-4a16-ab53-589a8184025e",
+      "label": "Cello practice tempo 92 BPM",
+      "principal_id": "local",
+      "revision": 2,
+      "status": "tombstoned"
+    },
+    {
+      "memory_id": "c59d5c5e-a67d-413f-aab7-a68e1b70bdc2",
+      "label": "Gallery205 definition",
+      "principal_id": "local",
+      "revision": 2,
+      "status": "tombstoned"
+    },
+    {
+      "memory_id": "a45f9e95-ad54-4365-8a4c-f72032a5e34f",
+      "label": "Cobalt theme for technical diagrams",
+      "principal_id": "local",
+      "revision": 2,
+      "status": "tombstoned"
+    },
+    {
+      "memory_id": "b4a67596-df67-40de-b611-b4991fb9909b",
+      "label": "Desk lighting color temperature",
+      "principal_id": "local",
+      "revision": 2,
+      "status": "tombstoned"
+    },
+    {
+      "memory_id": "de185afa-0cd0-43f5-87a9-1ef683730e07",
+      "label": "Export642-CSV-Dates",
+      "principal_id": "local",
+      "revision": 2,
+      "status": "tombstoned"
+    },
+    {
+      "memory_id": "b593a5ca-3ea9-417b-9f85-2839fac5bafc",
+      "label": "Soup357: Omit Cilantro",
+      "principal_id": "local",
+      "revision": 2,
+      "status": "tombstoned"
+    },
+    {
+      "memory_id": "c9117760-74c7-4d1d-9f67-cdde1cefc0cc",
+      "label": "Rowing Tuesdays",
+      "principal_id": "local",
+      "revision": 2,
+      "status": "tombstoned"
+    },
+    {
+      "memory_id": "ca08cdc1-907c-407b-8c95-a05e1aacba2a",
+      "label": "Saturday Kenyan peaberry coffee ritual",
+      "principal_id": "local",
+      "revision": 3,
+      "status": "tombstoned"
+    }
+  ]
+}
