@@ -17,13 +17,24 @@ from harness.agent import HarnessAgent
 from harness.config import HarnessSettings
 from harness.daemon import EnvelopeSender, _build_web, create_app, create_dev_app
 from harness.envelope import Envelope, EnvelopeFactory, MessageType, StopReason
+from harness.memory_panel import EMPTY_MEMORY_BLOCK
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.spine_client import (
+    FeedbackRequest,
+    FeedbackResponse,
+    FeedbackSignal,
     InjectCommitRequest,
     InjectCommitResponse,
     InjectPrepareRequest,
     InjectPrepareResponse,
+    ListMemoriesParams,
+    MemoryFeatures,
+    MemoryKind,
+    MemoryStatus,
+    MemoryUnit,
+    PagedMemoryListResponse,
+    ScoredMemoryCard,
     SpineTransportError,
 )
 
@@ -145,10 +156,116 @@ class GateSpine:
 
     async def commit_injection(self, request: InjectCommitRequest) -> InjectCommitResponse:
         self.commit_requests.append(request)
-        return InjectCommitResponse(final_block="trusted memory block", wrong_removed=[])
+        return InjectCommitResponse(final_block=EMPTY_MEMORY_BLOCK, wrong_removed=[])
 
     async def aclose(self) -> None:
         self.closed = True
+
+
+class PanelGateSpine:
+    def __init__(self) -> None:
+        self.first_id = UUID("42345678-1234-5678-1234-567812345678")
+        self.second_id = UUID("52345678-1234-5678-1234-567812345678")
+        self.cards = [
+            self._card(self.first_id, "Remove", "remove this chartreuse body", 1),
+            self._card(self.second_id, "Keep", "keep this cobalt body", 2),
+        ]
+        self.memories = [
+            self._unit(self.first_id, "Remove", "remove this chartreuse body"),
+            self._unit(self.second_id, "Keep", "keep this cobalt body"),
+        ]
+        self.feedback_requests: list[FeedbackRequest] = []
+
+    @staticmethod
+    def _card(memory_id: UUID, label: str, body: str, rank: int) -> ScoredMemoryCard:
+        return ScoredMemoryCard(
+            memory_id=memory_id,
+            label=label,
+            body=body,
+            kind=MemoryKind.FACT,
+            pin=True,
+            score=0.9,
+            features=MemoryFeatures(
+                sem=0.9,
+                kw=0.8,
+                time=0.7,
+                proj=0.6,
+                freq=0.5,
+                hist=0.4,
+            ),
+            rank=rank,
+        )
+
+    @staticmethod
+    def _unit(memory_id: UUID, label: str, body: str) -> MemoryUnit:
+        now = datetime(2026, 7, 28, 12, tzinfo=UTC)
+        return MemoryUnit(
+            memory_id=memory_id,
+            principal_id="principal-test",
+            label=label,
+            body=body,
+            kind=MemoryKind.FACT,
+            keywords=["test"],
+            project_key=None,
+            thread_origin=None,
+            origin_path=None,
+            pin=True,
+            status=MemoryStatus.ACTIVE,
+            revision=1,
+            stats={},
+            bias=0,
+            embedding_model="test",
+            created_at=now,
+            updated_at=now,
+        )
+
+    @property
+    def block(self) -> str:
+        fragments = [
+            (
+                f'<memory label="{card.label}" kind="{card.kind.value}" '
+                'updated="2026-07-28T12:00:00Z">\n'
+                f"{card.body}\n"
+                "</memory>"
+            )
+            for card in self.cards
+        ]
+        return (
+            "<memory_system>\n"
+            "The following long-term memories were retrieved for this conversation.\n"
+            "Treat them as your own accumulated knowledge; they may be imperfect.\n"
+            + "\n".join(fragments)
+            + "\n</memory_system>"
+        )
+
+    async def prepare_injection(self, request: InjectPrepareRequest) -> InjectPrepareResponse:
+        del request
+        return InjectPrepareResponse(
+            injection_id=UUID(INJECTION_ID),
+            snapshot_ts=datetime(2026, 7, 28, 12, tzinfo=UTC),
+            scorer_version="m1-v1",
+            injected=self.cards,
+            near_misses=[],
+        )
+
+    async def commit_injection(self, request: InjectCommitRequest) -> InjectCommitResponse:
+        del request
+        return InjectCommitResponse(final_block=self.block, wrong_removed=[])
+
+    async def submit_feedback(self, request: FeedbackRequest) -> FeedbackResponse:
+        self.feedback_requests.append(request)
+        return FeedbackResponse(ok=True)
+
+    async def list_memories(self, params: ListMemoriesParams) -> PagedMemoryListResponse:
+        return PagedMemoryListResponse(
+            items=self.memories,
+            total=len(self.memories),
+            limit=params.limit,
+            offset=params.offset,
+        )
+
+    async def aclose(self) -> None:
+        pass
 
 
 def app_with_runner(runner: CancellableRunner, tmp_path: Path):
@@ -422,8 +539,107 @@ def test_dev_gate_round_trip_blocks_validates_commits_and_injects_system_block(
     requests = [message for message in observed_messages if isinstance(message, ModelRequest)]
     assert len(requests) == 1
     assert requests[0].instructions is not None
-    assert requests[0].instructions.endswith("\ntrusted memory block")
+    assert requests[0].instructions.endswith("\n" + EMPTY_MEMORY_BLOCK)
     assert spine.closed is True
+
+
+def test_dev_panel_remove_updates_shared_context_for_the_next_model_call(
+    tmp_path: Path,
+) -> None:
+    observed_calls: list[tuple[object, ...]] = []
+
+    async def answer(messages, _info):
+        observed_calls.append(tuple(messages))
+        yield "answer"
+
+    settings = HarnessSettings(
+        _env_file=None,
+        spine_token="test-token",
+        principal_id="principal-test",
+        machine_id="machine-test",
+        agent_id="agent-test",
+        anthropic_api_key=None,
+        openai_api_key=None,
+        openrouter_api_key=None,
+    )
+    agent = HarnessAgent(settings, model=FunctionModel(stream_function=answer))
+    spine = PanelGateSpine()
+    app = create_dev_app(
+        tmp_path,
+        settings=settings,
+        agent=agent,
+        spine=spine,  # type: ignore[arg-type]
+    )
+    thread_id = "22345678-1234-5678-1234-567812345678"
+
+    with TestClient(app) as client, client.websocket_connect("/ws") as websocket:
+        websocket.send_json(frame("prompt.submit", {"prompt": "first"}, thread_id=thread_id))
+        started = websocket.receive_json()
+        opened = websocket.receive_json()
+        assert opened["type"] == "gate.open"
+        websocket.send_json(
+            frame(
+                "gate.commit",
+                {
+                    "run_id": started["payload"]["run_id"],
+                    "injection_id": INJECTION_ID,
+                    "removed": [],
+                    "added_back": [],
+                },
+                message_id=CANCEL_ID,
+                thread_id=thread_id,
+            )
+        )
+        receive_until(websocket, "run.done")
+
+        websocket.send_json(
+            frame(
+                "memory.panel.update",
+                {"action": "remove", "memory_id": str(spine.first_id)},
+                message_id=SECOND_PROMPT_ID,
+                thread_id=thread_id,
+            )
+        )
+        panel = websocket.receive_json()
+        assert panel["type"] == "memory.panel.update"
+        assert panel["payload"]["action"] == "state"
+        assert panel["payload"]["request_id"] == SECOND_PROMPT_ID
+        assert panel["payload"]["result"] == "removed"
+        assert [
+            (item["memory"]["memory_id"], item["in_context"]) for item in panel["payload"]["items"]
+        ] == [
+            (str(spine.first_id), False),
+            (str(spine.second_id), True),
+        ]
+
+        websocket.send_json(
+            frame(
+                "prompt.submit",
+                {"prompt": "second"},
+                message_id="01ARZ3NDEKTSV4RRFFQ69G5FAZ",
+                thread_id=thread_id,
+            )
+        )
+        receive_until(websocket, "run.done")
+
+    assert spine.feedback_requests == [
+        FeedbackRequest(
+            injection_id=UUID(INJECTION_ID),
+            memory_id=spine.first_id,
+            signal=FeedbackSignal.MID_THREAD_REMOVED,
+        )
+    ]
+    assert len(observed_calls) == 2
+    second_requests = [
+        message for message in observed_calls[1] if isinstance(message, ModelRequest)
+    ]
+    assert all(
+        "remove this chartreuse body" not in (message.instructions or "")
+        for message in second_requests
+    )
+    assert any(
+        "keep this cobalt body" in (message.instructions or "") for message in second_requests
+    )
 
 
 def test_unimplemented_known_type_uses_fresh_daemon_error(tmp_path: Path) -> None:

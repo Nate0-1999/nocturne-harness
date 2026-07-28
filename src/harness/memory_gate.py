@@ -7,6 +7,7 @@ from typing import Protocol
 from uuid import UUID
 
 from harness.commands import remember_command_text
+from harness.memory_panel import ThreadMemoryContextRegistry
 from harness.run_protocol import (
     RunEmitter,
     SystemInstructionTurnRunner,
@@ -54,6 +55,7 @@ class MemoryGateTurnRunner:
         context_factory: ContextFactory,
         *,
         model_context_tokens: int,
+        contexts: ThreadMemoryContextRegistry | None = None,
     ) -> None:
         if type(model_context_tokens) is not int or model_context_tokens <= 0:
             raise ValueError("model_context_tokens must be a positive integer")
@@ -61,6 +63,7 @@ class MemoryGateTurnRunner:
         self._spine = spine
         self._context_factory = context_factory
         self._model_context_tokens = model_context_tokens
+        self._contexts = contexts or ThreadMemoryContextRegistry()
         self._attempted_threads: set[str] = set()
 
     async def run(
@@ -138,7 +141,26 @@ class MemoryGateTurnRunner:
                 prompt=prompt,
                 message_history=message_history,
                 emit=emit,
-                excluded_memory_ids=excluded_memory_ids,
+                additional_excluded_memory_ids=excluded_memory_ids,
+            )
+
+        try:
+            self._contexts.install(
+                thread_id,
+                prepared=prepared,
+                removed_memory_ids=excluded_memory_ids,
+                added_back=decision.added_back,
+                final_block=committed.final_block,
+            )
+        except ValueError:
+            await self._memory_unavailable(emit, phase="commit")
+            await emit.dismiss_gate()
+            return await self._run_model(
+                thread_id=thread_id,
+                prompt=prompt,
+                message_history=message_history,
+                emit=emit,
+                additional_excluded_memory_ids=excluded_memory_ids,
             )
 
         for wrong in committed.wrong_removed:
@@ -155,8 +177,7 @@ class MemoryGateTurnRunner:
             prompt=prompt,
             message_history=message_history,
             emit=emit,
-            system_instructions=committed.final_block,
-            excluded_memory_ids=excluded_memory_ids,
+            additional_excluded_memory_ids=excluded_memory_ids,
         )
 
     async def _resolve_wrong_memory(
@@ -230,17 +251,22 @@ class MemoryGateTurnRunner:
         prompt: str,
         message_history: Sequence[object],
         emit: RunEmitter,
-        system_instructions: str | None = None,
-        excluded_memory_ids: frozenset[UUID] = frozenset(),
+        additional_excluded_memory_ids: frozenset[UUID] = frozenset(),
     ) -> TurnOutcome:
-        return await self._delegate.run(
-            thread_id=thread_id,
-            prompt=prompt,
-            message_history=message_history,
-            emit=emit,
-            system_instructions=system_instructions,
-            excluded_memory_ids=excluded_memory_ids,
-        )
+        async with self._contexts.model_feedback_boundary(thread_id):
+            context = self._contexts.snapshot(thread_id)
+            system_instructions = context.final_block if context is not None else None
+            excluded_memory_ids = (
+                context.excluded_memory_ids if context is not None else frozenset()
+            ) | additional_excluded_memory_ids
+            return await self._delegate.run(
+                thread_id=thread_id,
+                prompt=prompt,
+                message_history=message_history,
+                emit=emit,
+                system_instructions=system_instructions,
+                excluded_memory_ids=excluded_memory_ids,
+            )
 
     @staticmethod
     async def _memory_unavailable(emit: RunEmitter, *, phase: str) -> None:

@@ -11,18 +11,21 @@ import pytest
 
 from harness.envelope import GateCommitPayload, StopReason, WrongResolution
 from harness.memory_gate import MemoryGateTurnRunner
+from harness.memory_panel import EMPTY_MEMORY_BLOCK, ThreadMemoryContextRegistry
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.spine_client import (
     InjectCommitRequest,
     InjectCommitResponse,
     InjectPrepareRequest,
     InjectPrepareResponse,
+    MemoryFeatures,
     MemoryKind,
     MemoryStatus,
     MemoryUnit,
     PatchMemoryConflictError,
     PatchMemoryRequest,
     RevisionConflict,
+    ScoredMemoryCard,
     SpineTransportError,
 )
 from harness.tools_memory import MemoryToolContext
@@ -97,8 +100,15 @@ class RecordingSpine:
         self.commit_requests: list[InjectCommitRequest] = []
         self.patch_requests: list[tuple[UUID, PatchMemoryRequest]] = []
         self.commit_response = InjectCommitResponse(
-            final_block="trusted memory block",
+            final_block=EMPTY_MEMORY_BLOCK,
             wrong_removed=[],
+        )
+        self.prepare_response = InjectPrepareResponse(
+            injection_id=INJECTION_ID,
+            snapshot_ts=datetime(2026, 7, 21, 12, tzinfo=UTC),
+            scorer_version="m1-v1",
+            injected=[],
+            near_misses=[],
         )
         self.patch_outcomes: list[MemoryUnit | Exception] = []
 
@@ -106,13 +116,7 @@ class RecordingSpine:
         self.prepare_requests.append(request)
         if self.fail_prepare:
             raise SpineTransportError
-        return InjectPrepareResponse(
-            injection_id=INJECTION_ID,
-            snapshot_ts=datetime(2026, 7, 21, 12, tzinfo=UTC),
-            scorer_version="m1-v1",
-            injected=[],
-            near_misses=[],
-        )
+        return self.prepare_response
 
     async def commit_injection(self, request: InjectCommitRequest) -> InjectCommitResponse:
         self.commit_requests.append(request)
@@ -181,6 +185,40 @@ def memory_unit(*, revision: int = 2, body: str = "Current wrong body") -> Memor
     )
 
 
+def scored_card(memory_id: UUID, *, label: str, body: str, rank: int) -> ScoredMemoryCard:
+    return ScoredMemoryCard(
+        memory_id=memory_id,
+        label=label,
+        body=body,
+        kind=MemoryKind.FACT,
+        pin=False,
+        score=0.9,
+        features=MemoryFeatures(sem=0.9, kw=0.8, time=0.7, proj=0.6, freq=0.5, hist=0.4),
+        rank=rank,
+    )
+
+
+def final_block(*cards: ScoredMemoryCard) -> str:
+    if not cards:
+        return EMPTY_MEMORY_BLOCK
+    fragments = [
+        (
+            f'<memory label="{card.label}" kind="{card.kind.value}" '
+            'updated="2026-07-21T12:00:00Z">\n'
+            f"{card.body}\n"
+            "</memory>"
+        )
+        for card in cards
+    ]
+    return (
+        "<memory_system>\n"
+        "The following long-term memories were retrieved for this conversation.\n"
+        "Treat them as your own accumulated knowledge; they may be imperfect.\n"
+        + "\n".join(fragments)
+        + "\n</memory_system>"
+    )
+
+
 async def wait_for_gate_count(emitter: RecordingEmitter, count: int) -> None:
     async with asyncio.timeout(1):
         while len(emitter.gate_values) < count:
@@ -188,7 +226,7 @@ async def wait_for_gate_count(emitter: RecordingEmitter, count: int) -> None:
 
 
 @pytest.mark.asyncio
-async def test_first_chat_blocks_commits_and_supplies_system_instructions_once() -> None:
+async def test_first_chat_blocks_commits_and_keeps_system_instructions_current() -> None:
     spine = RecordingSpine()
     delegate = RecordingDelegate()
     runner = MemoryGateTurnRunner(
@@ -239,7 +277,7 @@ async def test_first_chat_blocks_commits_and_supplies_system_instructions_once()
     assert spine.commit_requests == [
         InjectCommitRequest(injection_id=INJECTION_ID, removed=[], added_back=[])
     ]
-    assert delegate.calls[-1][-2] == "trusted memory block"
+    assert delegate.calls[-1][-2] == EMPTY_MEMORY_BLOCK
     assert delegate.calls[-1][-1] == frozenset()
 
     await runner.run(
@@ -249,7 +287,128 @@ async def test_first_chat_blocks_commits_and_supplies_system_instructions_once()
         emit=RecordingEmitter(),
     )
     assert len(spine.prepare_requests) == 1
-    assert delegate.calls[-1][-2] is None
+    assert delegate.calls[-1][-2] == EMPTY_MEMORY_BLOCK
+
+
+@pytest.mark.asyncio
+async def test_later_turn_uses_rerendered_block_and_persistent_exclusions() -> None:
+    first_id = UUID("52345678-1234-5678-1234-567812345678")
+    second_id = UUID("62345678-1234-5678-1234-567812345678")
+    first_card = scored_card(first_id, label="Remove", body="Remove this body.", rank=1)
+    second_card = scored_card(second_id, label="Keep", body="Keep this body.", rank=2)
+    spine = RecordingSpine()
+    spine.prepare_response = spine.prepare_response.model_copy(
+        update={"injected": [first_card, second_card]}
+    )
+    spine.commit_response = InjectCommitResponse(
+        final_block=final_block(first_card, second_card),
+        wrong_removed=[],
+    )
+    contexts = ThreadMemoryContextRegistry()
+    delegate = RecordingDelegate()
+    runner = MemoryGateTurnRunner(
+        delegate,
+        spine,
+        context_factory(spine),
+        model_context_tokens=1_000_000,
+        contexts=contexts,
+    )
+    emitted = RecordingEmitter()
+    first_turn = asyncio.create_task(
+        runner.run(
+            thread_id=THREAD_ID,
+            prompt="first",
+            message_history=(),
+            emit=emitted,
+        )
+    )
+    await asyncio.wait_for(emitted.opened.wait(), 1)
+    assert emitted.decision is not None
+    emitted.decision.set_result(decision())
+    first_outcome = await asyncio.wait_for(first_turn, 1)
+    assert delegate.calls[-1][-2] == final_block(first_card, second_card)
+
+    assert contexts.remove(THREAD_ID, first_id) is True
+    await runner.run(
+        thread_id=THREAD_ID,
+        prompt="second",
+        message_history=first_outcome.message_history,
+        emit=RecordingEmitter(),
+    )
+
+    assert delegate.calls[-1][-2] == final_block(second_card)
+    assert delegate.calls[-1][-1] == frozenset({first_id})
+    assert "Remove this body." not in delegate.calls[-1][-2]
+    assert "Keep this body." in delegate.calls[-1][-2]
+
+
+@pytest.mark.asyncio
+async def test_near_miss_never_preserves_committed_context_and_exclusion() -> None:
+    retained_id = UUID("52345678-1234-5678-1234-567812345678")
+    vetoed_id = UUID("62345678-1234-5678-1234-567812345678")
+    retained = scored_card(retained_id, label="Keep", body="Keep this body.", rank=1)
+    near_miss = scored_card(vetoed_id, label="Never", body="Exclude this body.", rank=2)
+    spine = RecordingSpine()
+    spine.prepare_response = spine.prepare_response.model_copy(
+        update={"injected": [retained], "near_misses": [near_miss]}
+    )
+    spine.commit_response = InjectCommitResponse(
+        final_block=final_block(retained),
+        wrong_removed=[],
+    )
+    delegate = RecordingDelegate()
+    runner = MemoryGateTurnRunner(
+        delegate,
+        spine,
+        context_factory(spine),
+        model_context_tokens=1_000_000,
+    )
+    emitted = RecordingEmitter()
+    turn = asyncio.create_task(
+        runner.run(
+            thread_id=THREAD_ID,
+            prompt="ordinary chat",
+            message_history=(),
+            emit=emitted,
+        )
+    )
+    await asyncio.wait_for(emitted.opened.wait(), 1)
+    assert emitted.decision is not None
+    emitted.decision.set_result(
+        GateCommitPayload(
+            run_id=RUN_ID,
+            injection_id=INJECTION_ID,
+            removed=[{"memory_id": vetoed_id, "reason": "never"}],
+            added_back=[],
+        )
+    )
+    await asyncio.wait_for(turn, 1)
+
+    assert emitted.errors == []
+    assert emitted.events == ["gate.open", "gate.dismiss"]
+    assert delegate.calls == [
+        (
+            THREAD_ID,
+            "ordinary chat",
+            (),
+            final_block(retained),
+            frozenset({vetoed_id}),
+        )
+    ]
+
+    await runner.run(
+        thread_id=THREAD_ID,
+        prompt="later chat",
+        message_history=(),
+        emit=RecordingEmitter(),
+    )
+    assert delegate.calls[-1] == (
+        THREAD_ID,
+        "later chat",
+        (),
+        final_block(retained),
+        frozenset(),
+    )
 
 
 @pytest.mark.asyncio
@@ -257,8 +416,20 @@ async def test_wrong_removal_stays_paused_until_current_unit_is_edited() -> None
     spine = RecordingSpine()
     wrong = memory_unit()
     updated = wrong.model_copy(update={"body": "Corrected body", "revision": 3})
+    spine.prepare_response = spine.prepare_response.model_copy(
+        update={
+            "injected": [
+                scored_card(
+                    wrong.memory_id,
+                    label=wrong.label,
+                    body=wrong.body,
+                    rank=1,
+                )
+            ]
+        }
+    )
     spine.commit_response = InjectCommitResponse(
-        final_block="trusted memory block",
+        final_block=EMPTY_MEMORY_BLOCK,
         wrong_removed=[wrong],
     )
     spine.patch_outcomes.append(updated)
@@ -332,7 +503,7 @@ async def test_wrong_removal_stays_paused_until_current_unit_is_edited() -> None
             THREAD_ID,
             "ordinary chat",
             (),
-            "trusted memory block",
+            EMPTY_MEMORY_BLOCK,
             frozenset({wrong.memory_id}),
         )
     ]
@@ -344,8 +515,20 @@ async def test_wrong_resolution_refreshes_a_cas_conflict_then_expires() -> None:
     original = memory_unit()
     refreshed = memory_unit(revision=3, body="Concurrent correction")
     expired = refreshed.model_copy(update={"status": MemoryStatus.TOMBSTONED, "revision": 4})
+    spine.prepare_response = spine.prepare_response.model_copy(
+        update={
+            "injected": [
+                scored_card(
+                    original.memory_id,
+                    label=original.label,
+                    body=original.body,
+                    rank=1,
+                )
+            ]
+        }
+    )
     spine.commit_response = InjectCommitResponse(
-        final_block="trusted memory block",
+        final_block=EMPTY_MEMORY_BLOCK,
         wrong_removed=[original],
     )
     response = httpx.Response(

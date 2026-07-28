@@ -36,6 +36,8 @@ from harness.tools_memory import MemoryToolContext
 type ContextFactory = Callable[[str], MemoryToolContext]
 
 _INTERRUPTED_TOOL_CONTENT = "Tool execution interrupted by run cancellation."
+_MEMORY_BLOCK_OPEN = "<memory_system>\n"
+_MEMORY_BLOCK_CLOSE = "\n</memory_system>"
 
 
 class PydanticAITurnRunner:
@@ -83,12 +85,13 @@ class PydanticAITurnRunner:
                 await bridge.publish_usage(usage)
                 return TurnOutcome(StopReason("end_turn"), prior_history, usage)
 
+            prior_history = _strip_all_memory_blocks(prior_history)
             with capture_run_messages() as captured:
                 result = await self._agent.chat_agent.run(
                     prompt,
                     deps=context,
                     instructions=system_instructions,
-                    message_history=cast(Sequence[ModelMessage], message_history),
+                    message_history=cast(Sequence[ModelMessage], prior_history),
                     usage_limits=self._agent.usage_limits,
                     usage=run_usage,
                     event_stream_handler=bridge.handle,
@@ -284,3 +287,39 @@ def _repair_cancelled_tool_calls(history: Sequence[object]) -> tuple[object, ...
             conversation_id=last_response.conversation_id,
         ),
     )
+
+
+def _strip_all_memory_blocks(history: Sequence[object]) -> tuple[object, ...]:
+    """Remove dynamic C.6 instructions from history before adding the current block."""
+
+    return tuple(_strip_request_memory_block(message) for message in history)
+
+
+def _strip_request_memory_block(message: object) -> object:
+    if not isinstance(message, ModelRequest) or not _has_memory_block(message.instructions):
+        return message
+    instructions = message.instructions
+    assert instructions is not None
+    cleaned = _remove_memory_blocks(instructions)
+    return replace(message, instructions=cleaned or None)
+
+
+def _has_memory_block(instructions: str | None) -> bool:
+    if instructions is None:
+        return False
+    start = instructions.find(_MEMORY_BLOCK_OPEN)
+    return start >= 0 and instructions.find(_MEMORY_BLOCK_CLOSE, start) >= 0
+
+
+def _remove_memory_blocks(instructions: str) -> str:
+    value = instructions
+    while True:
+        start = value.find(_MEMORY_BLOCK_OPEN)
+        if start < 0:
+            return value
+        end = value.find(_MEMORY_BLOCK_CLOSE, start + len(_MEMORY_BLOCK_OPEN))
+        if end < 0:
+            return value
+        end += len(_MEMORY_BLOCK_CLOSE)
+        remove_from = start - 1 if start > 0 and value[start - 1] == "\n" else start
+        value = value[:remove_from] + value[end:]

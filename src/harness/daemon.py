@@ -28,6 +28,7 @@ from harness.envelope import (
     ThreadSnapshotRequestPayload,
 )
 from harness.memory_gate import MemoryGateTurnRunner
+from harness.memory_panel import MemoryPanelController, ThreadMemoryContextRegistry
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.spine_client import SpineClient
@@ -308,15 +309,25 @@ def create_dev_app(
             origin_path=None,
         )
 
+    memory_contexts = ThreadMemoryContextRegistry()
     runner = MemoryGateTurnRunner(
         PydanticAITurnRunner(owned_agent, context_factory),
         owned_spine,
         context_factory,
         model_context_tokens=configured.model_context_tokens,
+        contexts=memory_contexts,
+    )
+    panel = MemoryPanelController(
+        owned_spine,
+        memory_contexts,
+        factory,
+        principal_id=principal_id,
+        machine_id=machine_id,
     )
     loop = RunLoop(runner, factory)
     app = create_app(
         web_dist,
+        routes={MessageType.MEMORY_PANEL_UPDATE: panel.handle},
         run_loop=loop,
         envelope_factory=factory,
     )

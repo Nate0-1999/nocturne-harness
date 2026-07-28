@@ -2,11 +2,14 @@ import {
   createBrowserEnvelope,
   decodeServerEnvelope,
   DIRECT_MACHINE_ID,
+  isUuid,
   parseEnvelope,
   type BrowserMessageType,
   type BrowserPayloadMap,
   type Envelope,
   type GateCommitPayload,
+  type MemoryPanelOperation,
+  type MemoryPanelRequestPayload,
   type Ulid,
 } from './protocol'
 import { useHarnessStore, type HarnessStoreState } from './store'
@@ -155,6 +158,61 @@ export class HarnessSocketClient {
     return this.send('gate.commit', decision, threadId).id
   }
 
+  refreshMemoryPanel(): Ulid {
+    return this.sendMemoryPanelRequest('refresh', { action: 'refresh' })
+  }
+
+  removeMemoryFromContext(memoryId: string): Ulid {
+    if (!isUuid(memoryId)) {
+      throw new TypeError('memory id must be a UUID')
+    }
+    return this.sendMemoryPanelRequest('remove', {
+      action: 'remove',
+      memory_id: memoryId,
+    })
+  }
+
+  editMemoryBody(
+    memoryId: string,
+    expectedRevision: number,
+    body: string,
+  ): Ulid {
+    if (!isUuid(memoryId)) {
+      throw new TypeError('memory id must be a UUID')
+    }
+    if (!Number.isInteger(expectedRevision) || expectedRevision < 1) {
+      throw new TypeError('expected revision must be a positive integer')
+    }
+    if (!body.trim()) {
+      throw new TypeError('memory body must not be blank')
+    }
+    return this.sendMemoryPanelRequest('edit', {
+      action: 'edit',
+      memory_id: memoryId,
+      expected_revision: expectedRevision,
+      body,
+    })
+  }
+
+  setMemoryPin(
+    memoryId: string,
+    expectedRevision: number,
+    pin: boolean,
+  ): Ulid {
+    if (!isUuid(memoryId)) {
+      throw new TypeError('memory id must be a UUID')
+    }
+    if (!Number.isInteger(expectedRevision) || expectedRevision < 1) {
+      throw new TypeError('expected revision must be a positive integer')
+    }
+    return this.sendMemoryPanelRequest('pin', {
+      action: 'pin',
+      memory_id: memoryId,
+      expected_revision: expectedRevision,
+      pin,
+    })
+  }
+
   private openSocket(reconnecting: boolean): void {
     const generation = ++this.generation
     useHarnessStore
@@ -204,22 +262,34 @@ export class HarnessSocketClient {
         return
       }
 
+      const decoded = decodeServerEnvelope(envelope)
       const store = useHarnessStore.getState()
       store.observeDaemon(envelope.machine_id)
       if (
         this.snapshotBarrierThreadId !== null &&
         envelope.thread_id === this.snapshotBarrierThreadId
       ) {
-        const decoded = decodeServerEnvelope(envelope)
         if (decoded?.type !== 'thread.snapshot') {
           return
         }
         if (store.receiveEnvelope(envelope)) {
           this.snapshotBarrierThreadId = null
+          this.refreshMemoryPanelIfIdle()
         }
         return
       }
-      store.receiveEnvelope(envelope)
+      const acceptedSnapshot = store.receiveEnvelope(envelope)
+      if (decoded?.type === 'thread.snapshot' && acceptedSnapshot) {
+        this.refreshMemoryPanelIfIdle()
+        return
+      }
+      if (
+        decoded?.type !== 'run.done' ||
+        envelope.thread_id !== useHarnessStore.getState().selectedThreadId
+      ) {
+        return
+      }
+      this.refreshMemoryPanelIfIdle()
     })
 
     socket.addEventListener('error', () => {
@@ -261,6 +331,47 @@ export class HarnessSocketClient {
 
   private isOpen(): boolean {
     return this.socket?.readyState === WebSocket.OPEN
+  }
+
+  private sendMemoryPanelRequest(
+    operation: MemoryPanelOperation,
+    payload: MemoryPanelRequestPayload,
+  ): Ulid {
+    const state = useHarnessStore.getState()
+    const threadId = state.selectedThreadId
+    if (threadId === null) {
+      throw new Error('create or select a thread before opening memories')
+    }
+    if (selectedRuntime(state)?.awaitingSnapshot) {
+      throw new Error('wait for the authoritative thread snapshot before opening memories')
+    }
+    const envelope = this.send('memory.panel.update', payload, threadId)
+    useHarnessStore
+      .getState()
+      .beginMemoryPanelRequest(threadId, envelope.id, operation)
+    return envelope.id
+  }
+
+  private refreshMemoryPanelIfIdle(): void {
+    const runtime = selectedRuntime(useHarnessStore.getState())
+    if (
+      runtime === null ||
+      runtime.awaitingSnapshot ||
+      runtime.memoryPanel.pending !== null
+    ) {
+      return
+    }
+    try {
+      this.refreshMemoryPanel()
+    } catch (error) {
+      useHarnessStore
+        .getState()
+        .setTransportError(
+          error instanceof Error
+            ? error.message
+            : 'Memory panel could not be refreshed',
+        )
+    }
   }
 
   private send<Type extends BrowserMessageType>(

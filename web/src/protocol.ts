@@ -125,6 +125,63 @@ export type MemoryUnit = JsonObject & {
   updated_at: string
 }
 
+export type MemoryPanelOperation = 'refresh' | 'remove' | 'edit' | 'pin'
+export type MemoryPanelResult =
+  | 'refreshed'
+  | 'removed'
+  | 'edited'
+  | 'pin_changed'
+
+export type MemoryPanelItem = JsonObject & {
+  memory: MemoryUnit
+  in_context: boolean
+}
+
+export type MemoryPanelRequestPayload =
+  | { action: 'refresh' }
+  | { action: 'remove'; memory_id: string }
+  | {
+      action: 'edit'
+      memory_id: string
+      expected_revision: number
+      body: string
+    }
+  | {
+      action: 'pin'
+      memory_id: string
+      expected_revision: number
+      pin: boolean
+    }
+
+export type MemoryPanelStatePayload = JsonObject & {
+  action: 'state'
+  request_id: Ulid
+  result: MemoryPanelResult
+  items: MemoryPanelItem[]
+  total: number
+}
+
+export type MemoryPanelConflictPayload = JsonObject & {
+  action: 'conflict'
+  request_id: Ulid
+  operation: 'edit' | 'pin'
+  memory: MemoryUnit
+  message: string
+}
+
+export type MemoryPanelErrorPayload = JsonObject & {
+  action: 'error'
+  request_id: Ulid
+  operation: MemoryPanelOperation
+  code: string
+  message: string
+}
+
+export type MemoryPanelServerPayload =
+  | MemoryPanelStatePayload
+  | MemoryPanelConflictPayload
+  | MemoryPanelErrorPayload
+
 export type MemoryFeatures = JsonObject & {
   sem: number
   kw: number
@@ -223,6 +280,7 @@ export type DecodedServerEvent =
   | { type: 'run.done'; payload: RunDonePayload }
   | { type: 'gate.open'; payload: GateOpenPayload }
   | { type: 'gate.dismiss'; payload: GateDismissPayload }
+  | { type: 'memory.panel.update'; payload: MemoryPanelServerPayload }
   | { type: 'error'; payload: JsonValue }
   | { type: 'unknown'; payload: JsonValue }
 
@@ -231,6 +289,7 @@ export interface BrowserPayloadMap {
   'prompt.submit': { prompt: string }
   'run.cancel': { run_id: Ulid }
   'gate.commit': GateCommitPayload
+  'memory.panel.update': MemoryPanelRequestPayload
 }
 
 export type BrowserMessageType = keyof BrowserPayloadMap
@@ -590,6 +649,94 @@ function parseMemoryUnit(value: unknown): MemoryUnit | null {
   }
 }
 
+function parseMemoryPanelItem(value: unknown): MemoryPanelItem | null {
+  if (!isRecord(value) || typeof value.in_context !== 'boolean') {
+    return null
+  }
+  const memory = parseMemoryUnit(value.memory)
+  if (memory === null) {
+    return null
+  }
+  return {
+    ...value,
+    memory,
+    in_context: value.in_context,
+  } as MemoryPanelItem
+}
+
+function parseMemoryPanelUpdate(value: unknown): MemoryPanelServerPayload | null {
+  if (!isJsonObject(value) || !isUlid(value.request_id)) {
+    return null
+  }
+
+  if (value.action === 'state') {
+    if (
+      !['refreshed', 'removed', 'edited', 'pin_changed'].includes(
+        String(value.result),
+      ) ||
+      !Array.isArray(value.items) ||
+      !Number.isInteger(value.total) ||
+      (value.total as number) < 0
+    ) {
+      return null
+    }
+    const items = value.items.map(parseMemoryPanelItem)
+    if (items.some((item) => item === null)) {
+      return null
+    }
+    return {
+      ...value,
+      action: 'state',
+      request_id: value.request_id,
+      result: value.result as MemoryPanelResult,
+      items: items as MemoryPanelItem[],
+      total: value.total as number,
+    }
+  }
+
+  if (value.action === 'conflict') {
+    const memory = parseMemoryUnit(value.memory)
+    if (
+      !['edit', 'pin'].includes(String(value.operation)) ||
+      memory === null ||
+      typeof value.message !== 'string' ||
+      !value.message.trim()
+    ) {
+      return null
+    }
+    return {
+      ...value,
+      action: 'conflict',
+      request_id: value.request_id,
+      operation: value.operation as 'edit' | 'pin',
+      memory,
+      message: value.message,
+    }
+  }
+
+  if (value.action === 'error') {
+    if (
+      !['refresh', 'remove', 'edit', 'pin'].includes(String(value.operation)) ||
+      typeof value.code !== 'string' ||
+      !value.code.trim() ||
+      typeof value.message !== 'string' ||
+      !value.message.trim()
+    ) {
+      return null
+    }
+    return {
+      ...value,
+      action: 'error',
+      request_id: value.request_id,
+      operation: value.operation as MemoryPanelOperation,
+      code: value.code,
+      message: value.message,
+    }
+  }
+
+  return null
+}
+
 function parseGateOpen(value: unknown): GateOpenPayload | null {
   if (!isJsonObject(value)) {
     return null
@@ -820,6 +967,14 @@ export function decodeServerEnvelope(envelope: Envelope): DecodedServerEvent | n
         type: 'gate.dismiss',
         payload: { run_id: envelope.payload.run_id },
       }
+    case 'memory.panel.update':
+      payload = parseMemoryPanelUpdate(envelope.payload)
+      return payload === null
+        ? null
+        : {
+            type: 'memory.panel.update',
+            payload: payload as MemoryPanelServerPayload,
+          }
     case 'error':
       return { type: 'error', payload: envelope.payload }
     default:

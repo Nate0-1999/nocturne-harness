@@ -10,6 +10,9 @@ import {
   type Envelope,
   type GateOpenPayload,
   type JsonValue,
+  type MemoryPanelItem,
+  type MemoryPanelOperation,
+  type MemoryPanelServerPayload,
   type QueuedPrompt,
   type RunDeltaPayload,
   type RunDonePayload,
@@ -44,6 +47,20 @@ export interface OutboundPrompt {
   prompt: string
 }
 
+export interface MemoryPanelPending {
+  request_id: Ulid
+  operation: MemoryPanelOperation
+}
+
+export interface MemoryPanelState {
+  items: MemoryPanelItem[]
+  total: number
+  status: 'idle' | 'loading' | 'ready' | 'error'
+  pending: MemoryPanelPending | null
+  lastResponse: MemoryPanelServerPayload | null
+  completedEditRequestId: Ulid | null
+}
+
 export interface ThreadState {
   messages: ChatMessage[]
   outboundPrompts: OutboundPrompt[]
@@ -53,6 +70,7 @@ export interface ThreadState {
   queuedPrompts: QueuedPrompt[]
   lastError: HarnessError | null
   awaitingSnapshot: boolean
+  memoryPanel: MemoryPanelState
 }
 
 interface PersistedHarnessState {
@@ -70,6 +88,11 @@ export interface HarnessStoreState extends PersistedHarnessState {
   beginPrompt: (threadId: string, promptId: Ulid, prompt: string) => void
   markCancelling: (threadId: string, runId: Ulid) => void
   markSnapshotPending: (threadId: string) => void
+  beginMemoryPanelRequest: (
+    threadId: string,
+    requestId: Ulid,
+    operation: MemoryPanelOperation,
+  ) => void
   observeDaemon: (machineId: string) => void
   setConnection: (connection: ConnectionStatus) => void
   setTransportError: (message: string) => void
@@ -87,6 +110,18 @@ function emptyThreadState(): ThreadState {
     queuedPrompts: [],
     lastError: null,
     awaitingSnapshot: false,
+    memoryPanel: emptyMemoryPanelState(),
+  }
+}
+
+function emptyMemoryPanelState(): MemoryPanelState {
+  return {
+    items: [],
+    total: 0,
+    status: 'idle',
+    pending: null,
+    lastResponse: null,
+    completedEditRequestId: null,
   }
 }
 
@@ -337,6 +372,69 @@ function replaceFromSnapshot(
     queuedPrompts: active?.queued ?? [],
     lastError: null,
     awaitingSnapshot: false,
+    memoryPanel: {
+      ...emptyMemoryPanelState(),
+      completedEditRequestId: previous.memoryPanel.completedEditRequestId,
+    },
+  }
+}
+
+function applyMemoryPanelUpdate(
+  panel: MemoryPanelState,
+  payload: MemoryPanelServerPayload,
+): MemoryPanelState {
+  const pending =
+    panel.pending?.request_id === payload.request_id ? null : panel.pending
+
+  if (payload.action === 'state') {
+    return {
+      items: payload.items,
+      total: payload.total,
+      status: 'ready',
+      pending,
+      lastResponse: payload,
+      completedEditRequestId:
+        payload.result === 'edited'
+          ? payload.request_id
+          : panel.completedEditRequestId,
+    }
+  }
+
+  if (payload.action === 'conflict') {
+    const existing = panel.items.find(
+      (item) => item.memory.memory_id === payload.memory.memory_id,
+    )
+    const currentItem: MemoryPanelItem = {
+      ...(existing ?? {}),
+      memory: payload.memory,
+      in_context: existing?.in_context ?? false,
+    }
+    const currentItems =
+      existing === undefined
+        ? [...panel.items, currentItem]
+        : panel.items.map((item) =>
+            item.memory.memory_id === payload.memory.memory_id
+              ? currentItem
+              : item,
+          )
+    const wasActive = existing?.memory.status === 'active'
+    const isActive = payload.memory.status === 'active'
+    const totalDelta = wasActive === isActive ? 0 : isActive ? 1 : -1
+    return {
+      ...panel,
+      items: currentItems,
+      total: Math.max(0, panel.total + totalDelta),
+      status: 'ready',
+      pending,
+      lastResponse: payload,
+    }
+  }
+
+  return {
+    ...panel,
+    status: panel.items.length === 0 ? 'error' : 'ready',
+    pending,
+    lastResponse: payload,
   }
 }
 
@@ -384,6 +482,11 @@ function applyEvent(thread: ThreadState, event: DecodedServerEvent): ThreadState
             : thread.activeRun,
       }
     }
+    case 'memory.panel.update':
+      return {
+        ...thread,
+        memoryPanel: applyMemoryPanelUpdate(thread.memoryPanel, event.payload),
+      }
     case 'error':
       return { ...thread, lastError: errorFromPayload(event.payload) }
     default:
@@ -527,6 +630,27 @@ export const useHarnessStore = create<HarnessStoreState>()(
           threads: replaceThread(state.threads, threadId, (thread) => ({
             ...thread,
             awaitingSnapshot: true,
+            memoryPanel: {
+              ...thread.memoryPanel,
+              status: 'loading',
+              pending: null,
+            },
+          })),
+        }))
+      },
+
+      beginMemoryPanelRequest: (threadId, requestId, operation) => {
+        set((state) => ({
+          threads: replaceThread(state.threads, threadId, (thread) => ({
+            ...thread,
+            memoryPanel: {
+              ...thread.memoryPanel,
+              status:
+                operation === 'refresh' && thread.memoryPanel.items.length === 0
+                  ? 'loading'
+                  : thread.memoryPanel.status,
+              pending: { request_id: requestId, operation },
+            },
           })),
         }))
       },

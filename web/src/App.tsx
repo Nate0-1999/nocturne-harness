@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -8,8 +9,9 @@ import {
 } from 'react'
 
 import { harnessClient } from './socket'
-import { useHarnessStore } from './store'
+import { useHarnessStore, type MemoryPanelState } from './store'
 import { MemoryGate } from './MemoryGate'
+import { MemoryPanel } from './MemoryPanel'
 import type {
   AssistantTranscriptMessage,
   ChatMessage,
@@ -17,6 +19,14 @@ import type {
 } from './protocol'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
+const EMPTY_MEMORY_PANEL: MemoryPanelState = {
+  items: [],
+  total: 0,
+  status: 'idle',
+  pending: null,
+  lastResponse: null,
+  completedEditRequestId: null,
+}
 
 function shortId(value: string): string {
   return value.slice(0, 8).toUpperCase()
@@ -73,14 +83,17 @@ function App() {
   const selectedMeta = catalog.find((entry) => entry.thread_id === selectedThreadId)
   const [draft, setDraft] = useState('')
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [memoryDrawerOpen, setMemoryDrawerOpen] = useState(false)
   const [hasUnread, setHasUnread] = useState(false)
   const transcriptRef = useRef<HTMLDivElement>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const mobileThreadsRef = useRef<HTMLButtonElement>(null)
+  const mobileMemoriesRef = useRef<HTMLButtonElement>(null)
   const railCloseRef = useRef<HTMLButtonElement>(null)
   const followOutputRef = useRef(true)
   const drawerWasOpenRef = useRef(false)
+  const memoryDrawerWasOpenRef = useRef(false)
 
   const sortedCatalog = useMemo(
     () => [...catalog].sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
@@ -108,6 +121,7 @@ function App() {
   }, [selectedThread])
   const activeRun = selectedThread?.activeRun ?? null
   const openGate = selectedThread?.openGate ?? null
+  const memoryPanel = selectedThread?.memoryPanel ?? EMPTY_MEMORY_PANEL
   const queuedPrompts = selectedThread?.queuedPrompts ?? []
   const awaitingSnapshot = selectedThread?.awaitingSnapshot ?? true
   const canSend =
@@ -115,6 +129,7 @@ function App() {
     !awaitingSnapshot &&
     openGate === null &&
     draft.trim().length > 0
+  const closeMemoryDrawer = useCallback(() => setMemoryDrawerOpen(false), [])
 
   const runStates = useMemo(() => {
     const states = new Map<string, UserMessageState>()
@@ -191,6 +206,17 @@ function App() {
     }
   }, [drawerOpen])
 
+  useEffect(() => {
+    if (memoryDrawerOpen) {
+      memoryDrawerWasOpenRef.current = true
+      return
+    }
+    if (memoryDrawerWasOpenRef.current) {
+      memoryDrawerWasOpenRef.current = false
+      globalThis.requestAnimationFrame(() => mobileMemoriesRef.current?.focus())
+    }
+  }, [memoryDrawerOpen])
+
   function submitPrompt(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!canSend) {
@@ -219,6 +245,7 @@ function App() {
   function createThread() {
     harnessClient.createThread()
     setDrawerOpen(false)
+    setMemoryDrawerOpen(false)
     setDraft('')
     setHasUnread(false)
   }
@@ -226,6 +253,7 @@ function App() {
   function selectThread(threadId: string) {
     harnessClient.selectThread(threadId)
     setDrawerOpen(false)
+    setMemoryDrawerOpen(false)
     setDraft('')
     setHasUnread(false)
   }
@@ -275,17 +303,36 @@ function App() {
           <span className="brand__mode">M1 direct</span>
         </div>
 
-        <button
-          ref={mobileThreadsRef}
-          className="mobile-threads"
-          type="button"
-          data-testid="mobile-threads"
-          aria-expanded={drawerOpen}
-          onClick={() => setDrawerOpen(true)}
-        >
-          Threads
-          <span>{catalog.length.toString().padStart(2, '0')}</span>
-        </button>
+        <div className="mobile-navigation">
+          <button
+            ref={mobileThreadsRef}
+            className="mobile-threads"
+            type="button"
+            data-testid="mobile-threads"
+            aria-expanded={drawerOpen}
+            onClick={() => {
+              setMemoryDrawerOpen(false)
+              setDrawerOpen(true)
+            }}
+          >
+            Threads
+            <span>{catalog.length.toString().padStart(2, '0')}</span>
+          </button>
+          <button
+            ref={mobileMemoriesRef}
+            className="mobile-memories"
+            type="button"
+            data-testid="mobile-memories"
+            aria-expanded={memoryDrawerOpen}
+            onClick={() => {
+              setDrawerOpen(false)
+              setMemoryDrawerOpen(true)
+            }}
+          >
+            Memory
+            <span>{memoryPanel.total}</span>
+          </button>
+        </div>
 
         <p className={`connection connection--${connection}`} data-testid="connection" aria-live="polite">
           <span className="connection__signal" aria-hidden="true" />
@@ -294,19 +341,23 @@ function App() {
       </header>
 
       <div className="workspace">
-        {drawerOpen && (
+        {(drawerOpen || memoryDrawerOpen) && (
           <button
             className="drawer-scrim"
             type="button"
             tabIndex={-1}
             aria-hidden="true"
-            onClick={() => setDrawerOpen(false)}
+            onClick={() => {
+              setDrawerOpen(false)
+              setMemoryDrawerOpen(false)
+            }}
           />
         )}
 
         <aside
           className={`thread-rail${drawerOpen ? ' thread-rail--open' : ''}`}
           aria-labelledby="thread-rail-title"
+          inert={memoryDrawerOpen || openGate !== null || undefined}
         >
           <div className="thread-rail__header">
             <div>
@@ -380,7 +431,9 @@ function App() {
         <main
           className="chat-panel"
           aria-labelledby="thread-title"
-          inert={drawerOpen || openGate !== null || undefined}
+          inert={
+            drawerOpen || memoryDrawerOpen || openGate !== null || undefined
+          }
         >
           <header className="chat-header">
             <div className="chat-header__identity">
@@ -509,6 +562,25 @@ function App() {
             </div>
           </form>
         </main>
+
+        <MemoryPanel
+          panel={memoryPanel}
+          connected={connection === 'connected' && !awaitingSnapshot}
+          removeEnabled={activeRun === null}
+          mobileOpen={memoryDrawerOpen}
+          inert={drawerOpen || openGate !== null}
+          onClose={closeMemoryDrawer}
+          onRefresh={() => harnessClient.refreshMemoryPanel()}
+          onRemove={(memoryId) =>
+            harnessClient.removeMemoryFromContext(memoryId)
+          }
+          onEdit={(memoryId, expectedRevision, body) =>
+            harnessClient.editMemoryBody(memoryId, expectedRevision, body)
+          }
+          onPin={(memoryId, expectedRevision, pin) =>
+            harnessClient.setMemoryPin(memoryId, expectedRevision, pin)
+          }
+        />
       </div>
       {openGate !== null && (
         <MemoryGate

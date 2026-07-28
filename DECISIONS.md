@@ -403,3 +403,61 @@ violates P1.4 authority boundaries; permanently banning later global saves
 would ignore an explicit user correction. A second confirmation UI is not
 needed for this tool boundary because the later user turn supplies the
 confirmation boundary, while A-023 separately owns the typed correction stage.
+
+## 014 — Trusted live-memory panel and frozen thread context [P1.2.1d, P1.3]
+
+**Decision.** Adopt Garden A-024 as the H6 browser boundary. Keep the panel on
+the existing bidirectional WebSocket envelope and derive principal, machine,
+editor, PATCH reason, and injection ID in the daemon. Page the complete C.4
+ACTIVE list, filter it to the configured principal before it crosses the
+browser boundary, and correlate every state, conflict, or safe error to the
+request envelope.
+
+Bind each successfully committed injection's exact canonical fragments to its
+server-held member IDs in a daemon-lifetime per-thread registry. A panel remove
+submits `mid_thread_removed` with that registry's injection ID, mutates the
+registry only after `{ok:true}`, and persists the removed ID in the thread's
+memory-tool exclusions. Serialize that feedback boundary with the complete
+model run so a successful removal cannot race a later provider request that
+still holds stale instructions or tool context. Before each later turn, remove
+historical dynamic memory blocks and supply exactly the registry's current
+block. Body edits and manual pins use the displayed revision once, surface the
+typed current unit on a validated CAS conflict, and leave the already-committed
+thread block frozen.
+
+Render a persistent restrained memory rail on desktop and a focus-contained
+drawer at 390×844. Treat daemon state as authoritative: show current-context
+versus stored state, permit Remove only for current members, preserve an edit
+draft across a conflict, and require the user to retry explicitly. Refresh
+after authoritative thread snapshots and completed runs, plus direct user
+requests; do not poll.
+
+**Motivation.** Exact fragment retention preserves the committed injection
+event rather than reconstructing it from mutable MemoryUnits. The shared
+run/feedback boundary makes “next model call” a concurrency guarantee, not a
+UI timing assumption. Principal filtering and server-owned provenance keep the
+browser useful without making it an authority, while visible CAS replacement
+preserves deliberate human control.
+
+**Rejected alternatives.** Browser-supplied identity or injection IDs create
+an authority leak. Re-rendering current context after edit or pin violates the
+frozen-injection contract. Retrying a 409 silently overwrites concurrent work.
+Polling adds traffic and race states that snapshot/run completion already
+cover. Callable live instructions and a second persistence layer are not
+needed once feedback and provider runs share one narrow serialization
+boundary.
+
+## 015 — Composer hit-target correction [P3]
+
+**Decision.** Raise the chat textarea's minimum rendered height from 32px to
+44px after the H6 live responsive audit measured the actual interactive
+element rather than its larger surrounding form. Keep the existing composer
+layout, typography, and auto-growth ceiling unchanged.
+
+**Motivation.** A visually generous wrapper does not make its nested textarea
+an adequate phone target. Correcting the deepest local control closes the
+observed accessibility defect without redesigning the chat shell.
+
+**Rejected alternatives.** Treating the wrapper as the hit target would make
+the evidence untrue. Enlarging every composer dimension or adding a separate
+mobile layout would exceed this local P3 remedy.

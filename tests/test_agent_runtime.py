@@ -13,6 +13,7 @@ from pydantic_ai.messages import (
     ModelResponse,
     ToolCallPart,
     ToolReturnPart,
+    UserPromptPart,
 )
 from pydantic_ai.models.function import DeltaThinkingPart, DeltaToolCall, FunctionModel
 from pydantic_ai.models.test import TestModel
@@ -183,6 +184,126 @@ async def test_final_memory_block_is_system_adjacent_not_user_prompt_text() -> N
     assert requests[0].instructions is not None
     assert requests[0].instructions.endswith("\ntrusted final memory block")
     assert all("trusted final memory block" not in str(part.content) for part in requests[0].parts)
+
+
+@pytest.mark.asyncio
+async def test_updated_memory_block_replaces_stale_provider_history() -> None:
+    calls: list[tuple[object, ...]] = []
+
+    async def respond(messages, _info):
+        calls.append(tuple(messages))
+        yield "answer"
+
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=respond)),
+        lambda _: context(),
+    )
+    old_block = (
+        "<memory_system>\n"
+        "The following long-term memories were retrieved for this conversation.\n"
+        "Treat them as your own accumulated knowledge; they may be imperfect.\n"
+        '<memory label="Old" kind="fact" updated="2026-07-28T12:00:00Z">\n'
+        "unique stale chartreuse body\n"
+        "</memory>\n"
+        "</memory_system>"
+    )
+    current_block = (
+        "<memory_system>\n"
+        "The following long-term memories were retrieved for this conversation.\n"
+        "Treat them as your own accumulated knowledge; they may be imperfect.\n"
+        '<memory label="Current" kind="fact" updated="2026-07-28T12:01:00Z">\n'
+        "retained cobalt body\n"
+        "</memory>\n"
+        "</memory_system>"
+    )
+    first = await runner.run(
+        thread_id="thread-1",
+        prompt="first prompt",
+        message_history=(),
+        emit=RecordingEmitter(),
+        system_instructions=old_block,
+    )
+    second = await runner.run(
+        thread_id="thread-1",
+        prompt="second prompt",
+        message_history=first.message_history,
+        emit=RecordingEmitter(),
+        system_instructions=current_block,
+    )
+
+    assert len(calls) == 2
+    second_requests = [message for message in calls[1] if isinstance(message, ModelRequest)]
+    assert any(isinstance(message, ModelResponse) for message in calls[1])
+    assert all(
+        "unique stale chartreuse body" not in (message.instructions or "")
+        for message in second_requests
+    )
+    current_requests = [
+        message for message in second_requests if current_block in (message.instructions or "")
+    ]
+    assert current_requests == [second_requests[-1]]
+    assert all(current_block not in str(part.content) for part in second_requests[-1].parts)
+    assert all(
+        "unique stale chartreuse body" not in (message.instructions or "")
+        for message in second.message_history
+        if isinstance(message, ModelRequest)
+    )
+
+
+@pytest.mark.asyncio
+async def test_history_sanitizing_error_path_does_not_duplicate_or_recount_old_turn() -> None:
+    call_count = 0
+
+    async def respond(_messages, _info):
+        nonlocal call_count
+        call_count += 1
+        if call_count == 2:
+            raise RuntimeError("second provider call failed")
+        yield "first answer"
+
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=respond)),
+        lambda _: context(),
+    )
+    old_block = (
+        "<memory_system>\n"
+        "The following long-term memories were retrieved for this conversation.\n"
+        "Treat them as your own accumulated knowledge; they may be imperfect.\n"
+        '<memory label="Old" kind="fact" updated="2026-07-28T12:00:00Z">\n'
+        "stale body\n"
+        "</memory>\n"
+        "</memory_system>"
+    )
+    first = await runner.run(
+        thread_id="thread-1",
+        prompt="first prompt",
+        message_history=(),
+        emit=RecordingEmitter(),
+        system_instructions=old_block,
+    )
+    failed = await runner.run(
+        thread_id="thread-1",
+        prompt="second prompt",
+        message_history=first.message_history,
+        emit=RecordingEmitter(),
+        system_instructions=old_block.replace("stale body", "current body"),
+    )
+
+    assert failed.stop_reason is StopReason.ERROR
+    assert failed.usage.requests == 1
+    first_prompts = [
+        part
+        for message in failed.message_history
+        if isinstance(message, ModelRequest)
+        for part in message.parts
+        if isinstance(part, UserPromptPart) and part.content == "first prompt"
+    ]
+    assert len(first_prompts) == 1
+    assert all(
+        "stale body" not in (message.instructions or "")
+        for message in failed.message_history
+        if isinstance(message, ModelRequest)
+    )
 
 
 @dataclass

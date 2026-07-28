@@ -238,6 +238,76 @@ class ThreadSnapshotResponsePayload(_ExtensiblePayload):
     active_run: ActiveRunSnapshot | None
 
 
+class _MemoryPanelPayload(BaseModel):
+    """Closed H6 payload: browser extensions cannot smuggle trusted identity."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+
+
+class MemoryPanelRefreshPayload(_MemoryPanelPayload):
+    action: Literal["refresh"]
+
+
+class MemoryPanelRemovePayload(_MemoryPanelPayload):
+    action: Literal["remove"]
+    memory_id: UUID
+
+
+class MemoryPanelEditPayload(_MemoryPanelPayload):
+    action: Literal["edit"]
+    memory_id: UUID
+    expected_revision: Annotated[StrictInt, Field(ge=1)]
+    body: StrictStr
+
+
+class MemoryPanelPinPayload(_MemoryPanelPayload):
+    action: Literal["pin"]
+    memory_id: UUID
+    expected_revision: Annotated[StrictInt, Field(ge=1)]
+    pin: StrictBool
+
+
+class MemoryPanelItem(_MemoryPanelPayload):
+    memory: MemoryUnit
+    in_context: StrictBool
+
+
+class MemoryPanelStatePayload(_MemoryPanelPayload):
+    action: Literal["state"]
+    request_id: ULID
+    result: Literal["refreshed", "removed", "edited", "pin_changed"]
+    items: list[MemoryPanelItem]
+    total: NonNegativeInt
+
+
+class MemoryPanelConflictPayload(_MemoryPanelPayload):
+    action: Literal["conflict"]
+    request_id: ULID
+    operation: Literal["edit", "pin"]
+    memory: MemoryUnit
+    message: NonBlankString
+
+
+class MemoryPanelErrorPayload(_MemoryPanelPayload):
+    action: Literal["error"]
+    request_id: ULID
+    operation: Literal["refresh", "remove", "edit", "pin"]
+    code: NonBlankString
+    message: NonBlankString
+
+
+type MemoryPanelPayload = Annotated[
+    MemoryPanelRefreshPayload
+    | MemoryPanelRemovePayload
+    | MemoryPanelEditPayload
+    | MemoryPanelPinPayload
+    | MemoryPanelStatePayload
+    | MemoryPanelConflictPayload
+    | MemoryPanelErrorPayload,
+    Field(discriminator="action"),
+]
+
+
 type ThreadSnapshotPayload = Annotated[
     ThreadSnapshotRequestPayload | ThreadSnapshotResponsePayload,
     Field(union_mode="left_to_right"),
@@ -255,6 +325,7 @@ type KnownPayload = (
     | GateCommitPayload
     | GateDismissPayload
     | ThreadSnapshotPayload
+    | MemoryPanelPayload
 )
 
 _PAYLOAD_ADAPTERS: dict[MessageType, TypeAdapter[Any]] = {
@@ -269,6 +340,7 @@ _PAYLOAD_ADAPTERS: dict[MessageType, TypeAdapter[Any]] = {
     MessageType.GATE_COMMIT: TypeAdapter(GateCommitPayload),
     MessageType.GATE_DISMISS: TypeAdapter(GateDismissPayload),
     MessageType.THREAD_SNAPSHOT: TypeAdapter(ThreadSnapshotPayload),
+    MessageType.MEMORY_PANEL_UPDATE: TypeAdapter(MemoryPanelPayload),
 }
 _JSON_ADAPTER = TypeAdapter(JsonValue, config=ConfigDict(allow_inf_nan=False))
 
@@ -324,6 +396,7 @@ class Envelope(BaseModel):
         requires_thread = self.type in {
             MessageType.PROMPT_SUBMIT,
             MessageType.GATE_COMMIT,
+            MessageType.MEMORY_PANEL_UPDATE,
         } or (
             self.type is MessageType.THREAD_SNAPSHOT
             and isinstance(payload, ThreadSnapshotRequestPayload)

@@ -11,6 +11,13 @@ from harness.envelope import (
     GateCommitPayload,
     GateDismissPayload,
     GateOpenPayload,
+    MemoryPanelConflictPayload,
+    MemoryPanelEditPayload,
+    MemoryPanelErrorPayload,
+    MemoryPanelPinPayload,
+    MemoryPanelRefreshPayload,
+    MemoryPanelRemovePayload,
+    MemoryPanelStatePayload,
     MessageType,
     PromptQueuedPayload,
     PromptSubmitPayload,
@@ -241,6 +248,135 @@ def test_known_minimum_payloads_are_typed(
 
     assert isinstance(envelope.payload, expected_class)
     assert envelope.model_dump(mode="json")["payload"] == payload
+
+
+@pytest.mark.parametrize(
+    ("payload", "expected_class"),
+    [
+        ({"action": "refresh"}, MemoryPanelRefreshPayload),
+        ({"action": "remove", "memory_id": MEMORY_ID}, MemoryPanelRemovePayload),
+        (
+            {
+                "action": "edit",
+                "memory_id": MEMORY_ID,
+                "expected_revision": 2,
+                "body": "",
+            },
+            MemoryPanelEditPayload,
+        ),
+        (
+            {
+                "action": "pin",
+                "memory_id": MEMORY_ID,
+                "expected_revision": 2,
+                "pin": True,
+            },
+            MemoryPanelPinPayload,
+        ),
+        (
+            {
+                "action": "state",
+                "request_id": PROMPT_ID,
+                "result": "refreshed",
+                "items": [{"memory": wrong_unit(), "in_context": True}],
+                "total": 1,
+            },
+            MemoryPanelStatePayload,
+        ),
+        (
+            {
+                "action": "conflict",
+                "request_id": PROMPT_ID,
+                "operation": "edit",
+                "memory": wrong_unit(),
+                "message": "Review the latest version.",
+            },
+            MemoryPanelConflictPayload,
+        ),
+        (
+            {
+                "action": "error",
+                "request_id": PROMPT_ID,
+                "operation": "remove",
+                "code": "not_in_context",
+                "message": "This memory is not in context.",
+            },
+            MemoryPanelErrorPayload,
+        ),
+    ],
+)
+def test_memory_panel_payload_is_a_closed_discriminated_union(
+    payload: dict[str, object], expected_class: type[object]
+) -> None:
+    envelope = envelope_for("memory.panel.update", payload)
+
+    assert isinstance(envelope.payload, expected_class)
+    assert envelope.model_dump(mode="json")["payload"] == payload
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"action": "refresh", "principal_id": "browser-supplied"},
+        {"action": "remove", "memory_id": "not-a-uuid"},
+        {
+            "action": "remove",
+            "memory_id": MEMORY_ID,
+            "injection_id": INJECTION_ID,
+        },
+        {
+            "action": "edit",
+            "memory_id": MEMORY_ID,
+            "expected_revision": 0,
+            "body": "body",
+        },
+        {
+            "action": "edit",
+            "memory_id": MEMORY_ID,
+            "expected_revision": True,
+            "body": "body",
+        },
+        {
+            "action": "pin",
+            "memory_id": MEMORY_ID,
+            "expected_revision": 1,
+            "pin": 1,
+        },
+        {
+            "action": "state",
+            "request_id": PROMPT_ID,
+            "result": "unknown",
+            "items": [],
+            "total": 0,
+        },
+    ],
+)
+def test_memory_panel_rejects_invalid_or_browser_authority_fields(
+    payload: dict[str, object],
+) -> None:
+    with pytest.raises(ValidationError):
+        envelope_for("memory.panel.update", payload)
+
+
+def test_memory_panel_requires_outer_thread_in_both_directions() -> None:
+    for payload in (
+        {"action": "refresh"},
+        {
+            "action": "state",
+            "request_id": PROMPT_ID,
+            "result": "refreshed",
+            "items": [],
+            "total": 0,
+        },
+    ):
+        raw = {
+            **valid_envelope(),
+            "thread_id": None,
+            "type": "memory.panel.update",
+            "payload": payload,
+        }
+        with pytest.raises(ValidationError):
+            Envelope.model_validate(raw)
 
 
 @pytest.mark.parametrize(
