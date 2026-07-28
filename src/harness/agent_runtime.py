@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncIterable, Callable, Mapping, Sequence
+from dataclasses import replace
 from typing import Any, cast
+from uuid import UUID
 
 from pydantic_ai import UsageLimitExceeded, capture_run_messages
 from pydantic_ai.messages import (
@@ -51,6 +53,7 @@ class PydanticAITurnRunner:
         message_history: Sequence[object],
         emit: RunEmitter,
         system_instructions: str | None = None,
+        excluded_memory_ids: frozenset[UUID] = frozenset(),
     ) -> TurnOutcome:
         """Execute a turn and convert every terminal path to a stable outcome."""
 
@@ -61,7 +64,10 @@ class PydanticAITurnRunner:
         is_remember = remember_command_text(prompt) is not None
 
         try:
-            context = self._context_factory(thread_id)
+            context = replace(
+                self._context_factory(thread_id),
+                excluded_memory_ids=frozenset(excluded_memory_ids),
+            )
             if is_remember:
                 with capture_run_messages() as captured:
                     dispatched = await self._agent.dispatch(

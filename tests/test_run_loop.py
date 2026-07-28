@@ -16,6 +16,7 @@ from harness.envelope import (
     MessageType,
     StopReason,
     ThreadSnapshotResponsePayload,
+    WrongResolution,
 )
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
@@ -53,6 +54,34 @@ def card(memory_id: str, rank: int) -> dict[str, object]:
             "hist": 0.4,
         },
         "rank": rank,
+    }
+
+
+def wrong_unit(*, revision: int = 2) -> dict[str, object]:
+    return {
+        "memory_id": INJECTED_ID,
+        "principal_id": "principal-1",
+        "label": "Wrong memory",
+        "body": "Current wrong body",
+        "kind": "fact",
+        "keywords": [],
+        "project_key": None,
+        "thread_origin": "thread-1",
+        "origin_path": None,
+        "pin": False,
+        "status": "active",
+        "revision": revision,
+        "stats": {
+            "injections": 1,
+            "removals": 1,
+            "citations": 0,
+            "never_kills": 0,
+            "last_injected_at": None,
+        },
+        "bias": 0.0,
+        "embedding_model": "test-embedding",
+        "created_at": datetime(2026, 7, 20, tzinfo=UTC),
+        "updated_at": datetime(2026, 7, 21, tzinfo=UTC),
     }
 
 
@@ -179,6 +208,41 @@ class GateRunner:
         )
         self.accepted.set()
         await self.allow_dismiss.wait()
+        await emit.dismiss_gate()
+        await emit.text("model started")
+        return TurnOutcome(
+            StopReason.END_TURN,
+            (*message_history, f"{prompt}:complete"),
+        )
+
+
+class WrongResolutionGateRunner:
+    def __init__(self) -> None:
+        self.review: GateCommitPayload | None = None
+        self.resolution: GateCommitPayload | None = None
+
+    async def run(
+        self,
+        *,
+        thread_id: str,
+        prompt: str,
+        message_history: Sequence[object],
+        emit: RunEmitter,
+    ) -> TurnOutcome:
+        del thread_id
+        self.review = await emit.open_gate(
+            {
+                **gate_value(),
+                "injected": [card(INJECTED_ID, 1)],
+            }
+        )
+        self.resolution = await emit.open_gate(
+            {
+                **gate_value(),
+                "stage": "wrong_resolution",
+                "wrong_removed": [wrong_unit()],
+            }
+        )
         await emit.dismiss_gate()
         await emit.text("model started")
         return TurnOutcome(
@@ -404,6 +468,48 @@ async def test_gate_blocks_reconnects_validates_once_and_resumes_only_after_dism
             GateCommitPayload(
                 run_id=run_id,
                 injection_id=INJECTION_ID,
+                removed=[
+                    {
+                        "memory_id": NEAR_MISS_ID,
+                        "reason": "wrong",
+                    }
+                ],
+                added_back=[],
+            ),
+        ),
+        (
+            "thread-1",
+            GateCommitPayload(
+                run_id=run_id,
+                injection_id=INJECTION_ID,
+                removed=[
+                    {
+                        "memory_id": NEAR_MISS_ID,
+                        "reason": "not_relevant",
+                    }
+                ],
+                added_back=[],
+            ),
+        ),
+        (
+            "thread-1",
+            GateCommitPayload(
+                run_id=run_id,
+                injection_id=INJECTION_ID,
+                removed=[
+                    {
+                        "memory_id": NEAR_MISS_ID,
+                        "reason": "never",
+                    }
+                ],
+                added_back=[NEAR_MISS_ID],
+            ),
+        ),
+        (
+            "thread-1",
+            GateCommitPayload(
+                run_id=run_id,
+                injection_id=INJECTION_ID,
                 removed=[],
                 added_back=[NEAR_MISS_ID, NEAR_MISS_ID],
             ),
@@ -417,8 +523,11 @@ async def test_gate_blocks_reconnects_validates_once_and_resumes_only_after_dism
     decision = GateCommitPayload(
         run_id=run_id,
         injection_id=INJECTION_ID,
-        removed=[{"memory_id": INJECTED_ID, "reason": "not_relevant"}],
-        added_back=[NEAR_MISS_ID],
+        removed=[
+            {"memory_id": INJECTED_ID, "reason": "not_relevant"},
+            {"memory_id": NEAR_MISS_ID, "reason": "never"},
+        ],
+        added_back=[],
     )
     await loop.commit_gate(thread_id="thread-1", decision=decision, sink=reconnected)
     await _wait(runner.accepted)
@@ -452,6 +561,73 @@ async def test_gate_blocks_reconnects_validates_once_and_resumes_only_after_dism
             strict=True,
         )
     )
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_wrong_resolution_replaces_gate_and_validates_current_revision() -> None:
+    ids = Ids()
+    runner = WrongResolutionGateRunner()
+    loop = RunLoop(runner, factory(ids))
+    sink = Sink()
+    await loop.attach(sink)
+    run_id = await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(1),
+        prompt="hello",
+        sink=sink,
+    )
+    await _wait_for_type_count(sink, MessageType.GATE_OPEN, 1)
+
+    review = GateCommitPayload(
+        run_id=run_id,
+        injection_id=INJECTION_ID,
+        removed=[{"memory_id": INJECTED_ID, "reason": "wrong"}],
+        added_back=[],
+    )
+    await loop.commit_gate(thread_id="thread-1", decision=review, sink=sink)
+    await _wait_for_type_count(sink, MessageType.GATE_OPEN, 2)
+    replacement = [message for message in sink.messages if message.type is MessageType.GATE_OPEN][
+        -1
+    ].payload
+    assert replacement.stage == "wrong_resolution"
+    assert replacement.wrong_removed[0].revision == 2
+    assert MessageType.GATE_DISMISS not in types(sink)
+    assert MessageType.RUN_DELTA not in types(sink)
+
+    stale = GateCommitPayload(
+        run_id=run_id,
+        injection_id=INJECTION_ID,
+        removed=[],
+        added_back=[],
+        wrong_resolution=WrongResolution(
+            memory_id=INJECTED_ID,
+            expected_revision=1,
+            action="edit",
+            body="Corrected body",
+        ),
+    )
+    await loop.commit_gate(thread_id="thread-1", decision=stale, sink=sink)
+    await _wait_for_type_count(sink, MessageType.ERROR, 1)
+    assert runner.resolution is None
+
+    resolution = stale.model_copy(
+        update={
+            "wrong_resolution": WrongResolution(
+                memory_id=INJECTED_ID,
+                expected_revision=2,
+                action="expire",
+            )
+        }
+    )
+    await loop.commit_gate(thread_id="thread-1", decision=resolution, sink=sink)
+    await _wait_for_done_count(sink, 1)
+
+    assert runner.review == review
+    assert runner.resolution == resolution
+    event_types = types(sink)
+    assert event_types.count(MessageType.GATE_OPEN) == 2
+    assert event_types.index(MessageType.GATE_DISMISS) < event_types.index(MessageType.RUN_DELTA)
     await loop.close()
 
 

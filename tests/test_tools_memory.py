@@ -148,7 +148,12 @@ def memory_page(
     )
 
 
-def context(spine: FakeSpineGateway, *, project_key: str | None = "garden") -> MemoryToolContext:
+def context(
+    spine: FakeSpineGateway,
+    *,
+    project_key: str | None = "garden",
+    excluded_memory_ids: frozenset[UUID] = frozenset(),
+) -> MemoryToolContext:
     return MemoryToolContext(
         spine=spine,
         principal_id="principal-1",
@@ -157,6 +162,7 @@ def context(spine: FakeSpineGateway, *, project_key: str | None = "garden") -> M
         thread_id=THREAD_ID,
         project_key=project_key,
         origin_path="/workspace/PLAN.md",
+        excluded_memory_ids=excluded_memory_ids,
     )
 
 
@@ -239,8 +245,51 @@ async def test_save_rejects_project_scope_without_current_project_before_spine_c
         project_scoped=True,
     )
 
-    assert rendered == "memory not saved: project_scoped=true requires a current project"
+    assert rendered == (
+        "memory not saved: project_scoped=true requires a current project; "
+        "global fallback requires explicit user confirmation in a later user turn"
+    )
     assert spine.create_requests == []
+
+
+@pytest.mark.asyncio
+async def test_save_blocks_same_run_global_fallback_after_missing_project_context() -> None:
+    spine = FakeSpineGateway()
+    run_context = context(spine, project_key=None)
+
+    missing_project = await save_memory(
+        run_context,
+        "Project build",
+        "Use uv to build this project.",
+        MemoryKind.PROJECT_NOTE,
+        project_scoped=True,
+    )
+    global_retry = await save_memory(
+        run_context,
+        "Project build",
+        "Use uv to build this project.",
+        MemoryKind.PROJECT_NOTE,
+        project_scoped=False,
+    )
+
+    assert "requires a current project" in missing_project
+    assert global_retry == (
+        "memory not saved: global fallback requires explicit user confirmation in a later user turn"
+    )
+    assert spine.create_requests == []
+
+    spine.create_outcomes.append(CreatedMemoryResponse(created=memory_unit()))
+    confirmed_later_turn = await save_memory(
+        context(spine, project_key=None),
+        "Project build",
+        "Use uv to build this project.",
+        MemoryKind.PROJECT_NOTE,
+        project_scoped=False,
+    )
+
+    assert confirmed_later_turn.startswith("memory saved: ")
+    assert len(spine.create_requests) == 1
+    assert spine.create_requests[0].project_key is None
 
 
 @pytest.mark.asyncio
@@ -264,6 +313,33 @@ async def test_save_renders_similar_result_without_automatically_forcing_or_retr
     )
     assert len(spine.create_requests) == 1
     assert spine.create_requests[0].force is False
+
+
+@pytest.mark.asyncio
+async def test_save_never_renders_an_excluded_similar_memory() -> None:
+    spine = FakeSpineGateway()
+    spine.create_outcomes.append(
+        SimilarMemoriesResponse(
+            created=None,
+            similar=[
+                similarity_card(
+                    body="The unique chartreuse body must stay hidden.",
+                )
+            ],
+        )
+    )
+
+    rendered = await save_memory(
+        context(spine, excluded_memory_ids=frozenset({MEMORY_ID})),
+        "New editor preference",
+        "Tabs are preferred.",
+        MemoryKind.PREFERENCE,
+        project_scoped=False,
+    )
+
+    assert rendered == ("memory not saved: similar memory exists but is excluded from this turn")
+    assert str(MEMORY_ID) not in rendered
+    assert "chartreuse" not in rendered
 
 
 @pytest.mark.asyncio
@@ -307,6 +383,32 @@ async def test_save_surfaces_hard_duplicate_and_label_conflicts_without_retry(
 
 
 @pytest.mark.asyncio
+async def test_save_never_renders_an_excluded_create_conflict() -> None:
+    spine = FakeSpineGateway()
+    spine.create_outcomes.append(
+        create_conflict(
+            DuplicateMemoryConflict(
+                duplicate_of=similarity_card(
+                    body="The unique chartreuse body must stay hidden.",
+                )
+            )
+        )
+    )
+
+    rendered = await save_memory(
+        context(spine, excluded_memory_ids=frozenset({MEMORY_ID})),
+        "Taken label",
+        "A body",
+        MemoryKind.FACT,
+        project_scoped=False,
+    )
+
+    assert rendered == "memory not saved: conflicting memory is excluded from this turn"
+    assert str(MEMORY_ID) not in rendered
+    assert "chartreuse" not in rendered
+
+
+@pytest.mark.asyncio
 async def test_search_defaults_to_five_current_project_and_preserves_compact_order() -> None:
     spine = FakeSpineGateway()
     spine.search_outcomes.append(
@@ -345,6 +447,50 @@ async def test_search_defaults_to_five_current_project_and_preserves_compact_ord
     assert [json.loads(line)["label"] for line in lines] == ["First", "Second ☃"]
     expected_keys = {"memory_id", "label", "body", "kind", "pin", "score"}
     assert all(set(json.loads(line)) == expected_keys for line in lines)
+
+
+@pytest.mark.asyncio
+async def test_search_overfetches_and_never_renders_excluded_gate_removals() -> None:
+    spine = FakeSpineGateway()
+    allowed_third_id = UUID("20000000-0000-0000-0000-000000000003")
+    spine.search_outcomes.append(
+        SearchResponse(
+            results=[
+                similarity_card(
+                    memory_id=MEMORY_ID,
+                    label="Removed",
+                    body="The unique chartreuse body must stay hidden.",
+                    score=0.99,
+                ),
+                similarity_card(
+                    memory_id=OTHER_MEMORY_ID,
+                    label="Allowed",
+                    body="Visible first.",
+                    score=0.9,
+                ),
+                similarity_card(
+                    memory_id=allowed_third_id,
+                    label="Allowed second",
+                    body="Visible second.",
+                    score=0.8,
+                ),
+            ]
+        )
+    )
+
+    rendered = await search_memory(
+        context(spine, excluded_memory_ids=frozenset({MEMORY_ID})),
+        "editor setup",
+        k=2,
+    )
+
+    assert spine.search_requests[0].k == 3
+    assert str(MEMORY_ID) not in rendered
+    assert "chartreuse" not in rendered
+    assert [json.loads(line)["memory_id"] for line in rendered.splitlines()] == [
+        str(OTHER_MEMORY_ID),
+        str(allowed_third_id),
+    ]
 
 
 @pytest.mark.asyncio
@@ -437,6 +583,29 @@ async def test_edit_filters_other_principals_and_non_active_rows_locally() -> No
 
     assert [memory_id for memory_id, _ in spine.patch_requests] == [active.memory_id]
     assert spine.list_requests[0].status is MemoryStatus.ACTIVE
+
+
+@pytest.mark.asyncio
+async def test_edit_cannot_resolve_an_excluded_gate_removal() -> None:
+    spine = FakeSpineGateway()
+    spine.list_pages[0] = memory_page(
+        [
+            memory_unit(
+                body="The unique chartreuse body must stay hidden.",
+            )
+        ]
+    )
+
+    rendered = await edit_memory(
+        context(spine, excluded_memory_ids=frozenset({MEMORY_ID})),
+        str(MEMORY_ID),
+        "Updated",
+        "Correction",
+    )
+
+    assert rendered == f"memory not edited: no active exact match for '{MEMORY_ID}'"
+    assert "chartreuse" not in rendered
+    assert spine.patch_requests == []
 
 
 @pytest.mark.asyncio

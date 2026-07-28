@@ -22,9 +22,12 @@ from harness.agent_runtime import PydanticAITurnRunner
 from harness.config import HarnessSettings
 from harness.envelope import GateCommitPayload, StopReason
 from harness.run_protocol import UsageSnapshot
+from harness.spine_client import MemoryKind, SearchResponse, SimilarityMemoryCard
 from harness.tools_memory import MemoryToolContext
 
 THREAD_UUID = UUID("22345678-1234-5678-1234-567812345678")
+REMOVED_MEMORY_UUID = UUID("32345678-1234-5678-1234-567812345678")
+VISIBLE_MEMORY_UUID = UUID("42345678-1234-5678-1234-567812345678")
 
 
 @pytest.fixture(autouse=True)
@@ -180,6 +183,85 @@ async def test_final_memory_block_is_system_adjacent_not_user_prompt_text() -> N
     assert requests[0].instructions is not None
     assert requests[0].instructions.endswith("\ntrusted final memory block")
     assert all("trusted final memory block" not in str(part.content) for part in requests[0].parts)
+
+
+@dataclass
+class ExclusionSearchSpine:
+    requests: list[Any] = field(default_factory=list)
+
+    async def search(self, request: Any) -> SearchResponse:
+        self.requests.append(request)
+        return SearchResponse(
+            results=[
+                SimilarityMemoryCard(
+                    memory_id=REMOVED_MEMORY_UUID,
+                    label="Removed",
+                    body="The unique chartreuse body must stay hidden.",
+                    kind=MemoryKind.FACT,
+                    pin=False,
+                    score=0.99,
+                    features=None,
+                    rank=None,
+                ),
+                SimilarityMemoryCard(
+                    memory_id=VISIBLE_MEMORY_UUID,
+                    label="Visible",
+                    body="The allowed replacement.",
+                    kind=MemoryKind.FACT,
+                    pin=False,
+                    score=0.8,
+                    features=None,
+                    rank=None,
+                ),
+            ]
+        )
+
+
+@pytest.mark.asyncio
+async def test_turn_exclusions_are_applied_to_model_visible_search_results() -> None:
+    observed_tool_returns: list[str] = []
+
+    async def stream(messages, _info):
+        tool_returns = [
+            part
+            for message in messages
+            if isinstance(message, ModelRequest)
+            for part in message.parts
+            if isinstance(part, ToolReturnPart)
+        ]
+        if not tool_returns:
+            yield {
+                0: DeltaToolCall(
+                    name="search_memory",
+                    json_args='{"query":"chartreuse","k":1}',
+                    tool_call_id="search-excluded",
+                )
+            }
+            return
+        observed_tool_returns.extend(part.model_response_str() for part in tool_returns)
+        yield "safe answer"
+
+    spine = ExclusionSearchSpine()
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(spine),
+    )
+
+    outcome = await runner.run(
+        thread_id="thread-1",
+        prompt="find the saved color",
+        message_history=(),
+        emit=RecordingEmitter(),
+        excluded_memory_ids=frozenset({REMOVED_MEMORY_UUID}),
+    )
+
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert spine.requests[0].k == 2
+    assert len(observed_tool_returns) == 1
+    assert str(REMOVED_MEMORY_UUID) not in observed_tool_returns[0]
+    assert "chartreuse" not in observed_tool_returns[0]
+    assert str(VISIBLE_MEMORY_UUID) in observed_tool_returns[0]
+    assert "allowed replacement" in observed_tool_returns[0]
 
 
 @pytest.mark.asyncio

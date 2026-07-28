@@ -512,7 +512,9 @@ function App() {
       </div>
       {openGate !== null && (
         <MemoryGate
-          key={`${openGate.run_id}:${openGate.injection_id}`}
+          key={`${openGate.run_id}:${openGate.injection_id}:${openGate.stage}:${
+            openGate.wrong_removed[0]?.memory_id ?? 'review'
+          }:${openGate.wrong_removed[0]?.revision ?? 0}`}
           gate={openGate}
           connected={connection === 'connected'}
           cancelling={activeRun?.state === 'cancelling'}

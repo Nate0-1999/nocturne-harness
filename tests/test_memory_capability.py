@@ -27,7 +27,10 @@ EXPECTED_MEMORY_INSTRUCTION = (
     "wants repeated. Keep every memory ATOMIC: one fact per unit, at most a "
     "few sentences (hard cap 128 tokens); split larger content into multiple "
     "units. Prefer editing an existing memory over creating a near-duplicate. "
-    "Never save secrets or credentials."
+    "When a project-scoped save reports that no current project exists, surface "
+    "that result and do not retry the save globally in the same turn. A global "
+    "fallback requires explicit user confirmation in a later user turn. Never "
+    "save secrets or credentials."
 )
 
 

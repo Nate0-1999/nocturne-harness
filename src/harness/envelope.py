@@ -23,7 +23,7 @@ from pydantic import (
     model_validator,
 )
 
-from harness.spine_client import RemovedMemory, ScoredMemoryCard
+from harness.spine_client import MemoryUnit, RemovedMemory, ScoredMemoryCard
 
 # A ULID is 128 bits encoded as 26 Crockford Base32 characters. The leading
 # character is limited to 0–7 so the 130-bit textual space cannot overflow.
@@ -164,17 +164,41 @@ class RunDonePayload(_ExtensiblePayload):
 class GateOpenPayload(_ExtensiblePayload):
     run_id: ULID
     kind: Literal["memory_gate"]
+    stage: Literal["review", "wrong_resolution"] = "review"
     injection_id: UUID
     snapshot_ts: datetime
     scorer_version: NonBlankString
     injected: list[ScoredMemoryCard]
     near_misses: list[ScoredMemoryCard]
+    wrong_removed: list[MemoryUnit] = Field(default_factory=list)
+    resolution_error: StrictStr | None = None
 
     @model_validator(mode="after")
-    def require_unique_card_membership(self) -> "GateOpenPayload":
+    def require_stage_membership(self) -> "GateOpenPayload":
         memory_ids = [card.memory_id for card in (*self.injected, *self.near_misses)]
         if len(set(memory_ids)) != len(memory_ids):
             raise ValueError("gate cards must have unique memory_id values")
+        if self.stage == "review":
+            if self.wrong_removed:
+                raise ValueError("review gate must not carry wrong_removed")
+        elif self.injected or self.near_misses or len(self.wrong_removed) != 1:
+            raise ValueError("wrong_resolution gate requires one wrong_removed and no scored cards")
+        return self
+
+
+class WrongResolution(_ExtensiblePayload):
+    memory_id: UUID
+    expected_revision: Annotated[StrictInt, Field(ge=1)]
+    action: Literal["edit", "expire"]
+    body: StrictStr | None = None
+
+    @model_validator(mode="after")
+    def require_action_body(self) -> "WrongResolution":
+        if self.action == "edit":
+            if self.body is None or not self.body.strip():
+                raise ValueError("edit resolution requires a nonblank body")
+        elif self.body is not None:
+            raise ValueError("expire resolution must not carry a body")
         return self
 
 
@@ -183,6 +207,7 @@ class GateCommitPayload(_ExtensiblePayload):
     injection_id: UUID
     removed: list[RemovedMemory]
     added_back: list[UUID]
+    wrong_resolution: WrongResolution | None = None
 
 
 class GateDismissPayload(_ExtensiblePayload):

@@ -1,8 +1,9 @@
 # H5 verification — first-prompt memory gate
 
-H5 implements the first-chat prepare → human gate → commit → model sequence
-from SPEC C.6 and ADR-005. This is builder evidence, not the independent M1
-judge verdict reserved by SPEC B.6.
+H5 implements the first-chat prepare → review gate → commit → typed
+wrong-memory resolution → model sequence from SPEC C.6, ADR-005, and A-023.
+This is builder evidence, not the independent M1 judge verdict reserved by
+SPEC B.6.
 
 The fixture keeps the production SPA, `/ws` daemon route, `RunLoop`,
 `MemoryGateTurnRunner`, typed C.4 client, and the deployed Spine configured by
@@ -47,8 +48,25 @@ Confirm that the second prompt skips the memory gate.
 
 For the first prompt, leave `H5 proof — keep`; remove the three named cards
 with their matching `not_relevant`, `wrong`, and `never` reasons; add back
-`H5 proof — add back`; then Continue. Wait for the deterministic response and
-send the second prompt. The second prompt must run directly without a gate.
+`H5 proof — add back`; then Continue. The model must remain stopped while a
+second **Wrong memory resolution** gate opens for `H5 proof — wrong`. Leave
+**Edit body** selected, replace the body with this exact text, and choose
+**Save correction**:
+
+```text
+The first-prompt memory gate waits for a human decision before the model starts.
+```
+
+Before saving the correction, prove the second hard pause from another
+terminal:
+
+```sh
+curl -fsS -X POST http://127.0.0.1:8765/__scenario__/assert-wrong-paused
+```
+
+Only after that CAS-guarded PATCH succeeds may the gate dismiss and the
+deterministic response render. Then send the second prompt. The second prompt
+must run directly without a gate.
 
 Assert the resulting service/model ordering and exact decisions:
 
@@ -56,11 +74,12 @@ Assert the resulting service/model ordering and exact decisions:
 uv run python verification/h5/assert_trace.py
 ```
 
-The assertion requires one prepare, one explicit hard-pause observation, one
-commit, exactly one first-prompt model call after commit, the exact committed
-`final_block` as the suffix of that model call's system-adjacent instructions,
-a second model call with only its static capability instructions and no
-prepare/gate block, and exact kept/removed/added-back membership.
+The assertion requires one prepare, explicit hard-pause observations at both
+gate stages, one review commit, the returned current `wrong_removed` unit, one
+exact `gate/wrong:edit` PATCH and result before the first model call, the exact
+committed `final_block` as the suffix of that model call's system-adjacent
+instructions, a second model call with only its static capability instructions
+and no prepare/gate block, and exact kept/removed/added-back membership.
 
 ## Desktop and phone evidence
 
@@ -75,6 +94,9 @@ curl -fsS -X POST http://127.0.0.1:8765/__scenario__/seed
 
 Capture each acceptance-relevant rendered state under this directory:
 
+For a post-A-022 rerun, put new files in a dated subdirectory; do not overwrite
+the historical evidence listed below.
+
 - `01-gate-open-desktop.jpg` / `07-gate-open-mobile.jpg` — full bodies,
   overall score, and all six raw feature scores are readable.
 - `02-default-remove-desktop.jpg` / `08-default-remove-mobile.jpg` — a plain
@@ -84,8 +106,10 @@ Capture each acceptance-relevant rendered state under this directory:
 - `04-decisions-desktop.jpg` / `10-decisions-mobile.jpg` — the near-miss is
   visibly added before Continue; the exact three removal reasons plus add-back
   are proved by the corresponding canonical trace rather than a single frame.
-- `05-committed-run-desktop.jpg` / `11-committed-run-mobile.jpg` — the gate is
-  dismissed and the deterministic model answer is rendered.
+- Capture an additional append-only frame at each viewport showing the
+  `wrong_resolution` editor before submission.
+- `05-committed-run-desktop.jpg` / `11-committed-run-mobile.jpg` — both gate
+  stages have completed and the deterministic model answer is rendered.
 - `06-second-prompt-desktop.jpg` / `12-second-prompt-mobile.jpg` — the second
   prompt completes without another gate.
 
@@ -115,6 +139,10 @@ uv run python verification/h5/assert_trace.py verification/h5/trace-mobile.jsonl
 ```
 
 ## Executed result — 2026-07-21
+
+> Historical evidence: this run predates A-023 and therefore proves the former
+> one-stage flow only. Keep its screenshots and traces as append-only evidence;
+> they do not satisfy the current wrong-resolution PATCH assertion.
 
 The built SPA was driven through the in-app Chromium browser against the
 deployed Spine at both required viewports. Every image is verified JPEG/JFIF

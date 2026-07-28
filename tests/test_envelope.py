@@ -59,11 +59,14 @@ def gate_open_payload(**extensions: object) -> dict[str, object]:
     return {
         "run_id": RUN_ID,
         "kind": "memory_gate",
+        "stage": "review",
         "injection_id": INJECTION_ID,
         "snapshot_ts": "2026-07-21T12:00:00Z",
         "scorer_version": "m1-v1",
         "injected": [scored_card()],
         "near_misses": [],
+        "wrong_removed": [],
+        "resolution_error": None,
         **extensions,
     }
 
@@ -74,6 +77,29 @@ def gate_commit_payload() -> dict[str, object]:
         "injection_id": INJECTION_ID,
         "removed": [{"memory_id": MEMORY_ID, "reason": "not_relevant"}],
         "added_back": [],
+        "wrong_resolution": None,
+    }
+
+
+def wrong_unit() -> dict[str, object]:
+    return {
+        "memory_id": MEMORY_ID,
+        "principal_id": "principal-1",
+        "label": "Wrong memory",
+        "body": "Current body",
+        "kind": "fact",
+        "keywords": [],
+        "project_key": None,
+        "thread_origin": "thread-1",
+        "origin_path": None,
+        "pin": False,
+        "status": "active",
+        "revision": 2,
+        "stats": {},
+        "bias": 0.0,
+        "embedding_model": "test-embedding",
+        "created_at": "2026-07-20T12:00:00Z",
+        "updated_at": "2026-07-21T12:00:00Z",
     }
 
 
@@ -359,6 +385,72 @@ def test_gate_open_rejects_duplicate_membership_across_card_arrays() -> None:
 
     with pytest.raises(ValidationError):
         envelope_for("gate.open", payload)
+
+
+def test_wrong_resolution_gate_and_decision_are_typed() -> None:
+    opened = envelope_for(
+        "gate.open",
+        gate_open_payload(
+            stage="wrong_resolution",
+            injected=[],
+            wrong_removed=[wrong_unit()],
+            resolution_error="Review the latest revision.",
+        ),
+    )
+    assert isinstance(opened.payload, GateOpenPayload)
+    assert opened.payload.stage == "wrong_resolution"
+    assert opened.payload.wrong_removed[0].revision == 2
+
+    committed = envelope_for(
+        "gate.commit",
+        {
+            **gate_commit_payload(),
+            "removed": [],
+            "wrong_resolution": {
+                "memory_id": MEMORY_ID,
+                "expected_revision": 2,
+                "action": "edit",
+                "body": "Corrected body",
+            },
+        },
+    )
+    assert isinstance(committed.payload, GateCommitPayload)
+    assert committed.payload.wrong_resolution is not None
+    assert committed.payload.wrong_resolution.body == "Corrected body"
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        gate_open_payload(stage="wrong_resolution", injected=[], wrong_removed=[]),
+        gate_open_payload(stage="wrong_resolution", wrong_removed=[wrong_unit()]),
+        gate_open_payload(wrong_removed=[wrong_unit()]),
+        {
+            **gate_commit_payload(),
+            "wrong_resolution": {
+                "memory_id": MEMORY_ID,
+                "expected_revision": 2,
+                "action": "edit",
+                "body": "   ",
+            },
+        },
+        {
+            **gate_commit_payload(),
+            "wrong_resolution": {
+                "memory_id": MEMORY_ID,
+                "expected_revision": 2,
+                "action": "expire",
+                "body": "must be absent",
+            },
+        },
+    ],
+)
+def test_wrong_resolution_rejects_inconsistent_stage_shapes(
+    payload: dict[str, object],
+) -> None:
+    message_type = "gate.open" if "kind" in payload else "gate.commit"
+    with pytest.raises(ValidationError):
+        envelope_for(message_type, payload)
 
 
 def test_thread_snapshot_request_requires_outer_thread() -> None:

@@ -103,6 +103,28 @@ export type MemoryKind =
   | 'persona'
   | 'pinned'
 
+export type MemoryStatus = 'active' | 'quarantined' | 'tombstoned'
+
+export type MemoryUnit = JsonObject & {
+  memory_id: string
+  principal_id: string
+  label: string
+  body: string
+  kind: MemoryKind
+  keywords: string[]
+  project_key: string | null
+  thread_origin: string | null
+  origin_path: string | null
+  pin: boolean
+  status: MemoryStatus
+  revision: number
+  stats: JsonObject
+  bias: number
+  embedding_model: string
+  created_at: string
+  updated_at: string
+}
+
 export type MemoryFeatures = JsonObject & {
   sem: number
   kw: number
@@ -123,14 +145,19 @@ export type ScoredMemoryCard = JsonObject & {
   rank: number
 }
 
+export type GateStage = 'review' | 'wrong_resolution'
+
 export type GateOpenPayload = JsonObject & {
   run_id: Ulid
   kind: 'memory_gate'
+  stage: GateStage
   injection_id: string
   snapshot_ts: string
   scorer_version: string
   injected: ScoredMemoryCard[]
   near_misses: ScoredMemoryCard[]
+  wrong_removed: MemoryUnit[]
+  resolution_error?: string | null
 }
 
 export type RemovalReason = 'not_relevant' | 'wrong' | 'never'
@@ -140,11 +167,19 @@ export type RemovedMemoryDecision = JsonObject & {
   reason: RemovalReason
 }
 
+export type WrongResolutionDecision = JsonObject & {
+  memory_id: string
+  expected_revision: number
+  action: 'edit' | 'expire'
+  body?: string
+}
+
 export type GateCommitPayload = JsonObject & {
   run_id: Ulid
   injection_id: string
   removed: RemovedMemoryDecision[]
   added_back: string[]
+  wrong_resolution?: WrongResolutionDecision
 }
 
 export interface ThreadSnapshotPayload {
@@ -405,6 +440,11 @@ const MEMORY_KINDS: readonly MemoryKind[] = [
   'persona',
   'pinned',
 ]
+const MEMORY_STATUSES: readonly MemoryStatus[] = [
+  'active',
+  'quarantined',
+  'tombstoned',
+]
 
 const FEATURE_KEYS = ['sem', 'kw', 'time', 'proj', 'freq', 'hist'] as const
 const CARD_KEYS = [
@@ -416,6 +456,25 @@ const CARD_KEYS = [
   'score',
   'features',
   'rank',
+] as const
+const MEMORY_UNIT_KEYS = [
+  'memory_id',
+  'principal_id',
+  'label',
+  'body',
+  'kind',
+  'keywords',
+  'project_key',
+  'thread_origin',
+  'origin_path',
+  'pin',
+  'status',
+  'revision',
+  'stats',
+  'bias',
+  'embedding_model',
+  'created_at',
+  'updated_at',
 ] as const
 
 function hasExactKeys(
@@ -483,25 +542,85 @@ function parseScoredMemoryCard(value: unknown): ScoredMemoryCard | null {
   }
 }
 
-function parseGateOpen(value: unknown): GateOpenPayload | null {
+function parseMemoryUnit(value: unknown): MemoryUnit | null {
   if (
-    !isJsonObject(value) ||
+    !isRecord(value) ||
+    !hasExactKeys(value, MEMORY_UNIT_KEYS) ||
+    !isUuid(value.memory_id) ||
+    typeof value.principal_id !== 'string' ||
+    typeof value.label !== 'string' ||
+    typeof value.body !== 'string' ||
+    !MEMORY_KINDS.includes(value.kind as MemoryKind) ||
+    !Array.isArray(value.keywords) ||
+    !value.keywords.every((keyword) => typeof keyword === 'string') ||
+    (value.project_key !== null && typeof value.project_key !== 'string') ||
+    (value.thread_origin !== null && typeof value.thread_origin !== 'string') ||
+    (value.origin_path !== null && typeof value.origin_path !== 'string') ||
+    typeof value.pin !== 'boolean' ||
+    !MEMORY_STATUSES.includes(value.status as MemoryStatus) ||
+    !Number.isInteger(value.revision) ||
+    (value.revision as number) < 1 ||
+    !isJsonObject(value.stats) ||
+    typeof value.bias !== 'number' ||
+    !Number.isFinite(value.bias) ||
+    typeof value.embedding_model !== 'string' ||
+    !isIso8601Timestamp(value.created_at) ||
+    !isIso8601Timestamp(value.updated_at)
+  ) {
+    return null
+  }
+  return {
+    memory_id: value.memory_id,
+    principal_id: value.principal_id,
+    label: value.label,
+    body: value.body,
+    kind: value.kind as MemoryKind,
+    keywords: value.keywords as string[],
+    project_key: value.project_key as string | null,
+    thread_origin: value.thread_origin as string | null,
+    origin_path: value.origin_path as string | null,
+    pin: value.pin,
+    status: value.status as MemoryStatus,
+    revision: value.revision as number,
+    stats: value.stats,
+    bias: value.bias,
+    embedding_model: value.embedding_model,
+    created_at: value.created_at,
+    updated_at: value.updated_at,
+  }
+}
+
+function parseGateOpen(value: unknown): GateOpenPayload | null {
+  if (!isJsonObject(value)) {
+    return null
+  }
+  const stage = value.stage === undefined ? 'review' : value.stage
+  const wrongRemovedValue =
+    value.wrong_removed === undefined ? [] : value.wrong_removed
+  if (
     !isUlid(value.run_id) ||
     value.kind !== 'memory_gate' ||
+    !['review', 'wrong_resolution'].includes(String(stage)) ||
     !isUuid(value.injection_id) ||
     !isIso8601Timestamp(value.snapshot_ts) ||
     typeof value.scorer_version !== 'string' ||
     !value.scorer_version.trim() ||
     !Array.isArray(value.injected) ||
-    !Array.isArray(value.near_misses)
+    !Array.isArray(value.near_misses) ||
+    !Array.isArray(wrongRemovedValue) ||
+    (value.resolution_error !== undefined &&
+      value.resolution_error !== null &&
+      typeof value.resolution_error !== 'string')
   ) {
     return null
   }
   const injected = value.injected.map(parseScoredMemoryCard)
   const nearMisses = value.near_misses.map(parseScoredMemoryCard)
+  const wrongRemoved = wrongRemovedValue.map(parseMemoryUnit)
   if (
     injected.some((card) => card === null) ||
-    nearMisses.some((card) => card === null)
+    nearMisses.some((card) => card === null) ||
+    wrongRemoved.some((unit) => unit === null)
   ) {
     return null
   }
@@ -512,15 +631,28 @@ function parseGateOpen(value: unknown): GateOpenPayload | null {
   if (new Set(memoryIds).size !== memoryIds.length) {
     return null
   }
+  if (
+    (stage === 'review' && wrongRemoved.length !== 0) ||
+    (stage === 'wrong_resolution' &&
+      (injected.length !== 0 || nearMisses.length !== 0 || wrongRemoved.length !== 1))
+  ) {
+    return null
+  }
   return {
     ...value,
     run_id: value.run_id,
     kind: 'memory_gate',
+    stage: stage as GateStage,
     injection_id: value.injection_id,
     snapshot_ts: value.snapshot_ts,
     scorer_version: value.scorer_version,
     injected: injected as ScoredMemoryCard[],
     near_misses: nearMisses as ScoredMemoryCard[],
+    wrong_removed: wrongRemoved as MemoryUnit[],
+    resolution_error:
+      value.resolution_error === undefined
+        ? null
+        : (value.resolution_error as string | null),
   }
 }
 

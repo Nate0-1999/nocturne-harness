@@ -3,6 +3,7 @@
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Protocol
+from uuid import UUID
 
 from harness.envelope import GateCommitPayload, StopReason
 
@@ -82,4 +83,5 @@ class SystemInstructionTurnRunner(Protocol):
         message_history: Sequence[object],
         emit: RunEmitter,
         system_instructions: str | None = None,
+        excluded_memory_ids: frozenset[UUID] = frozenset(),
     ) -> TurnOutcome: ...

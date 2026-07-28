@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from typing import Protocol
+from uuid import UUID
 
 from harness.commands import remember_command_text
 from harness.run_protocol import (
@@ -16,9 +17,15 @@ from harness.spine_client import (
     InjectCommitResponse,
     InjectPrepareRequest,
     InjectPrepareResponse,
+    MemoryStatus,
+    MemoryUnit,
+    PatchMemoryConflictError,
+    PatchMemoryRequest,
+    PatchMemoryResponse,
+    RevisionConflict,
     SpineClientError,
 )
-from harness.tools_memory import MemoryToolContext
+from harness.tools_memory import MemoryToolContext, render_spine_error
 
 type ContextFactory = Callable[[str], MemoryToolContext]
 
@@ -26,11 +33,15 @@ _MEMORY_UNAVAILABLE_MESSAGE = "Memory is unavailable; continuing without injecte
 
 
 class InjectionGateway(Protocol):
-    """The two C.4 operations used by the first-chat injection flow."""
+    """The C.4 operations used by the first-chat injection flow."""
 
     async def prepare_injection(self, request: InjectPrepareRequest) -> InjectPrepareResponse: ...
 
     async def commit_injection(self, request: InjectCommitRequest) -> InjectCommitResponse: ...
+
+    async def patch_memory(
+        self, memory_id: UUID, request: PatchMemoryRequest
+    ) -> PatchMemoryResponse: ...
 
 
 class MemoryGateTurnRunner:
@@ -108,6 +119,7 @@ class MemoryGateTurnRunner:
                 "near_misses": prepared.near_misses,
             }
         )
+        excluded_memory_ids = frozenset(item.memory_id for item in decision.removed)
 
         try:
             committed = await self._spine.commit_injection(
@@ -126,6 +138,15 @@ class MemoryGateTurnRunner:
                 prompt=prompt,
                 message_history=message_history,
                 emit=emit,
+                excluded_memory_ids=excluded_memory_ids,
+            )
+
+        for wrong in committed.wrong_removed:
+            await self._resolve_wrong_memory(
+                current=wrong,
+                prepared=prepared,
+                context=context,
+                emit=emit,
             )
 
         await emit.dismiss_gate()
@@ -135,7 +156,72 @@ class MemoryGateTurnRunner:
             message_history=message_history,
             emit=emit,
             system_instructions=committed.final_block,
+            excluded_memory_ids=excluded_memory_ids,
         )
+
+    async def _resolve_wrong_memory(
+        self,
+        *,
+        current: MemoryUnit,
+        prepared: InjectPrepareResponse,
+        context: MemoryToolContext,
+        emit: RunEmitter,
+    ) -> None:
+        """Keep the hard pause open until one current wrong unit is resolved."""
+
+        resolution_error: str | None = None
+        while True:
+            decision = await emit.open_gate(
+                {
+                    "stage": "wrong_resolution",
+                    "injection_id": prepared.injection_id,
+                    "snapshot_ts": prepared.snapshot_ts,
+                    "scorer_version": prepared.scorer_version,
+                    "injected": [],
+                    "near_misses": [],
+                    "wrong_removed": [current],
+                    "resolution_error": resolution_error,
+                }
+            )
+            resolution = decision.wrong_resolution
+            if (
+                resolution is None
+                or decision.removed
+                or decision.added_back
+                or resolution.memory_id != current.memory_id
+                or resolution.expected_revision != current.revision
+            ):
+                raise ValueError("wrong-resolution decision does not match the current gate")
+
+            request = PatchMemoryRequest(
+                expected_revision=current.revision,
+                body=resolution.body if resolution.action == "edit" else None,
+                status=(MemoryStatus.TOMBSTONED if resolution.action == "expire" else None),
+                editor="user",
+                reason=f"gate/wrong:{resolution.action}",
+                machine_id=context.machine_id,
+            )
+            try:
+                updated = await self._spine.patch_memory(current.memory_id, request)
+            except PatchMemoryConflictError as exc:
+                if isinstance(exc.conflict, RevisionConflict):
+                    current = exc.conflict.conflict
+                    resolution_error = (
+                        "This memory changed while you were reviewing it. "
+                        "Review the latest version and try again."
+                    )
+                else:
+                    resolution_error = (
+                        "The memory could not be resolved because its label conflicts."
+                    )
+                continue
+            except SpineClientError as exc:
+                resolution_error = render_spine_error("update", exc)
+                continue
+
+            if updated.memory_id != current.memory_id:
+                raise RuntimeError("Spine patched a different memory than requested")
+            return
 
     async def _run_model(
         self,
@@ -145,6 +231,7 @@ class MemoryGateTurnRunner:
         message_history: Sequence[object],
         emit: RunEmitter,
         system_instructions: str | None = None,
+        excluded_memory_ids: frozenset[UUID] = frozenset(),
     ) -> TurnOutcome:
         return await self._delegate.run(
             thread_id=thread_id,
@@ -152,6 +239,7 @@ class MemoryGateTurnRunner:
             message_history=message_history,
             emit=emit,
             system_instructions=system_instructions,
+            excluded_memory_ids=excluded_memory_ids,
         )
 
     @staticmethod

@@ -646,10 +646,20 @@ class RunLoop:
             state = self._live_state_locked(thread_id, active)
             if state is None:
                 raise RuntimeError("cannot open a gate for an inactive run")
+            replacing_resolved_stage = (
+                state.open_gate is not None
+                and active.gate_decision is not None
+                and active.gate_decision.done()
+                and active.gate_committing
+                and payload.stage == "wrong_resolution"
+                and state.open_gate.injection_id == payload.injection_id
+            )
             if state.open_gate is not None or active.gate_decision is not None:
-                raise RuntimeError("run already has an open gate")
+                if not replacing_resolved_stage:
+                    raise RuntimeError("run already has an unresolved gate")
             active.state = "waiting_gate"
             active.gate_decision = decision
+            active.gate_committing = False
             state.open_gate = payload
             await self._publish_locked(
                 thread_id,
@@ -706,6 +716,18 @@ class RunLoop:
         gate: GateOpenPayload,
         decision: GateCommitPayload,
     ) -> bool:
+        if gate.stage == "wrong_resolution":
+            if decision.removed or decision.added_back or decision.wrong_resolution is None:
+                return False
+            current = gate.wrong_removed[0]
+            resolution = decision.wrong_resolution
+            return (
+                resolution.memory_id == current.memory_id
+                and resolution.expected_revision == current.revision
+            )
+
+        if decision.wrong_resolution is not None:
+            return False
         removed = [item.memory_id for item in decision.removed]
         added_back = list(decision.added_back)
         if len(set(removed)) != len(removed) or len(set(added_back)) != len(added_back):
@@ -714,7 +736,13 @@ class RunLoop:
             return False
         injected = {card.memory_id for card in gate.injected}
         near_misses = {card.memory_id for card in gate.near_misses}
-        return set(removed).issubset(injected) and set(added_back).issubset(near_misses)
+        if not set(added_back).issubset(near_misses):
+            return False
+        return all(
+            item.memory_id in injected
+            or (item.memory_id in near_misses and item.reason.value == "never")
+            for item in decision.removed
+        )
 
     def _live_state_locked(
         self,

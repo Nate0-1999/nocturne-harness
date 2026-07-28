@@ -182,3 +182,12 @@ failed; physical touch-hold remains for Nate's personal-use pass.
   controls.
 - Overall H5 builder verdict: **PASS WITH RECORDED FRICTION**, followed by the
   plan-required day of Nate's personal use before H6.
+
+## Contract note — 2026-07-27
+
+This walkthrough remains the append-only record of the 2026-07-21 product. It
+predates A-023 and does not claim that a Wrong decision opened the now-required
+second gate. A current rerun must keep the model stopped after the review
+commit, visibly open `wrong_resolution` for the returned current unit, submit
+an Edit or Expire decision with that unit's revision, observe the corresponding
+`gate/wrong:*` PATCH succeed, and only then observe the first model invocation.

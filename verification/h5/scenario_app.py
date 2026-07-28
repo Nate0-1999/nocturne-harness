@@ -57,6 +57,9 @@ from harness.spine_client import (
 TRACE_PATH = Path(__file__).with_name("trace.jsonl")
 FIRST_PROMPT = "Use the H5 verification memories to explain the handoff."
 SECOND_PROMPT = "Confirm that the second prompt skips the memory gate."
+CORRECTED_WRONG_BODY = (
+    "The first-prompt memory gate waits for a human decision before the model starts."
+)
 MACHINE_ID = "h5-verification-machine"
 AGENT_ID = "h5-verification-agent"
 EDITOR = "verification:h5"
@@ -252,6 +255,7 @@ class TracingSpine:
             "spine.commit.result",
             final_block=response.final_block,
             wrong_removed=[str(item.memory_id) for item in response.wrong_removed],
+            wrong_removed_current=[_wrong_memory_record(item) for item in response.wrong_removed],
         )
         return response
 
@@ -264,7 +268,27 @@ class TracingSpine:
     async def patch_memory(
         self, memory_id: UUID, request: PatchMemoryRequest
     ) -> PatchMemoryResponse:
-        return await self._delegate.patch_memory(memory_id, request)
+        traces_wrong_resolution = request.editor == "user" and request.reason.startswith(
+            "gate/wrong:"
+        )
+        if traces_wrong_resolution:
+            self._control.trace.record(
+                "spine.patch.call",
+                memory_id=str(memory_id),
+                expected_revision=request.expected_revision,
+                body=request.body,
+                status=request.status.value if request.status is not None else None,
+                editor=request.editor,
+                reason=request.reason,
+                machine_id=request.machine_id,
+            )
+        response = await self._delegate.patch_memory(memory_id, request)
+        if traces_wrong_resolution:
+            self._control.trace.record(
+                "spine.patch.result",
+                **_wrong_memory_record(response),
+            )
+        return response
 
     async def list_memories(self, params: ListMemoriesParams) -> PagedMemoryListResponse:
         return await self._delegate.list_memories(params)
@@ -320,6 +344,10 @@ def create_scenario_app() -> FastAPI:
                 "wrong": "wrong",
                 "never": "never",
                 "add_back": "added_back",
+                "wrong_resolution": {
+                    "action": "edit",
+                    "body": CORRECTED_WRONG_BODY,
+                },
             },
             "roles": {role: item.public_record() for role, item in control.seeded.items()},
         }
@@ -400,6 +428,33 @@ def create_scenario_app() -> FastAPI:
         control.trace.record("scenario.pause_checked", **state)
         return {"ok": True, **state}
 
+    @app.post("/__scenario__/assert-wrong-paused")
+    async def scenario_assert_wrong_paused() -> Mapping[str, object]:
+        state = {
+            "prepare_calls": control.prepare_calls,
+            "prepare_results": control.prepare_results,
+            "commit_calls": control.commit_calls,
+            "commit_results": control.commit_results,
+            "model_calls": control.model_calls,
+        }
+        expected = {
+            "prepare_calls": 1,
+            "prepare_results": 1,
+            "commit_calls": 1,
+            "commit_results": 1,
+            "model_calls": 0,
+        }
+        if state != expected:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "message": "run is not paused at wrong-memory resolution",
+                    **state,
+                },
+            )
+        control.trace.record("scenario.wrong_pause_checked", **state)
+        return {"ok": True, **state}
+
     @app.post("/__scenario__/fail-next/{phase}")
     async def scenario_fail_next(phase: str) -> Mapping[str, object]:
         try:
@@ -465,6 +520,15 @@ def _scored_card_record(card: Any) -> dict[str, object]:
     }
 
 
+def _wrong_memory_record(memory: MemoryUnit) -> dict[str, object]:
+    return {
+        "memory_id": str(memory.memory_id),
+        "revision": memory.revision,
+        "body": memory.body,
+        "status": memory.status.value,
+    }
+
+
 async def _tombstone_exact(spine: TracingSpine, memory: MemoryUnit) -> None:
     expected_revision = memory.revision
     for _ in range(3):
@@ -493,6 +557,7 @@ async def _tombstone_exact(spine: TracingSpine, memory: MemoryUnit) -> None:
 
 
 __all__ = [
+    "CORRECTED_WRONG_BODY",
     "FIRST_PROMPT",
     "SECOND_PROMPT",
     "TRACE_PATH",

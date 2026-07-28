@@ -370,3 +370,36 @@ about C.4's raw features. Folding command parsing into the agent adapter couples
 service routing to pydantic-ai, so the parser lives in a small framework-free
 module. H6 editing, per-prompt rescoring, retry UX, durable gate persistence,
 and explanatory training copy remain later work rather than H5 scope creep.
+
+## 013 — Turn-bound removals and conservative save scope [P1.2.1a, P1.4]
+
+**Decision.** Carry committed gate removals into the model adapter as an
+immutable, trusted, per-run set of memory IDs. The adapter places that set on
+the fresh `MemoryToolContext`; search overfetches only enough to replace
+excluded rows within C.4's 50-result wall, removes excluded IDs before
+rendering, and then reapplies the requested limit. The exclusion expires with
+the run rather than mutating Spine or becoming a thread blacklist. A-023 remains
+the authority for resolving `wrong_removed` units under the hard pause before
+this model run begins.
+
+When a project-scoped save has no current project, mark that trusted run
+context and surface the missing-context result. Reject every later global save
+in the same run, and instruct the agent that global fallback requires explicit
+user confirmation in a later user turn. A fresh run context is the boundary
+after that confirmation; no model argument can clear the guard.
+
+**Motivation.** Gate corrections must bind every memory path visible to the
+same answer, not only the precomputed final block. Filtering at the owned tool
+boundary closes search re-entry without changing scorer state or the completed
+Spine contract. The save guard converts the v2.16 no-silent-broadening rule
+from prompt etiquette into a deterministic same-run wall while still allowing
+the user to make a different explicit choice later.
+
+**Rejected alternatives.** Prompt-only exclusion can be bypassed by a tool
+call, while deleting or tombstoning every rejected unit would change C.4
+lifecycle semantics. A persistent thread blacklist would make a one-turn gate
+choice outlive its contract. Automatically retrying project saves globally
+violates P1.4 authority boundaries; permanently banning later global saves
+would ignore an explicit user correction. A second confirmation UI is not
+needed for this tool boundary because the later user turn supplies the
+confirmation boundary, while A-023 separately owns the typed correction stage.

@@ -349,8 +349,11 @@ def test_dev_gate_round_trip_blocks_validates_commits_and_injects_system_block(
             "injection_id": INJECTION_ID,
             "snapshot_ts": "2026-07-21T12:00:00Z",
             "scorer_version": "m1-v1",
+            "stage": "review",
             "injected": [],
             "near_misses": [],
+            "wrong_removed": [],
+            "resolution_error": None,
         }
         assert observed_messages == []
 

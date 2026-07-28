@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Protocol
 from uuid import UUID
 
@@ -50,6 +50,13 @@ class SpineGateway(Protocol):
     ) -> PatchMemoryResponse: ...
 
 
+@dataclass(slots=True)
+class _MemoryToolRunState:
+    """Mutable policy state shared only by tools in one trusted model run."""
+
+    missing_project_context: bool = False
+
+
 @dataclass(frozen=True, slots=True)
 class MemoryToolContext:
     """Trusted per-run identity and provenance; none are model arguments."""
@@ -61,6 +68,12 @@ class MemoryToolContext:
     thread_id: UUID | None = None
     project_key: str | None = None
     origin_path: str | None = None
+    excluded_memory_ids: frozenset[UUID] = frozenset()
+    _run_state: _MemoryToolRunState = field(
+        default_factory=_MemoryToolRunState,
+        repr=False,
+        compare=False,
+    )
 
 
 async def save_memory(
@@ -76,7 +89,16 @@ async def save_memory(
     """Save one atomic durable memory; use force only after reviewing a similar result."""
 
     if project_scoped and context.project_key is None:
-        return "memory not saved: project_scoped=true requires a current project"
+        context._run_state.missing_project_context = True
+        return (
+            "memory not saved: project_scoped=true requires a current project; "
+            "global fallback requires explicit user confirmation in a later user turn"
+        )
+    if not project_scoped and context._run_state.missing_project_context:
+        return (
+            "memory not saved: global fallback requires explicit user confirmation "
+            "in a later user turn"
+        )
 
     request = CreateMemoryRequest(
         principal_id=context.principal_id,
@@ -94,9 +116,18 @@ async def save_memory(
     try:
         response = await context.spine.create_memory(request)
     except CreateMemoryConflictError as exc:
+        if _create_conflict_is_excluded(context, exc):
+            return "memory not saved: conflicting memory is excluded from this turn"
         return render_create_conflict(exc)
     except SpineClientError as exc:
         return render_spine_error("save", exc)
+    if isinstance(response, SimilarMemoriesResponse):
+        visible = [
+            card for card in response.similar if card.memory_id not in context.excluded_memory_ids
+        ]
+        if not visible and response.similar:
+            return "memory not saved: similar memory exists but is excluded from this turn"
+        response = response.model_copy(update={"similar": visible})
     return render_create_response(response)
 
 
@@ -113,13 +144,21 @@ async def search_memory(context: MemoryToolContext, query: str, k: int = 5) -> s
     except ValidationError:
         return "memory search failed: k must be an integer from 1 through 50"
 
+    if context.excluded_memory_ids:
+        request = request.model_copy(
+            update={"k": min(50, request.k + len(context.excluded_memory_ids))}
+        )
+
     try:
         response = await context.spine.search(request)
     except SpineClientError as exc:
         return render_spine_error("search", exc)
-    if not response.results:
+    visible_results = [
+        card for card in response.results if card.memory_id not in context.excluded_memory_ids
+    ][:k]
+    if not visible_results:
         return "no matching memories"
-    return "\n".join(_render_card(card) for card in response.results)
+    return "\n".join(_render_card(card) for card in visible_results)
 
 
 async def edit_memory(
@@ -196,7 +235,9 @@ async def _resolve_active_memory(
         memories.extend(
             item
             for item in page.items
-            if item.principal_id == context.principal_id and item.status == MemoryStatus.ACTIVE
+            if item.principal_id == context.principal_id
+            and item.status == MemoryStatus.ACTIVE
+            and item.memory_id not in context.excluded_memory_ids
         )
         if not page.items or offset + len(page.items) >= page.total:
             break
@@ -255,6 +296,16 @@ def render_create_conflict(exc: CreateMemoryConflictError) -> str:
     return "memory not saved: label already exists: " + _compact_json(
         {"memory_id": str(target.memory_id), "label": target.label}
     )
+
+
+def _create_conflict_is_excluded(
+    context: MemoryToolContext, exc: CreateMemoryConflictError
+) -> bool:
+    if isinstance(exc.conflict, DuplicateMemoryConflict):
+        memory_id = exc.conflict.duplicate_of.memory_id
+    else:
+        memory_id = exc.conflict.label_conflict.memory_id
+    return memory_id in context.excluded_memory_ids
 
 
 def render_patch_conflict(exc: PatchMemoryConflictError) -> str:

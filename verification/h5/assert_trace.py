@@ -11,6 +11,10 @@ from typing import Any
 
 FIRST_PROMPT = "Use the H5 verification memories to explain the handoff."
 SECOND_PROMPT = "Confirm that the second prompt skips the memory gate."
+CORRECTED_WRONG_BODY = (
+    "The first-prompt memory gate waits for a human decision before the model starts."
+)
+MACHINE_ID = "h5-verification-machine"
 REQUIRED_ROLES = {"keep", "not_relevant", "wrong", "never", "add_back"}
 
 
@@ -64,15 +68,22 @@ def _assert_happy_path(records: list[dict[str, Any]]) -> None:
     prepares = _records(records, "spine.prepare.call")
     prepare_results = _records(records, "spine.prepare.result")
     pause_checks = _records(records, "scenario.pause_checked")
+    wrong_pause_checks = _records(records, "scenario.wrong_pause_checked")
     commits = _records(records, "spine.commit.call")
     commit_results = _records(records, "spine.commit.result")
+    patch_calls = _records(records, "spine.patch.call")
+    patch_results = _records(records, "spine.patch.result")
     model_calls = _records(records, "model.call")
     if len(prepares) != 1 or len(prepare_results) != 1:
         raise AssertionError("the two-prompt run must prepare exactly once")
     if len(pause_checks) != 1:
         raise AssertionError("the open gate must receive one explicit hard-pause check")
+    if len(wrong_pause_checks) != 1:
+        raise AssertionError("the wrong-resolution gate must receive one hard-pause check")
     if len(commits) != 1 or len(commit_results) != 1:
         raise AssertionError("the first prompt must commit exactly once")
+    if len(patch_calls) != 1 or len(patch_results) != 1:
+        raise AssertionError("the wrong removal must produce exactly one resolution PATCH")
     if len(model_calls) != 2:
         raise AssertionError("the canonical run must invoke the model once per prompt")
 
@@ -83,6 +94,9 @@ def _assert_happy_path(records: list[dict[str, Any]]) -> None:
         "scenario.pause_checked",
         "spine.commit.call",
         "spine.commit.result",
+        "scenario.wrong_pause_checked",
+        "spine.patch.call",
+        "spine.patch.result",
         "model.call",
     )
     positions = [_first_position(records, kind) for kind in expected_order]
@@ -131,6 +145,25 @@ def _assert_happy_path(records: list[dict[str, Any]]) -> None:
     pause_seconds = (_timestamp(pause_checks[0]) - _timestamp(prepare_results[0])).total_seconds()
     if pause_seconds < 5:
         raise AssertionError(f"hard-pause observation was only {pause_seconds:.3f}s")
+
+    wrong_pause_state = {
+        name: wrong_pause_checks[0].get(name)
+        for name in (
+            "prepare_calls",
+            "prepare_results",
+            "commit_calls",
+            "commit_results",
+            "model_calls",
+        )
+    }
+    if wrong_pause_state != {
+        "prepare_calls": 1,
+        "prepare_results": 1,
+        "commit_calls": 1,
+        "commit_results": 1,
+        "model_calls": 0,
+    }:
+        raise AssertionError(f"wrong-resolution hard-pause check differs: {wrong_pause_state}")
 
     commit = commits[0]
     if commit.get("injection_id") != prepared.get("injection_id"):
@@ -181,6 +214,7 @@ def _assert_happy_path(records: list[dict[str, Any]]) -> None:
     wrong_removed = committed.get("wrong_removed")
     if wrong_removed != [_role_id(roles, "wrong")]:
         raise AssertionError(f"wrong_removed differs: {wrong_removed}")
+    _assert_wrong_resolution(committed, patch_calls[0], patch_results[0], roles)
 
 
 def _assert_failure_path(records: list[dict[str, Any]], phase: str) -> None:
@@ -198,6 +232,8 @@ def _assert_failure_path(records: list[dict[str, Any]], phase: str) -> None:
     prepare_results = _records(records, "spine.prepare.result")
     commits = _records(records, "spine.commit.call")
     commit_results = _records(records, "spine.commit.result")
+    patch_calls = _records(records, "spine.patch.call")
+    patch_results = _records(records, "spine.patch.result")
     model_calls = _records(records, "model.call")
     if len(prepares) != 1 or len(model_calls) != 1:
         raise AssertionError("failure path must prepare and invoke the model exactly once")
@@ -215,6 +251,8 @@ def _assert_failure_path(records: list[dict[str, Any]], phase: str) -> None:
         raise AssertionError(f"{phase} failure has an unexpected prepare result")
     if len(commits) != expected_commits or commit_results:
         raise AssertionError(f"{phase} failure has an unexpected commit boundary")
+    if patch_calls or patch_results:
+        raise AssertionError(f"{phase} failure must not reach wrong-resolution PATCH")
 
     order = [
         _first_position(records, "scenario.failure_armed"),
@@ -244,6 +282,56 @@ def _assert_failure_path(records: list[dict[str, Any]], phase: str) -> None:
     for role in REQUIRED_ROLES:
         if _role_value(roles, role, "body") in instructions:
             raise AssertionError(f"failure-path instructions contain seeded role {role}")
+
+
+def _assert_wrong_resolution(
+    committed: dict[str, Any],
+    patch_call: dict[str, Any],
+    patch_result: dict[str, Any],
+    roles: dict[str, Any],
+) -> None:
+    current_values = committed.get("wrong_removed_current")
+    if (
+        not isinstance(current_values, list)
+        or len(current_values) != 1
+        or not isinstance(current_values[0], dict)
+    ):
+        raise AssertionError("commit result must trace one current wrong memory unit")
+    current = current_values[0]
+    wrong_id = _role_id(roles, "wrong")
+    wrong_body = _role_value(roles, "wrong", "body")
+    current_revision = current.get("revision")
+    if (
+        current.get("memory_id") != wrong_id
+        or current.get("body") != wrong_body
+        or current.get("status") != "active"
+        or type(current_revision) is not int
+        or current_revision < 1
+    ):
+        raise AssertionError(f"current wrong unit differs: {current}")
+
+    expected_call = {
+        "memory_id": wrong_id,
+        "expected_revision": current_revision,
+        "body": CORRECTED_WRONG_BODY,
+        "status": None,
+        "editor": "user",
+        "reason": "gate/wrong:edit",
+        "machine_id": MACHINE_ID,
+    }
+    actual_call = {field: patch_call.get(field) for field in expected_call}
+    if actual_call != expected_call:
+        raise AssertionError(f"wrong-resolution PATCH differs: {actual_call}")
+
+    expected_result = {
+        "memory_id": wrong_id,
+        "revision": current_revision + 1,
+        "body": CORRECTED_WRONG_BODY,
+        "status": "active",
+    }
+    actual_result = {field: patch_result.get(field) for field in expected_result}
+    if actual_result != expected_result:
+        raise AssertionError(f"wrong-resolution PATCH result differs: {actual_result}")
 
 
 def _assert_final_block_members(final_block: str, roles: dict[str, Any]) -> None:
