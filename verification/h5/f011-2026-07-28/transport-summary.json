@@ -1,0 +1,44 @@
+{
+  "status": "PASS",
+  "captured_at": "2026-07-28T20:20:08Z",
+  "source": "Cloud Logging request entries, reduced to method, normalized path, status, and count",
+  "project": "n8-memory-palace",
+  "service": "n8-memory-palace-spine",
+  "revision": "n8-memory-palace-spine-00004-vs2",
+  "window_start": "2026-07-28T20:15:00Z",
+  "startup_complete": true,
+  "startup_probe_succeeded": true,
+  "error_severity_entries": 0,
+  "requests": [
+    {
+      "request": "GET /health 200",
+      "count": 1
+    },
+    {
+      "request": "GET /v1/memories 200",
+      "count": 5
+    },
+    {
+      "request": "PATCH /v1/memories/{id} 200",
+      "count": 1
+    },
+    {
+      "request": "POST /v1/inject/commit 200",
+      "count": 4
+    },
+    {
+      "request": "POST /v1/inject/prepare 200",
+      "count": 4
+    },
+    {
+      "request": "POST /v1/memories 201",
+      "count": 1
+    },
+    {
+      "request": "POST /v1/search 200",
+      "count": 1
+    }
+  ],
+  "query_values_and_ids_redacted": true,
+  "credentials_redacted": true
+}

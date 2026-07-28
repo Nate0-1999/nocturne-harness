@@ -1,0 +1,112 @@
+{
+  "cleanup": {
+    "found": true,
+    "memory_ref": "b4916a85560cb81c",
+    "revision": 7,
+    "status": "tombstoned"
+  },
+  "client": "harness.spine_client.SpineClient",
+  "cloud_run_image": "us-central1-docker.pkg.dev/n8-memory-palace/spine/spine@sha256:dfe9fd5465038e9ac82ca61a49fd93f872afd041dae60b992a5b625fcb694cbb",
+  "cloud_run_revision": "n8-memory-palace-spine-00004-vs2",
+  "credentials_redacted": true,
+  "deployment_binding": {
+    "artifact_sha256": "77f29a7715a3266a6007e90af7cadb0c11cdfc6f5508b35414fe814c9cbf6761",
+    "cloud_run_image": "us-central1-docker.pkg.dev/n8-memory-palace/spine/spine@sha256:dfe9fd5465038e9ac82ca61a49fd93f872afd041dae60b992a5b625fcb694cbb",
+    "cloud_run_revision": "n8-memory-palace-spine-00004-vs2",
+    "latest_traffic_percent": 100,
+    "protected_state_unchanged": true,
+    "spine_source_commit": "d41b2862d1e824fafb29fada955756304e48e7f5"
+  },
+  "fixture_refs": {
+    "body": "bf59a8259d409654",
+    "memory": "b4916a85560cb81c",
+    "principal": "e1916b1b68db9afd",
+    "project": "70f648f63e0b6c7e"
+  },
+  "fourth_prepare": {
+    "injected": 0,
+    "injection_ref": "bd61494adea20602",
+    "near_misses": 0,
+    "search_results": 0,
+    "thread_ref": "341d38ae0143721b"
+  },
+  "health": {
+    "ok": true,
+    "status_code": 200,
+    "version": "0.1.0"
+  },
+  "rounds": [
+    {
+      "bias_after": -0.15000000596046448,
+      "features": {
+        "freq": 0.0,
+        "hist": 0.0,
+        "kw": 0.6666666666666666,
+        "proj": 1.0,
+        "sem": 1.0,
+        "time": 0.9999996927598088
+      },
+      "injection_ref": "f75869b6d8b02ce5",
+      "lane": "injected",
+      "ordinal": 1,
+      "revision_after": 3,
+      "score": 0.7966666221618652,
+      "stats_after": {
+        "injections": 1,
+        "never_kills": 1,
+        "removals": 1
+      },
+      "status_after": "active",
+      "thread_ref": "2fbcdc143340d56a"
+    },
+    {
+      "bias_after": -0.30000001192092896,
+      "features": {
+        "freq": 0.0,
+        "hist": 0.0,
+        "kw": 0.6666666666666666,
+        "proj": 1.0,
+        "sem": 1.0,
+        "time": 0.9999996990511949
+      },
+      "injection_ref": "eb0585e9861e8e82",
+      "lane": "injected",
+      "ordinal": 2,
+      "revision_after": 5,
+      "score": 0.6466666460037231,
+      "stats_after": {
+        "injections": 2,
+        "never_kills": 2,
+        "removals": 2
+      },
+      "status_after": "active",
+      "thread_ref": "a0fc26a0e25bf3da"
+    },
+    {
+      "bias_after": -0.45000001788139343,
+      "features": {
+        "freq": 0.0,
+        "hist": 0.0,
+        "kw": 0.6666666666666666,
+        "proj": 1.0,
+        "sem": 1.0,
+        "time": 0.9999997788633815
+      },
+      "injection_ref": "117e61df9f56e0bf",
+      "lane": "near_miss",
+      "ordinal": 3,
+      "revision_after": 6,
+      "score": 0.49666664004325867,
+      "stats_after": {
+        "injections": 2,
+        "never_kills": 3,
+        "removals": 3
+      },
+      "status_after": "quarantined",
+      "thread_ref": "a566bf3b60e666fe"
+    }
+  ],
+  "service_url": "https://n8-memory-palace-spine-713925718873.us-central1.run.app",
+  "spine_source_commit": "d41b2862d1e824fafb29fada955756304e48e7f5",
+  "status": "PASS"
+}
