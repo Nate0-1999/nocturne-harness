@@ -13,6 +13,7 @@ import {
   type MemoryPanelItem,
   type MemoryPanelOperation,
   type MemoryPanelServerPayload,
+  type PromptQueuedPayload,
   type QueuedPrompt,
   type RunDeltaPayload,
   type RunDonePayload,
@@ -64,6 +65,7 @@ export interface MemoryPanelState {
 export interface ThreadState {
   messages: ChatMessage[]
   outboundPrompts: OutboundPrompt[]
+  resolvedModel: string | null
   openGate: GateOpenPayload | null
   activeRun: ActiveRunState | null
   usage: Usage | null
@@ -104,6 +106,7 @@ function emptyThreadState(): ThreadState {
   return {
     messages: [],
     outboundPrompts: [],
+    resolvedModel: null,
     openGate: null,
     activeRun: null,
     usage: null,
@@ -230,6 +233,7 @@ function applyStarted(thread: ThreadState, payload: RunStartedPayload): ThreadSt
   return {
     ...thread,
     messages,
+    resolvedModel: payload.resolved_model ?? thread.resolvedModel,
     outboundPrompts: thread.outboundPrompts.filter(
       (prompt) => prompt.prompt_id !== payload.prompt_id,
     ),
@@ -247,7 +251,7 @@ function applyStarted(thread: ThreadState, payload: RunStartedPayload): ThreadSt
   }
 }
 
-function applyQueued(thread: ThreadState, payload: RunStartedPayload): ThreadState {
+function applyQueued(thread: ThreadState, payload: PromptQueuedPayload): ThreadState {
   const outbound = thread.outboundPrompts.find(
     (prompt) => prompt.prompt_id === payload.prompt_id,
   )
@@ -359,6 +363,7 @@ function replaceFromSnapshot(
     outboundPrompts: previous.outboundPrompts.filter(
       (prompt) => !representedPromptIds.has(prompt.prompt_id),
     ),
+    resolvedModel: payload.resolved_model,
     openGate: payload.open_gate,
     activeRun:
       active === null

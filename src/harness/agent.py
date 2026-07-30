@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
 
-from pydantic import SecretStr
-from pydantic_ai import Agent, UsageLimits
+from pydantic import BaseModel, ConfigDict, SecretStr, StrictStr
+from pydantic_ai import Agent, PromptedOutput, UsageLimits
 from pydantic_ai.models import Model, infer_model
 from pydantic_ai.providers import Provider
 from pydantic_ai.providers.anthropic import AnthropicProvider
@@ -32,14 +32,24 @@ from harness.tools_memory import (
     render_spine_error,
 )
 
-LABEL_INSTRUCTION = (
-    "Generate one short label for the supplied memory. Return only that label, "
-    "on one line, with no quotation marks or commentary."
+REMEMBER_DRAFT_INSTRUCTION = (
+    "Generate one short label and 2-5 lowercase searchable keywords for the "
+    "supplied memory. Keywords must be distinct nouns or terms. Return only "
+    "the requested structured result with no commentary."
 )
 
 
 class ModelConfigurationError(ValueError):
     """The selected hosted model has no configured credential."""
+
+
+class RememberDraft(BaseModel):
+    """One tools-free model completion for a `/remember` write."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    label: StrictStr
+    keywords: list[StrictStr]
 
 
 @dataclass(frozen=True, slots=True)
@@ -64,7 +74,7 @@ type DispatchResult = ChatResult | RememberResult
 
 
 class HarnessAgent:
-    """Own the chat agent, tools-free label agent, and C.5 usage walls."""
+    """Own the chat agent, tools-free remember agent, and C.5 usage walls."""
 
     def __init__(
         self,
@@ -90,7 +100,8 @@ class HarnessAgent:
         )
         self._label_agent = Agent(
             self._default_model,
-            instructions=LABEL_INSTRUCTION,
+            output_type=PromptedOutput(RememberDraft),
+            instructions=REMEMBER_DRAFT_INSTRUCTION,
             name="harness-memory-label",
         )
 
@@ -101,8 +112,8 @@ class HarnessAgent:
         return self._chat_agent
 
     @property
-    def label_agent(self) -> Agent[None, str]:
-        """Expose the separate, tools-free label agent for inspection."""
+    def label_agent(self) -> Agent[None, RememberDraft]:
+        """Expose the separate, tools-free remember agent for inspection."""
 
         return self._label_agent
 
@@ -143,7 +154,7 @@ class HarnessAgent:
         usage: RunUsage | None = None,
         raise_model_errors: bool = False,
     ) -> RememberResult:
-        """Generate one valid label, save one global user fact, and confirm honestly."""
+        """Generate one valid draft, save one global user fact, and confirm honestly."""
 
         body = text.strip()
         if not body:
@@ -151,7 +162,7 @@ class HarnessAgent:
 
         selected_model = self._select_model(model)
         try:
-            label_result = await self._label_agent.run(
+            draft_result = await self._label_agent.run(
                 f"Memory:\n{body}",
                 model=selected_model,
                 usage_limits=self._label_usage_limits,
@@ -160,11 +171,15 @@ class HarnessAgent:
         except Exception:
             if raise_model_errors:
                 raise
-            return RememberResult(False, "Could not remember: label generation failed.")
+            return RememberResult(False, "Could not remember: metadata generation failed.")
 
-        if not isinstance(label_result.output, str):
-            return RememberResult(False, "Could not remember: label generation returned no text.")
-        label = label_result.output.strip()
+        draft = draft_result.output
+        if not isinstance(draft, RememberDraft):  # pragma: no cover - pydantic-ai type guard
+            return RememberResult(
+                False,
+                "Could not remember: metadata generation returned no data.",
+            )
+        label = draft.label.strip()
         if not label:
             return RememberResult(False, "Could not remember: the generated label was blank.")
         if "\n" in label or "\r" in label:
@@ -178,9 +193,20 @@ class HarnessAgent:
                 "Could not remember: the generated label exceeded "
                 f"{self._settings.label_max} characters.",
             )
+        keywords = _normalize_keywords(draft.keywords)
+        if keywords is None:
+            return RememberResult(
+                False,
+                "Could not remember: generated keywords must contain 2-5 distinct nonblank terms.",
+            )
 
         try:
-            response = await create_remembered_memory(context, label=label, body=body)
+            response = await create_remembered_memory(
+                context,
+                label=label,
+                body=body,
+                keywords=keywords,
+            )
         except CreateMemoryConflictError as exc:
             return RememberResult(False, f"Could not remember: {render_create_conflict(exc)}")
         except SpineClientError as exc:
@@ -262,3 +288,16 @@ def _required_secret(value: SecretStr | None, name: str) -> str:
     if value is None or not value.get_secret_value().strip():
         raise ModelConfigurationError(f"{name} is required for the selected model provider")
     return value.get_secret_value()
+
+
+def _normalize_keywords(values: Sequence[str]) -> list[str] | None:
+    keywords: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        normalized = value.strip().lower()
+        if not normalized:
+            return None
+        if normalized not in seen:
+            keywords.append(normalized)
+            seen.add(normalized)
+    return keywords if 2 <= len(keywords) <= 5 else None

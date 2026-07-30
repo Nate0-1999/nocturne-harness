@@ -631,6 +631,7 @@ def test_thread_snapshot_response_types_nested_authoritative_state() -> None:
             "usage": {"requests": 1, "input_tokens": 2, "output_tokens": 3},
             "queued": [{"run_id": SECOND_ID, "prompt_id": ENVELOPE_ID, "prompt": "next"}],
         },
+        "resolved_model": "openrouter:minimax/minimax-m3",
         "revision": 7,
     }
 
@@ -640,6 +641,39 @@ def test_thread_snapshot_response_types_nested_authoritative_state() -> None:
     assert isinstance(snapshot.payload.open_gate, GateOpenPayload)
     assert isinstance(snapshot.payload.active_run, ActiveRunSnapshot)
     assert snapshot.model_dump(mode="json")["payload"] == payload
+
+
+@pytest.mark.parametrize(
+    ("message_type", "payload"),
+    [
+        (
+            "run.started",
+            {
+                "run_id": RUN_ID,
+                "prompt_id": PROMPT_ID,
+                "resolved_model": "openrouter:minimax/minimax-m3",
+            },
+        ),
+        (
+            "thread.snapshot",
+            {
+                "messages": [],
+                "open_gate": None,
+                "active_run": None,
+                "resolved_model": "openrouter:minimax/minimax-m3",
+            },
+        ),
+    ],
+)
+def test_resolved_model_extensions_reject_blank_values(
+    message_type: str,
+    payload: dict[str, object],
+) -> None:
+    envelope = envelope_for(message_type, payload)
+    assert envelope.model_dump(mode="json")["payload"] == payload
+
+    with pytest.raises(ValidationError):
+        envelope_for(message_type, {**payload, "resolved_model": " \t"})
 
 
 @pytest.mark.parametrize(

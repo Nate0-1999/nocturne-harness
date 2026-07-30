@@ -200,6 +200,7 @@ async def create_remembered_memory(
     *,
     label: str,
     body: str,
+    keywords: list[str],
 ) -> CreateMemoryResponse:
     """Create the global, user-authored fact required by `/remember`."""
 
@@ -209,6 +210,7 @@ async def create_remembered_memory(
             label=label,
             body=body,
             kind=MemoryKind.FACT,
+            keywords=keywords,
             project_key=None,
             thread_origin=str(context.thread_id) if context.thread_id is not None else None,
             origin_path=context.origin_path,

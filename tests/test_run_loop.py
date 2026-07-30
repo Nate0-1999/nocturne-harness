@@ -327,6 +327,50 @@ def payload(message: Envelope) -> dict[str, object]:
     return value
 
 
+@pytest.mark.parametrize("resolved_model", ["", " \t", " model "])
+def test_run_loop_rejects_invalid_resolved_model(resolved_model: str) -> None:
+    ids = Ids()
+
+    with pytest.raises(ValueError, match="resolved_model"):
+        RunLoop(
+            ImmediateHistoryRunner(),
+            factory(ids),
+            resolved_model=resolved_model,
+        )
+
+
+@pytest.mark.asyncio
+async def test_static_resolved_model_is_authoritative_on_start_and_snapshot() -> None:
+    ids = Ids()
+    model = "openrouter:minimax/minimax-m3"
+    loop = RunLoop(
+        ImmediateHistoryRunner(),
+        factory(ids),
+        resolved_model=model,
+    )
+    sink = Sink()
+    await loop.attach(sink)
+
+    await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(1),
+        prompt="hello",
+        sink=sink,
+    )
+    await _wait_for_done_count(sink, 1)
+    started = next(message for message in sink.messages if message.type is MessageType.RUN_STARTED)
+    assert payload(started)["resolved_model"] == model
+
+    snapshot_sink = Sink()
+    await loop.request_snapshot("thread-1", snapshot_sink)
+    await _wait_for_type_count(snapshot_sink, MessageType.THREAD_SNAPSHOT, 1)
+    snapshot = snapshot_sink.messages[0].payload
+    assert isinstance(snapshot, ThreadSnapshotResponsePayload)
+    assert snapshot.resolved_model == model
+
+    await loop.close()
+
+
 @pytest.mark.asyncio
 async def test_cancel_awaits_cleanup_preserves_partial_and_coalesces_duplicates() -> None:
     ids = Ids()

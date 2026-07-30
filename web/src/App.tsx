@@ -8,6 +8,7 @@ import {
   type KeyboardEvent,
 } from 'react'
 
+import { AssistantMarkdown } from './AssistantMarkdown'
 import { harnessClient } from './socket'
 import { useHarnessStore, type MemoryPanelState } from './store'
 import { MemoryGate } from './MemoryGate'
@@ -459,6 +460,16 @@ function App() {
               )}
               {selectedThreadId !== null && <span>{shortId(selectedThreadId)}</span>}
             </div>
+            <p
+              className="chat-header__model"
+              data-testid="active-model"
+              aria-label={`Active model: ${selectedThread?.resolvedModel ?? 'awaiting daemon'}`}
+            >
+              <span aria-hidden="true">Model</span>
+              <span className="chat-header__model-value">
+                {selectedThread?.resolvedModel ?? 'Awaiting daemon'}
+              </span>
+            </p>
           </header>
 
           {(globalError !== null || selectedThread?.lastError !== null) && (
@@ -641,7 +652,7 @@ function MessageRow({
         {status !== null && <span className="message__status">{status}</span>}
       </header>
       {message.content ? (
-        <p className="message__content">{message.content}</p>
+        <AssistantMarkdown content={message.content} />
       ) : (
         <p className="message__content message__content--quiet">Working…</p>
       )}

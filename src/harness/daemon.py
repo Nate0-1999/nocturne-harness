@@ -324,7 +324,7 @@ def create_dev_app(
         principal_id=principal_id,
         machine_id=machine_id,
     )
-    loop = RunLoop(runner, factory)
+    loop = RunLoop(runner, factory, resolved_model=configured.chat_model)
     app = create_app(
         web_dist,
         routes={MessageType.MEMORY_PANEL_UPDATE: panel.handle},

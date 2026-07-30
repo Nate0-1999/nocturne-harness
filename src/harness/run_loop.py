@@ -64,6 +64,7 @@ class _ThreadState:
     active: _ActiveRun | None = None
     queued: deque[_Turn] = field(default_factory=deque)
     open_gate: GateOpenPayload | None = None
+    resolved_model: str | None = None
 
 
 @dataclass(slots=True)
@@ -120,10 +121,18 @@ class RunLoop:
         factory: EnvelopeFactory,
         *,
         run_id_factory: Callable[[], str] | None = None,
+        resolved_model: str | None = None,
     ) -> None:
+        if resolved_model is not None and (
+            not isinstance(resolved_model, str)
+            or not resolved_model
+            or resolved_model != resolved_model.strip()
+        ):
+            raise ValueError("resolved_model must be nonblank without surrounding whitespace")
         self._runner = runner
         self._factory = factory
         self._run_id_factory = run_id_factory or factory.new_id
+        self._initial_resolved_model = resolved_model
         self._lock = asyncio.Lock()
         self._threads: dict[str, _ThreadState] = {}
         self._subscriptions: list[_Subscription] = []
@@ -151,7 +160,7 @@ class RunLoop:
             )
             self._subscriptions.append(subscription)
             if thread_id is not None:
-                state = self._threads.setdefault(thread_id, _ThreadState())
+                state = self._state_for_locked(thread_id)
                 receipt = self._enqueue_locked(
                     subscription,
                     self._snapshot_envelope(thread_id, state),
@@ -166,7 +175,7 @@ class RunLoop:
         self._require_thread_id(thread_id)
         async with self._lock:
             self._require_open()
-            self._threads.setdefault(thread_id, _ThreadState())
+            self._state_for_locked(thread_id)
             self._selected_thread_id = thread_id
             self._bind_sink_locked(sink, thread_id)
 
@@ -177,7 +186,7 @@ class RunLoop:
         receipt: asyncio.Future[None]
         async with self._lock:
             self._require_open()
-            state = self._threads.setdefault(thread_id, _ThreadState())
+            state = self._state_for_locked(thread_id)
             self._selected_thread_id = thread_id
             existing = self._find_sink_locked(sink)
             on_overflow = existing.on_overflow if existing is not None else None
@@ -236,7 +245,7 @@ class RunLoop:
 
         async with self._lock:
             self._require_open()
-            state = self._threads.setdefault(thread_id, _ThreadState())
+            state = self._state_for_locked(thread_id)
             self._selected_thread_id = thread_id
             if sink is not None:
                 self._bind_sink_locked(sink, thread_id)
@@ -407,7 +416,11 @@ class RunLoop:
             thread_id,
             self._factory.create(
                 MessageType.RUN_STARTED,
-                RunStartedPayload(run_id=turn.run_id, prompt_id=turn.prompt_id),
+                RunStartedPayload(
+                    run_id=turn.run_id,
+                    prompt_id=turn.prompt_id,
+                    resolved_model=state.resolved_model,
+                ),
                 thread_id=thread_id,
             ),
         )
@@ -778,6 +791,7 @@ class RunLoop:
                 messages=deepcopy(state.messages),
                 open_gate=state.open_gate,
                 active_run=active_snapshot,
+                resolved_model=state.resolved_model,
             ),
             thread_id=thread_id,
         )
@@ -892,6 +906,13 @@ class RunLoop:
     def _require_open(self) -> None:
         if self._closing:
             raise RuntimeError("run loop is closed")
+
+    def _state_for_locked(self, thread_id: str) -> _ThreadState:
+        state = self._threads.get(thread_id)
+        if state is None:
+            state = _ThreadState(resolved_model=self._initial_resolved_model)
+            self._threads[thread_id] = state
+        return state
 
     @staticmethod
     def _require_thread_id(thread_id: str) -> None:

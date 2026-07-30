@@ -242,10 +242,10 @@
 
 .chat-header {
   grid-row: 1;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 1.25rem;
+  gap: 0.3rem 1.25rem;
   min-width: 0;
   min-height: 4.7rem;
   padding: 0.85rem clamp(1rem, 3vw, 2.5rem);
@@ -254,6 +254,33 @@
 
 .chat-header__identity {
   min-width: 0;
+}
+
+.chat-header__model {
+  grid-column: 1 / -1;
+  display: flex;
+  max-width: 100%;
+  min-width: 0;
+  gap: 0.45rem;
+  margin: 0.35rem 0 0;
+  color: var(--dim);
+  font-family: var(--data-font);
+  font-size: 0.625rem;
+  letter-spacing: 0.04em;
+  line-height: 1.25;
+}
+
+.chat-header__model > span:first-child {
+  flex: none;
+  color: var(--accent);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.chat-header__model-value {
+  min-width: 0;
+  color: var(--muted);
+  overflow-wrap: anywhere;
 }
 
 .chat-header h1 {
@@ -446,6 +473,141 @@
 
 .message__content--quiet {
   color: var(--muted);
+}
+
+.message__content--markdown {
+  white-space: normal;
+}
+
+.message__content--markdown > :first-child {
+  margin-top: 0;
+}
+
+.message__content--markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.message__content--markdown p {
+  margin: 0 0 0.9rem;
+}
+
+.message__content--markdown h1,
+.message__content--markdown h2,
+.message__content--markdown h3,
+.message__content--markdown h4,
+.message__content--markdown h5,
+.message__content--markdown h6 {
+  margin: 1.5rem 0 0.65rem;
+  color: var(--ink);
+  font-family: var(--display-font);
+  font-stretch: condensed;
+  letter-spacing: 0.015em;
+  line-height: 1.2;
+}
+
+.message__content--markdown h1 {
+  font-size: 1.55rem;
+}
+
+.message__content--markdown h2 {
+  font-size: 1.35rem;
+}
+
+.message__content--markdown h3 {
+  font-size: 1.18rem;
+}
+
+.message__content--markdown h4,
+.message__content--markdown h5,
+.message__content--markdown h6 {
+  font-size: 1rem;
+}
+
+.message__content--markdown strong {
+  color: var(--ink);
+  font-weight: 760;
+}
+
+.message__content--markdown ul,
+.message__content--markdown ol {
+  margin: 0.65rem 0 1rem;
+  padding-left: 1.45rem;
+}
+
+.message__content--markdown li {
+  padding-left: 0.15rem;
+}
+
+.message__content--markdown li + li {
+  margin-top: 0.35rem;
+}
+
+.message__content--markdown li > p {
+  margin-bottom: 0.35rem;
+}
+
+.message__content--markdown table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  margin: 1rem 0;
+  overflow-x: auto;
+  border-collapse: collapse;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.message__content--markdown th,
+.message__content--markdown td {
+  min-width: 7rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line-strong);
+  text-align: left;
+  vertical-align: top;
+}
+
+.message__content--markdown th {
+  background: var(--surface-raised);
+  color: var(--muted);
+  font-family: var(--data-font);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.message__content--markdown td {
+  background: var(--surface);
+}
+
+.message__content--markdown code {
+  padding: 0.12rem 0.3rem;
+  background: var(--surface-raised);
+  color: var(--accent);
+  font-family: var(--data-font);
+  font-size: 0.86em;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.message__content--markdown pre {
+  max-width: 100%;
+  margin: 1rem 0;
+  padding: 0.9rem 1rem;
+  overflow-x: auto;
+  border-left: 2px solid var(--accent);
+  background: var(--surface);
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.message__content--markdown pre code {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  white-space: pre;
 }
 
 .run-detail {
@@ -1740,6 +1902,10 @@
     font-size: 0.92rem;
   }
 
+  .chat-header__model {
+    margin-top: 0.25rem;
+  }
+
   .run-metrics {
     max-width: 48vw;
     gap: 0.25rem 0.55rem;
@@ -1781,6 +1947,24 @@
   .message__label {
     flex-direction: row;
     justify-content: space-between;
+  }
+
+  .message__content--markdown h1 {
+    font-size: 1.35rem;
+  }
+
+  .message__content--markdown h2 {
+    font-size: 1.2rem;
+  }
+
+  .message__content--markdown th,
+  .message__content--markdown td {
+    min-width: 6.5rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .message__content--markdown pre {
+    padding: 0.8rem;
   }
 
   .run-detail {

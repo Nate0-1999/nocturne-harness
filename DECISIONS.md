@@ -461,3 +461,44 @@ observed accessibility defect without redesigning the chat shell.
 **Rejected alternatives.** Treating the wrapper as the hit target would make
 the evidence untrue. Enlarging every composer dimension or adding a separate
 mobile layout would exceed this local P3 remedy.
+
+## 016 — Safe rich text, thread-owned model truth, and keyword-complete remember [P2, P3]
+
+**Decision.** Render assistant content with `react-markdown` plus `remark-gfm`
+through a narrow element allowlist covering the H8 headings, emphasis, lists,
+tables, and code contract. Keep raw HTML handling disabled so source tags remain
+visible inert text, style only through the existing theme tokens, and leave user
+messages on React's plain-text path. Carry the daemon-owned resolved model as an
+optional nonblank C.7 extension on both `thread.snapshot` and `run.started`;
+seed it from the static chat configuration in M1, let the browser refresh its
+runtime-only thread state from either authoritative event, and degrade older
+daemon frames to an explicit waiting state rather than inventing a model name.
+
+Generate `/remember` metadata with one request-limited, tools-free
+`PromptedOutput` completion returning a typed label and keyword list. Normalize
+keywords to distinct lowercase terms and reject the draft before persistence
+unless two through five nonblank terms survive. Send those terms on the same
+user-authored memory create request, and put the SPEC's keyword mandate in the
+ordinary memory capability instruction as well.
+
+Ship the local Harness mark as an SVG favicon. It removes the browser's
+otherwise automatic missing-favicon request, keeping the product console clean
+without adding an asset pipeline or a network dependency.
+
+**Motivation.** A maintained CommonMark/GFM renderer is a smaller security and
+correctness surface than a local parser, while the explicit allowlist preserves
+the product's restrained typography and keeps provider text out of the DOM
+authority boundary. Snapshot/start model state gives the human truthful
+per-thread visibility now and one stable display seam for H9 without moving
+configuration into the browser or building the M2 selector. One structured
+metadata completion closes the live retrieval defect without doubling provider
+traffic or allowing a label save to land keyword-less.
+
+**Rejected alternatives.** `dangerouslySetInnerHTML`, `rehype-raw`, and a
+handwritten Markdown parser all widen the untrusted-rendering surface. Reading a
+Vite environment value would show process configuration rather than the
+thread's eventual H9 resolution; implementing the H9 policy resolver or an M2
+selector here would cross the packet fence. A second keyword completion wastes a
+request, while silently accepting an invalid list recreates the gate-day data
+defect H8 exists to close. Suppressing favicon errors in the fixture would hide
+a real baseline request instead of closing it in the product.

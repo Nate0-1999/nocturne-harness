@@ -1,0 +1,32 @@
+{
+  "viewport": {
+    "width": 1402,
+    "height": 992
+  },
+  "model": "local:h8-verification",
+  "assistant_counts": {
+    "h2": 1,
+    "strong": 1,
+    "em": 1,
+    "list_items": 2,
+    "table": 1,
+    "pre_code": 1
+  },
+  "raw_html": {
+    "button_elements": 0,
+    "script_elements": 0,
+    "button_literal": true,
+    "script_literal": true,
+    "executed_type": "undefined"
+  },
+  "code_font": "\"JetBrains Mono\", SFMono-Regular, Consolas, \"Liberation Mono\", monospace",
+  "user": {
+    "plain_markers": true,
+    "rich_descendants": 0
+  },
+  "document_width": {
+    "client": 1402,
+    "scroll": 1402
+  },
+  "console": []
+}

@@ -101,6 +101,10 @@ class PromptSubmitPayload(_ExtensiblePayload):
 class RunStartedPayload(_ExtensiblePayload):
     run_id: ULID
     prompt_id: ULID
+    resolved_model: NonBlankString | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
 
 
 class RunCancelPayload(_ExtensiblePayload):
@@ -236,6 +240,10 @@ class ThreadSnapshotResponsePayload(_ExtensiblePayload):
     messages: list[dict[str, JsonValue]]
     open_gate: GateOpenPayload | None
     active_run: ActiveRunSnapshot | None
+    resolved_model: NonBlankString | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
 
 
 class _MemoryPanelPayload(BaseModel):

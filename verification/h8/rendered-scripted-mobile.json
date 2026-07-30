@@ -1,0 +1,80 @@
+{
+  "expectedModel": "local:h8-verification",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "documentWidth": {
+    "client": 390,
+    "scroll": 390
+  },
+  "model": {
+    "text": "local:h8-verification",
+    "fullyVisible": true
+  },
+  "assistantCounts": {
+    "h2": 1,
+    "strong": 1,
+    "em": 1,
+    "listItems": 2,
+    "table": 1,
+    "preCode": 1
+  },
+  "assistantText": "HarnessH8 Markdown proof\nBold text and italic text remain readable.\n\nFirst list item\nSecond list item\n\nSurfaceResultTablePassCodePass\nprint(\"h8\")\n\n<button data-h8-raw=\"true\">Unsafe button</button>\n<script>globalThis.__h8RawHtmlExecuted = true</script>2 run events[\n  {\n    \"tool_name\": null,\n    \"tool_call_id\": null,\n    \"event_kind\": \"final_result\"\n  },\n  {\n    \"index\": 0,\n    \"part\": {\n      \"content\": \"## H8 Markdown proof\\n\\n**Bold text** and *italic text* remain readable.\\n\\n- First list item\\n- Second list item\\n\\n| Surface | Result |\\n| --- | --- |\\n| Table | Pass |\\n| Code | Pass |\\n\\n```python\\nprint(\\\"h8\\\")\\n```\\n\\n<button data-h8-raw=\\\"true\\\">Unsafe button</button>\\n<script>globalThis.__h8RawHtmlExecuted = true</script>\\n\",\n      \"id\": null,\n      \"provider_name\": null,\n      \"provider_details\": null,\n      \"part_kind\": \"text\"\n    },\n    \"next_part_kind\": null,\n    \"event_kind\": \"part_end\"\n  }\n]",
+  "rawHtml": {
+    "buttonElements": 0,
+    "scriptElements": 0,
+    "buttonLiteral": true,
+    "scriptLiteral": true,
+    "executedType": "undefined"
+  },
+  "codeFontFamily": "\"JetBrains Mono\", SFMono-Regular, Consolas, \"Liberation Mono\", monospace",
+  "user": {
+    "text": "YouShow the H8 Markdown proof. Keep **plain-user-text** literal in my message and treat <button data-h8-user-raw=\"true\">unsafe</button> as text.",
+    "plainMarkers": true,
+    "richDescendants": 0
+  },
+  "table": {
+    "clientWidth": 209,
+    "scrollWidth": 209,
+    "overflowX": "auto",
+    "reachable": true
+  },
+  "codeBlock": {
+    "clientWidth": 345,
+    "scrollWidth": 345,
+    "overflowX": "auto",
+    "reachable": true
+  },
+  "visibleActions": [
+    {
+      "label": "Threads02",
+      "width": 73.328125,
+      "height": 44
+    },
+    {
+      "label": "Memory1",
+      "width": 60.234375,
+      "height": 44
+    },
+    {
+      "label": "",
+      "width": 269.625,
+      "height": 44
+    },
+    {
+      "label": "Send↗",
+      "width": 74.390625,
+      "height": 44
+    }
+  ],
+  "appError": null,
+  "consoleProblems": [],
+  "pageErrors": [],
+  "mode": "mobile",
+  "baseUrl": "http://127.0.0.1:8771",
+  "screenshots": {
+    "remember": "/Users/nateoswalt/Developer/N8_Harness/harness/verification/h8/scripted-mobile-01-remember-390x844.png",
+    "markdown": "/Users/nateoswalt/Developer/N8_Harness/harness/verification/h8/scripted-mobile-02-markdown-390x844.png"
+  }
+}

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -12,10 +13,11 @@ from pydantic_ai.models.function import AgentInfo, FunctionModel
 from pydantic_ai.models.test import TestModel
 
 from harness.agent import (
-    LABEL_INSTRUCTION,
+    REMEMBER_DRAFT_INSTRUCTION,
     ChatResult,
     HarnessAgent,
     ModelConfigurationError,
+    RememberDraft,
     RememberResult,
     resolve_model,
 )
@@ -137,6 +139,18 @@ def response_model(text: str, calls: list[tuple[list[ModelMessage], AgentInfo]])
     return FunctionModel(respond, model_name=f"local:{text[:12]}")
 
 
+def remember_model(
+    label: str,
+    keywords: list[str],
+    calls: list[tuple[list[ModelMessage], AgentInfo]],
+) -> FunctionModel:
+    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        calls.append((list(messages), info))
+        return ModelResponse(parts=[TextPart(json.dumps({"label": label, "keywords": keywords}))])
+
+    return FunctionModel(respond, model_name=f"local:{label[:12]}")
+
+
 @pytest.mark.parametrize(
     ("model_name", "key_field", "environment_name", "provider_name"),
     [
@@ -228,15 +242,22 @@ async def test_chat_returns_output_and_reusable_full_history_with_exact_limits()
 @pytest.mark.asyncio
 async def test_label_agent_is_separate_and_has_no_tools() -> None:
     calls: list[tuple[list[ModelMessage], AgentInfo]] = []
-    model = response_model("Short label", calls)
+    model = remember_model("Short label", ["short", "label"], calls)
     agent = HarnessAgent(settings(), model=model)
 
     result = await agent.label_agent.run("label this")
 
-    assert result.output == "Short label"
+    assert result.output == RememberDraft(
+        label="Short label",
+        keywords=["short", "label"],
+    )
     assert len(calls) == 1
     assert calls[0][1].function_tools == []
-    assert calls[0][1].instructions == LABEL_INSTRUCTION
+    assert calls[0][1].output_tools == []
+    assert calls[0][1].instructions is not None
+    assert calls[0][1].instructions.startswith(REMEMBER_DRAFT_INSTRUCTION)
+    assert '"label"' in calls[0][1].instructions
+    assert '"keywords"' in calls[0][1].instructions
     assert agent.label_agent is not agent.chat_agent
 
 
@@ -263,7 +284,11 @@ async def test_empty_remember_command_is_visible_and_does_not_call_model_or_spin
 async def test_remember_uses_selected_model_once_without_tools_and_maps_global_user_fact() -> None:
     default_model = TestModel(call_tools=[], custom_output_text="wrong model")
     selected_calls: list[tuple[list[ModelMessage], AgentInfo]] = []
-    selected_model = response_model("Editor preference", selected_calls)
+    selected_model = remember_model(
+        "Editor preference",
+        ["Editor", "tabs", "editor"],
+        selected_calls,
+    )
     spine = FakeSpine(
         CreatedMemoryResponse(created=memory_unit(label="Editor preference", body="Use tabs."))
     )
@@ -283,7 +308,9 @@ async def test_remember_uses_selected_model_once_without_tools_and_maps_global_u
     )
     assert len(selected_calls) == 1
     assert selected_calls[0][1].function_tools == []
-    assert selected_calls[0][1].instructions == LABEL_INSTRUCTION
+    assert selected_calls[0][1].output_tools == []
+    assert selected_calls[0][1].instructions is not None
+    assert selected_calls[0][1].instructions.startswith(REMEMBER_DRAFT_INSTRUCTION)
     assert default_model.last_model_request_parameters is None
     assert len(spine.create_requests) == 1
     request = spine.create_requests[0]
@@ -291,7 +318,7 @@ async def test_remember_uses_selected_model_once_without_tools_and_maps_global_u
     assert request.label == "Editor preference"
     assert request.body == "Use tabs."
     assert request.kind is MemoryKind.FACT
-    assert request.keywords is None
+    assert request.keywords == ["editor", "tabs"]
     assert request.project_key is None
     assert request.thread_origin == str(THREAD_ID)
     assert request.origin_path == "/workspace/notes.md"
@@ -314,12 +341,44 @@ async def test_invalid_generated_label_is_rejected_without_calling_spine(
 ) -> None:
     calls: list[tuple[list[ModelMessage], AgentInfo]] = []
     spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
-    agent = HarnessAgent(settings(), model=response_model(label, calls))
+    agent = HarnessAgent(
+        settings(),
+        model=remember_model(label, ["editor", "tabs"], calls),
+    )
 
     result = await agent.remember("Use tabs.", context=context(spine))
 
     assert result.ok is False
     assert expected in result.message
+    assert len(calls) == 1
+    assert spine.create_requests == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "keywords",
+    [
+        [],
+        ["only"],
+        ["same", "SAME"],
+        ["one", "two", "three", "four", "five", "six"],
+        ["one", "   "],
+    ],
+)
+async def test_invalid_generated_keywords_are_rejected_without_calling_spine(
+    keywords: list[str],
+) -> None:
+    calls: list[tuple[list[ModelMessage], AgentInfo]] = []
+    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
+    agent = HarnessAgent(
+        settings(),
+        model=remember_model("Editor preference", keywords, calls),
+    )
+
+    result = await agent.remember("Use tabs.", context=context(spine))
+
+    assert result.ok is False
+    assert "2-5 distinct nonblank terms" in result.message
     assert len(calls) == 1
     assert spine.create_requests == []
 
@@ -367,7 +426,13 @@ async def test_remember_failures_are_truthful_visible_non_success(
     expected: str,
 ) -> None:
     spine = FakeSpine(outcome)
-    agent = HarnessAgent(settings(), model=TestModel(call_tools=[], custom_output_text="New fact"))
+    agent = HarnessAgent(
+        settings(),
+        model=TestModel(
+            call_tools=[],
+            custom_output_text=json.dumps({"label": "New fact", "keywords": ["new", "fact"]}),
+        ),
+    )
 
     result = await agent.remember("A durable fact.", context=context(spine))
 

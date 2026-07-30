@@ -375,6 +375,7 @@ def test_dev_app_wires_the_real_streaming_agent_adapter(tmp_path: Path) -> None:
         principal_id="principal-test",
         machine_id="machine-test",
         agent_id="agent-test",
+        chat_model="openrouter:static/visible-model",
         anthropic_api_key=None,
         openai_api_key=None,
         openrouter_api_key=None,
@@ -404,6 +405,7 @@ def test_dev_app_wires_the_real_streaming_agent_adapter(tmp_path: Path) -> None:
                 break
 
     assert messages[0]["type"] == "run.started"
+    assert messages[0]["payload"]["resolved_model"] == "openrouter:static/visible-model"
     assert messages[1]["type"] == "error"
     assert messages[1]["payload"] == {
         "code": "memory_unavailable",

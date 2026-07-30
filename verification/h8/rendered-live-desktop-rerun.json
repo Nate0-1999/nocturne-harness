@@ -1,0 +1,20 @@
+{
+  "viewport": {
+    "width": 1670,
+    "height": 936
+  },
+  "model": "local:h8-verification",
+  "raw_html": {
+    "button_elements": 0,
+    "script_elements": 0,
+    "executed_type": "undefined"
+  },
+  "user": {
+    "plain_markers": true,
+    "rich_descendants": 0
+  },
+  "document_width": {
+    "client": 1670,
+    "scroll": 1670
+  }
+}

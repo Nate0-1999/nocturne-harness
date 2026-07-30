@@ -243,14 +243,19 @@ export interface ThreadSnapshotPayload {
   messages: TranscriptMessage[]
   open_gate: GateOpenPayload | null
   active_run: ActiveRunSnapshot | null
+  resolved_model: string | null
 }
 
 export interface RunStartedPayload {
   run_id: Ulid
   prompt_id: Ulid
+  resolved_model: string | null
 }
 
-export type PromptQueuedPayload = RunStartedPayload
+export interface PromptQueuedPayload {
+  run_id: Ulid
+  prompt_id: Ulid
+}
 
 export type RunDeltaPayload =
   | { run_id: Ulid; kind: 'text'; text: string }
@@ -847,7 +852,13 @@ function parseTranscriptMessage(value: unknown): TranscriptMessage | null {
 }
 
 function parseSnapshot(value: unknown): ThreadSnapshotPayload | null {
-  if (!isRecord(value) || !Array.isArray(value.messages)) {
+  if (
+    !isRecord(value) ||
+    !Array.isArray(value.messages) ||
+    (value.resolved_model !== undefined &&
+      (typeof value.resolved_model !== 'string' ||
+        !value.resolved_model.trim()))
+  ) {
     return null
   }
   const messages = value.messages.map(parseTranscriptMessage)
@@ -866,14 +877,34 @@ function parseSnapshot(value: unknown): ThreadSnapshotPayload | null {
     messages: messages as TranscriptMessage[],
     open_gate: openGate,
     active_run: activeRun,
+    resolved_model:
+      typeof value.resolved_model === 'string' ? value.resolved_model : null,
   }
 }
 
-function parseRunIds(value: unknown): RunStartedPayload | null {
+function parsePromptQueued(value: unknown): PromptQueuedPayload | null {
   if (!isRecord(value) || !isUlid(value.run_id) || !isUlid(value.prompt_id)) {
     return null
   }
   return { run_id: value.run_id, prompt_id: value.prompt_id }
+}
+
+function parseRunStarted(value: unknown): RunStartedPayload | null {
+  const runIds = parsePromptQueued(value)
+  if (
+    runIds === null ||
+    !isRecord(value) ||
+    (value.resolved_model !== undefined &&
+      (typeof value.resolved_model !== 'string' ||
+        !value.resolved_model.trim()))
+  ) {
+    return null
+  }
+  return {
+    ...runIds,
+    resolved_model:
+      typeof value.resolved_model === 'string' ? value.resolved_model : null,
+  }
 }
 
 function parseRunDelta(value: unknown): RunDeltaPayload | null {
@@ -931,14 +962,15 @@ export function decodeServerEnvelope(envelope: Envelope): DecodedServerEvent | n
         ? null
         : { type: 'thread.snapshot', payload: payload as ThreadSnapshotPayload }
     case 'run.started':
-    case 'prompt.queued':
-      payload = parseRunIds(envelope.payload)
+      payload = parseRunStarted(envelope.payload)
       return payload === null
         ? null
-        : {
-            type: envelope.type,
-            payload: payload as RunStartedPayload,
-          }
+        : { type: 'run.started', payload: payload as RunStartedPayload }
+    case 'prompt.queued':
+      payload = parsePromptQueued(envelope.payload)
+      return payload === null
+        ? null
+        : { type: 'prompt.queued', payload: payload as PromptQueuedPayload }
     case 'run.delta':
       payload = parseRunDelta(envelope.payload)
       return payload === null

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
@@ -414,7 +415,15 @@ async def test_remember_label_budget_maps_to_budget_exceeded_with_usage() -> Non
     runner = PydanticAITurnRunner(
         HarnessAgent(
             settings(run_total_tokens_limit=1),
-            model=TestModel(call_tools=[], custom_output_text="Durable label"),
+            model=TestModel(
+                call_tools=[],
+                custom_output_text=json.dumps(
+                    {
+                        "label": "Durable label",
+                        "keywords": ["durable", "fact"],
+                    }
+                ),
+            ),
         ),
         lambda _: context(),
     )

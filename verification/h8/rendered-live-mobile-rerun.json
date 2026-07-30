@@ -1,0 +1,41 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "model": {
+    "text": "local:h8-verification",
+    "client_width": 135,
+    "scroll_width": 135
+  },
+  "raw_html": {
+    "button_elements": 0,
+    "script_elements": 0,
+    "executed_type": "undefined"
+  },
+  "user": {
+    "rich_descendants": 0
+  },
+  "document_width": {
+    "client": 390,
+    "scroll": 390
+  },
+  "visible_actions": [
+    {
+      "label": "Threads02",
+      "height": 44
+    },
+    {
+      "label": "Memory1",
+      "height": 44
+    },
+    {
+      "label": "TEXTAREA",
+      "height": 44
+    },
+    {
+      "label": "Send",
+      "height": 44
+    }
+  ]
+}

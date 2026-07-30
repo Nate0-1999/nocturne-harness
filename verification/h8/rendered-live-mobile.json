@@ -1,0 +1,58 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "model": {
+    "text": "local:h8-verification",
+    "client_width": 135,
+    "scroll_width": 135
+  },
+  "assistant_counts": {
+    "h2": 1,
+    "strong": 1,
+    "em": 1,
+    "list_items": 2,
+    "table": 1,
+    "pre_code": 1
+  },
+  "raw_html": {
+    "button_elements": 0,
+    "script_elements": 0,
+    "button_literal": true,
+    "script_literal": true,
+    "executed_type": "undefined"
+  },
+  "code_font": "\"JetBrains Mono\", SFMono-Regular, Consolas, \"Liberation Mono\", monospace",
+  "user": {
+    "plain_markers": true,
+    "rich_descendants": 0
+  },
+  "document_width": {
+    "client": 390,
+    "scroll": 390
+  },
+  "visible_actions": [
+    {
+      "label": "Threads02",
+      "width": 73.5078125,
+      "height": 44
+    },
+    {
+      "label": "Memory1",
+      "width": 60.3671875,
+      "height": 44
+    },
+    {
+      "label": "TEXTAREA",
+      "width": 269.6171875,
+      "height": 44
+    },
+    {
+      "label": "Send",
+      "width": 74.3984375,
+      "height": 44
+    }
+  ],
+  "console": []
+}
