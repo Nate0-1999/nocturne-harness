@@ -1,6 +1,6 @@
 # H5 live agent walkthrough
 
-Status: **EXECUTED — PASS WITH RECORDED FRICTION**
+Status: **PASS WITH RECORDED FRICTION — I1 RULE-8 RE-EXECUTED**
 
 This is the human-style walkthrough required by SPEC B.6 rule 8. The browser
 pass used the production SPA and WebSocket daemon against deployed Spine; only
@@ -187,7 +187,99 @@ failed; physical touch-hold remains for Nate's personal-use pass.
 
 This walkthrough remains the append-only record of the 2026-07-21 product. It
 predates A-023 and does not claim that a Wrong decision opened the now-required
-second gate. A current rerun must keep the model stopped after the review
-commit, visibly open `wrong_resolution` for the returned current unit, submit
-an Edit or Expire decision with that unit's revision, observe the corresponding
-`gate/wrong:*` PATCH succeed, and only then observe the first model invocation.
+second gate. The current I1 canonical desktop and phone replays close that
+historical gap: each kept the model stopped after review commit, opened
+`wrong_resolution` for the returned current unit, submitted an Edit with that
+unit's revision, observed the corresponding `gate/wrong:edit` PATCH, and only
+then observed the first model invocation. See the
+[desktop trace](../i1/2026-07-30/h5-trace-desktop.jsonl),
+[phone trace](../i1/2026-07-30/h5-trace-mobile.jsonl), and rendered
+[desktop](../i1/2026-07-30/34-h5-desktop-gate-paused.jpg) /
+[phone](../i1/2026-07-30/38-h5-mobile-gate-paused.jpg) starting frames. The
+closure addendum below separately records the required current unscripted
+segment without manufacturing additional feedback.
+
+## I1 closure addendum — current unscripted gate exploration
+
+- Runner: Codex relay using the connected Chrome extension
+- Date and local time: 2026-07-30, 13:57:53–14:03:45 CDT
+- Duration: 5 minutes 52 seconds
+- Principal: `h5-verification-7d842b89f3f04676886a1c4208582d42`
+- Surface: production SPA, `/ws`, `RunLoop`, `MemoryGateTurnRunner`, and real
+  local Spine; deterministic downstream model
+- Viewports: 1440×900, 390×844, 320×568, then 390×844
+- Trace:
+  [h5-exploration-trace.jsonl](../i1/2026-07-30-closure/h5-exploration-trace.jsonl)
+
+This addendum deliberately explores only volatile review choices. I stopped
+before Continue, so none of my verification clicks became committed feedback.
+
+1. **Action:** I created a fresh desktop thread beside the live five-unit
+   synthetic principal.
+   **Screenshot:** [18](../i1/2026-07-30-closure/18-h5-explore-arrival-1440x900.jpg).
+   **Observation:** The empty transcript and populated Memory rail made the
+   pending relationship clear without exposing the foreign owner population.
+2. **Action:** I sent the H5 handoff prompt and waited for the first-turn gate.
+   **Screenshot:** [19](../i1/2026-07-30-closure/19-h5-explore-gate-open-1440x900.jpg).
+   **Observation:** Four pinned cards and one near miss rendered with full
+   bodies and feature scores before any model text; the hard pause was obvious.
+3. **Action:** I plain-clicked × on the not-relevant fixture.
+   **Screenshot:** [20](../i1/2026-07-30-closure/20-h5-explore-volatile-remove.jpg).
+   **Observation:** The card stayed visible, gained `Removed · not relevant`,
+   and the sticky count fell from four to three without another dialog.
+4. **Action:** I clicked Restore on that same card.
+   **Screenshot:** [21](../i1/2026-07-30-closure/21-h5-explore-restore.jpg).
+   **Observation:** The original selected styling and four-memory summary
+   returned immediately; no stale reason remained.
+5. **Action:** I Alt-clicked × on the wrong fixture.
+   **Screenshot:** [22](../i1/2026-07-30-closure/22-h5-explore-reason-menu.jpg).
+   **Observation:** The anchored picker offered Wrong, Never, and Cancel
+   without hiding the card body or footer.
+6. **Action:** I pressed Escape from the reason picker.
+   **Screenshot:** [23](../i1/2026-07-30-closure/23-h5-explore-reason-menu-escape.jpg).
+   **Observation:** Only the picker closed; the gate and four selections
+   remained, confirming Escape was local rather than a gate bypass.
+7. **Action:** I clicked `+ Add` on the telescope near miss.
+   **Screenshot:** [24](../i1/2026-07-30-closure/24-h5-explore-near-miss-added.jpg).
+   **Observation:** The card visibly became Added and the summary rose to five
+   memories without committing anything.
+8. **Action:** I resized the open gate to exactly 390×844.
+   **Screenshot:** [25](../i1/2026-07-30-closure/25-h5-explore-phone-gate-390x844.jpg).
+   **Observation:** The same decision state survived the breakpoint; the
+   footer stayed thumb-reachable and no page-level horizontal clipping
+   appeared.
+9. **Action:** I scrolled the phone gate through the lower cards.
+   **Screenshot:** [26](../i1/2026-07-30-closure/26-h5-explore-phone-scrolled.jpg).
+   **Observation:** Every card remained reachable while Stop run and Continue
+   stayed fixed rather than becoming stranded below the content.
+10. **Action:** I reloaded the real page before submitting.
+    **Screenshot:** [27](../i1/2026-07-30-closure/27-h5-explore-reload-resets-volatile.jpg).
+    **Observation:** The daemon reconstructed the same injection, while the
+    unsubmitted add-back correctly reset to zero. That separation between
+    authoritative gate and volatile draft decisions felt safe.
+11. **Action:** I clicked the narrow visible backdrop edge.
+    **Screenshot:** [28](../i1/2026-07-30-closure/28-h5-explore-backdrop-inert.jpg).
+    **Observation:** Nothing dismissed or advanced; the modal remained the
+    only interactive surface.
+12. **Action:** I pressed Escape with Continue focused.
+    **Screenshot:** [29](../i1/2026-07-30-closure/29-h5-explore-escape-hard-pause.jpg).
+    **Observation:** The gate again held. Focus remained visible, but no model
+    call or commit occurred.
+13. **Action:** I narrowed the unchanged hard pause to 320×568.
+    **Screenshot:** [30](../i1/2026-07-30-closure/30-h5-explore-narrow-320x568.jpg).
+    **Observation:** The title became dense but readable, and both footer
+    actions remained present at the smallest explored frame.
+14. **Action:** I restored 390×844.
+    **Screenshot:** [31](../i1/2026-07-30-closure/31-h5-explore-restored-390x844.jpg).
+    **Observation:** The gate returned without losing its injection identity
+    or selected count.
+15. **Action:** I clicked Stop run rather than Continue.
+    **Screenshot:** [32](../i1/2026-07-30-closure/32-h5-explore-stopped-without-feedback.jpg).
+    **Observation:** The transcript retained a clear stopped boundary and the
+    gate dismissed without starting the model.
+
+The retained trace contains seed, prepare, and exact cleanup only: there is no
+commit, feedback, wrong-resolution PATCH, or model call. All five exact IDs
+were tombstoned. Judgment: **PASS WITH RECORDED FRICTION**. The existing
+owner-taste items remain reserved for the human hold; this replay found no new
+mechanical failure.

@@ -1,6 +1,6 @@
 # H6 live memory-panel walkthrough
 
-Status: **PASS WITH RECORDED FRICTION**
+Status: **PASS WITH RECORDED FRICTION — I1 RULE-8 RE-EXECUTED**
 
 This is the first-person record for SPEC B.6 rule 8. It must be completed only
 after a runner drives the production SPA and WebSocket daemon through the
@@ -207,3 +207,82 @@ canonical conflict, or turn the unscripted segment into scripted DOM calls.
   deliberate scrolling. The 32px composer target found during exploration was
   fixed and recorded in Decision 015 before handoff.
 - Overall H6 builder verdict: **PASS WITH RECORDED FRICTION**
+
+## I1 closure addendum — unscripted non-mutating panel exploration
+
+- Runner: Codex relay using the connected Chrome extension
+- Date and local time: 2026-07-30, 14:05:18–14:10:22 CDT
+- Duration: 5 minutes 4 seconds
+- Principal: `h6-verification-c41b8bc54edb495b89563414f9eb16fa`
+- Surface: production SPA, `/ws`, `RunLoop`, `MemoryGateTurnRunner`,
+  `MemoryPanelController`, and real local Spine; deterministic downstream model
+- Viewports: 1440×900 and 390×844
+- Trace:
+  [h6-exploration-trace.jsonl](../i1/2026-07-30-closure/h6-exploration-trace.jsonl)
+
+I committed the unchanged first gate to establish a real frozen context, then
+chose only refresh, draft, reload, navigation, resize, and drawer actions. I
+did not save, pin, unpin, remove, or stage a conflict.
+
+1. **Action:** I created a fresh desktop thread with the five-unit synthetic
+   principal visible.
+   **Screenshot:** [33](../i1/2026-07-30-closure/33-h6-explore-arrival-1440x900.jpg).
+   **Observation:** Five current-principal cards appeared in the rail; the
+   foreign sentinel was absent, and the empty transcript was clearly separate
+   from stored memory.
+2. **Action:** I sent the H6 context prompt and left the three injected cards
+   selected.
+   **Screenshot:** [34](../i1/2026-07-30-closure/34-h6-explore-gate-open.jpg).
+   **Observation:** The gate stopped the model with three selected and two
+   near misses, all readable before Continue.
+3. **Action:** I clicked Continue without changing a decision.
+   **Screenshot:** [35](../i1/2026-07-30-closure/35-h6-explore-context-panel.jpg).
+   **Observation:** The answer named retain/remove/frozen-edit present and pin
+   absent. The panel matched it exactly: three In context, two Stored.
+4. **Action:** I clicked Refresh on the authoritative panel.
+   **Screenshot:** [36](../i1/2026-07-30-closure/36-h6-explore-refreshed.jpg).
+   **Observation:** The same three/two relationship returned without a flash
+   of incorrect scope or a foreign row.
+5. **Action:** I opened Edit body on the Stored conflict fixture.
+   **Screenshot:** [37](../i1/2026-07-30-closure/37-h6-explore-editor-open.jpg).
+   **Observation:** The editor expanded in place with the authoritative body,
+   explicit Cancel, and Save body controls.
+6. **Action:** I replaced the textarea with an intentionally unsaved draft.
+   **Screenshot:** [38](../i1/2026-07-30-closure/38-h6-explore-unsaved-draft.jpg).
+   **Observation:** The draft was clearly local and no success or revision
+   state appeared prematurely.
+7. **Action:** I reloaded the real page without saving.
+   **Screenshot:** [39](../i1/2026-07-30-closure/39-h6-explore-reload-discards-draft.jpg).
+   **Observation:** The editor disappeared, the original server body returned,
+   and the two-message transcript plus context split survived. The draft did
+   not write or resurrect.
+8. **Action:** I created another local thread.
+   **Screenshot:** [40](../i1/2026-07-30-closure/40-h6-explore-fresh-thread-all-stored.jpg).
+   **Observation:** All five units correctly read Stored in the untouched
+   thread; no relationship leaked from the first thread.
+9. **Action:** I clicked the original two-message thread in the visible rail.
+   **Screenshot:** [41](../i1/2026-07-30-closure/41-h6-explore-return-context-restored.jpg).
+   **Observation:** The exact three In-context/two-Stored split and original
+   answer returned immediately.
+10. **Action:** I resized that restored thread to 390×844.
+    **Screenshot:** [42](../i1/2026-07-30-closure/42-h6-explore-phone-shell-390x844.jpg).
+    **Observation:** The transcript stayed readable and the Memory 5 trigger
+    was obvious without exposing the desktop rail.
+11. **Action:** I clicked Memory 5 to open the mobile drawer.
+    **Screenshot:** [43](../i1/2026-07-30-closure/43-h6-explore-memory-drawer-390x844.jpg).
+    **Observation:** Back received focus, the same relationship badges were
+    present, and the underlying chat was visually subordinate.
+12. **Action:** I scrolled the drawer to the two Stored cards.
+    **Screenshot:** [44](../i1/2026-07-30-closure/44-h6-explore-memory-drawer-scrolled.jpg).
+    **Observation:** Both lower cards and their actions were reachable without
+    horizontal overflow or losing the Back control.
+13. **Action:** I pressed Escape from the drawer.
+    **Screenshot:** [45](../i1/2026-07-30-closure/45-h6-explore-drawer-escape-return.jpg).
+    **Observation:** Only the drawer closed; focus returned to Memory 5 and the
+    original context answer remained visible.
+
+The trace contains the unchanged prepare/commit, one deterministic model call,
+read-only panel lists, and exact cleanup. It contains no user panel PATCH.
+Cleanup tombstoned the five visible IDs and foreign sentinel and returned
+`remaining_active_ids=[]`. Judgment: **PASS WITH RECORDED FRICTION**; card
+density remains the previously recorded taste concern, with no new defect.

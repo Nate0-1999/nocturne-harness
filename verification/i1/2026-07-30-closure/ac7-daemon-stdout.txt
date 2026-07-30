@@ -1,0 +1,23 @@
+Complete stdout from the single AC7 Harness fixture process
+Source: fresh Harness clone b2eebec65fe8473757e78aae5ba88677418c67c7
+Command surface: production SPA + /ws daemon + RunLoop + MemoryGateTurnRunner
+
+INFO:     Started server process [64648]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8770 (Press CTRL+C to quit)
+INFO:     127.0.0.1:63441 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63441 - "GET /assets/index-Dt_D5MJl.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63442 - "GET /assets/index-DDGQkXt0.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63443 - "WebSocket /ws" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:63442 - "GET /favicon.svg HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [64648]
+
+No other stdout was emitted. In particular, there is no reloader, replacement
+PID, traceback, unhandled exception, or crash. The same-action frames are in
+ac7-wire-trace.jsonl because the production daemon reports memory degradation
+over its C.7 wire rather than duplicating it to stdout.

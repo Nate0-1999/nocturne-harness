@@ -1,0 +1,12 @@
+Fresh-clone Spine stdout, credential-free excerpt
+Project: nocturne_i1_fresh
+Image source: 5c9ac726dbd7da6e12e0020f684be4bf50712d68
+
+2026-07-30T18:40:00.885269413Z INFO  [alembic.runtime.migration] Running upgrade  -> 0001, Create the authoritative SPEC C.2 schema and seed scorer v0.
+2026-07-30T18:40:00.906769354Z INFO  [alembic.runtime.migration] Running upgrade 0001 -> 0002, Add inert workspace-relative origin metadata to memory heads.
+2026-07-30T18:40:01.471395490Z INFO:     Started server process [1]
+2026-07-30T18:40:01.471425657Z INFO:     Application startup complete.
+2026-07-30T18:43:18.778858435Z INFO:     172.19.0.1:43554 - "POST /v1/inject/prepare HTTP/1.1" 200 OK
+2026-07-30T18:43:28.311629368Z INFO:     172.19.0.1:55794 - "POST /v1/inject/commit HTTP/1.1" 200 OK
+2026-07-30T18:43:33.241322950Z INFO:     172.19.0.1:55794 - "POST /v1/memories HTTP/1.1" 201 Created
+2026-07-30T18:44:04.981807981Z INFO:     172.19.0.1:41028 - "POST /v1/memories HTTP/1.1" 409 Conflict

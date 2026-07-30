@@ -1,12 +1,10 @@
 # H4 live chat-shell walkthrough
 
-Status: **PARTIAL — CANONICAL WALKTHROUGH PASSED; RULE-8 EXPLORATION OPEN**
+Status: **PASS WITH RECORDED FRICTION — I1 RULE-8 RE-EXECUTED**
 
 This is the current first-person canonical replay executed during I1. It is
-builder evidence, not the independent M1 judge verdict. The canonical path
-passed, but this file does not yet satisfy B.6 rule 8: the exploratory
-Queue→Stop finding below lacks a dedicated screenshot and timed five-minute
-unscripted segment.
+builder evidence, not the independent M1 judge verdict. The original canonical
+path and the dated I1 closure addendum below together satisfy B.6 rule 8.
 
 ## Session record
 
@@ -71,5 +69,70 @@ state as canonical evidence: I restarted the fixture and repeated the full
 mobile path cleanly. Both controls were readable and operable, but their
 proximity deserves fresh attention in J.
 
-The next I1 relay must execute and record that unscripted segment before H4's
-SOP can be called re-executed.
+## I1 closure addendum — unscripted phone exploration
+
+- Runner: Codex relay using the connected Chrome extension
+- Date and local time: 2026-07-30, 13:51:10–13:56:57 CDT
+- Duration: 5 minutes 47 seconds
+- Surface: production SPA, `/ws`, daemon, and `RunLoop`; H4's deterministic
+  model/release fixture
+- Viewports: 390×844, 320×844, then 390×844
+- Trace:
+  [h4-exploration-trace.jsonl](../i1/2026-07-30-closure/h4-exploration-trace.jsonl)
+
+I chose each next action from the rendered state rather than replaying the
+canonical script:
+
+1. **Action:** I opened the phone thread drawer and created a fresh thread.
+   **Screenshot:** [08](../i1/2026-07-30-closure/08-h4-explore-arrival-390x844.jpg).
+   **Observation:** The drawer closed onto a quiet, usable 390px composer. The
+   browser-local catalog was long, but the selected daemon thread was clearly
+   empty and authoritative.
+2. **Action:** I typed the release-boundary prompt and clicked Send.
+   **Screenshot:** [09](../i1/2026-07-30-closure/09-h4-explore-streaming-390x844.jpg).
+   **Observation:** Partial model text and usage appeared while Stop stayed
+   reachable. Queue was visibly present but disabled until I typed another
+   prompt, which made the state understandable.
+3. **Action:** While the first run was active, I typed a second prompt and
+   clicked Queue.
+   **Screenshot:** [10](../i1/2026-07-30-closure/10-h4-explore-queued-controls-390x844.jpg).
+   **Observation:** The queued message appeared exactly once with `Queued 1`.
+   Queue and Stop were both legible, though their vertical proximity remained
+   the same friction noted in the canonical replay.
+4. **Action:** I reloaded the real page with the active and queued turns still
+   open.
+   **Screenshot:** [11](../i1/2026-07-30-closure/11-h4-explore-reloaded-queue-390x844.jpg).
+   **Observation:** Hydration restored the same partial answer and one queued
+   prompt without duplication or loss.
+5. **Action:** I opened the Threads drawer during that active queue.
+   **Screenshot:** [12](../i1/2026-07-30-closure/12-h4-explore-thread-drawer-active.jpg).
+   **Observation:** The selected thread read Live, while the obscured
+   transcript retained the queued marker. The drawer felt like navigation,
+   not a second source of run state.
+6. **Action:** I pressed Escape from the drawer.
+   **Screenshot:** [13](../i1/2026-07-30-closure/13-h4-explore-drawer-escape-return.jpg).
+   **Observation:** Only the drawer closed; the active run and queue remained
+   untouched, and focus returned to Threads.
+7. **Action:** I narrowed the same live state to 320×844.
+   **Screenshot:** [14](../i1/2026-07-30-closure/14-h4-explore-narrow-320x844.jpg).
+   **Observation:** The transcript and both run controls still fit without
+   horizontal clipping. At this width the Stop/Queue stack felt denser, but I
+   could still distinguish the controls.
+8. **Action:** I restored 390×844 after observing the narrow state.
+   **Screenshot:** [15](../i1/2026-07-30-closure/15-h4-explore-restored-390x844.jpg).
+   **Observation:** The queue and partial text survived the breakpoint round
+   trip exactly.
+9. **Action:** I clicked Stop on the first turn.
+   **Screenshot:** [16](../i1/2026-07-30-closure/16-h4-explore-stop-promotes-queued.jpg).
+   **Observation:** The first answer became `Stopped · partial kept`, and the
+   queued prompt immediately promoted to the active run. That promotion was a
+   useful surprise, but it was coherent and preserved both turns.
+10. **Action:** After observing the promoted run, I clicked Stop again.
+    **Screenshot:** [17](../i1/2026-07-30-closure/17-h4-explore-both-stopped.jpg).
+    **Observation:** Both partial answers remained readable with distinct
+    stopped boundaries; the composer returned to its idle state.
+
+The trace records one `prompt.queued`, two authoritative reload snapshots, and
+two `run.done(cancelled, partial=true)` events for the same visible journey.
+No defect surfaced. Judgment: **PASS WITH RECORDED FRICTION**; Queue/Stop
+proximity remains an owner-taste item for J, not a builder failure.
