@@ -157,6 +157,8 @@ def remember_model(
         ("openrouter:minimax/minimax-m3", "openrouter_api_key", "OPENROUTER_API_KEY", "openrouter"),
         ("anthropic:claude-sonnet-4-6", "anthropic_api_key", "ANTHROPIC_API_KEY", "anthropic"),
         ("openai:gpt-4o-mini", "openai_api_key", "OPENAI_API_KEY", "openai"),
+        ("openai-chat:gpt-4o-mini", "openai_api_key", "OPENAI_API_KEY", "openai"),
+        ("openai-responses:gpt-4o-mini", "openai_api_key", "OPENAI_API_KEY", "openai"),
     ],
 )
 def test_resolve_model_uses_settings_key_not_ambient_environment(
@@ -180,6 +182,8 @@ def test_resolve_model_uses_settings_key_not_ambient_environment(
         ("openrouter:minimax/minimax-m3", "OPENROUTER_API_KEY"),
         ("anthropic:claude-sonnet-4-6", "ANTHROPIC_API_KEY"),
         ("openai:gpt-4o-mini", "OPENAI_API_KEY"),
+        ("openai-chat:gpt-4o-mini", "OPENAI_API_KEY"),
+        ("openai-responses:gpt-4o-mini", "OPENAI_API_KEY"),
     ],
 )
 def test_resolve_model_rejects_missing_settings_key_even_if_ambient_key_exists(
@@ -191,16 +195,35 @@ def test_resolve_model_rejects_missing_settings_key_even_if_ambient_key_exists(
         resolve_model(model_name, settings())
 
 
-def test_resolve_model_rejects_unknown_provider_instead_of_using_ambient_credentials(
+def test_resolve_model_uses_pydantic_provider_registry_for_other_model_strings(
     monkeypatch,
 ) -> None:
-    monkeypatch.setenv("GOOGLE_API_KEY", "ambient-key-must-not-win")
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
+
+    resolved = resolve_model("ollama:llama3.2", settings())
+
+    assert resolved.provider is not None
+    assert resolved.provider.name == "ollama"
+
+
+def test_resolve_model_rejects_a_string_unknown_to_pydantic_ai() -> None:
+    with pytest.raises(ModelConfigurationError, match="Unknown provider"):
+        resolve_model("not-a-provider:model", settings())
+
+
+def test_resolve_model_normalizes_a_missing_optional_provider_dependency(
+    monkeypatch,
+) -> None:
+    def missing_provider_dependency(name: str) -> None:
+        raise ImportError(f"missing optional dependency for {name}")
+
+    monkeypatch.setattr("harness.agent.infer_provider", missing_provider_dependency)
 
     with pytest.raises(
         ModelConfigurationError,
-        match="use openrouter, anthropic, or openai",
+        match="provider dependency is unavailable.*bedrock",
     ):
-        resolve_model("google-gla:gemini-2.5-pro", settings())
+        resolve_model("bedrock:anthropic.claude-v2", settings())
 
 
 def test_agent_lazily_resolves_only_the_selected_model() -> None:

@@ -1,0 +1,72 @@
+I1 read-only PostgreSQL replay receipt
+Captured: 2026-07-30
+Stack: local spine/docker-compose.yml Postgres
+Source: verification/i1/replay.sql
+
+CANONICAL GATE
+injection_id: 757de54b-d1b1-4a0a-8294-a3fbd43e3161
+prompt_text: How should you format the I1 acceptance handoff now?
+scorer_version: v0 (one distinct value)
+
+rank  memory_id                              shown_as   score       outcome
+1     5835cff3-a653-4627-8dbe-debdaed13694   pinned     0.437507    removed:not_relevant
+2     694df145-0caf-46f0-97c4-8ba343f6e7c7   near_miss  0.401854    NULL
+3     a93ae3df-9f28-4f68-95a9-d786deb284ad   near_miss  0.300565    added_back
+
+Every row has features._memory.
+
+FROZEN SNAPSHOT VERSUS CURRENT HEAD
+memory_id                              frozen body                                                     current head                                                     still matches
+5835cff3-a653-4627-8dbe-debdaed13694   In I1 demonstrations, concise bullet lists are better...        In I1 demonstrations, concise bullet lists are better...        true
+694df145-0caf-46f0-97c4-8ba343f6e7c7   The I1 demo quarantine candidate says every release note...      The I1 demo quarantine candidate says every release note...      true
+a93ae3df-9f28-4f68-95a9-d786deb284ad   The observatory stores cobalt meteor counts in drawer seven.    The observatory stores cobalt meteor counts in drawer eight...   false
+
+NEVER PASSES
+injection_id                           shown_as   persisted score   outcome
+c0261ada-60da-41f3-a031-4ff1caa4fd6e   injected   0.571009          removed:never
+3c207a91-ac1b-49b5-8d66-9d965e049f2c   near_miss  0.419201          removed:never
+7fcd64c0-30fc-454f-922b-c9dc54227bc5   near_miss  0.268908          removed:never
+
+Quarantined head:
+id: 694df145-0caf-46f0-97c4-8ba343f6e7c7
+status: quarantined
+revision: 5
+bias: -0.45000002
+stats.never_kills: 3
+stats.removals: 3
+stats.injections: 1
+
+Fourth gate:
+injection_id: 22d9370f-fc31-427c-9b3d-2de458428144
+rows for quarantined memory: 0
+
+AC2 PREFERENCE HEAD
+id: 5835cff3-a653-4627-8dbe-debdaed13694
+label: I1 demo formatting preference
+status: active
+revision at receipt: 11
+pin: true
+embedding non-null: true
+
+r1 editor=agent:harness-agent parent=NULL
+   For I1 demonstrations, prefer concise bullet lists over dense paragraphs.
+r2 editor=agent:harness-agent parent=01KYT1A7TZ6PFHXR6QQ5G22RJB
+   In I1 demonstrations, concise bullet lists are better than dense paragraphs.
+   reason: Rephrased to a more direct affirmative; replaces prior wording
+   with the user's preferred phrasing.
+
+AC5 /REMEMBER AND PANEL EDIT LINEAGE
+memory_id: a93ae3df-9f28-4f68-95a9-d786deb284ad
+r1 rev_uid=01KYT1CE0BVVMRB3VFZCFT1SR8 parent=NULL
+   editor=user reason=NULL body=The observatory stores cobalt meteor counts in drawer seven.
+r2 rev_uid=01KYT1GFMQXZVD2FBD74FQWTK7 parent=01KYT1CE0BVVMRB3VFZCFT1SR8
+   editor=system:inject reason=inject/commit:added_back
+   body=The observatory stores cobalt meteor counts in drawer seven.
+r3 rev_uid=01KYT1TKQ5BHXXEWM0QJPXCMV3 parent=01KYT1GFMQXZVD2FBD74FQWTK7
+   editor=user reason=panel/edit
+   body=The observatory stores cobalt meteor counts in drawer eight after the I1 panel edit.
+
+The database does not persist rendered final_block as a separate column.
+The integrated prepare -> commit test proves removed/add-back block membership
+while this receipt proves the frozen rows, prompt, scorer version, scores, and
+outcomes.

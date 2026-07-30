@@ -3,6 +3,11 @@
 Judge-owned milestone evidence belongs under `verification/<milestone>/`.
 Agent Zero reserves that structure and carries forward the governing law.
 
+The current integration handoff is
+[`verification/i1/README.md`](i1/README.md). It maps the I1 builder dry run,
+the evidence that passed, and the remaining C.8/SOP closure gaps. I1 is
+currently returned TODO; this is not an independent judge verdict.
+
 ## SPEC B.6 — Verification doctrine (judge law), verbatim
 
 > A milestone is DONE when a judge agent, acting as the user, experiences every

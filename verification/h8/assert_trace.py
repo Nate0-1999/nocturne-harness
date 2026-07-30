@@ -86,8 +86,18 @@ def _assert_trace(records: list[dict[str, Any]]) -> None:
     snapshot_threads = {record.get("thread_id") for record in snapshots}
     if not prompt_threads.issubset(snapshot_threads):
         raise AssertionError("both canonical threads were not hydrated from snapshots")
-    if any(record.get("resolved_model") != MODEL_SLUG for record in snapshots):
-        raise AssertionError("a thread snapshot omitted or changed the resolved model")
+    first_start_by_thread = {
+        run_started.get("thread_id"): records.index(run_started) for run_started in starts
+    }
+    for index, record in enumerate(records):
+        if record.get("kind") != "wire.thread.snapshot":
+            continue
+        resolved_model = record.get("resolved_model")
+        if resolved_model not in {None, MODEL_SLUG}:
+            raise AssertionError("a thread snapshot changed the resolved model")
+        first_start = first_start_by_thread.get(record.get("thread_id"))
+        if first_start is not None and index > first_start and resolved_model != MODEL_SLUG:
+            raise AssertionError("a post-resolution thread snapshot omitted the resolved model")
 
     _assert_model_calls(records)
     created_id = _assert_create(records, prompts[0])

@@ -1,0 +1,251 @@
+{
+  "heads": [
+    {
+      "id": "5835cff3-a653-4627-8dbe-debdaed13694",
+      "pin": true,
+      "bias": 0,
+      "body": "In I1 demonstrations, concise bullet lists are better than dense paragraphs.",
+      "label": "I1 demo formatting preference",
+      "stats": {
+        "removals": 1,
+        "citations": 0,
+        "injections": 7,
+        "never_kills": 0,
+        "last_injected_at": "2026-07-30T17:43:34.695443+00:00"
+      },
+      "status": "active",
+      "revision": 11,
+      "has_embedding": true
+    },
+    {
+      "id": "694df145-0caf-46f0-97c4-8ba343f6e7c7",
+      "pin": false,
+      "bias": -0.45000002,
+      "body": "The I1 demo quarantine candidate says every release note should mention a magenta llama.",
+      "label": "I1 demo: magenta llama rule",
+      "stats": {
+        "removals": 3,
+        "citations": 0,
+        "injections": 1,
+        "never_kills": 3,
+        "last_injected_at": "2026-07-30T17:35:56.534245+00:00"
+      },
+      "status": "quarantined",
+      "revision": 5,
+      "has_embedding": true
+    },
+    {
+      "id": "a93ae3df-9f28-4f68-95a9-d786deb284ad",
+      "pin": false,
+      "bias": 0,
+      "body": "The observatory stores cobalt meteor counts in drawer eight after the I1 panel edit.",
+      "label": "Cobalt meteor counts stored in drawer seven",
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 1,
+        "never_kills": 0,
+        "last_injected_at": "2026-07-30T17:35:15.600339+00:00"
+      },
+      "status": "active",
+      "revision": 3,
+      "has_embedding": true
+    }
+  ],
+  "never_events": [
+    {
+      "rank": 2,
+      "score": 0.5710091,
+      "outcome": "removed:never",
+      "features": {
+        "kw": 0.3333333333333333,
+        "sem": 0.6135782713203607,
+        "freq": 0.0,
+        "hist": 0.9997830760749777,
+        "proj": 0.5,
+        "time": 0.9998915321548522,
+        "_memory": {
+          "pin": false,
+          "body": "The I1 demo quarantine candidate says every release note should mention a magenta llama.",
+          "label": "I1 demo: magenta llama rule",
+          "updated_at": "2026-07-30T17:32:47.238486+00:00"
+        }
+      },
+      "shown_as": "injected",
+      "memory_id": "694df145-0caf-46f0-97c4-8ba343f6e7c7",
+      "prompt_text": "I1 quarantine pass one: how should release notes be formatted?",
+      "injection_id": "c0261ada-60da-41f3-a031-4ff1caa4fd6e",
+      "scorer_version": "v0"
+    },
+    {
+      "rank": 2,
+      "score": 0.41920146,
+      "outcome": "removed:never",
+      "features": {
+        "kw": 0.3333333333333333,
+        "sem": 0.6092653304901597,
+        "freq": 0.0,
+        "hist": 0.9996963944166416,
+        "proj": 0.5,
+        "time": 0.999981378580688,
+        "_memory": {
+          "pin": false,
+          "body": "The I1 demo quarantine candidate says every release note should mention a magenta llama.",
+          "label": "I1 demo: magenta llama rule",
+          "updated_at": "2026-07-30T17:36:39.691077+00:00"
+        }
+      },
+      "shown_as": "near_miss",
+      "memory_id": "694df145-0caf-46f0-97c4-8ba343f6e7c7",
+      "prompt_text": "I1 quarantine pass two: how should release notes be formatted?",
+      "injection_id": "3c207a91-ac1b-49b5-8d66-9d965e049f2c",
+      "scorer_version": "v0"
+    },
+    {
+      "rank": 4,
+      "score": 0.268908,
+      "outcome": "removed:never",
+      "features": {
+        "kw": 0.3333333333333333,
+        "sem": 0.6085778342085298,
+        "freq": 0.0,
+        "hist": 0.9996318390682705,
+        "proj": 0.5,
+        "time": 0.9999796234059156,
+        "_memory": {
+          "pin": false,
+          "body": "The I1 demo quarantine candidate says every release note should mention a magenta llama.",
+          "label": "I1 demo: magenta llama rule",
+          "updated_at": "2026-07-30T17:37:32.974266+00:00"
+        }
+      },
+      "shown_as": "near_miss",
+      "memory_id": "694df145-0caf-46f0-97c4-8ba343f6e7c7",
+      "prompt_text": "I1 quarantine pass three: how should release notes be formatted?",
+      "injection_id": "7fcd64c0-30fc-454f-922b-c9dc54227bc5",
+      "scorer_version": "v0"
+    }
+  ],
+  "canonical_gate": [
+    {
+      "rank": 1,
+      "score": 0.43750674,
+      "outcome": "removed:not_relevant",
+      "features": {
+        "kw": 0.125,
+        "sem": 0.3750185314766531,
+        "freq": 0.0,
+        "hist": 0.9999916971730293,
+        "proj": 0.5,
+        "time": 0.9999958485778975,
+        "_memory": {
+          "pin": true,
+          "body": "In I1 demonstrations, concise bullet lists are better than dense paragraphs.",
+          "label": "I1 demo formatting preference",
+          "updated_at": "2026-07-30T17:34:47.331535+00:00"
+        }
+      },
+      "shown_as": "pinned",
+      "memory_id": "5835cff3-a653-4627-8dbe-debdaed13694",
+      "prompt_text": "How should you format the I1 acceptance handoff now?",
+      "injection_id": "757de54b-d1b1-4a0a-8294-a3fbd43e3161",
+      "scorer_version": "v0"
+    },
+    {
+      "rank": 2,
+      "score": 0.4018542,
+      "outcome": null,
+      "features": {
+        "kw": 0.125,
+        "sem": 0.290172459746805,
+        "freq": 0.0,
+        "hist": 0.9998540719433137,
+        "proj": 0.5,
+        "time": 0.9999270333095879,
+        "_memory": {
+          "pin": false,
+          "body": "The I1 demo quarantine candidate says every release note should mention a magenta llama.",
+          "label": "I1 demo: magenta llama rule",
+          "updated_at": "2026-07-30T17:32:47.238486+00:00"
+        }
+      },
+      "shown_as": "near_miss",
+      "memory_id": "694df145-0caf-46f0-97c4-8ba343f6e7c7",
+      "prompt_text": "How should you format the I1 acceptance handoff now?",
+      "injection_id": "757de54b-d1b1-4a0a-8294-a3fbd43e3161",
+      "scorer_version": "v0"
+    },
+    {
+      "rank": 3,
+      "score": 0.30056491,
+      "outcome": "added_back",
+      "features": {
+        "kw": 0.0,
+        "sem": 0.09662126445837871,
+        "freq": 0.0,
+        "hist": 0.9998719600717286,
+        "proj": 0.5,
+        "time": 0.9999359779864552,
+        "_memory": {
+          "pin": false,
+          "body": "The observatory stores cobalt meteor counts in drawer seven.",
+          "label": "Cobalt meteor counts stored in drawer seven",
+          "updated_at": "2026-07-30T17:33:02.848767+00:00"
+        }
+      },
+      "shown_as": "near_miss",
+      "memory_id": "a93ae3df-9f28-4f68-95a9-d786deb284ad",
+      "prompt_text": "How should you format the I1 acceptance handoff now?",
+      "injection_id": "757de54b-d1b1-4a0a-8294-a3fbd43e3161",
+      "scorer_version": "v0"
+    }
+  ],
+  "selected_revisions": [
+    {
+      "body": "For I1 demonstrations, prefer concise bullet lists over dense paragraphs.",
+      "editor": "agent:harness-agent",
+      "reason": "",
+      "rev_uid": "01KYT1A7TZ6PFHXR6QQ5G22RJB",
+      "revision": 1,
+      "memory_id": "5835cff3-a653-4627-8dbe-debdaed13694",
+      "parent_uid": null
+    },
+    {
+      "body": "In I1 demonstrations, concise bullet lists are better than dense paragraphs.",
+      "editor": "agent:harness-agent",
+      "reason": "Rephrased to a more direct affirmative; replaces prior wording with the user's preferred phrasing.",
+      "rev_uid": "01KYT1B4G6W6WE29M6ZQ2KNF2F",
+      "revision": 2,
+      "memory_id": "5835cff3-a653-4627-8dbe-debdaed13694",
+      "parent_uid": "01KYT1A7TZ6PFHXR6QQ5G22RJB"
+    },
+    {
+      "body": "The observatory stores cobalt meteor counts in drawer seven.",
+      "editor": "user",
+      "reason": "",
+      "rev_uid": "01KYT1CE0BVVMRB3VFZCFT1SR8",
+      "revision": 1,
+      "memory_id": "a93ae3df-9f28-4f68-95a9-d786deb284ad",
+      "parent_uid": null
+    },
+    {
+      "body": "The observatory stores cobalt meteor counts in drawer seven.",
+      "editor": "system:inject",
+      "reason": "inject/commit:added_back",
+      "rev_uid": "01KYT1GFMQXZVD2FBD74FQWTK7",
+      "revision": 2,
+      "memory_id": "a93ae3df-9f28-4f68-95a9-d786deb284ad",
+      "parent_uid": "01KYT1CE0BVVMRB3VFZCFT1SR8"
+    },
+    {
+      "body": "The observatory stores cobalt meteor counts in drawer eight after the I1 panel edit.",
+      "editor": "user",
+      "reason": "panel/edit",
+      "rev_uid": "01KYT1TKQ5BHXXEWM0QJPXCMV3",
+      "revision": 3,
+      "memory_id": "a93ae3df-9f28-4f68-95a9-d786deb284ad",
+      "parent_uid": "01KYT1GFMQXZVD2FBD74FQWTK7"
+    }
+  ],
+  "fourth_gate_llama_rows": 0
+}

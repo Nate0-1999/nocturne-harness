@@ -77,9 +77,11 @@ uv run python verification/h5/assert_trace.py
 The assertion requires one prepare, explicit hard-pause observations at both
 gate stages, one review commit, the returned current `wrong_removed` unit, one
 exact `gate/wrong:edit` PATCH and result before the first model call, the exact
-committed `final_block` as the suffix of that model call's system-adjacent
-instructions, a second model call with only its static capability instructions
-and no prepare/gate block, and exact kept/removed/added-back membership.
+committed `final_block` as the suffix of both model calls' system-adjacent
+instructions, a second model call with no second prepare or gate, and exact
+kept/removed/added-back membership. The repeated block is the daemon-lifetime
+thread context frozen by A-024; only an accepted mid-thread removal re-renders
+it for a later model call.
 
 ## Desktop and phone evidence
 

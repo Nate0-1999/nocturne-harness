@@ -24,7 +24,9 @@ the first exact ID is cleaned.
 
 ## Proven outcomes
 
-- `thread.snapshot` and both `run.started` frames carry the exact
+- Before a dynamically resolved H9 thread starts, `thread.snapshot` carries
+  `resolved_model: null` and the UI truthfully shows its waiting state. Both
+  `run.started` frames, and every later hydrated snapshot, carry the exact
   `resolved_model` shown by the UI.
 - `/remember` makes one tools-free metadata completion containing one label and
   exactly `["markdown", "tables", "code"]`.

@@ -550,3 +550,29 @@ disabled fallbacks, an H9 browser selector, and a second label policy all exceed
 or contradict the enacted boundary. Closing provider-owned clients through
 private Pydantic internals is also rejected; explicit model ownership remains a
 small lifecycle follow-up rather than an H9 shutdown hack.
+
+## 018 — Delegate non-default model strings to Pydantic AI [P3]
+
+**Decision.** Keep explicit, settings-owned provider construction for the
+OpenRouter, Anthropic, and OpenAI routes exposed in Harness configuration.
+For every other provider prefix, delegate provider construction to Pydantic
+AI's installed provider registry and normalize its configuration errors at the
+Harness boundary. This supersedes Decision 008's rejection of all other direct
+providers. The browser still displays one daemon-resolved model per thread;
+this does not add a selector or provider-specific Harness settings.
+OpenAI's `openai`, `openai-chat`, and `openai-responses` aliases all remain on
+the settings-owned credential path. A registry provider whose optional package
+is not installed fails as a normalized configuration error rather than leaking
+an import exception.
+
+**Motivation.** C.8 requires the cold-start chat path to accept a Pydantic AI
+model string, including local providers. Repeating Pydantic AI's provider
+matrix in Harness would drift and violate DRY. The three default hosted routes
+retain the stronger settings-owned secret boundary, while opt-in providers use
+their upstream configuration contract.
+
+**Rejected alternatives.** Keeping the hard-coded three-provider rejection
+contradicts C.8. Adding one Harness setting and constructor per upstream
+provider duplicates a registry the adapter already depends on. A browser model
+selector is M2 scope and is not needed to prove configuration-level model
+agnosticism.

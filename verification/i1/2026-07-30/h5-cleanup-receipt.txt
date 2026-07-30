@@ -1,0 +1,18 @@
+I1 H5 exact-ID cleanup receipt
+Captured read-only from the retained local Compose database: 2026-07-30
+
+principal_id|id|status|revision|label
+h5-verification-49c8665dfa8b4525a63f04d97916f3a3|0e6d5172-9be3-447e-8980-63c045b1148b|tombstoned|6|H5 proof — never
+h5-verification-49c8665dfa8b4525a63f04d97916f3a3|401ac76f-9c10-4457-9d87-9312fc997e0d|tombstoned|5|H5 proof — keep
+h5-verification-49c8665dfa8b4525a63f04d97916f3a3|466debf2-407f-4c6f-8e44-69e856edfc4a|tombstoned|7|H5 proof — wrong
+h5-verification-49c8665dfa8b4525a63f04d97916f3a3|4e5cf77d-98c5-419b-9096-d5f4db1ee038|tombstoned|3|H5 proof — add back
+h5-verification-49c8665dfa8b4525a63f04d97916f3a3|8491720b-3265-41c7-8990-3189c8596d25|tombstoned|6|H5 proof — not relevant
+h5-verification-4dab0524a75c4e2f9394ebea43078c5e|09f604b5-827c-471f-bb3c-681f3d28d4ac|tombstoned|5|H5 proof — not relevant
+h5-verification-4dab0524a75c4e2f9394ebea43078c5e|3e4e2517-1e23-465e-9380-0445a1b90d8f|tombstoned|5|H5 proof — never
+h5-verification-4dab0524a75c4e2f9394ebea43078c5e|afcbf019-0853-4681-be51-963c25f20c40|tombstoned|6|H5 proof — wrong
+h5-verification-4dab0524a75c4e2f9394ebea43078c5e|cf1b6176-09f4-4fee-9adb-7fc8fa6fa07c|tombstoned|4|H5 proof — keep
+h5-verification-4dab0524a75c4e2f9394ebea43078c5e|e0225ec5-9b58-4069-9680-5d01d2bd13a3|tombstoned|3|H5 proof — add back
+
+Result: all ten exact memory IDs retained by the desktop and mobile seeded
+traces are tombstoned. This receipt does not infer cleanup from a principal
+scan; its WHERE set was the exact IDs in those scenario.seeded records.

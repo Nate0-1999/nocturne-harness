@@ -9,8 +9,9 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, SecretStr, StrictStr
 from pydantic_ai import Agent, PromptedOutput, UsageLimits
+from pydantic_ai.exceptions import UserError
 from pydantic_ai.models import Model, infer_model
-from pydantic_ai.providers import Provider
+from pydantic_ai.providers import Provider, infer_provider
 from pydantic_ai.providers.anthropic import AnthropicProvider
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.providers.openrouter import OpenRouterProvider
@@ -41,7 +42,7 @@ REMEMBER_DRAFT_INSTRUCTION = (
 
 
 class ModelConfigurationError(ValueError):
-    """The selected hosted model has no configured credential."""
+    """The selected model cannot be constructed from its provider configuration."""
 
 
 class RememberDraft(BaseModel):
@@ -279,7 +280,7 @@ class HarnessAgent:
 
 
 def resolve_model(model: Model | str, settings: HarnessSettings) -> Model:
-    """Resolve a model using settings-owned credentials, never global env mutation."""
+    """Resolve default routes from settings and explicit others through Pydantic AI."""
 
     if not isinstance(model, str):
         return model
@@ -295,15 +296,22 @@ def resolve_model(model: Model | str, settings: HarnessSettings) -> Model:
             return AnthropicProvider(
                 api_key=_required_secret(settings.anthropic_api_key, "ANTHROPIC_API_KEY")
             )
-        if name == "openai":
+        if name in {"openai", "openai-chat", "openai-responses"}:
             return OpenAIProvider(
                 api_key=_required_secret(settings.openai_api_key, "OPENAI_API_KEY")
             )
-        raise ModelConfigurationError(
-            f"unsupported model provider {name!r}; use openrouter, anthropic, or openai"
-        )
+        return infer_provider(name)
 
-    return infer_model(model, provider_factory=provider_factory)
+    try:
+        return infer_model(model, provider_factory=provider_factory)
+    except ModelConfigurationError:
+        raise
+    except (UserError, ValueError) as exc:
+        raise ModelConfigurationError(str(exc)) from exc
+    except ImportError as exc:
+        raise ModelConfigurationError(
+            f"provider dependency is unavailable for {model!r}: {exc}"
+        ) from exc
 
 
 def _required_secret(value: SecretStr | None, name: str) -> str:

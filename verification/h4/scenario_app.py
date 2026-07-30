@@ -22,6 +22,7 @@ from fastapi import FastAPI
 
 from harness.daemon import create_app
 from harness.envelope import Envelope, EnvelopeFactory, MessageType, StopReason
+from harness.model_policy import ThreadModelResolution
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 
@@ -99,7 +100,9 @@ class ScenarioRunner:
         prompt: str,
         message_history: Sequence[object],
         emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
     ) -> TurnOutcome:
+        del model_resolution
         self._control.trace("runner.start", thread_id=thread_id, prompt=prompt)
         try:
             if prompt == "Map the release boundary and hold the queue open.":

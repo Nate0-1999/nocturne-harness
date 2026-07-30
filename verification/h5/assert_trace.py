@@ -201,10 +201,12 @@ def _assert_happy_path(records: list[dict[str, Any]]) -> None:
         raise AssertionError("the first model call does not end with the exact final_block")
     if not isinstance(second_instructions, str):
         raise AssertionError("the second model call lacks its static capability instructions")
-    if final_block in second_instructions:
-        raise AssertionError("the second prompt unexpectedly received the first injection block")
-    if first_instructions.removesuffix(f"\n{final_block}") != second_instructions:
-        raise AssertionError("first model instructions differ beyond the exact final_block suffix")
+    if not second_instructions.endswith(f"\n{final_block}"):
+        raise AssertionError("the second model call does not retain the exact frozen final_block")
+    if first_instructions.removesuffix(f"\n{final_block}") != second_instructions.removesuffix(
+        f"\n{final_block}"
+    ):
+        raise AssertionError("model instructions differ beyond the exact frozen final_block suffix")
     if first_model.get("prompt_sha256") != _digest(FIRST_PROMPT):
         raise AssertionError("first model invocation prompt differs")
     if second_model.get("prompt_sha256") != _digest(SECOND_PROMPT):
