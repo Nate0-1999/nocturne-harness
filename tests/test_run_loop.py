@@ -18,6 +18,7 @@ from harness.envelope import (
     ThreadSnapshotResponsePayload,
     WrongResolution,
 )
+from harness.model_policy import ThreadModelResolution
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 
@@ -129,7 +130,9 @@ class ControlledRunner:
         prompt: str,
         message_history: Sequence[object],
         emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
     ) -> TurnOutcome:
+        del model_resolution
         control = self.controls[prompt]
         self.calls.append((thread_id, prompt, tuple(message_history)))
         self.emitters[prompt] = emit
@@ -159,7 +162,9 @@ class NeverStartsRunner:
         prompt: str,
         message_history: Sequence[object],
         emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
     ) -> TurnOutcome:
+        del model_resolution
         raise AssertionError("an immediately cancelled runner must not start")
 
 
@@ -174,13 +179,45 @@ class ImmediateHistoryRunner:
         prompt: str,
         message_history: Sequence[object],
         emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
     ) -> TurnOutcome:
-        del thread_id, emit
+        del thread_id, emit, model_resolution
         history = tuple(message_history)
         self.calls.append((prompt, history))
         return TurnOutcome(
             StopReason.END_TURN,
             (*history, f"{prompt}:complete"),
+        )
+
+
+class RecordingResolver:
+    def __init__(self, resolutions: Mapping[str, ThreadModelResolution]) -> None:
+        self.resolutions = resolutions
+        self.calls: list[str] = []
+
+    async def resolve(self, thread_id: str) -> ThreadModelResolution:
+        self.calls.append(thread_id)
+        return self.resolutions[thread_id]
+
+
+class ResolutionRecordingRunner:
+    def __init__(self) -> None:
+        self.resolutions: list[ThreadModelResolution | None] = []
+
+    async def run(
+        self,
+        *,
+        thread_id: str,
+        prompt: str,
+        message_history: Sequence[object],
+        emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
+    ) -> TurnOutcome:
+        del thread_id, emit
+        self.resolutions.append(model_resolution)
+        return TurnOutcome(
+            StopReason.END_TURN,
+            (*message_history, f"{prompt}:complete"),
         )
 
 
@@ -197,8 +234,9 @@ class GateRunner:
         prompt: str,
         message_history: Sequence[object],
         emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
     ) -> TurnOutcome:
-        del thread_id
+        del thread_id, model_resolution
         self.decision = await emit.open_gate(
             {
                 **gate_value(),
@@ -228,8 +266,9 @@ class WrongResolutionGateRunner:
         prompt: str,
         message_history: Sequence[object],
         emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
     ) -> TurnOutcome:
-        del thread_id
+        del thread_id, model_resolution
         self.review = await emit.open_gate(
             {
                 **gate_value(),
@@ -259,8 +298,9 @@ class InvalidGateRunner:
         prompt: str,
         message_history: Sequence[object],
         emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
     ) -> TurnOutcome:
-        del thread_id, prompt, message_history
+        del thread_id, prompt, message_history, model_resolution
         invalid = card(INJECTED_ID, 0)
         await emit.open_gate(
             {
@@ -343,8 +383,9 @@ def test_run_loop_rejects_invalid_resolved_model(resolved_model: str) -> None:
 async def test_static_resolved_model_is_authoritative_on_start_and_snapshot() -> None:
     ids = Ids()
     model = "openrouter:minimax/minimax-m3"
+    runner = ResolutionRecordingRunner()
     loop = RunLoop(
-        ImmediateHistoryRunner(),
+        runner,
         factory(ids),
         resolved_model=model,
     )
@@ -367,7 +408,77 @@ async def test_static_resolved_model_is_authoritative_on_start_and_snapshot() ->
     snapshot = snapshot_sink.messages[0].payload
     assert isinstance(snapshot, ThreadSnapshotResponsePayload)
     assert snapshot.resolved_model == model
+    assert runner.resolutions == [None]
 
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_policy_resolution_occurs_once_at_first_run_and_is_thread_authoritative() -> None:
+    ids = Ids()
+    thread_one = ThreadModelResolution(
+        model="openrouter:vendor/one",
+        context_tokens=131_072,
+        policy="elbow",
+        price_sorted=True,
+    )
+    thread_two = ThreadModelResolution(
+        model="openrouter:vendor/two",
+        context_tokens=262_144,
+        policy="max",
+        price_sorted=True,
+    )
+    resolver = RecordingResolver({"thread-1": thread_one, "thread-2": thread_two})
+    runner = ResolutionRecordingRunner()
+    loop = RunLoop(runner, factory(ids), model_resolver=resolver)
+
+    before = Sink()
+    await loop.request_snapshot("thread-1", before)
+    await _wait_for_type_count(before, MessageType.THREAD_SNAPSHOT, 1)
+    initial = before.messages[0].payload
+    assert isinstance(initial, ThreadSnapshotResponsePayload)
+    assert initial.resolved_model is None
+
+    first_sink = Sink()
+    await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(1),
+        prompt="first",
+        sink=first_sink,
+    )
+    await _wait_for_done_count(first_sink, 1)
+    started = next(
+        message for message in first_sink.messages if message.type is MessageType.RUN_STARTED
+    )
+    assert payload(started)["resolved_model"] == thread_one.model
+    assert runner.resolutions == [thread_one]
+
+    await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(2),
+        prompt="second",
+        sink=first_sink,
+    )
+    await _wait_for_done_count(first_sink, 2)
+
+    second_sink = Sink()
+    await loop.submit(
+        thread_id="thread-2",
+        prompt_id=ulid(3),
+        prompt="other",
+        sink=second_sink,
+    )
+    await _wait_for_done_count(second_sink, 1)
+
+    assert resolver.calls == ["thread-1", "thread-2"]
+    assert runner.resolutions == [thread_one, thread_one, thread_two]
+
+    after = Sink()
+    await loop.request_snapshot("thread-1", after)
+    await _wait_for_type_count(after, MessageType.THREAD_SNAPSHOT, 1)
+    snapshot = after.messages[0].payload
+    assert isinstance(snapshot, ThreadSnapshotResponsePayload)
+    assert snapshot.resolved_model == thread_one.model
     await loop.close()
 
 
@@ -1038,9 +1149,11 @@ class RegressiveUsageRunner:
         prompt: str,
         message_history: Sequence[object],
         emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
     ) -> TurnOutcome:
-        await emit.usage(UsageSnapshot(2, 20, 4))
-        await emit.usage(UsageSnapshot(1, 20, 4))
+        del thread_id, prompt, message_history, model_resolution
+        await emit.usage(UsageSnapshot(2, 20, 4, 12, 3))
+        await emit.usage(UsageSnapshot(2, 20, 4, 11, 3))
         raise AssertionError("regression must fail before this line")
 
 
@@ -1059,6 +1172,8 @@ async def test_usage_regression_terminalizes_as_error_and_stale_cancel_is_scoped
         "requests": 2,
         "input_tokens": 20,
         "output_tokens": 4,
+        "cache_read_tokens": 12,
+        "cache_write_tokens": 3,
         "run_id": run_id,
     }
     done = next(message for message in sink.messages if message.type is MessageType.RUN_DONE)

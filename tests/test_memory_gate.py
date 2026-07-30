@@ -12,6 +12,7 @@ import pytest
 from harness.envelope import GateCommitPayload, StopReason, WrongResolution
 from harness.memory_gate import MemoryGateTurnRunner
 from harness.memory_panel import EMPTY_MEMORY_BLOCK, ThreadMemoryContextRegistry
+from harness.model_policy import ThreadModelResolution
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.spine_client import (
     InjectCommitRequest,
@@ -40,6 +41,7 @@ class RecordingDelegate:
     calls: list[tuple[str, str, tuple[object, ...], str | None, frozenset[UUID]]] = field(
         default_factory=list
     )
+    resolutions: list[ThreadModelResolution | None] = field(default_factory=list)
 
     async def run(
         self,
@@ -48,11 +50,13 @@ class RecordingDelegate:
         prompt: str,
         message_history: Sequence[object],
         emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
         system_instructions: str | None = None,
         excluded_memory_ids: frozenset[UUID] = frozenset(),
     ) -> TurnOutcome:
         del emit
         history = tuple(message_history)
+        self.resolutions.append(model_resolution)
         self.calls.append((thread_id, prompt, history, system_instructions, excluded_memory_ids))
         return TurnOutcome(StopReason.END_TURN, (*history, f"{prompt}:done"))
 
@@ -288,6 +292,52 @@ async def test_first_chat_blocks_commits_and_keeps_system_instructions_current()
     )
     assert len(spine.prepare_requests) == 1
     assert delegate.calls[-1][-2] == EMPTY_MEMORY_BLOCK
+
+
+@pytest.mark.asyncio
+async def test_thread_resolution_controls_prepare_context_and_reaches_both_model_paths() -> None:
+    spine = RecordingSpine()
+    delegate = RecordingDelegate()
+    runner = MemoryGateTurnRunner(
+        delegate,
+        spine,
+        context_factory(spine),
+        model_context_tokens=1_000_000,
+    )
+    resolution = ThreadModelResolution(
+        model="openrouter:vendor/selected",
+        context_tokens=131_072,
+        policy="elbow",
+        price_sorted=True,
+    )
+
+    await runner.run(
+        thread_id=THREAD_ID,
+        prompt="/remember keep this",
+        message_history=(),
+        emit=RecordingEmitter(),
+        model_resolution=resolution,
+    )
+    assert spine.prepare_requests == []
+    assert delegate.resolutions == [resolution]
+
+    emitted = RecordingEmitter()
+    chat = asyncio.create_task(
+        runner.run(
+            thread_id=THREAD_ID,
+            prompt="ordinary chat",
+            message_history=(),
+            emit=emitted,
+            model_resolution=resolution,
+        )
+    )
+    await asyncio.wait_for(emitted.opened.wait(), 1)
+    assert spine.prepare_requests[0].model_context_tokens == 131_072
+    assert emitted.decision is not None
+    emitted.decision.set_result(decision())
+    await asyncio.wait_for(chat, 1)
+
+    assert delegate.resolutions == [resolution, resolution]
 
 
 @pytest.mark.asyncio

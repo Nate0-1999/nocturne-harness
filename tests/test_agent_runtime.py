@@ -12,17 +12,20 @@ from pydantic_ai import models
 from pydantic_ai.messages import (
     ModelRequest,
     ModelResponse,
+    TextPart,
     ToolCallPart,
     ToolReturnPart,
     UserPromptPart,
 )
 from pydantic_ai.models.function import DeltaThinkingPart, DeltaToolCall, FunctionModel
 from pydantic_ai.models.test import TestModel
+from pydantic_ai.usage import RunUsage
 
-from harness.agent import HarnessAgent
-from harness.agent_runtime import PydanticAITurnRunner
+from harness.agent import HarnessAgent, RememberResult
+from harness.agent_runtime import PydanticAITurnRunner, _usage_snapshot
 from harness.config import HarnessSettings
 from harness.envelope import GateCommitPayload, StopReason
+from harness.model_policy import ThreadModelResolution
 from harness.run_protocol import UsageSnapshot
 from harness.spine_client import MemoryKind, SearchResponse, SimilarityMemoryCard
 from harness.tools_memory import MemoryToolContext
@@ -157,6 +160,156 @@ async def test_streams_typed_deltas_events_cumulative_usage_and_reusable_history
     assert second.stop_reason is StopReason.END_TURN
     assert second.message_history[: len(first.message_history)] == first.message_history
     assert requested_threads == ["thread-1", "thread-1"]
+
+
+@pytest.mark.asyncio
+async def test_openrouter_route_settings_are_fresh_sticky_and_price_sorted() -> None:
+    observed_settings: list[dict[str, Any] | None] = []
+
+    async def stream(_messages, info):
+        observed_settings.append(info.model_settings)
+        yield "answer"
+
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(),
+    )
+    resolution = ThreadModelResolution(
+        model="openrouter:minimax/minimax-m3",
+        context_tokens=1_000_000,
+        policy="elbow",
+        price_sorted=True,
+    )
+    for prompt in ("first", "second"):
+        await runner.run(
+            thread_id="thread-sticky",
+            prompt=prompt,
+            message_history=(),
+            emit=RecordingEmitter(),
+            model_resolution=resolution,
+        )
+
+    assert observed_settings == [
+        {
+            "extra_body": {"session_id": "thread-sticky"},
+            "openrouter_provider": {"sort": "price"},
+        },
+        {
+            "extra_body": {"session_id": "thread-sticky"},
+            "openrouter_provider": {"sort": "price"},
+        },
+    ]
+    assert observed_settings[0] is not observed_settings[1]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("model", "price_sorted", "expected"),
+    [
+        (
+            "openrouter:minimax/minimax-m3",
+            False,
+            {"extra_body": {"session_id": "thread-1"}},
+        ),
+        ("anthropic:claude-sonnet-4-6", False, None),
+    ],
+)
+async def test_pinned_routes_only_receive_provider_settings_they_can_use(
+    model: str,
+    price_sorted: bool,
+    expected: dict[str, Any] | None,
+) -> None:
+    observed: list[dict[str, Any] | None] = []
+
+    async def stream(_messages, info):
+        observed.append(info.model_settings)
+        yield "answer"
+
+    runner = PydanticAITurnRunner(
+        HarnessAgent(
+            settings(chat_model=model),
+            model=FunctionModel(stream_function=stream),
+        ),
+        lambda _: context(),
+    )
+    await runner.run(
+        thread_id="thread-1",
+        prompt="hello",
+        message_history=(),
+        emit=RecordingEmitter(),
+        model_resolution=ThreadModelResolution(
+            model=model,
+            context_tokens=100_000,
+            policy=f"pinned:{model}",
+            price_sorted=price_sorted,
+        ),
+    )
+
+    assert observed == [expected]
+
+
+def test_provider_cache_usage_is_retained_by_the_existing_usage_adapter() -> None:
+    assert _usage_snapshot(
+        RunUsage(
+            requests=1,
+            input_tokens=20,
+            output_tokens=4,
+            cache_read_tokens=12,
+            cache_write_tokens=3,
+        )
+    ) == UsageSnapshot(
+        requests=1,
+        input_tokens=20,
+        output_tokens=4,
+        cache_read_tokens=12,
+        cache_write_tokens=3,
+    )
+
+
+@pytest.mark.asyncio
+async def test_remember_dispatch_receives_the_same_thread_model_and_routing_settings() -> None:
+    marker = FunctionModel(function=lambda _messages, _info: ModelResponse(parts=[TextPart("x")]))
+
+    class RememberSpyAgent:
+        def __init__(self) -> None:
+            self.selected_names: list[str | None] = []
+            self.dispatch_calls: list[dict[str, Any]] = []
+
+        def model_for(self, name: str | None):
+            self.selected_names.append(name)
+            return marker
+
+        async def dispatch(self, _prompt: str, **kwargs: Any) -> RememberResult:
+            self.dispatch_calls.append(kwargs)
+            return RememberResult(True, "remembered")
+
+    spy = RememberSpyAgent()
+    resolution = ThreadModelResolution(
+        model="openrouter:vendor/selected",
+        context_tokens=131_072,
+        policy="max",
+        price_sorted=True,
+    )
+    emitted = RecordingEmitter()
+    runner = PydanticAITurnRunner(spy, lambda _: context())  # type: ignore[arg-type]
+
+    outcome = await runner.run(
+        thread_id="thread-remember",
+        prompt="/remember durable fact",
+        message_history=(),
+        emit=emitted,
+        model_resolution=resolution,
+    )
+
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert emitted.texts == ["remembered"]
+    assert spy.selected_names == [resolution.model]
+    assert len(spy.dispatch_calls) == 1
+    assert spy.dispatch_calls[0]["model"] is marker
+    assert spy.dispatch_calls[0]["model_settings"] == {
+        "extra_body": {"session_id": "thread-remember"},
+        "openrouter_provider": {"sort": "price"},
+    }
 
 
 @pytest.mark.asyncio

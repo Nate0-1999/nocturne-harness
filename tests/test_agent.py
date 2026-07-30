@@ -203,6 +203,20 @@ def test_resolve_model_rejects_unknown_provider_instead_of_using_ambient_credent
         resolve_model("google-gla:gemini-2.5-pro", settings())
 
 
+def test_agent_lazily_resolves_only_the_selected_model() -> None:
+    agent = HarnessAgent(
+        settings(
+            chat_model="anthropic:claude-sonnet-4-6",
+            anthropic_api_key=None,
+            openrouter_api_key="test-openrouter-key",
+        )
+    )
+
+    selected = agent.model_for("openrouter:minimax/minimax-m3")
+
+    assert selected is agent.model_for("openrouter:minimax/minimax-m3")
+
+
 @pytest.mark.asyncio
 async def test_chat_returns_output_and_reusable_full_history_with_exact_limits() -> None:
     calls: list[tuple[list[ModelMessage], AgentInfo]] = []
@@ -293,11 +307,16 @@ async def test_remember_uses_selected_model_once_without_tools_and_maps_global_u
         CreatedMemoryResponse(created=memory_unit(label="Editor preference", body="Use tabs."))
     )
     agent = HarnessAgent(settings(), model=default_model)
+    routing_settings = {
+        "extra_body": {"session_id": "thread-remember"},
+        "openrouter_provider": {"sort": "price"},
+    }
 
     result = await agent.dispatch(
         "/remember   Use tabs.  ",
         context=context(spine),
         model=selected_model,
+        model_settings=routing_settings,
     )
 
     assert result == RememberResult(
@@ -311,6 +330,7 @@ async def test_remember_uses_selected_model_once_without_tools_and_maps_global_u
     assert selected_calls[0][1].output_tools == []
     assert selected_calls[0][1].instructions is not None
     assert selected_calls[0][1].instructions.startswith(REMEMBER_DRAFT_INSTRUCTION)
+    assert selected_calls[0][1].model_settings == routing_settings
     assert default_model.last_model_request_parameters is None
     assert len(spine.create_requests) == 1
     request = spine.create_requests[0]

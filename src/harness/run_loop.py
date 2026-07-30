@@ -29,6 +29,10 @@ from harness.envelope import (
     ThreadSnapshotResponsePayload,
     UsagePayload,
 )
+from harness.model_policy import (
+    ThreadModelResolution,
+    ThreadModelResolver,
+)
 from harness.run_protocol import RunEmitter, TurnOutcome, TurnRunner, UsageSnapshot
 
 type EnvelopeSink = Callable[[Envelope], Awaitable[None]]
@@ -65,6 +69,7 @@ class _ThreadState:
     queued: deque[_Turn] = field(default_factory=deque)
     open_gate: GateOpenPayload | None = None
     resolved_model: str | None = None
+    model_resolution: ThreadModelResolution | None = None
 
 
 @dataclass(slots=True)
@@ -122,7 +127,10 @@ class RunLoop:
         *,
         run_id_factory: Callable[[], str] | None = None,
         resolved_model: str | None = None,
+        model_resolver: ThreadModelResolver | None = None,
     ) -> None:
+        if resolved_model is not None and model_resolver is not None:
+            raise ValueError("use either resolved_model or model_resolver, not both")
         if resolved_model is not None and (
             not isinstance(resolved_model, str)
             or not resolved_model
@@ -133,6 +141,7 @@ class RunLoop:
         self._factory = factory
         self._run_id_factory = run_id_factory or factory.new_id
         self._initial_resolved_model = resolved_model
+        self._model_resolver = model_resolver
         self._lock = asyncio.Lock()
         self._threads: dict[str, _ThreadState] = {}
         self._subscriptions: list[_Subscription] = []
@@ -226,9 +235,12 @@ class RunLoop:
         if not prompt.strip():
             raise ValueError("prompt must not be blank")
 
+        async with self._lock:
+            self._require_open()
         run_id = self._run_id_factory()
         # Validate both correlation IDs before mutating process state.
         RunStartedPayload(run_id=run_id, prompt_id=prompt_id)
+        model_resolution = await self._resolution_for_thread(thread_id)
         user_message: dict[str, Any] = {
             "message_id": prompt_id,
             "run_id": run_id,
@@ -246,6 +258,12 @@ class RunLoop:
         async with self._lock:
             self._require_open()
             state = self._state_for_locked(thread_id)
+            if state.model_resolution is None:
+                state.model_resolution = model_resolution
+                if model_resolution is not None:
+                    state.resolved_model = model_resolution.model
+            elif model_resolution is not None and state.model_resolution != model_resolution:
+                raise RuntimeError("thread model resolution changed after its first run")
             self._selected_thread_id = thread_id
             if sink is not None:
                 self._bind_sink_locked(sink, thread_id)
@@ -425,7 +443,7 @@ class RunLoop:
             ),
         )
         active.task = asyncio.create_task(
-            self._drive(thread_id, active, history),
+            self._drive(thread_id, active, history, state.model_resolution),
             name=f"harness-run-{turn.run_id}",
         )
         active.task.add_done_callback(
@@ -451,6 +469,7 @@ class RunLoop:
         thread_id: str,
         active: _ActiveRun,
         history: tuple[object, ...],
+        model_resolution: ThreadModelResolution | None,
     ) -> None:
         outcome: TurnOutcome | None = None
         stop_reason = StopReason.ERROR
@@ -460,6 +479,7 @@ class RunLoop:
                 prompt=active.turn.prompt,
                 message_history=history,
                 emit=_Emitter(self, thread_id, active),
+                model_resolution=model_resolution,
             )
             if not isinstance(outcome, TurnOutcome):
                 raise TypeError("turn runner must return TurnOutcome")
@@ -914,6 +934,18 @@ class RunLoop:
             self._threads[thread_id] = state
         return state
 
+    async def _resolution_for_thread(
+        self,
+        thread_id: str,
+    ) -> ThreadModelResolution | None:
+        async with self._lock:
+            state = self._threads.get(thread_id)
+            if state is not None and state.model_resolution is not None:
+                return state.model_resolution
+        if self._model_resolver is None:
+            return None
+        return await self._model_resolver.resolve(thread_id)
+
     @staticmethod
     def _require_thread_id(thread_id: str) -> None:
         if not isinstance(thread_id, str) or not thread_id.strip():
@@ -925,6 +957,8 @@ class RunLoop:
             current.requests >= previous.requests
             and current.input_tokens >= previous.input_tokens
             and current.output_tokens >= previous.output_tokens
+            and current.cache_read_tokens >= previous.cache_read_tokens
+            and current.cache_write_tokens >= previous.cache_write_tokens
         )
 
     @staticmethod
@@ -933,4 +967,6 @@ class RunLoop:
             "requests": value.requests,
             "input_tokens": value.input_tokens,
             "output_tokens": value.output_tokens,
+            "cache_read_tokens": value.cache_read_tokens,
+            "cache_write_tokens": value.cache_write_tokens,
         }

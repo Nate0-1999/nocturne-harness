@@ -1,0 +1,43 @@
+{
+  "complete_benchmark_rows": 101,
+  "decisions": {
+    "elbow": {
+      "reason": "elbow frontier contains a non-positive prompt price",
+      "result": "degenerate"
+    },
+    "floor:52": {
+      "benchmark_model": "x-ai/grok-4.5-20260708",
+      "completion_usd_per_m": "6.000000",
+      "context_tokens": 500000,
+      "intelligence_index": "53.8",
+      "prompt_usd_per_m": "2.000000",
+      "result": "selected",
+      "route": "x-ai/grok-4.5"
+    },
+    "max": {
+      "benchmark_model": "anthropic/claude-opus-5-20260723",
+      "completion_usd_per_m": "25.000000",
+      "context_tokens": 1000000,
+      "intelligence_index": "60.7",
+      "prompt_usd_per_m": "5.000000",
+      "result": "selected",
+      "route": "anthropic/claude-opus-5"
+    },
+    "slope:0.05": {
+      "benchmark_model": "minimax/minimax-m3-20260531",
+      "completion_usd_per_m": "0.6000000",
+      "context_tokens": 1048576,
+      "intelligence_index": "44.4",
+      "prompt_usd_per_m": "0.15000000",
+      "result": "selected",
+      "route": "minimax/minimax-m3"
+    }
+  },
+  "fetched_at": "2026-07-30T17:09:35.729167+00:00",
+  "frontier_rows": 8,
+  "source": "openrouter/artificial-analysis",
+  "unambiguous_model_routes": 330,
+  "zero_price_frontier_models": [
+    "cohere/north-mini-code-20260617"
+  ]
+}

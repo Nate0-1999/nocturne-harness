@@ -29,6 +29,11 @@ from harness.envelope import (
 )
 from harness.memory_gate import MemoryGateTurnRunner
 from harness.memory_panel import MemoryPanelController, ThreadMemoryContextRegistry
+from harness.model_policy import (
+    ModelPolicyResolver,
+    OpenRouterCatalogClient,
+    ThreadModelResolution,
+)
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.spine_client import SpineClient
@@ -68,8 +73,9 @@ class _UnavailableTurnRunner:
         prompt: str,
         message_history: Sequence[object],
         emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
     ) -> TurnOutcome:
-        del thread_id, prompt, emit
+        del thread_id, prompt, emit, model_resolution
         return TurnOutcome(
             stop_reason=StopReason.ERROR,
             message_history=tuple(message_history),
@@ -293,6 +299,18 @@ def create_dev_app(
         owned_spine = SpineClient(configured.spine_url, token.get_secret_value())
     owned_agent = agent or HarnessAgent(configured)
     factory = EnvelopeFactory(machine_id=machine_id, agent_id=agent_id)
+    openrouter_key = (
+        configured.openrouter_api_key.get_secret_value()
+        if configured.openrouter_api_key is not None
+        else None
+    )
+    model_catalog = OpenRouterCatalogClient(openrouter_key)
+    model_resolver = ModelPolicyResolver(
+        policy=configured.effective_model_policy_chat,
+        static_model=configured.chat_model,
+        static_context_tokens=configured.model_context_tokens,
+        catalog=model_catalog,
+    )
 
     def context_factory(thread_id: str) -> MemoryToolContext:
         try:
@@ -324,7 +342,7 @@ def create_dev_app(
         principal_id=principal_id,
         machine_id=machine_id,
     )
-    loop = RunLoop(runner, factory, resolved_model=configured.chat_model)
+    loop = RunLoop(runner, factory, model_resolver=model_resolver)
     app = create_app(
         web_dist,
         routes={MessageType.MEMORY_PANEL_UPDATE: panel.handle},
@@ -332,6 +350,7 @@ def create_dev_app(
         envelope_factory=factory,
     )
     app.router.add_event_handler("shutdown", owned_spine.aclose)
+    app.router.add_event_handler("shutdown", model_catalog.aclose)
     return app
 
 

@@ -14,6 +14,7 @@ from pydantic_ai.providers import Provider
 from pydantic_ai.providers.anthropic import AnthropicProvider
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.providers.openrouter import OpenRouterProvider
+from pydantic_ai.settings import ModelSettings
 from pydantic_ai.usage import RunUsage
 
 from harness.commands import remember_command_text
@@ -83,7 +84,10 @@ class HarnessAgent:
         model: Model | None = None,
     ) -> None:
         self._settings = settings
-        self._default_model = model or resolve_model(settings.chat_model, settings)
+        self._default_model = model
+        self._models_by_name: dict[str, Model] = (
+            {settings.chat_model: model} if model is not None else {}
+        )
         self._usage_limits = UsageLimits(
             request_limit=settings.run_request_limit,
             total_tokens_limit=settings.run_total_tokens_limit,
@@ -121,6 +125,11 @@ class HarnessAgent:
     def usage_limits(self) -> UsageLimits:
         return self._usage_limits
 
+    def model_for(self, model: Model | str | None = None) -> Model:
+        """Return one cached settings-owned model instance for a resolved route."""
+
+        return self._select_model(model)
+
     async def chat(
         self,
         prompt: str,
@@ -128,6 +137,7 @@ class HarnessAgent:
         context: MemoryToolContext,
         message_history: Sequence[Any] | None = None,
         model: Model | str | None = None,
+        model_settings: ModelSettings | None = None,
     ) -> ChatResult:
         """Run one ordinary chat turn with memory tools and bounded usage."""
 
@@ -136,6 +146,7 @@ class HarnessAgent:
             deps=context,
             message_history=message_history,
             model=self._select_model(model),
+            model_settings=model_settings,
             usage_limits=self._usage_limits,
         )
         if not isinstance(result.output, str):
@@ -151,6 +162,7 @@ class HarnessAgent:
         *,
         context: MemoryToolContext,
         model: Model | str | None = None,
+        model_settings: ModelSettings | None = None,
         usage: RunUsage | None = None,
         raise_model_errors: bool = False,
     ) -> RememberResult:
@@ -165,6 +177,7 @@ class HarnessAgent:
             draft_result = await self._label_agent.run(
                 f"Memory:\n{body}",
                 model=selected_model,
+                model_settings=model_settings,
                 usage_limits=self._label_usage_limits,
                 usage=usage,
             )
@@ -229,6 +242,7 @@ class HarnessAgent:
         context: MemoryToolContext,
         message_history: Sequence[Any] | None = None,
         model: Model | str | None = None,
+        model_settings: ModelSettings | None = None,
         usage: RunUsage | None = None,
         raise_model_errors: bool = False,
     ) -> DispatchResult:
@@ -240,6 +254,7 @@ class HarnessAgent:
                 remembered_text,
                 context=context,
                 model=model,
+                model_settings=model_settings,
                 usage=usage,
                 raise_model_errors=raise_model_errors,
             )
@@ -248,12 +263,19 @@ class HarnessAgent:
             context=context,
             message_history=message_history,
             model=model,
+            model_settings=model_settings,
         )
 
     def _select_model(self, model: Model | str | None) -> Model:
         if model is None:
-            return self._default_model
-        return resolve_model(model, self._settings)
+            model = self._settings.chat_model
+        if not isinstance(model, str):
+            return model
+        resolved = self._models_by_name.get(model)
+        if resolved is None:
+            resolved = resolve_model(model, self._settings)
+            self._models_by_name[model] = resolved
+        return resolved
 
 
 def resolve_model(model: Model | str, settings: HarnessSettings) -> Model:

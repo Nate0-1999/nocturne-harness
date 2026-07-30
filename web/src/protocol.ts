@@ -79,6 +79,8 @@ export interface Usage {
   requests: number
   input_tokens: number
   output_tokens: number
+  cache_read_tokens: number
+  cache_write_tokens: number
 }
 
 export interface QueuedPrompt {
@@ -444,7 +446,13 @@ function parseUsage(value: unknown): Usage | null {
     !Number.isInteger(value.input_tokens) ||
     (value.input_tokens as number) < 0 ||
     !Number.isInteger(value.output_tokens) ||
-    (value.output_tokens as number) < 0
+    (value.output_tokens as number) < 0 ||
+    (value.cache_read_tokens !== undefined &&
+      (!Number.isInteger(value.cache_read_tokens) ||
+        (value.cache_read_tokens as number) < 0)) ||
+    (value.cache_write_tokens !== undefined &&
+      (!Number.isInteger(value.cache_write_tokens) ||
+        (value.cache_write_tokens as number) < 0))
   ) {
     return null
   }
@@ -452,6 +460,8 @@ function parseUsage(value: unknown): Usage | null {
     requests: value.requests as number,
     input_tokens: value.input_tokens as number,
     output_tokens: value.output_tokens as number,
+    cache_read_tokens: (value.cache_read_tokens as number | undefined) ?? 0,
+    cache_write_tokens: (value.cache_write_tokens as number | undefined) ?? 0,
   }
 }
 

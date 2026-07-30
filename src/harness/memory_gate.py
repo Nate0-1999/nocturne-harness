@@ -8,6 +8,7 @@ from uuid import UUID
 
 from harness.commands import remember_command_text
 from harness.memory_panel import ThreadMemoryContextRegistry
+from harness.model_policy import ThreadModelResolution
 from harness.run_protocol import (
     RunEmitter,
     SystemInstructionTurnRunner,
@@ -73,6 +74,7 @@ class MemoryGateTurnRunner:
         prompt: str,
         message_history: Sequence[object],
         emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
     ) -> TurnOutcome:
         """Prepare, block for a valid decision, commit, then invoke the model."""
 
@@ -82,6 +84,7 @@ class MemoryGateTurnRunner:
                 prompt=prompt,
                 message_history=message_history,
                 emit=emit,
+                model_resolution=model_resolution,
             )
 
         # Claim before any fallible work. A cancelled or failed attempt must not
@@ -101,7 +104,11 @@ class MemoryGateTurnRunner:
                     project_key=context.project_key,
                     agent_kind=None,
                     prompt=prompt,
-                    model_context_tokens=self._model_context_tokens,
+                    model_context_tokens=(
+                        model_resolution.context_tokens
+                        if model_resolution is not None
+                        else self._model_context_tokens
+                    ),
                 )
             )
         except SpineClientError:
@@ -111,6 +118,7 @@ class MemoryGateTurnRunner:
                 prompt=prompt,
                 message_history=message_history,
                 emit=emit,
+                model_resolution=model_resolution,
             )
 
         decision = await emit.open_gate(
@@ -142,6 +150,7 @@ class MemoryGateTurnRunner:
                 message_history=message_history,
                 emit=emit,
                 additional_excluded_memory_ids=excluded_memory_ids,
+                model_resolution=model_resolution,
             )
 
         try:
@@ -161,6 +170,7 @@ class MemoryGateTurnRunner:
                 message_history=message_history,
                 emit=emit,
                 additional_excluded_memory_ids=excluded_memory_ids,
+                model_resolution=model_resolution,
             )
 
         for wrong in committed.wrong_removed:
@@ -178,6 +188,7 @@ class MemoryGateTurnRunner:
             message_history=message_history,
             emit=emit,
             additional_excluded_memory_ids=excluded_memory_ids,
+            model_resolution=model_resolution,
         )
 
     async def _resolve_wrong_memory(
@@ -252,6 +263,7 @@ class MemoryGateTurnRunner:
         message_history: Sequence[object],
         emit: RunEmitter,
         additional_excluded_memory_ids: frozenset[UUID] = frozenset(),
+        model_resolution: ThreadModelResolution | None = None,
     ) -> TurnOutcome:
         async with self._contexts.model_feedback_boundary(thread_id):
             context = self._contexts.snapshot(thread_id)
@@ -264,6 +276,7 @@ class MemoryGateTurnRunner:
                 prompt=prompt,
                 message_history=message_history,
                 emit=emit,
+                model_resolution=model_resolution,
                 system_instructions=system_instructions,
                 excluded_memory_ids=excluded_memory_ids,
             )

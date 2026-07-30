@@ -7,6 +7,7 @@ from harness.config import HarnessSettings
 def test_c5_defaults_are_local_minimax_with_bounded_runs_and_spine(monkeypatch) -> None:
     for name in (
         "CHAT_MODEL",
+        "MODEL_POLICY_CHAT",
         "SPINE_URL",
         "PRINCIPAL_ID",
         "MACHINE_ID",
@@ -26,6 +27,8 @@ def test_c5_defaults_are_local_minimax_with_bounded_runs_and_spine(monkeypatch) 
     )
 
     assert settings.chat_model == "openrouter:minimax/minimax-m3"
+    assert settings.model_policy_chat is None
+    assert settings.effective_model_policy_chat == "pinned:openrouter:minimax/minimax-m3"
     assert settings.spine_url == "http://localhost:8000"
     assert settings.principal_id == "local"
     assert settings.machine_id == "local-machine"
@@ -38,6 +41,7 @@ def test_c5_defaults_are_local_minimax_with_bounded_runs_and_spine(monkeypatch) 
 
 def test_settings_accept_environment_model_spine_and_limit_overrides(monkeypatch) -> None:
     monkeypatch.setenv("CHAT_MODEL", "anthropic:claude-sonnet-4-6")
+    monkeypatch.setenv("MODEL_POLICY_CHAT", "elbow")
     monkeypatch.setenv("SPINE_URL", "https://spine.example.test")
     monkeypatch.setenv("PRINCIPAL_ID", "principal-test")
     monkeypatch.setenv("MACHINE_ID", "machine-test")
@@ -49,6 +53,8 @@ def test_settings_accept_environment_model_spine_and_limit_overrides(monkeypatch
     settings = HarnessSettings(_env_file=None)
 
     assert settings.chat_model == "anthropic:claude-sonnet-4-6"
+    assert settings.model_policy_chat == "elbow"
+    assert settings.effective_model_policy_chat == "elbow"
     assert settings.spine_url == "https://spine.example.test"
     assert settings.principal_id == "principal-test"
     assert settings.machine_id == "machine-test"
@@ -77,3 +83,19 @@ def test_model_context_tokens_requires_a_real_integer(value: object) -> None:
 def test_configured_runtime_identities_cannot_be_empty(field: str) -> None:
     with pytest.raises(ValidationError):
         HarnessSettings(_env_file=None, **{field: ""})
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["", " max", "MAX", "pinned:", "slope:0", "floor:NaN", "budget:10"],
+)
+def test_model_policy_chat_rejects_values_outside_a021(value: str) -> None:
+    with pytest.raises(ValidationError):
+        HarnessSettings(_env_file=None, model_policy_chat=value)
+
+
+def test_superseded_model_policy_fields_do_not_exist() -> None:
+    settings = HarnessSettings(_env_file=None)
+
+    assert not hasattr(settings, "model_intelligence_floor")
+    assert not hasattr(settings, "provider_quantizations")

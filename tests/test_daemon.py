@@ -18,6 +18,7 @@ from harness.config import HarnessSettings
 from harness.daemon import EnvelopeSender, _build_web, create_app, create_dev_app
 from harness.envelope import Envelope, EnvelopeFactory, MessageType, StopReason
 from harness.memory_panel import EMPTY_MEMORY_BLOCK
+from harness.model_policy import ThreadModelResolution
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.spine_client import (
@@ -105,8 +106,9 @@ class CancellableRunner:
         prompt: str,
         message_history: Sequence[object],
         emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
     ) -> TurnOutcome:
-        del thread_id
+        del thread_id, model_resolution
         self.calls.append(prompt)
         if prompt != "first":
             await emit.text(f"answer:{prompt}")
@@ -424,6 +426,27 @@ def test_dev_app_wires_the_real_streaming_agent_adapter(tmp_path: Path) -> None:
     )
     assert all(message["machine_id"] == "machine-test" for message in messages)
     assert all(message["agent_id"] == "agent-test" for message in messages)
+
+
+def test_explicit_pinned_policy_does_not_resolve_unused_chat_model(tmp_path: Path) -> None:
+    settings = HarnessSettings(
+        _env_file=None,
+        spine_token="test-token",
+        chat_model="anthropic:claude-sonnet-4-6",
+        model_policy_chat="pinned:openrouter:minimax/minimax-m3",
+        anthropic_api_key=None,
+        openai_api_key=None,
+        openrouter_api_key="test-openrouter-key",
+    )
+
+    app = create_dev_app(
+        tmp_path,
+        settings=settings,
+        spine=FailingPrepareSpine(),  # type: ignore[arg-type]
+    )
+
+    with TestClient(app):
+        pass
 
 
 def test_dev_gate_round_trip_blocks_validates_commits_and_injects_system_block(

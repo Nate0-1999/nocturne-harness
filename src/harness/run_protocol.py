@@ -6,6 +6,7 @@ from typing import Protocol
 from uuid import UUID
 
 from harness.envelope import GateCommitPayload, StopReason
+from harness.model_policy import ThreadModelResolution
 
 
 @dataclass(frozen=True, slots=True)
@@ -15,9 +16,17 @@ class UsageSnapshot:
     requests: int = 0
     input_tokens: int = 0
     output_tokens: int = 0
+    cache_read_tokens: int = 0
+    cache_write_tokens: int = 0
 
     def __post_init__(self) -> None:
-        values = (self.requests, self.input_tokens, self.output_tokens)
+        values = (
+            self.requests,
+            self.input_tokens,
+            self.output_tokens,
+            self.cache_read_tokens,
+            self.cache_write_tokens,
+        )
         if any(type(value) is not int for value in values):
             raise TypeError("usage values must be integers")
         if min(values) < 0:
@@ -69,6 +78,7 @@ class TurnRunner(Protocol):
         prompt: str,
         message_history: Sequence[object],
         emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
     ) -> TurnOutcome: ...
 
 
@@ -82,6 +92,7 @@ class SystemInstructionTurnRunner(Protocol):
         prompt: str,
         message_history: Sequence[object],
         emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
         system_instructions: str | None = None,
         excluded_memory_ids: frozenset[UUID] = frozenset(),
     ) -> TurnOutcome: ...

@@ -242,7 +242,13 @@ function applyStarted(thread: ThreadState, payload: RunStartedPayload): ThreadSt
       prompt_id: payload.prompt_id,
       state: 'running',
     },
-    usage: { requests: 0, input_tokens: 0, output_tokens: 0 },
+    usage: {
+      requests: 0,
+      input_tokens: 0,
+      output_tokens: 0,
+      cache_read_tokens: 0,
+      cache_write_tokens: 0,
+    },
     queuedPrompts: thread.queuedPrompts.filter(
       (prompt) =>
         prompt.run_id !== payload.run_id && prompt.prompt_id !== payload.prompt_id,
@@ -459,6 +465,8 @@ function applyEvent(thread: ThreadState, event: DecodedServerEvent): ThreadState
               requests: event.payload.requests,
               input_tokens: event.payload.input_tokens,
               output_tokens: event.payload.output_tokens,
+              cache_read_tokens: event.payload.cache_read_tokens,
+              cache_write_tokens: event.payload.cache_write_tokens,
             },
           }
         : thread

@@ -24,12 +24,15 @@ from pydantic_ai.messages import (
     ToolCallPart,
     ToolReturnPart,
 )
+from pydantic_ai.models.openrouter import OpenRouterModelSettings
+from pydantic_ai.settings import ModelSettings
 from pydantic_ai.usage import RunUsage
 from pydantic_core import to_jsonable_python
 
 from harness.agent import HarnessAgent, RememberResult
 from harness.commands import remember_command_text
 from harness.envelope import StopReason
+from harness.model_policy import ThreadModelResolution
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.tools_memory import MemoryToolContext
 
@@ -54,6 +57,7 @@ class PydanticAITurnRunner:
         prompt: str,
         message_history: Sequence[object],
         emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
         system_instructions: str | None = None,
         excluded_memory_ids: frozenset[UUID] = frozenset(),
     ) -> TurnOutcome:
@@ -64,6 +68,10 @@ class PydanticAITurnRunner:
         run_usage = RunUsage()
         bridge = _EventBridge(emit)
         is_remember = remember_command_text(prompt) is not None
+        selected_model = self._agent.model_for(
+            model_resolution.model if model_resolution is not None else None
+        )
+        model_settings = _model_settings(model_resolution, thread_id)
 
         try:
             context = replace(
@@ -75,6 +83,8 @@ class PydanticAITurnRunner:
                     dispatched = await self._agent.dispatch(
                         prompt,
                         context=context,
+                        model=selected_model,
+                        model_settings=model_settings,
                         usage=run_usage,
                         raise_model_errors=True,
                     )
@@ -92,6 +102,8 @@ class PydanticAITurnRunner:
                     deps=context,
                     instructions=system_instructions,
                     message_history=cast(Sequence[ModelMessage], prior_history),
+                    model=selected_model,
+                    model_settings=model_settings,
                     usage_limits=self._agent.usage_limits,
                     usage=run_usage,
                     event_stream_handler=bridge.handle,
@@ -179,6 +191,8 @@ class _EventBridge:
             usage.requests < self._last_usage.requests
             or usage.input_tokens < self._last_usage.input_tokens
             or usage.output_tokens < self._last_usage.output_tokens
+            or usage.cache_read_tokens < self._last_usage.cache_read_tokens
+            or usage.cache_write_tokens < self._last_usage.cache_write_tokens
         ):  # pragma: no cover - pydantic-ai promises cumulative usage
             raise ValueError("pydantic-ai usage decreased during a run")
         self._last_usage = usage
@@ -197,6 +211,8 @@ def _usage_snapshot(usage: RunUsage) -> UsageSnapshot:
         requests=usage.requests,
         input_tokens=usage.input_tokens,
         output_tokens=usage.output_tokens,
+        cache_read_tokens=usage.cache_read_tokens,
+        cache_write_tokens=usage.cache_write_tokens,
     )
 
 
@@ -213,13 +229,33 @@ def _failure_usage(
         requests=len(responses),
         input_tokens=sum(message.usage.input_tokens for message in responses),
         output_tokens=sum(message.usage.output_tokens for message in responses),
+        cache_read_tokens=sum(message.usage.cache_read_tokens for message in responses),
+        cache_write_tokens=sum(message.usage.cache_write_tokens for message in responses),
     )
     current = _usage_snapshot(usage)
     return UsageSnapshot(
         requests=max(current.requests, captured_usage.requests),
         input_tokens=max(current.input_tokens, captured_usage.input_tokens),
         output_tokens=max(current.output_tokens, captured_usage.output_tokens),
+        cache_read_tokens=max(current.cache_read_tokens, captured_usage.cache_read_tokens),
+        cache_write_tokens=max(current.cache_write_tokens, captured_usage.cache_write_tokens),
     )
+
+
+def _model_settings(
+    resolution: ThreadModelResolution | None,
+    thread_id: str,
+) -> ModelSettings | None:
+    """Build a fresh per-run broker body; pydantic-ai mutates provider settings."""
+
+    if resolution is None or not resolution.uses_openrouter:
+        return None
+    settings: OpenRouterModelSettings = {
+        "extra_body": {"session_id": thread_id},
+    }
+    if resolution.price_sorted:
+        settings["openrouter_provider"] = {"sort": "price"}
+    return cast(ModelSettings, settings)
 
 
 def _new_captured_messages(

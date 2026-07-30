@@ -502,3 +502,51 @@ selector here would cross the packet fence. A second keyword completion wastes a
 request, while silently accepting an invalid list recreates the gate-day data
 defect H8 exists to close. Suppressing favicon errors in the fixture would hide
 a real baseline request instead of closing it in the product.
+
+## 017 — Auditable per-thread model policy and broker-sticky routing [P4, P4.2]
+
+**Decision.** Adopt Garden A-020, A-021, A-025, and A-026 as the executable H9
+boundary. Parse exactly `pinned:<model>`, `max`, `elbow`, `slope:<lambda>`, and
+`floor:<n>` for the M1 chat role; leave `MODEL_POLICY_CHAT` unset by default so
+the existing `CHAT_MODEL` behaves as a pinned route. Resolve immediately before
+the first run in each daemon-lifetime thread, retain one immutable resolution,
+and pass that exact model/context pair through `run.started`, snapshots, memory
+prepare, ordinary chat, and the tools-free `/remember` label call.
+
+Fetch the Artificial Analysis benchmark and model listings as one cache
+snapshot, fresh for strictly less than 24 hours, with a single-flight refresh
+and no stale reuse. Use `Decimal` prices normalized from dollars per token to
+dollars per million tokens. Implement the specified deterministic Pareto,
+signed-log elbow, lower-hull slope, max, floor, and tie rules. A zero-priced
+elbow frontier and every other unavailable or degenerate table use the existing
+static model/context fail-open. Join a selected benchmark canonical to one
+executable model-list route under A-026: prefer its single standard route over
+explicit variants, accept a sole variant-only route, and otherwise fail open;
+take both request ID and context length from that same row.
+
+Every OpenRouter call carries `session_id=thread_id`. Calls selected by a
+non-pinned policy additionally sort providers by price; pinned OpenRouter calls
+do not. Provider fallbacks remain at broker defaults. Create fresh per-run model
+settings, resolve provider clients lazily from the route actually selected,
+cache settings-owned Pydantic model objects by resolved route, and retain
+broker cache-read and cache-write token counts through the existing usage
+envelope and browser state. An explicit pinned policy therefore does not demand
+credentials for an unused static `CHAT_MODEL`. Keep the H8 thread-owned model
+display seam; the human model selector remains M2 scope.
+
+**Motivation.** One retained resolution prevents the visible model, memory
+budget, chat model, and label model from drifting apart as a conversation
+grows. Exact decimal policy math and one timestamped broker snapshot make the
+economic choice reproducible, while session stickiness preserves the prompt
+prefix whose repeated input cost motivated H9. Binding canonical benchmark data
+to a concrete standard route avoids silently opting into free, batch, or
+extended semantics and makes context accounting truthful.
+
+**Rejected alternatives.** Floats, epsilons, and silently dropping a free
+benchmark row make elbow results irreproducible. Reusing an expired table makes
+the 24-hour bound false. Selecting a context independently from the request ID
+can overstate the actual route. Opaque classifier routing, quantization filters,
+disabled fallbacks, an H9 browser selector, and a second label policy all exceed
+or contradict the enacted boundary. Closing provider-owned clients through
+private Pydantic internals is also rejected; explicit model ownership remains a
+small lifecycle follow-up rather than an H9 shutdown hack.

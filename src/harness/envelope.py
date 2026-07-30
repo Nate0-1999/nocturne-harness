@@ -146,6 +146,14 @@ class UsagePayload(_ExtensiblePayload):
     requests: NonNegativeInt
     input_tokens: NonNegativeInt
     output_tokens: NonNegativeInt
+    cache_read_tokens: NonNegativeInt = Field(
+        default=0,
+        exclude_if=lambda value: value == 0,
+    )
+    cache_write_tokens: NonNegativeInt = Field(
+        default=0,
+        exclude_if=lambda value: value == 0,
+    )
 
 
 class RunUsagePayload(UsagePayload):
