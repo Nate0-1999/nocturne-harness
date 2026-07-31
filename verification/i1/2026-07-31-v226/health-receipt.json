@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "principal_id": "nocturne-i1-20260731-7f26",
+  "machine_id": "i1-v226-sop-verification",
+  "agent_id": "i1-v226-agent",
+  "default_model": "openrouter:minimax/minimax-m3",
+  "create_attempts": 2,
+  "created_memory_id": "c358ab87-4d96-4696-a82d-02cfb5683121"
+}

@@ -1,0 +1,15 @@
+ active_count
+--------------
+            0
+(1 row)
+
+                  id                  |   status   | revision
+--------------------------------------+------------+----------
+ c358ab87-4d96-4696-a82d-02cfb5683121 | tombstoned |        2
+(1 row)
+
+          rev_uid           |         parent_uid         |              memory_id               | revision |        editor        |    origin_machine_id     |                    reason
+----------------------------+----------------------------+--------------------------------------+----------+----------------------+--------------------------+-----------------------------------------------
+ 01KYWJ689HPB2E2YNW83X6J03M |                            | c358ab87-4d96-4696-a82d-02cfb5683121 |        1 | agent:i1-v226-agent  | i1-v226-sop-verification |
+ 01KYWJDN92B6P1DZE3CVCPP5T2 | 01KYWJ689HPB2E2YNW83X6J03M | c358ab87-4d96-4696-a82d-02cfb5683121 |        2 | verification:i1-v226 | i1-v226-sop-verification | I1 v2.26 evidence cleanup: exact fixture only
+(2 rows)

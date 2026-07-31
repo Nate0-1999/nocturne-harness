@@ -1,13 +1,31 @@
 # I1 integration and acceptance-criteria dry run
 
-Status: **PASS — BUILDER INTEGRATION DRY RUN COMPLETE**
+Status: **PASS — BUILDER INTEGRATION DRY RUN + J1/J2 REPAIR COMPLETE**
 
-Date: 2026-07-30
+Date: 2026-07-31
 
 This is the completed I1 builder handoff required by Garden PLAN §5. Every C.8
 criterion now has experiential, traced, and named adversarial evidence where
 required. It does not self-certify M1: J remains an independent judge packet
-and must not start until the owner separately clears the H5 hold.
+and the prior failing verdict remains controlling until a fresh judge
+supersedes it. The owner separately cleared the H5 hold on 2026-07-30.
+
+## v2.26/v2.27 J1-J2 repair addendum
+
+The focused [2026-07-31 repair record](2026-07-31-v226/README.md) closes the
+two proof gaps named by the prior independent verdict:
+
+- J1 now has one live, same-thread `hello` trace on the default model,
+  `/model openrouter:x-ai/grok-4.5`, a journaled epoch-1 model-change event,
+  an updated header, and one hosted post-switch exchange.
+- J2 now has a fresh-word restatement that itself makes exactly one
+  `save_memory(force=false)` call and receives the real Spine `200 similar[]`
+  result; SQL proves the revision-1 embedded root before exact-ID cleanup.
+
+The addendum includes five valid JPEG/JFIF browser captures, a contiguous
+credential-free C.7/daemon/Spine trace, pre/post-cleanup SQL, receipts, and a
+deterministic audit script. This is builder repair evidence only. It does not
+rewrite or supersede `verification/m1/VERDICT.md`.
 
 ## Start the real local product
 
@@ -121,7 +139,8 @@ JPEG/JFIF and uses a matching `.jpg` extension.
 
 ## Relay boundary
 
-I1's builder charge is complete. A fresh independent judge may use this map and
-must re-execute the packet SOPs rather than trusting the builder record. Garden
-still gates J on the owner's separate H5 human-use hold; this I1 pass does not
-clear or bypass that taste/training-signal boundary.
+I1's builder charge and the focused J1/J2 repair are complete. The owner
+explicitly cleared the H5 human-use hold on 2026-07-30. J remains TODO for a
+fresh independent Claude Code session, which must re-execute the implicated
+slices rather than trusting this builder record. The prior FAIL remains
+authoritative until that judge supersedes it; D3 remains gated on a passing J.

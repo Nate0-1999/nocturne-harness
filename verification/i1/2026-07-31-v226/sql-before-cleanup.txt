@@ -1,0 +1,14 @@
+ active_count
+--------------
+            1
+(1 row)
+
+                  id                  |       principal_id        |            label            |                      body                       |    kind    |         keywords          | project_key |            thread_origin             | pin | status | revision |        embedding_model        | embedding_present | embedding_dimensions
+--------------------------------------+---------------------------+-----------------------------+-------------------------------------------------+------------+---------------------------+-------------+--------------------------------------+-----+--------+----------+-------------------------------+-------------------+----------------------
+ c358ab87-4d96-4696-a82d-02cfb5683121 | nocturne-i1-20260731-7f26 | Code indentation preference | I prefer tabs over spaces for code indentation. | preference | {tabs,spaces,indentation} |             | f72c7b55-6c53-476d-b7b1-b97a4ec29760 | f   | active |        1 | openai/text-embedding-3-small | t                 |                 1536
+(1 row)
+
+          rev_uid           | parent_uid |              memory_id               | revision |                      body                       |            label            |       editor        |    origin_machine_id     | reason
+----------------------------+------------+--------------------------------------+----------+-------------------------------------------------+-----------------------------+---------------------+--------------------------+--------
+ 01KYWJ689HPB2E2YNW83X6J03M |            | c358ab87-4d96-4696-a82d-02cfb5683121 |        1 | I prefer tabs over spaces for code indentation. | Code indentation preference | agent:i1-v226-agent | i1-v226-sop-verification |
+(1 row)
