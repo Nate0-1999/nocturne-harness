@@ -1,0 +1,16 @@
+                  id                  |   status   | revision 
+--------------------------------------+------------+----------
+ 653cf054-6e03-432e-9dc6-0a5d4f1772e3 | tombstoned |        2
+(1 row)
+
+          rev_uid           | revision |         parent_uid         |       editor        |                  reason                   
+----------------------------+----------+----------------------------+---------------------+-------------------------------------------
+ 01KYWM9JWPW21N0T0TZP62F91Q |        1 | <NULL>                     | agent:j-f648-agent  | 
+ 01KYWMKB0RC11P3DP1SYVJ37Y5 |        2 | 01KYWM9JWPW21N0T0TZP62F91Q | verification:j-f648 | J re-judgment cleanup: exact fixture only
+(2 rows)
+
+ active_units 
+--------------
+            0
+(1 row)
+

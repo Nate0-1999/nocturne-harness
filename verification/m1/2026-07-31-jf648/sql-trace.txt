@@ -1,0 +1,21 @@
+                  id                  |       principal_id       | status | revision |            label             | embedding_present | embedding_dims |        embedding_model        
+--------------------------------------+--------------------------+--------+----------+------------------------------+-------------------+----------------+-------------------------------
+ 653cf054-6e03-432e-9dc6-0a5d4f1772e3 | nocturne-j-20260731-f648 | active |        1 | indentation-tabs-over-spaces | t                 |           1536 | openai/text-embedding-3-small
+(1 row)
+
+          rev_uid           |              memory_id               | revision | parent_uid |       editor       |     origin_machine_id     
+----------------------------+--------------------------------------+----------+------------+--------------------+---------------------------
+ 01KYWM9JWPW21N0T0TZP62F91Q | 653cf054-6e03-432e-9dc6-0a5d4f1772e3 |        1 | <NULL>     | agent:j-f648-agent | m1-judge-sop-verification
+(1 row)
+
+ injection_events 
+------------------
+                0
+(1 row)
+
+              thread_id               |       principal_id       |        machine_id         |   agent_id   | stamped 
+--------------------------------------+--------------------------+---------------------------+--------------+---------
+ 8c60c48a-5153-45ac-a8fc-31ca94c15773 | nocturne-j-20260731-f648 | m1-judge-sop-verification | j-f648-agent | t
+ 7e118c08-10a5-4853-97f4-a5cd657b0487 | nocturne-j-20260731-f648 | m1-judge-sop-verification | j-f648-agent | t
+(2 rows)
+

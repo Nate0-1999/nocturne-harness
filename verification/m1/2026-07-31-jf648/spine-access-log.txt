@@ -1,0 +1,6 @@
+INFO:     172.19.0.1:35266 - "POST /v1/inject/prepare HTTP/1.1" 200 OK
+INFO:     172.19.0.1:51884 - "POST /v1/inject/commit HTTP/1.1" 200 OK
+INFO:     172.19.0.1:52730 - "POST /v1/inject/prepare HTTP/1.1" 200 OK
+INFO:     172.19.0.1:35542 - "POST /v1/inject/commit HTTP/1.1" 200 OK
+INFO:     172.19.0.1:35542 - "POST /v1/memories HTTP/1.1" 201 Created
+INFO:     172.19.0.1:34246 - "POST /v1/memories HTTP/1.1" 200 OK
