@@ -22,7 +22,11 @@ from pydantic_ai.models.test import TestModel
 from pydantic_ai.usage import RunUsage
 
 from harness.agent import HarnessAgent, RememberResult
-from harness.agent_runtime import PydanticAITurnRunner, _usage_snapshot
+from harness.agent_runtime import (
+    PydanticAITurnRunner,
+    _cacheable_prefix_tokens,
+    _usage_snapshot,
+)
 from harness.config import HarnessSettings
 from harness.envelope import GateCommitPayload, StopReason
 from harness.model_policy import ThreadModelResolution
@@ -203,6 +207,39 @@ async def test_openrouter_route_settings_are_fresh_sticky_and_price_sorted() -> 
 
 
 @pytest.mark.asyncio
+async def test_resolution_epochs_break_and_then_repin_openrouter_session_stickiness() -> None:
+    observed_settings: list[dict[str, Any] | None] = []
+
+    async def stream(_messages, info):
+        observed_settings.append(info.model_settings)
+        yield "answer"
+
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(),
+    )
+    for epoch in (0, 1, 2):
+        await runner.run(
+            thread_id="thread-sticky",
+            prompt=f"epoch {epoch}",
+            message_history=(),
+            emit=RecordingEmitter(),
+            model_resolution=ThreadModelResolution(
+                model="openrouter:minimax/minimax-m3",
+                context_tokens=1_000_000,
+                policy="human_command" if epoch else "pinned:openrouter:minimax/minimax-m3",
+                stickiness_epoch=epoch,
+            ),
+        )
+
+    assert [settings["extra_body"] for settings in observed_settings if settings is not None] == [
+        {"session_id": "thread-sticky"},
+        {"session_id": "thread-sticky:epoch:1"},
+        {"session_id": "thread-sticky:epoch:2"},
+    ]
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("model", "price_sorted", "expected"),
     [
@@ -264,6 +301,21 @@ def test_provider_cache_usage_is_retained_by_the_existing_usage_adapter() -> Non
         cache_read_tokens=12,
         cache_write_tokens=3,
     )
+
+
+def test_cacheable_prefix_uses_only_the_terminal_provider_response() -> None:
+    messages = (
+        ModelResponse(
+            parts=[TextPart("tool request")],
+            usage=RunUsage(input_tokens=100, output_tokens=10),
+        ),
+        ModelResponse(
+            parts=[TextPart("final")],
+            usage=RunUsage(input_tokens=140, output_tokens=7),
+        ),
+    )
+
+    assert _cacheable_prefix_tokens(messages) == 147
 
 
 @pytest.mark.asyncio

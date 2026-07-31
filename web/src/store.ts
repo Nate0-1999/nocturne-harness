@@ -333,7 +333,14 @@ function applyDelta(thread: ThreadState, payload: RunDeltaPayload): ThreadState 
     }
     messages.push(assistant)
   }
-  return { ...thread, messages }
+  return {
+    ...thread,
+    messages,
+    resolvedModel:
+      payload.kind === 'event' && payload.resolved_model !== undefined
+        ? payload.resolved_model
+        : thread.resolvedModel,
+  }
 }
 
 function applyDone(thread: ThreadState, payload: RunDonePayload): ThreadState {

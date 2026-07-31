@@ -28,6 +28,10 @@ class ModelCatalogUnavailable(RuntimeError):
     """The broker catalog cannot produce an auditable policy decision."""
 
 
+class NamedModelResolutionError(ValueError):
+    """A human `/model` target is not a valid broker-listed OpenRouter route."""
+
+
 @dataclass(frozen=True, slots=True)
 class ModelPolicy:
     """One parsed A-021 policy."""
@@ -73,11 +77,14 @@ class ThreadModelResolution:
     price_sorted: bool = False
     benchmark: BenchmarkModel | None = None
     catalog_fetched_at: datetime | None = None
+    stickiness_epoch: int = 0
 
     def __post_init__(self) -> None:
         _validate_model_name(self.model)
         if type(self.context_tokens) is not int or self.context_tokens <= 0:
             raise ValueError("context_tokens must be a positive integer")
+        if type(self.stickiness_epoch) is not int or self.stickiness_epoch < 0:
+            raise ValueError("stickiness_epoch must be a non-negative integer")
 
     @property
     def uses_openrouter(self) -> bool:
@@ -89,11 +96,15 @@ class ModelCatalogLoader(Protocol):
 
     async def load(self) -> ModelCatalog: ...
 
+    async def load_named_route(self, model_id: str) -> tuple[ModelRoute, datetime]: ...
+
 
 class ThreadModelResolver(Protocol):
     """Return the stable model decision for one daemon-lifetime thread."""
 
     async def resolve(self, thread_id: str) -> ThreadModelResolution: ...
+
+    async def resolve_named(self, thread_id: str, model: str) -> ThreadModelResolution: ...
 
 
 def parse_model_policy(value: str) -> ModelPolicy:
@@ -229,17 +240,7 @@ class OpenRouterCatalogClient:
             cached = self._fresh_cache()
             if cached is not None:
                 return cached
-            if not self._api_key:
-                raise ModelCatalogUnavailable(
-                    "OPENROUTER_API_KEY is unavailable for model policy lookup"
-                )
-            client = self._client
-            if client is None:
-                client = httpx.AsyncClient(
-                    timeout=httpx.Timeout(10.0),
-                    headers={"Authorization": f"Bearer {self._api_key}"},
-                )
-                self._client = client
+            client = self._request_client()
             try:
                 benchmark_response, models_response = await asyncio.gather(
                     client.get(
@@ -266,6 +267,26 @@ class OpenRouterCatalogClient:
             self._cached_at_monotonic = self._monotonic()
             return catalog
 
+    async def load_named_route(self, model_id: str) -> tuple[ModelRoute, datetime]:
+        """Fetch one exact model-list route without consulting benchmark cache."""
+
+        async with self._lock:
+            client = self._request_client()
+            try:
+                response = await client.get(f"{self._base_url}/models")
+                payload = _response_json(response, "models")
+                fetched_at = self._clock()
+                if fetched_at.tzinfo is None:
+                    raise ModelCatalogUnavailable("catalog clock returned a naive timestamp")
+                route = _parse_named_routes(payload).get(model_id)
+                if route is None:
+                    raise NamedModelResolutionError(f"unknown OpenRouter model: {model_id}")
+                return route, fetched_at
+            except (ModelCatalogUnavailable, NamedModelResolutionError):
+                raise
+            except (httpx.HTTPError, ValueError, TypeError) as exc:
+                raise ModelCatalogUnavailable("OpenRouter model-list request failed") from exc
+
     async def aclose(self) -> None:
         if self._owns_client and self._client is not None:
             await self._client.aclose()
@@ -278,6 +299,18 @@ class OpenRouterCatalogClient:
         if 0 <= age < _CATALOG_TTL_SECONDS:
             return self._cached
         return None
+
+    def _request_client(self) -> httpx.AsyncClient:
+        if not self._api_key:
+            raise ModelCatalogUnavailable(
+                "OPENROUTER_API_KEY is unavailable for model policy lookup"
+            )
+        if self._client is None:
+            self._client = httpx.AsyncClient(
+                timeout=httpx.Timeout(10.0),
+                headers={"Authorization": f"Bearer {self._api_key}"},
+            )
+        return self._client
 
 
 class ModelPolicyResolver:
@@ -317,6 +350,39 @@ class ModelPolicyResolver:
             resolved = await self._resolve_uncached(thread_id)
             self._resolutions[thread_id] = resolved
             return resolved
+
+    async def resolve_named(self, thread_id: str, model: str) -> ThreadModelResolution:
+        """Resolve one explicit OpenRouter model string without mutating thread truth."""
+
+        if not isinstance(thread_id, str) or not thread_id.strip():
+            raise ValueError("thread_id must not be blank")
+        if (
+            not isinstance(model, str)
+            or not model.startswith("openrouter:")
+            or model != model.strip()
+            or not model.removeprefix("openrouter:")
+        ):
+            raise NamedModelResolutionError("model must be an openrouter:<broker-model-id> string")
+        if self._catalog is None:
+            raise ModelCatalogUnavailable("OpenRouter catalog is not configured")
+
+        slug = model.removeprefix("openrouter:")
+        route, fetched_at = await self._catalog.load_named_route(slug)
+
+        resolved = ThreadModelResolution(
+            model=f"openrouter:{route.model_id}",
+            context_tokens=route.context_tokens,
+            policy="human_command",
+            catalog_fetched_at=fetched_at,
+        )
+        logger.info(
+            "named model resolved thread=%s requested=%s model=%s context_tokens=%s",
+            thread_id,
+            model,
+            resolved.model,
+            resolved.context_tokens,
+        )
+        return resolved
 
     async def _resolve_uncached(self, thread_id: str) -> ThreadModelResolution:
         if self._policy.kind == "pinned":
@@ -548,6 +614,34 @@ def _parse_model_routes(payload: object) -> Mapping[str, ModelRoute]:
             )
     if not resolved:
         raise ModelCatalogUnavailable("model table has no unambiguous positive-context routes")
+    return resolved
+
+
+def _parse_named_routes(payload: object) -> Mapping[str, ModelRoute]:
+    """Retain every exact positive-context broker ID for explicit `/model`."""
+
+    data = _payload_data(payload, "models")
+    resolved: dict[str, ModelRoute] = {}
+    for raw in data:
+        if not isinstance(raw, dict):
+            continue
+        model_id = raw.get("id")
+        context_length = raw.get("context_length")
+        if (
+            not isinstance(model_id, str)
+            or not model_id
+            or model_id != model_id.strip()
+            or type(context_length) is not int
+            or context_length <= 0
+        ):
+            continue
+        previous = resolved.get(model_id)
+        route = ModelRoute(model_id=model_id, context_tokens=context_length)
+        if previous is not None and previous != route:
+            raise ModelCatalogUnavailable("model table contains conflicting named routes")
+        resolved[model_id] = route
+    if not resolved:
+        raise ModelCatalogUnavailable("model table has no positive-context named routes")
     return resolved
 
 

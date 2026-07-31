@@ -112,10 +112,12 @@ class PydanticAITurnRunner:
                 raise TypeError("chat agent returned a non-text output")
             usage = _usage_snapshot(result.usage)
             await bridge.publish_usage(usage)
+            history = tuple(result.all_messages())
             return TurnOutcome(
                 StopReason("end_turn"),
-                tuple(result.all_messages()),
+                history,
                 usage,
+                cacheable_prefix_tokens=_cacheable_prefix_tokens(history),
             )
         except asyncio.CancelledError:
             usage = _failure_usage(run_usage, captured, prior_history)
@@ -242,6 +244,18 @@ def _failure_usage(
     )
 
 
+def _cacheable_prefix_tokens(messages: Sequence[object]) -> int:
+    """Return the terminal provider request plus response token footprint."""
+
+    response = next(
+        (message for message in reversed(messages) if isinstance(message, ModelResponse)),
+        None,
+    )
+    if response is None:
+        return 0
+    return response.usage.input_tokens + response.usage.output_tokens
+
+
 def _model_settings(
     resolution: ThreadModelResolution | None,
     thread_id: str,
@@ -250,8 +264,11 @@ def _model_settings(
 
     if resolution is None or not resolution.uses_openrouter:
         return None
+    session_id = thread_id
+    if resolution.stickiness_epoch:
+        session_id = f"{thread_id}:epoch:{resolution.stickiness_epoch}"
     settings: OpenRouterModelSettings = {
-        "extra_body": {"session_id": thread_id},
+        "extra_body": {"session_id": session_id},
     }
     if resolution.price_sorted:
         settings["openrouter_provider"] = {"sort": "price"}

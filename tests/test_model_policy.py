@@ -16,7 +16,9 @@ from harness.model_policy import (
     ModelPolicyConfigurationError,
     ModelPolicyResolver,
     ModelRoute,
+    NamedModelResolutionError,
     OpenRouterCatalogClient,
+    ThreadModelResolution,
     _parse_model_routes,
     lower_convex_hull,
     pareto_frontier,
@@ -312,7 +314,6 @@ async def test_catalog_normalizes_per_token_prices_and_caches_for_strictly_under
                 context_tokens=131_072,
             )
         }
-
         monotonic[0] += 86_399
         assert await client.load() is first
         assert len(requests) == 2
@@ -360,10 +361,22 @@ async def test_catalog_refresh_is_single_flight_and_expired_failure_never_reuses
 class FakeCatalog:
     value: ModelCatalog
     calls: int = 0
+    named_routes: dict[str, ModelRoute] | None = None
+    named_calls: list[str] | None = None
 
     async def load(self) -> ModelCatalog:
         self.calls += 1
         return self.value
+
+    async def load_named_route(self, model_id: str) -> tuple[ModelRoute, datetime]:
+        if self.named_calls is None:
+            self.named_calls = []
+        self.named_calls.append(model_id)
+        routes = self.value.model_routes if self.named_routes is None else self.named_routes
+        route = routes.get(model_id)
+        if route is None:
+            raise NamedModelResolutionError(f"unknown OpenRouter model: {model_id}")
+        return route, self.value.fetched_at
 
 
 def catalog(
@@ -430,6 +443,147 @@ async def test_nonpinned_resolution_joins_context_and_remains_stable_per_thread(
     assert first.price_sorted is True
     assert first.benchmark == row("vendor/model-v1", "52", "1", "2")
     assert table.calls == 1
+
+
+@pytest.mark.asyncio
+async def test_named_resolution_validates_exact_openrouter_route_without_mutating_thread() -> None:
+    initial = ThreadModelResolution(
+        model="openrouter:vendor/initial",
+        context_tokens=64_000,
+        policy="pinned:openrouter:vendor/initial",
+    )
+    table = FakeCatalog(
+        ModelCatalog(
+            rows=(),
+            model_routes={},
+            fetched_at=datetime(2026, 7, 31, tzinfo=UTC),
+        ),
+        named_routes={
+            "vendor/next:free": ModelRoute("vendor/next:free", 131_072),
+        },
+    )
+    resolver = ModelPolicyResolver(
+        policy="pinned:openrouter:vendor/initial",
+        static_model=initial.model,
+        static_context_tokens=initial.context_tokens,
+        catalog=table,
+    )
+
+    assert await resolver.resolve("thread-1") == initial
+    named = await resolver.resolve_named("thread-1", "openrouter:vendor/next:free")
+
+    assert named == ThreadModelResolution(
+        model="openrouter:vendor/next:free",
+        context_tokens=131_072,
+        policy="human_command",
+        catalog_fetched_at=datetime(2026, 7, 31, tzinfo=UTC),
+    )
+    assert await resolver.resolve("thread-1") == initial
+    assert table.named_calls == ["vendor/next:free"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "target",
+    ["vendor/next", "anthropic:claude-sonnet-4-6", "openrouter:", " openrouter:x/y"],
+)
+async def test_named_resolution_rejects_non_openrouter_model_strings(target: str) -> None:
+    resolver = ModelPolicyResolver(
+        policy="pinned:openrouter:vendor/initial",
+        static_model="openrouter:vendor/initial",
+        static_context_tokens=64_000,
+        catalog=FakeCatalog(catalog((), {"vendor/next": 100_000})),
+    )
+
+    with pytest.raises(NamedModelResolutionError):
+        await resolver.resolve_named("thread-1", target)
+
+
+@pytest.mark.asyncio
+async def test_named_resolution_rejects_unknown_broker_model() -> None:
+    resolver = ModelPolicyResolver(
+        policy="pinned:openrouter:vendor/initial",
+        static_model="openrouter:vendor/initial",
+        static_context_tokens=64_000,
+        catalog=FakeCatalog(catalog((), {"vendor/known": 100_000})),
+    )
+
+    with pytest.raises(NamedModelResolutionError, match="unknown OpenRouter model"):
+        await resolver.resolve_named("thread-1", "openrouter:vendor/unknown")
+
+
+@pytest.mark.asyncio
+async def test_named_resolution_refetches_models_without_benchmark_dependency() -> None:
+    requests: list[str] = []
+    context_tokens = [64_000]
+    benchmark_available = [True]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request.url.path)
+        if request.url.path.endswith("/benchmarks"):
+            if not benchmark_available[0]:
+                return httpx.Response(503)
+            return httpx.Response(200, json=benchmark_payload())
+        return httpx.Response(
+            200,
+            json={
+                "data": [
+                    {
+                        "id": "vendor/model",
+                        "canonical_slug": "vendor/model-v1",
+                        "context_length": context_tokens[0],
+                    }
+                ]
+            },
+        )
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+        client = OpenRouterCatalogClient("test-key", http_client=http_client)
+        await client.load()
+        context_tokens[0] = 262_144
+        benchmark_available[0] = False
+        resolver = ModelPolicyResolver(
+            policy="pinned:openrouter:vendor/initial",
+            static_model="openrouter:vendor/initial",
+            static_context_tokens=64_000,
+            catalog=client,
+        )
+
+        named = await resolver.resolve_named("thread-1", "openrouter:vendor/model")
+
+    assert named.context_tokens == 262_144
+    assert requests == [
+        "/api/v1/benchmarks",
+        "/api/v1/models",
+        "/api/v1/models",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_named_resolution_requires_exact_broker_id_not_canonical_alias() -> None:
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "data": [
+                    {
+                        "id": "vendor/model",
+                        "canonical_slug": "vendor/model-v1",
+                        "context_length": 100_000,
+                    }
+                ]
+            },
+        )
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+        resolver = ModelPolicyResolver(
+            policy="pinned:openrouter:vendor/initial",
+            static_model="openrouter:vendor/initial",
+            static_context_tokens=64_000,
+            catalog=OpenRouterCatalogClient("test-key", http_client=http_client),
+        )
+        with pytest.raises(NamedModelResolutionError, match="unknown OpenRouter model"):
+            await resolver.resolve_named("thread-1", "openrouter:vendor/model-v1")
 
 
 @pytest.mark.asyncio

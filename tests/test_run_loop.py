@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
@@ -18,7 +18,11 @@ from harness.envelope import (
     ThreadSnapshotResponsePayload,
     WrongResolution,
 )
-from harness.model_policy import ThreadModelResolution
+from harness.model_policy import (
+    ModelCatalogUnavailable,
+    NamedModelResolutionError,
+    ThreadModelResolution,
+)
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 
@@ -191,18 +195,33 @@ class ImmediateHistoryRunner:
 
 
 class RecordingResolver:
-    def __init__(self, resolutions: Mapping[str, ThreadModelResolution]) -> None:
+    def __init__(
+        self,
+        resolutions: Mapping[str, ThreadModelResolution],
+        named: Mapping[str, ThreadModelResolution | Exception] | None = None,
+    ) -> None:
         self.resolutions = resolutions
+        self.named = named or {}
         self.calls: list[str] = []
+        self.named_calls: list[tuple[str, str]] = []
 
     async def resolve(self, thread_id: str) -> ThreadModelResolution:
         self.calls.append(thread_id)
         return self.resolutions[thread_id]
 
+    async def resolve_named(self, thread_id: str, model: str) -> ThreadModelResolution:
+        self.named_calls.append((thread_id, model))
+        value = self.named[model]
+        if isinstance(value, Exception):
+            raise value
+        return value
+
 
 class ResolutionRecordingRunner:
-    def __init__(self) -> None:
+    def __init__(self, *, cacheable_prefix_tokens: int = 0) -> None:
         self.resolutions: list[ThreadModelResolution | None] = []
+        self.histories: list[tuple[object, ...]] = []
+        self.cacheable_prefix_tokens = cacheable_prefix_tokens
 
     async def run(
         self,
@@ -215,9 +234,11 @@ class ResolutionRecordingRunner:
     ) -> TurnOutcome:
         del thread_id, emit
         self.resolutions.append(model_resolution)
+        self.histories.append(tuple(message_history))
         return TurnOutcome(
             StopReason.END_TURN,
             (*message_history, f"{prompt}:complete"),
+            cacheable_prefix_tokens=self.cacheable_prefix_tokens,
         )
 
 
@@ -479,6 +500,520 @@ async def test_policy_resolution_occurs_once_at_first_run_and_is_thread_authorit
     snapshot = after.messages[0].payload
     assert isinstance(snapshot, ThreadSnapshotResponsePayload)
     assert snapshot.resolved_model == thread_one.model
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_model_command_commits_one_journaled_epoch_without_calling_runner() -> None:
+    ids = Ids()
+    initial = ThreadModelResolution(
+        model="openrouter:vendor/initial",
+        context_tokens=64_000,
+        policy="pinned:openrouter:vendor/initial",
+    )
+    candidate = ThreadModelResolution(
+        model="openrouter:vendor/next",
+        context_tokens=262_144,
+        policy="human_command",
+    )
+    resolver = RecordingResolver(
+        {"thread-1": initial},
+        {candidate.model: candidate},
+    )
+    runner = ResolutionRecordingRunner(cacheable_prefix_tokens=123)
+    loop = RunLoop(
+        runner,
+        factory(ids),
+        model_resolver=resolver,
+        clock=lambda: datetime(2026, 7, 31, 9, 30, tzinfo=UTC),
+    )
+    sink = Sink()
+
+    await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(1),
+        prompt="hello",
+        sink=sink,
+    )
+    await _wait_for_done_count(sink, 1)
+    command_run = await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(2),
+        prompt=f"/model {candidate.model}",
+        sink=sink,
+    )
+    await _wait_for_done_count(sink, 2)
+
+    assert len(runner.resolutions) == 1
+    assert resolver.named_calls == [("thread-1", candidate.model)]
+    command_started = next(
+        message
+        for message in sink.messages
+        if message.type is MessageType.RUN_STARTED and payload(message)["run_id"] == command_run
+    )
+    assert payload(command_started)["resolved_model"] == initial.model
+    command_event_payloads = [
+        payload(message)
+        for message in sink.messages
+        if message.type is MessageType.RUN_DELTA
+        and payload(message)["run_id"] == command_run
+        and payload(message)["kind"] == "event"
+    ]
+    assert command_event_payloads == [
+        {
+            "run_id": command_run,
+            "kind": "event",
+            "resolved_model": candidate.model,
+            "event": {
+                "event_kind": "model_change",
+                "old_model": initial.model,
+                "new_model": candidate.model,
+                "reason": "human_command",
+                "timestamp": "2026-07-31T09:30:00+00:00",
+                "stickiness_epoch": 1,
+                "sacrificed_cached_prefix_tokens": 123,
+                "context_tokens": 262_144,
+            },
+        }
+    ]
+    command_events = [item["event"] for item in command_event_payloads]
+
+    snapshot_sink = Sink()
+    await loop.request_snapshot("thread-1", snapshot_sink)
+    await _wait_for_type_count(snapshot_sink, MessageType.THREAD_SNAPSHOT, 1)
+    snapshot = snapshot_sink.messages[0].payload
+    assert isinstance(snapshot, ThreadSnapshotResponsePayload)
+    assert snapshot.resolved_model == candidate.model
+    command_assistant = next(
+        message
+        for message in snapshot.messages
+        if message["run_id"] == command_run and message["role"] == "assistant"
+    )
+    assert command_assistant["events"] == command_events
+    assert "Context window: 262144 tokens" in command_assistant["content"]
+
+    await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(3),
+        prompt="after switch",
+        sink=sink,
+    )
+    await _wait_for_done_count(sink, 3)
+    assert runner.resolutions == [initial, replace(candidate, stickiness_epoch=1)]
+    assert runner.histories[1] == ("hello:complete",)
+    await loop.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("target", "failure", "expected_text"),
+    [
+        ("", None, "add an OpenRouter model string"),
+        (
+            "openrouter:vendor/unknown",
+            NamedModelResolutionError("unknown OpenRouter model: vendor/unknown"),
+            "unknown OpenRouter model",
+        ),
+        (
+            "openrouter:vendor/down",
+            ModelCatalogUnavailable("offline"),
+            "model catalog is unavailable",
+        ),
+    ],
+)
+async def test_model_command_failures_are_visible_and_preserve_epoch_and_prefix(
+    target: str,
+    failure: Exception | None,
+    expected_text: str,
+) -> None:
+    ids = Ids()
+    initial = ThreadModelResolution(
+        model="openrouter:vendor/initial",
+        context_tokens=64_000,
+        policy="pinned:openrouter:vendor/initial",
+    )
+    next_model = ThreadModelResolution(
+        model="openrouter:vendor/next",
+        context_tokens=100_000,
+        policy="human_command",
+    )
+    named: dict[str, ThreadModelResolution | Exception] = {
+        next_model.model: next_model,
+    }
+    if target:
+        assert isinstance(failure, Exception)
+        named[target] = failure
+    resolver = RecordingResolver({"thread-1": initial}, named)
+    runner = ResolutionRecordingRunner(cacheable_prefix_tokens=77)
+    loop = RunLoop(runner, factory(ids), model_resolver=resolver)
+    sink = Sink()
+
+    await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(1),
+        prompt="hello",
+        sink=sink,
+    )
+    await _wait_for_done_count(sink, 1)
+    command = "/model" if not target else f"/model {target}"
+    failed_run = await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(2),
+        prompt=command,
+        sink=sink,
+    )
+    await _wait_for_done_count(sink, 2)
+
+    failed_deltas = [
+        payload(message)
+        for message in sink.messages
+        if message.type is MessageType.RUN_DELTA and payload(message)["run_id"] == failed_run
+    ]
+    assert not [item for item in failed_deltas if item["kind"] == "event"]
+    assert expected_text in "".join(
+        str(item["text"]) for item in failed_deltas if item["kind"] == "text"
+    )
+
+    await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(3),
+        prompt=f"/model {next_model.model}",
+        sink=sink,
+    )
+    await _wait_for_done_count(sink, 3)
+    successful_event = next(
+        payload(message)["event"]
+        for message in sink.messages
+        if message.type is MessageType.RUN_DELTA and payload(message)["kind"] == "event"
+    )
+    assert successful_event["stickiness_epoch"] == 1
+    assert successful_event["sacrificed_cached_prefix_tokens"] == 77
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_current_model_command_refreshes_context_and_starts_new_epoch() -> None:
+    ids = Ids()
+    initial = ThreadModelResolution(
+        model="openrouter:vendor/current",
+        context_tokens=64_000,
+        policy="pinned:openrouter:vendor/current",
+    )
+    refreshed = ThreadModelResolution(
+        model=initial.model,
+        context_tokens=128_000,
+        policy="human_command",
+    )
+    resolver = RecordingResolver({"thread-1": initial}, {initial.model: refreshed})
+    runner = ResolutionRecordingRunner(cacheable_prefix_tokens=33)
+    loop = RunLoop(runner, factory(ids), model_resolver=resolver)
+    sink = Sink()
+
+    await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(1),
+        prompt="before",
+        sink=sink,
+    )
+    await _wait_for_done_count(sink, 1)
+    command_run = await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(2),
+        prompt=f"/model {initial.model}",
+        sink=sink,
+    )
+    await _wait_for_done_count(sink, 2)
+
+    command_event = next(
+        payload(message)["event"]
+        for message in sink.messages
+        if message.type is MessageType.RUN_DELTA
+        and payload(message)["run_id"] == command_run
+        and payload(message)["kind"] == "event"
+    )
+    assert command_event["old_model"] == initial.model
+    assert command_event["new_model"] == initial.model
+    assert command_event["stickiness_epoch"] == 1
+    assert command_event["context_tokens"] == 128_000
+    assert command_event["sacrificed_cached_prefix_tokens"] == 33
+
+    await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(3),
+        prompt="after",
+        sink=sink,
+    )
+    await _wait_for_done_count(sink, 3)
+    assert runner.resolutions == [initial, replace(refreshed, stickiness_epoch=1)]
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_queued_model_command_changes_only_the_following_turn() -> None:
+    ids = Ids()
+    initial = ThreadModelResolution(
+        model="openrouter:vendor/initial",
+        context_tokens=64_000,
+        policy="pinned:openrouter:vendor/initial",
+    )
+    candidate = ThreadModelResolution(
+        model="openrouter:vendor/next",
+        context_tokens=100_000,
+        policy="human_command",
+    )
+
+    class QueueRunner:
+        def __init__(self) -> None:
+            self.entered = asyncio.Event()
+            self.release = asyncio.Event()
+            self.prompts: list[str] = []
+            self.resolutions: list[ThreadModelResolution | None] = []
+            self.histories: list[tuple[object, ...]] = []
+
+        async def run(
+            self,
+            *,
+            thread_id: str,
+            prompt: str,
+            message_history: Sequence[object],
+            emit: RunEmitter,
+            model_resolution: ThreadModelResolution | None = None,
+        ) -> TurnOutcome:
+            del thread_id, emit
+            self.prompts.append(prompt)
+            self.resolutions.append(model_resolution)
+            self.histories.append(tuple(message_history))
+            if prompt == "old turn":
+                self.entered.set()
+                await self.release.wait()
+            return TurnOutcome(
+                StopReason.END_TURN,
+                (*message_history, f"{prompt}:complete"),
+                cacheable_prefix_tokens=50,
+            )
+
+    runner = QueueRunner()
+    resolver = RecordingResolver(
+        {"thread-1": initial},
+        {candidate.model: candidate},
+    )
+    loop = RunLoop(runner, factory(ids), model_resolver=resolver)
+    sink = Sink()
+    await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(1),
+        prompt="old turn",
+        sink=sink,
+    )
+    await _wait(runner.entered)
+    await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(2),
+        prompt=f"/model {candidate.model}",
+        sink=sink,
+    )
+    await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(3),
+        prompt="new turn",
+        sink=sink,
+    )
+
+    assert runner.prompts == ["old turn"]
+    runner.release.set()
+    await _wait_for_done_count(sink, 3)
+
+    assert runner.prompts == ["old turn", "new turn"]
+    assert runner.resolutions == [initial, replace(candidate, stickiness_epoch=1)]
+    assert runner.histories == [(), ("old turn:complete",)]
+    model_event = next(
+        payload(message)["event"]
+        for message in sink.messages
+        if message.type is MessageType.RUN_DELTA and payload(message)["kind"] == "event"
+    )
+    assert model_event["sacrificed_cached_prefix_tokens"] == 50
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_model_lookup_starts_at_fifo_boundary_after_immediate_queue_ack() -> None:
+    ids = Ids()
+    initial = ThreadModelResolution(
+        model="openrouter:vendor/initial",
+        context_tokens=64_000,
+        policy="pinned:openrouter:vendor/initial",
+    )
+    candidate = ThreadModelResolution(
+        model="openrouter:vendor/next",
+        context_tokens=100_000,
+        policy="human_command",
+    )
+
+    class DelayedResolver(RecordingResolver):
+        def __init__(self) -> None:
+            super().__init__({"thread-1": initial}, {candidate.model: candidate})
+            self.named_entered = asyncio.Event()
+            self.named_release = asyncio.Event()
+
+        async def resolve_named(self, thread_id: str, model: str) -> ThreadModelResolution:
+            self.named_entered.set()
+            await self.named_release.wait()
+            return await super().resolve_named(thread_id, model)
+
+    class DelayedRunner:
+        def __init__(self) -> None:
+            self.old_entered = asyncio.Event()
+            self.old_release = asyncio.Event()
+            self.prompts: list[str] = []
+            self.resolutions: list[ThreadModelResolution | None] = []
+
+        async def run(
+            self,
+            *,
+            thread_id: str,
+            prompt: str,
+            message_history: Sequence[object],
+            emit: RunEmitter,
+            model_resolution: ThreadModelResolution | None = None,
+        ) -> TurnOutcome:
+            del thread_id, emit
+            self.prompts.append(prompt)
+            self.resolutions.append(model_resolution)
+            if prompt == "old turn":
+                self.old_entered.set()
+                await self.old_release.wait()
+            return TurnOutcome(
+                StopReason.END_TURN,
+                (*message_history, f"{prompt}:complete"),
+            )
+
+    resolver = DelayedResolver()
+    runner = DelayedRunner()
+    loop = RunLoop(runner, factory(ids), model_resolver=resolver)
+    sink = Sink()
+    await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(1),
+        prompt="old turn",
+        sink=sink,
+    )
+    await _wait(runner.old_entered)
+
+    command_run = await asyncio.wait_for(
+        loop.submit(
+            thread_id="thread-1",
+            prompt_id=ulid(2),
+            prompt=f"/model {candidate.model}",
+            sink=sink,
+        ),
+        timeout=0.25,
+    )
+    next_run = await asyncio.wait_for(
+        loop.submit(
+            thread_id="thread-1",
+            prompt_id=ulid(3),
+            prompt="new turn",
+            sink=sink,
+        ),
+        timeout=0.25,
+    )
+    await _wait_for_type_count(sink, MessageType.PROMPT_QUEUED, 2)
+    queued = [
+        payload(message)["run_id"]
+        for message in sink.messages
+        if message.type is MessageType.PROMPT_QUEUED
+    ]
+    assert queued == [command_run, next_run]
+    assert not resolver.named_entered.is_set()
+
+    runner.old_release.set()
+    await _wait(resolver.named_entered)
+    assert runner.prompts == ["old turn"]
+    assert not any(
+        message.type is MessageType.RUN_STARTED and payload(message)["run_id"] == next_run
+        for message in sink.messages
+    )
+
+    resolver.named_release.set()
+    await _wait_for_done_count(sink, 3)
+    assert runner.prompts == ["old turn", "new turn"]
+    assert runner.resolutions == [initial, replace(candidate, stickiness_epoch=1)]
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_cancelling_model_lookup_preserves_current_model_and_epoch() -> None:
+    ids = Ids()
+    initial = ThreadModelResolution(
+        model="openrouter:vendor/initial",
+        context_tokens=64_000,
+        policy="pinned:openrouter:vendor/initial",
+    )
+    candidate = ThreadModelResolution(
+        model="openrouter:vendor/next",
+        context_tokens=100_000,
+        policy="human_command",
+    )
+
+    class BlockingResolver(RecordingResolver):
+        def __init__(self) -> None:
+            super().__init__({"thread-1": initial}, {candidate.model: candidate})
+            self.named_entered = asyncio.Event()
+            self.never_release = asyncio.Event()
+
+        async def resolve_named(self, thread_id: str, model: str) -> ThreadModelResolution:
+            self.named_entered.set()
+            await self.never_release.wait()
+            return await super().resolve_named(thread_id, model)
+
+    resolver = BlockingResolver()
+    runner = ResolutionRecordingRunner(cacheable_prefix_tokens=91)
+    loop = RunLoop(runner, factory(ids), model_resolver=resolver)
+    sink = Sink()
+    await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(1),
+        prompt="before",
+        sink=sink,
+    )
+    await _wait_for_done_count(sink, 1)
+    command_run = await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(2),
+        prompt=f"/model {candidate.model}",
+        sink=sink,
+    )
+    await _wait(resolver.named_entered)
+
+    await loop.cancel(thread_id="thread-1", run_id=command_run, sink=sink)
+    await _wait_for_done_count(sink, 2)
+    command_done = next(
+        message
+        for message in sink.messages
+        if message.type is MessageType.RUN_DONE and payload(message)["run_id"] == command_run
+    )
+    assert payload(command_done)["stop_reason"] == StopReason.CANCELLED
+    assert not any(
+        message.type is MessageType.RUN_DELTA
+        and payload(message)["run_id"] == command_run
+        and payload(message)["kind"] == "event"
+        for message in sink.messages
+    )
+
+    await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(3),
+        prompt="after",
+        sink=sink,
+    )
+    await _wait_for_done_count(sink, 3)
+    assert runner.resolutions == [initial, initial]
+    snapshot_sink = Sink()
+    await loop.request_snapshot("thread-1", snapshot_sink)
+    await _wait_for_type_count(snapshot_sink, MessageType.THREAD_SNAPSHOT, 1)
+    snapshot = snapshot_sink.messages[0].payload
+    assert isinstance(snapshot, ThreadSnapshotResponsePayload)
+    assert snapshot.resolved_model == initial.model
     await loop.close()
 
 

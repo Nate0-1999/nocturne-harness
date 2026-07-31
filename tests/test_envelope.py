@@ -391,7 +391,12 @@ def test_memory_panel_requires_outer_thread_in_both_directions() -> None:
             RunDeltaThinkingPayload,
         ),
         (
-            {"run_id": RUN_ID, "kind": "event", "event": {"name": "tool", "ok": True}},
+            {
+                "run_id": RUN_ID,
+                "kind": "event",
+                "event": {"name": "tool", "ok": True},
+                "resolved_model": "openrouter:vendor/next",
+            },
             RunDeltaEventPayload,
         ),
     ],
@@ -660,6 +665,15 @@ def test_thread_snapshot_response_types_nested_authoritative_state() -> None:
                 "messages": [],
                 "open_gate": None,
                 "active_run": None,
+                "resolved_model": "openrouter:minimax/minimax-m3",
+            },
+        ),
+        (
+            "run.delta",
+            {
+                "run_id": RUN_ID,
+                "kind": "event",
+                "event": {"event_kind": "model_change"},
                 "resolved_model": "openrouter:minimax/minimax-m3",
             },
         ),

@@ -576,3 +576,48 @@ contradicts C.8. Adding one Harness setting and constructor per upstream
 provider duplicates a registry the adapter already depends on. A browser model
 selector is M2 scope and is not needed to prove configuration-level model
 agnosticism.
+
+## 019 — Journaled model resolution points and cache epochs [P3, P4, P4.2]
+
+**Decision.** Implement SPEC v2.26's `/model <openrouter-model-string>` as a
+daemon-owned direct turn on the existing `prompt.submit` lifecycle. This
+supersedes Decision 017 only where it called a thread resolution immutable and
+required `session_id=thread_id` for every request. Validate the exact broker
+model ID with a fresh OpenRouter `/models` request, independently of the
+24-hour benchmark cache; take the executable ID and context window from that
+exact row. Unknown, unavailable, and blank targets return a visible no-change
+result. A valid already-current target still creates a new epoch: the command
+is an explicit resolution point, including when the old and new slugs match.
+
+Reserve and acknowledge the command in the existing FIFO before broker I/O,
+then fetch its candidate when the turn starts and commit only during successful
+terminalization. A successful commit increments the thread's stickiness epoch,
+swaps the model/context pair, clears the cacheable-prefix receipt, writes one
+`model_change` event into the process-lifetime transcript journal and
+structured daemon log, and puts the new daemon-authoritative model on that
+event delta before its text acknowledgement and `run.done`. The command's
+earlier `run.started` truthfully carries the model that is still active at turn
+start. No model or Spine call occurs, provider message history omits the daemon
+command, and reconnect snapshots retain the event. Epoch zero preserves
+`session_id=thread_id`; later epochs use
+`session_id=<thread_id>:epoch:<n>`, so switching back still creates a fresh
+cache identity. The sacrificed-prefix field is the final provider response's
+own input-plus-output token footprint from the last successful ordinary turn,
+not cumulative multi-request run usage.
+
+**Motivation.** The FIFO transaction makes deliberate changes observable and
+reproducible without permitting policy drift, while reusing the H8
+`run.started`/snapshot display seam keeps one authority for the visible model.
+A fresh model-list lookup makes the new context limit truthful even when the
+benchmark service or its cache is stale. Terminal-response accounting records
+the prefix that can actually seed the next request without double-counting
+tool-loop history.
+
+**Rejected alternatives.** Resolving or mutating when `/model` is submitted can
+block its immediate acknowledgement and overtake an active turn. Mutating
+inside the model task creates cancellation windows between state change and
+journaling. Reusing the benchmark cache does not re-fetch context and couples a
+human command to an irrelevant benchmark outage. Letting generic nested events
+control the browser header creates a second model authority. A new C.7 command
+type, browser registry/selector, persistent M1 journal database, or replaying
+`/model` into provider history all exceed the v2.26 repair.

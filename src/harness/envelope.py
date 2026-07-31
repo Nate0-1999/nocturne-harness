@@ -132,6 +132,10 @@ class RunDeltaEventPayload(_ExtensiblePayload):
     run_id: ULID
     kind: Literal["event"]
     event: dict[str, JsonValue]
+    resolved_model: NonBlankString | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
 
 
 type RunDeltaPayload = Annotated[

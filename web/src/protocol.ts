@@ -262,7 +262,12 @@ export interface PromptQueuedPayload {
 export type RunDeltaPayload =
   | { run_id: Ulid; kind: 'text'; text: string }
   | { run_id: Ulid; kind: 'thinking'; text: string }
-  | { run_id: Ulid; kind: 'event'; event: JsonObject }
+  | {
+      run_id: Ulid
+      kind: 'event'
+      event: JsonObject
+      resolved_model?: string
+    }
 
 export interface RunUsagePayload extends Usage {
   run_id: Ulid
@@ -927,8 +932,20 @@ function parseRunDelta(value: unknown): RunDeltaPayload | null {
   ) {
     return { run_id: value.run_id, kind: value.kind, text: value.text }
   }
-  if (value.kind === 'event' && isJsonObject(value.event)) {
-    return { run_id: value.run_id, kind: 'event', event: value.event }
+  if (
+    value.kind === 'event' &&
+    isJsonObject(value.event) &&
+    (value.resolved_model === undefined ||
+      (typeof value.resolved_model === 'string' && value.resolved_model.trim()))
+  ) {
+    return {
+      run_id: value.run_id,
+      kind: 'event',
+      event: value.event,
+      ...(typeof value.resolved_model === 'string'
+        ? { resolved_model: value.resolved_model }
+        : {}),
+    }
   }
   return null
 }

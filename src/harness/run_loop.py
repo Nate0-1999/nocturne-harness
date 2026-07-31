@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections import deque
 from collections.abc import Awaitable, Callable, Mapping
 from copy import deepcopy
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from datetime import UTC, datetime
 from typing import Any
 
+from harness.commands import model_command_text, remember_command_text
 from harness.envelope import (
     ActiveRunSnapshot,
     Envelope,
@@ -30,6 +33,8 @@ from harness.envelope import (
     UsagePayload,
 )
 from harness.model_policy import (
+    ModelCatalogUnavailable,
+    NamedModelResolutionError,
     ThreadModelResolution,
     ThreadModelResolver,
 )
@@ -40,6 +45,8 @@ type EnvelopeSink = Callable[[Envelope], Awaitable[None]]
 _SUBSCRIPTION_BUFFER_SIZE = 256
 type _Delivery = tuple[Envelope, asyncio.Future[None] | None]
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass(slots=True)
 class _Turn:
@@ -47,6 +54,7 @@ class _Turn:
     prompt_id: str
     prompt: str
     user_message: dict[str, Any]
+    model_target: str | None = None
 
 
 @dataclass(slots=True)
@@ -59,6 +67,8 @@ class _ActiveRun:
     task: asyncio.Task[None] | None = None
     gate_decision: asyncio.Future[GateCommitPayload] | None = None
     gate_committing: bool = False
+    model_candidate: ThreadModelResolution | None = None
+    model_error: str | None = None
 
 
 @dataclass(slots=True)
@@ -70,6 +80,7 @@ class _ThreadState:
     open_gate: GateOpenPayload | None = None
     resolved_model: str | None = None
     model_resolution: ThreadModelResolution | None = None
+    cached_prefix_tokens: int = 0
 
 
 @dataclass(slots=True)
@@ -128,6 +139,7 @@ class RunLoop:
         run_id_factory: Callable[[], str] | None = None,
         resolved_model: str | None = None,
         model_resolver: ThreadModelResolver | None = None,
+        clock: Callable[[], datetime] | None = None,
     ) -> None:
         if resolved_model is not None and model_resolver is not None:
             raise ValueError("use either resolved_model or model_resolver, not both")
@@ -142,6 +154,7 @@ class RunLoop:
         self._run_id_factory = run_id_factory or factory.new_id
         self._initial_resolved_model = resolved_model
         self._model_resolver = model_resolver
+        self._clock = clock or (lambda: datetime.now(UTC))
         self._lock = asyncio.Lock()
         self._threads: dict[str, _ThreadState] = {}
         self._subscriptions: list[_Subscription] = []
@@ -241,6 +254,7 @@ class RunLoop:
         # Validate both correlation IDs before mutating process state.
         RunStartedPayload(run_id=run_id, prompt_id=prompt_id)
         model_resolution = await self._resolution_for_thread(thread_id)
+        model_target = model_command_text(prompt)
         user_message: dict[str, Any] = {
             "message_id": prompt_id,
             "run_id": run_id,
@@ -253,6 +267,7 @@ class RunLoop:
             prompt_id=prompt_id,
             prompt=prompt,
             user_message=user_message,
+            model_target=model_target,
         )
 
         async with self._lock:
@@ -262,8 +277,6 @@ class RunLoop:
                 state.model_resolution = model_resolution
                 if model_resolution is not None:
                     state.resolved_model = model_resolution.model
-            elif model_resolution is not None and state.model_resolution != model_resolution:
-                raise RuntimeError("thread model resolution changed after its first run")
             self._selected_thread_id = thread_id
             if sink is not None:
                 self._bind_sink_locked(sink, thread_id)
@@ -474,13 +487,20 @@ class RunLoop:
         outcome: TurnOutcome | None = None
         stop_reason = StopReason.ERROR
         try:
-            outcome = await self._runner.run(
-                thread_id=thread_id,
-                prompt=active.turn.prompt,
-                message_history=history,
-                emit=_Emitter(self, thread_id, active),
-                model_resolution=model_resolution,
-            )
+            if active.turn.model_target is not None:
+                outcome = await self._resolve_model_command(
+                    thread_id=thread_id,
+                    active=active,
+                    history=history,
+                )
+            else:
+                outcome = await self._runner.run(
+                    thread_id=thread_id,
+                    prompt=active.turn.prompt,
+                    message_history=history,
+                    emit=_Emitter(self, thread_id, active),
+                    model_resolution=model_resolution,
+                )
             if not isinstance(outcome, TurnOutcome):
                 raise TypeError("turn runner must return TurnOutcome")
             stop_reason = outcome.stop_reason
@@ -527,6 +547,15 @@ class RunLoop:
                 elif not active.usage_emitted or outcome.usage != active.usage:
                     active.usage = outcome.usage
                     await self._publish_usage_locked(thread_id, active)
+                if (
+                    stop_reason is StopReason.END_TURN
+                    and active.turn.model_target is None
+                    and remember_command_text(active.turn.prompt) is None
+                ):
+                    state.cached_prefix_tokens = outcome.cacheable_prefix_tokens
+
+            if stop_reason is StopReason.END_TURN and active.turn.model_target is not None:
+                await self._commit_model_command_locked(thread_id, state, active)
 
             partial = stop_reason is not StopReason.END_TURN
             active.assistant_message["partial"] = partial
@@ -563,6 +592,122 @@ class RunLoop:
 
             if not self._closing and state.queued:
                 await self._start_locked(thread_id, state, state.queued.popleft())
+
+    async def _resolve_model_command(
+        self,
+        *,
+        thread_id: str,
+        active: _ActiveRun,
+        history: tuple[object, ...],
+    ) -> TurnOutcome:
+        """Resolve one direct command after its FIFO position is acknowledged."""
+
+        target = active.turn.model_target
+        assert target is not None
+        if not target:
+            active.model_error = "Model unchanged: add an OpenRouter model string after /model."
+        elif self._model_resolver is None:
+            active.model_error = "Model unchanged: broker model switching is unavailable."
+        else:
+            try:
+                active.model_candidate = await self._model_resolver.resolve_named(
+                    thread_id,
+                    target,
+                )
+            except NamedModelResolutionError as exc:
+                active.model_error = f"Model unchanged: {exc}."
+            except ModelCatalogUnavailable:
+                active.model_error = "Model unchanged: the OpenRouter model catalog is unavailable."
+        return TurnOutcome(StopReason.END_TURN, history, UsageSnapshot())
+
+    async def _commit_model_command_locked(
+        self,
+        thread_id: str,
+        state: _ThreadState,
+        active: _ActiveRun,
+    ) -> None:
+        """Atomically journal and publish a resolved command before run.done."""
+
+        event: dict[str, object] | None = None
+        message = active.model_error
+        candidate = active.model_candidate
+        previous = state.model_resolution
+        if message is None and (candidate is None or previous is None):
+            message = "Model unchanged: broker model switching is unavailable."
+        elif message is None and candidate is not None and previous is not None:
+            changed_at = self._clock()
+            if changed_at.tzinfo is None:
+                raise ValueError("model-change clock must return an aware datetime")
+            resolution = replace(
+                candidate,
+                stickiness_epoch=previous.stickiness_epoch + 1,
+            )
+            event = {
+                "event_kind": "model_change",
+                "old_model": previous.model,
+                "new_model": resolution.model,
+                "reason": "human_command",
+                "timestamp": changed_at.isoformat(),
+                "stickiness_epoch": resolution.stickiness_epoch,
+                "sacrificed_cached_prefix_tokens": state.cached_prefix_tokens,
+                "context_tokens": resolution.context_tokens,
+            }
+            state.model_resolution = resolution
+            state.resolved_model = resolution.model
+            state.cached_prefix_tokens = 0
+            logger.info(
+                "model_change thread=%s old_model=%s new_model=%s reason=%s "
+                "timestamp=%s stickiness_epoch=%s sacrificed_cached_prefix_tokens=%s "
+                "context_tokens=%s",
+                thread_id,
+                event["old_model"],
+                event["new_model"],
+                event["reason"],
+                event["timestamp"],
+                event["stickiness_epoch"],
+                event["sacrificed_cached_prefix_tokens"],
+                event["context_tokens"],
+            )
+            if previous.model == resolution.model:
+                message = (
+                    f"Model re-resolved to {resolution.model} in a new stickiness epoch. "
+                    f"Context window: {resolution.context_tokens} tokens."
+                )
+            else:
+                message = (
+                    f"Model changed from {previous.model} to {resolution.model}. "
+                    f"Context window: {resolution.context_tokens} tokens."
+                )
+
+        assert message is not None
+        if event is not None:
+            active.assistant_message["events"].append(deepcopy(event))
+            await self._publish_locked(
+                thread_id,
+                self._factory.create(
+                    MessageType.RUN_DELTA,
+                    RunDeltaEventPayload(
+                        run_id=active.turn.run_id,
+                        kind="event",
+                        event=event,
+                        resolved_model=state.resolved_model,
+                    ),
+                    thread_id=thread_id,
+                ),
+            )
+        active.assistant_message["content"] += message
+        await self._publish_locked(
+            thread_id,
+            self._factory.create(
+                MessageType.RUN_DELTA,
+                RunDeltaTextPayload(
+                    run_id=active.turn.run_id,
+                    kind="text",
+                    text=message,
+                ),
+                thread_id=thread_id,
+            ),
+        )
 
     async def _emit_text(
         self,
