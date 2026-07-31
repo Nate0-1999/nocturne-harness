@@ -122,7 +122,7 @@ empty active-ID set.
 Run the deterministic evidence audit from the Harness repository root:
 
 ```sh
-python verification/i1/2026-07-31-v226/assert_trace.py
+.venv/bin/python verification/i1/2026-07-31-v226/assert_trace.py
 ```
 
 It prints `I1 v2.26 J1/J2 trace audit: PASS` only after checking the exact
