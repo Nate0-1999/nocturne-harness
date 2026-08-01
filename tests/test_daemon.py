@@ -36,6 +36,8 @@ from harness.spine_client import (
     MemoryUnit,
     PagedMemoryListResponse,
     ScoredMemoryCard,
+    SpendEventsRequest,
+    SpendEventsResponse,
     SpineTransportError,
 )
 
@@ -139,6 +141,9 @@ class FailingPrepareSpine:
     async def aclose(self) -> None:
         pass
 
+    async def record_spend_events(self, request: SpendEventsRequest) -> SpendEventsResponse:
+        return SpendEventsResponse(accepted=len(request.events))
+
 
 class GateSpine:
     def __init__(self) -> None:
@@ -162,6 +167,9 @@ class GateSpine:
 
     async def aclose(self) -> None:
         self.closed = True
+
+    async def record_spend_events(self, request: SpendEventsRequest) -> SpendEventsResponse:
+        return SpendEventsResponse(accepted=len(request.events))
 
 
 class PanelGateSpine:
@@ -268,6 +276,9 @@ class PanelGateSpine:
 
     async def aclose(self) -> None:
         pass
+
+    async def record_spend_events(self, request: SpendEventsRequest) -> SpendEventsResponse:
+        return SpendEventsResponse(accepted=len(request.events))
 
 
 def app_with_runner(runner: CancellableRunner, tmp_path: Path):

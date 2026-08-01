@@ -34,6 +34,12 @@ from harness.commands import remember_command_text
 from harness.envelope import StopReason
 from harness.model_policy import ThreadModelResolution
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
+from harness.spend import (
+    SpendGateway,
+    SpendLineage,
+    SpendPurpose,
+    model_response_receipts,
+)
 from harness.tools_memory import MemoryToolContext
 
 type ContextFactory = Callable[[str], MemoryToolContext]
@@ -46,9 +52,15 @@ _MEMORY_BLOCK_CLOSE = "\n</memory_system>"
 class PydanticAITurnRunner:
     """Stream one bounded HarnessAgent turn into the daemon's owned protocol."""
 
-    def __init__(self, agent: HarnessAgent, context_factory: ContextFactory) -> None:
+    def __init__(
+        self,
+        agent: HarnessAgent,
+        context_factory: ContextFactory,
+        spend: SpendGateway | None = None,
+    ) -> None:
         self._agent = agent
         self._context_factory = context_factory
+        self._spend = spend
 
     async def run(
         self,
@@ -68,6 +80,8 @@ class PydanticAITurnRunner:
         run_usage = RunUsage()
         bridge = _EventBridge(emit)
         is_remember = remember_command_text(prompt) is not None
+        context: MemoryToolContext | None = None
+        remembered_memory_id: UUID | None = None
         selected_model = self._agent.model_for(
             model_resolution.model if model_resolution is not None else None
         )
@@ -90,6 +104,7 @@ class PydanticAITurnRunner:
                     )
                 if not isinstance(dispatched, RememberResult):  # pragma: no cover - seam guard
                     raise TypeError("/remember dispatch returned ordinary chat")
+                remembered_memory_id = dispatched.memory_id
                 await emit.text(dispatched.message)
                 usage = _failure_usage(run_usage, captured, ())
                 await bridge.publish_usage(usage)
@@ -154,6 +169,69 @@ class PydanticAITurnRunner:
                 _captured_history(prior_history, captured),
                 usage,
             )
+        finally:
+            await self._record_spend(
+                captured,
+                prior_history=prior_history,
+                context=context,
+                emit=emit,
+                purpose="remember" if is_remember else "building",
+                memory_id=remembered_memory_id,
+            )
+
+    async def _record_spend(
+        self,
+        captured: Sequence[ModelMessage],
+        *,
+        prior_history: Sequence[object],
+        context: MemoryToolContext | None,
+        emit: RunEmitter,
+        purpose: SpendPurpose,
+        memory_id: UUID | None,
+    ) -> None:
+        if self._spend is None or context is None:
+            return
+        responses = [
+            message
+            for message in _new_captured_messages(captured, prior_history)
+            if isinstance(message, ModelResponse)
+        ]
+        if not responses:
+            return
+        run_id = getattr(emit, "run_id", None)
+        prompt_id = getattr(emit, "prompt_id", None)
+        if not isinstance(run_id, str) or not isinstance(prompt_id, str):
+            raise RuntimeError("spend-enabled emitter must expose run_id and prompt_id")
+        if context.thread_id is None:
+            raise RuntimeError("spend-enabled model call requires a thread_id")
+        request = model_response_receipts(
+            responses,
+            lineage=SpendLineage(
+                principal_id=context.principal_id,
+                machine_id=context.machine_id,
+                origin_agent=context.agent_id,
+                thread_id=context.thread_id,
+                run_id=run_id,
+                prompt_id=prompt_id,
+                memory_id=memory_id,
+            ),
+            purpose=purpose,
+        )
+        if request is None:
+            return
+        try:
+            result = await self._spend.record_spend_events(request)
+        except Exception:
+            await emit.error(
+                {
+                    "code": "spend_unavailable",
+                    "phase": "receipt",
+                    "message": "Spend receipt could not be persisted; the turn was not committed.",
+                }
+            )
+            raise
+        if result.accepted != len(request.events):  # pragma: no cover - exact A-027 response
+            raise RuntimeError("Spine accepted an incomplete spend receipt batch")
 
 
 class _EventBridge:
@@ -269,6 +347,7 @@ def _model_settings(
         session_id = f"{thread_id}:epoch:{resolution.stickiness_epoch}"
     settings: OpenRouterModelSettings = {
         "extra_body": {"session_id": session_id},
+        "openrouter_usage": {"include": True},
     }
     if resolution.price_sorted:
         settings["openrouter_provider"] = {"sort": "price"}

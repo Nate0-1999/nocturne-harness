@@ -22,6 +22,8 @@ from harness.spine_client import (
     RevisionConflict,
     SearchRequest,
     SimilarMemoriesResponse,
+    SpendEvent,
+    SpendEventsRequest,
     SpineClient,
     SpineProblemError,
     SpineResponseError,
@@ -105,7 +107,7 @@ def raw_json_response(status: int, payload: object, media_type: str = JSON) -> h
 
 
 @pytest.mark.asyncio
-async def test_all_seven_routes_send_exact_http_contract() -> None:
+async def test_all_routes_send_exact_http_contract() -> None:
     seen: list[httpx.Request] = []
     responses = {
         ("POST", "/prefix/v1/inject/prepare"): response(
@@ -129,6 +131,7 @@ async def test_all_seven_routes_send_exact_http_contract() -> None:
             {"items": [memory_unit_payload()], "total": 1, "limit": 25, "offset": 5},
         ),
         ("POST", "/prefix/v1/search"): response(200, {"results": []}),
+        ("POST", "/prefix/v1/spend/events"): response(200, {"accepted": 1}),
     }
 
     async def handler(request: httpx.Request) -> httpx.Response:
@@ -193,6 +196,33 @@ async def test_all_seven_routes_send_exact_http_contract() -> None:
             ListMemoriesParams(status=MemoryStatus.ACTIVE, limit=25, offset=5)
         )
         searched = await client.search(SearchRequest(principal_id="principal-1", query="tabs", k=5))
+        spend = await client.record_spend_events(
+            SpendEventsRequest(
+                events=[
+                    SpendEvent(
+                        event_uid="01K1M2A0000000000000000001",
+                        ts="2026-08-01T12:00:00Z",
+                        product_type="llm.request",
+                        quantity_type="output",
+                        unit_of_measure="tokens",
+                        quantity=10,
+                        cost_usd="0.0001",
+                        basis="measured",
+                        behavior="variable",
+                        purpose="building",
+                        principal_id="principal-1",
+                        machine_id="machine-1",
+                        origin_agent="agent-1",
+                        thread_id=THREAD_ID,
+                        run_id="01K1M2A0000000000000000002",
+                        prompt_id="01K1M2A0000000000000000003",
+                        model="vendor/model",
+                        provider="vendor",
+                        ref="generation-1",
+                    )
+                ]
+            )
+        )
 
     assert prepared.scorer_version == "v0"
     assert committed.wrong_removed == []
@@ -202,6 +232,7 @@ async def test_all_seven_routes_send_exact_http_contract() -> None:
     assert patched.origin_path == "src/editor.py"
     assert listed.total == 1
     assert searched.results == []
+    assert spend.accepted == 1
 
     requests = {(item.method, item.url.path): item for item in seen}
     create_body = json.loads(requests[("POST", "/prefix/v1/memories")].content)
@@ -213,6 +244,8 @@ async def test_all_seven_routes_send_exact_http_contract() -> None:
     assert "body" not in patch_body
     list_query = requests[("GET", "/prefix/v1/memories")].url.params
     assert dict(list_query) == {"status": "active", "limit": "25", "offset": "5"}
+    spend_body = json.loads(requests[("POST", "/prefix/v1/spend/events")].content)
+    assert spend_body["events"][0]["cost_usd"] == "0.0001"
 
 
 @pytest.mark.asyncio

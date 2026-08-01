@@ -31,7 +31,13 @@ from harness.config import HarnessSettings
 from harness.envelope import GateCommitPayload, StopReason
 from harness.model_policy import ThreadModelResolution
 from harness.run_protocol import UsageSnapshot
-from harness.spine_client import MemoryKind, SearchResponse, SimilarityMemoryCard
+from harness.spine_client import (
+    MemoryKind,
+    SearchResponse,
+    SimilarityMemoryCard,
+    SpendEventsRequest,
+    SpendEventsResponse,
+)
 from harness.tools_memory import MemoryToolContext
 
 THREAD_UUID = UUID("22345678-1234-5678-1234-567812345678")
@@ -79,6 +85,8 @@ def context(spine: object | None = None) -> MemoryToolContext:
 
 @dataclass
 class RecordingEmitter:
+    run_id: str = "01K1M2A0000000000000000001"
+    prompt_id: str = "01K1M2A0000000000000000002"
     texts: list[str] = field(default_factory=list)
     thoughts: list[str] = field(default_factory=list)
     events: list[Mapping[str, object]] = field(default_factory=list)
@@ -108,6 +116,77 @@ class RecordingEmitter:
 
     async def error(self, value: Mapping[str, object]) -> None:
         self.errors.append(value)
+
+
+@dataclass
+class RecordingSpend:
+    requests: list[SpendEventsRequest] = field(default_factory=list)
+
+    async def record_spend_events(self, request: SpendEventsRequest) -> SpendEventsResponse:
+        self.requests.append(request)
+        return SpendEventsResponse(accepted=len(request.events))
+
+
+class FailingSpend:
+    async def record_spend_events(self, request: SpendEventsRequest) -> SpendEventsResponse:
+        del request
+        raise RuntimeError("ledger unavailable")
+
+
+@pytest.mark.asyncio
+async def test_successful_model_response_is_receipted_before_turn_returns() -> None:
+    async def stream(_messages: object, _info: object):
+        yield "answer"
+
+    spend = RecordingSpend()
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(),
+        spend,
+    )
+
+    outcome = await runner.run(
+        thread_id=str(THREAD_UUID),
+        prompt="hello",
+        message_history=(),
+        emit=RecordingEmitter(),
+    )
+
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert len(spend.requests) == 1
+    request = spend.requests[0]
+    assert "output" in {event.quantity_type for event in request.events}
+    assert {event.purpose for event in request.events} == {"building"}
+    assert {event.thread_id for event in request.events} == {THREAD_UUID}
+
+
+@pytest.mark.asyncio
+async def test_receipt_failure_is_visible_and_fails_the_turn_adapter() -> None:
+    async def stream(_messages: object, _info: object):
+        yield "answer"
+
+    emitted = RecordingEmitter()
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(),
+        FailingSpend(),
+    )
+
+    with pytest.raises(RuntimeError, match="ledger unavailable"):
+        await runner.run(
+            thread_id=str(THREAD_UUID),
+            prompt="hello",
+            message_history=(),
+            emit=emitted,
+        )
+
+    assert emitted.errors == [
+        {
+            "code": "spend_unavailable",
+            "phase": "receipt",
+            "message": "Spend receipt could not be persisted; the turn was not committed.",
+        }
+    ]
 
 
 @pytest.mark.asyncio
@@ -196,10 +275,12 @@ async def test_openrouter_route_settings_are_fresh_sticky_and_price_sorted() -> 
     assert observed_settings == [
         {
             "extra_body": {"session_id": "thread-sticky"},
+            "openrouter_usage": {"include": True},
             "openrouter_provider": {"sort": "price"},
         },
         {
             "extra_body": {"session_id": "thread-sticky"},
+            "openrouter_usage": {"include": True},
             "openrouter_provider": {"sort": "price"},
         },
     ]
@@ -246,7 +327,10 @@ async def test_resolution_epochs_break_and_then_repin_openrouter_session_stickin
         (
             "openrouter:minimax/minimax-m3",
             False,
-            {"extra_body": {"session_id": "thread-1"}},
+            {
+                "extra_body": {"session_id": "thread-1"},
+                "openrouter_usage": {"include": True},
+            },
         ),
         ("anthropic:claude-sonnet-4-6", False, None),
     ],
@@ -360,6 +444,7 @@ async def test_remember_dispatch_receives_the_same_thread_model_and_routing_sett
     assert spy.dispatch_calls[0]["model"] is marker
     assert spy.dispatch_calls[0]["model_settings"] == {
         "extra_body": {"session_id": "thread-remember"},
+        "openrouter_usage": {"include": True},
         "openrouter_provider": {"sort": "price"},
     }
 

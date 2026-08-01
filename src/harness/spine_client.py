@@ -1,20 +1,52 @@
-"""Typed asynchronous client for the exact SPEC C.4 Spine API."""
+"""Typed asynchronous client for the enacted Spine HTTP API."""
+
+from __future__ import annotations
 
 import json
 import math
+import re
 from datetime import datetime
+from decimal import Decimal
 from enum import StrEnum
 from typing import Annotated, Any, Literal, Never
 from uuid import UUID
 
 import httpx
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    JsonValue,
+    StrictStr,
+    TypeAdapter,
+    field_validator,
+    model_validator,
+)
 
 type JsonObject = dict[str, Any]
 
+_ULID_PATTERN = re.compile(r"^[0-7][0-9A-HJKMNP-TV-Z]{25}$", re.IGNORECASE)
+
+
+def _require_ulid(value: str) -> str:
+    if not _ULID_PATTERN.fullmatch(value):
+        raise ValueError("value must be a ULID")
+    return value.upper()
+
+
+def _require_nonblank(value: str) -> str:
+    if not value.strip() or value != value.strip():
+        raise ValueError("value must be nonblank without surrounding whitespace")
+    return value
+
+
+type ULID = Annotated[StrictStr, AfterValidator(_require_ulid)]
+type NonBlankString = Annotated[StrictStr, AfterValidator(_require_nonblank)]
+
 
 class ContractModel(BaseModel):
-    """Closed JSON object for a body whose fields are specified in C.4."""
+    """Closed JSON object for a body whose fields are fixed by Spine law."""
 
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
 
@@ -243,6 +275,63 @@ class SearchResponse(ContractModel):
     results: list[SimilarityMemoryCard]
 
 
+class SpendEvent(ContractModel):
+    """One exact A-027 receipt line submitted to Spine."""
+
+    event_uid: ULID
+    ts: datetime
+    product_type: Literal["llm.request", "llm.embedding"]
+    quantity_type: NonBlankString
+    unit_of_measure: NonBlankString
+    quantity: Decimal = Field(gt=0, max_digits=30, decimal_places=9)
+    cost_usd: Decimal | None = Field(default=None, ge=0, max_digits=20, decimal_places=12)
+    basis: Literal["measured", "allocated", "estimated"]
+    behavior: Literal["variable", "fixed", "step"]
+    purpose: Literal[
+        "building",
+        "extraction",
+        "curation",
+        "judge",
+        "remember",
+        "embedding",
+        "scout",
+    ]
+    principal_id: NonBlankString | None = None
+    machine_id: NonBlankString | None = None
+    origin_agent: NonBlankString | None = None
+    thread_id: UUID | None = None
+    run_id: ULID | None = None
+    prompt_id: ULID | None = None
+    memory_id: UUID | None = None
+    model: NonBlankString | None = None
+    provider: NonBlankString | None = None
+    quantization: NonBlankString | None = None
+    ref: NonBlankString
+    meta: dict[str, JsonValue] = Field(default_factory=dict)
+
+    @field_validator("ts")
+    @classmethod
+    def require_aware_timestamp(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("ts must include a UTC offset")
+        return value
+
+
+class SpendEventsRequest(ContractModel):
+    events: list[SpendEvent] = Field(min_length=1, max_length=1000)
+
+    @model_validator(mode="after")
+    def unique_event_ids(self) -> SpendEventsRequest:
+        ids = [event.event_uid for event in self.events]
+        if len(set(ids)) != len(ids):
+            raise ValueError("events must have unique event_uid values")
+        return self
+
+
+class SpendEventsResponse(ContractModel):
+    accepted: int = Field(strict=True, ge=1)
+
+
 class ProblemDetail(BaseModel):
     """RFC 7807 body; extension members are permitted by that standard."""
 
@@ -264,7 +353,7 @@ class ProblemDetail(BaseModel):
 
 
 class SpineClientError(RuntimeError):
-    """Base class for typed failures at the C.4 client boundary."""
+    """Base class for typed failures at the Spine client boundary."""
 
 
 class SpineTransportError(SpineClientError):
@@ -319,11 +408,12 @@ _MEMORY_UNIT = TypeAdapter(MemoryUnit)
 _PATCH_CONFLICT = TypeAdapter(PatchMemoryConflict)
 _MEMORY_LIST_RESPONSE = TypeAdapter(PagedMemoryListResponse)
 _SEARCH_RESPONSE = TypeAdapter(SearchResponse)
+_SPEND_EVENTS_RESPONSE = TypeAdapter(SpendEventsResponse)
 _PROBLEM_DETAIL = TypeAdapter(ProblemDetail)
 
 
 class SpineClient:
-    """Own one HTTP transport and validate every C.4 response by status."""
+    """Own one HTTP transport and validate every Spine response by status."""
 
     def __init__(
         self,
@@ -350,7 +440,7 @@ class SpineClient:
             transport=transport,
         )
 
-    async def __aenter__(self) -> "SpineClient":
+    async def __aenter__(self) -> SpineClient:
         return self
 
     async def __aexit__(self, *_: object) -> None:
@@ -444,6 +534,16 @@ class SpineClient:
             json_body=_request_body(request),
         )
         return _expect_success(response, status=200, adapter=_SEARCH_RESPONSE)
+
+    async def record_spend_events(self, request: SpendEventsRequest) -> SpendEventsResponse:
+        """Synchronously mirror A-027 POST /v1/spend/events."""
+
+        response = await self._request(
+            "POST",
+            "v1/spend/events",
+            json_body=_request_body(request),
+        )
+        return _expect_success(response, status=200, adapter=_SPEND_EVENTS_RESPONSE)
 
     async def _request(
         self,

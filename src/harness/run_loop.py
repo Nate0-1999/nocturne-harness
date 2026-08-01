@@ -101,6 +101,14 @@ class _Emitter(RunEmitter):
         self._thread_id = thread_id
         self._active = active
 
+    @property
+    def run_id(self) -> str:
+        return self._active.turn.run_id
+
+    @property
+    def prompt_id(self) -> str:
+        return self._active.turn.prompt_id
+
     async def text(self, value: str) -> None:
         await self._loop._emit_text(self._thread_id, self._active, value)
 

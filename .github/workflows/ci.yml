@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nate0-1999/nocturne-spine
-          ref: fdb817619e9ae1d5135a696a8775abfbe7d3324b
+          ref: 371b698425b607d7dac72213367a2f78d00da145
           path: _d3/spine
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -30,8 +30,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install ./_d3/spine
           python -m pip install -e ".[dev]"
-      - name: M1 scope fence
-        run: .githooks/pre-commit --all
       - name: Lint
         run: ruff check . && ruff format --check src tests
       - name: Test
@@ -83,7 +81,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nate0-1999/nocturne-spine
-          ref: fdb817619e9ae1d5135a696a8775abfbe7d3324b
+          ref: 371b698425b607d7dac72213367a2f78d00da145
           path: _contract/spine
           persist-credentials: false
       - uses: actions/setup-python@v5

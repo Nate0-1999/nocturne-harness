@@ -1137,6 +1137,7 @@ def test_packaged_source_materializes_separate_complete_trees(
     breaker = resources / "billing-breaker"
     breaker.mkdir(parents=True)
     (resources / "Dockerfile").write_text("FROM scratch\n", encoding="utf-8")
+    (resources / "README.md").write_text("# Spine\n", encoding="utf-8")
     (resources / "pyproject.toml").write_text("[project]\nname='spine'\n", encoding="utf-8")
     for filename in (
         "README.md",
@@ -1153,6 +1154,7 @@ def test_packaged_source_materializes_separate_complete_trees(
         temporary_root = source.app.parent
         assert source.app != source.breaker
         assert (source.app / "Dockerfile").read_text(encoding="utf-8") == "FROM scratch\n"
+        assert (source.app / "README.md").read_text(encoding="utf-8") == "# Spine\n"
         assert (source.app / "src" / "spine" / "deploy_resources.py").is_file()
         assert (source.app / "infra" / "billing-breaker" / "deploy.sh").is_file()
         assert (source.breaker / "deploy.sh").stat().st_mode & 0o111

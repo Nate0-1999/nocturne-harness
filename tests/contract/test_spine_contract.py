@@ -1,6 +1,8 @@
 """S1-S2 contract assertions against a live Spine and pgvector database."""
 
 import os
+from datetime import UTC, datetime
+from decimal import Decimal
 from uuid import uuid4
 
 import pytest
@@ -19,7 +21,10 @@ from harness.spine_client import (
     PatchMemoryRequest,
     RevisionConflict,
     SimilarMemoriesResponse,
+    SpendEvent,
+    SpendEventsRequest,
     SpineClient,
+    SpineProblemError,
 )
 
 pytestmark = [pytest.mark.contract, pytest.mark.asyncio]
@@ -252,3 +257,33 @@ async def test_live_patch_cas_tombstone_and_list(spine_client: SpineClient) -> N
     )
     assert historical.total == 1
     assert [unit.memory_id for unit in historical.items] == [tombstoned.memory_id]
+
+
+async def test_live_spend_receipt_is_atomic_and_idempotent(spine_client: SpineClient) -> None:
+    event = SpendEvent(
+        event_uid="01K1M2A0000000000000000001",
+        ts=datetime(2026, 8, 1, 12, tzinfo=UTC),
+        product_type="llm.request",
+        quantity_type="output",
+        unit_of_measure="tokens",
+        quantity=10,
+        cost_usd="0.0001",
+        basis="measured",
+        behavior="variable",
+        purpose="building",
+        principal_id="contract-owner",
+        machine_id="contract-machine",
+        origin_agent="contract-agent",
+        ref="contract-generation-1",
+    )
+    request = SpendEventsRequest(events=[event])
+
+    first = await spine_client.record_spend_events(request)
+    replay = await spine_client.record_spend_events(request)
+
+    assert first.accepted == replay.accepted == 1
+    with pytest.raises(SpineProblemError) as conflict:
+        await spine_client.record_spend_events(
+            SpendEventsRequest(events=[event.model_copy(update={"quantity": Decimal(11)})])
+        )
+    assert conflict.value.status_code == 409

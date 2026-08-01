@@ -330,7 +330,7 @@ def create_dev_app(
 
     memory_contexts = ThreadMemoryContextRegistry()
     runner = MemoryGateTurnRunner(
-        PydanticAITurnRunner(owned_agent, context_factory),
+        PydanticAITurnRunner(owned_agent, context_factory, owned_spine),
         owned_spine,
         context_factory,
         model_context_tokens=configured.model_context_tokens,

@@ -670,3 +670,56 @@ Cloud SQL instance creation, deletes, broad IAM, Cloud Build, automatic D2
 cleanup, and non-interactive breaker confirmation all cross explicit human
 boundaries. Treating a partial breaker as fresh would adopt unknown identities,
 keys, triggers, or queued destructive messages.
+
+## 022 — Broker responses become synchronous receipt batches [P4]
+
+**Decision.** Capture each new Pydantic AI `ModelResponse` at the existing turn
+adapter and translate its nonzero usage into A-027 receipt lines before the turn
+returns. Request usage explicitly asks OpenRouter for native accounting. The
+run loop's emitter exposes its already-owned run and prompt ULIDs; trusted tool
+context supplies principal, machine, agent path, and thread. Ordinary chat is
+`purpose=building`, the label completion for `/remember` is
+`purpose=remember`, and a successfully created memory id is attached when
+available. Provider response id is the request `ref`; request-id detail and the
+first receipt ULID are the declared fallbacks.
+
+OpenRouter/OpenAI-style prompt totals subtract reported cache reads and writes
+to produce fresh input; direct Anthropic input is already its fresh class and
+is not subtracted. Reported reasoning at or below output is split from ordinary
+output so quantities do not double-count it. Native aggregate USD is allocated
+token-pro-rata with a twelve-decimal exact remainder and marked `allocated`;
+one-line cost is `measured`, and missing cost remains NULL. Downstream provider
+is preferred over the broker name, while the broker and raw billing details
+remain in `meta`. A receipt failure emits a sanitized `spend_unavailable` event
+and makes the run terminally fail; there is no async retry queue.
+
+**Motivation.** The adapter is the first common point that sees every tool-loop
+response, normalized usage, broker-native cost, and daemon lineage. Recording
+there avoids provider-specific HTTP forks and preserves A-020's one broker
+seam. Exact aggregate preservation is dollar-true; the allocated basis admits
+that token-pro-rata is not a claim about the broker's undisclosed class rates.
+
+**Rejected alternatives.** Run-level cumulative usage loses one-ref-per-request
+grain and downstream provider detail. Emitting zero cache rows pads the ledger
+with non-purchases. Treating all prompt totals alike double-counts direct
+Anthropic cache usage or understates OpenRouter fresh input. Background writes
+can lose charged work, and silently continuing after a failed receipt would
+make Vitals look healthier than the bill.
+
+## 023 — Retire the closed-M1 regex fence [P4]
+
+**Decision.** Remove the repository pre-commit hook and CI step from Decision
+002 now that Garden report 035 has closed M1. The hook encoded M1's forbidden
+feature ledger; it is not a general product-correctness check, and several of
+those feature families are now expressly scheduled M2 work. Packet scope stays
+governed by the current Garden board and focused packet law. Lint, tests,
+packaging checks, and contract evidence remain CI gates.
+
+**Motivation.** The closed-milestone regex rejected the enacted M2A spend
+contract. Leaving a stale guard in place makes lawful work indistinguishable
+from scope drift and invites bypassing a check whose premise no longer holds.
+
+**Rejected alternatives.** `--no-verify` would conceal the mismatch and still
+leave CI red. A milestone switch whose M2 branch does nothing is ceremonial
+machinery. Rewriting the regex for every packet duplicates Garden authority in
+two product repositories and cannot express packet dependencies reliably.

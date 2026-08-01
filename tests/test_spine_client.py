@@ -84,7 +84,7 @@ def scored_card_payload() -> dict[str, object]:
     return payload
 
 
-def test_client_exposes_all_seven_c4_routes() -> None:
+def test_client_exposes_all_spine_routes() -> None:
     methods = {
         name
         for name, value in inspect.getmembers(SpineClient, inspect.iscoroutinefunction)
@@ -100,6 +100,7 @@ def test_client_exposes_all_seven_c4_routes() -> None:
         "patch_memory",
         "list_memories",
         "search",
+        "record_spend_events",
     }
 
 
