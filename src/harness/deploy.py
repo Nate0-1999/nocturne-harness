@@ -1528,6 +1528,21 @@ class GcloudDeployBackend:
             return ResourceState.UPDATABLE
         return ResourceState.DRIFTED
 
+    def _artifact_images(self) -> list[Mapping[str, Any]]:
+        return self._json_list(
+            (
+                "gcloud",
+                "artifacts",
+                "docker",
+                "images",
+                "list",
+                IMAGE_PACKAGE,
+                "--include-tags",
+                f"--project={PROJECT_ID}",
+                "--format=json",
+            )
+        )
+
     def _image_state(self, images: Sequence[Mapping[str, Any]]) -> ResourceState:
         self._image_digest_ref = None
         for row in images:
@@ -2296,24 +2311,7 @@ class GcloudDeployBackend:
             )
         )
         artifact_repository = self._artifact_state(repositories)
-        images = (
-            self._json_list(
-                (
-                    "gcloud",
-                    "artifacts",
-                    "docker",
-                    "images",
-                    "list",
-                    IMAGE_PACKAGE,
-                    "--include-tags",
-                    f"--project={PROJECT_ID}",
-                    f"--location={REGION}",
-                    "--format=json",
-                )
-            )
-            if artifact_repository is not ResourceState.ABSENT
-            else []
-        )
+        images = self._artifact_images() if artifact_repository is not ResourceState.ABSENT else []
         spine_image = self._image_state(images)
 
         run_services = self._json_list(

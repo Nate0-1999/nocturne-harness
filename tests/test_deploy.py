@@ -24,6 +24,7 @@ from harness.deploy import (
     DATABASE_USER,
     EMBED_BASE_URL,
     EMBED_MODEL,
+    IMAGE_PACKAGE,
     OPENROUTER_SECRET,
     PROJECT_ID,
     REGION,
@@ -965,6 +966,35 @@ def test_cloud_run_extra_or_conditional_public_iam_is_drifted(
 
     state = backend._cloud_run_state(exact_cloud_run_service(backend), policy)
     assert state is ResourceState.DRIFTED
+
+
+def test_artifact_image_listing_uses_supported_fully_qualified_package_argv() -> None:
+    calls: list[tuple[str, ...]] = []
+
+    def runner(argv: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        calls.append(tuple(argv))
+        return subprocess.CompletedProcess(argv, 0, "[]", "")
+
+    backend = GcloudDeployBackend(
+        image_tag="0.1.0",
+        openrouter_key="fixture",
+        runner=runner,
+    )
+
+    assert backend._artifact_images() == []
+    assert calls == [
+        (
+            "gcloud",
+            "artifacts",
+            "docker",
+            "images",
+            "list",
+            IMAGE_PACKAGE,
+            "--include-tags",
+            f"--project={PROJECT_ID}",
+            "--format=json",
+        )
+    ]
 
 
 def sql_user_state(users: list[dict[str, object]]) -> ResourceState:

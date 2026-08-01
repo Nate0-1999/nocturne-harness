@@ -14,7 +14,7 @@ editable checkout was present on `sys.path` during the installed-wheel checks.
 - The Harness sdist contains 30 release entries and excludes Garden, internal
   verification, tests, Node source, `node_modules`, and local environment data.
 - The installed `nocturne` entry point exposes exactly `init`, `up`, `deploy`,
-  and `status`.
+  and `open`.
 
 Artifact SHA-256 values:
 
@@ -22,8 +22,8 @@ Artifact SHA-256 values:
 | --- | --- |
 | `nocturne_spine-0.1.0-py3-none-any.whl` | `0a83d082ccfad2f16621d3386b15ce35cdfdacfb42e6ac20edf5f3372b220587` |
 | `nocturne_spine-0.1.0.tar.gz` | `08a08acb5fcf42d2ddad2624cf214402c34af15ab9283187b5df0fcf9774f6af` |
-| `nocturne_ai-0.1.0-py3-none-any.whl` | `fb9a2d20f7a0fd26dfc88cd01569c91962bdc459a3f017a153a6af4f432a6e73` |
-| `nocturne_ai-0.1.0.tar.gz` | `ba6195f2f80b22b28b47a38f6886183fb436b2037982e5f76a6fc43726f0ba6c` |
+| `nocturne_ai-0.1.0-py3-none-any.whl` | `1375a7f761b2410b809f99ed3fef10e54040354c054187a7d0a295efc8f7cf91` |
+| `nocturne_ai-0.1.0.tar.gz` | `99ff46627a26f0e7ef6e132ca1751bfb205310a1f12737d583dde32ed35f46dc` |
 
 ## Installed-wheel local acceptance
 
@@ -40,8 +40,29 @@ expected model response. The screenshot contains no secret material:
 
 ## Cloud dry-run
 
-Pending execution against the fixed deployment target. This section will
-record the complete non-mutating plan or the exact safe blocker.
+The installed wheel ran `nocturne deploy --dry-run` against the fixed
+`n8-memory-palace` / `us-central1` target. The first attempt caught an invalid
+Artifact Registry read argument; that command was corrected, covered by a
+regression test, rebuilt, reinstalled, and rerun. The final run exited normally
+after printing all 20 stages and made no changes.
+
+The complete redacted output is preserved in
+[`deploy-dry-run.txt`](deploy-dry-run.txt).
+
+The observed plan was:
+
+- exact/no-op: active project, billing link, PostgreSQL 16 foundation, SQL
+  protection, both runtime secrets, dedicated runtime identity, four scoped
+  IAM grants, immutable Artifact Registry repository, and the complete armed
+  D2 topology;
+- blocked: the existing database/user/managed-URL-secret tuple disagrees, and
+  the observed Alembic head is not forward-compatible with the packaged head;
+- forward work, not executed: create the immutable Spine image, update the
+  single Cloud Run service, and run remote verification.
+
+The blocked live state is intentionally not adopted, rotated, deleted, or
+replaced. Resolution requires an owner decision under the D1 boundaries; it is
+not silently widened into D3 authority.
 
 ## Public-index gate
 
