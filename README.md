@@ -36,8 +36,10 @@ nocturne deploy --dry-run
 nocturne deploy
 ```
 
-Cloud mode uses the same OpenRouter key plus the human's existing `gcloud`
-authentication. Under the current D1 contract it reconciles only the named
+Cloud mode additionally requires the Google Cloud CLI with the human's existing
+`gcloud auth`, Docker Buildx, and the Cloud SQL Auth Proxy available as
+`cloud-sql-proxy`. It uses the same OpenRouter key. Under the current D1
+contract it reconciles only the named
 `n8-memory-palace` foundation in `us-central1`: the project must already be
 ACTIVE and billed, and the PostgreSQL 16 Cloud SQL instance
 `n8-memory-palace-db` must already exist. Missing foundation resources stop the

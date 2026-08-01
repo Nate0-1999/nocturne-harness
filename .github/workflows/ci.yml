@@ -14,18 +14,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout lockstep Spine
+        uses: actions/checkout@v4
+        with:
+          repository: Nate0-1999/nocturne-spine
+          ref: cd36d6087eb062b7e224755be2210c5199de6b07
+          path: _d3/spine
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
       - name: Install harness
-        run: python -m pip install --upgrade pip && python -m pip install -e ".[dev]"
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ./_d3/spine
+          python -m pip install -e ".[dev]"
       - name: M1 scope fence
         run: .githooks/pre-commit --all
       - name: Lint
         run: ruff check . && ruff format --check src tests
       - name: Test
         run: pytest -m "not contract"
+      - name: Build distributions and rebuild wheel from sdist
+        run: |
+          python -m pip install build
+          python -m build --sdist --wheel
+          python scripts/verify_sdist.py dist/nocturne_ai-*.tar.gz
+          python -m pip wheel --no-deps --wheel-dir /tmp/nocturne-ai-sdist-wheel dist/nocturne_ai-*.tar.gz
+          cmp dist/nocturne_ai-*.whl /tmp/nocturne-ai-sdist-wheel/nocturne_ai-*.whl
+      - name: Verify installed rebuilt wheel outside the checkout
+        run: |
+          python -m venv /tmp/nocturne-wheel
+          /tmp/nocturne-wheel/bin/python -m pip install ./_d3/spine /tmp/nocturne-ai-sdist-wheel/nocturne_ai-*.whl
+          cd /tmp
+          /tmp/nocturne-wheel/bin/python "$GITHUB_WORKSPACE/scripts/verify_wheel.py"
 
   web:
     name: Web lint and build
@@ -46,6 +69,9 @@ jobs:
         run: npm run lint
       - name: Build
         run: npm run build
+      - name: Verify committed release bundle
+        working-directory: .
+        run: git diff --exit-code -- web/dist
 
   contract:
     name: Live Spine contract tests
@@ -56,8 +82,8 @@ jobs:
       - name: Checkout pinned Spine
         uses: actions/checkout@v4
         with:
-          repository: Nate0-1999/memory-palace
-          ref: 9c51c992b6103ee7492961bcb27fb608c4760446
+          repository: Nate0-1999/nocturne-spine
+          ref: cd36d6087eb062b7e224755be2210c5199de6b07
           path: _contract/spine
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -65,7 +91,10 @@ jobs:
           python-version: "3.12"
           cache: pip
       - name: Install harness
-        run: python -m pip install --upgrade pip && python -m pip install -e ".[dev]"
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ./_contract/spine
+          python -m pip install -e ".[dev]"
       - name: Run live S1-S2 contract
         env:
           SPINE_SOURCE_DIR: ${{ github.workspace }}/_contract/spine

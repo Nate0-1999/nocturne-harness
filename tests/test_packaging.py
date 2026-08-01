@@ -22,6 +22,12 @@ def test_public_distribution_and_lockstep_dependency_metadata() -> None:
     assert metadata["tool"]["hatch"]["build"]["targets"]["wheel"]["force-include"] == {
         "web/dist": "harness/_web"
     }
+    assert metadata["tool"]["hatch"]["build"]["targets"]["sdist"]["include"] == [
+        "/README.md",
+        "/pyproject.toml",
+        "/src/harness",
+        "/web/dist",
+    ]
 
 
 def test_committed_web_build_has_every_referenced_asset() -> None:

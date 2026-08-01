@@ -30,6 +30,10 @@ dev = [
 harness = "harness.daemon:main"
 nocturne = "harness.cli:main"
 
+[project.urls]
+Homepage = "https://github.com/Nate0-1999/nocturne"
+Source = "https://github.com/Nate0-1999/nocturne-harness"
+
 [tool.hatch.version]
 path = "src/harness/__init__.py"
 
@@ -41,6 +45,14 @@ packages = ["src/harness"]
 
 [tool.hatch.build.targets.sdist.force-include]
 "web/dist" = "web/dist"
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/README.md",
+  "/pyproject.toml",
+  "/src/harness",
+  "/web/dist",
+]
 
 [tool.uv.sources]
 nocturne-spine = { path = "../spine", editable = true }
