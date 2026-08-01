@@ -621,3 +621,52 @@ human command to an irrelevant benchmark outage. Letting generic nested events
 control the browser header creates a second model authority. A new C.7 command
 type, browser registry/selector, persistent M1 journal database, or replaying
 `/model` into provider history all exceed the v2.26 repair.
+
+## 020 — Installed-wheel local control plane [P4]
+
+**Decision.** Publish the Harness distribution as `nocturne-ai` at product
+version 0.1.0 with console command `nocturne`, and pin its local dependency to
+the lockstep `nocturne-spine==0.1.0` wheel. Bundle the committed production web
+build inside the Harness wheel and compose the installed app against that path;
+the existing `harness dev` command remains the only Node-backed path. Store one
+generated local config beneath `NOCTURNE_HOME` (default `~/.nocturne`) at mode
+0600, ask only for the OpenRouter key, and generate the Spine token, database
+password, and machine identity. Use packaged Compose only for a loopback-bound
+pgvector container; call Spine's packaged migration seam, then supervise the
+installed Spine and Harness processes in the foreground.
+
+**Motivation.** ADR-019 treats onboarding attention as product cost. One wheel
+environment, one private config, and one foreground supervisor reach a browser
+without exposing repository layout, Node, Alembic paths, or hand-written env
+files. Spine remains the sole owner of its migrations and deployable source.
+
+**Rejected alternatives.** A cloned three-repo workspace is the relay's
+implementation shape, not a user interface. Shipping Node or building the SPA
+at first run violates the prebuilt-assets contract. Duplicating Spine source or
+migration logic in Harness violates DRY; containerizing both Python services
+adds image distribution to a local path whose wheels already contain them.
+
+## 021 — Fixed-foundation, state-aware cloud reconciliation [P4]
+
+**Decision.** Implement `nocturne deploy` only for the named D1 foundation:
+`n8-memory-palace`, `us-central1`, and `n8-memory-palace-db`. Read-only planning
+classifies each exact resource as NOOP, CREATE, permitted monotonic UPDATE,
+HUMAN, or BLOCKED; apply re-observes and executes only the lawful forward
+actions. A missing ACTIVE billed project or PostgreSQL 16 instance blocks
+rather than provisioning. Existing credentials and secret versions are never
+rotated on a rerun. Images build locally for linux/amd64 from Spine-owned
+packaged source; migrations run separately; the runtime identity receives only
+Cloud SQL Client and per-secret access. D2 remains a distinct real-TTY gate:
+exact armed state is a no-op, complete absence may enter the existing typed
+detach confirmation, and partial or drifted state stops for human recovery.
+
+**Motivation.** ADR-019's idempotence is desired-state convergence, not license
+to widen D.2 045. Observing before planning makes dry-run truthful and makes a
+second apply inert, while the state split preserves D2's deliberate outage
+authority and its fail-closed recovery law.
+
+**Rejected alternatives.** Generic project creation, billing/budget changes,
+Cloud SQL instance creation, deletes, broad IAM, Cloud Build, automatic D2
+cleanup, and non-interactive breaker confirmation all cross explicit human
+boundaries. Treating a partial breaker as fresh would adopt unknown identities,
+keys, triggers, or queued destructive messages.

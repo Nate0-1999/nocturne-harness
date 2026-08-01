@@ -1,3 +1,3 @@
-"""Harness transport scaffold for Milestone M1."""
+"""NOCTURNE local harness and onboarding package."""
 
-__version__ = "0.0.0"
+__version__ = "0.1.0"

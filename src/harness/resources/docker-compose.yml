@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: spine
+      POSTGRES_PASSWORD: ${NOCTURNE_DB_PASSWORD:?Nocturne must be initialized}
+      POSTGRES_USER: spine
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spine -d spine"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    labels:
+      io.nocturne.managed: "true"
+    ports:
+      - "127.0.0.1:${NOCTURNE_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - nocturne_postgres:/var/lib/postgresql/data
+
+volumes:
+  nocturne_postgres:

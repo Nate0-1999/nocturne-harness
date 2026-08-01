@@ -14,6 +14,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
+from harness import __version__
 from harness.agent import HarnessAgent
 from harness.agent_runtime import PydanticAITurnRunner
 from harness.config import HarnessSettings
@@ -125,7 +126,7 @@ def create_app(
     envelope_factory: EnvelopeFactory | None = None,
 ) -> FastAPI:
     """Create the daemon with process-scoped H7 state and extensible routing."""
-    app = FastAPI(title="Harness", version="0.0.0")
+    app = FastAPI(title="NOCTURNE", version=__version__)
     factory = envelope_factory or EnvelopeFactory(machine_id="harness-daemon")
     loop = run_loop or RunLoop(_UnavailableTurnRunner(), factory)
     app.router.add_event_handler("shutdown", loop.close)

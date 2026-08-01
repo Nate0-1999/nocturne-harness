@@ -3,13 +3,15 @@ requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
-name = "n8-harness"
-version = "0.0.0"
-description = "M1 harness scaffold"
+name = "nocturne-ai"
+dynamic = ["version"]
+description = "NOCTURNE local harness, onboarding CLI, and Memory Palace client"
+readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
   "fastapi>=0.115,<1",
   "httpx>=0.27,<1",
+  "nocturne-spine==0.1.0",
   "pydantic>=2.10,<3",
   "pydantic-ai==2.12.0",
   "pydantic-settings>=2.7,<3",
@@ -26,9 +28,22 @@ dev = [
 
 [project.scripts]
 harness = "harness.daemon:main"
+nocturne = "harness.cli:main"
+
+[tool.hatch.version]
+path = "src/harness/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/harness"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"web/dist" = "harness/_web"
+
+[tool.hatch.build.targets.sdist.force-include]
+"web/dist" = "web/dist"
+
+[tool.uv.sources]
+nocturne-spine = { path = "../spine", editable = true }
 
 [tool.pytest.ini_options]
 addopts = "-ra"
