@@ -16,10 +16,10 @@ interface MemoryPanelProps {
   mobileOpen: boolean
   inert: boolean
   onClose: () => void
-  onRefresh: () => Ulid
-  onRemove: (memoryId: string) => Ulid
-  onEdit: (memoryId: string, expectedRevision: number, body: string) => Ulid
-  onPin: (memoryId: string, expectedRevision: number, pin: boolean) => Ulid
+  onRefresh: () => Promise<Ulid>
+  onRemove: (memoryId: string) => Promise<Ulid>
+  onEdit: (memoryId: string, expectedRevision: number, body: string) => Promise<Ulid>
+  onPin: (memoryId: string, expectedRevision: number, pin: boolean) => Promise<Ulid>
 }
 
 interface EditorState {
@@ -151,32 +151,32 @@ export function MemoryPanel({
     setClientError(error instanceof Error ? error.message : fallback)
   }
 
-  function refresh() {
+  async function refresh() {
     try {
       setClientError(null)
-      onRefresh()
+      await onRefresh()
     } catch (error) {
       reportClientError(error, 'Memories could not be refreshed')
     }
   }
 
-  function remove(memoryId: string) {
+  async function remove(memoryId: string) {
     try {
       setClientError(null)
-      onRemove(memoryId)
+      await onRemove(memoryId)
     } catch (error) {
       reportClientError(error, 'Memory could not be removed from context')
     }
   }
 
-  function togglePin(memory: MemoryUnit) {
+  async function togglePin(memory: MemoryUnit) {
     if (memory.status !== 'active') {
       setClientError('This memory is unavailable. Refresh before taking another action.')
       return
     }
     try {
       setClientError(null)
-      onPin(memory.memory_id, memory.revision, !memory.pin)
+      await onPin(memory.memory_id, memory.revision, !memory.pin)
     } catch (error) {
       reportClientError(error, 'Pin state could not be updated')
     }
@@ -197,7 +197,7 @@ export function MemoryPanel({
     })
   }
 
-  function submitEdit(event: FormEvent<HTMLFormElement>) {
+  async function submitEdit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (editor === null || !editor.body.trim() || editSaved) {
       return
@@ -210,7 +210,7 @@ export function MemoryPanel({
       currentMemory?.revision ?? editor.expectedRevision
     try {
       setClientError(null)
-      const requestId = onEdit(
+      const requestId = await onEdit(
         editor.memoryId,
         expectedRevision,
         editor.body,

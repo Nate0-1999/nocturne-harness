@@ -318,6 +318,31 @@ def test_serves_built_web_static(tmp_path: Path) -> None:
     assert "Harness shell" in response.text
 
 
+def test_static_shell_and_rack_frame_have_distinct_frame_policies(tmp_path: Path) -> None:
+    (tmp_path / "index.html").write_text("<h1>Harness shell</h1>", encoding="utf-8")
+    client = TestClient(create_app(tmp_path))
+
+    shell = client.get("/", headers={"host": "127.0.0.1:8765"})
+    rack = client.get(
+        "/?rack_module=chat",
+        headers={"host": "rack.localhost:8765"},
+    )
+    forged = client.get(
+        "/?rack_module=chat",
+        headers={"host": "127.0.0.1:8765"},
+    )
+
+    assert shell.headers["x-frame-options"] == "DENY"
+    assert shell.headers["content-security-policy"] == "frame-ancestors 'none'"
+    assert "x-frame-options" not in rack.headers
+    assert "connect-src 'none'" in rack.headers["content-security-policy"]
+    assert (
+        "frame-ancestors http://localhost:* http://127.0.0.1:*"
+        in rack.headers["content-security-policy"]
+    )
+    assert forged.headers["x-frame-options"] == "DENY"
+
+
 def test_missing_web_build_is_explicit(tmp_path: Path) -> None:
     client = TestClient(create_app(tmp_path))
 

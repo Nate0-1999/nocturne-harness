@@ -723,3 +723,41 @@ from scope drift and invites bypassing a check whose premise no longer holds.
 leave CI red. A milestone switch whose M2 branch does nothing is ceremonial
 machinery. Rewriting the regex for every packet duplicates Garden authority in
 two product repositories and cannot express packet dependencies reliably.
+
+## 024 — One isolated bridge for the first-party rack [P2.5]
+
+**Decision.** The rack host owns the sole Zustand/WebSocket adapter and renders
+every first-party surface in a sandboxed iframe on `rack.localhost`, an origin
+distinct from the local shell. A transferred `MessagePort` exposes exactly the
+versioned event, query-plus-`as_of`, and selection surfaces. The frame manifest
+scopes readable C.7 streams and permitted C.7 actions; the host rejects an
+undeclared action. Both handshake directions pin the expected local origin, so
+a navigated frame cannot impersonate a resident and acquire the bridge. Rack
+documents are served with `connect-src 'none'`, no
+forms, frames, workers, objects, or media, while the main shell refuses to be
+framed. The compiled M2 modules are the only loadable residents; M3 still owns
+folder loading, hot reload, the public authoring SDK, and the contributor
+skill.
+
+Use a twelve-column, twelve-row host grid. The fixed header consumes one row;
+the thread, chat, and memory modules share the remaining eleven. A horizontal
+resize clamps the selected manifest bounds and trades whole units with its
+adjacent module, preserving a twelve-unit row. Drag/drop or Alt+arrow reorders
+the modules. The current layout auto-restores locally, and one explicit saved
+set can be restored or replaced; this is the sole currently implemented mode.
+`ResizeObserver` rectangles cross the same bridge as resize events. NEO-NOIR
+is a token-only default layer over the modules, with one semantic danger color.
+
+**Motivation.** P2.5 exists so the shipped interface is a replaceable factory
+opinion without privileged first-party plumbing. An isolated origin makes the
+iframe boundary real while still allowing the built assets to load; the CSP
+turns “no network egress” into a browser wall. Trading units with a neighbor
+keeps the rack constrained and deterministic instead of creating overlap or
+hidden overflow. Keeping the bridge serializable gives M3 one delivery seam
+instead of a second API.
+
+**Rejected alternatives.** An in-process provider shaped like the future API
+would not satisfy ADR-023's sandbox law. Same-origin frames can remove their
+own sandbox. Freeform pixel windows violate the grid-unit resize law. Loading
+arbitrary plugin folders or inventing parameter bindings in M2B would pull M3
+and M2J into this packet.

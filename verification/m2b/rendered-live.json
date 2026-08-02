@@ -1,0 +1,124 @@
+{
+  "desktop": {
+    "document": {
+      "clientWidth": 1280,
+      "scrollWidth": 1280
+    },
+    "frames": [
+      {
+        "origin": "http://rack.localhost:8773",
+        "sandbox": "allow-scripts allow-same-origin"
+      },
+      {
+        "origin": "http://rack.localhost:8773",
+        "sandbox": "allow-scripts allow-same-origin"
+      },
+      {
+        "origin": "http://rack.localhost:8773",
+        "sandbox": "allow-scripts allow-same-origin"
+      },
+      {
+        "origin": "http://rack.localhost:8773",
+        "sandbox": "allow-scripts allow-same-origin"
+      }
+    ],
+    "layoutStatus": "Saved set",
+    "modules": [
+      {
+        "id": "header",
+        "resizeSequence": 1,
+        "width": 12,
+        "x": 1
+      },
+      {
+        "id": "chat",
+        "resizeSequence": 2,
+        "width": 7,
+        "x": 1
+      },
+      {
+        "id": "threads",
+        "resizeSequence": 2,
+        "width": 3,
+        "x": 8
+      },
+      {
+        "id": "memory",
+        "resizeSequence": 1,
+        "width": 2,
+        "x": 11
+      }
+    ],
+    "viewport": {
+      "height": 720,
+      "width": 1280
+    }
+  },
+  "mobile": {
+    "document": {
+      "clientWidth": 390,
+      "scrollWidth": 390
+    },
+    "frames": [
+      {
+        "origin": "http://rack.localhost:8773",
+        "sandbox": "allow-scripts allow-same-origin"
+      },
+      {
+        "origin": "http://rack.localhost:8773",
+        "sandbox": "allow-scripts allow-same-origin"
+      },
+      {
+        "origin": "http://rack.localhost:8773",
+        "sandbox": "allow-scripts allow-same-origin"
+      },
+      {
+        "origin": "http://rack.localhost:8773",
+        "sandbox": "allow-scripts allow-same-origin"
+      }
+    ],
+    "modules": [
+      {
+        "display": "flex",
+        "id": "header",
+        "inert": false
+      },
+      {
+        "display": "none",
+        "id": "threads",
+        "inert": false
+      },
+      {
+        "display": "flex",
+        "id": "chat",
+        "inert": false
+      },
+      {
+        "display": "none",
+        "id": "memory",
+        "inert": false
+      }
+    ],
+    "viewport": {
+      "height": 844,
+      "width": 390
+    }
+  },
+  "whitespace_send_disabled": true,
+  "console": {
+    "desktop": [],
+    "mobile": []
+  },
+  "screenshots": [
+    "09-live-arrival-desktop-1280x720.png",
+    "10-live-custom-rack-desktop-1280x720.png",
+    "11-live-gate-desktop-1280x720.png",
+    "12-live-after-gate-desktop-1280x720.png",
+    "13-live-arrival-mobile-390x844.png",
+    "14-live-memory-mobile-390x844.png",
+    "15-live-threads-mobile-390x844.png",
+    "16-live-gate-mobile-390x844.png",
+    "17-live-gate-scrolled-mobile-390x844.png",
+    "18-live-stopped-mobile-390x844.png"
+  ]
+}

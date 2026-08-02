@@ -1,0 +1,729 @@
+{
+  "base_url": "http://127.0.0.1:8773",
+  "modes": {
+    "desktop": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "sandbox": [
+        {
+          "testid": "rack-plugin-frame-header",
+          "sandbox": "allow-scripts allow-same-origin",
+          "origin": "http://rack.localhost:8773"
+        },
+        {
+          "testid": "rack-plugin-frame-threads",
+          "sandbox": "allow-scripts allow-same-origin",
+          "origin": "http://rack.localhost:8773"
+        },
+        {
+          "testid": "rack-plugin-frame-chat",
+          "sandbox": "allow-scripts allow-same-origin",
+          "origin": "http://rack.localhost:8773"
+        },
+        {
+          "testid": "rack-plugin-frame-memory",
+          "sandbox": "allow-scripts allow-same-origin",
+          "origin": "http://rack.localhost:8773"
+        }
+      ],
+      "arrival": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "client_width": 1440,
+          "scroll_width": 1440
+        },
+        "modules": [
+          {
+            "id": "header",
+            "grid_x": 1,
+            "grid_width": 12,
+            "resize_sequence": 1,
+            "display": "flex",
+            "rect": {
+              "x": 7,
+              "width": 1427,
+              "height": 54
+            }
+          },
+          {
+            "id": "threads",
+            "grid_x": 1,
+            "grid_width": 2,
+            "resize_sequence": 1,
+            "display": "flex",
+            "rect": {
+              "x": 7,
+              "width": 232,
+              "height": 826
+            }
+          },
+          {
+            "id": "chat",
+            "grid_x": 3,
+            "grid_width": 8,
+            "resize_sequence": 1,
+            "display": "flex",
+            "rect": {
+              "x": 246,
+              "width": 949,
+              "height": 826
+            }
+          },
+          {
+            "id": "memory",
+            "grid_x": 11,
+            "grid_width": 2,
+            "resize_sequence": 1,
+            "display": "flex",
+            "rect": {
+              "x": 1201,
+              "width": 232,
+              "height": 826
+            }
+          }
+        ]
+      },
+      "console_problems": [],
+      "page_errors": [],
+      "screenshots": {
+        "factory": "/Users/nateoswalt/Developer/N8_Harness/harness/verification/m2b/01-factory-desktop-1440x900.png",
+        "gate": "/Users/nateoswalt/Developer/N8_Harness/harness/verification/m2b/02-custom-gate-desktop-1440x900.png",
+        "gate_scrolled": "/Users/nateoswalt/Developer/N8_Harness/harness/verification/m2b/02b-custom-gate-scrolled-desktop-1440x900.png",
+        "response": "/Users/nateoswalt/Developer/N8_Harness/harness/verification/m2b/03-response-desktop-1440x900.png"
+      },
+      "layout": {
+        "before": {
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "document": {
+            "client_width": 1440,
+            "scroll_width": 1440
+          },
+          "modules": [
+            {
+              "id": "header",
+              "grid_x": 1,
+              "grid_width": 12,
+              "resize_sequence": 1,
+              "display": "flex",
+              "rect": {
+                "x": 7,
+                "width": 1427,
+                "height": 54
+              }
+            },
+            {
+              "id": "threads",
+              "grid_x": 1,
+              "grid_width": 2,
+              "resize_sequence": 1,
+              "display": "flex",
+              "rect": {
+                "x": 7,
+                "width": 232,
+                "height": 826
+              }
+            },
+            {
+              "id": "chat",
+              "grid_x": 3,
+              "grid_width": 8,
+              "resize_sequence": 1,
+              "display": "flex",
+              "rect": {
+                "x": 246,
+                "width": 949,
+                "height": 826
+              }
+            },
+            {
+              "id": "memory",
+              "grid_x": 11,
+              "grid_width": 2,
+              "resize_sequence": 1,
+              "display": "flex",
+              "rect": {
+                "x": 1201,
+                "width": 232,
+                "height": 826
+              }
+            }
+          ]
+        },
+        "resized": {
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "document": {
+            "client_width": 1440,
+            "scroll_width": 1440
+          },
+          "modules": [
+            {
+              "id": "header",
+              "grid_x": 1,
+              "grid_width": 12,
+              "resize_sequence": 1,
+              "display": "flex",
+              "rect": {
+                "x": 7,
+                "width": 1427,
+                "height": 54
+              }
+            },
+            {
+              "id": "threads",
+              "grid_x": 1,
+              "grid_width": 3,
+              "resize_sequence": 2,
+              "display": "flex",
+              "rect": {
+                "x": 7,
+                "width": 352,
+                "height": 826
+              }
+            },
+            {
+              "id": "chat",
+              "grid_x": 4,
+              "grid_width": 7,
+              "resize_sequence": 2,
+              "display": "flex",
+              "rect": {
+                "x": 365,
+                "width": 829,
+                "height": 826
+              }
+            },
+            {
+              "id": "memory",
+              "grid_x": 11,
+              "grid_width": 2,
+              "resize_sequence": 1,
+              "display": "flex",
+              "rect": {
+                "x": 1201,
+                "width": 232,
+                "height": 826
+              }
+            }
+          ]
+        },
+        "docked": {
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "document": {
+            "client_width": 1440,
+            "scroll_width": 1440
+          },
+          "modules": [
+            {
+              "id": "header",
+              "grid_x": 1,
+              "grid_width": 12,
+              "resize_sequence": 1,
+              "display": "flex",
+              "rect": {
+                "x": 7,
+                "width": 1427,
+                "height": 54
+              }
+            },
+            {
+              "id": "chat",
+              "grid_x": 1,
+              "grid_width": 7,
+              "resize_sequence": 2,
+              "display": "flex",
+              "rect": {
+                "x": 7,
+                "width": 829,
+                "height": 826
+              }
+            },
+            {
+              "id": "memory",
+              "grid_x": 8,
+              "grid_width": 2,
+              "resize_sequence": 1,
+              "display": "flex",
+              "rect": {
+                "x": 843,
+                "width": 232,
+                "height": 826
+              }
+            },
+            {
+              "id": "threads",
+              "grid_x": 10,
+              "grid_width": 3,
+              "resize_sequence": 2,
+              "display": "flex",
+              "rect": {
+                "x": 1082,
+                "width": 352,
+                "height": 826
+              }
+            }
+          ]
+        },
+        "restored": {
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "document": {
+            "client_width": 1440,
+            "scroll_width": 1440
+          },
+          "modules": [
+            {
+              "id": "header",
+              "grid_x": 1,
+              "grid_width": 12,
+              "resize_sequence": 1,
+              "display": "flex",
+              "rect": {
+                "x": 7,
+                "width": 1427,
+                "height": 54
+              }
+            },
+            {
+              "id": "chat",
+              "grid_x": 1,
+              "grid_width": 7,
+              "resize_sequence": 2,
+              "display": "flex",
+              "rect": {
+                "x": 7,
+                "width": 829,
+                "height": 826
+              }
+            },
+            {
+              "id": "memory",
+              "grid_x": 8,
+              "grid_width": 2,
+              "resize_sequence": 2,
+              "display": "flex",
+              "rect": {
+                "x": 843,
+                "width": 232,
+                "height": 826
+              }
+            },
+            {
+              "id": "threads",
+              "grid_x": 10,
+              "grid_width": 3,
+              "resize_sequence": 3,
+              "display": "flex",
+              "rect": {
+                "x": 1082,
+                "width": 352,
+                "height": 826
+              }
+            }
+          ]
+        },
+        "reloaded": {
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "document": {
+            "client_width": 1440,
+            "scroll_width": 1440
+          },
+          "modules": [
+            {
+              "id": "header",
+              "grid_x": 1,
+              "grid_width": 12,
+              "resize_sequence": 1,
+              "display": "flex",
+              "rect": {
+                "x": 7,
+                "width": 1427,
+                "height": 54
+              }
+            },
+            {
+              "id": "chat",
+              "grid_x": 1,
+              "grid_width": 7,
+              "resize_sequence": 1,
+              "display": "flex",
+              "rect": {
+                "x": 7,
+                "width": 829,
+                "height": 826
+              }
+            },
+            {
+              "id": "memory",
+              "grid_x": 8,
+              "grid_width": 2,
+              "resize_sequence": 1,
+              "display": "flex",
+              "rect": {
+                "x": 843,
+                "width": 232,
+                "height": 826
+              }
+            },
+            {
+              "id": "threads",
+              "grid_x": 10,
+              "grid_width": 3,
+              "resize_sequence": 1,
+              "display": "flex",
+              "rect": {
+                "x": 1082,
+                "width": 352,
+                "height": 826
+              }
+            }
+          ]
+        }
+      },
+      "gate": {
+        "sandbox": "allow-scripts allow-same-origin",
+        "origin": "http://rack.localhost:8773",
+        "visible_cards": 5,
+        "continue_visible": true
+      },
+      "gate_scroll": {
+        "before": {
+          "scroll_top": 0,
+          "client_height": 636,
+          "scroll_height": 1230
+        },
+        "after": {
+          "scroll_top": 594,
+          "client_height": 636,
+          "scroll_height": 1230
+        },
+        "continue_visible": true
+      },
+      "hostile_origin": {
+        "attempted_origin": "null",
+        "bridge_granted": false
+      },
+      "frame_policies": [
+        {
+          "url": "http://rack.localhost:8773/?rack_module=header&rack_host=http%3A%2F%2F127.0.0.1%3A8773",
+          "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+        },
+        {
+          "url": "http://rack.localhost:8773/?rack_module=chat&rack_host=http%3A%2F%2F127.0.0.1%3A8773",
+          "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+        },
+        {
+          "url": "http://rack.localhost:8773/?rack_module=threads&rack_host=http%3A%2F%2F127.0.0.1%3A8773",
+          "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+        },
+        {
+          "url": "http://rack.localhost:8773/?rack_module=memory&rack_host=http%3A%2F%2F127.0.0.1%3A8773",
+          "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+        },
+        {
+          "url": "http://rack.localhost:8773/?rack_module=threads&rack_host=http%3A%2F%2F127.0.0.1%3A8773",
+          "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+        },
+        {
+          "url": "http://rack.localhost:8773/?rack_module=header&rack_host=http%3A%2F%2F127.0.0.1%3A8773",
+          "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+        },
+        {
+          "url": "http://rack.localhost:8773/?rack_module=chat&rack_host=http%3A%2F%2F127.0.0.1%3A8773",
+          "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+        },
+        {
+          "url": "http://rack.localhost:8773/?rack_module=threads&rack_host=http%3A%2F%2F127.0.0.1%3A8773",
+          "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+        },
+        {
+          "url": "http://rack.localhost:8773/?rack_module=memory&rack_host=http%3A%2F%2F127.0.0.1%3A8773",
+          "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+        },
+        {
+          "url": "http://rack.localhost:8773/?rack_module=gate&rack_host=http%3A%2F%2F127.0.0.1%3A8773",
+          "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+        }
+      ]
+    },
+    "mobile": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "sandbox": [
+        {
+          "testid": "rack-plugin-frame-header",
+          "sandbox": "allow-scripts allow-same-origin",
+          "origin": "http://rack.localhost:8773"
+        },
+        {
+          "testid": "rack-plugin-frame-threads",
+          "sandbox": "allow-scripts allow-same-origin",
+          "origin": "http://rack.localhost:8773"
+        },
+        {
+          "testid": "rack-plugin-frame-chat",
+          "sandbox": "allow-scripts allow-same-origin",
+          "origin": "http://rack.localhost:8773"
+        },
+        {
+          "testid": "rack-plugin-frame-memory",
+          "sandbox": "allow-scripts allow-same-origin",
+          "origin": "http://rack.localhost:8773"
+        }
+      ],
+      "arrival": {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "document": {
+          "client_width": 390,
+          "scroll_width": 390
+        },
+        "modules": [
+          {
+            "id": "header",
+            "grid_x": 1,
+            "grid_width": 12,
+            "resize_sequence": 1,
+            "display": "flex",
+            "rect": {
+              "x": 0,
+              "width": 390,
+              "height": 52
+            }
+          },
+          {
+            "id": "threads",
+            "grid_x": 1,
+            "grid_width": 2,
+            "resize_sequence": 1,
+            "display": "none",
+            "rect": {
+              "x": 0,
+              "width": 0,
+              "height": 0
+            }
+          },
+          {
+            "id": "chat",
+            "grid_x": 3,
+            "grid_width": 8,
+            "resize_sequence": 1,
+            "display": "flex",
+            "rect": {
+              "x": 0,
+              "width": 390,
+              "height": 792
+            }
+          },
+          {
+            "id": "memory",
+            "grid_x": 11,
+            "grid_width": 2,
+            "resize_sequence": 1,
+            "display": "none",
+            "rect": {
+              "x": 0,
+              "width": 0,
+              "height": 0
+            }
+          }
+        ]
+      },
+      "console_problems": [],
+      "page_errors": [],
+      "screenshots": {
+        "arrival": "/Users/nateoswalt/Developer/N8_Harness/harness/verification/m2b/04-arrival-mobile-390x844.png",
+        "threads": "/Users/nateoswalt/Developer/N8_Harness/harness/verification/m2b/05-threads-mobile-390x844.png",
+        "memory": "/Users/nateoswalt/Developer/N8_Harness/harness/verification/m2b/06-memory-mobile-390x844.png",
+        "gate": "/Users/nateoswalt/Developer/N8_Harness/harness/verification/m2b/07-gate-mobile-390x844.png",
+        "gate_scrolled": "/Users/nateoswalt/Developer/N8_Harness/harness/verification/m2b/07b-gate-scrolled-mobile-390x844.png",
+        "response": "/Users/nateoswalt/Developer/N8_Harness/harness/verification/m2b/08-response-mobile-390x844.png"
+      },
+      "drawers": {
+        "threads": {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "document": {
+            "client_width": 390,
+            "scroll_width": 390
+          },
+          "modules": [
+            {
+              "id": "header",
+              "grid_x": 1,
+              "grid_width": 12,
+              "resize_sequence": 1,
+              "display": "flex",
+              "rect": {
+                "x": 0,
+                "width": 390,
+                "height": 52
+              }
+            },
+            {
+              "id": "threads",
+              "grid_x": 1,
+              "grid_width": 2,
+              "resize_sequence": 1,
+              "display": "flex",
+              "rect": {
+                "x": 0,
+                "width": 390,
+                "height": 792
+              }
+            },
+            {
+              "id": "chat",
+              "grid_x": 3,
+              "grid_width": 8,
+              "resize_sequence": 1,
+              "display": "flex",
+              "rect": {
+                "x": 0,
+                "width": 390,
+                "height": 792
+              }
+            },
+            {
+              "id": "memory",
+              "grid_x": 11,
+              "grid_width": 2,
+              "resize_sequence": 1,
+              "display": "none",
+              "rect": {
+                "x": 0,
+                "width": 0,
+                "height": 0
+              }
+            }
+          ]
+        }
+      },
+      "gate": {
+        "sandbox": "allow-scripts allow-same-origin",
+        "origin": "http://rack.localhost:8773",
+        "visible_cards": 5,
+        "continue_visible": true
+      },
+      "gate_scroll": {
+        "before": {
+          "scroll_top": 0,
+          "client_height": 551,
+          "scroll_height": 1896
+        },
+        "after": {
+          "scroll_top": 1345,
+          "client_height": 551,
+          "scroll_height": 1896
+        },
+        "continue_visible": true
+      },
+      "final_geometry": {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "document": {
+          "client_width": 390,
+          "scroll_width": 390
+        },
+        "modules": [
+          {
+            "id": "header",
+            "grid_x": 1,
+            "grid_width": 12,
+            "resize_sequence": 1,
+            "display": "flex",
+            "rect": {
+              "x": 0,
+              "width": 390,
+              "height": 52
+            }
+          },
+          {
+            "id": "threads",
+            "grid_x": 1,
+            "grid_width": 2,
+            "resize_sequence": 3,
+            "display": "none",
+            "rect": {
+              "x": 0,
+              "width": 0,
+              "height": 0
+            }
+          },
+          {
+            "id": "chat",
+            "grid_x": 3,
+            "grid_width": 8,
+            "resize_sequence": 1,
+            "display": "flex",
+            "rect": {
+              "x": 0,
+              "width": 390,
+              "height": 792
+            }
+          },
+          {
+            "id": "memory",
+            "grid_x": 11,
+            "grid_width": 2,
+            "resize_sequence": 3,
+            "display": "none",
+            "rect": {
+              "x": 0,
+              "width": 0,
+              "height": 0
+            }
+          }
+        ]
+      },
+      "frame_policies": [
+        {
+          "url": "http://rack.localhost:8773/?rack_module=header&rack_host=http%3A%2F%2F127.0.0.1%3A8773",
+          "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+        },
+        {
+          "url": "http://rack.localhost:8773/?rack_module=threads&rack_host=http%3A%2F%2F127.0.0.1%3A8773",
+          "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+        },
+        {
+          "url": "http://rack.localhost:8773/?rack_module=chat&rack_host=http%3A%2F%2F127.0.0.1%3A8773",
+          "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+        },
+        {
+          "url": "http://rack.localhost:8773/?rack_module=memory&rack_host=http%3A%2F%2F127.0.0.1%3A8773",
+          "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+        },
+        {
+          "url": "http://rack.localhost:8773/?rack_module=gate&rack_host=http%3A%2F%2F127.0.0.1%3A8773",
+          "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+        }
+      ]
+    }
+  }
+}

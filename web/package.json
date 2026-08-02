@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "verify:h8:browser": "node ../verification/h8/browser_check.mjs"
+    "verify:h8:browser": "node ../verification/h8/browser_check.mjs",
+    "verify:m2b:browser": "node ../verification/m2b/browser_check.mjs",
+    "verify:m2b:layout": "node --experimental-strip-types --test ../verification/m2b/rack_layout.test.mjs"
   },
   "dependencies": {
     "react": "^19.2.7",

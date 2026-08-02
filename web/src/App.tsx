@@ -4,13 +4,14 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
+  type DragEvent,
   type FormEvent,
   type KeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
 } from 'react'
 
 import { AssistantMarkdown } from './AssistantMarkdown'
-import { harnessClient } from './socket'
-import { useHarnessStore, type MemoryPanelState } from './store'
 import { MemoryGate } from './MemoryGate'
 import { MemoryPanel } from './MemoryPanel'
 import type {
@@ -18,9 +19,40 @@ import type {
   ChatMessage,
   UserMessageState,
 } from './protocol'
+import {
+  RackRuntime,
+  RACK_MANIFESTS,
+  clearRackSelection,
+  isRackModuleId,
+  useRackHostSnapshot,
+  useRackHostSelection,
+  useRackPlugin,
+  useRackSelection,
+  useRackSnapshot,
+  type RackMemoryPanelState,
+  type RackModuleManifest,
+} from './rack'
+import { RackPluginIframe, RackRemoteProvider } from './rackBridge'
+import { publishRackResize } from './rackEvents'
+import {
+  FACTORY_RACK_LAYOUT,
+  RACK_COLUMNS,
+  cloneFactoryLayout,
+  loadRackLayout,
+  loadSavedRackSet,
+  moduleGridColumn,
+  moveRackModule,
+  orderedModules,
+  persistRackLayout,
+  rackLayoutsEqual,
+  resizeRackModule,
+  saveRackSet,
+  type DockedModuleId,
+  type RackLayoutSet,
+} from './rackLayout'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
-const EMPTY_MEMORY_PANEL: MemoryPanelState = {
+const EMPTY_MEMORY_PANEL: RackMemoryPanelState = {
   items: [],
   total: 0,
   status: 'idle',
@@ -74,39 +106,554 @@ function messageStatus(
   return state === undefined ? (message.partial ? 'Partial' : null) : terminalCopy(state)
 }
 
+function initialRackLayout(): RackLayoutSet {
+  try {
+    return loadRackLayout(globalThis.localStorage)
+  } catch {
+    return cloneFactoryLayout()
+  }
+}
+
+function initialSavedRackSet(): RackLayoutSet | null {
+  try {
+    return loadSavedRackSet(globalThis.localStorage)
+  } catch {
+    return null
+  }
+}
+
 function App() {
-  const catalog = useHarnessStore((state) => state.catalog)
-  const selectedThreadId = useHarnessStore((state) => state.selectedThreadId)
-  const threads = useHarnessStore((state) => state.threads)
-  const connection = useHarnessStore((state) => state.connection)
-  const globalError = useHarnessStore((state) => state.globalError)
-  const selectedThread = selectedThreadId === null ? null : threads[selectedThreadId]
-  const selectedMeta = catalog.find((entry) => entry.thread_id === selectedThreadId)
+  const requestedModule = new URLSearchParams(globalThis.location.search).get('rack_module')
+  if (isRackModuleId(requestedModule)) {
+    return <RackRemoteApp moduleId={requestedModule} />
+  }
+  return (
+    <RackRuntime>
+      <RackWorkspace />
+    </RackRuntime>
+  )
+}
+
+function RackWorkspace() {
+  const snapshot = useRackHostSnapshot()
+  const selection = useRackHostSelection()
+  const [layout, setLayout] = useState<RackLayoutSet>(initialRackLayout)
+  const [savedSet, setSavedSet] = useState<RackLayoutSet | null>(initialSavedRackSet)
+  const selectedThread = snapshot.selectedThreadId === null
+    ? null
+    : snapshot.threads[snapshot.selectedThreadId]
+  const openGate = selectedThread?.openGate ?? null
+  const drawerModule = selection?.kind === 'module' ? selection.id : null
+  const ordered = orderedModules(layout)
+
+  useEffect(() => {
+    try {
+      persistRackLayout(globalThis.localStorage, layout)
+    } catch {
+      // The rack remains usable when a hardened browser denies local storage.
+    }
+  }, [layout])
+
+  const saveCurrentSet = useCallback(() => {
+    const copy: RackLayoutSet = {
+      version: 1,
+      modules: layout.modules.map((module) => ({ ...module })),
+    }
+    try {
+      saveRackSet(globalThis.localStorage, copy)
+    } catch {
+      // The visible status remains truthful: no saved set is claimed.
+      return
+    }
+    setSavedSet(copy)
+  }, [layout])
+
+  const restoreSavedSet = useCallback(() => {
+    if (savedSet !== null) {
+      setLayout({
+        version: 1,
+        modules: savedSet.modules.map((module) => ({ ...module })),
+      })
+    }
+  }, [savedSet])
+
+  const resetFactorySet = useCallback(() => {
+    setLayout(cloneFactoryLayout())
+  }, [])
+
+  const moveModule = useCallback((source: DockedModuleId, target: DockedModuleId) => {
+    setLayout((current) => moveRackModule(current, source, target))
+  }, [])
+
+  const resizeModule = useCallback((moduleId: DockedModuleId, width: number) => {
+    setLayout((current) => resizeRackModule(current, moduleId, width))
+  }, [])
+
+  const layoutStatus = savedSet !== null && rackLayoutsEqual(layout, savedSet)
+    ? 'Saved set'
+    : rackLayoutsEqual(layout, FACTORY_RACK_LAYOUT)
+      ? 'Factory set'
+      : 'Edited set'
+
+  return (
+    <div className="rack-shell" data-theme="neo-noir" data-testid="rack-shell">
+      <div className="rack-ambient" aria-hidden="true" />
+      <div className="rack-grid" data-testid="rack-grid">
+        <RackModuleFrame
+          manifest={RACK_MANIFESTS.header}
+          x={1}
+          y={1}
+          width={RACK_COLUMNS}
+          height={1}
+        />
+        <div className="rack-set-controls" aria-label="Rack layout set">
+          <span data-testid="layout-status">{layoutStatus}</span>
+          <button type="button" data-testid="layout-save" onClick={saveCurrentSet}>
+            Save
+          </button>
+          <button
+            type="button"
+            data-testid="layout-restore"
+            disabled={savedSet === null}
+            onClick={restoreSavedSet}
+          >
+            Restore
+          </button>
+          <button type="button" data-testid="layout-reset" onClick={resetFactorySet}>
+            Factory
+          </button>
+        </div>
+
+        {ordered.map((module, index) => {
+          const geometry = moduleGridColumn(layout, module.module_id)
+          const isDrawerOpen = drawerModule === module.module_id
+          const otherDrawerOpen = drawerModule !== null && !isDrawerOpen
+          const isInert = openGate !== null || otherDrawerOpen
+          return (
+            <RackModuleFrame
+              key={module.module_id}
+              manifest={RACK_MANIFESTS[module.module_id]}
+              x={geometry.x}
+              y={2}
+              width={geometry.w}
+              height={11}
+              drawerOpen={isDrawerOpen}
+              inert={isInert}
+              resizeFrom={index === ordered.length - 1 ? 'left' : 'right'}
+              onMove={moveModule}
+              onResize={resizeModule}
+              orderedIds={ordered.map((item) => item.module_id)}
+            />
+          )
+        })}
+      </div>
+
+      {drawerModule !== null && (
+        <button
+          className="drawer-scrim rack-drawer-scrim"
+          type="button"
+          tabIndex={-1}
+          aria-label="Close open rack module"
+          onClick={clearRackSelection}
+        />
+      )}
+
+      {openGate !== null && (
+        <div className="rack-overlay-module" data-rack-module="gate">
+          <RackPluginIframe manifest={RACK_MANIFESTS.gate} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+interface RackModuleFrameProps {
+  manifest: RackModuleManifest
+  x: number
+  y: number
+  width: number
+  height: number
+  drawerOpen?: boolean
+  inert?: boolean
+  resizeFrom?: 'left' | 'right'
+  orderedIds?: DockedModuleId[]
+  onMove?: (source: DockedModuleId, target: DockedModuleId) => void
+  onResize?: (moduleId: DockedModuleId, width: number) => void
+}
+
+function RackModuleFrame({
+  manifest,
+  x,
+  y,
+  width,
+  height,
+  drawerOpen = false,
+  inert = false,
+  resizeFrom = 'right',
+  orderedIds = [],
+  onMove,
+  onResize,
+}: RackModuleFrameProps) {
+  const frameRef = useRef<HTMLDivElement>(null)
+  const [resizeSequence, setResizeSequence] = useState(0)
+  const isDocked = manifest.slot === 'panel'
+  const moduleId = manifest.id as DockedModuleId
+
+  useEffect(() => {
+    const frame = frameRef.current
+    if (frame === null || typeof ResizeObserver === 'undefined') {
+      return
+    }
+    const observer = new ResizeObserver(([entry]) => {
+      const rect = entry.contentRect
+      publishRackResize({
+        module_id: manifest.id,
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+        grid_width: width,
+        grid_height: height,
+      })
+      setResizeSequence((value) => value + 1)
+    })
+    observer.observe(frame)
+    return () => observer.disconnect()
+  }, [height, manifest.id, width])
+
+  function dropModule(event: DragEvent<HTMLDivElement>) {
+    if (!isDocked || onMove === undefined) {
+      return
+    }
+    event.preventDefault()
+    const source = event.dataTransfer.getData('application/x-nocturne-module')
+    if (source === 'threads' || source === 'chat' || source === 'memory') {
+      onMove(source, moduleId)
+    }
+  }
+
+  function dockByKeyboard(event: KeyboardEvent<HTMLDivElement>) {
+    if (!isDocked || onMove === undefined || !event.altKey) {
+      return
+    }
+    const index = orderedIds.indexOf(moduleId)
+    const targetIndex = event.key === 'ArrowLeft'
+      ? index - 1
+      : event.key === 'ArrowRight'
+        ? index + 1
+        : index
+    const target = orderedIds[targetIndex]
+    if (target !== undefined && target !== moduleId) {
+      event.preventDefault()
+      onMove(moduleId, target)
+    }
+  }
+
+  function beginResize(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (!isDocked || onResize === undefined) {
+      return
+    }
+    event.preventDefault()
+    const grid = frameRef.current?.closest('.rack-grid')
+    if (!(grid instanceof HTMLElement)) {
+      return
+    }
+    const startX = event.clientX
+    const startWidth = width
+    const unit = grid.getBoundingClientRect().width / RACK_COLUMNS
+    const move = (moveEvent: globalThis.PointerEvent) => {
+      const delta = Math.round((moveEvent.clientX - startX) / unit)
+      onResize(moduleId, startWidth + (resizeFrom === 'left' ? -delta : delta))
+    }
+    const stop = () => {
+      globalThis.removeEventListener('pointermove', move)
+      globalThis.removeEventListener('pointerup', stop)
+      globalThis.removeEventListener('pointercancel', stop)
+    }
+    globalThis.addEventListener('pointermove', move)
+    globalThis.addEventListener('pointerup', stop)
+    globalThis.addEventListener('pointercancel', stop)
+  }
+
+  const style: CSSProperties = {
+    gridColumn: `${x} / span ${width}`,
+    gridRow: `${y} / span ${height}`,
+  }
+  const className = [
+    'rack-module',
+    `rack-module--${manifest.slot}`,
+    drawerOpen ? 'rack-module--drawer-open' : '',
+    manifest.law_bound ? 'rack-module--law-bound' : '',
+  ].filter(Boolean).join(' ')
+
+  return (
+    <div
+      ref={frameRef}
+      className={className}
+      style={style}
+      data-rack-module={manifest.id}
+      data-testid={`rack-module-${manifest.id}`}
+      data-grid-x={x}
+      data-grid-y={y}
+      data-grid-width={width}
+      data-grid-height={height}
+      data-resize-sequence={resizeSequence}
+      inert={inert || undefined}
+      onDragOver={(event) => {
+        if (isDocked) {
+          event.preventDefault()
+        }
+      }}
+      onDrop={dropModule}
+    >
+      {isDocked && (
+        <div className="rack-module__chrome">
+          <div
+            className="rack-module__drag"
+            role="button"
+            tabIndex={0}
+            draggable
+            aria-label={`Dock ${manifest.name}; Alt plus arrow keys also moves it`}
+            onKeyDown={dockByKeyboard}
+            onDragStart={(event) => {
+              event.dataTransfer.effectAllowed = 'move'
+              event.dataTransfer.setData('application/x-nocturne-module', moduleId)
+            }}
+          >
+            <span aria-hidden="true">⠿</span>
+            <strong>{manifest.name}</strong>
+          </div>
+          <span className="rack-module__geometry" aria-label={`${width} grid units wide`}>
+            {String(width).padStart(2, '0')}u
+          </span>
+          <button
+            className={`rack-module__resize rack-module__resize--${resizeFrom}`}
+            type="button"
+            aria-label={`Resize ${manifest.name}`}
+            onPointerDown={beginResize}
+            onKeyDown={(event) => {
+              if (onResize === undefined) {
+                return
+              }
+              if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                event.preventDefault()
+                const delta = event.key === 'ArrowRight' ? 1 : -1
+                onResize(moduleId, width + (resizeFrom === 'left' ? -delta : delta))
+              }
+            }}
+          >
+            <span aria-hidden="true">⋮</span>
+          </button>
+        </div>
+      )}
+      <div className="rack-module__content">
+        <RackPluginIframe manifest={manifest} />
+      </div>
+    </div>
+  )
+}
+
+function RackRemoteApp({ moduleId }: { moduleId: RackModuleManifest['id'] }) {
+  return (
+    <RackRemoteProvider moduleId={moduleId}>
+      <RackRemoteSurface moduleId={moduleId} />
+    </RackRemoteProvider>
+  )
+}
+
+function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] }) {
+  const selection = useRackSelection()
+  const drawerOpen = selection?.kind === 'module' && selection.id === moduleId
+  return (
+    <div
+      className={`rack-remote rack-remote--${moduleId}`}
+      data-rack-remote={moduleId}
+      data-drawer-open={drawerOpen || undefined}
+    >
+      {moduleId === 'header' ? (
+        <HeaderModule />
+      ) : moduleId === 'threads' ? (
+        <ThreadsModule />
+      ) : moduleId === 'chat' ? (
+        <ChatModuleSlot />
+      ) : moduleId === 'memory' ? (
+        <MemoryModule />
+      ) : (
+        <GateModule />
+      )}
+    </div>
+  )
+}
+
+function ChatModuleSlot() {
+  const snapshot = useRackSnapshot()
+  return <ChatModule key={snapshot.selectedThreadId ?? 'empty'} />
+}
+
+function HeaderModule() {
+  const snapshot = useRackSnapshot()
+  const selection = useRackSelection()
+  const { selection: selectionBus } = useRackPlugin()
+  const selectedThread = snapshot.selectedThreadId === null
+    ? null
+    : snapshot.threads[snapshot.selectedThreadId]
+  const memoryTotal = selectedThread?.memoryPanel.total ?? 0
+  const threadsOpen = selection?.kind === 'module' && selection.id === 'threads'
+  const memoriesOpen = selection?.kind === 'module' && selection.id === 'memory'
+
+  function toggleModule(moduleId: 'threads' | 'memory') {
+    const alreadyOpen = selection?.kind === 'module' && selection.id === moduleId
+    selectionBus.select(alreadyOpen ? null : { kind: 'module', id: moduleId })
+  }
+
+  return (
+    <header className="topbar">
+      <div className="brand" aria-label="Nocturne">
+        <span className="brand__mark" aria-hidden="true">N</span>
+        <span className="brand__word">Nocturne</span>
+        <span className="brand__mode">Rack · local direct</span>
+      </div>
+
+      <div className="mobile-navigation">
+        <button
+          className="mobile-threads"
+          type="button"
+          data-testid="mobile-threads"
+          aria-expanded={threadsOpen}
+          onClick={() => toggleModule('threads')}
+        >
+          Threads
+          <span>{snapshot.catalog.length.toString().padStart(2, '0')}</span>
+        </button>
+        <button
+          className="mobile-memories"
+          type="button"
+          data-testid="mobile-memories"
+          aria-expanded={memoriesOpen}
+          onClick={() => toggleModule('memory')}
+        >
+          Memory
+          <span>{memoryTotal}</span>
+        </button>
+      </div>
+
+      <p
+        className={`connection connection--${snapshot.connection}`}
+        data-testid="connection"
+        aria-live="polite"
+      >
+        <span className="connection__signal" aria-hidden="true" />
+        {connectionCopy(snapshot.connection)}
+      </p>
+    </header>
+  )
+}
+
+function ThreadsModule() {
+  const snapshot = useRackSnapshot()
+  const { events, selection } = useRackPlugin()
+  const sortedCatalog = useMemo(
+    () => [...snapshot.catalog].sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
+    [snapshot.catalog],
+  )
+
+  return (
+    <aside className="thread-rail" aria-labelledby="thread-rail-title">
+      <div className="thread-rail__header">
+        <div>
+          <p className="eyebrow">Local channels</p>
+          <h2 id="thread-rail-title">Threads</h2>
+        </div>
+        <button
+          className="rail-close"
+          type="button"
+          data-testid="mobile-close-threads"
+          aria-label="Close threads"
+          onClick={() => selection.select(null)}
+        >
+          Back
+        </button>
+      </div>
+
+      <button
+        className="new-thread"
+        type="button"
+        data-testid="new-thread"
+        onClick={() => {
+          void events.dispatch({ type: 'thread.create' }).catch(() => undefined)
+        }}
+      >
+        <span aria-hidden="true">＋</span>
+        New thread
+      </button>
+
+      <nav className="thread-list" data-testid="thread-list" aria-label="Known threads">
+        {sortedCatalog.map((entry) => {
+          const runtime = snapshot.threads[entry.thread_id]
+          const isSelected = entry.thread_id === snapshot.selectedThreadId
+          const liveState = runtime?.activeRun?.state
+          const queueCount = runtime?.queuedPrompts.length ?? 0
+          const outboundCount = runtime?.outboundPrompts.length ?? 0
+          const detail = runtime?.awaitingSnapshot
+            ? 'Not loaded'
+            : liveState === 'cancelling'
+              ? 'Stopping'
+              : liveState === 'waiting_gate'
+                ? 'Review memory'
+                : liveState !== undefined
+                  ? 'Live'
+                  : outboundCount > 0
+                    ? 'Sending'
+                    : queueCount > 0
+                      ? `${queueCount} queued`
+                      : runtime?.messages.length
+                        ? `${runtime.messages.length} messages`
+                        : 'Empty'
+          return (
+            <button
+              key={entry.thread_id}
+              className={`thread-item${isSelected ? ' thread-item--selected' : ''}`}
+              type="button"
+              data-thread-id={entry.thread_id}
+              aria-current={isSelected ? 'page' : undefined}
+              onClick={() => {
+                selection.select({ kind: 'thread', id: entry.thread_id })
+                void events
+                  .dispatch({ type: 'thread.select', thread_id: entry.thread_id })
+                  .catch(() => undefined)
+              }}
+            >
+              <span className="thread-item__title">{entry.title}</span>
+              <span className="thread-item__meta">
+                <span>{detail}</span>
+                <span>{shortId(entry.thread_id)}</span>
+              </span>
+            </button>
+          )
+        })}
+      </nav>
+
+      <p className="catalog-note">
+        Factory-set navigation. The daemon snapshot remains authoritative.
+      </p>
+    </aside>
+  )
+}
+
+function ChatModule() {
+  const snapshot = useRackSnapshot()
+  const { events } = useRackPlugin()
+  const selectedThreadId = snapshot.selectedThreadId
+  const selectedThread = selectedThreadId === null ? null : snapshot.threads[selectedThreadId]
+  const selectedMeta = snapshot.catalog.find((entry) => entry.thread_id === selectedThreadId)
   const [draft, setDraft] = useState('')
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [memoryDrawerOpen, setMemoryDrawerOpen] = useState(false)
   const [hasUnread, setHasUnread] = useState(false)
   const transcriptRef = useRef<HTMLDivElement>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
-  const formRef = useRef<HTMLFormElement>(null)
-  const mobileThreadsRef = useRef<HTMLButtonElement>(null)
-  const mobileMemoriesRef = useRef<HTMLButtonElement>(null)
-  const railCloseRef = useRef<HTMLButtonElement>(null)
   const followOutputRef = useRef(true)
-  const drawerWasOpenRef = useRef(false)
-  const memoryDrawerWasOpenRef = useRef(false)
-
-  const sortedCatalog = useMemo(
-    () => [...catalog].sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
-    [catalog],
-  )
   const messages = useMemo(() => {
     if (selectedThread === null) {
       return EMPTY_MESSAGES
     }
-    const represented = new Set(
-      selectedThread.messages.map((message) => message.message_id),
-    )
+    const represented = new Set(selectedThread.messages.map((message) => message.message_id))
     const optimistic: ChatMessage[] = selectedThread.outboundPrompts
       .filter((outbound) => !represented.has(outbound.prompt_id))
       .map((outbound) => ({
@@ -122,16 +669,13 @@ function App() {
   }, [selectedThread])
   const activeRun = selectedThread?.activeRun ?? null
   const openGate = selectedThread?.openGate ?? null
-  const memoryPanel = selectedThread?.memoryPanel ?? EMPTY_MEMORY_PANEL
   const queuedPrompts = selectedThread?.queuedPrompts ?? []
   const awaitingSnapshot = selectedThread?.awaitingSnapshot ?? true
   const canSend =
-    connection === 'connected' &&
+    snapshot.connection === 'connected' &&
     !awaitingSnapshot &&
     openGate === null &&
     draft.trim().length > 0
-  const closeMemoryDrawer = useCallback(() => setMemoryDrawerOpen(false), [])
-
   const runStates = useMemo(() => {
     const states = new Map<string, UserMessageState>()
     for (const message of messages) {
@@ -141,19 +685,6 @@ function App() {
     }
     return states
   }, [messages])
-
-  useEffect(() => {
-    harnessClient.connect()
-    const state = useHarnessStore.getState()
-    if (state.catalog.length === 0) {
-      harnessClient.createThread()
-    } else if (state.selectedThreadId === null) {
-      harnessClient.selectThread(state.catalog[0].thread_id)
-    } else {
-      harnessClient.requestSnapshot(state.selectedThreadId)
-    }
-    return () => harnessClient.disconnect()
-  }, [])
 
   useEffect(() => {
     followOutputRef.current = true
@@ -188,87 +719,27 @@ function App() {
     composer.style.height = `${Math.min(composer.scrollHeight, 144)}px`
   }, [draft])
 
-  useEffect(() => {
-    if (drawerOpen) {
-      drawerWasOpenRef.current = true
-      globalThis.requestAnimationFrame(() => railCloseRef.current?.focus())
-      const closeOnEscape = (event: globalThis.KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          setDrawerOpen(false)
-        }
-      }
-      globalThis.addEventListener('keydown', closeOnEscape)
-      return () => globalThis.removeEventListener('keydown', closeOnEscape)
-    }
-
-    if (drawerWasOpenRef.current) {
-      drawerWasOpenRef.current = false
-      globalThis.requestAnimationFrame(() => mobileThreadsRef.current?.focus())
-    }
-  }, [drawerOpen])
-
-  useEffect(() => {
-    if (memoryDrawerOpen) {
-      memoryDrawerWasOpenRef.current = true
-      return
-    }
-    if (memoryDrawerWasOpenRef.current) {
-      memoryDrawerWasOpenRef.current = false
-      globalThis.requestAnimationFrame(() => mobileMemoriesRef.current?.focus())
-    }
-  }, [memoryDrawerOpen])
-
-  function submitPrompt(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  function transmitPrompt() {
     if (!canSend) {
       return
     }
-    const prompt = draft.trim()
-    try {
-      harnessClient.submitPrompt(prompt)
-      setDraft('')
-      followOutputRef.current = true
-      setHasUnread(false)
-    } catch (error) {
-      useHarnessStore
-        .getState()
-        .setTransportError(error instanceof Error ? error.message : 'Prompt could not be sent')
-    }
+    void events
+      .dispatch({ type: 'prompt.submit', prompt: draft.trim() })
+      .catch(() => undefined)
+    setDraft('')
+    followOutputRef.current = true
+    setHasUnread(false)
+  }
+
+  function submitPrompt(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    transmitPrompt()
   }
 
   function onComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault()
-      formRef.current?.requestSubmit()
-    }
-  }
-
-  function createThread() {
-    harnessClient.createThread()
-    setDrawerOpen(false)
-    setMemoryDrawerOpen(false)
-    setDraft('')
-    setHasUnread(false)
-  }
-
-  function selectThread(threadId: string) {
-    harnessClient.selectThread(threadId)
-    setDrawerOpen(false)
-    setMemoryDrawerOpen(false)
-    setDraft('')
-    setHasUnread(false)
-  }
-
-  function cancelRun() {
-    if (activeRun === null || activeRun.state === 'cancelling') {
-      return
-    }
-    try {
-      harnessClient.cancelRun(activeRun.run_id)
-    } catch (error) {
-      useHarnessStore
-        .getState()
-        .setTransportError(error instanceof Error ? error.message : 'Run could not be stopped')
+      transmitPrompt()
     }
   }
 
@@ -296,317 +767,222 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
-      <header className="topbar">
-        <div className="brand" aria-label="Harness">
-          <span className="brand__mark" aria-hidden="true">H</span>
-          <span className="brand__word">Harness</span>
-          <span className="brand__mode">M1 direct</span>
+    <main className="chat-panel" aria-labelledby="thread-title">
+      <header className="chat-header">
+        <div className="chat-header__identity">
+          <p className="eyebrow">Active channel</p>
+          <h1 id="thread-title">{selectedMeta?.title ?? 'Opening thread'}</h1>
         </div>
-
-        <div className="mobile-navigation">
-          <button
-            ref={mobileThreadsRef}
-            className="mobile-threads"
-            type="button"
-            data-testid="mobile-threads"
-            aria-expanded={drawerOpen}
-            onClick={() => {
-              setMemoryDrawerOpen(false)
-              setDrawerOpen(true)
-            }}
-          >
-            Threads
-            <span>{catalog.length.toString().padStart(2, '0')}</span>
-          </button>
-          <button
-            ref={mobileMemoriesRef}
-            className="mobile-memories"
-            type="button"
-            data-testid="mobile-memories"
-            aria-expanded={memoryDrawerOpen}
-            onClick={() => {
-              setDrawerOpen(false)
-              setMemoryDrawerOpen(true)
-            }}
-          >
-            Memory
-            <span>{memoryPanel.total}</span>
-          </button>
+        <div className="run-metrics" aria-label="Run status">
+          {activeRun !== null && (
+            <span className={`run-state run-state--${activeRun.state}`}>
+              {activeRun.state === 'cancelling'
+                ? 'Stopping'
+                : activeRun.state === 'waiting_gate'
+                  ? 'Memory review'
+                  : 'Run active'}
+            </span>
+          )}
+          {queuedPrompts.length > 0 && <span>{queuedPrompts.length} queued</span>}
+          {selectedThread?.usage !== null && selectedThread?.usage !== undefined && (
+            <span data-testid="usage">
+              {selectedThread.usage.requests} req · {selectedThread.usage.input_tokens} in ·{' '}
+              {selectedThread.usage.output_tokens} out
+            </span>
+          )}
+          {selectedThreadId !== null && <span>{shortId(selectedThreadId)}</span>}
         </div>
-
-        <p className={`connection connection--${connection}`} data-testid="connection" aria-live="polite">
-          <span className="connection__signal" aria-hidden="true" />
-          {connectionCopy(connection)}
+        <p
+          className="chat-header__model"
+          data-testid="active-model"
+          aria-label={`Active model: ${selectedThread?.resolvedModel ?? 'awaiting daemon'}`}
+        >
+          <span aria-hidden="true">Model</span>
+          <span className="chat-header__model-value">
+            {selectedThread?.resolvedModel ?? 'Awaiting daemon'}
+          </span>
         </p>
       </header>
 
-      <div className="workspace">
-        {(drawerOpen || memoryDrawerOpen) && (
-          <button
-            className="drawer-scrim"
-            type="button"
-            tabIndex={-1}
-            aria-hidden="true"
-            onClick={() => {
-              setDrawerOpen(false)
-              setMemoryDrawerOpen(false)
-            }}
-          />
-        )}
-
-        <aside
-          className={`thread-rail${drawerOpen ? ' thread-rail--open' : ''}`}
-          aria-labelledby="thread-rail-title"
-          inert={memoryDrawerOpen || openGate !== null || undefined}
-        >
-          <div className="thread-rail__header">
-            <div>
-              <p className="eyebrow">Local navigation</p>
-              <h2 id="thread-rail-title">Threads</h2>
-            </div>
-            <button
-              ref={railCloseRef}
-              className="rail-close"
-              type="button"
-              data-testid="mobile-close-threads"
-              aria-label="Close threads"
-              onClick={() => setDrawerOpen(false)}
-            >
-              Back
-            </button>
-          </div>
-
-          <button className="new-thread" type="button" data-testid="new-thread" onClick={createThread}>
-            <span aria-hidden="true">＋</span>
-            New thread
-          </button>
-
-          <nav className="thread-list" data-testid="thread-list" aria-label="Known threads">
-            {sortedCatalog.map((entry) => {
-              const runtime = threads[entry.thread_id]
-              const isSelected = entry.thread_id === selectedThreadId
-              const liveState = runtime?.activeRun?.state
-              const queueCount = runtime?.queuedPrompts.length ?? 0
-              const outboundCount = runtime?.outboundPrompts.length ?? 0
-              const detail =
-                runtime?.awaitingSnapshot
-                  ? 'Not loaded'
-                  : liveState === 'cancelling'
-                  ? 'Stopping'
-                  : liveState === 'waiting_gate'
-                    ? 'Review memory'
-                  : liveState !== undefined
-                    ? 'Live'
-                    : outboundCount > 0
-                      ? 'Sending'
-                    : queueCount > 0
-                      ? `${queueCount} queued`
-                      : runtime?.messages.length
-                        ? `${runtime.messages.length} messages`
-                        : 'Empty'
-              return (
-                <button
-                  key={entry.thread_id}
-                  className={`thread-item${isSelected ? ' thread-item--selected' : ''}`}
-                  type="button"
-                  data-thread-id={entry.thread_id}
-                  aria-current={isSelected ? 'page' : undefined}
-                  onClick={() => selectThread(entry.thread_id)}
-                >
-                  <span className="thread-item__title">{entry.title}</span>
-                  <span className="thread-item__meta">
-                    <span>{detail}</span>
-                    <span>{shortId(entry.thread_id)}</span>
-                  </span>
-                </button>
-              )
-            })}
-          </nav>
-
-          <p className="catalog-note">
-            This list is browser-local. The daemon snapshot remains authoritative.
-          </p>
-        </aside>
-
-        <main
-          className="chat-panel"
-          aria-labelledby="thread-title"
-          inert={
-            drawerOpen || memoryDrawerOpen || openGate !== null || undefined
-          }
-        >
-          <header className="chat-header">
-            <div className="chat-header__identity">
-              <p className="eyebrow">Current thread</p>
-              <h1 id="thread-title">{selectedMeta?.title ?? 'Opening thread'}</h1>
-            </div>
-            <div className="run-metrics" aria-label="Run status">
-              {activeRun !== null && (
-                <span className={`run-state run-state--${activeRun.state}`}>
-                  {activeRun.state === 'cancelling'
-                    ? 'Stopping'
-                    : activeRun.state === 'waiting_gate'
-                      ? 'Memory review'
-                      : 'Run active'}
-                </span>
-              )}
-              {queuedPrompts.length > 0 && <span>{queuedPrompts.length} queued</span>}
-              {selectedThread?.usage !== null && selectedThread?.usage !== undefined && (
-                <span data-testid="usage">
-                  {selectedThread.usage.requests} req · {selectedThread.usage.input_tokens} in ·{' '}
-                  {selectedThread.usage.output_tokens} out
-                </span>
-              )}
-              {selectedThreadId !== null && <span>{shortId(selectedThreadId)}</span>}
-            </div>
-            <p
-              className="chat-header__model"
-              data-testid="active-model"
-              aria-label={`Active model: ${selectedThread?.resolvedModel ?? 'awaiting daemon'}`}
-            >
-              <span aria-hidden="true">Model</span>
-              <span className="chat-header__model-value">
-                {selectedThread?.resolvedModel ?? 'Awaiting daemon'}
-              </span>
-            </p>
-          </header>
-
-          {(globalError !== null || selectedThread?.lastError !== null) && (
-            <div className="error-line" role="status" data-testid="error-line">
-              <span aria-hidden="true">!</span>
-              {selectedThread?.lastError?.message ?? globalError?.message}
-            </div>
-          )}
-
-          <div
-            className="transcript"
-            ref={transcriptRef}
-            data-testid="transcript"
-            onScroll={onTranscriptScroll}
-          >
-            <div className="transcript__inner">
-              {awaitingSnapshot ? (
-                <div className="thread-empty thread-empty--loading" data-testid="thread-loading">
-                  <p className="eyebrow">Authoritative state</p>
-                  <h2>Hydrating thread</h2>
-                  <p>Waiting for the daemon snapshot before accepting input.</p>
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="thread-empty" data-testid="thread-empty">
-                  <p className="eyebrow">Channel open</p>
-                  <h2>New thread</h2>
-                  <p>Send a prompt when you’re ready. Nothing here demands a response.</p>
-                </div>
-              ) : (
-                messages.map((message) => (
-                  <MessageRow
-                    key={message.message_id}
-                    message={message}
-                    queuePosition={
-                      message.role === 'user'
-                        ? queuedPrompts.findIndex(
-                            (queued) => queued.prompt_id === message.message_id,
-                          ) + 1
-                        : 0
-                    }
-                    runState={
-                      message.run_id === null ? undefined : runStates.get(message.run_id)
-                    }
-                    activeRunId={activeRun?.run_id}
-                    activeState={activeRun?.state}
-                  />
-                ))
-              )}
-            </div>
-          </div>
-
-          {hasUnread && (
-            <button className="new-response" type="button" data-testid="new-response" onClick={scrollToLatest}>
-              New response ↓
-            </button>
-          )}
-
-          <form className="composer" ref={formRef} onSubmit={submitPrompt} aria-label="Prompt composer">
-            <div className="composer__body">
-              <label className="visually-hidden" htmlFor="prompt-input">
-                Message Harness
-              </label>
-              <textarea
-                id="prompt-input"
-                ref={composerRef}
-                data-testid="composer"
-                value={draft}
-                rows={1}
-                placeholder={connection === 'connected' ? 'Message Harness' : 'Waiting for connection'}
-                disabled={
-                  connection !== 'connected' || awaitingSnapshot || openGate !== null
-                }
-                onChange={(event) => setDraft(event.target.value)}
-                onKeyDown={onComposerKeyDown}
-              />
-              <p className="composer__hint">
-                {openGate !== null
-                  ? 'Review memory before the model starts'
-                  : activeRun === null
-                    ? 'Enter to send'
-                    : 'New prompts queue at the turn boundary'}
-                <span>Shift+Enter for newline</span>
-              </p>
-            </div>
-            <div className="composer__actions">
-              {activeRun !== null && (
-                <button
-                  className="stop-button"
-                  type="button"
-                  data-testid="stop"
-                  disabled={activeRun.state === 'cancelling'}
-                  onClick={cancelRun}
-                >
-                  {activeRun.state === 'cancelling' ? 'Stopping' : 'Stop'}
-                </button>
-              )}
-              <button className="send-button" type="submit" data-testid="send" disabled={!canSend}>
-                {activeRun === null ? 'Send' : 'Queue'}
-                <span aria-hidden="true">↗</span>
-              </button>
-            </div>
-          </form>
-        </main>
-
-        <MemoryPanel
-          panel={memoryPanel}
-          connected={connection === 'connected' && !awaitingSnapshot}
-          removeEnabled={activeRun === null}
-          mobileOpen={memoryDrawerOpen}
-          inert={drawerOpen || openGate !== null}
-          onClose={closeMemoryDrawer}
-          onRefresh={() => harnessClient.refreshMemoryPanel()}
-          onRemove={(memoryId) =>
-            harnessClient.removeMemoryFromContext(memoryId)
-          }
-          onEdit={(memoryId, expectedRevision, body) =>
-            harnessClient.editMemoryBody(memoryId, expectedRevision, body)
-          }
-          onPin={(memoryId, expectedRevision, pin) =>
-            harnessClient.setMemoryPin(memoryId, expectedRevision, pin)
-          }
-        />
-      </div>
-      {openGate !== null && (
-        <MemoryGate
-          key={`${openGate.run_id}:${openGate.injection_id}:${openGate.stage}:${
-            openGate.wrong_removed[0]?.memory_id ?? 'review'
-          }:${openGate.wrong_removed[0]?.revision ?? 0}`}
-          gate={openGate}
-          connected={connection === 'connected'}
-          cancelling={activeRun?.state === 'cancelling'}
-          serverError={selectedThread?.lastError?.detail ?? null}
-          onCommit={(decision) => harnessClient.commitGate(decision)}
-          onStop={cancelRun}
-        />
+      {(snapshot.globalError !== null || selectedThread?.lastError !== null) && (
+        <div className="error-line" role="status" data-testid="error-line">
+          <span aria-hidden="true">!</span>
+          {selectedThread?.lastError?.message ?? snapshot.globalError?.message}
+        </div>
       )}
-    </div>
+
+      <div
+        className="transcript"
+        ref={transcriptRef}
+        data-testid="transcript"
+        onScroll={onTranscriptScroll}
+      >
+        <div className="transcript__inner">
+          {awaitingSnapshot ? (
+            <div className="thread-empty thread-empty--loading" data-testid="thread-loading">
+              <p className="eyebrow">Authoritative state</p>
+              <h2>Hydrating channel</h2>
+              <p>Waiting for the daemon snapshot before accepting input.</p>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="thread-empty" data-testid="thread-empty">
+              <p className="eyebrow">Channel open</p>
+              <h2>New thread</h2>
+              <p>Send a prompt when you’re ready. Nothing here demands a response.</p>
+            </div>
+          ) : (
+            messages.map((message) => (
+              <MessageRow
+                key={message.message_id}
+                message={message}
+                queuePosition={
+                  message.role === 'user'
+                    ? queuedPrompts.findIndex(
+                        (queued) => queued.prompt_id === message.message_id,
+                      ) + 1
+                    : 0
+                }
+                runState={message.run_id === null ? undefined : runStates.get(message.run_id)}
+                activeRunId={activeRun?.run_id}
+                activeState={activeRun?.state}
+              />
+            ))
+          )}
+        </div>
+      </div>
+
+      {hasUnread && (
+        <button className="new-response" type="button" data-testid="new-response" onClick={scrollToLatest}>
+          New response ↓
+        </button>
+      )}
+
+      <form className="composer" onSubmit={submitPrompt} aria-label="Prompt composer">
+        <div className="composer__body">
+          <label className="visually-hidden" htmlFor="prompt-input">
+            Message Nocturne
+          </label>
+          <textarea
+            id="prompt-input"
+            ref={composerRef}
+            data-testid="composer"
+            value={draft}
+            rows={1}
+            placeholder={snapshot.connection === 'connected' ? 'Transmit to Nocturne' : 'Waiting for link'}
+            disabled={snapshot.connection !== 'connected' || awaitingSnapshot || openGate !== null}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={onComposerKeyDown}
+          />
+          <p className="composer__hint">
+            {openGate !== null
+              ? 'Review memory before the model starts'
+              : activeRun === null
+                ? 'Enter to transmit'
+                : 'New prompts queue at the turn boundary'}
+            <span>Shift+Enter for newline</span>
+          </p>
+        </div>
+        <div className="composer__actions">
+          {activeRun !== null && (
+            <button
+              className="stop-button"
+              type="button"
+              data-testid="stop"
+              disabled={activeRun.state === 'cancelling'}
+              onClick={() => {
+                void events
+                  .dispatch({ type: 'run.cancel', run_id: activeRun.run_id })
+                  .catch(() => undefined)
+              }}
+            >
+              {activeRun.state === 'cancelling' ? 'Stopping' : 'Stop'}
+            </button>
+          )}
+          <button
+            className="send-button"
+            type="button"
+            data-testid="send"
+            disabled={!canSend}
+            onClick={transmitPrompt}
+          >
+            {activeRun === null ? 'Transmit' : 'Queue'}
+            <span aria-hidden="true">↗</span>
+          </button>
+        </div>
+      </form>
+    </main>
+  )
+}
+
+function MemoryModule() {
+  const snapshot = useRackSnapshot()
+  const selection = useRackSelection()
+  const { events, selection: selectionBus } = useRackPlugin()
+  const selectedThread = snapshot.selectedThreadId === null
+    ? null
+    : snapshot.threads[snapshot.selectedThreadId]
+  const panel = selectedThread?.memoryPanel ?? EMPTY_MEMORY_PANEL
+  const mobileOpen = selection?.kind === 'module' && selection.id === 'memory'
+
+  return (
+    <MemoryPanel
+      panel={panel}
+      connected={snapshot.connection === 'connected' && !(selectedThread?.awaitingSnapshot ?? true)}
+      removeEnabled={selectedThread?.activeRun === null}
+      mobileOpen={mobileOpen}
+      inert={false}
+      onClose={() => selectionBus.select(null)}
+      onRefresh={() => events.dispatch({ type: 'memory.refresh' })}
+      onRemove={(memoryId) => events.dispatch({ type: 'memory.remove', memory_id: memoryId })}
+      onEdit={(memoryId, expectedRevision, body) =>
+        events.dispatch({
+          type: 'memory.edit',
+          memory_id: memoryId,
+          expected_revision: expectedRevision,
+          body,
+        })
+      }
+      onPin={(memoryId, expectedRevision, pin) =>
+        events.dispatch({
+          type: 'memory.pin',
+          memory_id: memoryId,
+          expected_revision: expectedRevision,
+          pin,
+        })
+      }
+    />
+  )
+}
+
+function GateModule() {
+  const snapshot = useRackSnapshot()
+  const { events } = useRackPlugin()
+  const selectedThread = snapshot.selectedThreadId === null
+    ? null
+    : snapshot.threads[snapshot.selectedThreadId]
+  const openGate = selectedThread?.openGate ?? null
+  const activeRun = selectedThread?.activeRun ?? null
+  if (openGate === null) {
+    return null
+  }
+  return (
+    <MemoryGate
+      key={`${openGate.run_id}:${openGate.injection_id}:${openGate.stage}:${
+        openGate.wrong_removed[0]?.memory_id ?? 'review'
+      }:${openGate.wrong_removed[0]?.revision ?? 0}`}
+      gate={openGate}
+      connected={snapshot.connection === 'connected'}
+      cancelling={activeRun?.state === 'cancelling'}
+      serverError={selectedThread?.lastError?.detail ?? null}
+      onCommit={(decision) => {
+        void events.dispatch({ type: 'gate.commit', decision }).catch(() => undefined)
+      }}
+      onStop={() => {
+        void events
+          .dispatch({ type: 'run.cancel', run_id: activeRun?.run_id })
+          .catch(() => undefined)
+      }}
+    />
   )
 }
 
@@ -626,12 +1002,11 @@ function MessageRow({
   activeState,
 }: MessageRowProps) {
   if (message.role === 'user') {
-    const status =
-      message.state === 'submitting'
-        ? 'Sending'
-        : message.state === 'queued'
-          ? `Queued ${Math.max(queuePosition, 1)}`
-          : null
+    const status = message.state === 'submitting'
+      ? 'Sending'
+      : message.state === 'queued'
+        ? `Queued ${Math.max(queuePosition, 1)}`
+        : null
     return (
       <article className={`message message--user message--${message.state}`} data-role="user">
         <header className="message__label">
@@ -644,11 +1019,15 @@ function MessageRow({
   }
 
   const status = messageStatus(message, runState, activeRunId, activeState)
-  const tone = runState === 'error' ? 'danger' : runState === 'budget_exceeded' ? 'budget' : 'normal'
+  const tone = runState === 'error'
+    ? 'danger'
+    : runState === 'budget_exceeded'
+      ? 'budget'
+      : 'normal'
   return (
     <article className={`message message--assistant message--${tone}`} data-role="assistant">
       <header className="message__label">
-        <span>Harness</span>
+        <span>Nocturne</span>
         {status !== null && <span className="message__status">{status}</span>}
       </header>
       {message.content ? (

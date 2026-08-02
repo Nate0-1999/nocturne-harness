@@ -10,7 +10,7 @@ from pathlib import Path
 from uuid import UUID
 
 import uvicorn
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, status
+from fastapi import FastAPI, Request, Response, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -49,6 +49,25 @@ type EnvelopeForwarder = Callable[[Envelope], Awaitable[None]]
 
 _OUTBOX_BUFFER_SIZE = 256
 _RESYNC_CLOSE_REASON = "snapshot resync required"
+_RACK_FRAME_HOST = "rack.localhost"
+_RACK_MODULE_IDS = frozenset({"header", "threads", "chat", "memory", "gate"})
+_RACK_FRAME_CSP = "; ".join(
+    (
+        "default-src 'self'",
+        "script-src 'self'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data:",
+        "font-src 'self' data:",
+        "connect-src 'none'",
+        "media-src 'none'",
+        "object-src 'none'",
+        "frame-src 'none'",
+        "worker-src 'none'",
+        "base-uri 'none'",
+        "form-action 'none'",
+        "frame-ancestors http://localhost:* http://127.0.0.1:*",
+    )
+)
 _RESERVED_TYPES = frozenset(
     {
         MessageType.RUN_STEER,
@@ -136,6 +155,23 @@ def create_app(
             if not isinstance(message_type, MessageType):
                 raise TypeError("route keys must be MessageType values")
             route_table[message_type] = handler
+
+    @app.middleware("http")
+    async def rack_frame_policy(request: Request, call_next: Callable) -> Response:
+        response = await call_next(request)
+        if not response.headers.get("content-type", "").startswith("text/html"):
+            return response
+        is_rack_frame = (
+            request.url.hostname == _RACK_FRAME_HOST
+            and request.query_params.get("rack_module") in _RACK_MODULE_IDS
+        )
+        response.headers["Referrer-Policy"] = "no-referrer"
+        if is_rack_frame:
+            response.headers["Content-Security-Policy"] = _RACK_FRAME_CSP
+        else:
+            response.headers["Content-Security-Policy"] = "frame-ancestors 'none'"
+            response.headers["X-Frame-Options"] = "DENY"
+        return response
 
     async def not_implemented(message: Envelope, send: EnvelopeSender) -> None:
         await send(

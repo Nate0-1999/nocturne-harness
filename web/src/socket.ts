@@ -12,6 +12,7 @@ import {
   type MemoryPanelRequestPayload,
   type Ulid,
 } from './protocol'
+import { publishRackEnvelope } from './rackEvents'
 import { useHarnessStore, type HarnessStoreState } from './store'
 
 const INITIAL_RECONNECT_DELAY_MS = 250
@@ -262,6 +263,8 @@ export class HarnessSocketClient {
         return
       }
 
+      publishRackEnvelope({ direction: 'inbound', envelope })
+
       const decoded = decodeServerEnvelope(envelope)
       const store = useHarnessStore.getState()
       store.observeDaemon(envelope.machine_id)
@@ -390,6 +393,7 @@ export class HarnessSocketClient {
       state.daemonMachineId ?? DIRECT_MACHINE_ID,
     )
     this.socket.send(JSON.stringify(envelope))
+    publishRackEnvelope({ direction: 'outbound', envelope })
     return envelope
   }
 }
