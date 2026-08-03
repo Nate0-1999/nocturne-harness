@@ -608,11 +608,35 @@ class VitalsReconciliation(ContractModel):
         return None if value is None else _require_aware_timestamp(value)
 
 
+class VitalsAccounting(ContractModel):
+    """Harness-local receipt drift added at the public Rack boundary. [A-038]"""
+
+    status: Literal["clear", "pending", "degraded"] = "clear"
+    pending_lines: int = Field(default=0, strict=True, ge=0)
+    oldest_queued_at: datetime | None = None
+    source: Literal["harness.receipt_queue"] = "harness.receipt_queue"
+
+    @field_validator("oldest_queued_at")
+    @classmethod
+    def require_aware_oldest(cls, value: datetime | None) -> datetime | None:
+        return None if value is None else _require_aware_timestamp(value)
+
+    @model_validator(mode="after")
+    def require_honest_queue_state(self) -> VitalsAccounting:
+        if self.status == "clear":
+            if self.pending_lines != 0 or self.oldest_queued_at is not None:
+                raise ValueError("clear accounting cannot contain pending receipts")
+        elif self.pending_lines == 0 or self.oldest_queued_at is None:
+            raise ValueError("pending accounting requires lines and an oldest timestamp")
+        return self
+
+
 class VitalsSnapshot(ContractModel):
     as_of: datetime
     window_minutes: Literal[60]
     spend: VitalsSpend
     reconciliation: VitalsReconciliation
+    accounting: VitalsAccounting = Field(default_factory=VitalsAccounting)
     lifecycle_rates: list[VitalsLifecycleRate]
     palace_counts: list[VitalsPalaceCount]
 

@@ -45,6 +45,13 @@ export interface ReconciliationSnapshot {
   error_code: 'broker_unavailable' | 'invalid_broker_response' | null
 }
 
+export interface AccountingSnapshot {
+  status: 'clear' | 'pending' | 'degraded'
+  pending_lines: number
+  oldest_queued_at: string | null
+  source: 'harness.receipt_queue'
+}
+
 export interface VitalsSnapshot {
   as_of: string
   window_minutes: 60
@@ -54,6 +61,7 @@ export interface VitalsSnapshot {
     lanes: SpendLane[]
   }
   reconciliation: ReconciliationSnapshot
+  accounting: AccountingSnapshot
   lifecycle_rates: LifecycleRate[]
   palace_counts: PalaceCount[]
 }
@@ -95,6 +103,7 @@ export function parseVitalsSnapshot(value: unknown): VitalsSnapshot {
       lanes: spend.lanes.map(parseSpendLane),
     },
     reconciliation: parseReconciliation(root.reconciliation),
+    accounting: parseAccounting(root.accounting),
     lifecycle_rates: gaugeArray(root.lifecycle_rates, parseLifecycleRate, 'lifecycle_rates'),
     palace_counts: gaugeArray(root.palace_counts, parsePalaceCount, 'palace_counts'),
   }
@@ -124,6 +133,14 @@ export function reconciliationCopy(value: ReconciliationSnapshot): string {
     case 'unavailable': return 'Ledger audit · Temporarily unavailable'
     case 'not_recorded': return 'Ledger audit · Not recorded'
   }
+}
+
+export function accountingCopy(value: AccountingSnapshot): string {
+  if (value.status === 'clear') {
+    return 'Receipt queue · Clear'
+  }
+  const durability = value.status === 'degraded' ? ' · Memory only' : ''
+  return `Receipt drift · ${value.pending_lines} ${value.pending_lines === 1 ? 'line' : 'lines'} pending${durability}`
 }
 
 export function formatSignedUsd(value: string | null): string {

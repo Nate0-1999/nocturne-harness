@@ -33,6 +33,7 @@ from harness.agent import HarnessAgent, RememberResult
 from harness.commands import remember_command_text
 from harness.envelope import StopReason
 from harness.model_policy import ThreadModelResolution
+from harness.receipt_queue import SpendReceiptQueue
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.spend import (
     SpendGateway,
@@ -57,10 +58,12 @@ class PydanticAITurnRunner:
         agent: HarnessAgent,
         context_factory: ContextFactory,
         spend: SpendGateway | None = None,
+        receipt_queue: SpendReceiptQueue | None = None,
     ) -> None:
         self._agent = agent
         self._context_factory = context_factory
         self._spend = spend
+        self._receipt_queue = receipt_queue
 
     async def run(
         self,
@@ -220,19 +223,31 @@ class PydanticAITurnRunner:
         )
         if request is None:
             return
+        if self._receipt_queue is not None:
+            await self._receipt_queue.flush(self._spend)
         try:
             result = await self._spend.record_spend_events(request)
+            if result.accepted != len(request.events):
+                raise RuntimeError("Spine accepted an incomplete spend receipt batch")
         except Exception:
+            durable = False
+            if self._receipt_queue is not None:
+                durable = await self._receipt_queue.enqueue(request)
+            pending = (
+                self._receipt_queue.snapshot().pending_lines
+                if self._receipt_queue is not None
+                else len(request.events)
+            )
+            location = "durably on disk" if durable else "in degraded memory"
             await emit.error(
                 {
-                    "code": "spend_unavailable",
+                    "code": "spend_pending",
                     "phase": "receipt",
-                    "message": "Spend receipt could not be persisted; the turn was not committed.",
+                    "message": f"Answer delivered; {pending} spend receipt line(s) are "
+                    f"waiting for the ledger ({location}).",
                 }
             )
-            raise
-        if result.accepted != len(request.events):  # pragma: no cover - exact A-027 response
-            raise RuntimeError("Spine accepted an incomplete spend receipt batch")
+            return
 
 
 class _EventBridge:

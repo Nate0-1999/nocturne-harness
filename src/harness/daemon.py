@@ -54,6 +54,7 @@ from harness.parameter_registry import (
     ParameterWriteViolation,
 )
 from harness.rack_query import RackQueryResult
+from harness.receipt_queue import SpendReceiptQueue
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.seed import SeedIngestionService, SeedUploadRequest
@@ -70,6 +71,7 @@ from harness.spine_client import (
     ScorerConsoleSnapshot,
     SpineClient,
     SpineClientError,
+    VitalsAccounting,
     VitalsSnapshot,
 )
 from harness.tools_memory import MemoryToolContext
@@ -560,6 +562,7 @@ def create_dev_app(
         )
 
     memory_contexts = ThreadMemoryContextRegistry()
+    receipt_queue = SpendReceiptQueue(nocturne_home() / "receipt-queue")
     panel = MemoryPanelController(
         owned_spine,
         memory_contexts,
@@ -575,7 +578,12 @@ def create_dev_app(
         )
 
     runner = MemoryGateTurnRunner(
-        PydanticAITurnRunner(owned_agent, context_factory, owned_spine),
+        PydanticAITurnRunner(
+            owned_agent,
+            context_factory,
+            owned_spine,
+            receipt_queue=receipt_queue,
+        ),
         owned_spine,
         context_factory,
         model_context_tokens=configured.model_context_tokens,
@@ -585,10 +593,12 @@ def create_dev_app(
     journal = transcript_journal or TranscriptJournal(nocturne_home() / "transcripts")
 
     async def read_vitals_snapshot() -> VitalsSnapshot:
-        return await owned_spine.vitals_snapshot()
+        snapshot = await owned_spine.vitals_snapshot()
+        return snapshot.model_copy(update={"accounting": _vitals_accounting(receipt_queue)})
 
     async def read_thread_vitals_snapshot(thread_id: UUID) -> VitalsSnapshot:
-        return await owned_spine.thread_vitals_snapshot(thread_id)
+        snapshot = await owned_spine.thread_vitals_snapshot(thread_id)
+        return snapshot.model_copy(update={"accounting": _vitals_accounting(receipt_queue)})
 
     async def read_memory_graph(thread_id: str | None) -> MemoryGraphSnapshot:
         memory_ids = None
@@ -634,6 +644,10 @@ def create_dev_app(
         )
     )
     def configure_extraction_routes(app: FastAPI) -> None:
+        async def flush_receipt_queue() -> None:
+            await receipt_queue.flush(owned_spine)
+
+        app.router.add_event_handler("startup", flush_receipt_queue)
         if idle_extraction is not None:
             app.router.add_event_handler("startup", idle_extraction.start)
             app.router.add_event_handler("shutdown", idle_extraction.stop)
@@ -718,6 +732,16 @@ def create_dev_app(
     app.router.add_event_handler("shutdown", owned_spine.aclose)
     app.router.add_event_handler("shutdown", model_catalog.aclose)
     return app
+
+
+def _vitals_accounting(receipt_queue: SpendReceiptQueue) -> VitalsAccounting:
+    snapshot = receipt_queue.snapshot()
+    return VitalsAccounting(
+        status=snapshot.status,
+        pending_lines=snapshot.pending_lines,
+        oldest_queued_at=snapshot.oldest_queued_at,
+        source="harness.receipt_queue",
+    )
 
 
 def _required_identity(value: str, name: str) -> str:
