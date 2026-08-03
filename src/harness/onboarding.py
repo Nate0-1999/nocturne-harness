@@ -63,6 +63,7 @@ class NocturneConfig:
                 "SPINE_TOKEN": self.spine_token,
                 "SPINE_DATABASE_URL": self.database_url,
                 "SPINE_URL": SPINE_URL,
+                "NOCTURNE_HOME": str(self.home),
                 "PRINCIPAL_ID": "local",
                 "MACHINE_ID": self.machine_id,
                 "AGENT_ID": "nocturne",

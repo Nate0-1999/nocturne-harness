@@ -74,6 +74,16 @@ def test_load_rejects_group_or_world_readable_secret_file(
         onboarding.load_config(home=tmp_path)
 
 
+def test_process_environment_keeps_services_on_the_initialized_home(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config = _initialized(tmp_path, monkeypatch)
+
+    environment = config.process_environment({})
+
+    assert environment["NOCTURNE_HOME"] == str(tmp_path)
+
+
 def test_up_orders_container_migration_services_and_browser(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

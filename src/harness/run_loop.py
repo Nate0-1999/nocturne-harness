@@ -39,6 +39,7 @@ from harness.model_policy import (
     ThreadModelResolver,
 )
 from harness.run_protocol import RunEmitter, TurnOutcome, TurnRunner, UsageSnapshot
+from harness.transcript import TranscriptJournal
 
 type EnvelopeSink = Callable[[Envelope], Awaitable[None]]
 
@@ -55,6 +56,7 @@ class _Turn:
     prompt: str
     user_message: dict[str, Any]
     model_target: str | None = None
+    parent_id: str | None = None
 
 
 @dataclass(slots=True)
@@ -148,6 +150,7 @@ class RunLoop:
         resolved_model: str | None = None,
         model_resolver: ThreadModelResolver | None = None,
         clock: Callable[[], datetime] | None = None,
+        transcript_journal: TranscriptJournal | None = None,
     ) -> None:
         if resolved_model is not None and model_resolver is not None:
             raise ValueError("use either resolved_model or model_resolver, not both")
@@ -163,6 +166,7 @@ class RunLoop:
         self._initial_resolved_model = resolved_model
         self._model_resolver = model_resolver
         self._clock = clock or (lambda: datetime.now(UTC))
+        self._transcript_journal = transcript_journal
         self._lock = asyncio.Lock()
         self._threads: dict[str, _ThreadState] = {}
         self._subscriptions: list[_Subscription] = []
@@ -288,7 +292,9 @@ class RunLoop:
             self._selected_thread_id = thread_id
             if sink is not None:
                 self._bind_sink_locked(sink, thread_id)
+            turn.parent_id = self._parent_for_new_turn_locked(state)
             state.messages.append(user_message)
+            self._capture_message(thread_id, user_message, parent_id=turn.parent_id)
             if state.active is None:
                 await self._start_locked(thread_id, state, turn)
             else:
@@ -435,6 +441,7 @@ class RunLoop:
         turn: _Turn,
     ) -> None:
         turn.user_message["state"] = "running"
+        self._capture_message(thread_id, turn.user_message, parent_id=turn.parent_id)
         assistant_message: dict[str, Any] = {
             "message_id": turn.run_id,
             "run_id": turn.run_id,
@@ -448,6 +455,7 @@ class RunLoop:
             index for index, message in enumerate(state.messages) if message is turn.user_message
         )
         state.messages.insert(user_index + 1, assistant_message)
+        self._capture_message(thread_id, assistant_message, parent_id=turn.prompt_id)
         active = _ActiveRun(turn=turn, assistant_message=assistant_message)
         state.active = active
         history = state.message_history
@@ -568,6 +576,16 @@ class RunLoop:
             partial = stop_reason is not StopReason.END_TURN
             active.assistant_message["partial"] = partial
             active.turn.user_message["state"] = stop_reason.value
+            self._capture_message(
+                thread_id,
+                active.turn.user_message,
+                parent_id=active.turn.parent_id,
+            )
+            self._capture_message(
+                thread_id,
+                active.assistant_message,
+                parent_id=active.turn.prompt_id,
+            )
 
             if state.open_gate is not None:
                 if active.gate_decision is not None and not active.gate_decision.done():
@@ -970,6 +988,7 @@ class RunLoop:
         )
 
     async def _publish_locked(self, thread_id: str, envelope: Envelope) -> None:
+        self._capture_event(thread_id, envelope)
         for subscription in tuple(self._subscriptions):
             if subscription.thread_id != thread_id:
                 continue
@@ -979,6 +998,8 @@ class RunLoop:
         await asyncio.sleep(0)
 
     async def _send_direct_locked(self, sink: EnvelopeSink, envelope: Envelope) -> None:
+        if envelope.thread_id is not None:
+            self._capture_event(envelope.thread_id, envelope)
         subscription = self._find_sink_locked(sink)
         if subscription is None:
             # Own even a one-off delivery so detach/close can always stop its
@@ -1086,6 +1107,37 @@ class RunLoop:
             state = _ThreadState(resolved_model=self._initial_resolved_model)
             self._threads[thread_id] = state
         return state
+
+    @staticmethod
+    def _parent_for_new_turn_locked(state: _ThreadState) -> str | None:
+        if state.queued:
+            return state.queued[-1].run_id
+        if state.active is not None:
+            return state.active.turn.run_id
+        if not state.messages:
+            return None
+        parent_id = state.messages[-1].get("message_id")
+        if not isinstance(parent_id, str) or not parent_id:
+            raise RuntimeError("thread transcript message is missing its message_id")
+        return parent_id
+
+    def _capture_message(
+        self,
+        thread_id: str,
+        message: Mapping[str, Any],
+        *,
+        parent_id: str | None,
+    ) -> None:
+        if self._transcript_journal is not None:
+            self._transcript_journal.append_message(
+                thread_id,
+                message,
+                parent_id=parent_id,
+            )
+
+    def _capture_event(self, thread_id: str, envelope: Envelope) -> None:
+        if self._transcript_journal is not None:
+            self._transcript_journal.append_event(thread_id, envelope)
 
     async def _resolution_for_thread(
         self,

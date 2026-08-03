@@ -40,6 +40,7 @@ from harness.spine_client import (
     SpendEventsResponse,
     SpineTransportError,
 )
+from harness.transcript import TranscriptJournal
 
 PROMPT_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV"
 SECOND_PROMPT_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAW"
@@ -403,7 +404,10 @@ def test_default_prompt_gets_fresh_correlated_error_lifecycle(tmp_path: Path) ->
     assert len({started["id"], usage["id"], done["id"]}) == 3
 
 
-def test_dev_app_wires_the_real_streaming_agent_adapter(tmp_path: Path) -> None:
+def test_dev_app_wires_the_real_streaming_agent_adapter(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     async def stream(_messages, _info):
         yield "wired response"
 
@@ -419,6 +423,8 @@ def test_dev_app_wires_the_real_streaming_agent_adapter(tmp_path: Path) -> None:
         openrouter_api_key=None,
     )
     agent = HarnessAgent(settings, model=FunctionModel(stream_function=stream))
+    state_home = tmp_path / "state"
+    monkeypatch.setenv("NOCTURNE_HOME", str(state_home))
     app = create_dev_app(
         tmp_path,
         settings=settings,
@@ -462,6 +468,7 @@ def test_dev_app_wires_the_real_streaming_agent_adapter(tmp_path: Path) -> None:
     )
     assert all(message["machine_id"] == "machine-test" for message in messages)
     assert all(message["agent_id"] == "agent-test" for message in messages)
+    assert len(list((state_home / "transcripts").glob("*.jsonl"))) == 1
 
 
 def test_explicit_pinned_policy_does_not_resolve_unused_chat_model(tmp_path: Path) -> None:
@@ -479,6 +486,7 @@ def test_explicit_pinned_policy_does_not_resolve_unused_chat_model(tmp_path: Pat
         tmp_path,
         settings=settings,
         spine=FailingPrepareSpine(),  # type: ignore[arg-type]
+        transcript_journal=TranscriptJournal(tmp_path / "transcripts"),
     )
 
     with TestClient(app):
@@ -512,6 +520,7 @@ def test_dev_gate_round_trip_blocks_validates_commits_and_injects_system_block(
         settings=settings,
         agent=agent,
         spine=spine,  # type: ignore[arg-type]
+        transcript_journal=TranscriptJournal(tmp_path / "transcripts"),
     )
     thread_id = "22345678-1234-5678-1234-567812345678"
 
@@ -630,6 +639,7 @@ def test_dev_panel_remove_updates_shared_context_for_the_next_model_call(
         settings=settings,
         agent=agent,
         spine=spine,  # type: ignore[arg-type]
+        transcript_journal=TranscriptJournal(tmp_path / "transcripts"),
     )
     thread_id = "22345678-1234-5678-1234-567812345678"
 

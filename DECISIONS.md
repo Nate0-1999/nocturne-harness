@@ -761,3 +761,39 @@ would not satisfy ADR-023's sandbox law. Same-origin frames can remove their
 own sandbox. Freeform pixel windows violate the grid-unit resize law. Loading
 arbitrary plugin folders or inventing parameter bindings in M2B would pull M3
 and M2J into this packet.
+
+## 025 — Capture-first local transcript journal [P3]
+
+**Decision.** Write one versioned append-only JSONL per opaque thread beneath
+`NOCTURNE_HOME/transcripts`. Capture immutable snapshots when each user or
+assistant message is created or terminally updated, and capture every
+daemon-authored C.7 run event before live delivery; this includes deltas,
+usage, gates, errors, terminal events, and the `/model` `model_change` event.
+Every captured message carries ADR-016's `parentId` now, including forward
+links through the existing FIFO, but M2D neither reads the journal nor changes
+the process-local snapshot contract. Snapshot resyncs and panel query replies
+are serving artifacts rather than new transcript events and are not copied
+back into the journal.
+
+Map thread ids to SHA-256 filenames instead of trusting them as paths. Create
+the transcript directory and files at modes 0700 and 0600, append with
+`O_APPEND`, and `fsync` every complete standard-JSON line before the run
+advances. Refuse a transcript root beneath any git worktree. The initialized
+home is propagated to both local services so an overridden `NOCTURNE_HOME`
+cannot split configuration and conversation state.
+
+**Motivation.** Item 4 requires capture now without importing M3's session
+table, tree serving, rewind, or Cube query surface. Self-contained message and
+event rows preserve everything needed for that later backfill, while seeding
+`parentId` honors ADR-016's first-persistent-store requirement without
+activating tree behavior early. Synchronous durable appends make a detached
+browser or daemon restart irrelevant to capture and make a write failure loud
+instead of silently claiming persistence.
+
+**Rejected alternatives.** Loading JSONL into `thread.snapshot` would pull M3
+serving into a capture-only packet. SQLite or a `session_message` table would
+pre-build the M3 schema. Logging only WebSocket traffic loses events while no
+client is attached; logging resync snapshots duplicates old history. Raw
+thread ids permit path traversal. Git storage violates the explicit push-leak
+wall, and buffered best-effort writes can lose the exact tail this packet
+exists to preserve.

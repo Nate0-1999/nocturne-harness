@@ -35,10 +35,12 @@ from harness.model_policy import (
     OpenRouterCatalogClient,
     ThreadModelResolution,
 )
+from harness.onboarding import nocturne_home
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.spine_client import SpineClient
 from harness.tools_memory import MemoryToolContext
+from harness.transcript import TranscriptJournal
 
 DEFAULT_WEB_DIST = Path(__file__).resolve().parents[2] / "web" / "dist"
 DEFAULT_WEB_ROOT = DEFAULT_WEB_DIST.parent
@@ -321,6 +323,7 @@ def create_dev_app(
     settings: HarnessSettings | None = None,
     agent: HarnessAgent | None = None,
     spine: SpineClient | None = None,
+    transcript_journal: TranscriptJournal | None = None,
 ) -> FastAPI:
     """Compose the real H3 agent loop with trusted local M1 run context."""
 
@@ -379,7 +382,13 @@ def create_dev_app(
         principal_id=principal_id,
         machine_id=machine_id,
     )
-    loop = RunLoop(runner, factory, model_resolver=model_resolver)
+    journal = transcript_journal or TranscriptJournal(nocturne_home() / "transcripts")
+    loop = RunLoop(
+        runner,
+        factory,
+        model_resolver=model_resolver,
+        transcript_journal=journal,
+    )
     app = create_app(
         web_dist,
         routes={MessageType.MEMORY_PANEL_UPDATE: panel.handle},
