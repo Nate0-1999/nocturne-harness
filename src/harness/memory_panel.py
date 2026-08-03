@@ -79,6 +79,7 @@ class ThreadMemorySnapshot:
     excluded_memory_ids: frozenset[UUID]
     confirmed_memory_ids: frozenset[UUID]
     event_sources: Mapping[UUID, UUID]
+    memory_bodies: Mapping[UUID, str]
 
 
 @dataclass(slots=True)
@@ -88,6 +89,7 @@ class _ThreadMemoryState:
     excluded_memory_ids: set[UUID]
     confirmed_memory_ids: set[UUID]
     event_sources: dict[UUID, UUID]
+    memory_bodies: dict[UUID, str]
 
     def snapshot(self) -> ThreadMemorySnapshot:
         return ThreadMemorySnapshot(
@@ -97,6 +99,7 @@ class _ThreadMemoryState:
             excluded_memory_ids=frozenset(self.excluded_memory_ids),
             confirmed_memory_ids=frozenset(self.confirmed_memory_ids),
             event_sources=dict(self.event_sources),
+            memory_bodies=dict(self.memory_bodies),
         )
 
 
@@ -154,6 +157,7 @@ class ThreadMemoryContextRegistry:
             excluded_memory_ids=set(removed_memory_ids),
             confirmed_memory_ids={card.memory_id for card in selected},
             event_sources={memory_id: prepared.injection_id for memory_id in prepared_ids},
+            memory_bodies={card.memory_id: card.body for card in selected},
         )
         self._threads[thread_id] = state
         return state.snapshot()
@@ -169,6 +173,7 @@ class ThreadMemoryContextRegistry:
         if state is None or memory_id not in state.fragments:
             return False
         del state.fragments[memory_id]
+        del state.memory_bodies[memory_id]
         state.confirmed_memory_ids.discard(memory_id)
         state.excluded_memory_ids.add(memory_id)
         return True
@@ -180,6 +185,7 @@ class ThreadMemoryContextRegistry:
         if state is None or memory.memory_id not in state.excluded_memory_ids:
             return False
         state.fragments[memory.memory_id] = _memory_unit_fragment(memory)
+        state.memory_bodies[memory.memory_id] = memory.body
         state.excluded_memory_ids.remove(memory.memory_id)
         state.confirmed_memory_ids.add(memory.memory_id)
         return True
@@ -208,6 +214,7 @@ class ThreadMemoryContextRegistry:
         fragments = _bind_final_block(prepared.final_block, cards)
         changed = set(state.fragments) != set(ids)
         state.fragments = dict(zip(ids, fragments, strict=True))
+        state.memory_bodies = {card.memory_id: card.body for card in cards}
         state.injection_id = prepared.injection_id
         for card in (*prepared.injected, *prepared.near_misses):
             state.event_sources[card.memory_id] = prepared.injection_id

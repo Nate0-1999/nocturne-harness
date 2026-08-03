@@ -15,6 +15,9 @@ from harness.memory_panel import EMPTY_MEMORY_BLOCK, ThreadMemoryContextRegistry
 from harness.model_policy import ThreadModelResolution
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.spine_client import (
+    FeedbackRequest,
+    FeedbackResponse,
+    FeedbackSignal,
     InjectCommitRequest,
     InjectCommitResponse,
     InjectPrepareRequest,
@@ -42,6 +45,7 @@ class RecordingDelegate:
         default_factory=list
     )
     resolutions: list[ThreadModelResolution | None] = field(default_factory=list)
+    assistant_text: str | None = None
 
     async def run(
         self,
@@ -58,7 +62,11 @@ class RecordingDelegate:
         history = tuple(message_history)
         self.resolutions.append(model_resolution)
         self.calls.append((thread_id, prompt, history, system_instructions, excluded_memory_ids))
-        return TurnOutcome(StopReason.END_TURN, (*history, f"{prompt}:done"))
+        return TurnOutcome(
+            StopReason.END_TURN,
+            (*history, f"{prompt}:done"),
+            assistant_text=self.assistant_text,
+        )
 
 
 @dataclass
@@ -103,6 +111,8 @@ class RecordingSpine:
         self.prepare_requests: list[InjectPrepareRequest] = []
         self.commit_requests: list[InjectCommitRequest] = []
         self.patch_requests: list[tuple[UUID, PatchMemoryRequest]] = []
+        self.feedback_requests: list[FeedbackRequest] = []
+        self.feedback_outcomes: list[FeedbackResponse | Exception] = []
         self.commit_response = InjectCommitResponse(
             final_block=EMPTY_MEMORY_BLOCK,
             wrong_removed=[],
@@ -134,6 +144,15 @@ class RecordingSpine:
         if self.fail_commit:
             raise SpineTransportError
         return self.commit_response
+
+    async def submit_feedback(self, request: FeedbackRequest) -> FeedbackResponse:
+        self.feedback_requests.append(request)
+        if self.feedback_outcomes:
+            outcome = self.feedback_outcomes.pop(0)
+            if isinstance(outcome, Exception):
+                raise outcome
+            return outcome
+        return FeedbackResponse(ok=True)
 
     async def patch_memory(self, memory_id: UUID, request: PatchMemoryRequest) -> MemoryUnit:
         self.patch_requests.append((memory_id, request))
@@ -366,6 +385,96 @@ async def test_post_first_turn_rescores_without_gate_and_publishes_ambient_membe
     assert request.confirmed_memory_ids == [first_id]
     assert request.excluded_memory_ids == []
     assert delegate.calls[-1][-2] == final_block(first_card, entered_card)
+
+
+@pytest.mark.asyncio
+async def test_citations_follow_each_model_calls_exact_event_source() -> None:
+    """Each ordinary response labels its gated or autonomous M2G batch. [A-036]"""
+
+    memory_id = UUID("52345678-1234-5678-1234-567812345678")
+    autonomous_id = UUID("72345678-1234-5678-1234-567812345678")
+    body = "Always write tests before changing shared production behavior."
+    card = scored_card(memory_id, label="Testing discipline", body=body, rank=1)
+    spine = RecordingSpine()
+    spine.prepare_response = spine.prepare_response.model_copy(update={"injected": [card]})
+    spine.commit_response = InjectCommitResponse(final_block=final_block(card), wrong_removed=[])
+    spine.prepare_outcomes.append(
+        InjectPrepareResponse(
+            injection_id=autonomous_id,
+            snapshot_ts=datetime(2026, 7, 21, 12, 1, tzinfo=UTC),
+            scorer_version="m1-v1",
+            injected=[card],
+            near_misses=[],
+            final_block=final_block(card),
+        )
+    )
+    delegate = RecordingDelegate(assistant_text=f"Agreed: {body}")
+    runner = MemoryGateTurnRunner(
+        delegate,
+        spine,
+        context_factory(spine),
+        model_context_tokens=1_000_000,
+    )
+
+    emitter = RecordingEmitter()
+    first = asyncio.create_task(
+        runner.run(thread_id=THREAD_ID, prompt="first", message_history=(), emit=emitter)
+    )
+    await asyncio.wait_for(emitter.opened.wait(), 1)
+    assert emitter.decision is not None
+    emitter.decision.set_result(decision())
+    first_outcome = await asyncio.wait_for(first, 1)
+    await runner.run(
+        thread_id=THREAD_ID,
+        prompt="second",
+        message_history=first_outcome.message_history,
+        emit=RecordingEmitter(),
+    )
+
+    assert spine.feedback_requests == [
+        FeedbackRequest(
+            injection_id=INJECTION_ID,
+            memory_id=memory_id,
+            signal=FeedbackSignal.CITED,
+        ),
+        FeedbackRequest(
+            injection_id=autonomous_id,
+            memory_id=memory_id,
+            signal=FeedbackSignal.CITED,
+        ),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_citation_failure_is_visible_without_retracting_the_turn() -> None:
+    """A-036 reports passive persistence failure after preserving model output."""
+
+    memory_id = UUID("52345678-1234-5678-1234-567812345678")
+    body = "Always write tests before changing shared production behavior."
+    card = scored_card(memory_id, label="Testing discipline", body=body, rank=1)
+    spine = RecordingSpine()
+    spine.prepare_response = spine.prepare_response.model_copy(update={"injected": [card]})
+    spine.commit_response = InjectCommitResponse(final_block=final_block(card), wrong_removed=[])
+    spine.feedback_outcomes.append(SpineTransportError())
+    delegate = RecordingDelegate(assistant_text=body)
+    runner = MemoryGateTurnRunner(
+        delegate,
+        spine,
+        context_factory(spine),
+        model_context_tokens=1_000_000,
+    )
+    emitter = RecordingEmitter()
+    task = asyncio.create_task(
+        runner.run(thread_id=THREAD_ID, prompt="first", message_history=(), emit=emitter)
+    )
+    await asyncio.wait_for(emitter.opened.wait(), 1)
+    assert emitter.decision is not None
+    emitter.decision.set_result(decision())
+
+    outcome = await asyncio.wait_for(task, 1)
+
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert emitter.errors[-1]["phase"] == "citation"
 
 
 @pytest.mark.asyncio

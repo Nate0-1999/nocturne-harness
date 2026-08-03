@@ -6,8 +6,9 @@ from collections.abc import Awaitable, Callable, Sequence
 from typing import Protocol
 from uuid import UUID
 
+from harness.citation import cited_memory_ids
 from harness.commands import remember_command_text
-from harness.memory_panel import ThreadMemoryContextRegistry
+from harness.memory_panel import ThreadMemoryContextRegistry, ThreadMemorySnapshot
 from harness.model_policy import ThreadModelResolution
 from harness.run_protocol import (
     RunEmitter,
@@ -15,6 +16,9 @@ from harness.run_protocol import (
     TurnOutcome,
 )
 from harness.spine_client import (
+    FeedbackRequest,
+    FeedbackResponse,
+    FeedbackSignal,
     InjectCommitRequest,
     InjectCommitResponse,
     InjectPrepareRequest,
@@ -41,6 +45,8 @@ class InjectionGateway(Protocol):
     async def prepare_injection(self, request: InjectPrepareRequest) -> InjectPrepareResponse: ...
 
     async def commit_injection(self, request: InjectCommitRequest) -> InjectCommitResponse: ...
+
+    async def submit_feedback(self, request: FeedbackRequest) -> FeedbackResponse: ...
 
     async def patch_memory(
         self, memory_id: UUID, request: PatchMemoryRequest
@@ -290,7 +296,7 @@ class MemoryGateTurnRunner:
             excluded_memory_ids = (
                 context.excluded_memory_ids if context is not None else frozenset()
             ) | additional_excluded_memory_ids
-            return await self._delegate.run(
+            outcome = await self._delegate.run(
                 thread_id=thread_id,
                 prompt=prompt,
                 message_history=message_history,
@@ -299,6 +305,8 @@ class MemoryGateTurnRunner:
                 system_instructions=system_instructions,
                 excluded_memory_ids=excluded_memory_ids,
             )
+            await self._record_citations(context, outcome, emit)
+            return outcome
 
     async def _run_autonomous(
         self,
@@ -358,7 +366,7 @@ class MemoryGateTurnRunner:
 
             if changed and self._on_context_changed is not None:
                 await self._on_context_changed(thread_id)
-            return await self._delegate.run(
+            outcome = await self._delegate.run(
                 thread_id=thread_id,
                 prompt=prompt,
                 message_history=message_history,
@@ -367,6 +375,38 @@ class MemoryGateTurnRunner:
                 system_instructions=current.final_block,
                 excluded_memory_ids=current.excluded_memory_ids,
             )
+            await self._record_citations(current, outcome, emit)
+            return outcome
+
+    async def _record_citations(
+        self,
+        context: ThreadMemorySnapshot | None,
+        outcome: TurnOutcome,
+        emit: RunEmitter,
+    ) -> None:
+        """Persist each lexical reuse against this model call's event batch. [A-036]"""
+
+        if outcome.stop_reason.value != "end_turn" or outcome.assistant_text is None:
+            return
+        if context is None:
+            return
+        failed = False
+        for memory_id in cited_memory_ids(outcome.assistant_text, context.memory_bodies):
+            injection_id = context.event_sources.get(memory_id)
+            if injection_id is None:
+                continue
+            try:
+                await self._spine.submit_feedback(
+                    FeedbackRequest(
+                        injection_id=injection_id,
+                        memory_id=memory_id,
+                        signal=FeedbackSignal.CITED,
+                    )
+                )
+            except SpineClientError:
+                failed = True
+        if failed:
+            await self._memory_unavailable(emit, phase="citation")
 
     @staticmethod
     async def _memory_unavailable(emit: RunEmitter, *, phase: str) -> None:

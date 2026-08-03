@@ -133,6 +133,7 @@ class PydanticAITurnRunner:
                 history,
                 usage,
                 cacheable_prefix_tokens=_cacheable_prefix_tokens(history),
+                assistant_text=result.output,
             )
         except asyncio.CancelledError:
             usage = _failure_usage(run_usage, captured, prior_history)

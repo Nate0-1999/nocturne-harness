@@ -135,6 +135,8 @@ class FailingSpend:
 
 @pytest.mark.asyncio
 async def test_successful_model_response_is_receipted_before_turn_returns() -> None:
+    """A successful response exposes final text for A-036 after A-027 receipts."""
+
     async def stream(_messages: object, _info: object):
         yield "answer"
 
@@ -153,6 +155,7 @@ async def test_successful_model_response_is_receipted_before_turn_returns() -> N
     )
 
     assert outcome.stop_reason is StopReason.END_TURN
+    assert outcome.assistant_text == "answer"
     assert len(spend.requests) == 1
     request = spend.requests[0]
     assert "output" in {event.quantity_type for event in request.events}

@@ -41,6 +41,7 @@ class TurnOutcome:
     message_history: tuple[object, ...]
     usage: UsageSnapshot = UsageSnapshot()
     cacheable_prefix_tokens: int = 0
+    assistant_text: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.stop_reason, StopReason):
@@ -53,6 +54,8 @@ class TurnOutcome:
             raise TypeError("cacheable_prefix_tokens must be an integer")
         if self.cacheable_prefix_tokens < 0:
             raise ValueError("cacheable_prefix_tokens must be non-negative")
+        if self.assistant_text is not None and not isinstance(self.assistant_text, str):
+            raise TypeError("assistant_text must be a string or None")
 
 
 class RunEmitter(Protocol):
