@@ -14,6 +14,7 @@ import {
 import { AssistantMarkdown } from './AssistantMarkdown'
 import { MemoryGate } from './MemoryGate'
 import { MemoryPanel } from './MemoryPanel'
+import { VitalsModule } from './VitalsModule'
 import type {
   AssistantTranscriptMessage,
   ChatMessage,
@@ -32,7 +33,10 @@ import {
   type RackMemoryPanelState,
   type RackModuleManifest,
 } from './rack'
-import { RackPluginIframe, RackRemoteProvider } from './rackBridge'
+import {
+  RackPluginIframe,
+  RackRemoteProvider,
+} from './rackBridge'
 import { publishRackResize } from './rackEvents'
 import {
   FACTORY_RACK_LAYOUT,
@@ -44,6 +48,7 @@ import {
   moveRackModule,
   orderedModules,
   persistRackLayout,
+  rackBodyRowAllocation,
   rackLayoutsEqual,
   resizeRackModule,
   saveRackSet,
@@ -124,27 +129,99 @@ function initialSavedRackSet(): RackLayoutSet | null {
 
 function App() {
   const requestedModule = new URLSearchParams(globalThis.location.search).get('rack_module')
-  if (isRackModuleId(requestedModule)) {
+  const isRemoteModule = isRackModuleId(requestedModule)
+  const isRegressionFixture = useVerifiedRegressionFixture(!isRemoteModule)
+  if (isRemoteModule) {
     return <RackRemoteApp moduleId={requestedModule} />
+  }
+  if (isRegressionFixture === null) {
+    return (
+      <main className="fixture-verification" role="status">
+        Verifying the isolated regression fixture…
+      </main>
+    )
   }
   return (
     <RackRuntime>
-      <RackWorkspace />
+      <RackWorkspace isRegressionFixture={isRegressionFixture} />
     </RackRuntime>
   )
 }
 
-function RackWorkspace() {
+function useVerifiedRegressionFixture(enabled: boolean): boolean | null {
+  const markerRequested = new URLSearchParams(globalThis.location.search)
+    .get('fixture') === 'M2C REGRESSION'
+  const [isVerified, setIsVerified] = useState<boolean | null>(
+    enabled && markerRequested ? null : false,
+  )
+
+  useEffect(() => {
+    if (!enabled || !markerRequested) {
+      return
+    }
+    const controller = new AbortController()
+    let active = true
+    void globalThis.fetch('/__scenario__/identity', {
+      cache: 'no-store',
+      credentials: 'same-origin',
+      signal: controller.signal,
+    }).then(async (response) => {
+      if (!response.ok) {
+        if (active) {
+          setIsVerified(false)
+        }
+        return
+      }
+      const identity: unknown = await response.json()
+      const verified = (
+        typeof identity === 'object' &&
+        identity !== null &&
+        'fixture' in identity &&
+        identity.fixture === 'M2C REGRESSION'
+      )
+      if (active) {
+        setIsVerified(verified)
+      }
+    }).catch(() => {
+      // Only the isolated regression server owns this opt-in identity route.
+      if (active) {
+        setIsVerified(false)
+      }
+    })
+    return () => {
+      active = false
+      controller.abort()
+    }
+  }, [enabled, markerRequested])
+
+  return isVerified
+}
+
+function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }) {
   const snapshot = useRackHostSnapshot()
   const selection = useRackHostSelection()
   const [layout, setLayout] = useState<RackLayoutSet>(initialRackLayout)
   const [savedSet, setSavedSet] = useState<RackLayoutSet | null>(initialSavedRackSet)
+  const [vitalsCollapsed, setVitalsCollapsed] = useState(
+    () => globalThis.matchMedia('(max-width: 47.99rem)').matches,
+  )
   const selectedThread = snapshot.selectedThreadId === null
     ? null
     : snapshot.threads[snapshot.selectedThreadId]
   const openGate = selectedThread?.openGate ?? null
   const drawerModule = selection?.kind === 'module' ? selection.id : null
   const ordered = orderedModules(layout)
+  const rowAllocation = rackBodyRowAllocation(vitalsCollapsed)
+  useEffect(() => {
+    const mobile = globalThis.matchMedia('(max-width: 47.99rem)')
+    const collapseOnMobile = (event: MediaQueryListEvent) => {
+      if (event.matches) {
+        setVitalsCollapsed(true)
+      }
+    }
+    mobile.addEventListener('change', collapseOnMobile)
+    return () => mobile.removeEventListener('change', collapseOnMobile)
+  }, [])
 
   useEffect(() => {
     try {
@@ -196,7 +273,11 @@ function RackWorkspace() {
       : 'Edited set'
 
   return (
-    <div className="rack-shell" data-theme="neo-noir" data-testid="rack-shell">
+    <div
+      className={`rack-shell rack-shell--vitals-${vitalsCollapsed ? 'collapsed' : 'expanded'}`}
+      data-theme="neo-noir"
+      data-testid="rack-shell"
+    >
       <div className="rack-ambient" aria-hidden="true" />
       <div className="rack-grid" data-testid="rack-grid">
         <RackModuleFrame
@@ -205,6 +286,7 @@ function RackWorkspace() {
           y={1}
           width={RACK_COLUMNS}
           height={1}
+          isRegressionFixture={isRegressionFixture}
         />
         <div className="rack-set-controls" aria-label="Rack layout set">
           <span data-testid="layout-status">{layoutStatus}</span>
@@ -236,16 +318,28 @@ function RackWorkspace() {
               x={geometry.x}
               y={2}
               width={geometry.w}
-              height={11}
+              height={rowAllocation.panelRows}
               drawerOpen={isDrawerOpen}
               inert={isInert}
               resizeFrom={index === ordered.length - 1 ? 'left' : 'right'}
               onMove={moveModule}
               onResize={resizeModule}
               orderedIds={ordered.map((item) => item.module_id)}
+              isRegressionFixture={isRegressionFixture}
             />
           )
         })}
+        <RackModuleFrame
+          manifest={RACK_MANIFESTS.vitals}
+          x={1}
+          y={rowAllocation.vitalsStart}
+          width={RACK_COLUMNS}
+          height={rowAllocation.vitalsRows}
+          collapsed={vitalsCollapsed}
+          inert={openGate !== null || drawerModule !== null}
+          onCollapseToggle={() => setVitalsCollapsed((value) => !value)}
+          isRegressionFixture={isRegressionFixture}
+        />
       </div>
 
       {drawerModule !== null && (
@@ -260,8 +354,14 @@ function RackWorkspace() {
 
       {openGate !== null && (
         <div className="rack-overlay-module" data-rack-module="gate">
-          <RackPluginIframe manifest={RACK_MANIFESTS.gate} />
+          <RackPluginIframe
+            manifest={RACK_MANIFESTS.gate}
+            isRegressionFixture={isRegressionFixture}
+          />
         </div>
+      )}
+      {isRegressionFixture && (
+        <RegressionFixtureMarker />
       )}
     </div>
   )
@@ -274,11 +374,14 @@ interface RackModuleFrameProps {
   width: number
   height: number
   drawerOpen?: boolean
+  collapsed?: boolean
   inert?: boolean
   resizeFrom?: 'left' | 'right'
   orderedIds?: DockedModuleId[]
   onMove?: (source: DockedModuleId, target: DockedModuleId) => void
   onResize?: (moduleId: DockedModuleId, width: number) => void
+  onCollapseToggle?: () => void
+  isRegressionFixture?: boolean
 }
 
 function RackModuleFrame({
@@ -288,15 +391,19 @@ function RackModuleFrame({
   width,
   height,
   drawerOpen = false,
+  collapsed = false,
   inert = false,
   resizeFrom = 'right',
   orderedIds = [],
   onMove,
   onResize,
+  onCollapseToggle,
+  isRegressionFixture = false,
 }: RackModuleFrameProps) {
   const frameRef = useRef<HTMLDivElement>(null)
   const [resizeSequence, setResizeSequence] = useState(0)
   const isDocked = manifest.slot === 'panel'
+  const isStrip = manifest.slot === 'strip'
   const moduleId = manifest.id as DockedModuleId
 
   useEffect(() => {
@@ -396,6 +503,7 @@ function RackModuleFrame({
       data-grid-width={width}
       data-grid-height={height}
       data-resize-sequence={resizeSequence}
+      data-collapsed={isStrip ? collapsed : undefined}
       inert={inert || undefined}
       onDragOver={(event) => {
         if (isDocked) {
@@ -444,8 +552,33 @@ function RackModuleFrame({
           </button>
         </div>
       )}
+      {isStrip && (
+        <div className="rack-module__chrome rack-module__chrome--strip">
+          <div className="rack-module__strip-title">
+            <span aria-hidden="true">⌁</span>
+            <strong>{manifest.name}</strong>
+          </div>
+          <span className="rack-module__geometry" aria-label={`${height} grid rows high`}>
+            12×{String(height).padStart(2, '0')}
+          </span>
+          <button
+            className="rack-module__collapse"
+            type="button"
+            data-testid="vitals-collapse"
+            aria-expanded={!collapsed}
+            aria-label={`${collapsed ? 'Expand' : 'Collapse'} Palace Vitals`}
+            onClick={onCollapseToggle}
+          >
+            <span aria-hidden="true">{collapsed ? '⌃' : '⌄'}</span>
+            {collapsed ? 'Expand' : 'Collapse'}
+          </button>
+        </div>
+      )}
       <div className="rack-module__content">
-        <RackPluginIframe manifest={manifest} />
+        <RackPluginIframe
+          manifest={manifest}
+          isRegressionFixture={isRegressionFixture}
+        />
       </div>
     </div>
   )
@@ -453,9 +586,24 @@ function RackModuleFrame({
 
 function RackRemoteApp({ moduleId }: { moduleId: RackModuleManifest['id'] }) {
   return (
-    <RackRemoteProvider moduleId={moduleId}>
+    <RackRemoteProvider
+      moduleId={moduleId}
+      regressionFixtureMarker={<RegressionFixtureMarker remote />}
+    >
       <RackRemoteSurface moduleId={moduleId} />
     </RackRemoteProvider>
+  )
+}
+
+function RegressionFixtureMarker({ remote = false }: { remote?: boolean }) {
+  return (
+    <div
+      className={`m2c-regression-fixture${remote ? ' m2c-regression-fixture--remote' : ''}`}
+      aria-hidden="true"
+    >
+      <strong>M2C REGRESSION FIXTURE</strong>
+      <span>DETERMINISTIC EVIDENCE · NOT THE OWNER APP</span>
+    </div>
   )
 }
 
@@ -476,6 +624,8 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
         <ChatModuleSlot />
       ) : moduleId === 'memory' ? (
         <MemoryModule />
+      ) : moduleId === 'vitals' ? (
+        <VitalsModule />
       ) : (
         <GateModule />
       )}

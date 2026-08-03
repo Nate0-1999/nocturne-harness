@@ -809,3 +809,46 @@ client is attached; logging resync snapshots duplicates old history. Raw
 thread ids permit path traversal. Git storage violates the explicit push-leak
 wall, and buffered best-effort writes can lose the exact tail this packet
 exists to preserve.
+
+## 026 — Vitals crosses the existing rack query bridge [P2.4, P2.5, P4.1]
+
+**Decision.** Adopt Garden A-028 and its collision repair A-029 as the M2C
+surface contract. The owner daemon
+uses its existing Spine bearer credential to fetch the live Vitals snapshot,
+then exposes that typed response only through ADR-023's public rack query
+surface. The sandboxed first-party resident receives neither the credential nor
+a private transport and keeps `connect-src 'none'`. Non-now requests remain a
+typed `historical_unavailable` result; upstream failures become a sanitized
+module-local failure and do not disable Chat.
+
+The daemon's typed Spine mirror rejects a snapshot that omits or duplicates
+A-028's gauges, changes their enacted availability status, breaks lane order or
+A-029 key identity, moves a sample outside the open trailing-hour window, or
+fails exact dollar/receipt/unpriced conservation. Required nullable members
+remain required on the wire: absence is not interchangeable with an explicit
+honest null.
+
+Render the server-grouped exact-string total, purpose, and model lanes in one
+full-width bottom rack strip. JavaScript may map values to SVG coordinates but
+does not regroup or sum currency. Collapse reallocates whole grid rows to the
+existing panels, mobile starts collapsed, and expanding reflows the rack rather
+than overlaying Chat's composer. Click or keyboard activation owns lane focus;
+hover and touch scrub publish the selected minute with that focus across the
+shared selection surface. Selection is a button and its quantitative timeline
+is a separate accessible slider, so keyboard value movement is explicit.
+Sparse server buckets remain disconnected rather than inventing a trend across
+minutes with no receipts. Deterministic fixture data is intrinsically marked by
+its own server identity; a query string on the owner app cannot opt into the
+fixture banner.
+
+**Motivation.** Reusing the one declared query and selection bridge proves the
+first-party module lives within the same public boundary promised to future
+residents. Server-owned grouping preserves dollar truth. A rack-resident strip
+keeps spend continuously legible without adding another page or sacrificing
+the owner's primary conversation surface on a phone.
+
+**Rejected alternatives.** Giving the iframe a Spine token or network access
+breaks the isolation contract. A new plugin loader, SDK, registry, or parameter
+system pulls M3/M2J into M2C. Browser-side dollar aggregation creates a second
+ledger. A fixed overlay can hide the composer, while a separate dashboard page
+would not satisfy the resident-rack requirement.

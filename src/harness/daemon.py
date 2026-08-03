@@ -7,10 +7,19 @@ import subprocess
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from contextlib import suppress
 from pathlib import Path
+from typing import Literal
 from uuid import UUID
 
 import uvicorn
-from fastapi import FastAPI, Request, Response, WebSocket, WebSocketDisconnect, status
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Request,
+    Response,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 from fastapi.responses import PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -36,9 +45,10 @@ from harness.model_policy import (
     ThreadModelResolution,
 )
 from harness.onboarding import nocturne_home
+from harness.rack_query import RackQueryResult
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
-from harness.spine_client import SpineClient
+from harness.spine_client import SpineClient, SpineClientError, VitalsSnapshot
 from harness.tools_memory import MemoryToolContext
 from harness.transcript import TranscriptJournal
 
@@ -48,11 +58,12 @@ DEFAULT_WEB_ROOT = DEFAULT_WEB_DIST.parent
 type EnvelopeSender = Callable[[Envelope], Awaitable[None]]
 type EnvelopeHandler = Callable[[Envelope, EnvelopeSender], Awaitable[None]]
 type EnvelopeForwarder = Callable[[Envelope], Awaitable[None]]
+type VitalsSnapshotReader = Callable[[], Awaitable[VitalsSnapshot]]
 
 _OUTBOX_BUFFER_SIZE = 256
 _RESYNC_CLOSE_REASON = "snapshot resync required"
 _RACK_FRAME_HOST = "rack.localhost"
-_RACK_MODULE_IDS = frozenset({"header", "threads", "chat", "memory", "gate"})
+_RACK_MODULE_IDS = frozenset({"header", "threads", "chat", "memory", "gate", "vitals"})
 _RACK_FRAME_CSP = "; ".join(
     (
         "default-src 'self'",
@@ -145,6 +156,7 @@ def create_app(
     run_loop: RunLoop | None = None,
     forward_unknown: EnvelopeForwarder | None = None,
     envelope_factory: EnvelopeFactory | None = None,
+    vitals_snapshot_reader: VitalsSnapshotReader | None = None,
 ) -> FastAPI:
     """Create the daemon with process-scoped H7 state and extensible routing."""
     app = FastAPI(title="NOCTURNE", version=__version__)
@@ -174,6 +186,34 @@ def create_app(
             response.headers["Content-Security-Policy"] = "frame-ancestors 'none'"
             response.headers["X-Frame-Options"] = "DENY"
         return response
+
+    @app.get("/v1/rack/query", response_model=RackQueryResult)
+    async def rack_query(
+        resource: Literal["vitals"],
+        as_of: str | None = None,
+    ) -> RackQueryResult:
+        """Keep Spine credentials behind the public rack query surface."""
+
+        del resource
+        if as_of not in {None, "now"}:
+            return RackQueryResult(
+                status="historical_unavailable",
+                as_of=as_of,
+                data=None,
+            )
+        if vitals_snapshot_reader is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Palace Vitals are unavailable.",
+            )
+        try:
+            snapshot = await vitals_snapshot_reader()
+        except SpineClientError:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Palace Vitals are unavailable.",
+            ) from None
+        return RackQueryResult(status="live", as_of=None, data=snapshot)
 
     async def not_implemented(message: Envelope, send: EnvelopeSender) -> None:
         await loop.send_direct(
@@ -384,6 +424,10 @@ def create_dev_app(
         machine_id=machine_id,
     )
     journal = transcript_journal or TranscriptJournal(nocturne_home() / "transcripts")
+
+    async def read_vitals_snapshot() -> VitalsSnapshot:
+        return await owned_spine.vitals_snapshot()
+
     loop = RunLoop(
         runner,
         factory,
@@ -395,6 +439,7 @@ def create_dev_app(
         routes={MessageType.MEMORY_PANEL_UPDATE: panel.handle},
         run_loop=loop,
         envelope_factory=factory,
+        vitals_snapshot_reader=read_vitals_snapshot,
     )
     app.router.add_event_handler("shutdown", owned_spine.aclose)
     app.router.add_event_handler("shutdown", model_catalog.aclose)

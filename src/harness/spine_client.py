@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import math
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import StrEnum
 from typing import Annotated, Any, Literal, Never
@@ -41,8 +41,18 @@ def _require_nonblank(value: str) -> str:
     return value
 
 
+def _require_nonnegative_decimal_string(value: str) -> str:
+    if not re.fullmatch(r"(?:0|[1-9][0-9]*)(?:\.[0-9]+)?", value):
+        raise ValueError("value must be a non-negative decimal string")
+    return value
+
+
 type ULID = Annotated[StrictStr, AfterValidator(_require_ulid)]
 type NonBlankString = Annotated[StrictStr, AfterValidator(_require_nonblank)]
+type NonNegativeDecimalString = Annotated[
+    StrictStr,
+    AfterValidator(_require_nonnegative_decimal_string),
+]
 
 
 class ContractModel(BaseModel):
@@ -332,6 +342,190 @@ class SpendEventsResponse(ContractModel):
     accepted: int = Field(strict=True, ge=1)
 
 
+class VitalsSpendPoint(ContractModel):
+    minute: datetime
+    cost_usd: NonNegativeDecimalString | None
+    receipt_lines: int = Field(strict=True, ge=0)
+    unpriced_lines: int = Field(strict=True, ge=0)
+
+    @field_validator("minute")
+    @classmethod
+    def require_aware_minute(cls, value: datetime) -> datetime:
+        return _require_aware_timestamp(value)
+
+    @model_validator(mode="after")
+    def require_honest_price_state(self) -> VitalsSpendPoint:
+        if self.unpriced_lines > self.receipt_lines:
+            raise ValueError("Vitals unpriced_lines cannot exceed receipt_lines")
+        all_unpriced = self.unpriced_lines == self.receipt_lines
+        if all_unpriced and self.cost_usd is not None:
+            raise ValueError("an all-unpriced Vitals point must have a null cost")
+        if not all_unpriced and self.cost_usd is None:
+            raise ValueError("a Vitals point with priced lines must carry known cost")
+        return self
+
+
+class VitalsSpendLane(ContractModel):
+    dimension: Literal["total", "purpose", "model"]
+    key: NonBlankString | None
+    label: NonBlankString
+    points: list[VitalsSpendPoint]
+
+    @model_validator(mode="after")
+    def require_dimension_key(self) -> VitalsSpendLane:
+        if self.dimension == "total" and self.key is not None:
+            raise ValueError("the total Vitals lane must have a null key")
+        if self.dimension != "total" and self.key is None:
+            raise ValueError("purpose and model Vitals lanes require a key")
+        if (
+            self.dimension == "model"
+            and self.key == "unreported"
+            and self.label != "Model not reported"
+        ):
+            raise ValueError("the unreported model lane requires its stable human label")
+        if self.dimension == "model" and self.key is not None and self.key.startswith("~"):
+            if self.key == "~unreported":
+                expected_label = "unreported"
+            elif self.key.startswith("~~"):
+                expected_label = self.key.removeprefix("~")
+            else:
+                raise ValueError("a Vitals model lane used a noncanonical key escape")
+            if self.label != expected_label:
+                raise ValueError("a Vitals model lane key does not match its A-029 label")
+        minutes = [point.minute for point in self.points]
+        if any(left >= right for left, right in zip(minutes, minutes[1:], strict=False)):
+            raise ValueError("Vitals lane points must be uniquely ordered by minute")
+        return self
+
+
+class VitalsSpend(ContractModel):
+    source_view: Literal["v_spend_rate"]
+    latest_minute: datetime | None
+    lanes: list[VitalsSpendLane]
+
+    @field_validator("latest_minute")
+    @classmethod
+    def require_aware_latest_minute(cls, value: datetime | None) -> datetime | None:
+        return None if value is None else _require_aware_timestamp(value)
+
+    @model_validator(mode="after")
+    def require_canonical_lanes(self) -> VitalsSpend:
+        identities = [(lane.dimension, lane.key) for lane in self.lanes]
+        if len(identities) != len(set(identities)):
+            raise ValueError("Vitals spend lanes must be unique")
+        if not self.lanes or sum(lane.dimension == "total" for lane in self.lanes) != 1:
+            raise ValueError("Vitals spend requires exactly one total lane")
+        if self.lanes != sorted(self.lanes, key=_vitals_lane_sort_key):
+            raise ValueError("Vitals spend lanes are outside canonical order")
+        if any(lane.dimension != "total" and not lane.points for lane in self.lanes):
+            raise ValueError("a dimensioned Vitals lane must contain at least one point")
+
+        all_minutes = [point.minute for lane in self.lanes for point in lane.points]
+        expected_latest = max(all_minutes) if all_minutes else None
+        if self.latest_minute != expected_latest:
+            raise ValueError("Vitals latest_minute does not match the lane points")
+
+        total = _aggregate_vitals_lanes([lane for lane in self.lanes if lane.dimension == "total"])
+        for dimension in ("purpose", "model"):
+            dimension_total = _aggregate_vitals_lanes(
+                [lane for lane in self.lanes if lane.dimension == dimension]
+            )
+            if dimension_total != total:
+                raise ValueError(f"Vitals {dimension} lanes do not conserve the total lane")
+        return self
+
+
+type VitalsGaugeStatus = Literal["measured", "not_recorded", "placeholder"]
+type VitalsLifecycleMetric = Literal[
+    "created",
+    "reinforced",
+    "superseded",
+    "merged",
+    "quarantined",
+    "tombstoned",
+    "add_backs",
+]
+type VitalsPalaceMetric = Literal[
+    "active_units",
+    "pinned_units",
+    "candidates_pending",
+    "edges",
+    "staged_units",
+    "queue_depth",
+]
+
+_VITALS_LIFECYCLE_CONTRACT = (
+    ("created", "measured"),
+    ("reinforced", "not_recorded"),
+    ("superseded", "not_recorded"),
+    ("merged", "not_recorded"),
+    ("quarantined", "not_recorded"),
+    ("tombstoned", "not_recorded"),
+    ("add_backs", "not_recorded"),
+)
+_VITALS_PALACE_CONTRACT = (
+    ("active_units", "measured"),
+    ("pinned_units", "measured"),
+    ("candidates_pending", "not_recorded"),
+    ("edges", "not_recorded"),
+    ("staged_units", "not_recorded"),
+    ("queue_depth", "placeholder"),
+)
+
+
+class VitalsLifecycleRate(ContractModel):
+    metric: VitalsLifecycleMetric
+    status: VitalsGaugeStatus
+    per_hour: int | None = Field(strict=True, ge=0)
+    source: NonBlankString | None
+
+    @model_validator(mode="after")
+    def require_honest_measurement(self) -> VitalsLifecycleRate:
+        _require_gauge_value(self.status, self.per_hour, self.source)
+        return self
+
+
+class VitalsPalaceCount(ContractModel):
+    metric: VitalsPalaceMetric
+    status: VitalsGaugeStatus
+    count: int | None = Field(strict=True, ge=0)
+    source: NonBlankString | None
+
+    @model_validator(mode="after")
+    def require_honest_measurement(self) -> VitalsPalaceCount:
+        _require_gauge_value(self.status, self.count, self.source)
+        return self
+
+
+class VitalsSnapshot(ContractModel):
+    as_of: datetime
+    window_minutes: Literal[60]
+    spend: VitalsSpend
+    lifecycle_rates: list[VitalsLifecycleRate]
+    palace_counts: list[VitalsPalaceCount]
+
+    @field_validator("as_of")
+    @classmethod
+    def require_aware_as_of(cls, value: datetime) -> datetime:
+        return _require_aware_timestamp(value)
+
+    @model_validator(mode="after")
+    def require_exact_snapshot(self) -> VitalsSnapshot:
+        lifecycle_contract = tuple((gauge.metric, gauge.status) for gauge in self.lifecycle_rates)
+        if lifecycle_contract != _VITALS_LIFECYCLE_CONTRACT:
+            raise ValueError("Vitals lifecycle gauges are outside the A-028 contract")
+        palace_contract = tuple((gauge.metric, gauge.status) for gauge in self.palace_counts)
+        if palace_contract != _VITALS_PALACE_CONTRACT:
+            raise ValueError("Vitals palace gauges are outside the A-028 contract")
+
+        window_start = self.as_of - timedelta(minutes=self.window_minutes)
+        for lane in self.spend.lanes:
+            for point in lane.points:
+                if not window_start < point.minute <= self.as_of:
+                    raise ValueError("Vitals point is outside the live trailing-hour window")
+        return self
+
+
 class ProblemDetail(BaseModel):
     """RFC 7807 body; extension members are permitted by that standard."""
 
@@ -409,6 +603,7 @@ _PATCH_CONFLICT = TypeAdapter(PatchMemoryConflict)
 _MEMORY_LIST_RESPONSE = TypeAdapter(PagedMemoryListResponse)
 _SEARCH_RESPONSE = TypeAdapter(SearchResponse)
 _SPEND_EVENTS_RESPONSE = TypeAdapter(SpendEventsResponse)
+_VITALS_SNAPSHOT = TypeAdapter(VitalsSnapshot)
 _PROBLEM_DETAIL = TypeAdapter(ProblemDetail)
 
 
@@ -545,6 +740,12 @@ class SpineClient:
         )
         return _expect_success(response, status=200, adapter=_SPEND_EVENTS_RESPONSE)
 
+    async def vitals_snapshot(self) -> VitalsSnapshot:
+        """Read A-028's live trailing-hour Palace Vitals snapshot."""
+
+        response = await self._request("GET", "v1/vitals")
+        return _expect_success(response, status=200, adapter=_VITALS_SNAPSHOT)
+
     async def _request(
         self,
         method: str,
@@ -566,6 +767,55 @@ class SpineClient:
 
 def _request_body(request: ContractModel) -> JsonObject:
     return request.model_dump(mode="json", exclude_none=True)
+
+
+def _require_aware_timestamp(value: datetime) -> datetime:
+    if value.tzinfo is None or value.utcoffset() is None:
+        raise ValueError("timestamp must include a UTC offset")
+    return value
+
+
+def _require_gauge_value(
+    status: VitalsGaugeStatus,
+    value: int | None,
+    source: str | None,
+) -> None:
+    if status == "measured":
+        if value is None or source is None:
+            raise ValueError("a measured Vitals gauge requires a value and source")
+        return
+    if value is not None or source is not None:
+        raise ValueError("a non-measured Vitals gauge must have a null value and source")
+
+
+def _vitals_lane_sort_key(lane: VitalsSpendLane) -> tuple[int, str]:
+    dimension_order = {"total": 0, "purpose": 1, "model": 2}
+    return dimension_order[lane.dimension], lane.key or ""
+
+
+def _aggregate_vitals_lanes(
+    lanes: list[VitalsSpendLane],
+) -> dict[datetime, tuple[Decimal | None, int, int]]:
+    accumulators: dict[datetime, tuple[Decimal, bool, int, int]] = {}
+    for lane in lanes:
+        for point in lane.points:
+            cost, has_priced, receipt_lines, unpriced_lines = accumulators.get(
+                point.minute,
+                (Decimal(0), False, 0, 0),
+            )
+            if point.cost_usd is not None:
+                cost += Decimal(point.cost_usd)
+                has_priced = True
+            accumulators[point.minute] = (
+                cost,
+                has_priced,
+                receipt_lines + point.receipt_lines,
+                unpriced_lines + point.unpriced_lines,
+            )
+    return {
+        minute: (cost if has_priced else None, receipt_lines, unpriced_lines)
+        for minute, (cost, has_priced, receipt_lines, unpriced_lines) in accumulators.items()
+    }
 
 
 def _normalize_base_url(base_url: str) -> httpx.URL:

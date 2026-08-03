@@ -1,0 +1,1050 @@
+{
+  "fixture": "M2C REGRESSION",
+  "base_url": "http://127.0.0.1:58316",
+  "desktop": {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "arrival": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "document": {
+        "client_width": 1440,
+        "scroll_width": 1440
+      },
+      "modules": [
+        {
+          "id": "header",
+          "grid_height": 1,
+          "rect": {
+            "x": 7,
+            "y": 7,
+            "width": 1427,
+            "height": 54
+          }
+        },
+        {
+          "id": "threads",
+          "grid_height": 7,
+          "rect": {
+            "x": 7,
+            "y": 67,
+            "width": 232,
+            "height": 523
+          }
+        },
+        {
+          "id": "chat",
+          "grid_height": 7,
+          "rect": {
+            "x": 246,
+            "y": 67,
+            "width": 949,
+            "height": 523
+          }
+        },
+        {
+          "id": "memory",
+          "grid_height": 7,
+          "rect": {
+            "x": 1201,
+            "y": 67,
+            "width": 232,
+            "height": 523
+          }
+        },
+        {
+          "id": "vitals",
+          "grid_height": 4,
+          "rect": {
+            "x": 7,
+            "y": 597,
+            "width": 1427,
+            "height": 296
+          }
+        }
+      ]
+    },
+    "scrub": {
+      "readout": "$0.004000000000",
+      "partial": "1 line awaiting a price",
+      "shared_timeline": {
+        "cursor_positions": [
+          98.33333333333333,
+          98.33333333333333,
+          98.33333333333333,
+          98.33333333333333,
+          98.33333333333333,
+          98.33333333333333,
+          98.33333333333333,
+          98.33333333333333,
+          98.33333333333333
+        ],
+        "rendered_minutes": [
+          "12:34 PM",
+          "12:34 PM",
+          "12:34 PM",
+          "12:34 PM",
+          "12:34 PM",
+          "12:34 PM",
+          "12:34 PM",
+          "12:34 PM",
+          "12:34 PM"
+        ],
+        "rendered_cursors": [
+          {
+            "display": "inline",
+            "visibility": "visible",
+            "opacity": 1,
+            "stroke": "rgb(242, 71, 155)",
+            "height": 30.063796997070312
+          },
+          {
+            "display": "inline",
+            "visibility": "visible",
+            "opacity": 1,
+            "stroke": "rgb(242, 71, 155)",
+            "height": 30.063796997070312
+          },
+          {
+            "display": "inline",
+            "visibility": "visible",
+            "opacity": 1,
+            "stroke": "rgb(242, 71, 155)",
+            "height": 30.063796997070312
+          },
+          {
+            "display": "inline",
+            "visibility": "visible",
+            "opacity": 1,
+            "stroke": "rgb(242, 71, 155)",
+            "height": 30.063796997070312
+          },
+          {
+            "display": "inline",
+            "visibility": "visible",
+            "opacity": 1,
+            "stroke": "rgb(242, 71, 155)",
+            "height": 30.063812255859375
+          },
+          {
+            "display": "inline",
+            "visibility": "visible",
+            "opacity": 1,
+            "stroke": "rgb(242, 71, 155)",
+            "height": 30.063812255859375
+          },
+          {
+            "display": "inline",
+            "visibility": "visible",
+            "opacity": 1,
+            "stroke": "rgb(242, 71, 155)",
+            "height": 30.063812255859375
+          },
+          {
+            "display": "inline",
+            "visibility": "visible",
+            "opacity": 1,
+            "stroke": "rgb(242, 71, 155)",
+            "height": 30.063812255859375
+          },
+          {
+            "display": "inline",
+            "visibility": "visible",
+            "opacity": 1,
+            "stroke": "rgb(242, 71, 155)",
+            "height": 30.063812255859375
+          }
+        ]
+      }
+    },
+    "all_unpriced_readout": "Awaiting price",
+    "gauges": {
+      "Created": "3/hr",
+      "Reinforced": "Not recorded yet",
+      "Superseded": "Not recorded yet",
+      "Merged": "Not recorded yet",
+      "Quarantined": "Not recorded yet",
+      "Tombstoned": "Not recorded yet",
+      "Add-backs": "Not recorded yet",
+      "Active units": "12",
+      "Pinned units": "2",
+      "Candidates pending": "Not recorded yet",
+      "Edges": "Not recorded yet",
+      "Staged units": "Not recorded yet",
+      "Queue depth": "Not active yet"
+    },
+    "selection_bus": {
+      "partial": {
+        "kind": "spend_lane",
+        "id": "total",
+        "as_of": "2026-08-02T17:34:00Z"
+      },
+      "focus": {
+        "kind": "spend_lane",
+        "id": "purpose:building",
+        "as_of": "2026-08-02T17:33:00Z"
+      },
+      "a029_literal_unreported": {
+        "kind": "spend_lane",
+        "id": "model:~unreported",
+        "as_of": "2026-08-02T17:33:00Z"
+      },
+      "a029_leading_tilde": {
+        "kind": "spend_lane",
+        "id": "model:~~unreported",
+        "as_of": "2026-08-02T17:33:00Z"
+      }
+    },
+    "focus": {
+      "lane": "purpose:building",
+      "rendered_styles": [
+        {
+          "selected": false,
+          "row_opacity": 1,
+          "text_opacity": 0.72,
+          "chart_opacity": 0.38,
+          "background": "none"
+        },
+        {
+          "selected": true,
+          "row_opacity": 1,
+          "text_opacity": 1,
+          "chart_opacity": 1,
+          "background": "linear-gradient(90deg, rgba(56, 215, 255, 0.086), rgba(0, 0, 0, 0) 78%)"
+        },
+        {
+          "selected": false,
+          "row_opacity": 1,
+          "text_opacity": 0.72,
+          "chart_opacity": 0.38,
+          "background": "none"
+        },
+        {
+          "selected": false,
+          "row_opacity": 1,
+          "text_opacity": 0.72,
+          "chart_opacity": 0.38,
+          "background": "none"
+        },
+        {
+          "selected": false,
+          "row_opacity": 1,
+          "text_opacity": 0.72,
+          "chart_opacity": 0.38,
+          "background": "none"
+        },
+        {
+          "selected": false,
+          "row_opacity": 1,
+          "text_opacity": 0.72,
+          "chart_opacity": 0.38,
+          "background": "none"
+        },
+        {
+          "selected": false,
+          "row_opacity": 1,
+          "text_opacity": 0.72,
+          "chart_opacity": 0.38,
+          "background": "none"
+        },
+        {
+          "selected": false,
+          "row_opacity": 1,
+          "text_opacity": 0.72,
+          "chart_opacity": 0.38,
+          "background": "none"
+        },
+        {
+          "selected": false,
+          "row_opacity": 1,
+          "text_opacity": 0.72,
+          "chart_opacity": 0.38,
+          "background": "none"
+        }
+      ]
+    },
+    "collapsed": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "document": {
+        "client_width": 1440,
+        "scroll_width": 1440
+      },
+      "modules": [
+        {
+          "id": "header",
+          "grid_height": 1,
+          "rect": {
+            "x": 7,
+            "y": 7,
+            "width": 1427,
+            "height": 54
+          }
+        },
+        {
+          "id": "threads",
+          "grid_height": 10,
+          "rect": {
+            "x": 7,
+            "y": 67,
+            "width": 232,
+            "height": 751
+          }
+        },
+        {
+          "id": "chat",
+          "grid_height": 10,
+          "rect": {
+            "x": 246,
+            "y": 67,
+            "width": 949,
+            "height": 751
+          }
+        },
+        {
+          "id": "memory",
+          "grid_height": 10,
+          "rect": {
+            "x": 1201,
+            "y": 67,
+            "width": 232,
+            "height": 751
+          }
+        },
+        {
+          "id": "vitals",
+          "grid_height": 1,
+          "rect": {
+            "x": 7,
+            "y": 824,
+            "width": 1427,
+            "height": 69
+          }
+        }
+      ]
+    },
+    "collapse_aria": {
+      "expanded": "true",
+      "collapsed": "false",
+      "reopened": "true"
+    },
+    "failure_isolated": true,
+    "empty_window_rendered": true,
+    "frame_policies": [
+      {
+        "url": "http://rack.localhost:58316/?rack_module=header&rack_host=http%3A%2F%2F127.0.0.1%3A58316&fixture=M2C+REGRESSION",
+        "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+      },
+      {
+        "url": "http://rack.localhost:58316/?rack_module=threads&rack_host=http%3A%2F%2F127.0.0.1%3A58316&fixture=M2C+REGRESSION",
+        "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+      },
+      {
+        "url": "http://rack.localhost:58316/?rack_module=chat&rack_host=http%3A%2F%2F127.0.0.1%3A58316&fixture=M2C+REGRESSION",
+        "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+      },
+      {
+        "url": "http://rack.localhost:58316/?rack_module=memory&rack_host=http%3A%2F%2F127.0.0.1%3A58316&fixture=M2C+REGRESSION",
+        "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+      },
+      {
+        "url": "http://rack.localhost:58316/?rack_module=vitals&rack_host=http%3A%2F%2F127.0.0.1%3A58316&fixture=M2C+REGRESSION",
+        "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+      }
+    ],
+    "query_frames": [
+      "main",
+      "main",
+      "main"
+    ],
+    "screenshots": [
+      "01-expanded-desktop-1440x900.png",
+      "01b-gauges-tail-desktop-1440x900.png",
+      "02-partial-scrub-desktop-1440x900.png",
+      "03-unpriced-desktop-1440x900.png",
+      "04-focus-desktop-1440x900.png",
+      "05-collapsed-desktop-1440x900.png",
+      "06-failure-isolated-desktop-1440x900.png",
+      "07-empty-desktop-1440x900.png"
+    ]
+  },
+  "mobile": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "arrival": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "document": {
+        "client_width": 390,
+        "scroll_width": 390
+      },
+      "modules": [
+        {
+          "id": "header",
+          "grid_height": 1,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 52
+          }
+        },
+        {
+          "id": "threads",
+          "grid_height": 10,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          }
+        },
+        {
+          "id": "chat",
+          "grid_height": 10,
+          "rect": {
+            "x": 0,
+            "y": 52,
+            "width": 390,
+            "height": 742
+          }
+        },
+        {
+          "id": "memory",
+          "grid_height": 10,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          }
+        },
+        {
+          "id": "vitals",
+          "grid_height": 1,
+          "rect": {
+            "x": 0,
+            "y": 794,
+            "width": 390,
+            "height": 50
+          }
+        }
+      ]
+    },
+    "expanded": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "document": {
+        "client_width": 390,
+        "scroll_width": 390
+      },
+      "modules": [
+        {
+          "id": "header",
+          "grid_height": 1,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 52
+          }
+        },
+        {
+          "id": "threads",
+          "grid_height": 7,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          }
+        },
+        {
+          "id": "chat",
+          "grid_height": 7,
+          "rect": {
+            "x": 0,
+            "y": 52,
+            "width": 390,
+            "height": 440
+          }
+        },
+        {
+          "id": "memory",
+          "grid_height": 7,
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          }
+        },
+        {
+          "id": "vitals",
+          "grid_height": 4,
+          "rect": {
+            "x": 0,
+            "y": 492,
+            "width": 390,
+            "height": 352
+          }
+        }
+      ]
+    },
+    "composer_reachable": true,
+    "failure_chat_usable": true,
+    "touch_scrub_readout": "$0.004000000000 · partial",
+    "shared_timeline": {
+      "cursor_positions": [
+        98.33333333333333,
+        98.33333333333333,
+        98.33333333333333,
+        98.33333333333333,
+        98.33333333333333,
+        98.33333333333333,
+        98.33333333333333,
+        98.33333333333333,
+        98.33333333333333
+      ],
+      "rendered_minutes": [
+        "12:34 PM",
+        "12:34 PM",
+        "12:34 PM",
+        "12:34 PM",
+        "12:34 PM",
+        "12:34 PM",
+        "12:34 PM",
+        "12:34 PM",
+        "12:34 PM"
+      ],
+      "rendered_cursors": [
+        {
+          "display": "inline",
+          "visibility": "visible",
+          "opacity": 1,
+          "stroke": "rgb(242, 71, 155)",
+          "height": 30.063796997070312
+        },
+        {
+          "display": "inline",
+          "visibility": "visible",
+          "opacity": 1,
+          "stroke": "rgb(242, 71, 155)",
+          "height": 30.063804626464844
+        },
+        {
+          "display": "inline",
+          "visibility": "visible",
+          "opacity": 1,
+          "stroke": "rgb(242, 71, 155)",
+          "height": 30.063812255859375
+        },
+        {
+          "display": "inline",
+          "visibility": "visible",
+          "opacity": 1,
+          "stroke": "rgb(242, 71, 155)",
+          "height": 30.063812255859375
+        },
+        {
+          "display": "inline",
+          "visibility": "visible",
+          "opacity": 1,
+          "stroke": "rgb(242, 71, 155)",
+          "height": 30.06378173828125
+        },
+        {
+          "display": "inline",
+          "visibility": "visible",
+          "opacity": 1,
+          "stroke": "rgb(242, 71, 155)",
+          "height": 30.06378173828125
+        },
+        {
+          "display": "inline",
+          "visibility": "visible",
+          "opacity": 1,
+          "stroke": "rgb(242, 71, 155)",
+          "height": 30.06378173828125
+        },
+        {
+          "display": "inline",
+          "visibility": "visible",
+          "opacity": 1,
+          "stroke": "rgb(242, 71, 155)",
+          "height": 30.06378173828125
+        },
+        {
+          "display": "inline",
+          "visibility": "visible",
+          "opacity": 1,
+          "stroke": "rgb(242, 71, 155)",
+          "height": 30.06378173828125
+        }
+      ]
+    },
+    "selection_bus": {
+      "partial": {
+        "kind": "spend_lane",
+        "id": "total",
+        "as_of": "2026-08-02T17:34:00Z"
+      },
+      "focus": {
+        "kind": "spend_lane",
+        "id": "purpose:building",
+        "as_of": "2026-08-02T17:34:00Z"
+      }
+    },
+    "keyboard_focus": "purpose:building",
+    "rendered_focus": [
+      {
+        "selected": false,
+        "row_opacity": 1,
+        "text_opacity": 0.72,
+        "chart_opacity": 0.38,
+        "background": "none"
+      },
+      {
+        "selected": true,
+        "row_opacity": 1,
+        "text_opacity": 1,
+        "chart_opacity": 1,
+        "background": "linear-gradient(90deg, rgba(56, 215, 255, 0.086), rgba(0, 0, 0, 0) 78%)"
+      },
+      {
+        "selected": false,
+        "row_opacity": 1,
+        "text_opacity": 0.72,
+        "chart_opacity": 0.38,
+        "background": "none"
+      },
+      {
+        "selected": false,
+        "row_opacity": 1,
+        "text_opacity": 0.72,
+        "chart_opacity": 0.38,
+        "background": "none"
+      },
+      {
+        "selected": false,
+        "row_opacity": 1,
+        "text_opacity": 0.72,
+        "chart_opacity": 0.38,
+        "background": "none"
+      },
+      {
+        "selected": false,
+        "row_opacity": 1,
+        "text_opacity": 0.72,
+        "chart_opacity": 0.38,
+        "background": "none"
+      },
+      {
+        "selected": false,
+        "row_opacity": 1,
+        "text_opacity": 0.72,
+        "chart_opacity": 0.38,
+        "background": "none"
+      },
+      {
+        "selected": false,
+        "row_opacity": 1,
+        "text_opacity": 0.72,
+        "chart_opacity": 0.38,
+        "background": "none"
+      },
+      {
+        "selected": false,
+        "row_opacity": 1,
+        "text_opacity": 0.72,
+        "chart_opacity": 0.38,
+        "background": "none"
+      }
+    ],
+    "focus_survived_collapse": true,
+    "reopened_focus": [
+      {
+        "selected": false,
+        "row_opacity": 1,
+        "text_opacity": 0.72,
+        "chart_opacity": 0.38,
+        "background": "none"
+      },
+      {
+        "selected": true,
+        "row_opacity": 1,
+        "text_opacity": 1,
+        "chart_opacity": 1,
+        "background": "linear-gradient(90deg, rgba(56, 215, 255, 0.086), rgba(0, 0, 0, 0) 78%)"
+      },
+      {
+        "selected": false,
+        "row_opacity": 1,
+        "text_opacity": 0.72,
+        "chart_opacity": 0.38,
+        "background": "none"
+      },
+      {
+        "selected": false,
+        "row_opacity": 1,
+        "text_opacity": 0.72,
+        "chart_opacity": 0.38,
+        "background": "none"
+      },
+      {
+        "selected": false,
+        "row_opacity": 1,
+        "text_opacity": 0.72,
+        "chart_opacity": 0.38,
+        "background": "none"
+      },
+      {
+        "selected": false,
+        "row_opacity": 1,
+        "text_opacity": 0.72,
+        "chart_opacity": 0.38,
+        "background": "none"
+      },
+      {
+        "selected": false,
+        "row_opacity": 1,
+        "text_opacity": 0.72,
+        "chart_opacity": 0.38,
+        "background": "none"
+      },
+      {
+        "selected": false,
+        "row_opacity": 1,
+        "text_opacity": 0.72,
+        "chart_opacity": 0.38,
+        "background": "none"
+      },
+      {
+        "selected": false,
+        "row_opacity": 1,
+        "text_opacity": 0.72,
+        "chart_opacity": 0.38,
+        "background": "none"
+      }
+    ],
+    "collapse_aria": {
+      "arrival": "false",
+      "expanded": "true",
+      "focus_collapsed": "false",
+      "reopened": "true",
+      "failure_collapsed": "false"
+    },
+    "gauges": {
+      "Created": "3/hr",
+      "Reinforced": "Not recorded yet",
+      "Superseded": "Not recorded yet",
+      "Merged": "Not recorded yet",
+      "Quarantined": "Not recorded yet",
+      "Tombstoned": "Not recorded yet",
+      "Add-backs": "Not recorded yet",
+      "Active units": "12",
+      "Pinned units": "2",
+      "Candidates pending": "Not recorded yet",
+      "Edges": "Not recorded yet",
+      "Staged units": "Not recorded yet",
+      "Queue depth": "Not active yet"
+    },
+    "collapsed_failure_visible": true,
+    "frame_policies": [
+      {
+        "url": "http://rack.localhost:58316/?rack_module=header&rack_host=http%3A%2F%2F127.0.0.1%3A58316&fixture=M2C+REGRESSION",
+        "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+      },
+      {
+        "url": "http://rack.localhost:58316/?rack_module=threads&rack_host=http%3A%2F%2F127.0.0.1%3A58316&fixture=M2C+REGRESSION",
+        "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+      },
+      {
+        "url": "http://rack.localhost:58316/?rack_module=chat&rack_host=http%3A%2F%2F127.0.0.1%3A58316&fixture=M2C+REGRESSION",
+        "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+      },
+      {
+        "url": "http://rack.localhost:58316/?rack_module=vitals&rack_host=http%3A%2F%2F127.0.0.1%3A58316&fixture=M2C+REGRESSION",
+        "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+      },
+      {
+        "url": "http://rack.localhost:58316/?rack_module=memory&rack_host=http%3A%2F%2F127.0.0.1%3A58316&fixture=M2C+REGRESSION",
+        "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors http://localhost:* http://127.0.0.1:*"
+      }
+    ],
+    "query_frames": [
+      "main",
+      "main"
+    ],
+    "screenshots": [
+      "08-collapsed-mobile-390x844.png",
+      "09-expanded-mobile-390x844.png",
+      "09b-gauges-mobile-390x844.png",
+      "10-shared-scrub-bottom-mobile-390x844.png",
+      "10-touch-focus-mobile-390x844.png",
+      "10b-focus-reopened-mobile-390x844.png",
+      "11-failure-visible-mobile-390x844.png"
+    ]
+  },
+  "trace": {
+    "fixture": "M2C REGRESSION",
+    "source_view": "v_spend_rate",
+    "snapshot": {
+      "as_of": "2026-08-02T17:35:00Z",
+      "window_minutes": 60,
+      "spend": {
+        "source_view": "v_spend_rate",
+        "latest_minute": "2026-08-02T17:35:00Z",
+        "lanes": [
+          {
+            "dimension": "total",
+            "key": null,
+            "label": "All spend",
+            "points": [
+              {
+                "minute": "2026-08-02T17:32:00Z",
+                "cost_usd": "0.005000000000",
+                "receipt_lines": 2,
+                "unpriced_lines": 0
+              },
+              {
+                "minute": "2026-08-02T17:33:00Z",
+                "cost_usd": "0.035000000000",
+                "receipt_lines": 3,
+                "unpriced_lines": 0
+              },
+              {
+                "minute": "2026-08-02T17:34:00Z",
+                "cost_usd": "0.004000000000",
+                "receipt_lines": 2,
+                "unpriced_lines": 1
+              },
+              {
+                "minute": "2026-08-02T17:35:00Z",
+                "cost_usd": null,
+                "receipt_lines": 1,
+                "unpriced_lines": 1
+              }
+            ]
+          },
+          {
+            "dimension": "purpose",
+            "key": "building",
+            "label": "Building",
+            "points": [
+              {
+                "minute": "2026-08-02T17:32:00Z",
+                "cost_usd": "0.005000000000",
+                "receipt_lines": 2,
+                "unpriced_lines": 0
+              },
+              {
+                "minute": "2026-08-02T17:33:00Z",
+                "cost_usd": "0.015000000000",
+                "receipt_lines": 2,
+                "unpriced_lines": 0
+              },
+              {
+                "minute": "2026-08-02T17:34:00Z",
+                "cost_usd": "0.004000000000",
+                "receipt_lines": 2,
+                "unpriced_lines": 1
+              }
+            ]
+          },
+          {
+            "dimension": "purpose",
+            "key": "curation",
+            "label": "Curation",
+            "points": [
+              {
+                "minute": "2026-08-02T17:33:00Z",
+                "cost_usd": "0.020000000000",
+                "receipt_lines": 1,
+                "unpriced_lines": 0
+              }
+            ]
+          },
+          {
+            "dimension": "purpose",
+            "key": "judge",
+            "label": "Judging",
+            "points": [
+              {
+                "minute": "2026-08-02T17:35:00Z",
+                "cost_usd": null,
+                "receipt_lines": 1,
+                "unpriced_lines": 1
+              }
+            ]
+          },
+          {
+            "dimension": "model",
+            "key": "anthropic/claude-sonnet-4.6",
+            "label": "anthropic/claude-sonnet-4.6",
+            "points": [
+              {
+                "minute": "2026-08-02T17:33:00Z",
+                "cost_usd": "0.015000000000",
+                "receipt_lines": 2,
+                "unpriced_lines": 0
+              }
+            ]
+          },
+          {
+            "dimension": "model",
+            "key": "openai/gpt-5.2",
+            "label": "openai/gpt-5.2",
+            "points": [
+              {
+                "minute": "2026-08-02T17:33:00Z",
+                "cost_usd": "0.020000000000",
+                "receipt_lines": 1,
+                "unpriced_lines": 0
+              },
+              {
+                "minute": "2026-08-02T17:35:00Z",
+                "cost_usd": null,
+                "receipt_lines": 1,
+                "unpriced_lines": 1
+              }
+            ]
+          },
+          {
+            "dimension": "model",
+            "key": "unreported",
+            "label": "Model not reported",
+            "points": [
+              {
+                "minute": "2026-08-02T17:34:00Z",
+                "cost_usd": "0.004000000000",
+                "receipt_lines": 2,
+                "unpriced_lines": 1
+              }
+            ]
+          },
+          {
+            "dimension": "model",
+            "key": "~unreported",
+            "label": "unreported",
+            "points": [
+              {
+                "minute": "2026-08-02T17:32:00Z",
+                "cost_usd": "0.002000000000",
+                "receipt_lines": 1,
+                "unpriced_lines": 0
+              }
+            ]
+          },
+          {
+            "dimension": "model",
+            "key": "~~unreported",
+            "label": "~unreported",
+            "points": [
+              {
+                "minute": "2026-08-02T17:32:00Z",
+                "cost_usd": "0.003000000000",
+                "receipt_lines": 1,
+                "unpriced_lines": 0
+              }
+            ]
+          }
+        ]
+      },
+      "lifecycle_rates": [
+        {
+          "metric": "created",
+          "status": "measured",
+          "per_hour": 3,
+          "source": "memory_unit.created_at"
+        },
+        {
+          "metric": "reinforced",
+          "status": "not_recorded",
+          "per_hour": null,
+          "source": null
+        },
+        {
+          "metric": "superseded",
+          "status": "not_recorded",
+          "per_hour": null,
+          "source": null
+        },
+        {
+          "metric": "merged",
+          "status": "not_recorded",
+          "per_hour": null,
+          "source": null
+        },
+        {
+          "metric": "quarantined",
+          "status": "not_recorded",
+          "per_hour": null,
+          "source": null
+        },
+        {
+          "metric": "tombstoned",
+          "status": "not_recorded",
+          "per_hour": null,
+          "source": null
+        },
+        {
+          "metric": "add_backs",
+          "status": "not_recorded",
+          "per_hour": null,
+          "source": null
+        }
+      ],
+      "palace_counts": [
+        {
+          "metric": "active_units",
+          "status": "measured",
+          "count": 12,
+          "source": "memory_unit.status"
+        },
+        {
+          "metric": "pinned_units",
+          "status": "measured",
+          "count": 2,
+          "source": "memory_unit.status + memory_unit.pin"
+        },
+        {
+          "metric": "candidates_pending",
+          "status": "not_recorded",
+          "count": null,
+          "source": null
+        },
+        {
+          "metric": "edges",
+          "status": "not_recorded",
+          "count": null,
+          "source": null
+        },
+        {
+          "metric": "staged_units",
+          "status": "not_recorded",
+          "count": null,
+          "source": null
+        },
+        {
+          "metric": "queue_depth",
+          "status": "placeholder",
+          "count": null,
+          "source": null
+        }
+      ]
+    }
+  }
+}

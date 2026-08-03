@@ -1,0 +1,44 @@
+M2C rule-8 live trace
+captured: 2026-08-02 CDT / 2026-08-03 UTC
+principal_id: m2c-sop-verification
+machine_id: m2c-sop-verification
+thread_id: 5def1a04-39a1-49fa-8f77-600d3e1aaf1e
+run_id: 01KZ2V9SGY02HRWTQR0R83Q4PN
+injection_id: 7876fdd1-4d2a-4b38-9c41-74f989d990ec
+
+Rendered owner surface
+----------------------
+active model: openrouter:minimax/minimax-m3
+completed text: M2C LIVE OWNER PATH
+usage: 1 request, 915 input tokens, 184 output tokens
+browser console warnings/errors: 0
+
+Harness -> Spine request path for the same action
+--------------------------------------------------
+POST /v1/inject/prepare 200
+POST /v1/inject/commit 200
+POST /v1/spend/events 200
+GET  /v1/vitals 200
+
+Append-only spend_event rows (ordered by ts, event_uid)
+-------------------------------------------------------
+2026-08-03 03:39:55.322643+00 | llm.embedding | input_fresh | 10  | 0.000000200000 | embedding | text-embedding-3-small | OpenAI | thread 5def1a04-... | ref gen-emb-1785728395-JCmi9YbxH5Iinqa4Ct6Q
+2026-08-03 03:40:13.162636+00 | llm.request   | input_cached | 128 | 0.000054109408 | building  | minimax/minimax-m3      | Novita | thread 5def1a04-... | run 01KZ2V9SGY02HRWTQR0R83Q4PN
+2026-08-03 03:40:13.162636+00 | llm.request   | input_fresh  | 787 | 0.000332688316 | building  | minimax/minimax-m3      | Novita | thread 5def1a04-... | run 01KZ2V9SGY02HRWTQR0R83Q4PN
+2026-08-03 03:40:13.162636+00 | llm.request   | output       | 10  | 0.000004227297 | building  | minimax/minimax-m3      | Novita | thread 5def1a04-... | run 01KZ2V9SGY02HRWTQR0R83Q4PN
+2026-08-03 03:40:13.162636+00 | llm.request   | reasoning    | 174 | 0.000073554979 | building  | minimax/minimax-m3      | Novita | thread 5def1a04-... | run 01KZ2V9SGY02HRWTQR0R83Q4PN
+
+Cross-checks:
+128 cached + 787 fresh = 915 rendered input tokens
+10 output + 174 reasoning = 184 rendered output tokens
+0.000054109408 + 0.000332688316 + 0.000004227297 + 0.000073554979 = 0.000464580000
+
+v_spend_rate after the minute-cadence refresh
+------------------------------------------------
+2026-08-03 03:39:00+00 | embedding | text-embedding-3-small | OpenAI | 1 receipt | 0 unpriced | 0.000000200000
+2026-08-03 03:40:00+00 | building  | minimax/minimax-m3      | Novita | 4 receipts | 0 unpriced | 0.000464580000
+
+Rendered scrub cross-check
+--------------------------
+10:39 PM: total = embedding = text-embedding-3-small = $0.000000200000; 1 receipt
+10:40 PM: total = building = minimax/minimax-m3 = $0.000464580000; 4 receipts

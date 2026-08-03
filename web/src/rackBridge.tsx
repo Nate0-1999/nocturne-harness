@@ -10,6 +10,7 @@ import {
   RackApiProvider,
   createHostPluginApi,
   isRackModuleId,
+  rackSelectionsEqual,
   type RackAction,
   type RackActionResult,
   type RackModuleId,
@@ -49,9 +50,16 @@ interface ConnectMessage {
   manifest: RackModuleManifest
   snapshot: RackSnapshot
   selection: RackSelection
+  regression_fixture: 'M2C REGRESSION' | null
 }
 
-export function RackPluginIframe({ manifest }: { manifest: RackModuleManifest }) {
+export function RackPluginIframe({
+  manifest,
+  isRegressionFixture = false,
+}: {
+  manifest: RackModuleManifest
+  isRegressionFixture?: boolean
+}) {
   const frameRef = useRef<HTMLIFrameElement>(null)
   const api = useMemo(() => createHostPluginApi(manifest), [manifest])
   const frameOrigin = useMemo(() => rackFrameOrigin(), [])
@@ -127,6 +135,7 @@ export function RackPluginIframe({ manifest }: { manifest: RackModuleManifest })
         manifest,
         snapshot: api.events.getSnapshot(),
         selection: api.selection.getSnapshot(),
+        regression_fixture: isRegressionFixture ? 'M2C REGRESSION' : null,
       }
       target.postMessage(message, frameOrigin, [channel.port2])
     }
@@ -166,7 +175,7 @@ export function RackPluginIframe({ manifest }: { manifest: RackModuleManifest })
       globalThis.removeEventListener('message', onWindowMessage)
       closeBridge()
     }
-  }, [api, frameOrigin, manifest])
+  }, [api, frameOrigin, isRegressionFixture, manifest])
 
   return (
     <iframe
@@ -200,11 +209,14 @@ function rackFrameOrigin(): string {
 export function RackRemoteProvider({
   moduleId,
   children,
+  regressionFixtureMarker,
 }: {
   moduleId: RackModuleId
   children: ReactNode
+  regressionFixtureMarker?: ReactNode
 }) {
   const [api, setApi] = useState<RackPluginApi | null>(null)
+  const [isRegressionFixture, setIsRegressionFixture] = useState(false)
   const hostOrigin = remoteHostOrigin()
 
   useEffect(() => {
@@ -227,6 +239,7 @@ export function RackRemoteProvider({
       activePort?.close()
       activePort = transferredPort
       setApi(createRemoteApi(message, transferredPort))
+      setIsRegressionFixture(message.regression_fixture === 'M2C REGRESSION')
     }
 
     globalThis.addEventListener('message', onConnect)
@@ -247,7 +260,12 @@ export function RackRemoteProvider({
       </div>
     )
   }
-  return <RackApiProvider api={api}>{children}</RackApiProvider>
+  return (
+    <RackApiProvider api={api}>
+      {children}
+      {isRegressionFixture ? regressionFixtureMarker : null}
+    </RackApiProvider>
+  )
 }
 
 function remoteHostOrigin(): string {
@@ -356,10 +374,7 @@ function createRemoteApi(
         return () => selectionListeners.delete(listener)
       },
       select(nextSelection) {
-        if (
-          nextSelection?.kind === selection?.kind &&
-          nextSelection?.id === selection?.id
-        ) {
+        if (rackSelectionsEqual(nextSelection, selection)) {
           return
         }
         selection = nextSelection
@@ -379,6 +394,9 @@ function isRackSelection(value: unknown): value is RackSelection {
   }
   if (value.kind === 'thread' || value.kind === 'memory') {
     return true
+  }
+  if (value.kind === 'spend_lane') {
+    return value.as_of === null || typeof value.as_of === 'string'
   }
   return value.kind === 'module' && isRackModuleId(value.id)
 }

@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 from pydantic_ai.messages import ModelRequest
 from pydantic_ai.models.function import FunctionModel
 from starlette.websockets import WebSocketDisconnect
+from vitals_fixture import vitals_payload
 
 from harness.agent import HarnessAgent
 from harness.config import HarnessSettings
@@ -39,6 +40,7 @@ from harness.spine_client import (
     SpendEventsRequest,
     SpendEventsResponse,
     SpineTransportError,
+    VitalsSnapshot,
 )
 from harness.transcript import TranscriptJournal
 
@@ -47,6 +49,10 @@ SECOND_PROMPT_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAW"
 CANCEL_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAX"
 SNAPSHOT_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAY"
 INJECTION_ID = "32345678-1234-5678-1234-567812345678"
+
+
+def vitals_snapshot() -> VitalsSnapshot:
+    return VitalsSnapshot.model_validate(vitals_payload())
 
 
 def valid_envelope() -> dict[str, object]:
@@ -150,6 +156,7 @@ class GateSpine:
     def __init__(self) -> None:
         self.prepare_requests: list[InjectPrepareRequest] = []
         self.commit_requests: list[InjectCommitRequest] = []
+        self.vitals_requests = 0
         self.closed = False
 
     async def prepare_injection(self, request: InjectPrepareRequest) -> InjectPrepareResponse:
@@ -171,6 +178,10 @@ class GateSpine:
 
     async def record_spend_events(self, request: SpendEventsRequest) -> SpendEventsResponse:
         return SpendEventsResponse(accepted=len(request.events))
+
+    async def vitals_snapshot(self) -> VitalsSnapshot:
+        self.vitals_requests += 1
+        return vitals_snapshot()
 
 
 class PanelGateSpine:
@@ -328,6 +339,10 @@ def test_static_shell_and_rack_frame_have_distinct_frame_policies(tmp_path: Path
         "/?rack_module=chat",
         headers={"host": "rack.localhost:8765"},
     )
+    vitals_rack = client.get(
+        "/?rack_module=vitals",
+        headers={"host": "rack.localhost:8765"},
+    )
     forged = client.get(
         "/?rack_module=chat",
         headers={"host": "127.0.0.1:8765"},
@@ -341,7 +356,83 @@ def test_static_shell_and_rack_frame_have_distinct_frame_policies(tmp_path: Path
         "frame-ancestors http://localhost:* http://127.0.0.1:*"
         in rack.headers["content-security-policy"]
     )
+    assert "connect-src 'none'" in vitals_rack.headers["content-security-policy"]
     assert forged.headers["x-frame-options"] == "DENY"
+
+
+def test_rack_vitals_query_uses_the_injected_reader_before_static_mount(tmp_path: Path) -> None:
+    (tmp_path / "index.html").write_text("<h1>Harness shell</h1>", encoding="utf-8")
+    calls = 0
+
+    async def read_vitals() -> VitalsSnapshot:
+        nonlocal calls
+        calls += 1
+        return vitals_snapshot()
+
+    client = TestClient(create_app(tmp_path, vitals_snapshot_reader=read_vitals))
+
+    response = client.get("/v1/rack/query?resource=vitals&as_of=now")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/json")
+    assert response.json() == {
+        "status": "live",
+        "as_of": None,
+        "data": vitals_snapshot().model_dump(mode="json"),
+    }
+    assert calls == 1
+
+
+def test_rack_vitals_query_truthfully_rejects_historical_as_of_without_reading() -> None:
+    async def must_not_read() -> VitalsSnapshot:
+        raise AssertionError("historical query must not read the live snapshot")
+
+    client = TestClient(create_app(vitals_snapshot_reader=must_not_read))
+    historical = "2026-08-02T11:00:00Z"
+
+    response = client.get(
+        "/v1/rack/query",
+        params={"resource": "vitals", "as_of": historical},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "historical_unavailable",
+        "as_of": historical,
+        "data": None,
+    }
+
+
+def test_unavailable_rack_vitals_returns_503_without_disturbing_chat() -> None:
+    async def unavailable() -> VitalsSnapshot:
+        raise SpineTransportError
+
+    app = create_app(vitals_snapshot_reader=unavailable)
+
+    with TestClient(app) as client:
+        failed = client.get("/v1/rack/query?resource=vitals&as_of=now")
+        assert failed.status_code == 503
+        assert failed.json() == {"detail": "Palace Vitals are unavailable."}
+
+        with client.websocket_connect("/ws") as websocket:
+            websocket.send_json(valid_envelope())
+            started = websocket.receive_json()
+            usage = websocket.receive_json()
+            done = websocket.receive_json()
+
+    assert [started["type"], usage["type"], done["type"]] == [
+        "run.started",
+        "run.usage",
+        "run.done",
+    ]
+    assert done["payload"]["stop_reason"] == "error"
+
+
+def test_missing_rack_vitals_reader_is_an_explicit_503() -> None:
+    response = TestClient(create_app()).get("/v1/rack/query?resource=vitals")
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Palace Vitals are unavailable."}
 
 
 def test_missing_web_build_is_explicit(tmp_path: Path) -> None:
@@ -351,6 +442,38 @@ def test_missing_web_build_is_explicit(tmp_path: Path) -> None:
 
     assert response.status_code == 503
     assert response.text == "web build missing; build web/ before starting harness"
+
+
+def test_dev_app_wires_the_owned_spine_into_the_public_rack_query(tmp_path: Path) -> None:
+    async def stream(_messages, _info):
+        yield "unused"
+
+    settings = HarnessSettings(
+        _env_file=None,
+        spine_token="test-token",
+        principal_id="principal-test",
+        machine_id="machine-test",
+        agent_id="agent-test",
+        anthropic_api_key=None,
+        openai_api_key=None,
+        openrouter_api_key=None,
+    )
+    agent = HarnessAgent(settings, model=FunctionModel(stream_function=stream))
+    spine = GateSpine()
+    app = create_dev_app(
+        tmp_path,
+        settings=settings,
+        agent=agent,
+        spine=spine,  # type: ignore[arg-type]
+        transcript_journal=TranscriptJournal(tmp_path / "transcripts"),
+    )
+
+    with TestClient(app) as client:
+        response = client.get("/v1/rack/query?resource=vitals&as_of=now")
+
+    assert response.status_code == 200
+    assert response.json()["data"]["window_minutes"] == 60
+    assert spine.vitals_requests == 1
 
 
 def test_dev_build_uses_locked_install_before_vite_build(

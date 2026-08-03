@@ -1,5 +1,8 @@
 export const RACK_COLUMNS = 12
 export const RACK_ROWS = 12
+export const RACK_BODY_ROWS = RACK_ROWS - 1
+export const VITALS_COLLAPSED_ROWS = 1
+export const VITALS_EXPANDED_ROWS = 4
 export const RACK_LAYOUT_STORAGE_KEY = 'nocturne.rack.layout.v1'
 export const RACK_SAVED_SET_STORAGE_KEY = 'nocturne.rack.saved-set.v1'
 
@@ -29,20 +32,40 @@ export interface RackLayoutSet {
 
 export const RACK_BOUNDS: Record<DockedModuleId, RackBounds> = {
   threads: {
-    min: { w: 2, h: 11 },
-    preferred: { w: 2, h: 11 },
-    max: { w: 4, h: 11 },
+    min: { w: 2, h: RACK_BODY_ROWS - VITALS_EXPANDED_ROWS },
+    preferred: { w: 2, h: RACK_BODY_ROWS - VITALS_EXPANDED_ROWS },
+    max: { w: 4, h: RACK_BODY_ROWS - VITALS_COLLAPSED_ROWS },
   },
   chat: {
-    min: { w: 5, h: 11 },
-    preferred: { w: 8, h: 11 },
-    max: { w: 10, h: 11 },
+    min: { w: 5, h: RACK_BODY_ROWS - VITALS_EXPANDED_ROWS },
+    preferred: { w: 8, h: RACK_BODY_ROWS - VITALS_EXPANDED_ROWS },
+    max: { w: 10, h: RACK_BODY_ROWS - VITALS_COLLAPSED_ROWS },
   },
   memory: {
-    min: { w: 2, h: 11 },
-    preferred: { w: 2, h: 11 },
-    max: { w: 4, h: 11 },
+    min: { w: 2, h: RACK_BODY_ROWS - VITALS_EXPANDED_ROWS },
+    preferred: { w: 2, h: RACK_BODY_ROWS - VITALS_EXPANDED_ROWS },
+    max: { w: 4, h: RACK_BODY_ROWS - VITALS_COLLAPSED_ROWS },
   },
+}
+
+export const VITALS_RACK_BOUNDS: RackBounds = {
+  min: { w: RACK_COLUMNS, h: VITALS_COLLAPSED_ROWS },
+  preferred: { w: RACK_COLUMNS, h: VITALS_EXPANDED_ROWS },
+  max: { w: RACK_COLUMNS, h: VITALS_EXPANDED_ROWS },
+}
+
+export function rackBodyRowAllocation(vitalsCollapsed: boolean): {
+  panelRows: number
+  vitalsRows: number
+  vitalsStart: number
+} {
+  const vitalsRows = vitalsCollapsed ? VITALS_COLLAPSED_ROWS : VITALS_EXPANDED_ROWS
+  const panelRows = RACK_BODY_ROWS - vitalsRows
+  return {
+    panelRows,
+    vitalsRows,
+    vitalsStart: 2 + panelRows,
+  }
 }
 
 export const FACTORY_RACK_LAYOUT: RackLayoutSet = {

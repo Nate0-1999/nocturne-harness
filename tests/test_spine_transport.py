@@ -1,9 +1,11 @@
 import json
 from collections.abc import Callable
+from copy import deepcopy
 from typing import Any
 
 import httpx
 import pytest
+from vitals_fixture import vitals_payload
 
 from harness.spine_client import (
     CreatedMemoryResponse,
@@ -35,6 +37,7 @@ PROBLEM_JSON = "application/problem+json"
 MEMORY_ID = "12345678-1234-5678-1234-567812345678"
 THREAD_ID = "22345678-1234-5678-1234-567812345678"
 INJECTION_ID = "32345678-1234-5678-1234-567812345678"
+type VitalsMutation = Callable[[dict[str, Any]], object]
 
 
 def memory_unit_payload() -> dict[str, Any]:
@@ -106,6 +109,42 @@ def raw_json_response(status: int, payload: object, media_type: str = JSON) -> h
     )
 
 
+async def _assert_vitals_payload_rejected(payload: dict[str, Any]) -> None:
+    async def handler(_: httpx.Request) -> httpx.Response:
+        return response(200, payload)
+
+    async with SpineClient(
+        "https://spine.invalid",
+        "token",
+        transport=httpx.MockTransport(handler),
+    ) as client:
+        with pytest.raises(SpineResponseError, match="outside C.4"):
+            await client.vitals_snapshot()
+
+
+def _measure_reinforced(payload: dict[str, Any]) -> None:
+    payload["lifecycle_rates"][1].update(
+        status="measured",
+        per_hour=0,
+        source="invented.reinforcement",
+    )
+
+
+def _measure_queue_depth(payload: dict[str, Any]) -> None:
+    payload["palace_counts"][-1].update(
+        status="measured",
+        count=0,
+        source="invented.queue",
+    )
+
+
+def _move_points_to_open_window_boundary(payload: dict[str, Any]) -> None:
+    boundary = "2026-08-02T11:05:30Z"
+    payload["spend"]["latest_minute"] = boundary
+    for lane in payload["spend"]["lanes"]:
+        lane["points"][0]["minute"] = boundary
+
+
 @pytest.mark.asyncio
 async def test_all_routes_send_exact_http_contract() -> None:
     seen: list[httpx.Request] = []
@@ -132,6 +171,7 @@ async def test_all_routes_send_exact_http_contract() -> None:
         ),
         ("POST", "/prefix/v1/search"): response(200, {"results": []}),
         ("POST", "/prefix/v1/spend/events"): response(200, {"accepted": 1}),
+        ("GET", "/prefix/v1/vitals"): response(200, vitals_payload()),
     }
 
     async def handler(request: httpx.Request) -> httpx.Response:
@@ -223,6 +263,7 @@ async def test_all_routes_send_exact_http_contract() -> None:
                 ]
             )
         )
+        vitals = await client.vitals_snapshot()
 
     assert prepared.scorer_version == "v0"
     assert committed.wrong_removed == []
@@ -233,6 +274,10 @@ async def test_all_routes_send_exact_http_contract() -> None:
     assert listed.total == 1
     assert searched.results == []
     assert spend.accepted == 1
+    assert vitals.window_minutes == 60
+    assert vitals.spend.source_view == "v_spend_rate"
+    assert vitals.spend.lanes[0].points[0].cost_usd == "0.001200000000"
+    assert vitals.lifecycle_rates[1].per_hour is None
 
     requests = {(item.method, item.url.path): item for item in seen}
     create_body = json.loads(requests[("POST", "/prefix/v1/memories")].content)
@@ -246,6 +291,162 @@ async def test_all_routes_send_exact_http_contract() -> None:
     assert dict(list_query) == {"status": "active", "limit": "25", "offset": "5"}
     spend_body = json.loads(requests[("POST", "/prefix/v1/spend/events")].content)
     assert spend_body["events"][0]["cost_usd"] == "0.0001"
+    assert requests[("GET", "/prefix/v1/vitals")].url.query == b""
+
+
+@pytest.mark.asyncio
+async def test_vitals_rejects_a_numeric_cost_that_would_lose_decimal_wire_truth() -> None:
+    payload = vitals_payload()
+    payload["spend"]["lanes"][0]["points"][0]["cost_usd"] = 0.0012
+
+    await _assert_vitals_payload_rejected(payload)
+
+
+@pytest.mark.asyncio
+async def test_vitals_accepts_the_a029_reserved_model_key_escape() -> None:
+    payload = vitals_payload()
+    model_lane = payload["spend"]["lanes"][-1]
+    model_lane.update(key="~unreported", label="unreported")
+
+    async def handler(_: httpx.Request) -> httpx.Response:
+        return response(200, payload)
+
+    async with SpineClient(
+        "https://spine.invalid",
+        "token",
+        transport=httpx.MockTransport(handler),
+    ) as client:
+        snapshot = await client.vitals_snapshot()
+
+    assert snapshot.spend.lanes[-1].key == "~unreported"
+    assert snapshot.spend.lanes[-1].label == "unreported"
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        pytest.param(
+            lambda payload: payload["lifecycle_rates"][1].pop("per_hour"),
+            id="missing-null-lifecycle-value",
+        ),
+        pytest.param(
+            lambda payload: payload["palace_counts"][-1].pop("count"),
+            id="missing-null-palace-value",
+        ),
+        pytest.param(
+            lambda payload: payload["lifecycle_rates"].pop(),
+            id="missing-lifecycle-gauge",
+        ),
+        pytest.param(
+            lambda payload: payload["palace_counts"].append(deepcopy(payload["palace_counts"][-1])),
+            id="duplicate-palace-gauge",
+        ),
+        pytest.param(
+            lambda payload: payload["lifecycle_rates"].reverse(),
+            id="lifecycle-order",
+        ),
+        pytest.param(_measure_reinforced, id="reinforced-cannot-be-measured"),
+        pytest.param(_measure_queue_depth, id="queue-must-be-placeholder"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_vitals_requires_the_exact_a028_gauge_contract(mutate: VitalsMutation) -> None:
+    payload = vitals_payload()
+    mutate(payload)
+
+    await _assert_vitals_payload_rejected(payload)
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        pytest.param(
+            lambda payload: payload["spend"]["lanes"][0]["points"][0].update(
+                receipt_lines=1,
+                unpriced_lines=2,
+            ),
+            id="unpriced-exceeds-receipts",
+        ),
+        pytest.param(
+            lambda payload: payload["spend"]["lanes"][0]["points"][0].update(cost_usd=None),
+            id="priced-lines-require-cost",
+        ),
+        pytest.param(
+            lambda payload: payload["spend"]["lanes"][0]["points"][0].update(unpriced_lines=3),
+            id="all-unpriced-requires-null-cost",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_vitals_rejects_dishonest_spend_points(mutate: VitalsMutation) -> None:
+    payload = vitals_payload()
+    mutate(payload)
+
+    await _assert_vitals_payload_rejected(payload)
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        pytest.param(
+            lambda payload: payload["spend"]["lanes"].reverse(),
+            id="lane-order",
+        ),
+        pytest.param(
+            lambda payload: payload["spend"]["lanes"].append(
+                deepcopy(payload["spend"]["lanes"][-1])
+            ),
+            id="duplicate-lane",
+        ),
+        pytest.param(
+            lambda payload: payload["spend"]["lanes"][-1].update(
+                key="~vendor/model",
+                label="vendor/model",
+            ),
+            id="noncanonical-model-key-escape",
+        ),
+        pytest.param(
+            lambda payload: payload["spend"]["lanes"][-1].update(
+                key="~~unreported",
+                label="unreported",
+            ),
+            id="escaped-model-label-mismatch",
+        ),
+        pytest.param(
+            lambda payload: payload["spend"]["lanes"][0]["points"].append(
+                deepcopy(payload["spend"]["lanes"][0]["points"][0])
+            ),
+            id="duplicate-minute",
+        ),
+        pytest.param(
+            lambda payload: payload["spend"].update(latest_minute="2026-08-02T12:04:00Z"),
+            id="latest-minute",
+        ),
+        pytest.param(_move_points_to_open_window_boundary, id="open-window-boundary"),
+        pytest.param(
+            lambda payload: payload["spend"]["lanes"][1]["points"][0].update(receipt_lines=2),
+            id="receipt-conservation",
+        ),
+        pytest.param(
+            lambda payload: payload["spend"]["lanes"][1]["points"][0].update(unpriced_lines=0),
+            id="unpriced-conservation",
+        ),
+        pytest.param(
+            lambda payload: payload["spend"]["lanes"][1]["points"][0].update(
+                cost_usd="0.001100000000"
+            ),
+            id="dollar-conservation",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_vitals_rejects_noncanonical_or_unconserved_lanes(
+    mutate: VitalsMutation,
+) -> None:
+    payload = vitals_payload()
+    mutate(payload)
+
+    await _assert_vitals_payload_rejected(payload)
 
 
 @pytest.mark.asyncio

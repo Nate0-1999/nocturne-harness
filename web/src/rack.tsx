@@ -20,7 +20,7 @@ import {
   type RackEnvelopeEvent,
   type RackResizeEvent,
 } from './rackEvents'
-import { RACK_BOUNDS, type RackBounds } from './rackLayout'
+import { RACK_BOUNDS, VITALS_RACK_BOUNDS, type RackBounds } from './rackLayout'
 import { harnessClient } from './socket'
 import {
   useHarnessStore,
@@ -30,8 +30,8 @@ import {
   type ThreadState,
 } from './store'
 
-export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'gate'
-export type RackModuleSlot = 'header' | 'panel' | 'overlay'
+export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'gate'
+export type RackModuleSlot = 'header' | 'panel' | 'strip' | 'overlay'
 export type RackMemoryPanelState = MemoryPanelState
 
 export function isRackModuleId(value: unknown): value is RackModuleId {
@@ -39,6 +39,7 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
     value === 'threads' ||
     value === 'chat' ||
     value === 'memory' ||
+    value === 'vitals' ||
     value === 'gate'
 }
 
@@ -87,7 +88,7 @@ export interface RackModuleManifest {
 }
 
 export interface RackQueryRequest {
-  resource: 'catalog' | 'selected_thread' | 'memory_panel'
+  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals'
   as_of?: string | null
 }
 
@@ -101,6 +102,7 @@ export type RackSelection =
   | { kind: 'thread'; id: string }
   | { kind: 'memory'; id: string }
   | { kind: 'module'; id: RackModuleId }
+  | { kind: 'spend_lane'; id: string; as_of: string | null }
   | null
 
 export interface RackEventSurface {
@@ -194,6 +196,18 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     movable: true,
     law_bound: true,
   },
+  vitals: {
+    id: 'vitals',
+    name: 'Palace Vitals',
+    version: '1.0.0',
+    class: 'visualizer',
+    slot: 'strip',
+    streams: [],
+    actions: [],
+    bounds: VITALS_RACK_BOUNDS,
+    movable: false,
+    law_bound: false,
+  },
   gate: {
     id: 'gate',
     name: 'Memory Gate',
@@ -285,6 +299,19 @@ export const rackQuerySurface: RackQuerySurface = {
         data: null,
       }
     }
+    if (request.resource === 'vitals') {
+      const url = new URL('/v1/rack/query', globalThis.location.origin)
+      url.searchParams.set('resource', 'vitals')
+      url.searchParams.set('as_of', 'now')
+      const response = await globalThis.fetch(url, {
+        cache: 'no-store',
+        headers: { Accept: 'application/json' },
+      })
+      if (!response.ok) {
+        throw new Error(`Vitals are unavailable (${response.status})`)
+      }
+      return parseRackQueryResult(await response.json())
+    }
     const snapshot = getRackSnapshot()
     let data: JsonValue | null = null
     if (request.resource === 'catalog') {
@@ -313,10 +340,7 @@ export const rackSelectionSurface: RackSelectionSurface = {
     return () => selectionListeners.delete(listener)
   },
   select(selection) {
-    if (
-      selection?.kind === currentSelection?.kind &&
-      selection?.id === currentSelection?.id
-    ) {
+    if (rackSelectionsEqual(selection, currentSelection)) {
       return
     }
     currentSelection = selection
@@ -324,6 +348,54 @@ export const rackSelectionSurface: RackSelectionSurface = {
       listener()
     }
   },
+}
+
+export function rackSelectionsEqual(left: RackSelection, right: RackSelection): boolean {
+  if (left === null || right === null) {
+    return left === right
+  }
+  if (left.kind !== right.kind || left.id !== right.id) {
+    return false
+  }
+  return left.kind !== 'spend_lane' || (
+    right.kind === 'spend_lane' && left.as_of === right.as_of
+  )
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function parseRackQueryResult(value: unknown): RackQueryResult {
+  if (
+    !isRecord(value) ||
+    (value.status !== 'live' && value.status !== 'historical_unavailable') ||
+    (value.as_of !== null && typeof value.as_of !== 'string') ||
+    !Object.hasOwn(value, 'data') ||
+    !isJsonValue(value.data)
+  ) {
+    throw new TypeError('Rack query returned an invalid response')
+  }
+  return {
+    status: value.status,
+    as_of: value.as_of,
+    data: value.data,
+  }
+}
+
+function isJsonValue(value: unknown): value is JsonValue {
+  if (
+    value === null ||
+    typeof value === 'string' ||
+    typeof value === 'boolean' ||
+    (typeof value === 'number' && Number.isFinite(value))
+  ) {
+    return true
+  }
+  if (Array.isArray(value)) {
+    return value.every(isJsonValue)
+  }
+  return isRecord(value) && Object.values(value).every(isJsonValue)
 }
 
 function streamMatches(declarations: readonly string[], eventType: string): boolean {

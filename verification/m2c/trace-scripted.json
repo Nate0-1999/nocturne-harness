@@ -1,0 +1,249 @@
+{
+  "fixture": "M2C REGRESSION",
+  "source_view": "v_spend_rate",
+  "snapshot": {
+    "as_of": "2026-08-02T17:35:00Z",
+    "window_minutes": 60,
+    "spend": {
+      "source_view": "v_spend_rate",
+      "latest_minute": "2026-08-02T17:35:00Z",
+      "lanes": [
+        {
+          "dimension": "total",
+          "key": null,
+          "label": "All spend",
+          "points": [
+            {
+              "minute": "2026-08-02T17:32:00Z",
+              "cost_usd": "0.005000000000",
+              "receipt_lines": 2,
+              "unpriced_lines": 0
+            },
+            {
+              "minute": "2026-08-02T17:33:00Z",
+              "cost_usd": "0.035000000000",
+              "receipt_lines": 3,
+              "unpriced_lines": 0
+            },
+            {
+              "minute": "2026-08-02T17:34:00Z",
+              "cost_usd": "0.004000000000",
+              "receipt_lines": 2,
+              "unpriced_lines": 1
+            },
+            {
+              "minute": "2026-08-02T17:35:00Z",
+              "cost_usd": null,
+              "receipt_lines": 1,
+              "unpriced_lines": 1
+            }
+          ]
+        },
+        {
+          "dimension": "purpose",
+          "key": "building",
+          "label": "Building",
+          "points": [
+            {
+              "minute": "2026-08-02T17:32:00Z",
+              "cost_usd": "0.005000000000",
+              "receipt_lines": 2,
+              "unpriced_lines": 0
+            },
+            {
+              "minute": "2026-08-02T17:33:00Z",
+              "cost_usd": "0.015000000000",
+              "receipt_lines": 2,
+              "unpriced_lines": 0
+            },
+            {
+              "minute": "2026-08-02T17:34:00Z",
+              "cost_usd": "0.004000000000",
+              "receipt_lines": 2,
+              "unpriced_lines": 1
+            }
+          ]
+        },
+        {
+          "dimension": "purpose",
+          "key": "curation",
+          "label": "Curation",
+          "points": [
+            {
+              "minute": "2026-08-02T17:33:00Z",
+              "cost_usd": "0.020000000000",
+              "receipt_lines": 1,
+              "unpriced_lines": 0
+            }
+          ]
+        },
+        {
+          "dimension": "purpose",
+          "key": "judge",
+          "label": "Judging",
+          "points": [
+            {
+              "minute": "2026-08-02T17:35:00Z",
+              "cost_usd": null,
+              "receipt_lines": 1,
+              "unpriced_lines": 1
+            }
+          ]
+        },
+        {
+          "dimension": "model",
+          "key": "anthropic/claude-sonnet-4.6",
+          "label": "anthropic/claude-sonnet-4.6",
+          "points": [
+            {
+              "minute": "2026-08-02T17:33:00Z",
+              "cost_usd": "0.015000000000",
+              "receipt_lines": 2,
+              "unpriced_lines": 0
+            }
+          ]
+        },
+        {
+          "dimension": "model",
+          "key": "openai/gpt-5.2",
+          "label": "openai/gpt-5.2",
+          "points": [
+            {
+              "minute": "2026-08-02T17:33:00Z",
+              "cost_usd": "0.020000000000",
+              "receipt_lines": 1,
+              "unpriced_lines": 0
+            },
+            {
+              "minute": "2026-08-02T17:35:00Z",
+              "cost_usd": null,
+              "receipt_lines": 1,
+              "unpriced_lines": 1
+            }
+          ]
+        },
+        {
+          "dimension": "model",
+          "key": "unreported",
+          "label": "Model not reported",
+          "points": [
+            {
+              "minute": "2026-08-02T17:34:00Z",
+              "cost_usd": "0.004000000000",
+              "receipt_lines": 2,
+              "unpriced_lines": 1
+            }
+          ]
+        },
+        {
+          "dimension": "model",
+          "key": "~unreported",
+          "label": "unreported",
+          "points": [
+            {
+              "minute": "2026-08-02T17:32:00Z",
+              "cost_usd": "0.002000000000",
+              "receipt_lines": 1,
+              "unpriced_lines": 0
+            }
+          ]
+        },
+        {
+          "dimension": "model",
+          "key": "~~unreported",
+          "label": "~unreported",
+          "points": [
+            {
+              "minute": "2026-08-02T17:32:00Z",
+              "cost_usd": "0.003000000000",
+              "receipt_lines": 1,
+              "unpriced_lines": 0
+            }
+          ]
+        }
+      ]
+    },
+    "lifecycle_rates": [
+      {
+        "metric": "created",
+        "status": "measured",
+        "per_hour": 3,
+        "source": "memory_unit.created_at"
+      },
+      {
+        "metric": "reinforced",
+        "status": "not_recorded",
+        "per_hour": null,
+        "source": null
+      },
+      {
+        "metric": "superseded",
+        "status": "not_recorded",
+        "per_hour": null,
+        "source": null
+      },
+      {
+        "metric": "merged",
+        "status": "not_recorded",
+        "per_hour": null,
+        "source": null
+      },
+      {
+        "metric": "quarantined",
+        "status": "not_recorded",
+        "per_hour": null,
+        "source": null
+      },
+      {
+        "metric": "tombstoned",
+        "status": "not_recorded",
+        "per_hour": null,
+        "source": null
+      },
+      {
+        "metric": "add_backs",
+        "status": "not_recorded",
+        "per_hour": null,
+        "source": null
+      }
+    ],
+    "palace_counts": [
+      {
+        "metric": "active_units",
+        "status": "measured",
+        "count": 12,
+        "source": "memory_unit.status"
+      },
+      {
+        "metric": "pinned_units",
+        "status": "measured",
+        "count": 2,
+        "source": "memory_unit.status + memory_unit.pin"
+      },
+      {
+        "metric": "candidates_pending",
+        "status": "not_recorded",
+        "count": null,
+        "source": null
+      },
+      {
+        "metric": "edges",
+        "status": "not_recorded",
+        "count": null,
+        "source": null
+      },
+      {
+        "metric": "staged_units",
+        "status": "not_recorded",
+        "count": null,
+        "source": null
+      },
+      {
+        "metric": "queue_depth",
+        "status": "placeholder",
+        "count": null,
+        "source": null
+      }
+    ]
+  }
+}
