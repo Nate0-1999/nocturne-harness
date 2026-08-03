@@ -515,12 +515,13 @@ def test_dev_gate_round_trip_blocks_validates_commits_and_injects_system_block(
     )
     agent = HarnessAgent(settings, model=FunctionModel(stream_function=answer))
     spine = GateSpine()
+    transcript_journal = TranscriptJournal(tmp_path / "transcripts")
     app = create_dev_app(
         tmp_path,
         settings=settings,
         agent=agent,
         spine=spine,  # type: ignore[arg-type]
-        transcript_journal=TranscriptJournal(tmp_path / "transcripts"),
+        transcript_journal=transcript_journal,
     )
     thread_id = "22345678-1234-5678-1234-567812345678"
 
@@ -611,6 +612,14 @@ def test_dev_gate_round_trip_blocks_validates_commits_and_injects_system_block(
     assert requests[0].instructions is not None
     assert requests[0].instructions.endswith("\n" + EMPTY_MEMORY_BLOCK)
     assert spine.closed is True
+    transcript_types = [
+        json.loads(line)["event"]["type"]
+        for line in transcript_journal.path_for_thread(thread_id).read_text().splitlines()
+        if json.loads(line)["record_type"] == "event"
+    ]
+    assert "gate.open" in transcript_types
+    assert "gate.dismiss" in transcript_types
+    assert "error" in transcript_types
 
 
 def test_dev_panel_remove_updates_shared_context_for_the_next_model_call(
@@ -634,12 +643,13 @@ def test_dev_panel_remove_updates_shared_context_for_the_next_model_call(
     )
     agent = HarnessAgent(settings, model=FunctionModel(stream_function=answer))
     spine = PanelGateSpine()
+    transcript_journal = TranscriptJournal(tmp_path / "transcripts")
     app = create_dev_app(
         tmp_path,
         settings=settings,
         agent=agent,
         spine=spine,  # type: ignore[arg-type]
-        transcript_journal=TranscriptJournal(tmp_path / "transcripts"),
+        transcript_journal=transcript_journal,
     )
     thread_id = "22345678-1234-5678-1234-567812345678"
 
@@ -711,12 +721,28 @@ def test_dev_panel_remove_updates_shared_context_for_the_next_model_call(
     assert any(
         "keep this cobalt body" in (message.instructions or "") for message in second_requests
     )
+    captured_event_types = [
+        row["event"]["type"]
+        for row in (
+            json.loads(line)
+            for line in transcript_journal.path_for_thread(thread_id).read_text().splitlines()
+        )
+        if row["record_type"] == "event"
+    ]
+    assert "memory.panel.update" not in captured_event_types
 
 
 def test_unimplemented_known_type_uses_fresh_daemon_error(tmp_path: Path) -> None:
-    client = TestClient(create_app(tmp_path))
+    transcript_journal = TranscriptJournal(tmp_path / "transcripts")
+    factory = EnvelopeFactory(machine_id="harness-daemon")
+    loop = RunLoop(
+        CancellableRunner(),
+        factory,
+        transcript_journal=transcript_journal,
+    )
+    app = create_app(tmp_path, run_loop=loop, envelope_factory=factory)
 
-    with client.websocket_connect("/ws") as websocket:
+    with TestClient(app) as client, client.websocket_connect("/ws") as websocket:
         websocket.send_json(frame("thread.create", {}))
         response = websocket.receive_json()
 
@@ -725,6 +751,11 @@ def test_unimplemented_known_type_uses_fresh_daemon_error(tmp_path: Path) -> Non
     assert response["id"] != PROMPT_ID
     assert response["machine_id"] == "harness-daemon"
     assert response["thread_id"] == "thread-1"
+    rows = [
+        json.loads(line)
+        for line in transcript_journal.path_for_thread("thread-1").read_text().splitlines()
+    ]
+    assert [row["event"]["type"] for row in rows] == ["error"]
 
 
 def test_ws_custom_route_overrides_known_loop_handler(tmp_path: Path) -> None:

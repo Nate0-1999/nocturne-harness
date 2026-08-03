@@ -10,7 +10,14 @@ from pathlib import Path
 
 import pytest
 
-from harness.envelope import Envelope, EnvelopeFactory, MessageType, StopReason
+import harness.transcript as transcript_module
+from harness.envelope import (
+    Envelope,
+    EnvelopeFactory,
+    MessageType,
+    StopReason,
+    ThreadSnapshotResponsePayload,
+)
 from harness.model_policy import ThreadModelResolution
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
@@ -60,6 +67,90 @@ class RecordingRunner:
         )
 
 
+class BlockingRunner:
+    def __init__(self) -> None:
+        self.first_started = asyncio.Event()
+        self.release_first = asyncio.Event()
+
+    async def run(
+        self,
+        *,
+        thread_id: str,
+        prompt: str,
+        message_history: Sequence[object],
+        emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
+    ) -> TurnOutcome:
+        del thread_id, emit, model_resolution
+        if prompt == "first":
+            self.first_started.set()
+            await self.release_first.wait()
+        return TurnOutcome(StopReason.END_TURN, (*message_history, prompt))
+
+
+class NeverRunner:
+    def __init__(self) -> None:
+        self.called = False
+
+    async def run(
+        self,
+        *,
+        thread_id: str,
+        prompt: str,
+        message_history: Sequence[object],
+        emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
+    ) -> TurnOutcome:
+        del thread_id, prompt, message_history, emit, model_resolution
+        self.called = True
+        raise AssertionError("runner must not start after a transcript failure")
+
+
+class CatchingRunner:
+    def __init__(self) -> None:
+        self.first_started = asyncio.Event()
+        self.release_first = asyncio.Event()
+        self.prompts: list[str] = []
+
+    async def run(
+        self,
+        *,
+        thread_id: str,
+        prompt: str,
+        message_history: Sequence[object],
+        emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
+    ) -> TurnOutcome:
+        del thread_id, model_resolution
+        self.prompts.append(prompt)
+        if prompt == "first":
+            self.first_started.set()
+            await self.release_first.wait()
+            try:
+                await emit.text("capture will fail")
+            except RuntimeError:
+                pass
+        return TurnOutcome(StopReason.END_TURN, (*message_history, prompt))
+
+
+class PromptOrderRunner:
+    def __init__(self) -> None:
+        self.prompts: list[str] = []
+
+    async def run(
+        self,
+        *,
+        thread_id: str,
+        prompt: str,
+        message_history: Sequence[object],
+        emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
+    ) -> TurnOutcome:
+        del thread_id, emit, model_resolution
+        self.prompts.append(prompt)
+        return TurnOutcome(StopReason.END_TURN, (*message_history, prompt))
+
+
 class Resolver:
     def __init__(self) -> None:
         self.initial = ThreadModelResolution(
@@ -81,6 +172,28 @@ class Resolver:
         del thread_id
         assert model == self.changed.model
         return self.changed
+
+
+class FailingResolver(Resolver):
+    async def resolve(self, thread_id: str) -> ThreadModelResolution:
+        del thread_id
+        raise RuntimeError("model resolution failed")
+
+
+class BlockingFirstResolver(Resolver):
+    def __init__(self) -> None:
+        super().__init__()
+        self.calls = 0
+        self.first_started = asyncio.Event()
+        self.release_first = asyncio.Event()
+
+    async def resolve(self, thread_id: str) -> ThreadModelResolution:
+        del thread_id
+        self.calls += 1
+        if self.calls == 1:
+            self.first_started.set()
+            await self.release_first.wait()
+        return self.initial
 
 
 def factory(ids: Ids) -> EnvelopeFactory:
@@ -142,6 +255,362 @@ def test_journal_refuses_a_git_worktree_root(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="must not live inside a git worktree"):
         TranscriptJournal(tmp_path / "state" / "transcripts")
+
+
+def test_journal_refuses_a_symlinked_thread_file(tmp_path: Path) -> None:
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    journal.root.mkdir(parents=True)
+    target = tmp_path / "target.txt"
+    target.write_text("do not touch", encoding="utf-8")
+    journal.path_for_thread("thread-1").symlink_to(target)
+
+    with pytest.raises(ValueError, match="must be a regular file"):
+        journal.append_message(
+            "thread-1",
+            {"message_id": ulid(1), "role": "user"},
+            parent_id=None,
+        )
+
+    assert target.read_text(encoding="utf-8") == "do not touch"
+
+
+def test_journal_refuses_root_replaced_by_a_directory_symlink(tmp_path: Path) -> None:
+    root = tmp_path / "transcripts"
+    journal = TranscriptJournal(root)
+    target = tmp_path / "target-worktree"
+    (target / ".git").mkdir(parents=True)
+    root.symlink_to(target, target_is_directory=True)
+
+    with pytest.raises(ValueError, match="root must be a real directory"):
+        journal.append_message(
+            "thread-1",
+            {"message_id": ulid(1), "role": "user"},
+            parent_id=None,
+        )
+
+    assert list(target.glob("*.jsonl")) == []
+
+
+def test_failed_partial_append_is_rolled_back(tmp_path: Path, monkeypatch) -> None:
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    real_write = transcript_module.os.write
+    calls = 0
+
+    def fail_after_partial(descriptor: int, value: bytes | memoryview) -> int:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return real_write(descriptor, value[: max(1, len(value) // 2)])
+        raise OSError("disk full")
+
+    monkeypatch.setattr(transcript_module.os, "write", fail_after_partial)
+    with pytest.raises(OSError, match="disk full"):
+        journal.append_message(
+            "thread-1",
+            {"message_id": ulid(1), "role": "user"},
+            parent_id=None,
+        )
+    monkeypatch.setattr(transcript_module.os, "write", real_write)
+
+    path = journal.path_for_thread("thread-1")
+    assert path.read_bytes() == b""
+    journal.append_message(
+        "thread-1",
+        {"message_id": ulid(1), "role": "user"},
+        parent_id=None,
+    )
+    assert len(records(journal, "thread-1")) == 1
+
+
+def test_preexisting_incomplete_tail_is_separated_from_new_records(tmp_path: Path) -> None:
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    journal.root.mkdir(parents=True)
+    path = journal.path_for_thread("thread-1")
+    path.write_bytes(b'{"incomplete":')
+
+    journal.append_message(
+        "thread-1",
+        {"message_id": ulid(1), "role": "user"},
+        parent_id=None,
+    )
+
+    lines = path.read_bytes().splitlines()
+    assert lines[0] == b'{"incomplete":'
+    assert json.loads(lines[1])["record_type"] == "message"
+
+
+def test_restart_scans_past_an_incomplete_tail_to_the_last_valid_message(
+    tmp_path: Path,
+) -> None:
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    journal.append_message(
+        "thread-1",
+        {"message_id": ulid(1), "role": "user"},
+        parent_id=None,
+    )
+    path = journal.path_for_thread("thread-1")
+    with path.open("ab") as transcript:
+        transcript.write(b'{"incomplete":')
+
+    reopened = TranscriptJournal(journal.root)
+
+    assert reopened.next_parent_id("thread-1") == ulid(1)
+
+
+def test_non_tail_revisions_do_not_move_restart_continuity_backward(tmp_path: Path) -> None:
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    for number in range(1, 5):
+        journal.append_message(
+            "thread-1",
+            {"message_id": ulid(number), "role": "user"},
+            parent_id=ulid(number - 1) if number > 1 else None,
+        )
+    journal.append_message(
+        "thread-1",
+        {"message_id": ulid(100), "role": "assistant"},
+        parent_id=ulid(2),
+        advance_tail=False,
+    )
+    journal.append_message(
+        "thread-1",
+        {"message_id": ulid(3), "role": "user"},
+        parent_id=ulid(100),
+        advance_tail=False,
+    )
+
+    assert journal.next_parent_id("thread-1") == ulid(4)
+    assert TranscriptJournal(journal.root).next_parent_id("thread-1") == ulid(4)
+    assert records(journal, "thread-1")[-1]["tail_message_id"] == ulid(4)
+
+
+def test_complete_record_is_fsynced_before_append_returns(tmp_path: Path, monkeypatch) -> None:
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    real_fsync = transcript_module.os.fsync
+    synced: list[int] = []
+
+    def recording_fsync(descriptor: int) -> None:
+        synced.append(descriptor)
+        real_fsync(descriptor)
+
+    monkeypatch.setattr(transcript_module.os, "fsync", recording_fsync)
+    journal.append_message(
+        "thread-1",
+        {"message_id": ulid(1), "role": "user"},
+        parent_id=None,
+    )
+
+    assert synced
+
+
+@pytest.mark.asyncio
+async def test_prompt_is_captured_before_model_resolution_failure(tmp_path: Path) -> None:
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    loop = RunLoop(
+        RecordingRunner(),
+        factory(Ids()),
+        model_resolver=FailingResolver(),
+        transcript_journal=journal,
+    )
+
+    with pytest.raises(RuntimeError, match="model resolution failed"):
+        await loop.submit(
+            thread_id="thread-1",
+            prompt_id=ulid(1),
+            prompt="persist me first",
+        )
+
+    rows = records(journal, "thread-1")
+    assert len(rows) == 1
+    assert rows[0]["record_type"] == "message"
+    assert rows[0]["message"]["content"] == "persist me first"  # type: ignore[index]
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_capture_failure_poison_stops_unjournaled_work(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    journal = TranscriptJournal(tmp_path / "transcripts")
+
+    def fail_event(thread_id: str, envelope: Envelope) -> None:
+        del thread_id, envelope
+        raise OSError("read-only filesystem")
+
+    monkeypatch.setattr(journal, "append_event", fail_event)
+    runner = NeverRunner()
+    loop = RunLoop(runner, factory(Ids()), transcript_journal=journal)
+    sink = Sink()
+
+    with pytest.raises(RuntimeError, match="transcript capture failed"):
+        await loop.submit(
+            thread_id="thread-1",
+            prompt_id=ulid(1),
+            prompt="first",
+            sink=sink,
+        )
+    with pytest.raises(RuntimeError, match="unavailable after transcript capture failure"):
+        await loop.submit(
+            thread_id="thread-1",
+            prompt_id=ulid(2),
+            prompt="must not queue",
+        )
+
+    assert runner.called is False
+    assert sink.messages == []
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_in_run_capture_poison_cannot_be_caught_to_start_queued_work(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    append_event = journal.append_event
+    failed = False
+
+    def fail_first_delta(thread_id: str, envelope: Envelope) -> None:
+        nonlocal failed
+        if not failed and envelope.type is MessageType.RUN_DELTA:
+            failed = True
+            raise OSError("transient disk failure")
+        append_event(thread_id, envelope)
+
+    monkeypatch.setattr(journal, "append_event", fail_first_delta)
+    runner = CatchingRunner()
+    sink = Sink()
+    loop = RunLoop(runner, factory(Ids()), transcript_journal=journal)
+    await loop.submit(thread_id="thread-1", prompt_id=ulid(1), prompt="first", sink=sink)
+    await asyncio.wait_for(runner.first_started.wait(), 1)
+    await loop.submit(thread_id="thread-1", prompt_id=ulid(2), prompt="second", sink=sink)
+
+    runner.release_first.set()
+    for _ in range(100):
+        if loop._capture_failure is not None:
+            break
+        await asyncio.sleep(0)
+    else:
+        raise AssertionError("capture failure did not poison the run loop")
+    for _ in range(10):
+        await asyncio.sleep(0)
+
+    assert runner.prompts == ["first"]
+    assert all(
+        message.payload.kind != "text"
+        for message in sink.messages
+        if message.type is MessageType.RUN_DELTA
+    )  # type: ignore[union-attr]
+    with pytest.raises(RuntimeError, match="unavailable after transcript capture failure"):
+        await loop.submit(thread_id="thread-1", prompt_id=ulid(3), prompt="third")
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_same_thread_resolution_is_serialized_in_capture_order(tmp_path: Path) -> None:
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    resolver = BlockingFirstResolver()
+    runner = PromptOrderRunner()
+    loop = RunLoop(
+        runner,
+        factory(Ids()),
+        model_resolver=resolver,
+        transcript_journal=journal,
+    )
+
+    first = asyncio.create_task(
+        loop.submit(thread_id="thread-1", prompt_id=ulid(1), prompt="first")
+    )
+    await asyncio.wait_for(resolver.first_started.wait(), 1)
+    second = asyncio.create_task(
+        loop.submit(thread_id="thread-1", prompt_id=ulid(2), prompt="second")
+    )
+    for _ in range(10):
+        await asyncio.sleep(0)
+
+    captured = [
+        row["message"] for row in records(journal, "thread-1") if row["record_type"] == "message"
+    ]
+    assert [message["message_id"] for message in captured] == [ulid(1), ulid(2)]
+    assert captured[1]["parentId"] == ulid(1)  # type: ignore[index]
+    assert resolver.calls == 1
+
+    resolver.release_first.set()
+    first_run, _ = await asyncio.gather(first, second)
+    for _ in range(100):
+        final_rows = records(journal, "thread-1")
+        done_count = sum(
+            row["record_type"] == "event" and row["event"]["type"] == "run.done"  # type: ignore[index]
+            for row in final_rows
+        )
+        if runner.prompts == ["first", "second"] and done_count == 2:
+            break
+        await asyncio.sleep(0)
+    assert runner.prompts == ["first", "second"]
+    second_versions = [
+        row["message"]
+        for row in final_rows
+        if row["record_type"] == "message" and row["message"]["message_id"] == ulid(2)  # type: ignore[index]
+    ]
+    assert second_versions[-1]["parentId"] == first_run  # type: ignore[index]
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_fifo_capture_has_no_dangling_parent_links(tmp_path: Path) -> None:
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    runner = BlockingRunner()
+    loop = RunLoop(runner, factory(Ids()), transcript_journal=journal)
+
+    first_run = await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(1),
+        prompt="first",
+    )
+    await asyncio.wait_for(runner.first_started.wait(), 1)
+    second_run = await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(2),
+        prompt="second",
+    )
+    await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(3),
+        prompt="third",
+    )
+
+    before_release = records(journal, "thread-1")
+    messages = [row["message"] for row in before_release if row["record_type"] == "message"]
+    second = [message for message in messages if message["message_id"] == ulid(2)]
+    third = [message for message in messages if message["message_id"] == ulid(3)]
+    assert {message["parentId"] for message in second} == {first_run}
+    assert {message["parentId"] for message in third} == {ulid(2)}
+    captured_ids = {message["message_id"] for message in messages}
+    assert all(
+        message["parentId"] is None or message["parentId"] in captured_ids for message in messages
+    )
+
+    runner.release_first.set()
+    for _ in range(100):
+        after_release = records(journal, "thread-1")
+        if (
+            sum(
+                row["record_type"] == "event" and row["event"]["type"] == "run.done"  # type: ignore[index]
+                for row in after_release
+            )
+            == 3
+        ):
+            break
+        await asyncio.sleep(0)
+    else:
+        raise AssertionError("queued runs did not finish")
+    final_third = [
+        row["message"]
+        for row in after_release
+        if row["record_type"] == "message" and row["message"]["message_id"] == ulid(3)  # type: ignore[index]
+    ]
+    assert final_third[-1]["parentId"] == second_run  # type: ignore[index]
+    await loop.close()
 
 
 @pytest.mark.asyncio
@@ -238,6 +707,9 @@ async def test_run_loop_captures_messages_events_model_change_without_serving_on
     assert by_message[first_run][-1]["partial"] is False
 
     event_types = [row["event"]["type"] for row in event_rows]  # type: ignore[index]
+    assert [row["event"]["id"] for row in event_rows] == [  # type: ignore[index]
+        message.id for message in sink.messages
+    ]
     assert "run.started" in event_types
     assert "run.usage" in event_types
     assert event_types.count("run.done") == 2
@@ -251,6 +723,12 @@ async def test_run_loop_captures_messages_events_model_change_without_serving_on
         "tool_result",
         "model_change",
     }
+    delta_kinds = {
+        row["event"]["payload"]["kind"]  # type: ignore[index]
+        for row in event_rows
+        if row["event"]["type"] == "run.delta"  # type: ignore[index]
+    }
+    assert delta_kinds == {"text", "thinking", "event"}
 
     restarted = RunLoop(
         RecordingRunner(),
@@ -259,11 +737,29 @@ async def test_run_loop_captures_messages_events_model_change_without_serving_on
         transcript_journal=TranscriptJournal(journal.root),
     )
     restart_sink = Sink()
+    before_snapshot = journal.path_for_thread(thread_id).read_bytes()
     await restarted.request_snapshot(thread_id, restart_sink)
     await wait_for_type(restart_sink, MessageType.THREAD_SNAPSHOT, 1)
     snapshot = restart_sink.messages[0].payload
-    assert snapshot.messages == []  # type: ignore[union-attr]
-    assert snapshot.active_run is None  # type: ignore[union-attr]
+    assert isinstance(snapshot, ThreadSnapshotResponsePayload)
+    assert snapshot.messages == []
+    assert snapshot.active_run is None
+    assert journal.path_for_thread(thread_id).read_bytes() == before_snapshot
+
+    await restarted.submit(
+        thread_id=thread_id,
+        prompt_id=ulid(3),
+        prompt="after restart",
+        sink=restart_sink,
+    )
+    await wait_for_done(restart_sink, 1)
+    restarted_rows = records(journal, thread_id)
+    continued = [
+        row["message"]
+        for row in restarted_rows
+        if row["record_type"] == "message" and row["message"]["message_id"] == ulid(3)  # type: ignore[index]
+    ]
+    assert {message["parentId"] for message in continued} == {command_run}  # type: ignore[index]
     await restarted.close()
 
 

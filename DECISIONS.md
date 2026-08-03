@@ -770,17 +770,29 @@ assistant message is created or terminally updated, and capture every
 daemon-authored C.7 run event before live delivery; this includes deltas,
 usage, gates, errors, terminal events, and the `/model` `model_change` event.
 Every captured message carries ADR-016's `parentId` now, including forward
-links through the existing FIFO, but M2D neither reads the journal nor changes
-the process-local snapshot contract. Snapshot resyncs and panel query replies
-are serving artifacts rather than new transcript events and are not copied
-back into the journal.
+continuity across daemon restarts. A queued prompt initially names the latest
+message that already exists; when its predecessor's assistant row lands, the
+prompt is re-journaled with that final parent. Each message row also records
+the current logical tail, so a revision to an earlier queued message cannot
+move restart continuity backward. M2D reads only that durable tail id for the
+next link — it never hydrates messages or changes the process-local snapshot
+contract. Snapshot resyncs and panel query replies are serving artifacts
+rather than new transcript events and are not copied back into the journal.
 
 Map thread ids to SHA-256 filenames instead of trusting them as paths. Create
 the transcript directory and files at modes 0700 and 0600, append with
 `O_APPEND`, and `fsync` every complete standard-JSON line before the run
-advances. Refuse a transcript root beneath any git worktree. The initialized
-home is propagated to both local services so an overridden `NOCTURNE_HOME`
-cannot split configuration and conversation state.
+advances. An advisory file lock preserves record boundaries if another local
+writer touches a file; conversation scheduling and tail ownership remain the
+single daemon's single journal. Roll a failed partial append back to its
+starting offset, separate any pre-existing incomplete tail before resuming,
+and refuse symlinked or non-regular thread files. Open the transcript root as
+a no-follow directory before opening a hashed child, and refuse a root beneath
+any git worktree. The initialized home is propagated to both local services so
+an overridden `NOCTURNE_HOME` cannot split configuration and conversation
+state. Any capture failure poisons the run loop, including work already in
+flight: later work is refused instead of continuing with an unjournaled or
+half-mutated thread.
 
 **Motivation.** Item 4 requires capture now without importing M3's session
 table, tree serving, rewind, or Cube query surface. Self-contained message and

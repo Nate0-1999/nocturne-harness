@@ -168,11 +168,14 @@ class RunLoop:
         self._clock = clock or (lambda: datetime.now(UTC))
         self._transcript_journal = transcript_journal
         self._lock = asyncio.Lock()
+        self._submission_locks: dict[str, asyncio.Lock] = {}
+        self._pending_captured: dict[str, deque[_Turn]] = {}
         self._threads: dict[str, _ThreadState] = {}
         self._subscriptions: list[_Subscription] = []
         self._selected_thread_id: str | None = None
         self._terminal_tasks: set[asyncio.Task[None]] = set()
         self._closing = False
+        self._capture_failure: Exception | None = None
 
     async def attach(
         self,
@@ -246,6 +249,13 @@ class RunLoop:
         async with self._lock:
             self._remove_sink_locked(sink)
 
+    async def send_direct(self, sink: EnvelopeSink, envelope: Envelope) -> None:
+        """Journal and deliver one daemon-authored event outside the run routes."""
+
+        async with self._lock:
+            self._require_open()
+            await self._send_direct_locked(sink, envelope)
+
     async def submit(
         self,
         *,
@@ -260,12 +270,9 @@ class RunLoop:
         if not prompt.strip():
             raise ValueError("prompt must not be blank")
 
-        async with self._lock:
-            self._require_open()
         run_id = self._run_id_factory()
         # Validate both correlation IDs before mutating process state.
         RunStartedPayload(run_id=run_id, prompt_id=prompt_id)
-        model_resolution = await self._resolution_for_thread(thread_id)
         model_target = model_command_text(prompt)
         user_message: dict[str, Any] = {
             "message_id": prompt_id,
@@ -281,32 +288,50 @@ class RunLoop:
             user_message=user_message,
             model_target=model_target,
         )
-
         async with self._lock:
             self._require_open()
-            state = self._state_for_locked(thread_id)
-            if state.model_resolution is None:
-                state.model_resolution = model_resolution
-                if model_resolution is not None:
-                    state.resolved_model = model_resolution.model
-            self._selected_thread_id = thread_id
-            if sink is not None:
-                self._bind_sink_locked(sink, thread_id)
-            turn.parent_id = self._parent_for_new_turn_locked(state)
-            state.messages.append(user_message)
-            self._capture_message(thread_id, user_message, parent_id=turn.parent_id)
-            if state.active is None:
-                await self._start_locked(thread_id, state, turn)
-            else:
-                state.queued.append(turn)
-                await self._publish_locked(
-                    thread_id,
-                    self._factory.create(
-                        MessageType.PROMPT_QUEUED,
-                        PromptQueuedPayload(run_id=run_id, prompt_id=prompt_id),
-                        thread_id=thread_id,
-                    ),
-                )
+            submission_lock = self._submission_locks.setdefault(thread_id, asyncio.Lock())
+            if self._transcript_journal is not None:
+                turn.parent_id = self._captured_parent_id(thread_id)
+                self._capture_message(thread_id, user_message, parent_id=turn.parent_id)
+                self._pending_captured.setdefault(thread_id, deque()).append(turn)
+
+        try:
+            async with submission_lock:
+                async with self._lock:
+                    self._require_open()
+                model_resolution = await self._resolution_for_thread(thread_id)
+
+                async with self._lock:
+                    self._require_open()
+                    self._discard_pending_capture_locked(thread_id, turn)
+                    state = self._state_for_locked(thread_id)
+                    if state.model_resolution is None:
+                        state.model_resolution = model_resolution
+                        if model_resolution is not None:
+                            state.resolved_model = model_resolution.model
+                    self._selected_thread_id = thread_id
+                    if sink is not None:
+                        self._bind_sink_locked(sink, thread_id)
+                    if self._transcript_journal is None:
+                        turn.parent_id = self._parent_for_new_turn_locked(state)
+                    state.messages.append(user_message)
+                    if state.active is None:
+                        await self._start_locked(thread_id, state, turn)
+                    else:
+                        state.queued.append(turn)
+                        await self._publish_locked(
+                            thread_id,
+                            self._factory.create(
+                                MessageType.PROMPT_QUEUED,
+                                PromptQueuedPayload(run_id=run_id, prompt_id=prompt_id),
+                                thread_id=thread_id,
+                            ),
+                        )
+        except BaseException:
+            async with self._lock:
+                self._discard_pending_capture_locked(thread_id, turn)
+            raise
         return run_id
 
     async def cancel(
@@ -441,7 +466,12 @@ class RunLoop:
         turn: _Turn,
     ) -> None:
         turn.user_message["state"] = "running"
-        self._capture_message(thread_id, turn.user_message, parent_id=turn.parent_id)
+        self._capture_message(
+            thread_id,
+            turn.user_message,
+            parent_id=turn.parent_id,
+            advance_tail=False,
+        )
         assistant_message: dict[str, Any] = {
             "message_id": turn.run_id,
             "run_id": turn.run_id,
@@ -455,7 +485,23 @@ class RunLoop:
             index for index, message in enumerate(state.messages) if message is turn.user_message
         )
         state.messages.insert(user_index + 1, assistant_message)
-        self._capture_message(thread_id, assistant_message, parent_id=turn.prompt_id)
+        pending = self._pending_captured.get(thread_id)
+        has_follower = bool(state.queued or pending)
+        self._capture_message(
+            thread_id,
+            assistant_message,
+            parent_id=turn.prompt_id,
+            advance_tail=not has_follower,
+        )
+        follower = state.queued[0] if state.queued else pending[0] if pending else None
+        if follower is not None:
+            follower.parent_id = turn.run_id
+            self._capture_message(
+                thread_id,
+                follower.user_message,
+                parent_id=follower.parent_id,
+                advance_tail=False,
+            )
         active = _ActiveRun(turn=turn, assistant_message=assistant_message)
         state.active = active
         history = state.message_history
@@ -580,11 +626,13 @@ class RunLoop:
                 thread_id,
                 active.turn.user_message,
                 parent_id=active.turn.parent_id,
+                advance_tail=False,
             )
             self._capture_message(
                 thread_id,
                 active.assistant_message,
                 parent_id=active.turn.prompt_id,
+                advance_tail=False,
             )
 
             if state.open_gate is not None:
@@ -616,7 +664,7 @@ class RunLoop:
             )
             state.active = None
 
-            if not self._closing and state.queued:
+            if not self._closing and self._capture_failure is None and state.queued:
                 await self._start_locked(thread_id, state, state.queued.popleft())
 
     async def _resolve_model_command(
@@ -1098,6 +1146,10 @@ class RunLoop:
         )
 
     def _require_open(self) -> None:
+        if self._capture_failure is not None:
+            raise RuntimeError("run loop is unavailable after transcript capture failure") from (
+                self._capture_failure
+            )
         if self._closing:
             raise RuntimeError("run loop is closed")
 
@@ -1108,10 +1160,21 @@ class RunLoop:
             self._threads[thread_id] = state
         return state
 
+    def _discard_pending_capture_locked(self, thread_id: str, turn: _Turn) -> None:
+        pending = self._pending_captured.get(thread_id)
+        if pending is None:
+            return
+        try:
+            pending.remove(turn)
+        except ValueError:
+            return
+        if not pending:
+            del self._pending_captured[thread_id]
+
     @staticmethod
     def _parent_for_new_turn_locked(state: _ThreadState) -> str | None:
         if state.queued:
-            return state.queued[-1].run_id
+            return state.queued[-1].prompt_id
         if state.active is not None:
             return state.active.turn.run_id
         if not state.messages:
@@ -1121,23 +1184,48 @@ class RunLoop:
             raise RuntimeError("thread transcript message is missing its message_id")
         return parent_id
 
+    def _captured_parent_id(self, thread_id: str) -> str | None:
+        assert self._transcript_journal is not None
+        try:
+            return self._transcript_journal.next_parent_id(thread_id)
+        except Exception as exc:
+            self._fail_capture(exc)
+
     def _capture_message(
         self,
         thread_id: str,
         message: Mapping[str, Any],
         *,
         parent_id: str | None,
+        advance_tail: bool = True,
     ) -> None:
         if self._transcript_journal is not None:
-            self._transcript_journal.append_message(
-                thread_id,
-                message,
-                parent_id=parent_id,
-            )
+            if self._capture_failure is not None:
+                self._fail_capture(self._capture_failure)
+            try:
+                self._transcript_journal.append_message(
+                    thread_id,
+                    message,
+                    parent_id=parent_id,
+                    advance_tail=advance_tail,
+                )
+            except Exception as exc:
+                self._fail_capture(exc)
 
     def _capture_event(self, thread_id: str, envelope: Envelope) -> None:
         if self._transcript_journal is not None:
-            self._transcript_journal.append_event(thread_id, envelope)
+            if self._capture_failure is not None:
+                self._fail_capture(self._capture_failure)
+            try:
+                self._transcript_journal.append_event(thread_id, envelope)
+            except Exception as exc:
+                self._fail_capture(exc)
+
+    def _fail_capture(self, exc: Exception) -> None:
+        if self._capture_failure is None:
+            self._capture_failure = exc
+            logger.critical("transcript capture failed; run loop is now unavailable", exc_info=exc)
+        raise RuntimeError("transcript capture failed; run loop is now unavailable") from exc
 
     async def _resolution_for_thread(
         self,

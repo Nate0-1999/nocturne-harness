@@ -176,12 +176,13 @@ def create_app(
         return response
 
     async def not_implemented(message: Envelope, send: EnvelopeSender) -> None:
-        await send(
+        await loop.send_direct(
+            send,
             factory.create(
                 MessageType.ERROR,
                 "not implemented",
                 thread_id=message.thread_id,
-            )
+            ),
         )
 
     @app.websocket("/ws")
