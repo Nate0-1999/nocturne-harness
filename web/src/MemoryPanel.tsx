@@ -8,6 +8,8 @@ import {
 
 import type { MemoryPanelState } from './store'
 import type { MemoryPanelConflictPayload, MemoryUnit, Ulid } from './protocol'
+import { ContributionBars, useContributionMap } from './ContributionBars'
+import { useRackSelection } from './rack'
 
 interface MemoryPanelProps {
   panel: MemoryPanelState
@@ -83,6 +85,8 @@ export function MemoryPanel({
   onEdit,
   onPin,
 }: MemoryPanelProps) {
+  const contributions = useContributionMap()
+  const rackSelection = useRackSelection()
   const [editor, setEditor] = useState<EditorState | null>(null)
   const [clientError, setClientError] = useState<string | null>(null)
   const panelRef = useRef<HTMLElement>(null)
@@ -211,6 +215,20 @@ export function MemoryPanel({
       requestId: null,
     })
   }
+
+  useEffect(() => {
+    if (rackSelection?.kind !== 'memory') return
+    const selected = panel.items.find((item) => item.memory.memory_id === rackSelection.id)?.memory
+    if (selected !== undefined && selected.status === 'active') {
+      queueMicrotask(() => {
+        setClientError(null)
+        setEditor({
+          memoryId: selected.memory_id, label: memoryTitle(selected), body: selected.body,
+          expectedRevision: selected.revision, requestId: null,
+        })
+      })
+    }
+  }, [panel.items, rackSelection])
 
   async function submitEdit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -469,6 +487,7 @@ export function MemoryPanel({
                   ) : (
                     <>
                       <p className="principal-memory__body">{memory.body}</p>
+                      <ContributionBars values={contributions[memory.memory_id]} />
                       <div className="principal-memory__actions">
                         <button
                           type="button"

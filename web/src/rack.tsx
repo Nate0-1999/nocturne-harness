@@ -36,7 +36,7 @@ import {
   type ThreadState,
 } from './store'
 
-export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device'
+export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'injection_console'
 export type RackModuleSlot = 'header' | 'panel' | 'strip' | 'overlay'
 export type RackMemoryPanelState = MemoryPanelState
 
@@ -49,7 +49,9 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
     value === 'gate' ||
     value === 'thread_end' ||
     value === 'palace_queue' ||
-    value === 'model_device'
+    value === 'model_device' ||
+    value === 'memory_graph' ||
+    value === 'injection_console'
 }
 
 export interface RackSnapshot {
@@ -72,6 +74,8 @@ export type RackAction =
   | { type: 'rack.scope.get'; module_id: RackModuleId }
   | { type: 'rack.scope.set'; module_id: RackModuleId; scope: 'GLOBAL' | 'CURRENT' }
   | { type: 'parameter.write'; thread_id: string; parameter_id: string; value: string | number | null }
+  | { type: 'scorer.write'; event_uid: string; base_version: string; values: JsonValue }
+  | { type: 'scorer.activate'; event_uid: string; version: string }
   | {
       type: 'queue.decide'
       item_uid: string
@@ -114,7 +118,7 @@ export interface RackModuleManifest {
 }
 
 export interface RackQueryRequest {
-  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'parameters'
+  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'parameters' | 'memory_graph' | 'scorer_console'
   as_of?: string | null
   thread_id?: string
 }
@@ -162,7 +166,7 @@ export type RackActionResult<Action extends RackAction> =
     ? string
     : Action['type'] extends 'thread.select'
       ? void
-      : Action['type'] extends 'thread.archive' | 'queue.load' | 'queue.decide' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write'
+      : Action['type'] extends 'thread.archive' | 'queue.load' | 'queue.decide' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.write' | 'scorer.activate'
         ? JsonValue
         : Action['type'] extends 'rack.scope.get' | 'rack.scope.set'
           ? 'GLOBAL' | 'CURRENT'
@@ -300,6 +304,23 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     law_bound: false,
     default_scope: 'CURRENT',
   },
+  memory_graph: {
+    id: 'memory_graph', name: 'Memory Graph', version: '1.0.0', class: 'visualizer',
+    slot: 'overlay', streams: ['memory.panel.update'],
+    actions: ['rack.scope.get', 'rack.scope.set'], bounds: commonPanelBounds,
+    movable: false, law_bound: true, default_scope: 'GLOBAL',
+  },
+  injection_console: {
+    id: 'injection_console', name: 'Injection Console', version: '1.0.0', class: 'control',
+    slot: 'overlay', streams: ['scorer.change'],
+    actions: ['scorer.write', 'scorer.activate', 'rack.scope.get', 'rack.scope.set'],
+    bindings: [
+      'scorer.tau', 'scorer.top_k', 'scorer.budget_tokens',
+      'scorer.half_life_time_days', 'scorer.half_life_hist_days',
+      'scorer.weight.sem', 'scorer.weight.kw', 'scorer.weight.time',
+      'scorer.weight.proj', 'scorer.weight.freq', 'scorer.weight.hist',
+    ], bounds: commonPanelBounds, movable: false, law_bound: true, default_scope: 'GLOBAL',
+  },
 }
 
 let lastStoreState = useHarnessStore.getState()
@@ -422,6 +443,19 @@ function dispatchRackAction<Action extends RackAction>(
             value: action.value,
           }),
         }) as Promise<RackActionResult<Action>>
+      case 'scorer.write':
+        return fetchJson('/v1/rack/scorers', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event_uid: action.event_uid, base_version: action.base_version,
+            values: action.values, actor_class: 'human', machine_id: 'harness-browser',
+          }),
+        }) as Promise<RackActionResult<Action>>
+      case 'scorer.activate':
+        return fetchJson(`/v1/rack/scorers/${encodeURIComponent(action.version)}/activate`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ event_uid: action.event_uid, actor_class: 'human', machine_id: 'harness-browser' }),
+        }) as Promise<RackActionResult<Action>>
       case 'gate.commit':
         return harnessClient.commitGate(action.decision) as RackActionResult<Action>
       case 'memory.refresh':
@@ -466,19 +500,20 @@ async function fetchJson(path: string, init?: RequestInit): Promise<JsonValue> {
 export const rackQuerySurface: RackQuerySurface = {
   async query(request) {
     const asOf = request.as_of ?? null
-    if (request.resource === 'vitals') {
+    if (request.resource === 'vitals' || request.resource === 'memory_graph' || request.resource === 'scorer_console') {
       if (asOf !== null && asOf !== 'now') {
         return { status: 'historical_unavailable', as_of: asOf, data: null }
       }
       const url = new URL('/v1/rack/query', globalThis.location.origin)
-      url.searchParams.set('resource', 'vitals')
+      url.searchParams.set('resource', request.resource)
       url.searchParams.set('as_of', 'now')
+      if (request.thread_id !== undefined) url.searchParams.set('thread_id', request.thread_id)
       const response = await globalThis.fetch(url, {
         cache: 'no-store',
         headers: { Accept: 'application/json' },
       })
       if (!response.ok) {
-        throw new Error(`Vitals are unavailable (${response.status})`)
+        throw new Error(`Memory instrumentation is unavailable (${response.status})`)
       }
       return parseRackQueryResult(await response.json())
     }

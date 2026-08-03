@@ -484,7 +484,7 @@ class VitalsSpendLane(ContractModel):
 
 
 class VitalsSpend(ContractModel):
-    source_view: Literal["v_spend_rate"]
+    source_view: Literal["v_spend_rate", "spend_event"]
     latest_minute: datetime | None
     lanes: list[VitalsSpendLane]
 
@@ -611,6 +611,69 @@ class VitalsSnapshot(ContractModel):
         return self
 
 
+class MemoryGraphQuery(ContractModel):
+    principal_id: NonBlankString
+    memory_ids: list[UUID] | None
+
+
+class MemoryGraphSnapshot(ContractModel):
+    as_of: datetime
+    graph_edge_sim: float
+    nodes: list[JsonObject]
+    edges: list[JsonObject]
+    omitted_memory_ids: list[UUID]
+
+
+class ScorerConsoleQuery(ContractModel):
+    principal_id: NonBlankString
+    thread_id: UUID | None
+    as_of: Literal["now"] = "now"
+
+
+class ScorerValues(ContractModel):
+    tau: float = Field(strict=True, ge=0, le=1)
+    top_k: int = Field(strict=True, ge=1, le=8)
+    budget_tokens: int = Field(strict=True, gt=0)
+    half_life_time_days: float = Field(strict=True, gt=0)
+    half_life_hist_days: float = Field(strict=True, gt=0)
+    weights: dict[Literal["sem", "kw", "time", "proj", "freq", "hist"], float]
+
+
+class ScorerConsoleSnapshot(ContractModel):
+    as_of: datetime
+    scope: Literal["GLOBAL", "CURRENT"]
+    thread_id: UUID | None
+    descriptors: list[JsonObject]
+    active_version: NonBlankString
+    configurations: list[JsonObject]
+    activations: list[JsonObject]
+    proposed_versions: list[JsonObject]
+    accuracy: list[JsonObject]
+    candidates: list[JsonObject]
+
+
+class ScorerConfigurationView(ContractModel):
+    version: NonBlankString
+    created_at: datetime
+    status: Literal["active", "proposed", "inactive"]
+    values: ScorerValues
+    replay: JsonObject | None
+
+
+class CreateScorerConfigRequest(ContractModel):
+    event_uid: ULID
+    base_version: NonBlankString
+    values: ScorerValues
+    actor_class: Literal["human"] = "human"
+    machine_id: NonBlankString
+
+
+class ActivateScorerConfigRequest(ContractModel):
+    event_uid: ULID
+    actor_class: Literal["human"] = "human"
+    machine_id: NonBlankString
+
+
 class ProblemDetail(BaseModel):
     """RFC 7807 body; extension members are permitted by that standard."""
 
@@ -689,6 +752,9 @@ _MEMORY_LIST_RESPONSE = TypeAdapter(PagedMemoryListResponse)
 _SEARCH_RESPONSE = TypeAdapter(SearchResponse)
 _SPEND_EVENTS_RESPONSE = TypeAdapter(SpendEventsResponse)
 _VITALS_SNAPSHOT = TypeAdapter(VitalsSnapshot)
+_MEMORY_GRAPH_SNAPSHOT = TypeAdapter(MemoryGraphSnapshot)
+_SCORER_CONSOLE_SNAPSHOT = TypeAdapter(ScorerConsoleSnapshot)
+_SCORER_CONFIGURATION = TypeAdapter(ScorerConfigurationView)
 _EXTRACTION_RESPONSE = TypeAdapter(ExtractionResponse)
 _SEED_RESPONSE = TypeAdapter(SeedResponse)
 _QUEUE_RESPONSE = TypeAdapter(QueueResponse)
@@ -835,6 +901,40 @@ class SpineClient:
 
         response = await self._request("GET", "v1/vitals")
         return _expect_success(response, status=200, adapter=_VITALS_SNAPSHOT)
+
+    async def thread_vitals_snapshot(self, thread_id: UUID) -> VitalsSnapshot:
+        response = await self._request("GET", f"v1/vitals/threads/{thread_id}")
+        return _expect_success(response, status=200, adapter=_VITALS_SNAPSHOT)
+
+    async def memory_graph(self, request: MemoryGraphQuery) -> MemoryGraphSnapshot:
+        response = await self._request(
+            "POST", "v1/memory-graph/query", json_body=_request_body(request)
+        )
+        return _expect_success(response, status=200, adapter=_MEMORY_GRAPH_SNAPSHOT)
+
+    async def scorer_console(self, request: ScorerConsoleQuery) -> ScorerConsoleSnapshot:
+        response = await self._request(
+            "POST", "v1/scorer-console/query", json_body=_request_body(request)
+        )
+        return _expect_success(response, status=200, adapter=_SCORER_CONSOLE_SNAPSHOT)
+
+    async def create_scorer_config(
+        self, request: CreateScorerConfigRequest
+    ) -> ScorerConfigurationView:
+        response = await self._request(
+            "POST", "v1/scorer-configs", json_body=_request_body(request)
+        )
+        return _expect_success(response, status=200, adapter=_SCORER_CONFIGURATION)
+
+    async def activate_scorer_config(
+        self, version: str, request: ActivateScorerConfigRequest
+    ) -> ScorerConfigurationView:
+        response = await self._request(
+            "POST",
+            f"v1/scorer-configs/{version}/activate",
+            json_body=_request_body(request),
+        )
+        return _expect_success(response, status=200, adapter=_SCORER_CONFIGURATION)
 
     async def create_extraction(self, request: ExtractionRequest) -> ExtractionResponse:
         response = await self._request("POST", "v1/extractions", json_body=_request_body(request))

@@ -18,6 +18,7 @@ import type {
   RemovalReason,
   ScoredMemoryCard,
 } from './protocol'
+import { ContributionBars, useContributionMap } from './ContributionBars'
 
 const LONG_PRESS_MS = 550
 const LONG_PRESS_MOVE_TOLERANCE_PX = 10
@@ -791,6 +792,7 @@ interface MemoryCardFrameProps {
 }
 
 function MemoryCardFrame({ card, tone, status, action }: MemoryCardFrameProps) {
+  const contributions = useContributionMap()
   return (
     <article
       className={`memory-card memory-card--${tone}`}
@@ -817,6 +819,7 @@ function MemoryCardFrame({ card, tone, status, action }: MemoryCardFrameProps) {
           <strong>{score(card.score)}</strong>
         </div>
         <FeatureScores features={card.features} />
+        <ContributionBars values={contributions[card.memory_id]} />
       </div>
       <code className="memory-card__id">{card.memory_id}</code>
     </article>

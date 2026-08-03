@@ -1,0 +1,26 @@
+{
+  "fixture": "M2K REGRESSION",
+  "deterministic": true,
+  "desktop": {
+    "viewport": {"width": 1440, "height": 900},
+    "graph_nodes": 2,
+    "global_scope_pressed": true,
+    "scorer_controls": 11,
+    "weighted_contribution_bars": 7,
+    "honest_not_scored_yet": true,
+    "enacted_version": "m2k-01KZ4R3ZD0AAG4SBA7QJM5PJF3",
+    "horizontal_overflow": false
+  },
+  "mobile": {
+    "viewport": {"width": 390, "height": 844},
+    "graph_launcher": true,
+    "console_launcher": true,
+    "scorer_controls": 11,
+    "horizontal_overflow": false
+  },
+  "screenshots": [
+    "01-graph-desktop-1440x900.png",
+    "02-console-desktop-1440x900.png",
+    "03-console-mobile-390x844.png"
+  ]
+}

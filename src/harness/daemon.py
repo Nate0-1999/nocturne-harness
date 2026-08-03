@@ -58,9 +58,16 @@ from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.seed import SeedIngestionService, SeedUploadRequest
 from harness.spine_client import (
+    ActivateScorerConfigRequest,
     BatchDecisionResponse,
+    CreateScorerConfigRequest,
+    MemoryGraphQuery,
+    MemoryGraphSnapshot,
     QueueDecisionRequest,
     QueueDecisionResponse,
+    ScorerConfigurationView,
+    ScorerConsoleQuery,
+    ScorerConsoleSnapshot,
     SpineClient,
     SpineClientError,
     VitalsSnapshot,
@@ -75,6 +82,15 @@ type EnvelopeSender = Callable[[Envelope], Awaitable[None]]
 type EnvelopeHandler = Callable[[Envelope, EnvelopeSender], Awaitable[None]]
 type EnvelopeForwarder = Callable[[Envelope], Awaitable[None]]
 type VitalsSnapshotReader = Callable[[], Awaitable[VitalsSnapshot]]
+type ThreadVitalsSnapshotReader = Callable[[UUID], Awaitable[VitalsSnapshot]]
+type MemoryGraphReader = Callable[[str | None], Awaitable[MemoryGraphSnapshot]]
+type ScorerConsoleReader = Callable[[str | None], Awaitable[ScorerConsoleSnapshot]]
+type ScorerConfigWriter = Callable[
+    [CreateScorerConfigRequest], Awaitable[ScorerConfigurationView]
+]
+type ScorerProposalActivator = Callable[
+    [str, ActivateScorerConfigRequest], Awaitable[ScorerConfigurationView]
+]
 
 _OUTBOX_BUFFER_SIZE = 256
 _RESYNC_CLOSE_REASON = "snapshot resync required"
@@ -90,6 +106,8 @@ _RACK_MODULE_IDS = frozenset(
         "thread_end",
         "palace_queue",
         "model_device",
+        "memory_graph",
+        "injection_console",
     }
 )
 _RACK_FRAME_CSP = "; ".join(
@@ -185,6 +203,11 @@ def create_app(
     forward_unknown: EnvelopeForwarder | None = None,
     envelope_factory: EnvelopeFactory | None = None,
     vitals_snapshot_reader: VitalsSnapshotReader | None = None,
+    thread_vitals_snapshot_reader: ThreadVitalsSnapshotReader | None = None,
+    memory_graph_reader: MemoryGraphReader | None = None,
+    scorer_console_reader: ScorerConsoleReader | None = None,
+    scorer_config_writer: ScorerConfigWriter | None = None,
+    scorer_proposal_activator: ScorerProposalActivator | None = None,
     before_static_mount: Callable[[FastAPI], None] | None = None,
 ) -> FastAPI:
     """Create the daemon with process-scoped H7 state and extensible routing."""
@@ -218,7 +241,7 @@ def create_app(
 
     @app.get("/v1/rack/query", response_model=RackQueryResult)
     async def rack_query(
-        resource: Literal["vitals", "parameters"],
+        resource: Literal["vitals", "parameters", "memory_graph", "scorer_console"],
         as_of: str | None = None,
         thread_id: str | None = None,
     ) -> RackQueryResult:
@@ -256,6 +279,21 @@ def create_app(
                 as_of=None,
                 data=snapshot,
             )
+        if resource in {"memory_graph", "scorer_console"}:
+            if as_of not in {None, "now"}:
+                return RackQueryResult(status="historical_unavailable", as_of=as_of, data=None)
+            reader = memory_graph_reader if resource == "memory_graph" else scorer_console_reader
+            if reader is None:
+                raise HTTPException(
+                    status_code=503, detail="Memory instrumentation is unavailable."
+                )
+            try:
+                snapshot = await reader(thread_id)
+            except (SpineClientError, ValueError):
+                raise HTTPException(
+                    status_code=503, detail="Memory instrumentation is unavailable."
+                ) from None
+            return RackQueryResult(status="live", as_of=None, data=snapshot)
         if as_of not in {None, "now"}:
             return RackQueryResult(status="historical_unavailable", as_of=as_of, data=None)
         if vitals_snapshot_reader is None:
@@ -264,13 +302,44 @@ def create_app(
                 detail="Palace Vitals are unavailable.",
             )
         try:
-            snapshot = await vitals_snapshot_reader()
+            if thread_id is not None:
+                if thread_vitals_snapshot_reader is None:
+                    raise HTTPException(status_code=503, detail="Thread Vitals are unavailable.")
+                snapshot = await thread_vitals_snapshot_reader(UUID(thread_id))
+            else:
+                snapshot = await vitals_snapshot_reader()
         except SpineClientError:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Palace Vitals are unavailable.",
             ) from None
         return RackQueryResult(status="live", as_of=None, data=snapshot)
+
+    @app.post("/v1/rack/scorers", response_model=ScorerConfigurationView)
+    async def write_scorer(body: CreateScorerConfigRequest) -> ScorerConfigurationView:
+        if scorer_config_writer is None:
+            raise HTTPException(status_code=503, detail="Injection controls are unavailable.")
+        try:
+            return await scorer_config_writer(body)
+        except SpineClientError:
+            raise HTTPException(
+                status_code=503, detail="Injection controls are unavailable."
+            ) from None
+
+    @app.post(
+        "/v1/rack/scorers/{version}/activate", response_model=ScorerConfigurationView
+    )
+    async def activate_scorer(
+        version: str, body: ActivateScorerConfigRequest
+    ) -> ScorerConfigurationView:
+        if scorer_proposal_activator is None:
+            raise HTTPException(status_code=503, detail="Injection controls are unavailable.")
+        try:
+            return await scorer_proposal_activator(version, body)
+        except SpineClientError:
+            raise HTTPException(
+                status_code=503, detail="Injection controls are unavailable."
+            ) from None
 
     @app.post("/v1/rack/parameters", response_model=ParameterSnapshot)
     async def write_parameter(body: ParameterWriteRequest) -> ParameterSnapshot:
@@ -518,6 +587,26 @@ def create_dev_app(
     async def read_vitals_snapshot() -> VitalsSnapshot:
         return await owned_spine.vitals_snapshot()
 
+    async def read_thread_vitals_snapshot(thread_id: UUID) -> VitalsSnapshot:
+        return await owned_spine.thread_vitals_snapshot(thread_id)
+
+    async def read_memory_graph(thread_id: str | None) -> MemoryGraphSnapshot:
+        memory_ids = None
+        if thread_id is not None:
+            snapshot = memory_contexts.snapshot(thread_id)
+            memory_ids = [] if snapshot is None else sorted(snapshot.member_ids, key=str)
+        return await owned_spine.memory_graph(
+            MemoryGraphQuery(principal_id=principal_id, memory_ids=memory_ids)
+        )
+
+    async def read_scorer_console(thread_id: str | None) -> ScorerConsoleSnapshot:
+        return await owned_spine.scorer_console(
+            ScorerConsoleQuery(
+                principal_id=principal_id,
+                thread_id=None if thread_id is None else UUID(thread_id),
+            )
+        )
+
     loop = RunLoop(
         runner,
         factory,
@@ -618,6 +707,11 @@ def create_dev_app(
         run_loop=loop,
         envelope_factory=factory,
         vitals_snapshot_reader=read_vitals_snapshot,
+        thread_vitals_snapshot_reader=read_thread_vitals_snapshot,
+        memory_graph_reader=read_memory_graph,
+        scorer_console_reader=read_scorer_console,
+        scorer_config_writer=getattr(owned_spine, "create_scorer_config", None),
+        scorer_proposal_activator=getattr(owned_spine, "activate_scorer_config", None),
         before_static_mount=configure_extraction_routes,
     )
 

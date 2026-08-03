@@ -12,6 +12,19 @@
   color: var(--ink);
 }
 
+/* M2K memory instruments: dense telemetry without dashboard card chrome. */
+.instrument-launchers { display:flex; gap:.35rem; margin-left:auto; }
+.instrument-launchers button,.scope-switch button { border:1px solid rgba(116,242,255,.25); background:transparent; color:var(--ink-muted); padding:.35rem .62rem; text-transform:uppercase; letter-spacing:.08em; }
+.instrument-launchers button[aria-expanded="true"],.scope-switch button[aria-pressed="true"] { color:#9df8ff; border-color:#74f2ff; box-shadow:0 0 16px rgba(70,230,255,.14) inset; }
+.rack-overlay-module--instrument { inset:4.5rem 3vw 2rem; background:rgba(3,8,13,.96); border:1px solid rgba(116,242,255,.24); box-shadow:0 24px 80px #000; }
+.instrument { min-height:100vh; padding:1.2rem; color:#dce9ee; background:radial-gradient(circle at 20% 0,rgba(27,103,120,.15),transparent 38%),#05090d; box-sizing:border-box; }
+.instrument>header { display:flex; align-items:end; justify-content:space-between; border-bottom:1px solid rgba(116,242,255,.2); padding-bottom:.75rem; }
+.instrument h1,.instrument h2 { margin:.1rem 0; font-weight:460; letter-spacing:.025em; }.instrument small { color:#66dce9; letter-spacing:.16em; }.scope-switch{display:flex}.scope-switch button{cursor:pointer}
+.graph-stage { display:grid; grid-template-columns:minmax(0,3fr) minmax(15rem,1fr); min-height:70vh; }.graph-stage svg{width:100%;height:70vh;overflow:visible}.graph-stage svg>line{stroke:#45606b;stroke-width:.25}.graph-stage svg>line[data-kind="lineage"]{stroke:#e8916c;stroke-dasharray:1 1}.graph-node{cursor:pointer;outline:none}.graph-node circle:not(.graph-pin){fill:#296d7a;stroke:#8af6ff;stroke-width:.35}.graph-node circle[data-kind="preference"]{fill:#704b86}.graph-node circle[data-kind="procedure"]{fill:#7a6633}.graph-node[data-status="quarantined"]{opacity:.42}.graph-node[data-current="true"] circle:not(.graph-pin){stroke:#fff;stroke-width:.8}.graph-pin{fill:none;stroke:#e9c46a;stroke-width:.4}.graph-node text{font-size:2.1px;fill:#b9cbd1;text-anchor:middle}.graph-stage aside{border-left:1px solid rgba(116,242,255,.18);padding:1rem;overflow:auto}.graph-stage aside em{color:#74f2ff}
+.console-grid{display:grid;grid-template-columns:minmax(17rem,1fr) minmax(24rem,2fr);gap:1.5rem;padding-top:1rem}.console-active{border-left:2px solid #74f2ff;padding-left:.7rem}.control-bank{display:grid;grid-template-columns:1fr 1fr;gap:.55rem}.control-bank label{display:flex;justify-content:space-between;gap:.6rem;color:#9db0b7}.control-bank input{width:6.5rem;background:#071118;color:#dff;border:1px solid #294b55;padding:.35rem}.control-bank .weight-ok,.control-bank .weight-bad{grid-column:1/-1}.weight-ok{color:#69dfb0}.weight-bad{color:#ff8b8b}.enact{grid-column:1/-1;background:#74f2ff;color:#041015;border:0;padding:.7rem;text-transform:uppercase;letter-spacing:.12em}.candidate-ledger article{padding:.65rem 0;border-top:1px solid rgba(116,242,255,.14)}.candidate-ledger article>header{display:flex;justify-content:space-between}.candidate-ledger article span{color:#89a3ac}
+.contribution-bars{display:grid;gap:.2rem;margin-top:.55rem}.contribution-row{display:grid;grid-template-columns:2.5rem 1fr 7.5rem;align-items:center;gap:.5rem;font:10px/1.3 ui-monospace,monospace;color:#8ca5ad}.contribution-row i{height:3px;background:#11242b}.contribution-row b{display:block;height:100%;background:#5de2ec}.contribution-row b[data-negative="true"]{background:#e27878}.contribution-row output{text-align:right}.contribution-empty{font:10px ui-monospace,monospace;color:#789098}
+@media(max-width:760px){.instrument-launchers{display:flex;margin-left:0;gap:.15rem}.instrument-launchers button{padding:.25rem;font-size:.5rem}.rack-overlay-module--instrument{inset:3.25rem 0 0}.graph-stage,.console-grid{grid-template-columns:1fr}.graph-stage svg{height:48vh}.graph-stage aside{border-left:0;border-top:1px solid rgba(116,242,255,.18)}.control-bank{grid-template-columns:1fr}.control-bank .weight-ok,.control-bank .weight-bad,.enact{grid-column:1}.instrument>header{align-items:start;gap:.5rem}.instrument{padding:.8rem}}
+
 .rack-shell::before,
 .rack-shell::after {
   position: absolute;
@@ -1256,11 +1269,13 @@
   position: absolute;
   z-index: 40;
   top: 0.42rem;
-  right: 8.67rem;
+  right: auto;
+  left: 18rem;
   display: flex;
   align-items: center;
   height: 3.35rem;
   gap: 0.3rem;
+  pointer-events: none;
 }
 
 .rack-set-controls > span {
@@ -1282,6 +1297,7 @@
   font-size: 0.54rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  pointer-events: auto;
 }
 
 .rack-set-controls button:not(:disabled):hover {
@@ -1529,7 +1545,8 @@
   }
 
   .rack-set-controls {
-    right: 7.7rem;
+    right: auto;
+    left: 15rem;
   }
 }
 

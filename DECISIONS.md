@@ -908,3 +908,29 @@ settings store would compete with RunLoop's model resolution. Hydrating
 parameter state from transcripts would violate M2D's capture-only fence.
 Resurrecting MODEL_INTELLIGENCE_FLOOR would reverse A-021; a global floor control
 can exist only if later law binds the current policy grammar to the registry.
+
+## 029 — Memory instruments use the public Rack bridge [P2.4, P2.5, P4]
+
+**Decision.** Adopt Garden A-035. Add Memory Graph and Injection Console as
+first-party sandboxed Rack overlays with only the public query, action,
+selection, and scope surfaces. The daemon owns Spine credentials and translates
+GLOBAL to a null corpus/thread filter and CURRENT to the selected thread's
+authoritative committed context. Node selection publishes a memory identity;
+the existing Memory Palace editor remains the only edit surface.
+
+The Injection Console binds exactly the eleven enacted scorer descriptors.
+“Enact version” creates a new version, while learner proposals use their
+distinct activation action. Gate and Palace cards read server-recorded weighted
+contributions and say “Not scored yet” when no event exists. Vitals applies the
+same persisted GLOBAL/CURRENT scope control and routes CURRENT to thread receipt
+lanes.
+
+**Motivation.** Reusing the Rack seams keeps credentials and authority out of
+residents, while selection joins graph inspection to the already proven CAS
+editor instead of creating competing controls. Exact server contributions keep
+the UI explanatory without making it an accountant.
+
+**Rejected alternatives.** A second graph editor violates DRY and CAS
+ownership. Three-dimensional rendering, bulk graph actions, and cross-Palace
+views are M3. A preview button would claim M2P what-if semantics that M2K does
+not enact.

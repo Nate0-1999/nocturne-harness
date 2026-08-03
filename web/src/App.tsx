@@ -14,6 +14,8 @@ import {
 import { AssistantMarkdown } from './AssistantMarkdown'
 import { MemoryGate } from './MemoryGate'
 import { MemoryPanel } from './MemoryPanel'
+import { MemoryGraph } from './MemoryGraph'
+import { InjectionConsole } from './InjectionConsole'
 import { ModelDevice } from './ModelDevice'
 import { VitalsModule } from './VitalsModule'
 import type {
@@ -152,7 +154,7 @@ function App() {
 
 function useVerifiedRegressionFixture(enabled: boolean): boolean | null {
   const requestedFixture = new URLSearchParams(globalThis.location.search).get('fixture')
-  const markerRequested = ['M2C REGRESSION', 'M2G REGRESSION', 'M2I REGRESSION', 'M2J REGRESSION'].includes(
+  const markerRequested = ['M2C REGRESSION', 'M2G REGRESSION', 'M2I REGRESSION', 'M2J REGRESSION', 'M2K REGRESSION'].includes(
     requestedFixture ?? '',
   )
   const [isVerified, setIsVerified] = useState<boolean | null>(
@@ -403,6 +405,16 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           />
         </div>
       )}
+      {drawerModule === 'memory_graph' && openGate === null && (
+        <div className="rack-overlay-module rack-overlay-module--instrument" data-rack-module="memory_graph">
+          <RackPluginIframe manifest={RACK_MANIFESTS.memory_graph} isRegressionFixture={isRegressionFixture} />
+        </div>
+      )}
+      {drawerModule === 'injection_console' && openGate === null && (
+        <div className="rack-overlay-module rack-overlay-module--instrument" data-rack-module="injection_console">
+          <RackPluginIframe manifest={RACK_MANIFESTS.injection_console} isRegressionFixture={isRegressionFixture} />
+        </div>
+      )}
       {isRegressionFixture && (
         <RegressionFixtureMarker />
       )}
@@ -640,7 +652,7 @@ function RackRemoteApp({ moduleId }: { moduleId: RackModuleManifest['id'] }) {
 
 function RegressionFixtureMarker({ remote = false }: { remote?: boolean }) {
   const requested = new URLSearchParams(globalThis.location.search).get('fixture')
-  const known = new Set(['M2C REGRESSION', 'M2G REGRESSION', 'M2I REGRESSION', 'M2J REGRESSION'])
+  const known = new Set(['M2C REGRESSION', 'M2G REGRESSION', 'M2I REGRESSION', 'M2J REGRESSION', 'M2K REGRESSION'])
   const label = requested !== null && known.has(requested) ? requested : 'M2C REGRESSION'
   return (
     <div
@@ -678,6 +690,10 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
         <PalaceQueueModule />
       ) : moduleId === 'model_device' ? (
         <ModelDevice />
+      ) : moduleId === 'memory_graph' ? (
+        <MemoryGraph />
+      ) : moduleId === 'injection_console' ? (
+        <InjectionConsole />
       ) : (
         <GateModule />
       )}
@@ -701,8 +717,10 @@ function HeaderModule() {
   const threadsOpen = selection?.kind === 'module' && selection.id === 'threads'
   const memoriesOpen = selection?.kind === 'module' && selection.id === 'memory'
   const queueOpen = selection?.kind === 'module' && selection.id === 'palace_queue'
+  const graphOpen = selection?.kind === 'module' && selection.id === 'memory_graph'
+  const consoleOpen = selection?.kind === 'module' && selection.id === 'injection_console'
 
-  function toggleModule(moduleId: 'threads' | 'memory' | 'palace_queue') {
+  function toggleModule(moduleId: 'threads' | 'memory' | 'palace_queue' | 'memory_graph' | 'injection_console') {
     const alreadyOpen = selection?.kind === 'module' && selection.id === moduleId
     selectionBus.select(alreadyOpen ? null : { kind: 'module', id: moduleId })
   }
@@ -747,6 +765,10 @@ function HeaderModule() {
       >
         Palace queue
       </button>
+      <nav className="instrument-launchers" aria-label="Memory instruments">
+        <button type="button" aria-expanded={graphOpen} onClick={() => toggleModule('memory_graph')}>Graph</button>
+        <button type="button" aria-expanded={consoleOpen} onClick={() => toggleModule('injection_console')}>Injection</button>
+      </nav>
 
       <p
         className={`connection connection--${snapshot.connection}`}

@@ -6,7 +6,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 
-import { useRackPlugin, useRackSelection } from './rack'
+import { useRackPlugin, useRackSelection, useRackSnapshot } from './rack'
 import {
   contiguousPolylineSegments,
   formatExactUsd,
@@ -57,6 +57,8 @@ const countFormatter = new Intl.NumberFormat(undefined, {
 export function VitalsModule() {
   const { events, query, selection: selectionBus } = useRackPlugin()
   const selection = useRackSelection()
+  const rack = useRackSnapshot()
+  const [scope, setScope] = useState<'GLOBAL' | 'CURRENT'>('GLOBAL')
   const [requestSequence, setRequestSequence] = useState(0)
   const [load, setLoad] = useState<VitalsLoadState>({
     snapshot: null,
@@ -68,7 +70,10 @@ export function VitalsModule() {
 
   useEffect(() => {
     let active = true
-    void query.query({ resource: 'vitals', as_of: 'now' })
+    void query.query({
+      resource: 'vitals', as_of: 'now',
+      thread_id: scope === 'CURRENT' ? rack.selectedThreadId ?? undefined : undefined,
+    })
       .then((result) => {
         if (result.status !== 'live' || result.data === null) {
           throw new TypeError('Live Palace vitals were not returned')
@@ -90,7 +95,11 @@ export function VitalsModule() {
     return () => {
       active = false
     }
-  }, [query, requestSequence])
+  }, [query, rack.selectedThreadId, requestSequence, scope])
+
+  useEffect(() => {
+    void events.dispatch({ type: 'rack.scope.get', module_id: 'vitals' }).then(setScope)
+  }, [events])
 
   useEffect(() => {
     const interval = globalThis.setInterval(() => {
@@ -215,6 +224,10 @@ export function VitalsModule() {
           <span>Through {formatMinute(snapshot.as_of)}</span>
         </p>
         <div className="vitals-strip__status" aria-live="polite">
+          <div className="scope-switch" aria-label="Vitals scope">
+            <button aria-pressed={scope === 'GLOBAL'} onClick={() => { setScope('GLOBAL'); void events.dispatch({ type: 'rack.scope.set', module_id: 'vitals', scope: 'GLOBAL' }) }}>Global</button>
+            <button aria-pressed={scope === 'CURRENT'} onClick={() => { setScope('CURRENT'); void events.dispatch({ type: 'rack.scope.set', module_id: 'vitals', scope: 'CURRENT' }) }}>Current</button>
+          </div>
           {load.failed && (
             <span role="alert">Vitals couldn’t refresh. Chat is still available.</span>
           )}
