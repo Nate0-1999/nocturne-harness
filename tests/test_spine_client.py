@@ -102,6 +102,9 @@ def test_client_exposes_all_spine_routes() -> None:
         "search",
         "record_spend_events",
         "vitals_snapshot",
+        "create_extraction",
+        "approval_queue",
+        "decide_queue_item",
     }
 
 

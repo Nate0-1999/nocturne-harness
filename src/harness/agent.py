@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, SecretStr, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, StrictStr
 from pydantic_ai import Agent, PromptedOutput, UsageLimits
 from pydantic_ai.exceptions import UserError
 from pydantic_ai.models import Model, infer_model
@@ -39,6 +39,12 @@ REMEMBER_DRAFT_INSTRUCTION = (
     "supplied memory. Keywords must be distinct nouns or terms. Return only "
     "the requested structured result with no commentary."
 )
+EXTRACTION_INSTRUCTION = (
+    "Read the complete thread transcript. Return a concise working summary, open loops, and at "
+    "most five durable memory candidates. Each candidate must be atomic, stand alone, preserve "
+    "uncertainty, and include 2-5 distinct lowercase searchable keywords. Do not extract transient "
+    "chat or facts that are not useful beyond this thread."
+)
 
 
 class ModelConfigurationError(ValueError):
@@ -52,6 +58,27 @@ class RememberDraft(BaseModel):
 
     label: StrictStr
     keywords: list[StrictStr]
+
+
+class ExtractionCandidateDraft(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    label: StrictStr
+    body: StrictStr
+    kind: Literal["fact", "preference", "procedure", "project_note", "persona"]
+    keywords: list[StrictStr] = Field(min_length=2, max_length=5)
+
+
+class ExtractionDraft(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    working_summary: StrictStr
+    open_loops: list[StrictStr]
+    candidates: list[ExtractionCandidateDraft] = Field(max_length=5)
+
+
+class ExtractionVerdictDraft(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    verdict: Literal["new", "merge", "supersede", "contradict"]
+    target_ids: list[UUID] = Field(max_length=5)
 
 
 @dataclass(frozen=True, slots=True)
@@ -108,6 +135,23 @@ class HarnessAgent:
             output_type=PromptedOutput(RememberDraft),
             instructions=REMEMBER_DRAFT_INSTRUCTION,
             name="harness-memory-label",
+        )
+        self._extraction_agent = Agent(
+            self._default_model,
+            output_type=PromptedOutput(ExtractionDraft),
+            instructions=EXTRACTION_INSTRUCTION,
+            name="harness-thread-extractor",
+        )
+        self._extraction_verdict_agent = Agent(
+            self._default_model,
+            output_type=PromptedOutput(ExtractionVerdictDraft),
+            instructions=(
+                "Compare one extracted candidate with machine-fetched corpus neighbors. "
+                "Propose exactly one verdict: new, merge, supersede, or contradict. Target IDs "
+                "must be selected only from the supplied neighbors. Use new with no targets when "
+                "the candidate stands alone. Return structured data only."
+            ),
+            name="harness-extraction-verdict",
         )
 
     @property
@@ -235,6 +279,48 @@ class HarnessAgent:
             memory_id=created.memory_id,
             label=created.label,
         )
+
+    async def extract_thread(
+        self,
+        transcript: str,
+        *,
+        model: Model | str | None = None,
+    ) -> ExtractionDraft:
+        """Run the tools-free cheap-model extraction pass over one durable transcript."""
+
+        result = await self._extraction_agent.run(
+            transcript,
+            model=self._select_model(model),
+            usage_limits=self._usage_limits,
+        )
+        if not isinstance(result.output, ExtractionDraft):
+            raise TypeError("extraction agent returned no structured result")
+        return result.output
+
+    async def propose_extraction_verdict(
+        self,
+        candidate: ExtractionCandidateDraft,
+        neighbors: list[dict[str, str]],
+        *,
+        model: Model | str | None = None,
+    ) -> ExtractionVerdictDraft:
+        """Give the thread-aware extractor the corpus neighborhood before queue birth."""
+
+        result = await self._extraction_verdict_agent.run(
+            f"Candidate: {candidate.model_dump_json()}\nNeighbors: {neighbors!r}",
+            model=self._select_model(model),
+            usage_limits=self._label_usage_limits,
+        )
+        if not isinstance(result.output, ExtractionVerdictDraft):
+            raise TypeError("extraction verdict agent returned no structured result")
+        allowed = {UUID(item["memory_id"]) for item in neighbors}
+        if any(target not in allowed for target in result.output.target_ids):
+            raise ValueError("extraction verdict targeted a memory outside its fetched neighbors")
+        if result.output.verdict == "new" and result.output.target_ids:
+            raise ValueError("new extraction verdict cannot have targets")
+        if result.output.verdict != "new" and not result.output.target_ids:
+            raise ValueError("non-new extraction verdict requires a target")
+        return result.output
 
     async def dispatch(
         self,

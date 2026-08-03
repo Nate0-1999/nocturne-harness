@@ -20,7 +20,13 @@ import {
   type RackEnvelopeEvent,
   type RackResizeEvent,
 } from './rackEvents'
-import { RACK_BOUNDS, VITALS_RACK_BOUNDS, type RackBounds } from './rackLayout'
+import {
+  RACK_BOUNDS,
+  VITALS_RACK_BOUNDS,
+  loadRackLayout,
+  persistRackLayout,
+  type RackBounds,
+} from './rackLayout'
 import { harnessClient } from './socket'
 import {
   useHarnessStore,
@@ -30,7 +36,7 @@ import {
   type ThreadState,
 } from './store'
 
-export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'gate'
+export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'gate' | 'thread_end'
 export type RackModuleSlot = 'header' | 'panel' | 'strip' | 'overlay'
 export type RackMemoryPanelState = MemoryPanelState
 
@@ -40,7 +46,8 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
     value === 'chat' ||
     value === 'memory' ||
     value === 'vitals' ||
-    value === 'gate'
+    value === 'gate' ||
+    value === 'thread_end'
 }
 
 export interface RackSnapshot {
@@ -56,6 +63,17 @@ export type RackAction =
   | { type: 'thread.select'; thread_id: string }
   | { type: 'prompt.submit'; prompt: string }
   | { type: 'run.cancel'; run_id?: Ulid }
+  | { type: 'thread.archive' }
+  | { type: 'queue.load'; thread_id?: string }
+  | { type: 'rack.scope.get'; module_id: RackModuleId }
+  | { type: 'rack.scope.set'; module_id: RackModuleId; scope: 'GLOBAL' | 'CURRENT' }
+  | {
+      type: 'queue.decide'
+      item_uid: string
+      decision: 'approve' | 'deny'
+      approval_mode: 'explicit' | 'passive'
+      actor_class: 'human' | 'passive'
+    }
   | { type: 'gate.commit'; decision: GateCommitPayload }
   | { type: 'memory.refresh' }
   | { type: 'memory.add'; memory_id: string }
@@ -86,6 +104,7 @@ export interface RackModuleManifest {
   bounds: RackBounds
   movable: boolean
   law_bound: boolean
+  default_scope: 'GLOBAL' | 'CURRENT'
 }
 
 export interface RackQueryRequest {
@@ -136,6 +155,10 @@ export type RackActionResult<Action extends RackAction> =
     ? string
     : Action['type'] extends 'thread.select'
       ? void
+      : Action['type'] extends 'thread.archive' | 'queue.load' | 'queue.decide'
+        ? JsonValue
+        : Action['type'] extends 'rack.scope.get' | 'rack.scope.set'
+          ? 'GLOBAL' | 'CURRENT'
       : Ulid
 
 const commonPanelBounds: RackBounds = {
@@ -160,6 +183,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     },
     movable: false,
     law_bound: false,
+    default_scope: 'GLOBAL',
   },
   threads: {
     id: 'threads',
@@ -172,6 +196,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     bounds: RACK_BOUNDS.threads,
     movable: true,
     law_bound: false,
+    default_scope: 'CURRENT',
   },
   chat: {
     id: 'chat',
@@ -180,10 +205,11 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'visualizer',
     slot: 'panel',
     streams: ['thread.snapshot', 'run.*', 'error'],
-    actions: ['prompt.submit', 'run.cancel'],
+    actions: ['prompt.submit', 'run.cancel', 'thread.archive', 'queue.load', 'queue.decide'],
     bounds: RACK_BOUNDS.chat,
     movable: true,
     law_bound: false,
+    default_scope: 'CURRENT',
   },
   memory: {
     id: 'memory',
@@ -196,6 +222,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     bounds: RACK_BOUNDS.memory,
     movable: true,
     law_bound: true,
+    default_scope: 'CURRENT',
   },
   vitals: {
     id: 'vitals',
@@ -208,6 +235,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     bounds: VITALS_RACK_BOUNDS,
     movable: false,
     law_bound: false,
+    default_scope: 'GLOBAL',
   },
   gate: {
     id: 'gate',
@@ -220,6 +248,20 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     bounds: commonPanelBounds,
     movable: false,
     law_bound: true,
+    default_scope: 'CURRENT',
+  },
+  thread_end: {
+    id: 'thread_end',
+    name: 'Thread Memory Review',
+    version: '1.0.0',
+    class: 'visualizer',
+    slot: 'overlay',
+    streams: ['thread.snapshot'],
+    actions: ['queue.load', 'queue.decide', 'rack.scope.get', 'rack.scope.set'],
+    bounds: commonPanelBounds,
+    movable: false,
+    law_bound: true,
+    default_scope: 'CURRENT',
   },
 }
 
@@ -251,7 +293,7 @@ function snapshotFromState(state: ReturnType<typeof useHarnessStore.getState>): 
 
 function dispatchRackAction<Action extends RackAction>(
   action: Action,
-): RackActionResult<Action> {
+): RackActionResult<Action> | Promise<RackActionResult<Action>> {
   try {
     switch (action.type) {
       case 'thread.create':
@@ -263,6 +305,50 @@ function dispatchRackAction<Action extends RackAction>(
         return harnessClient.submitPrompt(action.prompt) as RackActionResult<Action>
       case 'run.cancel':
         return harnessClient.cancelRun(action.run_id) as RackActionResult<Action>
+      case 'thread.archive': {
+        const threadId = getRackSnapshot().selectedThreadId
+        if (threadId === null) {
+          throw new Error('No selected thread to archive')
+        }
+        return fetchJson(`/v1/threads/${encodeURIComponent(threadId)}/archive`, {
+          method: 'POST',
+        }).then((result) => {
+          rackSelectionSurface.select({ kind: 'module', id: 'thread_end' })
+          return result as RackActionResult<Action>
+        })
+      }
+      case 'queue.decide':
+        return fetchJson(
+          `/v1/approval-queue/${encodeURIComponent(action.item_uid)}/decisions`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              decision: action.decision,
+              approval_mode: action.approval_mode,
+              actor_class: action.actor_class,
+              machine_id: 'harness-browser',
+            }),
+          },
+        ) as Promise<RackActionResult<Action>>
+      case 'queue.load': {
+        const query = action.thread_id === undefined
+          ? ''
+          : `?thread_id=${encodeURIComponent(action.thread_id)}`
+        return fetchJson(`/v1/approval-queue${query}`) as Promise<RackActionResult<Action>>
+      }
+      case 'rack.scope.get':
+        return loadRackLayout(globalThis.localStorage).scopes[action.module_id] as
+          RackActionResult<Action>
+      case 'rack.scope.set': {
+        const layout = loadRackLayout(globalThis.localStorage)
+        layout.scopes[action.module_id] = action.scope
+        persistRackLayout(globalThis.localStorage, layout)
+        globalThis.dispatchEvent(new CustomEvent('nocturne:rack-scope', {
+          detail: { module_id: action.module_id, scope: action.scope },
+        }))
+        return action.scope as RackActionResult<Action>
+      }
       case 'gate.commit':
         return harnessClient.commitGate(action.decision) as RackActionResult<Action>
       case 'memory.refresh':
@@ -290,6 +376,18 @@ function dispatchRackAction<Action extends RackAction>(
       .setTransportError(error instanceof Error ? error.message : 'Rack action failed')
     throw error
   }
+}
+
+async function fetchJson(path: string, init?: RequestInit): Promise<JsonValue> {
+  const response = await globalThis.fetch(path, {
+    cache: 'no-store',
+    credentials: 'same-origin',
+    ...init,
+  })
+  if (!response.ok) {
+    throw new Error(`Rack action failed (${response.status})`)
+  }
+  return await response.json() as JsonValue
 }
 
 export const rackQuerySurface: RackQuerySurface = {

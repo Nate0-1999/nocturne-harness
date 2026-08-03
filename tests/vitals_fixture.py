@@ -84,15 +84,24 @@ def vitals_payload() -> dict[str, Any]:
                 "count": 2,
                 "source": "memory_unit.status+pin",
             },
-            *[
-                {"metric": metric, "status": "not_recorded", "count": None, "source": None}
-                for metric in ("candidates_pending", "edges", "staged_units")
-            ],
+            {
+                "metric": "candidates_pending",
+                "status": "measured",
+                "count": 3,
+                "source": "memory_unit.status",
+            },
+            {
+                "metric": "edges",
+                "status": "measured",
+                "count": 4,
+                "source": "memory_edge",
+            },
+            {"metric": "staged_units", "status": "not_recorded", "count": None, "source": None},
             {
                 "metric": "queue_depth",
-                "status": "placeholder",
-                "count": None,
-                "source": None,
+                "status": "measured",
+                "count": 3,
+                "source": "approval_queue_item.state",
             },
         ],
     }

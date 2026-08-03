@@ -37,6 +37,7 @@ from harness.envelope import (
     StopReason,
     ThreadSnapshotRequestPayload,
 )
+from harness.extraction import ExtractionIdleScheduler, ExtractionService, ThreadEndResult
 from harness.memory_gate import MemoryGateTurnRunner
 from harness.memory_panel import MemoryPanelController, ThreadMemoryContextRegistry
 from harness.model_policy import (
@@ -48,7 +49,13 @@ from harness.onboarding import nocturne_home
 from harness.rack_query import RackQueryResult
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
-from harness.spine_client import SpineClient, SpineClientError, VitalsSnapshot
+from harness.spine_client import (
+    QueueDecisionRequest,
+    QueueDecisionResponse,
+    SpineClient,
+    SpineClientError,
+    VitalsSnapshot,
+)
 from harness.tools_memory import MemoryToolContext
 from harness.transcript import TranscriptJournal
 
@@ -63,7 +70,9 @@ type VitalsSnapshotReader = Callable[[], Awaitable[VitalsSnapshot]]
 _OUTBOX_BUFFER_SIZE = 256
 _RESYNC_CLOSE_REASON = "snapshot resync required"
 _RACK_FRAME_HOST = "rack.localhost"
-_RACK_MODULE_IDS = frozenset({"header", "threads", "chat", "memory", "gate", "vitals"})
+_RACK_MODULE_IDS = frozenset(
+    {"header", "threads", "chat", "memory", "gate", "vitals", "thread_end"}
+)
 _RACK_FRAME_CSP = "; ".join(
     (
         "default-src 'self'",
@@ -157,6 +166,7 @@ def create_app(
     forward_unknown: EnvelopeForwarder | None = None,
     envelope_factory: EnvelopeFactory | None = None,
     vitals_snapshot_reader: VitalsSnapshotReader | None = None,
+    before_static_mount: Callable[[FastAPI], None] | None = None,
 ) -> FastAPI:
     """Create the daemon with process-scoped H7 state and extensible routing."""
     app = FastAPI(title="NOCTURNE", version=__version__)
@@ -343,6 +353,9 @@ def create_app(
             reason="unknown WebSocket route",
         )
 
+    if before_static_mount is not None:
+        before_static_mount(app)
+
     static_root = Path(web_dist) if web_dist is not None else DEFAULT_WEB_DIST
     if (static_root / "index.html").is_file():
         app.mount("/", StaticFiles(directory=static_root, html=True), name="web")
@@ -442,13 +455,67 @@ def create_dev_app(
         model_resolver=model_resolver,
         transcript_journal=journal,
     )
+    extraction = ExtractionService(
+        journal=journal,
+        agent=owned_agent,
+        spine=owned_spine,
+        principal_id=principal_id,
+        machine_id=machine_id,
+    )
+    idle_extraction = (
+        None
+        if configured.extraction_idle_hours is None
+        else ExtractionIdleScheduler(
+            extraction, journal, idle_hours=configured.extraction_idle_hours
+        )
+    )
+    def configure_extraction_routes(app: FastAPI) -> None:
+        if idle_extraction is not None:
+            app.router.add_event_handler("startup", idle_extraction.start)
+            app.router.add_event_handler("shutdown", idle_extraction.stop)
+
+        @app.post("/v1/threads/{thread_id}/archive")
+        async def archive_thread(thread_id: UUID) -> ThreadEndResult:
+            try:
+                return await extraction.archive(thread_id)
+            except (ValueError, SpineClientError) as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail=f"Thread extraction failed: {exc}",
+                ) from exc
+
+        @app.get("/v1/threads/{thread_id}/thread-end")
+        async def thread_end(thread_id: UUID) -> ThreadEndResult:
+            messages = journal.read_messages(str(thread_id))
+            final_post = ""
+            for message in reversed(messages):
+                if message.get("role") == "assistant" and isinstance(
+                    message.get("content"), str
+                ):
+                    final_post = message["content"]
+                    break
+            pending = await owned_spine.approval_queue(principal_id, thread_id=thread_id)
+            return ThreadEndResult(thread_id, final_post, "", [], pending.cards, 0, True)
+
+        @app.post("/v1/approval-queue/{item_uid}/decisions")
+        async def decide_queue_item(
+            item_uid: str, body: QueueDecisionRequest
+        ) -> QueueDecisionResponse:
+            return await owned_spine.decide_queue_item(item_uid, body)
+
+        @app.get("/v1/approval-queue")
+        async def read_queue(thread_id: UUID | None = None):
+            return await owned_spine.approval_queue(principal_id, thread_id=thread_id)
+
     app = create_app(
         web_dist,
         routes={MessageType.MEMORY_PANEL_UPDATE: panel.handle},
         run_loop=loop,
         envelope_factory=factory,
         vitals_snapshot_reader=read_vitals_snapshot,
+        before_static_mount=configure_extraction_routes,
     )
+
     app.router.add_event_handler("shutdown", owned_spine.aclose)
     app.router.add_event_handler("shutdown", model_catalog.aclose)
     return app

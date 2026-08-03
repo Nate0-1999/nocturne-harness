@@ -34,6 +34,13 @@ to owner-only JSONL files under `$NOCTURNE_HOME/transcripts`. These files are
 local, append-only, and never stored in Git. This is capture-only in M2: a
 daemon restart preserves the files but does not yet reload them into the UI.
 
+Archiving a thread runs the memory extractor over that durable journal, then
+opens the law-bound Thread Memory Review rack module. Candidate memories remain
+invisible to search and model context until approved. Rows wholly visible in
+the viewport may be passively kept when the card resolves; unseen rows and
+contradictions remain pending. `EXTRACTION_IDLE_HOURS` controls the abandoned-
+thread fallback (24 hours by default). The queue never sends notifications.
+
 ## Cloud deployment
 
 ```sh

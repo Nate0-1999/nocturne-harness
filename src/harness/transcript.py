@@ -92,6 +92,117 @@ class TranscriptJournal:
                 self._next_parent_ids[thread_id] = self._read_last_tail_id(thread_id)
             return self._next_parent_ids[thread_id]
 
+    def read_messages(self, thread_id: str) -> list[dict[str, Any]]:
+        """Read the immutable message snapshots for an extraction pass."""
+
+        self._require_thread_id(thread_id)
+        path = self.path_for_thread(thread_id)
+        try:
+            with path.open("rb") as stream:
+                rows = stream.readlines()
+        except FileNotFoundError:
+            return []
+        messages: list[dict[str, Any]] = []
+        for raw in rows:
+            try:
+                row = json.loads(raw)
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                continue
+            if row.get("thread_id") != thread_id or row.get("record_type") != "message":
+                continue
+            message = row.get("message")
+            if isinstance(message, dict):
+                messages.append(deepcopy(message))
+        return messages
+
+    def transcript_tail(self, thread_id: str) -> str | None:
+        """Return the durable tail identity used for idempotent archive extraction."""
+
+        return self.next_parent_id(thread_id)
+
+    def append_extraction(
+        self,
+        thread_id: str,
+        *,
+        tail_message_id: str,
+        working_summary: str,
+        open_loops: list[str],
+        item_uids: list[str],
+    ) -> None:
+        """Journal a completed archive extraction against its exact durable tail."""
+
+        with self._lock:
+            self._append(
+                thread_id,
+                {
+                    "version": 1,
+                    "record_type": "extraction",
+                    "tail_message_id": tail_message_id,
+                    "working_summary": working_summary,
+                    "open_loops": list(open_loops),
+                    "item_uids": list(item_uids),
+                },
+            )
+
+    def extracted_tail(self, thread_id: str) -> str | None:
+        """Return the most recently completed extraction tail, if any."""
+
+        path = self.path_for_thread(thread_id)
+        try:
+            rows = path.read_bytes().splitlines()
+        except FileNotFoundError:
+            return None
+        for raw in reversed(rows):
+            try:
+                row = json.loads(raw)
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                continue
+            if row.get("record_type") == "extraction" and row.get("thread_id") == thread_id:
+                tail = row.get("tail_message_id")
+                return tail if isinstance(tail, str) and tail else None
+        return None
+
+    def idle_thread_ids(self, cutoff: datetime) -> list[str]:
+        """List transcript threads whose last captured message predates cutoff."""
+
+        if cutoff.tzinfo is None:
+            raise ValueError("idle cutoff must be timezone-aware")
+        found: list[str] = []
+        if not self._root.exists():
+            return found
+        for path in sorted(self._root.glob("*.jsonl")):
+            try:
+                rows = path.read_bytes().splitlines()
+            except OSError:
+                continue
+            thread_id: str | None = None
+            last_message_at: datetime | None = None
+            for raw in rows:
+                try:
+                    row = json.loads(raw)
+                except (UnicodeDecodeError, json.JSONDecodeError):
+                    continue
+                if row.get("record_type") != "message":
+                    continue
+                value = row.get("thread_id")
+                captured = row.get("captured_at")
+                if not isinstance(value, str) or not isinstance(captured, str):
+                    continue
+                try:
+                    instant = datetime.fromisoformat(captured)
+                except ValueError:
+                    continue
+                thread_id = value
+                last_message_at = instant
+            if (
+                thread_id is not None
+                and last_message_at is not None
+                and last_message_at <= cutoff
+                and self.extracted_tail(thread_id) != self.transcript_tail(thread_id)
+            ):
+                found.append(thread_id)
+        return found
+
     def _append(self, thread_id: str, record: dict[str, object]) -> None:
         captured_at = self._clock()
         if captured_at.tzinfo is None:

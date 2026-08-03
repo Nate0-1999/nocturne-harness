@@ -132,9 +132,9 @@ def _measure_reinforced(payload: dict[str, Any]) -> None:
 
 def _measure_queue_depth(payload: dict[str, Any]) -> None:
     payload["palace_counts"][-1].update(
-        status="measured",
-        count=0,
-        source="invented.queue",
+        status="placeholder",
+        count=None,
+        source=None,
     )
 
 
@@ -347,7 +347,7 @@ async def test_vitals_accepts_the_a029_reserved_model_key_escape() -> None:
             id="lifecycle-order",
         ),
         pytest.param(_measure_reinforced, id="reinforced-cannot-be-measured"),
-        pytest.param(_measure_queue_depth, id="queue-must-be-placeholder"),
+        pytest.param(_measure_queue_depth, id="queue-must-be-measured"),
     ],
 )
 @pytest.mark.asyncio

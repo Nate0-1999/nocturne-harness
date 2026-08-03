@@ -18,6 +18,7 @@ import { VitalsModule } from './VitalsModule'
 import type {
   AssistantTranscriptMessage,
   ChatMessage,
+  JsonValue,
   UserMessageState,
 } from './protocol'
 import {
@@ -233,10 +234,24 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     }
   }, [layout])
 
+  useEffect(() => {
+    const syncScope = (event: Event) => {
+      const detail = (event as CustomEvent).detail as { module_id?: string; scope?: string }
+      if (detail.module_id === undefined || !['GLOBAL', 'CURRENT'].includes(detail.scope ?? '')) return
+      setLayout((current) => ({
+        ...current,
+        scopes: { ...current.scopes, [detail.module_id!]: detail.scope as 'GLOBAL' | 'CURRENT' },
+      }))
+    }
+    globalThis.addEventListener('nocturne:rack-scope', syncScope)
+    return () => globalThis.removeEventListener('nocturne:rack-scope', syncScope)
+  }, [])
+
   const saveCurrentSet = useCallback(() => {
     const copy: RackLayoutSet = {
       version: 1,
       modules: layout.modules.map((module) => ({ ...module })),
+      scopes: { ...layout.scopes },
     }
     try {
       saveRackSet(globalThis.localStorage, copy)
@@ -252,6 +267,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
       setLayout({
         version: 1,
         modules: savedSet.modules.map((module) => ({ ...module })),
+        scopes: { ...savedSet.scopes },
       })
     }
   }, [savedSet])
@@ -358,6 +374,14 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
         <div className="rack-overlay-module" data-rack-module="gate">
           <RackPluginIframe
             manifest={RACK_MANIFESTS.gate}
+            isRegressionFixture={isRegressionFixture}
+          />
+        </div>
+      )}
+      {drawerModule === 'thread_end' && openGate === null && (
+        <div className="rack-overlay-module rack-overlay-module--thread-end" data-rack-module="thread_end">
+          <RackPluginIframe
+            manifest={RACK_MANIFESTS.thread_end}
             isRegressionFixture={isRegressionFixture}
           />
         </div>
@@ -630,6 +654,8 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
         <MemoryModule />
       ) : moduleId === 'vitals' ? (
         <VitalsModule />
+      ) : moduleId === 'thread_end' ? (
+        <ThreadEndModule />
       ) : (
         <GateModule />
       )}
@@ -800,6 +826,7 @@ function ChatModule() {
   const selectedMeta = snapshot.catalog.find((entry) => entry.thread_id === selectedThreadId)
   const [draft, setDraft] = useState('')
   const [hasUnread, setHasUnread] = useState(false)
+  const [archiveBusy, setArchiveBusy] = useState(false)
   const transcriptRef = useRef<HTMLDivElement>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
   const followOutputRef = useRef(true)
@@ -849,6 +876,16 @@ function ChatModule() {
       }
     })
   }, [selectedThreadId])
+
+  function archiveThread() {
+    if (selectedThreadId === null || archiveBusy) {
+      return
+    }
+    setArchiveBusy(true)
+    void events.dispatch({ type: 'thread.archive' })
+      .catch(() => undefined)
+      .finally(() => setArchiveBusy(false))
+  }
 
   useEffect(() => {
     const transcript = transcriptRef.current
@@ -985,22 +1022,24 @@ function ChatModule() {
               <p>Send a prompt when you’re ready. Nothing here demands a response.</p>
             </div>
           ) : (
-            messages.map((message) => (
-              <MessageRow
-                key={message.message_id}
-                message={message}
-                queuePosition={
-                  message.role === 'user'
-                    ? queuedPrompts.findIndex(
-                        (queued) => queued.prompt_id === message.message_id,
-                      ) + 1
-                    : 0
-                }
-                runState={message.run_id === null ? undefined : runStates.get(message.run_id)}
-                activeRunId={activeRun?.run_id}
-                activeState={activeRun?.state}
-              />
-            ))
+            <>
+              {messages.map((message) => (
+                <MessageRow
+                  key={message.message_id}
+                  message={message}
+                  queuePosition={
+                    message.role === 'user'
+                      ? queuedPrompts.findIndex(
+                          (queued) => queued.prompt_id === message.message_id,
+                        ) + 1
+                      : 0
+                  }
+                  runState={message.run_id === null ? undefined : runStates.get(message.run_id)}
+                  activeRunId={activeRun?.run_id}
+                  activeState={activeRun?.state}
+                />
+              ))}
+            </>
           )}
         </div>
       </div>
@@ -1037,6 +1076,17 @@ function ChatModule() {
           </p>
         </div>
         <div className="composer__actions">
+          {activeRun === null && messages.length > 0 && (
+            <button
+              className="archive-button"
+              type="button"
+              data-testid="archive-thread"
+              disabled={archiveBusy || openGate !== null}
+              onClick={archiveThread}
+            >
+              {archiveBusy ? 'Extracting' : 'Archive'}
+            </button>
+          )}
           {activeRun !== null && (
             <button
               className="stop-button"
@@ -1066,6 +1116,251 @@ function ChatModule() {
       </form>
     </main>
   )
+}
+
+interface ThreadEndQueueCard {
+  item_uid: string
+  verdict: 'new' | 'merge' | 'supersede' | 'contradict'
+  birthplace_thread_id: string
+  candidate: { label: string; body: string; keywords: string[] }
+  neighbors: Array<{ memory_id: string; label: string }>
+}
+
+function ThreadEndModule() {
+  const snapshot = useRackSnapshot()
+  const { events, selection } = useRackPlugin()
+  const [scope, setScope] = useState<'CURRENT' | 'GLOBAL'>(
+    RACK_MANIFESTS.thread_end.default_scope,
+  )
+  const [cards, setCards] = useState<ThreadEndQueueCard[]>([])
+  const selectedThreadId = snapshot.selectedThreadId
+  const selectedThread = selectedThreadId === null ? null : snapshot.threads[selectedThreadId]
+  const finalPost = finalAssistantPost(selectedThread?.messages ?? [])
+
+  useEffect(() => {
+    void events.dispatch({ type: 'rack.scope.get', module_id: 'thread_end' }).then(setScope)
+  }, [events])
+
+  useEffect(() => {
+    const threadId = scope === 'CURRENT' ? selectedThreadId ?? undefined : undefined
+    void events.dispatch({ type: 'queue.load', thread_id: threadId }).then((value) => {
+      setCards(queueCardsFrom(value))
+    }).catch(() => setCards([]))
+  }, [events, scope, selectedThreadId])
+
+  function changeScope(value: 'CURRENT' | 'GLOBAL') {
+    setScope(value)
+    void events.dispatch({
+      type: 'rack.scope.set', module_id: 'thread_end', scope: value,
+    }).catch(() => undefined)
+  }
+
+  return (
+    <div className="thread-end-module">
+      <button
+        className="thread-end-module__close"
+        type="button"
+        onClick={() => selection.select(null)}
+      >Close review</button>
+      {cards.length === 0 ? (
+        <section className="thread-end-card thread-end-card--empty">
+          <p className="eyebrow">Thread end · consent surface</p>
+          <h2>Nothing pending</h2>
+          <p>Duplicate lessons were folded out, or this thread produced no durable candidates.</p>
+        </section>
+      ) : (
+        <ThreadEndCard
+          view={{ final_post: finalPost, cards }}
+          scope={scope}
+          onScopeChange={changeScope}
+          onDecide={(itemUid, decision, mode) => events.dispatch({
+            type: 'queue.decide', item_uid: itemUid, decision,
+            approval_mode: mode,
+            actor_class: mode === 'passive' ? 'passive' : 'human',
+          })}
+          onChanged={(itemUid) => setCards((current) =>
+            current.filter((card) => card.item_uid !== itemUid)
+          )}
+        />
+      )}
+    </div>
+  )
+}
+
+interface ThreadEndView {
+  final_post: string
+  cards: ThreadEndQueueCard[]
+}
+
+function ThreadEndCard({
+  view,
+  scope,
+  onScopeChange,
+  onDecide,
+  onChanged,
+}: {
+  view: ThreadEndView
+  scope: 'CURRENT' | 'GLOBAL'
+  onScopeChange: (scope: 'CURRENT' | 'GLOBAL') => void
+  onDecide: (
+    itemUid: string,
+    decision: 'approve' | 'deny',
+    mode: 'explicit' | 'passive',
+  ) => Promise<JsonValue>
+  onChanged: (itemUid: string) => void
+}) {
+  const [collapsed, setCollapsed] = useState(false)
+  const seen = useRef(new Set<string>())
+  const [busy, setBusy] = useState(new Set<string>())
+
+  function decide(
+    itemUid: string,
+    decision: 'approve' | 'deny',
+    mode: 'explicit' | 'passive',
+  ) {
+    setBusy((current) => new Set(current).add(itemUid))
+    void onDecide(itemUid, decision, mode).then(() => onChanged(itemUid)).finally(() => {
+      setBusy((current) => {
+        const next = new Set(current)
+        next.delete(itemUid)
+        return next
+      })
+    })
+  }
+
+  function resolveVisible() {
+    if (collapsed) return
+    for (const card of view.cards) {
+      if (card.verdict !== 'contradict' && seen.current.has(card.item_uid)) {
+        decide(card.item_uid, 'approve', 'passive')
+      }
+    }
+  }
+
+  return (
+    <section className="thread-end-card" data-testid="thread-end-card" aria-label="Thread memory review">
+      <header className="thread-end-card__header">
+        <div>
+          <p className="eyebrow">Thread end · consent surface</p>
+          <h2>What should survive?</h2>
+        </div>
+        <div className="scope-toggle" aria-label="Queue scope">
+          {(['GLOBAL', 'CURRENT'] as const).map((value) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={scope === value}
+              onClick={() => onScopeChange(value)}
+            >{value}</button>
+          ))}
+        </div>
+      </header>
+      <div className="thread-end-card__final">
+        <span>Final post</span>
+        <p>{view.final_post || 'No final assistant post was captured.'}</p>
+      </div>
+      <button
+        className="thread-end-card__collapse"
+        type="button"
+        aria-expanded={!collapsed}
+        onClick={() => setCollapsed((value) => !value)}
+      >
+        {collapsed ? `Show ${view.cards.length} candidates` : 'Collapse candidates'}
+      </button>
+      {!collapsed && (
+        <div className="thread-end-list">
+          {view.cards.map((card) => (
+            <VisibleQueueRow
+              key={card.item_uid}
+              card={card}
+              disabled={busy.has(card.item_uid)}
+              onSeen={() => seen.current.add(card.item_uid)}
+              onApprove={() => decide(card.item_uid, 'approve', 'explicit')}
+              onDeny={() => decide(card.item_uid, 'deny', 'explicit')}
+            />
+          ))}
+        </div>
+      )}
+      <footer>
+        <button type="button" onClick={resolveVisible} disabled={collapsed}>
+          Resolve visible · keep unseen pending
+        </button>
+        <span>Contradictions always need a tap.</span>
+      </footer>
+    </section>
+  )
+}
+
+function VisibleQueueRow({
+  card,
+  disabled,
+  onSeen,
+  onApprove,
+  onDeny,
+}: {
+  card: ThreadEndQueueCard
+  disabled: boolean
+  onSeen: () => void
+  onApprove: () => void
+  onDeny: () => void
+}) {
+  const rowRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const row = rowRef.current
+    if (row === null || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && entry.intersectionRatio === 1) onSeen()
+    }, { threshold: 1 })
+    observer.observe(row)
+    return () => observer.disconnect()
+  }, [onSeen])
+  return (
+    <article ref={rowRef} className="thread-end-row" data-verdict={card.verdict}>
+      <div className="thread-end-row__meta">
+        <span>{card.verdict}</span>
+        <span>{card.candidate.keywords.join(' · ')}</span>
+      </div>
+      <h3>{card.candidate.label}</h3>
+      <p>{card.candidate.body}</p>
+      {card.neighbors.length > 0 && (
+        <small>Neighbors: {card.neighbors.map((item) => item.label).join(', ')}</small>
+      )}
+      <div className="thread-end-row__actions">
+        <button type="button" disabled={disabled} onClick={onDeny}>Deny</button>
+        <button type="button" disabled={disabled} onClick={onApprove}>Approve</button>
+      </div>
+    </article>
+  )
+}
+
+function finalAssistantPost(messages: ChatMessage[]): string {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index]
+    if (message.role === 'assistant') return message.content
+  }
+  return ''
+}
+
+function queueCardsFrom(value: JsonValue): ThreadEndQueueCard[] {
+  if (!isObject(value) || !Array.isArray(value.cards)) return []
+  const cards: ThreadEndQueueCard[] = []
+  for (const item of value.cards) {
+    if (isQueueCard(item)) cards.push(item)
+  }
+  return cards
+}
+
+function isQueueCard(value: unknown): value is ThreadEndQueueCard {
+  return isObject(value) && typeof value.item_uid === 'string' &&
+    ['new', 'merge', 'supersede', 'contradict'].includes(String(value.verdict)) &&
+    typeof value.birthplace_thread_id === 'string' && isObject(value.candidate) &&
+    typeof value.candidate.label === 'string' && typeof value.candidate.body === 'string' &&
+    Array.isArray(value.candidate.keywords) && value.candidate.keywords.every((item) => typeof item === 'string') &&
+    Array.isArray(value.neighbors)
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function MemoryModule() {

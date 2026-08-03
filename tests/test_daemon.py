@@ -5,9 +5,10 @@ import json
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic_ai.messages import ModelRequest
 from pydantic_ai.models.function import FunctionModel
@@ -330,6 +331,23 @@ def test_serves_built_web_static(tmp_path: Path) -> None:
 
     assert response.status_code == 200
     assert "Harness shell" in response.text
+
+
+def test_composed_http_routes_precede_the_static_mount(tmp_path: Path) -> None:
+    (tmp_path / "index.html").write_text("<h1>Harness shell</h1>", encoding="utf-8")
+
+    def configure(app: FastAPI) -> None:
+        @app.post("/v1/threads/{thread_id}/archive")
+        async def archive(thread_id: UUID) -> dict[str, str]:
+            return {"thread_id": str(thread_id)}
+
+    client = TestClient(create_app(tmp_path, before_static_mount=configure))
+    thread_id = uuid4()
+
+    response = client.post(f"/v1/threads/{thread_id}/archive")
+
+    assert response.status_code == 200
+    assert response.json() == {"thread_id": str(thread_id)}
 
 
 def test_static_shell_and_rack_frame_have_distinct_frame_policies(tmp_path: Path) -> None:

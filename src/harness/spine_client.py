@@ -72,6 +72,7 @@ class MemoryKind(StrEnum):
 
 class MemoryStatus(StrEnum):
     ACTIVE = "active"
+    CANDIDATE = "candidate"
     QUARANTINED = "quarantined"
     TOMBSTONED = "tombstoned"
 
@@ -291,6 +292,59 @@ class SearchResponse(ContractModel):
     results: list[SimilarityMemoryCard]
 
 
+class ExtractionCandidate(ContractModel):
+    label: str
+    body: str
+    kind: MemoryKind
+    keywords: list[str]
+    project_key: str | None = None
+    verdict: Literal["new", "merge", "supersede", "contradict"]
+    target_ids: list[UUID] = Field(default_factory=list)
+
+
+class ExtractionRequest(ContractModel):
+    principal_id: str
+    thread_id: UUID
+    machine_id: str
+    editor: str
+    candidates: list[ExtractionCandidate]
+
+
+class QueueCard(ContractModel):
+    item_uid: ULID
+    candidate: MemoryUnit
+    birthplace_thread_id: UUID
+    verdict: Literal["new", "merge", "supersede", "contradict"]
+    neighbors: list[SimilarityMemoryCard]
+    target_ids: list[UUID]
+    state: Literal["pending", "approved", "rejected"]
+    created_at: datetime
+
+
+class ExtractionResponse(ContractModel):
+    cards: list[QueueCard]
+    duplicate_count: int
+
+
+class QueueResponse(ContractModel):
+    cards: list[QueueCard]
+
+
+class QueueDecisionRequest(ContractModel):
+    decision: Literal["approve", "deny"]
+    approval_mode: Literal["explicit", "passive"]
+    actor_class: Literal["human", "passive"]
+    machine_id: str
+
+
+class QueueDecisionResponse(ContractModel):
+    card: QueueCard
+    decision: Literal["approve", "deny"]
+    approval_mode: Literal["explicit", "passive"]
+    actor_class: Literal["human", "passive"]
+    decision_uid: ULID
+
+
 class SpendEvent(ContractModel):
     """One exact A-027 receipt line submitted to Spine."""
 
@@ -472,10 +526,10 @@ _VITALS_LIFECYCLE_CONTRACT = (
 _VITALS_PALACE_CONTRACT = (
     ("active_units", "measured"),
     ("pinned_units", "measured"),
-    ("candidates_pending", "not_recorded"),
-    ("edges", "not_recorded"),
+    ("candidates_pending", "measured"),
+    ("edges", "measured"),
     ("staged_units", "not_recorded"),
-    ("queue_depth", "placeholder"),
+    ("queue_depth", "measured"),
 )
 
 
@@ -610,6 +664,9 @@ _MEMORY_LIST_RESPONSE = TypeAdapter(PagedMemoryListResponse)
 _SEARCH_RESPONSE = TypeAdapter(SearchResponse)
 _SPEND_EVENTS_RESPONSE = TypeAdapter(SpendEventsResponse)
 _VITALS_SNAPSHOT = TypeAdapter(VitalsSnapshot)
+_EXTRACTION_RESPONSE = TypeAdapter(ExtractionResponse)
+_QUEUE_RESPONSE = TypeAdapter(QueueResponse)
+_QUEUE_DECISION_RESPONSE = TypeAdapter(QueueDecisionResponse)
 _PROBLEM_DETAIL = TypeAdapter(ProblemDetail)
 
 
@@ -751,6 +808,27 @@ class SpineClient:
 
         response = await self._request("GET", "v1/vitals")
         return _expect_success(response, status=200, adapter=_VITALS_SNAPSHOT)
+
+    async def create_extraction(self, request: ExtractionRequest) -> ExtractionResponse:
+        response = await self._request("POST", "v1/extractions", json_body=_request_body(request))
+        return _expect_success(response, status=200, adapter=_EXTRACTION_RESPONSE)
+
+    async def approval_queue(
+        self, principal_id: str, *, thread_id: UUID | None = None
+    ) -> QueueResponse:
+        params: JsonObject = {"principal_id": principal_id}
+        if thread_id is not None:
+            params["thread_id"] = str(thread_id)
+        response = await self._request("GET", "v1/approval-queue", params=params)
+        return _expect_success(response, status=200, adapter=_QUEUE_RESPONSE)
+
+    async def decide_queue_item(
+        self, item_uid: str, request: QueueDecisionRequest
+    ) -> QueueDecisionResponse:
+        response = await self._request(
+            "POST", f"v1/approval-queue/{item_uid}/decisions", json_body=_request_body(request)
+        )
+        return _expect_success(response, status=200, adapter=_QUEUE_DECISION_RESPONSE)
 
     async def _request(
         self,

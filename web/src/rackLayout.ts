@@ -7,6 +7,7 @@ export const RACK_LAYOUT_STORAGE_KEY = 'nocturne.rack.layout.v1'
 export const RACK_SAVED_SET_STORAGE_KEY = 'nocturne.rack.saved-set.v1'
 
 export type DockedModuleId = 'threads' | 'chat' | 'memory'
+export type RackScope = 'GLOBAL' | 'CURRENT'
 
 export interface RackSize {
   w: number
@@ -28,6 +29,7 @@ export interface DockedModuleLayout {
 export interface RackLayoutSet {
   version: 1
   modules: DockedModuleLayout[]
+  scopes: Record<string, RackScope>
 }
 
 export const RACK_BOUNDS: Record<DockedModuleId, RackBounds> = {
@@ -70,6 +72,10 @@ export function rackBodyRowAllocation(vitalsCollapsed: boolean): {
 
 export const FACTORY_RACK_LAYOUT: RackLayoutSet = {
   version: 1,
+  scopes: {
+    header: 'GLOBAL', threads: 'CURRENT', chat: 'CURRENT', memory: 'CURRENT',
+    vitals: 'GLOBAL', gate: 'CURRENT', thread_end: 'CURRENT',
+  },
   modules: [
     { module_id: 'threads', order: 0, width: 2 },
     { module_id: 'chat', order: 1, width: 8 },
@@ -96,6 +102,7 @@ export function saveRackSet(storage: Storage, layout: RackLayoutSet): void {
 export function cloneFactoryLayout(): RackLayoutSet {
   return {
     version: 1,
+    scopes: { ...FACTORY_RACK_LAYOUT.scopes },
     modules: FACTORY_RACK_LAYOUT.modules.map((module) => ({ ...module })),
   }
 }
@@ -136,6 +143,7 @@ export function moveRackModule(
   modules.splice(targetIndex, 0, source)
   return {
     version: 1,
+    scopes: { ...layout.scopes },
     modules: modules.map((module, order) => ({ ...module, order })),
   }
 }
@@ -170,6 +178,7 @@ export function resizeRackModule(
   modules[neighborIndex] = { ...neighbor, width: neighborWidth }
   return {
     version: 1,
+    scopes: { ...layout.scopes },
     modules: modules.map((item, order) => ({ ...item, order })),
   }
 }
@@ -180,7 +189,9 @@ export function rackLayoutsEqual(left: RackLayoutSet, right: RackLayoutSet): boo
   return leftModules.every((module, index) => {
     const other = rightModules[index]
     return module.module_id === other?.module_id && module.width === other.width
-  })
+  }) && Object.keys(FACTORY_RACK_LAYOUT.scopes).every(
+    (key) => left.scopes[key] === right.scopes[key],
+  )
 }
 
 function parseRackLayout(raw: string | null): RackLayoutSet | null {
@@ -228,11 +239,21 @@ function parseRackLayout(raw: string | null): RackLayoutSet | null {
   }
   return {
     version: 1,
-    modules: orderedModules({ version: 1, modules }).map((module, order) => ({
+    scopes: parseScopes(value.scopes),
+    modules: orderedModules({ version: 1, modules, scopes: {} }).map((module, order) => ({
       ...module,
       order,
     })),
   }
+}
+
+function parseScopes(value: unknown): Record<string, RackScope> {
+  const scopes = { ...FACTORY_RACK_LAYOUT.scopes }
+  if (!isRecord(value)) return scopes
+  for (const key of Object.keys(scopes)) {
+    if (value[key] === 'GLOBAL' || value[key] === 'CURRENT') scopes[key] = value[key]
+  }
+  return scopes
 }
 
 function isDockedModuleId(value: unknown): value is DockedModuleId {
