@@ -11,6 +11,7 @@ import pytest
 from harness.envelope import (
     Envelope,
     EnvelopeFactory,
+    MemoryPanelAddPayload,
     MemoryPanelConflictPayload,
     MemoryPanelEditPayload,
     MemoryPanelErrorPayload,
@@ -139,6 +140,7 @@ def prepared(cards: list[ScoredMemoryCard]) -> InjectPrepareResponse:
         scorer_version="m1-v1",
         injected=cards,
         near_misses=[],
+        final_block=None,
     )
 
 
@@ -237,6 +239,7 @@ def controller(
 async def handle(
     panel: MemoryPanelController,
     payload: MemoryPanelRefreshPayload
+    | MemoryPanelAddPayload
     | MemoryPanelRemovePayload
     | MemoryPanelEditPayload
     | MemoryPanelPinPayload,
@@ -325,6 +328,25 @@ async def test_remove_uses_server_injection_then_rebinds_exact_block_and_exclusi
     assert isinstance(response.payload, MemoryPanelStatePayload)
     assert response.payload.result == "removed"
     assert [item.in_context for item in response.payload.items] == [False, True]
+    assert [item.thread_excluded for item in response.payload.items] == [True, False]
+
+    added = await handle(
+        controller(spine, contexts),
+        MemoryPanelAddPayload(action="add", memory_id=MEMORY_A),
+    )
+    assert spine.feedback_requests[-1] == FeedbackRequest(
+        injection_id=INJECTION_ID,
+        memory_id=MEMORY_A,
+        signal=FeedbackSignal.MID_THREAD_ADDED,
+    )
+    restored = contexts.snapshot(THREAD_ID)
+    assert restored is not None
+    assert restored.member_ids == frozenset({MEMORY_A, MEMORY_B})
+    assert restored.confirmed_memory_ids == frozenset({MEMORY_A, MEMORY_B})
+    assert restored.excluded_memory_ids == frozenset()
+    assert isinstance(added.payload, MemoryPanelStatePayload)
+    assert added.payload.result == "added"
+    assert all(not item.thread_excluded for item in added.payload.items)
 
 
 @pytest.mark.asyncio
@@ -631,6 +653,7 @@ def test_context_install_binds_commit_membership_in_rank_order() -> None:
         scorer_version="m1-v1",
         injected=[removed, retained],
         near_misses=[added],
+        final_block=None,
     )
     contexts = ThreadMemoryContextRegistry()
 
@@ -643,7 +666,8 @@ def test_context_install_binds_commit_membership_in_rank_order() -> None:
     )
 
     assert snapshot.member_ids == frozenset({MEMORY_B, MEMORY_C})
-    assert snapshot.excluded_memory_ids == frozenset()
+    assert snapshot.excluded_memory_ids == frozenset({MEMORY_A})
+    assert snapshot.confirmed_memory_ids == frozenset({MEMORY_B, MEMORY_C})
     assert snapshot.final_block == final_block([added, retained])
     assert snapshot.final_block.index("Added body") < snapshot.final_block.index("Retained body")
     assert "Removed body" not in snapshot.final_block

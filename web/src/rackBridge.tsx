@@ -191,11 +191,15 @@ export function RackPluginIframe({
 
 function rackFrameUrl(moduleId: RackModuleId): string {
   const url = new URL(globalThis.location.href)
+  const fixture = url.searchParams.get('fixture')
   url.hostname = 'rack.localhost'
   url.pathname = '/'
   url.search = ''
   url.searchParams.set('rack_module', moduleId)
   url.searchParams.set('rack_host', globalThis.location.origin)
+  if (fixture === 'M2C REGRESSION' || fixture === 'M2G REGRESSION') {
+    url.searchParams.set('fixture', fixture)
+  }
   url.hash = ''
   return url.toString()
 }

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from typing import Protocol
 from uuid import UUID
 
@@ -30,6 +30,7 @@ from harness.spine_client import (
 from harness.tools_memory import MemoryToolContext, render_spine_error
 
 type ContextFactory = Callable[[str], MemoryToolContext]
+type ContextChanged = Callable[[str], Awaitable[None]]
 
 _MEMORY_UNAVAILABLE_MESSAGE = "Memory is unavailable; continuing without injected context."
 
@@ -57,6 +58,7 @@ class MemoryGateTurnRunner:
         *,
         model_context_tokens: int,
         contexts: ThreadMemoryContextRegistry | None = None,
+        on_context_changed: ContextChanged | None = None,
     ) -> None:
         if type(model_context_tokens) is not int or model_context_tokens <= 0:
             raise ValueError("model_context_tokens must be a positive integer")
@@ -65,6 +67,7 @@ class MemoryGateTurnRunner:
         self._context_factory = context_factory
         self._model_context_tokens = model_context_tokens
         self._contexts = contexts or ThreadMemoryContextRegistry()
+        self._on_context_changed = on_context_changed
         self._attempted_threads: set[str] = set()
 
     async def run(
@@ -78,8 +81,24 @@ class MemoryGateTurnRunner:
     ) -> TurnOutcome:
         """Prepare, block for a valid decision, commit, then invoke the model."""
 
-        if remember_command_text(prompt) is not None or thread_id in self._attempted_threads:
+        if remember_command_text(prompt) is not None:
             return await self._run_model(
+                thread_id=thread_id,
+                prompt=prompt,
+                message_history=message_history,
+                emit=emit,
+                model_resolution=model_resolution,
+            )
+        if thread_id in self._attempted_threads:
+            if self._contexts.snapshot(thread_id) is None:
+                return await self._run_model(
+                    thread_id=thread_id,
+                    prompt=prompt,
+                    message_history=message_history,
+                    emit=emit,
+                    model_resolution=model_resolution,
+                )
+            return await self._run_autonomous(
                 thread_id=thread_id,
                 prompt=prompt,
                 message_history=message_history,
@@ -279,6 +298,74 @@ class MemoryGateTurnRunner:
                 model_resolution=model_resolution,
                 system_instructions=system_instructions,
                 excluded_memory_ids=excluded_memory_ids,
+            )
+
+    async def _run_autonomous(
+        self,
+        *,
+        thread_id: str,
+        prompt: str,
+        message_history: Sequence[object],
+        emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None,
+    ) -> TurnOutcome:
+        """Re-score once, update ambient state, then run without another gate."""
+
+        context = self._context_factory(thread_id)
+        if context.thread_id is None:
+            raise ValueError("memory rescore context requires a thread_id")
+        async with self._contexts.model_feedback_boundary(thread_id):
+            snapshot = self._contexts.snapshot(thread_id)
+            if snapshot is None:  # pragma: no cover - guarded by run()
+                raise RuntimeError("thread memory context disappeared")
+            try:
+                prepared = await self._spine.prepare_injection(
+                    InjectPrepareRequest(
+                        thread_id=context.thread_id,
+                        agent_id=context.agent_id,
+                        machine_id=context.machine_id,
+                        principal_id=context.principal_id,
+                        project_key=context.project_key,
+                        agent_kind=None,
+                        prompt=prompt,
+                        model_context_tokens=(
+                            model_resolution.context_tokens
+                            if model_resolution is not None
+                            else self._model_context_tokens
+                        ),
+                        mode="autonomous",
+                        current_memory_ids=sorted(snapshot.member_ids, key=lambda value: value.int),
+                        confirmed_memory_ids=sorted(
+                            snapshot.confirmed_memory_ids, key=lambda value: value.int
+                        ),
+                        excluded_memory_ids=sorted(
+                            snapshot.excluded_memory_ids, key=lambda value: value.int
+                        ),
+                    )
+                )
+                current, changed = self._contexts.replace_autonomous(
+                    thread_id,
+                    prepared=prepared,
+                )
+            except SpineClientError:
+                await self._memory_unavailable(emit, phase="rescore")
+                current = snapshot
+                changed = False
+            except ValueError:
+                await self._memory_unavailable(emit, phase="rescore")
+                current = snapshot
+                changed = False
+
+            if changed and self._on_context_changed is not None:
+                await self._on_context_changed(thread_id)
+            return await self._delegate.run(
+                thread_id=thread_id,
+                prompt=prompt,
+                message_history=message_history,
+                emit=emit,
+                model_resolution=model_resolution,
+                system_instructions=current.final_block,
+                excluded_memory_ids=current.excluded_memory_ids,
             )
 
     @staticmethod

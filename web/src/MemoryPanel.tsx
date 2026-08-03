@@ -17,6 +17,7 @@ interface MemoryPanelProps {
   inert: boolean
   onClose: () => void
   onRefresh: () => Promise<Ulid>
+  onAdd: (memoryId: string) => Promise<Ulid>
   onRemove: (memoryId: string) => Promise<Ulid>
   onEdit: (memoryId: string, expectedRevision: number, body: string) => Promise<Ulid>
   onPin: (memoryId: string, expectedRevision: number, pin: boolean) => Promise<Ulid>
@@ -39,6 +40,8 @@ function operationCopy(operation: string): string {
       return 'Refreshing'
     case 'remove':
       return 'Removing'
+    case 'add':
+      return 'Re-adding'
     case 'edit':
       return 'Saving'
     case 'pin':
@@ -52,8 +55,10 @@ function resultCopy(result: string): string {
   switch (result) {
     case 'removed':
       return 'Removed from this thread’s next model context.'
+    case 'added':
+      return 'Re-added and locked into this thread’s next model context.'
     case 'edited':
-      return 'Memory body saved for future injections. This thread keeps its committed copy.'
+      return 'Memory body saved. This thread refreshes it before the next response.'
     case 'pin_changed':
       return 'Pin state updated for future injections.'
     default:
@@ -73,6 +78,7 @@ export function MemoryPanel({
   inert,
   onClose,
   onRefresh,
+  onAdd,
   onRemove,
   onEdit,
   onPin,
@@ -166,6 +172,15 @@ export function MemoryPanel({
       await onRemove(memoryId)
     } catch (error) {
       reportClientError(error, 'Memory could not be removed from context')
+    }
+  }
+
+  async function add(memoryId: string) {
+    try {
+      setClientError(null)
+      await onAdd(memoryId)
+    } catch (error) {
+      reportClientError(error, 'Memory could not be re-added to context')
     }
   }
 
@@ -323,7 +338,7 @@ export function MemoryPanel({
           </div>
         ) : (
           <div className="memory-panel__list" data-testid="memory-list">
-            {panel.items.map(({ memory, in_context: inContext }) => {
+            {panel.items.map(({ memory, in_context: inContext, thread_excluded: threadExcluded }) => {
               const editing =
                 editor?.memoryId === memory.memory_id && !editSaved
               const unavailable = memory.status !== 'active'
@@ -421,8 +436,8 @@ export function MemoryPanel({
                       )}
                       {editSaved && (
                         <p className="memory-panel__notice" role="status">
-                          Saved for future injections. This thread keeps its
-                          committed copy.
+                          Saved. Per-message scoring refreshes this thread
+                          before the next response.
                         </p>
                       )}
                       <div className="principal-memory__editor-actions">
@@ -478,6 +493,16 @@ export function MemoryPanel({
                             onClick={() => remove(memory.memory_id)}
                           >
                             Remove
+                          </button>
+                        )}
+                        {threadExcluded && (
+                          <button
+                            className="principal-memory__primary"
+                            type="button"
+                            disabled={!connected || !removeEnabled || busy || unavailable}
+                            onClick={() => add(memory.memory_id)}
+                          >
+                            Re-add
                           </button>
                         )}
                       </div>

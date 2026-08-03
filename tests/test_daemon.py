@@ -167,6 +167,7 @@ class GateSpine:
             scorer_version="m1-v1",
             injected=[],
             near_misses=[],
+            final_block=None,
         )
 
     async def commit_injection(self, request: InjectCommitRequest) -> InjectCommitResponse:
@@ -268,6 +269,7 @@ class PanelGateSpine:
             scorer_version="m1-v1",
             injected=self.cards,
             near_misses=[],
+            final_block=None,
         )
 
     async def commit_injection(self, request: InjectCommitRequest) -> InjectCommitResponse:

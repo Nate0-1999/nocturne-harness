@@ -409,19 +409,27 @@ def create_dev_app(
         )
 
     memory_contexts = ThreadMemoryContextRegistry()
-    runner = MemoryGateTurnRunner(
-        PydanticAITurnRunner(owned_agent, context_factory, owned_spine),
-        owned_spine,
-        context_factory,
-        model_context_tokens=configured.model_context_tokens,
-        contexts=memory_contexts,
-    )
     panel = MemoryPanelController(
         owned_spine,
         memory_contexts,
         factory,
         principal_id=principal_id,
         machine_id=machine_id,
+    )
+
+    async def publish_ambient_memory_panel(thread_id: str) -> None:
+        await panel.publish_ambient(
+            thread_id,
+            lambda envelope: loop.publish(thread_id, envelope),
+        )
+
+    runner = MemoryGateTurnRunner(
+        PydanticAITurnRunner(owned_agent, context_factory, owned_spine),
+        owned_spine,
+        context_factory,
+        model_context_tokens=configured.model_context_tokens,
+        contexts=memory_contexts,
+        on_context_changed=publish_ambient_memory_panel,
     )
     journal = transcript_journal or TranscriptJournal(nocturne_home() / "transcripts")
 

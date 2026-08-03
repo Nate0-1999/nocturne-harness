@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
+from collections.abc import AsyncIterator, Awaitable, Callable, Mapping, Sequence
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Literal, Protocol
@@ -12,6 +12,7 @@ from uuid import UUID
 from harness.envelope import (
     Envelope,
     EnvelopeFactory,
+    MemoryPanelAddPayload,
     MemoryPanelConflictPayload,
     MemoryPanelEditPayload,
     MemoryPanelErrorPayload,
@@ -44,8 +45,8 @@ from harness.spine_client import (
 )
 
 type EnvelopeSender = Callable[[Envelope], Awaitable[None]]
-type PanelOperation = Literal["refresh", "remove", "edit", "pin"]
-type PanelResult = Literal["refreshed", "removed", "edited", "pin_changed"]
+type PanelOperation = Literal["refresh", "add", "remove", "edit", "pin"]
+type PanelResult = Literal["refreshed", "added", "removed", "edited", "pin_changed", "rescored"]
 
 _MEMORY_BLOCK_PREFIX = (
     "<memory_system>\n"
@@ -76,6 +77,8 @@ class ThreadMemorySnapshot:
     final_block: str
     member_ids: frozenset[UUID]
     excluded_memory_ids: frozenset[UUID]
+    confirmed_memory_ids: frozenset[UUID]
+    event_sources: Mapping[UUID, UUID]
 
 
 @dataclass(slots=True)
@@ -83,6 +86,8 @@ class _ThreadMemoryState:
     injection_id: UUID
     fragments: dict[UUID, str]
     excluded_memory_ids: set[UUID]
+    confirmed_memory_ids: set[UUID]
+    event_sources: dict[UUID, UUID]
 
     def snapshot(self) -> ThreadMemorySnapshot:
         return ThreadMemorySnapshot(
@@ -90,6 +95,8 @@ class _ThreadMemoryState:
             final_block=_render_memory_block(tuple(self.fragments.values())),
             member_ids=frozenset(self.fragments),
             excluded_memory_ids=frozenset(self.excluded_memory_ids),
+            confirmed_memory_ids=frozenset(self.confirmed_memory_ids),
+            event_sources=dict(self.event_sources),
         )
 
 
@@ -144,7 +151,9 @@ class ThreadMemoryContextRegistry:
         state = _ThreadMemoryState(
             injection_id=prepared.injection_id,
             fragments=dict(zip((card.memory_id for card in selected), fragments, strict=True)),
-            excluded_memory_ids=set(),
+            excluded_memory_ids=set(removed_memory_ids),
+            confirmed_memory_ids={card.memory_id for card in selected},
+            event_sources={memory_id: prepared.injection_id for memory_id in prepared_ids},
         )
         self._threads[thread_id] = state
         return state.snapshot()
@@ -160,8 +169,49 @@ class ThreadMemoryContextRegistry:
         if state is None or memory_id not in state.fragments:
             return False
         del state.fragments[memory_id]
+        state.confirmed_memory_ids.discard(memory_id)
         state.excluded_memory_ids.add(memory_id)
         return True
+
+    def add(self, thread_id: str, memory: MemoryUnit) -> bool:
+        """Re-add one human-excluded active unit as a confirmed thread lock."""
+
+        state = self._threads.get(thread_id)
+        if state is None or memory.memory_id not in state.excluded_memory_ids:
+            return False
+        state.fragments[memory.memory_id] = _memory_unit_fragment(memory)
+        state.excluded_memory_ids.remove(memory.memory_id)
+        state.confirmed_memory_ids.add(memory.memory_id)
+        return True
+
+    def replace_autonomous(
+        self,
+        thread_id: str,
+        *,
+        prepared: InjectPrepareResponse,
+    ) -> tuple[ThreadMemorySnapshot, bool]:
+        """Install one autonomous canonical block while preserving human locks."""
+
+        state = self._threads.get(thread_id)
+        if state is None:
+            raise ValueError("thread does not have a committed memory context")
+        if prepared.final_block is None:
+            raise ValueError("autonomous prepare did not return a final block")
+        cards = sorted(prepared.injected, key=lambda card: (card.rank, card.memory_id.int))
+        ids = [card.memory_id for card in cards]
+        if len(ids) != len(set(ids)):
+            raise ValueError("autonomous prepare contains duplicate selected memories")
+        if not state.confirmed_memory_ids <= set(ids):
+            raise ValueError("autonomous prepare demoted a confirmed memory")
+        if state.excluded_memory_ids & set(ids):
+            raise ValueError("autonomous prepare resurrected an excluded memory")
+        fragments = _bind_final_block(prepared.final_block, cards)
+        changed = set(state.fragments) != set(ids)
+        state.fragments = dict(zip(ids, fragments, strict=True))
+        state.injection_id = prepared.injection_id
+        for card in (*prepared.injected, *prepared.near_misses):
+            state.event_sources[card.memory_id] = prepared.injection_id
+        return state.snapshot(), changed
 
     @asynccontextmanager
     async def model_feedback_boundary(self, thread_id: str) -> AsyncIterator[None]:
@@ -206,6 +256,8 @@ class MemoryPanelController:
                 operation="refresh",
                 send=send,
             )
+        elif isinstance(payload, MemoryPanelAddPayload):
+            await self._add(message.thread_id, message.id, payload, send)
         elif isinstance(payload, MemoryPanelRemovePayload):
             await self._remove(message.thread_id, message.id, payload, send)
         elif isinstance(payload, MemoryPanelEditPayload):
@@ -236,6 +288,83 @@ class MemoryPanelController:
                 send=send,
             )
 
+    async def publish_ambient(self, thread_id: str, send: EnvelopeSender) -> None:
+        """Publish an unsolicited authoritative panel refresh after re-scoring."""
+
+        await self._send_state(
+            thread_id=thread_id,
+            request_id=self._factory.new_id(),
+            result="rescored",
+            operation="refresh",
+            send=send,
+        )
+
+    async def _add(
+        self,
+        thread_id: str,
+        request_id: str,
+        payload: MemoryPanelAddPayload,
+        send: EnvelopeSender,
+    ) -> None:
+        error: tuple[str, str] | None = None
+        async with self._contexts.model_feedback_boundary(thread_id):
+            context = self._contexts.snapshot(thread_id)
+            source = None if context is None else context.event_sources.get(payload.memory_id)
+            if (
+                context is None
+                or payload.memory_id not in context.excluded_memory_ids
+                or source is None
+            ):
+                error = ("not_thread_excluded", "This memory is not excluded from the thread.")
+            else:
+                try:
+                    active = await self._active_principal_memories()
+                    memory = next(
+                        (item for item in active if item.memory_id == payload.memory_id), None
+                    )
+                    if memory is None:
+                        error = (
+                            "memory_not_found",
+                            "This active memory is no longer available. Refresh and try again.",
+                        )
+                    else:
+                        response = await self._spine.submit_feedback(
+                            FeedbackRequest(
+                                injection_id=source,
+                                memory_id=payload.memory_id,
+                                signal=FeedbackSignal.MID_THREAD_ADDED,
+                            )
+                        )
+                        if response.ok is not True:  # pragma: no cover
+                            error = (
+                                "invalid_response",
+                                "The memory service returned an invalid re-add response.",
+                            )
+                        elif not self._contexts.add(thread_id, memory):
+                            error = (
+                                "context_changed",
+                                "The thread context changed before the memory could be re-added.",
+                            )
+                except SpineClientError as exc:
+                    error = _safe_spine_error(exc)
+        if error is not None:
+            await self._send_error(
+                thread_id=thread_id,
+                request_id=request_id,
+                operation="add",
+                code=error[0],
+                message=error[1],
+                send=send,
+            )
+            return
+        await self._send_state(
+            thread_id=thread_id,
+            request_id=request_id,
+            result="added",
+            operation="add",
+            send=send,
+        )
+
     async def _remove(
         self,
         thread_id: str,
@@ -253,9 +382,12 @@ class MemoryPanelController:
                 )
             else:
                 try:
+                    source = context.event_sources.get(payload.memory_id)
+                    if source is None:
+                        raise ValueError("context member has no injection event source")
                     response = await self._spine.submit_feedback(
                         FeedbackRequest(
-                            injection_id=context.injection_id,
+                            injection_id=source,
                             memory_id=payload.memory_id,
                             signal=FeedbackSignal.MID_THREAD_REMOVED,
                         )
@@ -413,7 +545,13 @@ class MemoryPanelController:
         context = self._contexts.snapshot(thread_id)
         members = context.member_ids if context is not None else frozenset()
         items = [
-            MemoryPanelItem(memory=memory, in_context=memory.memory_id in members)
+            MemoryPanelItem(
+                memory=memory,
+                in_context=memory.memory_id in members,
+                thread_excluded=(
+                    context is not None and memory.memory_id in context.excluded_memory_ids
+                ),
+            )
             for memory in memories
         ]
         await send(
@@ -537,6 +675,18 @@ def _render_memory_block(fragments: Sequence[str]) -> str:
     if not fragments:
         return EMPTY_MEMORY_BLOCK
     return _MEMORY_BLOCK_PREFIX + "\n".join(fragments) + "\n" + _MEMORY_BLOCK_CLOSING
+
+
+def _memory_unit_fragment(memory: MemoryUnit) -> str:
+    """Render one current active unit with the canonical C.6 escaping rules."""
+
+    updated = memory.updated_at.isoformat()
+    return (
+        f'<memory label="{_escape_attribute(memory.label)}" '
+        f'kind="{_escape_attribute(memory.kind.value)}" '
+        f'updated="{_escape_attribute(updated)}">\n'
+        f"{_escape_body(memory.body)}\n</memory>"
+    )
 
 
 def _escape_attribute(value: str) -> str:

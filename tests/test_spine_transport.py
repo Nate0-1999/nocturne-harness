@@ -157,6 +157,7 @@ async def test_all_routes_send_exact_http_contract() -> None:
                 "scorer_version": "v0",
                 "injected": [],
                 "near_misses": [],
+                "final_block": None,
             },
         ),
         ("POST", "/prefix/v1/inject/commit"): response(

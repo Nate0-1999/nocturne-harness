@@ -1,0 +1,33 @@
+M2G rule-8 live trace
+captured: 2026-08-03 CDT / 2026-08-03 UTC
+principal_id: m2g-sop-verification
+machine_id: m2g-sop-verification
+thread_id: a5ee77f2-e26d-4bb0-91ed-9d8d58490e21
+
+Rendered owner surface
+----------------------
+active model: openrouter:minimax/minimax-m3
+first completed usage: 1 request, 884 input tokens, 95 output tokens
+post-pin completed usage: 1 request, 1470 input tokens, 53 output tokens
+browser console warnings/errors: 0
+
+Same-thread prepare batches, oldest to newest
+---------------------------------------------
+766ba7c0-3699-4cb8-8a57-bbc05f870599 | human  | confirmed pin kept; amber near_miss
+59eccd2f-41f8-4ad5-a84a-430ac01c45d7 | passive | confirmed pin kept; amber near_miss
+e6e63b34-2965-49ad-a481-5267404dc14a | passive | confirmed pin kept; amber selected
+
+Final passive rows after the visible remove -> re-add
+------------------------------------------------------
+e6e63b34-... | amber    059d044b-... | passive | pinned | mid_thread_added | rank 1 | score 0.553
+e6e63b34-... | confirmed e142631d-... | passive | pinned | kept             | rank 2 | score 0.343
+
+The amber event was written as auto_entered by autonomous prepare, then the
+visible panel actions transitioned that same membership through
+mid_thread_removed to mid_thread_added. The confirmed event stayed kept.
+
+Hygiene
+-------
+The exact two seed IDs were tombstoned after the pass. The owner daemon,
+deterministic daemon, Compose services, disposable transcript home, and browser
+tabs were all stopped or removed. The pre-existing Compose volume was preserved.

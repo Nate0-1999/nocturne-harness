@@ -426,6 +426,7 @@ function applyMemoryPanelUpdate(
       ...(existing ?? {}),
       memory: payload.memory,
       in_context: existing?.in_context ?? false,
+      thread_excluded: existing?.thread_excluded ?? false,
     }
     const currentItems =
       existing === undefined

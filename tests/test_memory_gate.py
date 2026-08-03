@@ -113,13 +113,20 @@ class RecordingSpine:
             scorer_version="m1-v1",
             injected=[],
             near_misses=[],
+            final_block=None,
         )
+        self.prepare_outcomes: list[InjectPrepareResponse | Exception] = []
         self.patch_outcomes: list[MemoryUnit | Exception] = []
 
     async def prepare_injection(self, request: InjectPrepareRequest) -> InjectPrepareResponse:
         self.prepare_requests.append(request)
         if self.fail_prepare:
             raise SpineTransportError
+        if self.prepare_outcomes and request.mode == "autonomous":
+            outcome = self.prepare_outcomes.pop(0)
+            if isinstance(outcome, Exception):
+                raise outcome
+            return outcome
         return self.prepare_response
 
     async def commit_injection(self, request: InjectCommitRequest) -> InjectCommitResponse:
@@ -262,13 +269,12 @@ async def test_first_chat_blocks_commits_and_keeps_system_instructions_current()
     assert [call[1] for call in delegate.calls] == ["/remember keep this"]
     assert len(spine.prepare_requests) == 1
     prepared = spine.prepare_requests[0]
-    assert prepared.model_dump(mode="python") == {
+    assert prepared.model_dump(mode="python", exclude_defaults=True) == {
         "thread_id": UUID(THREAD_ID),
         "agent_id": "agent-1",
         "machine_id": "machine-1",
         "principal_id": "principal-1",
         "project_key": "project-1",
-        "agent_kind": None,
         "prompt": "ordinary chat",
         "model_context_tokens": 1_000_000,
     }
@@ -290,8 +296,76 @@ async def test_first_chat_blocks_commits_and_keeps_system_instructions_current()
         message_history=outcome.message_history,
         emit=RecordingEmitter(),
     )
-    assert len(spine.prepare_requests) == 1
+    assert len(spine.prepare_requests) == 2
+    assert spine.prepare_requests[-1].mode == "autonomous"
     assert delegate.calls[-1][-2] == EMPTY_MEMORY_BLOCK
+
+
+async def _record_ambient(values: list[str], thread_id: str) -> None:
+    values.append(thread_id)
+
+
+@pytest.mark.asyncio
+async def test_post_first_turn_rescores_without_gate_and_publishes_ambient_membership() -> None:
+    first_id = UUID("52345678-1234-5678-1234-567812345678")
+    entered_id = UUID("62345678-1234-5678-1234-567812345678")
+    first_card = scored_card(first_id, label="Confirmed", body="First body.", rank=1)
+    entered_card = scored_card(entered_id, label="Ambient", body="Second body.", rank=2)
+    spine = RecordingSpine()
+    spine.prepare_response = spine.prepare_response.model_copy(update={"injected": [first_card]})
+    spine.commit_response = InjectCommitResponse(
+        final_block=final_block(first_card), wrong_removed=[]
+    )
+    spine.prepare_outcomes.append(
+        InjectPrepareResponse(
+            injection_id=UUID("72345678-1234-5678-1234-567812345678"),
+            snapshot_ts=datetime(2026, 7, 21, 12, 1, tzinfo=UTC),
+            scorer_version="m1-v1",
+            injected=[first_card, entered_card],
+            near_misses=[],
+            final_block=final_block(first_card, entered_card),
+        )
+    )
+    ambient: list[str] = []
+    delegate = RecordingDelegate()
+    runner = MemoryGateTurnRunner(
+        delegate,
+        spine,
+        context_factory(spine),
+        model_context_tokens=1_000_000,
+        on_context_changed=lambda thread_id: _record_ambient(ambient, thread_id),
+    )
+
+    first_emitter = RecordingEmitter()
+    first = asyncio.create_task(
+        runner.run(
+            thread_id=THREAD_ID,
+            prompt="first",
+            message_history=(),
+            emit=first_emitter,
+        )
+    )
+    await asyncio.wait_for(first_emitter.opened.wait(), 1)
+    assert first_emitter.decision is not None
+    first_emitter.decision.set_result(decision())
+    first_outcome = await asyncio.wait_for(first, 1)
+
+    second_emitter = RecordingEmitter()
+    await runner.run(
+        thread_id=THREAD_ID,
+        prompt="second",
+        message_history=first_outcome.message_history,
+        emit=second_emitter,
+    )
+
+    assert second_emitter.events == []
+    assert ambient == [THREAD_ID]
+    request = spine.prepare_requests[-1]
+    assert request.mode == "autonomous"
+    assert request.current_memory_ids == [first_id]
+    assert request.confirmed_memory_ids == [first_id]
+    assert request.excluded_memory_ids == []
+    assert delegate.calls[-1][-2] == final_block(first_card, entered_card)
 
 
 @pytest.mark.asyncio
@@ -457,7 +531,7 @@ async def test_near_miss_never_preserves_committed_context_and_exclusion() -> No
         "later chat",
         (),
         final_block(retained),
-        frozenset(),
+        frozenset({vetoed_id}),
     )
 
 

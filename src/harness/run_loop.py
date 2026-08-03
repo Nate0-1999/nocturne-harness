@@ -256,6 +256,16 @@ class RunLoop:
             self._require_open()
             await self._send_direct_locked(sink, envelope)
 
+    async def publish(self, thread_id: str, envelope: Envelope) -> None:
+        """Publish one daemon-authored ambient event to a thread's subscribers."""
+
+        self._require_thread_id(thread_id)
+        if envelope.thread_id != thread_id:
+            raise ValueError("ambient envelope thread does not match its publish target")
+        async with self._lock:
+            self._require_open()
+            await self._publish_locked(thread_id, envelope)
+
     async def submit(
         self,
         *,

@@ -173,6 +173,16 @@ export class HarnessSocketClient {
     })
   }
 
+  addMemoryToContext(memoryId: string): Ulid {
+    if (!isUuid(memoryId)) {
+      throw new TypeError('memory id must be a UUID')
+    }
+    return this.sendMemoryPanelRequest('add', {
+      action: 'add',
+      memory_id: memoryId,
+    })
+  }
+
   editMemoryBody(
     memoryId: string,
     expectedRevision: number,

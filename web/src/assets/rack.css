@@ -1185,6 +1185,10 @@
     padding: 0 0.7rem;
   }
 
+  .topbar .connection {
+    display: none;
+  }
+
   .brand__mode {
     display: none;
   }
@@ -1262,7 +1266,25 @@
   }
 
   .m2c-regression-fixture {
+    gap: 0.2rem;
     padding-top: 3.7rem;
+  }
+
+  .m2c-regression-fixture strong,
+  .m2c-regression-fixture span {
+    max-width: calc(100vw - 2rem);
+    white-space: normal;
+  }
+
+  .m2c-regression-fixture strong {
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+  }
+
+  .m2c-regression-fixture span {
+    padding: 0.2rem 0.35rem;
+    font-size: 0.45rem;
+    letter-spacing: 0.08em;
   }
 }
 

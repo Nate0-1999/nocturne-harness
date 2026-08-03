@@ -84,6 +84,7 @@ class RemovalReason(StrEnum):
 
 class FeedbackSignal(StrEnum):
     MID_THREAD_REMOVED = "mid_thread_removed"
+    MID_THREAD_ADDED = "mid_thread_added"
     CITED = "cited"
 
 
@@ -157,6 +158,10 @@ class InjectPrepareRequest(ContractModel):
     agent_kind: str | None = None
     prompt: str
     model_context_tokens: int = Field(gt=0)
+    mode: Literal["gate", "autonomous"] = "gate"
+    current_memory_ids: list[UUID] = Field(default_factory=list)
+    confirmed_memory_ids: list[UUID] = Field(default_factory=list)
+    excluded_memory_ids: list[UUID] = Field(default_factory=list)
 
 
 class InjectPrepareResponse(ContractModel):
@@ -165,6 +170,7 @@ class InjectPrepareResponse(ContractModel):
     scorer_version: str
     injected: list[ScoredMemoryCard]
     near_misses: list[ScoredMemoryCard]
+    final_block: str | None
 
 
 class RemovedMemory(ContractModel):
@@ -652,7 +658,7 @@ class SpineClient:
         response = await self._request(
             "POST",
             "v1/inject/prepare",
-            json_body=_request_body(request),
+            json_body=request.model_dump(mode="json", exclude_none=True, exclude_defaults=True),
         )
         return _expect_success(response, status=200, adapter=_PREPARE_RESPONSE)
 

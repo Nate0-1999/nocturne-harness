@@ -149,8 +149,10 @@ function App() {
 }
 
 function useVerifiedRegressionFixture(enabled: boolean): boolean | null {
-  const markerRequested = new URLSearchParams(globalThis.location.search)
-    .get('fixture') === 'M2C REGRESSION'
+  const requestedFixture = new URLSearchParams(globalThis.location.search).get('fixture')
+  const markerRequested = ['M2C REGRESSION', 'M2G REGRESSION'].includes(
+    requestedFixture ?? '',
+  )
   const [isVerified, setIsVerified] = useState<boolean | null>(
     enabled && markerRequested ? null : false,
   )
@@ -177,7 +179,7 @@ function useVerifiedRegressionFixture(enabled: boolean): boolean | null {
         typeof identity === 'object' &&
         identity !== null &&
         'fixture' in identity &&
-        identity.fixture === 'M2C REGRESSION'
+        identity.fixture === requestedFixture
       )
       if (active) {
         setIsVerified(verified)
@@ -192,7 +194,7 @@ function useVerifiedRegressionFixture(enabled: boolean): boolean | null {
       active = false
       controller.abort()
     }
-  }, [enabled, markerRequested])
+  }, [enabled, markerRequested, requestedFixture])
 
   return isVerified
 }
@@ -596,12 +598,14 @@ function RackRemoteApp({ moduleId }: { moduleId: RackModuleManifest['id'] }) {
 }
 
 function RegressionFixtureMarker({ remote = false }: { remote?: boolean }) {
+  const requested = new URLSearchParams(globalThis.location.search).get('fixture')
+  const label = requested === 'M2G REGRESSION' ? requested : 'M2C REGRESSION'
   return (
     <div
       className={`m2c-regression-fixture${remote ? ' m2c-regression-fixture--remote' : ''}`}
       aria-hidden="true"
     >
-      <strong>M2C REGRESSION FIXTURE</strong>
+      <strong>{label} FIXTURE</strong>
       <span>DETERMINISTIC EVIDENCE · NOT THE OWNER APP</span>
     </div>
   )
@@ -1083,6 +1087,7 @@ function MemoryModule() {
       inert={false}
       onClose={() => selectionBus.select(null)}
       onRefresh={() => events.dispatch({ type: 'memory.refresh' })}
+      onAdd={(memoryId) => events.dispatch({ type: 'memory.add', memory_id: memoryId })}
       onRemove={(memoryId) => events.dispatch({ type: 'memory.remove', memory_id: memoryId })}
       onEdit={(memoryId, expectedRevision, body) =>
         events.dispatch({

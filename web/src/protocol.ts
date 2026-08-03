@@ -127,20 +127,24 @@ export type MemoryUnit = JsonObject & {
   updated_at: string
 }
 
-export type MemoryPanelOperation = 'refresh' | 'remove' | 'edit' | 'pin'
+export type MemoryPanelOperation = 'refresh' | 'add' | 'remove' | 'edit' | 'pin'
 export type MemoryPanelResult =
   | 'refreshed'
+  | 'added'
   | 'removed'
   | 'edited'
   | 'pin_changed'
+  | 'rescored'
 
 export type MemoryPanelItem = JsonObject & {
   memory: MemoryUnit
   in_context: boolean
+  thread_excluded: boolean
 }
 
 export type MemoryPanelRequestPayload =
   | { action: 'refresh' }
+  | { action: 'add'; memory_id: string }
   | { action: 'remove'; memory_id: string }
   | {
       action: 'edit'
@@ -670,7 +674,11 @@ function parseMemoryUnit(value: unknown): MemoryUnit | null {
 }
 
 function parseMemoryPanelItem(value: unknown): MemoryPanelItem | null {
-  if (!isRecord(value) || typeof value.in_context !== 'boolean') {
+  if (
+    !isRecord(value) ||
+    typeof value.in_context !== 'boolean' ||
+    typeof value.thread_excluded !== 'boolean'
+  ) {
     return null
   }
   const memory = parseMemoryUnit(value.memory)
@@ -681,6 +689,7 @@ function parseMemoryPanelItem(value: unknown): MemoryPanelItem | null {
     ...value,
     memory,
     in_context: value.in_context,
+    thread_excluded: value.thread_excluded,
   } as MemoryPanelItem
 }
 
@@ -691,7 +700,7 @@ function parseMemoryPanelUpdate(value: unknown): MemoryPanelServerPayload | null
 
   if (value.action === 'state') {
     if (
-      !['refreshed', 'removed', 'edited', 'pin_changed'].includes(
+      !['refreshed', 'added', 'removed', 'edited', 'pin_changed', 'rescored'].includes(
         String(value.result),
       ) ||
       !Array.isArray(value.items) ||
@@ -736,7 +745,7 @@ function parseMemoryPanelUpdate(value: unknown): MemoryPanelServerPayload | null
 
   if (value.action === 'error') {
     if (
-      !['refresh', 'remove', 'edit', 'pin'].includes(String(value.operation)) ||
+      !['refresh', 'add', 'remove', 'edit', 'pin'].includes(String(value.operation)) ||
       typeof value.code !== 'string' ||
       !value.code.trim() ||
       typeof value.message !== 'string' ||

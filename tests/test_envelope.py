@@ -278,7 +278,13 @@ def test_known_minimum_payloads_are_typed(
                 "action": "state",
                 "request_id": PROMPT_ID,
                 "result": "refreshed",
-                "items": [{"memory": wrong_unit(), "in_context": True}],
+                "items": [
+                    {
+                        "memory": wrong_unit(),
+                        "in_context": True,
+                        "thread_excluded": False,
+                    }
+                ],
                 "total": 1,
             },
             MemoryPanelStatePayload,

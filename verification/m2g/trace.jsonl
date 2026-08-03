@@ -1,0 +1,9 @@
+{"at":"2026-08-03T16:01:23.886286+00:00","kind":"spine.prepare","call":1,"mode":"gate","thread_id":"570cc827-2c25-441a-a033-23275fe42324","current":[],"confirmed":[],"excluded":[],"selected":["10000000-0000-4000-8000-000000000001"]}
+{"at":"2026-08-03T16:01:37.559029+00:00","kind":"spine.commit","injection_id":"53795f82-4935-49a7-9cbc-7fdfdb7c8fbd","removed":[]}
+{"at":"2026-08-03T16:01:37.563617+00:00","kind":"model.call","prompt":"Which Garden memory governs this handoff?"}
+{"at":"2026-08-03T16:01:37.566531+00:00","kind":"spine.spend","accepted":2}
+{"at":"2026-08-03T16:01:37.893241+00:00","kind":"spine.prepare","call":2,"mode":"autonomous","thread_id":"570cc827-2c25-441a-a033-23275fe42324","current":["10000000-0000-4000-8000-000000000001"],"confirmed":["10000000-0000-4000-8000-000000000001"],"excluded":[],"selected":["10000000-0000-4000-8000-000000000001","10000000-0000-4000-8000-000000000002"]}
+{"at":"2026-08-03T16:01:37.896784+00:00","kind":"model.call","prompt":"Now include the ambient scoring rule too."}
+{"at":"2026-08-03T16:01:37.899670+00:00","kind":"spine.spend","accepted":2}
+{"at":"2026-08-03T16:01:45.392477+00:00","kind":"spine.feedback","injection_id":"91c12fdc-5369-4741-bb8b-85de37225b64","memory_id":"10000000-0000-4000-8000-000000000002","signal":"mid_thread_removed"}
+{"at":"2026-08-03T16:01:45.858619+00:00","kind":"spine.feedback","injection_id":"91c12fdc-5369-4741-bb8b-85de37225b64","memory_id":"10000000-0000-4000-8000-000000000002","signal":"mid_thread_added"}

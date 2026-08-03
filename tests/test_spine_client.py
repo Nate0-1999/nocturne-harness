@@ -115,7 +115,7 @@ def test_prepare_request_mirrors_named_c4_fields() -> None:
         model_context_tokens=200_000,
     )
 
-    assert set(request.model_dump(exclude_none=True)) == {
+    assert set(request.model_dump(exclude_none=True, exclude_defaults=True)) == {
         "thread_id",
         "agent_id",
         "machine_id",
@@ -171,6 +171,7 @@ def test_prepare_cards_require_concrete_features_and_rank() -> None:
         scorer_version="v0",
         injected=[scored_card_payload()],
         near_misses=[],
+        final_block=None,
     )
 
     assert response.injected[0].features.sem == pytest.approx(0.9)
@@ -182,6 +183,7 @@ def test_prepare_cards_require_concrete_features_and_rank() -> None:
             scorer_version="v0",
             injected=[similarity_card_payload()],
             near_misses=[],
+            final_block=None,
         )
 
 

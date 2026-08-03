@@ -852,3 +852,32 @@ breaks the isolation contract. A new plugin loader, SDK, registry, or parameter
 system pulls M3/M2J into M2C. Browser-side dollar aggregation creates a second
 ledger. A fixed overlay can hide the composer, while a separate dashboard page
 would not satisfy the resident-rack requirement.
+
+## 027 — Re-score ordinary messages inside the model/feedback boundary [P1.2, P1.4]
+
+**Decision.** Adopt Garden A-030 as the M2G owner-path contract. Keep one
+daemon-lifetime registry per thread for current, human-confirmed, explicitly
+excluded, and event-source membership. The first ordinary message still opens
+the existing gate; its survivors become confirmed. Every later ordinary
+message prepares autonomously while serialized with context-changing panel
+feedback, replaces the bound model block from Spine's canonical response, and
+publishes an unsolicited authoritative panel refresh only when membership
+changes. `/remember` remains its own command path and does not re-score.
+
+Remove moves a current member into the thread exclusion set only after Spine
+accepts feedback. Re-add resolves the active current MemoryUnit, records
+`mid_thread_added` against the same event source, and restores it as a confirmed
+lock. The panel exposes Re-add only for an explicitly thread-excluded item. No
+post-first prepare opens a modal; an upstream failure remains visible and fails
+open with the prior trusted context.
+
+**Motivation.** One serialized boundary ensures the model never races a human
+remove or re-add and receives the exact panel membership the owner sees. Spine
+owns scoring and frozen rendering; Harness owns ephemeral conversational state
+and presentation. This keeps the authority split narrow and testable.
+
+**Rejected alternatives.** Client-side rescoring duplicates the canonical
+scorer and leaks authority into an iframe. Treating removal as a corpus edit
+loses its thread-local meaning. Polling the panel adds latency and still races
+the model boundary. Persisting thread context in a new Harness database would
+pre-build later session infrastructure outside M2G.
