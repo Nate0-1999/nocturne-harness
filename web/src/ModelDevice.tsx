@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { JsonValue } from './protocol'
 import { RACK_MANIFESTS, useRackPlugin, useRackSnapshot } from './rack'
@@ -46,6 +46,7 @@ export function ModelDevice() {
   const [drafts, setDrafts] = useState<Record<string, number>>({})
   const [slug, setSlug] = useState('')
   const [status, setStatus] = useState('Ready')
+  const slugDirty = useRef(false)
 
   const load = useCallback(async (asOf: string | null = null) => {
     if (threadId === null) {
@@ -61,7 +62,7 @@ export function ModelDevice() {
       })
       const parsed = parseSnapshot(result.data)
       setView(parsed)
-      setSlug(parsed.resolved_model)
+      if (asOf !== null || !slugDirty.current) setSlug(parsed.resolved_model)
       if (asOf === null) {
         setLive(parsed)
         setHistoryIndex(parsed.changes.length)
@@ -100,6 +101,7 @@ export function ModelDevice() {
         parameter_id: parameterId,
         value,
       })
+      if (parameterId === 'model.slug') slugDirty.current = false
       await load()
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Control write was refused')
@@ -110,6 +112,8 @@ export function ModelDevice() {
     setHistoryIndex(index)
     if (live === null || index >= live.changes.length) {
       setView(live)
+      if (live !== null) setSlug(live.resolved_model)
+      slugDirty.current = false
       setStatus('Live')
       return
     }
@@ -170,7 +174,10 @@ export function ModelDevice() {
           id="model-device-slug"
           value={slug}
           disabled={!editable}
-          onChange={(event) => setSlug(event.target.value)}
+          onChange={(event) => {
+            slugDirty.current = true
+            setSlug(event.target.value)
+          }}
           spellCheck={false}
         />
         <button
