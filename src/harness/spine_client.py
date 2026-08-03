@@ -310,10 +310,25 @@ class ExtractionRequest(ContractModel):
     candidates: list[ExtractionCandidate]
 
 
+class SeedRequest(ContractModel):
+    principal_id: str
+    batch_uid: UUID
+    source_name: str
+    source_sha256: str
+    markdown: str
+    machine_id: str
+    editor: str
+    candidates: list[ExtractionCandidate]
+
+
 class QueueCard(ContractModel):
     item_uid: ULID
     candidate: MemoryUnit
-    birthplace_thread_id: UUID
+    birthplace: Literal["thread", "seed"]
+    birthplace_thread_id: UUID | None
+    batch_uid: UUID | None
+    source_name: str | None
+    source_sha256: str | None
     verdict: Literal["new", "merge", "supersede", "contradict"]
     neighbors: list[SimilarityMemoryCard]
     target_ids: list[UUID]
@@ -324,6 +339,10 @@ class QueueCard(ContractModel):
 class ExtractionResponse(ContractModel):
     cards: list[QueueCard]
     duplicate_count: int
+
+
+class SeedResponse(ExtractionResponse):
+    batch_uid: UUID
 
 
 class QueueResponse(ContractModel):
@@ -343,6 +362,12 @@ class QueueDecisionResponse(ContractModel):
     approval_mode: Literal["explicit", "passive"]
     actor_class: Literal["human", "passive"]
     decision_uid: ULID
+
+
+class BatchDecisionResponse(ContractModel):
+    batch_uid: UUID
+    decision: Literal["approve", "deny"]
+    cards: list[QueueCard]
 
 
 class SpendEvent(ContractModel):
@@ -665,8 +690,10 @@ _SEARCH_RESPONSE = TypeAdapter(SearchResponse)
 _SPEND_EVENTS_RESPONSE = TypeAdapter(SpendEventsResponse)
 _VITALS_SNAPSHOT = TypeAdapter(VitalsSnapshot)
 _EXTRACTION_RESPONSE = TypeAdapter(ExtractionResponse)
+_SEED_RESPONSE = TypeAdapter(SeedResponse)
 _QUEUE_RESPONSE = TypeAdapter(QueueResponse)
 _QUEUE_DECISION_RESPONSE = TypeAdapter(QueueDecisionResponse)
+_BATCH_DECISION_RESPONSE = TypeAdapter(BatchDecisionResponse)
 _PROBLEM_DETAIL = TypeAdapter(ProblemDetail)
 
 
@@ -813,12 +840,22 @@ class SpineClient:
         response = await self._request("POST", "v1/extractions", json_body=_request_body(request))
         return _expect_success(response, status=200, adapter=_EXTRACTION_RESPONSE)
 
+    async def create_seed(self, request: SeedRequest) -> SeedResponse:
+        response = await self._request("POST", "v1/seeds", json_body=_request_body(request))
+        return _expect_success(response, status=200, adapter=_SEED_RESPONSE)
+
     async def approval_queue(
-        self, principal_id: str, *, thread_id: UUID | None = None
+        self,
+        principal_id: str,
+        *,
+        thread_id: UUID | None = None,
+        birthplace: Literal["thread", "seed"] | None = None,
     ) -> QueueResponse:
         params: JsonObject = {"principal_id": principal_id}
         if thread_id is not None:
             params["thread_id"] = str(thread_id)
+        if birthplace is not None:
+            params["birthplace"] = birthplace
         response = await self._request("GET", "v1/approval-queue", params=params)
         return _expect_success(response, status=200, adapter=_QUEUE_RESPONSE)
 
@@ -829,6 +866,16 @@ class SpineClient:
             "POST", f"v1/approval-queue/{item_uid}/decisions", json_body=_request_body(request)
         )
         return _expect_success(response, status=200, adapter=_QUEUE_DECISION_RESPONSE)
+
+    async def decide_queue_batch(
+        self, batch_uid: UUID, request: QueueDecisionRequest
+    ) -> BatchDecisionResponse:
+        response = await self._request(
+            "POST",
+            f"v1/approval-queue/batches/{batch_uid}/decisions",
+            json_body=_request_body(request),
+        )
+        return _expect_success(response, status=200, adapter=_BATCH_DECISION_RESPONSE)
 
     async def _request(
         self,

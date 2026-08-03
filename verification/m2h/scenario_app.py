@@ -153,7 +153,11 @@ class FixtureSpine:
             card = QueueCard(
                 item_uid=item_uid,
                 candidate=memory,
+                birthplace="thread",
                 birthplace_thread_id=request.thread_id,
+                batch_uid=None,
+                source_name=None,
+                source_sha256=None,
                 verdict=candidate.verdict,
                 neighbors=[] if candidate.verdict == "new" else [await self.search_one()],
                 target_ids=candidate.target_ids,
@@ -170,7 +174,11 @@ class FixtureSpine:
         ).results[0]
 
     async def approval_queue(
-        self, principal_id: str, *, thread_id: UUID | None = None
+        self,
+        principal_id: str,
+        *,
+        thread_id: UUID | None = None,
+        birthplace: str | None = None,
     ) -> QueueResponse:
         del principal_id
         cards = [
@@ -178,6 +186,7 @@ class FixtureSpine:
             for card in self.cards.values()
             if card.state == "pending"
             and (thread_id is None or card.birthplace_thread_id == thread_id)
+            and (birthplace is None or card.birthplace == birthplace)
         ]
         return QueueResponse(cards=cards)
 

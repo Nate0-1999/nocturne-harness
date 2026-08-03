@@ -41,6 +41,12 @@ the viewport may be passively kept when the card resolves; unseen rows and
 contradictions remain pending. `EXTRACTION_IDLE_HOURS` controls the abandoned-
 thread fallback (24 hours by default). The queue never sends notifications.
 
+The Palace Queue also accepts `.md` and `.markdown` seed files up to 24 KiB.
+NOCTURNE semantically splits each document into standalone, lineaged candidate
+memories and groups them by source document. Seed batches are corpus-born:
+they never appear in thread-end cards, never resolve passively, and enter the
+Palace only through an explicit whole-batch approve action.
+
 ## Cloud deployment
 
 ```sh

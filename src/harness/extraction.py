@@ -56,7 +56,11 @@ class ExtractionService:
             raise ValueError("thread has no durable transcript to archive")
         final_post = _final_assistant_post(messages)
         if self._journal.extracted_tail(text_id) == tail:
-            pending = await self._spine.approval_queue(self._principal_id, thread_id=thread_id)
+            pending = await self._spine.approval_queue(
+                self._principal_id,
+                thread_id=thread_id,
+                birthplace="thread",
+            )
             return ThreadEndResult(thread_id, final_post, "", [], pending.cards, 0, True)
         transcript = json.dumps(messages, ensure_ascii=False, separators=(",", ":"))
         draft = await self._agent.extract_thread(transcript)

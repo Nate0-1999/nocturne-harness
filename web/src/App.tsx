@@ -386,6 +386,14 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           />
         </div>
       )}
+      {drawerModule === 'palace_queue' && openGate === null && (
+        <div className="rack-overlay-module rack-overlay-module--palace-queue" data-rack-module="palace_queue">
+          <RackPluginIframe
+            manifest={RACK_MANIFESTS.palace_queue}
+            isRegressionFixture={isRegressionFixture}
+          />
+        </div>
+      )}
       {isRegressionFixture && (
         <RegressionFixtureMarker />
       )}
@@ -623,7 +631,8 @@ function RackRemoteApp({ moduleId }: { moduleId: RackModuleManifest['id'] }) {
 
 function RegressionFixtureMarker({ remote = false }: { remote?: boolean }) {
   const requested = new URLSearchParams(globalThis.location.search).get('fixture')
-  const label = requested === 'M2G REGRESSION' ? requested : 'M2C REGRESSION'
+  const known = new Set(['M2C REGRESSION', 'M2G REGRESSION', 'M2I REGRESSION'])
+  const label = requested !== null && known.has(requested) ? requested : 'M2C REGRESSION'
   return (
     <div
       className={`m2c-regression-fixture${remote ? ' m2c-regression-fixture--remote' : ''}`}
@@ -656,6 +665,8 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
         <VitalsModule />
       ) : moduleId === 'thread_end' ? (
         <ThreadEndModule />
+      ) : moduleId === 'palace_queue' ? (
+        <PalaceQueueModule />
       ) : (
         <GateModule />
       )}
@@ -678,8 +689,9 @@ function HeaderModule() {
   const memoryTotal = selectedThread?.memoryPanel.total ?? 0
   const threadsOpen = selection?.kind === 'module' && selection.id === 'threads'
   const memoriesOpen = selection?.kind === 'module' && selection.id === 'memory'
+  const queueOpen = selection?.kind === 'module' && selection.id === 'palace_queue'
 
-  function toggleModule(moduleId: 'threads' | 'memory') {
+  function toggleModule(moduleId: 'threads' | 'memory' | 'palace_queue') {
     const alreadyOpen = selection?.kind === 'module' && selection.id === moduleId
     selectionBus.select(alreadyOpen ? null : { kind: 'module', id: moduleId })
   }
@@ -714,6 +726,16 @@ function HeaderModule() {
           <span>{memoryTotal}</span>
         </button>
       </div>
+
+      <button
+        className="palace-queue-launch"
+        type="button"
+        data-testid="palace-queue-launch"
+        aria-expanded={queueOpen}
+        onClick={() => toggleModule('palace_queue')}
+      >
+        Palace queue
+      </button>
 
       <p
         className={`connection connection--${snapshot.connection}`}
@@ -1121,7 +1143,10 @@ function ChatModule() {
 interface ThreadEndQueueCard {
   item_uid: string
   verdict: 'new' | 'merge' | 'supersede' | 'contradict'
-  birthplace_thread_id: string
+  birthplace: 'thread' | 'seed'
+  birthplace_thread_id: string | null
+  batch_uid: string | null
+  source_name: string | null
   candidate: { label: string; body: string; keywords: string[] }
   neighbors: Array<{ memory_id: string; label: string }>
 }
@@ -1143,7 +1168,7 @@ function ThreadEndModule() {
 
   useEffect(() => {
     const threadId = scope === 'CURRENT' ? selectedThreadId ?? undefined : undefined
-    void events.dispatch({ type: 'queue.load', thread_id: threadId }).then((value) => {
+    void events.dispatch({ type: 'queue.load', thread_id: threadId, birthplace: 'thread' }).then((value) => {
       setCards(queueCardsFrom(value))
     }).catch(() => setCards([]))
   }, [events, scope, selectedThreadId])
@@ -1353,7 +1378,11 @@ function queueCardsFrom(value: JsonValue): ThreadEndQueueCard[] {
 function isQueueCard(value: unknown): value is ThreadEndQueueCard {
   return isObject(value) && typeof value.item_uid === 'string' &&
     ['new', 'merge', 'supersede', 'contradict'].includes(String(value.verdict)) &&
-    typeof value.birthplace_thread_id === 'string' && isObject(value.candidate) &&
+    (typeof value.birthplace_thread_id === 'string' || value.birthplace_thread_id === null) &&
+    (value.birthplace === 'thread' || value.birthplace === 'seed') &&
+    (typeof value.batch_uid === 'string' || value.batch_uid === null) &&
+    (typeof value.source_name === 'string' || value.source_name === null) &&
+    isObject(value.candidate) &&
     typeof value.candidate.label === 'string' && typeof value.candidate.body === 'string' &&
     Array.isArray(value.candidate.keywords) && value.candidate.keywords.every((item) => typeof item === 'string') &&
     Array.isArray(value.neighbors)
@@ -1361,6 +1390,153 @@ function isQueueCard(value: unknown): value is ThreadEndQueueCard {
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function PalaceQueueModule() {
+  const { events, selection } = useRackPlugin()
+  const [scope, setScope] = useState<'CURRENT' | 'GLOBAL'>(
+    RACK_MANIFESTS.palace_queue.default_scope,
+  )
+  const [cards, setCards] = useState<ThreadEndQueueCard[]>([])
+  const [statusText, setStatusText] = useState('Choose Markdown files to grow the queue.')
+  const [busy, setBusy] = useState(false)
+
+  const load = useCallback(() => {
+    return events.dispatch({ type: 'queue.load', birthplace: 'seed' }).then((value) => {
+      setCards(queueCardsFrom(value).filter((card) => card.birthplace === 'seed'))
+    })
+  }, [events])
+
+  useEffect(() => {
+    void events.dispatch({ type: 'rack.scope.get', module_id: 'palace_queue' }).then(setScope)
+    void load().catch(() => setStatusText('The Palace queue could not be loaded.'))
+  }, [events, load])
+
+  const batches = useMemo(() => {
+    const grouped = new Map<string, ThreadEndQueueCard[]>()
+    for (const card of cards) {
+      if (card.batch_uid === null) continue
+      grouped.set(card.batch_uid, [...(grouped.get(card.batch_uid) ?? []), card])
+    }
+    return [...grouped.entries()]
+  }, [cards])
+
+  function changeScope(value: 'CURRENT' | 'GLOBAL') {
+    setScope(value)
+    void events.dispatch({
+      type: 'rack.scope.set', module_id: 'palace_queue', scope: value,
+    }).catch(() => undefined)
+  }
+
+  async function upload(files: FileList | null) {
+    if (files === null || files.length === 0 || busy) return
+    setBusy(true)
+    try {
+      for (const file of Array.from(files)) {
+        const lower = file.name.toLowerCase()
+        if ((!lower.endsWith('.md') && !lower.endsWith('.markdown')) || file.size > 24 * 1024) {
+          throw new Error(`${file.name} must be Markdown and no larger than 24 KiB.`)
+        }
+        setStatusText(`Splitting ${file.name} without losing its claims…`)
+        await events.dispatch({
+          type: 'seed.upload',
+          batch_uid: globalThis.crypto.randomUUID(),
+          source_name: file.name,
+          markdown: await file.text(),
+        })
+      }
+      await load()
+      setStatusText('Split complete. Review each document as one batch.')
+    } catch (error) {
+      setStatusText(error instanceof Error ? error.message : 'Seed ingestion failed.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function decideBatch(batchUid: string, decision: 'approve' | 'deny') {
+    if (busy) return
+    setBusy(true)
+    setStatusText(decision === 'approve' ? 'Planting the document…' : 'Rejecting the document…')
+    void events.dispatch({ type: 'queue.batch.decide', batch_uid: batchUid, decision })
+      .then(() => load())
+      .then(() => setStatusText(decision === 'approve' ? 'Document planted.' : 'Document rejected.'))
+      .catch(() => setStatusText('The batch changed before it could be decided.'))
+      .finally(() => setBusy(false))
+  }
+
+  return (
+    <div className="palace-queue-module">
+      <button
+        className="thread-end-module__close"
+        type="button"
+        onClick={() => selection.select(null)}
+      >Close queue</button>
+      <section className="palace-queue-card" aria-label="Palace seed queue">
+        <header className="palace-queue-card__header">
+          <div>
+            <p className="eyebrow">Corpus door · explicit consent</p>
+            <h2>Grow the Palace from Markdown</h2>
+            <p>Each document is split into standalone memories. Nothing enters until you approve its batch.</p>
+          </div>
+          <div className="scope-toggle" aria-label="Palace queue scope">
+            {(['GLOBAL', 'CURRENT'] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={scope === value}
+                onClick={() => changeScope(value)}
+              >{value}</button>
+            ))}
+          </div>
+        </header>
+        <label className="seed-drop">
+          <span>{busy ? 'Working…' : 'Choose Markdown files'}</span>
+          <input
+            data-testid="seed-upload"
+            type="file"
+            accept=".md,.markdown,text/markdown"
+            multiple
+            disabled={busy}
+            onChange={(event) => void upload(event.currentTarget.files)}
+          />
+        </label>
+        <p className="seed-status" aria-live="polite">{statusText}</p>
+        {batches.length === 0 ? (
+          <div className="palace-queue-empty">
+            <h3>The queue is clear</h3>
+            <p>Pending seed documents will wait here without expiring or interrupting you.</p>
+          </div>
+        ) : (
+          <div className="seed-batch-list">
+            {batches.map(([batchUid, batchCards]) => (
+              <article className="seed-batch" key={batchUid} data-batch-uid={batchUid}>
+                <header>
+                  <div>
+                    <span>Markdown seed · {batchCards.length} memories</span>
+                    <h3>{batchCards[0]?.source_name ?? 'Untitled document'}</h3>
+                  </div>
+                  <div className="seed-batch__actions">
+                    <button type="button" disabled={busy} onClick={() => decideBatch(batchUid, 'deny')}>Reject batch</button>
+                    <button type="button" disabled={busy} onClick={() => decideBatch(batchUid, 'approve')}>Approve batch</button>
+                  </div>
+                </header>
+                <div className="seed-batch__memories">
+                  {batchCards.map((card) => (
+                    <div key={card.item_uid} className="seed-memory" data-verdict={card.verdict}>
+                      <span>{card.verdict} · {card.candidate.keywords.join(' · ')}</span>
+                      <strong>{card.candidate.label}</strong>
+                      <p>{card.candidate.body}</p>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
+  )
 }
 
 function MemoryModule() {

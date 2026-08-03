@@ -41,7 +41,7 @@ class FakeSpine:
         self.requests.append(request)
         return ExtractionResponse(cards=[], duplicate_count=1)
 
-    async def approval_queue(self, principal_id: str, *, thread_id=None):
+    async def approval_queue(self, principal_id: str, *, thread_id=None, birthplace=None):
         return QueueResponse(cards=[])
 
     async def search(self, request):

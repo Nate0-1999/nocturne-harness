@@ -49,7 +49,9 @@ from harness.onboarding import nocturne_home
 from harness.rack_query import RackQueryResult
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
+from harness.seed import SeedIngestionService, SeedUploadRequest
 from harness.spine_client import (
+    BatchDecisionResponse,
     QueueDecisionRequest,
     QueueDecisionResponse,
     SpineClient,
@@ -71,7 +73,16 @@ _OUTBOX_BUFFER_SIZE = 256
 _RESYNC_CLOSE_REASON = "snapshot resync required"
 _RACK_FRAME_HOST = "rack.localhost"
 _RACK_MODULE_IDS = frozenset(
-    {"header", "threads", "chat", "memory", "gate", "vitals", "thread_end"}
+    {
+        "header",
+        "threads",
+        "chat",
+        "memory",
+        "gate",
+        "vitals",
+        "thread_end",
+        "palace_queue",
+    }
 )
 _RACK_FRAME_CSP = "; ".join(
     (
@@ -462,6 +473,12 @@ def create_dev_app(
         principal_id=principal_id,
         machine_id=machine_id,
     )
+    seed_ingestion = SeedIngestionService(
+        agent=owned_agent,
+        spine=owned_spine,
+        principal_id=principal_id,
+        machine_id=machine_id,
+    )
     idle_extraction = (
         None
         if configured.extraction_idle_hours is None
@@ -494,7 +511,9 @@ def create_dev_app(
                 ):
                     final_post = message["content"]
                     break
-            pending = await owned_spine.approval_queue(principal_id, thread_id=thread_id)
+            pending = await owned_spine.approval_queue(
+                principal_id, thread_id=thread_id, birthplace="thread"
+            )
             return ThreadEndResult(thread_id, final_post, "", [], pending.cards, 0, True)
 
         @app.post("/v1/approval-queue/{item_uid}/decisions")
@@ -503,9 +522,37 @@ def create_dev_app(
         ) -> QueueDecisionResponse:
             return await owned_spine.decide_queue_item(item_uid, body)
 
+        @app.post("/v1/approval-queue/batches/{batch_uid}/decisions")
+        async def decide_queue_batch(
+            batch_uid: UUID, body: QueueDecisionRequest
+        ) -> BatchDecisionResponse:
+            return await owned_spine.decide_queue_batch(batch_uid, body)
+
         @app.get("/v1/approval-queue")
-        async def read_queue(thread_id: UUID | None = None):
-            return await owned_spine.approval_queue(principal_id, thread_id=thread_id)
+        async def read_queue(
+            thread_id: UUID | None = None,
+            birthplace: Literal["thread", "seed"] | None = None,
+        ):
+            return await owned_spine.approval_queue(
+                principal_id,
+                thread_id=thread_id,
+                birthplace=birthplace,
+            )
+
+        @app.post("/v1/seeds")
+        async def ingest_seed(upload: SeedUploadRequest):
+            try:
+                return await seed_ingestion.ingest(upload)
+            except ValueError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=str(exc),
+                ) from exc
+            except SpineClientError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail=f"Seed ingestion failed: {exc}",
+                ) from exc
 
     app = create_app(
         web_dist,

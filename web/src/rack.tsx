@@ -36,7 +36,7 @@ import {
   type ThreadState,
 } from './store'
 
-export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'gate' | 'thread_end'
+export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'gate' | 'thread_end' | 'palace_queue'
 export type RackModuleSlot = 'header' | 'panel' | 'strip' | 'overlay'
 export type RackMemoryPanelState = MemoryPanelState
 
@@ -47,7 +47,8 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
     value === 'memory' ||
     value === 'vitals' ||
     value === 'gate' ||
-    value === 'thread_end'
+    value === 'thread_end' ||
+    value === 'palace_queue'
 }
 
 export interface RackSnapshot {
@@ -64,7 +65,9 @@ export type RackAction =
   | { type: 'prompt.submit'; prompt: string }
   | { type: 'run.cancel'; run_id?: Ulid }
   | { type: 'thread.archive' }
-  | { type: 'queue.load'; thread_id?: string }
+  | { type: 'queue.load'; thread_id?: string; birthplace?: 'thread' | 'seed' }
+  | { type: 'seed.upload'; batch_uid: string; source_name: string; markdown: string }
+  | { type: 'queue.batch.decide'; batch_uid: string; decision: 'approve' | 'deny' }
   | { type: 'rack.scope.get'; module_id: RackModuleId }
   | { type: 'rack.scope.set'; module_id: RackModuleId; scope: 'GLOBAL' | 'CURRENT' }
   | {
@@ -155,7 +158,7 @@ export type RackActionResult<Action extends RackAction> =
     ? string
     : Action['type'] extends 'thread.select'
       ? void
-      : Action['type'] extends 'thread.archive' | 'queue.load' | 'queue.decide'
+      : Action['type'] extends 'thread.archive' | 'queue.load' | 'queue.decide' | 'seed.upload' | 'queue.batch.decide'
         ? JsonValue
         : Action['type'] extends 'rack.scope.get' | 'rack.scope.set'
           ? 'GLOBAL' | 'CURRENT'
@@ -263,6 +266,19 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     law_bound: true,
     default_scope: 'CURRENT',
   },
+  palace_queue: {
+    id: 'palace_queue',
+    name: 'Palace Queue',
+    version: '1.0.0',
+    class: 'visualizer',
+    slot: 'overlay',
+    streams: [],
+    actions: ['queue.load', 'seed.upload', 'queue.batch.decide', 'rack.scope.get', 'rack.scope.set'],
+    bounds: commonPanelBounds,
+    movable: false,
+    law_bound: true,
+    default_scope: 'GLOBAL',
+  },
 }
 
 let lastStoreState = useHarnessStore.getState()
@@ -332,11 +348,36 @@ function dispatchRackAction<Action extends RackAction>(
           },
         ) as Promise<RackActionResult<Action>>
       case 'queue.load': {
-        const query = action.thread_id === undefined
-          ? ''
-          : `?thread_id=${encodeURIComponent(action.thread_id)}`
+        const params = new URLSearchParams()
+        if (action.thread_id !== undefined) params.set('thread_id', action.thread_id)
+        if (action.birthplace !== undefined) params.set('birthplace', action.birthplace)
+        const query = params.size === 0 ? '' : `?${params.toString()}`
         return fetchJson(`/v1/approval-queue${query}`) as Promise<RackActionResult<Action>>
       }
+      case 'seed.upload':
+        return fetchJson('/v1/seeds', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            batch_uid: action.batch_uid,
+            source_name: action.source_name,
+            markdown: action.markdown,
+          }),
+        }) as Promise<RackActionResult<Action>>
+      case 'queue.batch.decide':
+        return fetchJson(
+          `/v1/approval-queue/batches/${encodeURIComponent(action.batch_uid)}/decisions`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              decision: action.decision,
+              approval_mode: 'explicit',
+              actor_class: 'human',
+              machine_id: 'harness-browser',
+            }),
+          },
+        ) as Promise<RackActionResult<Action>>
       case 'rack.scope.get':
         return loadRackLayout(globalThis.localStorage).scopes[action.module_id] as
           RackActionResult<Action>

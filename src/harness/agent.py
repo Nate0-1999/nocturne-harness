@@ -17,6 +17,7 @@ from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.usage import RunUsage
+from spine.tokens import cl100k_token_count
 
 from harness.commands import remember_command_text
 from harness.config import HarnessSettings
@@ -44,6 +45,13 @@ EXTRACTION_INSTRUCTION = (
     "most five durable memory candidates. Each candidate must be atomic, stand alone, preserve "
     "uncertainty, and include 2-5 distinct lowercase searchable keywords. Do not extract transient "
     "chat or facts that are not useful beyond this thread."
+)
+SEED_SPLIT_INSTRUCTION = (
+    "Semantically split the complete Markdown document into durable atomic memories. Preserve "
+    "every durable claim without summarizing or mechanical token chopping. Every child must "
+    "stand alone with no unresolved references, contain one claim, use at most 128 cl100k_base "
+    "tokens, and include its own short label, kind, and 2-5 distinct lowercase searchable "
+    "keywords. Return one to 64 children in source order and structured data only."
 )
 
 
@@ -73,6 +81,11 @@ class ExtractionDraft(BaseModel):
     working_summary: StrictStr
     open_loops: list[StrictStr]
     candidates: list[ExtractionCandidateDraft] = Field(max_length=5)
+
+
+class SeedSplitDraft(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    candidates: list[ExtractionCandidateDraft] = Field(min_length=1, max_length=64)
 
 
 class ExtractionVerdictDraft(BaseModel):
@@ -152,6 +165,12 @@ class HarnessAgent:
                 "the candidate stands alone. Return structured data only."
             ),
             name="harness-extraction-verdict",
+        )
+        self._seed_splitter_agent = Agent(
+            self._default_model,
+            output_type=PromptedOutput(SeedSplitDraft),
+            instructions=SEED_SPLIT_INSTRUCTION,
+            name="harness-seed-splitter",
         )
 
     @property
@@ -320,6 +339,35 @@ class HarnessAgent:
             raise ValueError("new extraction verdict cannot have targets")
         if result.output.verdict != "new" and not result.output.target_ids:
             raise ValueError("non-new extraction verdict requires a target")
+        return result.output
+
+    async def split_seed(
+        self,
+        source_name: str,
+        markdown: str,
+        *,
+        model: Model | str | None = None,
+    ) -> SeedSplitDraft:
+        """Produce a lossless semantic split or fail before any queue write."""
+
+        result = await self._seed_splitter_agent.run(
+            f"Source: {source_name}\n\n{markdown}",
+            model=self._select_model(model),
+            usage_limits=self._usage_limits,
+        )
+        if not isinstance(result.output, SeedSplitDraft):
+            raise TypeError("seed splitter returned no structured result")
+        for candidate in result.output.candidates:
+            invalid_label = (
+                not candidate.label.strip()
+                or len(candidate.label.strip()) > self._settings.label_max
+            )
+            if invalid_label:
+                raise ValueError("seed splitter produced an invalid label")
+            if cl100k_token_count(candidate.body.strip()) > 128:
+                raise ValueError("seed splitter produced a child above the 128-token limit")
+            if _normalize_keywords(candidate.keywords) is None:
+                raise ValueError("seed splitter produced invalid keywords")
         return result.output
 
     async def dispatch(

@@ -103,8 +103,10 @@ def test_client_exposes_all_spine_routes() -> None:
         "record_spend_events",
         "vitals_snapshot",
         "create_extraction",
+        "create_seed",
         "approval_queue",
         "decide_queue_item",
+        "decide_queue_batch",
     }
 
 

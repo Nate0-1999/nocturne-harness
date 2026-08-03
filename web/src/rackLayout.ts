@@ -74,7 +74,7 @@ export const FACTORY_RACK_LAYOUT: RackLayoutSet = {
   version: 1,
   scopes: {
     header: 'GLOBAL', threads: 'CURRENT', chat: 'CURRENT', memory: 'CURRENT',
-    vitals: 'GLOBAL', gate: 'CURRENT', thread_end: 'CURRENT',
+    vitals: 'GLOBAL', gate: 'CURRENT', thread_end: 'CURRENT', palace_queue: 'GLOBAL',
   },
   modules: [
     { module_id: 'threads', order: 0, width: 2 },

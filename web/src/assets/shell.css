@@ -759,6 +759,23 @@
   display: none;
 }
 
+.palace-queue-launch {
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, transparent);
+  background: rgb(255 255 255 / 3%);
+  color: var(--ink);
+  padding: .42rem .68rem;
+  font-family: var(--data-font);
+  font-size: .65rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.palace-queue-launch[aria-expanded="true"] {
+  background: var(--accent);
+  color: #081017;
+}
+
 .memory-panel {
   position: relative;
   z-index: 10;
