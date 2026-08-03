@@ -7,6 +7,7 @@ import {
   laneChartPoints,
   nearestSpendPoint,
   parseVitalsSnapshot,
+  reconciliationCopy,
   spendLaneId,
   unpricedCopy,
 } from '../src/vitals.ts'
@@ -43,6 +44,19 @@ function snapshot() {
           ],
         },
       ],
+    },
+    reconciliation: {
+      status: 'drift',
+      checked_at: '2026-08-02T12:59:30Z',
+      broker_usage_usd: '10.040000000000',
+      ledger_cost_usd: '0.035000000000',
+      broker_since_baseline_usd: '0.040000000000',
+      ledger_since_baseline_usd: '0.035000000000',
+      drift_usd: '-0.005000000000',
+      tolerance_usd: '0.000001000000',
+      unpriced_lines: 1,
+      source: 'openrouter:/api/v1/key',
+      error_code: null,
     },
     lifecycle_rates: [
       {
@@ -81,6 +95,7 @@ test('parses the exact server-provided vitals shape without re-accounting', () =
   assert.equal(parsed.spend.lanes[0].points[0].cost_usd, '0.035000000000')
   assert.equal(spendLaneId(parsed.spend.lanes[0]), 'total')
   assert.equal(parsed.palace_counts[1].status, 'placeholder')
+  assert.equal(reconciliationCopy(parsed.reconciliation), 'Ledger drift · -$0.005000000000')
 })
 
 test('preserves exact decimal scale and distinguishes an unpriced point', () => {

@@ -29,6 +29,22 @@ export interface PalaceCount {
   source: string | null
 }
 
+export type ReconciliationStatus = 'not_recorded' | 'baseline' | 'balanced' | 'drift' | 'unavailable'
+
+export interface ReconciliationSnapshot {
+  status: ReconciliationStatus
+  checked_at: string | null
+  broker_usage_usd: string | null
+  ledger_cost_usd: string | null
+  broker_since_baseline_usd: string | null
+  ledger_since_baseline_usd: string | null
+  drift_usd: string | null
+  tolerance_usd: string | null
+  unpriced_lines: number
+  source: 'openrouter:/api/v1/key' | null
+  error_code: 'broker_unavailable' | 'invalid_broker_response' | null
+}
+
 export interface VitalsSnapshot {
   as_of: string
   window_minutes: 60
@@ -37,6 +53,7 @@ export interface VitalsSnapshot {
     latest_minute: string | null
     lanes: SpendLane[]
   }
+  reconciliation: ReconciliationSnapshot
   lifecycle_rates: LifecycleRate[]
   palace_counts: PalaceCount[]
 }
@@ -48,6 +65,7 @@ export interface LaneChartPoint {
 }
 
 const DECIMAL = /^(?:0|[1-9]\d*)(?:\.\d+)?$/
+const SIGNED_DECIMAL = /^-?(?:0|[1-9]\d*)(?:\.\d+)?$/
 const OFFSET_TIMESTAMP = /(?:Z|[+-]\d{2}:\d{2})$/
 
 export function parseVitalsSnapshot(value: unknown): VitalsSnapshot {
@@ -76,6 +94,7 @@ export function parseVitalsSnapshot(value: unknown): VitalsSnapshot {
       latest_minute: latestMinute,
       lanes: spend.lanes.map(parseSpendLane),
     },
+    reconciliation: parseReconciliation(root.reconciliation),
     lifecycle_rates: gaugeArray(root.lifecycle_rates, parseLifecycleRate, 'lifecycle_rates'),
     palace_counts: gaugeArray(root.palace_counts, parsePalaceCount, 'palace_counts'),
   }
@@ -95,6 +114,24 @@ export function formatExactUsd(value: string | null): string {
   const [whole, fraction] = value.split('.')
   const groupedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
   return `$${groupedWhole}${fraction === undefined ? '' : `.${fraction}`}`
+}
+
+export function reconciliationCopy(value: ReconciliationSnapshot): string {
+  switch (value.status) {
+    case 'baseline': return 'Ledger audit · Baseline set'
+    case 'balanced': return 'Ledger audit · Aligned'
+    case 'drift': return `Ledger drift · ${formatSignedUsd(value.drift_usd)}`
+    case 'unavailable': return 'Ledger audit · Temporarily unavailable'
+    case 'not_recorded': return 'Ledger audit · Not recorded'
+  }
+}
+
+export function formatSignedUsd(value: string | null): string {
+  if (value === null || !SIGNED_DECIMAL.test(value)) {
+    throw new TypeError('Drift must be an exact signed decimal string')
+  }
+  const sign = value.startsWith('-') ? '-' : '+'
+  return `${sign}${formatExactUsd(value.replace(/^-/, ''))}`
 }
 
 export function unpricedCopy(count: number): string | null {
@@ -206,6 +243,78 @@ function parseSpendLane(value: unknown, index: number): SpendLane {
     label: lane.label,
     points: lane.points.map((point, pointIndex) => parseSpendPoint(point, index, pointIndex)),
   }
+}
+
+function parseReconciliation(value: unknown): ReconciliationSnapshot {
+  const item = record(value, 'reconciliation')
+  const statuses: ReconciliationStatus[] = [
+    'not_recorded', 'baseline', 'balanced', 'drift', 'unavailable',
+  ]
+  if (!statuses.includes(item.status as ReconciliationStatus)) {
+    throw new TypeError('reconciliation.status is invalid')
+  }
+  const decimal = (field: string, signed = false): string | null => {
+    const candidate = item[field]
+    if (candidate === null) return null
+    if (typeof candidate !== 'string' || !(signed ? SIGNED_DECIMAL : DECIMAL).test(candidate)) {
+      throw new TypeError(`reconciliation.${field} must be an exact decimal string or null`)
+    }
+    return candidate
+  }
+  const checkedAt = item.checked_at === null
+    ? null
+    : timestamp(item.checked_at, 'reconciliation.checked_at')
+  if (item.source !== null && item.source !== 'openrouter:/api/v1/key') {
+    throw new TypeError('reconciliation.source is invalid')
+  }
+  if (
+    item.error_code !== null &&
+    item.error_code !== 'broker_unavailable' &&
+    item.error_code !== 'invalid_broker_response'
+  ) {
+    throw new TypeError('reconciliation.error_code is invalid')
+  }
+  const result: ReconciliationSnapshot = {
+    status: item.status as ReconciliationStatus,
+    checked_at: checkedAt,
+    broker_usage_usd: decimal('broker_usage_usd'),
+    ledger_cost_usd: decimal('ledger_cost_usd'),
+    broker_since_baseline_usd: decimal('broker_since_baseline_usd'),
+    ledger_since_baseline_usd: decimal('ledger_since_baseline_usd'),
+    drift_usd: decimal('drift_usd', true),
+    tolerance_usd: decimal('tolerance_usd'),
+    unpriced_lines: nonnegativeInteger(item.unpriced_lines, 'reconciliation.unpriced_lines'),
+    source: item.source as 'openrouter:/api/v1/key' | null,
+    error_code: item.error_code as 'broker_unavailable' | 'invalid_broker_response' | null,
+  }
+  const observations = [
+    result.broker_usage_usd,
+    result.ledger_cost_usd,
+    result.broker_since_baseline_usd,
+    result.ledger_since_baseline_usd,
+    result.drift_usd,
+  ]
+  if (result.status === 'not_recorded') {
+    if (
+      result.checked_at !== null || observations.some((entry) => entry !== null) ||
+      result.tolerance_usd !== null || result.error_code !== null
+    ) {
+      throw new TypeError('not_recorded reconciliation cannot contain a result')
+    }
+  } else if (result.status === 'unavailable') {
+    if (
+      result.checked_at === null || observations.some((entry) => entry !== null) ||
+      result.tolerance_usd === null || result.error_code === null || result.source === null
+    ) {
+      throw new TypeError('unavailable reconciliation has an invalid shape')
+    }
+  } else if (
+    result.checked_at === null || observations.some((entry) => entry === null) ||
+    result.tolerance_usd === null || result.error_code !== null || result.source === null
+  ) {
+    throw new TypeError('successful reconciliation has an invalid shape')
+  }
+  return result
 }
 
 function parseSpendPoint(value: unknown, laneIndex: number, pointIndex: number): SpendPoint {

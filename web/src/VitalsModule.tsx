@@ -14,6 +14,7 @@ import {
   latestSpendPoint,
   nearestSpendPoint,
   parseVitalsSnapshot,
+  reconciliationCopy,
   spendLaneId,
   unpricedCopy,
   type GaugeStatus,
@@ -207,6 +208,12 @@ export function VitalsModule() {
               : `At ${formatMinute(totalPoint.minute)}`}
           </small>
         </button>
+        <span
+          className={`vitals-reconciliation vitals-reconciliation--${snapshot.reconciliation.status}`}
+          title="Palace-wide broker audit"
+        >
+          {reconciliationCopy(snapshot.reconciliation)}
+        </span>
         {load.failed && (
           <span className="vitals-inline-failure" role="alert">
             Vitals couldn’t refresh. Chat is still available.
@@ -237,6 +244,13 @@ export function VitalsModule() {
           </button>
         </div>
       </header>
+
+      <div
+        className={`vitals-reconciliation vitals-reconciliation--${snapshot.reconciliation.status}`}
+        title="Palace-wide broker audit"
+      >
+        {reconciliationCopy(snapshot.reconciliation)}
+      </div>
 
       <div className="vitals-gauges" aria-label="Lifecycle and Palace gauges">
         {snapshot.lifecycle_rates.map((gauge) => (

@@ -926,8 +926,28 @@
 
 .vitals-strip--expanded {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto minmax(0, 1fr);
   overflow: hidden;
+}
+
+.vitals-reconciliation {
+  overflow: hidden;
+  padding: 0.2rem 0.6rem;
+  color: var(--dim);
+  font-size: 0.54rem;
+  letter-spacing: 0.055em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.vitals-reconciliation--drift {
+  color: var(--danger);
+}
+
+.vitals-strip--collapsed > .vitals-reconciliation {
+  flex: none;
+  padding: 0;
 }
 
 .vitals-strip__header {

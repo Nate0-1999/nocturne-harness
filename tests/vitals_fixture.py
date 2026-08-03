@@ -52,6 +52,19 @@ def vitals_payload() -> dict[str, Any]:
                 },
             ],
         },
+        "reconciliation": {
+            "status": "balanced",
+            "checked_at": "2026-08-02T12:05:10Z",
+            "broker_usage_usd": "4.101200000000",
+            "ledger_cost_usd": "0.101200000000",
+            "broker_since_baseline_usd": "0.001200000000",
+            "ledger_since_baseline_usd": "0.001200000000",
+            "drift_usd": "0.000000000000",
+            "tolerance_usd": "0.000001000000",
+            "unpriced_lines": 1,
+            "source": "openrouter:/api/v1/key",
+            "error_code": None,
+        },
         "lifecycle_rates": [
             {
                 "metric": "created",

@@ -47,12 +47,19 @@ def _require_nonnegative_decimal_string(value: str) -> str:
     return value
 
 
+def _require_signed_decimal_string(value: str) -> str:
+    if not re.fullmatch(r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?", value):
+        raise ValueError("value must be a signed decimal string")
+    return value
+
+
 type ULID = Annotated[StrictStr, AfterValidator(_require_ulid)]
 type NonBlankString = Annotated[StrictStr, AfterValidator(_require_nonblank)]
 type NonNegativeDecimalString = Annotated[
     StrictStr,
     AfterValidator(_require_nonnegative_decimal_string),
 ]
+type SignedDecimalString = Annotated[StrictStr, AfterValidator(_require_signed_decimal_string)]
 
 
 class ContractModel(BaseModel):
@@ -582,10 +589,30 @@ class VitalsPalaceCount(ContractModel):
         return self
 
 
+class VitalsReconciliation(ContractModel):
+    status: Literal["not_recorded", "baseline", "balanced", "drift", "unavailable"]
+    checked_at: datetime | None
+    broker_usage_usd: NonNegativeDecimalString | None
+    ledger_cost_usd: NonNegativeDecimalString | None
+    broker_since_baseline_usd: NonNegativeDecimalString | None
+    ledger_since_baseline_usd: NonNegativeDecimalString | None
+    drift_usd: SignedDecimalString | None
+    tolerance_usd: NonNegativeDecimalString | None
+    unpriced_lines: int = Field(strict=True, ge=0)
+    source: Literal["openrouter:/api/v1/key"] | None
+    error_code: Literal["broker_unavailable", "invalid_broker_response"] | None
+
+    @field_validator("checked_at")
+    @classmethod
+    def require_aware_checked_at(cls, value: datetime | None) -> datetime | None:
+        return None if value is None else _require_aware_timestamp(value)
+
+
 class VitalsSnapshot(ContractModel):
     as_of: datetime
     window_minutes: Literal[60]
     spend: VitalsSpend
+    reconciliation: VitalsReconciliation
     lifecycle_rates: list[VitalsLifecycleRate]
     palace_counts: list[VitalsPalaceCount]
 
