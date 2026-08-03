@@ -14,6 +14,7 @@ import {
 import { AssistantMarkdown } from './AssistantMarkdown'
 import { MemoryGate } from './MemoryGate'
 import { MemoryPanel } from './MemoryPanel'
+import { ModelDevice } from './ModelDevice'
 import { VitalsModule } from './VitalsModule'
 import type {
   AssistantTranscriptMessage,
@@ -151,7 +152,7 @@ function App() {
 
 function useVerifiedRegressionFixture(enabled: boolean): boolean | null {
   const requestedFixture = new URLSearchParams(globalThis.location.search).get('fixture')
-  const markerRequested = ['M2C REGRESSION', 'M2G REGRESSION'].includes(
+  const markerRequested = ['M2C REGRESSION', 'M2G REGRESSION', 'M2I REGRESSION', 'M2J REGRESSION'].includes(
     requestedFixture ?? '',
   )
   const [isVerified, setIsVerified] = useState<boolean | null>(
@@ -394,6 +395,14 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           />
         </div>
       )}
+      {drawerModule === 'model_device' && openGate === null && (
+        <div className="rack-overlay-module rack-overlay-module--model-device" data-rack-module="model_device">
+          <RackPluginIframe
+            manifest={RACK_MANIFESTS.model_device}
+            isRegressionFixture={isRegressionFixture}
+          />
+        </div>
+      )}
       {isRegressionFixture && (
         <RegressionFixtureMarker />
       )}
@@ -631,7 +640,7 @@ function RackRemoteApp({ moduleId }: { moduleId: RackModuleManifest['id'] }) {
 
 function RegressionFixtureMarker({ remote = false }: { remote?: boolean }) {
   const requested = new URLSearchParams(globalThis.location.search).get('fixture')
-  const known = new Set(['M2C REGRESSION', 'M2G REGRESSION', 'M2I REGRESSION'])
+  const known = new Set(['M2C REGRESSION', 'M2G REGRESSION', 'M2I REGRESSION', 'M2J REGRESSION'])
   const label = requested !== null && known.has(requested) ? requested : 'M2C REGRESSION'
   return (
     <div
@@ -667,6 +676,8 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
         <ThreadEndModule />
       ) : moduleId === 'palace_queue' ? (
         <PalaceQueueModule />
+      ) : moduleId === 'model_device' ? (
+        <ModelDevice />
       ) : (
         <GateModule />
       )}
@@ -842,7 +853,7 @@ function ThreadsModule() {
 
 function ChatModule() {
   const snapshot = useRackSnapshot()
-  const { events } = useRackPlugin()
+  const { events, selection } = useRackPlugin()
   const selectedThreadId = snapshot.selectedThreadId
   const selectedThread = selectedThreadId === null ? null : snapshot.threads[selectedThreadId]
   const selectedMeta = snapshot.catalog.find((entry) => entry.thread_id === selectedThreadId)
@@ -1005,16 +1016,18 @@ function ChatModule() {
           )}
           {selectedThreadId !== null && <span>{shortId(selectedThreadId)}</span>}
         </div>
-        <p
+        <button
+          type="button"
           className="chat-header__model"
           data-testid="active-model"
           aria-label={`Active model: ${selectedThread?.resolvedModel ?? 'awaiting daemon'}`}
+          onClick={() => selection.select({ kind: 'module', id: 'model_device' })}
         >
           <span aria-hidden="true">Model</span>
           <span className="chat-header__model-value">
             {selectedThread?.resolvedModel ?? 'Awaiting daemon'}
           </span>
-        </p>
+        </button>
       </header>
 
       {(snapshot.globalError !== null || selectedThread?.lastError !== null) && (

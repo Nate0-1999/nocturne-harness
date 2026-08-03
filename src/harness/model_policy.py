@@ -6,7 +6,7 @@ import asyncio
 import logging
 import time
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from decimal import Decimal, DecimalException, InvalidOperation, localcontext
 from typing import Literal, Protocol
@@ -78,6 +78,9 @@ class ThreadModelResolution:
     benchmark: BenchmarkModel | None = None
     catalog_fetched_at: datetime | None = None
     stickiness_epoch: int = 0
+    request_parameters: ModelRequestParameters = field(
+        default_factory=lambda: ModelRequestParameters()
+    )
 
     def __post_init__(self) -> None:
         _validate_model_name(self.model)
@@ -89,6 +92,29 @@ class ThreadModelResolution:
     @property
     def uses_openrouter(self) -> bool:
         return self.model.startswith("openrouter:")
+
+
+@dataclass(frozen=True, slots=True)
+class ModelRequestParameters:
+    """Nullable per-thread broker overrides; null inherits provider behavior."""
+
+    temperature: float | None = None
+    top_p: float | None = None
+    top_k: int | None = None
+    max_tokens: int | None = None
+    effort: Literal["none", "minimal", "low", "medium", "high", "xhigh"] | None = None
+
+    def __post_init__(self) -> None:
+        if self.temperature is not None and not 0 <= self.temperature <= 2:
+            raise ValueError("temperature must be between 0 and 2")
+        if self.top_p is not None and not 0 <= self.top_p <= 1:
+            raise ValueError("top_p must be between 0 and 1")
+        if self.top_k is not None and (type(self.top_k) is not int or not 0 <= self.top_k <= 500):
+            raise ValueError("top_k must be an integer between 0 and 500")
+        if self.max_tokens is not None and (
+            type(self.max_tokens) is not int or not 1 <= self.max_tokens <= 131_072
+        ):
+            raise ValueError("max_tokens must be an integer between 1 and 131072")
 
 
 class ModelCatalogLoader(Protocol):

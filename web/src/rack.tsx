@@ -36,7 +36,7 @@ import {
   type ThreadState,
 } from './store'
 
-export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'gate' | 'thread_end' | 'palace_queue'
+export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device'
 export type RackModuleSlot = 'header' | 'panel' | 'strip' | 'overlay'
 export type RackMemoryPanelState = MemoryPanelState
 
@@ -48,7 +48,8 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
     value === 'vitals' ||
     value === 'gate' ||
     value === 'thread_end' ||
-    value === 'palace_queue'
+    value === 'palace_queue' ||
+    value === 'model_device'
 }
 
 export interface RackSnapshot {
@@ -70,6 +71,7 @@ export type RackAction =
   | { type: 'queue.batch.decide'; batch_uid: string; decision: 'approve' | 'deny' }
   | { type: 'rack.scope.get'; module_id: RackModuleId }
   | { type: 'rack.scope.set'; module_id: RackModuleId; scope: 'GLOBAL' | 'CURRENT' }
+  | { type: 'parameter.write'; thread_id: string; parameter_id: string; value: string | number | null }
   | {
       type: 'queue.decide'
       item_uid: string
@@ -100,7 +102,7 @@ export interface RackModuleManifest {
   id: RackModuleId
   name: string
   version: '1.0.0'
-  class: 'visualizer'
+  class: 'visualizer' | 'control'
   slot: RackModuleSlot
   streams: readonly string[]
   actions: readonly RackActionType[]
@@ -108,11 +110,13 @@ export interface RackModuleManifest {
   movable: boolean
   law_bound: boolean
   default_scope: 'GLOBAL' | 'CURRENT'
+  bindings?: readonly string[]
 }
 
 export interface RackQueryRequest {
-  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals'
+  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'parameters'
   as_of?: string | null
+  thread_id?: string
 }
 
 export interface RackQueryResult {
@@ -158,7 +162,7 @@ export type RackActionResult<Action extends RackAction> =
     ? string
     : Action['type'] extends 'thread.select'
       ? void
-      : Action['type'] extends 'thread.archive' | 'queue.load' | 'queue.decide' | 'seed.upload' | 'queue.batch.decide'
+      : Action['type'] extends 'thread.archive' | 'queue.load' | 'queue.decide' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write'
         ? JsonValue
         : Action['type'] extends 'rack.scope.get' | 'rack.scope.set'
           ? 'GLOBAL' | 'CURRENT'
@@ -279,6 +283,23 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     law_bound: true,
     default_scope: 'GLOBAL',
   },
+  model_device: {
+    id: 'model_device',
+    name: 'Model Device',
+    version: '1.0.0',
+    class: 'control',
+    slot: 'overlay',
+    streams: ['parameter.change', 'parameter.refused', 'model.change'],
+    actions: ['parameter.write', 'rack.scope.get', 'rack.scope.set'],
+    bindings: [
+      'model.slug', 'model.temperature', 'model.top_p', 'model.top_k',
+      'model.max_tokens', 'model.effort',
+    ],
+    bounds: commonPanelBounds,
+    movable: false,
+    law_bound: false,
+    default_scope: 'CURRENT',
+  },
 }
 
 let lastStoreState = useHarnessStore.getState()
@@ -390,6 +411,17 @@ function dispatchRackAction<Action extends RackAction>(
         }))
         return action.scope as RackActionResult<Action>
       }
+      case 'parameter.write':
+        return fetchJson('/v1/rack/parameters', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            module_id: 'model_device',
+            thread_id: action.thread_id,
+            parameter_id: action.parameter_id,
+            value: action.value,
+          }),
+        }) as Promise<RackActionResult<Action>>
       case 'gate.commit':
         return harnessClient.commitGate(action.decision) as RackActionResult<Action>
       case 'memory.refresh':
@@ -434,14 +466,10 @@ async function fetchJson(path: string, init?: RequestInit): Promise<JsonValue> {
 export const rackQuerySurface: RackQuerySurface = {
   async query(request) {
     const asOf = request.as_of ?? null
-    if (asOf !== null && asOf !== 'now') {
-      return {
-        status: 'historical_unavailable',
-        as_of: asOf,
-        data: null,
-      }
-    }
     if (request.resource === 'vitals') {
+      if (asOf !== null && asOf !== 'now') {
+        return { status: 'historical_unavailable', as_of: asOf, data: null }
+      }
       const url = new URL('/v1/rack/query', globalThis.location.origin)
       url.searchParams.set('resource', 'vitals')
       url.searchParams.set('as_of', 'now')
@@ -453,6 +481,24 @@ export const rackQuerySurface: RackQuerySurface = {
         throw new Error(`Vitals are unavailable (${response.status})`)
       }
       return parseRackQueryResult(await response.json())
+    }
+    if (request.resource === 'parameters') {
+      if (request.thread_id === undefined) {
+        throw new Error('CURRENT parameter query requires a thread')
+      }
+      const url = new URL('/v1/rack/query', globalThis.location.origin)
+      url.searchParams.set('resource', 'parameters')
+      url.searchParams.set('thread_id', request.thread_id)
+      url.searchParams.set('as_of', asOf ?? 'now')
+      const response = await globalThis.fetch(url, {
+        cache: 'no-store',
+        headers: { Accept: 'application/json' },
+      })
+      if (!response.ok) throw new Error(`Model controls are unavailable (${response.status})`)
+      return parseRackQueryResult(await response.json())
+    }
+    if (asOf !== null && asOf !== 'now') {
+      return { status: 'historical_unavailable', as_of: asOf, data: null }
     }
     const snapshot = getRackSnapshot()
     let data: JsonValue | null = null

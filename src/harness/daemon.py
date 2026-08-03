@@ -6,6 +6,7 @@ import json
 import subprocess
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from contextlib import suppress
+from datetime import datetime
 from pathlib import Path
 from typing import Literal
 from uuid import UUID
@@ -44,8 +45,14 @@ from harness.model_policy import (
     ModelPolicyResolver,
     OpenRouterCatalogClient,
     ThreadModelResolution,
+    ThreadModelResolver,
 )
 from harness.onboarding import nocturne_home
+from harness.parameter_registry import (
+    ParameterSnapshot,
+    ParameterWriteRequest,
+    ParameterWriteViolation,
+)
 from harness.rack_query import RackQueryResult
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
@@ -82,6 +89,7 @@ _RACK_MODULE_IDS = frozenset(
         "vitals",
         "thread_end",
         "palace_queue",
+        "model_device",
     }
 )
 _RACK_FRAME_CSP = "; ".join(
@@ -210,18 +218,46 @@ def create_app(
 
     @app.get("/v1/rack/query", response_model=RackQueryResult)
     async def rack_query(
-        resource: Literal["vitals"],
+        resource: Literal["vitals", "parameters"],
         as_of: str | None = None,
+        thread_id: str | None = None,
     ) -> RackQueryResult:
         """Keep Spine credentials behind the public rack query surface."""
 
-        del resource
-        if as_of not in {None, "now"}:
+        if resource == "parameters":
+            if thread_id is None or not thread_id.strip():
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    detail="CURRENT parameter queries require a thread_id.",
+                )
+            instant: datetime | None = None
+            if as_of not in {None, "now"}:
+                try:
+                    instant = datetime.fromisoformat(as_of.replace("Z", "+00:00"))
+                except ValueError:
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                        detail="Parameter as_of must be an aware ISO-8601 timestamp.",
+                    ) from None
+                if instant.tzinfo is None or instant.utcoffset() is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                        detail="Parameter as_of must be an aware ISO-8601 timestamp.",
+                    )
+            try:
+                snapshot = await loop.parameter_snapshot(thread_id, as_of=instant)
+            except ParameterWriteViolation:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="The parameter registry is unavailable.",
+                ) from None
             return RackQueryResult(
-                status="historical_unavailable",
-                as_of=as_of,
-                data=None,
+                status="live",
+                as_of=None,
+                data=snapshot,
             )
+        if as_of not in {None, "now"}:
+            return RackQueryResult(status="historical_unavailable", as_of=as_of, data=None)
         if vitals_snapshot_reader is None:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -235,6 +271,27 @@ def create_app(
                 detail="Palace Vitals are unavailable.",
             ) from None
         return RackQueryResult(status="live", as_of=None, data=snapshot)
+
+    @app.post("/v1/rack/parameters", response_model=ParameterSnapshot)
+    async def write_parameter(body: ParameterWriteRequest) -> ParameterSnapshot:
+        try:
+            return await loop.write_parameter(
+                module_id=body.module_id,
+                thread_id=body.thread_id,
+                parameter_id=body.parameter_id,
+                value=body.value,
+            )
+        except ParameterWriteViolation as exc:
+            if exc.reason == "busy":
+                code = status.HTTP_409_CONFLICT
+            elif exc.reason == "invalid":
+                code = status.HTTP_422_UNPROCESSABLE_CONTENT
+            else:
+                code = status.HTTP_403_FORBIDDEN
+            raise HTTPException(
+                status_code=code,
+                detail=f"Parameter write refused: {exc.reason}.",
+            ) from None
 
     async def not_implemented(message: Envelope, send: EnvelopeSender) -> None:
         await loop.send_direct(
@@ -389,6 +446,7 @@ def create_dev_app(
     agent: HarnessAgent | None = None,
     spine: SpineClient | None = None,
     transcript_journal: TranscriptJournal | None = None,
+    model_resolver_override: ThreadModelResolver | None = None,
 ) -> FastAPI:
     """Compose the real H3 agent loop with trusted local M1 run context."""
 
@@ -410,7 +468,7 @@ def create_dev_app(
         else None
     )
     model_catalog = OpenRouterCatalogClient(openrouter_key)
-    model_resolver = ModelPolicyResolver(
+    model_resolver = model_resolver_override or ModelPolicyResolver(
         policy=configured.effective_model_policy_chat,
         static_model=configured.chat_model,
         static_context_tokens=configured.model_context_tokens,

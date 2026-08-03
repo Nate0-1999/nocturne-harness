@@ -508,6 +508,8 @@ function applyEvent(thread: ThreadState, event: DecodedServerEvent): ThreadState
         ...thread,
         memoryPanel: applyMemoryPanelUpdate(thread.memoryPanel, event.payload),
       }
+    case 'model.change':
+      return { ...thread, resolvedModel: event.payload.new_model }
     case 'error':
       return { ...thread, lastError: errorFromPayload(event.payload) }
     default:

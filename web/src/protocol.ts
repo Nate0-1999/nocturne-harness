@@ -287,6 +287,13 @@ export interface GateDismissPayload {
   run_id: Ulid
 }
 
+export interface ModelChangePayload {
+  new_model: string
+  reason: string
+  timestamp: string
+  stickiness_epoch: number
+}
+
 export type DecodedServerEvent =
   | { type: 'thread.snapshot'; payload: ThreadSnapshotPayload }
   | { type: 'run.started'; payload: RunStartedPayload }
@@ -297,6 +304,7 @@ export type DecodedServerEvent =
   | { type: 'gate.open'; payload: GateOpenPayload }
   | { type: 'gate.dismiss'; payload: GateDismissPayload }
   | { type: 'memory.panel.update'; payload: MemoryPanelServerPayload }
+  | { type: 'model.change'; payload: ModelChangePayload }
   | { type: 'error'; payload: JsonValue }
   | { type: 'unknown'; payload: JsonValue }
 
@@ -1043,6 +1051,27 @@ export function decodeServerEnvelope(envelope: Envelope): DecodedServerEvent | n
             type: 'memory.panel.update',
             payload: payload as MemoryPanelServerPayload,
           }
+    case 'model.change':
+      if (
+        !isRecord(envelope.payload) ||
+        typeof envelope.payload.new_model !== 'string' ||
+        !envelope.payload.new_model.trim() ||
+        typeof envelope.payload.reason !== 'string' ||
+        typeof envelope.payload.timestamp !== 'string' ||
+        typeof envelope.payload.stickiness_epoch !== 'number' ||
+        !Number.isInteger(envelope.payload.stickiness_epoch)
+      ) {
+        return null
+      }
+      return {
+        type: 'model.change',
+        payload: {
+          new_model: envelope.payload.new_model,
+          reason: envelope.payload.reason,
+          timestamp: envelope.payload.timestamp,
+          stickiness_epoch: envelope.payload.stickiness_epoch,
+        },
+      }
     case 'error':
       return { type: 'error', payload: envelope.payload }
     default:

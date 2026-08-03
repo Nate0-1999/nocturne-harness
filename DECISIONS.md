@@ -881,3 +881,30 @@ scorer and leaks authority into an iframe. Treating removal as a corpus edit
 loses its thread-local meaning. Polling the panel adds latency and still races
 the model boundary. Persisting thread context in a new Harness database would
 pre-build later session infrastructure outside M2G.
+
+## 028 — One thread-owned registry seam for the model device [P2.5, P3, P4]
+
+**Decision.** Adopt Garden A-034. Keep descriptor validation, current values,
+daemon-lifetime replay history, named-model resolution, and change/refusal
+publication behind one RunLoop-owned parameter boundary. The first-party MODEL
+DEVICE reaches it only through the public rack query/action API and declares
+all six bindings in its control-plugin manifest. Request parameters live on
+the thread's immutable model resolution value and are copied into each fresh
+broker settings body; a selector change preserves them while starting the
+standing new cache epoch. CURRENT follows shared thread selection. GLOBAL is
+an honest read-only registry/default view because M2J ships no global writable
+descriptor.
+
+**Motivation.** One owner of model truth prevents the header, registry, and
+broker request from drifting apart. Publishing accepted and refused writes as
+C.7 events makes controls replayable and lets M2D capture them without turning
+the capture journal into the forbidden pre-M3 session server. A read-only
+GLOBAL view obeys the rack-wide scope law without fabricating a global
+temperature whose effect the product cannot define.
+
+**Rejected alternatives.** Browser-owned values or direct provider writes
+would bypass descriptor authority and disappear from the journal. A second
+settings store would compete with RunLoop's model resolution. Hydrating
+parameter state from transcripts would violate M2D's capture-only fence.
+Resurrecting MODEL_INTELLIGENCE_FLOOR would reverse A-021; a global floor control
+can exist only if later law binds the current policy grammar to the registry.

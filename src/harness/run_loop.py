@@ -34,9 +34,17 @@ from harness.envelope import (
 )
 from harness.model_policy import (
     ModelCatalogUnavailable,
+    ModelRequestParameters,
     NamedModelResolutionError,
     ThreadModelResolution,
     ThreadModelResolver,
+)
+from harness.parameter_registry import (
+    ParameterChange,
+    ParameterRegistry,
+    ParameterSnapshot,
+    ParameterValue,
+    ParameterWriteViolation,
 )
 from harness.run_protocol import RunEmitter, TurnOutcome, TurnRunner, UsageSnapshot
 from harness.transcript import TranscriptJournal
@@ -151,6 +159,7 @@ class RunLoop:
         model_resolver: ThreadModelResolver | None = None,
         clock: Callable[[], datetime] | None = None,
         transcript_journal: TranscriptJournal | None = None,
+        parameter_registry: ParameterRegistry | None = None,
     ) -> None:
         if resolved_model is not None and model_resolver is not None:
             raise ValueError("use either resolved_model or model_resolver, not both")
@@ -167,6 +176,7 @@ class RunLoop:
         self._model_resolver = model_resolver
         self._clock = clock or (lambda: datetime.now(UTC))
         self._transcript_journal = transcript_journal
+        self._parameter_registry = parameter_registry or ParameterRegistry()
         self._lock = asyncio.Lock()
         self._submission_locks: dict[str, asyncio.Lock] = {}
         self._pending_captured: dict[str, deque[_Turn]] = {}
@@ -176,6 +186,157 @@ class RunLoop:
         self._terminal_tasks: set[asyncio.Task[None]] = set()
         self._closing = False
         self._capture_failure: Exception | None = None
+
+    async def parameter_snapshot(
+        self,
+        thread_id: str,
+        *,
+        as_of: datetime | None = None,
+    ) -> ParameterSnapshot:
+        """Read one CURRENT thread through the typed public registry seam."""
+
+        self._require_thread_id(thread_id)
+        resolution = await self._resolution_for_thread(thread_id)
+        if resolution is None:
+            raise ParameterWriteViolation("invalid")
+        instant = as_of or self._clock()
+        if instant.tzinfo is None or instant.utcoffset() is None:
+            raise ValueError("parameter as_of must be timezone-aware")
+        async with self._lock:
+            state = self._state_for_locked(thread_id)
+            if state.model_resolution is None:
+                state.model_resolution = resolution
+                state.resolved_model = resolution.model
+            self._ensure_parameter_thread_locked(thread_id, state.model_resolution)
+            return self._parameter_registry.snapshot(thread_id=thread_id, as_of=instant)
+
+    async def write_parameter(
+        self,
+        *,
+        module_id: str,
+        thread_id: str,
+        parameter_id: str,
+        value: object,
+    ) -> ParameterSnapshot:
+        """Validate, apply, journal, and publish one bound control write."""
+
+        self._require_thread_id(thread_id)
+        try:
+            normalized = self._parameter_registry.validate_bound_write(
+                module_id=module_id,
+                parameter_id=parameter_id,
+                value=value,
+            )
+        except ParameterWriteViolation as exc:
+            await self._publish_parameter_refusal(
+                thread_id=thread_id,
+                module_id=module_id,
+                parameter_id=parameter_id,
+                reason=exc.reason,
+            )
+            raise
+
+        submission_lock = self._submission_locks.setdefault(thread_id, asyncio.Lock())
+        async with submission_lock:
+            async with self._lock:
+                state = self._state_for_locked(thread_id)
+                if state.active is not None:
+                    await self._publish_parameter_refusal_locked(
+                        thread_id=thread_id,
+                        module_id=module_id,
+                        parameter_id=parameter_id,
+                        reason="busy",
+                    )
+                    raise ParameterWriteViolation("busy")
+
+            resolution = await self._resolution_for_thread(thread_id)
+            if resolution is None:
+                await self._publish_parameter_refusal(
+                    thread_id=thread_id,
+                    module_id=module_id,
+                    parameter_id=parameter_id,
+                    reason="invalid",
+                )
+                raise ParameterWriteViolation("invalid")
+
+            candidate: ThreadModelResolution | None = None
+            if parameter_id == "model.slug":
+                assert isinstance(normalized, str)
+                if self._model_resolver is None:
+                    await self._publish_parameter_refusal(
+                        thread_id=thread_id,
+                        module_id=module_id,
+                        parameter_id=parameter_id,
+                        reason="invalid",
+                    )
+                    raise ParameterWriteViolation("invalid")
+                try:
+                    candidate = await self._model_resolver.resolve_named(thread_id, normalized)
+                except (NamedModelResolutionError, ModelCatalogUnavailable) as exc:
+                    await self._publish_parameter_refusal(
+                        thread_id=thread_id,
+                        module_id=module_id,
+                        parameter_id=parameter_id,
+                        reason="invalid",
+                    )
+                    raise ParameterWriteViolation("invalid") from exc
+
+            async with self._lock:
+                state = self._state_for_locked(thread_id)
+                if state.active is not None:
+                    await self._publish_parameter_refusal_locked(
+                        thread_id=thread_id,
+                        module_id=module_id,
+                        parameter_id=parameter_id,
+                        reason="busy",
+                    )
+                    raise ParameterWriteViolation("busy")
+                if state.model_resolution is None:
+                    state.model_resolution = resolution
+                    state.resolved_model = resolution.model
+                previous = state.model_resolution
+                self._ensure_parameter_thread_locked(thread_id, previous)
+                old_value = self._parameter_value(previous, parameter_id)
+                if old_value == normalized:
+                    return self._parameter_registry.snapshot(
+                        thread_id=thread_id,
+                        as_of=self._aware_clock(),
+                    )
+
+                if candidate is not None:
+                    sacrificed_prefix = state.cached_prefix_tokens
+                    updated = replace(
+                        candidate,
+                        stickiness_epoch=previous.stickiness_epoch + 1,
+                        request_parameters=previous.request_parameters,
+                    )
+                    state.cached_prefix_tokens = 0
+                else:
+                    updated = self._with_parameter(previous, parameter_id, normalized)
+                state.model_resolution = updated
+                state.resolved_model = updated.model
+                changed_at = self._aware_clock()
+                await self._record_parameter_change_locked(
+                    thread_id=thread_id,
+                    parameter_id=parameter_id,
+                    old_value=old_value,
+                    new_value=normalized,
+                    changed_at=changed_at,
+                )
+                if candidate is not None:
+                    await self._publish_model_change_locked(
+                        thread_id=thread_id,
+                        state=state,
+                        previous=previous,
+                        resolution=updated,
+                        changed_at=changed_at,
+                        reason="human_control",
+                        sacrificed_cached_prefix_tokens=sacrificed_prefix,
+                    )
+                return self._parameter_registry.snapshot(
+                    thread_id=thread_id,
+                    as_of=changed_at,
+                )
 
     async def attach(
         self,
@@ -725,6 +886,7 @@ class RunLoop:
             resolution = replace(
                 candidate,
                 stickiness_epoch=previous.stickiness_epoch + 1,
+                request_parameters=previous.request_parameters,
             )
             event = {
                 "event_kind": "model_change",
@@ -739,6 +901,14 @@ class RunLoop:
             state.model_resolution = resolution
             state.resolved_model = resolution.model
             state.cached_prefix_tokens = 0
+            self._ensure_parameter_thread_locked(thread_id, previous)
+            await self._record_parameter_change_locked(
+                thread_id=thread_id,
+                parameter_id="model.slug",
+                old_value=previous.model,
+                new_value=resolution.model,
+                changed_at=changed_at,
+            )
             logger.info(
                 "model_change thread=%s old_model=%s new_model=%s reason=%s "
                 "timestamp=%s stickiness_epoch=%s sacrificed_cached_prefix_tokens=%s "
@@ -791,6 +961,163 @@ class RunLoop:
                 ),
                 thread_id=thread_id,
             ),
+        )
+
+    def _aware_clock(self) -> datetime:
+        instant = self._clock()
+        if instant.tzinfo is None or instant.utcoffset() is None:
+            raise ValueError("parameter clock must return an aware datetime")
+        return instant
+
+    def _ensure_parameter_thread_locked(
+        self,
+        thread_id: str,
+        resolution: ThreadModelResolution,
+    ) -> None:
+        self._parameter_registry.ensure_thread(
+            thread_id,
+            self._parameter_values(resolution),
+        )
+
+    @staticmethod
+    def _parameter_values(resolution: ThreadModelResolution) -> dict[str, ParameterValue]:
+        parameters = resolution.request_parameters
+        return {
+            "model.slug": resolution.model,
+            "model.temperature": parameters.temperature,
+            "model.top_p": parameters.top_p,
+            "model.top_k": parameters.top_k,
+            "model.max_tokens": parameters.max_tokens,
+            "model.effort": parameters.effort,
+        }
+
+    @classmethod
+    def _parameter_value(
+        cls,
+        resolution: ThreadModelResolution,
+        parameter_id: str,
+    ) -> ParameterValue:
+        return cls._parameter_values(resolution)[parameter_id]
+
+    @staticmethod
+    def _with_parameter(
+        resolution: ThreadModelResolution,
+        parameter_id: str,
+        value: ParameterValue,
+    ) -> ThreadModelResolution:
+        attribute = parameter_id.removeprefix("model.")
+        if attribute == "slug":
+            raise ValueError("model.slug must use resolve_named")
+        parameters = replace(
+            resolution.request_parameters,
+            **{attribute: value},
+        )
+        assert isinstance(parameters, ModelRequestParameters)
+        return replace(resolution, request_parameters=parameters)
+
+    async def _record_parameter_change_locked(
+        self,
+        *,
+        thread_id: str,
+        parameter_id: str,
+        old_value: ParameterValue,
+        new_value: ParameterValue,
+        changed_at: datetime,
+    ) -> None:
+        change = ParameterChange(
+            event_id=self._factory.new_id(),
+            parameter_id=parameter_id,
+            thread_id=thread_id,
+            timestamp=changed_at,
+            old_value=old_value,
+            new_value=new_value,
+        )
+        self._parameter_registry.record(change)
+        payload = {
+            "event_kind": "parameter_change",
+            **change.model_dump(mode="json"),
+        }
+        await self._publish_locked(
+            thread_id,
+            self._factory.create("parameter.change", payload, thread_id=thread_id),
+        )
+
+    async def _publish_parameter_refusal(
+        self,
+        *,
+        thread_id: str,
+        module_id: str,
+        parameter_id: str,
+        reason: str,
+    ) -> None:
+        async with self._lock:
+            self._state_for_locked(thread_id)
+            await self._publish_parameter_refusal_locked(
+                thread_id=thread_id,
+                module_id=module_id,
+                parameter_id=parameter_id,
+                reason=reason,
+            )
+
+    async def _publish_parameter_refusal_locked(
+        self,
+        *,
+        thread_id: str,
+        module_id: str,
+        parameter_id: str,
+        reason: str,
+    ) -> None:
+        payload = {
+            "event_kind": "parameter_refused",
+            "event_id": self._factory.new_id(),
+            "module_id": module_id,
+            "parameter_id": parameter_id,
+            "thread_id": thread_id,
+            "timestamp": self._aware_clock().isoformat(),
+            "reason": reason,
+        }
+        await self._publish_locked(
+            thread_id,
+            self._factory.create("parameter.refused", payload, thread_id=thread_id),
+        )
+
+    async def _publish_model_change_locked(
+        self,
+        *,
+        thread_id: str,
+        state: _ThreadState,
+        previous: ThreadModelResolution,
+        resolution: ThreadModelResolution,
+        changed_at: datetime,
+        reason: str,
+        sacrificed_cached_prefix_tokens: int,
+    ) -> None:
+        event = {
+            "event_kind": "model_change",
+            "old_model": previous.model,
+            "new_model": resolution.model,
+            "reason": reason,
+            "timestamp": changed_at.isoformat(),
+            "stickiness_epoch": resolution.stickiness_epoch,
+            "sacrificed_cached_prefix_tokens": sacrificed_cached_prefix_tokens,
+            "context_tokens": resolution.context_tokens,
+        }
+        await self._publish_locked(
+            thread_id,
+            self._factory.create("model.change", event, thread_id=thread_id),
+        )
+        logger.info(
+            "model_change thread=%s old_model=%s new_model=%s reason=%s "
+            "timestamp=%s stickiness_epoch=%s sacrificed_cached_prefix_tokens=%s "
+            "context_tokens=%s",
+            thread_id,
+            previous.model,
+            resolution.model,
+            reason,
+            changed_at.isoformat(),
+            resolution.stickiness_epoch,
+            sacrificed_cached_prefix_tokens,
+            resolution.context_tokens,
         )
 
     async def _emit_text(

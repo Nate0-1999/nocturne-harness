@@ -1,0 +1,220 @@
+{
+  "fixture": "M2J REGRESSION",
+  "base_url": "http://127.0.0.1:8776",
+  "desktop": {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "resolved_model": "openrouter:fixture/next",
+    "header_synchronized": true,
+    "temperature_journaled": true,
+    "effort_journaled": true,
+    "historical_replay": true,
+    "defaults_read_only": true,
+    "horizontal_overflow": false
+  },
+  "mobile": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "resolved_model": "openrouter:fixture/next",
+    "header_synchronized": true,
+    "temperature_journaled": true,
+    "effort_journaled": true,
+    "historical_replay": true,
+    "defaults_read_only": true,
+    "horizontal_overflow": false
+  },
+  "trace": {
+    "named_resolutions": [
+      {
+        "thread_id": "14ed745b-dd53-49a3-b222-1626cbe68164",
+        "model": "openrouter:fixture/next"
+      },
+      {
+        "thread_id": "6b960db5-1d05-471f-be8d-eb96a616941b",
+        "model": "openrouter:fixture/next"
+      }
+    ],
+    "events": [
+      {
+        "agent_id": "m2j-verification-agent",
+        "id": "01KZ4PJAE58G8E9TM9VGBZ17FF",
+        "machine_id": "m2j-verification-machine",
+        "payload": {
+          "actor": "human",
+          "event_id": "01KZ4PJAE57EBMPG0D0E3W29P1",
+          "event_kind": "parameter_change",
+          "new_value": 0.05,
+          "old_value": null,
+          "parameter_id": "model.temperature",
+          "scope": "thread",
+          "thread_id": "14ed745b-dd53-49a3-b222-1626cbe68164",
+          "timestamp": "2026-08-03T20:55:40.229610Z"
+        },
+        "thread_id": "14ed745b-dd53-49a3-b222-1626cbe68164",
+        "ts": "2026-08-03T20:55:40.229668Z",
+        "type": "parameter.change",
+        "v": 1
+      },
+      {
+        "agent_id": "m2j-verification-agent",
+        "id": "01KZ4PJAF4PCQN15G0VKES0C6M",
+        "machine_id": "m2j-verification-machine",
+        "payload": {
+          "actor": "human",
+          "event_id": "01KZ4PJAF4W4ABKZAAFNY40ZYM",
+          "event_kind": "parameter_change",
+          "new_value": "high",
+          "old_value": null,
+          "parameter_id": "model.effort",
+          "scope": "thread",
+          "thread_id": "14ed745b-dd53-49a3-b222-1626cbe68164",
+          "timestamp": "2026-08-03T20:55:40.260188Z"
+        },
+        "thread_id": "14ed745b-dd53-49a3-b222-1626cbe68164",
+        "ts": "2026-08-03T20:55:40.260239Z",
+        "type": "parameter.change",
+        "v": 1
+      },
+      {
+        "agent_id": "m2j-verification-agent",
+        "id": "01KZ4PJAHJ51KQNX5258QS06XD",
+        "machine_id": "m2j-verification-machine",
+        "payload": {
+          "actor": "human",
+          "event_id": "01KZ4PJAHJAXNCWH3HE18AZY60",
+          "event_kind": "parameter_change",
+          "new_value": "openrouter:fixture/next",
+          "old_value": "openrouter:fixture/base",
+          "parameter_id": "model.slug",
+          "scope": "thread",
+          "thread_id": "14ed745b-dd53-49a3-b222-1626cbe68164",
+          "timestamp": "2026-08-03T20:55:40.338543Z"
+        },
+        "thread_id": "14ed745b-dd53-49a3-b222-1626cbe68164",
+        "ts": "2026-08-03T20:55:40.338596Z",
+        "type": "parameter.change",
+        "v": 1
+      },
+      {
+        "agent_id": "m2j-verification-agent",
+        "id": "01KZ4PJAHK4AJPP52N7XC3Z3HW",
+        "machine_id": "m2j-verification-machine",
+        "payload": {
+          "context_tokens": 64000,
+          "event_kind": "model_change",
+          "new_model": "openrouter:fixture/next",
+          "old_model": "openrouter:fixture/base",
+          "reason": "human_control",
+          "sacrificed_cached_prefix_tokens": 0,
+          "stickiness_epoch": 1,
+          "timestamp": "2026-08-03T20:55:40.338543+00:00"
+        },
+        "thread_id": "14ed745b-dd53-49a3-b222-1626cbe68164",
+        "ts": "2026-08-03T20:55:40.339213Z",
+        "type": "model.change",
+        "v": 1
+      },
+      {
+        "agent_id": "m2j-verification-agent",
+        "id": "01KZ4PJB8ENVD23B0EGWGWD4RR",
+        "machine_id": "m2j-verification-machine",
+        "payload": {
+          "actor": "human",
+          "event_id": "01KZ4PJB8EE1BV5SQR6YC7TR2H",
+          "event_kind": "parameter_change",
+          "new_value": 0.05,
+          "old_value": null,
+          "parameter_id": "model.temperature",
+          "scope": "thread",
+          "thread_id": "6b960db5-1d05-471f-be8d-eb96a616941b",
+          "timestamp": "2026-08-03T20:55:41.070780Z"
+        },
+        "thread_id": "6b960db5-1d05-471f-be8d-eb96a616941b",
+        "ts": "2026-08-03T20:55:41.070854Z",
+        "type": "parameter.change",
+        "v": 1
+      },
+      {
+        "agent_id": "m2j-verification-agent",
+        "id": "01KZ4PJB9CCND88F345NBN7M0G",
+        "machine_id": "m2j-verification-machine",
+        "payload": {
+          "actor": "human",
+          "event_id": "01KZ4PJB9CS29P0VQBA7N4N31V",
+          "event_kind": "parameter_change",
+          "new_value": "high",
+          "old_value": null,
+          "parameter_id": "model.effort",
+          "scope": "thread",
+          "thread_id": "6b960db5-1d05-471f-be8d-eb96a616941b",
+          "timestamp": "2026-08-03T20:55:41.100217Z"
+        },
+        "thread_id": "6b960db5-1d05-471f-be8d-eb96a616941b",
+        "ts": "2026-08-03T20:55:41.100267Z",
+        "type": "parameter.change",
+        "v": 1
+      },
+      {
+        "agent_id": "m2j-verification-agent",
+        "id": "01KZ4PJBBWRNAX22WEH6WM1HEN",
+        "machine_id": "m2j-verification-machine",
+        "payload": {
+          "actor": "human",
+          "event_id": "01KZ4PJBBW59GE5AK5KQC5PHG5",
+          "event_kind": "parameter_change",
+          "new_value": "openrouter:fixture/next",
+          "old_value": "openrouter:fixture/base",
+          "parameter_id": "model.slug",
+          "scope": "thread",
+          "thread_id": "6b960db5-1d05-471f-be8d-eb96a616941b",
+          "timestamp": "2026-08-03T20:55:41.180818Z"
+        },
+        "thread_id": "6b960db5-1d05-471f-be8d-eb96a616941b",
+        "ts": "2026-08-03T20:55:41.180912Z",
+        "type": "parameter.change",
+        "v": 1
+      },
+      {
+        "agent_id": "m2j-verification-agent",
+        "id": "01KZ4PJBBXS4X97A1194AEZ4SH",
+        "machine_id": "m2j-verification-machine",
+        "payload": {
+          "context_tokens": 64000,
+          "event_kind": "model_change",
+          "new_model": "openrouter:fixture/next",
+          "old_model": "openrouter:fixture/base",
+          "reason": "human_control",
+          "sacrificed_cached_prefix_tokens": 0,
+          "stickiness_epoch": 1,
+          "timestamp": "2026-08-03T20:55:41.180818+00:00"
+        },
+        "thread_id": "6b960db5-1d05-471f-be8d-eb96a616941b",
+        "ts": "2026-08-03T20:55:41.181574Z",
+        "type": "model.change",
+        "v": 1
+      },
+      {
+        "agent_id": "m2j-verification-agent",
+        "id": "01KZ4PJBGSWAHE364P8T6BRTKR",
+        "machine_id": "m2j-verification-machine",
+        "payload": {
+          "event_id": "01KZ4PJBGS57R6KSB0AYDXGMF6",
+          "event_kind": "parameter_refused",
+          "module_id": "chat",
+          "parameter_id": "model.temperature",
+          "reason": "unbound",
+          "thread_id": "6b960db5-1d05-471f-be8d-eb96a616941b",
+          "timestamp": "2026-08-03T20:55:41.337430+00:00"
+        },
+        "thread_id": "6b960db5-1d05-471f-be8d-eb96a616941b",
+        "ts": "2026-08-03T20:55:41.337440Z",
+        "type": "parameter.refused",
+        "v": 1
+      }
+    ]
+  }
+}

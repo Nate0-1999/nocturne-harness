@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
+from harness.parameter_registry import ParameterSnapshot
 from harness.spine_client import VitalsSnapshot
 
 
@@ -16,7 +17,7 @@ class RackQueryResult(BaseModel):
 
     status: Literal["live", "historical_unavailable"]
     as_of: str | None
-    data: VitalsSnapshot | None
+    data: VitalsSnapshot | ParameterSnapshot | None
 
     @model_validator(mode="after")
     def require_status_shape(self) -> RackQueryResult:
