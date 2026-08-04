@@ -262,6 +262,33 @@ function parseSpendLane(value: unknown, index: number): SpendLane {
   }
 }
 
+function parseAccounting(value: unknown): AccountingSnapshot {
+  const item = record(value, 'accounting')
+  if (!['clear', 'pending', 'degraded'].includes(String(item.status))) {
+    throw new TypeError('accounting.status is invalid')
+  }
+  const pendingLines = nonnegativeInteger(item.pending_lines, 'accounting.pending_lines')
+  const oldest = item.oldest_queued_at === null
+    ? null
+    : timestamp(item.oldest_queued_at, 'accounting.oldest_queued_at')
+  if (item.source !== 'harness.receipt_queue') {
+    throw new TypeError('accounting.source is invalid')
+  }
+  if (item.status === 'clear') {
+    if (pendingLines !== 0 || oldest !== null) {
+      throw new TypeError('clear accounting cannot contain pending receipts')
+    }
+  } else if (pendingLines === 0 || oldest === null) {
+    throw new TypeError('pending accounting requires lines and an oldest timestamp')
+  }
+  return {
+    status: item.status as AccountingSnapshot['status'],
+    pending_lines: pendingLines,
+    oldest_queued_at: oldest,
+    source: 'harness.receipt_queue',
+  }
+}
+
 function parseReconciliation(value: unknown): ReconciliationSnapshot {
   const item = record(value, 'reconciliation')
   const statuses: ReconciliationStatus[] = [

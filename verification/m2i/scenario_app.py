@@ -21,6 +21,7 @@ from harness.spine_client import (
     SeedRequest,
     SeedResponse,
 )
+from verification.fixture_isolation import install_fixture_isolation
 from verification.m2h.scenario_app import UPDATED, FixtureSpine, _memory, _uid
 
 
@@ -155,10 +156,7 @@ def create_scenario_app() -> FastAPI:
         spine=spine,  # type: ignore[arg-type]
     )
     app = FastAPI(title="M2I deterministic verification")
-
-    @app.get("/__scenario__/identity")
-    async def identity() -> dict[str, object]:
-        return {"fixture": "M2I REGRESSION", "deterministic": True}
+    install_fixture_isolation(app, "M2I REGRESSION")
 
     @app.get("/__scenario__/trace")
     async def trace() -> dict[str, object]:

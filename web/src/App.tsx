@@ -59,6 +59,7 @@ import {
   type DockedModuleId,
   type RackLayoutSet,
 } from './rackLayout'
+import { isLegacyFixtureTitle } from './store'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
 const EMPTY_MEMORY_PANEL: RackMemoryPanelState = {
@@ -154,9 +155,7 @@ function App() {
 
 function useVerifiedRegressionFixture(enabled: boolean): boolean | null {
   const requestedFixture = new URLSearchParams(globalThis.location.search).get('fixture')
-  const markerRequested = ['M2C REGRESSION', 'M2G REGRESSION', 'M2I REGRESSION', 'M2J REGRESSION', 'M2K REGRESSION'].includes(
-    requestedFixture ?? '',
-  )
+  const markerRequested = requestedFixture !== null && /^[A-Z][A-Z0-9]* REGRESSION$/.test(requestedFixture)
   const [isVerified, setIsVerified] = useState<boolean | null>(
     enabled && markerRequested ? null : false,
   )
@@ -183,7 +182,9 @@ function useVerifiedRegressionFixture(enabled: boolean): boolean | null {
         typeof identity === 'object' &&
         identity !== null &&
         'fixture' in identity &&
-        identity.fixture === requestedFixture
+        identity.fixture === requestedFixture &&
+        'deterministic' in identity &&
+        identity.deterministic === true
       )
       if (active) {
         setIsVerified(verified)
@@ -652,8 +653,9 @@ function RackRemoteApp({ moduleId }: { moduleId: RackModuleManifest['id'] }) {
 
 function RegressionFixtureMarker({ remote = false }: { remote?: boolean }) {
   const requested = new URLSearchParams(globalThis.location.search).get('fixture')
-  const known = new Set(['M2C REGRESSION', 'M2G REGRESSION', 'M2I REGRESSION', 'M2J REGRESSION', 'M2K REGRESSION'])
-  const label = requested !== null && known.has(requested) ? requested : 'M2C REGRESSION'
+  const label = requested !== null && /^[A-Z][A-Z0-9]* REGRESSION$/.test(requested)
+    ? requested
+    : 'UNVERIFIED REGRESSION'
   return (
     <div
       className={`m2c-regression-fixture${remote ? ' m2c-regression-fixture--remote' : ''}`}
@@ -789,6 +791,7 @@ function ThreadsModule() {
     () => [...snapshot.catalog].sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
     [snapshot.catalog],
   )
+  const fixtureThreadCount = snapshot.catalog.filter((entry) => isLegacyFixtureTitle(entry.title)).length
 
   return (
     <aside className="thread-rail" aria-labelledby="thread-rail-title">
@@ -819,6 +822,18 @@ function ThreadsModule() {
         <span aria-hidden="true">＋</span>
         New thread
       </button>
+
+      {fixtureThreadCount > 0 && (
+        <button
+          className="fixture-catalog-cleanup"
+          type="button"
+          onClick={() => {
+            void events.dispatch({ type: 'catalog.cleanup-fixtures' })
+          }}
+        >
+          Remove {fixtureThreadCount} fixture {fixtureThreadCount === 1 ? 'thread' : 'threads'}
+        </button>
+      )}
 
       <nav className="thread-list" data-testid="thread-list" aria-label="Known threads">
         {sortedCatalog.map((entry) => {

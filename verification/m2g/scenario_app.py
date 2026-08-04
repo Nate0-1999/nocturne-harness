@@ -38,6 +38,7 @@ from harness.spine_client import (
     VitalsSpend,
     VitalsSpendLane,
 )
+from verification.fixture_isolation import install_fixture_isolation
 
 TRACE_PATH = Path(__file__).with_name("trace.jsonl")
 FIRST_PROMPT = "Which Garden memory governs this handoff?"
@@ -258,10 +259,7 @@ def create_scenario_app() -> FastAPI:
         spine=spine,  # type: ignore[arg-type]
     )
     app = FastAPI(title="M2G deterministic verification")
-
-    @app.get("/__scenario__/identity")
-    async def identity() -> Mapping[str, object]:
-        return {"fixture": "M2G REGRESSION", "deterministic": True}
+    install_fixture_isolation(app, "M2G REGRESSION")
 
     @app.get("/__scenario__/expectation")
     async def expectation() -> Mapping[str, object]:

@@ -12,16 +12,16 @@ Build the app, then run the fixture from the Harness repository root:
 
 ```sh
 npm run build --prefix web
-PYTHONPATH=src uv run uvicorn scenario_app:create_scenario_app --factory \
-  --app-dir verification/h4 --host 127.0.0.1 --port 8765
+PYTHONPATH=src:. uv run --locked python -m verification.run_fixture \
+  verification.h4.scenario_app:create_scenario_app --port 8764
 ```
 
 The scenario controls used by the browser pass are:
 
 ```sh
-curl -X POST http://127.0.0.1:8765/__scenario__/reset
-curl -X POST http://127.0.0.1:8765/__scenario__/release/primary
-curl -X POST http://127.0.0.1:8765/__scenario__/release/secondary
+curl -X POST http://127.0.0.1:8764/__scenario__/reset
+curl -X POST http://127.0.0.1:8764/__scenario__/release/primary
+curl -X POST http://127.0.0.1:8764/__scenario__/release/secondary
 ```
 
 The first deterministic prompt streams and waits at `primary`; the second is

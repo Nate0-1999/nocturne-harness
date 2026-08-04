@@ -18,6 +18,7 @@ from harness.spine_client import (
     VitalsSpendLane,
     VitalsSpendPoint,
 )
+from verification.fixture_isolation import install_fixture_isolation
 
 AS_OF = datetime(2026, 8, 2, 17, 35, tzinfo=UTC)
 MINUTE_ESCAPE = datetime(2026, 8, 2, 17, 32, tzinfo=UTC)
@@ -186,6 +187,7 @@ def create_scenario_app() -> FastAPI:
     """Create one outer control shell around the real built Harness daemon."""
 
     scenario = FastAPI(title="M2C RULE-7 FIXTURE")
+    install_fixture_isolation(scenario, "M2C REGRESSION")
     state = {"mode": "live"}
 
     @scenario.middleware("http")
@@ -194,8 +196,6 @@ def create_scenario_app() -> FastAPI:
         call_next: Callable[[Request], Awaitable[Response]],
     ) -> Response:
         additions: dict[str, str] = {}
-        if request.url.path == "/" and request.query_params.get("fixture") != "M2C REGRESSION":
-            additions["fixture"] = "M2C REGRESSION"
         if (
             request.url.path == "/"
             and request.query_params.get("rack_module") is not None
@@ -228,10 +228,6 @@ def create_scenario_app() -> FastAPI:
             "source_view": "v_spend_rate",
             "snapshot": SNAPSHOT.model_dump(mode="json"),
         }
-
-    @scenario.get("/__scenario__/identity")
-    async def identity() -> dict[str, str]:
-        return {"fixture": "M2C REGRESSION"}
 
     scenario.mount("/", create_app(vitals_snapshot_reader=read_vitals))
     return scenario

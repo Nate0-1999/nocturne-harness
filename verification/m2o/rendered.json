@@ -1,0 +1,29 @@
+{
+  "fixture": "M2O REGRESSION",
+  "base_url": "http://127.0.0.1:57558",
+  "profile_removed_on_exit": true,
+  "query_alone_rejected": true,
+  "desktop_overlay": {
+    "x": 0,
+    "y": 0,
+    "width": 1440,
+    "height": 900
+  },
+  "mobile_overlay": {
+    "x": 0,
+    "y": 0,
+    "width": 390,
+    "height": 844
+  },
+  "pending_receipts_visible": 2,
+  "expected_fixture_chat_503s": 2,
+  "cleanup": {
+    "exact_fixture_entries_removed": 2,
+    "ordinary_entry_preserved": true
+  },
+  "screenshots": [
+    "01-isolated-pending-desktop.png",
+    "02-clean-catalog-desktop.png",
+    "03-isolated-mobile.png"
+  ]
+}

@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 
-from fastapi import FastAPI, Request
-from fastapi.responses import RedirectResponse, Response
+from fastapi import FastAPI
 
 from harness.daemon import create_app
 from harness.spine_client import (
@@ -17,6 +15,7 @@ from harness.spine_client import (
     VitalsSpend,
     VitalsSpendLane,
 )
+from verification.fixture_isolation import install_fixture_isolation
 
 FIXTURE = "M2M REGRESSION"
 AS_OF = datetime(2026, 8, 3, 18, 0, tzinfo=UTC)
@@ -77,25 +76,10 @@ DRIFT_SNAPSHOT = VitalsSnapshot(
 
 def create_scenario_app() -> FastAPI:
     scenario = FastAPI(title="M2M RULE-7 FIXTURE")
-
-    @scenario.middleware("http")
-    async def force_fixture_marker(
-        request: Request,
-        call_next: Callable[[Request], Awaitable[Response]],
-    ) -> Response:
-        if request.url.path == "/" and request.query_params.get("fixture") != FIXTURE:
-            return RedirectResponse(
-                request.url.include_query_params(fixture=FIXTURE),
-                status_code=307,
-            )
-        return await call_next(request)
+    install_fixture_isolation(scenario, FIXTURE)
 
     async def read_vitals() -> VitalsSnapshot:
         return DRIFT_SNAPSHOT
-
-    @scenario.get("/__scenario__/identity")
-    async def identity() -> dict[str, str]:
-        return {"fixture": FIXTURE}
 
     @scenario.get("/__scenario__/snapshot")
     async def snapshot() -> dict[str, object]:

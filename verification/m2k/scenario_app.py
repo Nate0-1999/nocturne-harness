@@ -16,6 +16,7 @@ from harness.spine_client import (
     ScorerConfigurationView,
     ScorerConsoleSnapshot,
 )
+from verification.fixture_isolation import install_fixture_isolation
 
 NOW = datetime(2026, 8, 3, 18, 0, tzinfo=UTC)
 FIRST = "00000000-0000-0000-0000-000000000101"
@@ -178,9 +179,7 @@ def create_scenario_app() -> FastAPI:
         )
 
     def scenario_routes(app: FastAPI) -> None:
-        @app.get("/__scenario__/identity")
-        async def identity() -> dict[str, object]:
-            return {"fixture": "M2K REGRESSION", "deterministic": True}
+        install_fixture_isolation(app, "M2K REGRESSION")
 
         @app.get("/__scenario__/trace")
         async def trace() -> dict[str, object]:

@@ -154,6 +154,20 @@
   background: #e68a4c;
 }
 
+.fixture-catalog-cleanup {
+  margin: -0.45rem 0 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--danger) 58%, transparent);
+  background: transparent;
+  color: var(--danger);
+  font-family: var(--data-font);
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+}
+
+.fixture-catalog-cleanup:hover {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+
 .thread-list {
   display: flex;
   flex: 1;

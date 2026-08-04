@@ -2,8 +2,8 @@
 
 Run with::
 
-    uvicorn scenario_app:create_scenario_app --factory \
-      --app-dir verification/h4 --host 127.0.0.1 --port 8765
+    PYTHONPATH=src:. uv run --locked python -m verification.run_fixture \
+      verification.h4.scenario_app:create_scenario_app --port 8764
 
 The browser still exercises the production FastAPI/WebSocket/RunLoop path.
 Only the model runner and the out-of-band release controls are deterministic.
@@ -25,6 +25,7 @@ from harness.envelope import Envelope, EnvelopeFactory, MessageType, StopReason
 from harness.model_policy import ThreadModelResolution
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
+from verification.fixture_isolation import install_fixture_isolation
 
 TRACE_PATH = Path(__file__).with_name("trace.jsonl")
 
@@ -213,6 +214,7 @@ def create_scenario_app() -> FastAPI:
     loop = RunLoop(ScenarioRunner(control), factory)  # type: ignore[arg-type]
     harness_app = create_app(run_loop=loop, envelope_factory=factory)  # type: ignore[arg-type]
     app = FastAPI(title="Harness H4 verification")
+    install_fixture_isolation(app, "H4 REGRESSION")
 
     @app.get("/__scenario__/health")
     async def scenario_health() -> Mapping[str, bool]:

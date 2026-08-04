@@ -2,8 +2,8 @@
 
 Run from the Harness repository root::
 
-    PYTHONPATH=src uv run uvicorn scenario_app:create_scenario_app --factory \
-      --app-dir verification/h6 --host 127.0.0.1 --port 8766
+    PYTHONPATH=src:. uv run --locked python -m verification.run_fixture \
+      verification.h6.scenario_app:create_scenario_app --port 8766
 
 The browser exercises the production SPA, WebSocket daemon, memory gate,
 memory-panel controller, run loop, and configured deployed Spine. Only the
@@ -53,6 +53,7 @@ from harness.spine_client import (
     SearchResponse,
     SpineClient,
 )
+from verification.fixture_isolation import install_fixture_isolation
 
 TRACE_PATH = Path(__file__).with_name("trace.jsonl")
 FIRST_PROMPT = "Open the H6 verification thread context."
@@ -488,6 +489,7 @@ def create_scenario_app() -> FastAPI:
         spine=traced_spine,  # type: ignore[arg-type]
     )
     app = FastAPI(title="Harness H6 verification")
+    install_fixture_isolation(app, "H6 REGRESSION")
 
     @app.get("/__scenario__/health")
     async def scenario_health() -> Mapping[str, object]:

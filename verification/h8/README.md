@@ -55,9 +55,8 @@ Start one fresh fixture process per viewport. The command fails closed when
 `SPINE_TOKEN` is absent and otherwise reads the ignored local `.env`:
 
 ```sh
-PYTHONPATH=src uv run --locked uvicorn \
-  scenario_app:create_scenario_app --factory \
-  --app-dir verification/h8 --host 127.0.0.1 --port 8770
+PYTHONPATH=src:. uv run --locked python -m verification.run_fixture \
+  verification.h8.scenario_app:create_scenario_app --port 8770
 ```
 
 In another terminal:

@@ -2,8 +2,8 @@
 
 Run from the Harness repository root::
 
-    PYTHONPATH=src uv run uvicorn scenario_app:create_scenario_app --factory \
-      --app-dir verification/h5 --host 127.0.0.1 --port 8765
+    PYTHONPATH=src:. uv run --locked python -m verification.run_fixture \
+      verification.h5.scenario_app:create_scenario_app --port 8773
 
 The browser exercises the production SPA, WebSocket daemon, run loop, memory
 gate, and configured deployed Spine. Only the downstream model is local and
@@ -53,6 +53,7 @@ from harness.spine_client import (
     SpineClient,
     SpineTransportError,
 )
+from verification.fixture_isolation import install_fixture_isolation
 
 TRACE_PATH = Path(__file__).with_name("trace.jsonl")
 FIRST_PROMPT = "Use the H5 verification memories to explain the handoff."
@@ -325,6 +326,7 @@ def create_scenario_app() -> FastAPI:
         spine=traced_spine,  # type: ignore[arg-type]
     )
     app = FastAPI(title="Harness H5 verification")
+    install_fixture_isolation(app, "H5 REGRESSION")
 
     @app.get("/__scenario__/health")
     async def scenario_health() -> Mapping[str, object]:

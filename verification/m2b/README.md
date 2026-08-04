@@ -37,8 +37,8 @@ npm run verify:m2b:layout --prefix web
 Start the deterministic H5 scenario fixture in another terminal:
 
 ```bash
-PYTHONPATH=src uv run --locked uvicorn scenario_app:create_scenario_app \
-  --factory --app-dir verification/h5 --host 127.0.0.1 --port 8773
+PYTHONPATH=src:. uv run --locked python -m verification.run_fixture \
+  verification.h5.scenario_app:create_scenario_app --port 8773
 ```
 
 Then drive the built daemon at desktop and exact phone geometry:

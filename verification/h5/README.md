@@ -19,8 +19,8 @@ From the Harness repository root:
 
 ```sh
 npm run build --prefix web
-PYTHONPATH=src uv run uvicorn scenario_app:create_scenario_app --factory \
-  --app-dir verification/h5 --host 127.0.0.1 --port 8765
+PYTHONPATH=src:. uv run --locked python -m verification.run_fixture \
+  verification.h5.scenario_app:create_scenario_app --port 8773
 ```
 
 The command intentionally fails closed when `SPINE_TOKEN` is absent. It reads
@@ -30,8 +30,8 @@ principal/machine/agent identities with fixture-specific values.
 In another terminal, seed a fresh isolated principal:
 
 ```sh
-curl -fsS -X POST http://127.0.0.1:8765/__scenario__/seed
-curl -fsS http://127.0.0.1:8765/__scenario__/expectation
+curl -fsS -X POST http://127.0.0.1:8773/__scenario__/seed
+curl -fsS http://127.0.0.1:8773/__scenario__/expectation
 ```
 
 Seeding uses only C.4 `POST /v1/memories` and `PATCH /v1/memories/{id}`.
@@ -61,7 +61,7 @@ Before saving the correction, prove the second hard pause from another
 terminal:
 
 ```sh
-curl -fsS -X POST http://127.0.0.1:8765/__scenario__/assert-wrong-paused
+curl -fsS -X POST http://127.0.0.1:8773/__scenario__/assert-wrong-paused
 ```
 
 Only after that CAS-guarded PATCH succeeds may the gate dismiss and the
@@ -90,8 +90,8 @@ each viewport, cleanup and seed again so `never` feedback cannot accumulate
 across evidence runs:
 
 ```sh
-curl -fsS -X POST http://127.0.0.1:8765/__scenario__/cleanup
-curl -fsS -X POST http://127.0.0.1:8765/__scenario__/seed
+curl -fsS -X POST http://127.0.0.1:8773/__scenario__/cleanup
+curl -fsS -X POST http://127.0.0.1:8773/__scenario__/seed
 ```
 
 Capture each acceptance-relevant rendered state under this directory:
@@ -119,7 +119,7 @@ While the initial gate is visibly open, wait at least five seconds and record
 the explicit no-model/no-commit pause check from a second terminal:
 
 ```sh
-curl -fsS -X POST http://127.0.0.1:8765/__scenario__/assert-paused
+curl -fsS -X POST http://127.0.0.1:8773/__scenario__/assert-paused
 ```
 
 At each viewport also assert `scrollWidth == clientWidth`, the gate can scroll
@@ -205,8 +205,8 @@ The controls fail one operation before it reaches Spine, once, without
 altering credentials or stopping the deployed service:
 
 ```sh
-curl -fsS -X POST http://127.0.0.1:8765/__scenario__/fail-next/prepare
-curl -fsS -X POST http://127.0.0.1:8765/__scenario__/fail-next/commit
+curl -fsS -X POST http://127.0.0.1:8773/__scenario__/fail-next/prepare
+curl -fsS -X POST http://127.0.0.1:8773/__scenario__/fail-next/commit
 ```
 
 Run each against a fresh thread. The UI must surface the clear memory warning
@@ -224,7 +224,7 @@ uv run python verification/h5/assert_trace.py \
 Reset before a canonical happy trace:
 
 ```sh
-curl -fsS -X POST http://127.0.0.1:8765/__scenario__/reset
+curl -fsS -X POST http://127.0.0.1:8773/__scenario__/reset
 ```
 
 ## Exact cleanup
@@ -232,7 +232,7 @@ curl -fsS -X POST http://127.0.0.1:8765/__scenario__/reset
 Always finish with:
 
 ```sh
-curl -fsS -X POST http://127.0.0.1:8765/__scenario__/cleanup
+curl -fsS -X POST http://127.0.0.1:8773/__scenario__/cleanup
 ```
 
 Cleanup never issues DELETE and never lists or bulk-mutates a principal. It

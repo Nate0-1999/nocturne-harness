@@ -86,6 +86,7 @@ export interface HarnessStoreState extends PersistedHarnessState {
   daemonMachineId: string | null
   globalError: HarnessError | null
   createThread: () => string
+  removeFixtureThreads: () => number
   selectThread: (threadId: string) => void
   beginPrompt: (threadId: string, promptId: Ulid, prompt: string) => void
   markCancelling: (threadId: string, runId: Ulid) => void
@@ -135,6 +136,23 @@ function normalizedTitle(prompt: string): string {
     return normalized
   }
   return `${codePoints.slice(0, 48).join('')}…`
+}
+
+const LEGACY_FIXTURE_TITLES = new Set([
+  'Map the release boundary and hold the queue open.',
+  'Turn that boundary into three calm checks.',
+  'Keep partial work visible while I stop this run.',
+  'Show the budget boundary without losing the draft.',
+  'Show a recoverable run error with partial work.',
+  'Use the H5 verification memories to explain the handoff.',
+  'Open the H6 verification thread context.',
+  '/remember H8 remembers that Markdown evidence needs readable tables and code.',
+  'Show the H8 Markdown proof. Keep **plain-user-text** literal in my message and treat <button data-h8-user-raw="true">unsafe</button> as text.',
+  'Which Garden memory governs this handoff?',
+].map(normalizedTitle))
+
+export function isLegacyFixtureTitle(title: string): boolean {
+  return LEGACY_FIXTURE_TITLES.has(title)
 }
 
 function nextIsoTimestamp(previous: string): string {
@@ -591,6 +609,31 @@ export const useHarnessStore = create<HarnessStoreState>()(
           globalError: null,
         }))
         return threadId
+      },
+
+      removeFixtureThreads: () => {
+        const fixtureIds = new Set(
+          get().catalog
+            .filter((entry) => isLegacyFixtureTitle(entry.title))
+            .map((entry) => entry.thread_id),
+        )
+        if (fixtureIds.size === 0) {
+          return 0
+        }
+        set((state) => {
+          const catalog = state.catalog.filter((entry) => !fixtureIds.has(entry.thread_id))
+          const threads = Object.fromEntries(
+            Object.entries(state.threads).filter(([threadId]) => !fixtureIds.has(threadId)),
+          )
+          return {
+            catalog,
+            threads,
+            selectedThreadId: state.selectedThreadId !== null && fixtureIds.has(state.selectedThreadId)
+              ? catalog[0]?.thread_id ?? null
+              : state.selectedThreadId,
+          }
+        })
+        return fixtureIds.size
       },
 
       selectThread: (threadId) => {

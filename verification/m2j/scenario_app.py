@@ -12,6 +12,7 @@ from harness.daemon import create_dev_app
 from harness.model_policy import ThreadModelResolution
 from harness.onboarding import nocturne_home
 from harness.transcript import TranscriptJournal
+from verification.fixture_isolation import install_fixture_isolation
 from verification.m2h.scenario_app import FixtureSpine
 
 
@@ -57,10 +58,7 @@ def create_scenario_app() -> FastAPI:
         model_resolver_override=resolver,
     )
     app = FastAPI(title="M2J deterministic verification")
-
-    @app.get("/__scenario__/identity")
-    async def identity() -> dict[str, object]:
-        return {"fixture": "M2J REGRESSION", "deterministic": True}
+    install_fixture_isolation(app, "M2J REGRESSION")
 
     @app.get("/__scenario__/trace")
     async def trace() -> dict[str, object]:

@@ -60,6 +60,7 @@ nocturne-spine = { path = "../spine", editable = true }
 [tool.pytest.ini_options]
 addopts = "-ra"
 asyncio_default_fixture_loop_scope = "function"
+pythonpath = [".", "src"]
 testpaths = ["tests"]
 markers = [
   "contract: requires the live Spine and pgvector stack started by tests/contract/run.sh",

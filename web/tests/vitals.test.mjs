@@ -6,6 +6,7 @@ import {
   formatExactUsd,
   laneChartPoints,
   nearestSpendPoint,
+  accountingCopy,
   parseVitalsSnapshot,
   reconciliationCopy,
   spendLaneId,
@@ -58,6 +59,12 @@ function snapshot() {
       source: 'openrouter:/api/v1/key',
       error_code: null,
     },
+    accounting: {
+      status: 'pending',
+      pending_lines: 2,
+      oldest_queued_at: '2026-08-02T12:58:00Z',
+      source: 'harness.receipt_queue',
+    },
     lifecycle_rates: [
       {
         metric: 'created',
@@ -96,6 +103,7 @@ test('parses the exact server-provided vitals shape without re-accounting', () =
   assert.equal(spendLaneId(parsed.spend.lanes[0]), 'total')
   assert.equal(parsed.palace_counts[1].status, 'placeholder')
   assert.equal(reconciliationCopy(parsed.reconciliation), 'Ledger drift · -$0.005000000000')
+  assert.equal(accountingCopy(parsed.accounting), 'Receipt drift · 2 lines pending')
 })
 
 test('preserves exact decimal scale and distinguishes an unpriced point', () => {

@@ -65,6 +65,12 @@ def vitals_payload() -> dict[str, Any]:
             "source": "openrouter:/api/v1/key",
             "error_code": None,
         },
+        "accounting": {
+            "status": "clear",
+            "pending_lines": 0,
+            "oldest_queued_at": None,
+            "source": "harness.receipt_queue",
+        },
         "lifecycle_rates": [
             {
                 "metric": "created",

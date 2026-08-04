@@ -941,7 +941,9 @@
   white-space: nowrap;
 }
 
-.vitals-reconciliation--drift {
+.vitals-reconciliation--drift,
+.vitals-reconciliation--pending,
+.vitals-reconciliation--degraded {
   color: var(--danger);
 }
 

@@ -4,6 +4,7 @@ import asyncio
 import json
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 from uuid import UUID
 
@@ -30,6 +31,7 @@ from harness.agent_runtime import (
 from harness.config import HarnessSettings
 from harness.envelope import GateCommitPayload, StopReason
 from harness.model_policy import ThreadModelResolution
+from harness.receipt_queue import SpendReceiptQueue
 from harness.run_protocol import UsageSnapshot
 from harness.spine_client import (
     MemoryKind,
@@ -164,7 +166,8 @@ async def test_successful_model_response_is_receipted_before_turn_returns() -> N
 
 
 @pytest.mark.asyncio
-async def test_receipt_failure_is_visible_and_fails_the_turn_adapter() -> None:
+async def test_dead_ledger_queues_estimate_and_never_retracts_answer(tmp_path: Path) -> None:
+    """B.6 rule 11: a dead ledger cannot brick a completed conversation turn."""
     async def stream(_messages: object, _info: object):
         yield "answer"
 
@@ -173,23 +176,20 @@ async def test_receipt_failure_is_visible_and_fails_the_turn_adapter() -> None:
         HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
         lambda _: context(),
         FailingSpend(),
+        receipt_queue=SpendReceiptQueue(tmp_path / "receipt-queue"),
     )
 
-    with pytest.raises(RuntimeError, match="ledger unavailable"):
-        await runner.run(
-            thread_id=str(THREAD_UUID),
-            prompt="hello",
-            message_history=(),
-            emit=emitted,
-        )
+    outcome = await runner.run(
+        thread_id=str(THREAD_UUID),
+        prompt="hello",
+        message_history=(),
+        emit=emitted,
+    )
 
-    assert emitted.errors == [
-        {
-            "code": "spend_unavailable",
-            "phase": "receipt",
-            "message": "Spend receipt could not be persisted; the turn was not committed.",
-        }
-    ]
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert outcome.assistant_text == "answer"
+    assert emitted.errors[0]["code"] == "spend_pending"
+    assert "Answer delivered" in str(emitted.errors[0]["message"])
 
 
 @pytest.mark.asyncio

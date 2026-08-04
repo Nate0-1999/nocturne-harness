@@ -8,6 +8,7 @@ import {
 
 import { useRackPlugin, useRackSelection, useRackSnapshot } from './rack'
 import {
+  accountingCopy,
   contiguousPolylineSegments,
   formatExactUsd,
   laneChartPoints,
@@ -214,6 +215,14 @@ export function VitalsModule() {
         >
           {reconciliationCopy(snapshot.reconciliation)}
         </span>
+        {snapshot.accounting.status !== 'clear' && (
+          <span
+            className={`vitals-reconciliation vitals-reconciliation--${snapshot.accounting.status}`}
+            title="Owner-local receipt queue"
+          >
+            {accountingCopy(snapshot.accounting)}
+          </span>
+        )}
         {load.failed && (
           <span className="vitals-inline-failure" role="alert">
             Vitals couldn’t refresh. Chat is still available.
@@ -251,6 +260,14 @@ export function VitalsModule() {
       >
         {reconciliationCopy(snapshot.reconciliation)}
       </div>
+      {snapshot.accounting.status !== 'clear' && (
+        <div
+          className={`vitals-reconciliation vitals-reconciliation--${snapshot.accounting.status}`}
+          title="Owner-local receipt queue"
+        >
+          {accountingCopy(snapshot.accounting)}
+        </div>
+      )}
 
       <div className="vitals-gauges" aria-label="Lifecycle and Palace gauges">
         {snapshot.lifecycle_rates.map((gauge) => (

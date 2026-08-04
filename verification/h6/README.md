@@ -68,8 +68,8 @@ From the Harness repository root:
 
 ```sh
 npm run build --prefix web
-PYTHONPATH=src uv run uvicorn scenario_app:create_scenario_app --factory \
-  --app-dir verification/h6 --host 127.0.0.1 --port 8766
+PYTHONPATH=src:. uv run --locked python -m verification.run_fixture \
+  verification.h6.scenario_app:create_scenario_app --port 8766
 ```
 
 The command intentionally fails closed when `SPINE_TOKEN` is absent. It reads

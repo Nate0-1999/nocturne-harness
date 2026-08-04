@@ -44,6 +44,7 @@ from harness.spine_client import (
     VitalsSpend,
     VitalsSpendLane,
 )
+from verification.fixture_isolation import install_fixture_isolation
 
 UPDATED = datetime(2026, 8, 3, 18, 30, tzinfo=UTC)
 NEIGHBOR_ID = UUID("20000000-0000-4000-8000-000000000001")
@@ -372,10 +373,7 @@ def create_scenario_app() -> FastAPI:
         spine=spine,  # type: ignore[arg-type]
     )
     app = FastAPI(title="M2H deterministic verification")
-
-    @app.get("/__scenario__/identity")
-    async def identity() -> dict[str, object]:
-        return {"fixture": "M2H REGRESSION", "deterministic": True}
+    install_fixture_isolation(app, "M2H REGRESSION")
 
     @app.get("/__scenario__/trace")
     async def trace() -> dict[str, object]:

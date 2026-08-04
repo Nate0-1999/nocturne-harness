@@ -2,7 +2,7 @@
 
 1. Build the committed web bundle with `cd web && npm run build`.
 2. Start the deterministic fixture on its isolated port:
-   `PYTHONPATH=src:. uv run --locked uvicorn verification.m2i.scenario_app:create_scenario_app --factory --host 127.0.0.1 --port 8775`.
+   `PYTHONPATH=src:. uv run --locked python -m verification.run_fixture verification.m2i.scenario_app:create_scenario_app --port 8775`.
 3. Open `http://127.0.0.1:8775/?fixture=M2I%20REGRESSION` and confirm the
    unmistakable `M2I REGRESSION FIXTURE` marker.
 4. Open **Palace queue**. Confirm the empty state says seed work waits without

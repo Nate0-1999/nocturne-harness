@@ -65,6 +65,7 @@ export interface RackSnapshot {
 export type RackAction =
   | { type: 'thread.create' }
   | { type: 'thread.select'; thread_id: string }
+  | { type: 'catalog.cleanup-fixtures' }
   | { type: 'prompt.submit'; prompt: string }
   | { type: 'run.cancel'; run_id?: Ulid }
   | { type: 'thread.archive' }
@@ -164,6 +165,8 @@ export interface RackPluginApi {
 export type RackActionResult<Action extends RackAction> =
   Action['type'] extends 'thread.create'
     ? string
+    : Action['type'] extends 'catalog.cleanup-fixtures'
+      ? number
     : Action['type'] extends 'thread.select'
       ? void
       : Action['type'] extends 'thread.archive' | 'queue.load' | 'queue.decide' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.write' | 'scorer.activate'
@@ -203,7 +206,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'visualizer',
     slot: 'panel',
     streams: ['thread.snapshot', 'run.started', 'run.done', 'prompt.queued'],
-    actions: ['thread.create', 'thread.select'],
+    actions: ['thread.create', 'thread.select', 'catalog.cleanup-fixtures'],
     bounds: RACK_BOUNDS.threads,
     movable: true,
     law_bound: false,
@@ -359,6 +362,8 @@ function dispatchRackAction<Action extends RackAction>(
       case 'thread.select':
         harnessClient.selectThread(action.thread_id)
         return undefined as RackActionResult<Action>
+      case 'catalog.cleanup-fixtures':
+        return useHarnessStore.getState().removeFixtureThreads() as RackActionResult<Action>
       case 'prompt.submit':
         return harnessClient.submitPrompt(action.prompt) as RackActionResult<Action>
       case 'run.cancel':
