@@ -25,6 +25,13 @@ the installed Spine and Harness wheels, and opens <http://127.0.0.1:8765>.
 Keep that command running; Ctrl-C stops the two Python services while retaining
 the local database volume. `nocturne open` reopens an already-running UI.
 
+`nocturne up` saves a verified private database backup before it attempts a
+migration. While the local Palace is running, `nocturne backup` creates another
+backup on demand. Each generation lives under `$NOCTURNE_HOME/backups` with a
+receipt containing its database revision, size, and SHA-256 digest. NOCTURNE
+keeps five generations by default; set `NOCTURNE_BACKUP_GENERATIONS` in the
+private config to retain between 1 and 50.
+
 For an isolated install root, set `NOCTURNE_HOME` before `init`, `up`, and
 `deploy`. Set `NOCTURNE_POSTGRES_PORT` before `init` when port 5432 is already
 owned by another local database.

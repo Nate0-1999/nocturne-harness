@@ -38,7 +38,6 @@
     "tests/test_agent_runtime.py::test_usage_limit_maps_to_budget_exceeded_with_partial_history": "d73a1ae644b076324f1d356cd8140a948f6bbfd5634a39a4e4991cca0e679e74",
     "tests/test_cli.py::test_deploy_loads_initialized_key_and_forwards_dry_run": "1204540a847163ca191add69e8dffe753445e7434798b27ab26899436e5bdaad",
     "tests/test_cli.py::test_local_commands_dispatch": "c51453b9586ab0851208dbafc69ce16588feb775ce9bb7e8044ee7e9f4657c0d",
-    "tests/test_cli.py::test_parser_exposes_exactly_four_contract_commands": "1a077f9c474dae56aee4528f975a6c505a8a9c01ad6d35642dc48caf37843672",
     "tests/test_cli.py::test_safe_command_error_has_no_traceback": "a02ea3d2474df6f4d8c6a5bd1ccafe0c895cfa4c156156e7cf05b9273954efa3",
     "tests/test_cli.py::test_unknown_command_is_rejected_by_argparse": "330f8dbab19a69d0d86d54a126d31e01c7b783adee92f1acac2372154a794080",
     "tests/test_commands.py::test_model_command_parses_only_the_exact_direct_command": "85e5cb2dbc0765c16454ff330c60e347a6773037a255fbe6bb99cd10042c9bd0",

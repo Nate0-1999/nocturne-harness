@@ -87,6 +87,7 @@ def test_process_environment_keeps_services_on_the_initialized_home(
 def test_up_orders_container_migration_services_and_browser(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """A-042 places a verified receipt before migration while ADR-019 preserves startup order."""
     config = _initialized(tmp_path, monkeypatch)
     events: list[object] = []
 
@@ -107,6 +108,11 @@ def test_up_orders_container_migration_services_and_browser(
         onboarding,
         "_upgrade_database",
         lambda database_url: events.append(("migrate", database_url)),
+    )
+    monkeypatch.setattr(
+        onboarding,
+        "create_local_backup",
+        lambda config, *, reason, stdout: events.append(("backup", reason, config.home)),
     )
     monkeypatch.setattr(
         onboarding,
@@ -142,9 +148,10 @@ def test_up_orders_container_migration_services_and_browser(
     assert any("up" in command and "--wait" in command for command in docker_commands)
     assert all("npm" not in command for command in docker_commands)
     migrate_index = next(index for index, event in enumerate(events) if event[0] == "migrate")
+    backup_index = events.index(("backup", "pre_migration", config.home))
     spine_index = events.index(("start", "spine.main:create_app", 8000, config.spine_token))
     harness_index = events.index(("start", "harness.packaged:create_app", 8765, config.spine_token))
-    assert migrate_index < spine_index < harness_index
+    assert backup_index < migrate_index < spine_index < harness_index
     assert ("browser", onboarding.LOCAL_URL) in events
     assert events[-1] == ("stop", 2)
 

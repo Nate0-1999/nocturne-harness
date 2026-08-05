@@ -8,13 +8,14 @@ from harness import cli
 from harness.onboarding import NocturneConfig, OnboardingError
 
 
-def test_parser_exposes_exactly_four_contract_commands() -> None:
+def test_parser_exposes_onboarding_and_lifecycle_commands() -> None:
+    """ADR-019 and A-042 keep the public owner commands explicit and inspectable."""
     parser = cli.build_parser()
     subparsers = next(
         action for action in parser._actions if isinstance(action, cli.argparse._SubParsersAction)
     )
 
-    assert set(subparsers.choices) == {"init", "up", "deploy", "open"}
+    assert set(subparsers.choices) == {"init", "up", "deploy", "open", "backup"}
 
 
 @pytest.mark.parametrize(
@@ -24,11 +25,13 @@ def test_parser_exposes_exactly_four_contract_commands() -> None:
         (["up"], ("up", True)),
         (["up", "--no-open"], ("up", False)),
         (["open"], ("open",)),
+        (["backup"], ("backup",)),
     ],
 )
 def test_local_commands_dispatch(
     argv: list[str], expected: tuple[object, ...], monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """ADR-019 and A-042 route each local command to one owner-facing operation."""
     calls: list[tuple[object, ...]] = []
     monkeypatch.setattr(cli, "init_nocturne", lambda **kwargs: calls.append(("init",)))
     monkeypatch.setattr(
@@ -37,6 +40,7 @@ def test_local_commands_dispatch(
         lambda *, open_browser, stdout: calls.append(("up", open_browser)),
     )
     monkeypatch.setattr(cli, "open_nocturne", lambda **kwargs: calls.append(("open",)))
+    monkeypatch.setattr(cli, "backup_nocturne", lambda **kwargs: calls.append(("backup",)))
 
     assert cli.main(argv, stdout=io.StringIO(), stderr=io.StringIO()) == 0
     assert calls == [expected]

@@ -24,6 +24,8 @@ from pathlib import Path
 from typing import TextIO
 from urllib.parse import quote
 
+from harness.lifecycle import create_local_backup
+
 LOCAL_URL = "http://127.0.0.1:8765"
 SPINE_URL = "http://127.0.0.1:8000"
 _CONFIG_FILE = "env"
@@ -55,6 +57,10 @@ class NocturneConfig:
     def database_url(self) -> str:
         password = quote(self.database_password, safe="")
         return f"postgresql+asyncpg://spine:{password}@127.0.0.1:{self.postgres_port}/spine"
+
+    @property
+    def compose_project(self) -> str:
+        return _compose_project(self.home)
 
     def process_environment(self, base: Mapping[str, str] | None = None) -> dict[str, str]:
         environment = dict(os.environ if base is None else base)
@@ -184,6 +190,7 @@ def up_nocturne(
         _run([*compose, "pull", "postgres"])
         _run([*compose, "up", "--detach", "--wait", "postgres"])
 
+    create_local_backup(config, reason="pre_migration", stdout=stdout)
     _upgrade_database(config.database_url)
     environment = config.process_environment()
     spine = _start_service(
@@ -215,6 +222,14 @@ def open_nocturne(*, stdout: TextIO = sys.stdout) -> int:
     _wait_for_url(LOCAL_URL, timeout=3.0)
     _open_browser(LOCAL_URL, stdout=stdout)
     return 0
+
+
+def backup_nocturne(*, home: Path | None = None, stdout: TextIO = sys.stdout) -> Path:
+    """Publish one verified local Palace backup generation."""
+
+    config = load_config(home=home)
+    _require_command("docker")
+    return create_local_backup(config, reason="manual", stdout=stdout)
 
 
 def _write_config(config: NocturneConfig) -> None:

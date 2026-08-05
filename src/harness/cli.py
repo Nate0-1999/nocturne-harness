@@ -8,8 +8,10 @@ from collections.abc import Sequence
 from typing import TextIO
 
 from harness.deploy import DeployError
+from harness.lifecycle import LifecycleError
 from harness.onboarding import (
     OnboardingError,
+    backup_nocturne,
     init_nocturne,
     load_config,
     open_nocturne,
@@ -33,6 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="start without opening the browser",
     )
     commands.add_parser("open", help="open the running local Nocturne UI")
+    commands.add_parser("backup", help="save a verified local Palace backup")
     deploy = commands.add_parser("deploy", help="reconcile the fixed D1 cloud foundation")
     deploy.add_argument(
         "--dry-run",
@@ -64,6 +67,8 @@ def main(
             up_nocturne(open_browser=not args.no_open, stdout=stdout)
         elif args.command == "open":
             open_nocturne(stdout=stdout)
+        elif args.command == "backup":
+            backup_nocturne(stdout=stdout)
         elif args.command == "deploy":
             config = load_config()
             _run_cloud_deploy(
@@ -72,7 +77,7 @@ def main(
             )
         else:  # pragma: no cover - argparse owns the closed command set
             raise AssertionError(f"unhandled command: {args.command}")
-    except (DeployError, OnboardingError) as exc:
+    except (DeployError, LifecycleError, OnboardingError) as exc:
         print(f"nocturne: {exc}", file=stderr)
         return 2
     except KeyboardInterrupt:

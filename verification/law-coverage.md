@@ -2,9 +2,9 @@
 
 Generated deterministically by `scripts/check_test_motivations.py`.
 
-- Tests discovered: 332
-- Motivated tests: 20
-- Grandfathered baseline debt: 312
+- Tests discovered: 334
+- Motivated tests: 25
+- Grandfathered baseline debt: 309
 - Stale baseline entries: 0
 
 ## SPEC and ADR defenders
@@ -109,9 +109,11 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 
 - _None._
 
-### ADR-019 — ZERO DEFENDERS
+### ADR-019 — 3 defender(s)
 
-- _None._
+- `tests/test_cli.py::test_local_commands_dispatch`
+- `tests/test_cli.py::test_parser_exposes_onboarding_and_lifecycle_commands`
+- `tests/test_onboarding.py::test_up_orders_container_migration_services_and_browser`
 
 ### ADR-020 — ZERO DEFENDERS
 
@@ -260,6 +262,14 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_m2n_lifecycle.py::test_future_config_is_refused_without_mutation`
 - `tests/test_m2n_lifecycle.py::test_v1_config_upgrades_atomically_without_replacing_owner_values`
 
+### A-042
+
+- `tests/test_cli.py::test_local_commands_dispatch`
+- `tests/test_cli.py::test_parser_exposes_onboarding_and_lifecycle_commands`
+- `tests/test_m2n_backup.py::test_backup_publishes_verified_private_receipt_and_prunes_known_generations`
+- `tests/test_m2n_backup.py::test_failed_dump_publishes_no_generation`
+- `tests/test_onboarding.py::test_up_orders_container_migration_services_and_browser`
+
 ## Baseline debt
 
 - `tests/contract/test_spine_contract.py::test_live_create_conflicts_and_dedup_bands`
@@ -298,8 +308,6 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_agent_runtime.py::test_provider_failure_maps_to_error_and_preserves_capture_without_cancel_repair`
 - `tests/test_agent_runtime.py::test_cancellation_waits_for_tool_and_repairs_history_for_the_next_turn`
 - `tests/test_agent_runtime.py::test_tool_cleanup_exception_cannot_mask_cancelled_history_repair`
-- `tests/test_cli.py::test_parser_exposes_exactly_four_contract_commands`
-- `tests/test_cli.py::test_local_commands_dispatch`
 - `tests/test_cli.py::test_deploy_loads_initialized_key_and_forwards_dry_run`
 - `tests/test_cli.py::test_safe_command_error_has_no_traceback`
 - `tests/test_cli.py::test_unknown_command_is_rejected_by_argparse`
@@ -466,7 +474,6 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_onboarding.py::test_init_uses_environment_secret_and_existing_config_is_inert`
 - `tests/test_onboarding.py::test_load_rejects_group_or_world_readable_secret_file`
 - `tests/test_onboarding.py::test_process_environment_keeps_services_on_the_initialized_home`
-- `tests/test_onboarding.py::test_up_orders_container_migration_services_and_browser`
 - `tests/test_onboarding.py::test_open_requires_reachability_before_launching_browser`
 - `tests/test_packaging.py::test_public_distribution_and_lockstep_dependency_metadata`
 - `tests/test_packaging.py::test_committed_web_build_has_every_referenced_asset`

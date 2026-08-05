@@ -1023,3 +1023,24 @@ preserving operation before recovery commands depend on it.
 the existing Palace. Treating missing fields as permanent implicit defaults
 would leave no versioned migration trail. Pinning one architecture would make
 the same wheel behave differently on Apple Silicon and cloud build hosts.
+
+## 034 — One verified local backup authority [P1.3, P4]
+
+**Decision.** Adopt Garden A-042. Stream PostgreSQL's custom archive from the
+already-running packaged Compose database into a private temporary generation,
+verify it with the matching container's `pg_restore`, record its digest, size,
+image, revision, reason, and ULID in one receipt, then atomically publish it.
+Manual backup and the local pre-migration path call the same writer; retention
+deletes only generations that fully validate against that receipt contract.
+
+**Motivation.** Restore, migration safety, pruning, and doctor need one fact to
+trust. A receipt that can be checked without secrets makes the archive
+self-describing, while temp-then-rename prevents a crash from promoting a
+partial dump. Reusing the pinned database image for dump and verification keeps
+the installed wheel free of a second PostgreSQL client toolchain.
+
+**Rejected alternatives.** A raw SQL text dump is larger and less suitable for
+side-by-side restore. Installing host `pg_dump` creates version drift. Naming a
+directory a backup without verifying its archive would make retention capable
+of deleting good history in favor of corrupt output. Deleting unfamiliar files
+would turn a bounded product cleanup into broad filesystem authority.
