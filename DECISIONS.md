@@ -986,3 +986,22 @@ context would overcount multi-request tool turns. Presenting locally counted
 categories as provider facts would hide uncertainty. Instrumenting provider
 internals or building compaction policy now would exceed the packet and create
 machinery M3 owns.
+
+## 032 — Syntax-ratcheted test motivation and inverse law index [P4]
+
+**Decision.** Adopt Garden A-040. Ship a repository-local, standard-library
+checker that reads Python test docstrings and JavaScript test JSDoc, accepts
+only the enacted citation grammar, and grandfathers only an exact normalized
+syntax digest. Run it from both the local pre-commit configuration and CI.
+Generate the law-coverage artifact from the same scan rather than maintaining a
+second hand-written index.
+
+**Motivation.** A filename exemption would let an old test change forever
+without explaining its purpose. A syntax digest makes the temporary baseline a
+real ratchet, while one scanner keeps enforcement and coverage from disagreeing.
+
+**Rejected alternatives.** Enforcing prose quality with keyword heuristics
+would manufacture confidence the machine cannot justify. Sharing the script
+through a sibling checkout would break installed and standalone repository
+operation. Auto-inserting generic docstrings would disguise the human sweep as
+completion.

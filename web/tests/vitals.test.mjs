@@ -96,6 +96,7 @@ function snapshot() {
   }
 }
 
+/** SPEC C.10 requires the client to render the canonical snapshot without creating a second accounting authority. */
 test('parses the exact server-provided vitals shape without re-accounting', () => {
   const parsed = parseVitalsSnapshot(snapshot())
 
@@ -106,6 +107,7 @@ test('parses the exact server-provided vitals shape without re-accounting', () =
   assert.equal(accountingCopy(parsed.accounting), 'Receipt drift · 2 lines pending')
 })
 
+/** A-034 preserves exact receipt decimals and visible unpriced state so browser arithmetic cannot hide uncertainty. */
 test('preserves exact decimal scale and distinguishes an unpriced point', () => {
   assert.equal(formatExactUsd('0.035000000000'), '$0.035000000000')
   assert.equal(formatExactUsd('1200.00'), '$1,200.00')
@@ -113,6 +115,7 @@ test('preserves exact decimal scale and distinguishes an unpriced point', () => 
   assert.equal(unpricedCopy(1), '1 line awaiting a price')
 })
 
+/** SPEC C.10 forbids unavailable lifecycle data from masquerading as a measured zero. */
 test('rejects unavailable gauges masquerading as measured zeroes', () => {
   const payload = snapshot()
   payload.lifecycle_rates[1].per_hour = 0
@@ -123,6 +126,7 @@ test('rejects unavailable gauges masquerading as measured zeroes', () => {
   )
 })
 
+/** SPEC C.10 requires scrubbing to retain server-provided values while presentation geometry may use numbers. */
 test('finds scrub buckets and uses decimals only for SVG geometry', () => {
   const lane = parseVitalsSnapshot(snapshot()).spend.lanes[0]
   const nearest = nearestSpendPoint(lane.points, '2026-08-02T13:00:00Z', 0.99)
@@ -134,6 +138,7 @@ test('finds scrub buckets and uses decimals only for SVG geometry', () => {
   assert.ok(chart[0].x >= 0 && chart[0].x <= 100)
 })
 
+/** SPEC C.10 makes missing and unpriced buckets discontinuities so the rack cannot invent spend history. */
 test('does not invent a trend line across empty or unpriced minute buckets', () => {
   const point = (minute, x, y) => ({
     point: { minute, cost_usd: y === null ? null : '1', receipt_lines: 1, unpriced_lines: 0 },
@@ -151,6 +156,7 @@ test('does not invent a trend line across empty or unpriced minute buckets', () 
   assert.deepEqual(segments, ['0,20 10,10', '30,5', '50,8'])
 })
 
+/** SPEC B.6 responsive law requires a collapsed rack to preserve rather than obscure the primary chat surface. */
 test('collapse reallocates rows instead of overlaying Chat', () => {
   assert.deepEqual(rackBodyRowAllocation(false), {
     panelRows: 7,
