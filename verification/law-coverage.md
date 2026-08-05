@@ -2,9 +2,9 @@
 
 Generated deterministically by `scripts/check_test_motivations.py`.
 
-- Tests discovered: 348
-- Motivated tests: 40
-- Grandfathered baseline debt: 308
+- Tests discovered: 350
+- Motivated tests: 43
+- Grandfathered baseline debt: 307
 - Stale baseline entries: 0
 
 ## SPEC and ADR defenders
@@ -109,8 +109,9 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 
 - _None._
 
-### ADR-019 — 3 defender(s)
+### ADR-019 — 4 defender(s)
 
+- `tests/test_cli.py::test_deploy_loads_initialized_key_and_forwards_dry_run`
 - `tests/test_cli.py::test_local_commands_dispatch`
 - `tests/test_cli.py::test_parser_exposes_onboarding_and_lifecycle_commands`
 - `tests/test_onboarding.py::test_up_orders_container_migration_services_and_browser`
@@ -298,6 +299,11 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_m2n_backup.py::test_rollback_manifest_names_loss_reversion_pins_and_event_deltas`
 - `tests/test_m2n_lifecycle.py::test_v2_config_adds_the_existing_compose_volume_without_changing_owner_values`
 
+### A-046
+
+- `tests/test_deploy.py::test_cloud_backup_verification_failure_stops_before_migration`
+- `tests/test_deploy.py::test_cloud_migration_waits_for_verified_private_backup_receipt`
+
 ## Baseline debt
 
 - `tests/contract/test_spine_contract.py::test_live_create_conflicts_and_dedup_bands`
@@ -336,7 +342,6 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_agent_runtime.py::test_provider_failure_maps_to_error_and_preserves_capture_without_cancel_repair`
 - `tests/test_agent_runtime.py::test_cancellation_waits_for_tool_and_repairs_history_for_the_next_turn`
 - `tests/test_agent_runtime.py::test_tool_cleanup_exception_cannot_mask_cancelled_history_repair`
-- `tests/test_cli.py::test_deploy_loads_initialized_key_and_forwards_dry_run`
 - `tests/test_cli.py::test_safe_command_error_has_no_traceback`
 - `tests/test_cli.py::test_unknown_command_is_rejected_by_argparse`
 - `tests/test_commands.py::test_model_command_parses_only_the_exact_direct_command`

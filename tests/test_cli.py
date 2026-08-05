@@ -69,6 +69,8 @@ def test_local_commands_dispatch(
 def test_deploy_loads_initialized_key_and_forwards_dry_run(
     tmp_path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """ADR-019 keeps cloud deployment on the initialized owner's private home and key."""
+
     config = NocturneConfig(
         home=tmp_path,
         openrouter_api_key="owner-secret",
@@ -76,17 +78,17 @@ def test_deploy_loads_initialized_key_and_forwards_dry_run(
         database_password="generated-password",
         machine_id="generated-machine",
     )
-    calls: list[tuple[bool, str]] = []
+    calls: list[tuple[bool, str, object]] = []
     monkeypatch.setattr(cli, "load_config", lambda: config)
     monkeypatch.setattr(
         cli,
         "_run_cloud_deploy",
-        lambda *, dry_run, openrouter_key: calls.append((dry_run, openrouter_key)),
+        lambda *, dry_run, openrouter_key, home: calls.append((dry_run, openrouter_key, home)),
     )
 
     output = io.StringIO()
     assert cli.main(["deploy", "--dry-run"], stdout=output, stderr=output) == 0
-    assert calls == [(True, "owner-secret")]
+    assert calls == [(True, "owner-secret", tmp_path)]
     assert "owner-secret" not in output.getvalue()
 
 

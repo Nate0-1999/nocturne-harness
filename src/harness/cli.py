@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Sequence
+from pathlib import Path
 from typing import TextIO
 
 from harness.deploy import DeployError
@@ -50,10 +51,10 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _run_cloud_deploy(*, dry_run: bool, openrouter_key: str) -> None:
+def _run_cloud_deploy(*, dry_run: bool, openrouter_key: str, home: Path) -> None:
     from harness.deploy import run_cloud_deploy
 
-    run_cloud_deploy(dry_run=dry_run, openrouter_key=openrouter_key)
+    run_cloud_deploy(dry_run=dry_run, openrouter_key=openrouter_key, home=home)
 
 
 def main(
@@ -83,6 +84,7 @@ def main(
             _run_cloud_deploy(
                 dry_run=args.dry_run,
                 openrouter_key=config.openrouter_api_key,
+                home=config.home,
             )
         else:  # pragma: no cover - argparse owns the closed command set
             raise AssertionError(f"unhandled command: {args.command}")

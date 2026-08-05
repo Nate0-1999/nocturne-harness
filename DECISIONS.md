@@ -1099,3 +1099,20 @@ One constrained pointer makes the switch durable and mechanically reversible.
 semantics. Reusing the live container cannot prove side-by-side validity.
 Deleting the former volume would erase the owner's fastest recovery path, and
 keeping candidates after cancellation would accumulate ambiguous Palaces.
+
+## 038 — Prove the provider backup before owner-cloud migration [P1.3, P4]
+
+**Decision.** Adopt Garden A-046. Create one uniquely described Cloud SQL
+on-demand backup, capture its operation and backup IDs, wait for that operation,
+independently describe the completed backup, and atomically persist the safe
+metadata under the owner's private Nocturne home before invoking Alembic.
+
+**Motivation.** Submission is not recoverability. A migration can begin only
+after the provider says the exact backup is successful and the owner has a
+durable locator that survives terminal output and process exit.
+
+**Rejected alternatives.** Treating the latest scheduled backup as this run's
+receipt would not prove ordering. Waiting without describing the backup would
+prove only operation completion, not a usable backup object. Automating restore
+or pruning cloud backups would expand an evidence seam into destructive cloud
+lifecycle authority the packet explicitly does not grant.

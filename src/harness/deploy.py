@@ -23,6 +23,7 @@ import time
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
@@ -30,6 +31,8 @@ from typing import IO, Any, Protocol
 from urllib.parse import quote, unquote, urlsplit
 
 import httpx
+
+from harness.envelope import generate_ulid
 
 PROJECT_ID = "n8-memory-palace"
 REGION = "us-central1"
@@ -50,6 +53,7 @@ _BUDGET_RESOURCE_RE = re.compile(
     r"(?P<budget>[A-Za-z0-9][A-Za-z0-9._-]{0,126})$"
 )
 _IMAGE_TAG_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+_CLOUD_OPERATION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 
 RUNTIME_SERVICE_ACCOUNT_EMAIL = f"{RUNTIME_SERVICE_ACCOUNT}@{PROJECT_ID}.iam.gserviceaccount.com"
 SQL_CONNECTION_NAME = f"{PROJECT_ID}:{REGION}:{SQL_INSTANCE}"
@@ -1042,6 +1046,7 @@ class GcloudDeployBackend:
         process_factory: ProcessFactory = subprocess.Popen,
         health_probe: HealthProbe = _default_health_probe,
         remote_verifier: RemoteVerifier = verify_remote_spine,
+        cloud_receipt_directory: Path | None = None,
     ) -> None:
         if not _IMAGE_TAG_RE.fullmatch(image_tag):
             raise ValueError("image_tag must be one immutable Docker tag component")
@@ -1055,6 +1060,7 @@ class GcloudDeployBackend:
         self._process_factory = process_factory
         self._health_probe = health_probe
         self._remote_verifier = remote_verifier
+        self._cloud_receipt_directory = cloud_receipt_directory
         self._database_password: str | None = None
         self._spine_token: str | None = None
         self._service_url: str | None = None
@@ -2503,6 +2509,7 @@ class GcloudDeployBackend:
     def _apply_migrations(self) -> None:
         if self._database_password is None:
             raise DeployError("database credential is unavailable for migration")
+        self._create_cloud_backup_receipt()
         with self._cloud_sql_proxy() as port:
             database_url = (
                 f"postgresql+asyncpg://{DATABASE_USER}:"
@@ -2511,6 +2518,161 @@ class GcloudDeployBackend:
             environment = os.environ.copy()
             environment["SPINE_DATABASE_URL"] = database_url
             self._run((sys.executable, "-m", "spine.db.migrate"), env=environment)
+
+    @staticmethod
+    def _cloud_timestamp(value: object) -> str:
+        if not isinstance(value, str) or not value:
+            raise DeployError("Cloud SQL backup metadata was incomplete")
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise DeployError("Cloud SQL backup metadata was incomplete") from exc
+        if parsed.tzinfo is None or parsed.utcoffset() is None:
+            raise DeployError("Cloud SQL backup metadata was incomplete")
+        return value
+
+    def _persist_cloud_backup_receipt(self, receipt_id: str, payload: Mapping[str, object]) -> Path:
+        directory = self._cloud_receipt_directory
+        if directory is None:
+            raise DeployError("Cloud SQL backup completed but its receipt location is unavailable")
+        temporary: Path | None = None
+        try:
+            if directory.is_symlink():
+                raise OSError("receipt directory is a symlink")
+            directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+            os.chmod(directory, 0o700)
+            descriptor, name = tempfile.mkstemp(prefix=".receipt-", dir=directory)
+            temporary = Path(name)
+            with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+                os.fchmod(handle.fileno(), 0o600)
+                json.dump(dict(payload), handle, indent=2, sort_keys=True)
+                handle.write("\n")
+                handle.flush()
+                os.fsync(handle.fileno())
+            destination = directory / f"{receipt_id}.json"
+            os.replace(temporary, destination)
+            temporary = None
+            directory_descriptor = os.open(directory, os.O_RDONLY)
+            try:
+                os.fsync(directory_descriptor)
+            finally:
+                os.close(directory_descriptor)
+            return destination
+        except OSError as exc:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
+            raise DeployError(
+                "Cloud SQL backup completed but its local receipt could not be saved; "
+                "migration did not run"
+            ) from exc
+
+    def _create_cloud_backup_receipt(self) -> Path:
+        receipt_id = generate_ulid()
+        description = f"nocturne-pre-migration-{receipt_id.lower()}"
+        operation = self._json_object(
+            (
+                "gcloud",
+                "sql",
+                "backups",
+                "create",
+                f"--instance={SQL_INSTANCE}",
+                f"--description={description}",
+                f"--location={REGION}",
+                "--async",
+                f"--project={PROJECT_ID}",
+                "--format=json",
+                "--quiet",
+            )
+        )
+        operation_id = str(operation.get("name", ""))
+        context = operation.get("backupContext", {})
+        if not isinstance(context, Mapping):
+            raise DeployError("Cloud SQL backup did not return a usable receipt identity")
+        submitted_backup_id = str(context.get("backupId", ""))
+        if not _CLOUD_OPERATION_RE.fullmatch(operation_id) or (
+            submitted_backup_id and not submitted_backup_id.isdigit()
+        ):
+            raise DeployError("Cloud SQL backup did not return a usable receipt identity")
+
+        waited = self._json_list(
+            (
+                "gcloud",
+                "sql",
+                "operations",
+                "wait",
+                operation_id,
+                "--timeout=1800",
+                f"--project={PROJECT_ID}",
+                "--format=json",
+            )
+        )
+        if len(waited) != 1:
+            raise DeployError("Cloud SQL backup operation did not complete safely")
+        completed = waited[0]
+        completed_context = completed.get("backupContext", {})
+        backup_id = (
+            str(completed_context.get("backupId", ""))
+            if isinstance(completed_context, Mapping)
+            else ""
+        )
+        if not isinstance(completed_context, Mapping) or not all(
+            (
+                backup_id.isdigit(),
+                not submitted_backup_id or submitted_backup_id == backup_id,
+                completed.get("name") == operation_id,
+                completed.get("status") == "DONE",
+                completed.get("operationType") == "BACKUP_VOLUME",
+                completed.get("targetProject") == PROJECT_ID,
+                completed.get("targetId") == SQL_INSTANCE,
+            )
+        ):
+            raise DeployError("Cloud SQL backup operation did not complete safely")
+
+        backup = self._json_object(
+            (
+                "gcloud",
+                "sql",
+                "backups",
+                "describe",
+                backup_id,
+                f"--instance={SQL_INSTANCE}",
+                f"--project={PROJECT_ID}",
+                "--format=json",
+            )
+        )
+        if not all(
+            (
+                str(backup.get("id", "")) == backup_id,
+                backup.get("instance") == SQL_INSTANCE,
+                backup.get("description") == description,
+                backup.get("status") == "SUCCESSFUL",
+                backup.get("type") == "ON_DEMAND",
+                backup.get("location") == REGION,
+            )
+        ):
+            raise DeployError("Cloud SQL backup could not be verified; migration did not run")
+
+        payload = {
+            "schema_version": 1,
+            "receipt_id": receipt_id,
+            "created_at": datetime.now(UTC).isoformat(),
+            "reason": "pre_migration",
+            "provider": "gcp_cloud_sql",
+            "project": PROJECT_ID,
+            "region": REGION,
+            "instance": SQL_INSTANCE,
+            "database": DATABASE_NAME,
+            "operation_id": operation_id,
+            "backup_id": backup_id,
+            "description": description,
+            "status": "SUCCESSFUL",
+            "type": "ON_DEMAND",
+            "location": REGION,
+            "enqueued_time": self._cloud_timestamp(backup.get("enqueuedTime")),
+            "start_time": self._cloud_timestamp(backup.get("startTime")),
+            "end_time": self._cloud_timestamp(backup.get("endTime")),
+        }
+        return self._persist_cloud_backup_receipt(receipt_id, payload)
 
     def _service_url_now(self) -> str:
         service = self._json_object(
@@ -2722,9 +2884,14 @@ def run_cloud_deploy(
     stdout: IO[str] = sys.stdout,
     runner: CommandRunner = subprocess.run,
     process_factory: ProcessFactory = subprocess.Popen,
+    home: Path | None = None,
 ) -> DeployPlan:
     """CLI integration seam: discover and reconcile the one authorized target."""
 
+    if home is None:
+        from harness.onboarding import nocturne_home
+
+        home = nocturne_home()
     from spine import __version__ as spine_version
 
     image_tag = spine_version.replace("+", ".")
@@ -2733,6 +2900,7 @@ def run_cloud_deploy(
         openrouter_key=openrouter_key,
         runner=runner,
         process_factory=process_factory,
+        cloud_receipt_directory=home / "cloud-backups",
     )
     backend.preflight()
     target = backend.discover_target()

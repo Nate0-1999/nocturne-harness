@@ -3,7 +3,9 @@ from __future__ import annotations
 import copy
 import io
 import json
+import stat
 import subprocess
+import sys
 from collections.abc import Iterator, Sequence
 from contextlib import AbstractContextManager, contextmanager
 from dataclasses import replace
@@ -1365,3 +1367,132 @@ def test_missing_command_is_normalized_without_leaking_os_error() -> None:
 
     assert str(error.value) == "required command is unavailable: gcloud"
     assert "sensitive host path" not in str(error.value)
+
+
+def test_cloud_migration_waits_for_verified_private_backup_receipt(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A-046 prevents owner-cloud Alembic from outrunning completed recovery evidence."""
+
+    calls: list[tuple[str, ...]] = []
+    receipt_id = "01J00000000000000000000000"
+    backup_id = "1785900000000"
+    operation_id = "backup-operation-1"
+    description = f"nocturne-pre-migration-{receipt_id.lower()}"
+
+    def runner(argv: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        command = tuple(argv)
+        calls.append(command)
+        if command[:4] == ("gcloud", "sql", "backups", "create"):
+            value: object = {
+                "name": operation_id,
+                "backupContext": {"backupId": backup_id},
+            }
+        elif command[:4] == ("gcloud", "sql", "operations", "wait"):
+            value = [
+                {
+                    "name": operation_id,
+                    "status": "DONE",
+                    "operationType": "BACKUP_VOLUME",
+                    "targetProject": PROJECT_ID,
+                    "targetId": SQL_INSTANCE,
+                    "backupContext": {"backupId": backup_id},
+                }
+            ]
+        elif command[:4] == ("gcloud", "sql", "backups", "describe"):
+            value = {
+                "id": backup_id,
+                "instance": SQL_INSTANCE,
+                "description": description,
+                "status": "SUCCESSFUL",
+                "type": "ON_DEMAND",
+                "location": REGION,
+                "enqueuedTime": "2026-08-04T20:00:00Z",
+                "startTime": "2026-08-04T20:00:01Z",
+                "endTime": "2026-08-04T20:00:22Z",
+            }
+        elif command[:3] == (sys.executable, "-m", "spine.db.migrate"):
+            receipt = tmp_path / "cloud-backups" / f"{receipt_id}.json"
+            assert receipt.is_file()
+            value = ""
+        else:
+            raise AssertionError(f"unexpected command: {command!r}")
+        stdout = value if isinstance(value, str) else json.dumps(value)
+        return subprocess.CompletedProcess(command, 0, stdout, "")
+
+    @contextmanager
+    def proxy() -> Iterator[int]:
+        yield 54321
+
+    monkeypatch.setattr("harness.deploy.generate_ulid", lambda: receipt_id)
+    backend = GcloudDeployBackend(
+        image_tag="0.1.0",
+        openrouter_key="fixture",
+        runner=runner,
+        cloud_receipt_directory=tmp_path / "cloud-backups",
+    )
+    backend._database_password = "database-secret"
+    monkeypatch.setattr(backend, "_cloud_sql_proxy", proxy)
+
+    backend._apply_migrations()
+
+    receipt_path = tmp_path / "cloud-backups" / f"{receipt_id}.json"
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    assert receipt["backup_id"] == backup_id
+    assert receipt["operation_id"] == operation_id
+    assert receipt["status"] == "SUCCESSFUL"
+    assert receipt["type"] == "ON_DEMAND"
+    assert stat.S_IMODE((tmp_path / "cloud-backups").stat().st_mode) == 0o700
+    assert stat.S_IMODE(receipt_path.stat().st_mode) == 0o600
+    assert calls[-1][:3] == (sys.executable, "-m", "spine.db.migrate")
+
+
+def test_cloud_backup_verification_failure_stops_before_migration(tmp_path: Path) -> None:
+    """A-046 fails closed when the provider cannot prove the requested backup succeeded."""
+
+    calls: list[tuple[str, ...]] = []
+
+    def runner(argv: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        command = tuple(argv)
+        calls.append(command)
+        if command[:4] == ("gcloud", "sql", "backups", "create"):
+            value: object = {
+                "name": "backup-operation-2",
+                "backupContext": {"backupId": "1785900000001"},
+            }
+        elif command[:4] == ("gcloud", "sql", "operations", "wait"):
+            value = [
+                {
+                    "name": "backup-operation-2",
+                    "status": "DONE",
+                    "operationType": "BACKUP_VOLUME",
+                    "targetProject": PROJECT_ID,
+                    "targetId": SQL_INSTANCE,
+                    "backupContext": {"backupId": "1785900000001"},
+                }
+            ]
+        elif command[:4] == ("gcloud", "sql", "backups", "describe"):
+            value = {
+                "id": "1785900000001",
+                "instance": SQL_INSTANCE,
+                "description": "not-the-requested-backup",
+                "status": "SUCCESSFUL",
+                "type": "ON_DEMAND",
+                "location": REGION,
+            }
+        else:
+            raise AssertionError("migration ran after failed backup verification")
+        return subprocess.CompletedProcess(command, 0, json.dumps(value), "")
+
+    backend = GcloudDeployBackend(
+        image_tag="0.1.0",
+        openrouter_key="fixture",
+        runner=runner,
+        cloud_receipt_directory=tmp_path / "cloud-backups",
+    )
+    backend._database_password = "database-secret"
+
+    with pytest.raises(DeployError, match="could not be verified"):
+        backend._apply_migrations()
+    assert not (tmp_path / "cloud-backups").exists()
+    assert all(command[:3] != (sys.executable, "-m", "spine.db.migrate") for command in calls)
