@@ -782,6 +782,7 @@
 }
 
 .palace-queue-launch {
+  margin-left: 0.5rem;
   border: 1px solid color-mix(in srgb, var(--accent) 42%, transparent);
   background: rgb(255 255 255 / 3%);
   color: var(--ink);
@@ -1811,6 +1812,10 @@
 
   .brand__mode {
     display: none;
+  }
+
+  .palace-queue-launch {
+    margin-left: 0;
   }
 
   .mobile-navigation {

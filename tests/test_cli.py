@@ -29,7 +29,11 @@ def test_parser_exposes_onboarding_and_lifecycle_commands() -> None:
 @pytest.mark.parametrize(
     ("argv", "expected"),
     [
-        (["init"], ("init",)),
+        (["init"], ("init", None)),
+        (
+            ["init", "--remote", "https://spine.example.test"],
+            ("init", "https://spine.example.test"),
+        ),
         (["up"], ("up", True)),
         (["up", "--no-open"], ("up", False)),
         (["open"], ("open",)),
@@ -43,7 +47,11 @@ def test_local_commands_dispatch(
 ) -> None:
     """ADR-019, A-042, and A-045 route each local command to one owner-facing operation."""
     calls: list[tuple[object, ...]] = []
-    monkeypatch.setattr(cli, "init_nocturne", lambda **kwargs: calls.append(("init",)))
+    monkeypatch.setattr(
+        cli,
+        "init_nocturne",
+        lambda *, remote, stdout: calls.append(("init", remote)),
+    )
     monkeypatch.setattr(
         cli,
         "up_nocturne",

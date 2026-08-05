@@ -1,6 +1,6 @@
 # NOCTURNE
 
-NOCTURNE is a local agent harness backed by its Memory Palace. The public
+NOCTURNE is an agent harness backed by its Memory Palace. The public
 Python distribution is `nocturne-ai`; the product and command remain
 `nocturne`.
 
@@ -24,6 +24,28 @@ running it to use an existing environment secret without a prompt.
 the installed Spine and Harness wheels, and opens <http://127.0.0.1:8765>.
 Keep that command running; Ctrl-C stops the two Python services while retaining
 the local database volume. `nocturne open` reopens an already-running UI.
+
+## Existing remote Palace
+
+If your Palace is already running in your own cloud, connect the same installed
+daemon directly to it:
+
+```sh
+nocturne init --remote https://YOUR-SPINE-SERVICE
+nocturne up
+```
+
+`init` uses `OPENROUTER_API_KEY` when it is already exported, otherwise it
+prompts for it, then privately prompts for the Palace bearer. `up` checks that
+Palace, starts only the local daemon, and opens the Rack; it does not start
+Docker or a second Spine. Existing checkout users can replace sourcing `.env`
+and running `uv run harness dev` with those two commands, entering the same
+`SPINE_URL`, `SPINE_TOKEN`, and OpenRouter key when prompted. The private config
+remains at `~/.nocturne/env` with owner-only permissions.
+
+`nocturne doctor` checks the remote Spine plus the local conversation journal
+and disk. It says plainly that local database and backup checks are skipped;
+those remain the remote Palace operator's responsibility.
 
 `nocturne up` saves a verified private database backup before it attempts a
 migration. While the local Palace is running, `nocturne backup` creates another

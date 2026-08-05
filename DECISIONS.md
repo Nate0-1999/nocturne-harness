@@ -1135,3 +1135,23 @@ all three existing views to explain the same comparison.
 permissions. Persisting audition overlays would contaminate commit and
 feedback. A confirmation dialog would add friction without proving that the
 displayed evidence still matches the values being forced.
+
+## 040 — Select the Palace rung in one private config [P4]
+
+**Decision.** Add an explicit local-or-remote Palace mode and Spine origin to
+the existing versioned Nocturne config. The installed daemon remains the same
+on both rungs. Local mode retains Docker, migrations, Spine, and backup
+lifecycle; remote mode verifies the configured Spine and starts only the
+packaged daemon. Existing version 3 configs upgrade atomically to explicit
+local mode.
+
+**Motivation.** The owner's cloud Palace already works, but reaching it through
+a sourced checkout env and a developer command makes the more capable rung
+harder to start than the local one. One config lets `init` and `up` remain the
+whole startup vocabulary without turning a deployment choice into a second
+product.
+
+**Rejected alternatives.** Reading the repository `.env` would preserve the
+checkout dependency the packet removes. A second remote-only config format or
+command would fork the capability ladder. Starting a local Spine as a proxy
+would add an unused service and blur which Palace owns the data.

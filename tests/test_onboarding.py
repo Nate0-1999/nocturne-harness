@@ -70,6 +70,46 @@ def test_init_uses_environment_secret_and_existing_config_is_inert(
     assert first.read_bytes() == original
 
 
+def test_remote_init_records_one_palace_origin_and_prompts_only_for_its_bearer(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """M2S and ADR-019 require remote rung setup to fit the same two-command surface."""
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "environment-secret")
+    prompts: list[str] = []
+
+    onboarding.init_nocturne(
+        home=tmp_path,
+        remote="https://spine.example.test/",
+        prompt=lambda message: prompts.append(message) or "remote-bearer",
+        stdout=io.StringIO(),
+    )
+    config = onboarding.load_config(home=tmp_path)
+
+    assert prompts == ["Palace bearer: "]
+    assert config.palace_mode == "remote"
+    assert config.spine_url == "https://spine.example.test"
+    assert config.spine_token == "remote-bearer"
+    environment = config.process_environment({})
+    assert environment["SPINE_URL"] == config.spine_url
+    assert "SPINE_DATABASE_URL" not in environment
+    assert "NOCTURNE_POSTGRES_VOLUME" not in environment
+
+
+@pytest.mark.parametrize(
+    "remote",
+    ["", "spine.example.test", "https://user:secret@spine.example.test", "https://x/y"],
+)
+def test_remote_init_rejects_values_that_are_not_service_origins(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, remote: str
+) -> None:
+    """M2S keeps remote setup bounded to one explicit Palace service origin."""
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "environment-secret")
+    with pytest.raises(onboarding.OnboardingError, match="service origin"):
+        onboarding.init_nocturne(home=tmp_path, remote=remote, stdout=io.StringIO())
+
+
 def test_load_rejects_group_or_world_readable_secret_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -166,6 +206,97 @@ def test_up_orders_container_migration_services_and_browser(
     assert backup_index < migrate_index < spine_index < harness_index
     assert ("browser", onboarding.LOCAL_URL) in events
     assert events[-1] == ("stop", 2)
+
+
+def test_remote_up_starts_only_the_daemon_and_opens_the_browser(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """M2S requires remote mode to skip local containers and Spine while retaining the Rack."""
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "environment-secret")
+    onboarding.init_nocturne(
+        home=tmp_path,
+        remote="https://spine.example.test",
+        prompt=lambda _: "remote-bearer",
+        stdout=io.StringIO(),
+    )
+    events: list[object] = []
+
+    class Process:
+        def poll(self) -> None:
+            return None
+
+    monkeypatch.setattr(
+        onboarding,
+        "_require_command",
+        lambda command: pytest.fail(f"remote startup required {command}"),
+    )
+    monkeypatch.setattr(
+        onboarding,
+        "_run",
+        lambda command: pytest.fail(f"remote startup ran {command}"),
+    )
+    monkeypatch.setattr(
+        onboarding,
+        "_start_service",
+        lambda factory, *, port, environment: (
+            events.append(("start", factory, port, environment["SPINE_URL"])),
+            Process(),
+        )[1],
+    )
+    monkeypatch.setattr(
+        onboarding,
+        "_wait_for_url",
+        lambda url, **kwargs: events.append(("wait", url, kwargs.get("token"))),
+    )
+    monkeypatch.setattr(
+        onboarding, "_supervise", lambda processes: events.append(("supervise", len(processes)))
+    )
+    monkeypatch.setattr(
+        onboarding, "_stop_processes", lambda processes: events.append(("stop", len(processes)))
+    )
+    monkeypatch.setattr(
+        onboarding, "_open_browser", lambda url, *, stdout: events.append(("browser", url))
+    )
+
+    assert onboarding.up_nocturne(home=tmp_path, stdout=io.StringIO()) == 0
+    assert events == [
+        ("wait", "https://spine.example.test/health", "remote-bearer"),
+        ("start", "harness.packaged:create_app", 8765, "https://spine.example.test"),
+        ("wait", onboarding.LOCAL_URL, None),
+        ("browser", onboarding.LOCAL_URL),
+        ("supervise", 1),
+        ("stop", 1),
+    ]
+
+
+def test_remote_doctor_checks_spine_journal_and_disk_without_local_database(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """M2S requires remote doctor output to state exactly which local checks are skipped."""
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "environment-secret")
+    onboarding.init_nocturne(
+        home=tmp_path,
+        remote="https://spine.example.test",
+        prompt=lambda _: "remote-bearer",
+        stdout=io.StringIO(),
+    )
+    checks: list[tuple[str, str | None]] = []
+    monkeypatch.setattr(
+        onboarding,
+        "_wait_for_url",
+        lambda url, **kwargs: checks.append((url, kwargs.get("token"))),
+    )
+    output = io.StringIO()
+
+    assert onboarding.doctor_nocturne(home=tmp_path, stdout=output) == 0
+    assert checks == [("https://spine.example.test/health", "remote-bearer")]
+    rendered = output.getvalue()
+    assert "Remote Palace: healthy" in rendered
+    assert "Conversation journal:" in rendered
+    assert "Disk:" in rendered
+    assert "Local database and backup checks are skipped for a remote Palace." in rendered
 
 
 def test_open_requires_reachability_before_launching_browser(monkeypatch) -> None:

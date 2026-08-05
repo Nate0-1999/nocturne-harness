@@ -746,7 +746,7 @@ function HeaderModule() {
       <div className="brand" aria-label="Nocturne">
         <span className="brand__mark" aria-hidden="true">N</span>
         <span className="brand__word">Nocturne</span>
-        <span className="brand__mode">Rack · local direct</span>
+        <span className="brand__mode">Linked</span>
       </div>
 
       <div className="mobile-navigation">
