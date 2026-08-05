@@ -11,6 +11,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_public_distribution_and_lockstep_dependency_metadata() -> None:
+    """ADR-019 is defended by verifying that public distribution and lockstep dependency
+    metadata; this prevents drift in the public package and bundled-owner-app contract.
+    """
     metadata = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     project = metadata["project"]
 
@@ -31,6 +34,9 @@ def test_public_distribution_and_lockstep_dependency_metadata() -> None:
 
 
 def test_committed_web_build_has_every_referenced_asset() -> None:
+    """ADR-019 is defended by verifying that committed web build has every referenced asset;
+    this prevents drift in the public package and bundled-owner-app contract.
+    """
     web_dist = ROOT / "web" / "dist"
     index = (web_dist / "index.html").read_text(encoding="utf-8")
     references = re.findall(r'(?:src|href)="/([^"?#]+)', index)
@@ -41,5 +47,8 @@ def test_committed_web_build_has_every_referenced_asset() -> None:
 
 
 def test_packaged_factory_uses_only_the_private_wheel_asset_path() -> None:
+    """ADR-019 is defended by verifying that packaged factory uses only the private wheel asset
+    path; this prevents drift in the public package and bundled-owner-app contract.
+    """
     assert BUNDLED_WEB_DIST == Path(__file__).resolve().parents[1] / "src/harness/_web"
     assert "web/dist" not in BUNDLED_WEB_DIST.as_posix()

@@ -128,6 +128,9 @@ def envelope_for(message_type: str, payload: object) -> Envelope:
 
 
 def test_valid_c7_envelope_has_named_type_and_typed_payload() -> None:
+    """SPEC C.7 is defended by verifying that valid c7 envelope has named type and typed
+    payload; this prevents drift in the typed websocket envelope contract.
+    """
     envelope = Envelope.model_validate(valid_envelope())
 
     assert envelope.v == 1
@@ -138,6 +141,9 @@ def test_valid_c7_envelope_has_named_type_and_typed_payload() -> None:
 
 
 def test_message_types_cover_m1_and_reserved_names() -> None:
+    """SPEC C.7 is defended by verifying that message types cover m1 and reserved names; this
+    prevents drift in the typed websocket envelope contract.
+    """
     assert {message_type.value for message_type in MessageType} == {
         "thread.create",
         "thread.snapshot",
@@ -174,6 +180,9 @@ def test_message_types_cover_m1_and_reserved_names() -> None:
     ],
 )
 def test_rejects_invalid_outer_values(field: str, value: object) -> None:
+    """SPEC C.7 is defended by verifying that rejects invalid outer values; this prevents drift
+    in the typed websocket envelope contract.
+    """
     raw = valid_envelope()
     raw[field] = value
 
@@ -182,6 +191,9 @@ def test_rejects_invalid_outer_values(field: str, value: object) -> None:
 
 
 def test_rejects_extra_outer_fields() -> None:
+    """SPEC C.7 is defended by verifying that rejects extra outer fields; this prevents drift
+    in the typed websocket envelope contract.
+    """
     raw = valid_envelope()
     raw["localhost"] = True
 
@@ -191,6 +203,9 @@ def test_rejects_extra_outer_fields() -> None:
 
 @pytest.mark.parametrize("field", ["v", "id", "ts", "machine_id", "type", "payload"])
 def test_rejects_missing_required_outer_fields(field: str) -> None:
+    """SPEC C.7 is defended by verifying that rejects missing required outer fields; this
+    prevents drift in the typed websocket envelope contract.
+    """
     raw = valid_envelope()
     del raw[field]
 
@@ -199,6 +214,9 @@ def test_rejects_missing_required_outer_fields(field: str) -> None:
 
 
 def test_optional_agent_and_thread_ids_may_be_absent_for_untyped_extension() -> None:
+    """SPEC C.7 is defended by verifying that optional agent and thread ids may be absent for
+    untyped extension; this prevents drift in the typed websocket envelope contract.
+    """
     raw = valid_envelope()
     del raw["agent_id"]
     del raw["thread_id"]
@@ -244,6 +262,9 @@ def test_known_minimum_payloads_are_typed(
     payload: dict[str, object],
     expected_class: type[object],
 ) -> None:
+    """SPEC C.7 is defended by verifying that known minimum payloads are typed; this prevents
+    drift in the typed websocket envelope contract.
+    """
     envelope = envelope_for(message_type, payload)
 
     assert isinstance(envelope.payload, expected_class)
@@ -314,6 +335,9 @@ def test_known_minimum_payloads_are_typed(
 def test_memory_panel_payload_is_a_closed_discriminated_union(
     payload: dict[str, object], expected_class: type[object]
 ) -> None:
+    """SPEC C.7 is defended by verifying that memory panel payload is a closed discriminated
+    union; this prevents drift in the typed websocket envelope contract.
+    """
     envelope = envelope_for("memory.panel.update", payload)
 
     assert isinstance(envelope.payload, expected_class)
@@ -360,11 +384,17 @@ def test_memory_panel_payload_is_a_closed_discriminated_union(
 def test_memory_panel_rejects_invalid_or_browser_authority_fields(
     payload: dict[str, object],
 ) -> None:
+    """SPEC C.7 is defended by verifying that memory panel rejects invalid or browser authority
+    fields; this prevents drift in the typed websocket envelope contract.
+    """
     with pytest.raises(ValidationError):
         envelope_for("memory.panel.update", payload)
 
 
 def test_memory_panel_requires_outer_thread_in_both_directions() -> None:
+    """SPEC C.7 is defended by verifying that memory panel requires outer thread in both
+    directions; this prevents drift in the typed websocket envelope contract.
+    """
     for payload in (
         {"action": "refresh"},
         {
@@ -410,6 +440,9 @@ def test_memory_panel_requires_outer_thread_in_both_directions() -> None:
 def test_run_delta_is_discriminated(
     payload: dict[str, object], expected_class: type[object]
 ) -> None:
+    """SPEC C.7 is defended by verifying that run delta is discriminated; this prevents drift
+    in the typed websocket envelope contract.
+    """
     envelope = envelope_for("run.delta", payload)
 
     assert isinstance(envelope.payload, expected_class)
@@ -425,12 +458,18 @@ def test_run_delta_is_discriminated(
     ],
 )
 def test_run_delta_rejects_wrong_variant_shape(payload: object) -> None:
+    """SPEC C.7 is defended by verifying that run delta rejects wrong variant shape; this
+    prevents drift in the typed websocket envelope contract.
+    """
     with pytest.raises(ValidationError):
         envelope_for("run.delta", payload)
 
 
 @pytest.mark.parametrize("value", [-1, True, 1.5, "1"])
 def test_run_usage_requires_strict_nonnegative_integers(value: object) -> None:
+    """SPEC C.7 is defended by verifying that run usage requires strict nonnegative integers;
+    this prevents drift in the typed websocket envelope contract.
+    """
     with pytest.raises(ValidationError):
         envelope_for(
             "run.usage",
@@ -453,6 +492,9 @@ def test_run_usage_requires_strict_nonnegative_integers(value: object) -> None:
     ],
 )
 def test_run_done_enforces_stop_reason_partial_invariant(stop_reason: str, partial: bool) -> None:
+    """SPEC C.7 is defended by verifying that run done enforces stop reason partial invariant;
+    this prevents drift in the typed websocket envelope contract.
+    """
     envelope = envelope_for(
         "run.done",
         {"run_id": RUN_ID, "stop_reason": stop_reason, "partial": partial},
@@ -469,6 +511,9 @@ def test_run_done_enforces_stop_reason_partial_invariant(stop_reason: str, parti
 
 
 def test_prompt_submit_requires_nonblank_prompt_and_outer_thread() -> None:
+    """SPEC C.7 is defended by verifying that prompt submit requires nonblank prompt and outer
+    thread; this prevents drift in the typed websocket envelope contract.
+    """
     for prompt in ("", "  \n"):
         with pytest.raises(ValidationError):
             envelope_for("prompt.submit", {"prompt": prompt})
@@ -480,6 +525,9 @@ def test_prompt_submit_requires_nonblank_prompt_and_outer_thread() -> None:
 
 
 def test_gate_commit_requires_outer_thread() -> None:
+    """SPEC C.7 is defended by verifying that gate commit requires outer thread; this prevents
+    drift in the typed websocket envelope contract.
+    """
     raw = {
         **valid_envelope(),
         "thread_id": None,
@@ -503,6 +551,9 @@ def test_gate_commit_requires_outer_thread() -> None:
 def test_memory_gate_payloads_enforce_exact_c4_member_types(
     payload: dict[str, object],
 ) -> None:
+    """SPEC C.7 is defended by verifying that memory gate payloads enforce exact c4 member
+    types; this prevents drift in the typed websocket envelope contract.
+    """
     message_type = "gate.commit" if "removed" in payload else "gate.open"
     with pytest.raises(ValidationError):
         envelope_for(message_type, payload)
@@ -521,6 +572,9 @@ def test_memory_gate_payloads_enforce_exact_c4_member_types(
 def test_gate_open_rejects_cards_the_browser_cannot_render_truthfully(
     card_update: dict[str, object],
 ) -> None:
+    """SPEC C.7 is defended by verifying that gate open rejects cards the browser cannot render
+    truthfully; this prevents drift in the typed websocket envelope contract.
+    """
     payload = gate_open_payload(injected=[{**scored_card(), **card_update}])
 
     with pytest.raises(ValidationError):
@@ -528,6 +582,9 @@ def test_gate_open_rejects_cards_the_browser_cannot_render_truthfully(
 
 
 def test_gate_open_rejects_duplicate_membership_across_card_arrays() -> None:
+    """SPEC C.7 is defended by verifying that gate open rejects duplicate membership across
+    card arrays; this prevents drift in the typed websocket envelope contract.
+    """
     payload = gate_open_payload(near_misses=[scored_card()])
 
     with pytest.raises(ValidationError):
@@ -535,6 +592,9 @@ def test_gate_open_rejects_duplicate_membership_across_card_arrays() -> None:
 
 
 def test_wrong_resolution_gate_and_decision_are_typed() -> None:
+    """SPEC C.7 is defended by verifying that wrong resolution gate and decision are typed;
+    this prevents drift in the typed websocket envelope contract.
+    """
     opened = envelope_for(
         "gate.open",
         gate_open_payload(
@@ -595,12 +655,18 @@ def test_wrong_resolution_gate_and_decision_are_typed() -> None:
 def test_wrong_resolution_rejects_inconsistent_stage_shapes(
     payload: dict[str, object],
 ) -> None:
+    """SPEC C.7 is defended by verifying that wrong resolution rejects inconsistent stage
+    shapes; this prevents drift in the typed websocket envelope contract.
+    """
     message_type = "gate.open" if "kind" in payload else "gate.commit"
     with pytest.raises(ValidationError):
         envelope_for(message_type, payload)
 
 
 def test_thread_snapshot_request_requires_outer_thread() -> None:
+    """SPEC C.7 is defended by verifying that thread snapshot request requires outer thread;
+    this prevents drift in the typed websocket envelope contract.
+    """
     request = envelope_for("thread.snapshot", {"request": True})
     assert isinstance(request.payload, ThreadSnapshotRequestPayload)
 
@@ -615,6 +681,9 @@ def test_thread_snapshot_request_requires_outer_thread() -> None:
 
 
 def test_thread_snapshot_request_extensions_cannot_reclassify_its_direction() -> None:
+    """SPEC C.7 is defended by verifying that thread snapshot request extensions cannot
+    reclassify its direction; this prevents drift in the typed websocket envelope contract.
+    """
     request = envelope_for(
         "thread.snapshot",
         {
@@ -629,6 +698,9 @@ def test_thread_snapshot_request_extensions_cannot_reclassify_its_direction() ->
 
 
 def test_thread_snapshot_response_types_nested_authoritative_state() -> None:
+    """SPEC C.7 is defended by verifying that thread snapshot response types nested
+    authoritative state; this prevents drift in the typed websocket envelope contract.
+    """
     payload = {
         "messages": [
             {"role": "user", "content": "hello"},
@@ -689,6 +761,9 @@ def test_resolved_model_extensions_reject_blank_values(
     message_type: str,
     payload: dict[str, object],
 ) -> None:
+    """SPEC C.7 is defended by verifying that resolved model extensions reject blank values;
+    this prevents drift in the typed websocket envelope contract.
+    """
     envelope = envelope_for(message_type, payload)
     assert envelope.model_dump(mode="json")["payload"] == payload
 
@@ -701,6 +776,9 @@ def test_resolved_model_extensions_reject_blank_values(
     ["run.steer", "plan.update", "checkpoint.restore", "relay.connect"],
 )
 def test_reserved_and_unknown_types_preserve_arbitrary_json(message_type: str) -> None:
+    """SPEC C.7 is defended by verifying that reserved and unknown types preserve arbitrary
+    json; this prevents drift in the typed websocket envelope contract.
+    """
     payload = {"future": [1, "two", True, None], "nested": {"ok": False}}
     envelope = envelope_for(message_type, payload)
 
@@ -715,6 +793,9 @@ def test_reserved_and_unknown_types_preserve_arbitrary_json(message_type: str) -
 
 
 def test_unknown_type_rejects_non_json_python_payload() -> None:
+    """SPEC C.7 is defended by verifying that unknown type rejects non json python payload;
+    this prevents drift in the typed websocket envelope contract.
+    """
     with pytest.raises(ValidationError):
         envelope_for("relay.connect", {"at": datetime.now(UTC)})
 
@@ -723,6 +804,9 @@ def test_unknown_type_rejects_non_json_python_payload() -> None:
 def test_unknown_and_extensible_known_payloads_reject_nonfinite_numbers(
     value: float,
 ) -> None:
+    """SPEC C.7 is defended by verifying that unknown and extensible known payloads reject
+    nonfinite numbers; this prevents drift in the typed websocket envelope contract.
+    """
     with pytest.raises(ValidationError):
         envelope_for("relay.connect", {"value": value})
     with pytest.raises(ValidationError):
@@ -738,6 +822,9 @@ def test_unknown_and_extensible_known_payloads_reject_nonfinite_numbers(
 
 
 def test_minimum_payload_extensions_are_json_typed_and_preserved() -> None:
+    """SPEC C.7 is defended by verifying that minimum payload extensions are json typed and
+    preserved; this prevents drift in the typed websocket envelope contract.
+    """
     payload = gate_open_payload(
         candidate_ids=["a", "b"],
         details={"count": 2},
@@ -754,6 +841,9 @@ def test_minimum_payload_extensions_are_json_typed_and_preserved() -> None:
 
 
 def test_factory_injects_fresh_ids_timestamps_and_daemon_metadata() -> None:
+    """SPEC C.7 is defended by verifying that factory injects fresh ids timestamps and daemon
+    metadata; this prevents drift in the typed websocket envelope contract.
+    """
     ids: Iterator[str] = iter((ENVELOPE_ID, SECOND_ID))
     times: Iterator[datetime] = iter(
         (
@@ -784,6 +874,9 @@ def test_factory_injects_fresh_ids_timestamps_and_daemon_metadata() -> None:
 
 
 def test_factory_and_generator_emit_valid_ulids() -> None:
+    """SPEC C.7 is defended by verifying that factory and generator emit valid ulids; this
+    prevents drift in the typed websocket envelope contract.
+    """
     generated = generate_ulid(datetime(2026, 7, 20, tzinfo=UTC))
     factory = EnvelopeFactory(machine_id="daemon-1", id_factory=lambda: generated)
 
@@ -799,6 +892,9 @@ def test_factory_and_generator_emit_valid_ulids() -> None:
 
 
 def test_factory_rejects_invalid_injected_id() -> None:
+    """SPEC C.7 is defended by verifying that factory rejects invalid injected id; this
+    prevents drift in the typed websocket envelope contract.
+    """
     factory = EnvelopeFactory(machine_id="daemon-1", id_factory=lambda: "bad")
 
     with pytest.raises(ValueError, match="ULID"):

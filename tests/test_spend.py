@@ -22,6 +22,9 @@ def _lineage() -> SpendLineage:
 
 
 def test_openrouter_receipts_split_price_classes_and_preserve_exact_native_cost() -> None:
+    """A-027 is defended by verifying that openrouter receipts split price classes and preserve
+    exact native cost; this prevents drift in the honest broker receipt contract.
+    """
     response = ModelResponse(
         parts=[TextPart("answer")],
         usage=RequestUsage(
@@ -64,6 +67,9 @@ def test_openrouter_receipts_split_price_classes_and_preserve_exact_native_cost(
 
 
 def test_direct_anthropic_fresh_semantics_missing_cost_and_ref_fallback_stay_honest() -> None:
+    """A-027 is defended by verifying that direct anthropic fresh semantics missing cost and
+    ref fallback stay honest; this prevents drift in the honest broker receipt contract.
+    """
     response = ModelResponse(
         parts=[TextPart("answer")],
         usage=RequestUsage(input_tokens=30, cache_read_tokens=20, output_tokens=5),

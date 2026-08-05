@@ -256,6 +256,10 @@ async def handle(
 
 @pytest.mark.asyncio
 async def test_refresh_pages_global_active_list_before_principal_filtering() -> None:
+    """A-030 is defended by verifying that refresh pages global active list before principal
+    filtering; this prevents drift in the owner memory control and context-rebinding
+    contract.
+    """
     cards = [memory_card(MEMORY_A, label="A", body="A body", rank=1)]
     contexts = ThreadMemoryContextRegistry()
     install_context(contexts, cards)
@@ -291,6 +295,10 @@ async def test_refresh_pages_global_active_list_before_principal_filtering() -> 
 
 @pytest.mark.asyncio
 async def test_remove_uses_server_injection_then_rebinds_exact_block_and_exclusions() -> None:
+    """A-030 is defended by verifying that remove uses server injection then rebinds exact
+    block and exclusions; this prevents drift in the owner memory control and
+    context-rebinding contract.
+    """
     first = memory_card(
         MEMORY_A,
         label='A & "quoted"',
@@ -351,6 +359,10 @@ async def test_remove_uses_server_injection_then_rebinds_exact_block_and_exclusi
 
 @pytest.mark.asyncio
 async def test_failed_feedback_returns_safe_error_without_mutating_thread_state() -> None:
+    """A-030 is defended by verifying that failed feedback returns safe error without mutating
+    thread state; this prevents drift in the owner memory control and context-rebinding
+    contract.
+    """
     card = memory_card(MEMORY_A, label="A", body="Secret response text", rank=1)
     contexts = ThreadMemoryContextRegistry()
     install_context(contexts, [card])
@@ -374,6 +386,9 @@ async def test_failed_feedback_returns_safe_error_without_mutating_thread_state(
 
 @pytest.mark.asyncio
 async def test_panel_error_never_exposes_problem_response_body() -> None:
+    """A-030 is defended by verifying that panel error never exposes problem response body;
+    this prevents drift in the owner memory control and context-rebinding contract.
+    """
     card = memory_card(MEMORY_A, label="A", body="Body", rank=1)
     contexts = ThreadMemoryContextRegistry()
     install_context(contexts, [card])
@@ -402,6 +417,10 @@ async def test_panel_error_never_exposes_problem_response_body() -> None:
 
 @pytest.mark.asyncio
 async def test_remove_waits_for_an_active_model_run_before_feedback_and_mutation() -> None:
+    """A-030 is defended by verifying that remove waits for an active model run before feedback
+    and mutation; this prevents drift in the owner memory control and context-rebinding
+    contract.
+    """
     card = memory_card(MEMORY_A, label="A", body="Body", rank=1)
     contexts = ThreadMemoryContextRegistry()
     install_context(contexts, [card])
@@ -431,6 +450,9 @@ async def test_remove_waits_for_an_active_model_run_before_feedback_and_mutation
 
 @pytest.mark.asyncio
 async def test_remove_rejects_nonmember_without_contacting_spine() -> None:
+    """A-030 is defended by verifying that remove rejects nonmember without contacting spine;
+    this prevents drift in the owner memory control and context-rebinding contract.
+    """
     spine = FakeSpine([memory_unit(MEMORY_A)])
 
     response = await handle(
@@ -446,6 +468,10 @@ async def test_remove_rejects_nonmember_without_contacting_spine() -> None:
 
 @pytest.mark.asyncio
 async def test_edit_uses_browser_revision_and_daemon_owned_provenance() -> None:
+    """A-030 is defended by verifying that edit uses browser revision and daemon owned
+    provenance; this prevents drift in the owner memory control and context-rebinding
+    contract.
+    """
     original = memory_unit(MEMORY_A, body="Old body", revision=4)
     spine = FakeSpine([original])
     contexts = ThreadMemoryContextRegistry()
@@ -486,6 +512,10 @@ async def test_edit_uses_browser_revision_and_daemon_owned_provenance() -> None:
 
 @pytest.mark.asyncio
 async def test_pin_uses_browser_revision_and_daemon_owned_provenance() -> None:
+    """A-030 is defended by verifying that pin uses browser revision and daemon owned
+    provenance; this prevents drift in the owner memory control and context-rebinding
+    contract.
+    """
     original = memory_unit(MEMORY_A, revision=7, pin=False)
     spine = FakeSpine([original])
     contexts = ThreadMemoryContextRegistry()
@@ -527,6 +557,9 @@ async def test_pin_uses_browser_revision_and_daemon_owned_provenance() -> None:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("operation", ["edit", "pin"])
 async def test_patch_cas_conflict_surfaces_current_unit_without_retry(operation: str) -> None:
+    """A-030 is defended by verifying that patch cas conflict surfaces current unit without
+    retry; this prevents drift in the owner memory control and context-rebinding contract.
+    """
     original = memory_unit(MEMORY_A, revision=2)
     current = memory_unit(
         MEMORY_A,
@@ -579,6 +612,10 @@ async def test_patch_cas_conflict_surfaces_current_unit_without_retry(operation:
 async def test_patch_rejects_conflict_unit_outside_requested_principal_boundary(
     current: MemoryUnit,
 ) -> None:
+    """A-030 is defended by verifying that patch rejects conflict unit outside requested
+    principal boundary; this prevents drift in the owner memory control and
+    context-rebinding contract.
+    """
     original = memory_unit(MEMORY_A, revision=2)
     conflict = PatchMemoryConflictError(
         httpx.Response(
@@ -608,6 +645,9 @@ async def test_patch_rejects_conflict_unit_outside_requested_principal_boundary(
 
 @pytest.mark.asyncio
 async def test_edit_cannot_target_another_principals_memory() -> None:
+    """A-030 is defended by verifying that edit cannot target another principals memory; this
+    prevents drift in the owner memory control and context-rebinding contract.
+    """
     spine = FakeSpine([memory_unit(MEMORY_A, principal_id="other-principal")])
 
     response = await handle(
@@ -626,6 +666,9 @@ async def test_edit_cannot_target_another_principals_memory() -> None:
 
 
 def test_context_install_fails_closed_on_unbindable_final_block() -> None:
+    """A-030 is defended by verifying that context install fails closed on unbindable final
+    block; this prevents drift in the owner memory control and context-rebinding contract.
+    """
     card = memory_card(MEMORY_A, label="A", body="Body", rank=1)
     contexts = ThreadMemoryContextRegistry()
 
@@ -644,6 +687,9 @@ def test_context_install_fails_closed_on_unbindable_final_block() -> None:
 
 
 def test_context_install_binds_commit_membership_in_rank_order() -> None:
+    """A-030 is defended by verifying that context install binds commit membership in rank
+    order; this prevents drift in the owner memory control and context-rebinding contract.
+    """
     removed = memory_card(MEMORY_A, label="Removed", body="Removed body", rank=1)
     retained = memory_card(MEMORY_B, label="Retained", body="Retained body", rank=3)
     added = memory_card(MEMORY_C, label="Added", body="Added body", rank=2)

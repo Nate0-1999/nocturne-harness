@@ -42,6 +42,9 @@ class FakeSpine:
 
 @pytest.mark.asyncio
 async def test_markdown_seed_is_split_before_one_standard_queue_write() -> None:
+    """A-033 is defended by verifying that markdown seed is split before one standard queue
+    write; this prevents drift in the seed splitting and unified-queue contract.
+    """
     spine = FakeSpine()
     service = SeedIngestionService(
         agent=FakeAgent(),  # type: ignore[arg-type]
@@ -69,6 +72,9 @@ async def test_markdown_seed_is_split_before_one_standard_queue_write() -> None:
 
 @pytest.mark.asyncio
 async def test_seed_rejects_non_markdown_before_model_work() -> None:
+    """A-033 is defended by verifying that seed rejects non markdown before model work; this
+    prevents drift in the seed splitting and unified-queue contract.
+    """
     service = SeedIngestionService(
         agent=FakeAgent(),  # type: ignore[arg-type]
         spine=FakeSpine(),  # type: ignore[arg-type]

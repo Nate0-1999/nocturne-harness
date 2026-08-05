@@ -52,6 +52,9 @@ def row(
     ],
 )
 def test_policy_grammar_accepts_exact_five_forms(raw: str, expected: ModelPolicy) -> None:
+    """A-021 is defended by verifying that policy grammar accepts exact five forms; this
+    prevents drift in the deterministic model policy contract.
+    """
     assert parse_model_policy(raw) == expected
 
 
@@ -71,11 +74,17 @@ def test_policy_grammar_accepts_exact_five_forms(raw: str, expected: ModelPolicy
     ],
 )
 def test_policy_grammar_rejects_every_other_form(raw: str) -> None:
+    """A-021 is defended by verifying that policy grammar rejects every other form; this
+    prevents drift in the deterministic model policy contract.
+    """
     with pytest.raises(ModelPolicyConfigurationError):
         parse_model_policy(raw)
 
 
 def test_all_policy_algorithms_follow_one_golden_table() -> None:
+    """A-021 is defended by verifying that all policy algorithms follow one golden table; this
+    prevents drift in the deterministic model policy contract.
+    """
     rows = (
         row("base", "10", "1"),
         row("dup-z", "20", "2", ".1"),
@@ -103,6 +112,9 @@ def test_all_policy_algorithms_follow_one_golden_table() -> None:
 
 
 def test_elbow_matches_the_a021_worked_example_and_small_frontier_max_rule() -> None:
+    """A-021 is defended by verifying that elbow matches the a021 worked example and small
+    frontier max rule; this prevents drift in the deterministic model policy contract.
+    """
     worked = (
         row("A", "20", ".10"),
         row("B", "35", ".30"),
@@ -116,6 +128,9 @@ def test_elbow_matches_the_a021_worked_example_and_small_frontier_max_rule() -> 
 
 
 def test_elbow_ties_fall_to_lower_prompt_price_and_zero_price_is_degenerate() -> None:
+    """A-021 is defended by verifying that elbow ties fall to lower prompt price and zero price
+    is degenerate; this prevents drift in the deterministic model policy contract.
+    """
     tied = (
         row("start", "10", "1"),
         row("early", "60", "10"),
@@ -133,6 +148,9 @@ def test_elbow_ties_fall_to_lower_prompt_price_and_zero_price_is_degenerate() ->
 
 
 def test_lower_hull_retains_collinear_vertices_and_slope_equality_is_inclusive() -> None:
+    """A-021 is defended by verifying that lower hull retains collinear vertices and slope
+    equality is inclusive; this prevents drift in the deterministic model policy contract.
+    """
     rows = (
         row("one", "10", "1"),
         row("two", "20", "2"),
@@ -149,6 +167,9 @@ def test_lower_hull_retains_collinear_vertices_and_slope_equality_is_inclusive()
 
 
 def test_slope_matches_a021_worked_example_and_one_point_is_degenerate() -> None:
+    """A-021 is defended by verifying that slope matches a021 worked example and one point is
+    degenerate; this prevents drift in the deterministic model policy contract.
+    """
     worked = (
         row("a", "54", ".90"),
         row("b", "55", "1.00"),
@@ -163,6 +184,9 @@ def test_slope_matches_a021_worked_example_and_one_point_is_degenerate() -> None
 
 
 def test_extreme_external_decimal_arithmetic_is_a_fail_open_condition() -> None:
+    """A-021 is defended by verifying that extreme external decimal arithmetic is a fail open
+    condition; this prevents drift in the deterministic model policy contract.
+    """
     extreme = (
         row("cheap", "10", "1"),
         row("middle", "20", "2"),
@@ -219,6 +243,9 @@ def models_payload() -> dict[str, object]:
 
 
 def test_model_routes_prefer_standard_use_sole_variant_and_drop_real_ambiguity() -> None:
+    """A-021 is defended by verifying that model routes prefer standard use sole variant and
+    drop real ambiguity; this prevents drift in the deterministic model policy contract.
+    """
     routes = _parse_model_routes(
         {
             "data": [
@@ -289,6 +316,9 @@ def test_model_routes_prefer_standard_use_sole_variant_and_drop_real_ambiguity()
 
 @pytest.mark.asyncio
 async def test_catalog_normalizes_per_token_prices_and_caches_for_strictly_under_24h() -> None:
+    """A-021 is defended by verifying that catalog normalizes per token prices and caches for
+    strictly under 24h; this prevents drift in the deterministic model policy contract.
+    """
     requests: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -326,6 +356,9 @@ async def test_catalog_normalizes_per_token_prices_and_caches_for_strictly_under
 
 @pytest.mark.asyncio
 async def test_catalog_refresh_is_single_flight_and_expired_failure_never_reuses_stale() -> None:
+    """A-021 is defended by verifying that catalog refresh is single flight and expired failure
+    never reuses stale; this prevents drift in the deterministic model policy contract.
+    """
     request_count = 0
     fail = False
 
@@ -395,6 +428,9 @@ def catalog(
 
 @pytest.mark.asyncio
 async def test_pinned_resolution_bypasses_catalog_and_is_stable_per_thread() -> None:
+    """A-021 is defended by verifying that pinned resolution bypasses catalog and is stable per
+    thread; this prevents drift in the deterministic model policy contract.
+    """
     table = FakeCatalog(catalog((row("vendor/model", "52", "1"),), {"vendor/model": 10}))
     resolver = ModelPolicyResolver(
         policy="pinned:anthropic:claude-sonnet-4-6",
@@ -415,6 +451,9 @@ async def test_pinned_resolution_bypasses_catalog_and_is_stable_per_thread() -> 
 
 @pytest.mark.asyncio
 async def test_nonpinned_resolution_joins_context_and_remains_stable_per_thread() -> None:
+    """A-021 is defended by verifying that nonpinned resolution joins context and remains
+    stable per thread; this prevents drift in the deterministic model policy contract.
+    """
     table = FakeCatalog(
         ModelCatalog(
             rows=(row("vendor/model-v1", "52", "1", "2"),),
@@ -447,6 +486,9 @@ async def test_nonpinned_resolution_joins_context_and_remains_stable_per_thread(
 
 @pytest.mark.asyncio
 async def test_named_resolution_validates_exact_openrouter_route_without_mutating_thread() -> None:
+    """A-021 is defended by verifying that named resolution validates exact openrouter route
+    without mutating thread; this prevents drift in the deterministic model policy contract.
+    """
     initial = ThreadModelResolution(
         model="openrouter:vendor/initial",
         context_tokens=64_000,
@@ -488,6 +530,9 @@ async def test_named_resolution_validates_exact_openrouter_route_without_mutatin
     ["vendor/next", "anthropic:claude-sonnet-4-6", "openrouter:", " openrouter:x/y"],
 )
 async def test_named_resolution_rejects_non_openrouter_model_strings(target: str) -> None:
+    """A-021 is defended by verifying that named resolution rejects non openrouter model
+    strings; this prevents drift in the deterministic model policy contract.
+    """
     resolver = ModelPolicyResolver(
         policy="pinned:openrouter:vendor/initial",
         static_model="openrouter:vendor/initial",
@@ -501,6 +546,9 @@ async def test_named_resolution_rejects_non_openrouter_model_strings(target: str
 
 @pytest.mark.asyncio
 async def test_named_resolution_rejects_unknown_broker_model() -> None:
+    """A-021 is defended by verifying that named resolution rejects unknown broker model; this
+    prevents drift in the deterministic model policy contract.
+    """
     resolver = ModelPolicyResolver(
         policy="pinned:openrouter:vendor/initial",
         static_model="openrouter:vendor/initial",
@@ -514,6 +562,9 @@ async def test_named_resolution_rejects_unknown_broker_model() -> None:
 
 @pytest.mark.asyncio
 async def test_named_resolution_refetches_models_without_benchmark_dependency() -> None:
+    """A-021 is defended by verifying that named resolution refetches models without benchmark
+    dependency; this prevents drift in the deterministic model policy contract.
+    """
     requests: list[str] = []
     context_tokens = [64_000]
     benchmark_available = [True]
@@ -561,6 +612,10 @@ async def test_named_resolution_refetches_models_without_benchmark_dependency() 
 
 @pytest.mark.asyncio
 async def test_named_resolution_requires_exact_broker_id_not_canonical_alias() -> None:
+    """A-021 is defended by verifying that named resolution requires exact broker id not
+    canonical alias; this prevents drift in the deterministic model policy contract.
+    """
+
     def handler(_request: httpx.Request) -> httpx.Response:
         return httpx.Response(
             200,
@@ -609,6 +664,9 @@ async def test_every_degenerate_nonpinned_resolution_fails_open_to_static_pair(
     contexts: dict[str, int],
     caplog: pytest.LogCaptureFixture,
 ) -> None:
+    """A-021 is defended by verifying that every degenerate nonpinned resolution fails open to
+    static pair; this prevents drift in the deterministic model policy contract.
+    """
     resolver = ModelPolicyResolver(
         policy=policy,
         static_model="openrouter:static/model",

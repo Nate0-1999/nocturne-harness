@@ -49,15 +49,16 @@ DRIFT_SNAPSHOT = VitalsSnapshot(
     ),
     reconciliation=DRIFT,
     lifecycle_rates=[
-        VitalsLifecycleRate(
-            metric="created", status="measured", per_hour=2, source="fixture"
-        ),
+        VitalsLifecycleRate(metric="created", status="measured", per_hour=2, source="fixture"),
         *[
-            VitalsLifecycleRate(
-                metric=metric, status="not_recorded", per_hour=None, source=None
-            )
+            VitalsLifecycleRate(metric=metric, status="not_recorded", per_hour=None, source=None)
             for metric in (
-                "reinforced", "superseded", "merged", "quarantined", "tombstoned", "add_backs"
+                "reinforced",
+                "superseded",
+                "merged",
+                "quarantined",
+                "tombstoned",
+                "add_backs",
             )
         ],
     ],

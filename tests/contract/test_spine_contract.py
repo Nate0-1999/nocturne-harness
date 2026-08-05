@@ -77,6 +77,9 @@ def _create_request(
 
 
 async def test_live_create_conflicts_and_dedup_bands(spine_client: SpineClient) -> None:
+    """SPEC C.4 is defended by verifying that live create conflicts and dedup bands; this
+    prevents drift in the live Harness-Spine contract.
+    """
     run_id = uuid4().hex
     project_key = f"h2-{run_id}"
 
@@ -156,6 +159,9 @@ async def test_live_create_conflicts_and_dedup_bands(spine_client: SpineClient) 
 
 
 async def test_live_patch_cas_tombstone_and_list(spine_client: SpineClient) -> None:
+    """SPEC C.4 is defended by verifying that live patch cas tombstone and list; this prevents
+    drift in the live Harness-Spine contract.
+    """
     run_id = uuid4().hex
     principal_id = f"cas-{run_id}"
     project_key = f"h2-{run_id}"
@@ -260,6 +266,9 @@ async def test_live_patch_cas_tombstone_and_list(spine_client: SpineClient) -> N
 
 
 async def test_live_spend_receipt_is_atomic_and_idempotent(spine_client: SpineClient) -> None:
+    """SPEC C.4 is defended by verifying that live spend receipt is atomic and idempotent; this
+    prevents drift in the live Harness-Spine contract.
+    """
     event = SpendEvent(
         event_uid="01K1M2A0000000000000000001",
         ts=datetime(2026, 8, 1, 12, tzinfo=UTC),

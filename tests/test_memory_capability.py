@@ -37,6 +37,9 @@ EXPECTED_MEMORY_INSTRUCTION = (
 
 
 def test_capability_contract_is_owned_typed_and_frozen() -> None:
+    """ADR-005 is defended by verifying that capability contract is owned typed and frozen;
+    this prevents drift in the owned memory capability seam.
+    """
     definition = DEFAULT_MEMORY_FEATURE.definition
 
     assert isinstance(definition, CapabilityDefinition)
@@ -81,10 +84,16 @@ def test_capability_contract_is_owned_typed_and_frozen() -> None:
 
 
 def test_c6_memory_instruction_is_verbatim() -> None:
+    """ADR-005 is defended by verifying that c6 memory instruction is verbatim; this prevents
+    drift in the owned memory capability seam.
+    """
     assert MEMORY_INSTRUCTION == EXPECTED_MEMORY_INSTRUCTION
 
 
 def test_owned_save_handler_keeps_project_scope_required_and_force_optional() -> None:
+    """ADR-005 is defended by verifying that owned save handler keeps project scope required
+    and force optional; this prevents drift in the owned memory capability seam.
+    """
     parameters = inspect.signature(save_memory).parameters
 
     assert parameters["project_scoped"].default is inspect.Parameter.empty
@@ -93,6 +102,9 @@ def test_owned_save_handler_keeps_project_scope_required_and_force_optional() ->
 
 @pytest.mark.asyncio
 async def test_vanilla_agent_discovers_three_memory_tools_and_instruction() -> None:
+    """ADR-005 is defended by verifying that vanilla agent discovers three memory tools and
+    instruction; this prevents drift in the owned memory capability seam.
+    """
     assert pydantic_ai.__version__ == "2.12.0"
     model = TestModel(call_tools=[], custom_output_text="ok")
     capability = MemoryCapability()
@@ -122,6 +134,9 @@ async def test_vanilla_agent_discovers_three_memory_tools_and_instruction() -> N
 
 @pytest.mark.asyncio
 async def test_adapted_tool_schemas_defaults_descriptions_and_capability_id() -> None:
+    """ADR-005 is defended by verifying that adapted tool schemas defaults descriptions and
+    capability id; this prevents drift in the owned memory capability seam.
+    """
     model = TestModel(call_tools=[], custom_output_text="ok")
     agent = Agent(model, deps_type=MemoryToolContext, capabilities=[MemoryCapability()])
     await agent.run("hello", deps=object())
@@ -171,6 +186,9 @@ async def test_adapted_tool_schemas_defaults_descriptions_and_capability_id() ->
 
 
 def test_pydantic_ai_capability_imports_are_fenced_to_adapter() -> None:
+    """ADR-005 is defended by verifying that pydantic ai capability imports are fenced to
+    adapter; this prevents drift in the owned memory capability seam.
+    """
     package_root = Path(__file__).parents[1] / "src" / "harness"
     offenders: list[str] = []
     capability_modules = (
@@ -216,6 +234,9 @@ def test_pydantic_ai_capability_imports_are_fenced_to_adapter() -> None:
 
 @pytest.mark.asyncio
 async def test_adapter_executes_the_owned_feature_handler() -> None:
+    """ADR-005 is defended by verifying that adapter executes the owned feature handler; this
+    prevents drift in the owned memory capability seam.
+    """
     calls: list[tuple[str, int, str]] = []
 
     async def owned_search(

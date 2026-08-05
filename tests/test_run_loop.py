@@ -390,6 +390,9 @@ def payload(message: Envelope) -> dict[str, object]:
 
 @pytest.mark.parametrize("resolved_model", ["", " \t", " model "])
 def test_run_loop_rejects_invalid_resolved_model(resolved_model: str) -> None:
+    """SPEC C.7 is defended by verifying that run loop rejects invalid resolved model; this
+    prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
 
     with pytest.raises(ValueError, match="resolved_model"):
@@ -402,6 +405,9 @@ def test_run_loop_rejects_invalid_resolved_model(resolved_model: str) -> None:
 
 @pytest.mark.asyncio
 async def test_static_resolved_model_is_authoritative_on_start_and_snapshot() -> None:
+    """SPEC C.7 is defended by verifying that static resolved model is authoritative on start
+    and snapshot; this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     model = "openrouter:minimax/minimax-m3"
     runner = ResolutionRecordingRunner()
@@ -436,6 +442,9 @@ async def test_static_resolved_model_is_authoritative_on_start_and_snapshot() ->
 
 @pytest.mark.asyncio
 async def test_policy_resolution_occurs_once_at_first_run_and_is_thread_authoritative() -> None:
+    """SPEC C.7 is defended by verifying that policy resolution occurs once at first run and is
+    thread authoritative; this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     thread_one = ThreadModelResolution(
         model="openrouter:vendor/one",
@@ -505,6 +514,9 @@ async def test_policy_resolution_occurs_once_at_first_run_and_is_thread_authorit
 
 @pytest.mark.asyncio
 async def test_model_command_commits_one_journaled_epoch_without_calling_runner() -> None:
+    """SPEC C.7 is defended by verifying that model command commits one journaled epoch without
+    calling runner; this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     initial = ThreadModelResolution(
         model="openrouter:vendor/initial",
@@ -626,6 +638,9 @@ async def test_model_command_failures_are_visible_and_preserve_epoch_and_prefix(
     failure: Exception | None,
     expected_text: str,
 ) -> None:
+    """SPEC C.7 is defended by verifying that model command failures are visible and preserve
+    epoch and prefix; this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     initial = ThreadModelResolution(
         model="openrouter:vendor/initial",
@@ -693,6 +708,9 @@ async def test_model_command_failures_are_visible_and_preserve_epoch_and_prefix(
 
 @pytest.mark.asyncio
 async def test_current_model_command_refreshes_context_and_starts_new_epoch() -> None:
+    """SPEC C.7 is defended by verifying that current model command refreshes context and
+    starts new epoch; this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     initial = ThreadModelResolution(
         model="openrouter:vendor/current",
@@ -750,6 +768,9 @@ async def test_current_model_command_refreshes_context_and_starts_new_epoch() ->
 
 @pytest.mark.asyncio
 async def test_queued_model_command_changes_only_the_following_turn() -> None:
+    """SPEC C.7 is defended by verifying that queued model command changes only the following
+    turn; this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     initial = ThreadModelResolution(
         model="openrouter:vendor/initial",
@@ -837,6 +858,9 @@ async def test_queued_model_command_changes_only_the_following_turn() -> None:
 
 @pytest.mark.asyncio
 async def test_model_lookup_starts_at_fifo_boundary_after_immediate_queue_ack() -> None:
+    """SPEC C.7 is defended by verifying that model lookup starts at fifo boundary after
+    immediate queue ack; this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     initial = ThreadModelResolution(
         model="openrouter:vendor/initial",
@@ -943,6 +967,9 @@ async def test_model_lookup_starts_at_fifo_boundary_after_immediate_queue_ack() 
 
 @pytest.mark.asyncio
 async def test_cancelling_model_lookup_preserves_current_model_and_epoch() -> None:
+    """SPEC C.7 is defended by verifying that cancelling model lookup preserves current model
+    and epoch; this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     initial = ThreadModelResolution(
         model="openrouter:vendor/initial",
@@ -1019,6 +1046,9 @@ async def test_cancelling_model_lookup_preserves_current_model_and_epoch() -> No
 
 @pytest.mark.asyncio
 async def test_cancel_awaits_cleanup_preserves_partial_and_coalesces_duplicates() -> None:
+    """SPEC C.7 is defended by verifying that cancel awaits cleanup preserves partial and
+    coalesces duplicates; this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     control = TurnControl(usage=UsageSnapshot(1, 12, 3))
     runner = ControlledRunner({"hello": control})
@@ -1086,6 +1116,9 @@ async def test_cancel_awaits_cleanup_preserves_partial_and_coalesces_duplicates(
 
 @pytest.mark.asyncio
 async def test_gate_blocks_reconnects_validates_once_and_resumes_only_after_dismiss() -> None:
+    """SPEC C.7 is defended by verifying that gate blocks reconnects validates once and resumes
+    only after dismiss; this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     runner = GateRunner()
     loop = RunLoop(runner, factory(ids))
@@ -1256,6 +1289,9 @@ async def test_gate_blocks_reconnects_validates_once_and_resumes_only_after_dism
 
 @pytest.mark.asyncio
 async def test_wrong_resolution_replaces_gate_and_validates_current_revision() -> None:
+    """SPEC C.7 is defended by verifying that wrong resolution replaces gate and validates
+    current revision; this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     runner = WrongResolutionGateRunner()
     loop = RunLoop(runner, factory(ids))
@@ -1323,6 +1359,9 @@ async def test_wrong_resolution_replaces_gate_and_validates_current_revision() -
 
 @pytest.mark.asyncio
 async def test_invalid_gate_payload_ends_the_run_instead_of_stranding_the_ui() -> None:
+    """SPEC C.7 is defended by verifying that invalid gate payload ends the run instead of
+    stranding the ui; this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     loop = RunLoop(InvalidGateRunner(), factory(ids))
     sink = Sink()
@@ -1348,6 +1387,9 @@ async def test_invalid_gate_payload_ends_the_run_instead_of_stranding_the_ui() -
 
 @pytest.mark.asyncio
 async def test_cancel_before_run_task_first_step_still_confirms_once() -> None:
+    """SPEC C.7 is defended by verifying that cancel before run task first step still confirms
+    once; this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     loop = RunLoop(NeverStartsRunner(), factory(ids))
     sink = Sink()
@@ -1376,6 +1418,9 @@ async def test_cancel_before_run_task_first_step_still_confirms_once() -> None:
 
 @pytest.mark.asyncio
 async def test_cancel_racing_completed_model_preserves_outcome_for_queued_turn() -> None:
+    """SPEC C.7 is defended by verifying that cancel racing completed model preserves outcome
+    for queued turn; this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     runner = ImmediateHistoryRunner()
     loop = FinishBarrierLoop(runner, factory(ids))
@@ -1419,6 +1464,9 @@ async def test_cancel_racing_completed_model_preserves_outcome_for_queued_turn()
 
 @pytest.mark.asyncio
 async def test_close_does_not_interrupt_cancellation_cleanup_a_second_time() -> None:
+    """SPEC C.7 is defended by verifying that close does not interrupt cancellation cleanup a
+    second time; this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     control = TurnControl()
     loop = RunLoop(ControlledRunner({"hello": control}), factory(ids))
@@ -1445,6 +1493,9 @@ async def test_close_does_not_interrupt_cancellation_cleanup_a_second_time() -> 
 
 @pytest.mark.asyncio
 async def test_slow_sink_is_bounded_without_one_task_per_delta() -> None:
+    """SPEC C.7 is defended by verifying that slow sink is bounded without one task per delta;
+    this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     control = TurnControl()
     runner = ControlledRunner({"hello": control})
@@ -1498,6 +1549,9 @@ async def test_slow_sink_is_bounded_without_one_task_per_delta() -> None:
 
 @pytest.mark.asyncio
 async def test_direct_error_worker_is_owned_until_loop_close() -> None:
+    """SPEC C.7 is defended by verifying that direct error worker is owned until loop close;
+    this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     loop = RunLoop(ImmediateHistoryRunner(), factory(ids))
     sink = Sink()
@@ -1521,6 +1575,9 @@ async def test_direct_error_worker_is_owned_until_loop_close() -> None:
 
 @pytest.mark.asyncio
 async def test_fifo_runs_once_and_survives_error_and_budget_terminals() -> None:
+    """SPEC C.7 is defended by verifying that fifo runs once and survives error and budget
+    terminals; this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     first = TurnControl(stop_reason=StopReason.ERROR)
     second = TurnControl(
@@ -1625,6 +1682,9 @@ class SnapshotBarrierSink(Sink):
 
 @pytest.mark.asyncio
 async def test_attach_snapshot_is_atomic_before_new_live_delta() -> None:
+    """SPEC C.7 is defended by verifying that attach snapshot is atomic before new live delta;
+    this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     control = TurnControl()
     runner = ControlledRunner({"hello": control})
@@ -1654,6 +1714,9 @@ async def test_attach_snapshot_is_atomic_before_new_live_delta() -> None:
 
 @pytest.mark.asyncio
 async def test_cancel_without_outer_thread_finds_run_after_selection_changes() -> None:
+    """SPEC C.7 is defended by verifying that cancel without outer thread finds run after
+    selection changes; this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     control = TurnControl()
     runner = ControlledRunner({"hello": control})
@@ -1694,6 +1757,9 @@ class RegressiveUsageRunner:
 
 @pytest.mark.asyncio
 async def test_usage_regression_terminalizes_as_error_and_stale_cancel_is_scoped() -> None:
+    """SPEC C.7 is defended by verifying that usage regression terminalizes as error and stale
+    cancel is scoped; this prevents drift in the single authoritative run-loop contract.
+    """
     ids = Ids()
     loop = RunLoop(RegressiveUsageRunner(), factory(ids))
     sink = Sink()

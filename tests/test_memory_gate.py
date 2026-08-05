@@ -257,6 +257,10 @@ async def wait_for_gate_count(emitter: RecordingEmitter, count: int) -> None:
 
 @pytest.mark.asyncio
 async def test_first_chat_blocks_commits_and_keeps_system_instructions_current() -> None:
+    """A-030 is defended by verifying that first chat blocks commits and keeps system
+    instructions current; this prevents drift in the first-gate and per-message memory
+    selection contract.
+    """
     spine = RecordingSpine()
     delegate = RecordingDelegate()
     runner = MemoryGateTurnRunner(
@@ -326,6 +330,10 @@ async def _record_ambient(values: list[str], thread_id: str) -> None:
 
 @pytest.mark.asyncio
 async def test_post_first_turn_rescores_without_gate_and_publishes_ambient_membership() -> None:
+    """A-030 is defended by verifying that post first turn rescores without gate and publishes
+    ambient membership; this prevents drift in the first-gate and per-message memory
+    selection contract.
+    """
     first_id = UUID("52345678-1234-5678-1234-567812345678")
     entered_id = UUID("62345678-1234-5678-1234-567812345678")
     first_card = scored_card(first_id, label="Confirmed", body="First body.", rank=1)
@@ -479,6 +487,10 @@ async def test_citation_failure_is_visible_without_retracting_the_turn() -> None
 
 @pytest.mark.asyncio
 async def test_thread_resolution_controls_prepare_context_and_reaches_both_model_paths() -> None:
+    """A-030 is defended by verifying that thread resolution controls prepare context and
+    reaches both model paths; this prevents drift in the first-gate and per-message memory
+    selection contract.
+    """
     spine = RecordingSpine()
     delegate = RecordingDelegate()
     runner = MemoryGateTurnRunner(
@@ -525,6 +537,10 @@ async def test_thread_resolution_controls_prepare_context_and_reaches_both_model
 
 @pytest.mark.asyncio
 async def test_later_turn_uses_rerendered_block_and_persistent_exclusions() -> None:
+    """A-030 is defended by verifying that later turn uses rerendered block and persistent
+    exclusions; this prevents drift in the first-gate and per-message memory selection
+    contract.
+    """
     first_id = UUID("52345678-1234-5678-1234-567812345678")
     second_id = UUID("62345678-1234-5678-1234-567812345678")
     first_card = scored_card(first_id, label="Remove", body="Remove this body.", rank=1)
@@ -577,6 +593,10 @@ async def test_later_turn_uses_rerendered_block_and_persistent_exclusions() -> N
 
 @pytest.mark.asyncio
 async def test_near_miss_never_preserves_committed_context_and_exclusion() -> None:
+    """A-030 is defended by verifying that near miss never preserves committed context and
+    exclusion; this prevents drift in the first-gate and per-message memory selection
+    contract.
+    """
     retained_id = UUID("52345678-1234-5678-1234-567812345678")
     vetoed_id = UUID("62345678-1234-5678-1234-567812345678")
     retained = scored_card(retained_id, label="Keep", body="Keep this body.", rank=1)
@@ -646,6 +666,9 @@ async def test_near_miss_never_preserves_committed_context_and_exclusion() -> No
 
 @pytest.mark.asyncio
 async def test_wrong_removal_stays_paused_until_current_unit_is_edited() -> None:
+    """A-030 is defended by verifying that wrong removal stays paused until current unit is
+    edited; this prevents drift in the first-gate and per-message memory selection contract.
+    """
     spine = RecordingSpine()
     wrong = memory_unit()
     updated = wrong.model_copy(update={"body": "Corrected body", "revision": 3})
@@ -744,6 +767,10 @@ async def test_wrong_removal_stays_paused_until_current_unit_is_edited() -> None
 
 @pytest.mark.asyncio
 async def test_wrong_resolution_refreshes_a_cas_conflict_then_expires() -> None:
+    """A-030 is defended by verifying that wrong resolution refreshes a cas conflict then
+    expires; this prevents drift in the first-gate and per-message memory selection
+    contract.
+    """
     spine = RecordingSpine()
     original = memory_unit()
     refreshed = memory_unit(revision=3, body="Concurrent correction")
@@ -848,6 +875,10 @@ async def test_wrong_resolution_refreshes_a_cas_conflict_then_expires() -> None:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("phase", ["prepare", "commit"])
 async def test_spine_failure_is_visible_and_fails_open_without_instructions(phase: str) -> None:
+    """A-030 is defended by verifying that spine failure is visible and fails open without
+    instructions; this prevents drift in the first-gate and per-message memory selection
+    contract.
+    """
     spine = RecordingSpine(
         fail_prepare=phase == "prepare",
         fail_commit=phase == "commit",
@@ -899,6 +930,9 @@ async def test_spine_failure_is_visible_and_fails_open_without_instructions(phas
 
 @pytest.mark.asyncio
 async def test_cancelled_attempt_is_claimed_and_never_invokes_the_model() -> None:
+    """A-030 is defended by verifying that cancelled attempt is claimed and never invokes the
+    model; this prevents drift in the first-gate and per-message memory selection contract.
+    """
     spine = RecordingSpine()
     delegate = RecordingDelegate()
     runner = MemoryGateTurnRunner(
@@ -933,6 +967,10 @@ async def test_cancelled_attempt_is_claimed_and_never_invokes_the_model() -> Non
 
 
 def test_gate_config_rejects_non_positive_or_boolean_context_windows() -> None:
+    """A-030 is defended by verifying that gate config rejects non positive or boolean context
+    windows; this prevents drift in the first-gate and per-message memory selection
+    contract.
+    """
     spine = RecordingSpine()
     for value in (0, -1, True):
         with pytest.raises(ValueError, match="positive integer"):

@@ -167,7 +167,8 @@ async def test_successful_model_response_is_receipted_before_turn_returns() -> N
 
 @pytest.mark.asyncio
 async def test_dead_ledger_queues_estimate_and_never_retracts_answer(tmp_path: Path) -> None:
-    """B.6 rule 11: a dead ledger cannot brick a completed conversation turn."""
+    """SPEC B.6 rule 11 requires a dead ledger never to brick or retract a completed turn."""
+
     async def stream(_messages: object, _info: object):
         yield "answer"
 
@@ -194,6 +195,11 @@ async def test_dead_ledger_queues_estimate_and_never_retracts_answer(tmp_path: P
 
 @pytest.mark.asyncio
 async def test_streams_typed_deltas_events_cumulative_usage_and_reusable_history() -> None:
+    """ADR-013 is defended by verifying that streams typed deltas events cumulative usage and
+    reusable history; this prevents drift in the streaming model runtime and history
+    boundary.
+    """
+
     async def stream(_messages, _info):
         yield {0: DeltaThinkingPart(content="plan ")}
         yield {0: DeltaThinkingPart(content="done")}
@@ -250,6 +256,9 @@ async def test_streams_typed_deltas_events_cumulative_usage_and_reusable_history
 
 @pytest.mark.asyncio
 async def test_openrouter_route_settings_are_fresh_sticky_and_price_sorted() -> None:
+    """ADR-013 is defended by verifying that openrouter route settings are fresh sticky and
+    price sorted; this prevents drift in the streaming model runtime and history boundary.
+    """
     observed_settings: list[dict[str, Any] | None] = []
 
     async def stream(_messages, info):
@@ -292,6 +301,10 @@ async def test_openrouter_route_settings_are_fresh_sticky_and_price_sorted() -> 
 
 @pytest.mark.asyncio
 async def test_resolution_epochs_break_and_then_repin_openrouter_session_stickiness() -> None:
+    """ADR-013 is defended by verifying that resolution epochs break and then repin openrouter
+    session stickiness; this prevents drift in the streaming model runtime and history
+    boundary.
+    """
     observed_settings: list[dict[str, Any] | None] = []
 
     async def stream(_messages, info):
@@ -343,6 +356,9 @@ async def test_pinned_routes_only_receive_provider_settings_they_can_use(
     price_sorted: bool,
     expected: dict[str, Any] | None,
 ) -> None:
+    """ADR-013 is defended by verifying that pinned routes only receive provider settings they
+    can use; this prevents drift in the streaming model runtime and history boundary.
+    """
     observed: list[dict[str, Any] | None] = []
 
     async def stream(_messages, info):
@@ -373,6 +389,9 @@ async def test_pinned_routes_only_receive_provider_settings_they_can_use(
 
 
 def test_provider_cache_usage_is_retained_by_the_existing_usage_adapter() -> None:
+    """ADR-013 is defended by verifying that provider cache usage is retained by the existing
+    usage adapter; this prevents drift in the streaming model runtime and history boundary.
+    """
     assert _usage_snapshot(
         RunUsage(
             requests=1,
@@ -391,6 +410,9 @@ def test_provider_cache_usage_is_retained_by_the_existing_usage_adapter() -> Non
 
 
 def test_cacheable_prefix_uses_only_the_terminal_provider_response() -> None:
+    """ADR-013 is defended by verifying that cacheable prefix uses only the terminal provider
+    response; this prevents drift in the streaming model runtime and history boundary.
+    """
     messages = (
         ModelResponse(
             parts=[TextPart("tool request")],
@@ -407,6 +429,10 @@ def test_cacheable_prefix_uses_only_the_terminal_provider_response() -> None:
 
 @pytest.mark.asyncio
 async def test_remember_dispatch_receives_the_same_thread_model_and_routing_settings() -> None:
+    """ADR-013 is defended by verifying that remember dispatch receives the same thread model
+    and routing settings; this prevents drift in the streaming model runtime and history
+    boundary.
+    """
     marker = FunctionModel(function=lambda _messages, _info: ModelResponse(parts=[TextPart("x")]))
 
     class RememberSpyAgent:
@@ -454,6 +480,9 @@ async def test_remember_dispatch_receives_the_same_thread_model_and_routing_sett
 
 @pytest.mark.asyncio
 async def test_final_memory_block_is_system_adjacent_not_user_prompt_text() -> None:
+    """ADR-013 is defended by verifying that final memory block is system adjacent not user
+    prompt text; this prevents drift in the streaming model runtime and history boundary.
+    """
     observed_messages = []
 
     async def respond(messages, _info):
@@ -482,6 +511,9 @@ async def test_final_memory_block_is_system_adjacent_not_user_prompt_text() -> N
 
 @pytest.mark.asyncio
 async def test_updated_memory_block_replaces_stale_provider_history() -> None:
+    """ADR-013 is defended by verifying that updated memory block replaces stale provider
+    history; this prevents drift in the streaming model runtime and history boundary.
+    """
     calls: list[tuple[object, ...]] = []
 
     async def respond(messages, _info):
@@ -546,6 +578,10 @@ async def test_updated_memory_block_replaces_stale_provider_history() -> None:
 
 @pytest.mark.asyncio
 async def test_history_sanitizing_error_path_does_not_duplicate_or_recount_old_turn() -> None:
+    """ADR-013 is defended by verifying that history sanitizing error path does not duplicate
+    or recount old turn; this prevents drift in the streaming model runtime and history
+    boundary.
+    """
     call_count = 0
 
     async def respond(_messages, _info):
@@ -634,6 +670,9 @@ class ExclusionSearchSpine:
 
 @pytest.mark.asyncio
 async def test_turn_exclusions_are_applied_to_model_visible_search_results() -> None:
+    """ADR-013 is defended by verifying that turn exclusions are applied to model visible
+    search results; this prevents drift in the streaming model runtime and history boundary.
+    """
     observed_tool_returns: list[str] = []
 
     async def stream(messages, _info):
@@ -681,6 +720,9 @@ async def test_turn_exclusions_are_applied_to_model_visible_search_results() -> 
 
 @pytest.mark.asyncio
 async def test_remember_uses_dispatch_and_emits_its_visible_result() -> None:
+    """ADR-013 is defended by verifying that remember uses dispatch and emits its visible
+    result; this prevents drift in the streaming model runtime and history boundary.
+    """
     model = TestModel(call_tools=[], custom_output_text="must not run")
     runner = PydanticAITurnRunner(HarnessAgent(settings(), model=model), lambda _: context())
     emitted = RecordingEmitter()
@@ -705,6 +747,9 @@ async def test_remember_uses_dispatch_and_emits_its_visible_result() -> None:
 
 @pytest.mark.asyncio
 async def test_remember_label_budget_maps_to_budget_exceeded_with_usage() -> None:
+    """ADR-013 is defended by verifying that remember label budget maps to budget exceeded with
+    usage; this prevents drift in the streaming model runtime and history boundary.
+    """
     runner = PydanticAITurnRunner(
         HarnessAgent(
             settings(run_total_tokens_limit=1),
@@ -739,6 +784,10 @@ async def test_remember_label_budget_maps_to_budget_exceeded_with_usage() -> Non
 
 @pytest.mark.asyncio
 async def test_remember_label_provider_failure_maps_to_error() -> None:
+    """ADR-013 is defended by verifying that remember label provider failure maps to error;
+    this prevents drift in the streaming model runtime and history boundary.
+    """
+
     def fail_label(_messages, _info):
         raise RuntimeError("label provider failed")
 
@@ -759,6 +808,9 @@ async def test_remember_label_provider_failure_maps_to_error() -> None:
 
 @pytest.mark.asyncio
 async def test_usage_limit_maps_to_budget_exceeded_with_partial_history() -> None:
+    """ADR-013 is defended by verifying that usage limit maps to budget exceeded with partial
+    history; this prevents drift in the streaming model runtime and history boundary.
+    """
     runner = PydanticAITurnRunner(
         HarnessAgent(
             settings(run_total_tokens_limit=1),
@@ -785,6 +837,11 @@ async def test_usage_limit_maps_to_budget_exceeded_with_partial_history() -> Non
 
 @pytest.mark.asyncio
 async def test_provider_failure_maps_to_error_and_preserves_capture_without_cancel_repair() -> None:
+    """ADR-013 is defended by verifying that provider failure maps to error and preserves
+    capture without cancel repair; this prevents drift in the streaming model runtime and
+    history boundary.
+    """
+
     async def broken_stream(_messages, _info):
         yield {0: DeltaToolCall(name="search_memory", json_args='{"query":"x"}')}
         raise RuntimeError("provider stream failed")
@@ -838,6 +895,10 @@ class FailingCleanupSpine:
 
 @pytest.mark.asyncio
 async def test_cancellation_waits_for_tool_and_repairs_history_for_the_next_turn() -> None:
+    """ADR-013 is defended by verifying that cancellation waits for tool and repairs history
+    for the next turn; this prevents drift in the streaming model runtime and history
+    boundary.
+    """
     model_calls = 0
 
     async def stream(_messages, _info):
@@ -910,6 +971,10 @@ async def test_cancellation_waits_for_tool_and_repairs_history_for_the_next_turn
 
 @pytest.mark.asyncio
 async def test_tool_cleanup_exception_cannot_mask_cancelled_history_repair() -> None:
+    """ADR-013 is defended by verifying that tool cleanup exception cannot mask cancelled
+    history repair; this prevents drift in the streaming model runtime and history boundary.
+    """
+
     async def stream(_messages, _info):
         yield {
             0: DeltaToolCall(

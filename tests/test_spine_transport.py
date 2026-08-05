@@ -147,6 +147,9 @@ def _move_points_to_open_window_boundary(payload: dict[str, Any]) -> None:
 
 @pytest.mark.asyncio
 async def test_all_routes_send_exact_http_contract() -> None:
+    """SPEC C.4 is defended by verifying that all routes send exact http contract; this
+    prevents drift in the authenticated Spine transport contract.
+    """
     seen: list[httpx.Request] = []
     responses = {
         ("POST", "/prefix/v1/inject/prepare"): response(
@@ -297,6 +300,9 @@ async def test_all_routes_send_exact_http_contract() -> None:
 
 @pytest.mark.asyncio
 async def test_vitals_rejects_a_numeric_cost_that_would_lose_decimal_wire_truth() -> None:
+    """SPEC C.4 is defended by verifying that vitals rejects a numeric cost that would lose
+    decimal wire truth; this prevents drift in the authenticated Spine transport contract.
+    """
     payload = vitals_payload()
     payload["spend"]["lanes"][0]["points"][0]["cost_usd"] = 0.0012
 
@@ -305,6 +311,9 @@ async def test_vitals_rejects_a_numeric_cost_that_would_lose_decimal_wire_truth(
 
 @pytest.mark.asyncio
 async def test_vitals_accepts_the_a029_reserved_model_key_escape() -> None:
+    """SPEC C.4 is defended by verifying that vitals accepts the a029 reserved model key
+    escape; this prevents drift in the authenticated Spine transport contract.
+    """
     payload = vitals_payload()
     model_lane = payload["spend"]["lanes"][-1]
     model_lane.update(key="~unreported", label="unreported")
@@ -352,6 +361,9 @@ async def test_vitals_accepts_the_a029_reserved_model_key_escape() -> None:
 )
 @pytest.mark.asyncio
 async def test_vitals_requires_the_exact_a028_gauge_contract(mutate: VitalsMutation) -> None:
+    """SPEC C.4 is defended by verifying that vitals requires the exact a028 gauge contract;
+    this prevents drift in the authenticated Spine transport contract.
+    """
     payload = vitals_payload()
     mutate(payload)
 
@@ -380,6 +392,9 @@ async def test_vitals_requires_the_exact_a028_gauge_contract(mutate: VitalsMutat
 )
 @pytest.mark.asyncio
 async def test_vitals_rejects_dishonest_spend_points(mutate: VitalsMutation) -> None:
+    """SPEC C.4 is defended by verifying that vitals rejects dishonest spend points; this
+    prevents drift in the authenticated Spine transport contract.
+    """
     payload = vitals_payload()
     mutate(payload)
 
@@ -444,6 +459,9 @@ async def test_vitals_rejects_dishonest_spend_points(mutate: VitalsMutation) -> 
 async def test_vitals_rejects_noncanonical_or_unconserved_lanes(
     mutate: VitalsMutation,
 ) -> None:
+    """SPEC C.4 is defended by verifying that vitals rejects noncanonical or unconserved lanes;
+    this prevents drift in the authenticated Spine transport contract.
+    """
     payload = vitals_payload()
     mutate(payload)
 
@@ -452,6 +470,10 @@ async def test_vitals_rejects_noncanonical_or_unconserved_lanes(
 
 @pytest.mark.asyncio
 async def test_create_similar_response_is_distinct_from_created_status() -> None:
+    """SPEC C.4 is defended by verifying that create similar response is distinct from created
+    status; this prevents drift in the authenticated Spine transport contract.
+    """
+
     async def handler(_: httpx.Request) -> httpx.Response:
         return response(200, {"created": None, "similar": [similarity_card_payload()]})
 
@@ -489,6 +511,10 @@ async def test_create_similar_response_is_distinct_from_created_status() -> None
 async def test_create_409_is_a_typed_domain_conflict(
     payload: object, expected_type: type[object]
 ) -> None:
+    """SPEC C.4 is defended by verifying that create 409 is a typed domain conflict; this
+    prevents drift in the authenticated Spine transport contract.
+    """
+
     async def handler(_: httpx.Request) -> httpx.Response:
         return response(409, payload)
 
@@ -527,6 +553,10 @@ async def test_create_409_is_a_typed_domain_conflict(
 async def test_patch_409_is_a_typed_domain_conflict(
     payload: object, expected_type: type[object]
 ) -> None:
+    """SPEC C.4 is defended by verifying that patch 409 is a typed domain conflict; this
+    prevents drift in the authenticated Spine transport contract.
+    """
+
     async def handler(_: httpx.Request) -> httpx.Response:
         return response(409, payload)
 
@@ -557,6 +587,10 @@ async def test_patch_409_is_a_typed_domain_conflict(
 )
 @pytest.mark.asyncio
 async def test_rfc7807_errors_remain_typed_problems(route: str, status: int) -> None:
+    """SPEC C.4 is defended by verifying that rfc7807 errors remain typed problems; this
+    prevents drift in the authenticated Spine transport contract.
+    """
+
     async def handler(_: httpx.Request) -> httpx.Response:
         return response(status, problem_payload(status), PROBLEM_JSON)
 
@@ -648,6 +682,10 @@ async def test_rfc7807_errors_remain_typed_problems(route: str, status: int) -> 
 async def test_response_contract_violations_are_not_silently_accepted(
     make_response: Callable[[], httpx.Response],
 ) -> None:
+    """SPEC C.4 is defended by verifying that response contract violations are not silently
+    accepted; this prevents drift in the authenticated Spine transport contract.
+    """
+
     async def handler(_: httpx.Request) -> httpx.Response:
         return make_response()
 
@@ -662,6 +700,9 @@ async def test_response_contract_violations_are_not_silently_accepted(
 
 @pytest.mark.asyncio
 async def test_rfc7807_standard_members_are_optional_but_not_nullable() -> None:
+    """SPEC C.4 is defended by verifying that rfc7807 standard members are optional but not
+    nullable; this prevents drift in the authenticated Spine transport contract.
+    """
     payloads = [{}, {"title": None}]
 
     async def handler(_: httpx.Request) -> httpx.Response:
@@ -684,6 +725,10 @@ async def test_rfc7807_standard_members_are_optional_but_not_nullable() -> None:
 
 @pytest.mark.asyncio
 async def test_create_status_and_body_cannot_be_swapped() -> None:
+    """SPEC C.4 is defended by verifying that create status and body cannot be swapped; this
+    prevents drift in the authenticated Spine transport contract.
+    """
+
     async def handler(_: httpx.Request) -> httpx.Response:
         return response(200, {"created": memory_unit_payload()})
 
@@ -707,6 +752,9 @@ async def test_create_status_and_body_cannot_be_swapped() -> None:
 
 @pytest.mark.asyncio
 async def test_transport_failure_is_wrapped_without_request_secrets() -> None:
+    """SPEC C.4 is defended by verifying that transport failure is wrapped without request
+    secrets; this prevents drift in the authenticated Spine transport contract.
+    """
     calls = 0
 
     async def handler(request: httpx.Request) -> httpx.Response:
@@ -729,6 +777,10 @@ async def test_transport_failure_is_wrapped_without_request_secrets() -> None:
 
 @pytest.mark.asyncio
 async def test_response_decoding_failure_is_wrapped_as_transport_failure() -> None:
+    """SPEC C.4 is defended by verifying that response decoding failure is wrapped as transport
+    failure; this prevents drift in the authenticated Spine transport contract.
+    """
+
     async def handler(_: httpx.Request) -> httpx.Response:
         return httpx.Response(
             200,
@@ -749,6 +801,9 @@ async def test_response_decoding_failure_is_wrapped_as_transport_failure() -> No
 
 @pytest.mark.asyncio
 async def test_redirects_are_not_followed() -> None:
+    """SPEC C.4 is defended by verifying that redirects are not followed; this prevents drift
+    in the authenticated Spine transport contract.
+    """
     calls = 0
 
     async def handler(_: httpx.Request) -> httpx.Response:
@@ -780,6 +835,9 @@ class CloseAwareTransport(httpx.AsyncBaseTransport):
 
 @pytest.mark.asyncio
 async def test_context_manager_closes_caller_supplied_transport() -> None:
+    """SPEC C.4 is defended by verifying that context manager closes caller supplied transport;
+    this prevents drift in the authenticated Spine transport contract.
+    """
     transport = CloseAwareTransport()
 
     async with SpineClient(
@@ -793,6 +851,9 @@ async def test_context_manager_closes_caller_supplied_transport() -> None:
 
 
 def test_constructor_rejects_missing_connection_values() -> None:
+    """SPEC C.4 is defended by verifying that constructor rejects missing connection values;
+    this prevents drift in the authenticated Spine transport contract.
+    """
     for base_url in ("", "   "):
         with pytest.raises(ValueError, match="base_url"):
             SpineClient(base_url, "token")
@@ -820,12 +881,19 @@ def test_constructor_rejects_missing_connection_values() -> None:
     ],
 )
 def test_constructor_rejects_unsafe_base_urls(base_url: str) -> None:
+    """SPEC C.4 is defended by verifying that constructor rejects unsafe base urls; this
+    prevents drift in the authenticated Spine transport contract.
+    """
     with pytest.raises(ValueError, match="base_url"):
         SpineClient(base_url, "token")
 
 
 @pytest.mark.asyncio
 async def test_base_url_normalization_preserves_encoded_path_segments() -> None:
+    """SPEC C.4 is defended by verifying that base url normalization preserves encoded path
+    segments; this prevents drift in the authenticated Spine transport contract.
+    """
+
     async def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.raw_path == b"/tenant%2Fone/v1/search"
         return response(200, {"results": []})

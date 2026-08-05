@@ -8,6 +8,9 @@ from harness.model_policy import ThreadModelResolution
 
 
 def test_tracker_keeps_measured_total_and_exact_limit_with_estimated_split() -> None:
+    """A-039 is defended by verifying that tracker keeps measured total and exact limit with
+    estimated split; this prevents drift in the measured context-pressure contract.
+    """
     tracker = ContextWindowTracker()
     tracker.record(
         thread_id="thread-a",
@@ -35,6 +38,9 @@ def test_tracker_keeps_measured_total_and_exact_limit_with_estimated_split() -> 
 
 
 def test_tracker_global_aggregates_only_observed_threads() -> None:
+    """A-039 is defended by verifying that tracker global aggregates only observed threads;
+    this prevents drift in the measured context-pressure contract.
+    """
     tracker = ContextWindowTracker()
     assert tracker.snapshot(None).aggregate is None
     assert tracker.snapshot("not-seen").observations == []
@@ -42,11 +48,7 @@ def test_tracker_global_aggregates_only_observed_threads() -> None:
     for thread_id, used in (("b", 20), ("a", 10)):
         tracker.record(
             thread_id=thread_id,
-            captured=[
-                ModelResponse(
-                    parts=[TextPart("ok")], usage=RequestUsage(input_tokens=used)
-                )
-            ],
+            captured=[ModelResponse(parts=[TextPart("ok")], usage=RequestUsage(input_tokens=used))],
             resolution=ThreadModelResolution(
                 model="openrouter:test/model", context_tokens=100, policy="pinned:test/model"
             ),

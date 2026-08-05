@@ -198,6 +198,9 @@ async def test_save_maps_only_trusted_context_scope_and_force(
     force: bool,
     expected_project: str | None,
 ) -> None:
+    """ADR-005 is defended by verifying that save maps only trusted context scope and force;
+    this prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     created = memory_unit()
     spine.create_outcomes.append(CreatedMemoryResponse(created=created))
@@ -235,6 +238,9 @@ async def test_save_maps_only_trusted_context_scope_and_force(
 
 @pytest.mark.asyncio
 async def test_save_rejects_project_scope_without_current_project_before_spine_call() -> None:
+    """ADR-005 is defended by verifying that save rejects project scope without current project
+    before spine call; this prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
 
     rendered = await save_memory(
@@ -254,6 +260,9 @@ async def test_save_rejects_project_scope_without_current_project_before_spine_c
 
 @pytest.mark.asyncio
 async def test_save_blocks_same_run_global_fallback_after_missing_project_context() -> None:
+    """ADR-005 is defended by verifying that save blocks same run global fallback after missing
+    project context; this prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     run_context = context(spine, project_key=None)
 
@@ -294,6 +303,9 @@ async def test_save_blocks_same_run_global_fallback_after_missing_project_contex
 
 @pytest.mark.asyncio
 async def test_save_renders_similar_result_without_automatically_forcing_or_retrying() -> None:
+    """ADR-005 is defended by verifying that save renders similar result without automatically
+    forcing or retrying; this prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     spine.create_outcomes.append(SimilarMemoriesResponse(created=None, similar=[similarity_card()]))
 
@@ -317,6 +329,9 @@ async def test_save_renders_similar_result_without_automatically_forcing_or_retr
 
 @pytest.mark.asyncio
 async def test_save_never_renders_an_excluded_similar_memory() -> None:
+    """ADR-005 is defended by verifying that save never renders an excluded similar memory;
+    this prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     spine.create_outcomes.append(
         SimilarMemoriesResponse(
@@ -366,6 +381,9 @@ async def test_save_surfaces_hard_duplicate_and_label_conflicts_without_retry(
     failure: CreateMemoryConflictError,
     expected: str,
 ) -> None:
+    """ADR-005 is defended by verifying that save surfaces hard duplicate and label conflicts
+    without retry; this prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     spine.create_outcomes.append(failure)
 
@@ -384,6 +402,9 @@ async def test_save_surfaces_hard_duplicate_and_label_conflicts_without_retry(
 
 @pytest.mark.asyncio
 async def test_save_never_renders_an_excluded_create_conflict() -> None:
+    """ADR-005 is defended by verifying that save never renders an excluded create conflict;
+    this prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     spine.create_outcomes.append(
         create_conflict(
@@ -410,6 +431,9 @@ async def test_save_never_renders_an_excluded_create_conflict() -> None:
 
 @pytest.mark.asyncio
 async def test_search_defaults_to_five_current_project_and_preserves_compact_order() -> None:
+    """ADR-005 is defended by verifying that search defaults to five current project and
+    preserves compact order; this prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     spine.search_outcomes.append(
         SearchResponse(
@@ -451,6 +475,9 @@ async def test_search_defaults_to_five_current_project_and_preserves_compact_ord
 
 @pytest.mark.asyncio
 async def test_search_overfetches_and_never_renders_excluded_gate_removals() -> None:
+    """ADR-005 is defended by verifying that search overfetches and never renders excluded gate
+    removals; this prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     allowed_third_id = UUID("20000000-0000-0000-0000-000000000003")
     spine.search_outcomes.append(
@@ -495,6 +522,9 @@ async def test_search_overfetches_and_never_renders_excluded_gate_removals() -> 
 
 @pytest.mark.asyncio
 async def test_search_renders_empty_results_truthfully() -> None:
+    """ADR-005 is defended by verifying that search renders empty results truthfully; this
+    prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     spine.search_outcomes.append(SearchResponse(results=[]))
 
@@ -505,6 +535,9 @@ async def test_search_renders_empty_results_truthfully() -> None:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("invalid_k", [0, 51])
 async def test_search_rejects_invalid_k_without_spine_call(invalid_k: int) -> None:
+    """ADR-005 is defended by verifying that search rejects invalid k without spine call; this
+    prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
 
     rendered = await search_memory(context(spine), "query", k=invalid_k)
@@ -515,6 +548,9 @@ async def test_search_rejects_invalid_k_without_spine_call(invalid_k: int) -> No
 
 @pytest.mark.asyncio
 async def test_edit_resolves_uuid_before_an_exact_uuid_shaped_label() -> None:
+    """ADR-005 is defended by verifying that edit resolves uuid before an exact uuid shaped
+    label; this prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     by_id = memory_unit(memory_id=MEMORY_ID, label="Actual ID target")
     by_label = memory_unit(memory_id=OTHER_MEMORY_ID, label=str(MEMORY_ID))
@@ -528,6 +564,9 @@ async def test_edit_resolves_uuid_before_an_exact_uuid_shaped_label() -> None:
 
 @pytest.mark.asyncio
 async def test_edit_falls_back_to_exact_label_when_label_is_uuid_shaped() -> None:
+    """ADR-005 is defended by verifying that edit falls back to exact label when label is uuid
+    shaped; this prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     uuid_label = str(MEMORY_ID)
     target = memory_unit(memory_id=OTHER_MEMORY_ID, label=uuid_label)
@@ -541,6 +580,9 @@ async def test_edit_falls_back_to_exact_label_when_label_is_uuid_shaped() -> Non
 
 @pytest.mark.asyncio
 async def test_edit_exact_label_is_case_sensitive_and_rejects_substrings() -> None:
+    """ADR-005 is defended by verifying that edit exact label is case sensitive and rejects
+    substrings; this prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     spine.list_pages[0] = memory_page(
         [
@@ -565,6 +607,9 @@ async def test_edit_exact_label_is_case_sensitive_and_rejects_substrings() -> No
 
 @pytest.mark.asyncio
 async def test_edit_filters_other_principals_and_non_active_rows_locally() -> None:
+    """ADR-005 is defended by verifying that edit filters other principals and non active rows
+    locally; this prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     wrong_principal = memory_unit(principal_id="principal-2", label="Target")
     tombstoned = memory_unit(
@@ -587,6 +632,9 @@ async def test_edit_filters_other_principals_and_non_active_rows_locally() -> No
 
 @pytest.mark.asyncio
 async def test_edit_cannot_resolve_an_excluded_gate_removal() -> None:
+    """ADR-005 is defended by verifying that edit cannot resolve an excluded gate removal; this
+    prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     spine.list_pages[0] = memory_page(
         [
@@ -610,6 +658,9 @@ async def test_edit_cannot_resolve_an_excluded_gate_removal() -> None:
 
 @pytest.mark.asyncio
 async def test_edit_paginates_principal_wide_without_project_filter() -> None:
+    """ADR-005 is defended by verifying that edit paginates principal wide without project
+    filter; this prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     first = memory_unit(label="Decoy", project_key="garden")
     target = memory_unit(
@@ -649,6 +700,9 @@ async def test_edit_does_not_patch_missing_or_ambiguous_exact_match(
     label: str,
     expected: str,
 ) -> None:
+    """ADR-005 is defended by verifying that edit does not patch missing or ambiguous exact
+    match; this prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     spine.list_pages[0] = memory_page(items)
 
@@ -658,6 +712,9 @@ async def test_edit_does_not_patch_missing_or_ambiguous_exact_match(
 
 @pytest.mark.asyncio
 async def test_edit_patch_is_body_only_with_trusted_metadata_and_expected_revision() -> None:
+    """ADR-005 is defended by verifying that edit patch is body only with trusted metadata and
+    expected revision; this prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     target = memory_unit(revision=3)
     updated = target.model_copy(update={"body": "Use four spaces.", "revision": 4})
@@ -690,6 +747,9 @@ async def test_edit_patch_is_body_only_with_trusted_metadata_and_expected_revisi
 
 @pytest.mark.asyncio
 async def test_edit_retries_revision_conflict_once_with_returned_current_revision() -> None:
+    """ADR-005 is defended by verifying that edit retries revision conflict once with returned
+    current revision; this prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     original = memory_unit(revision=3)
     current = memory_unit(body="Concurrent update", revision=8)
@@ -717,6 +777,9 @@ async def test_edit_retries_revision_conflict_once_with_returned_current_revisio
 
 @pytest.mark.asyncio
 async def test_edit_does_not_retry_label_conflict() -> None:
+    """ADR-005 is defended by verifying that edit does not retry label conflict; this prevents
+    drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     target = memory_unit()
     spine.list_pages[0] = memory_page([target])
@@ -737,6 +800,9 @@ async def test_edit_does_not_retry_label_conflict() -> None:
 
 @pytest.mark.asyncio
 async def test_edit_stops_after_second_revision_conflict_without_third_attempt() -> None:
+    """ADR-005 is defended by verifying that edit stops after second revision conflict without
+    third attempt; this prevents drift in the owner memory-tool safety contract.
+    """
     spine = FakeSpineGateway()
     original = memory_unit(revision=3)
     first_current = memory_unit(body="First concurrent update", revision=8)

@@ -13,10 +13,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(prog="python -m verification.run_fixture")
     parser.add_argument(
         "app",
-        help=(
-            "ASGI factory import, for example "
-            "verification.m2g.scenario_app:create_scenario_app"
-        ),
+        help=("ASGI factory import, for example verification.m2g.scenario_app:create_scenario_app"),
     )
     parser.add_argument("--port", type=int, required=True)
     args = parser.parse_args()

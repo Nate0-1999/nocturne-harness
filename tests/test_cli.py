@@ -93,6 +93,9 @@ def test_deploy_loads_initialized_key_and_forwards_dry_run(
 
 
 def test_safe_command_error_has_no_traceback(monkeypatch: pytest.MonkeyPatch) -> None:
+    """P3 is defended by verifying that safe command error has no traceback; this prevents
+    drift in the safe owner CLI boundary.
+    """
     monkeypatch.setattr(
         cli,
         "load_config",
@@ -105,5 +108,8 @@ def test_safe_command_error_has_no_traceback(monkeypatch: pytest.MonkeyPatch) ->
 
 
 def test_unknown_command_is_rejected_by_argparse() -> None:
+    """P3 is defended by verifying that unknown command is rejected by argparse; this prevents
+    drift in the safe owner CLI boundary.
+    """
     with pytest.raises(SystemExit, match="2"):
         cli.main(["status"])

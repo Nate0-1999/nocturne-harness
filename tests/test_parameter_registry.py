@@ -37,6 +37,9 @@ class _Resolver:
 
 
 def test_registry_rejects_unknown_unbound_and_invalid_values() -> None:
+    """ADR-023 is defended by verifying that registry rejects unknown unbound and invalid
+    values; this prevents drift in the plugin parameter registry contract.
+    """
     registry = ParameterRegistry()
 
     with pytest.raises(ParameterWriteViolation, match="unknown"):
@@ -44,9 +47,7 @@ def test_registry_rejects_unknown_unbound_and_invalid_values() -> None:
             module_id="model_device", parameter_id="model.unknown", value=1
         )
     with pytest.raises(ParameterWriteViolation, match="unbound"):
-        registry.validate_bound_write(
-            module_id="chat", parameter_id="model.temperature", value=1
-        )
+        registry.validate_bound_write(module_id="chat", parameter_id="model.temperature", value=1)
     with pytest.raises(ParameterWriteViolation, match="invalid"):
         registry.validate_bound_write(
             module_id="model_device", parameter_id="model.top_p", value=1.1
@@ -55,6 +56,9 @@ def test_registry_rejects_unknown_unbound_and_invalid_values() -> None:
 
 @pytest.mark.asyncio
 async def test_run_loop_applies_replays_and_publishes_bound_parameter_changes() -> None:
+    """ADR-023 is defended by verifying that run loop applies replays and publishes bound
+    parameter changes; this prevents drift in the plugin parameter registry contract.
+    """
     now = datetime(2026, 8, 3, 16, 0, tzinfo=UTC)
     messages: list[Envelope] = []
 
@@ -92,6 +96,9 @@ async def test_run_loop_applies_replays_and_publishes_bound_parameter_changes() 
 
 @pytest.mark.asyncio
 async def test_selector_uses_named_seam_preserves_overrides_and_journals_refusals() -> None:
+    """ADR-023 is defended by verifying that selector uses named seam preserves overrides and
+    journals refusals; this prevents drift in the plugin parameter registry contract.
+    """
     messages: list[Envelope] = []
 
     async def sink(message: Envelope) -> None:
@@ -136,6 +143,9 @@ async def test_selector_uses_named_seam_preserves_overrides_and_journals_refusal
 
 
 def test_model_settings_forward_every_real_request_parameter() -> None:
+    """ADR-023 is defended by verifying that model settings forward every real request
+    parameter; this prevents drift in the plugin parameter registry contract.
+    """
     from dataclasses import replace
 
     resolution = ThreadModelResolution(

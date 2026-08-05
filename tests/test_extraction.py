@@ -71,6 +71,9 @@ def _journal(root: Path, thread_id: str, now: datetime) -> TranscriptJournal:
 
 @pytest.mark.asyncio
 async def test_archive_reads_durable_transcript_and_is_idempotent_per_tail(tmp_path: Path) -> None:
+    """A-033 is defended by verifying that archive reads durable transcript and is idempotent
+    per tail; this prevents drift in the thread extraction trigger and idempotency contract.
+    """
     thread_id = uuid4()
     journal = _journal(tmp_path / "transcripts", str(thread_id), datetime.now(UTC))
     agent = FakeAgent()
@@ -98,6 +101,9 @@ async def test_archive_reads_durable_transcript_and_is_idempotent_per_tail(tmp_p
 
 @pytest.mark.asyncio
 async def test_idle_scheduler_uses_same_archive_path(tmp_path: Path) -> None:
+    """A-033 is defended by verifying that idle scheduler uses same archive path; this prevents
+    drift in the thread extraction trigger and idempotency contract.
+    """
     thread_id = uuid4()
     old = datetime.now(UTC) - timedelta(hours=4)
     journal = _journal(tmp_path / "transcripts", str(thread_id), old)

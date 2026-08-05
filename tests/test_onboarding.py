@@ -18,6 +18,9 @@ def _initialized(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> onboarding.
 def test_init_prompts_once_and_generates_private_config(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """ADR-019 is defended by verifying that init prompts once and generates private config;
+    this prevents drift in the private local owner onboarding contract.
+    """
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
     prompts: list[str] = []
     output = io.StringIO()
@@ -43,6 +46,9 @@ def test_init_prompts_once_and_generates_private_config(
 def test_init_uses_environment_secret_and_existing_config_is_inert(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """ADR-019 is defended by verifying that init uses environment secret and existing config
+    is inert; this prevents drift in the private local owner onboarding contract.
+    """
     monkeypatch.setenv("OPENROUTER_API_KEY", "environment-secret")
 
     def unexpected_prompt(_: str) -> str:
@@ -67,6 +73,9 @@ def test_init_uses_environment_secret_and_existing_config_is_inert(
 def test_load_rejects_group_or_world_readable_secret_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """ADR-019 is defended by verifying that load rejects group or world readable secret file;
+    this prevents drift in the private local owner onboarding contract.
+    """
     config = _initialized(tmp_path, monkeypatch)
     config.path.chmod(0o640)
 
@@ -77,6 +86,9 @@ def test_load_rejects_group_or_world_readable_secret_file(
 def test_process_environment_keeps_services_on_the_initialized_home(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """ADR-019 is defended by verifying that process environment keeps services on the
+    initialized home; this prevents drift in the private local owner onboarding contract.
+    """
     config = _initialized(tmp_path, monkeypatch)
 
     environment = config.process_environment({})
@@ -157,6 +169,9 @@ def test_up_orders_container_migration_services_and_browser(
 
 
 def test_open_requires_reachability_before_launching_browser(monkeypatch) -> None:
+    """ADR-019 is defended by verifying that open requires reachability before launching
+    browser; this prevents drift in the private local owner onboarding contract.
+    """
     events: list[str] = []
     monkeypatch.setattr(
         onboarding,

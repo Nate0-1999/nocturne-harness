@@ -25,7 +25,7 @@ def fixture_app() -> FastAPI:
 
 
 def test_fixture_refuses_owner_port_before_serving_ui() -> None:
-    """B.6 rule 10: a fake is unreachable on the owner's product port."""
+    """SPEC B.6 rule 10 makes every fake unreachable on the owner's product port."""
 
     client = TestClient(fixture_app(), base_url="http://127.0.0.1:8765")
     response = client.get("/")
@@ -106,7 +106,7 @@ def test_fixture_launcher_rejects_owner_port(monkeypatch: pytest.MonkeyPatch) ->
 
 
 def test_every_scenario_app_installs_the_shared_reachability_wall() -> None:
-    """B.6 rule 10: no legacy fixture silently escapes the common isolation wall."""
+    """SPEC B.6 rule 10 prevents legacy fixtures from escaping the shared isolation wall."""
 
     root = Path(__file__).parents[1] / "verification"
     scenario_files = sorted(root.glob("*/scenario_app.py"))

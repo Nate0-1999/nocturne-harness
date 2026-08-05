@@ -7,6 +7,9 @@ from harness.daemon import create_app
 
 
 def test_public_rack_query_returns_current_context_observation() -> None:
+    """A-039 is defended by verifying that public rack query returns current context
+    observation; this prevents drift in the truthful Context Bars observation contract.
+    """
     observation = ContextObservation(
         thread_id="thread-a",
         model="openrouter:test/model",
@@ -37,6 +40,9 @@ def test_public_rack_query_returns_current_context_observation() -> None:
 
 
 def test_context_history_is_not_fabricated() -> None:
+    """A-039 is defended by verifying that context history is not fabricated; this prevents
+    drift in the truthful Context Bars observation contract.
+    """
     response = TestClient(create_app(context_window_reader=lambda _: None)).get(
         "/v1/rack/query?resource=context_window&as_of=2026-08-01T00:00:00Z"
     )

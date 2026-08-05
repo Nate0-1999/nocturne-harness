@@ -26,6 +26,4 @@ def test_citation_requires_full_short_body_and_ignores_tiny_memories() -> None:
     tiny = UUID(int=4)
     bodies = {exact: "favorite color is blue", tiny: "likes blue tea"}
 
-    assert cited_memory_ids("Their favorite color is blue, and they like tea.", bodies) == (
-        exact,
-    )
+    assert cited_memory_ids("Their favorite color is blue, and they like tea.", bodies) == (exact,)

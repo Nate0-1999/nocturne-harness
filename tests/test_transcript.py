@@ -213,6 +213,9 @@ def records(journal: TranscriptJournal, thread_id: str) -> list[dict[str, object
 
 
 def test_journal_is_private_append_only_and_path_safe(tmp_path: Path) -> None:
+    """ADR-016 is defended by verifying that journal is private append only and path safe; this
+    prevents drift in the private append-only journal contract.
+    """
     root = tmp_path / "state" / "transcripts"
     thread_id = "../../not-a-path"
     journal = TranscriptJournal(
@@ -251,6 +254,9 @@ def test_journal_is_private_append_only_and_path_safe(tmp_path: Path) -> None:
 
 
 def test_journal_refuses_a_git_worktree_root(tmp_path: Path) -> None:
+    """ADR-016 is defended by verifying that journal refuses a git worktree root; this prevents
+    drift in the private append-only journal contract.
+    """
     (tmp_path / ".git").mkdir()
 
     with pytest.raises(ValueError, match="must not live inside a git worktree"):
@@ -258,6 +264,9 @@ def test_journal_refuses_a_git_worktree_root(tmp_path: Path) -> None:
 
 
 def test_journal_refuses_a_symlinked_thread_file(tmp_path: Path) -> None:
+    """ADR-016 is defended by verifying that journal refuses a symlinked thread file; this
+    prevents drift in the private append-only journal contract.
+    """
     journal = TranscriptJournal(tmp_path / "transcripts")
     journal.root.mkdir(parents=True)
     target = tmp_path / "target.txt"
@@ -275,6 +284,9 @@ def test_journal_refuses_a_symlinked_thread_file(tmp_path: Path) -> None:
 
 
 def test_journal_refuses_root_replaced_by_a_directory_symlink(tmp_path: Path) -> None:
+    """ADR-016 is defended by verifying that journal refuses root replaced by a directory
+    symlink; this prevents drift in the private append-only journal contract.
+    """
     root = tmp_path / "transcripts"
     journal = TranscriptJournal(root)
     target = tmp_path / "target-worktree"
@@ -292,6 +304,9 @@ def test_journal_refuses_root_replaced_by_a_directory_symlink(tmp_path: Path) ->
 
 
 def test_failed_partial_append_is_rolled_back(tmp_path: Path, monkeypatch) -> None:
+    """ADR-016 is defended by verifying that failed partial append is rolled back; this
+    prevents drift in the private append-only journal contract.
+    """
     journal = TranscriptJournal(tmp_path / "transcripts")
     real_write = transcript_module.os.write
     calls = 0
@@ -323,6 +338,9 @@ def test_failed_partial_append_is_rolled_back(tmp_path: Path, monkeypatch) -> No
 
 
 def test_preexisting_incomplete_tail_is_separated_from_new_records(tmp_path: Path) -> None:
+    """ADR-016 is defended by verifying that preexisting incomplete tail is separated from new
+    records; this prevents drift in the private append-only journal contract.
+    """
     journal = TranscriptJournal(tmp_path / "transcripts")
     journal.root.mkdir(parents=True)
     path = journal.path_for_thread("thread-1")
@@ -342,6 +360,9 @@ def test_preexisting_incomplete_tail_is_separated_from_new_records(tmp_path: Pat
 def test_restart_scans_past_an_incomplete_tail_to_the_last_valid_message(
     tmp_path: Path,
 ) -> None:
+    """ADR-016 is defended by verifying that restart scans past an incomplete tail to the last
+    valid message; this prevents drift in the private append-only journal contract.
+    """
     journal = TranscriptJournal(tmp_path / "transcripts")
     journal.append_message(
         "thread-1",
@@ -358,6 +379,9 @@ def test_restart_scans_past_an_incomplete_tail_to_the_last_valid_message(
 
 
 def test_non_tail_revisions_do_not_move_restart_continuity_backward(tmp_path: Path) -> None:
+    """ADR-016 is defended by verifying that non tail revisions do not move restart continuity
+    backward; this prevents drift in the private append-only journal contract.
+    """
     journal = TranscriptJournal(tmp_path / "transcripts")
     for number in range(1, 5):
         journal.append_message(
@@ -384,6 +408,9 @@ def test_non_tail_revisions_do_not_move_restart_continuity_backward(tmp_path: Pa
 
 
 def test_complete_record_is_fsynced_before_append_returns(tmp_path: Path, monkeypatch) -> None:
+    """ADR-016 is defended by verifying that complete record is fsynced before append returns;
+    this prevents drift in the private append-only journal contract.
+    """
     journal = TranscriptJournal(tmp_path / "transcripts")
     real_fsync = transcript_module.os.fsync
     synced: list[int] = []
@@ -404,6 +431,9 @@ def test_complete_record_is_fsynced_before_append_returns(tmp_path: Path, monkey
 
 @pytest.mark.asyncio
 async def test_prompt_is_captured_before_model_resolution_failure(tmp_path: Path) -> None:
+    """ADR-016 is defended by verifying that prompt is captured before model resolution
+    failure; this prevents drift in the private append-only journal contract.
+    """
     journal = TranscriptJournal(tmp_path / "transcripts")
     loop = RunLoop(
         RecordingRunner(),
@@ -431,6 +461,9 @@ async def test_capture_failure_poison_stops_unjournaled_work(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
+    """ADR-016 is defended by verifying that capture failure poison stops unjournaled work;
+    this prevents drift in the private append-only journal contract.
+    """
     journal = TranscriptJournal(tmp_path / "transcripts")
 
     def fail_event(thread_id: str, envelope: Envelope) -> None:
@@ -466,6 +499,9 @@ async def test_in_run_capture_poison_cannot_be_caught_to_start_queued_work(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
+    """ADR-016 is defended by verifying that in run capture poison cannot be caught to start
+    queued work; this prevents drift in the private append-only journal contract.
+    """
     journal = TranscriptJournal(tmp_path / "transcripts")
     append_event = journal.append_event
     failed = False
@@ -508,6 +544,9 @@ async def test_in_run_capture_poison_cannot_be_caught_to_start_queued_work(
 
 @pytest.mark.asyncio
 async def test_same_thread_resolution_is_serialized_in_capture_order(tmp_path: Path) -> None:
+    """ADR-016 is defended by verifying that same thread resolution is serialized in capture
+    order; this prevents drift in the private append-only journal contract.
+    """
     journal = TranscriptJournal(tmp_path / "transcripts")
     resolver = BlockingFirstResolver()
     runner = PromptOrderRunner()
@@ -558,6 +597,9 @@ async def test_same_thread_resolution_is_serialized_in_capture_order(tmp_path: P
 
 @pytest.mark.asyncio
 async def test_fifo_capture_has_no_dangling_parent_links(tmp_path: Path) -> None:
+    """ADR-016 is defended by verifying that fifo capture has no dangling parent links; this
+    prevents drift in the private append-only journal contract.
+    """
     journal = TranscriptJournal(tmp_path / "transcripts")
     runner = BlockingRunner()
     loop = RunLoop(runner, factory(Ids()), transcript_journal=journal)
@@ -615,6 +657,9 @@ async def test_fifo_capture_has_no_dangling_parent_links(tmp_path: Path) -> None
 
 @pytest.mark.asyncio
 async def test_capture_does_not_depend_on_a_live_subscriber(tmp_path: Path) -> None:
+    """ADR-016 is defended by verifying that capture does not depend on a live subscriber; this
+    prevents drift in the private append-only journal contract.
+    """
     thread_id = "detached-thread"
     journal = TranscriptJournal(tmp_path / "transcripts")
     loop = RunLoop(
@@ -651,6 +696,10 @@ async def test_capture_does_not_depend_on_a_live_subscriber(tmp_path: Path) -> N
 async def test_run_loop_captures_messages_events_model_change_without_serving_on_restart(
     tmp_path: Path,
 ) -> None:
+    """ADR-016 is defended by verifying that run loop captures messages events model change
+    without serving on restart; this prevents drift in the private append-only journal
+    contract.
+    """
     thread_id = "thread/with/path-separators"
     prompt_id = ulid(1)
     command_prompt_id = ulid(2)

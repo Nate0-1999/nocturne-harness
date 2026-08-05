@@ -91,7 +91,7 @@ async def test_unwritable_spool_retains_degraded_memory_batch(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """B.6 rule 11: even a disk-spool failure keeps accounting fail-open and visible."""
+    """SPEC B.6 rule 11 keeps accounting fail-open and visible after disk-spool failure."""
 
     queue = SpendReceiptQueue(tmp_path / "receipt-queue", clock=lambda: NOW)
 

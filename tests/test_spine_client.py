@@ -85,6 +85,9 @@ def scored_card_payload() -> dict[str, object]:
 
 
 def test_client_exposes_all_spine_routes() -> None:
+    """SPEC C.4 is defended by verifying that client exposes all spine routes; this prevents
+    drift in the typed Harness-Spine client contract.
+    """
     methods = {
         name
         for name, value in inspect.getmembers(SpineClient, inspect.iscoroutinefunction)
@@ -101,12 +104,12 @@ def test_client_exposes_all_spine_routes() -> None:
         "list_memories",
         "search",
         "record_spend_events",
-            "vitals_snapshot",
-            "thread_vitals_snapshot",
-            "memory_graph",
-            "scorer_console",
-            "create_scorer_config",
-            "activate_scorer_config",
+        "vitals_snapshot",
+        "thread_vitals_snapshot",
+        "memory_graph",
+        "scorer_console",
+        "create_scorer_config",
+        "activate_scorer_config",
         "create_extraction",
         "create_seed",
         "approval_queue",
@@ -116,6 +119,9 @@ def test_client_exposes_all_spine_routes() -> None:
 
 
 def test_prepare_request_mirrors_named_c4_fields() -> None:
+    """SPEC C.4 is defended by verifying that prepare request mirrors named c4 fields; this
+    prevents drift in the typed Harness-Spine client contract.
+    """
     request = InjectPrepareRequest(
         thread_id="12345678-1234-5678-1234-567812345678",
         agent_id="agent-1",
@@ -136,6 +142,9 @@ def test_prepare_request_mirrors_named_c4_fields() -> None:
 
 
 def test_memory_unit_is_the_shared_c4_shape() -> None:
+    """SPEC C.4 is defended by verifying that memory unit is the shared c4 shape; this prevents
+    drift in the typed Harness-Spine client contract.
+    """
     unit = MemoryUnit.model_validate(memory_unit_payload())
 
     assert set(unit.model_dump()) == {
@@ -161,6 +170,9 @@ def test_memory_unit_is_the_shared_c4_shape() -> None:
 
 
 def test_dedup_and_search_cards_require_nullable_features_and_rank() -> None:
+    """SPEC C.4 is defended by verifying that dedup and search cards require nullable features
+    and rank; this prevents drift in the typed Harness-Spine client contract.
+    """
     card = MemoryCard.model_validate(similarity_card_payload())
     search = SearchResponse(results=[similarity_card_payload()])
 
@@ -175,6 +187,9 @@ def test_dedup_and_search_cards_require_nullable_features_and_rank() -> None:
 
 
 def test_prepare_cards_require_concrete_features_and_rank() -> None:
+    """SPEC C.4 is defended by verifying that prepare cards require concrete features and rank;
+    this prevents drift in the typed Harness-Spine client contract.
+    """
     response = InjectPrepareResponse(
         injection_id="22345678-1234-5678-1234-567812345678",
         snapshot_ts="2026-07-17T12:00:00Z",
@@ -198,6 +213,9 @@ def test_prepare_cards_require_concrete_features_and_rank() -> None:
 
 
 def test_commit_response_includes_current_wrong_units() -> None:
+    """SPEC C.4 is defended by verifying that commit response includes current wrong units;
+    this prevents drift in the typed Harness-Spine client contract.
+    """
     response = InjectCommitResponse(
         final_block="<memory_system></memory_system>",
         wrong_removed=[memory_unit_payload()],
@@ -207,6 +225,9 @@ def test_commit_response_includes_current_wrong_units() -> None:
 
 
 def test_create_request_has_machine_id_and_similar_band_force() -> None:
+    """SPEC C.4 is defended by verifying that create request has machine id and similar band
+    force; this prevents drift in the typed Harness-Spine client contract.
+    """
     request = CreateMemoryRequest(
         principal_id="principal-1",
         label="Editor preference",
@@ -223,6 +244,9 @@ def test_create_request_has_machine_id_and_similar_band_force() -> None:
 
 
 def test_create_success_and_similar_bodies_use_v15_shapes() -> None:
+    """SPEC C.4 is defended by verifying that create success and similar bodies use v15 shapes;
+    this prevents drift in the typed Harness-Spine client contract.
+    """
     created = CreatedMemoryResponse(created=memory_unit_payload())
     similar = SimilarMemoriesResponse(created=None, similar=[similarity_card_payload()])
 
@@ -231,6 +255,9 @@ def test_create_success_and_similar_bodies_use_v15_shapes() -> None:
 
 
 def test_create_conflicts_cover_duplicate_and_active_label() -> None:
+    """SPEC C.4 is defended by verifying that create conflicts cover duplicate and active
+    label; this prevents drift in the typed Harness-Spine client contract.
+    """
     duplicate = DuplicateMemoryConflict(duplicate_of=similarity_card_payload())
     label = LabelConflict(
         label_conflict={
@@ -247,6 +274,9 @@ def test_create_conflicts_cover_duplicate_and_active_label() -> None:
 
 
 def test_patch_request_and_exact_success_conflict_bodies() -> None:
+    """SPEC C.4 is defended by verifying that patch request and exact success conflict bodies;
+    this prevents drift in the typed Harness-Spine client contract.
+    """
     request = PatchMemoryRequest(
         expected_revision=1,
         body="The user strongly prefers tabs.",
@@ -273,6 +303,9 @@ def test_patch_request_and_exact_success_conflict_bodies() -> None:
 
 
 def test_list_params_and_response_mirror_stable_paging_contract() -> None:
+    """SPEC C.4 is defended by verifying that list params and response mirror stable paging
+    contract; this prevents drift in the typed Harness-Spine client contract.
+    """
     params = ListMemoriesParams()
     response = PagedMemoryListResponse(
         items=[memory_unit_payload()], total=1, limit=params.limit, offset=params.offset
@@ -296,6 +329,9 @@ def test_list_params_and_response_mirror_stable_paging_contract() -> None:
 
 
 def test_contract_models_reject_unspecified_fields() -> None:
+    """SPEC C.4 is defended by verifying that contract models reject unspecified fields; this
+    prevents drift in the typed Harness-Spine client contract.
+    """
     raw = deepcopy(memory_unit_payload())
     raw["embedding"] = [0.0]
 
@@ -304,6 +340,9 @@ def test_contract_models_reject_unspecified_fields() -> None:
 
 
 def test_search_default_is_literal_c4_value() -> None:
+    """SPEC C.4 is defended by verifying that search default is literal c4 value; this prevents
+    drift in the typed Harness-Spine client contract.
+    """
     request = SearchRequest(principal_id="principal-1", query="tabs")
 
     assert request.k == 10
@@ -315,6 +354,9 @@ def test_search_default_is_literal_c4_value() -> None:
 
 
 def test_prepare_requires_positive_model_context() -> None:
+    """SPEC C.4 is defended by verifying that prepare requires positive model context; this
+    prevents drift in the typed Harness-Spine client contract.
+    """
     for invalid in (0, -1):
         with pytest.raises(ValidationError):
             InjectPrepareRequest(

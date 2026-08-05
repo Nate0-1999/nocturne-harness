@@ -168,6 +168,9 @@ def test_resolve_model_uses_settings_key_not_ambient_environment(
     environment_name: str,
     provider_name: str,
 ) -> None:
+    """ADR-013 is defended by verifying that resolve model uses settings key not ambient
+    environment; this prevents drift in the agent composition and explicit model boundary.
+    """
     monkeypatch.setenv(environment_name, "ambient-key-must-not-win")
     resolved = resolve_model(model_name, settings(**{key_field: "settings-owned-key"}))
 
@@ -189,6 +192,10 @@ def test_resolve_model_uses_settings_key_not_ambient_environment(
 def test_resolve_model_rejects_missing_settings_key_even_if_ambient_key_exists(
     monkeypatch, model_name: str, environment_name: str
 ) -> None:
+    """ADR-013 is defended by verifying that resolve model rejects missing settings key even if
+    ambient key exists; this prevents drift in the agent composition and explicit model
+    boundary.
+    """
     monkeypatch.setenv(environment_name, "ambient-key-must-not-win")
 
     with pytest.raises(ModelConfigurationError, match=f"{environment_name} is required"):
@@ -198,6 +205,10 @@ def test_resolve_model_rejects_missing_settings_key_even_if_ambient_key_exists(
 def test_resolve_model_uses_pydantic_provider_registry_for_other_model_strings(
     monkeypatch,
 ) -> None:
+    """ADR-013 is defended by verifying that resolve model uses pydantic provider registry for
+    other model strings; this prevents drift in the agent composition and explicit model
+    boundary.
+    """
     monkeypatch.setenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
 
     resolved = resolve_model("ollama:llama3.2", settings())
@@ -207,6 +218,9 @@ def test_resolve_model_uses_pydantic_provider_registry_for_other_model_strings(
 
 
 def test_resolve_model_rejects_a_string_unknown_to_pydantic_ai() -> None:
+    """ADR-013 is defended by verifying that resolve model rejects a string unknown to pydantic
+    ai; this prevents drift in the agent composition and explicit model boundary.
+    """
     with pytest.raises(ModelConfigurationError, match="Unknown provider"):
         resolve_model("not-a-provider:model", settings())
 
@@ -214,6 +228,11 @@ def test_resolve_model_rejects_a_string_unknown_to_pydantic_ai() -> None:
 def test_resolve_model_normalizes_a_missing_optional_provider_dependency(
     monkeypatch,
 ) -> None:
+    """ADR-013 is defended by verifying that resolve model normalizes a missing optional
+    provider dependency; this prevents drift in the agent composition and explicit model
+    boundary.
+    """
+
     def missing_provider_dependency(name: str) -> None:
         raise ImportError(f"missing optional dependency for {name}")
 
@@ -227,6 +246,9 @@ def test_resolve_model_normalizes_a_missing_optional_provider_dependency(
 
 
 def test_agent_lazily_resolves_only_the_selected_model() -> None:
+    """ADR-013 is defended by verifying that agent lazily resolves only the selected model;
+    this prevents drift in the agent composition and explicit model boundary.
+    """
     agent = HarnessAgent(
         settings(
             chat_model="anthropic:claude-sonnet-4-6",
@@ -242,6 +264,9 @@ def test_agent_lazily_resolves_only_the_selected_model() -> None:
 
 @pytest.mark.asyncio
 async def test_chat_returns_output_and_reusable_full_history_with_exact_limits() -> None:
+    """ADR-013 is defended by verifying that chat returns output and reusable full history with
+    exact limits; this prevents drift in the agent composition and explicit model boundary.
+    """
     calls: list[tuple[list[ModelMessage], AgentInfo]] = []
 
     async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
@@ -278,6 +303,9 @@ async def test_chat_returns_output_and_reusable_full_history_with_exact_limits()
 
 @pytest.mark.asyncio
 async def test_label_agent_is_separate_and_has_no_tools() -> None:
+    """ADR-013 is defended by verifying that label agent is separate and has no tools; this
+    prevents drift in the agent composition and explicit model boundary.
+    """
     calls: list[tuple[list[ModelMessage], AgentInfo]] = []
     model = remember_model("Short label", ["short", "label"], calls)
     agent = HarnessAgent(settings(), model=model)
@@ -303,6 +331,10 @@ async def test_label_agent_is_separate_and_has_no_tools() -> None:
 async def test_empty_remember_command_is_visible_and_does_not_call_model_or_spine(
     command: str,
 ) -> None:
+    """ADR-013 is defended by verifying that empty remember command is visible and does not
+    call model or spine; this prevents drift in the agent composition and explicit model
+    boundary.
+    """
     model = TestModel(call_tools=[], custom_output_text="must not run")
     spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
     agent = HarnessAgent(settings(), model=model)
@@ -319,6 +351,10 @@ async def test_empty_remember_command_is_visible_and_does_not_call_model_or_spin
 
 @pytest.mark.asyncio
 async def test_remember_uses_selected_model_once_without_tools_and_maps_global_user_fact() -> None:
+    """ADR-013 is defended by verifying that remember uses selected model once without tools
+    and maps global user fact; this prevents drift in the agent composition and explicit
+    model boundary.
+    """
     default_model = TestModel(call_tools=[], custom_output_text="wrong model")
     selected_calls: list[tuple[list[ModelMessage], AgentInfo]] = []
     selected_model = remember_model(
@@ -382,6 +418,9 @@ async def test_remember_uses_selected_model_once_without_tools_and_maps_global_u
 async def test_invalid_generated_label_is_rejected_without_calling_spine(
     label: str, expected: str
 ) -> None:
+    """ADR-013 is defended by verifying that invalid generated label is rejected without
+    calling spine; this prevents drift in the agent composition and explicit model boundary.
+    """
     calls: list[tuple[list[ModelMessage], AgentInfo]] = []
     spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
     agent = HarnessAgent(
@@ -411,6 +450,9 @@ async def test_invalid_generated_label_is_rejected_without_calling_spine(
 async def test_invalid_generated_keywords_are_rejected_without_calling_spine(
     keywords: list[str],
 ) -> None:
+    """ADR-013 is defended by verifying that invalid generated keywords are rejected without
+    calling spine; this prevents drift in the agent composition and explicit model boundary.
+    """
     calls: list[tuple[list[ModelMessage], AgentInfo]] = []
     spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
     agent = HarnessAgent(
@@ -468,6 +510,9 @@ async def test_remember_failures_are_truthful_visible_non_success(
     outcome: CreatedMemoryResponse | SimilarMemoriesResponse | SpineClientError,
     expected: str,
 ) -> None:
+    """ADR-013 is defended by verifying that remember failures are truthful visible non
+    success; this prevents drift in the agent composition and explicit model boundary.
+    """
     spine = FakeSpine(outcome)
     agent = HarnessAgent(
         settings(),
@@ -493,6 +538,9 @@ async def test_remember_failures_are_truthful_visible_non_success(
     ["/remembered", "/remembering this", "/remember: this", " /remember this", "/Remember this"],
 )
 async def test_near_miss_remember_commands_are_ordinary_chat(ordinary_text: str) -> None:
+    """ADR-013 is defended by verifying that near miss remember commands are ordinary chat;
+    this prevents drift in the agent composition and explicit model boundary.
+    """
     calls: list[tuple[list[ModelMessage], AgentInfo]] = []
     spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
     agent = HarnessAgent(settings(), model=response_model("ordinary chat", calls))

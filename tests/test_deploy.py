@@ -357,6 +357,9 @@ def source_provider(
 
 
 def test_exact_armed_plan_is_all_noop() -> None:
+    """ADR-019 is defended by verifying that exact armed plan is all noop; this prevents drift
+    in the fixed-project deploy and drift-safety contract.
+    """
     plan = build_plan(observed())
 
     assert len(plan.steps) == 20
@@ -366,6 +369,10 @@ def test_exact_armed_plan_is_all_noop() -> None:
 
 
 def test_lawful_absent_managed_states_have_only_create_or_forward_update() -> None:
+    """ADR-019 is defended by verifying that lawful absent managed states have only create or
+    forward update; this prevents drift in the fixed-project deploy and drift-safety
+    contract.
+    """
     plan = build_plan(absent_managed())
     expected_updates = {
         DeployStage.SQL_PROTECTION,
@@ -389,6 +396,9 @@ def test_lawful_absent_managed_states_have_only_create_or_forward_update() -> No
     [(field, stage) for stage, field in STAGE_FIELDS.items()],
 )
 def test_every_managed_drift_blocks(field: str, stage: DeployStage) -> None:
+    """ADR-019 is defended by verifying that every managed drift blocks; this prevents drift in
+    the fixed-project deploy and drift-safety contract.
+    """
     plan = build_plan(observed(**{field: ResourceState.DRIFTED}))
 
     assert plan.blocked
@@ -408,6 +418,9 @@ def test_every_managed_drift_blocks(field: str, stage: DeployStage) -> None:
 def test_every_foundation_failure_blocks_all_managed_steps(
     updates: dict[str, object], foundation_stage: DeployStage
 ) -> None:
+    """ADR-019 is defended by verifying that every foundation failure blocks all managed steps;
+    this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     plan = build_plan(observed(**updates))
 
     assert plan.step(foundation_stage).action is PlanAction.BLOCKED
@@ -427,6 +440,9 @@ def test_every_foundation_failure_blocks_all_managed_steps(
     ],
 )
 def test_non_updatable_resources_block_an_update(field: str, stage: DeployStage) -> None:
+    """ADR-019 is defended by verifying that non updatable resources block an update; this
+    prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     plan = build_plan(observed(**{field: ResourceState.UPDATABLE}))
 
     assert plan.step(stage).action is PlanAction.BLOCKED
@@ -443,6 +459,9 @@ def test_non_updatable_resources_block_an_update(field: str, stage: DeployStage)
 def test_database_user_and_url_secret_partial_topologies_block(
     updates: dict[str, object],
 ) -> None:
+    """ADR-019 is defended by verifying that database user and url secret partial topologies
+    block; this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     plan = build_plan(observed(**updates))
 
     assert plan.blocked
@@ -451,6 +470,9 @@ def test_database_user_and_url_secret_partial_topologies_block(
 
 
 def test_dry_run_only_observes_and_never_materializes_or_mutates() -> None:
+    """ADR-019 is defended by verifying that dry run only observes and never materializes or
+    mutates; this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     backend = FakeBackend(absent_managed(breaker=BreakerState.ABSENT))
 
     def forbidden_source() -> Iterator[PackagedDeploySource]:
@@ -475,6 +497,9 @@ def test_dry_run_only_observes_and_never_materializes_or_mutates() -> None:
 
 
 def test_apply_converges_once_then_second_apply_has_zero_mutations(tmp_path: Path) -> None:
+    """ADR-019 is defended by verifying that apply converges once then second apply has zero
+    mutations; this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     backend = FakeBackend(absent_managed())
     source_calls: list[PackagedDeploySource] = []
 
@@ -513,6 +538,9 @@ def test_apply_converges_once_then_second_apply_has_zero_mutations(tmp_path: Pat
 
 
 def test_absent_breaker_requires_tty_before_any_d1_work() -> None:
+    """ADR-019 is defended by verifying that absent breaker requires tty before any d1 work;
+    this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     backend = FakeBackend(absent_managed(breaker=BreakerState.ABSENT))
 
     with pytest.raises(HumanTerminalRequired, match="real interactive"):
@@ -526,6 +554,10 @@ def test_absent_breaker_requires_tty_before_any_d1_work() -> None:
 def test_absent_breaker_is_armed_only_through_packaged_source_and_tty(
     tmp_path: Path,
 ) -> None:
+    """ADR-019 is defended by verifying that absent breaker is armed only through packaged
+    source and tty; this prevents drift in the fixed-project deploy and drift-safety
+    contract.
+    """
     backend = FakeBackend(observed(breaker=BreakerState.ABSENT))
     source_calls: list[PackagedDeploySource] = []
 
@@ -547,6 +579,9 @@ def test_absent_breaker_is_armed_only_through_packaged_source_and_tty(
 
 
 def test_partial_breaker_blocks_without_source_or_mutation() -> None:
+    """ADR-019 is defended by verifying that partial breaker blocks without source or mutation;
+    this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     backend = FakeBackend(observed(breaker=BreakerState.PARTIAL_OR_DRIFTED))
 
     with pytest.raises(DeployBlocked) as error:
@@ -559,6 +594,9 @@ def test_partial_breaker_blocks_without_source_or_mutation() -> None:
 
 
 def test_exact_canonical_d2_evidence_is_armed() -> None:
+    """ADR-019 is defended by verifying that exact canonical d2 evidence is armed; this
+    prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     assert breaker_state(exact_breaker_fixture()) is BreakerState.ARMED
 
 
@@ -855,10 +893,16 @@ def test_exact_canonical_d2_evidence_is_armed() -> None:
 def test_every_canonical_d2_deviation_is_partial_or_drifted(
     path: tuple[str | int, ...], value: object
 ) -> None:
+    """ADR-019 is defended by verifying that every canonical d2 deviation is partial or
+    drifted; this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     assert breaker_state(mutate_fixture(path, value)) is BreakerState.PARTIAL_OR_DRIFTED
 
 
 def test_untrusted_billing_account_controller_blocks_armed_state() -> None:
+    """ADR-019 is defended by verifying that untrusted billing account controller blocks armed
+    state; this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     fixture = exact_breaker_fixture()
     fixture["billing_policy"] = {
         "bindings": [
@@ -924,6 +968,10 @@ def exact_cloud_run_service(backend: GcloudDeployBackend) -> dict[str, object]:
 
 
 def test_cloud_run_is_exact_only_with_sole_unconditional_public_invoker() -> None:
+    """ADR-019 is defended by verifying that cloud run is exact only with sole unconditional
+    public invoker; this prevents drift in the fixed-project deploy and drift-safety
+    contract.
+    """
     backend = GcloudDeployBackend(image_tag="0.1.0", openrouter_key="fixture")
     service = exact_cloud_run_service(backend)
     exact_policy = {"bindings": [{"role": "roles/run.invoker", "members": ["allUsers"]}]}
@@ -964,6 +1012,9 @@ def test_cloud_run_is_exact_only_with_sole_unconditional_public_invoker() -> Non
 def test_cloud_run_extra_or_conditional_public_iam_is_drifted(
     policy: dict[str, object],
 ) -> None:
+    """ADR-019 is defended by verifying that cloud run extra or conditional public iam is
+    drifted; this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     backend = GcloudDeployBackend(image_tag="0.1.0", openrouter_key="fixture")
 
     state = backend._cloud_run_state(exact_cloud_run_service(backend), policy)
@@ -971,6 +1022,10 @@ def test_cloud_run_extra_or_conditional_public_iam_is_drifted(
 
 
 def test_artifact_image_listing_uses_supported_fully_qualified_package_argv() -> None:
+    """ADR-019 is defended by verifying that artifact image listing uses supported fully
+    qualified package argv; this prevents drift in the fixed-project deploy and drift-safety
+    contract.
+    """
     calls: list[tuple[str, ...]] = []
 
     def runner(argv: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
@@ -1086,10 +1141,16 @@ def sql_user_state(users: list[dict[str, object]]) -> ResourceState:
 def test_sql_user_identity_requires_one_builtin_user(
     users: list[dict[str, object]], expected: ResourceState
 ) -> None:
+    """ADR-019 is defended by verifying that sql user identity requires one builtin user; this
+    prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     assert sql_user_state(users) is expected
 
 
 def test_database_url_round_trips_only_the_exact_cloud_sql_socket_shape() -> None:
+    """ADR-019 is defended by verifying that database url round trips only the exact cloud sql
+    socket shape; this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     producer = GcloudDeployBackend(image_tag="0.1.0", openrouter_key="fixture")
     producer._database_password = "p@ss/word"
     database_url = producer._database_url()
@@ -1124,6 +1185,9 @@ def test_database_url_round_trips_only_the_exact_cloud_sql_socket_shape() -> Non
 def test_database_url_rejects_remote_port_extra_query_and_fragment(
     database_url: str,
 ) -> None:
+    """ADR-019 is defended by verifying that database url rejects remote port extra query and
+    fragment; this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     backend = GcloudDeployBackend(image_tag="0.1.0", openrouter_key="fixture")
 
     with pytest.raises(DeployError, match="unexpected identity"):
@@ -1133,6 +1197,9 @@ def test_database_url_rejects_remote_port_extra_query_and_fragment(
 def test_packaged_source_materializes_separate_complete_trees(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """ADR-019 is defended by verifying that packaged source materializes separate complete
+    trees; this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     from spine import deploy_resources
 
     resources = tmp_path / "resources"
@@ -1166,6 +1233,10 @@ def test_packaged_source_materializes_separate_complete_trees(
 def test_packaged_breaker_uses_exact_argv_without_shell_or_confirmation_synthesis(
     tmp_path: Path,
 ) -> None:
+    """ADR-019 is defended by verifying that packaged breaker uses exact argv without shell or
+    confirmation synthesis; this prevents drift in the fixed-project deploy and drift-safety
+    contract.
+    """
     script = tmp_path / "deploy.sh"
     script.write_text("#!/bin/sh\n", encoding="utf-8")
     calls: list[tuple[tuple[str, ...], dict[str, object]]] = []
@@ -1196,6 +1267,9 @@ def test_packaged_breaker_uses_exact_argv_without_shell_or_confirmation_synthesi
 def test_build_and_execute_commands_stay_inside_the_argv_fence(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """ADR-019 is defended by verifying that build and execute commands stay inside the argv
+    fence; this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     openrouter_key = "sk-or-v1-super-secret"
     access_token = "registry-access-token"
     calls: list[tuple[tuple[str, ...], dict[str, object]]] = []
@@ -1247,11 +1321,17 @@ def test_build_and_execute_commands_stay_inside_the_argv_fence(
 
 @pytest.mark.parametrize("image_ref", ["", " ", "repo/image:tag with-space", "\ttag"])
 def test_local_build_rejects_non_single_argv_image_refs(image_ref: str) -> None:
+    """ADR-019 is defended by verifying that local build rejects non single argv image refs;
+    this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     with pytest.raises(ValueError):
         local_image_build_argv(Path("/source"), image_ref)
 
 
 def test_execute_refuses_non_mutation_and_unknown_stages() -> None:
+    """ADR-019 is defended by verifying that execute refuses non mutation and unknown stages;
+    this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     backend = GcloudDeployBackend(image_tag="0.1.0", openrouter_key="secret")
 
     with pytest.raises(DeployError, match="non-D1"):
@@ -1269,6 +1349,9 @@ def test_execute_refuses_non_mutation_and_unknown_stages() -> None:
 
 
 def test_deploy_target_accepts_only_matching_canonical_identifiers() -> None:
+    """ADR-019 is defended by verifying that deploy target accepts only matching canonical
+    identifiers; this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     assert TARGET.breaker_confirmation == (
         "DETACH BILLING n8-memory-palace "
         "billingAccounts/ABCDEF-123456-789ABC/budgets/nocturne-100 "
@@ -1289,6 +1372,9 @@ def test_deploy_target_accepts_only_matching_canonical_identifiers() -> None:
     ],
 )
 def test_deploy_target_rejects_unsafe_or_mismatched_identifiers(account: str, budget: str) -> None:
+    """ADR-019 is defended by verifying that deploy target rejects unsafe or mismatched
+    identifiers; this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     with pytest.raises(ValueError):
         DeployTarget(account, budget)
 
@@ -1305,6 +1391,9 @@ def test_deploy_target_rejects_unsafe_or_mismatched_identifiers(account: str, bu
 def test_preflight_blocks_every_credential_override_before_subprocesses(
     variable: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """ADR-019 is defended by verifying that preflight blocks every credential override before
+    subprocesses; this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     forbidden = (
         "CLOUDSDK_AUTH_ACCESS_TOKEN",
         "CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE",
@@ -1328,6 +1417,9 @@ def test_preflight_blocks_every_credential_override_before_subprocesses(
 
 
 def test_subprocess_failure_redacts_secret_input_and_cloud_output() -> None:
+    """ADR-019 is defended by verifying that subprocess failure redacts secret input and cloud
+    output; this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
     secret = "sk-or-v1-do-not-print"
 
     def runner(argv: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
@@ -1354,6 +1446,10 @@ def test_subprocess_failure_redacts_secret_input_and_cloud_output() -> None:
 
 
 def test_missing_command_is_normalized_without_leaking_os_error() -> None:
+    """ADR-019 is defended by verifying that missing command is normalized without leaking os
+    error; this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
+
     def runner(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
         raise FileNotFoundError("sensitive host path")
 

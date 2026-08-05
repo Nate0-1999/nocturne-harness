@@ -18,4 +18,7 @@ def test_model_command_parses_only_the_exact_direct_command(
     text: str,
     expected: str | None,
 ) -> None:
+    """A-021 is defended by verifying that model command parses only the exact direct command;
+    this prevents drift in the explicit model command grammar.
+    """
     assert model_command_text(text) == expected

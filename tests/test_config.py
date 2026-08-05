@@ -5,6 +5,9 @@ from harness.config import HarnessSettings
 
 
 def test_c5_defaults_are_local_minimax_with_bounded_runs_and_spine(monkeypatch) -> None:
+    """SPEC C.5 is defended by verifying that c5 defaults are local minimax with bounded runs
+    and spine; this prevents drift in the local runtime configuration contract.
+    """
     for name in (
         "CHAT_MODEL",
         "MODEL_POLICY_CHAT",
@@ -40,6 +43,9 @@ def test_c5_defaults_are_local_minimax_with_bounded_runs_and_spine(monkeypatch) 
 
 
 def test_settings_accept_environment_model_spine_and_limit_overrides(monkeypatch) -> None:
+    """SPEC C.5 is defended by verifying that settings accept environment model spine and limit
+    overrides; this prevents drift in the local runtime configuration contract.
+    """
     monkeypatch.setenv("CHAT_MODEL", "anthropic:claude-sonnet-4-6")
     monkeypatch.setenv("MODEL_POLICY_CHAT", "elbow")
     monkeypatch.setenv("SPINE_URL", "https://spine.example.test")
@@ -69,18 +75,27 @@ def test_settings_accept_environment_model_spine_and_limit_overrides(monkeypatch
     ["model_context_tokens", "run_request_limit", "run_total_tokens_limit", "label_max"],
 )
 def test_positive_configured_limits_are_enforced(field: str) -> None:
+    """SPEC C.5 is defended by verifying that positive configured limits are enforced; this
+    prevents drift in the local runtime configuration contract.
+    """
     with pytest.raises(ValidationError):
         HarnessSettings(_env_file=None, **{field: 0})
 
 
 @pytest.mark.parametrize("value", [True, 1.5])
 def test_model_context_tokens_requires_a_real_integer(value: object) -> None:
+    """SPEC C.5 is defended by verifying that model context tokens requires a real integer;
+    this prevents drift in the local runtime configuration contract.
+    """
     with pytest.raises(ValidationError):
         HarnessSettings(_env_file=None, model_context_tokens=value)
 
 
 @pytest.mark.parametrize("field", ["principal_id", "machine_id", "agent_id"])
 def test_configured_runtime_identities_cannot_be_empty(field: str) -> None:
+    """SPEC C.5 is defended by verifying that configured runtime identities cannot be empty;
+    this prevents drift in the local runtime configuration contract.
+    """
     with pytest.raises(ValidationError):
         HarnessSettings(_env_file=None, **{field: ""})
 
@@ -90,11 +105,17 @@ def test_configured_runtime_identities_cannot_be_empty(field: str) -> None:
     ["", " max", "MAX", "pinned:", "slope:0", "floor:NaN", "budget:10"],
 )
 def test_model_policy_chat_rejects_values_outside_a021(value: str) -> None:
+    """SPEC C.5 is defended by verifying that model policy chat rejects values outside a021;
+    this prevents drift in the local runtime configuration contract.
+    """
     with pytest.raises(ValidationError):
         HarnessSettings(_env_file=None, model_policy_chat=value)
 
 
 def test_superseded_model_policy_fields_do_not_exist() -> None:
+    """SPEC C.5 is defended by verifying that superseded model policy fields do not exist; this
+    prevents drift in the local runtime configuration contract.
+    """
     settings = HarnessSettings(_env_file=None)
 
     assert not hasattr(settings, "model_intelligence_floor")

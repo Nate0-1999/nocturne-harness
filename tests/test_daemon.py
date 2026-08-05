@@ -324,6 +324,9 @@ class OverflowOnAttachLoop:
 
 
 def test_serves_built_web_static(tmp_path: Path) -> None:
+    """SPEC C.7 is defended by verifying that serves built web static; this prevents drift in
+    the daemon transport and event-loop contract.
+    """
     (tmp_path / "index.html").write_text("<h1>Harness shell</h1>", encoding="utf-8")
     client = TestClient(create_app(tmp_path))
 
@@ -334,6 +337,9 @@ def test_serves_built_web_static(tmp_path: Path) -> None:
 
 
 def test_composed_http_routes_precede_the_static_mount(tmp_path: Path) -> None:
+    """SPEC C.7 is defended by verifying that composed http routes precede the static mount;
+    this prevents drift in the daemon transport and event-loop contract.
+    """
     (tmp_path / "index.html").write_text("<h1>Harness shell</h1>", encoding="utf-8")
 
     def configure(app: FastAPI) -> None:
@@ -351,6 +357,9 @@ def test_composed_http_routes_precede_the_static_mount(tmp_path: Path) -> None:
 
 
 def test_static_shell_and_rack_frame_have_distinct_frame_policies(tmp_path: Path) -> None:
+    """SPEC C.7 is defended by verifying that static shell and rack frame have distinct frame
+    policies; this prevents drift in the daemon transport and event-loop contract.
+    """
     (tmp_path / "index.html").write_text("<h1>Harness shell</h1>", encoding="utf-8")
     client = TestClient(create_app(tmp_path))
 
@@ -381,6 +390,9 @@ def test_static_shell_and_rack_frame_have_distinct_frame_policies(tmp_path: Path
 
 
 def test_rack_vitals_query_uses_the_injected_reader_before_static_mount(tmp_path: Path) -> None:
+    """SPEC C.7 is defended by verifying that rack vitals query uses the injected reader before
+    static mount; this prevents drift in the daemon transport and event-loop contract.
+    """
     (tmp_path / "index.html").write_text("<h1>Harness shell</h1>", encoding="utf-8")
     calls = 0
 
@@ -404,6 +416,11 @@ def test_rack_vitals_query_uses_the_injected_reader_before_static_mount(tmp_path
 
 
 def test_rack_vitals_query_truthfully_rejects_historical_as_of_without_reading() -> None:
+    """SPEC C.7 is defended by verifying that rack vitals query truthfully rejects historical
+    as of without reading; this prevents drift in the daemon transport and event-loop
+    contract.
+    """
+
     async def must_not_read() -> VitalsSnapshot:
         raise AssertionError("historical query must not read the live snapshot")
 
@@ -424,6 +441,10 @@ def test_rack_vitals_query_truthfully_rejects_historical_as_of_without_reading()
 
 
 def test_unavailable_rack_vitals_returns_503_without_disturbing_chat() -> None:
+    """SPEC C.7 is defended by verifying that unavailable rack vitals returns 503 without
+    disturbing chat; this prevents drift in the daemon transport and event-loop contract.
+    """
+
     async def unavailable() -> VitalsSnapshot:
         raise SpineTransportError
 
@@ -449,6 +470,9 @@ def test_unavailable_rack_vitals_returns_503_without_disturbing_chat() -> None:
 
 
 def test_missing_rack_vitals_reader_is_an_explicit_503() -> None:
+    """SPEC C.7 is defended by verifying that missing rack vitals reader is an explicit 503;
+    this prevents drift in the daemon transport and event-loop contract.
+    """
     response = TestClient(create_app()).get("/v1/rack/query?resource=vitals")
 
     assert response.status_code == 503
@@ -456,6 +480,9 @@ def test_missing_rack_vitals_reader_is_an_explicit_503() -> None:
 
 
 def test_missing_web_build_is_explicit(tmp_path: Path) -> None:
+    """SPEC C.7 is defended by verifying that missing web build is explicit; this prevents
+    drift in the daemon transport and event-loop contract.
+    """
     client = TestClient(create_app(tmp_path))
 
     response = client.get("/")
@@ -506,6 +533,9 @@ def test_dev_app_wires_the_owned_spine_into_the_public_rack_query(tmp_path: Path
 def test_dev_build_uses_locked_install_before_vite_build(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """SPEC C.7 is defended by verifying that dev build uses locked install before vite build;
+    this prevents drift in the daemon transport and event-loop contract.
+    """
     calls: list[tuple[list[str], Path, bool]] = []
 
     def record(command: list[str], *, cwd: Path, check: bool) -> None:
@@ -522,6 +552,9 @@ def test_dev_build_uses_locked_install_before_vite_build(
 
 
 def test_default_prompt_gets_fresh_correlated_error_lifecycle(tmp_path: Path) -> None:
+    """SPEC C.7 is defended by verifying that default prompt gets fresh correlated error
+    lifecycle; this prevents drift in the daemon transport and event-loop contract.
+    """
     client = TestClient(create_app(tmp_path))
 
     with client.websocket_connect("/ws") as websocket:
@@ -558,6 +591,10 @@ def test_dev_app_wires_the_real_streaming_agent_adapter(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """SPEC C.7 is defended by verifying that dev app wires the real streaming agent adapter;
+    this prevents drift in the daemon transport and event-loop contract.
+    """
+
     async def stream(_messages, _info):
         yield "wired response"
 
@@ -622,6 +659,9 @@ def test_dev_app_wires_the_real_streaming_agent_adapter(
 
 
 def test_explicit_pinned_policy_does_not_resolve_unused_chat_model(tmp_path: Path) -> None:
+    """SPEC C.7 is defended by verifying that explicit pinned policy does not resolve unused
+    chat model; this prevents drift in the daemon transport and event-loop contract.
+    """
     settings = HarnessSettings(
         _env_file=None,
         spine_token="test-token",
@@ -646,6 +686,10 @@ def test_explicit_pinned_policy_does_not_resolve_unused_chat_model(tmp_path: Pat
 def test_dev_gate_round_trip_blocks_validates_commits_and_injects_system_block(
     tmp_path: Path,
 ) -> None:
+    """SPEC C.7 is defended by verifying that dev gate round trip blocks validates commits and
+    injects system block; this prevents drift in the daemon transport and event-loop
+    contract.
+    """
     observed_messages = []
 
     async def answer(messages, _info):
@@ -775,6 +819,9 @@ def test_dev_gate_round_trip_blocks_validates_commits_and_injects_system_block(
 def test_dev_panel_remove_updates_shared_context_for_the_next_model_call(
     tmp_path: Path,
 ) -> None:
+    """SPEC C.7 is defended by verifying that dev panel remove updates shared context for the
+    next model call; this prevents drift in the daemon transport and event-loop contract.
+    """
     observed_calls: list[tuple[object, ...]] = []
 
     async def answer(messages, _info):
@@ -883,6 +930,9 @@ def test_dev_panel_remove_updates_shared_context_for_the_next_model_call(
 
 
 def test_unimplemented_known_type_uses_fresh_daemon_error(tmp_path: Path) -> None:
+    """SPEC C.7 is defended by verifying that unimplemented known type uses fresh daemon error;
+    this prevents drift in the daemon transport and event-loop contract.
+    """
     transcript_journal = TranscriptJournal(tmp_path / "transcripts")
     factory = EnvelopeFactory(machine_id="harness-daemon")
     loop = RunLoop(
@@ -909,6 +959,9 @@ def test_unimplemented_known_type_uses_fresh_daemon_error(tmp_path: Path) -> Non
 
 
 def test_ws_custom_route_overrides_known_loop_handler(tmp_path: Path) -> None:
+    """SPEC C.7 is defended by verifying that ws custom route overrides known loop handler;
+    this prevents drift in the daemon transport and event-loop contract.
+    """
     routed: list[MessageType] = []
 
     async def handler(message: Envelope, send: EnvelopeSender) -> None:
@@ -928,6 +981,9 @@ def test_ws_custom_route_overrides_known_loop_handler(tmp_path: Path) -> None:
 
 
 def test_ws_handler_may_stream_multiple_valid_envelopes(tmp_path: Path) -> None:
+    """SPEC C.7 is defended by verifying that ws handler may stream multiple valid envelopes;
+    this prevents drift in the daemon transport and event-loop contract.
+    """
     factory = EnvelopeFactory(machine_id="daemon-test")
 
     async def stream(message: Envelope, send: EnvelopeSender) -> None:
@@ -955,6 +1011,9 @@ def test_ws_handler_may_stream_multiple_valid_envelopes(tmp_path: Path) -> None:
 
 
 def test_ws_live_subscription_overflow_closes_for_snapshot_resync(tmp_path: Path) -> None:
+    """SPEC C.7 is defended by verifying that ws live subscription overflow closes for snapshot
+    resync; this prevents drift in the daemon transport and event-loop contract.
+    """
     client = TestClient(create_app(tmp_path, run_loop=OverflowOnAttachLoop()))  # type: ignore[arg-type]
 
     with client.websocket_connect("/ws") as websocket:
@@ -969,6 +1028,10 @@ def test_ws_outbox_overflow_closes_for_snapshot_resync(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """SPEC C.7 is defended by verifying that ws outbox overflow closes for snapshot resync;
+    this prevents drift in the daemon transport and event-loop contract.
+    """
+
     async def block_json_send(self, data, mode: str = "text") -> None:
         del self, data, mode
         await asyncio.Future()
@@ -1005,6 +1068,9 @@ def test_ws_outbox_overflow_closes_for_snapshot_resync(
 
 
 def test_ws_cancel_midstream_confirms_and_preserves_partial_work(tmp_path: Path) -> None:
+    """SPEC C.7 is defended by verifying that ws cancel midstream confirms and preserves
+    partial work; this prevents drift in the daemon transport and event-loop contract.
+    """
     runner = CancellableRunner()
     client = TestClient(app_with_runner(runner, tmp_path))
 
@@ -1056,6 +1122,9 @@ def test_ws_cancel_midstream_confirms_and_preserves_partial_work(tmp_path: Path)
 def test_ws_duplicate_cancel_while_cleanup_pending_shares_one_confirmation(
     tmp_path: Path,
 ) -> None:
+    """SPEC C.7 is defended by verifying that ws duplicate cancel while cleanup pending shares
+    one confirmation; this prevents drift in the daemon transport and event-loop contract.
+    """
     runner = CancellableRunner(cleanup_delay=0.03)
     client = TestClient(app_with_runner(runner, tmp_path))
 
@@ -1097,6 +1166,9 @@ def test_ws_duplicate_cancel_while_cleanup_pending_shares_one_confirmation(
 
 
 def test_ws_queues_prompt_and_runs_it_once_after_terminal_boundary(tmp_path: Path) -> None:
+    """SPEC C.7 is defended by verifying that ws queues prompt and runs it once after terminal
+    boundary; this prevents drift in the daemon transport and event-loop contract.
+    """
     runner = CancellableRunner()
     client = TestClient(app_with_runner(runner, tmp_path))
 
@@ -1148,6 +1220,9 @@ def test_ws_queues_prompt_and_runs_it_once_after_terminal_boundary(tmp_path: Pat
 def test_ws_reconnect_hydrates_once_from_snapshot_without_delta_replay(
     tmp_path: Path,
 ) -> None:
+    """SPEC C.7 is defended by verifying that ws reconnect hydrates once from snapshot without
+    delta replay; this prevents drift in the daemon transport and event-loop contract.
+    """
     runner = CancellableRunner()
     with TestClient(app_with_runner(runner, tmp_path)) as client:
         with client.websocket_connect("/ws") as first_socket:
@@ -1182,6 +1257,9 @@ def test_ws_reconnect_hydrates_once_from_snapshot_without_delta_replay(
 def test_unknown_and_reserved_types_forward_unchanged_or_ignore(
     tmp_path: Path, message_type: str
 ) -> None:
+    """SPEC C.7 is defended by verifying that unknown and reserved types forward unchanged or
+    ignore; this prevents drift in the daemon transport and event-loop contract.
+    """
     forwarded: list[Envelope] = []
 
     async def forward(message: Envelope) -> None:
@@ -1207,6 +1285,9 @@ def test_unknown_and_reserved_types_forward_unchanged_or_ignore(
 
 
 def test_unknown_type_without_forwarder_is_ignored_without_closing(tmp_path: Path) -> None:
+    """SPEC C.7 is defended by verifying that unknown type without forwarder is ignored without
+    closing; this prevents drift in the daemon transport and event-loop contract.
+    """
     client = TestClient(create_app(tmp_path))
 
     with client.websocket_connect("/ws") as websocket:
@@ -1231,6 +1312,10 @@ def test_unknown_type_without_forwarder_is_ignored_without_closing(tmp_path: Pat
 def test_snapshot_request_is_enqueued_before_a_later_direct_route_response(
     tmp_path: Path,
 ) -> None:
+    """SPEC C.7 is defended by verifying that snapshot request is enqueued before a later
+    direct route response; this prevents drift in the daemon transport and event-loop
+    contract.
+    """
     client = TestClient(create_app(tmp_path))
 
     with client.websocket_connect("/ws") as websocket:
@@ -1276,6 +1361,9 @@ def test_snapshot_request_is_enqueued_before_a_later_direct_route_response(
     ],
 )
 def test_ws_rejects_malformed_text_envelope(tmp_path: Path, raw: str) -> None:
+    """SPEC C.7 is defended by verifying that ws rejects malformed text envelope; this prevents
+    drift in the daemon transport and event-loop contract.
+    """
     client = TestClient(create_app(tmp_path))
 
     with client.websocket_connect("/ws") as websocket:
@@ -1295,6 +1383,9 @@ def test_ws_rejects_malformed_text_envelope(tmp_path: Path, raw: str) -> None:
     ],
 )
 def test_ws_rejects_json_parser_limits(tmp_path: Path, raw_payload: str) -> None:
+    """SPEC C.7 is defended by verifying that ws rejects json parser limits; this prevents
+    drift in the daemon transport and event-loop contract.
+    """
     client = TestClient(create_app(tmp_path))
 
     with client.websocket_connect("/ws") as websocket:
@@ -1307,6 +1398,9 @@ def test_ws_rejects_json_parser_limits(tmp_path: Path, raw_payload: str) -> None
 
 
 def test_ws_rejects_binary_frame_without_routing(tmp_path: Path) -> None:
+    """SPEC C.7 is defended by verifying that ws rejects binary frame without routing; this
+    prevents drift in the daemon transport and event-loop contract.
+    """
     routed = False
 
     async def handler(message: Envelope, send: EnvelopeSender) -> None:
@@ -1326,6 +1420,9 @@ def test_ws_rejects_binary_frame_without_routing(tmp_path: Path) -> None:
 
 
 def test_ws_stops_routing_after_first_malformed_message(tmp_path: Path) -> None:
+    """SPEC C.7 is defended by verifying that ws stops routing after first malformed message;
+    this prevents drift in the daemon transport and event-loop contract.
+    """
     routed: list[str] = []
 
     async def handler(message: Envelope, send: EnvelopeSender) -> None:
@@ -1347,6 +1444,9 @@ def test_ws_stops_routing_after_first_malformed_message(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize("path", ["/ws/", "/unknown"])
 def test_built_static_mode_rejects_unknown_websocket_path(tmp_path: Path, path: str) -> None:
+    """SPEC C.7 is defended by verifying that built static mode rejects unknown websocket path;
+    this prevents drift in the daemon transport and event-loop contract.
+    """
     (tmp_path / "index.html").write_text("<h1>Harness shell</h1>", encoding="utf-8")
     client = TestClient(create_app(tmp_path))
 
