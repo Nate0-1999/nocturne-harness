@@ -1005,3 +1005,21 @@ would manufacture confidence the machine cannot justify. Sharing the script
 through a sibling checkout would break installed and standalone repository
 operation. Auto-inserting generic docstrings would disguise the human sweep as
 completion.
+
+## 033 — Evolve owner config in place before lifecycle commands [P1.3, P4]
+
+**Decision.** Adopt Garden A-041. Move local config to version 2 by atomically
+upgrading a private version-1 file in place, preserving the generated secrets
+and adding only bounded backup-generation retention. Pin the packaged Compose
+database by its multi-platform OCI index rather than an architecture-specific
+manifest.
+
+**Motivation.** Backup and restore cannot be durable if a routine package
+upgrade strands the owner's existing config or silently changes the database
+image beneath it. The first config transition proves that evolution is a
+preserving operation before recovery commands depend on it.
+
+**Rejected alternatives.** Reinitializing would rotate secrets and disconnect
+the existing Palace. Treating missing fields as permanent implicit defaults
+would leave no versioned migration trail. Pinning one architecture would make
+the same wheel behave differently on Apple Silicon and cloud build hosts.

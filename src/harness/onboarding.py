@@ -27,7 +27,8 @@ from urllib.parse import quote
 LOCAL_URL = "http://127.0.0.1:8765"
 SPINE_URL = "http://127.0.0.1:8000"
 _CONFIG_FILE = "env"
-_CONFIG_VERSION = "1"
+_CONFIG_VERSION = "2"
+_DEFAULT_BACKUP_GENERATIONS = 5
 
 
 class OnboardingError(RuntimeError):
@@ -44,6 +45,7 @@ class NocturneConfig:
     database_password: str
     machine_id: str
     postgres_port: int = 5432
+    backup_generations: int = _DEFAULT_BACKUP_GENERATIONS
 
     @property
     def path(self) -> Path:
@@ -67,6 +69,7 @@ class NocturneConfig:
                 "PRINCIPAL_ID": "local",
                 "MACHINE_ID": self.machine_id,
                 "AGENT_ID": "nocturne",
+                "NOCTURNE_BACKUP_GENERATIONS": str(self.backup_generations),
             }
         )
         return environment
@@ -130,9 +133,16 @@ def load_config(*, home: Path | None = None) -> NocturneConfig:
             f"Refusing insecure config permissions {mode:o}; run `chmod 600 {path}`."
         )
     values = _parse_config(path)
-    if values.get("NOCTURNE_CONFIG_VERSION") != _CONFIG_VERSION:
+    version = values.get("NOCTURNE_CONFIG_VERSION")
+    if version == "1":
+        _upgrade_v1_config(path)
+        values = _parse_config(path)
+    elif version != _CONFIG_VERSION:
         raise OnboardingError("Unsupported Nocturne config version; reinstall or reinitialize.")
     port = _parse_port(values.get("NOCTURNE_POSTGRES_PORT", "5432"))
+    backup_generations = _parse_backup_generations(
+        values.get("NOCTURNE_BACKUP_GENERATIONS", str(_DEFAULT_BACKUP_GENERATIONS))
+    )
     required = ("OPENROUTER_API_KEY", "SPINE_TOKEN", "NOCTURNE_DB_PASSWORD", "MACHINE_ID")
     missing = [name for name in required if not values.get(name, "").strip()]
     if missing:
@@ -144,6 +154,7 @@ def load_config(*, home: Path | None = None) -> NocturneConfig:
         database_password=values["NOCTURNE_DB_PASSWORD"],
         machine_id=values["MACHINE_ID"],
         postgres_port=port,
+        backup_generations=backup_generations,
     )
 
 
@@ -215,22 +226,45 @@ def _write_config(config: NocturneConfig) -> None:
         "SPINE_TOKEN": config.spine_token,
         "NOCTURNE_DB_PASSWORD": config.database_password,
         "NOCTURNE_POSTGRES_PORT": str(config.postgres_port),
+        "NOCTURNE_BACKUP_GENERATIONS": str(config.backup_generations),
         "MACHINE_ID": config.machine_id,
     }
-    descriptor, temporary_name = tempfile.mkstemp(prefix=".env.", dir=config.home)
+    content = "".join(f"{name}={json.dumps(value)}\n" for name, value in values.items())
+    _atomic_write_config(config.path, content)
+
+
+def _atomic_write_config(path: Path, content: str) -> None:
+    """Replace one private config durably without exposing a partial write."""
+
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    os.chmod(path.parent, 0o700)
+    descriptor, temporary_name = tempfile.mkstemp(prefix=".env.", dir=path.parent)
     temporary = Path(temporary_name)
     try:
         os.fchmod(descriptor, 0o600)
         with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
-            for name, value in values.items():
-                handle.write(f"{name}={json.dumps(value)}\n")
+            handle.write(content)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary, config.path)
-        os.chmod(config.path, 0o600)
+        os.replace(temporary, path)
+        os.chmod(path, 0o600)
     finally:
         if temporary.exists():
             temporary.unlink()
+
+
+def _upgrade_v1_config(path: Path) -> None:
+    """Apply the sole enacted config transition while retaining all secret lines."""
+
+    lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
+    version_lines = [
+        index for index, line in enumerate(lines) if line.startswith("NOCTURNE_CONFIG_VERSION=")
+    ]
+    if len(version_lines) != 1:
+        raise OnboardingError("Nocturne config has an invalid version field.")
+    lines[version_lines[0]] = f"NOCTURNE_CONFIG_VERSION={json.dumps(_CONFIG_VERSION)}\n"
+    lines.append(f"NOCTURNE_BACKUP_GENERATIONS={json.dumps(str(_DEFAULT_BACKUP_GENERATIONS))}\n")
+    _atomic_write_config(path, "".join(lines))
 
 
 def _parse_config(path: Path) -> dict[str, str]:
@@ -264,6 +298,16 @@ def _parse_port(value: str) -> int:
     if not 1 <= port <= 65535:
         raise OnboardingError("NOCTURNE_POSTGRES_PORT must be between 1 and 65535.")
     return port
+
+
+def _parse_backup_generations(value: str) -> int:
+    try:
+        generations = int(value)
+    except ValueError as exc:
+        raise OnboardingError("NOCTURNE_BACKUP_GENERATIONS must be an integer.") from exc
+    if not 1 <= generations <= 50:
+        raise OnboardingError("NOCTURNE_BACKUP_GENERATIONS must be between 1 and 50.")
+    return generations
 
 
 def _compose_project(home: Path) -> str:

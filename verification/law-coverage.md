@@ -2,8 +2,8 @@
 
 Generated deterministically by `scripts/check_test_motivations.py`.
 
-- Tests discovered: 329
-- Motivated tests: 17
+- Tests discovered: 332
+- Motivated tests: 20
 - Grandfathered baseline debt: 312
 - Stale baseline entries: 0
 
@@ -253,6 +253,12 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 ### A-040
 
 - `tests/test_test_motivations.py::test_syntax_digest_turns_a_modified_grandfathered_test_into_a_failure`
+
+### A-041
+
+- `tests/test_m2n_lifecycle.py::test_config_rejects_invalid_backup_retention`
+- `tests/test_m2n_lifecycle.py::test_future_config_is_refused_without_mutation`
+- `tests/test_m2n_lifecycle.py::test_v1_config_upgrades_atomically_without_replacing_owner_values`
 
 ## Baseline debt
 
