@@ -32,7 +32,10 @@ def _successful_run(command: list[str], **kwargs: object) -> SimpleNamespace:
         kwargs["stdout"].write(b"PGDMP verified archive")  # type: ignore[union-attr]
         return SimpleNamespace(stdout=None)
     if "pg_restore" in command:
-        assert kwargs["stdin"].read() == b"PGDMP verified archive"  # type: ignore[union-attr]
+        assert kwargs["stdin"].read() in {  # type: ignore[union-attr]
+            b"PGDMP verified archive",
+            b"old",
+        }
         return SimpleNamespace(stdout=None)
     if "ps" in command and "--services" in command:
         return SimpleNamespace(stdout="postgres\n")
@@ -40,12 +43,15 @@ def _successful_run(command: list[str], **kwargs: object) -> SimpleNamespace:
         return SimpleNamespace(stdout="alembic_version\n")
     if "version_num" in command[-1]:
         return SimpleNamespace(stdout="0009\n")
+    if "pg_database_size" in command[-1]:
+        return SimpleNamespace(stdout="1048576\n")
     raise AssertionError(command)
 
 
 def _old_generation(backups: Path, backup_id: str) -> None:
     generation = backups / backup_id
     generation.mkdir(parents=True)
+    backups.chmod(0o700)
     generation.chmod(0o700)
     archive = generation / "palace.pgdump"
     archive.write_bytes(b"old")
@@ -123,3 +129,58 @@ def test_failed_dump_publishes_no_generation(
 
     backups = tmp_path / "backups"
     assert not list(backups.iterdir())
+
+
+def test_doctor_rechecks_resources_and_backup_authority(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A-043 warns before disk exhaustion and reuses the complete A-042 backup contract."""
+    config = _config(tmp_path)
+    tmp_path.chmod(0o700)
+    backups = tmp_path / "backups"
+    _old_generation(backups, "01J00000000000000000000000")
+    transcripts = tmp_path / "transcripts"
+    transcripts.mkdir()
+    (transcripts / "thread.jsonl").write_bytes(b"history")
+    monkeypatch.setattr(lifecycle.subprocess, "run", _successful_run)
+    monkeypatch.setattr(
+        lifecycle.shutil,
+        "disk_usage",
+        lambda path: SimpleNamespace(total=100 * 1024**3, used=96 * 1024**3, free=4 * 1024**3),
+    )
+
+    report = lifecycle.inspect_local_palace(config)
+
+    assert report.status == "warning"
+    assert report.exit_code == 1
+    assert report.database_bytes == 1024**2
+    assert report.journal_bytes == len(b"history")
+    assert report.backup_generations == 1
+    assert report.warnings == ("Free disk space is below the early warning boundary.",)
+    assert report.failures == ()
+
+
+def test_doctor_fails_closed_on_a_corrupt_recognized_backup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A-043 prevents a damaged A-042 generation from retaining a trusted label."""
+    config = _config(tmp_path)
+    tmp_path.chmod(0o700)
+    backups = tmp_path / "backups"
+    _old_generation(backups, "01J00000000000000000000000")
+    (backups / "01J00000000000000000000000" / "palace.pgdump").write_bytes(b"changed")
+    monkeypatch.setattr(lifecycle.subprocess, "run", _successful_run)
+    monkeypatch.setattr(
+        lifecycle.shutil,
+        "disk_usage",
+        lambda path: SimpleNamespace(total=100 * 1024**3, used=50 * 1024**3, free=50 * 1024**3),
+    )
+
+    report = lifecycle.inspect_local_palace(config)
+
+    assert report.status == "failed"
+    assert report.exit_code == 2
+    assert report.backup_generations == 0
+    assert report.failures == (
+        "Backup 01J00000000000000000000000 failed its receipt or digest check.",
+    )

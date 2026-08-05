@@ -15,7 +15,7 @@ def test_parser_exposes_onboarding_and_lifecycle_commands() -> None:
         action for action in parser._actions if isinstance(action, cli.argparse._SubParsersAction)
     )
 
-    assert set(subparsers.choices) == {"init", "up", "deploy", "open", "backup"}
+    assert set(subparsers.choices) == {"init", "up", "deploy", "open", "backup", "doctor"}
 
 
 @pytest.mark.parametrize(
@@ -26,6 +26,7 @@ def test_parser_exposes_onboarding_and_lifecycle_commands() -> None:
         (["up", "--no-open"], ("up", False)),
         (["open"], ("open",)),
         (["backup"], ("backup",)),
+        (["doctor"], ("doctor",)),
     ],
 )
 def test_local_commands_dispatch(
@@ -41,6 +42,11 @@ def test_local_commands_dispatch(
     )
     monkeypatch.setattr(cli, "open_nocturne", lambda **kwargs: calls.append(("open",)))
     monkeypatch.setattr(cli, "backup_nocturne", lambda **kwargs: calls.append(("backup",)))
+    monkeypatch.setattr(
+        cli,
+        "doctor_nocturne",
+        lambda **kwargs: calls.append(("doctor",)) or 0,
+    )
 
     assert cli.main(argv, stdout=io.StringIO(), stderr=io.StringIO()) == 0
     assert calls == [expected]

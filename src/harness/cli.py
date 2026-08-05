@@ -1,4 +1,4 @@
-"""The four-command public ``nocturne`` console interface."""
+"""The public ``nocturne`` console interface."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from harness.lifecycle import LifecycleError
 from harness.onboarding import (
     OnboardingError,
     backup_nocturne,
+    doctor_nocturne,
     init_nocturne,
     load_config,
     open_nocturne,
@@ -20,7 +21,7 @@ from harness.onboarding import (
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Build the exact ADR-019 command surface."""
+    """Build the enacted owner command surface."""
 
     parser = argparse.ArgumentParser(
         prog="nocturne",
@@ -36,6 +37,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     commands.add_parser("open", help="open the running local Nocturne UI")
     commands.add_parser("backup", help="save a verified local Palace backup")
+    commands.add_parser("doctor", help="inspect local Palace health and backups")
     deploy = commands.add_parser("deploy", help="reconcile the fixed D1 cloud foundation")
     deploy.add_argument(
         "--dry-run",
@@ -69,6 +71,8 @@ def main(
             open_nocturne(stdout=stdout)
         elif args.command == "backup":
             backup_nocturne(stdout=stdout)
+        elif args.command == "doctor":
+            return doctor_nocturne(stdout=stdout)
         elif args.command == "deploy":
             config = load_config()
             _run_cloud_deploy(

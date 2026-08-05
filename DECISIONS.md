@@ -1044,3 +1044,21 @@ side-by-side restore. Installing host `pg_dump` creates version drift. Naming a
 directory a backup without verifying its archive would make retention capable
 of deleting good history in favor of corrupt output. Deleting unfamiliar files
 would turn a bounded product cleanup into broad filesystem authority.
+
+## 035 — Read-only lifecycle doctor with an early disk boundary [P1.3, P4]
+
+**Decision.** Adopt Garden A-043. Add `nocturne doctor` as one read-only local
+inspection that measures database, journal, backups, and free space; revalidates
+every recognized backup against the existing A-042 authority; and warns at the
+greater of 5 GiB or ten percent free. Preserve distinct healthy, warning, and
+failed exit statuses.
+
+**Motivation.** Mandatory history can fail closed safely only after the owner had
+a useful warning. Rechecking the same receipt, digest, permissions, and archive
+format used at publication also keeps backup confidence from becoming a stale
+claim.
+
+**Rejected alternatives.** A background notifier would create a new attention
+channel before the enacted Deck threshold exists. Automatically deleting data
+would turn diagnosis into recovery policy. A second backup parser would let
+retention and doctor disagree about which generations are real.

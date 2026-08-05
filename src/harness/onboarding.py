@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import TextIO
 from urllib.parse import quote
 
-from harness.lifecycle import create_local_backup
+from harness.lifecycle import DoctorReport, create_local_backup, inspect_local_palace
 
 LOCAL_URL = "http://127.0.0.1:8765"
 SPINE_URL = "http://127.0.0.1:8000"
@@ -230,6 +230,46 @@ def backup_nocturne(*, home: Path | None = None, stdout: TextIO = sys.stdout) ->
     config = load_config(home=home)
     _require_command("docker")
     return create_local_backup(config, reason="manual", stdout=stdout)
+
+
+def doctor_nocturne(*, home: Path | None = None, stdout: TextIO = sys.stdout) -> int:
+    """Print a safe, read-only health report for the local Palace."""
+
+    config = load_config(home=home)
+    report = inspect_local_palace(config)
+    _print_doctor_report(report, stdout=stdout)
+    return report.exit_code
+
+
+def _print_doctor_report(report: DoctorReport, *, stdout: TextIO) -> None:
+    database = (
+        "unavailable" if report.database_bytes is None else _human_bytes(report.database_bytes)
+    )
+    print(f"Palace doctor: {report.status}", file=stdout)
+    print(f"Database: {database}", file=stdout)
+    print(f"Conversation journal: {_human_bytes(report.journal_bytes)}", file=stdout)
+    print(
+        f"Backups: {report.backup_generations} verified, {_human_bytes(report.backup_bytes)}",
+        file=stdout,
+    )
+    print(
+        f"Disk: {_human_bytes(report.disk_free_bytes)} free of "
+        f"{_human_bytes(report.disk_total_bytes)}",
+        file=stdout,
+    )
+    for warning in report.warnings:
+        print(f"Warning: {warning}", file=stdout)
+    for failure in report.failures:
+        print(f"Problem: {failure}", file=stdout)
+
+
+def _human_bytes(value: int) -> str:
+    amount = float(value)
+    for unit in ("B", "KiB", "MiB", "GiB", "TiB"):
+        if amount < 1024 or unit == "TiB":
+            return f"{amount:.1f} {unit}"
+        amount /= 1024
+    raise AssertionError("unreachable")
 
 
 def _write_config(config: NocturneConfig) -> None:
