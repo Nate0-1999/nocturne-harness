@@ -389,7 +389,7 @@ export function MemoryGate({
               Injection <code>{gate.injection_id}</code>
             </span>
             <span>
-              Scorer <code>{gate.scorer_version}</code>
+              Retrieval recipe <code>{gate.scorer_version}</code>
             </span>
             <span>
               Snapshot <time dateTime={gate.snapshot_ts}>{gate.snapshot_ts}</time>

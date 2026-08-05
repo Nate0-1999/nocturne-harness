@@ -74,7 +74,7 @@ export const FACTORY_RACK_LAYOUT: RackLayoutSet = {
   version: 1,
   scopes: {
     header: 'GLOBAL', threads: 'CURRENT', chat: 'CURRENT', memory: 'CURRENT',
-    vitals: 'GLOBAL', gate: 'CURRENT', thread_end: 'CURRENT', palace_queue: 'GLOBAL',
+    vitals: 'GLOBAL', context_bars: 'CURRENT', gate: 'CURRENT', thread_end: 'CURRENT', palace_queue: 'GLOBAL',
     model_device: 'CURRENT',
     memory_graph: 'GLOBAL', injection_console: 'GLOBAL',
   },

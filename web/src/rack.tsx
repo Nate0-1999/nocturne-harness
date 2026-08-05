@@ -36,7 +36,7 @@ import {
   type ThreadState,
 } from './store'
 
-export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'injection_console'
+export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'injection_console'
 export type RackModuleSlot = 'header' | 'panel' | 'strip' | 'overlay'
 export type RackMemoryPanelState = MemoryPanelState
 
@@ -46,6 +46,7 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
     value === 'chat' ||
     value === 'memory' ||
     value === 'vitals' ||
+    value === 'context_bars' ||
     value === 'gate' ||
     value === 'thread_end' ||
     value === 'palace_queue' ||
@@ -119,7 +120,7 @@ export interface RackModuleManifest {
 }
 
 export interface RackQueryRequest {
-  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'parameters' | 'memory_graph' | 'scorer_console'
+  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'context_window' | 'parameters' | 'memory_graph' | 'scorer_console'
   as_of?: string | null
   thread_id?: string
 }
@@ -245,11 +246,17 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'visualizer',
     slot: 'strip',
     streams: [],
-    actions: [],
+    actions: ['rack.scope.get', 'rack.scope.set'],
     bounds: VITALS_RACK_BOUNDS,
     movable: false,
     law_bound: false,
     default_scope: 'GLOBAL',
+  },
+  context_bars: {
+    id: 'context_bars', name: 'Context Bars', version: '1.0.0', class: 'visualizer',
+    slot: 'strip', streams: ['run.done'], actions: ['rack.scope.get', 'rack.scope.set'],
+    bounds: { min: { w: 3, h: 1 }, preferred: { w: 3, h: 4 }, max: { w: 3, h: 4 } },
+    movable: false, law_bound: false, default_scope: 'CURRENT',
   },
   gate: {
     id: 'gate',
@@ -505,7 +512,7 @@ async function fetchJson(path: string, init?: RequestInit): Promise<JsonValue> {
 export const rackQuerySurface: RackQuerySurface = {
   async query(request) {
     const asOf = request.as_of ?? null
-    if (request.resource === 'vitals' || request.resource === 'memory_graph' || request.resource === 'scorer_console') {
+    if (request.resource === 'vitals' || request.resource === 'context_window' || request.resource === 'memory_graph' || request.resource === 'scorer_console') {
       if (asOf !== null && asOf !== 'now') {
         return { status: 'historical_unavailable', as_of: asOf, data: null }
       }

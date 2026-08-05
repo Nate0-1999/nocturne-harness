@@ -28,6 +28,7 @@ from harness import __version__
 from harness.agent import HarnessAgent
 from harness.agent_runtime import PydanticAITurnRunner
 from harness.config import HarnessSettings
+from harness.context_window import ContextWindowSnapshot, ContextWindowTracker
 from harness.envelope import (
     Envelope,
     EnvelopeFactory,
@@ -93,6 +94,7 @@ type ScorerConfigWriter = Callable[
 type ScorerProposalActivator = Callable[
     [str, ActivateScorerConfigRequest], Awaitable[ScorerConfigurationView]
 ]
+type ContextWindowReader = Callable[[str | None], ContextWindowSnapshot]
 
 _OUTBOX_BUFFER_SIZE = 256
 _RESYNC_CLOSE_REASON = "snapshot resync required"
@@ -105,6 +107,7 @@ _RACK_MODULE_IDS = frozenset(
         "memory",
         "gate",
         "vitals",
+        "context_bars",
         "thread_end",
         "palace_queue",
         "model_device",
@@ -210,6 +213,7 @@ def create_app(
     scorer_console_reader: ScorerConsoleReader | None = None,
     scorer_config_writer: ScorerConfigWriter | None = None,
     scorer_proposal_activator: ScorerProposalActivator | None = None,
+    context_window_reader: ContextWindowReader | None = None,
     before_static_mount: Callable[[FastAPI], None] | None = None,
 ) -> FastAPI:
     """Create the daemon with process-scoped H7 state and extensible routing."""
@@ -243,12 +247,22 @@ def create_app(
 
     @app.get("/v1/rack/query", response_model=RackQueryResult)
     async def rack_query(
-        resource: Literal["vitals", "parameters", "memory_graph", "scorer_console"],
+        resource: Literal[
+            "vitals", "parameters", "memory_graph", "scorer_console", "context_window"
+        ],
         as_of: str | None = None,
         thread_id: str | None = None,
     ) -> RackQueryResult:
         """Keep Spine credentials behind the public rack query surface."""
 
+        if resource == "context_window":
+            if as_of not in {None, "now"}:
+                return RackQueryResult(status="historical_unavailable", as_of=as_of, data=None)
+            if context_window_reader is None:
+                raise HTTPException(status_code=503, detail="Context usage is unavailable.")
+            return RackQueryResult(
+                status="live", as_of=None, data=context_window_reader(thread_id)
+            )
         if resource == "parameters":
             if thread_id is None or not thread_id.strip():
                 raise HTTPException(
@@ -562,6 +576,7 @@ def create_dev_app(
         )
 
     memory_contexts = ThreadMemoryContextRegistry()
+    context_windows = ContextWindowTracker()
     receipt_queue = SpendReceiptQueue(nocturne_home() / "receipt-queue")
     panel = MemoryPanelController(
         owned_spine,
@@ -583,6 +598,7 @@ def create_dev_app(
             context_factory,
             owned_spine,
             receipt_queue=receipt_queue,
+            context_windows=context_windows,
         ),
         owned_spine,
         context_factory,
@@ -726,6 +742,7 @@ def create_dev_app(
         scorer_console_reader=read_scorer_console,
         scorer_config_writer=getattr(owned_spine, "create_scorer_config", None),
         scorer_proposal_activator=getattr(owned_spine, "activate_scorer_config", None),
+        context_window_reader=context_windows.snapshot,
         before_static_mount=configure_extraction_routes,
     )
 

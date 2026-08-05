@@ -31,6 +31,7 @@ from pydantic_core import to_jsonable_python
 
 from harness.agent import HarnessAgent, RememberResult
 from harness.commands import remember_command_text
+from harness.context_window import ContextWindowTracker
 from harness.envelope import StopReason
 from harness.model_policy import ThreadModelResolution
 from harness.receipt_queue import SpendReceiptQueue
@@ -59,11 +60,13 @@ class PydanticAITurnRunner:
         context_factory: ContextFactory,
         spend: SpendGateway | None = None,
         receipt_queue: SpendReceiptQueue | None = None,
+        context_windows: ContextWindowTracker | None = None,
     ) -> None:
         self._agent = agent
         self._context_factory = context_factory
         self._spend = spend
         self._receipt_queue = receipt_queue
+        self._context_windows = context_windows
 
     async def run(
         self,
@@ -174,6 +177,13 @@ class PydanticAITurnRunner:
                 usage,
             )
         finally:
+            if self._context_windows is not None and not is_remember:
+                self._context_windows.record(
+                    thread_id=thread_id,
+                    captured=captured,
+                    resolution=model_resolution,
+                    memory_block=system_instructions,
+                )
             await self._record_spend(
                 captured,
                 prior_history=prior_history,

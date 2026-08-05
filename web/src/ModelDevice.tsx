@@ -139,7 +139,7 @@ export function ModelDevice() {
     <section className="model-device" aria-labelledby="model-device-title">
       <header className="model-device__header">
         <div>
-          <p className="eyebrow">Bound control · thread request</p>
+          <p className="eyebrow">This thread’s model</p>
           <h2 id="model-device-title">Model device</h2>
         </div>
         <div className="scope-toggle" aria-label="Model device scope">
@@ -157,9 +157,9 @@ export function ModelDevice() {
       </header>
 
       <div className="model-device__truth">
-        <span>Resolved route</span>
+        <span>Model in use</span>
         <strong data-testid="model-device-resolved">{view?.resolved_model ?? 'Waiting for thread'}</strong>
-        <small>{scope === 'GLOBAL' ? 'Provider inheritance · read only' : status}</small>
+        <small>{scope === 'GLOBAL' ? 'Provider defaults · read only' : status}</small>
       </div>
 
       <form

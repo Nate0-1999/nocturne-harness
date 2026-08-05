@@ -18,6 +18,7 @@ import { MemoryGraph } from './MemoryGraph'
 import { InjectionConsole } from './InjectionConsole'
 import { ModelDevice } from './ModelDevice'
 import { VitalsModule } from './VitalsModule'
+import { ContextBars } from './ContextBars'
 import type {
   AssistantTranscriptMessage,
   ChatMessage,
@@ -355,11 +356,20 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           manifest={RACK_MANIFESTS.vitals}
           x={1}
           y={rowAllocation.vitalsStart}
-          width={RACK_COLUMNS}
+          width={9}
           height={rowAllocation.vitalsRows}
           collapsed={vitalsCollapsed}
           inert={openGate !== null || drawerModule !== null}
           onCollapseToggle={() => setVitalsCollapsed((value) => !value)}
+          isRegressionFixture={isRegressionFixture}
+        />
+        <RackModuleFrame
+          manifest={RACK_MANIFESTS.context_bars}
+          x={10}
+          y={rowAllocation.vitalsStart}
+          width={3}
+          height={rowAllocation.vitalsRows}
+          inert={openGate !== null || drawerModule !== null}
           isRegressionFixture={isRegressionFixture}
         />
       </div>
@@ -617,17 +627,19 @@ function RackModuleFrame({
           <span className="rack-module__geometry" aria-label={`${height} grid rows high`}>
             12×{String(height).padStart(2, '0')}
           </span>
-          <button
-            className="rack-module__collapse"
-            type="button"
-            data-testid="vitals-collapse"
-            aria-expanded={!collapsed}
-            aria-label={`${collapsed ? 'Expand' : 'Collapse'} Palace Vitals`}
-            onClick={onCollapseToggle}
-          >
-            <span aria-hidden="true">{collapsed ? '⌃' : '⌄'}</span>
-            {collapsed ? 'Expand' : 'Collapse'}
-          </button>
+          {onCollapseToggle !== undefined && (
+            <button
+              className="rack-module__collapse"
+              type="button"
+              data-testid="vitals-collapse"
+              aria-expanded={!collapsed}
+              aria-label={`${collapsed ? 'Expand' : 'Collapse'} Palace Vitals`}
+              onClick={onCollapseToggle}
+            >
+              <span aria-hidden="true">{collapsed ? '⌃' : '⌄'}</span>
+              {collapsed ? 'Expand' : 'Collapse'}
+            </button>
+          )}
         </div>
       )}
       <div className="rack-module__content">
@@ -686,6 +698,8 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
         <MemoryModule />
       ) : moduleId === 'vitals' ? (
         <VitalsModule />
+      ) : moduleId === 'context_bars' ? (
+        <ContextBars />
       ) : moduleId === 'thread_end' ? (
         <ThreadEndModule />
       ) : moduleId === 'palace_queue' ? (

@@ -963,3 +963,26 @@ changing README ports leaves an accidentally launched fixture reachable on
 database or general job queue is unnecessary for a handful of immutable
 receipt batches, and marking the turn failed would preserve the bug M2O exists
 to remove.
+
+## 031 — Measure context total; disclose the category estimate [P2.2, P2.5]
+
+**Decision.** Adopt Garden A-039. Record the terminal broker response's
+per-request input tokens beside the immutable resolved model context length.
+Estimate the four owner-facing categories from the exact memory injection and
+owned capability definitions, assigning the broker-total remainder to history.
+Expose CURRENT and GLOBAL projections only through the public Rack query seam,
+and place the compact CONTEXT BARS module beside Palace Vitals.
+
+The 80% line is presentation only and explicitly says compaction is not active.
+M2R does not mutate history, warn, block, or add a context-policy service.
+
+**Motivation.** The broker owns the credible total but does not report a
+category split. Separating that measured fact from a plainly labelled estimate
+gives the owner useful pressure visibility without false precision or a second
+token authority.
+
+**Rejected alternatives.** Calling the cumulative run usage the current
+context would overcount multi-request tool turns. Presenting locally counted
+categories as provider facts would hide uncertainty. Instrumenting provider
+internals or building compaction policy now would exceed the packet and create
+machinery M3 owns.
