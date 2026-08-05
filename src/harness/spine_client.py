@@ -748,6 +748,8 @@ class CreateScorerConfigRequest(ContractModel):
     event_uid: ULID
     base_version: NonBlankString
     values: ScorerValues
+    simulation_digest: Annotated[StrictStr, Field(pattern=r"^[0-9a-f]{64}$")]
+    force: Literal[True]
     actor_class: Literal["human"] = "human"
     machine_id: NonBlankString
 
@@ -756,6 +758,59 @@ class ActivateScorerConfigRequest(ContractModel):
     event_uid: ULID
     actor_class: Literal["human"] = "human"
     machine_id: NonBlankString
+
+
+class ScorerSimulationRequest(ContractModel):
+    principal_id: NonBlankString
+    injection_id: UUID | None
+    base_version: NonBlankString
+    values: ScorerValues
+    slice_parameter_id: NonBlankString
+
+
+class ScorerSimulationResponse(ContractModel):
+    simulation_digest: Annotated[StrictStr, Field(pattern=r"^[0-9a-f]{64}$")]
+    base_version: NonBlankString
+    values: ScorerValues
+    source_boundary: str | None
+    holdout_dispositions: int = Field(strict=True, ge=0)
+    accuracy_percent: str | None
+    incumbent_accuracy_percent: str | None
+    delta_percent: str | None
+    instant: JsonObject
+    slice: JsonObject
+
+
+class ScorerAuditionRequest(ContractModel):
+    principal_id: NonBlankString
+    injection_id: UUID
+    proposal_version: NonBlankString
+
+
+class ScorerAuditionResponse(ContractModel):
+    incumbent_version: NonBlankString
+    proposal_version: NonBlankString
+    instant: JsonObject
+
+
+class RackScorerForceRequest(ContractModel):
+    event_uid: ULID
+    base_version: NonBlankString
+    values: ScorerValues
+    simulation_digest: Annotated[StrictStr, Field(pattern=r"^[0-9a-f]{64}$")]
+    force: Literal[True]
+
+
+class RackScorerSimulationRequest(ContractModel):
+    injection_id: UUID | None
+    base_version: NonBlankString
+    values: ScorerValues
+    slice_parameter_id: NonBlankString
+
+
+class RackScorerAuditionRequest(ContractModel):
+    injection_id: UUID
+    proposal_version: NonBlankString
 
 
 class ProblemDetail(BaseModel):
@@ -839,6 +894,8 @@ _VITALS_SNAPSHOT = TypeAdapter(VitalsSnapshot)
 _MEMORY_GRAPH_SNAPSHOT = TypeAdapter(MemoryGraphSnapshot)
 _SCORER_CONSOLE_SNAPSHOT = TypeAdapter(ScorerConsoleSnapshot)
 _SCORER_CONFIGURATION = TypeAdapter(ScorerConfigurationView)
+_SCORER_SIMULATION = TypeAdapter(ScorerSimulationResponse)
+_SCORER_AUDITION = TypeAdapter(ScorerAuditionResponse)
 _EXTRACTION_RESPONSE = TypeAdapter(ExtractionResponse)
 _SEED_RESPONSE = TypeAdapter(SeedResponse)
 _QUEUE_RESPONSE = TypeAdapter(QueueResponse)
@@ -1009,6 +1066,18 @@ class SpineClient:
             "POST", "v1/scorer-configs", json_body=_request_body(request)
         )
         return _expect_success(response, status=200, adapter=_SCORER_CONFIGURATION)
+
+    async def simulate_scorer(self, request: ScorerSimulationRequest) -> ScorerSimulationResponse:
+        response = await self._request(
+            "POST", "v1/scorer-simulations", json_body=_request_body(request)
+        )
+        return _expect_success(response, status=200, adapter=_SCORER_SIMULATION)
+
+    async def audition_scorer(self, request: ScorerAuditionRequest) -> ScorerAuditionResponse:
+        response = await self._request(
+            "POST", "v1/scorer-auditions", json_body=_request_body(request)
+        )
+        return _expect_success(response, status=200, adapter=_SCORER_AUDITION)
 
     async def activate_scorer_config(
         self, version: str, request: ActivateScorerConfigRequest

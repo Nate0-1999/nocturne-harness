@@ -1116,3 +1116,22 @@ receipt would not prove ordering. Waiting without describing the backup would
 prove only operation completion, not a usable backup object. Automating restore
 or pruning cloud backups would expand an evidence seam into destructive cloud
 lifecycle authority the packet explicitly does not grant.
+
+## 039 — Keep scorer consequence inside the public Rack bridge [P1.2.3, P2.5]
+
+**Decision.** Adopt Garden A-047 and A-048. The Injection Console uses three
+explicit public Rack actions: simulate, exact-receipt force, and read-only
+proposal audition. The daemon supplies principal and machine identity behind
+that boundary; browser requests cannot claim either. Any knob edit clears the
+DEEP receipt, while an audition result may be fanned out inside the host only
+as a presentation mark on the live Gate and Memory Panel.
+
+**Motivation.** The owner needs to see consequence before authority changes,
+but the browser must not become a second scorer or an identity authority. One
+typed bridge keeps credentials and replay in the owned services while allowing
+all three existing views to explain the same comparison.
+
+**Rejected alternatives.** A private console fetch would bypass Rack
+permissions. Persisting audition overlays would contaminate commit and
+feedback. A confirmation dialog would add friction without proving that the
+displayed evidence still matches the values being forced.

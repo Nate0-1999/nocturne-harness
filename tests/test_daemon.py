@@ -37,7 +37,13 @@ from harness.spine_client import (
     MemoryStatus,
     MemoryUnit,
     PagedMemoryListResponse,
+    RackScorerAuditionRequest,
+    RackScorerForceRequest,
+    RackScorerSimulationRequest,
     ScoredMemoryCard,
+    ScorerAuditionResponse,
+    ScorerConfigurationView,
+    ScorerSimulationResponse,
     SpendEventsRequest,
     SpendEventsResponse,
     SpineTransportError,
@@ -413,6 +419,110 @@ def test_rack_vitals_query_uses_the_injected_reader_before_static_mount(tmp_path
         "data": vitals_snapshot().model_dump(mode="json"),
     }
     assert calls == 1
+
+
+def test_rack_scorer_simulation_force_and_audition_use_public_actions() -> None:
+    """A-047 is defended by proving the public Rack strips owner identity from browser
+    requests while carrying exact simulation receipts and read-only auditions.
+    """
+    seen: list[object] = []
+    values = {
+        "tau": 0.55,
+        "top_k": 8,
+        "budget_tokens": 4000,
+        "half_life_time_days": 30.0,
+        "half_life_hist_days": 120.0,
+        "weights": {
+            "sem": 0.4,
+            "kw": 0.2,
+            "time": 0.1,
+            "proj": 0.1,
+            "freq": 0.1,
+            "hist": 0.1,
+        },
+    }
+
+    async def simulate(body: RackScorerSimulationRequest) -> ScorerSimulationResponse:
+        seen.append(body)
+        return ScorerSimulationResponse.model_validate(
+            {
+                "simulation_digest": "a" * 64,
+                "base_version": "v0",
+                "values": values,
+                "source_boundary": None,
+                "holdout_dispositions": 0,
+                "accuracy_percent": None,
+                "incumbent_accuracy_percent": None,
+                "delta_percent": None,
+                "instant": {"status": "not_requested", "injection_id": None, "candidates": []},
+                "slice": {"parameter_id": "scorer.tau", "points": []},
+            }
+        )
+
+    async def force(body: RackScorerForceRequest) -> ScorerConfigurationView:
+        seen.append(body)
+        return ScorerConfigurationView.model_validate(
+            {
+                "version": "m2k-force",
+                "created_at": "2026-08-04T12:00:00Z",
+                "status": "active",
+                "values": values,
+                "replay": None,
+            }
+        )
+
+    async def audition(body: RackScorerAuditionRequest) -> ScorerAuditionResponse:
+        seen.append(body)
+        return ScorerAuditionResponse.model_validate(
+            {
+                "incumbent_version": "v0",
+                "proposal_version": body.proposal_version,
+                "instant": {
+                    "status": "ready",
+                    "injection_id": str(body.injection_id),
+                    "candidates": [],
+                },
+            }
+        )
+
+    client = TestClient(
+        create_app(
+            scorer_simulator=simulate,
+            scorer_config_writer=force,
+            scorer_auditioner=audition,
+        )
+    )
+    injection_id = "12345678-1234-5678-1234-567812345678"
+    simulated = client.post(
+        "/v1/rack/scorers/simulate",
+        json={
+            "injection_id": injection_id,
+            "base_version": "v0",
+            "values": values,
+            "slice_parameter_id": "scorer.tau",
+        },
+    )
+    forced = client.post(
+        "/v1/rack/scorers",
+        json={
+            "event_uid": PROMPT_ID,
+            "base_version": "v0",
+            "values": values,
+            "simulation_digest": "a" * 64,
+            "force": True,
+        },
+    )
+    auditioned = client.post(
+        "/v1/rack/scorers/audition",
+        json={"injection_id": injection_id, "proposal_version": "learner-v1"},
+    )
+
+    assert [simulated.status_code, forced.status_code, auditioned.status_code] == [200, 200, 200]
+    assert [type(item) for item in seen] == [
+        RackScorerSimulationRequest,
+        RackScorerForceRequest,
+        RackScorerAuditionRequest,
+    ]
 
 
 def test_rack_vitals_query_truthfully_rejects_historical_as_of_without_reading() -> None:

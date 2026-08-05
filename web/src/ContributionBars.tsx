@@ -36,5 +36,25 @@ export function useContributionMap(): Record<string, Record<string, string>> {
   }, [query, rack.selectedThreadId])
   return values
 }
+
+export interface ScorerPreviewMark {
+  preview_score: string
+  preview_rank: number
+  disposition: 'also_shown' | 'would_add' | 'would_drop' | 'still_out'
+}
+
+// eslint-disable-next-line react-refresh/only-export-components -- paired presentation hook
+export function useScorerAuditionMap(): Record<string, ScorerPreviewMark> {
+  const [values, setValues] = useState<Record<string, ScorerPreviewMark>>({})
+  useEffect(() => {
+    const receive = (event: Event) => {
+      const detail = (event as CustomEvent).detail as { instant?: { candidates?: ({ memory_id: string } & ScorerPreviewMark)[] } }
+      setValues(Object.fromEntries((detail.instant?.candidates ?? []).map((row)=>[row.memory_id,row])))
+    }
+    globalThis.addEventListener('nocturne:scorer-audition', receive)
+    return () => globalThis.removeEventListener('nocturne:scorer-audition', receive)
+  }, [])
+  return values
+}
 import { useEffect, useState } from 'react'
 import { useRackPlugin, useRackSnapshot } from './rack'

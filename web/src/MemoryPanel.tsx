@@ -8,7 +8,7 @@ import {
 
 import type { MemoryPanelState } from './store'
 import type { MemoryPanelConflictPayload, MemoryUnit, Ulid } from './protocol'
-import { ContributionBars, useContributionMap } from './ContributionBars'
+import { ContributionBars, useContributionMap, useScorerAuditionMap } from './ContributionBars'
 import { useRackSelection } from './rack'
 
 interface MemoryPanelProps {
@@ -86,6 +86,7 @@ export function MemoryPanel({
   onPin,
 }: MemoryPanelProps) {
   const contributions = useContributionMap()
+  const auditions = useScorerAuditionMap()
   const rackSelection = useRackSelection()
   const [editor, setEditor] = useState<EditorState | null>(null)
   const [clientError, setClientError] = useState<string | null>(null)
@@ -487,6 +488,7 @@ export function MemoryPanel({
                   ) : (
                     <>
                       <p className="principal-memory__body">{memory.body}</p>
+                      {auditions[memory.memory_id] !== undefined && <p className="scorer-preview-mark">Audition: {auditions[memory.memory_id].preview_score} · #{auditions[memory.memory_id].preview_rank} {auditions[memory.memory_id].disposition.replace('_', ' ')}</p>}
                       <ContributionBars values={contributions[memory.memory_id]} />
                       <div className="principal-memory__actions">
                         <button

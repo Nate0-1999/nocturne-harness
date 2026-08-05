@@ -76,7 +76,9 @@ export type RackAction =
   | { type: 'rack.scope.get'; module_id: RackModuleId }
   | { type: 'rack.scope.set'; module_id: RackModuleId; scope: 'GLOBAL' | 'CURRENT' }
   | { type: 'parameter.write'; thread_id: string; parameter_id: string; value: string | number | null }
-  | { type: 'scorer.write'; event_uid: string; base_version: string; values: JsonValue }
+  | { type: 'scorer.simulate'; injection_id?: string; base_version: string; values: JsonValue; slice_parameter_id: string }
+  | { type: 'scorer.force'; event_uid: string; base_version: string; values: JsonValue; simulation_digest: string }
+  | { type: 'scorer.audition'; injection_id: string; proposal_version: string }
   | { type: 'scorer.activate'; event_uid: string; version: string }
   | {
       type: 'queue.decide'
@@ -170,7 +172,7 @@ export type RackActionResult<Action extends RackAction> =
       ? number
     : Action['type'] extends 'thread.select'
       ? void
-      : Action['type'] extends 'thread.archive' | 'queue.load' | 'queue.decide' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.write' | 'scorer.activate'
+      : Action['type'] extends 'thread.archive' | 'queue.load' | 'queue.decide' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.audition' | 'scorer.activate'
         ? JsonValue
         : Action['type'] extends 'rack.scope.get' | 'rack.scope.set'
           ? 'GLOBAL' | 'CURRENT'
@@ -323,7 +325,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
   injection_console: {
     id: 'injection_console', name: 'Injection Console', version: '1.0.0', class: 'control',
     slot: 'overlay', streams: ['scorer.change'],
-    actions: ['scorer.write', 'scorer.activate', 'rack.scope.get', 'rack.scope.set'],
+    actions: ['scorer.simulate', 'scorer.force', 'scorer.audition', 'scorer.activate', 'rack.scope.get', 'rack.scope.set'],
     bindings: [
       'scorer.tau', 'scorer.top_k', 'scorer.budget_tokens',
       'scorer.half_life_time_days', 'scorer.half_life_hist_days',
@@ -455,14 +457,36 @@ function dispatchRackAction<Action extends RackAction>(
             value: action.value,
           }),
         }) as Promise<RackActionResult<Action>>
-      case 'scorer.write':
+      case 'scorer.simulate':
+        return fetchJson('/v1/rack/scorers/simulate', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            injection_id: action.injection_id ?? null,
+            base_version: action.base_version,
+            values: action.values,
+            slice_parameter_id: action.slice_parameter_id,
+          }),
+        }) as Promise<RackActionResult<Action>>
+      case 'scorer.force':
         return fetchJson('/v1/rack/scorers', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             event_uid: action.event_uid, base_version: action.base_version,
-            values: action.values, actor_class: 'human', machine_id: 'harness-browser',
+            values: action.values, simulation_digest: action.simulation_digest, force: true,
           }),
         }) as Promise<RackActionResult<Action>>
+      case 'scorer.audition': {
+        return fetchJson('/v1/rack/scorers/audition', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            injection_id: action.injection_id,
+            proposal_version: action.proposal_version,
+          }),
+        }).then((result) => {
+          globalThis.dispatchEvent(new CustomEvent('nocturne:scorer-audition', { detail: result }))
+          return result as RackActionResult<Action>
+        })
+      }
       case 'scorer.activate':
         return fetchJson(`/v1/rack/scorers/${encodeURIComponent(action.version)}/activate`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },

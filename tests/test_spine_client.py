@@ -109,6 +109,8 @@ def test_client_exposes_all_spine_routes() -> None:
         "memory_graph",
         "scorer_console",
         "create_scorer_config",
+        "simulate_scorer",
+        "audition_scorer",
         "activate_scorer_config",
         "create_extraction",
         "create_seed",

@@ -18,7 +18,7 @@ import type {
   RemovalReason,
   ScoredMemoryCard,
 } from './protocol'
-import { ContributionBars, useContributionMap } from './ContributionBars'
+import { ContributionBars, useContributionMap, useScorerAuditionMap } from './ContributionBars'
 
 const LONG_PRESS_MS = 550
 const LONG_PRESS_MOVE_TOLERANCE_PX = 10
@@ -793,6 +793,7 @@ interface MemoryCardFrameProps {
 
 function MemoryCardFrame({ card, tone, status, action }: MemoryCardFrameProps) {
   const contributions = useContributionMap()
+  const audition = useScorerAuditionMap()[card.memory_id]
   return (
     <article
       className={`memory-card memory-card--${tone}`}
@@ -818,6 +819,7 @@ function MemoryCardFrame({ card, tone, status, action }: MemoryCardFrameProps) {
           <span>Total score</span>
           <strong>{score(card.score)}</strong>
         </div>
+        {audition !== undefined && <p className="scorer-preview-mark">Audition: {audition.preview_score} · #{audition.preview_rank} {audition.disposition.replace('_', ' ')}</p>}
         <FeatureScores features={card.features} />
         <ContributionBars values={contributions[card.memory_id]} />
       </div>

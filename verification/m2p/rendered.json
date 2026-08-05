@@ -1,0 +1,20 @@
+{
+  "fixture": "M2P REGRESSION",
+  "desktop_viewport": {"width": 1440, "height": 900},
+  "mobile_viewport": {"width": 390, "height": 844},
+  "mobile_document": {"client_width": 390, "scroll_width": 390},
+  "verified": [
+    "GLOBAL refuses a fabricated instant gate",
+    "CURRENT knob edits update frozen-gate score and disposition previews",
+    "FORCE stays disabled before DEEP and after any knob edit",
+    "DEEP shows held-out accuracy, signed delta, digest prefix, and a 2D slice",
+    "exact-receipt FORCE changes the active immutable version",
+    "learner audition shows presentation-only candidate disposition marks",
+    "browser console has no warnings or errors"
+  ],
+  "screenshots": [
+    "01-deep-current-desktop-1440x900.png",
+    "02-audition-desktop-1440x900.png",
+    "03-deep-current-mobile-390x844.png"
+  ]
+}

@@ -68,9 +68,16 @@ from harness.spine_client import (
     MemoryGraphSnapshot,
     QueueDecisionRequest,
     QueueDecisionResponse,
+    RackScorerAuditionRequest,
+    RackScorerForceRequest,
+    RackScorerSimulationRequest,
+    ScorerAuditionRequest,
+    ScorerAuditionResponse,
     ScorerConfigurationView,
     ScorerConsoleQuery,
     ScorerConsoleSnapshot,
+    ScorerSimulationRequest,
+    ScorerSimulationResponse,
     SpineClient,
     SpineClientError,
     VitalsAccounting,
@@ -89,7 +96,9 @@ type VitalsSnapshotReader = Callable[[], Awaitable[VitalsSnapshot]]
 type ThreadVitalsSnapshotReader = Callable[[UUID], Awaitable[VitalsSnapshot]]
 type MemoryGraphReader = Callable[[str | None], Awaitable[MemoryGraphSnapshot]]
 type ScorerConsoleReader = Callable[[str | None], Awaitable[ScorerConsoleSnapshot]]
-type ScorerConfigWriter = Callable[[CreateScorerConfigRequest], Awaitable[ScorerConfigurationView]]
+type ScorerConfigWriter = Callable[[RackScorerForceRequest], Awaitable[ScorerConfigurationView]]
+type ScorerSimulator = Callable[[RackScorerSimulationRequest], Awaitable[ScorerSimulationResponse]]
+type ScorerAuditioner = Callable[[RackScorerAuditionRequest], Awaitable[ScorerAuditionResponse]]
 type ScorerProposalActivator = Callable[
     [str, ActivateScorerConfigRequest], Awaitable[ScorerConfigurationView]
 ]
@@ -211,6 +220,8 @@ def create_app(
     memory_graph_reader: MemoryGraphReader | None = None,
     scorer_console_reader: ScorerConsoleReader | None = None,
     scorer_config_writer: ScorerConfigWriter | None = None,
+    scorer_simulator: ScorerSimulator | None = None,
+    scorer_auditioner: ScorerAuditioner | None = None,
     scorer_proposal_activator: ScorerProposalActivator | None = None,
     context_window_reader: ContextWindowReader | None = None,
     before_static_mount: Callable[[FastAPI], None] | None = None,
@@ -329,7 +340,7 @@ def create_app(
         return RackQueryResult(status="live", as_of=None, data=snapshot)
 
     @app.post("/v1/rack/scorers", response_model=ScorerConfigurationView)
-    async def write_scorer(body: CreateScorerConfigRequest) -> ScorerConfigurationView:
+    async def write_scorer(body: RackScorerForceRequest) -> ScorerConfigurationView:
         if scorer_config_writer is None:
             raise HTTPException(status_code=503, detail="Injection controls are unavailable.")
         try:
@@ -338,6 +349,26 @@ def create_app(
             raise HTTPException(
                 status_code=503, detail="Injection controls are unavailable."
             ) from None
+
+    @app.post("/v1/rack/scorers/simulate", response_model=ScorerSimulationResponse)
+    async def simulate_scorer(body: RackScorerSimulationRequest) -> ScorerSimulationResponse:
+        if scorer_simulator is None:
+            raise HTTPException(status_code=503, detail="Injection simulation is unavailable.")
+        try:
+            return await scorer_simulator(body)
+        except SpineClientError:
+            raise HTTPException(
+                status_code=503, detail="Injection simulation is unavailable."
+            ) from None
+
+    @app.post("/v1/rack/scorers/audition", response_model=ScorerAuditionResponse)
+    async def audition_scorer(body: RackScorerAuditionRequest) -> ScorerAuditionResponse:
+        if scorer_auditioner is None:
+            raise HTTPException(status_code=503, detail="Scorer audition is unavailable.")
+        try:
+            return await scorer_auditioner(body)
+        except SpineClientError:
+            raise HTTPException(status_code=503, detail="Scorer audition is unavailable.") from None
 
     @app.post("/v1/rack/scorers/{version}/activate", response_model=ScorerConfigurationView)
     async def activate_scorer(
@@ -639,6 +670,31 @@ def create_dev_app(
             )
         )
 
+    async def simulate_scorer(body: RackScorerSimulationRequest) -> ScorerSimulationResponse:
+        return await owned_spine.simulate_scorer(
+            ScorerSimulationRequest(
+                principal_id=principal_id,
+                **body.model_dump(),
+            )
+        )
+
+    async def force_scorer(body: RackScorerForceRequest) -> ScorerConfigurationView:
+        return await owned_spine.create_scorer_config(
+            CreateScorerConfigRequest(
+                **body.model_dump(),
+                actor_class="human",
+                machine_id=machine_id,
+            )
+        )
+
+    async def audition_scorer(body: RackScorerAuditionRequest) -> ScorerAuditionResponse:
+        return await owned_spine.audition_scorer(
+            ScorerAuditionRequest(
+                principal_id=principal_id,
+                **body.model_dump(),
+            )
+        )
+
     loop = RunLoop(
         runner,
         factory,
@@ -745,7 +801,9 @@ def create_dev_app(
         thread_vitals_snapshot_reader=read_thread_vitals_snapshot,
         memory_graph_reader=read_memory_graph,
         scorer_console_reader=read_scorer_console,
-        scorer_config_writer=getattr(owned_spine, "create_scorer_config", None),
+        scorer_config_writer=force_scorer,
+        scorer_simulator=simulate_scorer,
+        scorer_auditioner=audition_scorer,
         scorer_proposal_activator=getattr(owned_spine, "activate_scorer_config", None),
         context_window_reader=context_windows.snapshot,
         before_static_mount=configure_extraction_routes,
