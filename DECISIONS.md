@@ -1062,3 +1062,22 @@ claim.
 channel before the enacted Deck threshold exists. Automatically deleting data
 would turn diagnosis into recovery policy. A second backup parser would let
 retention and doctor disagree about which generations are real.
+
+## 036 — Split resource observation at the process boundary [P1.3, P2.4, P4]
+
+**Decision.** Adopt Garden A-044. Let Spine report the database bytes it owns,
+then enrich that Vitals object at the Harness Rack boundary with current daemon
+RSS, monotonic uptime, and owner-local disk, journal, and backup measurements.
+Reuse the same local storage reader for doctor and startup warning.
+
+**Motivation.** A useful resource gauge must be honest about where each number
+comes from. Harness cannot infer Cloud SQL size from its local disk, and Spine
+cannot observe the owner's daemon process or filesystem. The existing Vitals
+enrichment seam is the one place those facts can meet without creating another
+monitoring service.
+
+**Rejected alternatives.** Adding psutil for one process number expands the
+install surface unnecessarily; the supported host already exposes current RSS
+through `ps`. Polling Docker for database volume size would be local-only and
+false for the owner's cloud Palace. A popup would violate the passive Vitals
+and least-attention law.

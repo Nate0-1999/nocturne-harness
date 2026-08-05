@@ -631,12 +631,45 @@ class VitalsAccounting(ContractModel):
         return self
 
 
+class VitalsResources(ContractModel):
+    """Cross-process resource gauge enriched by Harness under A-044."""
+
+    status: Literal["partial", "measured"]
+    daemon_rss_bytes: int | None = Field(strict=True, ge=0)
+    daemon_uptime_seconds: int | None = Field(strict=True, ge=0)
+    disk_free_bytes: int | None = Field(strict=True, ge=0)
+    disk_total_bytes: int | None = Field(strict=True, ge=0)
+    database_bytes: int = Field(strict=True, ge=0)
+    journal_bytes: int | None = Field(strict=True, ge=0)
+    backup_bytes: int | None = Field(strict=True, ge=0)
+    warning: Literal["low_disk"] | None
+
+    @model_validator(mode="after")
+    def require_honest_availability(self) -> VitalsResources:
+        local = (
+            self.daemon_rss_bytes,
+            self.daemon_uptime_seconds,
+            self.disk_free_bytes,
+            self.disk_total_bytes,
+            self.journal_bytes,
+            self.backup_bytes,
+        )
+        if self.status == "measured" and any(value is None for value in local):
+            raise ValueError("measured resources require every local observation")
+        if self.warning is not None and (
+            self.disk_free_bytes is None or self.disk_total_bytes is None
+        ):
+            raise ValueError("a resource warning requires disk observations")
+        return self
+
+
 class VitalsSnapshot(ContractModel):
     as_of: datetime
     window_minutes: Literal[60]
     spend: VitalsSpend
     reconciliation: VitalsReconciliation
     accounting: VitalsAccounting = Field(default_factory=VitalsAccounting)
+    resources: VitalsResources
     lifecycle_rates: list[VitalsLifecycleRate]
     palace_counts: list[VitalsPalaceCount]
 

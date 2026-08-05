@@ -465,6 +465,8 @@ def test_missing_web_build_is_explicit(tmp_path: Path) -> None:
 
 
 def test_dev_app_wires_the_owned_spine_into_the_public_rack_query(tmp_path: Path) -> None:
+    """A-044 keeps the public Vitals boundary enriched with owner-local resources."""
+
     async def stream(_messages, _info):
         yield "unused"
 
@@ -493,6 +495,11 @@ def test_dev_app_wires_the_owned_spine_into_the_public_rack_query(tmp_path: Path
 
     assert response.status_code == 200
     assert response.json()["data"]["window_minutes"] == 60
+    resources = response.json()["data"]["resources"]
+    assert resources["status"] == "measured"
+    assert resources["database_bytes"] == vitals_snapshot().resources.database_bytes
+    assert resources["daemon_rss_bytes"] > 0
+    assert resources["disk_free_bytes"] > 0
     assert spine.vitals_requests == 1
 
 

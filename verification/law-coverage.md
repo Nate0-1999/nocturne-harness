@@ -2,9 +2,9 @@
 
 Generated deterministically by `scripts/check_test_motivations.py`.
 
-- Tests discovered: 334
-- Motivated tests: 25
-- Grandfathered baseline debt: 309
+- Tests discovered: 341
+- Motivated tests: 33
+- Grandfathered baseline debt: 308
 - Stale baseline entries: 0
 
 ## SPEC and ADR defenders
@@ -166,7 +166,7 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 ### B.6 — 2 defender(s)
 
 - `tests/test_test_motivations.py::test_report_indexes_citations_and_marks_uncovered_law`
-- `web/tests/vitals.test.mjs::line-160`
+- `web/tests/vitals.test.mjs::line-189`
 
 ### C.1 — ZERO DEFENDERS
 
@@ -206,10 +206,10 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 
 ### C.10 — 4 defender(s)
 
-- `web/tests/vitals.test.mjs::line-100`
-- `web/tests/vitals.test.mjs::line-119`
-- `web/tests/vitals.test.mjs::line-130`
-- `web/tests/vitals.test.mjs::line-142`
+- `web/tests/vitals.test.mjs::line-113`
+- `web/tests/vitals.test.mjs::line-148`
+- `web/tests/vitals.test.mjs::line-159`
+- `web/tests/vitals.test.mjs::line-171`
 
 ### D.1 — ZERO DEFENDERS
 
@@ -235,7 +235,7 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 
 ### A-034
 
-- `web/tests/vitals.test.mjs::line-111`
+- `web/tests/vitals.test.mjs::line-140`
 
 ### A-036
 
@@ -267,8 +267,24 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_cli.py::test_local_commands_dispatch`
 - `tests/test_cli.py::test_parser_exposes_onboarding_and_lifecycle_commands`
 - `tests/test_m2n_backup.py::test_backup_publishes_verified_private_receipt_and_prunes_known_generations`
+- `tests/test_m2n_backup.py::test_doctor_fails_closed_on_a_corrupt_recognized_backup`
+- `tests/test_m2n_backup.py::test_doctor_rechecks_resources_and_backup_authority`
 - `tests/test_m2n_backup.py::test_failed_dump_publishes_no_generation`
 - `tests/test_onboarding.py::test_up_orders_container_migration_services_and_browser`
+
+### A-043
+
+- `tests/test_m2n_backup.py::test_doctor_fails_closed_on_a_corrupt_recognized_backup`
+- `tests/test_m2n_backup.py::test_doctor_rechecks_resources_and_backup_authority`
+
+### A-044
+
+- `tests/test_daemon.py::test_dev_app_wires_the_owned_spine_into_the_public_rack_query`
+- `tests/test_m2n_resources.py::test_directory_size_ignores_symlinked_content`
+- `tests/test_m2n_resources.py::test_resource_watch_enriches_database_truth_with_owner_local_measurements`
+- `tests/test_m2n_resources.py::test_resource_watch_keeps_unavailable_rss_distinct_from_zero`
+- `tests/test_m2n_resources.py::test_startup_warns_early_without_prompting_or_stopping`
+- `web/tests/vitals.test.mjs::line-127`
 
 ## Baseline debt
 
@@ -331,7 +347,6 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_daemon.py::test_unavailable_rack_vitals_returns_503_without_disturbing_chat`
 - `tests/test_daemon.py::test_missing_rack_vitals_reader_is_an_explicit_503`
 - `tests/test_daemon.py::test_missing_web_build_is_explicit`
-- `tests/test_daemon.py::test_dev_app_wires_the_owned_spine_into_the_public_rack_query`
 - `tests/test_daemon.py::test_dev_build_uses_locked_install_before_vite_build`
 - `tests/test_daemon.py::test_default_prompt_gets_fresh_correlated_error_lifecycle`
 - `tests/test_daemon.py::test_dev_app_wires_the_real_streaming_agent_adapter`

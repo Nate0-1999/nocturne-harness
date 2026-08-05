@@ -10,7 +10,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from harness import lifecycle, onboarding
+from harness import lifecycle, onboarding, resources
 
 
 def _config(tmp_path: Path, *, retention: int = 2) -> onboarding.NocturneConfig:
@@ -144,7 +144,7 @@ def test_doctor_rechecks_resources_and_backup_authority(
     (transcripts / "thread.jsonl").write_bytes(b"history")
     monkeypatch.setattr(lifecycle.subprocess, "run", _successful_run)
     monkeypatch.setattr(
-        lifecycle.shutil,
+        resources.shutil,
         "disk_usage",
         lambda path: SimpleNamespace(total=100 * 1024**3, used=96 * 1024**3, free=4 * 1024**3),
     )
@@ -171,7 +171,7 @@ def test_doctor_fails_closed_on_a_corrupt_recognized_backup(
     (backups / "01J00000000000000000000000" / "palace.pgdump").write_bytes(b"changed")
     monkeypatch.setattr(lifecycle.subprocess, "run", _successful_run)
     monkeypatch.setattr(
-        lifecycle.shutil,
+        resources.shutil,
         "disk_usage",
         lambda path: SimpleNamespace(total=100 * 1024**3, used=50 * 1024**3, free=50 * 1024**3),
     )

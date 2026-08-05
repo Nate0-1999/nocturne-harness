@@ -52,6 +52,18 @@ export interface AccountingSnapshot {
   source: 'harness.receipt_queue'
 }
 
+export interface ResourceSnapshot {
+  status: 'partial' | 'measured'
+  daemon_rss_bytes: number | null
+  daemon_uptime_seconds: number | null
+  disk_free_bytes: number | null
+  disk_total_bytes: number | null
+  database_bytes: number
+  journal_bytes: number | null
+  backup_bytes: number | null
+  warning: 'low_disk' | null
+}
+
 export interface VitalsSnapshot {
   as_of: string
   window_minutes: 60
@@ -62,6 +74,7 @@ export interface VitalsSnapshot {
   }
   reconciliation: ReconciliationSnapshot
   accounting: AccountingSnapshot
+  resources: ResourceSnapshot
   lifecycle_rates: LifecycleRate[]
   palace_counts: PalaceCount[]
 }
@@ -104,9 +117,32 @@ export function parseVitalsSnapshot(value: unknown): VitalsSnapshot {
     },
     reconciliation: parseReconciliation(root.reconciliation),
     accounting: parseAccounting(root.accounting),
+    resources: parseResources(root.resources),
     lifecycle_rates: gaugeArray(root.lifecycle_rates, parseLifecycleRate, 'lifecycle_rates'),
     palace_counts: gaugeArray(root.palace_counts, parsePalaceCount, 'palace_counts'),
   }
+}
+
+export function formatBytes(value: number | null): string {
+  if (value === null) return 'Unavailable'
+  const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
+  let amount = value
+  let unit = 0
+  while (amount >= 1024 && unit < units.length - 1) {
+    amount /= 1024
+    unit += 1
+  }
+  return `${amount.toFixed(1)} ${units[unit]}`
+}
+
+export function formatUptime(value: number | null): string {
+  if (value === null) return 'Unavailable'
+  const days = Math.floor(value / 86_400)
+  const hours = Math.floor((value % 86_400) / 3_600)
+  const minutes = Math.floor((value % 3_600) / 60)
+  if (days > 0) return `${days}d ${hours}h`
+  if (hours > 0) return `${hours}h ${minutes}m`
+  return `${minutes}m`
 }
 
 export function spendLaneId(lane: SpendLane): string {
@@ -289,6 +325,45 @@ function parseAccounting(value: unknown): AccountingSnapshot {
   }
 }
 
+function parseResources(value: unknown): ResourceSnapshot {
+  const item = record(value, 'resources')
+  if (item.status !== 'partial' && item.status !== 'measured') {
+    throw new TypeError('resources.status is invalid')
+  }
+  if (item.warning !== null && item.warning !== 'low_disk') {
+    throw new TypeError('resources.warning is invalid')
+  }
+  const result: ResourceSnapshot = {
+    status: item.status,
+    daemon_rss_bytes: nullableNonnegativeInteger(item.daemon_rss_bytes, 'resources.daemon_rss_bytes'),
+    daemon_uptime_seconds: nullableNonnegativeInteger(item.daemon_uptime_seconds, 'resources.daemon_uptime_seconds'),
+    disk_free_bytes: nullableNonnegativeInteger(item.disk_free_bytes, 'resources.disk_free_bytes'),
+    disk_total_bytes: nullableNonnegativeInteger(item.disk_total_bytes, 'resources.disk_total_bytes'),
+    database_bytes: nonnegativeInteger(item.database_bytes, 'resources.database_bytes'),
+    journal_bytes: nullableNonnegativeInteger(item.journal_bytes, 'resources.journal_bytes'),
+    backup_bytes: nullableNonnegativeInteger(item.backup_bytes, 'resources.backup_bytes'),
+    warning: item.warning,
+  }
+  const local = [
+    result.daemon_rss_bytes,
+    result.daemon_uptime_seconds,
+    result.disk_free_bytes,
+    result.disk_total_bytes,
+    result.journal_bytes,
+    result.backup_bytes,
+  ]
+  if (result.status === 'measured' && local.some((entry) => entry === null)) {
+    throw new TypeError('measured resources require every local observation')
+  }
+  if (
+    result.warning !== null &&
+    (result.disk_free_bytes === null || result.disk_total_bytes === null)
+  ) {
+    throw new TypeError('resource warnings require disk observations')
+  }
+  return result
+}
+
 function parseReconciliation(value: unknown): ReconciliationSnapshot {
   const item = record(value, 'reconciliation')
   const statuses: ReconciliationStatus[] = [
@@ -463,6 +538,10 @@ function nonnegativeInteger(value: unknown, name: string): number {
     throw new TypeError(`${name} must be a non-negative integer`)
   }
   return value
+}
+
+function nullableNonnegativeInteger(value: unknown, name: string): number | null {
+  return value === null ? null : nonnegativeInteger(value, name)
 }
 
 function timestamp(value: unknown, name: string): string {

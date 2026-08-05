@@ -1025,7 +1025,8 @@
 
 .vitals-reconciliation--drift,
 .vitals-reconciliation--pending,
-.vitals-reconciliation--degraded {
+.vitals-reconciliation--degraded,
+.vitals-reconciliation--low-disk {
   color: var(--danger);
 }
 
@@ -1130,6 +1131,14 @@
   font-weight: 650;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.vitals-gauge--resource {
+  background: linear-gradient(180deg, rgba(56, 215, 255, 0.035), transparent);
+}
+
+.vitals-gauge--warning > strong {
+  color: var(--danger);
 }
 
 .vitals-gauge--not_recorded > strong,

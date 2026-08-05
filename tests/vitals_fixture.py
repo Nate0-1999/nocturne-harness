@@ -71,6 +71,17 @@ def vitals_payload() -> dict[str, Any]:
             "oldest_queued_at": None,
             "source": "harness.receipt_queue",
         },
+        "resources": {
+            "status": "partial",
+            "daemon_rss_bytes": None,
+            "daemon_uptime_seconds": None,
+            "disk_free_bytes": None,
+            "disk_total_bytes": None,
+            "database_bytes": 7_864_320,
+            "journal_bytes": None,
+            "backup_bytes": None,
+            "warning": None,
+        },
         "lifecycle_rates": [
             {
                 "metric": "created",

@@ -56,6 +56,7 @@ from harness.parameter_registry import (
 )
 from harness.rack_query import RackQueryResult
 from harness.receipt_queue import SpendReceiptQueue
+from harness.resources import ResourceWatch
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.seed import SeedIngestionService, SeedUploadRequest
@@ -88,9 +89,7 @@ type VitalsSnapshotReader = Callable[[], Awaitable[VitalsSnapshot]]
 type ThreadVitalsSnapshotReader = Callable[[UUID], Awaitable[VitalsSnapshot]]
 type MemoryGraphReader = Callable[[str | None], Awaitable[MemoryGraphSnapshot]]
 type ScorerConsoleReader = Callable[[str | None], Awaitable[ScorerConsoleSnapshot]]
-type ScorerConfigWriter = Callable[
-    [CreateScorerConfigRequest], Awaitable[ScorerConfigurationView]
-]
+type ScorerConfigWriter = Callable[[CreateScorerConfigRequest], Awaitable[ScorerConfigurationView]]
 type ScorerProposalActivator = Callable[
     [str, ActivateScorerConfigRequest], Awaitable[ScorerConfigurationView]
 ]
@@ -260,9 +259,7 @@ def create_app(
                 return RackQueryResult(status="historical_unavailable", as_of=as_of, data=None)
             if context_window_reader is None:
                 raise HTTPException(status_code=503, detail="Context usage is unavailable.")
-            return RackQueryResult(
-                status="live", as_of=None, data=context_window_reader(thread_id)
-            )
+            return RackQueryResult(status="live", as_of=None, data=context_window_reader(thread_id))
         if resource == "parameters":
             if thread_id is None or not thread_id.strip():
                 raise HTTPException(
@@ -342,9 +339,7 @@ def create_app(
                 status_code=503, detail="Injection controls are unavailable."
             ) from None
 
-    @app.post(
-        "/v1/rack/scorers/{version}/activate", response_model=ScorerConfigurationView
-    )
+    @app.post("/v1/rack/scorers/{version}/activate", response_model=ScorerConfigurationView)
     async def activate_scorer(
         version: str, body: ActivateScorerConfigRequest
     ) -> ScorerConfigurationView:
@@ -578,6 +573,7 @@ def create_dev_app(
     memory_contexts = ThreadMemoryContextRegistry()
     context_windows = ContextWindowTracker()
     receipt_queue = SpendReceiptQueue(nocturne_home() / "receipt-queue")
+    resource_watch = ResourceWatch(nocturne_home())
     panel = MemoryPanelController(
         owned_spine,
         memory_contexts,
@@ -610,11 +606,21 @@ def create_dev_app(
 
     async def read_vitals_snapshot() -> VitalsSnapshot:
         snapshot = await owned_spine.vitals_snapshot()
-        return snapshot.model_copy(update={"accounting": _vitals_accounting(receipt_queue)})
+        return snapshot.model_copy(
+            update={
+                "accounting": _vitals_accounting(receipt_queue),
+                "resources": resource_watch.snapshot(snapshot.resources.database_bytes),
+            }
+        )
 
     async def read_thread_vitals_snapshot(thread_id: UUID) -> VitalsSnapshot:
         snapshot = await owned_spine.thread_vitals_snapshot(thread_id)
-        return snapshot.model_copy(update={"accounting": _vitals_accounting(receipt_queue)})
+        return snapshot.model_copy(
+            update={
+                "accounting": _vitals_accounting(receipt_queue),
+                "resources": resource_watch.snapshot(snapshot.resources.database_bytes),
+            }
+        )
 
     async def read_memory_graph(thread_id: str | None) -> MemoryGraphSnapshot:
         memory_ids = None
@@ -659,6 +665,7 @@ def create_dev_app(
             extraction, journal, idle_hours=configured.extraction_idle_hours
         )
     )
+
     def configure_extraction_routes(app: FastAPI) -> None:
         async def flush_receipt_queue() -> None:
             await receipt_queue.flush(owned_spine)
@@ -683,9 +690,7 @@ def create_dev_app(
             messages = journal.read_messages(str(thread_id))
             final_post = ""
             for message in reversed(messages):
-                if message.get("role") == "assistant" and isinstance(
-                    message.get("content"), str
-                ):
+                if message.get("role") == "assistant" and isinstance(message.get("content"), str):
                     final_post = message["content"]
                     break
             pending = await owned_spine.approval_queue(

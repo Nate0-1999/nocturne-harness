@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import IO, TextIO
 
 from harness.envelope import generate_ulid
+from harness.resources import local_storage_snapshot
 
 _ARCHIVE_NAME = "palace.pgdump"
 _RECEIPT_NAME = "receipt.json"
@@ -233,22 +234,6 @@ def _valid_generations(backups: Path) -> list[Path]:
     return sorted(valid, key=lambda path: path.name)
 
 
-def _directory_size(path: Path) -> int:
-    if not path.exists() or path.is_symlink():
-        return 0
-    total = 0
-    for root, directories, files in os.walk(path, followlinks=False):
-        directories[:] = [name for name in directories if not (Path(root) / name).is_symlink()]
-        for name in files:
-            candidate = Path(root) / name
-            if not candidate.is_symlink():
-                try:
-                    total += candidate.stat().st_size
-                except OSError:
-                    continue
-    return total
-
-
 def inspect_local_palace(config: object) -> DoctorReport:
     """Inspect local lifecycle health without changing the Palace."""
 
@@ -264,12 +249,12 @@ def inspect_local_palace(config: object) -> DoctorReport:
             failures.append(f"Nocturne home permissions are {home_mode:o}; expected 700.")
         if config_mode != 0o600:
             failures.append(f"Nocturne config permissions are {config_mode:o}; expected 600.")
-        usage = shutil.disk_usage(home)
+        storage = local_storage_snapshot(home)
     except OSError:
         raise LifecycleError("Doctor could not inspect the local Nocturne home.") from None
 
-    journal_bytes = _directory_size(home / "transcripts")
-    backup_bytes = _directory_size(home / "backups")
+    journal_bytes = storage.journal_bytes
+    backup_bytes = storage.backup_bytes
     backups = home / "backups"
     valid_generations: list[Path] = []
     verified_generations: list[Path] = []
@@ -341,8 +326,7 @@ def inspect_local_palace(config: object) -> DoctorReport:
             except (LifecycleError, OSError):
                 failures.append(f"Backup {generation.name} failed its archive check.")
 
-    warning_boundary = max(5 * 1024**3, usage.total // 10)
-    if usage.free <= warning_boundary:
+    if storage.low_disk:
         warnings.append("Free disk space is below the early warning boundary.")
 
     return DoctorReport(
@@ -350,8 +334,8 @@ def inspect_local_palace(config: object) -> DoctorReport:
         journal_bytes=journal_bytes,
         backup_bytes=backup_bytes,
         backup_generations=len(verified_generations),
-        disk_free_bytes=usage.free,
-        disk_total_bytes=usage.total,
+        disk_free_bytes=storage.disk_free_bytes,
+        disk_total_bytes=storage.disk_total_bytes,
         warnings=tuple(warnings),
         failures=tuple(failures),
     )

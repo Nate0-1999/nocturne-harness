@@ -11,6 +11,8 @@ import {
   accountingCopy,
   contiguousPolylineSegments,
   formatExactUsd,
+  formatBytes,
+  formatUptime,
   laneChartPoints,
   latestSpendPoint,
   nearestSpendPoint,
@@ -223,6 +225,12 @@ export function VitalsModule() {
             {accountingCopy(snapshot.accounting)}
           </span>
         )}
+        <span
+          className={`vitals-reconciliation${snapshot.resources.warning === null ? '' : ' vitals-reconciliation--low-disk'}`}
+          title="Owner-local storage and Palace database"
+        >
+          Resources · {formatBytes(snapshot.resources.disk_free_bytes)} free · DB {formatBytes(snapshot.resources.database_bytes)}
+        </span>
         {load.failed && (
           <span className="vitals-inline-failure" role="alert">
             Vitals couldn’t refresh. Chat is still available.
@@ -269,7 +277,17 @@ export function VitalsModule() {
         </div>
       )}
 
-      <div className="vitals-gauges" aria-label="Lifecycle and Palace gauges">
+      <div className="vitals-gauges" aria-label="Resource, lifecycle and Palace gauges">
+        <ResourceGauge
+          label="Disk free"
+          value={formatBytes(snapshot.resources.disk_free_bytes)}
+          warning={snapshot.resources.warning === 'low_disk'}
+        />
+        <ResourceGauge label="Database" value={formatBytes(snapshot.resources.database_bytes)} />
+        <ResourceGauge label="Daemon memory" value={formatBytes(snapshot.resources.daemon_rss_bytes)} />
+        <ResourceGauge label="Daemon uptime" value={formatUptime(snapshot.resources.daemon_uptime_seconds)} />
+        <ResourceGauge label="Journal" value={formatBytes(snapshot.resources.journal_bytes)} />
+        <ResourceGauge label="Backups" value={formatBytes(snapshot.resources.backup_bytes)} />
         {snapshot.lifecycle_rates.map((gauge) => (
           <Gauge
             key={`rate:${gauge.metric}`}
@@ -312,6 +330,23 @@ export function VitalsModule() {
         </div>
       )}
     </section>
+  )
+}
+
+function ResourceGauge({
+  label,
+  value,
+  warning = false,
+}: {
+  label: string
+  value: string
+  warning?: boolean
+}) {
+  return (
+    <div className={`vitals-gauge vitals-gauge--resource${warning ? ' vitals-gauge--warning' : ''}`}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
   )
 }
 

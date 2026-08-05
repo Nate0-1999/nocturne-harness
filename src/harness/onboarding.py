@@ -25,6 +25,7 @@ from typing import TextIO
 from urllib.parse import quote
 
 from harness.lifecycle import DoctorReport, create_local_backup, inspect_local_palace
+from harness.resources import local_storage_snapshot
 
 LOCAL_URL = "http://127.0.0.1:8765"
 SPINE_URL = "http://127.0.0.1:8000"
@@ -173,6 +174,7 @@ def up_nocturne(
     """Start pgvector, migrate, supervise Spine + Harness, and open the browser."""
 
     config = load_config(home=home)
+    _warn_if_low_disk(config.home, stdout=stdout)
     _require_command("docker")
     with resources.as_file(
         resources.files("harness").joinpath("resources", "docker-compose.yml")
@@ -270,6 +272,15 @@ def _human_bytes(value: int) -> str:
             return f"{amount:.1f} {unit}"
         amount /= 1024
     raise AssertionError("unreachable")
+
+
+def _warn_if_low_disk(home: Path, *, stdout: TextIO) -> None:
+    if local_storage_snapshot(home).low_disk:
+        print(
+            "Warning: Free disk space is low. Nocturne will continue; run `nocturne doctor` "
+            "for details.",
+            file=stdout,
+        )
 
 
 def _write_config(config: NocturneConfig) -> None:

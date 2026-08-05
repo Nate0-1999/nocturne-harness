@@ -4,6 +4,8 @@ import test from 'node:test'
 import {
   contiguousPolylineSegments,
   formatExactUsd,
+  formatBytes,
+  formatUptime,
   laneChartPoints,
   nearestSpendPoint,
   accountingCopy,
@@ -65,6 +67,17 @@ function snapshot() {
       oldest_queued_at: '2026-08-02T12:58:00Z',
       source: 'harness.receipt_queue',
     },
+    resources: {
+      status: 'measured',
+      daemon_rss_bytes: 134217728,
+      daemon_uptime_seconds: 3661,
+      disk_free_bytes: 107374182400,
+      disk_total_bytes: 536870912000,
+      database_bytes: 7864320,
+      journal_bytes: 2048,
+      backup_bytes: 4096,
+      warning: null,
+    },
     lifecycle_rates: [
       {
         metric: 'created',
@@ -105,6 +118,22 @@ test('parses the exact server-provided vitals shape without re-accounting', () =
   assert.equal(parsed.palace_counts[1].status, 'placeholder')
   assert.equal(reconciliationCopy(parsed.reconciliation), 'Ledger drift · -$0.005000000000')
   assert.equal(accountingCopy(parsed.accounting), 'Receipt drift · 2 lines pending')
+  assert.equal(parsed.resources.database_bytes, 7864320)
+  assert.equal(formatBytes(parsed.resources.disk_free_bytes), '100.0 GiB')
+  assert.equal(formatUptime(parsed.resources.daemon_uptime_seconds), '1h 1m')
+})
+
+/** A-044 keeps missing process observations unavailable and preserves the low-disk signal. */
+test('parses honest partial resource measurements without inventing zeroes', () => {
+  const payload = snapshot()
+  payload.resources.status = 'partial'
+  payload.resources.daemon_rss_bytes = null
+  payload.resources.warning = 'low_disk'
+
+  const parsed = parseVitalsSnapshot(payload)
+
+  assert.equal(formatBytes(parsed.resources.daemon_rss_bytes), 'Unavailable')
+  assert.equal(parsed.resources.warning, 'low_disk')
 })
 
 /** A-034 preserves exact receipt decimals and visible unpriced state so browser arithmetic cannot hide uncertainty. */

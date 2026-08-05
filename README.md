@@ -33,6 +33,9 @@ NOCTURNE keeps five generations by default; set
 `NOCTURNE_BACKUP_GENERATIONS` in the private config to retain between 1 and 50.
 Run `nocturne doctor` to re-check those backups and see the database,
 conversation-journal, backup, and free-disk sizes before space is low.
+`nocturne up` performs the same free-space check before Docker work and warns
+without prompting or stopping. Palace Vitals passively shows current free disk,
+database, journal, backup, daemon-memory, and daemon-uptime measurements.
 
 For an isolated install root, set `NOCTURNE_HOME` before `init`, `up`, and
 `deploy`. Set `NOCTURNE_POSTGRES_PORT` before `init` when port 5432 is already
