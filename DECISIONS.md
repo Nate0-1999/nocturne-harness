@@ -992,12 +992,12 @@ machinery M3 owns.
 **Decision.** Adopt Garden A-040. Ship a repository-local, standard-library
 checker that reads Python test docstrings and JavaScript test JSDoc, accepts
 only the enacted citation grammar, and grandfathers only an exact normalized
-syntax digest. Run it from both the local pre-commit configuration and CI.
+source digest. Run it from both the local pre-commit configuration and CI.
 Generate the law-coverage artifact from the same scan rather than maintaining a
 second hand-written index.
 
 **Motivation.** A filename exemption would let an old test change forever
-without explaining its purpose. A syntax digest makes the temporary baseline a
+without explaining its purpose. A source digest makes the temporary baseline a
 real ratchet, while one scanner keeps enforcement and coverage from disagreeing.
 
 **Rejected alternatives.** Enforcing prose quality with keyword heuristics
