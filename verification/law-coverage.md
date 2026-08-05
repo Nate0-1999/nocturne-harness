@@ -2,8 +2,8 @@
 
 Generated deterministically by `scripts/check_test_motivations.py`.
 
-- Tests discovered: 341
-- Motivated tests: 33
+- Tests discovered: 348
+- Motivated tests: 40
 - Grandfathered baseline debt: 308
 - Stale baseline entries: 0
 
@@ -285,6 +285,18 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_m2n_resources.py::test_resource_watch_keeps_unavailable_rss_distinct_from_zero`
 - `tests/test_m2n_resources.py::test_startup_warns_early_without_prompting_or_stopping`
 - `web/tests/vitals.test.mjs::line-127`
+
+### A-045
+
+- `tests/test_cli.py::test_local_commands_dispatch`
+- `tests/test_cli.py::test_parser_exposes_onboarding_and_lifecycle_commands`
+- `tests/test_m2n_backup.py::test_candidate_credential_file_is_private_and_docker_env_compatible`
+- `tests/test_m2n_backup.py::test_exact_restore_confirmation_switches_and_retains_candidate`
+- `tests/test_m2n_backup.py::test_failed_candidate_switch_restores_the_former_config_and_volume`
+- `tests/test_m2n_backup.py::test_restore_cancellation_prints_manifest_and_discards_only_candidate`
+- `tests/test_m2n_backup.py::test_restore_refuses_while_owner_services_can_still_write`
+- `tests/test_m2n_backup.py::test_rollback_manifest_names_loss_reversion_pins_and_event_deltas`
+- `tests/test_m2n_lifecycle.py::test_v2_config_adds_the_existing_compose_volume_without_changing_owner_values`
 
 ## Baseline debt
 

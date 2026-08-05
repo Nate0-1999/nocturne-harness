@@ -5,6 +5,7 @@ import io
 import json
 import stat
 import subprocess
+from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -184,3 +185,187 @@ def test_doctor_fails_closed_on_a_corrupt_recognized_backup(
     assert report.failures == (
         "Backup 01J00000000000000000000000 failed its receipt or digest check.",
     )
+
+
+def _inventory(memories: list[dict[str, object]], *, base_count: int) -> dict[str, object]:
+    return {
+        "memories": memories,
+        "event_counts": {
+            table: base_count + index for index, table in enumerate(lifecycle._EVENT_TABLES)
+        },
+    }
+
+
+def test_rollback_manifest_names_loss_reversion_pins_and_event_deltas() -> None:
+    """A-045 makes the destructive consequence inspectable before confirmation."""
+    current = _inventory(
+        [
+            {"id": "a", "label": "Born later", "revision": 1, "pin": True},
+            {"id": "b", "label": "Edited", "revision": 3, "pin": False},
+            {"id": "c", "label": "Unpinned there", "revision": 2, "pin": True},
+        ],
+        base_count=10,
+    )
+    candidate = _inventory(
+        [
+            {"id": "b", "label": "Edited", "revision": 1, "pin": False},
+            {"id": "c", "label": "Unpinned there", "revision": 2, "pin": False},
+        ],
+        base_count=4,
+    )
+
+    manifest = lifecycle._rollback_manifest(current, candidate)
+
+    assert [item.memory_id for item in manifest.memories_lost] == ["a"]
+    assert [item.memory_id for item in manifest.edits_reverted] == ["b", "c"]
+    assert [item.memory_id for item in manifest.pins_undone] == ["a", "c"]
+    assert all(count.candidate - count.current == -6 for count in manifest.event_counts)
+
+
+def _prepared_restore(tmp_path: Path) -> lifecycle.PreparedRestore:
+    manifest = lifecycle.RollbackManifest(
+        memories_lost=(lifecycle.ManifestMemory("a", "Born later", 1, None),),
+        edits_reverted=(lifecycle.ManifestMemory("b", "Edited", 3, 1),),
+        pins_undone=(),
+        event_counts=tuple(lifecycle.EventCount(table, 10, 4) for table in lifecycle._EVENT_TABLES),
+    )
+    return lifecycle.PreparedRestore(
+        restore_id="01J00000000000000000000009",
+        backup_id="01J00000000000000000000000",
+        former_volume="nocturne_old",
+        candidate_volume="nocturne_candidate",
+        manifest=manifest,
+    )
+
+
+def test_restore_cancellation_prints_manifest_and_discards_only_candidate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A-045 treats every response except the exact typed phrase as no authority to switch."""
+    config = _config(tmp_path)
+    prepared = _prepared_restore(tmp_path)
+    discarded: list[lifecycle.PreparedRestore] = []
+    monkeypatch.setattr(onboarding, "load_config", lambda **kwargs: config)
+    monkeypatch.setattr(onboarding, "_require_command", lambda command: None)
+    monkeypatch.setattr(onboarding, "_service_reachable", lambda *args, **kwargs: False)
+    monkeypatch.setattr(onboarding, "prepare_local_restore", lambda *args: prepared)
+    monkeypatch.setattr(onboarding, "discard_prepared_restore", discarded.append)
+    output = io.StringIO()
+
+    result = onboarding.restore_nocturne(
+        prepared.backup_id,
+        prompt=lambda message: "no",
+        stdout=output,
+    )
+
+    assert result == 1
+    assert discarded == [prepared]
+    assert "Memories lost: 1" in output.getvalue()
+    assert "Born later [a]" in output.getvalue()
+    assert "memory_revision: 10 -> 4 (-6)" in output.getvalue()
+    assert "live Palace was not changed" in output.getvalue()
+
+
+def test_failed_candidate_switch_restores_the_former_config_and_volume(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A-045 mechanically returns to the former Palace when candidate startup fails."""
+    config = _config(tmp_path)
+    prepared = _prepared_restore(tmp_path)
+    active = {"volume": prepared.former_volume}
+    changes: list[str] = []
+
+    @contextmanager
+    def compose(current: object):
+        yield ["compose", str(getattr(current, "active_postgres_volume"))]
+
+    def set_volume(volume: str) -> object:
+        active["volume"] = volume
+        changes.append(volume)
+        return SimpleNamespace(active_postgres_volume=volume)
+
+    def run(command: list[str], **kwargs: object) -> SimpleNamespace:
+        del kwargs
+        if "up" in command and prepared.candidate_volume in command:
+            raise lifecycle.LifecycleError("candidate failed")
+        if "ps" in command:
+            return SimpleNamespace(stdout="postgres\n")
+        return SimpleNamespace(stdout=None)
+
+    monkeypatch.setattr(lifecycle, "_compose_command", compose)
+    monkeypatch.setattr(lifecycle, "_run", run)
+
+    with pytest.raises(lifecycle.LifecycleError, match="former Palace was restored"):
+        lifecycle.activate_local_restore(config, prepared, set_active_volume=set_volume)
+
+    assert changes == [prepared.candidate_volume, prepared.former_volume]
+    assert active["volume"] == prepared.former_volume
+
+
+def test_candidate_credential_file_is_private_and_docker_env_compatible(tmp_path: Path) -> None:
+    """A-045 keeps the isolated restore credential private without changing its value."""
+    config = _config(tmp_path)
+
+    path = lifecycle._candidate_env_file(config)
+    try:
+        assert stat.S_IMODE(path.stat().st_mode) == 0o600
+        assert path.read_text(encoding="utf-8").splitlines() == [
+            "POSTGRES_DB=spine",
+            "POSTGRES_USER=spine",
+            "POSTGRES_PASSWORD=database-secret",
+        ]
+    finally:
+        path.unlink()
+
+
+def test_exact_restore_confirmation_switches_and_retains_candidate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A-045 grants switch authority only through the exact backup-bound phrase."""
+    config = _config(tmp_path)
+    prepared = _prepared_restore(tmp_path)
+    activated: list[lifecycle.PreparedRestore] = []
+    discarded: list[lifecycle.PreparedRestore] = []
+    receipt = tmp_path / "rollback-volumes" / "receipt.json"
+    monkeypatch.setattr(onboarding, "load_config", lambda **kwargs: config)
+    monkeypatch.setattr(onboarding, "_require_command", lambda command: None)
+    monkeypatch.setattr(onboarding, "_service_reachable", lambda *args, **kwargs: False)
+    monkeypatch.setattr(onboarding, "prepare_local_restore", lambda *args: prepared)
+    monkeypatch.setattr(onboarding, "discard_prepared_restore", discarded.append)
+    monkeypatch.setattr(
+        onboarding,
+        "activate_local_restore",
+        lambda config, candidate, **kwargs: activated.append(candidate) or receipt,
+    )
+
+    result = onboarding.restore_nocturne(
+        prepared.backup_id,
+        prompt=lambda message: f"RESTORE {prepared.backup_id}",
+        stdout=io.StringIO(),
+    )
+
+    assert result == 0
+    assert activated == [prepared]
+    assert discarded == []
+
+
+def test_restore_refuses_while_owner_services_can_still_write(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A-045 prevents the manifest from racing writes by a running owner app."""
+    config = _config(tmp_path)
+    monkeypatch.setattr(onboarding, "load_config", lambda **kwargs: config)
+    monkeypatch.setattr(onboarding, "_require_command", lambda command: None)
+    monkeypatch.setattr(onboarding, "_service_reachable", lambda *args, **kwargs: True)
+    monkeypatch.setattr(
+        onboarding,
+        "prepare_local_restore",
+        lambda *args: pytest.fail("a live owner app must stop restore before preparation"),
+    )
+
+    with pytest.raises(onboarding.OnboardingError, match="Stop `nocturne up`"):
+        onboarding.restore_nocturne(
+            "01J00000000000000000000000",
+            prompt=lambda message: pytest.fail("restore must not ask while writes are possible"),
+            stdout=io.StringIO(),
+        )

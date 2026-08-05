@@ -1081,3 +1081,21 @@ install surface unnecessarily; the supported host already exposes current RSS
 through `ps`. Polling Docker for database volume size would be local-only and
 false for the owner's cloud Palace. A popup would violate the passive Vitals
 and least-attention law.
+
+## 037 — Switch local restore through one durable volume pointer [P1.3, P4]
+
+**Decision.** Adopt Garden A-045. Make the active PostgreSQL volume a private,
+versioned config value. Restore and migrate a candidate volume in isolation,
+compute the rollback manifest from both live databases, and change that one
+pointer only after the exact backup-bound confirmation. Retain the former
+volume with a private rollback receipt.
+
+**Motivation.** Docker volumes cannot be renamed. Copying restored files into
+the existing volume would be an in-place replacement wearing a safer name, and
+changing Compose project identity would orphan every other lifecycle command.
+One constrained pointer makes the switch durable and mechanically reversible.
+
+**Rejected alternatives.** Raw filesystem copying bypasses PostgreSQL's restore
+semantics. Reusing the live container cannot prove side-by-side validity.
+Deleting the former volume would erase the owner's fastest recovery path, and
+keeping candidates after cancellation would accumulate ambiguous Palaces.

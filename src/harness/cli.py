@@ -16,6 +16,7 @@ from harness.onboarding import (
     init_nocturne,
     load_config,
     open_nocturne,
+    restore_nocturne,
     up_nocturne,
 )
 
@@ -37,6 +38,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     commands.add_parser("open", help="open the running local Nocturne UI")
     commands.add_parser("backup", help="save a verified local Palace backup")
+    restore = commands.add_parser("restore", help="inspect and restore a local Palace backup")
+    restore.add_argument("backup_id", help="verified backup generation to restore")
     commands.add_parser("doctor", help="inspect local Palace health and backups")
     deploy = commands.add_parser("deploy", help="reconcile the fixed D1 cloud foundation")
     deploy.add_argument(
@@ -71,6 +74,8 @@ def main(
             open_nocturne(stdout=stdout)
         elif args.command == "backup":
             backup_nocturne(stdout=stdout)
+        elif args.command == "restore":
+            return restore_nocturne(args.backup_id, stdout=stdout)
         elif args.command == "doctor":
             return doctor_nocturne(stdout=stdout)
         elif args.command == "deploy":

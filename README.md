@@ -37,6 +37,14 @@ conversation-journal, backup, and free-disk sizes before space is low.
 without prompting or stopping. Palace Vitals passively shows current free disk,
 database, journal, backup, daemon-memory, and daemon-uptime measurements.
 
+To inspect an older generation without risking the live Palace, stop
+`nocturne up` and run `nocturne restore BACKUP_ID`. NOCTURNE restores and
+upgrades that generation in a fresh database volume, then prints the memories,
+edits, pins, and event counts that would roll back. It switches only when you
+type the displayed backup-bound confirmation phrase. The former volume is kept
+and recorded under `$NOCTURNE_HOME/rollback-volumes`; a failed or cancelled
+restore leaves the live Palace unchanged.
+
 For an isolated install root, set `NOCTURNE_HOME` before `init`, `up`, and
 `deploy`. Set `NOCTURNE_POSTGRES_PORT` before `init` when port 5432 is already
 owned by another local database.

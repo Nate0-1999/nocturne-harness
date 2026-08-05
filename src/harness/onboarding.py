@@ -6,6 +6,7 @@ import getpass
 import hashlib
 import json
 import os
+import re
 import secrets
 import shutil
 import stat
@@ -24,14 +25,23 @@ from pathlib import Path
 from typing import TextIO
 from urllib.parse import quote
 
-from harness.lifecycle import DoctorReport, create_local_backup, inspect_local_palace
+from harness.lifecycle import (
+    DoctorReport,
+    PreparedRestore,
+    activate_local_restore,
+    create_local_backup,
+    discard_prepared_restore,
+    inspect_local_palace,
+    prepare_local_restore,
+)
 from harness.resources import local_storage_snapshot
 
 LOCAL_URL = "http://127.0.0.1:8765"
 SPINE_URL = "http://127.0.0.1:8000"
 _CONFIG_FILE = "env"
-_CONFIG_VERSION = "2"
+_CONFIG_VERSION = "3"
 _DEFAULT_BACKUP_GENERATIONS = 5
+_LOWER_ULID_PATTERN = re.compile(r"[0-7][0-9a-hjkmnp-tv-z]{25}\Z")
 
 
 class OnboardingError(RuntimeError):
@@ -49,6 +59,7 @@ class NocturneConfig:
     machine_id: str
     postgres_port: int = 5432
     backup_generations: int = _DEFAULT_BACKUP_GENERATIONS
+    postgres_volume: str | None = None
 
     @property
     def path(self) -> Path:
@@ -62,6 +73,10 @@ class NocturneConfig:
     @property
     def compose_project(self) -> str:
         return _compose_project(self.home)
+
+    @property
+    def active_postgres_volume(self) -> str:
+        return self.postgres_volume or _default_postgres_volume(self.home)
 
     def process_environment(self, base: Mapping[str, str] | None = None) -> dict[str, str]:
         environment = dict(os.environ if base is None else base)
@@ -77,6 +92,7 @@ class NocturneConfig:
                 "MACHINE_ID": self.machine_id,
                 "AGENT_ID": "nocturne",
                 "NOCTURNE_BACKUP_GENERATIONS": str(self.backup_generations),
+                "NOCTURNE_POSTGRES_VOLUME": self.active_postgres_volume,
             }
         )
         return environment
@@ -128,7 +144,7 @@ def init_nocturne(
 
 
 def load_config(*, home: Path | None = None) -> NocturneConfig:
-    """Load and validate the generated local config without mutating it."""
+    """Load, preserve-upgrade, and validate the generated local config."""
 
     target_home = home or nocturne_home()
     path = target_home / _CONFIG_FILE
@@ -144,11 +160,18 @@ def load_config(*, home: Path | None = None) -> NocturneConfig:
     if version == "1":
         _upgrade_v1_config(path)
         values = _parse_config(path)
+        version = values.get("NOCTURNE_CONFIG_VERSION")
+    if version == "2":
+        _upgrade_v2_config(path, target_home)
+        values = _parse_config(path)
     elif version != _CONFIG_VERSION:
         raise OnboardingError("Unsupported Nocturne config version; reinstall or reinitialize.")
     port = _parse_port(values.get("NOCTURNE_POSTGRES_PORT", "5432"))
     backup_generations = _parse_backup_generations(
         values.get("NOCTURNE_BACKUP_GENERATIONS", str(_DEFAULT_BACKUP_GENERATIONS))
+    )
+    postgres_volume = _parse_postgres_volume(
+        values.get("NOCTURNE_POSTGRES_VOLUME", ""), target_home
     )
     required = ("OPENROUTER_API_KEY", "SPINE_TOKEN", "NOCTURNE_DB_PASSWORD", "MACHINE_ID")
     missing = [name for name in required if not values.get(name, "").strip()]
@@ -162,6 +185,7 @@ def load_config(*, home: Path | None = None) -> NocturneConfig:
         machine_id=values["MACHINE_ID"],
         postgres_port=port,
         backup_generations=backup_generations,
+        postgres_volume=postgres_volume,
     )
 
 
@@ -234,6 +258,44 @@ def backup_nocturne(*, home: Path | None = None, stdout: TextIO = sys.stdout) ->
     return create_local_backup(config, reason="manual", stdout=stdout)
 
 
+def restore_nocturne(
+    backup_id: str,
+    *,
+    home: Path | None = None,
+    prompt: Callable[[str], str] = input,
+    stdout: TextIO = sys.stdout,
+) -> int:
+    """Prepare an informed side-by-side restore and switch only after confirmation."""
+
+    config = load_config(home=home)
+    _require_command("docker")
+    if _service_reachable(LOCAL_URL) or _service_reachable(
+        f"{SPINE_URL}/healthz", token=config.spine_token
+    ):
+        raise OnboardingError("Stop `nocturne up` before restoring the local Palace.")
+
+    prepared = prepare_local_restore(config, backup_id)
+    switched = False
+    try:
+        _print_rollback_manifest(prepared, stdout=stdout)
+        expected = f"RESTORE {backup_id}"
+        answer = prompt(f"Type {expected} to switch Palaces: ").strip()
+        if answer != expected:
+            print("Restore cancelled. The live Palace was not changed.", file=stdout)
+            return 1
+        receipt = activate_local_restore(
+            config,
+            prepared,
+            set_active_volume=lambda volume: _set_active_postgres_volume(config, volume),
+        )
+        switched = True
+        print(f"Restore complete. Rollback receipt: {receipt}.", file=stdout)
+        return 0
+    finally:
+        if not switched:
+            discard_prepared_restore(prepared)
+
+
 def doctor_nocturne(*, home: Path | None = None, stdout: TextIO = sys.stdout) -> int:
     """Print a safe, read-only health report for the local Palace."""
 
@@ -265,6 +327,31 @@ def _print_doctor_report(report: DoctorReport, *, stdout: TextIO) -> None:
         print(f"Problem: {failure}", file=stdout)
 
 
+def _print_rollback_manifest(prepared: PreparedRestore, *, stdout: TextIO) -> None:
+    manifest = prepared.manifest
+    print(f"Rollback manifest for backup {prepared.backup_id}", file=stdout)
+    for heading, memories in (
+        ("Memories lost", manifest.memories_lost),
+        ("Edits reverted", manifest.edits_reverted),
+        ("Pins undone", manifest.pins_undone),
+    ):
+        print(f"{heading}: {len(memories)}", file=stdout)
+        for memory in memories:
+            suffix = (
+                ""
+                if memory.candidate_revision is None
+                else f" (revision {memory.current_revision} -> {memory.candidate_revision})"
+            )
+            print(f"  - {memory.label} [{memory.memory_id}]{suffix}", file=stdout)
+    print("Event counts (current -> restored, delta):", file=stdout)
+    for count in manifest.event_counts:
+        print(
+            f"  - {count.table}: {count.current} -> {count.candidate} "
+            f"({count.candidate - count.current:+d})",
+            file=stdout,
+        )
+
+
 def _human_bytes(value: int) -> str:
     amount = float(value)
     for unit in ("B", "KiB", "MiB", "GiB", "TiB"):
@@ -293,6 +380,7 @@ def _write_config(config: NocturneConfig) -> None:
         "NOCTURNE_DB_PASSWORD": config.database_password,
         "NOCTURNE_POSTGRES_PORT": str(config.postgres_port),
         "NOCTURNE_BACKUP_GENERATIONS": str(config.backup_generations),
+        "NOCTURNE_POSTGRES_VOLUME": config.active_postgres_volume,
         "MACHINE_ID": config.machine_id,
     }
     content = "".join(f"{name}={json.dumps(value)}\n" for name, value in values.items())
@@ -328,9 +416,38 @@ def _upgrade_v1_config(path: Path) -> None:
     ]
     if len(version_lines) != 1:
         raise OnboardingError("Nocturne config has an invalid version field.")
-    lines[version_lines[0]] = f"NOCTURNE_CONFIG_VERSION={json.dumps(_CONFIG_VERSION)}\n"
+    lines[version_lines[0]] = 'NOCTURNE_CONFIG_VERSION="2"\n'
     lines.append(f"NOCTURNE_BACKUP_GENERATIONS={json.dumps(str(_DEFAULT_BACKUP_GENERATIONS))}\n")
     _atomic_write_config(path, "".join(lines))
+
+
+def _upgrade_v2_config(path: Path, home: Path) -> None:
+    """Add the preserving active-volume pointer required for side-by-side restore."""
+
+    lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
+    version_lines = [
+        index for index, line in enumerate(lines) if line.startswith("NOCTURNE_CONFIG_VERSION=")
+    ]
+    if len(version_lines) != 1:
+        raise OnboardingError("Nocturne config has an invalid version field.")
+    if any(line.startswith("NOCTURNE_POSTGRES_VOLUME=") for line in lines):
+        raise OnboardingError("Nocturne version 2 config has an unexpected volume field.")
+    lines[version_lines[0]] = f"NOCTURNE_CONFIG_VERSION={json.dumps(_CONFIG_VERSION)}\n"
+    lines.append(f"NOCTURNE_POSTGRES_VOLUME={json.dumps(_default_postgres_volume(home))}\n")
+    _atomic_write_config(path, "".join(lines))
+
+
+def _set_active_postgres_volume(config: NocturneConfig, volume: str) -> NocturneConfig:
+    _parse_postgres_volume(volume, config.home)
+    lines = config.path.read_text(encoding="utf-8").splitlines(keepends=True)
+    matches = [
+        index for index, line in enumerate(lines) if line.startswith("NOCTURNE_POSTGRES_VOLUME=")
+    ]
+    if len(matches) != 1:
+        raise OnboardingError("Nocturne config has an invalid database volume field.")
+    lines[matches[0]] = f"NOCTURNE_POSTGRES_VOLUME={json.dumps(volume)}\n"
+    _atomic_write_config(config.path, "".join(lines))
+    return load_config(home=config.home)
 
 
 def _parse_config(path: Path) -> dict[str, str]:
@@ -374,6 +491,31 @@ def _parse_backup_generations(value: str) -> int:
     if not 1 <= generations <= 50:
         raise OnboardingError("NOCTURNE_BACKUP_GENERATIONS must be between 1 and 50.")
     return generations
+
+
+def _default_postgres_volume(home: Path) -> str:
+    return f"{_compose_project(home)}_nocturne_postgres"
+
+
+def _parse_postgres_volume(value: str, home: Path) -> str:
+    project = _compose_project(home)
+    default = f"{project}_nocturne_postgres"
+    restore_prefix = f"{project}_restore_"
+    suffix = value[len(restore_prefix) :] if value.startswith(restore_prefix) else ""
+    if value != default and _LOWER_ULID_PATTERN.fullmatch(suffix) is None:
+        raise OnboardingError("NOCTURNE_POSTGRES_VOLUME is not managed by this Nocturne home.")
+    return value
+
+
+def _service_reachable(url: str, *, token: str | None = None) -> bool:
+    headers = {"Authorization": f"Bearer {token}"} if token is not None else {}
+    try:
+        urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=0.5).close()
+    except urllib.error.HTTPError:
+        return True
+    except (OSError, urllib.error.URLError):
+        return False
+    return True
 
 
 def _compose_project(home: Path) -> str:

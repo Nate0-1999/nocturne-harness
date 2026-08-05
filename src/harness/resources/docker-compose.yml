@@ -19,3 +19,4 @@ services:
 
 volumes:
   nocturne_postgres:
+    name: ${NOCTURNE_POSTGRES_VOLUME:?Nocturne config must select a database volume}
