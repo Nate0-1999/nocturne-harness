@@ -16,6 +16,7 @@ import re
 import runpy
 import secrets
 import socket
+import stat
 import subprocess
 import sys
 import tempfile
@@ -245,6 +246,9 @@ class DeployBackend(Protocol):
 
     def align_owner_cloud_credentials_once(self) -> Path:
         """Back up and align the fixed owner's managed database credential."""
+
+    def owner_credentials_managed(self) -> bool:
+        """Return whether durable non-secret custody evidence exists."""
 
     def arm_breaker(
         self,
@@ -704,7 +708,7 @@ def deploy(
     if dry_run:
         return initial
     aligned_credentials = False
-    if _needs_owner_credential_alignment(observed):
+    if _needs_owner_credential_alignment(backend, observed):
         consent = credential_alignment_consent
         if consent is None:
             stdout.write(
@@ -794,7 +798,7 @@ def deploy(
     return final
 
 
-def _needs_owner_credential_alignment(observed: ObservedDeployment) -> bool:
+def _needs_owner_credential_alignment(backend: DeployBackend, observed: ObservedDeployment) -> bool:
     """Recognize only the exact hand-built credential mismatch granted by D.2 096."""
 
     return all(
@@ -805,7 +809,8 @@ def _needs_owner_credential_alignment(observed: ObservedDeployment) -> bool:
             observed.database is ResourceState.EXACT,
             observed.database_user is ResourceState.EXACT,
             observed.database_url_secret is ResourceState.EXACT,
-            observed.migrations is ResourceState.UNOBSERVED,
+            observed.migrations in {ResourceState.UNOBSERVED, ResourceState.UPDATABLE},
+            not backend.owner_credentials_managed(),
         )
     )
 
@@ -1137,6 +1142,7 @@ class GcloudDeployBackend:
         health_probe: HealthProbe = _default_health_probe,
         remote_verifier: RemoteVerifier = verify_remote_spine,
         cloud_receipt_directory: Path | None = None,
+        credential_custody_receipt: Path | None = None,
     ) -> None:
         if not _IMAGE_TAG_RE.fullmatch(image_tag):
             raise ValueError("image_tag must be one immutable Docker tag component")
@@ -1151,6 +1157,7 @@ class GcloudDeployBackend:
         self._health_probe = health_probe
         self._remote_verifier = remote_verifier
         self._cloud_receipt_directory = cloud_receipt_directory
+        self._credential_custody_receipt = credential_custody_receipt
         self._database_password: str | None = None
         self._spine_token: str | None = None
         self._service_url: str | None = None
@@ -2596,7 +2603,76 @@ class GcloudDeployBackend:
                     )
                 )
         self._database_password = password
+        self._persist_credential_custody_receipt(receipt, added_version)
         return receipt
+
+    def owner_credentials_managed(self) -> bool:
+        """Prove this install completed its one-time fixed-owner credential alignment."""
+
+        path = self._credential_custody_receipt
+        if path is None or not path.exists():
+            return False
+        if path.is_symlink() or not path.is_file() or stat.S_IMODE(path.stat().st_mode) & 0o077:
+            raise DeployError(
+                "The credential custody receipt is unsafe; restore its 0600 regular file "
+                "or remove it after reviewing the owner-cloud runbook."
+            )
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise DeployError(
+                "The credential custody receipt is unreadable; review it before deploying."
+            ) from exc
+        expected = {
+            "schema_version": 1,
+            "project": PROJECT_ID,
+            "instance": SQL_INSTANCE,
+            "database_user": DATABASE_USER,
+            "secret": DATABASE_URL_SECRET,
+        }
+        if not isinstance(payload, Mapping) or any(
+            payload.get(key) != value for key, value in expected.items()
+        ):
+            raise DeployError(
+                "The credential custody receipt does not match this Palace; "
+                "review it before deploying."
+            )
+        return True
+
+    def _persist_credential_custody_receipt(
+        self, backup_receipt: Path, secret_version: str
+    ) -> None:
+        path = self._credential_custody_receipt
+        if path is None:
+            raise DeployError(
+                "The credentials changed but the custody receipt location is unavailable; "
+                "stop and inspect the owner-cloud state."
+            )
+        path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        os.chmod(path.parent, 0o700)
+        payload = {
+            "schema_version": 1,
+            "aligned_at": datetime.now(UTC).isoformat(),
+            "project": PROJECT_ID,
+            "instance": SQL_INSTANCE,
+            "database_user": DATABASE_USER,
+            "secret": DATABASE_URL_SECRET,
+            "secret_version": secret_version,
+            "backup_receipt": backup_receipt.name,
+        }
+        descriptor, temporary_name = tempfile.mkstemp(prefix=".custody-", dir=path.parent)
+        temporary = Path(temporary_name)
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+                json.dump(payload, handle, sort_keys=True)
+                handle.write("\n")
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.chmod(temporary, 0o600)
+            os.replace(temporary, path)
+        finally:
+            if temporary.exists():
+                temporary.unlink()
 
     @staticmethod
     def _database_url_for_password(password: str) -> str:
@@ -3096,6 +3172,7 @@ def run_cloud_deploy(
         runner=runner,
         process_factory=process_factory,
         cloud_receipt_directory=home / "cloud-backups",
+        credential_custody_receipt=home / "cloud-credential-custody.json",
     )
     backend.preflight()
     target = backend.discover_target()

@@ -1166,6 +1166,10 @@ then calls the narrow alignment operation inline. That operation first persists
 a verified Cloud SQL backup receipt, resets the user through a private flags
 file, adds one secret version through stdin, and disables superseded enabled
 versions. The same receipt remains bound to the same run's later migration.
+After the reset and secret rewrite both succeed, publish a private non-secret
+custody receipt in the Nocturne home. Its absence is the one-time alignment
+signal; its exact fixed-target fields prevent future software updates from
+rotating credentials again.
 
 **Motivation.** Credential disagreement says nothing about `alembic_version`.
 Treating it as schema drift hid the real remedy, while teaching every deploy to
@@ -1173,6 +1177,8 @@ reset credentials on broader drift would turn a one-use recovery grant into
 standing authority. One enabled secret version gives the runtime an unambiguous
 `latest` value without deleting the audit history. Accepting `nocturne up`'s
 version prompt passes that consent into deploy so the owner answers once.
+Successful authentication alone is not durable proof that this deployer minted
+the credential, because the hand-built password happened to remain valid.
 
 **Rejected alternatives.** Adopting an unknown hand-built password cannot prove
 custody. Printing or passing the password in argv leaks it. Deleting the old

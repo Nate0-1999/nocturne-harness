@@ -111,6 +111,7 @@ class FakeBackend(DeployBackend):
         self.executed: list[tuple[PlanStep, Path | None]] = []
         self.armed: list[Path] = []
         self.alignments = 0
+        self.credentials_managed = True
 
     def observe(self, target: DeployTarget) -> ObservedDeployment:
         assert target == TARGET
@@ -130,8 +131,12 @@ class FakeBackend(DeployBackend):
 
     def align_owner_cloud_credentials_once(self) -> Path:
         self.alignments += 1
+        self.credentials_managed = True
         self.state = replace(self.state, migrations=ResourceState.UPDATABLE)
         return Path("/private/verified-backup.json")
+
+    def owner_credentials_managed(self) -> bool:
+        return self.credentials_managed
 
     def arm_breaker(
         self,
@@ -513,6 +518,7 @@ def test_apply_offers_inline_alignment_and_continues_the_same_plan(tmp_path: Pat
             remote_verification=ResourceState.UPDATABLE,
         )
     )
+    backend.credentials_managed = False
 
     @contextmanager
     def source() -> Iterator[PackagedDeploySource]:
@@ -542,6 +548,7 @@ def test_declining_inline_alignment_changes_nothing() -> None:
     """D.2 096 consent is explicit; declining leaves the owner a plain retry action."""
 
     backend = FakeBackend(observed(migrations=ResourceState.UNOBSERVED))
+    backend.credentials_managed = False
 
     with pytest.raises(DeployError, match="run nocturne deploy again"):
         deploy(
@@ -1257,6 +1264,7 @@ def test_owner_credential_alignment_backs_up_before_private_reset_and_secret_rew
         openrouter_key="fixture",
         runner=runner,
         cloud_receipt_directory=tmp_path,
+        credential_custody_receipt=tmp_path / "cloud-credential-custody.json",
     )
     receipt = tmp_path / "verified-backup.json"
     monkeypatch.setattr(backend, "_create_cloud_backup_receipt", lambda: receipt)
@@ -1283,6 +1291,10 @@ def test_owner_credential_alignment_backs_up_before_private_reset_and_secret_rew
     add_kwargs = calls[add_index][1]
     assert backend._database_password not in str(add_kwargs.get("env"))
     assert "postgresql+asyncpg://" in str(add_kwargs["input"])
+    assert backend.owner_credentials_managed()
+    custody = json.loads((tmp_path / "cloud-credential-custody.json").read_text(encoding="utf-8"))
+    assert custody["backup_receipt"] == receipt.name
+    assert custody["secret_version"] == "2"
 
 
 def test_unobserved_migration_reports_credential_cause_and_remedy() -> None:
