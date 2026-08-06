@@ -298,6 +298,7 @@ def _up_remote(
                 dry_run=False,
                 openrouter_key=config.openrouter_api_key,
                 home=config.home,
+                credential_alignment_consent=True,
             )
         else:
             print(

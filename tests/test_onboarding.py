@@ -343,6 +343,55 @@ def test_remote_up_keeps_running_with_a_visible_notice_when_update_is_declined(
     assert "Nocturne is running" in output.getvalue()
 
 
+def test_remote_up_acceptance_runs_full_deploy_with_the_same_consent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SPEC v2.50 makes remote update a single `nocturne up` yes, including alignment consent."""
+
+    config = onboarding.NocturneConfig(
+        home=tmp_path,
+        openrouter_api_key="openrouter-fixture",
+        spine_token="palace-token",
+        database_password="unused-local-password",
+        machine_id="fixture-machine",
+        palace_mode="remote",
+        spine_url="https://spine.example.test",
+    )
+
+    class Process:
+        def poll(self) -> None:
+            return None
+
+    deploy_calls: list[dict[str, object]] = []
+    monkeypatch.setattr(onboarding, "_wait_for_url", lambda *args, **kwargs: None)
+    monkeypatch.setattr(onboarding, "_remote_schema_version", lambda *args: "0002")
+    monkeypatch.setattr(onboarding, "_expected_schema_version", lambda: "0009")
+    monkeypatch.setattr(onboarding, "_start_service", lambda *args, **kwargs: Process())
+    monkeypatch.setattr(onboarding, "_supervise", lambda processes: None)
+    monkeypatch.setattr(onboarding, "_stop_processes", lambda processes: None)
+    monkeypatch.setattr(
+        "harness.deploy.run_cloud_deploy", lambda **kwargs: deploy_calls.append(kwargs)
+    )
+
+    assert (
+        onboarding._up_remote(
+            config,
+            open_browser=False,
+            prompt=lambda message: "yes",
+            stdout=io.StringIO(),
+        )
+        == 0
+    )
+    assert deploy_calls == [
+        {
+            "dry_run": False,
+            "openrouter_key": config.openrouter_api_key,
+            "home": config.home,
+            "credential_alignment_consent": True,
+        }
+    ]
+
+
 def test_open_requires_reachability_before_launching_browser(monkeypatch) -> None:
     """ADR-019 is defended by verifying that open requires reachability before launching
     browser; this prevents drift in the private local owner onboarding contract.

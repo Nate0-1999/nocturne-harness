@@ -110,6 +110,7 @@ class FakeBackend(DeployBackend):
         self.observations = 0
         self.executed: list[tuple[PlanStep, Path | None]] = []
         self.armed: list[Path] = []
+        self.alignments = 0
 
     def observe(self, target: DeployTarget) -> ObservedDeployment:
         assert target == TARGET
@@ -126,6 +127,11 @@ class FakeBackend(DeployBackend):
         assert target == TARGET
         self.executed.append((step, source_dir))
         self.state = replace(self.state, **{STAGE_FIELDS[step.stage]: ResourceState.EXACT})
+
+    def align_owner_cloud_credentials_once(self) -> Path:
+        self.alignments += 1
+        self.state = replace(self.state, migrations=ResourceState.UPDATABLE)
+        return Path("/private/verified-backup.json")
 
     def arm_breaker(
         self,
@@ -494,6 +500,60 @@ def test_dry_run_only_observes_and_never_materializes_or_mutates() -> None:
     assert backend.armed == []
     assert plan.mutations
     assert output.getvalue() == f"{plan.render()}\n"
+
+
+def test_apply_offers_inline_alignment_and_continues_the_same_plan(tmp_path: Path) -> None:
+    """D.2 096 makes credential custody one consent inside the ordinary deploy run."""
+
+    backend = FakeBackend(
+        observed(
+            migrations=ResourceState.UNOBSERVED,
+            spine_image=ResourceState.ABSENT,
+            cloud_run_service=ResourceState.UPDATABLE,
+            remote_verification=ResourceState.UPDATABLE,
+        )
+    )
+
+    @contextmanager
+    def source() -> Iterator[PackagedDeploySource]:
+        yield PackagedDeploySource(tmp_path / "app", tmp_path / "breaker")
+
+    output = io.StringIO()
+    deploy(
+        backend,
+        TARGET,
+        dry_run=False,
+        stdin=io.StringIO("y\n"),
+        stdout=output,
+        source_provider=source,
+    )
+
+    assert backend.alignments == 1
+    assert [step.stage for step, _ in backend.executed] == [
+        DeployStage.SPINE_IMAGE,
+        DeployStage.CLOUD_RUN_SERVICE,
+        DeployStage.MIGRATIONS,
+        DeployStage.REMOTE_VERIFICATION,
+    ]
+    assert "Back up and align it now?" in output.getvalue()
+
+
+def test_declining_inline_alignment_changes_nothing() -> None:
+    """D.2 096 consent is explicit; declining leaves the owner a plain retry action."""
+
+    backend = FakeBackend(observed(migrations=ResourceState.UNOBSERVED))
+
+    with pytest.raises(DeployError, match="run nocturne deploy again"):
+        deploy(
+            backend,
+            TARGET,
+            dry_run=False,
+            stdin=io.StringIO("no\n"),
+            stdout=io.StringIO(),
+        )
+
+    assert backend.alignments == 0
+    assert backend.executed == []
 
 
 def test_apply_converges_once_then_second_apply_has_zero_mutations(tmp_path: Path) -> None:
@@ -1127,7 +1187,7 @@ def sql_user_state(users: list[dict[str, object]]) -> ResourceState:
     [
         ([{"name": DATABASE_USER, "type": "BUILT_IN"}], ResourceState.EXACT),
         ([{"name": DATABASE_USER, "type": "CLOUD_IAM_USER"}], ResourceState.DRIFTED),
-        ([{"name": DATABASE_USER}], ResourceState.DRIFTED),
+        ([{"name": DATABASE_USER}], ResourceState.EXACT),
         (
             [
                 {"name": DATABASE_USER, "type": "BUILT_IN"},
@@ -1138,12 +1198,10 @@ def sql_user_state(users: list[dict[str, object]]) -> ResourceState:
         ([], ResourceState.ABSENT),
     ],
 )
-def test_sql_user_identity_requires_one_builtin_user(
+def test_sql_user_identity_accepts_postgres_builtin_shape_and_rejects_iam_or_duplicates(
     users: list[dict[str, object]], expected: ResourceState
 ) -> None:
-    """ADR-019 is defended by verifying that sql user identity requires one builtin user; this
-    prevents drift in the fixed-project deploy and drift-safety contract.
-    """
+    """ADR-019 accepts gcloud's omitted type for a PostgreSQL built-in but rejects IAM or twins."""
     assert sql_user_state(users) is expected
 
 
@@ -1675,3 +1733,39 @@ def test_cloud_backup_verification_failure_stops_before_migration(tmp_path: Path
         backend._apply_migrations()
     assert not (tmp_path / "cloud-backups").exists()
     assert all(command[:3] != (sys.executable, "-m", "spine.db.migrate") for command in calls)
+
+
+def test_same_attempt_alignment_receipt_is_reused_for_migration(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """D.2 096 uses one fresh receipt for the reset and later migration in that same deploy."""
+
+    calls: list[tuple[str, ...]] = []
+
+    def runner(argv: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        calls.append(tuple(argv))
+        return subprocess.CompletedProcess(argv, 0, "", "")
+
+    @contextmanager
+    def proxy() -> Iterator[int]:
+        yield 54321
+
+    backend = GcloudDeployBackend(
+        image_tag="0.1.0",
+        openrouter_key="fixture",
+        runner=runner,
+        cloud_receipt_directory=tmp_path,
+    )
+    backend._database_password = "database-secret"
+    backend._attempt_backup_receipt = tmp_path / "fresh-attempt.json"
+    monkeypatch.setattr(backend, "_cloud_sql_proxy", proxy)
+    monkeypatch.setattr(
+        backend,
+        "_create_cloud_backup_receipt",
+        lambda: pytest.fail("migration created a second receipt in the same attempt"),
+    )
+
+    backend._apply_migrations()
+
+    assert calls == [(sys.executable, "-m", "spine.db.migrate")]
+    assert backend._attempt_backup_receipt is None

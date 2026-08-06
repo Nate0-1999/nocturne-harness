@@ -1159,19 +1159,24 @@ would add an unused service and blur which Palace owns the data.
 ## 041 — Separate credential custody from schema observation [P1.3, P4]
 
 **Decision.** Represent a migration whose revision could not be queried as
-`UNOBSERVED`, never drifted. Keep the D.2 094 credential reset behind one
-explicit backend operation: first persist a verified Cloud SQL backup receipt,
-then reset the database user through a private flags file, add one secret
-version through stdin, and disable superseded enabled versions. Ordinary
-`nocturne deploy` retains no automatic credential-rotation branch.
+`UNOBSERVED`, never drifted. Under D.2 096, ordinary `nocturne deploy` recognizes
+only the exact fixed-owner shape (foundation, database, built-in user, and
+managed secret all exact; authentication fails), offers one plain consent, and
+then calls the narrow alignment operation inline. That operation first persists
+a verified Cloud SQL backup receipt, resets the user through a private flags
+file, adds one secret version through stdin, and disables superseded enabled
+versions. The same receipt remains bound to the same run's later migration.
 
 **Motivation.** Credential disagreement says nothing about `alembic_version`.
 Treating it as schema drift hid the real remedy, while teaching every deploy to
-reset credentials would turn a one-use recovery grant into standing authority.
-One enabled secret version gives the runtime an unambiguous `latest` value
-without deleting the audit history.
+reset credentials on broader drift would turn a one-use recovery grant into
+standing authority. One enabled secret version gives the runtime an unambiguous
+`latest` value without deleting the audit history. Accepting `nocturne up`'s
+version prompt passes that consent into deploy so the owner answers once.
 
 **Rejected alternatives.** Adopting an unknown hand-built password cannot prove
 custody. Printing or passing the password in argv leaks it. Deleting the old
-secret version discards useful history. Permanently rotating on any mismatch
-could break a recoverable service during an ordinary dry-run/apply cycle.
+secret version discards useful history. Rotating on any mismatch could break a
+recoverable service during an ordinary dry-run/apply cycle. Asking again inside
+deploy after `nocturne up` already received consent would make the promised
+one-step update two steps.

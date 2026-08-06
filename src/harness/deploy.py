@@ -243,6 +243,9 @@ class DeployBackend(Protocol):
     ) -> None:
         """Execute exactly one allowed D1 CREATE/UPDATE step."""
 
+    def align_owner_cloud_credentials_once(self) -> Path:
+        """Back up and align the fixed owner's managed database credential."""
+
     def arm_breaker(
         self,
         *,
@@ -442,6 +445,19 @@ def build_plan(observed: ObservedDeployment) -> DeployPlan:
             allow_update=True,
             source_required=True,
         )
+        if (
+            observed.migrations is ResourceState.UNOBSERVED
+            and observed.database is ResourceState.EXACT
+            and observed.database_user is ResourceState.EXACT
+            and observed.database_url_secret is ResourceState.EXACT
+        ):
+            migrations = PlanStep(
+                DeployStage.MIGRATIONS,
+                PlanAction.BLOCKED,
+                "the managed database credential could not authenticate; align it, "
+                "then continue this deploy",
+                source_required=True,
+            )
         database_url_secret = _resource_step(
             DeployStage.DATABASE_URL_SECRET,
             observed.database_url_secret,
@@ -672,6 +688,7 @@ def deploy(
     stdin: IO[str] = sys.stdin,
     stdout: IO[str] = sys.stdout,
     source_provider: SourceProvider = packaged_spine_source,
+    credential_alignment_consent: bool | None = None,
 ) -> DeployPlan:
     """Plan or converge the fixed D1 target, then enter D2's human boundary.
 
@@ -681,10 +698,29 @@ def deploy(
     from exact state or block on ambiguity.
     """
 
-    initial = build_plan(backend.observe(target))
+    observed = backend.observe(target)
+    initial = build_plan(observed)
     stdout.write(f"{initial.render()}\n")
     if dry_run:
         return initial
+    aligned_credentials = False
+    if _needs_owner_credential_alignment(observed):
+        consent = credential_alignment_consent
+        if consent is None:
+            stdout.write(
+                "The managed database credential needs alignment. Back up and align it now? [y/N] "
+            )
+            stdout.flush()
+            consent = stdin.readline().strip().lower() in {"y", "yes"}
+        if not consent:
+            raise DeployError(
+                "Database credential alignment was declined; run nocturne deploy again when ready."
+            )
+        backend.align_owner_cloud_credentials_once()
+        aligned_credentials = True
+        observed = backend.observe(target)
+        initial = build_plan(observed)
+        stdout.write(f"{initial.render()}\n")
     if initial.blocked:
         raise DeployBlocked(initial)
 
@@ -697,6 +733,19 @@ def deploy(
     d1_mutations = tuple(
         step for step in initial.steps if step.action in {PlanAction.CREATE, PlanAction.UPDATE}
     )
+    if aligned_credentials:
+        owner_update_order = {
+            DeployStage.SPINE_IMAGE: 0,
+            DeployStage.CLOUD_RUN_SERVICE: 1,
+            DeployStage.MIGRATIONS: 2,
+            DeployStage.REMOTE_VERIFICATION: 3,
+        }
+        d1_mutations = tuple(
+            sorted(
+                d1_mutations,
+                key=lambda step: owner_update_order.get(step.stage, -1),
+            )
+        )
     needs_source = any(step.source_required for step in (*d1_mutations, human_step))
 
     @contextmanager
@@ -743,6 +792,22 @@ def deploy(
     if any(step.action is not PlanAction.NOOP for step in final.steps):
         raise DeployIncomplete(final)
     return final
+
+
+def _needs_owner_credential_alignment(observed: ObservedDeployment) -> bool:
+    """Recognize only the exact hand-built credential mismatch granted by D.2 096."""
+
+    return all(
+        (
+            observed.project_active,
+            observed.billing_enabled,
+            observed.sql_foundation is ResourceState.EXACT,
+            observed.database is ResourceState.EXACT,
+            observed.database_user is ResourceState.EXACT,
+            observed.database_url_secret is ResourceState.EXACT,
+            observed.migrations is ResourceState.UNOBSERVED,
+        )
+    )
 
 
 CommandRunner = Callable[..., subprocess.CompletedProcess[str]]
@@ -1091,6 +1156,7 @@ class GcloudDeployBackend:
         self._service_url: str | None = None
         self._image_digest_ref: str | None = None
         self._active_account: str | None = None
+        self._attempt_backup_receipt: Path | None = None
 
     @property
     def runtime_member(self) -> str:
@@ -1475,7 +1541,14 @@ class GcloudDeployBackend:
         if len(heads) != 1:
             raise DeployError("packaged Spine migrations do not have one head")
         with self._cloud_sql_proxy() as port:
-            versions = asyncio.run(current_versions(port))
+            try:
+                versions = asyncio.run(current_versions(port))
+            except Exception as exc:
+                import asyncpg
+
+                if isinstance(exc, asyncpg.InvalidPasswordError):
+                    return ResourceState.UNOBSERVED
+                raise
         if not versions:
             return ResourceState.ABSENT
         if versions == heads:
@@ -2262,7 +2335,7 @@ class GcloudDeployBackend:
             ResourceState.ABSENT
             if not user_rows
             else ResourceState.EXACT
-            if len(user_rows) == 1 and user_rows[0].get("type") == "BUILT_IN"
+            if len(user_rows) == 1 and user_rows[0].get("type") in {None, "BUILT_IN"}
             else ResourceState.DRIFTED
         )
 
@@ -2439,9 +2512,10 @@ class GcloudDeployBackend:
         )
 
     def align_owner_cloud_credentials_once(self) -> Path:
-        """Consume D.2 094: back up, then reset the managed database credential."""
+        """Consume D.2 096: back up, then reset the managed database credential."""
 
         receipt = self._create_cloud_backup_receipt()
+        self._attempt_backup_receipt = receipt
         password = secrets.token_urlsafe(32)
         with tempfile.NamedTemporaryFile(
             mode="w",
@@ -2624,7 +2698,8 @@ class GcloudDeployBackend:
     def _apply_migrations(self) -> None:
         if self._database_password is None:
             raise DeployError("database credential is unavailable for migration")
-        self._create_cloud_backup_receipt()
+        if self._attempt_backup_receipt is None:
+            self._create_cloud_backup_receipt()
         with self._cloud_sql_proxy() as port:
             database_url = (
                 f"postgresql+asyncpg://{DATABASE_USER}:"
@@ -2633,6 +2708,7 @@ class GcloudDeployBackend:
             environment = os.environ.copy()
             environment["SPINE_DATABASE_URL"] = database_url
             self._run((sys.executable, "-m", "spine.db.migrate"), env=environment)
+        self._attempt_backup_receipt = None
 
     @staticmethod
     def _cloud_timestamp(value: object) -> str:
@@ -3003,6 +3079,7 @@ def run_cloud_deploy(
     runner: CommandRunner = subprocess.run,
     process_factory: ProcessFactory = subprocess.Popen,
     home: Path | None = None,
+    credential_alignment_consent: bool | None = None,
 ) -> DeployPlan:
     """CLI integration seam: discover and reconcile the one authorized target."""
 
@@ -3028,4 +3105,5 @@ def run_cloud_deploy(
         dry_run=dry_run,
         stdin=stdin,
         stdout=stdout,
+        credential_alignment_consent=credential_alignment_consent,
     )
