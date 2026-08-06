@@ -140,9 +140,9 @@ def init_nocturne(
         raise OnboardingError("An OpenRouter API key is required.")
     spine_token = secrets.token_urlsafe(32)
     if palace_mode == "remote":
-        spine_token = prompt("Palace bearer: ").strip()
+        spine_token = prompt("Your Palace access token: ").strip()
         if not spine_token:
-            raise OnboardingError("A Palace bearer is required for a remote Palace.")
+            raise OnboardingError("Your Palace access token is required for a remote Palace.")
     postgres_port = _parse_port(values.get("NOCTURNE_POSTGRES_PORT", "5432"))
 
     config = NocturneConfig(
@@ -221,6 +221,7 @@ def up_nocturne(
     *,
     home: Path | None = None,
     open_browser: bool = True,
+    prompt: Callable[[str], str] = input,
     stdout: TextIO = sys.stdout,
 ) -> int:
     """Start pgvector, migrate, supervise Spine + Harness, and open the browser."""
@@ -228,7 +229,7 @@ def up_nocturne(
     config = load_config(home=home)
     _warn_if_low_disk(config.home, stdout=stdout)
     if config.palace_mode == "remote":
-        return _up_remote(config, open_browser=open_browser, stdout=stdout)
+        return _up_remote(config, open_browser=open_browser, prompt=prompt, stdout=stdout)
     _require_command("docker")
     with resources.as_file(
         resources.files("harness").joinpath("resources", "docker-compose.yml")
@@ -276,11 +277,33 @@ def _up_remote(
     config: NocturneConfig,
     *,
     open_browser: bool,
+    prompt: Callable[[str], str],
     stdout: TextIO,
 ) -> int:
     """Start only the local daemon against an owner-operated remote Palace."""
 
     _wait_for_url(f"{config.spine_url}/health", token=config.spine_token)
+    remote_schema = _remote_schema_version(config.spine_url, config.spine_token)
+    expected_schema = _expected_schema_version()
+    if remote_schema != expected_schema:
+        answer = prompt(
+            f"Your Palace is running older software (schema {remote_schema or 'unknown'}; "
+            f"this app expects {expected_schema}). Update now? Updates back up first and take "
+            "a few minutes. [y/N] "
+        ).strip()
+        if answer.lower() in {"y", "yes"}:
+            from harness.deploy import run_cloud_deploy
+
+            run_cloud_deploy(
+                dry_run=False,
+                openrouter_key=config.openrouter_api_key,
+                home=config.home,
+            )
+        else:
+            print(
+                "Your Palace update was postponed; some newer screens may be unavailable.",
+                file=stdout,
+            )
     harness = _start_service(
         "harness.packaged:create_app",
         port=8765,
@@ -295,6 +318,36 @@ def _up_remote(
         return 0
     finally:
         _stop_processes((harness,))
+
+
+def _remote_schema_version(service_url: str, token: str) -> str | None:
+    request = urllib.request.Request(
+        f"{service_url.rstrip('/')}/health",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=15.0) as response:
+            payload = json.loads(response.read())
+    except (OSError, ValueError) as exc:
+        raise OnboardingError(
+            "The remote Palace version could not be read; check its health and try again."
+        ) from exc
+    value = payload.get("schema_version") if isinstance(payload, Mapping) else None
+    return value if isinstance(value, str) and value else None
+
+
+def _expected_schema_version() -> str:
+    from alembic.script import ScriptDirectory
+    from spine.db.migrate import make_alembic_config
+
+    heads = ScriptDirectory.from_config(
+        make_alembic_config("postgresql+asyncpg://unused:unused@127.0.0.1/unused")
+    ).get_heads()
+    if len(heads) != 1:
+        raise OnboardingError(
+            "The installed Palace schema is ambiguous; reinstall Nocturne and try again."
+        )
+    return heads[0]
 
 
 def open_nocturne(*, stdout: TextIO = sys.stdout) -> int:

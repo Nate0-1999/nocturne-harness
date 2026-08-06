@@ -86,7 +86,7 @@ def test_remote_init_records_one_palace_origin_and_prompts_only_for_its_bearer(
     )
     config = onboarding.load_config(home=tmp_path)
 
-    assert prompts == ["Palace bearer: "]
+    assert prompts == ["Your Palace access token: "]
     assert config.palace_mode == "remote"
     assert config.spine_url == "https://spine.example.test"
     assert config.spine_token == "remote-bearer"
@@ -221,6 +221,10 @@ def test_remote_up_starts_only_the_daemon_and_opens_the_browser(
         stdout=io.StringIO(),
     )
     events: list[object] = []
+    monkeypatch.setattr(onboarding, "_expected_schema_version", lambda: "0009_fixture")
+    monkeypatch.setattr(
+        onboarding, "_remote_schema_version", lambda service_url, token: "0009_fixture"
+    )
 
     class Process:
         def poll(self) -> None:
@@ -297,6 +301,46 @@ def test_remote_doctor_checks_spine_journal_and_disk_without_local_database(
     assert "Conversation journal:" in rendered
     assert "Disk:" in rendered
     assert "Local database and backup checks are skipped for a remote Palace." in rendered
+
+
+def test_remote_up_keeps_running_with_a_visible_notice_when_update_is_declined(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SPEC v2.50 keeps an older remote Palace usable when its offered update is declined."""
+
+    config = onboarding.NocturneConfig(
+        home=tmp_path,
+        openrouter_api_key="openrouter-fixture",
+        spine_token="palace-token",
+        database_password="unused-local-password",
+        machine_id="fixture-machine",
+        palace_mode="remote",
+        spine_url="https://spine.example.test",
+    )
+
+    class Process:
+        def poll(self) -> None:
+            return None
+
+    monkeypatch.setattr(onboarding, "_wait_for_url", lambda *args, **kwargs: None)
+    monkeypatch.setattr(onboarding, "_remote_schema_version", lambda *args: "0002")
+    monkeypatch.setattr(onboarding, "_expected_schema_version", lambda: "0009")
+    monkeypatch.setattr(onboarding, "_start_service", lambda *args, **kwargs: Process())
+    monkeypatch.setattr(onboarding, "_supervise", lambda processes: None)
+    monkeypatch.setattr(onboarding, "_stop_processes", lambda processes: None)
+    output = io.StringIO()
+
+    assert (
+        onboarding._up_remote(
+            config,
+            open_browser=False,
+            prompt=lambda message: "no",
+            stdout=output,
+        )
+        == 0
+    )
+    assert "update was postponed" in output.getvalue()
+    assert "Nocturne is running" in output.getvalue()
 
 
 def test_open_requires_reachability_before_launching_browser(monkeypatch) -> None:

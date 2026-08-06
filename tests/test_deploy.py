@@ -1161,6 +1161,82 @@ def test_database_url_round_trips_only_the_exact_cloud_sql_socket_shape() -> Non
     assert consumer._database_password == "p@ss/word"
 
 
+def test_owner_credential_alignment_backs_up_before_private_reset_and_secret_rewrite(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """D.2 094 is defended by proving backup-first ordering and keeping credentials off argv."""
+
+    calls: list[tuple[tuple[str, ...], dict[str, object]]] = []
+
+    def runner(argv: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        command = tuple(argv)
+        calls.append((command, kwargs))
+        if command[:5] == ("gcloud", "secrets", "versions", "add", DATABASE_URL_SECRET):
+            output = {"name": f"projects/fixture/secrets/{DATABASE_URL_SECRET}/versions/2"}
+        elif command[:5] == ("gcloud", "secrets", "versions", "list", DATABASE_URL_SECRET):
+            output = [
+                {
+                    "name": f"projects/fixture/secrets/{DATABASE_URL_SECRET}/versions/1",
+                    "state": "ENABLED",
+                },
+                {
+                    "name": f"projects/fixture/secrets/{DATABASE_URL_SECRET}/versions/2",
+                    "state": "ENABLED",
+                },
+            ]
+        else:
+            output = {}
+        return subprocess.CompletedProcess(command, 0, json.dumps(output), "")
+
+    backend = GcloudDeployBackend(
+        image_tag="0.1.0",
+        openrouter_key="fixture",
+        runner=runner,
+        cloud_receipt_directory=tmp_path,
+    )
+    receipt = tmp_path / "verified-backup.json"
+    monkeypatch.setattr(backend, "_create_cloud_backup_receipt", lambda: receipt)
+
+    assert backend.align_owner_cloud_credentials_once() == receipt
+
+    argvs = [argv for argv, _ in calls]
+    reset_index = next(
+        i for i, argv in enumerate(argvs) if argv[:4] == ("gcloud", "sql", "users", "set-password")
+    )
+    add_index = next(
+        i
+        for i, argv in enumerate(argvs)
+        if argv[:5] == ("gcloud", "secrets", "versions", "add", DATABASE_URL_SECRET)
+    )
+    disable_index = next(
+        i
+        for i, argv in enumerate(argvs)
+        if argv[:4] == ("gcloud", "secrets", "versions", "disable")
+    )
+    assert reset_index < add_index < disable_index
+    assert all(backend._database_password not in argv for argv in argvs)
+    add_kwargs = calls[add_index][1]
+    assert backend._database_password not in str(add_kwargs.get("env"))
+    assert "postgresql+asyncpg://" in str(add_kwargs["input"])
+
+
+def test_unobserved_migration_reports_credential_cause_and_remedy() -> None:
+    """SPEC v2.52 prevents credential disagreement from being mislabeled as schema drift."""
+
+    plan = build_plan(
+        observed(
+            migrations=ResourceState.UNOBSERVED,
+            database_url_secret=ResourceState.DRIFTED,
+        )
+    )
+
+    migration = plan.step(DeployStage.MIGRATIONS)
+    assert migration.action is PlanAction.BLOCKED
+    assert "could not be inspected" in migration.detail
+    assert "run the dry-run again" in migration.detail
+    assert "incompatible" not in migration.detail
+
+
 @pytest.mark.parametrize(
     "database_url",
     [

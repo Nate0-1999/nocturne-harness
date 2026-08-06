@@ -79,6 +79,7 @@ class ResourceState(StrEnum):
     ABSENT = "absent"
     EXACT = "exact"
     UPDATABLE = "updatable"
+    UNOBSERVED = "unobserved"
     DRIFTED = "drifted"
 
 
@@ -307,6 +308,14 @@ def _resource_step(
             f"{detail} needs an allowed forward-only update",
             source_required,
         )
+    if state is ResourceState.UNOBSERVED:
+        return PlanStep(
+            stage,
+            PlanAction.BLOCKED,
+            f"{detail} could not be inspected; fix the earlier credential problem "
+            "and run the dry-run again",
+            source_required,
+        )
     return PlanStep(
         stage,
         PlanAction.BLOCKED,
@@ -415,12 +424,14 @@ def build_plan(observed: ObservedDeployment) -> DeployPlan:
             database = PlanStep(
                 DeployStage.DATABASE,
                 PlanAction.BLOCKED,
-                "database/user partial state cannot be adopted without resetting credentials",
+                "the database and user do not match; align the managed credentials, "
+                "then run the dry-run again",
             )
             database_user = PlanStep(
                 DeployStage.DATABASE_USER,
                 PlanAction.BLOCKED,
-                "database/user partial state cannot be adopted without resetting credentials",
+                "the database and user do not match; align the managed credentials, "
+                "then run the dry-run again",
             )
 
         migrations = _resource_step(
@@ -442,20 +453,20 @@ def build_plan(observed: ObservedDeployment) -> DeployPlan:
             database = PlanStep(
                 DeployStage.DATABASE,
                 PlanAction.BLOCKED,
-                "database and managed URL secret state disagree; "
-                "credential adoption or reset is forbidden",
+                "the database and managed URL secret do not match; "
+                "align the managed credentials, then run the dry-run again",
             )
             database_user = PlanStep(
                 DeployStage.DATABASE_USER,
                 PlanAction.BLOCKED,
-                "database user and managed URL secret state disagree; "
-                "credential adoption or reset is forbidden",
+                "the database user and managed URL secret do not match; "
+                "align the managed credentials, then run the dry-run again",
             )
             database_url_secret = PlanStep(
                 DeployStage.DATABASE_URL_SECRET,
                 PlanAction.BLOCKED,
-                "database/user and URL secret must be wholly absent or exact together; "
-                "rotation is forbidden",
+                "the database user and managed URL secret do not match; "
+                "align the managed credentials, then run the dry-run again",
             )
 
         managed = (
@@ -1017,6 +1028,20 @@ async def _verify_remote_spine_async(service_url: str, token: str) -> None:
                 if tombstoned.status is not MemoryStatus.TOMBSTONED:
                     raise DeployError("remote verification fixture cleanup did not tombstone")
 
+    async with httpx.AsyncClient(timeout=45.0) as client:
+        vitals = await client.get(
+            f"{service_url.rstrip('/')}/v1/vitals",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+    if vitals.status_code != 200:
+        raise DeployError(f"remote Vitals verification returned HTTP {vitals.status_code}")
+    try:
+        vitals_body = vitals.json()
+    except ValueError as exc:
+        raise DeployError("remote Vitals verification returned malformed JSON") from exc
+    if not isinstance(vitals_body, Mapping):
+        raise DeployError("remote Vitals verification returned the wrong response shape")
+
 
 def verify_remote_spine(service_url: str, token: str) -> None:
     """Synchronously execute the isolated typed D1 smoke."""
@@ -1316,7 +1341,7 @@ class GcloudDeployBackend:
             if str(row.get("state", "")).upper() == "ENABLED"
             and _resource_tail(row.get("name")) != "0"
         ]
-        if locations == {REGION} and len(enabled) == 1 and len(versions) == 1:
+        if locations == {REGION} and len(enabled) == 1:
             return ResourceState.EXACT
         return ResourceState.DRIFTED
 
@@ -1341,11 +1366,7 @@ class GcloudDeployBackend:
         if password is None:
             password = secrets.token_urlsafe(32)
             self._database_password = password
-        encoded = quote(password, safe="")
-        return (
-            f"postgresql+asyncpg://{DATABASE_USER}:{encoded}@/{DATABASE_NAME}"
-            f"?host=/cloudsql/{SQL_CONNECTION_NAME}"
-        )
+        return self._database_url_for_password(password)
 
     def _remember_database_password(self, database_url: str) -> None:
         try:
@@ -1422,7 +1443,7 @@ class GcloudDeployBackend:
 
     def _migration_state(self) -> ResourceState:
         if self._database_password is None:
-            return ResourceState.DRIFTED
+            return ResourceState.UNOBSERVED
 
         async def current_versions(port: int) -> tuple[str, ...]:
             import asyncpg
@@ -2271,7 +2292,7 @@ class GcloudDeployBackend:
         ):
             migrations = self._migration_state()
         else:
-            migrations = ResourceState.DRIFTED
+            migrations = ResourceState.UNOBSERVED
 
         service_accounts = self._json_list(
             (
@@ -2415,6 +2436,100 @@ class GcloudDeployBackend:
                 "--quiet",
             ),
             input_text=value,
+        )
+
+    def align_owner_cloud_credentials_once(self) -> Path:
+        """Consume D.2 094: back up, then reset the managed database credential."""
+
+        receipt = self._create_cloud_backup_receipt()
+        password = secrets.token_urlsafe(32)
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            prefix="nocturne-gcloud-flags-",
+            suffix=".json",
+        ) as flags_file:
+            os.chmod(flags_file.name, 0o600)
+            json.dump({"password": password}, flags_file)
+            flags_file.flush()
+            self._run(
+                (
+                    "gcloud",
+                    "sql",
+                    "users",
+                    "set-password",
+                    DATABASE_USER,
+                    f"--instance={SQL_INSTANCE}",
+                    f"--flags-file={flags_file.name}",
+                    f"--project={PROJECT_ID}",
+                    "--quiet",
+                )
+            )
+
+        database_url = self._database_url_for_password(password)
+        added = self._run(
+            (
+                "gcloud",
+                "secrets",
+                "versions",
+                "add",
+                DATABASE_URL_SECRET,
+                "--data-file=-",
+                f"--project={PROJECT_ID}",
+                "--format=json",
+                "--quiet",
+            ),
+            input_text=database_url,
+        )
+        try:
+            added_name = str(json.loads(added.stdout)["name"])
+        except (KeyError, TypeError, json.JSONDecodeError) as exc:
+            raise DeployError(
+                "the new managed database secret version could not be verified"
+            ) from exc
+        added_version = _resource_tail(added_name)
+        if not added_version:
+            raise DeployError("the new managed database secret version could not be verified")
+
+        versions = self._json_list(
+            (
+                "gcloud",
+                "secrets",
+                "versions",
+                "list",
+                DATABASE_URL_SECRET,
+                f"--project={PROJECT_ID}",
+                "--format=json",
+            )
+        )
+        for row in versions:
+            version = _resource_tail(row.get("name"))
+            if (
+                version
+                and version != added_version
+                and str(row.get("state", "")).upper() == "ENABLED"
+            ):
+                self._run(
+                    (
+                        "gcloud",
+                        "secrets",
+                        "versions",
+                        "disable",
+                        version,
+                        f"--secret={DATABASE_URL_SECRET}",
+                        f"--project={PROJECT_ID}",
+                        "--quiet",
+                    )
+                )
+        self._database_password = password
+        return receipt
+
+    @staticmethod
+    def _database_url_for_password(password: str) -> str:
+        encoded = quote(password, safe="")
+        return (
+            f"postgresql+asyncpg://{DATABASE_USER}:{encoded}@/{DATABASE_NAME}"
+            f"?host=/cloudsql/{SQL_CONNECTION_NAME}"
         )
 
     def _add_project_role(self, role: str) -> None:
@@ -2699,7 +2814,10 @@ class GcloudDeployBackend:
             self._spine_token = token
         service_url = self._service_url_now()
         if not self._health_probe(service_url, token):
-            raise DeployError("Cloud Run bearer health verification failed")
+            raise DeployError(
+                "Cloud Run health verification failed; check the service logs "
+                "and run the dry-run again"
+            )
         self._remote_verifier(service_url, token)
         self._run(
             (

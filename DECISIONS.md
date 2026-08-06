@@ -1155,3 +1155,23 @@ product.
 checkout dependency the packet removes. A second remote-only config format or
 command would fork the capability ladder. Starting a local Spine as a proxy
 would add an unused service and blur which Palace owns the data.
+
+## 041 — Separate credential custody from schema observation [P1.3, P4]
+
+**Decision.** Represent a migration whose revision could not be queried as
+`UNOBSERVED`, never drifted. Keep the D.2 094 credential reset behind one
+explicit backend operation: first persist a verified Cloud SQL backup receipt,
+then reset the database user through a private flags file, add one secret
+version through stdin, and disable superseded enabled versions. Ordinary
+`nocturne deploy` retains no automatic credential-rotation branch.
+
+**Motivation.** Credential disagreement says nothing about `alembic_version`.
+Treating it as schema drift hid the real remedy, while teaching every deploy to
+reset credentials would turn a one-use recovery grant into standing authority.
+One enabled secret version gives the runtime an unambiguous `latest` value
+without deleting the audit history.
+
+**Rejected alternatives.** Adopting an unknown hand-built password cannot prove
+custody. Printing or passing the password in argv leaks it. Deleting the old
+secret version discards useful history. Permanently rotating on any mismatch
+could break a recoverable service during an ordinary dry-run/apply cycle.

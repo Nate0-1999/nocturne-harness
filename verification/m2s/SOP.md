@@ -15,7 +15,7 @@ mode-0600 config; no secret value was printed or copied into this evidence.
 ## Walkthrough
 
 1. Ran `nocturne init --remote <owner-spine-origin>`. The OpenRouter key came
-   from the environment; the command prompted only for the Palace bearer and
+   from the environment; the command prompted only for the Palace access token and
    wrote a private version-4 config with `remote` mode and the normalized
    service origin.
 2. Ran `nocturne doctor`. The scale-to-zero service reached authenticated

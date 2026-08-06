@@ -36,7 +36,7 @@ nocturne up
 ```
 
 `init` uses `OPENROUTER_API_KEY` when it is already exported, otherwise it
-prompts for it, then privately prompts for the Palace bearer. `up` checks that
+prompts for it, then privately prompts for your Palace access token. `up` checks that
 Palace, starts only the local daemon, and opens the Rack; it does not start
 Docker or a second Spine. Existing checkout users can replace sourcing `.env`
 and running `uv run harness dev` with those two commands, entering the same
