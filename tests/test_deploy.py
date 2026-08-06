@@ -1167,10 +1167,16 @@ def test_owner_credential_alignment_backs_up_before_private_reset_and_secret_rew
     """D.2 094 is defended by proving backup-first ordering and keeping credentials off argv."""
 
     calls: list[tuple[tuple[str, ...], dict[str, object]]] = []
+    private_flag_payloads: list[dict[str, str]] = []
 
     def runner(argv: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
         command = tuple(argv)
         calls.append((command, kwargs))
+        for value in command:
+            if value.startswith("--flags-file="):
+                private_flag_payloads.append(
+                    json.loads(Path(value.split("=", 1)[1]).read_text(encoding="utf-8"))
+                )
         if command[:5] == ("gcloud", "secrets", "versions", "add", DATABASE_URL_SECRET):
             output = {"name": f"projects/fixture/secrets/{DATABASE_URL_SECRET}/versions/2"}
         elif command[:5] == ("gcloud", "secrets", "versions", "list", DATABASE_URL_SECRET):
@@ -1215,6 +1221,7 @@ def test_owner_credential_alignment_backs_up_before_private_reset_and_secret_rew
     )
     assert reset_index < add_index < disable_index
     assert all(backend._database_password not in argv for argv in argvs)
+    assert private_flag_payloads == [{"--password": backend._database_password}]
     add_kwargs = calls[add_index][1]
     assert backend._database_password not in str(add_kwargs.get("env"))
     assert "postgresql+asyncpg://" in str(add_kwargs["input"])

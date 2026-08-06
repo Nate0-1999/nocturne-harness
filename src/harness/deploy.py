@@ -2450,7 +2450,7 @@ class GcloudDeployBackend:
             suffix=".json",
         ) as flags_file:
             os.chmod(flags_file.name, 0o600)
-            json.dump({"password": password}, flags_file)
+            json.dump({"--password": password}, flags_file)
             flags_file.flush()
             self._run(
                 (
@@ -2888,7 +2888,7 @@ class GcloudDeployBackend:
                 suffix=".json",
             ) as flags_file:
                 os.chmod(flags_file.name, 0o600)
-                json.dump({"password": password}, flags_file)
+                json.dump({"--password": password}, flags_file)
                 flags_file.flush()
                 self._run(
                     (
