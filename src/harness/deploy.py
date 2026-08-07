@@ -748,7 +748,8 @@ def deploy(
     stdout.write(f"{initial.render()}\n")
     if dry_run:
         return initial
-    if _needs_owner_credential_alignment(backend, observed):
+    needs_credential_alignment = _needs_owner_credential_alignment(backend, observed)
+    if needs_credential_alignment:
         consent = credential_alignment_consent
         if consent is None:
             stdout.write(
@@ -760,11 +761,12 @@ def deploy(
             raise DeployError(
                 "Database credential alignment was declined; run nocturne deploy again when ready."
             )
-        backend.align_owner_cloud_credentials_once()
-        observed = backend.observe(target)
-        initial = build_plan(observed)
-        stdout.write(f"{initial.render()}\n")
-    if initial.blocked:
+    alignment_blockers = tuple(
+        step
+        for step in initial.steps
+        if step.action is PlanAction.BLOCKED and step.stage is not DeployStage.MIGRATIONS
+    )
+    if initial.blocked and (not needs_credential_alignment or alignment_blockers):
         raise DeployBlocked(initial)
 
     human_step = initial.step(DeployStage.BILLING_BREAKER)
@@ -785,6 +787,16 @@ def deploy(
     owner_update_attempt = observed.sql_foundation is ResourceState.EXACT and any(
         step.stage in owner_update_order for step in d1_mutations
     )
+    # D.2 098 makes the verifier an ordinary data-plane operation; every other
+    # deploy CREATE/UPDATE remains receipt-taking infrastructure.
+    infrastructure_mutations = tuple(
+        step
+        for step in d1_mutations
+        if step.stage is not DeployStage.REMOTE_VERIFICATION
+    )
+    needs_backup_receipt = observed.sql_foundation is ResourceState.EXACT and (
+        needs_credential_alignment or bool(infrastructure_mutations)
+    )
     if owner_update_attempt:
         d1_mutations = tuple(
             sorted(
@@ -792,7 +804,11 @@ def deploy(
                 key=lambda step: owner_update_order.get(step.stage, -1),
             )
         )
-    needs_source = any(step.source_required for step in (*d1_mutations, human_step))
+    # Alignment makes the blocked migration observable and runnable. Materialize
+    # its packaged source before the receipt even when the image is already exact.
+    needs_source = needs_credential_alignment or any(
+        step.source_required for step in (*d1_mutations, human_step)
+    )
 
     @contextmanager
     def no_source() -> Iterator[PackagedDeploySource | None]:
@@ -801,9 +817,10 @@ def deploy(
     source_context: AbstractContextManager[PackagedDeploySource | None]
     source_context = source_provider() if needs_source else no_source()
     with source_context as source_dir:
-        if owner_update_attempt:
+        if needs_backup_receipt:
             backend.begin_mutation_attempt()
-        for step in d1_mutations:
+
+        def execute_step(step: PlanStep) -> None:
             backend.execute(
                 step,
                 target=target,
@@ -811,6 +828,42 @@ def deploy(
                     source_dir.app if source_dir is not None and step.source_required else None
                 ),
             )
+
+        image_step = next(
+            (step for step in d1_mutations if step.stage is DeployStage.SPINE_IMAGE),
+            None,
+        )
+        if image_step is not None:
+            execute_step(image_step)
+            after_image = build_plan(backend.observe(target))
+            if after_image.step(DeployStage.SPINE_IMAGE).action is not PlanAction.NOOP:
+                raise DeployIncomplete(after_image)
+            d1_mutations = tuple(
+                step for step in d1_mutations if step.stage is not DeployStage.SPINE_IMAGE
+            )
+
+        if needs_credential_alignment:
+            backend.align_owner_cloud_credentials_once()
+            observed = backend.observe(target)
+            initial = build_plan(observed)
+            stdout.write(f"{initial.render()}\n")
+            if initial.blocked:
+                raise DeployBlocked(initial)
+            if initial.step(DeployStage.SPINE_IMAGE).action is not PlanAction.NOOP:
+                raise DeployIncomplete(initial)
+            d1_mutations = tuple(
+                sorted(
+                    (
+                        step
+                        for step in initial.steps
+                        if step.action in {PlanAction.CREATE, PlanAction.UPDATE}
+                    ),
+                    key=lambda step: owner_update_order.get(step.stage, -1),
+                )
+            )
+
+        for step in d1_mutations:
+            execute_step(step)
 
         before_breaker = build_plan(backend.observe(target))
         d1_pending = tuple(

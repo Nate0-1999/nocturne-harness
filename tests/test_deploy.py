@@ -43,6 +43,7 @@ from harness.deploy import (
     DeployBackend,
     DeployBlocked,
     DeployError,
+    DeployIncomplete,
     DeployStage,
     DeployTarget,
     GcloudDeployBackend,
@@ -253,6 +254,7 @@ class FakeBackend(DeployBackend):
     def align_owner_cloud_credentials_once(self) -> Path:
         self.alignments += 1
         self.begin_mutation_attempt()
+        self.events.append("credential_alignment")
         self.credentials_managed = True
         self.state = replace(self.state, migrations=ResourceState.UPDATABLE)
         return Path("/private/verified-backup.json")
@@ -630,7 +632,7 @@ def test_dry_run_only_observes_and_never_materializes_or_mutates() -> None:
 
 
 def test_apply_offers_inline_alignment_and_continues_the_same_plan(tmp_path: Path) -> None:
-    """D.2 096 makes credential custody one consent inside the ordinary deploy run."""
+    """D.2 098 puts local source and image work before credential alignment."""
 
     backend = FakeBackend(
         observed(
@@ -644,6 +646,7 @@ def test_apply_offers_inline_alignment_and_continues_the_same_plan(tmp_path: Pat
 
     @contextmanager
     def source() -> Iterator[PackagedDeploySource]:
+        backend.events.append("source_materialized")
         yield PackagedDeploySource(tmp_path / "app", tmp_path / "breaker")
 
     output = io.StringIO()
@@ -658,7 +661,15 @@ def test_apply_offers_inline_alignment_and_continues_the_same_plan(tmp_path: Pat
 
     assert backend.alignments == 1
     assert backend.attempts == 1
-    assert backend.events[0] == "backup_receipt"
+    assert backend.events == [
+        "source_materialized",
+        "backup_receipt",
+        "spine_image",
+        "credential_alignment",
+        "cloud_run_service",
+        "migrations",
+        "remote_verification",
+    ]
     assert [step.stage for step, _ in backend.executed] == [
         DeployStage.SPINE_IMAGE,
         DeployStage.CLOUD_RUN_SERVICE,
@@ -666,6 +677,121 @@ def test_apply_offers_inline_alignment_and_continues_the_same_plan(tmp_path: Pat
         DeployStage.REMOTE_VERIFICATION,
     ]
     assert "Back up and align it now?" in output.getvalue()
+
+
+def test_verification_only_apply_takes_no_infrastructure_receipt() -> None:
+    """D.2 098 keeps ordinary remote verification outside the infrastructure grant boundary."""
+
+    backend = FakeBackend(observed(remote_verification=ResourceState.UPDATABLE))
+
+    deploy(
+        backend,
+        TARGET,
+        dry_run=False,
+        stdin=io.StringIO(),
+        stdout=io.StringIO(),
+    )
+
+    assert backend.attempts == 0
+    assert backend.events == ["remote_verification"]
+    assert [step.stage for step, _ in backend.executed] == [
+        DeployStage.REMOTE_VERIFICATION
+    ]
+
+
+def test_secret_only_apply_takes_an_infrastructure_receipt() -> None:
+    """D.2 096/098 receipts every infrastructure mutation, not only owner rollouts."""
+
+    backend = FakeBackend(observed(openrouter_secret=ResourceState.ABSENT))
+
+    deploy(
+        backend,
+        TARGET,
+        dry_run=False,
+        stdin=io.StringIO(),
+        stdout=io.StringIO(),
+    )
+
+    assert backend.attempts == 1
+    assert backend.events == ["backup_receipt", "openrouter_secret"]
+
+
+def test_alignment_materializes_source_before_receipt_when_image_is_exact(
+    tmp_path: Path,
+) -> None:
+    """D.2 098 moves every locally fallible source check ahead of alignment mutation."""
+
+    backend = FakeBackend(observed(migrations=ResourceState.UNOBSERVED))
+    backend.credentials_managed = False
+
+    @contextmanager
+    def source() -> Iterator[PackagedDeploySource]:
+        backend.events.append("source_materialized")
+        yield PackagedDeploySource(tmp_path / "app", tmp_path / "breaker")
+
+    deploy(
+        backend,
+        TARGET,
+        dry_run=False,
+        stdin=io.StringIO("y\n"),
+        stdout=io.StringIO(),
+        source_provider=source,
+    )
+
+    assert backend.events == [
+        "source_materialized",
+        "backup_receipt",
+        "credential_alignment",
+        "migrations",
+    ]
+
+
+def test_alignment_stops_when_pushed_image_does_not_converge(tmp_path: Path) -> None:
+    """D.2 098 proves the image exact before the first service-affecting mutation."""
+
+    class NonConvergingImageBackend(FakeBackend):
+        def execute(
+            self,
+            step: PlanStep,
+            *,
+            target: DeployTarget,
+            source_dir: Path | None,
+        ) -> None:
+            super().execute(step, target=target, source_dir=source_dir)
+            if step.stage is DeployStage.SPINE_IMAGE:
+                self.state = replace(self.state, spine_image=ResourceState.ABSENT)
+
+    backend = NonConvergingImageBackend(
+        observed(
+            migrations=ResourceState.UNOBSERVED,
+            spine_image=ResourceState.ABSENT,
+            cloud_run_service=ResourceState.UPDATABLE,
+            remote_verification=ResourceState.UPDATABLE,
+        )
+    )
+    backend.credentials_managed = False
+
+    @contextmanager
+    def source() -> Iterator[PackagedDeploySource]:
+        backend.events.append("source_materialized")
+        yield PackagedDeploySource(tmp_path / "app", tmp_path / "breaker")
+
+    with pytest.raises(DeployIncomplete):
+        deploy(
+            backend,
+            TARGET,
+            dry_run=False,
+            stdin=io.StringIO("y\n"),
+            stdout=io.StringIO(),
+            source_provider=source,
+        )
+
+    assert backend.alignments == 0
+    assert backend.events == [
+        "source_materialized",
+        "backup_receipt",
+        "spine_image",
+    ]
 
 
 def test_managed_owner_resume_backs_up_before_image_service_migration_and_verification(
