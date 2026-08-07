@@ -7,3 +7,4 @@ __pycache__/
 *.py[cod]
 web/node_modules/
 verification/h5/trace.jsonl
+src/harness/_web/
