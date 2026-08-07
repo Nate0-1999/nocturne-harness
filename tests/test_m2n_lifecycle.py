@@ -72,7 +72,7 @@ def test_v2_config_adds_the_existing_compose_volume_without_changing_owner_value
 
 
 def test_v3_config_makes_its_existing_local_palace_explicit(tmp_path: Path) -> None:
-    """M2S upgrades existing owners into the capability ladder without changing their rung."""
+    """ADR-019 upgrades existing owners into the capability ladder without changing rungs."""
 
     path = tmp_path / "env"
     source = _v1_config().replace('VERSION="1"', 'VERSION="3"')

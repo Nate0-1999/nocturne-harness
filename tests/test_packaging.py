@@ -4,7 +4,9 @@ import re
 import tomllib
 from pathlib import Path
 
-from harness import __version__
+import pytest
+
+from harness import __version__, packaged
 from harness.packaged import BUNDLED_WEB_DIST
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -46,9 +48,77 @@ def test_committed_web_build_has_every_referenced_asset() -> None:
     assert not any(path.name == "node_modules" for path in web_dist.rglob("*"))
 
 
-def test_packaged_factory_uses_only_the_private_wheel_asset_path() -> None:
-    """ADR-019 is defended by verifying that packaged factory uses only the private wheel asset
-    path; this prevents drift in the public package and bundled-owner-app contract.
+def test_wheel_bundle_keeps_its_private_asset_path() -> None:
+    """ADR-019 keeps the built wheel's web bundle private to its package path.
     """
     assert BUNDLED_WEB_DIST == Path(__file__).resolve().parents[1] / "src/harness/_web"
     assert "web/dist" not in BUNDLED_WEB_DIST.as_posix()
+
+
+def test_editable_checkout_uses_its_canonical_web_build(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """ADR-019 keeps source-checkout startup equivalent to the bundled owner app."""
+
+    bundled = tmp_path / "src" / "harness" / "_web"
+    web_root = tmp_path / "web"
+    (web_root / "dist").mkdir(parents=True)
+    (web_root / "package.json").write_text("{}", encoding="utf-8")
+    (web_root / "dist" / "index.html").write_text("owner rack", encoding="utf-8")
+    monkeypatch.setattr(packaged, "BUNDLED_WEB_DIST", bundled)
+    monkeypatch.setattr(packaged, "_CANONICAL_WEB_ROOT", web_root)
+
+    resolved, refusal = packaged._runtime_web_assets()
+
+    assert resolved == web_root / "dist"
+    assert refusal is None
+    assert not bundled.exists()
+
+
+def test_editable_checkout_builds_when_node_is_available(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """ADR-019 keeps a cold editable checkout self-materializing when Node.js is present."""
+
+    bundled = tmp_path / "src" / "harness" / "_web"
+    web_root = tmp_path / "web"
+    web_root.mkdir()
+    (web_root / "package.json").write_text("{}", encoding="utf-8")
+    builds: list[Path] = []
+
+    def build(root: Path) -> None:
+        builds.append(root)
+        (root / "dist").mkdir()
+        (root / "dist" / "index.html").write_text("built rack", encoding="utf-8")
+
+    monkeypatch.setattr(packaged, "BUNDLED_WEB_DIST", bundled)
+    monkeypatch.setattr(packaged, "_CANONICAL_WEB_ROOT", web_root)
+    monkeypatch.setattr(packaged.shutil, "which", lambda command: "/usr/bin/npm")
+    monkeypatch.setattr(packaged, "_build_web", build)
+
+    resolved, refusal = packaged._runtime_web_assets()
+
+    assert builds == [web_root]
+    assert resolved == web_root / "dist"
+    assert refusal is None
+
+
+def test_editable_checkout_without_node_returns_one_plain_remedy(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SPEC D.2 095 requires a cold source checkout refusal to include its next action."""
+
+    web_root = tmp_path / "web"
+    web_root.mkdir()
+    (web_root / "package.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(packaged, "BUNDLED_WEB_DIST", tmp_path / "missing-wheel-assets")
+    monkeypatch.setattr(packaged, "_CANONICAL_WEB_ROOT", web_root)
+    monkeypatch.setattr(packaged.shutil, "which", lambda command: None)
+
+    resolved, refusal = packaged._runtime_web_assets()
+
+    assert resolved == web_root / "dist"
+    assert refusal is not None
+    assert "Install Node.js" in refusal
+    assert "npm ci && npm run build" in refusal
+    assert "\n" not in refusal

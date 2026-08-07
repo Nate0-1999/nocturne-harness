@@ -263,7 +263,7 @@ def up_nocturne(
             port=8765,
             environment=environment,
         )
-        _wait_for_url(LOCAL_URL, process=harness)
+        _wait_for_url(LOCAL_URL, process=harness, stop_on_refusal=True)
         print(f"Nocturne is running at {LOCAL_URL}. Press Ctrl-C to stop it.", file=stdout)
         if open_browser:
             _open_browser(LOCAL_URL, stdout=stdout)
@@ -311,7 +311,7 @@ def _up_remote(
         environment=config.process_environment(),
     )
     try:
-        _wait_for_url(LOCAL_URL, process=harness)
+        _wait_for_url(LOCAL_URL, process=harness, stop_on_refusal=True)
         print(f"Nocturne is running at {LOCAL_URL}. Press Ctrl-C to stop it.", file=stdout)
         if open_browser:
             _open_browser(LOCAL_URL, stdout=stdout)
@@ -754,6 +754,7 @@ def _wait_for_url(
     token: str | None = None,
     process: subprocess.Popen[str] | None = None,
     timeout: float = 30.0,
+    stop_on_refusal: bool = False,
 ) -> None:
     deadline = time.monotonic() + timeout
     headers = {"Authorization": f"Bearer {token}"} if token is not None else {}
@@ -766,6 +767,16 @@ def _wait_for_url(
             ) as response:
                 if response.status == 200:
                     return
+        except urllib.error.HTTPError as exc:
+            if stop_on_refusal and exc.code == 503:
+                body = exc.read(4096).decode("utf-8", errors="replace")
+                message = " ".join(body.split())
+                if message:
+                    raise OnboardingError(message) from exc
+                raise OnboardingError(
+                    "Nocturne could not start its web app. Run `nocturne doctor`, then try "
+                    "`nocturne up` again."
+                ) from exc
         except (urllib.error.URLError, TimeoutError):
             pass
         time.sleep(0.2)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import stat
+import urllib.error
 from pathlib import Path
 
 import pytest
@@ -103,7 +104,7 @@ def test_remote_init_records_one_palace_origin_and_prompts_only_for_its_bearer(
 def test_remote_init_rejects_values_that_are_not_service_origins(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, remote: str
 ) -> None:
-    """M2S keeps remote setup bounded to one explicit Palace service origin."""
+    """ADR-019 keeps remote setup bounded to one explicit Palace service origin."""
 
     monkeypatch.setenv("OPENROUTER_API_KEY", "environment-secret")
     with pytest.raises(onboarding.OnboardingError, match="service origin"):
@@ -211,7 +212,7 @@ def test_up_orders_container_migration_services_and_browser(
 def test_remote_up_starts_only_the_daemon_and_opens_the_browser(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """M2S requires remote mode to skip local containers and Spine while retaining the Rack."""
+    """ADR-019 requires remote mode to skip local services while retaining the Rack."""
 
     monkeypatch.setenv("OPENROUTER_API_KEY", "environment-secret")
     onboarding.init_nocturne(
@@ -277,7 +278,7 @@ def test_remote_up_starts_only_the_daemon_and_opens_the_browser(
 def test_remote_doctor_checks_spine_journal_and_disk_without_local_database(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """M2S requires remote doctor output to state exactly which local checks are skipped."""
+    """ADR-019 requires remote doctor output to name the local checks it skips."""
 
     monkeypatch.setenv("OPENROUTER_API_KEY", "environment-secret")
     onboarding.init_nocturne(
@@ -306,7 +307,7 @@ def test_remote_doctor_checks_spine_journal_and_disk_without_local_database(
 def test_remote_up_keeps_running_with_a_visible_notice_when_update_is_declined(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """SPEC v2.50 keeps an older remote Palace usable when its offered update is declined."""
+    """SPEC D.2 093 keeps an older remote Palace usable when its update is declined."""
 
     config = onboarding.NocturneConfig(
         home=tmp_path,
@@ -346,7 +347,7 @@ def test_remote_up_keeps_running_with_a_visible_notice_when_update_is_declined(
 def test_remote_up_acceptance_runs_full_deploy_with_the_same_consent(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """SPEC v2.50 makes remote update a single `nocturne up` yes, including alignment consent."""
+    """SPEC D.2 093 makes remote update one `nocturne up` consent path."""
 
     config = onboarding.NocturneConfig(
         home=tmp_path,
@@ -410,3 +411,38 @@ def test_open_requires_reachability_before_launching_browser(monkeypatch) -> Non
 
     assert onboarding.open_nocturne(stdout=io.StringIO()) == 0
     assert events == [f"wait:{onboarding.LOCAL_URL}", f"open:{onboarding.LOCAL_URL}"]
+
+
+def test_readiness_stops_on_the_first_plain_web_refusal(monkeypatch: pytest.MonkeyPatch) -> None:
+    """SPEC D.2 095 prevents a permanent 503 from becoming a wall of readiness polling."""
+
+    calls = 0
+
+    def refuse(request, timeout):
+        nonlocal calls
+        del timeout
+        calls += 1
+        raise urllib.error.HTTPError(
+            request.full_url,
+            503,
+            "Service Unavailable",
+            {},
+            io.BytesIO(
+                b"Nocturne's web app is missing. Install Node.js, then run the web build."
+            ),
+        )
+
+    monkeypatch.setattr(onboarding.urllib.request, "urlopen", refuse)
+    monkeypatch.setattr(
+        onboarding.time,
+        "sleep",
+        lambda _: pytest.fail("a permanent refusal must not be polled again"),
+    )
+
+    with pytest.raises(onboarding.OnboardingError) as error:
+        onboarding._wait_for_url(onboarding.LOCAL_URL, stop_on_refusal=True)
+
+    assert calls == 1
+    assert str(error.value) == (
+        "Nocturne's web app is missing. Install Node.js, then run the web build."
+    )

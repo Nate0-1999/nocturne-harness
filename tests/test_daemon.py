@@ -590,15 +590,17 @@ def test_missing_rack_vitals_reader_is_an_explicit_503() -> None:
 
 
 def test_missing_web_build_is_explicit(tmp_path: Path) -> None:
-    """SPEC C.7 is defended by verifying that missing web build is explicit; this prevents
-    drift in the daemon transport and event-loop contract.
+    """SPEC D.2 095 requires a missing web build to state the situation and remedy once.
     """
     client = TestClient(create_app(tmp_path))
 
     response = client.get("/")
 
     assert response.status_code == 503
-    assert response.text == "web build missing; build web/ before starting harness"
+    assert response.text == (
+        "Nocturne's web app is missing. Build it with `npm ci && npm run build` in the `web` "
+        "directory, then run `nocturne up` again."
+    )
 
 
 def test_dev_app_wires_the_owned_spine_into_the_public_rack_query(tmp_path: Path) -> None:

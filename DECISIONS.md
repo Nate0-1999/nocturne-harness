@@ -1212,3 +1212,26 @@ through the owner's persistent configuration and logging out afterward could
 erase an existing credential. Invoking a Homebrew plugin path directly would
 hard-code one workstation layout and bypass Docker's configured plugin seam.
 Treating the consumed receipt as reusable would violate D.2 096/097.
+
+## 043 — Resolve one web build without synthesizing package files [P4]
+
+**Decision.** The packaged factory serves the wheel's private `_web` directory
+when it exists. In the canonical editable checkout it instead serves the
+existing `web/dist` directly, or invokes the existing web builder once when
+Node.js is available. It never copies checkout output into the package tree.
+When no build can be materialized, the daemon stays reachable long enough to
+return one plain 503 with the remedy, and startup treats that first refusal as
+terminal instead of polling it again.
+
+**Motivation.** Hatch creates `_web` only while building a wheel, but the owner
+runs the same command from an editable checkout. Both layouts already have one
+canonical copy of the same compiled rack; selecting the copy that belongs to
+the active layout keeps the two startup paths equivalent. A permanent refusal
+is actionable state, not liveness noise, so repeating it spends attention
+without adding information.
+
+**Rejected alternatives.** Recreating the gate's hand-copy would leave stale,
+ignored package files that can mask a changed canonical build. Rebuilding on
+every startup would add needless Node work when either valid build already
+exists. Continuing to poll a deterministic 503 would preserve the wall of log
+lines and hide the response's exact remedy.

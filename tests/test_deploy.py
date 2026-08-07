@@ -114,7 +114,7 @@ class TtyStringIO(io.StringIO):
 async def test_remote_verifier_uses_distinct_label_for_duplicate_probe_and_cleans_up(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The hard-duplicate probe must pass the label-first conflict check and clean up."""
+    """SPEC C.4 requires the duplicate probe to pass label checks and clean up."""
 
     memory_id = UUID("12345678-1234-5678-1234-567812345678")
     injection_id = UUID("22345678-1234-5678-1234-567812345678")
@@ -632,7 +632,7 @@ def test_dry_run_only_observes_and_never_materializes_or_mutates() -> None:
 
 
 def test_apply_offers_inline_alignment_and_continues_the_same_plan(tmp_path: Path) -> None:
-    """D.2 098 puts local source and image work before credential alignment."""
+    """SPEC D.2 098 puts local source and image work before credential alignment."""
 
     backend = FakeBackend(
         observed(
@@ -680,7 +680,7 @@ def test_apply_offers_inline_alignment_and_continues_the_same_plan(tmp_path: Pat
 
 
 def test_verification_only_apply_takes_no_infrastructure_receipt() -> None:
-    """D.2 098 keeps ordinary remote verification outside the infrastructure grant boundary."""
+    """SPEC D.2 098 keeps remote verification outside the infrastructure grant boundary."""
 
     backend = FakeBackend(observed(remote_verification=ResourceState.UPDATABLE))
 
@@ -700,7 +700,7 @@ def test_verification_only_apply_takes_no_infrastructure_receipt() -> None:
 
 
 def test_secret_only_apply_takes_an_infrastructure_receipt() -> None:
-    """D.2 096/098 receipts every infrastructure mutation, not only owner rollouts."""
+    """SPEC D.2 096/098 receipts every infrastructure mutation, not only owner rollouts."""
 
     backend = FakeBackend(observed(openrouter_secret=ResourceState.ABSENT))
 
@@ -719,7 +719,7 @@ def test_secret_only_apply_takes_an_infrastructure_receipt() -> None:
 def test_alignment_materializes_source_before_receipt_when_image_is_exact(
     tmp_path: Path,
 ) -> None:
-    """D.2 098 moves every locally fallible source check ahead of alignment mutation."""
+    """SPEC D.2 098 moves every locally fallible source check ahead of alignment mutation."""
 
     backend = FakeBackend(observed(migrations=ResourceState.UNOBSERVED))
     backend.credentials_managed = False
@@ -747,7 +747,7 @@ def test_alignment_materializes_source_before_receipt_when_image_is_exact(
 
 
 def test_alignment_stops_when_pushed_image_does_not_converge(tmp_path: Path) -> None:
-    """D.2 098 proves the image exact before the first service-affecting mutation."""
+    """SPEC D.2 098 proves the image exact before the first service-affecting mutation."""
 
     class NonConvergingImageBackend(FakeBackend):
         def execute(
@@ -797,7 +797,7 @@ def test_alignment_stops_when_pushed_image_does_not_converge(tmp_path: Path) -> 
 def test_managed_owner_resume_backs_up_before_image_service_migration_and_verification(
     tmp_path: Path,
 ) -> None:
-    """D.2 096/097 keeps every post-custody retry receipt-first and in owner update order."""
+    """SPEC D.2 096/097 keeps post-custody retries receipt-first and in owner update order."""
 
     backend = FakeBackend(
         observed(
@@ -833,7 +833,7 @@ def test_managed_owner_resume_backs_up_before_image_service_migration_and_verifi
 
 
 def test_declining_inline_alignment_changes_nothing() -> None:
-    """D.2 096 consent is explicit; declining leaves the owner a plain retry action."""
+    """SPEC D.2 096 makes consent explicit and leaves a plain retry action after decline."""
 
     backend = FakeBackend(observed(migrations=ResourceState.UNOBSERVED))
     backend.credentials_managed = False
@@ -1517,7 +1517,7 @@ def test_database_url_round_trips_only_the_exact_cloud_sql_socket_shape() -> Non
 def test_owner_credential_alignment_backs_up_before_private_reset_and_secret_rewrite(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """D.2 094 is defended by proving backup-first ordering and keeping credentials off argv."""
+    """SPEC D.2 094 requires backup-first ordering while credentials stay off argv."""
 
     calls: list[tuple[tuple[str, ...], dict[str, object]]] = []
     private_flag_payloads: list[dict[str, str]] = []
@@ -1586,7 +1586,7 @@ def test_owner_credential_alignment_backs_up_before_private_reset_and_secret_rew
 
 
 def test_unobserved_migration_reports_credential_cause_and_remedy() -> None:
-    """SPEC v2.52 prevents credential disagreement from being mislabeled as schema drift."""
+    """SPEC D.2 095 prevents credential disagreement from being mislabeled as schema drift."""
 
     plan = build_plan(
         observed(
@@ -1763,7 +1763,7 @@ def test_build_and_execute_commands_stay_inside_the_argv_fence(
 def test_isolated_docker_environment_keeps_routing_but_drops_registry_credentials(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """D.2 097 keeps pre-receipt Docker proof identical to the credential-isolated build."""
+    """SPEC D.2 097 keeps pre-receipt proof identical to the credential-isolated build."""
 
     persistent = tmp_path / "persistent-docker"
     persistent.mkdir()
@@ -1801,7 +1801,7 @@ def test_isolated_docker_environment_keeps_routing_but_drops_registry_credential
 def test_preflight_proves_the_exact_isolated_buildx_environment(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """D.2 097 spends no receipt before the isolated Buildx plugin and daemon both work."""
+    """SPEC D.2 097 spends no receipt before isolated Buildx and its daemon both work."""
 
     persistent = tmp_path / "persistent-docker"
     persistent.mkdir()
@@ -1860,7 +1860,7 @@ def test_preflight_proves_the_exact_isolated_buildx_environment(
 def test_failed_build_uses_one_secret_free_isolated_config_and_cleans_it(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """D.2 097 keeps a failed image build credential-isolated, redacted, and ephemeral."""
+    """SPEC D.2 097 keeps a failed image build credential-isolated and ephemeral."""
 
     persistent = tmp_path / "persistent-docker"
     persistent.mkdir()
@@ -2189,7 +2189,7 @@ def test_cloud_backup_verification_failure_stops_before_migration(tmp_path: Path
 def test_same_attempt_alignment_receipt_is_reused_for_migration(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """D.2 096 uses one fresh receipt for the reset and later migration in that same deploy."""
+    """SPEC D.2 096 uses one fresh receipt for reset and migration in the same deploy."""
 
     calls: list[tuple[str, ...]] = []
 

@@ -88,6 +88,10 @@ from harness.transcript import TranscriptJournal
 
 DEFAULT_WEB_DIST = Path(__file__).resolve().parents[2] / "web" / "dist"
 DEFAULT_WEB_ROOT = DEFAULT_WEB_DIST.parent
+MISSING_WEB_BUILD_MESSAGE = (
+    "Nocturne's web app is missing. Build it with `npm ci && npm run build` in the "
+    "`web` directory, then run `nocturne up` again."
+)
 
 type EnvelopeSender = Callable[[Envelope], Awaitable[None]]
 type EnvelopeHandler = Callable[[Envelope, EnvelopeSender], Awaitable[None]]
@@ -211,6 +215,7 @@ async def _receive_envelope(websocket: WebSocket) -> Envelope | None:
 def create_app(
     web_dist: str | Path | None = None,
     *,
+    missing_web_message: str = MISSING_WEB_BUILD_MESSAGE,
     routes: Mapping[MessageType, EnvelopeHandler] | None = None,
     run_loop: RunLoop | None = None,
     forward_unknown: EnvelopeForwarder | None = None,
@@ -543,7 +548,7 @@ def create_app(
         @app.get("/", response_class=PlainTextResponse)
         async def missing_web_build() -> PlainTextResponse:
             return PlainTextResponse(
-                "web build missing; build web/ before starting harness",
+                missing_web_message,
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
 
@@ -553,6 +558,7 @@ def create_app(
 def create_dev_app(
     web_dist: str | Path | None = None,
     *,
+    missing_web_message: str = MISSING_WEB_BUILD_MESSAGE,
     settings: HarnessSettings | None = None,
     agent: HarnessAgent | None = None,
     spine: SpineClient | None = None,
@@ -794,6 +800,7 @@ def create_dev_app(
 
     app = create_app(
         web_dist,
+        missing_web_message=missing_web_message,
         routes={MessageType.MEMORY_PANEL_UPDATE: panel.handle},
         run_loop=loop,
         envelope_factory=factory,
