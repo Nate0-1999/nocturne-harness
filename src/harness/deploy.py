@@ -1084,8 +1084,9 @@ async def _verify_remote_spine_async(service_url: str, token: str) -> None:
                 raise DeployError("remote verification create did not create a memory")
             memory_id = created.memory_id
 
+            duplicate_request = request.model_copy(update={"label": f"D3 deploy duplicate {nonce}"})
             try:
-                await client.create_memory(request)
+                await client.create_memory(duplicate_request)
             except CreateMemoryConflictError as exc:
                 conflict = exc.conflict
                 if not isinstance(conflict, DuplicateMemoryConflict):

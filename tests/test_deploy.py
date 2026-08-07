@@ -10,9 +10,14 @@ from collections.abc import Iterator, Sequence
 from contextlib import AbstractContextManager, contextmanager
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
+from uuid import UUID
 
+import httpx
 import pytest
 
+import harness.deploy as deploy_module
+import harness.spine_client as spine_client_module
 from harness.deploy import (
     ARTIFACT_HOST,
     BREAKER_BUILD_ACCOUNT,
@@ -102,6 +107,111 @@ def absent_managed(*, breaker: BreakerState = BreakerState.ARMED) -> ObservedDep
 class TtyStringIO(io.StringIO):
     def isatty(self) -> bool:
         return True
+
+
+@pytest.mark.asyncio
+async def test_remote_verifier_uses_distinct_label_for_duplicate_probe_and_cleans_up(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The hard-duplicate probe must pass the label-first conflict check and clean up."""
+
+    memory_id = UUID("12345678-1234-5678-1234-567812345678")
+    injection_id = UUID("22345678-1234-5678-1234-567812345678")
+    requests: list[spine_client_module.CreateMemoryRequest] = []
+    cleaned: list[UUID] = []
+
+    class FakeSpineClient:
+        def __init__(self, base_url: str, token: str, *, timeout: float) -> None:
+            assert (base_url, token, timeout) == ("https://spine.invalid", "token", 45.0)
+
+        async def __aenter__(self) -> FakeSpineClient:
+            return self
+
+        async def __aexit__(self, *_: object) -> None:
+            return None
+
+        async def create_memory(self, request: spine_client_module.CreateMemoryRequest) -> object:
+            requests.append(request)
+            if len(requests) == 1:
+                return SimpleNamespace(created=SimpleNamespace(memory_id=memory_id))
+
+            source = requests[0]
+            response = httpx.Response(409)
+            if request.label == source.label:
+                conflict: spine_client_module.CreateMemoryConflict = (
+                    spine_client_module.LabelConflict(
+                        label_conflict=spine_client_module.LabelConflictTarget(
+                            memory_id=memory_id,
+                            label=source.label,
+                        )
+                    )
+                )
+            else:
+                assert request.principal_id == source.principal_id
+                assert request.body == source.body
+                conflict = spine_client_module.DuplicateMemoryConflict(
+                    duplicate_of=spine_client_module.SimilarityMemoryCard(
+                        memory_id=memory_id,
+                        label=source.label,
+                        body=source.body,
+                        kind=source.kind,
+                        pin=False,
+                        score=1.0,
+                        features=None,
+                        rank=None,
+                    )
+                )
+            raise spine_client_module.CreateMemoryConflictError(response, conflict)
+
+        async def prepare_injection(self, request: object) -> object:
+            return SimpleNamespace(
+                injection_id=injection_id,
+                injected=[SimpleNamespace(memory_id=memory_id)],
+            )
+
+        async def commit_injection(self, request: object) -> object:
+            return SimpleNamespace(final_block="<memory_system>verified</memory_system>")
+
+        async def list_memories(self, params: object) -> object:
+            return SimpleNamespace(items=[SimpleNamespace(memory_id=memory_id, revision=1)])
+
+        async def patch_memory(self, target: UUID, request: object) -> object:
+            assert target == memory_id
+            assert request.status is spine_client_module.MemoryStatus.TOMBSTONED
+            cleaned.append(target)
+            return SimpleNamespace(status=spine_client_module.MemoryStatus.TOMBSTONED)
+
+    class FakeVitalsClient:
+        def __init__(self, *, timeout: float) -> None:
+            assert timeout == 45.0
+
+        async def __aenter__(self) -> FakeVitalsClient:
+            return self
+
+        async def __aexit__(self, *_: object) -> None:
+            return None
+
+        async def get(self, url: str, *, headers: dict[str, str]) -> httpx.Response:
+            assert url == "https://spine.invalid/v1/vitals"
+            assert headers == {"Authorization": "Bearer token"}
+            return httpx.Response(200, json={"ok": True})
+
+    monkeypatch.setattr(spine_client_module, "SpineClient", FakeSpineClient)
+    monkeypatch.setattr(
+        deploy_module,
+        "httpx",
+        SimpleNamespace(AsyncClient=FakeVitalsClient),
+    )
+
+    await deploy_module._verify_remote_spine_async("https://spine.invalid", "token")
+
+    assert len(requests) == 2
+    source, duplicate = requests
+    assert duplicate.label != source.label
+    assert 0 < len(duplicate.label) <= 64
+    assert duplicate.principal_id == source.principal_id
+    assert duplicate.body == source.body
+    assert cleaned == [memory_id]
 
 
 class FakeBackend(DeployBackend):
