@@ -1,5 +1,9 @@
 # M2T verification-only readiness — 2026-08-06 / c810
 
+Checkpoint note: the later authorized execution passed; see
+[`verification-only-closure.md`](verification-only-closure.md). The evidence
+below is preserved as the pre-execution state.
+
 Status: **READY LOCALLY; production apply not started.**
 
 SPEC v2.55 / D.2 098 classifies the corrected typed round trip, Vitals read,
