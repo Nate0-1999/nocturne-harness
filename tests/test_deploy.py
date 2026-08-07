@@ -111,6 +111,9 @@ class FakeBackend(DeployBackend):
         self.executed: list[tuple[PlanStep, Path | None]] = []
         self.armed: list[Path] = []
         self.alignments = 0
+        self.attempts = 0
+        self.attempt_active = False
+        self.events: list[str] = []
         self.credentials_managed = True
 
     def observe(self, target: DeployTarget) -> ObservedDeployment:
@@ -127,10 +130,19 @@ class FakeBackend(DeployBackend):
     ) -> None:
         assert target == TARGET
         self.executed.append((step, source_dir))
+        self.events.append(str(step.stage))
         self.state = replace(self.state, **{STAGE_FIELDS[step.stage]: ResourceState.EXACT})
+
+    def begin_mutation_attempt(self) -> Path:
+        if not self.attempt_active:
+            self.attempts += 1
+            self.attempt_active = True
+            self.events.append("backup_receipt")
+        return Path("/private/verified-backup.json")
 
     def align_owner_cloud_credentials_once(self) -> Path:
         self.alignments += 1
+        self.begin_mutation_attempt()
         self.credentials_managed = True
         self.state = replace(self.state, migrations=ResourceState.UPDATABLE)
         return Path("/private/verified-backup.json")
@@ -535,6 +547,8 @@ def test_apply_offers_inline_alignment_and_continues_the_same_plan(tmp_path: Pat
     )
 
     assert backend.alignments == 1
+    assert backend.attempts == 1
+    assert backend.events[0] == "backup_receipt"
     assert [step.stage for step, _ in backend.executed] == [
         DeployStage.SPINE_IMAGE,
         DeployStage.CLOUD_RUN_SERVICE,
@@ -542,6 +556,44 @@ def test_apply_offers_inline_alignment_and_continues_the_same_plan(tmp_path: Pat
         DeployStage.REMOTE_VERIFICATION,
     ]
     assert "Back up and align it now?" in output.getvalue()
+
+
+def test_managed_owner_resume_backs_up_before_image_service_migration_and_verification(
+    tmp_path: Path,
+) -> None:
+    """D.2 096/097 keeps every post-custody retry receipt-first and in owner update order."""
+
+    backend = FakeBackend(
+        observed(
+            migrations=ResourceState.UPDATABLE,
+            spine_image=ResourceState.ABSENT,
+            cloud_run_service=ResourceState.UPDATABLE,
+            remote_verification=ResourceState.UPDATABLE,
+        )
+    )
+
+    @contextmanager
+    def source() -> Iterator[PackagedDeploySource]:
+        yield PackagedDeploySource(tmp_path / "app", tmp_path / "breaker")
+
+    deploy(
+        backend,
+        TARGET,
+        dry_run=False,
+        stdin=io.StringIO(),
+        stdout=io.StringIO(),
+        source_provider=source,
+    )
+
+    assert backend.alignments == 0
+    assert backend.attempts == 1
+    assert backend.events == [
+        "backup_receipt",
+        "spine_image",
+        "cloud_run_service",
+        "migrations",
+        "remote_verification",
+    ]
 
 
 def test_declining_inline_alignment_changes_nothing() -> None:
@@ -1470,6 +1522,157 @@ def test_build_and_execute_commands_stay_inside_the_argv_fence(
         value.split("=", 1)[1] for argv in argvs for value in argv if value.startswith("--role=")
     }
     assert roles == {"roles/cloudsql.client", "roles/secretmanager.secretAccessor"}
+
+
+def test_isolated_docker_environment_keeps_routing_but_drops_registry_credentials(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """D.2 097 keeps pre-receipt Docker proof identical to the credential-isolated build."""
+
+    persistent = tmp_path / "persistent-docker"
+    persistent.mkdir()
+    (persistent / "config.json").write_text(
+        json.dumps(
+            {
+                "auths": {"registry.example": {"auth": "encoded-secret"}},
+                "credsStore": "desktop",
+                "credHelpers": {"registry.example": "helper"},
+                "currentContext": "colima",
+                "cliPluginsExtraDirs": ["/opt/homebrew/lib/docker/cli-plugins"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    for name in ("buildx", "cli-plugins", "contexts"):
+        (persistent / name).mkdir()
+    monkeypatch.setenv("DOCKER_CONFIG", str(persistent))
+
+    backend = GcloudDeployBackend(image_tag="0.1.0", openrouter_key="fixture")
+    with backend._isolated_docker_environment() as environment:
+        isolated = Path(environment["DOCKER_CONFIG"])
+        rendered = json.loads((isolated / "config.json").read_text(encoding="utf-8"))
+        assert rendered == {
+            "currentContext": "colima",
+            "cliPluginsExtraDirs": ["/opt/homebrew/lib/docker/cli-plugins"],
+        }
+        assert stat.S_IMODE((isolated / "config.json").stat().st_mode) == 0o600
+        for name in ("buildx", "cli-plugins", "contexts"):
+            assert (isolated / name).is_symlink()
+            assert (isolated / name).resolve() == (persistent / name).resolve()
+    assert not isolated.exists()
+
+
+def test_preflight_proves_the_exact_isolated_buildx_environment(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """D.2 097 spends no receipt before the isolated Buildx plugin and daemon both work."""
+
+    persistent = tmp_path / "persistent-docker"
+    persistent.mkdir()
+    (persistent / "config.json").write_text(
+        json.dumps(
+            {
+                "auths": {"registry.example": {"auth": "encoded-secret"}},
+                "currentContext": "colima",
+                "cliPluginsExtraDirs": ["/opt/homebrew/lib/docker/cli-plugins"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("DOCKER_CONFIG", str(persistent))
+    for variable in (
+        "CLOUDSDK_AUTH_ACCESS_TOKEN",
+        "CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE",
+        "CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT",
+        "GOOGLE_APPLICATION_CREDENTIALS",
+    ):
+        monkeypatch.delenv(variable, raising=False)
+
+    calls: list[tuple[str, ...]] = []
+    isolated_paths: list[Path] = []
+
+    def runner(argv: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        calls.append(argv)
+        if argv[:3] == ("gcloud", "config", "get-value"):
+            return subprocess.CompletedProcess(argv, 0, "(unset)\n", "")
+        if argv[:3] == ("gcloud", "auth", "list"):
+            return subprocess.CompletedProcess(argv, 0, '[{"account":"owner@example.com"}]', "")
+        if argv[:2] == ("docker", "buildx") or argv[:2] == ("docker", "info"):
+            environment = kwargs["env"]
+            assert isinstance(environment, dict)
+            isolated = Path(environment["DOCKER_CONFIG"])
+            isolated_paths.append(isolated)
+            config = json.loads((isolated / "config.json").read_text(encoding="utf-8"))
+            assert "auths" not in config
+            assert config["currentContext"] == "colima"
+        return subprocess.CompletedProcess(argv, 0, "fixture", "")
+
+    backend = GcloudDeployBackend(
+        image_tag="0.1.0",
+        openrouter_key="fixture",
+        runner=runner,
+    )
+    backend.preflight()
+
+    assert ("docker", "buildx", "version") in calls
+    assert ("docker", "info", "--format={{.ServerVersion}}") in calls
+    assert len(isolated_paths) == 2
+    assert isolated_paths[0] == isolated_paths[1]
+    assert not isolated_paths[0].exists()
+
+
+def test_failed_build_uses_one_secret_free_isolated_config_and_cleans_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """D.2 097 keeps a failed image build credential-isolated, redacted, and ephemeral."""
+
+    persistent = tmp_path / "persistent-docker"
+    persistent.mkdir()
+    (persistent / "config.json").write_text(
+        json.dumps(
+            {
+                "auths": {"registry.example": {"auth": "persistent-secret"}},
+                "currentContext": "colima",
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("DOCKER_CONFIG", str(persistent))
+    access_token = "short-lived-registry-token"
+    isolated_paths: list[Path] = []
+    calls: list[tuple[tuple[str, ...], dict[str, object]]] = []
+
+    def runner(argv: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        calls.append((argv, kwargs))
+        if argv[:3] == ("gcloud", "auth", "print-access-token"):
+            return subprocess.CompletedProcess(argv, 0, access_token, "")
+        environment = kwargs["env"]
+        assert isinstance(environment, dict)
+        isolated = Path(environment["DOCKER_CONFIG"])
+        isolated_paths.append(isolated)
+        config = json.loads((isolated / "config.json").read_text(encoding="utf-8"))
+        assert "auths" not in config
+        if argv[:2] == ("docker", "login"):
+            assert kwargs["input"] == access_token
+            return subprocess.CompletedProcess(argv, 0, "", "")
+        assert argv[:3] == ("docker", "buildx", "build")
+        assert kwargs["input"] is None
+        return subprocess.CompletedProcess(argv, 1, access_token, "registry failure")
+
+    backend = GcloudDeployBackend(
+        image_tag="0.1.0",
+        openrouter_key="fixture",
+        runner=runner,
+    )
+    with pytest.raises(DeployError) as error:
+        backend._build_image(tmp_path / "source")
+
+    assert str(error.value) == "subprocess failed without changing scope: docker buildx build"
+    assert access_token not in str(error.value)
+    assert len(isolated_paths) == 2
+    assert isolated_paths[0] == isolated_paths[1]
+    assert not isolated_paths[0].exists()
+    assert all(access_token not in argv for argv, _ in calls)
 
 
 @pytest.mark.parametrize("image_ref", ["", " ", "repo/image:tag with-space", "\ttag"])

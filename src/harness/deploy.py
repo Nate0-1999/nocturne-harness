@@ -244,6 +244,9 @@ class DeployBackend(Protocol):
     ) -> None:
         """Execute exactly one allowed D1 CREATE/UPDATE step."""
 
+    def begin_mutation_attempt(self) -> Path:
+        """Mint or return this process's verified receipt before owner-cloud mutation."""
+
     def align_owner_cloud_credentials_once(self) -> Path:
         """Back up and align the fixed owner's managed database credential."""
 
@@ -646,6 +649,44 @@ def local_image_build_argv(source_dir: Path, image_ref: str) -> tuple[str, ...]:
     )
 
 
+_DOCKER_CLIENT_CONFIG_KEYS = ("currentContext", "cliPluginsExtraDirs")
+_DOCKER_CLIENT_STATE_DIRS = ("buildx", "cli-plugins", "contexts")
+
+
+def _prepare_isolated_docker_config(source: Path, destination: Path) -> None:
+    """Keep Docker routing/plugin state while excluding persistent registry credentials."""
+
+    safe_config: dict[str, object] = {}
+    source_config = source / "config.json"
+    if source_config.is_file():
+        try:
+            loaded = json.loads(source_config.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise DeployError(
+                "the local Docker client configuration is unreadable; repair it before deploying"
+            ) from exc
+        if not isinstance(loaded, Mapping):
+            raise DeployError(
+                "the local Docker client configuration is malformed; repair it before deploying"
+            )
+        safe_config = {
+            key: loaded[key] for key in _DOCKER_CLIENT_CONFIG_KEYS if key in loaded
+        }
+
+    try:
+        config_path = destination / "config.json"
+        config_path.write_text(json.dumps(safe_config), encoding="utf-8")
+        config_path.chmod(0o600)
+        for name in _DOCKER_CLIENT_STATE_DIRS:
+            shared = source / name
+            if shared.exists():
+                (destination / name).symlink_to(shared, target_is_directory=True)
+    except OSError as exc:
+        raise DeployError(
+            "the isolated Docker client configuration could not be prepared"
+        ) from exc
+
+
 def invoke_packaged_breaker(
     source_dir: Path,
     target: DeployTarget,
@@ -707,7 +748,6 @@ def deploy(
     stdout.write(f"{initial.render()}\n")
     if dry_run:
         return initial
-    aligned_credentials = False
     if _needs_owner_credential_alignment(backend, observed):
         consent = credential_alignment_consent
         if consent is None:
@@ -721,7 +761,6 @@ def deploy(
                 "Database credential alignment was declined; run nocturne deploy again when ready."
             )
         backend.align_owner_cloud_credentials_once()
-        aligned_credentials = True
         observed = backend.observe(target)
         initial = build_plan(observed)
         stdout.write(f"{initial.render()}\n")
@@ -737,13 +776,16 @@ def deploy(
     d1_mutations = tuple(
         step for step in initial.steps if step.action in {PlanAction.CREATE, PlanAction.UPDATE}
     )
-    if aligned_credentials:
-        owner_update_order = {
-            DeployStage.SPINE_IMAGE: 0,
-            DeployStage.CLOUD_RUN_SERVICE: 1,
-            DeployStage.MIGRATIONS: 2,
-            DeployStage.REMOTE_VERIFICATION: 3,
-        }
+    owner_update_order = {
+        DeployStage.SPINE_IMAGE: 0,
+        DeployStage.CLOUD_RUN_SERVICE: 1,
+        DeployStage.MIGRATIONS: 2,
+        DeployStage.REMOTE_VERIFICATION: 3,
+    }
+    owner_update_attempt = observed.sql_foundation is ResourceState.EXACT and any(
+        step.stage in owner_update_order for step in d1_mutations
+    )
+    if owner_update_attempt:
         d1_mutations = tuple(
             sorted(
                 d1_mutations,
@@ -759,6 +801,8 @@ def deploy(
     source_context: AbstractContextManager[PackagedDeploySource | None]
     source_context = source_provider() if needs_source else no_source()
     with source_context as source_dir:
+        if owner_update_attempt:
+            backend.begin_mutation_attempt()
         for step in d1_mutations:
             backend.execute(
                 step,
@@ -1320,8 +1364,26 @@ class GcloudDeployBackend:
         if "@" not in account or account.endswith(".gserviceaccount.com"):
             raise TargetDiscoveryBlocked("BLOCKED: active gcloud identity must be a human account")
         self._active_account = account
-        self._run(("docker", "buildx", "version"))
+        with self._isolated_docker_environment() as environment:
+            self._run(("docker", "buildx", "version"), env=environment)
+            self._run(("docker", "info", "--format={{.ServerVersion}}"), env=environment)
         self._run(("cloud-sql-proxy", "--version"))
+
+    @contextmanager
+    def _isolated_docker_environment(self) -> Iterator[dict[str, str]]:
+        """Yield the exact credential-isolated Docker environment used by the image build."""
+
+        environment = os.environ.copy()
+        source = (
+            Path(environment.get("DOCKER_CONFIG", Path.home() / ".docker"))
+            .expanduser()
+            .resolve()
+        )
+        with tempfile.TemporaryDirectory(prefix="nocturne-docker-config-") as temporary:
+            destination = Path(temporary)
+            _prepare_isolated_docker_config(source, destination)
+            environment["DOCKER_CONFIG"] = str(destination)
+            yield environment
 
     def _run(
         self,
@@ -2521,8 +2583,7 @@ class GcloudDeployBackend:
     def align_owner_cloud_credentials_once(self) -> Path:
         """Consume D.2 096: back up, then reset the managed database credential."""
 
-        receipt = self._create_cloud_backup_receipt()
-        self._attempt_backup_receipt = receipt
+        receipt = self.begin_mutation_attempt()
         password = secrets.token_urlsafe(32)
         with tempfile.NamedTemporaryFile(
             mode="w",
@@ -2605,6 +2666,13 @@ class GcloudDeployBackend:
         self._database_password = password
         self._persist_credential_custody_receipt(receipt, added_version)
         return receipt
+
+    def begin_mutation_attempt(self) -> Path:
+        """Mint one verified receipt and reuse it only inside this process's attempt."""
+
+        if self._attempt_backup_receipt is None:
+            self._attempt_backup_receipt = self._create_cloud_backup_receipt()
+        return self._attempt_backup_receipt
 
     def owner_credentials_managed(self) -> bool:
         """Prove this install completed its one-time fixed-owner credential alignment."""
@@ -2721,9 +2789,7 @@ class GcloudDeployBackend:
         ).stdout
         if not access_token:
             raise DeployError("gcloud returned an empty registry access token")
-        with tempfile.TemporaryDirectory(prefix="nocturne-docker-config-") as docker_config:
-            environment = os.environ.copy()
-            environment["DOCKER_CONFIG"] = docker_config
+        with self._isolated_docker_environment() as environment:
             self._run(
                 (
                     "docker",
@@ -2774,8 +2840,7 @@ class GcloudDeployBackend:
     def _apply_migrations(self) -> None:
         if self._database_password is None:
             raise DeployError("database credential is unavailable for migration")
-        if self._attempt_backup_receipt is None:
-            self._create_cloud_backup_receipt()
+        self.begin_mutation_attempt()
         with self._cloud_sql_proxy() as port:
             database_url = (
                 f"postgresql+asyncpg://{DATABASE_USER}:"

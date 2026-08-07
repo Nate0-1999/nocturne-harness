@@ -1186,3 +1186,29 @@ secret version discards useful history. Rotating on any mismatch could break a
 recoverable service during an ordinary dry-run/apply cycle. Asking again inside
 deploy after `nocturne up` already received consent would make the promised
 one-step update two steps.
+
+## 042 — Isolate registry credentials without hiding Docker routing [P1.3, P4]
+
+**Decision.** Give registry login and Buildx one temporary Docker configuration
+that retains only `currentContext`, `cliPluginsExtraDirs`, and links to the
+existing Buildx, plugin, and context state. Persistent registry auth,
+credential stores, and credential helpers never enter that configuration.
+Preflight runs both `docker buildx version` and `docker info` through this exact
+environment before an owner-cloud receipt can be minted. A post-custody owner
+update still begins with its own fresh verified receipt and preserves the
+image → service → migration → authenticated-verification order.
+
+**Motivation.** An empty `DOCKER_CONFIG` protected registry credentials but also
+hid Homebrew Buildx and the Colima context. The first exact-path proof therefore
+passed in one environment and the real build failed in another after consuming
+the receipt. Credential isolation is useful only if the preflight and build see
+the same non-secret routing facts. The post-custody ordering remains explicit
+because a completed reset must not silently turn a resumed owner update back
+into migration-first execution.
+
+**Rejected alternatives.** Copying the whole Docker configuration would copy
+persistent registry credentials and helpers into the build sandbox. Logging in
+through the owner's persistent configuration and logging out afterward could
+erase an existing credential. Invoking a Homebrew plugin path directly would
+hard-code one workstation layout and bypass Docker's configured plugin seam.
+Treating the consumed receipt as reusable would violate D.2 096/097.
