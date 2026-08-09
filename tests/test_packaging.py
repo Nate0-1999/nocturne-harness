@@ -49,8 +49,7 @@ def test_committed_web_build_has_every_referenced_asset() -> None:
 
 
 def test_wheel_bundle_keeps_its_private_asset_path() -> None:
-    """ADR-019 keeps the built wheel's web bundle private to its package path.
-    """
+    """ADR-019 keeps the built wheel's web bundle private to its package path."""
     assert BUNDLED_WEB_DIST == Path(__file__).resolve().parents[1] / "src/harness/_web"
     assert "web/dist" not in BUNDLED_WEB_DIST.as_posix()
 
@@ -101,6 +100,31 @@ def test_editable_checkout_builds_when_node_is_available(
     assert builds == [web_root]
     assert resolved == web_root / "dist"
     assert refusal is None
+
+
+def test_doctor_asset_inspection_is_read_only_when_startup_can_build(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SPEC D.2 099 makes doctor prove buildability without performing the startup build."""
+
+    web_root = tmp_path / "web"
+    web_root.mkdir()
+    (web_root / "package.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(packaged, "BUNDLED_WEB_DIST", tmp_path / "missing-wheel-assets")
+    monkeypatch.setattr(packaged, "_CANONICAL_WEB_ROOT", web_root)
+    monkeypatch.setattr(packaged.shutil, "which", lambda command: "/usr/bin/npm")
+    monkeypatch.setattr(
+        packaged,
+        "_build_web",
+        lambda root: pytest.fail("read-only inspection performed a web build"),
+    )
+
+    readiness = packaged.inspect_runtime_web_assets()
+
+    assert not readiness.ready
+    assert readiness.buildable
+    assert readiness.refusal is None
+    assert not (web_root / "dist").exists()
 
 
 def test_editable_checkout_without_node_returns_one_plain_remedy(

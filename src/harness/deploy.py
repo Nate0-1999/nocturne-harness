@@ -82,6 +82,7 @@ class ResourceState(StrEnum):
     UPDATABLE = "updatable"
     UNOBSERVED = "unobserved"
     DRIFTED = "drifted"
+    SOURCE_CHANGED = "source_changed"
 
 
 class BreakerState(StrEnum):
@@ -554,13 +555,22 @@ def build_plan(observed: ObservedDeployment) -> DeployPlan:
                 absent_action=PlanAction.CREATE,
                 allow_update=True,
             ),
-            _resource_step(
-                DeployStage.SPINE_IMAGE,
-                observed.spine_image,
-                detail="immutable packaged Spine linux/amd64 image",
-                absent_action=PlanAction.CREATE,
-                allow_update=False,
-                source_required=True,
+            (
+                PlanStep(
+                    DeployStage.SPINE_IMAGE,
+                    PlanAction.BLOCKED,
+                    "this version is already released; bump the spine version to ship changes",
+                    source_required=True,
+                )
+                if observed.spine_image is ResourceState.SOURCE_CHANGED
+                else _resource_step(
+                    DeployStage.SPINE_IMAGE,
+                    observed.spine_image,
+                    detail="immutable packaged Spine linux/amd64 image",
+                    absent_action=PlanAction.CREATE,
+                    allow_update=False,
+                    source_required=True,
+                )
             ),
             _resource_step(
                 DeployStage.CLOUD_RUN_SERVICE,
@@ -632,18 +642,47 @@ def packaged_spine_source() -> Iterator[PackagedDeploySource]:
         yield PackagedDeploySource(app=source, breaker=breaker)
 
 
-def local_image_build_argv(source_dir: Path, image_ref: str) -> tuple[str, ...]:
+def deploy_source_digest(source_dir: Path) -> str:
+    """Hash the exact relative paths, modes, and bytes sent to Buildx."""
+
+    digest = hashlib.sha256()
+    for path in sorted(item for item in source_dir.rglob("*") if item.is_file()):
+        relative = path.relative_to(source_dir).as_posix().encode()
+        mode = stat.S_IMODE(path.stat().st_mode)
+        digest.update(len(relative).to_bytes(4, "big"))
+        digest.update(relative)
+        digest.update(mode.to_bytes(4, "big"))
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+    return digest.hexdigest()
+
+
+def local_image_build_argv(
+    source_dir: Path,
+    image_ref: str,
+    source_ref: str | None = None,
+) -> tuple[str, ...]:
     """Return the sole authorized local image-build command as an argv tuple."""
 
     if not image_ref or any(character.isspace() for character in image_ref):
         raise ValueError("image_ref must be a non-blank single argv value")
-    return (
+    if source_ref is not None and (
+        not source_ref or any(character.isspace() for character in source_ref)
+    ):
+        raise ValueError("source_ref must be a non-blank single argv value")
+    command = (
         "docker",
         "buildx",
         "build",
         "--platform=linux/amd64",
         "--tag",
         image_ref,
+    )
+    if source_ref is not None:
+        command = (*command, "--tag", source_ref)
+    return (
+        *command,
         "--push",
         str(source_dir),
     )
@@ -669,9 +708,7 @@ def _prepare_isolated_docker_config(source: Path, destination: Path) -> None:
             raise DeployError(
                 "the local Docker client configuration is malformed; repair it before deploying"
             )
-        safe_config = {
-            key: loaded[key] for key in _DOCKER_CLIENT_CONFIG_KEYS if key in loaded
-        }
+        safe_config = {key: loaded[key] for key in _DOCKER_CLIENT_CONFIG_KEYS if key in loaded}
 
     try:
         config_path = destination / "config.json"
@@ -682,9 +719,7 @@ def _prepare_isolated_docker_config(source: Path, destination: Path) -> None:
             if shared.exists():
                 (destination / name).symlink_to(shared, target_is_directory=True)
     except OSError as exc:
-        raise DeployError(
-            "the isolated Docker client configuration could not be prepared"
-        ) from exc
+        raise DeployError("the isolated Docker client configuration could not be prepared") from exc
 
 
 def invoke_packaged_breaker(
@@ -790,9 +825,7 @@ def deploy(
     # D.2 098 makes the verifier an ordinary data-plane operation; every other
     # deploy CREATE/UPDATE remains receipt-taking infrastructure.
     infrastructure_mutations = tuple(
-        step
-        for step in d1_mutations
-        if step.stage is not DeployStage.REMOTE_VERIFICATION
+        step for step in d1_mutations if step.stage is not DeployStage.REMOTE_VERIFICATION
     )
     needs_backup_receipt = observed.sql_foundation is ResourceState.EXACT and (
         needs_credential_alignment or bool(infrastructure_mutations)
@@ -1235,6 +1268,7 @@ class GcloudDeployBackend:
         *,
         image_tag: str,
         openrouter_key: str,
+        source_digest: str | None = None,
         runner: CommandRunner = subprocess.run,
         process_factory: ProcessFactory = subprocess.Popen,
         health_probe: HealthProbe = _default_health_probe,
@@ -1246,8 +1280,12 @@ class GcloudDeployBackend:
             raise ValueError("image_tag must be one immutable Docker tag component")
         if not openrouter_key or openrouter_key != openrouter_key.strip():
             raise ValueError("openrouter_key must be non-blank without surrounding whitespace")
+        if source_digest is not None and not re.fullmatch(r"[0-9a-f]{64}", source_digest):
+            raise ValueError("source_digest must be one lowercase SHA-256 digest")
         self.image_tag = image_tag
         self.image_ref = f"{IMAGE_PACKAGE}:{image_tag}"
+        self.source_tag = None if source_digest is None else f"source-{source_digest}"
+        self.source_ref = None if self.source_tag is None else f"{IMAGE_PACKAGE}:{self.source_tag}"
         self._verification_receipt = hashlib.sha256(image_tag.encode()).hexdigest()[:32]
         self._openrouter_key = openrouter_key
         self._runner = runner
@@ -1379,8 +1417,8 @@ class GcloudDeployBackend:
         except ValueError as exc:
             raise TargetDiscoveryBlocked("BLOCKED: exact D2 budget has an unsafe name") from exc
 
-    def preflight(self) -> None:
-        """Reject credential overrides and prove the three required local tools."""
+    def verify_owner_credentials(self) -> None:
+        """Prove ambient gcloud credentials belong to one human owner."""
 
         forbidden = (
             "CLOUDSDK_AUTH_ACCESS_TOKEN",
@@ -1418,6 +1456,11 @@ class GcloudDeployBackend:
         if "@" not in account or account.endswith(".gserviceaccount.com"):
             raise TargetDiscoveryBlocked("BLOCKED: active gcloud identity must be a human account")
         self._active_account = account
+
+    def preflight(self) -> None:
+        """Reject credential overrides and prove the three required local tools."""
+
+        self.verify_owner_credentials()
         with self._isolated_docker_environment() as environment:
             self._run(("docker", "buildx", "version"), env=environment)
             self._run(("docker", "info", "--format={{.ServerVersion}}"), env=environment)
@@ -1429,9 +1472,7 @@ class GcloudDeployBackend:
 
         environment = os.environ.copy()
         source = (
-            Path(environment.get("DOCKER_CONFIG", Path.home() / ".docker"))
-            .expanduser()
-            .resolve()
+            Path(environment.get("DOCKER_CONFIG", Path.home() / ".docker")).expanduser().resolve()
         )
         with tempfile.TemporaryDirectory(prefix="nocturne-docker-config-") as temporary:
             destination = Path(temporary)
@@ -1785,6 +1826,12 @@ class GcloudDeployBackend:
                 self._image_digest_ref = f"{IMAGE_PACKAGE}@{version}"
             elif "/versions/sha256:" in version:
                 self._image_digest_ref = f"{IMAGE_PACKAGE}@{_resource_tail(version)}"
+            if (
+                self.source_tag is not None
+                and self.source_ref not in tags
+                and self.source_tag not in tags
+            ):
+                return ResourceState.SOURCE_CHANGED
             return ResourceState.EXACT
         return ResourceState.ABSENT
 
@@ -2855,7 +2902,10 @@ class GcloudDeployBackend:
                 input_text=access_token,
                 env=environment,
             )
-            self._run(local_image_build_argv(source_dir, self.image_ref), env=environment)
+            self._run(
+                local_image_build_argv(source_dir, self.image_ref, self.source_ref),
+                env=environment,
+            )
 
     def _deploy_service(self) -> None:
         self._run(
@@ -2952,9 +3002,12 @@ class GcloudDeployBackend:
                 "migration did not run"
             ) from exc
 
-    def _create_cloud_backup_receipt(self) -> Path:
+    def _create_cloud_backup_receipt(self, *, reason: str = "pre_migration") -> Path:
+        if reason not in {"pre_migration", "manual"}:
+            raise ValueError("Cloud SQL backup reason must be pre_migration or manual")
         receipt_id = generate_ulid()
-        description = f"nocturne-pre-migration-{receipt_id.lower()}"
+        description_reason = "pre-migration" if reason == "pre_migration" else "manual"
+        description = f"nocturne-{description_reason}-{receipt_id.lower()}"
         operation = self._json_object(
             (
                 "gcloud",
@@ -3042,7 +3095,7 @@ class GcloudDeployBackend:
             "schema_version": 1,
             "receipt_id": receipt_id,
             "created_at": datetime.now(UTC).isoformat(),
-            "reason": "pre_migration",
+            "reason": reason,
             "provider": "gcp_cloud_sql",
             "project": PROJECT_ID,
             "region": REGION,
@@ -3285,21 +3338,55 @@ def run_cloud_deploy(
     from spine import __version__ as spine_version
 
     image_tag = spine_version.replace("+", ".")
+    with packaged_spine_source() as source:
+        backend = GcloudDeployBackend(
+            image_tag=image_tag,
+            openrouter_key=openrouter_key,
+            source_digest=deploy_source_digest(source.app),
+            runner=runner,
+            process_factory=process_factory,
+            cloud_receipt_directory=home / "cloud-backups",
+            credential_custody_receipt=home / "cloud-credential-custody.json",
+        )
+
+        @contextmanager
+        def current_source() -> Iterator[PackagedDeploySource]:
+            yield source
+
+        backend.preflight()
+        target = backend.discover_target()
+        return deploy(
+            backend,
+            target,
+            dry_run=dry_run,
+            stdin=stdin,
+            stdout=stdout,
+            source_provider=current_source,
+            credential_alignment_consent=credential_alignment_consent,
+        )
+
+
+def create_owner_cloud_backup(
+    *,
+    openrouter_key: str,
+    home: Path,
+    runner: CommandRunner = subprocess.run,
+) -> Path:
+    """Create and verify one owner-requested on-demand backup without deployment."""
+
+    from spine import __version__ as spine_version
+
     backend = GcloudDeployBackend(
-        image_tag=image_tag,
+        image_tag=spine_version.replace("+", "."),
         openrouter_key=openrouter_key,
         runner=runner,
-        process_factory=process_factory,
         cloud_receipt_directory=home / "cloud-backups",
-        credential_custody_receipt=home / "cloud-credential-custody.json",
     )
-    backend.preflight()
-    target = backend.discover_target()
-    return deploy(
-        backend,
-        target,
-        dry_run=dry_run,
-        stdin=stdin,
-        stdout=stdout,
-        credential_alignment_consent=credential_alignment_consent,
-    )
+    try:
+        backend.verify_owner_credentials()
+        return backend._create_cloud_backup_receipt(reason="manual")
+    except DeployError as exc:
+        raise DeployError(
+            f"Remote Palace backup failed: {exc}. Check `gcloud auth list` for one signed-in "
+            "owner account, then run `nocturne backup` again."
+        ) from exc

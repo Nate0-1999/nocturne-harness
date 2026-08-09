@@ -43,10 +43,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="start without opening the browser",
     )
     commands.add_parser("open", help="open the running local Nocturne UI")
-    commands.add_parser("backup", help="save a verified local Palace backup")
+    commands.add_parser("backup", help="save a verified Palace backup")
     restore = commands.add_parser("restore", help="inspect and restore a local Palace backup")
     restore.add_argument("backup_id", help="verified backup generation to restore")
-    commands.add_parser("doctor", help="inspect local Palace health and backups")
+    commands.add_parser("doctor", help="inspect Palace health and startup readiness")
     deploy = commands.add_parser("deploy", help="reconcile the fixed D1 cloud foundation")
     deploy.add_argument(
         "--dry-run",

@@ -293,6 +293,8 @@ def test_remote_doctor_checks_spine_journal_and_disk_without_local_database(
         "_wait_for_url",
         lambda url, **kwargs: checks.append((url, kwargs.get("token"))),
     )
+    monkeypatch.setattr(onboarding, "_remote_schema_version", lambda service_url, token: "0009")
+    monkeypatch.setattr(onboarding, "_expected_schema_version", lambda: "0009")
     output = io.StringIO()
 
     assert onboarding.doctor_nocturne(home=tmp_path, stdout=output) == 0
@@ -393,16 +395,141 @@ def test_remote_up_acceptance_runs_full_deploy_with_the_same_consent(
     ]
 
 
-def test_open_requires_reachability_before_launching_browser(monkeypatch) -> None:
-    """ADR-019 is defended by verifying that open requires reachability before launching
-    browser; this prevents drift in the private local owner onboarding contract.
-    """
-    events: list[str] = []
+def test_remote_up_refuses_reverse_schema_skew_without_offering_deploy(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SPEC D.2 099 and B.6 rule 12 forbid an older app from downgrading its Palace."""
+
+    config = onboarding.NocturneConfig(
+        home=tmp_path,
+        openrouter_api_key="openrouter-fixture",
+        spine_token="palace-token",
+        database_password="unused-local-password",
+        machine_id="fixture-machine",
+        palace_mode="remote",
+        spine_url="https://spine.example.test",
+    )
     monkeypatch.setattr(
         onboarding,
-        "_wait_for_url",
-        lambda url, **kwargs: events.append(f"wait:{url}"),
+        "_remote_palace_status",
+        lambda config: ("0010", "0009", "newer"),
     )
+
+    with pytest.raises(onboarding.OnboardingError) as error:
+        onboarding._up_remote(
+            config,
+            open_browser=False,
+            prompt=lambda message: pytest.fail("reverse skew offered a deployment"),
+            stdout=io.StringIO(),
+        )
+
+    assert str(error.value).startswith("this app is older than your Palace — update the app first.")
+
+
+def test_schema_direction_uses_the_packaged_migration_graph() -> None:
+    """SPEC D.2 099 and B.6 rule 12 classify known ancestors as forward-only updates."""
+
+    assert onboarding._schema_relation("0002", "0009") == "older"
+    assert onboarding._schema_relation("0009", "0009") == "current"
+    assert onboarding._schema_relation("0010", "0009") == "newer"
+
+
+def test_up_adopts_an_existing_nocturne_without_starting_a_second_daemon(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SPEC D.2 099 makes an occupied Nocturne port an ordinary adopt-existing path."""
+
+    _initialized(tmp_path, monkeypatch)
+    preflight = onboarding.DaemonPreflight(
+        existing=True,
+        web_assets="served",
+        port="owned by Nocturne",
+        toolchain="already running",
+        failures=(),
+    )
+    monkeypatch.setattr(onboarding, "_daemon_preflight", lambda config: preflight)
+    monkeypatch.setattr(
+        onboarding,
+        "_start_service",
+        lambda *args, **kwargs: pytest.fail("adoption started another daemon"),
+    )
+    opened: list[str] = []
+    monkeypatch.setattr(onboarding, "_open_browser", lambda url, *, stdout: opened.append(url))
+    output = io.StringIO()
+
+    assert onboarding.up_nocturne(home=tmp_path, stdout=output) == 0
+    assert "already running" in output.getvalue()
+    assert opened == [onboarding.LOCAL_URL]
+
+
+def test_up_and_doctor_share_every_daemon_preflight_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SPEC D.2 099 requires doctor's startup dependency checks to be an up superset."""
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "environment-secret")
+    onboarding.init_nocturne(
+        home=tmp_path,
+        remote="https://spine.example.test",
+        prompt=lambda _: "remote-bearer",
+        stdout=io.StringIO(),
+    )
+    refusal = (
+        "Port 8765 is occupied by another process; stop that process, then run `nocturne up` again."
+    )
+    preflight = onboarding.DaemonPreflight(
+        existing=False,
+        web_assets="ready",
+        port="occupied",
+        toolchain="ready",
+        failures=(refusal,),
+    )
+    monkeypatch.setattr(onboarding, "_daemon_preflight", lambda config: preflight)
+    monkeypatch.setattr(
+        onboarding,
+        "_remote_palace_status",
+        lambda config: ("0009", "0009", "current"),
+    )
+
+    with pytest.raises(onboarding.OnboardingError, match="Port 8765"):
+        onboarding.up_nocturne(home=tmp_path, stdout=io.StringIO())
+    output = io.StringIO()
+    assert onboarding.doctor_nocturne(home=tmp_path, stdout=output) == 2
+    assert f"Problem: {refusal}" in output.getvalue()
+
+
+def test_remote_backup_uses_the_verified_owner_cloud_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SPEC D.2 099 makes Rung 2 backup a verified on-demand Cloud SQL backup."""
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "environment-secret")
+    onboarding.init_nocturne(
+        home=tmp_path,
+        remote="https://spine.example.test",
+        prompt=lambda _: "remote-bearer",
+        stdout=io.StringIO(),
+    )
+    receipt = tmp_path / "cloud-backups" / "manual.json"
+    commands: list[str] = []
+    calls: list[dict[str, object]] = []
+    monkeypatch.setattr(onboarding, "_require_command", commands.append)
+    monkeypatch.setattr(
+        "harness.deploy.create_owner_cloud_backup",
+        lambda **kwargs: calls.append(kwargs) or receipt,
+    )
+    output = io.StringIO()
+
+    assert onboarding.backup_nocturne(home=tmp_path, stdout=output) == receipt
+    assert commands == ["gcloud"]
+    assert calls == [{"openrouter_key": "environment-secret", "home": tmp_path}]
+    assert "Cloud SQL backup verified" in output.getvalue()
+
+
+def test_open_requires_reachability_before_launching_browser(monkeypatch) -> None:
+    """SPEC D.2 099 opens only a daemon identified as Nocturne."""
+    events: list[str] = []
+    monkeypatch.setattr(onboarding, "_existing_nocturne", lambda: True)
     monkeypatch.setattr(
         onboarding,
         "_open_browser",
@@ -410,7 +537,17 @@ def test_open_requires_reachability_before_launching_browser(monkeypatch) -> Non
     )
 
     assert onboarding.open_nocturne(stdout=io.StringIO()) == 0
-    assert events == [f"wait:{onboarding.LOCAL_URL}", f"open:{onboarding.LOCAL_URL}"]
+    assert events == [f"open:{onboarding.LOCAL_URL}"]
+
+
+def test_open_on_a_down_daemon_names_the_one_startup_remedy(monkeypatch) -> None:
+    """SPEC D.2 099 and 095 require the down-daemon refusal to name its next action."""
+
+    monkeypatch.setattr(onboarding, "_existing_nocturne", lambda: False)
+    with pytest.raises(onboarding.OnboardingError) as error:
+        onboarding.open_nocturne(stdout=io.StringIO())
+
+    assert str(error.value) == "Nocturne isn't running — run `nocturne up`."
 
 
 def test_readiness_stops_on_the_first_plain_web_refusal(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -427,9 +564,7 @@ def test_readiness_stops_on_the_first_plain_web_refusal(monkeypatch: pytest.Monk
             503,
             "Service Unavailable",
             {},
-            io.BytesIO(
-                b"Nocturne's web app is missing. Install Node.js, then run the web build."
-            ),
+            io.BytesIO(b"Nocturne's web app is missing. Install Node.js, then run the web build."),
         )
 
     monkeypatch.setattr(onboarding.urllib.request, "urlopen", refuse)

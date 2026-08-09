@@ -2,8 +2,8 @@
 
 Generated deterministically by `scripts/check_test_motivations.py`.
 
-- Tests discovered: 376
-- Motivated tests: 376
+- Tests discovered: 389
+- Motivated tests: 389
 - Grandfathered baseline debt: 0
 - Stale baseline entries: 0
 
@@ -184,7 +184,7 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 
 - _None._
 
-### ADR-019 — 49 defender(s)
+### ADR-019 — 48 defender(s)
 
 - `tests/test_cli.py::test_deploy_loads_initialized_key_and_forwards_dry_run`
 - `tests/test_cli.py::test_local_commands_dispatch`
@@ -223,7 +223,6 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_onboarding.py::test_init_prompts_once_and_generates_private_config`
 - `tests/test_onboarding.py::test_init_uses_environment_secret_and_existing_config_is_inert`
 - `tests/test_onboarding.py::test_load_rejects_group_or_world_readable_secret_file`
-- `tests/test_onboarding.py::test_open_requires_reachability_before_launching_browser`
 - `tests/test_onboarding.py::test_process_environment_keeps_services_on_the_initialized_home`
 - `tests/test_onboarding.py::test_remote_doctor_checks_spine_journal_and_disk_without_local_database`
 - `tests/test_onboarding.py::test_remote_init_records_one_palace_origin_and_prompts_only_for_its_bearer`
@@ -471,25 +470,39 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 
 - _None._
 
-### D.2 — 18 defender(s)
+### D.2 — 32 defender(s)
 
 - `tests/test_daemon.py::test_missing_web_build_is_explicit`
 - `tests/test_deploy.py::test_alignment_materializes_source_before_receipt_when_image_is_exact`
 - `tests/test_deploy.py::test_alignment_stops_when_pushed_image_does_not_converge`
 - `tests/test_deploy.py::test_apply_offers_inline_alignment_and_continues_the_same_plan`
 - `tests/test_deploy.py::test_declining_inline_alignment_changes_nothing`
+- `tests/test_deploy.py::test_deploy_blocks_a_schema_revision_outside_the_packaged_forward_graph`
+- `tests/test_deploy.py::test_deploy_source_digest_tracks_paths_modes_and_bytes`
 - `tests/test_deploy.py::test_failed_build_uses_one_secret_free_isolated_config_and_cleans_it`
 - `tests/test_deploy.py::test_isolated_docker_environment_keeps_routing_but_drops_registry_credentials`
 - `tests/test_deploy.py::test_managed_owner_resume_backs_up_before_image_service_migration_and_verification`
+- `tests/test_deploy.py::test_manual_cloud_backup_receipt_names_manual_on_demand_reason`
+- `tests/test_deploy.py::test_owner_cloud_backup_reuses_verified_receipt_without_deploy_or_grants`
 - `tests/test_deploy.py::test_owner_credential_alignment_backs_up_before_private_reset_and_secret_rewrite`
 - `tests/test_deploy.py::test_preflight_proves_the_exact_isolated_buildx_environment`
+- `tests/test_deploy.py::test_released_image_requires_the_matching_packaged_source_tag`
 - `tests/test_deploy.py::test_same_attempt_alignment_receipt_is_reused_for_migration`
 - `tests/test_deploy.py::test_secret_only_apply_takes_an_infrastructure_receipt`
+- `tests/test_deploy.py::test_source_guard_build_publishes_version_and_digest_tags`
 - `tests/test_deploy.py::test_unobserved_migration_reports_credential_cause_and_remedy`
 - `tests/test_deploy.py::test_verification_only_apply_takes_no_infrastructure_receipt`
+- `tests/test_onboarding.py::test_open_on_a_down_daemon_names_the_one_startup_remedy`
+- `tests/test_onboarding.py::test_open_requires_reachability_before_launching_browser`
 - `tests/test_onboarding.py::test_readiness_stops_on_the_first_plain_web_refusal`
+- `tests/test_onboarding.py::test_remote_backup_uses_the_verified_owner_cloud_path`
 - `tests/test_onboarding.py::test_remote_up_acceptance_runs_full_deploy_with_the_same_consent`
 - `tests/test_onboarding.py::test_remote_up_keeps_running_with_a_visible_notice_when_update_is_declined`
+- `tests/test_onboarding.py::test_remote_up_refuses_reverse_schema_skew_without_offering_deploy`
+- `tests/test_onboarding.py::test_schema_direction_uses_the_packaged_migration_graph`
+- `tests/test_onboarding.py::test_up_adopts_an_existing_nocturne_without_starting_a_second_daemon`
+- `tests/test_onboarding.py::test_up_and_doctor_share_every_daemon_preflight_failure`
+- `tests/test_packaging.py::test_doctor_asset_inspection_is_read_only_when_startup_can_build`
 - `tests/test_packaging.py::test_editable_checkout_without_node_returns_one_plain_remedy`
 
 ### D.3 — ZERO DEFENDERS

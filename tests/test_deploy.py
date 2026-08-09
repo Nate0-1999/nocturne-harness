@@ -55,7 +55,9 @@ from harness.deploy import (
     ResourceState,
     TargetDiscoveryBlocked,
     build_plan,
+    create_owner_cloud_backup,
     deploy,
+    deploy_source_digest,
     invoke_packaged_breaker,
     local_image_build_argv,
     packaged_spine_source,
@@ -540,6 +542,15 @@ def test_every_managed_drift_blocks(field: str, stage: DeployStage) -> None:
     assert plan.step(stage).action is PlanAction.BLOCKED
 
 
+def test_deploy_blocks_a_schema_revision_outside_the_packaged_forward_graph() -> None:
+    """SPEC D.2 099 and B.6 rule 12 keep deploy from treating reverse skew as an update."""
+
+    migration = build_plan(observed(migrations=ResourceState.DRIFTED)).step(DeployStage.MIGRATIONS)
+
+    assert migration.action is PlanAction.BLOCKED
+    assert "incompatible" in migration.detail
+
+
 @pytest.mark.parametrize(
     ("updates", "foundation_stage"),
     [
@@ -694,9 +705,7 @@ def test_verification_only_apply_takes_no_infrastructure_receipt() -> None:
 
     assert backend.attempts == 0
     assert backend.events == ["remote_verification"]
-    assert [step.stage for step, _ in backend.executed] == [
-        DeployStage.REMOTE_VERIFICATION
-    ]
+    assert [step.stage for step, _ in backend.executed] == [DeployStage.REMOTE_VERIFICATION]
 
 
 def test_secret_only_apply_takes_an_infrastructure_receipt() -> None:
@@ -1409,6 +1418,31 @@ def test_artifact_image_listing_uses_supported_fully_qualified_package_argv() ->
     ]
 
 
+def test_released_image_requires_the_matching_packaged_source_tag() -> None:
+    """SPEC D.2 099 blocks a reused version when its packaged source digest changed."""
+
+    digest = "a" * 64
+    backend = GcloudDeployBackend(
+        image_tag="0.1.0",
+        openrouter_key="fixture",
+        source_digest=digest,
+    )
+    row = {
+        "package": IMAGE_PACKAGE,
+        "tags": [backend.image_tag, backend.source_tag],
+        "version": "sha256:fixture",
+    }
+
+    assert backend._image_state([row]) is ResourceState.EXACT
+    row["tags"] = [backend.image_tag, f"source-{'b' * 64}"]
+    assert backend._image_state([row]) is ResourceState.SOURCE_CHANGED
+    step = build_plan(observed(spine_image=ResourceState.SOURCE_CHANGED)).step(
+        DeployStage.SPINE_IMAGE
+    )
+    assert step.action is PlanAction.BLOCKED
+    assert step.detail == "this version is already released; bump the spine version to ship changes"
+
+
 def sql_user_state(users: list[dict[str, object]]) -> ResourceState:
     instance = {
         "name": SQL_INSTANCE,
@@ -1671,6 +1705,25 @@ def test_packaged_source_materializes_separate_complete_trees(
     assert not temporary_root.exists()
 
 
+def test_deploy_source_digest_tracks_paths_modes_and_bytes(tmp_path: Path) -> None:
+    """SPEC D.2 099 binds an immutable release tag to the exact packaged source tree."""
+
+    source = tmp_path / "source"
+    source.mkdir()
+    first = source / "first.py"
+    second = source / "second.py"
+    first.write_text("first\n", encoding="utf-8")
+    second.write_text("second\n", encoding="utf-8")
+    baseline = deploy_source_digest(source)
+
+    assert deploy_source_digest(source) == baseline
+    second.write_text("changed\n", encoding="utf-8")
+    assert deploy_source_digest(source) != baseline
+    second.write_text("second\n", encoding="utf-8")
+    second.chmod(0o755)
+    assert deploy_source_digest(source) != baseline
+
+
 def test_packaged_breaker_uses_exact_argv_without_shell_or_confirmation_synthesis(
     tmp_path: Path,
 ) -> None:
@@ -1758,6 +1811,30 @@ def test_build_and_execute_commands_stay_inside_the_argv_fence(
         value.split("=", 1)[1] for argv in argvs for value in argv if value.startswith("--role=")
     }
     assert roles == {"roles/cloudsql.client", "roles/secretmanager.secretAccessor"}
+
+
+def test_source_guard_build_publishes_version_and_digest_tags(tmp_path: Path) -> None:
+    """SPEC D.2 099 publishes one digest companion for the immutable version tag."""
+
+    digest = "a" * 64
+    backend = GcloudDeployBackend(
+        image_tag="0.1.0",
+        openrouter_key="fixture",
+        source_digest=digest,
+    )
+
+    assert local_image_build_argv(tmp_path, backend.image_ref, backend.source_ref) == (
+        "docker",
+        "buildx",
+        "build",
+        "--platform=linux/amd64",
+        "--tag",
+        backend.image_ref,
+        "--tag",
+        f"{IMAGE_PACKAGE}:source-{digest}",
+        "--push",
+        str(tmp_path),
+    )
 
 
 def test_isolated_docker_environment_keeps_routing_but_drops_registry_credentials(
@@ -2184,6 +2261,103 @@ def test_cloud_backup_verification_failure_stops_before_migration(tmp_path: Path
         backend._apply_migrations()
     assert not (tmp_path / "cloud-backups").exists()
     assert all(command[:3] != (sys.executable, "-m", "spine.db.migrate") for command in calls)
+
+
+def test_owner_cloud_backup_reuses_verified_receipt_without_deploy_or_grants(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SPEC D.2 099 gives Rung 2 backup owner hands without deployment grant machinery."""
+
+    receipt = tmp_path / "cloud-backups" / "manual.json"
+    events: list[object] = []
+
+    def verify(self: GcloudDeployBackend) -> None:
+        events.append("owner-credentials")
+
+    def backup(self: GcloudDeployBackend, *, reason: str = "pre_migration") -> Path:
+        events.append((reason, self._cloud_receipt_directory))
+        return receipt
+
+    monkeypatch.setattr(GcloudDeployBackend, "verify_owner_credentials", verify)
+    monkeypatch.setattr(GcloudDeployBackend, "_create_cloud_backup_receipt", backup)
+    monkeypatch.setattr(
+        GcloudDeployBackend,
+        "preflight",
+        lambda self: pytest.fail("manual backup entered deploy preflight"),
+    )
+    monkeypatch.setattr(
+        GcloudDeployBackend,
+        "discover_target",
+        lambda self: pytest.fail("manual backup discovered deployment grants"),
+    )
+
+    assert (
+        create_owner_cloud_backup(
+            openrouter_key="fixture",
+            home=tmp_path,
+        )
+        == receipt
+    )
+    assert events == ["owner-credentials", ("manual", tmp_path / "cloud-backups")]
+
+
+def test_manual_cloud_backup_receipt_names_manual_on_demand_reason(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SPEC D.2 099 requires a verified ON_DEMAND receipt for an owner backup command."""
+
+    receipt_id = "01J00000000000000000000000"
+    backup_id = "1785900000002"
+    operation_id = "backup-operation-3"
+    description = f"nocturne-manual-{receipt_id.lower()}"
+
+    def runner(argv: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        command = tuple(argv)
+        if command[:4] == ("gcloud", "sql", "backups", "create"):
+            value: object = {
+                "name": operation_id,
+                "backupContext": {"backupId": backup_id},
+            }
+        elif command[:4] == ("gcloud", "sql", "operations", "wait"):
+            value = [
+                {
+                    "name": operation_id,
+                    "status": "DONE",
+                    "operationType": "BACKUP_VOLUME",
+                    "targetProject": PROJECT_ID,
+                    "targetId": SQL_INSTANCE,
+                    "backupContext": {"backupId": backup_id},
+                }
+            ]
+        elif command[:4] == ("gcloud", "sql", "backups", "describe"):
+            value = {
+                "id": backup_id,
+                "instance": SQL_INSTANCE,
+                "description": description,
+                "status": "SUCCESSFUL",
+                "type": "ON_DEMAND",
+                "location": REGION,
+                "enqueuedTime": "2026-08-08T20:00:00Z",
+                "startTime": "2026-08-08T20:00:01Z",
+                "endTime": "2026-08-08T20:00:22Z",
+            }
+        else:
+            raise AssertionError(f"unexpected command: {command!r}")
+        return subprocess.CompletedProcess(command, 0, json.dumps(value), "")
+
+    monkeypatch.setattr("harness.deploy.generate_ulid", lambda: receipt_id)
+    backend = GcloudDeployBackend(
+        image_tag="0.1.0",
+        openrouter_key="fixture",
+        runner=runner,
+        cloud_receipt_directory=tmp_path / "cloud-backups",
+    )
+
+    receipt_path = backend._create_cloud_backup_receipt(reason="manual")
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    assert receipt["reason"] == "manual"
+    assert receipt["description"] == description
+    assert receipt["type"] == "ON_DEMAND"
 
 
 def test_same_attempt_alignment_receipt_is_reused_for_migration(

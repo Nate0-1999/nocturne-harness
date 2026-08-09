@@ -1235,3 +1235,31 @@ ignored package files that can mask a changed canonical build. Rebuilding on
 every startup would add needless Node work when either valid build already
 exists. Continuing to poll a deterministic 503 would preserve the wall of log
 lines and hide the response's exact remedy.
+
+## 044 — Bind immutable releases to source and reuse verified backup custody [P1.3, P4]
+
+**Decision.** Hash the exact packaged Spine build context by relative path,
+mode, and bytes. Publish that digest as a companion immutable Artifact Registry
+tag on the same image as the semantic version. Observation accepts an existing
+version only when its image also owns the expected digest tag; otherwise the
+planner refuses until the Spine version is bumped. Rung 2 `nocturne backup`
+uses the existing verified Cloud SQL on-demand receipt path with the ambient
+human-owner gcloud identity and does not enter deployment discovery or grant
+reconciliation. `up` and read-only `doctor` share one daemon dependency
+inspector; only `up` may materialize a buildable web app.
+
+**Motivation.** An immutable version tag prevents overwriting bytes but cannot
+by itself reveal that local packaged source changed without a version bump. A
+digest companion makes that comparison observable before Buildx tries the
+forbidden push. The cloud migration path already proves provider completion and
+persists private recovery evidence, so using it for an explicit owner backup
+keeps one recovery authority. Sharing the startup inspector makes doctor's
+promise mechanically cover the same assets, port, and rung-specific toolchain
+that startup will use without turning diagnosis into mutation.
+
+**Rejected alternatives.** Rebuilding and comparing image bytes would consume
+work before the version guard and would make a dry-run depend on Docker.
+Mutable metadata outside the immutable repository could drift away from the
+image it describes. A second Cloud SQL backup implementation would duplicate
+verification and receipt rules. Letting doctor run npm would violate its
+read-only contract, while separate readiness checks would invite parity drift.

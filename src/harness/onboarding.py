@@ -9,6 +9,7 @@ import os
 import re
 import secrets
 import shutil
+import socket
 import stat
 import subprocess
 import sys
@@ -103,6 +104,17 @@ class NocturneConfig:
                 }
             )
         return environment
+
+
+@dataclass(frozen=True, slots=True)
+class DaemonPreflight:
+    """Read-only startup dependencies shared by ``up`` and ``doctor``."""
+
+    existing: bool
+    web_assets: str
+    port: str
+    toolchain: str
+    failures: tuple[str, ...]
 
 
 def nocturne_home(environ: Mapping[str, str] | None = None) -> Path:
@@ -228,9 +240,16 @@ def up_nocturne(
 
     config = load_config(home=home)
     _warn_if_low_disk(config.home, stdout=stdout)
+    preflight = _daemon_preflight(config)
+    if preflight.existing:
+        print(f"Nocturne is already running at {LOCAL_URL}; using it.", file=stdout)
+        if open_browser:
+            _open_browser(LOCAL_URL, stdout=stdout)
+        return 0
+    if preflight.failures:
+        raise OnboardingError(preflight.failures[0])
     if config.palace_mode == "remote":
         return _up_remote(config, open_browser=open_browser, prompt=prompt, stdout=stdout)
-    _require_command("docker")
     with resources.as_file(
         resources.files("harness").joinpath("resources", "docker-compose.yml")
     ) as compose_file:
@@ -282,10 +301,10 @@ def _up_remote(
 ) -> int:
     """Start only the local daemon against an owner-operated remote Palace."""
 
-    _wait_for_url(f"{config.spine_url}/health", token=config.spine_token)
-    remote_schema = _remote_schema_version(config.spine_url, config.spine_token)
-    expected_schema = _expected_schema_version()
-    if remote_schema != expected_schema:
+    remote_schema, expected_schema, relation = _remote_palace_status(config)
+    if relation == "newer":
+        raise OnboardingError(_app_older_refusal(remote_schema, expected_schema))
+    if relation == "older":
         answer = prompt(
             f"Your Palace is running older software (schema {remote_schema or 'unknown'}; "
             f"this app expects {expected_schema}). Update now? Updates back up first and take "
@@ -351,19 +370,61 @@ def _expected_schema_version() -> str:
     return heads[0]
 
 
+def _schema_relation(remote_schema: str | None, expected_schema: str) -> str:
+    """Classify remote schema direction without guessing from revision spelling."""
+
+    if remote_schema == expected_schema:
+        return "current"
+    from alembic.script import ScriptDirectory
+    from spine.db.migrate import make_alembic_config
+
+    script = ScriptDirectory.from_config(
+        make_alembic_config("postgresql+asyncpg://unused:unused@127.0.0.1/unused")
+    )
+    packaged = {revision.revision for revision in script.walk_revisions()}
+    return "older" if remote_schema in packaged else "newer"
+
+
+def _remote_palace_status(config: NocturneConfig) -> tuple[str | None, str, str]:
+    """Probe the remote Palace and compare it to the installed migration graph."""
+
+    _wait_for_url(f"{config.spine_url}/health", token=config.spine_token)
+    remote_schema = _remote_schema_version(config.spine_url, config.spine_token)
+    expected_schema = _expected_schema_version()
+    return remote_schema, expected_schema, _schema_relation(remote_schema, expected_schema)
+
+
+def _app_older_refusal(remote_schema: str | None, expected_schema: str) -> str:
+    remote = remote_schema or "unknown"
+    return (
+        "this app is older than your Palace — update the app first. "
+        f"Palace schema {remote}; app expects {expected_schema}."
+    )
+
+
 def open_nocturne(*, stdout: TextIO = sys.stdout) -> int:
     """Open the running local Nocturne UI after a bounded reachability check."""
 
-    _wait_for_url(LOCAL_URL, timeout=3.0)
+    if not _existing_nocturne():
+        raise OnboardingError("Nocturne isn't running — run `nocturne up`.")
     _open_browser(LOCAL_URL, stdout=stdout)
     return 0
 
 
 def backup_nocturne(*, home: Path | None = None, stdout: TextIO = sys.stdout) -> Path:
-    """Publish one verified local Palace backup generation."""
+    """Publish one verified backup generation for the selected Palace rung."""
 
     config = load_config(home=home)
-    _require_local_palace(config, operation="Backup")
+    if config.palace_mode == "remote":
+        _require_command("gcloud")
+        from harness.deploy import create_owner_cloud_backup
+
+        receipt = create_owner_cloud_backup(
+            openrouter_key=config.openrouter_api_key,
+            home=config.home,
+        )
+        print(f"Cloud SQL backup verified. Receipt: {receipt}", file=stdout)
+        return receipt
     _require_command("docker")
     return create_local_backup(config, reason="manual", stdout=stdout)
 
@@ -411,24 +472,43 @@ def doctor_nocturne(*, home: Path | None = None, stdout: TextIO = sys.stdout) ->
     """Print a safe, read-only health report for the selected Palace rung."""
 
     config = load_config(home=home)
+    preflight = _daemon_preflight(config)
     if config.palace_mode == "remote":
-        return _doctor_remote(config, stdout=stdout)
+        return _doctor_remote(config, preflight=preflight, stdout=stdout)
     report = inspect_local_palace(config)
-    _print_doctor_report(report, stdout=stdout)
-    return report.exit_code
+    _print_doctor_report(report, preflight=preflight, stdout=stdout)
+    return 2 if preflight.failures else report.exit_code
 
 
-def _doctor_remote(config: NocturneConfig, *, stdout: TextIO) -> int:
+def _doctor_remote(
+    config: NocturneConfig,
+    *,
+    preflight: DaemonPreflight,
+    stdout: TextIO,
+) -> int:
     """Inspect the remote service plus the durable state still owned by this daemon."""
 
     storage = local_storage_snapshot(config.home)
     remote_healthy = True
+    schema_warning: str | None = None
+    schema_failure: str | None = None
+    remote_schema: str | None = None
+    expected_schema: str | None = None
     try:
-        _wait_for_url(f"{config.spine_url}/health", token=config.spine_token)
+        remote_schema, expected_schema, relation = _remote_palace_status(config)
+        if relation == "older":
+            schema_warning = (
+                f"Remote Palace schema {remote_schema} is older than app schema "
+                f"{expected_schema}; run `nocturne up` and accept the offered update."
+            )
+        elif relation == "newer":
+            schema_failure = _app_older_refusal(remote_schema, expected_schema)
     except OnboardingError:
         remote_healthy = False
     low_disk = storage.low_disk
-    status = "failed" if not remote_healthy else "warning" if low_disk else "healthy"
+    failed = not remote_healthy or schema_failure is not None or bool(preflight.failures)
+    warned = low_disk or schema_warning is not None
+    status = "failed" if failed else "warning" if warned else "healthy"
     print(f"Palace doctor: {status}", file=stdout)
     print(
         f"Remote Palace: {'healthy' if remote_healthy else 'unreachable'} at {config.spine_url}",
@@ -440,17 +520,36 @@ def _doctor_remote(config: NocturneConfig, *, stdout: TextIO) -> int:
         f"{_human_bytes(storage.disk_total_bytes)}",
         file=stdout,
     )
+    _print_daemon_preflight(preflight, stdout=stdout)
     print("Local database and backup checks are skipped for a remote Palace.", file=stdout)
+    if remote_healthy and remote_schema is not None:
+        print(f"Palace schema: {remote_schema} (app expects {expected_schema})", file=stdout)
+    if not remote_healthy:
+        print(
+            "Problem: Remote Palace is unreachable; check its URL and access token, then run "
+            "`nocturne doctor` again.",
+            file=stdout,
+        )
+    if schema_failure is not None:
+        print(f"Problem: {schema_failure}", file=stdout)
+    if schema_warning is not None:
+        print(f"Warning: {schema_warning}", file=stdout)
     if low_disk:
         print("Warning: Free disk space is below the early warning boundary.", file=stdout)
-    return 2 if not remote_healthy else 1 if low_disk else 0
+    return 2 if failed else 1 if warned else 0
 
 
-def _print_doctor_report(report: DoctorReport, *, stdout: TextIO) -> None:
+def _print_doctor_report(
+    report: DoctorReport,
+    *,
+    preflight: DaemonPreflight,
+    stdout: TextIO,
+) -> None:
     database = (
         "unavailable" if report.database_bytes is None else _human_bytes(report.database_bytes)
     )
-    print(f"Palace doctor: {report.status}", file=stdout)
+    status = "failed" if preflight.failures else report.status
+    print(f"Palace doctor: {status}", file=stdout)
     print(f"Database: {database}", file=stdout)
     print(f"Conversation journal: {_human_bytes(report.journal_bytes)}", file=stdout)
     print(
@@ -462,6 +561,7 @@ def _print_doctor_report(report: DoctorReport, *, stdout: TextIO) -> None:
         f"{_human_bytes(report.disk_total_bytes)}",
         file=stdout,
     )
+    _print_daemon_preflight(preflight, stdout=stdout)
     for warning in report.warnings:
         print(f"Warning: {warning}", file=stdout)
     for failure in report.failures:
@@ -630,7 +730,98 @@ def _parse_config(path: Path) -> dict[str, str]:
 
 def _require_command(command: str) -> None:
     if shutil.which(command) is None:
-        raise OnboardingError(f"{command} is required. Install Docker Desktop or Colima first.")
+        if command == "docker":
+            remedy = "Install Docker Desktop or Colima first"
+        elif command == "gcloud":
+            remedy = "Install the Google Cloud CLI and sign in first"
+        else:
+            remedy = f"Install {command} first"
+        raise OnboardingError(f"{command} is required. {remedy}, then run the command again.")
+
+
+def _daemon_preflight(config: NocturneConfig) -> DaemonPreflight:
+    """Inspect every local daemon startup dependency without mutating it."""
+
+    if _existing_nocturne():
+        return DaemonPreflight(
+            existing=True,
+            web_assets="served by the running Nocturne daemon",
+            port="8765 is owned by the running Nocturne daemon",
+            toolchain="already running",
+            failures=(),
+        )
+
+    from harness.packaged import inspect_runtime_web_assets
+
+    assets = inspect_runtime_web_assets()
+    failures: list[str] = []
+    if assets.ready:
+        web_assets = f"ready at {assets.path}"
+    elif assets.buildable:
+        web_assets = "buildable with npm at startup"
+    else:
+        web_assets = "not ready"
+        failures.append(
+            assets.refusal
+            or "Nocturne's web app is unavailable; reinstall Nocturne, then run `nocturne up`."
+        )
+
+    if _port_available(8765):
+        port = "8765 is available"
+    else:
+        port = "8765 is occupied by another process"
+        failures.append(
+            "Port 8765 is occupied by another process; stop that process, then run "
+            "`nocturne up` again."
+        )
+
+    if config.palace_mode == "local":
+        if shutil.which("docker") is None:
+            toolchain = "Docker is unavailable"
+            failures.append(
+                "docker is required. Install Docker Desktop or Colima first, then run "
+                "`nocturne up` again."
+            )
+        else:
+            toolchain = "Docker is available"
+    else:
+        toolchain = "no local Palace toolchain is required"
+
+    return DaemonPreflight(
+        existing=False,
+        web_assets=web_assets,
+        port=port,
+        toolchain=toolchain,
+        failures=tuple(failures),
+    )
+
+
+def _print_daemon_preflight(preflight: DaemonPreflight, *, stdout: TextIO) -> None:
+    print(f"Web app: {preflight.web_assets}", file=stdout)
+    print(f"Port: {preflight.port}", file=stdout)
+    print(f"Startup toolchain: {preflight.toolchain}", file=stdout)
+    for failure in preflight.failures:
+        print(f"Problem: {failure}", file=stdout)
+
+
+def _port_available(port: int) -> bool:
+    try:
+        with socket.socket() as reservation:
+            reservation.bind(("127.0.0.1", port))
+    except OSError:
+        return False
+    return True
+
+
+def _existing_nocturne() -> bool:
+    request = urllib.request.Request(f"{LOCAL_URL}/openapi.json")
+    try:
+        with urllib.request.urlopen(request, timeout=0.5) as response:
+            payload = json.loads(response.read())
+    except (OSError, ValueError, urllib.error.HTTPError, urllib.error.URLError):
+        return False
+    info = payload.get("info") if isinstance(payload, Mapping) else None
+    return isinstance(info, Mapping) and info.get("title") == "NOCTURNE"
 
 
 def _parse_port(value: str) -> int:
