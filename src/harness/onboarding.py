@@ -36,6 +36,7 @@ from harness.lifecycle import (
     prepare_local_restore,
 )
 from harness.resources import local_storage_snapshot
+from harness.transcript import TranscriptJournal, TranscriptJournalUnavailable
 
 LOCAL_URL = "http://127.0.0.1:8765"
 SPINE_URL = "http://127.0.0.1:8000"
@@ -248,6 +249,7 @@ def up_nocturne(
         return 0
     if preflight.failures:
         raise OnboardingError(preflight.failures[0])
+    _require_writable_journal(config.home)
     if config.palace_mode == "remote":
         return _up_remote(config, open_browser=open_browser, prompt=prompt, stdout=stdout)
     with resources.as_file(
@@ -794,6 +796,15 @@ def _daemon_preflight(config: NocturneConfig) -> DaemonPreflight:
         toolchain=toolchain,
         failures=tuple(failures),
     )
+
+
+def _require_writable_journal(home: Path) -> None:
+    """Prove the mandatory journal before starting either Palace rung."""
+
+    try:
+        TranscriptJournal(home / "transcripts")
+    except TranscriptJournalUnavailable as exc:
+        raise OnboardingError(str(exc)) from exc
 
 
 def _print_daemon_preflight(preflight: DaemonPreflight, *, stdout: TextIO) -> None:

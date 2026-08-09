@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import stat
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -9,6 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
+from pydantic_ai.messages import ModelRequest, ModelResponse, TextPart, UserPromptPart
 
 import harness.transcript as transcript_module
 from harness.envelope import (
@@ -21,7 +23,7 @@ from harness.envelope import (
 from harness.model_policy import ThreadModelResolution
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
-from harness.transcript import TranscriptJournal
+from harness.transcript import TranscriptJournal, TranscriptJournalUnavailable
 
 
 def ulid(number: int) -> str:
@@ -46,6 +48,9 @@ class Sink:
 
 
 class RecordingRunner:
+    def __init__(self) -> None:
+        self.histories: list[tuple[object, ...]] = []
+
     async def run(
         self,
         *,
@@ -56,6 +61,7 @@ class RecordingRunner:
         model_resolution: ThreadModelResolution | None = None,
     ) -> TurnOutcome:
         del thread_id, prompt, model_resolution
+        self.histories.append(tuple(message_history))
         await emit.text("durable answer")
         await emit.thinking("durable thought")
         await emit.event({"event_kind": "tool_result", "ok": True})
@@ -268,7 +274,6 @@ def test_journal_refuses_a_symlinked_thread_file(tmp_path: Path) -> None:
     prevents drift in the private append-only journal contract.
     """
     journal = TranscriptJournal(tmp_path / "transcripts")
-    journal.root.mkdir(parents=True)
     target = tmp_path / "target.txt"
     target.write_text("do not touch", encoding="utf-8")
     journal.path_for_thread("thread-1").symlink_to(target)
@@ -291,6 +296,7 @@ def test_journal_refuses_root_replaced_by_a_directory_symlink(tmp_path: Path) ->
     journal = TranscriptJournal(root)
     target = tmp_path / "target-worktree"
     (target / ".git").mkdir(parents=True)
+    root.rmdir()
     root.symlink_to(target, target_is_directory=True)
 
     with pytest.raises(ValueError, match="root must be a real directory"):
@@ -301,6 +307,22 @@ def test_journal_refuses_root_replaced_by_a_directory_symlink(tmp_path: Path) ->
         )
 
     assert list(target.glob("*.jsonl")) == []
+
+
+def test_preflight_refuses_a_preexisting_symlinked_root(tmp_path: Path) -> None:
+    """ADR-016 requires the journal root itself to remain private and path safe; this prevents
+    the startup preflight from changing permissions or writing through a directory symlink.
+    """
+    root = tmp_path / "transcripts"
+    target = tmp_path / "outside"
+    target.mkdir(mode=0o755)
+    root.symlink_to(target, target_is_directory=True)
+
+    with pytest.raises(TranscriptJournalUnavailable, match="not writable"):
+        TranscriptJournal(root)
+
+    assert stat.S_IMODE(target.stat().st_mode) == 0o755
+    assert list(target.iterdir()) == []
 
 
 def test_failed_partial_append_is_rolled_back(tmp_path: Path, monkeypatch) -> None:
@@ -337,12 +359,54 @@ def test_failed_partial_append_is_rolled_back(tmp_path: Path, monkeypatch) -> No
     assert len(records(journal, "thread-1")) == 1
 
 
+def test_startup_preflight_fsyncs_and_removes_its_probe(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """F030 and ADR-016 require a reversible write and fsync probe before healthy startup;
+    this proves the mandatory journal can durably accept history without leaving residue.
+    """
+    real_fsync = transcript_module.os.fsync
+    synced_modes: list[int] = []
+
+    def recording_fsync(descriptor: int) -> None:
+        synced_modes.append(os.fstat(descriptor).st_mode)
+        real_fsync(descriptor)
+
+    monkeypatch.setattr(transcript_module.os, "fsync", recording_fsync)
+    journal = TranscriptJournal(tmp_path / "transcripts")
+
+    assert len(synced_modes) == 2
+    assert any(stat.S_ISREG(mode) for mode in synced_modes)
+    assert any(stat.S_ISDIR(mode) for mode in synced_modes)
+    assert list(journal.root.iterdir()) == []
+
+
+def test_startup_preflight_refuses_a_read_only_journal_with_plain_remedy(
+    tmp_path: Path,
+) -> None:
+    """F030, v2.39, and B.6 rule 12 require startup to fail before serving when the journal
+    is read only; this prevents accepting a conversation whose history cannot be written.
+    """
+    root = tmp_path / "transcripts"
+    root.mkdir(mode=0o500)
+    try:
+        with pytest.raises(TranscriptJournalUnavailable) as raised:
+            TranscriptJournal(root)
+    finally:
+        root.chmod(0o700)
+
+    assert "Conversation journal is not writable" in str(raised.value)
+    assert "Fix that directory's permissions" in str(raised.value)
+    assert "`nocturne up`" in str(raised.value)
+    assert list(root.iterdir()) == []
+
+
 def test_preexisting_incomplete_tail_is_separated_from_new_records(tmp_path: Path) -> None:
     """ADR-016 is defended by verifying that preexisting incomplete tail is separated from new
     records; this prevents drift in the private append-only journal contract.
     """
     journal = TranscriptJournal(tmp_path / "transcripts")
-    journal.root.mkdir(parents=True)
     path = journal.path_for_thread("thread-1")
     path.write_bytes(b'{"incomplete":')
 
@@ -405,6 +469,65 @@ def test_non_tail_revisions_do_not_move_restart_continuity_backward(tmp_path: Pa
     assert journal.next_parent_id("thread-1") == ulid(4)
     assert TranscriptJournal(journal.root).next_parent_id("thread-1") == ulid(4)
     assert records(journal, "thread-1")[-1]["tail_message_id"] == ulid(4)
+
+
+@pytest.mark.asyncio
+async def test_startup_hydrates_every_journal_thread(tmp_path: Path) -> None:
+    """F030 requires every catalogued transcript to come from the journal after restart; this
+    prevents the selected browser thread from being the only conversation that survives.
+    """
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    expected: dict[str, list[dict[str, object]]] = {}
+    for offset, thread_id in enumerate(("thread-one", "thread-two"), start=1):
+        prompt_id = ulid(offset * 10)
+        run_id = ulid(offset * 10 + 1)
+        user = {
+            "message_id": prompt_id,
+            "run_id": run_id,
+            "role": "user",
+            "content": f"prompt {offset}",
+            "state": "end_turn",
+        }
+        assistant = {
+            "message_id": run_id,
+            "run_id": run_id,
+            "role": "assistant",
+            "content": f"answer {offset}",
+            "thinking": "",
+            "events": [],
+            "partial": False,
+        }
+        journal.append_message(thread_id, user, parent_id=None)
+        journal.append_message(thread_id, assistant, parent_id=prompt_id)
+        expected[thread_id] = [
+            {**user, "parentId": None},
+            {**assistant, "parentId": prompt_id},
+        ]
+
+    loop = RunLoop(RecordingRunner(), factory(Ids()), transcript_journal=journal)
+    for thread_id, messages in expected.items():
+        sink = Sink()
+        await loop.request_snapshot(thread_id, sink)
+        snapshot = sink.messages[0].payload
+        assert isinstance(snapshot, ThreadSnapshotResponsePayload)
+        assert snapshot.messages == messages
+        assert snapshot.active_run is None
+    await loop.close()
+
+
+def test_startup_refuses_unrecoverable_parent_history(tmp_path: Path) -> None:
+    """ADR-016 and v2.39 make history mandatory and fail closed on unrecoverable gaps; this
+    prevents a damaged transcript from silently becoming an apparently empty conversation.
+    """
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    journal.append_message(
+        "thread-1",
+        {"message_id": ulid(2), "role": "assistant", "partial": True},
+        parent_id=ulid(1),
+    )
+
+    with pytest.raises(TranscriptJournalUnavailable, match="missing a parent message"):
+        RunLoop(RecordingRunner(), factory(Ids()), transcript_journal=journal)
 
 
 def test_complete_record_is_fsynced_before_append_returns(tmp_path: Path, monkeypatch) -> None:
@@ -693,12 +816,12 @@ async def test_capture_does_not_depend_on_a_live_subscriber(tmp_path: Path) -> N
 
 
 @pytest.mark.asyncio
-async def test_run_loop_captures_messages_events_model_change_without_serving_on_restart(
+async def test_run_loop_rehydrates_exact_transcript_and_model_recency_on_restart(
     tmp_path: Path,
 ) -> None:
-    """ADR-016 is defended by verifying that run loop captures messages events model change
-    without serving on restart; this prevents drift in the private append-only journal
-    contract.
+    """F030, ADR-016, and B.6 rule 12 require journal authority across daemon restarts; this
+    proves exact readable messages, the selected model, and ordinary text recency survive
+    while local control turns stay outside provider history.
     """
     thread_id = "thread/with/path-separators"
     prompt_id = ulid(1)
@@ -779,8 +902,9 @@ async def test_run_loop_captures_messages_events_model_change_without_serving_on
     }
     assert delta_kinds == {"text", "thinking", "event"}
 
+    restarted_runner = RecordingRunner()
     restarted = RunLoop(
-        RecordingRunner(),
+        restarted_runner,
         factory(Ids(value=500)),
         model_resolver=Resolver(),
         transcript_journal=TranscriptJournal(journal.root),
@@ -791,8 +915,14 @@ async def test_run_loop_captures_messages_events_model_change_without_serving_on
     await wait_for_type(restart_sink, MessageType.THREAD_SNAPSHOT, 1)
     snapshot = restart_sink.messages[0].payload
     assert isinstance(snapshot, ThreadSnapshotResponsePayload)
-    assert snapshot.messages == []
+    assert snapshot.messages == [
+        by_message[prompt_id][-1],
+        by_message[first_run][-1],
+        by_message[command_prompt_id][-1],
+        by_message[command_run][-1],
+    ]
     assert snapshot.active_run is None
+    assert snapshot.resolved_model == resolver.changed.model
     assert journal.path_for_thread(thread_id).read_bytes() == before_snapshot
 
     await restarted.submit(
@@ -802,6 +932,15 @@ async def test_run_loop_captures_messages_events_model_change_without_serving_on
         sink=restart_sink,
     )
     await wait_for_done(restart_sink, 1)
+    assert len(restarted_runner.histories) == 1
+    model_history = restarted_runner.histories[0]
+    assert len(model_history) == 2
+    assert isinstance(model_history[0], ModelRequest)
+    assert isinstance(model_history[0].parts[0], UserPromptPart)
+    assert model_history[0].parts[0].content == "hello"
+    assert isinstance(model_history[1], ModelResponse)
+    assert isinstance(model_history[1].parts[0], TextPart)
+    assert model_history[1].parts[0].content == "durable answer"
     restarted_rows = records(journal, thread_id)
     continued = [
         row["message"]

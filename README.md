@@ -73,8 +73,9 @@ owned by another local database.
 
 While the daemon runs, it durably appends each thread's messages and run events
 to owner-only JSONL files under `$NOCTURNE_HOME/transcripts`. These files are
-local, append-only, and never stored in Git. This is capture-only in M2: a
-daemon restart preserves the files but does not yet reload them into the UI.
+local, append-only, and never stored in Git. On startup, NOCTURNE verifies that
+the journal can durably accept writes and reloads each conversation from its
+durable tail before serving the UI.
 
 Archiving a thread runs the memory extractor over that durable journal, then
 opens the law-bound Thread Memory Review rack module. Candidate memories remain

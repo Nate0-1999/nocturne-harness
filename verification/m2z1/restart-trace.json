@@ -1,0 +1,56 @@
+{
+  "executed_at": "2026-08-09",
+  "identity": {
+    "principal_id": "m2z1-sop-verification",
+    "machine_id": "m2z1-sop-verification",
+    "agent_id": "harness-agent"
+  },
+  "owner_app": {
+    "url": "http://127.0.0.1:8791/",
+    "provider": "openrouter:minimax/minimax-m3",
+    "fixture": false,
+    "browser_asset": "assets/index-CzPK_xER.js"
+  },
+  "before_restart": {
+    "journal_files": 2,
+    "threads": [
+      {
+        "thread_id": "a7204f81-a89a-4140-9f25-07c3f1ec6eb1",
+        "message_count": 2,
+        "sha256": "34ab68209219dc835fb6a07bfb69cf29ad4925b8b5bc4347966bd20b38bddd9c",
+        "assistant_text": "Moonlight continuity confirmed."
+      },
+      {
+        "thread_id": "0ab4e266-5b8e-4be2-be17-1df09e8967b5",
+        "message_count": 2,
+        "sha256": "1bbf0e1ed3ddfa60be0c0461e5bf3b1c6a42e257b8bcaf7af453ec173f88c941",
+        "assistant_text_prefix": "I don't have access to any threading system"
+      }
+    ]
+  },
+  "after_restart": {
+    "active_thread_loaded_messages": 2,
+    "other_thread_loaded_messages_after_selection": 2,
+    "resolved_model_restored": "openrouter:minimax/minimax-m3",
+    "untouched_thread_sha256": "1bbf0e1ed3ddfa60be0c0461e5bf3b1c6a42e257b8bcaf7af453ec173f88c941",
+    "continued_thread_messages": 4,
+    "continued_provider_answer": "Moonlight continuity",
+    "continued_parent_is_pre_restart_tail": true
+  },
+  "writability_preflight": {
+    "command": "nocturne up --no-open",
+    "read_only_mode": "0500",
+    "exit_code": 2,
+    "service_started": false,
+    "plain_remedy": "Fix that directory's permissions, then run `nocturne up` again."
+  },
+  "hygiene": {
+    "memories_used": 0,
+    "memory_mutations": 0,
+    "counts_toward_owner_floor": false,
+    "browser_warning_error_logs": [],
+    "temporary_homes_removed": true,
+    "processes_stopped": true,
+    "browser_tabs_finalized": true
+  }
+}

@@ -11,6 +11,8 @@ from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from typing import Any
 
+from pydantic_ai.messages import ModelRequest, ModelResponse, TextPart, UserPromptPart
+
 from harness.commands import model_command_text, remember_command_text
 from harness.envelope import (
     ActiveRunSnapshot,
@@ -47,7 +49,7 @@ from harness.parameter_registry import (
     ParameterWriteViolation,
 )
 from harness.run_protocol import RunEmitter, TurnOutcome, TurnRunner, UsageSnapshot
-from harness.transcript import TranscriptJournal
+from harness.transcript import HydratedTranscript, TranscriptJournal
 
 type EnvelopeSink = Callable[[Envelope], Awaitable[None]]
 
@@ -180,7 +182,7 @@ class RunLoop:
         self._lock = asyncio.Lock()
         self._submission_locks: dict[str, asyncio.Lock] = {}
         self._pending_captured: dict[str, deque[_Turn]] = {}
-        self._threads: dict[str, _ThreadState] = {}
+        self._threads = self._hydrate_threads(transcript_journal)
         self._subscriptions: list[_Subscription] = []
         self._selected_thread_id: str | None = None
         self._terminal_tasks: set[asyncio.Task[None]] = set()
@@ -1497,6 +1499,49 @@ class RunLoop:
             self._threads[thread_id] = state
         return state
 
+    def _hydrate_threads(
+        self,
+        journal: TranscriptJournal | None,
+    ) -> dict[str, _ThreadState]:
+        if journal is None:
+            return {}
+        return {
+            transcript.thread_id: _ThreadState(
+                messages=[deepcopy(message) for message in transcript.messages],
+                message_history=self._rehydrate_model_history(transcript),
+                resolved_model=transcript.resolved_model or self._initial_resolved_model,
+            )
+            for transcript in journal.hydrate_threads()
+        }
+
+    @staticmethod
+    def _rehydrate_model_history(transcript: HydratedTranscript) -> tuple[object, ...]:
+        history: list[object] = []
+        messages = transcript.messages
+        for index in range(0, len(messages) - 1, 2):
+            user = messages[index]
+            assistant = messages[index + 1]
+            prompt = user.get("content")
+            answer = assistant.get("content")
+            if (
+                user.get("role") != "user"
+                or assistant.get("role") != "assistant"
+                or user.get("state") != StopReason.END_TURN.value
+                or assistant.get("partial") is not False
+                or not isinstance(prompt, str)
+                or not isinstance(answer, str)
+                or model_command_text(prompt) is not None
+                or remember_command_text(prompt) is not None
+            ):
+                continue
+            history.extend(
+                (
+                    ModelRequest([UserPromptPart(prompt)]),
+                    ModelResponse([TextPart(answer)]),
+                )
+            )
+        return tuple(history)
+
     def _discard_pending_capture_locked(self, thread_id: str, turn: _Turn) -> None:
         pending = self._pending_captured.get(thread_id)
         if pending is None:
@@ -1568,12 +1613,17 @@ class RunLoop:
         self,
         thread_id: str,
     ) -> ThreadModelResolution | None:
+        hydrated_model: str | None = None
         async with self._lock:
             state = self._threads.get(thread_id)
             if state is not None and state.model_resolution is not None:
                 return state.model_resolution
+            if state is not None:
+                hydrated_model = state.resolved_model
         if self._model_resolver is None:
             return None
+        if hydrated_model is not None:
+            return await self._model_resolver.resolve_named(thread_id, hydrated_model)
         return await self._model_resolver.resolve(thread_id)
 
     @staticmethod

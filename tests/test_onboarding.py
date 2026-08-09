@@ -498,6 +498,44 @@ def test_up_and_doctor_share_every_daemon_preflight_failure(
     assert f"Problem: {refusal}" in output.getvalue()
 
 
+def test_up_refuses_a_read_only_journal_before_starting_services(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """F030, ADR-016, and B.6 rule 12 require the owner command to state the journal remedy
+    before any service starts; this prevents a generic child-process failure after startup.
+    """
+    _initialized(tmp_path, monkeypatch)
+    transcript_root = tmp_path / "transcripts"
+    transcript_root.mkdir(mode=0o500)
+    monkeypatch.setattr(
+        onboarding,
+        "_daemon_preflight",
+        lambda config: onboarding.DaemonPreflight(
+            existing=False,
+            web_assets="ready",
+            port="available",
+            toolchain="ready",
+            failures=(),
+        ),
+    )
+    monkeypatch.setattr(
+        onboarding,
+        "_start_service",
+        lambda *args, **kwargs: pytest.fail("journal refusal started a service"),
+    )
+
+    try:
+        with pytest.raises(onboarding.OnboardingError) as raised:
+            onboarding.up_nocturne(home=tmp_path, stdout=io.StringIO())
+    finally:
+        transcript_root.chmod(0o700)
+
+    assert "Conversation journal is not writable" in str(raised.value)
+    assert "Fix that directory's permissions" in str(raised.value)
+    assert "`nocturne up`" in str(raised.value)
+
+
 def test_remote_backup_uses_the_verified_owner_cloud_path(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

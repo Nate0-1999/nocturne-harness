@@ -8,14 +8,29 @@ import json
 import os
 import stat
 import threading
+import uuid
 from collections.abc import Callable, Mapping
 from copy import deepcopy
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from errno import ELOOP, ENOENT, ENOTDIR
 from pathlib import Path
 from typing import Any
 
 from harness.envelope import Envelope
+
+
+class TranscriptJournalUnavailable(RuntimeError):
+    """The mandatory conversation journal cannot safely accept history."""
+
+
+@dataclass(frozen=True, slots=True)
+class HydratedTranscript:
+    """One authoritative current thread reconstructed from append-only rows."""
+
+    thread_id: str
+    messages: tuple[dict[str, Any], ...]
+    resolved_model: str | None
 
 
 class TranscriptJournal:
@@ -27,11 +42,12 @@ class TranscriptJournal:
         *,
         clock: Callable[[], datetime] | None = None,
     ) -> None:
-        self._root = root.expanduser().resolve()
+        self._root = Path(os.path.abspath(root.expanduser()))
         self._clock = clock or (lambda: datetime.now(UTC))
         self._lock = threading.RLock()
         self._next_parent_ids: dict[str, str | None] = {}
         self._reject_git_ancestor()
+        self._preflight()
 
     @property
     def root(self) -> Path:
@@ -114,6 +130,33 @@ class TranscriptJournal:
             if isinstance(message, dict):
                 messages.append(deepcopy(message))
         return messages
+
+    def hydrate_threads(self) -> tuple[HydratedTranscript, ...]:
+        """Reconstruct every current transcript branch from durable journal rows."""
+
+        with self._lock:
+            try:
+                root_descriptor = self._open_root_descriptor()
+                try:
+                    filenames = sorted(os.listdir(root_descriptor))
+                finally:
+                    os.close(root_descriptor)
+            except TranscriptJournalUnavailable:
+                raise
+            except OSError as exc:
+                raise TranscriptJournalUnavailable(
+                    f"Conversation journal cannot be read at {self._root}. "
+                    "Fix that directory, then run `nocturne up` again."
+                ) from exc
+
+            hydrated: list[HydratedTranscript] = []
+            for filename in filenames:
+                if not self._is_transcript_filename(filename):
+                    continue
+                transcript = self._hydrate_file(filename)
+                if transcript is not None:
+                    hydrated.append(transcript)
+            return tuple(hydrated)
 
     def transcript_tail(self, thread_id: str) -> str | None:
         """Return the durable tail identity used for idempotent archive extraction."""
@@ -256,6 +299,169 @@ class TranscriptJournal:
                 fcntl.flock(descriptor, fcntl.LOCK_UN)
             os.close(descriptor)
 
+    def _preflight(self) -> None:
+        filename = f".journal-preflight-{uuid.uuid4().hex}"
+        root_descriptor: int | None = None
+        descriptor: int | None = None
+        created = False
+        failure: BaseException | None = None
+        try:
+            root_descriptor = self._open_root_descriptor()
+            descriptor = os.open(
+                filename,
+                os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_NOFOLLOW", 0),
+                0o600,
+                dir_fd=root_descriptor,
+            )
+            created = True
+            os.fchmod(descriptor, 0o600)
+            self._write_all(descriptor, b"nocturne journal preflight\n")
+            os.fsync(descriptor)
+        except BaseException as exc:
+            failure = exc
+        finally:
+            if descriptor is not None:
+                os.close(descriptor)
+            if root_descriptor is not None:
+                if created:
+                    try:
+                        os.unlink(filename, dir_fd=root_descriptor)
+                    except BaseException as exc:
+                        if failure is None:
+                            failure = exc
+                    else:
+                        try:
+                            os.fsync(root_descriptor)
+                        except BaseException as exc:
+                            if failure is None:
+                                failure = exc
+                os.close(root_descriptor)
+        if failure is not None:
+            if not isinstance(failure, Exception):
+                raise failure
+            raise TranscriptJournalUnavailable(
+                f"Conversation journal is not writable at {self._root}. "
+                "Fix that directory's permissions, then run `nocturne up` again."
+            ) from failure
+
+    def _hydrate_file(self, filename: str) -> HydratedTranscript | None:
+        rows = self._read_file_rows(filename)
+        thread_id: str | None = None
+        latest_messages: dict[str, dict[str, Any]] = {}
+        tail_message_id: str | None = None
+        saw_tail = False
+        resolved_model: str | None = None
+
+        for raw in rows:
+            try:
+                row = json.loads(raw)
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                continue
+            if not isinstance(row, dict):
+                continue
+            candidate = row.get("thread_id")
+            if not isinstance(candidate, str) or self._filename_for_thread(candidate) != filename:
+                continue
+            if thread_id is None:
+                thread_id = candidate
+            elif candidate != thread_id:
+                continue
+
+            if row.get("record_type") == "message":
+                message = row.get("message")
+                if not isinstance(message, dict):
+                    continue
+                try:
+                    message_id = self._message_id(message)
+                except ValueError:
+                    continue
+                parent_id = message.get("parentId")
+                if parent_id is not None and (not isinstance(parent_id, str) or not parent_id):
+                    continue
+                latest_messages[message_id] = deepcopy(message)
+                if "tail_message_id" in row:
+                    candidate_tail = row["tail_message_id"]
+                    if candidate_tail is None or isinstance(candidate_tail, str) and candidate_tail:
+                        tail_message_id = candidate_tail
+                        saw_tail = True
+            elif row.get("record_type") == "event":
+                event = row.get("event")
+                if isinstance(event, dict):
+                    resolved_model = self._resolved_model(event, resolved_model)
+
+        if not rows:
+            return None
+        if thread_id is None or not latest_messages:
+            raise TranscriptJournalUnavailable(
+                "Conversation journal contains an unreadable transcript. "
+                "Restore the journal from a verified backup before starting Nocturne."
+            )
+        if not saw_tail or tail_message_id is None:
+            raise TranscriptJournalUnavailable(
+                f"Conversation journal for thread {thread_id} has no durable tail. "
+                "Restore the journal from a verified backup before starting Nocturne."
+            )
+
+        branch: list[dict[str, Any]] = []
+        visited: set[str] = set()
+        cursor: str | None = tail_message_id
+        while cursor is not None:
+            if cursor in visited:
+                raise TranscriptJournalUnavailable(
+                    f"Conversation journal for thread {thread_id} contains a history cycle. "
+                    "Restore the journal from a verified backup before starting Nocturne."
+                )
+            visited.add(cursor)
+            message = latest_messages.get(cursor)
+            if message is None:
+                raise TranscriptJournalUnavailable(
+                    f"Conversation journal for thread {thread_id} is missing a parent message. "
+                    "Restore the journal from a verified backup before starting Nocturne."
+                )
+            branch.append(message)
+            parent_id = message.get("parentId")
+            cursor = parent_id if isinstance(parent_id, str) else None
+        branch.reverse()
+        return HydratedTranscript(thread_id, tuple(branch), resolved_model)
+
+    def _read_file_rows(self, filename: str) -> list[bytes]:
+        root_descriptor = self._open_root_descriptor()
+        try:
+            descriptor = os.open(
+                filename,
+                os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0),
+                dir_fd=root_descriptor,
+            )
+        except OSError as exc:
+            os.close(root_descriptor)
+            if exc.errno == ELOOP:
+                raise TranscriptJournalUnavailable(
+                    "Conversation journal contains a non-file transcript. "
+                    "Replace it with a verified journal file, then run `nocturne up` again."
+                ) from exc
+            raise TranscriptJournalUnavailable(
+                f"Conversation journal cannot read {filename}. "
+                "Fix that file, then run `nocturne up` again."
+            ) from exc
+        os.close(root_descriptor)
+        locked = False
+        try:
+            if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+                raise TranscriptJournalUnavailable(
+                    "Conversation journal contains a non-file transcript. "
+                    "Replace it with a verified journal file, then run `nocturne up` again."
+                )
+            fcntl.flock(descriptor, fcntl.LOCK_SH)
+            locked = True
+            chunks: list[bytes] = []
+            while chunk := os.read(descriptor, 64 * 1024):
+                chunks.append(chunk)
+            return b"".join(chunks).splitlines()
+        finally:
+            if locked:
+                fcntl.flock(descriptor, fcntl.LOCK_UN)
+            os.close(descriptor)
+
     def _open_append_descriptor(self, thread_id: str) -> int:
         root_descriptor = self._open_root_descriptor()
         filename = self._filename_for_thread(thread_id)
@@ -357,6 +563,9 @@ class TranscriptJournal:
         if not stat.S_ISDIR(os.fstat(descriptor).st_mode):
             os.close(descriptor)
             raise ValueError("transcript root must be a real directory")
+        if not os.fstat(descriptor).st_mode & stat.S_IWUSR:
+            os.close(descriptor)
+            raise PermissionError("transcript root is not owner-writable")
         try:
             os.fchmod(descriptor, 0o700)
         except BaseException:
@@ -378,6 +587,37 @@ class TranscriptJournal:
         TranscriptJournal._require_thread_id(thread_id)
         digest = hashlib.sha256(thread_id.encode("utf-8")).hexdigest()
         return f"{digest}.jsonl"
+
+    @staticmethod
+    def _is_transcript_filename(filename: str) -> bool:
+        stem, suffix = os.path.splitext(filename)
+        return (
+            suffix == ".jsonl"
+            and len(stem) == 64
+            and all(character in "0123456789abcdef" for character in stem)
+        )
+
+    @staticmethod
+    def _resolved_model(event: Mapping[str, Any], current: str | None) -> str | None:
+        payload = event.get("payload")
+        if not isinstance(payload, dict):
+            return current
+        direct = payload.get("resolved_model")
+        if isinstance(direct, str) and direct:
+            current = direct
+        nested = payload.get("event")
+        if isinstance(nested, dict):
+            candidate = nested.get("new_model")
+            if (
+                nested.get("event_kind") == "model_change"
+                and isinstance(candidate, str)
+                and candidate
+            ):
+                current = candidate
+        candidate = payload.get("new_model")
+        if payload.get("event_kind") == "model_change" and isinstance(candidate, str) and candidate:
+            current = candidate
+        return current
 
     @staticmethod
     def _message_id(message: Mapping[str, Any]) -> str:

@@ -1306,3 +1306,28 @@ estimate, and exact dollar readout—remain immediately visible.
 the rack modules would move the overflow disease to the shell. Making every
 gauge fit by compressing its long rail would destroy its watchable scale, while
 allowing the whole Vitals document to scroll would hide the exact current value.
+
+## 047 — Rebuild current conversation truth from the durable tail [P1, ADR-016]
+
+**Decision.** On daemon construction, scan the private journal files and rebuild
+each thread by taking the latest immutable snapshot of every message, then walking
+parent links backward from the last durable tail. Refuse startup when that branch
+has a gap or cycle. Restore completed ordinary user/assistant text pairs as model
+recency; keep `/model`, `/remember`, failed turns, gates, and active-run state out
+of reconstructed provider history. Re-resolve the last journaled model through the
+normal named-model boundary before the next run.
+
+**Motivation.** F030 showed that durable bytes alone did not preserve a usable
+conversation: restart rendered the transcript empty and the next model turn had no
+past. The journal already records a branch tail and repeated immutable snapshots,
+so replaying that structure restores the exact readable branch without making the
+browser cache authoritative. Completed plain text is the smallest honest provider
+history available in the existing journal; local controls deliberately never
+entered provider history before restart either.
+
+**Rejected alternatives.** Treating file order as the transcript would surface
+every intermediate snapshot and non-tail revision. Restoring an active run or gate
+would invent live work after process death. Replaying control turns into the model
+would change their established semantics. Expanding the journal format to serialize
+opaque provider internals would not repair the owner's existing files and belongs
+to a separate migration, not M2Z1.
