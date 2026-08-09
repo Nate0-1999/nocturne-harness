@@ -94,8 +94,9 @@ verification gesture was substituted for owner evidence.
 
 - The accepted `Moonlit` verification memory was expired through the real
   wrong/expire flow. The final Memory panel showed `0 active units`.
-- `ORBIT-NINE` remains only as quarantined verification evidence under the
-  verification principal; it cannot inject and is hygiene-excluded.
+- Owner-directive follow-up tombstoned the sole quarantined `ORBIT-NINE`
+  verification record at revision 6; a scoped re-query found zero quarantined
+  records for `m2x-sop-verification`.
 - Pending seed and thread-review queues were drained.
 - The owner, degraded-mode, and H5 processes were stopped. Disposable homes
   and the offline receipt queue were removed. No FORCE, scorer activation,

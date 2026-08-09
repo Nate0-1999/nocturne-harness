@@ -25,6 +25,7 @@
   },
   "cleanup": {
     "active_verification_memories": 0,
+    "quarantined_verification_memories": 0,
     "pending_seed_items": 0,
     "pending_thread_items": 0,
     "temporary_homes_removed": true,
