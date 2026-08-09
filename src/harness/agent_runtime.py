@@ -107,6 +107,7 @@ class PydanticAITurnRunner:
                         model_settings=model_settings,
                         usage=run_usage,
                         raise_model_errors=True,
+                        captured_messages=captured,
                     )
                 if not isinstance(dispatched, RememberResult):  # pragma: no cover - seam guard
                     raise TypeError("/remember dispatch returned ordinary chat")

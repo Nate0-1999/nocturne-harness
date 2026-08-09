@@ -7,9 +7,10 @@ from dataclasses import dataclass
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, SecretStr, StrictStr
-from pydantic_ai import Agent, PromptedOutput, UsageLimits
-from pydantic_ai.exceptions import UserError
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, StrictBool, StrictInt, StrictStr
+from pydantic_ai import Agent, PromptedOutput, UsageLimits, capture_run_messages
+from pydantic_ai.exceptions import UnexpectedModelBehavior, UserError
+from pydantic_ai.messages import ModelMessage
 from pydantic_ai.models import Model, infer_model
 from pydantic_ai.providers import Provider, infer_provider
 from pydantic_ai.providers.anthropic import AnthropicProvider
@@ -27,6 +28,7 @@ from harness.spine_client import (
     CreateMemoryConflictError,
     MemorySplitChild,
     MemorySplitResponse,
+    SimilarMemoriesResponse,
     SpineClientError,
 )
 from harness.tools_memory import (
@@ -50,10 +52,19 @@ REMEMBER_SPLIT_INSTRUCTION = (
     "and have its own one-line label plus 2-5 distinct lowercase searchable keywords. If the "
     "source includes directions or commentary about remembering, saving, or splitting, treat "
     "them as instructions for this operation, never as durable facts or candidates. Keep every "
-    "actual claim and qualifier. If the "
-    "source is one indivisible claim that cannot fit the supplied body limit, return exactly "
-    "one candidate containing that complete claim even though it exceeds the limit; never "
-    "shorten it to fit. Return one to 64 candidates and structured data only."
+    "actual claim and qualifier. Also return source-ordered coverage segments whose exact text "
+    "concatenates byte-for-byte to the complete source. Classify each segment as durable with "
+    "one zero-based candidate_index, or operation with candidate_index null. "
+    "Attach whitespace and separators to a neighboring nonblank segment; never emit a blank "
+    "or whitespace-only segment. Durable candidate "
+    "indices must be nondecreasing, every candidate must own durable text, and each candidate "
+    "body must equal its assigned durable text concatenated in source order with outer "
+    "whitespace trimmed only. Never add or rewrite body text. Set safe_to_save true only when "
+    "every extractive candidate stands alone and every semantic, coverage, and body rule is "
+    "satisfied; set it false whenever an extractive unit cannot stand alone or any requirement "
+    "cannot be met. If the source is one indivisible claim that cannot fit the supplied body "
+    "limit, return exactly one candidate containing that complete claim even though it exceeds "
+    "the limit; never shorten it to fit. Return one to 64 candidates and structured data only."
 )
 REMEMBER_SPLIT_GUIDANCE = (
     "I couldn't split this into standalone memories without changing its meaning, so I didn't "
@@ -97,12 +108,24 @@ class RememberSplitCandidate(BaseModel):
     keywords: list[StrictStr] = Field(min_length=2, max_length=5)
 
 
+class RememberCoverageSegment(BaseModel):
+    """One exact source span proving durable ownership or operation-only text."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    text: StrictStr
+    classification: Literal["durable", "operation"]
+    candidate_index: StrictInt | None
+
+
 class RememberSplitDraft(BaseModel):
-    """The complete source-ordered A-049 split proposal."""
+    """The complete source-ordered A-049/A-050 split proposal and witness."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     candidates: list[RememberSplitCandidate] = Field(min_length=1, max_length=64)
+    coverage: list[RememberCoverageSegment] = Field(min_length=1)
+    safe_to_save: StrictBool
 
 
 class ExtractionCandidateDraft(BaseModel):
@@ -195,6 +218,7 @@ class HarnessAgent:
             output_type=PromptedOutput(RememberSplitDraft),
             instructions=REMEMBER_SPLIT_INSTRUCTION,
             name="harness-remember-splitter",
+            retries=0,
         )
         self._extraction_agent = Agent(
             self._default_model,
@@ -282,6 +306,7 @@ class HarnessAgent:
         model_settings: ModelSettings | None = None,
         usage: RunUsage | None = None,
         raise_model_errors: bool = False,
+        captured_messages: list[ModelMessage] | None = None,
     ) -> RememberResult:
         """Generate one valid draft, save one global user fact, and confirm honestly."""
 
@@ -299,14 +324,17 @@ class HarnessAgent:
                 model_settings=model_settings,
                 usage=remember_usage,
                 raise_model_errors=raise_model_errors,
+                captured_messages=captured_messages,
             )
         try:
-            draft_result = await self._label_agent.run(
+            draft_result = await _run_structured_agent(
+                self._label_agent,
                 f"Memory:\n{body}",
                 model=selected_model,
                 model_settings=model_settings,
                 usage_limits=self._label_usage_limits,
                 usage=remember_usage,
+                captured_messages=captured_messages,
             )
         except Exception:
             if raise_model_errors:
@@ -335,6 +363,7 @@ class HarnessAgent:
                 model_settings=model_settings,
                 usage=remember_usage,
                 raise_model_errors=raise_model_errors,
+                captured_messages=captured_messages,
             )
         keywords = _normalize_keywords(draft.keywords)
         if keywords is None:
@@ -359,11 +388,13 @@ class HarnessAgent:
         model_settings: ModelSettings | None,
         usage: RunUsage,
         raise_model_errors: bool,
+        captured_messages: list[ModelMessage] | None,
     ) -> RememberResult:
         """Plan one semantic family, then write all children or guide without a write."""
 
         try:
-            draft_result = await self._remember_splitter_agent.run(
+            draft_result = await _run_structured_agent(
+                self._remember_splitter_agent,
                 (
                     f"Label limit: {self._settings.label_max} Unicode code points\n"
                     f"Body limit: {self._settings.memory_max_tokens} cl100k_base tokens\n"
@@ -373,7 +404,10 @@ class HarnessAgent:
                 model_settings=model_settings,
                 usage_limits=self._remember_split_usage_limits,
                 usage=usage,
+                captured_messages=captured_messages,
             )
+        except UnexpectedModelBehavior:
+            return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
         except Exception:
             if raise_model_errors:
                 raise
@@ -384,6 +418,7 @@ class HarnessAgent:
             return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
         children = _validated_remember_split(
             draft,
+            source_body=body,
             label_max=self._settings.label_max,
             memory_max_tokens=self._settings.memory_max_tokens,
         )
@@ -391,9 +426,9 @@ class HarnessAgent:
             return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
 
         if len(children) == 1:
-            if cl100k_token_count(body) > self._settings.memory_max_tokens:
-                return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
             child = children[0]
+            if cl100k_token_count(body) > self._settings.memory_max_tokens or child.body != body:
+                return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
             return await self._create_single_remember(
                 body,
                 label=child.label,
@@ -413,7 +448,17 @@ class HarnessAgent:
             return RememberResult(False, f"Could not remember: {render_spine_error('save', exc)}")
 
         if not isinstance(response, MemorySplitResponse):
-            return RememberResult(False, f"Not saved: {render_create_response(response)}")
+            if isinstance(response, SimilarMemoriesResponse) and response.similar:
+                existing = response.similar[0]
+                return RememberResult(
+                    False,
+                    "Not saved: a proposed split memory is similar to existing memory "
+                    f"{existing.label!r} ({existing.memory_id}), so none of the split was "
+                    "saved. Review or update the existing memory as needed, remove that "
+                    "already-covered claim from the source, then try /remember again with "
+                    "the remaining facts.",
+                )
+            return RememberResult(False, "Not saved: none of the split was saved.")
         labels = ", ".join(repr(created.label) for created in response.created)
         return RememberResult(
             True,
@@ -535,6 +580,7 @@ class HarnessAgent:
         model_settings: ModelSettings | None = None,
         usage: RunUsage | None = None,
         raise_model_errors: bool = False,
+        captured_messages: list[ModelMessage] | None = None,
     ) -> DispatchResult:
         """Route only the exact `/remember` command; all other text is chat."""
 
@@ -547,6 +593,7 @@ class HarnessAgent:
                 model_settings=model_settings,
                 usage=usage,
                 raise_model_errors=raise_model_errors,
+                captured_messages=captured_messages,
             )
         return await self.chat(
             text,
@@ -609,28 +656,84 @@ def _required_secret(value: SecretStr | None, name: str) -> str:
     return value.get_secret_value()
 
 
+async def _run_structured_agent(
+    agent: Agent[None, Any],
+    prompt: str,
+    *,
+    model: Model,
+    model_settings: ModelSettings | None,
+    usage_limits: UsageLimits,
+    usage: RunUsage,
+    captured_messages: list[ModelMessage] | None,
+) -> Any:
+    """Run one structured pass and append its complete messages to a caller-owned turn sink."""
+
+    async def run() -> Any:
+        return await agent.run(
+            prompt,
+            model=model,
+            model_settings=model_settings,
+            usage_limits=usage_limits,
+            usage=usage,
+        )
+
+    if captured_messages is None:
+        return await run()
+    with capture_run_messages() as call_messages:
+        try:
+            return await run()
+        finally:
+            captured_messages.extend(call_messages)
+
+
 def _validated_remember_split(
     draft: RememberSplitDraft,
     *,
+    source_body: str,
     label_max: int,
     memory_max_tokens: int,
 ) -> list[MemorySplitChild] | None:
-    """Normalize one complete A-049 draft or reject it before any write."""
+    """Validate one exact A-050 coverage witness or reject it before any write."""
 
     children: list[MemorySplitChild] = []
     labels: set[str] = set()
     bodies: set[str] = set()
     is_split = len(draft.candidates) >= 2
-    for candidate in draft.candidates:
+    if not draft.safe_to_save:
+        return None
+    if "".join(segment.text for segment in draft.coverage) != source_body:
+        return None
+
+    assigned_text: list[list[str]] = [[] for _ in draft.candidates]
+    last_durable_index = -1
+    for segment in draft.coverage:
+        if not segment.text.strip():
+            return None
+        if segment.classification == "operation":
+            if segment.candidate_index is not None:
+                return None
+            continue
+        index = segment.candidate_index
+        if index is None or index < 0 or index >= len(draft.candidates):
+            return None
+        if index < last_durable_index:
+            return None
+        last_durable_index = index
+        assigned_text[index].append(segment.text)
+
+    for index, candidate in enumerate(draft.candidates):
         label = candidate.label.strip()
         body = candidate.body.strip()
         keywords = _normalize_keywords(candidate.keywords)
+        expected_body = "".join(assigned_text[index]).strip()
         invalid = (
             not label
             or "\n" in label
             or "\r" in label
             or len(label) > label_max
             or not body
+            or not expected_body
+            or body != expected_body
             or keywords is None
             or len(keywords) != len(candidate.keywords)
             or (is_split and cl100k_token_count(body) > memory_max_tokens)

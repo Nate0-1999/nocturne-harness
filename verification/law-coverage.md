@@ -2,8 +2,8 @@
 
 Generated deterministically by `scripts/check_test_motivations.py`.
 
-- Tests discovered: 417
-- Motivated tests: 417
+- Tests discovered: 423
+- Motivated tests: 423
 - Grandfathered baseline debt: 0
 - Stale baseline entries: 0
 
@@ -247,14 +247,20 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 
 - _None._
 
-### ADR-022 — 7 defender(s)
+### ADR-022 — 13 defender(s)
 
 - `tests/test_agent.py::test_a049_invalid_split_draft_uses_safe_guidance_and_zero_writes`
 - `tests/test_agent.py::test_a049_overlong_label_single_claim_reuses_exact_source_through_ordinary_create`
 - `tests/test_agent.py::test_a049_oversized_multi_claim_uses_one_atomic_split_with_exact_source`
 - `tests/test_agent.py::test_a049_remember_splitter_is_tools_free_and_lossless_by_instruction`
 - `tests/test_agent.py::test_a049_single_atomic_oversized_claim_guides_without_any_write`
+- `tests/test_agent.py::test_a049_split_near_similar_copy_never_offers_nonexistent_force`
+- `tests/test_agent.py::test_a050_invalid_coverage_witness_guides_before_any_write`
+- `tests/test_agent.py::test_a050_label_triggered_unsafe_single_candidate_guides_without_write`
+- `tests/test_agent.py::test_a050_single_fitting_candidate_never_persists_excluded_operation_text`
+- `tests/test_agent_runtime.py::test_a049_invalid_structured_split_guides_instead_of_failing_the_turn`
 - `tests/test_agent_runtime.py::test_a049_label_and_split_share_one_two_request_runtime_usage_wall`
+- `tests/test_agent_runtime.py::test_a049_split_provider_failure_keeps_runtime_error_semantics`
 - `tests/test_tools_memory.py::test_a049_remember_split_maps_exact_source_and_trusted_global_provenance`
 
 ### ADR-023 — 4 defender(s)
@@ -296,7 +302,7 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 
 - _None._
 
-### B.6 — 17 defender(s)
+### B.6 — 23 defender(s)
 
 - `tests/contract/test_spine_contract.py::test_live_create_conflicts_and_dedup_bands`
 - `tests/contract/test_spine_contract.py::test_live_patch_cas_tombstone_and_list`
@@ -305,7 +311,13 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_agent.py::test_a049_oversized_multi_claim_uses_one_atomic_split_with_exact_source`
 - `tests/test_agent.py::test_a049_remember_splitter_is_tools_free_and_lossless_by_instruction`
 - `tests/test_agent.py::test_a049_single_atomic_oversized_claim_guides_without_any_write`
+- `tests/test_agent.py::test_a049_split_near_similar_copy_never_offers_nonexistent_force`
+- `tests/test_agent.py::test_a050_invalid_coverage_witness_guides_before_any_write`
+- `tests/test_agent.py::test_a050_label_triggered_unsafe_single_candidate_guides_without_write`
+- `tests/test_agent.py::test_a050_single_fitting_candidate_never_persists_excluded_operation_text`
+- `tests/test_agent_runtime.py::test_a049_invalid_structured_split_guides_instead_of_failing_the_turn`
 - `tests/test_agent_runtime.py::test_a049_label_and_split_share_one_two_request_runtime_usage_wall`
+- `tests/test_agent_runtime.py::test_a049_split_provider_failure_keeps_runtime_error_semantics`
 - `tests/test_agent_runtime.py::test_dead_ledger_queues_estimate_and_never_retracts_answer`
 - `tests/test_fixture_isolation.py::test_every_scenario_app_installs_the_shared_reachability_wall`
 - `tests/test_fixture_isolation.py::test_fixture_refuses_owner_port_before_serving_ui`
@@ -696,10 +708,24 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_agent.py::test_a049_oversized_multi_claim_uses_one_atomic_split_with_exact_source`
 - `tests/test_agent.py::test_a049_remember_splitter_is_tools_free_and_lossless_by_instruction`
 - `tests/test_agent.py::test_a049_single_atomic_oversized_claim_guides_without_any_write`
+- `tests/test_agent.py::test_a049_split_near_similar_copy_never_offers_nonexistent_force`
+- `tests/test_agent_runtime.py::test_a049_invalid_structured_split_guides_instead_of_failing_the_turn`
 - `tests/test_agent_runtime.py::test_a049_label_and_split_share_one_two_request_runtime_usage_wall`
+- `tests/test_agent_runtime.py::test_a049_split_provider_failure_keeps_runtime_error_semantics`
 - `tests/test_spine_client.py::test_a049_memory_split_models_are_closed_exact_c4_shapes`
 - `tests/test_spine_transport.py::test_a049_split_preserves_existing_similar_and_conflict_status_bodies`
 - `tests/test_tools_memory.py::test_a049_remember_split_maps_exact_source_and_trusted_global_provenance`
+
+### A-050
+
+- `tests/test_agent.py::test_a049_oversized_multi_claim_uses_one_atomic_split_with_exact_source`
+- `tests/test_agent.py::test_a049_remember_splitter_is_tools_free_and_lossless_by_instruction`
+- `tests/test_agent.py::test_a050_invalid_coverage_witness_guides_before_any_write`
+- `tests/test_agent.py::test_a050_label_triggered_unsafe_single_candidate_guides_without_write`
+- `tests/test_agent.py::test_a050_single_fitting_candidate_never_persists_excluded_operation_text`
+- `tests/test_agent_runtime.py::test_a049_invalid_structured_split_guides_instead_of_failing_the_turn`
+- `tests/test_agent_runtime.py::test_a049_label_and_split_share_one_two_request_runtime_usage_wall`
+- `tests/test_agent_runtime.py::test_a049_split_provider_failure_keeps_runtime_error_semantics`
 
 ### F020
 
@@ -737,7 +763,13 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_agent.py::test_a049_oversized_multi_claim_uses_one_atomic_split_with_exact_source`
 - `tests/test_agent.py::test_a049_remember_splitter_is_tools_free_and_lossless_by_instruction`
 - `tests/test_agent.py::test_a049_single_atomic_oversized_claim_guides_without_any_write`
+- `tests/test_agent.py::test_a049_split_near_similar_copy_never_offers_nonexistent_force`
+- `tests/test_agent.py::test_a050_invalid_coverage_witness_guides_before_any_write`
+- `tests/test_agent.py::test_a050_label_triggered_unsafe_single_candidate_guides_without_write`
+- `tests/test_agent.py::test_a050_single_fitting_candidate_never_persists_excluded_operation_text`
+- `tests/test_agent_runtime.py::test_a049_invalid_structured_split_guides_instead_of_failing_the_turn`
 - `tests/test_agent_runtime.py::test_a049_label_and_split_share_one_two_request_runtime_usage_wall`
+- `tests/test_agent_runtime.py::test_a049_split_provider_failure_keeps_runtime_error_semantics`
 
 ### F030
 

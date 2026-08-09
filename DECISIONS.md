@@ -1331,3 +1331,24 @@ would invent live work after process death. Replaying control turns into the mod
 would change their established semantics. Expanding the journal format to serialize
 opaque provider internals would not repair the owner's existing files and belongs
 to a separate migration, not M2Z1.
+
+## 048 — Stop a similar split without inventing a force path [P1.5]
+
+**Decision.** When an atomic `/remember` split finds a near-similar existing
+memory, say that none of the family was saved, identify the first existing
+memory, and give the only complete retry path: review or update that memory as
+needed, remove its already-covered claim from the source, then remember the
+remaining facts. Never reuse the ordinary create copy that offers `force=true`;
+the split operation deliberately exposes no force switch.
+
+**Motivation.** A near-similar response is neither a successful family nor an
+invalid semantic draft. Atomicity means Harness cannot quietly keep the other
+children, while telling the owner merely to update and retry would turn the
+same child into a hard duplicate. Naming the overlap and the source edit keeps
+the no-write result honest and leaves the owner a path that can actually pass.
+
+**Rejected alternatives.** Adding force to the family would reopen A-049's
+enacted request contract and let one override hide overlap across a whole
+batch. Reusing the single-create renderer would advertise a control that does
+not exist. Returning the generic split guidance would falsely imply that the
+model could not preserve meaning and conceal the real similarity decision.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -51,6 +52,32 @@ THREAD_ID = UUID("22345678-1234-5678-1234-567812345678")
 SPLIT_SOURCE_ID = UUID("32345678-1234-5678-1234-567812345678")
 SPLIT_CHILD_ONE_ID = UUID("42345678-1234-5678-1234-567812345678")
 SPLIT_CHILD_TWO_ID = UUID("52345678-1234-5678-1234-567812345678")
+SPLIT_CHILD_THREE_ID = UUID("62345678-1234-5678-1234-567812345678")
+LIVE_OPERATION_HEAD = (
+    "This verification dossier contains three independent facts that must remain separate. "
+)
+LIVE_FACT_ONE = (
+    "First: the temporary observatory ledger uses a silver cover, and its only purpose is to "
+    "record nightly calibration checks for this run; it must never be treated as owner biography. "
+)
+LIVE_FACT_TWO = (
+    "Second: the temporary calibration lantern is stored on the eastern shelf, is tagged with "
+    "the code LANTERN-SEVEN, and is returned there after every measurement; this location is "
+    "unrelated to the ledger. "
+)
+LIVE_FACT_THREE = (
+    "Third: the disposable weather card says that a north wind pauses the calibration procedure "
+    "until the instrument settles, and that card is destroyed when verification ends. "
+)
+LIVE_OPERATION_TAIL = (
+    "These facts describe different objects, different duties, and different lifetimes. "
+    "Preserve all of their meaning and provenance, but split them into atomic durable memories "
+    "instead of truncating or blending them. The entire paragraph is intentionally above the "
+    "single-memory cap so the guided split behavior is observable."
+)
+LIVE_SPLIT_SOURCE = (
+    LIVE_OPERATION_HEAD + LIVE_FACT_ONE + LIVE_FACT_TWO + LIVE_FACT_THREE + LIVE_OPERATION_TAIL
+)
 
 
 @dataclass
@@ -202,13 +229,18 @@ def split_response(source: str) -> MemorySplitResponse:
         created=[
             memory_unit(
                 memory_id=SPLIT_CHILD_ONE_ID,
-                label="Garden cadence",
-                body="The garden review happens weekly.",
+                label="Observatory ledger duty",
+                body=LIVE_FACT_ONE.strip(),
             ),
             memory_unit(
                 memory_id=SPLIT_CHILD_TWO_ID,
-                label="Garden owner",
-                body="Nate owns the garden review.",
+                label="Calibration lantern location",
+                body=LIVE_FACT_TWO.strip(),
+            ),
+            memory_unit(
+                memory_id=SPLIT_CHILD_THREE_ID,
+                label="North-wind calibration pause",
+                body=LIVE_FACT_THREE.strip(),
             ),
         ],
     )
@@ -391,20 +423,28 @@ async def test_label_agent_is_separate_and_has_no_tools() -> None:
 
 @pytest.mark.asyncio
 async def test_a049_remember_splitter_is_tools_free_and_lossless_by_instruction() -> None:
-    """F027, A-049, ADR-022, and SPEC B.6 rule 12 are defended here.
+    """F027, A-049, A-050, ADR-022, and SPEC B.6 rule 12 are defended here.
     The semantic splitter must be a separate tools-free boundary that preserves complete claims.
     """
     calls: list[tuple[list[ModelMessage], AgentInfo]] = []
     model = structured_sequence_model(
         [
             {
+                "safe_to_save": True,
                 "candidates": [
                     {
                         "label": "Garden cadence",
                         "body": "The garden review happens weekly.",
                         "keywords": ["garden", "cadence"],
                     }
-                ]
+                ],
+                "coverage": [
+                    {
+                        "text": "The garden review happens weekly.",
+                        "classification": "durable",
+                        "candidate_index": 0,
+                    }
+                ],
             }
         ],
         calls,
@@ -421,6 +461,9 @@ async def test_a049_remember_splitter_is_tools_free_and_lossless_by_instruction(
     assert calls[0][1].instructions.startswith(REMEMBER_SPLIT_INSTRUCTION)
     assert "without summarizing" in calls[0][1].instructions
     assert "never as durable facts or candidates" in calls[0][1].instructions
+    assert "concatenates byte-for-byte to the complete source" in calls[0][1].instructions
+    assert "never emit a blank or whitespace-only segment" in calls[0][1].instructions
+    assert "safe_to_save true only" in calls[0][1].instructions
 
 
 @pytest.mark.asyncio
@@ -506,30 +549,59 @@ async def test_remember_uses_selected_model_once_without_tools_and_maps_global_u
 
 @pytest.mark.asyncio
 async def test_a049_oversized_multi_claim_uses_one_atomic_split_with_exact_source() -> None:
-    """F027, A-049, ADR-022, and SPEC B.6 rule 12 are defended here.
+    """F027, A-049, A-050, ADR-022, and SPEC B.6 rule 12 are defended here.
     An oversized multi-claim source must become one linked atomic request with exact provenance.
     """
-    source = (
-        "The garden review happens weekly. "
-        + "This sentence preserves relevant qualifying context. " * 70
-        + "Nate owns the garden review."
-    )
+    source = LIVE_SPLIT_SOURCE
     calls: list[tuple[list[ModelMessage], AgentInfo]] = []
     model = structured_sequence_model(
         [
             {
+                "safe_to_save": True,
                 "candidates": [
                     {
-                        "label": "Garden cadence",
-                        "body": "The garden review happens weekly.",
-                        "keywords": ["garden", "cadence"],
+                        "label": "Observatory ledger duty",
+                        "body": LIVE_FACT_ONE.strip(),
+                        "keywords": ["observatory", "ledger"],
                     },
                     {
-                        "label": "Garden owner",
-                        "body": "Nate owns the garden review.",
-                        "keywords": ["garden", "owner"],
+                        "label": "Calibration lantern location",
+                        "body": LIVE_FACT_TWO.strip(),
+                        "keywords": ["lantern", "shelf"],
                     },
-                ]
+                    {
+                        "label": "North-wind calibration pause",
+                        "body": LIVE_FACT_THREE.strip(),
+                        "keywords": ["weather", "calibration"],
+                    },
+                ],
+                "coverage": [
+                    {
+                        "text": LIVE_OPERATION_HEAD,
+                        "classification": "operation",
+                        "candidate_index": None,
+                    },
+                    {
+                        "text": LIVE_FACT_ONE,
+                        "classification": "durable",
+                        "candidate_index": 0,
+                    },
+                    {
+                        "text": LIVE_FACT_TWO,
+                        "classification": "durable",
+                        "candidate_index": 1,
+                    },
+                    {
+                        "text": LIVE_FACT_THREE,
+                        "classification": "durable",
+                        "candidate_index": 2,
+                    },
+                    {
+                        "text": LIVE_OPERATION_TAIL,
+                        "classification": "operation",
+                        "candidate_index": None,
+                    },
+                ],
             }
         ],
         calls,
@@ -549,7 +621,10 @@ async def test_a049_oversized_multi_claim_uses_one_atomic_split_with_exact_sourc
 
     assert result == RememberResult(
         ok=True,
-        message="Remembered 2 linked memories: 'Garden cadence', 'Garden owner'.",
+        message=(
+            "Remembered 3 linked memories: 'Observatory ledger duty', "
+            "'Calibration lantern location', 'North-wind calibration pause'."
+        ),
         memory_id=SPLIT_SOURCE_ID,
         label="Split source",
     )
@@ -561,14 +636,19 @@ async def test_a049_oversized_multi_claim_uses_one_atomic_split_with_exact_sourc
     assert request.source_body == source
     assert [child.model_dump() for child in request.children] == [
         {
-            "label": "Garden cadence",
-            "body": "The garden review happens weekly.",
-            "keywords": ["garden", "cadence"],
+            "label": "Observatory ledger duty",
+            "body": LIVE_FACT_ONE.strip(),
+            "keywords": ["observatory", "ledger"],
         },
         {
-            "label": "Garden owner",
-            "body": "Nate owns the garden review.",
-            "keywords": ["garden", "owner"],
+            "label": "Calibration lantern location",
+            "body": LIVE_FACT_TWO.strip(),
+            "keywords": ["lantern", "shelf"],
+        },
+        {
+            "label": "North-wind calibration pause",
+            "body": LIVE_FACT_THREE.strip(),
+            "keywords": ["weather", "calibration"],
         },
     ]
     assert request.principal_id == "principal-1"
@@ -591,13 +671,21 @@ async def test_a049_overlong_label_single_claim_reuses_exact_source_through_ordi
         [
             {"label": "L" * 65, "keywords": ["garden", "cadence"]},
             {
+                "safe_to_save": True,
                 "candidates": [
                     {
                         "label": "Garden cadence",
                         "body": source,
                         "keywords": ["Garden", "cadence"],
                     }
-                ]
+                ],
+                "coverage": [
+                    {
+                        "text": source,
+                        "classification": "durable",
+                        "candidate_index": 0,
+                    }
+                ],
             },
         ],
         calls,
@@ -625,18 +713,26 @@ async def test_a049_single_atomic_oversized_claim_guides_without_any_write() -> 
     """F027, A-049, ADR-022, and SPEC B.6 rule 12 are defended here.
     One oversized indivisible claim is never shortened and receives enacted owner guidance.
     """
-    source = "The complete indivisible claim retains this qualifier. " * 80
+    source = ("The complete indivisible claim retains this qualifier. " * 80).strip()
     calls: list[tuple[list[ModelMessage], AgentInfo]] = []
     model = structured_sequence_model(
         [
             {
+                "safe_to_save": False,
                 "candidates": [
                     {
                         "label": "Indivisible claim",
                         "body": source,
                         "keywords": ["indivisible", "qualifier"],
                     }
-                ]
+                ],
+                "coverage": [
+                    {
+                        "text": source,
+                        "classification": "durable",
+                        "candidate_index": 0,
+                    }
+                ],
             }
         ],
         calls,
@@ -650,6 +746,139 @@ async def test_a049_single_atomic_oversized_claim_guides_without_any_write() -> 
     assert len(calls) == 1
     assert spine.create_requests == []
     assert spine.split_requests == []
+
+
+@pytest.mark.asyncio
+async def test_a050_single_fitting_candidate_never_persists_excluded_operation_text() -> None:
+    """F027, A-050, ADR-022, and SPEC B.6 rule 12 are defended here.
+    Exact-source fallback may create only when the sole durable extract equals the whole source.
+    """
+    source = "Remember this: The observatory ledger has a silver cover."
+    model = structured_sequence_model(
+        [
+            {"label": "L" * 65, "keywords": ["ledger", "silver"]},
+            {
+                "safe_to_save": True,
+                "candidates": [
+                    {
+                        "label": "Observatory ledger cover",
+                        "body": "The observatory ledger has a silver cover.",
+                        "keywords": ["ledger", "silver"],
+                    }
+                ],
+                "coverage": [
+                    {
+                        "text": "Remember this: ",
+                        "classification": "operation",
+                        "candidate_index": None,
+                    },
+                    {
+                        "text": "The observatory ledger has a silver cover.",
+                        "classification": "durable",
+                        "candidate_index": 0,
+                    },
+                ],
+            },
+        ],
+        [],
+    )
+    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
+    agent = HarnessAgent(settings(), model=model)
+
+    result = await agent.remember(source, context=context(spine))
+
+    assert result == RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
+    assert spine.create_requests == []
+    assert spine.split_requests == []
+
+
+@pytest.mark.asyncio
+async def test_a050_label_triggered_unsafe_single_candidate_guides_without_write() -> None:
+    """F027, A-050, ADR-022, and SPEC B.6 rule 12 are defended here.
+    A fitting extractive draft that cannot satisfy standalone semantics must never be created.
+    """
+    source = "The lantern is east, and the separate ledger is silver."
+    model = structured_sequence_model(
+        [
+            {"label": "L" * 65, "keywords": ["lantern", "ledger"]},
+            {
+                "safe_to_save": False,
+                "candidates": [
+                    {
+                        "label": "Unsafe combined facts",
+                        "body": source,
+                        "keywords": ["lantern", "ledger"],
+                    }
+                ],
+                "coverage": [
+                    {
+                        "text": source,
+                        "classification": "durable",
+                        "candidate_index": 0,
+                    }
+                ],
+            },
+        ],
+        [],
+    )
+    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
+    agent = HarnessAgent(settings(), model=model)
+
+    result = await agent.remember(source, context=context(spine))
+
+    assert result == RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
+    assert spine.create_requests == []
+    assert spine.split_requests == []
+
+
+@pytest.mark.asyncio
+async def test_a049_split_near_similar_copy_never_offers_nonexistent_force() -> None:
+    """F027, A-049, ADR-022, and SPEC B.6 rule 12 are defended here.
+    An atomic split 200 names the no-write result and a lawful remedy without a force fiction.
+    """
+    source = "Fact one. Fact two."
+    model = structured_sequence_model(
+        [
+            {
+                "safe_to_save": True,
+                "candidates": [
+                    {"label": "First", "body": "Fact one.", "keywords": ["fact", "one"]},
+                    {"label": "Second", "body": "Fact two.", "keywords": ["fact", "two"]},
+                ],
+                "coverage": [
+                    {
+                        "text": "Fact one. ",
+                        "classification": "durable",
+                        "candidate_index": 0,
+                    },
+                    {
+                        "text": "Fact two.",
+                        "classification": "durable",
+                        "candidate_index": 1,
+                    },
+                ],
+            }
+        ],
+        [],
+    )
+    spine = FakeSpine(
+        CreatedMemoryResponse(created=memory_unit()),
+        split_outcome=similar_response(),
+    )
+    agent = HarnessAgent(settings(memory_max_tokens=4), model=model)
+
+    result = await agent.remember(source, context=context(spine))
+
+    assert result.message == (
+        "Not saved: a proposed split memory is similar to existing memory "
+        f"'Existing preference' ({MEMORY_ID}), so none of the split was saved. "
+        "Review or update the existing memory as needed, remove that already-covered claim "
+        "from the source, then try /remember again with the remaining facts."
+    )
+    assert result.ok is False
+    assert "force" not in result.message.lower()
+    assert spine.create_requests == []
+    assert len(spine.split_requests) == 1
 
 
 @pytest.mark.asyncio
@@ -707,10 +936,114 @@ async def test_a049_invalid_split_draft_uses_safe_guidance_and_zero_writes(
     """F027, A-049, ADR-022, and SPEC B.6 rule 12 are defended here.
     Invalid split drafts cannot become partial writes, mechanical chunks, or raw limit errors.
     """
-    source = "one two three four five six seven eight"
-    model = structured_sequence_model([{"candidates": candidates}], [])
+    coverage = [
+        {
+            "text": str(candidate["body"]) + (" " if index + 1 < len(candidates) else ""),
+            "classification": "durable",
+            "candidate_index": index,
+        }
+        for index, candidate in enumerate(candidates)
+    ]
+    source = "".join(str(segment["text"]) for segment in coverage)
+    model = structured_sequence_model(
+        [{"candidates": candidates, "coverage": coverage, "safe_to_save": True}],
+        [],
+    )
     spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
     agent = HarnessAgent(settings(memory_max_tokens=5), model=model)
+
+    result = await agent.remember(source, context=context(spine))
+
+    assert result == RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
+    assert spine.create_requests == []
+    assert spine.split_requests == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "case",
+    [
+        "missing",
+        "reordered",
+        "duplicated",
+        "blank",
+        "operation-index",
+        "durable-no-index",
+        "out-of-range",
+        "decreasing",
+        "uncovered",
+        "body-mismatch",
+        "non-exact",
+    ],
+)
+async def test_a050_invalid_coverage_witness_guides_before_any_write(case: str) -> None:
+    """F027, A-050, ADR-022, and SPEC B.6 rule 12 are defended here.
+    Every malformed, incomplete, or body-inconsistent exact-source witness must fail closed.
+    """
+    source = "Fact one. Fact two."
+    draft: dict[str, object] = {
+        "safe_to_save": True,
+        "candidates": [
+            {"label": "First", "body": "Fact one.", "keywords": ["fact", "one"]},
+            {"label": "Second", "body": "Fact two.", "keywords": ["fact", "two"]},
+        ],
+        "coverage": [
+            {
+                "text": "Fact one. ",
+                "classification": "durable",
+                "candidate_index": 0,
+            },
+            {
+                "text": "Fact two.",
+                "classification": "durable",
+                "candidate_index": 1,
+            },
+        ],
+    }
+    coverage = deepcopy(draft["coverage"])
+    assert isinstance(coverage, list)
+    candidates = deepcopy(draft["candidates"])
+    assert isinstance(candidates, list)
+    if case == "missing":
+        draft.pop("coverage")
+    elif case == "reordered":
+        draft["coverage"] = list(reversed(coverage))
+    elif case == "duplicated":
+        draft["coverage"] = [coverage[0], coverage[0], coverage[1]]
+    elif case == "blank":
+        draft["coverage"] = [
+            {"text": "Fact one.", "classification": "durable", "candidate_index": 0},
+            {"text": " ", "classification": "operation", "candidate_index": None},
+            coverage[1],
+        ]
+    elif case == "operation-index":
+        coverage[0]["classification"] = "operation"
+        draft["coverage"] = coverage
+    elif case == "durable-no-index":
+        coverage[0]["candidate_index"] = None
+        draft["coverage"] = coverage
+    elif case == "out-of-range":
+        coverage[1]["candidate_index"] = 2
+        draft["coverage"] = coverage
+    elif case == "decreasing":
+        coverage[0]["candidate_index"] = 1
+        coverage[1]["candidate_index"] = 0
+        draft["coverage"] = coverage
+    elif case == "uncovered":
+        coverage[1]["candidate_index"] = 0
+        candidates[0]["body"] = source
+        draft["coverage"] = coverage
+        draft["candidates"] = candidates
+    elif case == "body-mismatch":
+        candidates[0]["body"] = "A hallucinated fact."
+        draft["candidates"] = candidates
+    elif case == "non-exact":
+        coverage[1]["text"] = "Fact three."
+        draft["coverage"] = coverage
+
+    model = structured_sequence_model([draft], [])
+    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
+    agent = HarnessAgent(settings(memory_max_tokens=4), model=model)
 
     result = await agent.remember(source, context=context(spine))
 

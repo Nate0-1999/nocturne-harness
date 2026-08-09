@@ -23,7 +23,7 @@ from pydantic_ai.models.function import DeltaThinkingPart, DeltaToolCall, Functi
 from pydantic_ai.models.test import TestModel
 from pydantic_ai.usage import RunUsage
 
-from harness.agent import HarnessAgent, RememberResult
+from harness.agent import REMEMBER_SPLIT_GUIDANCE, HarnessAgent, RememberResult
 from harness.agent_runtime import (
     PydanticAITurnRunner,
     _cacheable_prefix_tokens,
@@ -750,7 +750,7 @@ async def test_remember_uses_dispatch_and_emits_its_visible_result() -> None:
 
 @pytest.mark.asyncio
 async def test_a049_label_and_split_share_one_two_request_runtime_usage_wall() -> None:
-    """F027, A-049, ADR-022, and SPEC B.6 rule 12 are defended here.
+    """F027, A-049, A-050, ADR-022, and SPEC B.6 rule 12 are defended here.
     Label fallback and semantic split share usage, emit once, and stop at two model requests.
     """
     source_id = UUID("52345678-1234-5678-1234-567812345678")
@@ -796,10 +796,23 @@ async def test_a049_label_and_split_share_one_two_request_runtime_usage_wall() -
     outputs = [
         {"label": "L" * 65, "keywords": ["fact", "garden"]},
         {
+            "safe_to_save": True,
             "candidates": [
                 {"label": "First fact", "body": "Fact one.", "keywords": ["fact", "one"]},
                 {"label": "Second fact", "body": "Fact two.", "keywords": ["fact", "two"]},
-            ]
+            ],
+            "coverage": [
+                {
+                    "text": "Fact one. ",
+                    "classification": "durable",
+                    "candidate_index": 0,
+                },
+                {
+                    "text": "Fact two.",
+                    "classification": "durable",
+                    "candidate_index": 1,
+                },
+            ],
         },
     ]
 
@@ -808,9 +821,11 @@ async def test_a049_label_and_split_share_one_two_request_runtime_usage_wall() -
 
     spine = SplitSpine()
     emitted = RecordingEmitter()
+    spend = RecordingSpend()
     runner = PydanticAITurnRunner(
         HarnessAgent(settings(), model=FunctionModel(function=respond)),
         lambda _: context(spine),
+        spend,
     )
 
     outcome = await runner.run(
@@ -825,6 +840,67 @@ async def test_a049_label_and_split_share_one_two_request_runtime_usage_wall() -
     assert emitted.texts == ["Remembered 2 linked memories: 'First fact', 'Second fact'."]
     assert len(spine.requests) == 1
     assert outputs == []
+    assert len(spend.requests) == 1
+    receipt_events = spend.requests[0].events
+    assert len({event.ref for event in receipt_events}) == 2
+    assert {event.memory_id for event in receipt_events} == {source_id}
+    assert {event.purpose for event in receipt_events} == {"remember"}
+
+
+@pytest.mark.asyncio
+async def test_a049_invalid_structured_split_guides_instead_of_failing_the_turn() -> None:
+    """F027, A-049, A-050, ADR-022, and SPEC B.6 rule 12 are defended here.
+    Malformed model structure is an invalid draft, so it guides with zero writes rather than ERROR.
+    """
+    outputs = [json.dumps({"label": "L" * 65, "keywords": ["fact", "garden"]}), "not-json"]
+
+    async def respond(_messages, _info) -> ModelResponse:
+        return ModelResponse(parts=[TextPart(outputs.pop(0))])
+
+    emitted = RecordingEmitter()
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(function=respond)),
+        lambda _: context(),
+    )
+
+    outcome = await runner.run(
+        thread_id="thread-1",
+        prompt="/remember Fact one. Fact two.",
+        message_history=(),
+        emit=emitted,
+    )
+
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert outcome.usage.requests == 2
+    assert emitted.texts == [REMEMBER_SPLIT_GUIDANCE]
+    assert outputs == []
+
+
+@pytest.mark.asyncio
+async def test_a049_split_provider_failure_keeps_runtime_error_semantics() -> None:
+    """F027, A-049, A-050, ADR-022, and SPEC B.6 rule 12 are defended here.
+    Provider transport failure is not an invalid draft and must retain the ordinary ERROR outcome.
+    """
+
+    def fail_split(_messages, _info):
+        raise RuntimeError("split provider failed")
+
+    runner = PydanticAITurnRunner(
+        HarnessAgent(
+            settings(memory_max_tokens=1),
+            model=FunctionModel(function=fail_split),
+        ),
+        lambda _: context(),
+    )
+
+    outcome = await runner.run(
+        thread_id="thread-1",
+        prompt="/remember Fact one. Fact two.",
+        message_history=(),
+        emit=RecordingEmitter(),
+    )
+
+    assert outcome.stop_reason is StopReason.ERROR
 
 
 @pytest.mark.asyncio
