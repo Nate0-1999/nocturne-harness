@@ -1,0 +1,102 @@
+{
+  "session": "codex / 2026-08-08 / e6b1",
+  "verification_identity": {
+    "principal_id": "m2x-sop-verification",
+    "machine_id": "m2x-sop-verification",
+    "agent_id": "nocturne"
+  },
+  "real_turn": {
+    "thread_id": "5bc60dca-a00d-487e-8c33-a2039558121e",
+    "message_id": "01KZJE8AEE7VQFG2HKYY14MJP1",
+    "run_id": "01KZJE8AEFWZRGEYXYMRRHR9AP",
+    "injection_id": "4cd3d997-afe0-4165-8694-1a65598938e9",
+    "resolved_model": "openrouter:minimax/minimax-m3",
+    "requests": 1,
+    "input_tokens": 391,
+    "output_tokens": 66,
+    "injected_memories": 0,
+    "near_misses": 0
+  },
+  "F020": {
+    "verdict": "PASS",
+    "graph_global_http": 200,
+    "graph_current_http": 200,
+    "graph_global_final": {"memories": 3, "relationships": 3},
+    "graph_current_initial": {"memories": 0, "relationships": 0},
+    "injection_global_http": 200,
+    "simulation_global_http": 200,
+    "deep_accuracy_percent": "100",
+    "deep_holdout_dispositions": 1,
+    "simulation_digest_prefix": "313e805f38f7",
+    "force_enacted": false
+  },
+  "F021": {
+    "verdict": "PASS",
+    "batch_uid": "63be3288-1f75-4c67-9b7b-20bfa3865411",
+    "item_uid": "01KZJE2AV7WCQ1WK9C96PNHDMM",
+    "candidate_memory_id": "ee174333-c08d-4d21-a5cd-7d433b3bcaac",
+    "source_sha256": "257d3305ffbab1700785cdb356b73ca75eba1670966b2bf764f4415020477c16",
+    "first_request": {"http": 200, "seconds": 8.704164},
+    "exact_replay": {"http": 200, "seconds": 0.157143},
+    "same_durable_result": true,
+    "final_seed_queue_cards": 0
+  },
+  "F022": {
+    "verdict": "PASS",
+    "archive_first_http": 200,
+    "archive_replay_http": 200,
+    "thread_review_opened": true,
+    "item_uid": "01KZJEBJMC2YYV81W7GNWG707Q",
+    "candidate_memory_id": "0e9100fc-a3ec-49e0-baad-c08729fbbf27",
+    "final_thread_queue_cards": 0,
+    "duplicate_candidate_created": false
+  },
+  "F023": {
+    "verdict": "PASS",
+    "real_seed_batch_decision_http": 200,
+    "real_thread_item_decision_http": 200,
+    "browser_supplied_machine_id_http": 422,
+    "browser_supplied_machine_id_error": "extra_forbidden",
+    "configured_machine_identity": "m2x-sop-verification"
+  },
+  "F024": {
+    "verdict": "PASS",
+    "viewport": {"width": 390, "height": 844},
+    "shell": {"client_width": 390, "scroll_width": 390},
+    "context_frame": {"client_width": 163, "scroll_width": 163},
+    "context_document": {"client_width": 163, "scroll_width": 163},
+    "used_tokens": 391,
+    "context_tokens": 1000000,
+    "estimated_categories": {
+      "system": 145,
+      "history": 155,
+      "memory": 33,
+      "tools": 58
+    },
+    "estimated_category_sum": 391
+  },
+  "F025": {
+    "verdict": "PASS",
+    "vitals_frame": {"client_width": 226, "scroll_width": 226},
+    "vitals_document": {"client_width": 226, "scroll_width": 226},
+    "exact_visible_dollar_value": "$0.000196500000"
+  },
+  "F026": {
+    "verdict": "FAIL",
+    "current_query_http_responses": [200, 200],
+    "thread_id": "5bc60dca-a00d-487e-8c33-a2039558121e",
+    "response_spend_source_view": "spend_event",
+    "browser_parser_accepted_source_view": "v_spend_rate",
+    "rendered_alert": "Vitals couldn’t refresh. Chat is still available.",
+    "stale_global_snapshot_remained_visible": true
+  },
+  "cleanup": {
+    "seed_batch_denied": true,
+    "thread_candidate_denied": true,
+    "accepted_verification_memories": 0,
+    "pending_verification_candidates": 0,
+    "scorer_configuration_changed": false,
+    "browser_warnings_or_errors": [],
+    "disposable_home_removed": true
+  }
+}
