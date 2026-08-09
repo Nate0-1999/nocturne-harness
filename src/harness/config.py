@@ -29,6 +29,7 @@ class HarnessSettings(BaseSettings):
     run_request_limit: int = Field(default=40, ge=1)
     run_total_tokens_limit: int = Field(default=500_000, ge=1)
     label_max: int = Field(default=64, ge=1)
+    memory_max_tokens: int = Field(default=128, ge=1)
     extraction_idle_hours: float | None = Field(default=24.0, gt=0)
 
     @field_validator("model_context_tokens", mode="before")

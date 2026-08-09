@@ -25,11 +25,14 @@ from harness.pydantic_ai_adapter import MemoryCapability
 from harness.spine_client import (
     CreatedMemoryResponse,
     CreateMemoryConflictError,
+    MemorySplitChild,
+    MemorySplitResponse,
     SpineClientError,
 )
 from harness.tools_memory import (
     MemoryToolContext,
     create_remembered_memory,
+    create_remembered_memory_split,
     render_create_conflict,
     render_create_response,
     render_spine_error,
@@ -39,6 +42,22 @@ REMEMBER_DRAFT_INSTRUCTION = (
     "Generate one short label and 2-5 lowercase searchable keywords for the "
     "supplied memory. Keywords must be distinct nouns or terms. Return only "
     "the requested structured result with no commentary."
+)
+REMEMBER_SPLIT_INSTRUCTION = (
+    "Semantically divide the complete /remember source into durable atomic facts in source "
+    "order. Preserve every claim and qualifier without summarizing, omitting, truncating, or "
+    "mechanically chopping the source. Every candidate must stand alone, contain one claim, "
+    "and have its own one-line label plus 2-5 distinct lowercase searchable keywords. If the "
+    "source includes directions or commentary about remembering, saving, or splitting, treat "
+    "them as instructions for this operation, never as durable facts or candidates. Keep every "
+    "actual claim and qualifier. If the "
+    "source is one indivisible claim that cannot fit the supplied body limit, return exactly "
+    "one candidate containing that complete claim even though it exceeds the limit; never "
+    "shorten it to fit. Return one to 64 candidates and structured data only."
+)
+REMEMBER_SPLIT_GUIDANCE = (
+    "I couldn't split this into standalone memories without changing its meaning, so I didn't "
+    "save it. Please break it into separate facts and try /remember again."
 )
 EXTRACTION_INSTRUCTION = (
     "Read the complete thread transcript. Return a concise working summary, open loops, and at "
@@ -66,6 +85,24 @@ class RememberDraft(BaseModel):
 
     label: StrictStr
     keywords: list[StrictStr]
+
+
+class RememberSplitCandidate(BaseModel):
+    """One semantic child proposed only for an oversized `/remember`."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    label: StrictStr
+    body: StrictStr
+    keywords: list[StrictStr] = Field(min_length=2, max_length=5)
+
+
+class RememberSplitDraft(BaseModel):
+    """The complete source-ordered A-049 split proposal."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    candidates: list[RememberSplitCandidate] = Field(min_length=1, max_length=64)
 
 
 class ExtractionCandidateDraft(BaseModel):
@@ -137,6 +174,10 @@ class HarnessAgent:
             request_limit=1,
             total_tokens_limit=settings.run_total_tokens_limit,
         )
+        self._remember_split_usage_limits = UsageLimits(
+            request_limit=2,
+            total_tokens_limit=settings.run_total_tokens_limit,
+        )
         self._chat_agent = Agent(
             self._default_model,
             deps_type=MemoryToolContext,
@@ -148,6 +189,12 @@ class HarnessAgent:
             output_type=PromptedOutput(RememberDraft),
             instructions=REMEMBER_DRAFT_INSTRUCTION,
             name="harness-memory-label",
+        )
+        self._remember_splitter_agent = Agent(
+            self._default_model,
+            output_type=PromptedOutput(RememberSplitDraft),
+            instructions=REMEMBER_SPLIT_INSTRUCTION,
+            name="harness-remember-splitter",
         )
         self._extraction_agent = Agent(
             self._default_model,
@@ -184,6 +231,12 @@ class HarnessAgent:
         """Expose the separate, tools-free remember agent for inspection."""
 
         return self._label_agent
+
+    @property
+    def remember_splitter_agent(self) -> Agent[None, RememberSplitDraft]:
+        """Expose the separate, tools-free A-049 semantic splitter for inspection."""
+
+        return self._remember_splitter_agent
 
     @property
     def usage_limits(self) -> UsageLimits:
@@ -237,13 +290,23 @@ class HarnessAgent:
             return RememberResult(False, "Nothing to remember; add text after /remember.")
 
         selected_model = self._select_model(model)
+        remember_usage = usage if usage is not None else RunUsage()
+        if cl100k_token_count(body) > self._settings.memory_max_tokens:
+            return await self._split_or_guide_remember(
+                body,
+                context=context,
+                model=selected_model,
+                model_settings=model_settings,
+                usage=remember_usage,
+                raise_model_errors=raise_model_errors,
+            )
         try:
             draft_result = await self._label_agent.run(
                 f"Memory:\n{body}",
                 model=selected_model,
                 model_settings=model_settings,
                 usage_limits=self._label_usage_limits,
-                usage=usage,
+                usage=remember_usage,
             )
         except Exception:
             if raise_model_errors:
@@ -265,10 +328,13 @@ class HarnessAgent:
                 "Could not remember: the generated label was not one line.",
             )
         if len(label) > self._settings.label_max:
-            return RememberResult(
-                False,
-                "Could not remember: the generated label exceeded "
-                f"{self._settings.label_max} characters.",
+            return await self._split_or_guide_remember(
+                body,
+                context=context,
+                model=selected_model,
+                model_settings=model_settings,
+                usage=remember_usage,
+                raise_model_errors=raise_model_errors,
             )
         keywords = _normalize_keywords(draft.keywords)
         if keywords is None:
@@ -276,6 +342,95 @@ class HarnessAgent:
                 False,
                 "Could not remember: generated keywords must contain 2-5 distinct nonblank terms.",
             )
+
+        return await self._create_single_remember(
+            body,
+            label=label,
+            keywords=keywords,
+            context=context,
+        )
+
+    async def _split_or_guide_remember(
+        self,
+        body: str,
+        *,
+        context: MemoryToolContext,
+        model: Model,
+        model_settings: ModelSettings | None,
+        usage: RunUsage,
+        raise_model_errors: bool,
+    ) -> RememberResult:
+        """Plan one semantic family, then write all children or guide without a write."""
+
+        try:
+            draft_result = await self._remember_splitter_agent.run(
+                (
+                    f"Label limit: {self._settings.label_max} Unicode code points\n"
+                    f"Body limit: {self._settings.memory_max_tokens} cl100k_base tokens\n"
+                    f"Memory source:\n{body}"
+                ),
+                model=model,
+                model_settings=model_settings,
+                usage_limits=self._remember_split_usage_limits,
+                usage=usage,
+            )
+        except Exception:
+            if raise_model_errors:
+                raise
+            return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
+
+        draft = draft_result.output
+        if not isinstance(draft, RememberSplitDraft):  # pragma: no cover - type guard
+            return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
+        children = _validated_remember_split(
+            draft,
+            label_max=self._settings.label_max,
+            memory_max_tokens=self._settings.memory_max_tokens,
+        )
+        if children is None:
+            return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
+
+        if len(children) == 1:
+            if cl100k_token_count(body) > self._settings.memory_max_tokens:
+                return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
+            child = children[0]
+            return await self._create_single_remember(
+                body,
+                label=child.label,
+                keywords=child.keywords,
+                context=context,
+            )
+
+        try:
+            response = await create_remembered_memory_split(
+                context,
+                source_body=body,
+                children=children,
+            )
+        except CreateMemoryConflictError as exc:
+            return RememberResult(False, f"Could not remember: {render_create_conflict(exc)}")
+        except SpineClientError as exc:
+            return RememberResult(False, f"Could not remember: {render_spine_error('save', exc)}")
+
+        if not isinstance(response, MemorySplitResponse):
+            return RememberResult(False, f"Not saved: {render_create_response(response)}")
+        labels = ", ".join(repr(created.label) for created in response.created)
+        return RememberResult(
+            True,
+            f"Remembered {len(response.created)} linked memories: {labels}.",
+            memory_id=response.source.memory_id,
+            label=response.source.label,
+        )
+
+    @staticmethod
+    async def _create_single_remember(
+        body: str,
+        *,
+        label: str,
+        keywords: list[str],
+        context: MemoryToolContext,
+    ) -> RememberResult:
+        """Persist the exact source through the unchanged ordinary create boundary."""
 
         try:
             response = await create_remembered_memory(
@@ -452,6 +607,42 @@ def _required_secret(value: SecretStr | None, name: str) -> str:
     if value is None or not value.get_secret_value().strip():
         raise ModelConfigurationError(f"{name} is required for the selected model provider")
     return value.get_secret_value()
+
+
+def _validated_remember_split(
+    draft: RememberSplitDraft,
+    *,
+    label_max: int,
+    memory_max_tokens: int,
+) -> list[MemorySplitChild] | None:
+    """Normalize one complete A-049 draft or reject it before any write."""
+
+    children: list[MemorySplitChild] = []
+    labels: set[str] = set()
+    bodies: set[str] = set()
+    is_split = len(draft.candidates) >= 2
+    for candidate in draft.candidates:
+        label = candidate.label.strip()
+        body = candidate.body.strip()
+        keywords = _normalize_keywords(candidate.keywords)
+        invalid = (
+            not label
+            or "\n" in label
+            or "\r" in label
+            or len(label) > label_max
+            or not body
+            or keywords is None
+            or len(keywords) != len(candidate.keywords)
+            or (is_split and cl100k_token_count(body) > memory_max_tokens)
+        )
+        if invalid:
+            return None
+        if is_split and (label in labels or body in bodies):
+            return None
+        labels.add(label)
+        bodies.add(body)
+        children.append(MemorySplitChild(label=label, body=body, keywords=keywords))
+    return children
 
 
 def _normalize_keywords(values: Sequence[str]) -> list[str] | None:

@@ -2,8 +2,8 @@
 
 Generated deterministically by `scripts/check_test_motivations.py`.
 
-- Tests discovered: 389
-- Motivated tests: 389
+- Tests discovered: 417
+- Motivated tests: 417
 - Grandfathered baseline debt: 0
 - Stale baseline entries: 0
 
@@ -157,8 +157,9 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 
 - _None._
 
-### ADR-016 — 16 defender(s)
+### ADR-016 — 20 defender(s)
 
+- `tests/test_onboarding.py::test_up_refuses_a_read_only_journal_before_starting_services`
 - `tests/test_transcript.py::test_capture_does_not_depend_on_a_live_subscriber`
 - `tests/test_transcript.py::test_capture_failure_poison_stops_unjournaled_work`
 - `tests/test_transcript.py::test_complete_record_is_fsynced_before_append_returns`
@@ -171,10 +172,13 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_transcript.py::test_journal_refuses_root_replaced_by_a_directory_symlink`
 - `tests/test_transcript.py::test_non_tail_revisions_do_not_move_restart_continuity_backward`
 - `tests/test_transcript.py::test_preexisting_incomplete_tail_is_separated_from_new_records`
+- `tests/test_transcript.py::test_preflight_refuses_a_preexisting_symlinked_root`
 - `tests/test_transcript.py::test_prompt_is_captured_before_model_resolution_failure`
 - `tests/test_transcript.py::test_restart_scans_past_an_incomplete_tail_to_the_last_valid_message`
-- `tests/test_transcript.py::test_run_loop_captures_messages_events_model_change_without_serving_on_restart`
+- `tests/test_transcript.py::test_run_loop_rehydrates_exact_transcript_and_model_recency_on_restart`
 - `tests/test_transcript.py::test_same_thread_resolution_is_serialized_in_capture_order`
+- `tests/test_transcript.py::test_startup_preflight_fsyncs_and_removes_its_probe`
+- `tests/test_transcript.py::test_startup_refuses_unrecoverable_parent_history`
 
 ### ADR-017 — ZERO DEFENDERS
 
@@ -243,9 +247,15 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 
 - _None._
 
-### ADR-022 — ZERO DEFENDERS
+### ADR-022 — 7 defender(s)
 
-- _None._
+- `tests/test_agent.py::test_a049_invalid_split_draft_uses_safe_guidance_and_zero_writes`
+- `tests/test_agent.py::test_a049_overlong_label_single_claim_reuses_exact_source_through_ordinary_create`
+- `tests/test_agent.py::test_a049_oversized_multi_claim_uses_one_atomic_split_with_exact_source`
+- `tests/test_agent.py::test_a049_remember_splitter_is_tools_free_and_lossless_by_instruction`
+- `tests/test_agent.py::test_a049_single_atomic_oversized_claim_guides_without_any_write`
+- `tests/test_agent_runtime.py::test_a049_label_and_split_share_one_two_request_runtime_usage_wall`
+- `tests/test_tools_memory.py::test_a049_remember_split_maps_exact_source_and_trusted_global_provenance`
 
 ### ADR-023 — 4 defender(s)
 
@@ -286,16 +296,25 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 
 - _None._
 
-### B.6 — 8 defender(s)
+### B.6 — 17 defender(s)
 
 - `tests/contract/test_spine_contract.py::test_live_create_conflicts_and_dedup_bands`
 - `tests/contract/test_spine_contract.py::test_live_patch_cas_tombstone_and_list`
+- `tests/test_agent.py::test_a049_invalid_split_draft_uses_safe_guidance_and_zero_writes`
+- `tests/test_agent.py::test_a049_overlong_label_single_claim_reuses_exact_source_through_ordinary_create`
+- `tests/test_agent.py::test_a049_oversized_multi_claim_uses_one_atomic_split_with_exact_source`
+- `tests/test_agent.py::test_a049_remember_splitter_is_tools_free_and_lossless_by_instruction`
+- `tests/test_agent.py::test_a049_single_atomic_oversized_claim_guides_without_any_write`
+- `tests/test_agent_runtime.py::test_a049_label_and_split_share_one_two_request_runtime_usage_wall`
 - `tests/test_agent_runtime.py::test_dead_ledger_queues_estimate_and_never_retracts_answer`
 - `tests/test_fixture_isolation.py::test_every_scenario_app_installs_the_shared_reachability_wall`
 - `tests/test_fixture_isolation.py::test_fixture_refuses_owner_port_before_serving_ui`
 - `tests/test_receipt_queue.py::test_unwritable_spool_retains_degraded_memory_batch`
+- `tests/test_spine_client.py::test_a049_memory_split_models_are_closed_exact_c4_shapes`
+- `tests/test_spine_transport.py::test_a049_split_preserves_existing_similar_and_conflict_status_bodies`
 - `tests/test_test_motivations.py::test_report_indexes_citations_and_marks_uncovered_law`
-- `web/tests/vitals.test.mjs::line-189`
+- `tests/test_tools_memory.py::test_a049_remember_split_maps_exact_source_and_trusted_global_provenance`
+- `web/tests/vitals.test.mjs::line-203`
 
 ### C.1 — ZERO DEFENDERS
 
@@ -462,9 +481,9 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 ### C.10 — 4 defender(s)
 
 - `web/tests/vitals.test.mjs::line-113`
-- `web/tests/vitals.test.mjs::line-148`
-- `web/tests/vitals.test.mjs::line-159`
-- `web/tests/vitals.test.mjs::line-171`
+- `web/tests/vitals.test.mjs::line-162`
+- `web/tests/vitals.test.mjs::line-173`
+- `web/tests/vitals.test.mjs::line-185`
 
 ### D.1 — ZERO DEFENDERS
 
@@ -570,16 +589,27 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_memory_panel.py::test_remove_uses_server_injection_then_rebinds_exact_block_and_exclusions`
 - `tests/test_memory_panel.py::test_remove_waits_for_an_active_model_run_before_feedback_and_mutation`
 
+### A-032
+
+- `tests/test_extraction.py::test_archive_transport_failure_reconciles_then_marks_the_tail`
+
 ### A-033
 
 - `tests/test_extraction.py::test_archive_reads_durable_transcript_and_is_idempotent_per_tail`
 - `tests/test_extraction.py::test_idle_scheduler_uses_same_archive_path`
 - `tests/test_seed.py::test_markdown_seed_is_split_before_one_standard_queue_write`
 - `tests/test_seed.py::test_seed_rejects_non_markdown_before_model_work`
+- `tests/test_seed.py::test_seed_replay_returns_pending_batch_before_model_work`
+- `tests/test_seed.py::test_seed_transport_failure_reconciles_the_exact_durable_batch`
 
 ### A-034
 
-- `web/tests/vitals.test.mjs::line-140`
+- `web/tests/vitals.test.mjs::line-154`
+
+### A-035
+
+- `tests/test_spine_transport.py::test_global_instrument_requests_preserve_required_null_scope_fields`
+- `web/tests/vitals.test.mjs::line-127`
 
 ### A-036
 
@@ -635,7 +665,7 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_m2n_resources.py::test_resource_watch_enriches_database_truth_with_owner_local_measurements`
 - `tests/test_m2n_resources.py::test_resource_watch_keeps_unavailable_rss_distinct_from_zero`
 - `tests/test_m2n_resources.py::test_startup_warns_early_without_prompting_or_stopping`
-- `web/tests/vitals.test.mjs::line-127`
+- `web/tests/vitals.test.mjs::line-141`
 
 ### A-045
 
@@ -657,6 +687,65 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 ### A-047
 
 - `tests/test_daemon.py::test_rack_scorer_simulation_force_and_audition_use_public_actions`
+- `tests/test_spine_transport.py::test_global_instrument_requests_preserve_required_null_scope_fields`
+
+### A-049
+
+- `tests/test_agent.py::test_a049_invalid_split_draft_uses_safe_guidance_and_zero_writes`
+- `tests/test_agent.py::test_a049_overlong_label_single_claim_reuses_exact_source_through_ordinary_create`
+- `tests/test_agent.py::test_a049_oversized_multi_claim_uses_one_atomic_split_with_exact_source`
+- `tests/test_agent.py::test_a049_remember_splitter_is_tools_free_and_lossless_by_instruction`
+- `tests/test_agent.py::test_a049_single_atomic_oversized_claim_guides_without_any_write`
+- `tests/test_agent_runtime.py::test_a049_label_and_split_share_one_two_request_runtime_usage_wall`
+- `tests/test_spine_client.py::test_a049_memory_split_models_are_closed_exact_c4_shapes`
+- `tests/test_spine_transport.py::test_a049_split_preserves_existing_similar_and_conflict_status_bodies`
+- `tests/test_tools_memory.py::test_a049_remember_split_maps_exact_source_and_trusted_global_provenance`
+
+### F020
+
+- `tests/test_daemon.py::test_rack_scorer_simulation_force_and_audition_use_public_actions`
+- `tests/test_spine_transport.py::test_global_instrument_requests_preserve_required_null_scope_fields`
+
+### F021
+
+- `tests/test_seed.py::test_seed_replay_returns_pending_batch_before_model_work`
+- `tests/test_seed.py::test_seed_transport_failure_reconciles_the_exact_durable_batch`
+- `tests/test_seed.py::test_seed_transport_failure_stays_loud_without_exact_batch_proof`
+
+### F022
+
+- `tests/test_extraction.py::test_archive_transport_failure_reconciles_then_marks_the_tail`
+- `tests/test_extraction.py::test_archive_transport_failure_stays_loud_without_exact_candidate`
+- `web/tests/rackAction.test.mjs::line-20`
+- `web/tests/rackAction.test.mjs::line-7`
+
+### F023
+
+- `tests/test_queue_provenance.py::test_owner_api_publishes_choice_fields_without_machine_identity`
+- `tests/test_queue_provenance.py::test_queue_tap_cannot_supply_or_override_machine_identity`
+- `tests/test_queue_provenance.py::test_queue_taps_land_with_the_daemon_machine_identity`
+- `web/tests/approvalQueue.test.mjs::line-10`
+
+### F026
+
+- `web/tests/vitals.test.mjs::line-127`
+
+### F027
+
+- `tests/test_agent.py::test_a049_invalid_split_draft_uses_safe_guidance_and_zero_writes`
+- `tests/test_agent.py::test_a049_overlong_label_single_claim_reuses_exact_source_through_ordinary_create`
+- `tests/test_agent.py::test_a049_oversized_multi_claim_uses_one_atomic_split_with_exact_source`
+- `tests/test_agent.py::test_a049_remember_splitter_is_tools_free_and_lossless_by_instruction`
+- `tests/test_agent.py::test_a049_single_atomic_oversized_claim_guides_without_any_write`
+- `tests/test_agent_runtime.py::test_a049_label_and_split_share_one_two_request_runtime_usage_wall`
+
+### F030
+
+- `tests/test_onboarding.py::test_up_refuses_a_read_only_journal_before_starting_services`
+- `tests/test_transcript.py::test_run_loop_rehydrates_exact_transcript_and_model_recency_on_restart`
+- `tests/test_transcript.py::test_startup_hydrates_every_journal_thread`
+- `tests/test_transcript.py::test_startup_preflight_fsyncs_and_removes_its_probe`
+- `tests/test_transcript.py::test_startup_preflight_refuses_a_read_only_journal_with_plain_remedy`
 
 ### P3
 

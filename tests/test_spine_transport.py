@@ -19,6 +19,9 @@ from harness.spine_client import (
     ListMemoriesParams,
     MemoryGraphQuery,
     MemoryKind,
+    MemorySplitChild,
+    MemorySplitRequest,
+    MemorySplitResponse,
     MemoryStatus,
     PatchMemoryConflictError,
     PatchMemoryRequest,
@@ -265,6 +268,18 @@ async def test_all_routes_send_exact_http_contract() -> None:
         ),
         ("POST", "/prefix/v1/feedback"): response(200, {"ok": True}),
         ("POST", "/prefix/v1/memories"): response(201, {"created": memory_unit_payload()}),
+        ("POST", "/prefix/v1/memory-splits"): response(
+            201,
+            {
+                "source": {
+                    **memory_unit_payload(),
+                    "label": "Split source",
+                    "body": "Fact one. Fact two.",
+                    "status": "tombstoned",
+                },
+                "created": [memory_unit_payload(), memory_unit_payload()],
+            },
+        ),
         ("PATCH", f"/prefix/v1/memories/{MEMORY_ID}"): response(200, memory_unit_payload()),
         ("GET", "/prefix/v1/memories"): response(
             200,
@@ -323,6 +338,28 @@ async def test_all_routes_send_exact_http_contract() -> None:
                 machine_id="machine-1",
             )
         )
+        split = await client.create_memory_split(
+            MemorySplitRequest(
+                principal_id="principal-1",
+                source_body="Fact one. Fact two.",
+                children=[
+                    MemorySplitChild(
+                        label="First",
+                        body="Fact one.",
+                        keywords=["fact", "one"],
+                    ),
+                    MemorySplitChild(
+                        label="Second",
+                        body="Fact two.",
+                        keywords=["fact", "two"],
+                    ),
+                ],
+                thread_origin=THREAD_ID,
+                origin_path="src/editor.py",
+                editor="user",
+                machine_id="machine-1",
+            )
+        )
         patched = await client.patch_memory(
             MEMORY_ID,
             PatchMemoryRequest(
@@ -370,6 +407,9 @@ async def test_all_routes_send_exact_http_contract() -> None:
     assert committed.wrong_removed == []
     assert feedback.ok is True
     assert isinstance(created, CreatedMemoryResponse)
+    assert isinstance(split, MemorySplitResponse)
+    assert split.source.status is MemoryStatus.TOMBSTONED
+    assert len(split.created) == 2
     assert created.created.origin_path == "src/editor.py"
     assert patched.origin_path == "src/editor.py"
     assert listed.total == 1
@@ -385,6 +425,19 @@ async def test_all_routes_send_exact_http_contract() -> None:
     assert create_body["origin_path"] == "src/editor.py"
     assert create_body["force"] is False
     assert "project_key" not in create_body
+    split_body = json.loads(requests[("POST", "/prefix/v1/memory-splits")].content)
+    assert split_body == {
+        "principal_id": "principal-1",
+        "source_body": "Fact one. Fact two.",
+        "children": [
+            {"label": "First", "body": "Fact one.", "keywords": ["fact", "one"]},
+            {"label": "Second", "body": "Fact two.", "keywords": ["fact", "two"]},
+        ],
+        "thread_origin": THREAD_ID,
+        "origin_path": "src/editor.py",
+        "editor": "user",
+        "machine_id": "machine-1",
+    }
     patch_body = json.loads(requests[("PATCH", f"/prefix/v1/memories/{MEMORY_ID}")].content)
     assert patch_body["origin_path"] == "src/editor.py"
     assert "body" not in patch_body
@@ -592,6 +645,46 @@ async def test_create_similar_response_is_distinct_from_created_status() -> None
 
     assert isinstance(result, SimilarMemoriesResponse)
     assert result.similar[0].score == pytest.approx(0.85)
+
+
+@pytest.mark.asyncio
+async def test_a049_split_preserves_existing_similar_and_conflict_status_bodies() -> None:
+    """A-049, C.4, and SPEC B.6 rule 12 are defended here.
+    Atomic split reuses exact near-similar 200 and conflict 409 bodies, never partial success.
+    """
+    outcomes = [
+        response(200, {"created": None, "similar": [similarity_card_payload()]}),
+        response(
+            409,
+            {"label_conflict": {"memory_id": MEMORY_ID, "label": "Editor preference"}},
+        ),
+    ]
+
+    async def handler(_: httpx.Request) -> httpx.Response:
+        return outcomes.pop(0)
+
+    request = MemorySplitRequest(
+        principal_id="principal-1",
+        source_body="Fact one. Fact two.",
+        children=[
+            MemorySplitChild(label="First", body="Fact one.", keywords=["fact", "one"]),
+            MemorySplitChild(label="Second", body="Fact two.", keywords=["fact", "two"]),
+        ],
+        editor="user",
+        machine_id="machine-1",
+    )
+    async with SpineClient(
+        "https://spine.invalid",
+        "token",
+        transport=httpx.MockTransport(handler),
+    ) as client:
+        similar = await client.create_memory_split(request)
+        with pytest.raises(CreateMemoryConflictError) as caught:
+            await client.create_memory_split(request)
+
+    assert isinstance(similar, SimilarMemoriesResponse)
+    assert str(similar.similar[0].memory_id) == MEMORY_ID
+    assert isinstance(caught.value.conflict, LabelConflict)
 
 
 @pytest.mark.parametrize(

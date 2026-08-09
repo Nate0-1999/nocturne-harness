@@ -14,10 +14,13 @@ from harness.spine_client import (
     CreateMemoryConflictError,
     CreateMemoryRequest,
     CreateMemoryResponse,
+    CreateMemorySplitResponse,
     DuplicateMemoryConflict,
     LabelConflict,
     ListMemoriesParams,
     MemoryKind,
+    MemorySplitChild,
+    MemorySplitRequest,
     MemoryStatus,
     MemoryUnit,
     PagedMemoryListResponse,
@@ -40,6 +43,10 @@ class SpineGateway(Protocol):
     """The C.4 operations needed by H3, independent of HTTP transport."""
 
     async def create_memory(self, request: CreateMemoryRequest) -> CreateMemoryResponse: ...
+
+    async def create_memory_split(
+        self, request: MemorySplitRequest
+    ) -> CreateMemorySplitResponse: ...
 
     async def search(self, request: SearchRequest) -> SearchResponse: ...
 
@@ -217,6 +224,27 @@ async def create_remembered_memory(
             editor="user",
             machine_id=context.machine_id,
             force=False,
+        )
+    )
+
+
+async def create_remembered_memory_split(
+    context: MemoryToolContext,
+    *,
+    source_body: str,
+    children: list[MemorySplitChild],
+) -> CreateMemorySplitResponse:
+    """Atomically create one global, user-authored A-049 split family."""
+
+    return await context.spine.create_memory_split(
+        MemorySplitRequest(
+            principal_id=context.principal_id,
+            source_body=source_body,
+            children=children,
+            thread_origin=str(context.thread_id) if context.thread_id is not None else None,
+            origin_path=context.origin_path,
+            editor="user",
+            machine_id=context.machine_id,
         )
     )
 

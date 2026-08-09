@@ -4,6 +4,7 @@ import asyncio
 import json
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -35,6 +36,8 @@ from harness.receipt_queue import SpendReceiptQueue
 from harness.run_protocol import UsageSnapshot
 from harness.spine_client import (
     MemoryKind,
+    MemorySplitRequest,
+    MemorySplitResponse,
     SearchResponse,
     SimilarityMemoryCard,
     SpendEventsRequest,
@@ -743,6 +746,85 @@ async def test_remember_uses_dispatch_and_emits_its_visible_result() -> None:
     assert emitted.events == []
     assert emitted.usages == []
     assert model.last_model_request_parameters is None
+
+
+@pytest.mark.asyncio
+async def test_a049_label_and_split_share_one_two_request_runtime_usage_wall() -> None:
+    """F027, A-049, ADR-022, and SPEC B.6 rule 12 are defended here.
+    Label fallback and semantic split share usage, emit once, and stop at two model requests.
+    """
+    source_id = UUID("52345678-1234-5678-1234-567812345678")
+    child_one_id = UUID("62345678-1234-5678-1234-567812345678")
+    child_two_id = UUID("72345678-1234-5678-1234-567812345678")
+    now = datetime(2026, 8, 9, 12, tzinfo=UTC)
+
+    def unit(memory_id: UUID, label: str, body: str, status: str) -> dict[str, object]:
+        return {
+            "memory_id": memory_id,
+            "principal_id": "principal-1",
+            "label": label,
+            "body": body,
+            "kind": "fact",
+            "keywords": ["fact", "garden"],
+            "project_key": None,
+            "thread_origin": str(THREAD_UUID),
+            "origin_path": "/workspace/notes.md",
+            "pin": False,
+            "status": status,
+            "revision": 1,
+            "stats": {},
+            "bias": 0.0,
+            "embedding_model": "text-embedding-3-small",
+            "created_at": now,
+            "updated_at": now,
+        }
+
+    class SplitSpine:
+        def __init__(self) -> None:
+            self.requests: list[MemorySplitRequest] = []
+
+        async def create_memory_split(self, request: MemorySplitRequest) -> MemorySplitResponse:
+            self.requests.append(request)
+            return MemorySplitResponse(
+                source=unit(source_id, "Split source", request.source_body, "tombstoned"),
+                created=[
+                    unit(child_one_id, "First fact", "Fact one.", "active"),
+                    unit(child_two_id, "Second fact", "Fact two.", "active"),
+                ],
+            )
+
+    outputs = [
+        {"label": "L" * 65, "keywords": ["fact", "garden"]},
+        {
+            "candidates": [
+                {"label": "First fact", "body": "Fact one.", "keywords": ["fact", "one"]},
+                {"label": "Second fact", "body": "Fact two.", "keywords": ["fact", "two"]},
+            ]
+        },
+    ]
+
+    async def respond(_messages, _info) -> ModelResponse:
+        return ModelResponse(parts=[TextPart(json.dumps(outputs.pop(0)))])
+
+    spine = SplitSpine()
+    emitted = RecordingEmitter()
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(function=respond)),
+        lambda _: context(spine),
+    )
+
+    outcome = await runner.run(
+        thread_id="thread-1",
+        prompt="/remember Fact one. Fact two.",
+        message_history=(),
+        emit=emitted,
+    )
+
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert outcome.usage.requests == 2
+    assert emitted.texts == ["Remembered 2 linked memories: 'First fact', 'Second fact'."]
+    assert len(spine.requests) == 1
+    assert outputs == []
 
 
 @pytest.mark.asyncio

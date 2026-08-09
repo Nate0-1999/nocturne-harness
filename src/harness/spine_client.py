@@ -233,6 +233,30 @@ class SimilarMemoriesResponse(ContractModel):
 type CreateMemoryResponse = CreatedMemoryResponse | SimilarMemoriesResponse
 
 
+class MemorySplitChild(ContractModel):
+    label: str
+    body: str
+    keywords: list[str] = Field(min_length=2, max_length=5)
+
+
+class MemorySplitRequest(ContractModel):
+    principal_id: str
+    source_body: str
+    children: list[MemorySplitChild] = Field(min_length=2, max_length=64)
+    thread_origin: str | None = None
+    origin_path: str | None = None
+    editor: str
+    machine_id: str
+
+
+class MemorySplitResponse(ContractModel):
+    source: MemoryUnit
+    created: list[MemoryUnit] = Field(min_length=2, max_length=64)
+
+
+type CreateMemorySplitResponse = MemorySplitResponse | SimilarMemoriesResponse
+
+
 class DuplicateMemoryConflict(ContractModel):
     duplicate_of: SimilarityMemoryCard
 
@@ -892,6 +916,7 @@ _FEEDBACK_RESPONSE = TypeAdapter(FeedbackResponse)
 _CREATED_RESPONSE = TypeAdapter(CreatedMemoryResponse)
 _SIMILAR_RESPONSE = TypeAdapter(SimilarMemoriesResponse)
 _CREATE_CONFLICT = TypeAdapter(CreateMemoryConflict)
+_MEMORY_SPLIT_RESPONSE = TypeAdapter(MemorySplitResponse)
 _MEMORY_UNIT = TypeAdapter(MemoryUnit)
 _PATCH_CONFLICT = TypeAdapter(PatchMemoryConflict)
 _MEMORY_LIST_RESPONSE = TypeAdapter(PagedMemoryListResponse)
@@ -990,6 +1015,23 @@ class SpineClient:
         )
         if response.status_code == 201:
             return _decode_json(response, _CREATED_RESPONSE, _JSON_MEDIA_TYPE)
+        if response.status_code == 200:
+            return _decode_json(response, _SIMILAR_RESPONSE, _JSON_MEDIA_TYPE)
+        if response.status_code == 409 and _media_type(response) == _JSON_MEDIA_TYPE:
+            conflict = _decode_json(response, _CREATE_CONFLICT, _JSON_MEDIA_TYPE)
+            raise CreateMemoryConflictError(response, conflict)
+        _raise_problem(response)
+
+    async def create_memory_split(self, request: MemorySplitRequest) -> CreateMemorySplitResponse:
+        """Mirror A-049 POST /v1/memory-splits."""
+
+        response = await self._request(
+            "POST",
+            "v1/memory-splits",
+            json_body=_request_body(request),
+        )
+        if response.status_code == 201:
+            return _decode_json(response, _MEMORY_SPLIT_RESPONSE, _JSON_MEDIA_TYPE)
         if response.status_code == 200:
             return _decode_json(response, _SIMILAR_RESPONSE, _JSON_MEDIA_TYPE)
         if response.status_code == 409 and _media_type(response) == _JSON_MEDIA_TYPE:

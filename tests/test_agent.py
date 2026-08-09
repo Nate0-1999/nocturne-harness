@@ -11,14 +11,18 @@ import pytest
 from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 from pydantic_ai.models.test import TestModel
+from pydantic_ai.usage import RunUsage
 
 from harness.agent import (
     REMEMBER_DRAFT_INSTRUCTION,
+    REMEMBER_SPLIT_GUIDANCE,
+    REMEMBER_SPLIT_INSTRUCTION,
     ChatResult,
     HarnessAgent,
     ModelConfigurationError,
     RememberDraft,
     RememberResult,
+    RememberSplitDraft,
     resolve_model,
 )
 from harness.config import HarnessSettings
@@ -26,9 +30,13 @@ from harness.spine_client import (
     CreatedMemoryResponse,
     CreateMemoryConflictError,
     CreateMemoryRequest,
+    CreateMemorySplitResponse,
     DuplicateMemoryConflict,
     LabelConflict,
     MemoryKind,
+    MemorySplitRequest,
+    MemorySplitResponse,
+    MemoryStatus,
     MemoryUnit,
     ProblemDetail,
     SimilarMemoriesResponse,
@@ -40,12 +48,17 @@ from harness.tools_memory import MemoryToolContext
 
 MEMORY_ID = UUID("12345678-1234-5678-1234-567812345678")
 THREAD_ID = UUID("22345678-1234-5678-1234-567812345678")
+SPLIT_SOURCE_ID = UUID("32345678-1234-5678-1234-567812345678")
+SPLIT_CHILD_ONE_ID = UUID("42345678-1234-5678-1234-567812345678")
+SPLIT_CHILD_TWO_ID = UUID("52345678-1234-5678-1234-567812345678")
 
 
 @dataclass
 class FakeSpine:
     outcome: CreatedMemoryResponse | SimilarMemoriesResponse | SpineClientError
+    split_outcome: CreateMemorySplitResponse | SpineClientError | None = None
     create_requests: list[CreateMemoryRequest] = field(default_factory=list)
+    split_requests: list[MemorySplitRequest] = field(default_factory=list)
 
     async def create_memory(
         self, request: CreateMemoryRequest
@@ -54,6 +67,14 @@ class FakeSpine:
         if isinstance(self.outcome, SpineClientError):
             raise self.outcome
         return self.outcome
+
+    async def create_memory_split(self, request: MemorySplitRequest) -> CreateMemorySplitResponse:
+        self.split_requests.append(request)
+        if self.split_outcome is None:
+            raise AssertionError("unexpected split call")
+        if isinstance(self.split_outcome, SpineClientError):
+            raise self.split_outcome
+        return self.split_outcome
 
 
 def settings(**overrides: Any) -> HarnessSettings:
@@ -71,10 +92,16 @@ def settings(**overrides: Any) -> HarnessSettings:
     return HarnessSettings(_env_file=None, **values)
 
 
-def memory_unit(*, label: str = "Editor preference", body: str = "Use tabs.") -> MemoryUnit:
+def memory_unit(
+    *,
+    memory_id: UUID = MEMORY_ID,
+    label: str = "Editor preference",
+    body: str = "Use tabs.",
+    status: MemoryStatus = MemoryStatus.ACTIVE,
+) -> MemoryUnit:
     now = datetime(2026, 7, 20, 12, 0, tzinfo=UTC)
     return MemoryUnit(
-        memory_id=MEMORY_ID,
+        memory_id=memory_id,
         principal_id="principal-1",
         label=label,
         body=body,
@@ -84,7 +111,7 @@ def memory_unit(*, label: str = "Editor preference", body: str = "Use tabs.") ->
         thread_origin=str(THREAD_ID),
         origin_path="/workspace/notes.md",
         pin=False,
-        status="active",
+        status=status,
         revision=1,
         stats={},
         bias=0,
@@ -149,6 +176,42 @@ def remember_model(
         return ModelResponse(parts=[TextPart(json.dumps({"label": label, "keywords": keywords}))])
 
     return FunctionModel(respond, model_name=f"local:{label[:12]}")
+
+
+def structured_sequence_model(
+    outputs: list[dict[str, object]],
+    calls: list[tuple[list[ModelMessage], AgentInfo]],
+) -> FunctionModel:
+    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        calls.append((list(messages), info))
+        if not outputs:
+            raise AssertionError("unexpected model request")
+        return ModelResponse(parts=[TextPart(json.dumps(outputs.pop(0)))])
+
+    return FunctionModel(respond, model_name="local:remember-sequence")
+
+
+def split_response(source: str) -> MemorySplitResponse:
+    return MemorySplitResponse(
+        source=memory_unit(
+            memory_id=SPLIT_SOURCE_ID,
+            label="Split source",
+            body=source,
+            status=MemoryStatus.TOMBSTONED,
+        ),
+        created=[
+            memory_unit(
+                memory_id=SPLIT_CHILD_ONE_ID,
+                label="Garden cadence",
+                body="The garden review happens weekly.",
+            ),
+            memory_unit(
+                memory_id=SPLIT_CHILD_TWO_ID,
+                label="Garden owner",
+                body="Nate owns the garden review.",
+            ),
+        ],
+    )
 
 
 @pytest.mark.parametrize(
@@ -327,6 +390,40 @@ async def test_label_agent_is_separate_and_has_no_tools() -> None:
 
 
 @pytest.mark.asyncio
+async def test_a049_remember_splitter_is_tools_free_and_lossless_by_instruction() -> None:
+    """F027, A-049, ADR-022, and SPEC B.6 rule 12 are defended here.
+    The semantic splitter must be a separate tools-free boundary that preserves complete claims.
+    """
+    calls: list[tuple[list[ModelMessage], AgentInfo]] = []
+    model = structured_sequence_model(
+        [
+            {
+                "candidates": [
+                    {
+                        "label": "Garden cadence",
+                        "body": "The garden review happens weekly.",
+                        "keywords": ["garden", "cadence"],
+                    }
+                ]
+            }
+        ],
+        calls,
+    )
+    agent = HarnessAgent(settings(), model=model)
+
+    result = await agent.remember_splitter_agent.run("split this", model=model)
+
+    assert isinstance(result.output, RememberSplitDraft)
+    assert len(calls) == 1
+    assert calls[0][1].function_tools == []
+    assert calls[0][1].output_tools == []
+    assert calls[0][1].instructions is not None
+    assert calls[0][1].instructions.startswith(REMEMBER_SPLIT_INSTRUCTION)
+    assert "without summarizing" in calls[0][1].instructions
+    assert "never as durable facts or candidates" in calls[0][1].instructions
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("command", ["/remember", "/remember ", "/remember\n\t"])
 async def test_empty_remember_command_is_visible_and_does_not_call_model_or_spine(
     command: str,
@@ -404,6 +501,222 @@ async def test_remember_uses_selected_model_once_without_tools_and_maps_global_u
     assert request.editor == "user"
     assert request.machine_id == "machine-1"
     assert request.force is False
+    assert spine.split_requests == []
+
+
+@pytest.mark.asyncio
+async def test_a049_oversized_multi_claim_uses_one_atomic_split_with_exact_source() -> None:
+    """F027, A-049, ADR-022, and SPEC B.6 rule 12 are defended here.
+    An oversized multi-claim source must become one linked atomic request with exact provenance.
+    """
+    source = (
+        "The garden review happens weekly. "
+        + "This sentence preserves relevant qualifying context. " * 70
+        + "Nate owns the garden review."
+    )
+    calls: list[tuple[list[ModelMessage], AgentInfo]] = []
+    model = structured_sequence_model(
+        [
+            {
+                "candidates": [
+                    {
+                        "label": "Garden cadence",
+                        "body": "The garden review happens weekly.",
+                        "keywords": ["garden", "cadence"],
+                    },
+                    {
+                        "label": "Garden owner",
+                        "body": "Nate owns the garden review.",
+                        "keywords": ["garden", "owner"],
+                    },
+                ]
+            }
+        ],
+        calls,
+    )
+    spine = FakeSpine(
+        CreatedMemoryResponse(created=memory_unit()),
+        split_outcome=split_response(source),
+    )
+    usage = RunUsage()
+    agent = HarnessAgent(settings(), model=model)
+
+    result = await agent.dispatch(
+        f"/remember   {source}  ",
+        context=context(spine),
+        usage=usage,
+    )
+
+    assert result == RememberResult(
+        ok=True,
+        message="Remembered 2 linked memories: 'Garden cadence', 'Garden owner'.",
+        memory_id=SPLIT_SOURCE_ID,
+        label="Split source",
+    )
+    assert len(calls) == 1
+    assert usage.requests == 1
+    assert spine.create_requests == []
+    assert len(spine.split_requests) == 1
+    request = spine.split_requests[0]
+    assert request.source_body == source
+    assert [child.model_dump() for child in request.children] == [
+        {
+            "label": "Garden cadence",
+            "body": "The garden review happens weekly.",
+            "keywords": ["garden", "cadence"],
+        },
+        {
+            "label": "Garden owner",
+            "body": "Nate owns the garden review.",
+            "keywords": ["garden", "owner"],
+        },
+    ]
+    assert request.principal_id == "principal-1"
+    assert request.thread_origin == str(THREAD_ID)
+    assert request.origin_path == "/workspace/notes.md"
+    assert request.editor == "user"
+    assert request.machine_id == "machine-1"
+
+
+@pytest.mark.asyncio
+async def test_a049_overlong_label_single_claim_reuses_exact_source_through_ordinary_create() -> (
+    None
+):
+    """F027, A-049, ADR-022, and SPEC B.6 rule 12 are defended here.
+    An overlong label gets one fallback while a fitting single claim keeps exact-body creation.
+    """
+    source = "The garden review happens weekly."
+    calls: list[tuple[list[ModelMessage], AgentInfo]] = []
+    model = structured_sequence_model(
+        [
+            {"label": "L" * 65, "keywords": ["garden", "cadence"]},
+            {
+                "candidates": [
+                    {
+                        "label": "Garden cadence",
+                        "body": source,
+                        "keywords": ["Garden", "cadence"],
+                    }
+                ]
+            },
+        ],
+        calls,
+    )
+    spine = FakeSpine(
+        CreatedMemoryResponse(created=memory_unit(label="Garden cadence", body=source))
+    )
+    usage = RunUsage()
+    agent = HarnessAgent(settings(), model=model)
+
+    result = await agent.remember(source, context=context(spine), usage=usage)
+
+    assert result.ok is True
+    assert len(calls) == 2
+    assert usage.requests == 2
+    assert len(spine.create_requests) == 1
+    assert spine.create_requests[0].body == source
+    assert spine.create_requests[0].label == "Garden cadence"
+    assert spine.create_requests[0].keywords == ["garden", "cadence"]
+    assert spine.split_requests == []
+
+
+@pytest.mark.asyncio
+async def test_a049_single_atomic_oversized_claim_guides_without_any_write() -> None:
+    """F027, A-049, ADR-022, and SPEC B.6 rule 12 are defended here.
+    One oversized indivisible claim is never shortened and receives enacted owner guidance.
+    """
+    source = "The complete indivisible claim retains this qualifier. " * 80
+    calls: list[tuple[list[ModelMessage], AgentInfo]] = []
+    model = structured_sequence_model(
+        [
+            {
+                "candidates": [
+                    {
+                        "label": "Indivisible claim",
+                        "body": source,
+                        "keywords": ["indivisible", "qualifier"],
+                    }
+                ]
+            }
+        ],
+        calls,
+    )
+    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
+    agent = HarnessAgent(settings(), model=model)
+
+    result = await agent.remember(source, context=context(spine))
+
+    assert result == RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
+    assert len(calls) == 1
+    assert spine.create_requests == []
+    assert spine.split_requests == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "candidates",
+    [
+        pytest.param(
+            [
+                {"label": "Same", "body": "Fact one.", "keywords": ["fact", "one"]},
+                {"label": "Same", "body": "Fact two.", "keywords": ["fact", "two"]},
+            ],
+            id="duplicate-label",
+        ),
+        pytest.param(
+            [
+                {"label": "First", "body": "Same fact.", "keywords": ["fact", "one"]},
+                {"label": "Second", "body": "Same fact.", "keywords": ["fact", "two"]},
+            ],
+            id="duplicate-body",
+        ),
+        pytest.param(
+            [
+                {
+                    "label": "First",
+                    "body": "one two three four five six",
+                    "keywords": ["fact", "one"],
+                },
+                {"label": "Second", "body": "Fact two.", "keywords": ["fact", "two"]},
+            ],
+            id="over-limit-child",
+        ),
+        pytest.param(
+            [
+                {"label": "First\nline", "body": "Fact one.", "keywords": ["fact", "one"]},
+                {"label": "Second", "body": "Fact two.", "keywords": ["fact", "two"]},
+            ],
+            id="multiline-label",
+        ),
+        pytest.param(
+            [
+                {
+                    "label": "First",
+                    "body": "Fact one.",
+                    "keywords": ["same", "SAME", "other"],
+                },
+                {"label": "Second", "body": "Fact two.", "keywords": ["fact", "two"]},
+            ],
+            id="duplicate-keyword",
+        ),
+    ],
+)
+async def test_a049_invalid_split_draft_uses_safe_guidance_and_zero_writes(
+    candidates: list[dict[str, object]],
+) -> None:
+    """F027, A-049, ADR-022, and SPEC B.6 rule 12 are defended here.
+    Invalid split drafts cannot become partial writes, mechanical chunks, or raw limit errors.
+    """
+    source = "one two three four five six seven eight"
+    model = structured_sequence_model([{"candidates": candidates}], [])
+    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
+    agent = HarnessAgent(settings(memory_max_tokens=5), model=model)
+
+    result = await agent.remember(source, context=context(spine))
+
+    assert result == RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
+    assert spine.create_requests == []
+    assert spine.split_requests == []
 
 
 @pytest.mark.asyncio
@@ -412,7 +725,6 @@ async def test_remember_uses_selected_model_once_without_tools_and_maps_global_u
     [
         ("   ", "generated label was blank"),
         ("first line\nsecond line", "generated label was not one line"),
-        ("é" * 65, "generated label exceeded 64 characters"),
     ],
 )
 async def test_invalid_generated_label_is_rejected_without_calling_spine(

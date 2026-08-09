@@ -19,6 +19,7 @@ def test_c5_defaults_are_local_minimax_with_bounded_runs_and_spine(monkeypatch) 
         "RUN_REQUEST_LIMIT",
         "RUN_TOTAL_TOKENS_LIMIT",
         "LABEL_MAX",
+        "MEMORY_MAX_TOKENS",
     ):
         monkeypatch.delenv(name, raising=False)
     settings = HarnessSettings(
@@ -40,6 +41,7 @@ def test_c5_defaults_are_local_minimax_with_bounded_runs_and_spine(monkeypatch) 
     assert settings.run_request_limit == 40
     assert settings.run_total_tokens_limit == 500_000
     assert settings.label_max == 64
+    assert settings.memory_max_tokens == 128
 
 
 def test_settings_accept_environment_model_spine_and_limit_overrides(monkeypatch) -> None:
@@ -72,7 +74,13 @@ def test_settings_accept_environment_model_spine_and_limit_overrides(monkeypatch
 
 @pytest.mark.parametrize(
     "field",
-    ["model_context_tokens", "run_request_limit", "run_total_tokens_limit", "label_max"],
+    [
+        "model_context_tokens",
+        "run_request_limit",
+        "run_total_tokens_limit",
+        "label_max",
+        "memory_max_tokens",
+    ],
 )
 def test_positive_configured_limits_are_enforced(field: str) -> None:
     """SPEC C.5 is defended by verifying that positive configured limits are enforced; this

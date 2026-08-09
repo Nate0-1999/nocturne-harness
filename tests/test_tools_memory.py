@@ -11,10 +11,14 @@ from harness.spine_client import (
     CreateMemoryConflictError,
     CreateMemoryRequest,
     CreateMemoryResponse,
+    CreateMemorySplitResponse,
     DuplicateMemoryConflict,
     LabelConflict,
     ListMemoriesParams,
     MemoryKind,
+    MemorySplitChild,
+    MemorySplitRequest,
+    MemorySplitResponse,
     MemoryStatus,
     MemoryUnit,
     PagedMemoryListResponse,
@@ -28,7 +32,13 @@ from harness.spine_client import (
     SimilarMemoriesResponse,
     SpineClientError,
 )
-from harness.tools_memory import MemoryToolContext, edit_memory, save_memory, search_memory
+from harness.tools_memory import (
+    MemoryToolContext,
+    create_remembered_memory_split,
+    edit_memory,
+    save_memory,
+    search_memory,
+)
 
 NOW = datetime(2026, 7, 20, 12, tzinfo=UTC)
 THREAD_ID = UUID("10000000-0000-0000-0000-000000000001")
@@ -43,10 +53,12 @@ class FakeSpineGateway:
 
     def __init__(self) -> None:
         self.create_outcomes: list[CreateMemoryResponse | SpineClientError] = []
+        self.split_outcomes: list[CreateMemorySplitResponse | SpineClientError] = []
         self.search_outcomes: list[SearchResponse | SpineClientError] = []
         self.list_pages: dict[int, PagedMemoryListResponse | SpineClientError] = {}
         self.patch_outcomes: list[PatchMemoryResponse | SpineClientError] = []
         self.create_requests: list[CreateMemoryRequest] = []
+        self.split_requests: list[MemorySplitRequest] = []
         self.search_requests: list[SearchRequest] = []
         self.list_requests: list[ListMemoriesParams] = []
         self.patch_requests: list[tuple[UUID, PatchMemoryRequest]] = []
@@ -54,6 +66,10 @@ class FakeSpineGateway:
     async def create_memory(self, request: CreateMemoryRequest) -> CreateMemoryResponse:
         self.create_requests.append(request)
         return self._take(self.create_outcomes, "create")
+
+    async def create_memory_split(self, request: MemorySplitRequest) -> CreateMemorySplitResponse:
+        self.split_requests.append(request)
+        return self._take(self.split_outcomes, "split")
 
     async def search(self, request: SearchRequest) -> SearchResponse:
         self.search_requests.append(request)
@@ -181,6 +197,44 @@ def create_conflict(
 
 def patch_conflict(conflict: RevisionConflict | LabelConflict) -> PatchMemoryConflictError:
     return PatchMemoryConflictError(conflict_response("PATCH"), conflict)
+
+
+@pytest.mark.asyncio
+async def test_a049_remember_split_maps_exact_source_and_trusted_global_provenance() -> None:
+    """A-049, ADR-022, and SPEC B.6 rule 12 are defended here.
+    The split mapper sends exact source and trusted user/global lineage through one operation.
+    """
+    spine = FakeSpineGateway()
+    source = memory_unit(
+        label="Split source", body="Fact one. Fact two.", status=MemoryStatus.TOMBSTONED
+    )
+    child_one = memory_unit(label="First", body="Fact one.", kind=MemoryKind.FACT)
+    child_two = memory_unit(
+        memory_id=OTHER_MEMORY_ID, label="Second", body="Fact two.", kind=MemoryKind.FACT
+    )
+    spine.split_outcomes.append(MemorySplitResponse(source=source, created=[child_one, child_two]))
+    children = [
+        MemorySplitChild(label="First", body="Fact one.", keywords=["fact", "one"]),
+        MemorySplitChild(label="Second", body="Fact two.", keywords=["fact", "two"]),
+    ]
+
+    response = await create_remembered_memory_split(
+        context(spine),
+        source_body="Fact one. Fact two.",
+        children=children,
+    )
+
+    assert isinstance(response, MemorySplitResponse)
+    assert len(spine.split_requests) == 1
+    assert spine.split_requests[0].model_dump(mode="json", exclude_none=True) == {
+        "principal_id": "principal-1",
+        "source_body": "Fact one. Fact two.",
+        "children": [child.model_dump() for child in children],
+        "thread_origin": str(THREAD_ID),
+        "origin_path": "/workspace/PLAN.md",
+        "editor": "user",
+        "machine_id": "machine-1",
+    }
 
 
 @pytest.mark.asyncio

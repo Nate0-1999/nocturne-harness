@@ -16,6 +16,9 @@ from harness.spine_client import (
     ListMemoriesParams,
     MemoryCard,
     MemoryKind,
+    MemorySplitChild,
+    MemorySplitRequest,
+    MemorySplitResponse,
     MemoryUnit,
     PagedMemoryListResponse,
     PatchMemoryConflict,
@@ -100,6 +103,7 @@ def test_client_exposes_all_spine_routes() -> None:
         "commit_injection",
         "submit_feedback",
         "create_memory",
+        "create_memory_split",
         "patch_memory",
         "list_memories",
         "search",
@@ -254,6 +258,45 @@ def test_create_success_and_similar_bodies_use_v15_shapes() -> None:
 
     assert created.created.memory_id == similar.similar[0].memory_id
     assert similar.similar[0].features is None
+
+
+def test_a049_memory_split_models_are_closed_exact_c4_shapes() -> None:
+    """A-049, C.4, and SPEC B.6 rule 12 are defended here.
+    Atomic split models expose only the enacted exact-source, child, and lineage fields.
+    """
+    request = MemorySplitRequest(
+        principal_id="principal-1",
+        source_body="Fact one. Fact two.",
+        children=[
+            MemorySplitChild(label="First", body="Fact one.", keywords=["fact", "one"]),
+            MemorySplitChild(label="Second", body="Fact two.", keywords=["fact", "two"]),
+        ],
+        thread_origin="22345678-1234-5678-1234-567812345678",
+        origin_path="/workspace/notes.md",
+        editor="user",
+        machine_id="machine-1",
+    )
+    source = memory_unit_payload()
+    source.update(label="Split source", body=request.source_body, status="tombstoned")
+    response = MemorySplitResponse(
+        source=source,
+        created=[memory_unit_payload(), memory_unit_payload()],
+    )
+
+    assert set(request.model_dump()) == {
+        "principal_id",
+        "source_body",
+        "children",
+        "thread_origin",
+        "origin_path",
+        "editor",
+        "machine_id",
+    }
+    assert set(request.children[0].model_dump()) == {"label", "body", "keywords"}
+    assert response.source.status == "tombstoned"
+    assert len(response.created) == 2
+    with pytest.raises(ValidationError):
+        MemorySplitRequest.model_validate({**request.model_dump(), "kind": "fact"})
 
 
 def test_create_conflicts_cover_duplicate_and_active_label() -> None:
