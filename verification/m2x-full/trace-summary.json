@@ -1,0 +1,38 @@
+{
+  "session": "codex / 2026-08-08 / e6b1",
+  "checklist_commit": "38feca0",
+  "checklist_items": 58,
+  "verdicts": {
+    "pass": 39,
+    "fail": 12,
+    "needs_taste": 7
+  },
+  "provider": "openrouter:minimax/minimax-m3",
+  "identity": {
+    "principal_id": "m2x-sop-verification",
+    "machine_id": "m2x-sop-verification"
+  },
+  "deep_simulation": {
+    "accuracy_percent": 100,
+    "holdout_count": 1,
+    "digest_prefix": "313e805f38f7",
+    "force_enacted": false
+  },
+  "journal": {
+    "files_after_use": 12,
+    "mode": "0600",
+    "restart_hydrated_transcripts": false
+  },
+  "cleanup": {
+    "active_verification_memories": 0,
+    "pending_seed_items": 0,
+    "pending_thread_items": 0,
+    "temporary_homes_removed": true,
+    "processes_stopped": true
+  },
+  "tests": {
+    "harness": "681 passed, 3 deselected",
+    "spine": "223 passed",
+    "web": "10 unit passed; lint passed; build passed"
+  }
+}
