@@ -2,71 +2,59 @@
 
 Generated deterministically by `scripts/check_test_motivations.py`.
 
-- Tests discovered: 423
-- Motivated tests: 423
+- Tests discovered: 428
+- Motivated tests: 428
 - Grandfathered baseline debt: 0
 - Stale baseline entries: 0
+- Catalog headings: 53
+- Catalog headings referenced: 12
+- Normative-bearing headings: 40
+- Normative-bearing heading coverage: 11 / 40
+- Zero-defender normative-bearing headings: 29
+- Unique test-to-statute mention links: 494
 
-## SPEC and ADR defenders
+Coverage is heading-level only; this report does not claim clause coverage.
 
-### 0 — ZERO DEFENDERS
+## Normative-bearing heading coverage
 
+### 1.0 — MIXED_GUARDRAIL — ZERO DEFENDERS
+
+- Classification basis: SPEC 47-89 is vocabulary plus one load-bearing naming law.
 - _None._
 
-### 1 — ZERO DEFENDERS
+### 1.3 — CONTRACT — ZERO DEFENDERS
 
+- Classification basis: SPEC 1.4 lines 167-170 explicitly names the Invariants as a contract.
 - _None._
 
-### 1.0 — ZERO DEFENDERS
+### 1.4 — RULE — ZERO DEFENDERS
 
+- Classification basis: SPEC 163-202 governs force classes, completions, and decision journaling.
 - _None._
 
-### 1.1 — ZERO DEFENDERS
+### 2.1 — RULE — ZERO DEFENDERS
 
+- Classification basis: SPEC 299-315 is the numbered Blight Protocol and record duty.
 - _None._
 
-### 1.2 — ZERO DEFENDERS
+### ADR-001 — MIXED_GUARDRAIL — ZERO DEFENDERS
 
+- Classification basis: SPEC 328-355 mixes architecture guidance with frozen boundaries.
 - _None._
 
-### 1.3 — ZERO DEFENDERS
+### ADR-010 — RULE — ZERO DEFENDERS
 
+- Classification basis: SPEC 383-394 explicitly declares placement and movement law.
 - _None._
 
-### 1.4 — ZERO DEFENDERS
+### ADR-004 — RULE — ZERO DEFENDERS
 
+- Classification basis: SPEC 512-549 explicitly identifies the shipped unit and concurrency law.
 - _None._
 
-### 2 — ZERO DEFENDERS
+### ADR-005 — MIXED_GUARDRAIL — 30 defender(s)
 
-- _None._
-
-### 2.1 — ZERO DEFENDERS
-
-- _None._
-
-### ADR-001 — ZERO DEFENDERS
-
-- _None._
-
-### ADR-010 — ZERO DEFENDERS
-
-- _None._
-
-### ADR-002 — ZERO DEFENDERS
-
-- _None._
-
-### ADR-003 — ZERO DEFENDERS
-
-- _None._
-
-### ADR-004 — ZERO DEFENDERS
-
-- _None._
-
-### ADR-005 — 30 defender(s)
-
+- Classification basis: SPEC 553-694 mixes partial/open design with binding scorer rules.
 - `tests/test_citation.py::test_citation_uses_deterministic_unicode_alphanumeric_ngrams`
 - `tests/test_memory_capability.py::test_adapted_tool_schemas_defaults_descriptions_and_capability_id`
 - `tests/test_memory_capability.py::test_adapter_executes_the_owned_feature_handler`
@@ -98,24 +86,24 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_tools_memory.py::test_search_rejects_invalid_k_without_spine_call`
 - `tests/test_tools_memory.py::test_search_renders_empty_results_truthfully`
 
-### ADR-011 — ZERO DEFENDERS
+### ADR-011 — MIXED_GUARDRAIL — ZERO DEFENDERS
 
+- Classification basis: SPEC 696-733 is HORIZON design plus a current no-build guardrail.
 - _None._
 
-### ADR-007 — ZERO DEFENDERS
+### ADR-008 — MIXED_GUARDRAIL — ZERO DEFENDERS
 
+- Classification basis: SPEC 760-817 mixes accepted M1 constraints with later proposals.
 - _None._
 
-### ADR-008 — ZERO DEFENDERS
+### ADR-012 — CONTRACT — ZERO DEFENDERS
 
+- Classification basis: SPEC 822-823 explicitly declares the work protocol a contract.
 - _None._
 
-### ADR-012 — ZERO DEFENDERS
+### ADR-013 — CONTRACT — 32 defender(s)
 
-- _None._
-
-### ADR-013 — 32 defender(s)
-
+- Classification basis: SPEC 889-890 explicitly declares the harness seam a contract.
 - `tests/test_agent.py::test_agent_lazily_resolves_only_the_selected_model`
 - `tests/test_agent.py::test_chat_returns_output_and_reusable_full_history_with_exact_limits`
 - `tests/test_agent.py::test_empty_remember_command_is_visible_and_does_not_call_model_or_spine`
@@ -149,16 +137,19 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_agent_runtime.py::test_updated_memory_block_replaces_stale_provider_history`
 - `tests/test_agent_runtime.py::test_usage_limit_maps_to_budget_exceeded_with_partial_history`
 
-### ADR-014 — ZERO DEFENDERS
+### ADR-014 — CONTRACT — ZERO DEFENDERS
 
+- Classification basis: SPEC 933-935 explicitly declares the milestone-scoped loop contract.
 - _None._
 
-### ADR-015 — ZERO DEFENDERS
+### ADR-015 — CONTRACT — ZERO DEFENDERS
 
+- Classification basis: SPEC 970 explicitly declares the permission model a contract.
 - _None._
 
-### ADR-016 — 20 defender(s)
+### ADR-016 — CONTRACT — 20 defender(s)
 
+- Classification basis: SPEC 1010 explicitly declares the session and journal contract.
 - `tests/test_onboarding.py::test_up_refuses_a_read_only_journal_before_starting_services`
 - `tests/test_transcript.py::test_capture_does_not_depend_on_a_live_subscriber`
 - `tests/test_transcript.py::test_capture_failure_poison_stops_unjournaled_work`
@@ -180,19 +171,24 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_transcript.py::test_startup_preflight_fsyncs_and_removes_its_probe`
 - `tests/test_transcript.py::test_startup_refuses_unrecoverable_parent_history`
 
-### ADR-017 — ZERO DEFENDERS
+### ADR-017 — CONTRACT — ZERO DEFENDERS
 
+- Classification basis: SPEC 1068 explicitly declares the M3+ Symphony contract.
 - _None._
 
-### ADR-018 — ZERO DEFENDERS
+### ADR-018 — CONTRACT — ZERO DEFENDERS
 
+- Classification basis: SPEC 1114-1117 declares the viz contract and separates guidance.
 - _None._
 
-### ADR-019 — 48 defender(s)
+### ADR-019 — CONTRACT — 50 defender(s)
 
+- Classification basis: SPEC 1206 explicitly declares the packaging contract.
 - `tests/test_cli.py::test_deploy_loads_initialized_key_and_forwards_dry_run`
 - `tests/test_cli.py::test_local_commands_dispatch`
 - `tests/test_cli.py::test_parser_exposes_onboarding_and_lifecycle_commands`
+- `tests/test_cli.py::test_seed_command_posts_each_markdown_file_to_the_running_owner_pipeline`
+- `tests/test_cli.py::test_seed_command_refuses_non_markdown_before_contacting_the_daemon`
 - `tests/test_deploy.py::test_absent_breaker_is_armed_only_through_packaged_source_and_tty`
 - `tests/test_deploy.py::test_absent_breaker_requires_tty_before_any_d1_work`
 - `tests/test_deploy.py::test_apply_converges_once_then_second_apply_has_zero_mutations`
@@ -239,16 +235,19 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_packaging.py::test_public_distribution_and_lockstep_dependency_metadata`
 - `tests/test_packaging.py::test_wheel_bundle_keeps_its_private_asset_path`
 
-### ADR-020 — ZERO DEFENDERS
+### ADR-020 — MIXED_GUARDRAIL — ZERO DEFENDERS
 
+- Classification basis: SPEC 1318-1319 is HORIZON design plus a no-build guardrail.
 - _None._
 
-### ADR-021 — ZERO DEFENDERS
+### ADR-021 — RULE — ZERO DEFENDERS
 
+- Classification basis: SPEC 1369-1531 is the accepted, operative Memory Write Law.
 - _None._
 
-### ADR-022 — 13 defender(s)
+### ADR-022 — MIXED_GUARDRAIL — 13 defender(s)
 
+- Classification basis: SPEC 1535-1669 mixes accepted doctrine, rules, and proposed ops.
 - `tests/test_agent.py::test_a049_invalid_split_draft_uses_safe_guidance_and_zero_writes`
 - `tests/test_agent.py::test_a049_overlong_label_single_claim_reuses_exact_source_through_ordinary_create`
 - `tests/test_agent.py::test_a049_oversized_multi_claim_uses_one_atomic_split_with_exact_source`
@@ -263,47 +262,52 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_agent_runtime.py::test_a049_split_provider_failure_keeps_runtime_error_semantics`
 - `tests/test_tools_memory.py::test_a049_remember_split_maps_exact_source_and_trusted_global_provenance`
 
-### ADR-023 — 4 defender(s)
+### ADR-023 — RULE — 4 defender(s)
 
+- Classification basis: SPEC 1674-1818 identifies owner law and action contracts.
 - `tests/test_parameter_registry.py::test_model_settings_forward_every_real_request_parameter`
 - `tests/test_parameter_registry.py::test_registry_rejects_unknown_unbound_and_invalid_values`
 - `tests/test_parameter_registry.py::test_run_loop_applies_replays_and_publishes_bound_parameter_changes`
 - `tests/test_parameter_registry.py::test_selector_uses_named_seam_preserves_overrides_and_journals_refusals`
 
-### ADR-024 — ZERO DEFENDERS
+### ADR-024 — MIXED_GUARDRAIL — ZERO DEFENDERS
 
+- Classification basis: SPEC 1823-1919 mixes ledger rules with deferred and horizon design.
 - _None._
 
-### ADR-006 — ZERO DEFENDERS
+### ADR-009 — MIXED_GUARDRAIL — ZERO DEFENDERS
 
+- Classification basis: SPEC 1936-2063 mixes accepted direction, rules, and proposed detail.
 - _None._
 
-### ADR-009 — ZERO DEFENDERS
+### B.1 — RULE — ZERO DEFENDERS
 
+- Classification basis: SPEC 2057-2076 makes commitment tiers part of roadmap and scope law.
 - _None._
 
-### B.1 — ZERO DEFENDERS
+### B.2 — RULE — ZERO DEFENDERS
 
+- Classification basis: SPEC 2057-2062 and 2078-2093 govern pillar and repository ownership.
 - _None._
 
-### B.2 — ZERO DEFENDERS
+### B.3 — RULE — ZERO DEFENDERS
 
+- Classification basis: SPEC 2057-2062 and 2095-2137 govern what is built when.
 - _None._
 
-### B.3 — ZERO DEFENDERS
+### B.4 — CONTRACT — ZERO DEFENDERS
 
+- Classification basis: SPEC 1.4 lines 167-170 explicitly names the feature ledger a contract.
 - _None._
 
-### B.4 — ZERO DEFENDERS
+### B.5 — CONTRACT — ZERO DEFENDERS
 
+- Classification basis: SPEC 1.4 lines 167-170 explicitly names anti-scope rules contracts.
 - _None._
 
-### B.5 — ZERO DEFENDERS
+### B.6 — RULE — 26 defender(s)
 
-- _None._
-
-### B.6 — 23 defender(s)
-
+- Classification basis: SPEC 2191 onward explicitly declares and numbers judge law.
 - `tests/contract/test_spine_contract.py::test_live_create_conflicts_and_dedup_bands`
 - `tests/contract/test_spine_contract.py::test_live_patch_cas_tombstone_and_list`
 - `tests/test_agent.py::test_a049_invalid_split_draft_uses_safe_guidance_and_zero_writes`
@@ -324,24 +328,31 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_receipt_queue.py::test_unwritable_spool_retains_degraded_memory_batch`
 - `tests/test_spine_client.py::test_a049_memory_split_models_are_closed_exact_c4_shapes`
 - `tests/test_spine_transport.py::test_a049_split_preserves_existing_similar_and_conflict_status_bodies`
-- `tests/test_test_motivations.py::test_report_indexes_citations_and_marks_uncovered_law`
+- `tests/test_test_motivations.py::test_committed_heading_registry_is_exhaustive_and_preserves_boundaries`
+- `tests/test_test_motivations.py::test_normal_check_fails_closed_on_an_unknown_spec_heading`
+- `tests/test_test_motivations.py::test_report_generation_is_byte_deterministic`
+- `tests/test_test_motivations.py::test_report_separates_normative_coverage_from_contextual_mentions`
 - `tests/test_tools_memory.py::test_a049_remember_split_maps_exact_source_and_trusted_global_provenance`
 - `web/tests/vitals.test.mjs::line-203`
 
-### C.1 — ZERO DEFENDERS
+### C.1 — RULE — ZERO DEFENDERS
 
+- Classification basis: SPEC 2301-2305 makes Part C literal; 2307-2344 fixes repo boundaries.
 - _None._
 
-### C.2 — ZERO DEFENDERS
+### C.2 — CONTRACT — ZERO DEFENDERS
 
+- Classification basis: SPEC 1.4 lines 167-170 explicitly names the DDL a contract.
 - _None._
 
-### C.3 — ZERO DEFENDERS
+### C.3 — RULE — ZERO DEFENDERS
 
+- Classification basis: SPEC 2301-2305 and 2448-2496 make scorer rules literal.
 - _None._
 
-### C.4 — 38 defender(s)
+### C.4 — CONTRACT — 38 defender(s)
 
+- Classification basis: SPEC 1.4 lines 167-170 explicitly names API bodies contracts.
 - `tests/contract/test_spine_contract.py::test_live_create_conflicts_and_dedup_bands`
 - `tests/contract/test_spine_contract.py::test_live_patch_cas_tombstone_and_list`
 - `tests/contract/test_spine_contract.py::test_live_spend_receipt_is_atomic_and_idempotent`
@@ -381,8 +392,9 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_spine_transport.py::test_vitals_rejects_noncanonical_or_unconserved_lanes`
 - `tests/test_spine_transport.py::test_vitals_requires_the_exact_a028_gauge_contract`
 
-### C.5 — 7 defender(s)
+### C.5 — RULE — 7 defender(s)
 
+- Classification basis: SPEC 2301-2305 and 2680-2698 make defaults literal and single-source.
 - `tests/test_config.py::test_c5_defaults_are_local_minimax_with_bounded_runs_and_spine`
 - `tests/test_config.py::test_configured_runtime_identities_cannot_be_empty`
 - `tests/test_config.py::test_model_context_tokens_requires_a_real_integer`
@@ -391,12 +403,14 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_config.py::test_settings_accept_environment_model_spine_and_limit_overrides`
 - `tests/test_config.py::test_superseded_model_policy_fields_do_not_exist`
 
-### C.6 — ZERO DEFENDERS
+### C.6 — RULE — ZERO DEFENDERS
 
+- Classification basis: SPEC 2301-2305 and 2700-2787 make the exact capability flow literal.
 - _None._
 
-### C.7 — 84 defender(s)
+### C.7 — CONTRACT — 84 defender(s)
 
+- Classification basis: SPEC 1.4 lines 167-170 explicitly names the WS envelope a contract.
 - `tests/test_daemon.py::test_built_static_mode_rejects_unknown_websocket_path`
 - `tests/test_daemon.py::test_composed_http_routes_precede_the_static_mount`
 - `tests/test_daemon.py::test_default_prompt_gets_fresh_correlated_error_lifecycle`
@@ -482,27 +496,79 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_run_loop.py::test_usage_regression_terminalizes_as_error_and_stale_cancel_is_scoped`
 - `tests/test_run_loop.py::test_wrong_resolution_replaces_gate_and_validates_current_revision`
 
-### C.8 — ZERO DEFENDERS
+### C.8 — CONTRACT — ZERO DEFENDERS
 
+- Classification basis: SPEC 1.4 lines 167-170 explicitly names acceptance criteria contracts.
 - _None._
 
-### C.9 — ZERO DEFENDERS
+### C.9 — RULE — ZERO DEFENDERS
 
+- Classification basis: SPEC 2951-3008 is the concrete protocol expanding B.6 judge law.
 - _None._
 
-### C.10 — 4 defender(s)
+### C.10 — RULE — 4 defender(s)
 
+- Classification basis: SPEC 3010-3066 is an accepted verbatim charge with tasks and exit criteria.
 - `web/tests/vitals.test.mjs::line-113`
 - `web/tests/vitals.test.mjs::line-162`
 - `web/tests/vitals.test.mjs::line-173`
 - `web/tests/vitals.test.mjs::line-185`
 
-### D.1 — ZERO DEFENDERS
+## Contextual and reference-only catalog mentions
 
+### 0 — REFERENCE_ONLY — ZERO REFERENCES
+
+- Classification basis: SPEC 21-41 is vision not named by the 1.4 contract list.
 - _None._
 
-### D.2 — 32 defender(s)
+### 1 — REFERENCE_ONLY — ZERO REFERENCES
 
+- Classification basis: SPEC 45 is a container heading.
+- _None._
+
+### 1.1 — REFERENCE_ONLY — ZERO REFERENCES
+
+- Classification basis: SPEC 91-110 is descriptive topology.
+- _None._
+
+### 1.2 — REFERENCE_ONLY — ZERO REFERENCES
+
+- Classification basis: SPEC 112-123 is a narrative prompt lifecycle.
+- _None._
+
+### 2 — REFERENCE_ONLY — ZERO REFERENCES
+
+- Classification basis: SPEC 206-298 is why-lineage; its must language states problems.
+- _None._
+
+### ADR-002 — REFERENCE_ONLY — ZERO REFERENCES
+
+- Classification basis: SPEC 428-458 delegates its exact normative bodies to C.4.
+- _None._
+
+### ADR-003 — REFERENCE_ONLY — ZERO REFERENCES
+
+- Classification basis: SPEC 462-508 points each lifecycle stage to its owning law.
+- _None._
+
+### ADR-007 — REFERENCE_ONLY — ZERO REFERENCES
+
+- Classification basis: SPEC 739-756 is explicitly an index to owning law.
+- _None._
+
+### ADR-006 — REFERENCE_ONLY — ZERO REFERENCES
+
+- Classification basis: SPEC 1923 marks the ADR PROPOSED.
+- _None._
+
+### D.1 — REFERENCE_ONLY — ZERO REFERENCES
+
+- Classification basis: SPEC 3074 marks these questions OPEN.
+- _None._
+
+### D.2 — REFERENCE_ONLY — 32 reference(s)
+
+- Classification basis: SPEC 3089-3198 mixes accepted and proposed history under one unscoped token.
 - `tests/test_daemon.py::test_missing_web_build_is_explicit`
 - `tests/test_deploy.py::test_alignment_materializes_source_before_receipt_when_image_is_exact`
 - `tests/test_deploy.py::test_alignment_stops_when_pushed_image_does_not_converge`
@@ -536,12 +602,14 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_packaging.py::test_doctor_asset_inspection_is_read_only_when_startup_can_build`
 - `tests/test_packaging.py::test_editable_checkout_without_node_returns_one_plain_remedy`
 
-### D.3 — ZERO DEFENDERS
+### D.3 — REFERENCE_ONLY — ZERO REFERENCES
 
+- Classification basis: SPEC 3199-3210 is a routing index to owning sections.
 - _None._
 
-### D.4 — ZERO DEFENDERS
+### D.4 — REFERENCE_ONLY — ZERO REFERENCES
 
+- Classification basis: A-040 lines 1546-1549 says no normative test law lives in D.4.
 - _None._
 
 ## Other referenced statutes
