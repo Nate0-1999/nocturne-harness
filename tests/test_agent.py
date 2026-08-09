@@ -57,16 +57,16 @@ LIVE_OPERATION_HEAD = (
     "This verification dossier contains three independent facts that must remain separate. "
 )
 LIVE_FACT_ONE = (
-    "First: the temporary observatory ledger uses a silver cover, and its only purpose is to "
+    "The temporary observatory ledger uses a silver cover, and its only purpose is to "
     "record nightly calibration checks for this run; it must never be treated as owner biography. "
 )
 LIVE_FACT_TWO = (
-    "Second: the temporary calibration lantern is stored on the eastern shelf, is tagged with "
+    "The temporary calibration lantern is stored on the eastern shelf, is tagged with "
     "the code LANTERN-SEVEN, and is returned there after every measurement; this location is "
     "unrelated to the ledger. "
 )
 LIVE_FACT_THREE = (
-    "Third: the disposable weather card says that a north wind pauses the calibration procedure "
+    "The disposable weather card says that a north wind pauses the calibration procedure "
     "until the instrument settles, and that card is destroyed when verification ends. "
 )
 LIVE_OPERATION_TAIL = (
@@ -460,10 +460,23 @@ async def test_a049_remember_splitter_is_tools_free_and_lossless_by_instruction(
     assert calls[0][1].instructions is not None
     assert calls[0][1].instructions.startswith(REMEMBER_SPLIT_INSTRUCTION)
     assert "without summarizing" in calls[0][1].instructions
+    assert "prefer 2-5 words and under 40 characters" in calls[0][1].instructions
+    assert "at most 128 cl100k_base tokens" in calls[0][1].instructions
     assert "never as durable facts or candidates" in calls[0][1].instructions
     assert "concatenates byte-for-byte to the complete source" in calls[0][1].instructions
     assert "never emit a blank or whitespace-only segment" in calls[0][1].instructions
+    assert "internal reference is resolved" in calls[0][1].instructions
+    assert "First, Second, and Third" in calls[0][1].instructions
+    assert "MUST still appear byte-for-byte in coverage" in calls[0][1].instructions
+    assert "retain them byte-for-byte in that candidate body" in calls[0][1].instructions
+    assert "JSON strings must never trim it" in calls[0][1].instructions
     assert "safe_to_save true only" in calls[0][1].instructions
+    schema = RememberSplitDraft.model_json_schema()
+    candidate_label = schema["$defs"]["RememberSplitCandidate"]["properties"]["label"]
+    coverage_text = schema["$defs"]["RememberCoverageSegment"]["properties"]["text"]
+    assert candidate_label["maxLength"] == 64
+    assert "Never whitespace-only" in coverage_text["description"]
+    assert "Never trim it" in coverage_text["description"]
 
 
 @pytest.mark.asyncio

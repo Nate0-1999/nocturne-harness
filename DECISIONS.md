@@ -1352,3 +1352,49 @@ enacted request contract and let one override hide overlap across a whole
 batch. Reusing the single-create renderer would advertise a control that does
 not exist. Returning the generic split guidance would falsely imply that the
 model could not preserve meaning and conceal the real similarity decision.
+
+## 049 — Define standalone at the candidate boundary [P1.5]
+
+**Decision.** Tell the semantic splitter that a reference resolved inside the
+same candidate remains independently comprehensible, and that source-order
+markers such as First, Second, and Third do not make an otherwise independent
+fact unsafe. State the witness mechanics literally: instruction-only text must
+remain byte-for-byte in operation coverage even though it is excluded from
+candidate bodies, while any durable ordinal marker must remain byte-for-byte
+in its candidate body. State the enacted 64-code-point label and 128-token body
+limits in the model instruction instead of referring to limits that were never
+actually supplied. Put the same label and nonblank-coverage constraints on the
+structured-output schema, where providers receive them beside the fields they
+govern. Describe labels as short retrieval handles (prefer 2-5 words and under
+40 characters) while retaining 64 as the hard law. Keep the exact extractive
+witness, limits, and
+deterministic validator unchanged.
+
+**Motivation.** The M2Z2 recovery replayed its checked-in three-fact source
+through two real OpenRouter models. Both returned the safe no-write outcome
+because the prompt's bare "stand alone" phrase encouraged them to reject
+ordinary local anaphora such as "the ledger ... its purpose" and "the eastern
+shelf ... returned there." That conservatism prevented the guided split the
+exit criterion exists to prove even though each antecedent lives in the same
+candidate. A diagnostic full-model draft then found the three correct facts
+but omitted the operation-only head/tail from coverage and removed ordinal
+markers from candidate bodies; the unchanged validator correctly rejected it.
+The same draft also emitted labels beyond 64 code points, exposing that the
+instruction never stated A-049's literal configured bounds. The verification
+dossier's ordinal markers were structural rather than durable meaning, so its
+checked-in source now expresses the same three claims without them; this keeps
+the proof focused on semantic splitting and exact qualifier retention.
+Another diagnostic preserved all source bytes but emitted separator spaces as
+standalone coverage rows despite the prose prohibition. Schema-local wording
+closes that provider-facing ambiguity without accepting a response A-050 says
+to reject.
+Because a later draft then omitted those boundary spaces entirely, the schema
+also names leading and trailing whitespace as source text and gives the literal
+`. ` boundary example. This remains instruction at the model boundary; the
+validator still accepts only byte-exact reconstruction.
+
+**Rejected alternatives.** Weakening validation would trade visible refusal
+for silent meaning loss. Rewriting bodies would violate A-050's exact witness.
+Changing the verification paragraph would evade the product boundary instead
+of fixing it. Model-specific retries would add cost and nondeterminism while
+leaving the shared instruction ambiguous.

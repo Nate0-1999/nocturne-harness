@@ -49,12 +49,25 @@ REMEMBER_SPLIT_INSTRUCTION = (
     "Semantically divide the complete /remember source into durable atomic facts in source "
     "order. Preserve every claim and qualifier without summarizing, omitting, truncating, or "
     "mechanically chopping the source. Every candidate must stand alone, contain one claim, "
-    "and have its own one-line label plus 2-5 distinct lowercase searchable keywords. If the "
+    "and have its own short retrieval label: prefer 2-5 words and under 40 characters, with "
+    "64 Unicode code points as the hard maximum. Also return 2-5 "
+    "distinct lowercase searchable keywords. Every split candidate body must be at most 128 "
+    "cl100k_base tokens. If the "
+    "candidate itself names an object before referring back to it, that internal reference is "
+    "resolved and the candidate can still stand alone (for example, 'the ledger ... its cover' "
+    "or 'the eastern shelf ... returned there'). Source-order words such as First, Second, and "
+    "Third do not by themselves make otherwise independent facts unsafe; when they are part "
+    "of a durable coverage segment, retain them byte-for-byte in that candidate body. "
     "source includes directions or commentary about remembering, saving, or splitting, treat "
     "them as instructions for this operation, never as durable facts or candidates. Keep every "
     "actual claim and qualifier. Also return source-ordered coverage segments whose exact text "
     "concatenates byte-for-byte to the complete source. Classify each segment as durable with "
-    "one zero-based candidate_index, or operation with candidate_index null. "
+    "one zero-based candidate_index, or operation with candidate_index null. Operation text "
+    "is excluded from candidate bodies but MUST still appear byte-for-byte in coverage; never "
+    "drop an instruction-only introduction, transition, or ending from the witness. "
+    "Boundary whitespace is source text: preserve it inside an adjacent coverage text value. "
+    "For example, when the source boundary is '. ' the preceding text must end with that space "
+    "or the following text must begin with it; JSON strings must never trim it. "
     "Attach whitespace and separators to a neighboring nonblank segment; never emit a blank "
     "or whitespace-only segment. Durable candidate "
     "indices must be nondecreasing, every candidate must own durable text, and each candidate "
@@ -103,7 +116,14 @@ class RememberSplitCandidate(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    label: StrictStr
+    label: StrictStr = Field(
+        min_length=1,
+        max_length=64,
+        description=(
+            "A short retrieval handle, preferably 2-5 words and under 40 characters; one "
+            "nonblank line with 64 Unicode code points as the hard maximum."
+        ),
+    )
     body: StrictStr
     keywords: list[StrictStr] = Field(min_length=2, max_length=5)
 
@@ -113,7 +133,15 @@ class RememberCoverageSegment(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    text: StrictStr
+    text: StrictStr = Field(
+        min_length=1,
+        description=(
+            "Exact source text. Never whitespace-only: attach every separator to the previous "
+            "or following nonblank segment so all segments still concatenate byte-for-byte. "
+            "Preserve leading and trailing boundary whitespace inside this string; for a '. ' "
+            "source boundary, one adjacent segment must carry the space. Never trim it."
+        ),
+    )
     classification: Literal["durable", "operation"]
     candidate_index: StrictInt | None
 
