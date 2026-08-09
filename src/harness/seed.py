@@ -9,10 +9,12 @@ from pydantic import BaseModel, ConfigDict, Field
 from harness.agent import HarnessAgent
 from harness.spine_client import (
     ExtractionCandidate,
+    QueueCard,
     SearchRequest,
     SeedRequest,
     SeedResponse,
     SpineClient,
+    SpineClientError,
 )
 
 
@@ -40,6 +42,17 @@ class SeedIngestionService:
 
     async def ingest(self, upload: SeedUploadRequest) -> SeedResponse:
         _validate_upload(upload)
+        source_sha256 = sha256(upload.markdown.encode("utf-8")).hexdigest()
+        try:
+            existing = await self._pending_batch(
+                upload.batch_uid,
+                upload.source_name,
+                source_sha256,
+            )
+        except SpineClientError:
+            existing = None
+        if existing is not None:
+            return existing
         split = await self._agent.split_seed(upload.source_name, upload.markdown)
         candidates: list[ExtractionCandidate] = []
         for item in split.candidates:
@@ -70,17 +83,50 @@ class SeedIngestionService:
                     target_ids=verdict.target_ids,
                 )
             )
-        return await self._spine.create_seed(
-            SeedRequest(
-                principal_id=self._principal_id,
-                batch_uid=upload.batch_uid,
-                source_name=upload.source_name,
-                source_sha256=sha256(upload.markdown.encode("utf-8")).hexdigest(),
-                markdown=upload.markdown,
-                machine_id=self._machine_id,
-                editor="seed-splitter",
-                candidates=candidates,
+        request = SeedRequest(
+            principal_id=self._principal_id,
+            batch_uid=upload.batch_uid,
+            source_name=upload.source_name,
+            source_sha256=source_sha256,
+            markdown=upload.markdown,
+            machine_id=self._machine_id,
+            editor="seed-splitter",
+            candidates=candidates,
+        )
+        try:
+            return await self._spine.create_seed(request)
+        except SpineClientError:
+            existing = await self._pending_batch(
+                request.batch_uid,
+                request.source_name,
+                request.source_sha256,
             )
+            if existing is None:
+                raise
+            return existing
+
+    async def _pending_batch(
+        self,
+        batch_uid: UUID,
+        source_name: str,
+        source_sha256: str,
+    ) -> SeedResponse | None:
+        pending = await self._spine.approval_queue(
+            self._principal_id,
+            birthplace="seed",
+        )
+        cards = _matching_seed_cards(
+            pending.cards,
+            batch_uid=batch_uid,
+            source_name=source_name,
+            source_sha256=source_sha256,
+        )
+        if not cards:
+            return None
+        return SeedResponse(
+            batch_uid=batch_uid,
+            cards=cards,
+            duplicate_count=0,
         )
 
 
@@ -93,3 +139,19 @@ def _validate_upload(upload: SeedUploadRequest) -> None:
         raise ValueError("The Markdown document is blank.")
     if len(upload.markdown.encode("utf-8")) > 24 * 1024:
         raise ValueError("The Markdown document exceeds 24 KiB.")
+
+
+def _matching_seed_cards(
+    cards: list[QueueCard],
+    *,
+    batch_uid: UUID,
+    source_name: str,
+    source_sha256: str,
+) -> list[QueueCard]:
+    return [
+        card
+        for card in cards
+        if card.batch_uid == batch_uid
+        and card.source_name == source_name
+        and card.source_sha256 == source_sha256
+    ]

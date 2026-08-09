@@ -12,9 +12,11 @@ from harness.agent import ExtractionCandidateDraft, HarnessAgent
 from harness.spine_client import (
     ExtractionCandidate,
     ExtractionRequest,
+    ExtractionResponse,
     QueueCard,
     SearchRequest,
     SpineClient,
+    SpineClientError,
 )
 from harness.transcript import TranscriptJournal
 
@@ -84,15 +86,28 @@ class ExtractionService:
             ]
             verdict = await self._agent.propose_extraction_verdict(item, neighbor_payload)
             candidates.append(_candidate(item, verdict.verdict, verdict.target_ids))
-        response = await self._spine.create_extraction(
-            ExtractionRequest(
-                principal_id=self._principal_id,
-                thread_id=thread_id,
-                machine_id=self._machine_id,
-                editor="extraction",
-                candidates=candidates,
-            )
+        request = ExtractionRequest(
+            principal_id=self._principal_id,
+            thread_id=thread_id,
+            machine_id=self._machine_id,
+            editor="extraction",
+            candidates=candidates,
         )
+        try:
+            response = await self._spine.create_extraction(request)
+        except SpineClientError:
+            pending = await self._spine.approval_queue(
+                self._principal_id,
+                thread_id=thread_id,
+                birthplace="thread",
+            )
+            cards = _matching_thread_cards(pending.cards, request)
+            if not cards:
+                raise
+            response = ExtractionResponse(
+                cards=cards,
+                duplicate_count=max(0, len(request.candidates) - len(cards)),
+            )
         self._journal.append_extraction(
             text_id,
             tail_message_id=tail,
@@ -171,6 +186,24 @@ def _candidate(
         verdict=verdict,
         target_ids=target_ids,
     )
+
+
+def _matching_thread_cards(cards: list[QueueCard], request: ExtractionRequest) -> list[QueueCard]:
+    return [
+        card
+        for card in cards
+        if card.birthplace_thread_id == request.thread_id
+        and any(
+            card.candidate.label == candidate.label
+            and card.candidate.body == candidate.body
+            and card.candidate.kind == candidate.kind
+            and card.candidate.keywords == candidate.keywords
+            and card.candidate.project_key == candidate.project_key
+            and card.verdict == candidate.verdict
+            and card.target_ids == candidate.target_ids
+            for candidate in request.candidates
+        )
+    ]
 
 
 def _final_assistant_post(messages: list[dict[str, object]]) -> str:

@@ -1,0 +1,51 @@
+{
+  "session": "codex / 2026-08-08 / c7e4",
+  "base_commit": "f24c4b7c53174b35a84d4a0b66e1b3ad22be2bb0",
+  "owner_app": {
+    "fixture": false,
+    "browser": "Codex in-app browser",
+    "isolated_home": true,
+    "machine_id": "nocturne-1991d87e-4759-431e-a2ae-c8b564b369db",
+    "resolved_model": "openrouter:minimax/minimax-m3",
+    "thread_review_opened": true,
+    "first_thread_review": "Nothing pending"
+  },
+  "seed_reconciliation": {
+    "batch_uid": "c7e40000-0000-4000-8000-000000000002",
+    "first_status": 200,
+    "first_seconds": 33.758934,
+    "replay_status": 200,
+    "replay_seconds": 0.320833,
+    "responses_byte_identical": true,
+    "card_count": 1,
+    "item_uid": "01KZJBZ1XJ13AJ8HCZX4M6SX2G",
+    "duplicate_count": 0
+  },
+  "archive_reconciliation": {
+    "thread_id": "c7e40000-0000-4000-8000-000000000003",
+    "first_status": 200,
+    "first_seconds": 61.769888,
+    "first_already_extracted": false,
+    "replay_status": 200,
+    "replay_seconds": 0.152409,
+    "replay_already_extracted": true,
+    "card_count": 1,
+    "item_uid": "01KZJC2RTMHC5A9EE7T57FCJ3S",
+    "same_item_on_replay": true
+  },
+  "cleanup": {
+    "accepted_count": 0,
+    "verification_candidates_rejected": 2,
+    "pending_before": 3,
+    "pending_after": 3,
+    "verification_items_still_pending": []
+  },
+  "tests": {
+    "focused_python": "9 passed",
+    "harness_ground": "681 passed, 3 deselected",
+    "web_unit": "10 passed",
+    "web_lint": "passed",
+    "web_build": "passed",
+    "test_motivation": "401 tests, 0 grandfathered"
+  }
+}

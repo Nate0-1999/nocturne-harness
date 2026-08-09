@@ -28,6 +28,7 @@ import {
   persistRackLayout,
   type RackBounds,
 } from './rackLayout'
+import { runRackAction } from './rackAction'
 import { harnessClient } from './socket'
 import {
   useHarnessStore,
@@ -365,8 +366,7 @@ function snapshotFromState(state: ReturnType<typeof useHarnessStore.getState>): 
 function dispatchRackAction<Action extends RackAction>(
   action: Action,
 ): RackActionResult<Action> | Promise<RackActionResult<Action>> {
-  try {
-    switch (action.type) {
+  switch (action.type) {
       case 'thread.create':
         return harnessClient.createThread() as RackActionResult<Action>
       case 'thread.select':
@@ -507,12 +507,6 @@ function dispatchRackAction<Action extends RackAction>(
           action.expected_revision,
           action.pin,
         ) as RackActionResult<Action>
-    }
-  } catch (error) {
-    useHarnessStore
-      .getState()
-      .setTransportError(error instanceof Error ? error.message : 'Rack action failed')
-    throw error
   }
 }
 
@@ -684,7 +678,10 @@ export function createHostPluginApi(manifest: RackModuleManifest): RackPluginApi
         if (!(manifest.actions as readonly string[]).includes(action.type)) {
           throw new Error(`${manifest.id} is not permitted to dispatch ${action.type}`)
         }
-        return dispatchRackAction(action)
+        return runRackAction(
+          () => dispatchRackAction(action),
+          (message) => useHarnessStore.getState().setTransportError(message),
+        )
       },
     },
     query: rackQuerySurface,
