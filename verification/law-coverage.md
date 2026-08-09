@@ -2,8 +2,8 @@
 
 Generated deterministically by `scripts/check_test_motivations.py`.
 
-- Tests discovered: 350
-- Motivated tests: 350
+- Tests discovered: 376
+- Motivated tests: 376
 - Grandfathered baseline debt: 0
 - Stale baseline entries: 0
 
@@ -184,7 +184,7 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 
 - _None._
 
-### ADR-019 — 42 defender(s)
+### ADR-019 — 49 defender(s)
 
 - `tests/test_cli.py::test_deploy_loads_initialized_key_and_forwards_dry_run`
 - `tests/test_cli.py::test_local_commands_dispatch`
@@ -216,18 +216,25 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_deploy.py::test_packaged_source_materializes_separate_complete_trees`
 - `tests/test_deploy.py::test_partial_breaker_blocks_without_source_or_mutation`
 - `tests/test_deploy.py::test_preflight_blocks_every_credential_override_before_subprocesses`
-- `tests/test_deploy.py::test_sql_user_identity_requires_one_builtin_user`
+- `tests/test_deploy.py::test_sql_user_identity_accepts_postgres_builtin_shape_and_rejects_iam_or_duplicates`
 - `tests/test_deploy.py::test_subprocess_failure_redacts_secret_input_and_cloud_output`
 - `tests/test_deploy.py::test_untrusted_billing_account_controller_blocks_armed_state`
+- `tests/test_m2n_lifecycle.py::test_v3_config_makes_its_existing_local_palace_explicit`
 - `tests/test_onboarding.py::test_init_prompts_once_and_generates_private_config`
 - `tests/test_onboarding.py::test_init_uses_environment_secret_and_existing_config_is_inert`
 - `tests/test_onboarding.py::test_load_rejects_group_or_world_readable_secret_file`
 - `tests/test_onboarding.py::test_open_requires_reachability_before_launching_browser`
 - `tests/test_onboarding.py::test_process_environment_keeps_services_on_the_initialized_home`
+- `tests/test_onboarding.py::test_remote_doctor_checks_spine_journal_and_disk_without_local_database`
+- `tests/test_onboarding.py::test_remote_init_records_one_palace_origin_and_prompts_only_for_its_bearer`
+- `tests/test_onboarding.py::test_remote_init_rejects_values_that_are_not_service_origins`
+- `tests/test_onboarding.py::test_remote_up_starts_only_the_daemon_and_opens_the_browser`
 - `tests/test_onboarding.py::test_up_orders_container_migration_services_and_browser`
 - `tests/test_packaging.py::test_committed_web_build_has_every_referenced_asset`
-- `tests/test_packaging.py::test_packaged_factory_uses_only_the_private_wheel_asset_path`
+- `tests/test_packaging.py::test_editable_checkout_builds_when_node_is_available`
+- `tests/test_packaging.py::test_editable_checkout_uses_its_canonical_web_build`
 - `tests/test_packaging.py::test_public_distribution_and_lockstep_dependency_metadata`
+- `tests/test_packaging.py::test_wheel_bundle_keeps_its_private_asset_path`
 
 ### ADR-020 — ZERO DEFENDERS
 
@@ -280,8 +287,10 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 
 - _None._
 
-### B.6 — 6 defender(s)
+### B.6 — 8 defender(s)
 
+- `tests/contract/test_spine_contract.py::test_live_create_conflicts_and_dedup_bands`
+- `tests/contract/test_spine_contract.py::test_live_patch_cas_tombstone_and_list`
 - `tests/test_agent_runtime.py::test_dead_ledger_queues_estimate_and_never_retracts_answer`
 - `tests/test_fixture_isolation.py::test_every_scenario_app_installs_the_shared_reachability_wall`
 - `tests/test_fixture_isolation.py::test_fixture_refuses_owner_port_before_serving_ui`
@@ -301,11 +310,12 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 
 - _None._
 
-### C.4 — 37 defender(s)
+### C.4 — 38 defender(s)
 
 - `tests/contract/test_spine_contract.py::test_live_create_conflicts_and_dedup_bands`
 - `tests/contract/test_spine_contract.py::test_live_patch_cas_tombstone_and_list`
 - `tests/contract/test_spine_contract.py::test_live_spend_receipt_is_atomic_and_idempotent`
+- `tests/test_deploy.py::test_remote_verifier_uses_distinct_label_for_duplicate_probe_and_cleans_up`
 - `tests/test_spine_client.py::test_client_exposes_all_spine_routes`
 - `tests/test_spine_client.py::test_commit_response_includes_current_wrong_units`
 - `tests/test_spine_client.py::test_contract_models_reject_unspecified_fields`
@@ -355,7 +365,7 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 
 - _None._
 
-### C.7 — 85 defender(s)
+### C.7 — 84 defender(s)
 
 - `tests/test_daemon.py::test_built_static_mode_rejects_unknown_websocket_path`
 - `tests/test_daemon.py::test_composed_http_routes_precede_the_static_mount`
@@ -366,7 +376,6 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 - `tests/test_daemon.py::test_dev_panel_remove_updates_shared_context_for_the_next_model_call`
 - `tests/test_daemon.py::test_explicit_pinned_policy_does_not_resolve_unused_chat_model`
 - `tests/test_daemon.py::test_missing_rack_vitals_reader_is_an_explicit_503`
-- `tests/test_daemon.py::test_missing_web_build_is_explicit`
 - `tests/test_daemon.py::test_rack_vitals_query_truthfully_rejects_historical_as_of_without_reading`
 - `tests/test_daemon.py::test_rack_vitals_query_uses_the_injected_reader_before_static_mount`
 - `tests/test_daemon.py::test_serves_built_web_static`
@@ -462,9 +471,26 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 
 - _None._
 
-### D.2 — ZERO DEFENDERS
+### D.2 — 18 defender(s)
 
-- _None._
+- `tests/test_daemon.py::test_missing_web_build_is_explicit`
+- `tests/test_deploy.py::test_alignment_materializes_source_before_receipt_when_image_is_exact`
+- `tests/test_deploy.py::test_alignment_stops_when_pushed_image_does_not_converge`
+- `tests/test_deploy.py::test_apply_offers_inline_alignment_and_continues_the_same_plan`
+- `tests/test_deploy.py::test_declining_inline_alignment_changes_nothing`
+- `tests/test_deploy.py::test_failed_build_uses_one_secret_free_isolated_config_and_cleans_it`
+- `tests/test_deploy.py::test_isolated_docker_environment_keeps_routing_but_drops_registry_credentials`
+- `tests/test_deploy.py::test_managed_owner_resume_backs_up_before_image_service_migration_and_verification`
+- `tests/test_deploy.py::test_owner_credential_alignment_backs_up_before_private_reset_and_secret_rewrite`
+- `tests/test_deploy.py::test_preflight_proves_the_exact_isolated_buildx_environment`
+- `tests/test_deploy.py::test_same_attempt_alignment_receipt_is_reused_for_migration`
+- `tests/test_deploy.py::test_secret_only_apply_takes_an_infrastructure_receipt`
+- `tests/test_deploy.py::test_unobserved_migration_reports_credential_cause_and_remedy`
+- `tests/test_deploy.py::test_verification_only_apply_takes_no_infrastructure_receipt`
+- `tests/test_onboarding.py::test_readiness_stops_on_the_first_plain_web_refusal`
+- `tests/test_onboarding.py::test_remote_up_acceptance_runs_full_deploy_with_the_same_consent`
+- `tests/test_onboarding.py::test_remote_up_keeps_running_with_a_visible_notice_when_update_is_declined`
+- `tests/test_packaging.py::test_editable_checkout_without_node_returns_one_plain_remedy`
 
 ### D.3 — ZERO DEFENDERS
 
@@ -614,6 +640,10 @@ Generated deterministically by `scripts/check_test_motivations.py`.
 
 - `tests/test_deploy.py::test_cloud_backup_verification_failure_stops_before_migration`
 - `tests/test_deploy.py::test_cloud_migration_waits_for_verified_private_backup_receipt`
+
+### A-047
+
+- `tests/test_daemon.py::test_rack_scorer_simulation_force_and_audition_use_public_actions`
 
 ### P3
 

@@ -29,10 +29,14 @@ from harness.spine_client import (
 
 pytestmark = [pytest.mark.contract, pytest.mark.asyncio]
 
-HARD_SOURCE = "H2 hard source"
-HARD_CANDIDATE = "H2 hard candidate"
-SIMILAR_SOURCE = "H2 similar source"
-SIMILAR_CANDIDATE = "H2 similar candidate"
+HARD_SOURCE = "A contract test must reject an exact duplicate memory body."
+HARD_CANDIDATE = HARD_SOURCE
+SIMILAR_SOURCE = (
+    "The Palace stores durable memories for the owner and retrieves them when relevant."
+)
+SIMILAR_CANDIDATE = (
+    "The Palace keeps persistent memories for its owner and finds the useful records later."
+)
 CAS_ORIGINAL = "H2 CAS original"
 CAS_PATCHED = "H2 CAS patched"
 
@@ -51,6 +55,13 @@ async def spine_client():
         _required_environment("SPINE_TOKEN"),
     ) as client:
         yield client
+
+
+@pytest.fixture(scope="session")
+def expected_embedding_model() -> str:
+    """Return the model identity the selected live environment must report."""
+
+    return _required_environment("SPINE_EXPECTED_EMBEDDING_MODEL")
 
 
 def _create_request(
@@ -76,9 +87,12 @@ def _create_request(
     )
 
 
-async def test_live_create_conflicts_and_dedup_bands(spine_client: SpineClient) -> None:
-    """SPEC C.4 is defended by verifying that live create conflicts and dedup bands; this
-    prevents drift in the live Harness-Spine contract.
+async def test_live_create_conflicts_and_dedup_bands(
+    spine_client: SpineClient,
+    expected_embedding_model: str,
+) -> None:
+    """SPEC C.4 and SPEC B.6 rules 10 and 12 require strict live create, dedup, and
+    provider evidence; this prevents a fixture-only expectation from rejecting the real broker.
     """
     run_id = uuid4().hex
     project_key = f"h2-{run_id}"
@@ -93,7 +107,7 @@ async def test_live_create_conflicts_and_dedup_bands(spine_client: SpineClient) 
         )
     )
     assert isinstance(hard_source, CreatedMemoryResponse)
-    assert hard_source.created.embedding_model == "h2-contract-embedding-1536"
+    assert hard_source.created.embedding_model == expected_embedding_model
     assert hard_source.created.origin_path == "tests/contract"
 
     with pytest.raises(CreateMemoryConflictError) as label_error:
@@ -123,7 +137,7 @@ async def test_live_create_conflicts_and_dedup_bands(spine_client: SpineClient) 
     assert isinstance(duplicate_error.value.conflict, DuplicateMemoryConflict)
     duplicate = duplicate_error.value.conflict.duplicate_of
     assert duplicate.memory_id == hard_source.created.memory_id
-    assert duplicate.score == pytest.approx(0.96, abs=1e-5)
+    assert 0.92 <= duplicate.score <= 1.0
     assert duplicate.features is None
     assert duplicate.rank is None
 
@@ -149,7 +163,7 @@ async def test_live_create_conflicts_and_dedup_bands(spine_client: SpineClient) 
     assert similar.created is None
     assert len(similar.similar) == 1
     assert similar.similar[0].memory_id == similar_source.created.memory_id
-    assert similar.similar[0].score == pytest.approx(0.85, abs=1e-5)
+    assert 0.80 <= similar.similar[0].score < 0.92
     assert similar.similar[0].features is None
     assert similar.similar[0].rank is None
 
@@ -158,9 +172,12 @@ async def test_live_create_conflicts_and_dedup_bands(spine_client: SpineClient) 
     assert forced.created.label == candidate_request.label
 
 
-async def test_live_patch_cas_tombstone_and_list(spine_client: SpineClient) -> None:
-    """SPEC C.4 is defended by verifying that live patch cas tombstone and list; this prevents
-    drift in the live Harness-Spine contract.
+async def test_live_patch_cas_tombstone_and_list(
+    spine_client: SpineClient,
+    expected_embedding_model: str,
+) -> None:
+    """SPEC C.4 and SPEC B.6 rules 10 and 12 require strict live patch, CAS, and
+    provider evidence; this prevents a fixture-only expectation from rejecting the real broker.
     """
     run_id = uuid4().hex
     principal_id = f"cas-{run_id}"
@@ -193,7 +210,7 @@ async def test_live_patch_cas_tombstone_and_list(spine_client: SpineClient) -> N
     assert patched.memory_id == created.memory_id
     assert patched.body == CAS_PATCHED
     assert patched.origin_path == "tests/contract/patched"
-    assert patched.embedding_model == "h2-contract-embedding-1536"
+    assert patched.embedding_model == expected_embedding_model
     assert patched.revision == 2
 
     with pytest.raises(PatchMemoryConflictError) as stale_error:

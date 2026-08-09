@@ -25,10 +25,13 @@ def _with_cosine(score: float, *, axis: int, other_axis: int) -> list[float]:
 
 
 VECTORS = {
-    "H2 hard source": _basis(0),
-    "H2 hard candidate": _with_cosine(0.96, axis=0, other_axis=1),
-    "H2 similar source": _basis(2),
-    "H2 similar candidate": _with_cosine(0.85, axis=2, other_axis=3),
+    "A contract test must reject an exact duplicate memory body.": _basis(0),
+    "The Palace stores durable memories for the owner and retrieves them when relevant.": (
+        _basis(2)
+    ),
+    "The Palace keeps persistent memories for its owner and finds the useful records later.": (
+        _with_cosine(0.85, axis=2, other_axis=3)
+    ),
     "H2 CAS original": _basis(4),
     "H2 CAS patched": _basis(5),
 }
