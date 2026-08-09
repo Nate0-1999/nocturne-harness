@@ -105,6 +105,13 @@ memory above. It was denied with `machine_id=m2x-sop-verification`; Vitals then
 returned to the pre-scout baseline of three pending candidates. Nothing was
 accepted.
 
+The in-app browser file chooser failed to attach the Markdown file on two
+bounded attempts, so ingestion itself used the same local owner API behind the
+visible queue; review and rejection stayed in the real UI. This is an
+automation boundary, not a claim that physical file selection passes. The
+thread candidate was denied through its exact owner API endpoint because the
+failed Archive flow never opened the required review surface.
+
 ### Phone viewport
 
 - [13 — shell](sop-13-owner-shell-mobile-390x844.jpg)
