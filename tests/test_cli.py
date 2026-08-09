@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 
 import pytest
 
@@ -22,6 +23,7 @@ def test_parser_exposes_onboarding_and_lifecycle_commands() -> None:
         "open",
         "backup",
         "restore",
+        "seed",
         "doctor",
     }
 
@@ -98,6 +100,59 @@ def test_deploy_loads_initialized_key_and_forwards_dry_run(
     assert cli.main(["deploy", "--dry-run"], stdout=output, stderr=output) == 0
     assert calls == [(True, "owner-secret", tmp_path)]
     assert "owner-secret" not in output.getvalue()
+
+
+def test_seed_command_posts_each_markdown_file_to_the_running_owner_pipeline(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """ADR-019 clause 4 and B.6 rule 12 require CLI seeds to retain queue consent."""
+
+    first = tmp_path / "first.md"
+    second = tmp_path / "second.markdown"
+    first.write_text("# First\n\nOne durable claim.")
+    second.write_text("# Second\n\nAnother durable claim.")
+    requests: list[dict[str, object]] = []
+
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return None
+
+        def read(self) -> bytes:
+            return b'{"cards":[{},{}]}'
+
+    def open_request(request, timeout):
+        assert timeout == 120.0
+        requests.append(json.loads(request.data))
+        return Response()
+
+    monkeypatch.setattr(cli.urllib.request, "urlopen", open_request)
+    output = io.StringIO()
+
+    assert cli.main(["seed", str(tmp_path / "*")], stdout=output) == 0
+    assert [request["source_name"] for request in requests] == ["first.md", "second.markdown"]
+    assert len({request["batch_uid"] for request in requests}) == 2
+    assert output.getvalue().count("waiting for review") == 2
+
+
+def test_seed_command_refuses_non_markdown_before_contacting_the_daemon(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """ADR-019 clause 4 and B.6 rule 12 keep the CLI on the Markdown-only seed contract."""
+
+    source = tmp_path / "notes.txt"
+    source.write_text("This must not enter the seed pipeline.")
+    monkeypatch.setattr(
+        cli.urllib.request,
+        "urlopen",
+        lambda *_args, **_kwargs: pytest.fail("invalid input reached the daemon"),
+    )
+    error = io.StringIO()
+
+    assert cli.main(["seed", str(source)], stdout=io.StringIO(), stderr=error) == 2
+    assert error.getvalue() == "nocturne: notes.txt is not a Markdown file.\n"
 
 
 def test_safe_command_error_has_no_traceback(monkeypatch: pytest.MonkeyPatch) -> None:

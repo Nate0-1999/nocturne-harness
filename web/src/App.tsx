@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type ClipboardEvent,
   type DragEvent,
   type FormEvent,
   type KeyboardEvent,
@@ -1456,6 +1457,12 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+function markdownFile(markdown: string): File {
+  return new File([markdown], `pasted-${new Date().toISOString().replaceAll(':', '-')}.md`, {
+    type: 'text/markdown',
+  })
+}
+
 function PalaceQueueModule() {
   const { events, selection } = useRackPlugin()
   const [scope, setScope] = useState<'CURRENT' | 'GLOBAL'>(
@@ -1464,6 +1471,7 @@ function PalaceQueueModule() {
   const [cards, setCards] = useState<ThreadEndQueueCard[]>([])
   const [statusText, setStatusText] = useState('Choose Markdown files to grow the queue.')
   const [busy, setBusy] = useState(false)
+  const [dragging, setDragging] = useState(false)
 
   const load = useCallback(() => {
     return events.dispatch({ type: 'queue.load', birthplace: 'seed' }).then((value) => {
@@ -1492,11 +1500,11 @@ function PalaceQueueModule() {
     }).catch(() => undefined)
   }
 
-  async function upload(files: FileList | null) {
-    if (files === null || files.length === 0 || busy) return
+  async function upload(files: readonly File[]) {
+    if (files.length === 0 || busy) return
     setBusy(true)
     try {
-      for (const file of Array.from(files)) {
+      for (const file of files) {
         const lower = file.name.toLowerCase()
         if ((!lower.endsWith('.md') && !lower.endsWith('.markdown')) || file.size > 24 * 1024) {
           throw new Error(`${file.name} must be Markdown and no larger than 24 KiB.`)
@@ -1516,6 +1524,28 @@ function PalaceQueueModule() {
     } finally {
       setBusy(false)
     }
+  }
+
+  function dropped(event: DragEvent<HTMLElement>) {
+    event.preventDefault()
+    setDragging(false)
+    if (busy) return
+    const files = Array.from(event.dataTransfer.files)
+    if (files.length > 0) {
+      void upload(files)
+      return
+    }
+    const markdown = event.dataTransfer.getData('text/plain')
+    if (markdown.trim()) void upload([markdownFile(markdown)])
+  }
+
+  function pasted(event: ClipboardEvent<HTMLElement>) {
+    if (busy) return
+    const files = Array.from(event.clipboardData.files)
+    const markdown = event.clipboardData.getData('text/plain')
+    if (files.length === 0 && !markdown.trim()) return
+    event.preventDefault()
+    void upload(files.length > 0 ? files : [markdownFile(markdown)])
   }
 
   function decideBatch(batchUid: string, decision: 'approve' | 'deny') {
@@ -1554,15 +1584,25 @@ function PalaceQueueModule() {
             ))}
           </div>
         </header>
-        <label className="seed-drop">
-          <span>{busy ? 'Working…' : 'Choose Markdown files'}</span>
+        <label
+          className={`seed-drop${dragging ? ' seed-drop--active' : ''}`}
+          tabIndex={0}
+          onDragEnter={(event) => { event.preventDefault(); setDragging(true) }}
+          onDragOver={(event) => event.preventDefault()}
+          onDragLeave={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false)
+          }}
+          onDrop={dropped}
+          onPaste={pasted}
+        >
+          <span>{busy ? 'Working…' : 'Drop, paste, or choose Markdown'}</span>
           <input
             data-testid="seed-upload"
             type="file"
             accept=".md,.markdown,text/markdown"
             multiple
             disabled={busy}
-            onChange={(event) => void upload(event.currentTarget.files)}
+            onChange={(event) => void upload(Array.from(event.currentTarget.files ?? []))}
           />
         </label>
         <p className="seed-status" aria-live="polite">{statusText}</p>

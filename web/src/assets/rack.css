@@ -608,6 +608,15 @@
   background: rgb(56 215 255 / 3%);
   color: var(--ink);
   cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
+}
+
+.seed-drop:focus-visible,
+.seed-drop--active {
+  outline: none;
+  border-color: var(--accent);
+  background: rgb(56 215 255 / 9%);
+  box-shadow: inset 0 0 2rem rgb(56 215 255 / 8%);
 }
 
 .seed-drop input {
