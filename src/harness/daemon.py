@@ -66,6 +66,7 @@ from harness.spine_client import (
     CreateScorerConfigRequest,
     MemoryGraphQuery,
     MemoryGraphSnapshot,
+    QueueDecisionIntent,
     QueueDecisionRequest,
     QueueDecisionResponse,
     RackScorerAuditionRequest,
@@ -107,6 +108,7 @@ type ScorerProposalActivator = Callable[
     [str, ActivateScorerConfigRequest], Awaitable[ScorerConfigurationView]
 ]
 type ContextWindowReader = Callable[[str | None], ContextWindowSnapshot]
+
 
 _OUTBOX_BUFFER_SIZE = 256
 _RESYNC_CLOSE_REASON = "snapshot resync required"
@@ -762,15 +764,17 @@ def create_dev_app(
 
         @app.post("/v1/approval-queue/{item_uid}/decisions")
         async def decide_queue_item(
-            item_uid: str, body: QueueDecisionRequest
+            item_uid: str, body: QueueDecisionIntent
         ) -> QueueDecisionResponse:
-            return await owned_spine.decide_queue_item(item_uid, body)
+            request = QueueDecisionRequest(machine_id=machine_id, **body.model_dump())
+            return await owned_spine.decide_queue_item(item_uid, request)
 
         @app.post("/v1/approval-queue/batches/{batch_uid}/decisions")
         async def decide_queue_batch(
-            batch_uid: UUID, body: QueueDecisionRequest
+            batch_uid: UUID, body: QueueDecisionIntent
         ) -> BatchDecisionResponse:
-            return await owned_spine.decide_queue_batch(batch_uid, body)
+            request = QueueDecisionRequest(machine_id=machine_id, **body.model_dump())
+            return await owned_spine.decide_queue_batch(batch_uid, request)
 
         @app.get("/v1/approval-queue")
         async def read_queue(

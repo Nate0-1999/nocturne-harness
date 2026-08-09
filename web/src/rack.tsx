@@ -14,6 +14,7 @@ import type {
   ThreadCatalogEntry,
   Ulid,
 } from './protocol'
+import { queueDecisionPayload, seedBatchDecisionPayload } from './approvalQueue'
 import {
   subscribeRackEnvelopes,
   subscribeRackResize,
@@ -395,12 +396,11 @@ function dispatchRackAction<Action extends RackAction>(
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+            body: JSON.stringify(queueDecisionPayload({
               decision: action.decision,
               approval_mode: action.approval_mode,
               actor_class: action.actor_class,
-              machine_id: 'harness-browser',
-            }),
+            })),
           },
         ) as Promise<RackActionResult<Action>>
       case 'queue.load': {
@@ -426,12 +426,7 @@ function dispatchRackAction<Action extends RackAction>(
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              decision: action.decision,
-              approval_mode: 'explicit',
-              actor_class: 'human',
-              machine_id: 'harness-browser',
-            }),
+            body: JSON.stringify(seedBatchDecisionPayload(action.decision)),
           },
         ) as Promise<RackActionResult<Action>>
       case 'rack.scope.get':

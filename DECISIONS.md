@@ -1263,3 +1263,26 @@ Mutable metadata outside the immutable repository could drift away from the
 image it describes. A second Cloud SQL backup implementation would duplicate
 verification and receipt rules. Letting doctor run npm would violate its
 read-only contract, while separate readiness checks would invite parity drift.
+
+## 045 — Annotate mis-stamped decisions without inventing learner state [P1.2.2, P4]
+
+**Decision.** Preserve an explicit evidence annotation for the two M2X seed
+decisions stamped `harness-browser`, classifying them under their authoritative
+`m2x-sop-verification` session identity. Do not mutate append-only decision
+history or add a training-exclusion column. Queue decisions remain outside the
+enacted learner input, which is `injection_event`; their floor eligibility is
+therefore false by source boundary. The owner API now removes identity from the
+browser contract and stamps the daemon's configured identity at the trusted
+boundary.
+
+**Motivation.** F023 combined a real provenance defect with an apparent learner
+contamination. Fixing the authority inversion prevents recurrence. Recording
+the historical classification preserves the scout observation and makes its
+intended treatment reviewable if learner inputs expand, while stating the
+current source boundary proves the 25-signal floor was never contaminated.
+
+**Rejected alternatives.** Rewriting stored decision provenance would destroy
+the observed failure. Adding a database migration or learner exclusion path for
+rows the learner never reads would create dormant policy and imply a false
+contamination. Leaving only prose in the relay report would make the two exact
+records and their classification difficult to audit later.

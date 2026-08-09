@@ -356,10 +356,17 @@ class QueueResponse(ContractModel):
     cards: list[QueueCard]
 
 
-class QueueDecisionRequest(ContractModel):
+class QueueDecisionIntent(ContractModel):
+    """Human choice fields accepted at the owner API boundary."""
+
     decision: Literal["approve", "deny"]
     approval_mode: Literal["explicit", "passive"]
     actor_class: Literal["human", "passive"]
+
+
+class QueueDecisionRequest(QueueDecisionIntent):
+    """Trusted Harness-to-Spine request with daemon-stamped provenance."""
+
     machine_id: str
 
 

@@ -75,6 +75,7 @@ class SeedFixtureSpine(FixtureSpine):
                     "decision": request.decision,
                     "approval_mode": request.approval_mode,
                     "actor_class": request.actor_class,
+                    "machine_id": request.machine_id,
                 }
             )
             decided.append(updated)

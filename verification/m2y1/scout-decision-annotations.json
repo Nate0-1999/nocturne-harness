@@ -1,0 +1,35 @@
+{
+  "packet": "M2Y1",
+  "flag": "F023",
+  "source_trace": "../m2x/trace-summary.json",
+  "authoritative_session_machine_id": "m2x-sop-verification",
+  "learner_boundary": {
+    "eligible_source": "injection_event",
+    "approval_decision_is_a_source": false,
+    "verification_identity_suffix": "-verification",
+    "conclusion": "Neither annotated queue decision has ever contributed to the 25-signal training floor."
+  },
+  "annotations": [
+    {
+      "batch_uid": "b4e90000-0000-4000-8000-000000000001",
+      "item_uid": null,
+      "label": "Cobalt-lantern rule scope",
+      "observed_stored_machine_id": "harness-browser",
+      "effective_identity": "m2x-sop-verification",
+      "effective_class": "verification",
+      "training_eligible": false,
+      "floor_eligible": false
+    },
+    {
+      "batch_uid": "b4e90000-0000-4000-8000-000000000002",
+      "item_uid": "01KZJ15KBFT18YS469T5QMNF8C",
+      "candidate_memory_id": "5e4c6168-45fc-41d6-bbf5-8a1f57aa074a",
+      "label": "Seed batches require owner consent",
+      "observed_stored_machine_id": "harness-browser",
+      "effective_identity": "m2x-sop-verification",
+      "effective_class": "verification",
+      "training_eligible": false,
+      "floor_eligible": false
+    }
+  ]
+}
