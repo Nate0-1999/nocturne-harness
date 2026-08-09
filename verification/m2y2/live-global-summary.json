@@ -1,0 +1,38 @@
+{
+  "fixture": false,
+  "owner_app": "local daemon connected to configured remote Palace",
+  "memory_graph": {
+    "GLOBAL": {
+      "memories": 24,
+      "relationships": 24,
+      "alerts": []
+    },
+    "CURRENT": {
+      "memories": 0,
+      "relationships": 0,
+      "alerts": []
+    }
+  },
+  "injection_console": {
+    "GLOBAL": {
+      "active_version": "v0",
+      "candidates": 12,
+      "alerts": []
+    },
+    "CURRENT": {
+      "candidates": 0,
+      "alerts": []
+    }
+  },
+  "global_deep_simulation": {
+    "accuracy_percent": 100,
+    "delta_percent": 0,
+    "holdout_dispositions": 1,
+    "simulation_digest_prefix": "313e805f38f7",
+    "force_enacted": false
+  },
+  "browser_console": {
+    "warnings": 0,
+    "errors": 0
+  }
+}

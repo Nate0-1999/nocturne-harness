@@ -422,8 +422,8 @@ def test_rack_vitals_query_uses_the_injected_reader_before_static_mount(tmp_path
 
 
 def test_rack_scorer_simulation_force_and_audition_use_public_actions() -> None:
-    """A-047 is defended by proving the public Rack strips owner identity from browser
-    requests while carrying exact simulation receipts and read-only auditions.
+    """A-047/F020 are defended by proving the public Rack strips owner identity from
+    browser requests while carrying exact simulation receipts and GLOBAL scope.
     """
     seen: list[object] = []
     values = {
@@ -502,6 +502,14 @@ def test_rack_scorer_simulation_force_and_audition_use_public_actions() -> None:
             "slice_parameter_id": "scorer.tau",
         },
     )
+    global_simulated = client.post(
+        "/v1/rack/scorers/simulate",
+        json={
+            "base_version": "v0",
+            "values": values,
+            "slice_parameter_id": "scorer.tau",
+        },
+    )
     forced = client.post(
         "/v1/rack/scorers",
         json={
@@ -517,12 +525,19 @@ def test_rack_scorer_simulation_force_and_audition_use_public_actions() -> None:
         json={"injection_id": injection_id, "proposal_version": "learner-v1"},
     )
 
-    assert [simulated.status_code, forced.status_code, auditioned.status_code] == [200, 200, 200]
+    assert [
+        simulated.status_code,
+        global_simulated.status_code,
+        forced.status_code,
+        auditioned.status_code,
+    ] == [200, 200, 200, 200]
     assert [type(item) for item in seen] == [
+        RackScorerSimulationRequest,
         RackScorerSimulationRequest,
         RackScorerForceRequest,
         RackScorerAuditionRequest,
     ]
+    assert seen[1].injection_id is None
 
 
 def test_rack_vitals_query_truthfully_rejects_historical_as_of_without_reading() -> None:
@@ -590,8 +605,7 @@ def test_missing_rack_vitals_reader_is_an_explicit_503() -> None:
 
 
 def test_missing_web_build_is_explicit(tmp_path: Path) -> None:
-    """SPEC D.2 095 requires a missing web build to state the situation and remedy once.
-    """
+    """SPEC D.2 095 requires a missing web build to state the situation and remedy once."""
     client = TestClient(create_app(tmp_path))
 
     response = client.get("/")

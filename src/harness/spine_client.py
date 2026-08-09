@@ -809,7 +809,7 @@ class RackScorerForceRequest(ContractModel):
 
 
 class RackScorerSimulationRequest(ContractModel):
-    injection_id: UUID | None
+    injection_id: UUID | None = None
     base_version: NonBlankString
     values: ScorerValues
     slice_parameter_id: NonBlankString
@@ -1056,13 +1056,17 @@ class SpineClient:
 
     async def memory_graph(self, request: MemoryGraphQuery) -> MemoryGraphSnapshot:
         response = await self._request(
-            "POST", "v1/memory-graph/query", json_body=_request_body(request)
+            "POST",
+            "v1/memory-graph/query",
+            json_body=request.model_dump(mode="json"),
         )
         return _expect_success(response, status=200, adapter=_MEMORY_GRAPH_SNAPSHOT)
 
     async def scorer_console(self, request: ScorerConsoleQuery) -> ScorerConsoleSnapshot:
         response = await self._request(
-            "POST", "v1/scorer-console/query", json_body=_request_body(request)
+            "POST",
+            "v1/scorer-console/query",
+            json_body=request.model_dump(mode="json"),
         )
         return _expect_success(response, status=200, adapter=_SCORER_CONSOLE_SNAPSHOT)
 
@@ -1076,7 +1080,9 @@ class SpineClient:
 
     async def simulate_scorer(self, request: ScorerSimulationRequest) -> ScorerSimulationResponse:
         response = await self._request(
-            "POST", "v1/scorer-simulations", json_body=_request_body(request)
+            "POST",
+            "v1/scorer-simulations",
+            json_body=request.model_dump(mode="json"),
         )
         return _expect_success(response, status=200, adapter=_SCORER_SIMULATION)
 

@@ -17,11 +17,14 @@ from harness.spine_client import (
     InjectPrepareRequest,
     LabelConflict,
     ListMemoriesParams,
+    MemoryGraphQuery,
     MemoryKind,
     MemoryStatus,
     PatchMemoryConflictError,
     PatchMemoryRequest,
     RevisionConflict,
+    ScorerConsoleQuery,
+    ScorerSimulationRequest,
     SearchRequest,
     SimilarMemoriesResponse,
     SpendEvent,
@@ -120,6 +123,100 @@ async def _assert_vitals_payload_rejected(payload: dict[str, Any]) -> None:
     ) as client:
         with pytest.raises(SpineResponseError, match="outside C.4"):
             await client.vitals_snapshot()
+
+
+@pytest.mark.asyncio
+async def test_global_instrument_requests_preserve_required_null_scope_fields() -> None:
+    """F020/A-035/A-047 require explicit null scope fields for lawful GLOBAL
+    reads and simulations.
+    """
+    seen: dict[str, object] = {}
+    values = {
+        "tau": 0.55,
+        "top_k": 8,
+        "budget_tokens": 4000,
+        "half_life_time_days": 30.0,
+        "half_life_hist_days": 120.0,
+        "weights": {
+            "sem": 0.4,
+            "kw": 0.2,
+            "time": 0.1,
+            "proj": 0.1,
+            "freq": 0.1,
+            "hist": 0.1,
+        },
+    }
+    payloads = {
+        "/v1/memory-graph/query": {
+            "as_of": "2026-08-08T12:00:00Z",
+            "graph_edge_sim": 0.75,
+            "nodes": [],
+            "edges": [],
+            "omitted_memory_ids": [],
+        },
+        "/v1/scorer-console/query": {
+            "as_of": "2026-08-08T12:00:00Z",
+            "scope": "GLOBAL",
+            "thread_id": None,
+            "descriptors": [],
+            "active_version": "v0",
+            "configurations": [],
+            "activations": [],
+            "proposed_versions": [],
+            "accuracy": [],
+            "candidates": [],
+        },
+        "/v1/scorer-simulations": {
+            "simulation_digest": "a" * 64,
+            "base_version": "v0",
+            "values": values,
+            "source_boundary": None,
+            "holdout_dispositions": 0,
+            "accuracy_percent": None,
+            "incumbent_accuracy_percent": None,
+            "delta_percent": None,
+            "instant": {"status": "not_requested", "injection_id": None, "candidates": []},
+            "slice": {"parameter_id": "scorer.tau", "points": []},
+        },
+    }
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        seen[request.url.path] = json.loads(request.content)
+        return response(200, payloads[request.url.path])
+
+    async with SpineClient(
+        "https://spine.invalid",
+        "token",
+        transport=httpx.MockTransport(handler),
+    ) as client:
+        await client.memory_graph(MemoryGraphQuery(principal_id="owner", memory_ids=None))
+        await client.scorer_console(ScorerConsoleQuery(principal_id="owner", thread_id=None))
+        await client.simulate_scorer(
+            ScorerSimulationRequest(
+                principal_id="owner",
+                injection_id=None,
+                base_version="v0",
+                values=values,
+                slice_parameter_id="scorer.tau",
+            )
+        )
+
+    assert seen["/v1/memory-graph/query"] == {
+        "principal_id": "owner",
+        "memory_ids": None,
+    }
+    assert seen["/v1/scorer-console/query"] == {
+        "principal_id": "owner",
+        "thread_id": None,
+        "as_of": "now",
+    }
+    assert seen["/v1/scorer-simulations"] == {
+        "principal_id": "owner",
+        "injection_id": None,
+        "base_version": "v0",
+        "values": values,
+        "slice_parameter_id": "scorer.tau",
+    }
 
 
 def _measure_reinforced(payload: dict[str, Any]) -> None:
