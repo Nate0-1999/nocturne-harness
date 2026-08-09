@@ -1,0 +1,21 @@
+{
+  "captured_at": "2026-08-09T18:45:33.765728Z",
+  "request": "GET /v1/rack/query?resource=vitals&as_of=now&thread_id=79384fed-9c77-456b-a37d-133d456fe82d",
+  "http_status": 200,
+  "status": "live",
+  "source_view": "spend_event",
+  "latest_minute": "2026-08-09T18:43:00Z",
+  "total": {
+    "cost_usd": "0.000607940000",
+    "receipt_lines": 9,
+    "unpriced_lines": 0
+  },
+  "purpose_lanes": {
+    "building": "0.000607620000",
+    "embedding": "0.000000320000"
+  },
+  "model_lanes": {
+    "minimax/minimax-m3": "0.000607620000",
+    "text-embedding-3-small": "0.000000320000"
+  }
+}

@@ -68,7 +68,7 @@ export interface VitalsSnapshot {
   as_of: string
   window_minutes: 60
   spend: {
-    source_view: 'v_spend_rate'
+    source_view: 'v_spend_rate' | 'spend_event'
     latest_minute: string | null
     lanes: SpendLane[]
   }
@@ -97,8 +97,8 @@ export function parseVitalsSnapshot(value: unknown): VitalsSnapshot {
   }
 
   const spend = record(root.spend, 'spend')
-  if (spend.source_view !== 'v_spend_rate') {
-    throw new TypeError('Vitals spend must come from v_spend_rate')
+  if (spend.source_view !== 'v_spend_rate' && spend.source_view !== 'spend_event') {
+    throw new TypeError('Vitals spend must come from v_spend_rate or spend_event')
   }
   const latestMinute = spend.latest_minute === null
     ? null
@@ -111,7 +111,7 @@ export function parseVitalsSnapshot(value: unknown): VitalsSnapshot {
     as_of: asOf,
     window_minutes: 60,
     spend: {
-      source_view: 'v_spend_rate',
+      source_view: spend.source_view,
       latest_minute: latestMinute,
       lanes: spend.lanes.map(parseSpendLane),
     },

@@ -123,6 +123,20 @@ test('parses the exact server-provided vitals shape without re-accounting', () =
   assert.equal(formatUptime(parsed.resources.daemon_uptime_seconds), '1h 1m')
 })
 
+/** F026 and A-035 require CURRENT spend_event snapshots without widening GLOBAL's canonical source contract. */
+test('accepts the exact current Vitals source and rejects unknown accounting sources', () => {
+  const current = snapshot()
+  current.spend.source_view = 'spend_event'
+  assert.equal(parseVitalsSnapshot(current).spend.source_view, 'spend_event')
+
+  const unknown = snapshot()
+  unknown.spend.source_view = 'other_view'
+  assert.throws(
+    () => parseVitalsSnapshot(unknown),
+    /must come from v_spend_rate or spend_event/,
+  )
+})
+
 /** A-044 keeps missing process observations unavailable and preserves the low-disk signal. */
 test('parses honest partial resource measurements without inventing zeroes', () => {
   const payload = snapshot()
