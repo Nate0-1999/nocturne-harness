@@ -49,6 +49,11 @@ body {
   overflow: hidden;
 }
 
+html[data-rack-module-document],
+html[data-rack-module-document] body {
+  min-width: 0;
+}
+
 button,
 textarea {
   color: inherit;

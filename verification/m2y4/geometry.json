@@ -1,0 +1,49 @@
+{
+  "packet": "M2Y4",
+  "session": "codex / 2026-08-08 / d4f6",
+  "viewport_css_pixels": {
+    "width": 390,
+    "height": 844
+  },
+  "before": {
+    "source": "M2X scout flags F024 and F025",
+    "shell": {"client_width": 390, "scroll_width": 390},
+    "context_frame": {"client_width": 163, "scroll_width": 320},
+    "vitals_frame": {"client_width": 226, "scroll_width": 320}
+  },
+  "after_real_owner_app": {
+    "shell": {"client_width": 390, "scroll_width": 390},
+    "context_frame": {"client_width": 163, "scroll_width": 163},
+    "context_module_root": {"client_width": 163, "scroll_width": 163},
+    "context_header": {"client_width": 163, "scroll_width": 163},
+    "vitals_frame": {"client_width": 226, "scroll_width": 226},
+    "vitals_module_root": {"client_width": 226, "scroll_width": 226},
+    "vitals_lanes": {"client_width": 226, "scroll_width": 226},
+    "vitals_gauge_rail": {
+      "client_width": 226,
+      "scroll_width": 2128,
+      "overflow_x": "auto",
+      "bounded": true
+    },
+    "exact_dollar_readout": {
+      "text": "$0.000000160000",
+      "fully_visible": true,
+      "client_width_equals_scroll_width": true
+    }
+  },
+  "after_isolated_real_broker_run": {
+    "provider_route": "openrouter:minimax/minimax-m3",
+    "measured_input_tokens": 824,
+    "context_categories": {
+      "system": 145,
+      "history": 588,
+      "memory": 33,
+      "tools": 58
+    },
+    "context_category_sum": 824,
+    "context_disclosure": "Estimated breakdown · 80% line · Compaction is not active",
+    "context_module_root": {"client_width": 163, "scroll_width": 163},
+    "vitals_module_root": {"client_width": 226, "scroll_width": 226},
+    "browser_console_warnings_or_errors": []
+  }
+}

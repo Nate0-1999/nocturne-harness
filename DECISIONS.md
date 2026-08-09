@@ -1286,3 +1286,23 @@ the observed failure. Adding a database migration or learner exclusion path for
 rows the learner never reads would create dormant policy and imply a false
 contamination. Leaving only prose in the relay report would make the two exact
 records and their classification difficult to audit later.
+
+## 046 — Let rack documents shrink below the owner shell floor [P2.2, P2.4, P2.5]
+
+**Decision.** Keep the owner shell's 320-pixel minimum, but remove that minimum
+inside documents loaded as rack modules. At internal module widths of 20rem or
+less, stack the Context and Vitals controls, reflow each Vitals lane into a
+label/readout row above its scrubber, and retain horizontal scrolling only for
+the explicitly bounded gauge rail.
+
+**Motivation.** The rack deliberately assigns Context and Vitals rectangles
+narrower than 320 pixels at the 390-pixel owner viewport. Applying the shell's
+minimum to each embedded document created a false 320-pixel canvas, causing
+both F024 and F025. The module boundary must honor the width the rack actually
+owns, while the important facts—the measured context total, explicit category
+estimate, and exact dollar readout—remain immediately visible.
+
+**Rejected alternatives.** Hiding overflow would conceal owner truth. Widening
+the rack modules would move the overflow disease to the shell. Making every
+gauge fit by compressing its long rail would destroy its watchable scale, while
+allowing the whole Vitals document to scroll would hide the exact current value.

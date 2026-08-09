@@ -1907,6 +1907,66 @@
     padding-inline: 0.45rem;
   }
 
+  @media (max-width: 20rem) {
+    .context-bars__header {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .context-bars__header > div,
+    .context-bars__header .scope-switch {
+      min-width: 0;
+      width: 100%;
+    }
+
+    .context-bars__header .scope-switch button {
+      flex: 1;
+      min-width: 0;
+      padding-inline: 0.25rem;
+      font-size: 0.5rem;
+      letter-spacing: 0.02em;
+    }
+
+    .vitals-strip__header {
+      align-content: start;
+      display: grid;
+      gap: 0.3rem;
+      padding-block: 0.35rem;
+    }
+
+    .vitals-strip__header p {
+      display: grid;
+      gap: 0.14rem;
+    }
+
+    .vitals-strip__status {
+      justify-content: space-between;
+      margin-left: 0;
+      width: 100%;
+    }
+
+    .vitals-lane {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-rows: auto 2.05rem;
+    }
+
+    .vitals-lane__identity {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .vitals-lane__scrubber {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+
+    .vitals-lane__readout {
+      grid-column: 2;
+      grid-row: 1;
+      text-align: right;
+    }
+  }
+
   .m2c-regression-fixture {
     gap: 0.2rem;
     padding-top: 3.7rem;
