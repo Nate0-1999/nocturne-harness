@@ -1398,3 +1398,22 @@ for silent meaning loss. Rewriting bodies would violate A-050's exact witness.
 Changing the verification paragraph would evade the product boundary instead
 of fixing it. Model-specific retries would add cost and nondeterminism while
 leaving the shared instruction ambiguous.
+
+## 050 — Converge every seed entrance at the daemon boundary [P1.4, ADR-019]
+
+**Decision.** File choice, drag/drop, pasted files, pasted text, and the
+`nocturne seed` command all mint ordinary seed-upload requests and converge on
+the existing daemon `/v1/seeds` endpoint. Pasted text becomes a named Markdown
+document; the CLI expands path patterns but performs only cheap local format
+checks before calling the daemon. None of these entrances decides a batch.
+
+**Motivation.** M2Y5 exists because the native file dialog is not operable by
+agents and is unnecessary friction for humans. The durable split, dedup,
+idempotency, and consent rules already live behind one daemon operation, so a
+new transport should only deliver Markdown to that authority.
+
+**Rejected alternatives.** Running splitters inside the CLI would create a
+second pipeline and require credentials there. Auto-approving CLI documents
+would violate corpus-born explicit consent. A global paste listener would
+steal ordinary chat text; paste is accepted only while the visible seed target
+has focus.
