@@ -1,0 +1,112 @@
+{
+  "session": {
+    "packet": "M2X SCOUT",
+    "date": "2026-08-08",
+    "tag": "b4e9",
+    "principal_id": "local",
+    "machine_id": "m2x-sop-verification",
+    "thread_id": "c59f6ada-b2df-47da-acee-8c4e0483ad36",
+    "fixture_banner_present": false
+  },
+  "ground": {
+    "doctor": "pass",
+    "remote_palace": "healthy",
+    "web": "ready",
+    "port": 8765,
+    "schema_actual": "0009",
+    "schema_expected": "0009"
+  },
+  "model": {
+    "resolved_route": "openrouter:minimax/minimax-m3",
+    "requests": [
+      {"input_tokens": 1024, "output_tokens": 449},
+      {"input_tokens": 3340, "output_tokens": 494}
+    ],
+    "first_turn_injection_id": "55d06364-abfc-42a0-8578-c7898f32e0ab",
+    "first_turn_started_before_decision": false
+  },
+  "memory_probe": {
+    "memory_id": "9cdaa36b-aa77-4089-a37f-dd508c503116",
+    "unique_phrase": "root of first principles",
+    "used_memory_hist_contribution": "0.012443570247023363",
+    "comparison_hist_contribution": "0",
+    "remove_state": "stored/re-add/r5",
+    "final_state": "in-context/r5"
+  },
+  "rack": {
+    "vitals_candidates_pending_before": 3,
+    "vitals_candidates_pending_after_cleanup": 3,
+    "ledger_drift_displayed": "-0.002278576000",
+    "context_total": "1.8K / 1M",
+    "context_estimates": {
+      "system": 145,
+      "history": "1.5K",
+      "memory": 125,
+      "tools": 58
+    },
+    "graph_current_status": 200,
+    "graph_global_status": 503,
+    "injection_current_status": 200,
+    "injection_current_simulate_status": 200,
+    "injection_global_status": 503,
+    "injection_global_simulate_status": 503,
+    "force_used": false
+  },
+  "model_device": {
+    "temperature_probe": 0.05,
+    "parameter_change_statuses": [200, 200],
+    "restored": "inherit",
+    "route_changed": false
+  },
+  "seed_ingestion": {
+    "input": "seed-verification.md",
+    "file_chooser_attempts": 2,
+    "file_chooser_result": "automation-boundary; no product verdict",
+    "batches": [
+      {
+        "batch_uid": "b4e90000-0000-4000-8000-000000000001",
+        "local_status": 503,
+        "remote_status": 422,
+        "durable_queue_write_observed": true,
+        "label": "Cobalt-lantern rule scope"
+      },
+      {
+        "batch_uid": "b4e90000-0000-4000-8000-000000000002",
+        "local_status": 200,
+        "durable_queue_write_observed": true,
+        "item_uid": "01KZJ15KBFT18YS469T5QMNF8C",
+        "candidate_memory_id": "5e4c6168-45fc-41d6-bbf5-8a1f57aa074a",
+        "label": "Seed batches require owner consent"
+      }
+    ],
+    "batches_rejected": 2,
+    "ui_decision_machine_id": "harness-browser",
+    "verification_hygiene_excluded": false
+  },
+  "thread_close": {
+    "archive_statuses": [503, 503],
+    "candidate_count_created": 1,
+    "item_uid": "01KZJ1B19462FP7J7HWE4DS8TE",
+    "candidate_memory_id": "63c1d178-cd51-4d59-9e91-5520a72ff24e",
+    "target_memory_id": "9cdaa36b-aa77-4089-a37f-dd508c503116",
+    "cleanup_decision_status": 200,
+    "cleanup_machine_id": "m2x-sop-verification",
+    "thread_end_surface_opened": false
+  },
+  "responsive": {
+    "viewport": {"width": 390, "height": 844},
+    "shell": {"client_width": 390, "scroll_width": 390},
+    "vitals": {"client_width": 226, "scroll_width": 320},
+    "context": {"client_width": 163, "scroll_width": 320},
+    "browser_console_warnings_or_errors": []
+  },
+  "cleanup": {
+    "accepted_verification_memories": 0,
+    "pending_candidate_delta": 0,
+    "scorer_version_changed": false,
+    "parameter_restored": true,
+    "disposable_home_removed": true,
+    "secrets_committed": false,
+    "local_catalog_thread_residue": true
+  }
+}
