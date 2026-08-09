@@ -29,6 +29,10 @@ import {
   type RackBounds,
 } from './rackLayout'
 import { runRackAction } from './rackAction'
+import {
+  canonicalProjectPath,
+  knownProjectPaths,
+} from './projectPath'
 import { harnessClient } from './socket'
 import {
   useHarnessStore,
@@ -60,6 +64,8 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
 export interface RackSnapshot {
   catalog: ThreadCatalogEntry[]
   selectedThreadId: string | null
+  currentProjectKey: string | null
+  projectPaths: string[]
   threads: Record<string, ThreadState>
   connection: ConnectionStatus
   globalError: HarnessError | null
@@ -68,6 +74,7 @@ export interface RackSnapshot {
 export type RackAction =
   | { type: 'thread.create' }
   | { type: 'thread.select'; thread_id: string }
+  | { type: 'project.select'; project_key: string }
   | { type: 'catalog.cleanup-fixtures' }
   | { type: 'prompt.submit'; prompt: string }
   | { type: 'run.cancel'; run_id?: Ulid }
@@ -137,6 +144,7 @@ export interface RackQueryResult {
 
 export type RackSelection =
   | { kind: 'thread'; id: string }
+  | { kind: 'project'; id: string }
   | { kind: 'memory'; id: string }
   | { kind: 'module'; id: RackModuleId }
   | { kind: 'spend_lane'; id: string; as_of: string | null }
@@ -168,7 +176,7 @@ export interface RackPluginApi {
 }
 
 export type RackActionResult<Action extends RackAction> =
-  Action['type'] extends 'thread.create'
+  Action['type'] extends 'thread.create' | 'project.select'
     ? string
     : Action['type'] extends 'catalog.cleanup-fixtures'
       ? number
@@ -224,7 +232,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'visualizer',
     slot: 'panel',
     streams: ['thread.snapshot', 'run.*', 'error'],
-    actions: ['prompt.submit', 'run.cancel', 'thread.archive', 'queue.load', 'queue.decide'],
+    actions: ['project.select', 'prompt.submit', 'run.cancel', 'thread.archive', 'queue.load', 'queue.decide'],
     bounds: RACK_BOUNDS.chat,
     movable: true,
     law_bound: false,
@@ -354,9 +362,14 @@ export function subscribeRackState(listener: () => void): () => void {
 }
 
 function snapshotFromState(state: ReturnType<typeof useHarnessStore.getState>): RackSnapshot {
+  const currentProjectKey = state.selectedThreadId === null
+    ? null
+    : state.catalog.find((entry) => entry.thread_id === state.selectedThreadId)?.project_key ?? null
   return {
     catalog: state.catalog,
     selectedThreadId: state.selectedThreadId,
+    currentProjectKey,
+    projectPaths: knownProjectPaths(state.catalog),
     threads: state.threads,
     connection: state.connection,
     globalError: state.globalError,
@@ -372,6 +385,12 @@ function dispatchRackAction<Action extends RackAction>(
       case 'thread.select':
         harnessClient.selectThread(action.thread_id)
         return undefined as RackActionResult<Action>
+      case 'project.select': {
+        const projectKey = canonicalProjectPath(action.project_key)
+        const threadId = harnessClient.selectProject(projectKey)
+        rackSelectionSurface.select({ kind: 'project', id: projectKey })
+        return threadId as RackActionResult<Action>
+      }
       case 'catalog.cleanup-fixtures':
         return useHarnessStore.getState().removeFixtureThreads() as RackActionResult<Action>
       case 'prompt.submit':
@@ -745,6 +764,9 @@ export function clearRackSelection(): void {
 
 export function RackRuntime({ children }: { children: ReactNode }) {
   const selectedThreadId = useHarnessStore((state) => state.selectedThreadId)
+  const currentProjectKey = useHarnessStore((state) => state.selectedThreadId === null
+    ? null
+    : state.catalog.find((entry) => entry.thread_id === state.selectedThreadId)?.project_key ?? null)
 
   useEffect(() => {
     harnessClient.connect()
@@ -761,9 +783,15 @@ export function RackRuntime({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (selectedThreadId !== null) {
-      rackSelectionSurface.select({ kind: 'thread', id: selectedThreadId })
+      const selection = rackSelectionSurface.getSnapshot()
+      if (
+        selection?.kind !== 'project' ||
+        selection.id !== currentProjectKey
+      ) {
+        rackSelectionSurface.select({ kind: 'thread', id: selectedThreadId })
+      }
     }
-  }, [selectedThreadId])
+  }, [currentProjectKey, selectedThreadId])
 
   return children
 }

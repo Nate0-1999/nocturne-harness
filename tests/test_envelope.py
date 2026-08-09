@@ -680,6 +680,57 @@ def test_thread_snapshot_request_requires_outer_thread() -> None:
         Envelope.model_validate(raw)
 
 
+@pytest.mark.parametrize(
+    "project_key",
+    [
+        "",
+        " ",
+        "/build-test",
+        "build\\test",
+        "build//test",
+        "build/./test",
+        "build/../test",
+        "x" * 257,
+        "🪴" * 257,
+    ],
+)
+def test_thread_snapshot_project_context_requires_a_canonical_artificial_path(
+    project_key: str,
+) -> None:
+    """F028, ADR-010, ADR-023, and B.6 r12 require one canonical relative project path;
+    this prevents browser spelling variants from fragmenting project identity.
+    """
+
+    with pytest.raises(ValidationError):
+        envelope_for(
+            "thread.snapshot",
+            {"request": True, "project_key": project_key},
+        )
+
+
+def test_thread_snapshot_project_context_accepts_the_seed_and_descendants() -> None:
+    """F028 and ADR-023 require artificial paths to prefigure movement relationships; this
+    proves the seeded project and a path-shaped child use the same typed request boundary.
+    """
+
+    seeded = envelope_for(
+        "thread.snapshot",
+        {"request": True, "project_key": "build-test"},
+    )
+    child = envelope_for(
+        "thread.snapshot",
+        {"request": True, "project_key": "build-test/api"},
+    )
+    unicode_boundary = envelope_for(
+        "thread.snapshot",
+        {"request": True, "project_key": "🪴" * 256},
+    )
+
+    assert seeded.payload.project_key == "build-test"
+    assert child.payload.project_key == "build-test/api"
+    assert unicode_boundary.payload.project_key == "🪴" * 256
+
+
 def test_thread_snapshot_request_extensions_cannot_reclassify_its_direction() -> None:
     """SPEC C.7 is defended by verifying that thread snapshot request extensions cannot
     reclassify its direction; this prevents drift in the typed websocket envelope contract.
@@ -714,6 +765,7 @@ def test_thread_snapshot_response_types_nested_authoritative_state() -> None:
             "usage": {"requests": 1, "input_tokens": 2, "output_tokens": 3},
             "queued": [{"run_id": SECOND_ID, "prompt_id": ENVELOPE_ID, "prompt": "next"}],
         },
+        "project_key": "build-test/api",
         "resolved_model": "openrouter:minimax/minimax-m3",
         "revision": 7,
     }
@@ -724,6 +776,28 @@ def test_thread_snapshot_response_types_nested_authoritative_state() -> None:
     assert isinstance(snapshot.payload.open_gate, GateOpenPayload)
     assert isinstance(snapshot.payload.active_run, ActiveRunSnapshot)
     assert snapshot.model_dump(mode="json")["payload"] == payload
+
+
+def test_thread_snapshot_response_requires_an_explicit_nullable_project() -> None:
+    """F028 and ADR-023 require authoritative snapshots to distinguish legacy None from an
+    omitted project field; this prevents clients from inventing a default project.
+    """
+
+    payload = {
+        "messages": [],
+        "open_gate": None,
+        "active_run": None,
+        "project_key": None,
+    }
+    snapshot = envelope_for("thread.snapshot", payload)
+    assert isinstance(snapshot.payload, ThreadSnapshotResponsePayload)
+    assert snapshot.payload.project_key is None
+
+    with pytest.raises(ValidationError):
+        envelope_for(
+            "thread.snapshot",
+            {key: value for key, value in payload.items() if key != "project_key"},
+        )
 
 
 @pytest.mark.parametrize(
@@ -743,6 +817,7 @@ def test_thread_snapshot_response_types_nested_authoritative_state() -> None:
                 "messages": [],
                 "open_gate": None,
                 "active_run": None,
+                "project_key": None,
                 "resolved_model": "openrouter:minimax/minimax-m3",
             },
         ),

@@ -23,6 +23,16 @@ import {
   type Usage,
   type Ulid,
 } from './protocol'
+import {
+  DEFAULT_PROJECT_PATH,
+  canonicalProjectPath,
+  isCanonicalProjectPath,
+} from './projectPath'
+import {
+  isProjectContextConflict,
+  snapshotErrorAfterReconciliation,
+  snapshotRequestError,
+} from './snapshotBarrier'
 
 export const THREAD_CATALOG_STORAGE_KEY = 'harness.thread-catalog.v1'
 
@@ -71,6 +81,7 @@ export interface ThreadState {
   usage: Usage | null
   queuedPrompts: QueuedPrompt[]
   lastError: HarnessError | null
+  projectConflictAwaitingSnapshot: boolean
   awaitingSnapshot: boolean
   memoryPanel: MemoryPanelState
 }
@@ -85,7 +96,7 @@ export interface HarnessStoreState extends PersistedHarnessState {
   connection: ConnectionStatus
   daemonMachineId: string | null
   globalError: HarnessError | null
-  createThread: () => string
+  createThread: (projectKey?: string | null) => string
   removeFixtureThreads: () => number
   selectThread: (threadId: string) => void
   beginPrompt: (threadId: string, promptId: Ulid, prompt: string) => void
@@ -113,6 +124,7 @@ function emptyThreadState(): ThreadState {
     usage: null,
     queuedPrompts: [],
     lastError: null,
+    projectConflictAwaitingSnapshot: false,
     awaitingSnapshot: false,
     memoryPanel: emptyMemoryPanelState(),
   }
@@ -161,13 +173,14 @@ function nextIsoTimestamp(previous: string): string {
   return new Date(nextTime).toISOString()
 }
 
-function newCatalogEntry(threadId: string): ThreadCatalogEntry {
+function newCatalogEntry(threadId: string, projectKey: string): ThreadCatalogEntry {
   const timestamp = new Date().toISOString()
   return {
     thread_id: threadId,
     title: 'New thread',
     created_at: timestamp,
     updated_at: timestamp,
+    project_key: canonicalProjectPath(projectKey),
   }
 }
 
@@ -272,6 +285,7 @@ function applyStarted(thread: ThreadState, payload: RunStartedPayload): ThreadSt
         prompt.run_id !== payload.run_id && prompt.prompt_id !== payload.prompt_id,
     ),
     lastError: null,
+    projectConflictAwaitingSnapshot: false,
   }
 }
 
@@ -406,7 +420,11 @@ function replaceFromSnapshot(
           },
     usage: active?.usage ?? null,
     queuedPrompts: active?.queued ?? [],
-    lastError: null,
+    lastError: snapshotErrorAfterReconciliation(
+      previous.lastError,
+      previous.projectConflictAwaitingSnapshot,
+    ),
+    projectConflictAwaitingSnapshot: false,
     awaitingSnapshot: false,
     memoryPanel: {
       ...emptyMemoryPanelState(),
@@ -503,6 +521,7 @@ function applyEvent(thread: ThreadState, event: DecodedServerEvent): ThreadState
         ...thread,
         openGate: event.payload,
         lastError: null,
+        projectConflictAwaitingSnapshot: false,
         activeRun:
           thread.activeRun?.run_id === event.payload.run_id
             ? { ...thread.activeRun, state: 'waiting_gate' }
@@ -529,7 +548,14 @@ function applyEvent(thread: ThreadState, event: DecodedServerEvent): ThreadState
     case 'model.change':
       return { ...thread, resolvedModel: event.payload.new_model }
     case 'error':
-      return { ...thread, lastError: errorFromPayload(event.payload) }
+      {
+        const lastError = errorFromPayload(event.payload)
+        return {
+          ...thread,
+          lastError,
+          projectConflictAwaitingSnapshot: isProjectContextConflict(lastError),
+        }
+      }
     default:
       return thread
   }
@@ -549,23 +575,36 @@ function restoredState(value: unknown): PersistedHarnessState {
   }
   const candidate = value as Partial<PersistedHarnessState>
   const seen = new Set<string>()
-  const catalog = Array.isArray(candidate.catalog)
-    ? candidate.catalog.filter((entry): entry is ThreadCatalogEntry => {
-        if (
-          typeof entry !== 'object' ||
-          entry === null ||
-          !isUuid(entry.thread_id) ||
-          seen.has(entry.thread_id) ||
-          typeof entry.title !== 'string' ||
-          !isIsoTimestamp(entry.created_at) ||
-          !isIsoTimestamp(entry.updated_at)
-        ) {
-          return false
-        }
-        seen.add(entry.thread_id)
-        return true
+  const catalog: ThreadCatalogEntry[] = []
+  if (Array.isArray(candidate.catalog)) {
+    for (const entry of candidate.catalog) {
+      if (
+        typeof entry !== 'object' ||
+        entry === null ||
+        !isUuid(entry.thread_id) ||
+        seen.has(entry.thread_id) ||
+        typeof entry.title !== 'string' ||
+        !isIsoTimestamp(entry.created_at) ||
+        !isIsoTimestamp(entry.updated_at)
+      ) {
+        continue
+      }
+      const projectKey = Object.hasOwn(entry, 'project_key')
+        ? entry.project_key
+        : null
+      if (projectKey !== null && !isCanonicalProjectPath(projectKey)) {
+        continue
+      }
+      seen.add(entry.thread_id)
+      catalog.push({
+        thread_id: entry.thread_id,
+        title: entry.title,
+        created_at: entry.created_at,
+        updated_at: entry.updated_at,
+        project_key: projectKey,
       })
-    : []
+    }
+  }
   const selectedThreadId =
     typeof candidate.selectedThreadId === 'string' &&
     seen.has(candidate.selectedThreadId)
@@ -593,12 +632,20 @@ export const useHarnessStore = create<HarnessStoreState>()(
       daemonMachineId: null,
       globalError: null,
 
-      createThread: () => {
+      createThread: (requestedProjectKey) => {
+        const current = get()
+        const selectedProjectKey = current.selectedThreadId === null
+          ? null
+          : current.catalog.find((entry) => entry.thread_id === current.selectedThreadId)
+            ?.project_key ?? null
+        const projectKey = canonicalProjectPath(
+          requestedProjectKey ?? selectedProjectKey ?? DEFAULT_PROJECT_PATH,
+        )
         let threadId = globalThis.crypto.randomUUID()
         while (get().catalog.some((entry) => entry.thread_id === threadId)) {
           threadId = globalThis.crypto.randomUUID()
         }
-        const entry = newCatalogEntry(threadId)
+        const entry = newCatalogEntry(threadId, projectKey)
         set((state) => ({
           catalog: [...state.catalog, entry],
           selectedThreadId: threadId,
@@ -642,9 +689,13 @@ export const useHarnessStore = create<HarnessStoreState>()(
         }
         set((state) => ({
           selectedThreadId: threadId,
-          threads: state.threads[threadId]
-            ? state.threads
-            : { ...state.threads, [threadId]: emptyThreadState() },
+          threads: replaceThread(state.threads, threadId, (thread) => ({
+            ...thread,
+            lastError: snapshotRequestError(
+              thread.lastError,
+              thread.projectConflictAwaitingSnapshot,
+            ),
+          })),
           globalError: null,
         }))
       },
@@ -675,6 +726,7 @@ export const useHarnessStore = create<HarnessStoreState>()(
               { prompt_id: promptId, prompt },
             ],
             lastError: null,
+            projectConflictAwaitingSnapshot: false,
           })),
         }))
       },
@@ -695,6 +747,10 @@ export const useHarnessStore = create<HarnessStoreState>()(
         set((state) => ({
           threads: replaceThread(state.threads, threadId, (thread) => ({
             ...thread,
+            lastError: snapshotRequestError(
+              thread.lastError,
+              thread.projectConflictAwaitingSnapshot,
+            ),
             awaitingSnapshot: true,
             memoryPanel: {
               ...thread.memoryPanel,
@@ -744,6 +800,7 @@ export const useHarnessStore = create<HarnessStoreState>()(
           threads: replaceThread(state.threads, threadId, (thread) => ({
             ...thread,
             lastError: null,
+            projectConflictAwaitingSnapshot: false,
           })),
         }))
       },
@@ -769,6 +826,9 @@ export const useHarnessStore = create<HarnessStoreState>()(
 
         if (event.type === 'thread.snapshot') {
           set((state) => ({
+            catalog: state.catalog.map((entry) => entry.thread_id === selectedThreadId
+              ? { ...entry, project_key: event.payload.project_key }
+              : entry),
             threads: {
               ...state.threads,
               [selectedThreadId]: replaceFromSnapshot(

@@ -57,7 +57,7 @@ from harness.parameter_registry import (
 from harness.rack_query import RackQueryResult
 from harness.receipt_queue import SpendReceiptQueue
 from harness.resources import ResourceWatch
-from harness.run_loop import RunLoop
+from harness.run_loop import ProjectBindingConflict, RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.seed import SeedIngestionService, SeedUploadRequest
 from harness.spine_client import (
@@ -516,7 +516,33 @@ def create_app(
                     message.payload, ThreadSnapshotRequestPayload
                 ):
                     assert message.thread_id is not None
-                    await loop.request_snapshot(message.thread_id, send)
+                    try:
+                        await loop.request_snapshot(
+                            message.thread_id,
+                            send,
+                            project_key=message.payload.project_key,
+                        )
+                    except ProjectBindingConflict as exc:
+                        existing = (
+                            f"project {exc.existing}"
+                            if exc.existing is not None
+                            else "unscoped history"
+                        )
+                        await loop.send_direct(
+                            send,
+                            factory.create(
+                                MessageType.ERROR,
+                                {
+                                    "code": "project_context_conflict",
+                                    "message": (
+                                        f"This thread already belongs to {existing}. "
+                                        f"Start a new thread in project {exc.requested}."
+                                    ),
+                                },
+                                thread_id=message.thread_id,
+                            ),
+                        )
+                        await loop.request_snapshot(message.thread_id, send)
                 else:
                     await not_implemented(message, send)
         except WebSocketDisconnect:
@@ -599,14 +625,15 @@ def create_dev_app(
             parsed_thread_id = UUID(thread_id)
         except ValueError as exc:
             raise ValueError("agent thread_id must be a UUID") from exc
+        project_key = loop.project_key(thread_id)
         return MemoryToolContext(
             spine=owned_spine,
             principal_id=principal_id,
             machine_id=machine_id,
             agent_id=agent_id,
             thread_id=parsed_thread_id,
-            project_key=None,
-            origin_path=None,
+            project_key=project_key,
+            origin_path=project_key,
         )
 
     memory_contexts = ThreadMemoryContextRegistry()

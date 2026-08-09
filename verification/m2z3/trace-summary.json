@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "packet": "M2Z3",
+  "run_uid": "m2z3-20260809-a7c9",
+  "status": "pass",
+  "owner_app": {
+    "factory": "harness.daemon:create_dev_app",
+    "fixture": false,
+    "chat_provider": "OpenRouter",
+    "chat_route": "openrouter:openai/gpt-4.1",
+    "palace": "configured owner Spine service",
+    "embedding_model": "openai/text-embedding-3-small",
+    "principal_id": "m2z3-sop-verification",
+    "machine_id": "m2z3-sop-verification",
+    "agent_id": "m2z3-sop-verification"
+  },
+  "memory": {
+    "memory_id": "513e4315-e13b-4e83-85cb-7e23f3894ffa",
+    "label": "M2Z3 cobalt latch beacon",
+    "marker": "m2z3-20260809-a7c9",
+    "project_key": "build-test",
+    "origin_path": "build-test",
+    "save_thread_id": "845acd83-d609-4701-b7cb-125472c0271b",
+    "created_status": "active",
+    "embedding_model": "openai/text-embedding-3-small"
+  },
+  "build_test": {
+    "thread_id": "3c4e43f9-8aeb-4482-8057-6c559b37fc05",
+    "project_key": "build-test",
+    "injection_id": "ef6ba888-a895-4dad-9558-00c58c4e1cac",
+    "memory_id": "513e4315-e13b-4e83-85cb-7e23f3894ffa",
+    "score": "0.6499630808830261",
+    "rank": 1,
+    "shown_as": "injected",
+    "outcome": "cited",
+    "features": {
+      "sem": 0.8055677495760248,
+      "kw": 0.21052631578947367,
+      "time": 0.9994584977088508,
+      "proj": 1.0,
+      "freq": 0.1,
+      "hist": 0.0
+    },
+    "graph_current_contains_memory": true,
+    "graph_project_key": "build-test"
+  },
+  "other_test": {
+    "thread_id": "4636def2-8703-479d-9852-b6428dace96c",
+    "project_key": "other-test",
+    "injection_id": "a09bb366-0298-4065-b0e6-9455286a29a4",
+    "injected_count": 0,
+    "near_miss_count": 0,
+    "scoped_list_total": 0,
+    "scoped_search_result_count": 0,
+    "graph_current_node_count": 0,
+    "graph_contains_memory": false,
+    "omitted_memory_ids": []
+  },
+  "restart": {
+    "live_rehydrated_thread_id": "845acd83-d609-4701-b7cb-125472c0271b",
+    "live_rehydrated_project_key": "build-test",
+    "continued_openrouter_turn_found_marker": true,
+    "journal_bindings": [
+      {
+        "thread_id": "3c4e43f9-8aeb-4482-8057-6c559b37fc05",
+        "project_key": "build-test"
+      },
+      {
+        "thread_id": "4636def2-8703-479d-9852-b6428dace96c",
+        "project_key": "other-test"
+      }
+    ],
+    "dual_thread_browser_reload_claimed": false,
+    "dual_thread_reload_note": "Local listener relaunch approval review timed out twice after the final stop; automated journal hydration covers both bindings."
+  },
+  "cleanup": {
+    "method": "PATCH exact UUID with CAS",
+    "expected_revision": 5,
+    "final_revision": 6,
+    "final_status": "tombstoned",
+    "reason": "m2z3 verification cleanup",
+    "active_list_contains_memory": false,
+    "active_search_contains_memory": false,
+    "tombstoned_list_contains_single_exact_memory": true,
+    "unrelated_memory_ids_changed": 0
+  },
+  "screenshots": [
+    "01-build-test-desktop-1440x900.png",
+    "02-build-test-gate-1440x900.png",
+    "03-build-test-graph-current-1440x900.png",
+    "05-other-test-empty-gate-1440x900.png",
+    "06-other-test-graph-current-1440x900.png"
+  ]
+}

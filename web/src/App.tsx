@@ -62,6 +62,12 @@ import {
   type RackLayoutSet,
 } from './rackLayout'
 import { isLegacyFixtureTitle } from './store'
+import { ProjectSelector } from './ProjectSelector'
+import { projectSelectorContextKey } from './projectPath'
+import {
+  rackDrawerModule,
+  rackModuleSelectionIsOpen,
+} from './graphOverlaySelection'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
 const EMPTY_MEMORY_PANEL: RackMemoryPanelState = {
@@ -218,7 +224,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     ? null
     : snapshot.threads[snapshot.selectedThreadId]
   const openGate = selectedThread?.openGate ?? null
-  const drawerModule = selection?.kind === 'module' ? selection.id : null
+  const drawerModule = rackDrawerModule(selection)
   const ordered = orderedModules(layout)
   const rowAllocation = rackBodyRowAllocation(vitalsCollapsed)
   useEffect(() => {
@@ -682,7 +688,7 @@ function RegressionFixtureMarker({ remote = false }: { remote?: boolean }) {
 
 function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] }) {
   const selection = useRackSelection()
-  const drawerOpen = selection?.kind === 'module' && selection.id === moduleId
+  const drawerOpen = rackModuleSelectionIsOpen(selection, moduleId)
   return (
     <div
       className={`rack-remote rack-remote--${moduleId}`}
@@ -731,14 +737,14 @@ function HeaderModule() {
     ? null
     : snapshot.threads[snapshot.selectedThreadId]
   const memoryTotal = selectedThread?.memoryPanel.total ?? 0
-  const threadsOpen = selection?.kind === 'module' && selection.id === 'threads'
-  const memoriesOpen = selection?.kind === 'module' && selection.id === 'memory'
-  const queueOpen = selection?.kind === 'module' && selection.id === 'palace_queue'
-  const graphOpen = selection?.kind === 'module' && selection.id === 'memory_graph'
-  const consoleOpen = selection?.kind === 'module' && selection.id === 'injection_console'
+  const threadsOpen = rackModuleSelectionIsOpen(selection, 'threads')
+  const memoriesOpen = rackModuleSelectionIsOpen(selection, 'memory')
+  const queueOpen = rackModuleSelectionIsOpen(selection, 'palace_queue')
+  const graphOpen = rackModuleSelectionIsOpen(selection, 'memory_graph')
+  const consoleOpen = rackModuleSelectionIsOpen(selection, 'injection_console')
 
   function toggleModule(moduleId: 'threads' | 'memory' | 'palace_queue' | 'memory_graph' | 'injection_console') {
-    const alreadyOpen = selection?.kind === 'module' && selection.id === moduleId
+    const alreadyOpen = rackModuleSelectionIsOpen(selection, moduleId)
     selectionBus.select(alreadyOpen ? null : { kind: 'module', id: moduleId })
   }
 
@@ -905,6 +911,7 @@ function ThreadsModule() {
 
 function ChatModule() {
   const snapshot = useRackSnapshot()
+  const rackSelection = useRackSelection()
   const { events, selection } = useRackPlugin()
   const selectedThreadId = snapshot.selectedThreadId
   const selectedThread = selectedThreadId === null ? null : snapshot.threads[selectedThreadId]
@@ -937,6 +944,7 @@ function ChatModule() {
   const openGate = selectedThread?.openGate ?? null
   const queuedPrompts = selectedThread?.queuedPrompts ?? []
   const awaitingSnapshot = selectedThread?.awaitingSnapshot ?? true
+  const projectSwitching = awaitingSnapshot && rackSelection?.kind === 'project'
   const canSend =
     snapshot.connection === 'connected' &&
     !awaitingSnapshot &&
@@ -1068,24 +1076,40 @@ function ChatModule() {
           )}
           {selectedThreadId !== null && <span>{shortId(selectedThreadId)}</span>}
         </div>
-        <button
-          type="button"
-          className="chat-header__model"
-          data-testid="active-model"
-          aria-label={`Active model: ${selectedThread?.resolvedModel ?? 'awaiting daemon'}`}
-          onClick={() => selection.select({ kind: 'module', id: 'model_device' })}
-        >
-          <span aria-hidden="true">Model</span>
-          <span className="chat-header__model-value">
-            {selectedThread?.resolvedModel ?? 'Awaiting daemon'}
-          </span>
-        </button>
+        <div className="chat-header__context">
+          <ProjectSelector
+            key={projectSelectorContextKey(selectedThreadId, snapshot.currentProjectKey)}
+            selectedThreadId={selectedThreadId}
+            currentProjectKey={snapshot.currentProjectKey}
+            projectPaths={snapshot.projectPaths}
+            awaitingSnapshot={awaitingSnapshot}
+            switching={projectSwitching}
+            onSelect={(projectKey) => events.dispatch({
+              type: 'project.select',
+              project_key: projectKey,
+            })}
+          />
+          <button
+            type="button"
+            className="chat-header__model"
+            data-testid="active-model"
+            aria-label={`Active model: ${selectedThread?.resolvedModel ?? 'awaiting daemon'}`}
+            onClick={() => selection.select({ kind: 'module', id: 'model_device' })}
+          >
+            <span aria-hidden="true">Model</span>
+            <span className="chat-header__model-value">
+              {selectedThread?.resolvedModel ?? 'Awaiting daemon'}
+            </span>
+          </button>
+        </div>
       </header>
 
       {(snapshot.globalError !== null || selectedThread?.lastError !== null) && (
         <div className="error-line" role="status" data-testid="error-line">
           <span aria-hidden="true">!</span>
-          {selectedThread?.lastError?.message ?? snapshot.globalError?.message}
+          <span className="error-line__message">
+            {selectedThread?.lastError?.message ?? snapshot.globalError?.message}
+          </span>
         </div>
       )}
 

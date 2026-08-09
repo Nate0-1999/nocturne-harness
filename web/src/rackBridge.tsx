@@ -396,7 +396,7 @@ function isRackSelection(value: unknown): value is RackSelection {
   if (!isRecord(value) || typeof value.id !== 'string') {
     return false
   }
-  if (value.kind === 'thread' || value.kind === 'memory') {
+  if (value.kind === 'thread' || value.kind === 'project' || value.kind === 'memory') {
     return true
   }
   if (value.kind === 'spend_lane') {

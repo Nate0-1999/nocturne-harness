@@ -23,6 +23,7 @@ from pydantic import (
     model_validator,
 )
 
+from harness.project_path import ArtificialProjectPath
 from harness.spine_client import MemoryUnit, RemovedMemory, ScoredMemoryCard
 
 # A ULID is 128 bits encoded as 26 Crockford Base32 characters. The leading
@@ -246,12 +247,14 @@ class ActiveRunSnapshot(_ExtensiblePayload):
 
 class ThreadSnapshotRequestPayload(_ExtensiblePayload):
     request: Literal[True]
+    project_key: ArtificialProjectPath | None = None
 
 
 class ThreadSnapshotResponsePayload(_ExtensiblePayload):
     messages: list[dict[str, JsonValue]]
     open_gate: GateOpenPayload | None
     active_run: ActiveRunSnapshot | None
+    project_key: ArtificialProjectPath | None
     resolved_model: NonBlankString | None = Field(
         default=None,
         exclude_if=lambda value: value is None,

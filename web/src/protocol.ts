@@ -1,3 +1,5 @@
+import { isCanonicalProjectPath } from './projectPath'
+
 const ULID_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
 const ULID_PATTERN = /^[0-7][0-9A-HJKMNP-TV-Z]{25}$/i
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -35,6 +37,7 @@ export interface ThreadCatalogEntry {
   title: string
   created_at: string
   updated_at: string
+  project_key: string | null
 }
 
 export type StopReason =
@@ -250,6 +253,7 @@ export interface ThreadSnapshotPayload {
   open_gate: GateOpenPayload | null
   active_run: ActiveRunSnapshot | null
   resolved_model: string | null
+  project_key: string | null
 }
 
 export interface RunStartedPayload {
@@ -309,7 +313,7 @@ export type DecodedServerEvent =
   | { type: 'unknown'; payload: JsonValue }
 
 export interface BrowserPayloadMap {
-  'thread.snapshot': { request: true }
+  'thread.snapshot': { request: true; project_key: string | null }
   'prompt.submit': { prompt: string }
   'run.cancel': { run_id: Ulid }
   'gate.commit': GateCommitPayload
@@ -887,6 +891,8 @@ function parseSnapshot(value: unknown): ThreadSnapshotPayload | null {
   if (
     !isRecord(value) ||
     !Array.isArray(value.messages) ||
+    !Object.hasOwn(value, 'project_key') ||
+    (value.project_key !== null && !isCanonicalProjectPath(value.project_key)) ||
     (value.resolved_model !== undefined &&
       (typeof value.resolved_model !== 'string' ||
         !value.resolved_model.trim()))
@@ -911,6 +917,7 @@ function parseSnapshot(value: unknown): ThreadSnapshotPayload | null {
     active_run: activeRun,
     resolved_model:
       typeof value.resolved_model === 'string' ? value.resolved_model : null,
+    project_key: value.project_key as string | null,
   }
 }
 

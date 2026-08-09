@@ -13,6 +13,8 @@ import {
   type Ulid,
 } from './protocol'
 import { publishRackEnvelope } from './rackEvents'
+import { canonicalProjectPath, newestProjectThread } from './projectPath'
+import { snapshotBarrierRoute } from './snapshotBarrier'
 import { useHarnessStore, type HarnessStoreState } from './store'
 
 const INITIAL_RECONNECT_DELAY_MS = 250
@@ -79,8 +81,8 @@ export class HarnessSocketClient {
     useHarnessStore.getState().setConnection('disconnected')
   }
 
-  createThread(): string {
-    const threadId = useHarnessStore.getState().createThread()
+  createThread(projectKey?: string | null): string {
+    const threadId = useHarnessStore.getState().createThread(projectKey)
     this.requestSnapshot(threadId)
     return threadId
   }
@@ -90,13 +92,24 @@ export class HarnessSocketClient {
     this.requestSnapshot(threadId)
   }
 
+  selectProject(projectPath: string): string {
+    const projectKey = canonicalProjectPath(projectPath)
+    const existing = newestProjectThread(useHarnessStore.getState().catalog, projectKey)
+    if (existing === null) {
+      return this.createThread(projectKey)
+    }
+    this.selectThread(existing.thread_id)
+    return existing.thread_id
+  }
+
   requestSnapshot(threadId?: string): Ulid | null {
     const state = useHarnessStore.getState()
     const selectedThreadId = threadId ?? state.selectedThreadId
     if (selectedThreadId === null) {
       return null
     }
-    if (!state.catalog.some((entry) => entry.thread_id === selectedThreadId)) {
+    const entry = state.catalog.find((candidate) => candidate.thread_id === selectedThreadId)
+    if (entry === undefined) {
       throw new RangeError('thread is not in the local catalog')
     }
 
@@ -106,7 +119,11 @@ export class HarnessSocketClient {
       this.connect()
       return null
     }
-    return this.send('thread.snapshot', { request: true }, selectedThreadId).id
+    return this.send(
+      'thread.snapshot',
+      { request: true, project_key: entry.project_key },
+      selectedThreadId,
+    ).id
   }
 
   submitPrompt(prompt: string): Ulid {
@@ -273,16 +290,24 @@ export class HarnessSocketClient {
         return
       }
 
-      publishRackEnvelope({ direction: 'inbound', envelope })
-
       const decoded = decodeServerEnvelope(envelope)
       const store = useHarnessStore.getState()
       store.observeDaemon(envelope.machine_id)
-      if (
-        this.snapshotBarrierThreadId !== null &&
-        envelope.thread_id === this.snapshotBarrierThreadId
-      ) {
-        if (decoded?.type !== 'thread.snapshot') {
+      const barrierRoute = snapshotBarrierRoute(
+        this.snapshotBarrierThreadId,
+        envelope.thread_id,
+        decoded?.type ?? null,
+      )
+      if (barrierRoute.publish) {
+        publishRackEnvelope({ direction: 'inbound', envelope })
+      }
+      const barrierDisposition = barrierRoute.disposition
+      if (barrierDisposition !== 'outside') {
+        if (barrierDisposition === 'error') {
+          store.receiveEnvelope(envelope)
+          return
+        }
+        if (barrierDisposition === 'drop') {
           return
         }
         if (store.receiveEnvelope(envelope)) {

@@ -512,7 +512,45 @@ async def test_startup_hydrates_every_journal_thread(tmp_path: Path) -> None:
         assert isinstance(snapshot, ThreadSnapshotResponsePayload)
         assert snapshot.messages == messages
         assert snapshot.active_run is None
+        assert snapshot.project_key is None
     await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_project_context_only_thread_hydrates_before_its_first_prompt(tmp_path: Path) -> None:
+    """F028, ADR-005, ADR-023, and B.6 r12 require project identity to survive restart from
+    the journal; this prevents a pristine project thread from falling back to legacy None.
+    """
+
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    journal.append_thread_context("thread-project", "build-test/api")
+
+    hydrated = journal.hydrate_threads()
+    assert len(hydrated) == 1
+    assert hydrated[0].messages == ()
+    assert hydrated[0].project_key == "build-test/api"
+
+    restarted = RunLoop(RecordingRunner(), factory(Ids()), transcript_journal=journal)
+    sink = Sink()
+    await restarted.request_snapshot("thread-project", sink)
+    snapshot = sink.messages[0].payload
+    assert isinstance(snapshot, ThreadSnapshotResponsePayload)
+    assert snapshot.project_key == "build-test/api"
+    assert restarted.project_key("thread-project") == "build-test/api"
+    await restarted.close()
+
+
+def test_journal_refuses_a_thread_that_changes_project_context(tmp_path: Path) -> None:
+    """F028 and SPEC C.4 require project to remain part of immutable thread identity; this
+    prevents contradictory journal rows from choosing a project by append order.
+    """
+
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    journal.append_thread_context("thread-project", "build-test")
+    journal.append_thread_context("thread-project", "another-project")
+
+    with pytest.raises(TranscriptJournalUnavailable, match="changes project context"):
+        journal.hydrate_threads()
 
 
 def test_startup_refuses_unrecoverable_parent_history(tmp_path: Path) -> None:

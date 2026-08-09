@@ -48,6 +48,7 @@ from harness.parameter_registry import (
     ParameterValue,
     ParameterWriteViolation,
 )
+from harness.project_path import validate_artificial_project_path
 from harness.run_protocol import RunEmitter, TurnOutcome, TurnRunner, UsageSnapshot
 from harness.transcript import HydratedTranscript, TranscriptJournal
 
@@ -93,6 +94,16 @@ class _ThreadState:
     resolved_model: str | None = None
     model_resolution: ThreadModelResolution | None = None
     cached_prefix_tokens: int = 0
+    project_key: str | None = None
+
+
+class ProjectBindingConflict(RuntimeError):
+    """A project path cannot replace an authoritative thread identity."""
+
+    def __init__(self, requested: str, existing: str | None) -> None:
+        self.requested = requested
+        self.existing = existing
+        super().__init__("thread project context is already fixed")
 
 
 @dataclass(slots=True)
@@ -379,14 +390,24 @@ class RunLoop:
             self._selected_thread_id = thread_id
             self._bind_sink_locked(sink, thread_id)
 
-    async def request_snapshot(self, thread_id: str, sink: EnvelopeSink) -> None:
+    async def request_snapshot(
+        self,
+        thread_id: str,
+        sink: EnvelopeSink,
+        project_key: str | None = None,
+    ) -> None:
         """Select a thread and atomically send its one authoritative snapshot."""
 
         self._require_thread_id(thread_id)
+        canonical_project = (
+            None if project_key is None else validate_artificial_project_path(project_key)
+        )
         receipt: asyncio.Future[None]
         async with self._lock:
             self._require_open()
             state = self._state_for_locked(thread_id)
+            if canonical_project is not None:
+                self._bind_project_locked(thread_id, state, canonical_project)
             self._selected_thread_id = thread_id
             existing = self._find_sink_locked(sink)
             on_overflow = existing.on_overflow if existing is not None else None
@@ -406,6 +427,13 @@ class RunLoop:
             receipt = pending
         await receipt
 
+    def project_key(self, thread_id: str) -> str | None:
+        """Read the daemon-owned project identity for trusted run composition."""
+
+        self._require_thread_id(thread_id)
+        state = self._threads.get(thread_id)
+        return None if state is None else state.project_key
+
     async def detach(self, sink: EnvelopeSink) -> None:
         """Detach a connection without changing daemon-lifetime thread state."""
 
@@ -415,9 +443,13 @@ class RunLoop:
     async def send_direct(self, sink: EnvelopeSink, envelope: Envelope) -> None:
         """Journal and deliver one daemon-authored event outside the run routes."""
 
+        receipt: asyncio.Future[None]
         async with self._lock:
             self._require_open()
-            await self._send_direct_locked(sink, envelope)
+            pending = await self._send_direct_locked(sink, envelope, confirm=True)
+            assert pending is not None
+            receipt = pending
+        await receipt
 
     async def publish(self, thread_id: str, envelope: Envelope) -> None:
         """Publish one daemon-authored ambient event to a thread's subscribers."""
@@ -1369,6 +1401,7 @@ class RunLoop:
                 messages=deepcopy(state.messages),
                 open_gate=state.open_gate,
                 active_run=active_snapshot,
+                project_key=state.project_key,
                 resolved_model=state.resolved_model,
             ),
             thread_id=thread_id,
@@ -1384,7 +1417,13 @@ class RunLoop:
         # during a synchronous burst from one model callback.
         await asyncio.sleep(0)
 
-    async def _send_direct_locked(self, sink: EnvelopeSink, envelope: Envelope) -> None:
+    async def _send_direct_locked(
+        self,
+        sink: EnvelopeSink,
+        envelope: Envelope,
+        *,
+        confirm: bool = False,
+    ) -> asyncio.Future[None] | None:
         if envelope.thread_id is not None:
             self._capture_event(envelope.thread_id, envelope)
         subscription = self._find_sink_locked(sink)
@@ -1394,7 +1433,7 @@ class RunLoop:
             # resubscribe a sink that was detached after backpressure.
             subscription = _Subscription(sink=sink, thread_id=None)
             self._subscriptions.append(subscription)
-        self._enqueue_locked(subscription, envelope)
+        return self._enqueue_locked(subscription, envelope, confirm=confirm)
 
     def _enqueue_locked(
         self,
@@ -1499,6 +1538,26 @@ class RunLoop:
             self._threads[thread_id] = state
         return state
 
+    def _bind_project_locked(
+        self,
+        thread_id: str,
+        state: _ThreadState,
+        project_key: str,
+    ) -> None:
+        if state.project_key == project_key:
+            return
+        if (
+            state.project_key is not None
+            or state.messages
+            or state.active is not None
+            or state.queued
+            or self._pending_captured.get(thread_id)
+        ):
+            raise ProjectBindingConflict(project_key, state.project_key)
+        if self._transcript_journal is not None:
+            self._transcript_journal.append_thread_context(thread_id, project_key)
+        state.project_key = project_key
+
     def _hydrate_threads(
         self,
         journal: TranscriptJournal | None,
@@ -1510,6 +1569,7 @@ class RunLoop:
                 messages=[deepcopy(message) for message in transcript.messages],
                 message_history=self._rehydrate_model_history(transcript),
                 resolved_model=transcript.resolved_model or self._initial_resolved_model,
+                project_key=transcript.project_key,
             )
             for transcript in journal.hydrate_threads()
         }

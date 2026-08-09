@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from harness.envelope import Envelope
+from harness.project_path import validate_artificial_project_path
 
 
 class TranscriptJournalUnavailable(RuntimeError):
@@ -31,6 +32,7 @@ class HydratedTranscript:
     thread_id: str
     messages: tuple[dict[str, Any], ...]
     resolved_model: str | None
+    project_key: str | None
 
 
 class TranscriptJournal:
@@ -96,6 +98,20 @@ class TranscriptJournal:
                     "version": 1,
                     "record_type": "event",
                     "event": envelope.model_dump(mode="json"),
+                },
+            )
+
+    def append_thread_context(self, thread_id: str, project_key: str) -> None:
+        """Append the immutable artificial project path before exposing the thread."""
+
+        canonical = validate_artificial_project_path(project_key)
+        with self._lock:
+            self._append(
+                thread_id,
+                {
+                    "version": 1,
+                    "record_type": "thread_context",
+                    "project_key": canonical,
                 },
             )
 
@@ -350,7 +366,9 @@ class TranscriptJournal:
         latest_messages: dict[str, dict[str, Any]] = {}
         tail_message_id: str | None = None
         saw_tail = False
+        saw_message_row = False
         resolved_model: str | None = None
+        project_key: str | None = None
 
         for raw in rows:
             try:
@@ -368,6 +386,7 @@ class TranscriptJournal:
                 continue
 
             if row.get("record_type") == "message":
+                saw_message_row = True
                 message = row.get("message")
                 if not isinstance(message, dict):
                     continue
@@ -388,10 +407,35 @@ class TranscriptJournal:
                 event = row.get("event")
                 if isinstance(event, dict):
                     resolved_model = self._resolved_model(event, resolved_model)
+            elif row.get("record_type") == "thread_context":
+                candidate_project = row.get("project_key")
+                try:
+                    if not isinstance(candidate_project, str):
+                        raise ValueError("project context must be a string")
+                    canonical_project = validate_artificial_project_path(candidate_project)
+                except ValueError as exc:
+                    raise TranscriptJournalUnavailable(
+                        f"Conversation journal for thread {candidate} has an invalid project "
+                        "context. Restore the journal from a verified backup before starting "
+                        "Nocturne."
+                    ) from exc
+                if project_key is not None and canonical_project != project_key:
+                    raise TranscriptJournalUnavailable(
+                        f"Conversation journal for thread {candidate} changes project context. "
+                        "Restore the journal from a verified backup before starting Nocturne."
+                    )
+                project_key = canonical_project
 
         if not rows:
             return None
-        if thread_id is None or not latest_messages:
+        if thread_id is None:
+            raise TranscriptJournalUnavailable(
+                "Conversation journal contains an unreadable transcript. "
+                "Restore the journal from a verified backup before starting Nocturne."
+            )
+        if not latest_messages:
+            if project_key is not None and not saw_message_row:
+                return HydratedTranscript(thread_id, (), resolved_model, project_key)
             raise TranscriptJournalUnavailable(
                 "Conversation journal contains an unreadable transcript. "
                 "Restore the journal from a verified backup before starting Nocturne."
@@ -422,7 +466,7 @@ class TranscriptJournal:
             parent_id = message.get("parentId")
             cursor = parent_id if isinstance(parent_id, str) else None
         branch.reverse()
-        return HydratedTranscript(thread_id, tuple(branch), resolved_model)
+        return HydratedTranscript(thread_id, tuple(branch), resolved_model, project_key)
 
     def _read_file_rows(self, filename: str) -> list[bytes]:
         root_descriptor = self._open_root_descriptor()

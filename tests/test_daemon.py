@@ -148,8 +148,11 @@ class CancellableRunner:
 
 
 class FailingPrepareSpine:
+    def __init__(self) -> None:
+        self.prepare_requests: list[InjectPrepareRequest] = []
+
     async def prepare_injection(self, request: InjectPrepareRequest) -> InjectPrepareResponse:
-        del request
+        self.prepare_requests.append(request)
         raise SpineTransportError
 
     async def aclose(self) -> None:
@@ -782,6 +785,152 @@ def test_dev_app_wires_the_real_streaming_agent_adapter(
     assert all(message["machine_id"] == "machine-test" for message in messages)
     assert all(message["agent_id"] == "agent-test" for message in messages)
     assert len(list((state_home / "transcripts").glob("*.jsonl"))) == 1
+
+
+def test_dev_app_project_binding_reaches_the_trusted_prepare_context(tmp_path: Path) -> None:
+    """F028, SPEC C.3/C.4, ADR-005, and B.6 r12 require one current project to reach
+    injection from daemon authority; this prevents the browser from becoming trusted identity.
+    """
+
+    async def stream(_messages, _info):
+        yield "project-aware response"
+
+    settings = HarnessSettings(
+        _env_file=None,
+        spine_token="test-token",
+        principal_id="principal-test",
+        machine_id="machine-test",
+        agent_id="agent-test",
+        chat_model="openrouter:static/visible-model",
+        anthropic_api_key=None,
+        openai_api_key=None,
+        openrouter_api_key=None,
+    )
+    agent = HarnessAgent(settings, model=FunctionModel(stream_function=stream))
+    spine = FailingPrepareSpine()
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    app = create_dev_app(
+        tmp_path,
+        settings=settings,
+        agent=agent,
+        spine=spine,  # type: ignore[arg-type]
+        transcript_journal=journal,
+    )
+    thread_id = "22345678-1234-5678-1234-567812345678"
+
+    with TestClient(app) as client, client.websocket_connect("/ws") as websocket:
+        websocket.send_json(
+            frame(
+                "thread.snapshot",
+                {"request": True, "project_key": "build-test/api"},
+                thread_id=thread_id,
+            )
+        )
+        snapshot = websocket.receive_json()
+        assert snapshot["payload"]["project_key"] == "build-test/api"
+
+        websocket.send_json(
+            frame(
+                "prompt.submit",
+                {"prompt": "Use the current project."},
+                thread_id=thread_id,
+            )
+        )
+        receive_until(websocket, "run.done")
+
+    assert len(spine.prepare_requests) == 1
+    assert spine.prepare_requests[0].project_key == "build-test/api"
+    rows = [
+        json.loads(line)
+        for line in journal.path_for_thread(thread_id).read_text(encoding="utf-8").splitlines()
+    ]
+    assert rows[0]["record_type"] == "thread_context"
+    assert rows[0]["project_key"] == "build-test/api"
+
+
+def test_project_rebind_conflict_returns_error_then_authoritative_snapshot(tmp_path: Path) -> None:
+    """F028 and ADR-005 require a thread project to be immutable; this proves a conflicting
+    browser request gets a journaled new-thread remedy before the daemon's existing identity.
+    """
+
+    instant = datetime(2026, 8, 9, 12, tzinfo=UTC)
+    outbound_ids = iter((PROMPT_ID, SECOND_PROMPT_ID, CANCEL_ID))
+    factory = EnvelopeFactory(
+        machine_id="daemon-test",
+        id_factory=lambda: next(outbound_ids),
+        clock=lambda: instant,
+    )
+    journal = TranscriptJournal(tmp_path / "transcripts", clock=lambda: instant)
+    loop = RunLoop(CancellableRunner(), factory, transcript_journal=journal)
+    client = TestClient(
+        create_app(
+            tmp_path,
+            run_loop=loop,
+            envelope_factory=factory,
+        )
+    )
+
+    with client.websocket_connect("/ws") as websocket:
+        websocket.send_json(
+            frame(
+                "thread.snapshot",
+                {"request": True, "project_key": "build-test"},
+            )
+        )
+        first = websocket.receive_json()
+        assert first["payload"]["project_key"] == "build-test"
+
+        websocket.send_json(
+            frame(
+                "thread.snapshot",
+                {"request": True, "project_key": "another-project"},
+                message_id=SNAPSHOT_ID,
+            )
+        )
+        error = websocket.receive_json()
+        authoritative = websocket.receive_json()
+
+    assert [error["type"], authoritative["type"]] == ["error", "thread.snapshot"]
+    assert error["payload"] == {
+        "code": "project_context_conflict",
+        "message": (
+            "This thread already belongs to project build-test. "
+            "Start a new thread in project another-project."
+        ),
+    }
+    assert authoritative["payload"]["project_key"] == "build-test"
+    event_rows = [
+        row
+        for row in (
+            json.loads(line)
+            for line in journal.path_for_thread("thread-1").read_text(encoding="utf-8").splitlines()
+        )
+        if row["record_type"] == "event"
+    ]
+    assert event_rows == [
+        {
+            "version": 1,
+            "record_type": "event",
+            "captured_at": "2026-08-09T12:00:00+00:00",
+            "thread_id": "thread-1",
+            "event": {
+                "v": 1,
+                "id": SECOND_PROMPT_ID,
+                "ts": "2026-08-09T12:00:00Z",
+                "machine_id": "daemon-test",
+                "agent_id": None,
+                "thread_id": "thread-1",
+                "type": "error",
+                "payload": {
+                    "code": "project_context_conflict",
+                    "message": (
+                        "This thread already belongs to project build-test. "
+                        "Start a new thread in project another-project."
+                    ),
+                },
+            },
+        }
+    ]
 
 
 def test_explicit_pinned_policy_does_not_resolve_unused_chat_model(tmp_path: Path) -> None:
@@ -1432,6 +1581,7 @@ def test_unknown_type_without_forwarder_is_ignored_without_closing(tmp_path: Pat
         "messages": [],
         "open_gate": None,
         "active_run": None,
+        "project_key": None,
     }
 
 

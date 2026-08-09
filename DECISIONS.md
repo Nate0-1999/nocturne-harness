@@ -1441,3 +1441,51 @@ prose while missing contracts written without modal words. Calling the result
 clause coverage would manufacture precision the current citation grammar does
 not contain. Treating all accepted `D.2` history as one covered law would hide
 the exact-row ambiguity rather than resolve it.
+
+## 052 — Bind each thread to one artificial project path [P1, ADR-005, ADR-023; PROVISIONAL-TASTE]
+
+**Decision.** Treat a project as a canonical relative POSIX artificial path of
+at most 256 Unicode code points. Paths are nonblank, use forward slashes, and
+contain neither empty nor `.` or `..` segments; slash-prefix ancestry makes
+`build-test/api` a descendant of `build-test` without a second project
+database. Seed `build-test` as the first usable path.
+
+Bind each thread to its project once, durably, by appending a `thread_context`
+row to that thread's existing transcript journal before exposing the binding.
+Hydrate the same identity on restart and never rebind a thread: a project jump
+selects the newest thread already in that project or creates another thread.
+Legacy journals without a binding retain `None`; the owner surface renders
+that state separately as **Unscoped**, never as a project value, wildcard, or
+global match.
+
+Carry the daemon-owned binding through project-scoped saves and both first-turn
+and autonomous injection preparation. Expose each memory's project provenance
+in the Graph inspector, but leave A-035 unchanged: Graph CURRENT is still the
+set of injected memory ids, not a project-filtered query. **PROVISIONAL-TASTE:**
+place one compact Project path control beside Model in the Active Channel
+header, with the separate Unscoped status visible; the owner may overrule that
+placement or feel at the M2X gate.
+
+**Motivation.** F028 showed that constructing the owner app with
+`project_key=None` collapses distinct work into one undifferentiated Palace and
+makes `f_proj` impossible to prove. Thread identity is already the durable
+boundary for conversation continuity, so journal-backed project identity keeps
+the browser a navigation surface rather than an authority and survives daemon
+restart without a new store. Artificial slash ancestry prefigures ADR-023's M3
+movement law: a future agent location can become the project without migrating
+opaque ids. The bounded shared grammar prevents wire drift, while an explicit
+legacy state preserves what old journals actually know. The header control is
+the smallest visible intervention at the point where the owner is already
+choosing a thread and model.
+
+**Rejected alternatives.** Browser-only or local-storage project state would
+drift from the daemon and disappear across restart. Rebinding an existing
+thread would mix durable conversation and memory provenance. A project table,
+second database, or prebuilt tree browser would duplicate the journal and pull
+M3 forward. Absolute filesystem paths or the daemon's working directory would
+confuse artificial location with one machine's layout. Treating `None` as a
+global project match would leak scoped memory, while placing the word
+`Unscoped` in the editable path value would collide with a valid path. Changing
+Graph CURRENT to mean current project would silently replace A-035's injected-
+membership contract. A separate project screen or permanent sidebar would add
+navigation before owner use has earned it.

@@ -4,6 +4,7 @@ import asyncio
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 from uuid import UUID
 
@@ -23,8 +24,9 @@ from harness.model_policy import (
     NamedModelResolutionError,
     ThreadModelResolution,
 )
-from harness.run_loop import RunLoop
+from harness.run_loop import ProjectBindingConflict, RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
+from harness.transcript import TranscriptJournal
 
 TEST_TIMEOUT = 1.0
 INJECTION_ID = "32345678-1234-5678-1234-567812345678"
@@ -401,6 +403,71 @@ def test_run_loop_rejects_invalid_resolved_model(resolved_model: str) -> None:
             factory(ids),
             resolved_model=resolved_model,
         )
+
+
+@pytest.mark.asyncio
+async def test_project_binding_is_journaled_once_and_becomes_authoritative(
+    tmp_path: Path,
+) -> None:
+    """F028, SPEC C.3/C.4, ADR-005, and B.6 r12 require one trusted current project;
+    this proves an idempotent pristine bind is durable before its snapshot is exposed.
+    """
+
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    loop = RunLoop(
+        ImmediateHistoryRunner(),
+        factory(Ids()),
+        transcript_journal=journal,
+    )
+    first = Sink()
+    await loop.request_snapshot("thread-1", first, project_key="build-test/api")
+    await _wait_for_type_count(first, MessageType.THREAD_SNAPSHOT, 1)
+    snapshot = first.messages[0].payload
+    assert isinstance(snapshot, ThreadSnapshotResponsePayload)
+    assert snapshot.project_key == "build-test/api"
+    assert loop.project_key("thread-1") == "build-test/api"
+
+    second = Sink()
+    await loop.request_snapshot("thread-1", second, project_key="build-test/api")
+    rows = journal.path_for_thread("thread-1").read_text(encoding="utf-8")
+    assert rows.count('"record_type":"thread_context"') == 1
+
+    with pytest.raises(ProjectBindingConflict) as raised:
+        await loop.request_snapshot("thread-1", Sink(), project_key="another-project")
+    assert raised.value.existing == "build-test/api"
+    assert loop.project_key("thread-1") == "build-test/api"
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_legacy_nonempty_thread_cannot_be_silently_reprojected() -> None:
+    """F028 and ADR-005 forbid treating legacy None as a global project match; this proves a
+    nonempty unscoped thread must remain unscoped instead of changing Spine identity.
+    """
+
+    control = TurnControl()
+    loop = RunLoop(ControlledRunner({"legacy": control}), factory(Ids()))
+    sink = Sink()
+    await loop.submit(
+        thread_id="thread-legacy",
+        prompt_id=ulid(1),
+        prompt="legacy",
+        sink=sink,
+    )
+    await asyncio.wait_for(control.entered.wait(), TEST_TIMEOUT)
+
+    with pytest.raises(ProjectBindingConflict) as raised:
+        await loop.request_snapshot(
+            "thread-legacy",
+            Sink(),
+            project_key="build-test",
+        )
+    assert raised.value.existing is None
+    assert loop.project_key("thread-legacy") is None
+
+    control.release.set()
+    await _wait_for_done_count(sink, 1)
+    await loop.close()
 
 
 @pytest.mark.asyncio
