@@ -116,11 +116,16 @@ class TtyStringIO(io.StringIO):
 async def test_remote_verifier_uses_distinct_label_for_duplicate_probe_and_cleans_up(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """SPEC C.4 requires the duplicate probe to pass label checks and clean up."""
+    """F033/A-031 and SPEC C.4 are defended by verifying that the isolated D3 probe uses
+    one canonical verification machine through create, prepare, and cleanup; this prevents
+    deploy checks from becoming owner-learning signals while preserving per-run isolation.
+    """
 
     memory_id = UUID("12345678-1234-5678-1234-567812345678")
     injection_id = UUID("22345678-1234-5678-1234-567812345678")
     requests: list[spine_client_module.CreateMemoryRequest] = []
+    prepare_requests: list[spine_client_module.InjectPrepareRequest] = []
+    patch_requests: list[spine_client_module.PatchMemoryRequest] = []
     cleaned: list[UUID] = []
 
     class FakeSpineClient:
@@ -166,7 +171,11 @@ async def test_remote_verifier_uses_distinct_label_for_duplicate_probe_and_clean
                 )
             raise spine_client_module.CreateMemoryConflictError(response, conflict)
 
-        async def prepare_injection(self, request: object) -> object:
+        async def prepare_injection(
+            self,
+            request: spine_client_module.InjectPrepareRequest,
+        ) -> object:
+            prepare_requests.append(request)
             return SimpleNamespace(
                 injection_id=injection_id,
                 injected=[SimpleNamespace(memory_id=memory_id)],
@@ -178,9 +187,14 @@ async def test_remote_verifier_uses_distinct_label_for_duplicate_probe_and_clean
         async def list_memories(self, params: object) -> object:
             return SimpleNamespace(items=[SimpleNamespace(memory_id=memory_id, revision=1)])
 
-        async def patch_memory(self, target: UUID, request: object) -> object:
+        async def patch_memory(
+            self,
+            target: UUID,
+            request: spine_client_module.PatchMemoryRequest,
+        ) -> object:
             assert target == memory_id
             assert request.status is spine_client_module.MemoryStatus.TOMBSTONED
+            patch_requests.append(request)
             cleaned.append(target)
             return SimpleNamespace(status=spine_client_module.MemoryStatus.TOMBSTONED)
 
@@ -214,6 +228,19 @@ async def test_remote_verifier_uses_distinct_label_for_duplicate_probe_and_clean
     assert 0 < len(duplicate.label) <= 64
     assert duplicate.principal_id == source.principal_id
     assert duplicate.body == source.body
+    assert source.principal_id.startswith("nocturne-deploy-verify-")
+    assert source.project_key == source.principal_id
+    assert source.machine_id == deploy_module._DEPLOY_VERIFIER_MACHINE_ID
+    assert deploy_module._DEPLOY_VERIFIER_MACHINE_ID == "nocturne-deploy-verification"
+    assert len(prepare_requests) == 1
+    prepared = prepare_requests[0]
+    assert prepared.machine_id == deploy_module._DEPLOY_VERIFIER_MACHINE_ID
+    assert prepared.principal_id == source.principal_id
+    assert prepared.project_key == source.project_key
+    assert prepared.agent_id == "nocturne-deploy"
+    assert prepared.agent_kind == "verification"
+    assert len(patch_requests) == 1
+    assert patch_requests[0].machine_id == deploy_module._DEPLOY_VERIFIER_MACHINE_ID
     assert cleaned == [memory_id]
 
 

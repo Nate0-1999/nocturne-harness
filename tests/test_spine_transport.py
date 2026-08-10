@@ -14,6 +14,8 @@ from harness.spine_client import (
     DuplicateMemoryConflict,
     FeedbackRequest,
     InjectCommitRequest,
+    InjectionEventAnnotationInput,
+    InjectionEventAnnotationsRequest,
     InjectPrepareRequest,
     LabelConflict,
     ListMemoriesParams,
@@ -328,6 +330,10 @@ async def test_all_routes_send_exact_http_contract() -> None:
             200, {"final_block": "<memory_system></memory_system>", "wrong_removed": []}
         ),
         ("POST", "/prefix/v1/feedback"): response(200, {"ok": True}),
+        ("POST", "/prefix/v1/injection-event-annotations"): response(
+            200,
+            {"accepted": 1},
+        ),
         ("POST", "/prefix/v1/memories"): response(201, {"created": memory_unit_payload()}),
         ("POST", "/prefix/v1/memory-splits"): response(
             201,
@@ -386,6 +392,21 @@ async def test_all_routes_send_exact_http_contract() -> None:
                 injection_id=INJECTION_ID,
                 memory_id=MEMORY_ID,
                 signal="cited",
+            )
+        )
+        annotations = await client.annotate_injection_events(
+            InjectionEventAnnotationsRequest(
+                annotations=[
+                    InjectionEventAnnotationInput(
+                        target_event_uid="01KY2JE3JKY1MXYCKVZ93KY399",
+                        expected_principal_id="d1-principal",
+                        expected_machine_id="d1-relay",
+                        reason="Legacy D1 deploy verification artifact.",
+                        annotator_principal_id="m2za-sop-verification",
+                        annotator_machine_id="m2za-sop-verification",
+                        annotator_origin_agent="verification:m2za",
+                    )
+                ]
             )
         )
         created = await client.create_memory(
@@ -467,6 +488,7 @@ async def test_all_routes_send_exact_http_contract() -> None:
     assert prepared.scorer_version == "v0"
     assert committed.wrong_removed == []
     assert feedback.ok is True
+    assert annotations.accepted == 1
     assert isinstance(created, CreatedMemoryResponse)
     assert isinstance(split, MemorySplitResponse)
     assert split.source.status is MemoryStatus.TOMBSTONED
@@ -486,6 +508,22 @@ async def test_all_routes_send_exact_http_contract() -> None:
     assert create_body["origin_path"] == "src/editor.py"
     assert create_body["force"] is False
     assert "project_key" not in create_body
+    annotation_body = json.loads(
+        requests[("POST", "/prefix/v1/injection-event-annotations")].content
+    )
+    assert annotation_body == {
+        "annotations": [
+            {
+                "target_event_uid": "01KY2JE3JKY1MXYCKVZ93KY399",
+                "expected_principal_id": "d1-principal",
+                "expected_machine_id": "d1-relay",
+                "reason": "Legacy D1 deploy verification artifact.",
+                "annotator_principal_id": "m2za-sop-verification",
+                "annotator_machine_id": "m2za-sop-verification",
+                "annotator_origin_agent": "verification:m2za",
+            }
+        ]
+    }
     split_body = json.loads(requests[("POST", "/prefix/v1/memory-splits")].content)
     assert split_body == {
         "principal_id": "principal-1",

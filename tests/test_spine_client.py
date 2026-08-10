@@ -10,6 +10,9 @@ from harness.spine_client import (
     CreateMemoryRequest,
     DuplicateMemoryConflict,
     InjectCommitResponse,
+    InjectionEventAnnotationInput,
+    InjectionEventAnnotationsRequest,
+    InjectionEventAnnotationsResponse,
     InjectPrepareRequest,
     InjectPrepareResponse,
     LabelConflict,
@@ -103,6 +106,7 @@ def test_client_exposes_all_spine_routes() -> None:
         "prepare_injection",
         "commit_injection",
         "submit_feedback",
+        "annotate_injection_events",
         "create_memory",
         "create_memory_split",
         "patch_memory",
@@ -124,6 +128,61 @@ def test_client_exposes_all_spine_routes() -> None:
         "decide_queue_item",
         "decide_queue_batch",
     }
+
+
+def test_injection_event_annotation_contract_is_strict_and_atomic() -> None:
+    """A-053/F033 is defended by verifying that annotation batches retain target
+    fingerprints, provenance, and unique canonical targets; this prevents ambiguous hygiene
+    rewrites at the typed Harness-Spine boundary.
+    """
+    annotation = InjectionEventAnnotationInput(
+        target_event_uid="01KY2JE3JKY1MXYCKVZ93KY399",
+        expected_principal_id="d1-4f6500c7-336f-4ce4-871b-9f31ef770f9f",
+        expected_machine_id="d1-relay",
+        reason="Legacy D1 deploy verification artifact.",
+        annotator_principal_id="m2za-sop-verification",
+        annotator_machine_id="m2za-sop-verification",
+        annotator_origin_agent="verification:m2za",
+    )
+    request = InjectionEventAnnotationsRequest(annotations=[annotation])
+
+    assert request.model_dump(mode="json") == {
+        "annotations": [
+            {
+                "target_event_uid": "01KY2JE3JKY1MXYCKVZ93KY399",
+                "expected_principal_id": "d1-4f6500c7-336f-4ce4-871b-9f31ef770f9f",
+                "expected_machine_id": "d1-relay",
+                "reason": "Legacy D1 deploy verification artifact.",
+                "annotator_principal_id": "m2za-sop-verification",
+                "annotator_machine_id": "m2za-sop-verification",
+                "annotator_origin_agent": "verification:m2za",
+            }
+        ]
+    }
+    historical_fingerprint = InjectionEventAnnotationInput(
+        **{
+            **annotation.model_dump(),
+            "expected_principal_id": " ",
+            "expected_machine_id": "",
+        }
+    )
+    assert historical_fingerprint.expected_principal_id == " "
+    assert historical_fingerprint.expected_machine_id == ""
+    assert InjectionEventAnnotationsResponse(accepted=1).accepted == 1
+    with pytest.raises(ValidationError):
+        InjectionEventAnnotationsRequest(annotations=[])
+    with pytest.raises(ValidationError):
+        InjectionEventAnnotationsRequest(annotations=[annotation, annotation])
+    with pytest.raises(ValidationError):
+        InjectionEventAnnotationInput(
+            **{**annotation.model_dump(), "reason": " "},
+        )
+    with pytest.raises(ValidationError):
+        InjectionEventAnnotationInput(
+            **{**annotation.model_dump(), "target_event_uid": "not-a-ulid"},
+        )
+    with pytest.raises(ValidationError):
+        InjectionEventAnnotationsResponse(accepted="1")
 
 
 def test_retrain_response_keeps_learning_receipts_strict_and_server_authored() -> None:

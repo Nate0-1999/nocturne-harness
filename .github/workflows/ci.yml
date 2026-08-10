@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nate0-1999/nocturne-spine
-          ref: 1a455878a9e607bcbd30d49e90ce2da8f2de1f39
+          ref: 2e634e8bf5b1f9f68cabe72caac4ba97e78c281f
           path: _d3/spine
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -83,7 +83,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nate0-1999/nocturne-spine
-          ref: 1a455878a9e607bcbd30d49e90ce2da8f2de1f39
+          ref: 2e634e8bf5b1f9f68cabe72caac4ba97e78c281f
           path: _contract/spine
           persist-credentials: false
       - uses: actions/setup-python@v5

@@ -43,6 +43,7 @@ DATABASE_USER = "spine"
 RUNTIME_SERVICE_ACCOUNT = "spine-runtime"
 ARTIFACT_REPOSITORY = "spine"
 CLOUD_RUN_SERVICE = "n8-memory-palace-spine"
+_DEPLOY_VERIFIER_MACHINE_ID = "nocturne-deploy-verification"
 
 DATABASE_URL_SECRET = "spine-database-url"
 SPINE_TOKEN_SECRET = "spine-token"
@@ -1148,7 +1149,6 @@ async def _verify_remote_spine_async(service_url: str, token: str) -> None:
     project = f"nocturne-deploy-verify-{nonce}"
     label = f"D3 deploy verification {nonce}"
     body = f"Isolated D3 deployment verification memory {nonce}."
-    machine = "nocturne-deploy"
     request = CreateMemoryRequest(
         principal_id=principal,
         label=label,
@@ -1159,7 +1159,7 @@ async def _verify_remote_spine_async(service_url: str, token: str) -> None:
         thread_origin=None,
         origin_path="nocturne-deploy",
         editor="nocturne-deploy",
-        machine_id=machine,
+        machine_id=_DEPLOY_VERIFIER_MACHINE_ID,
     )
     memory_id = None
     async with SpineClient(service_url, token, timeout=45.0) as client:
@@ -1188,7 +1188,7 @@ async def _verify_remote_spine_async(service_url: str, token: str) -> None:
                 InjectPrepareRequest(
                     thread_id=uuid4(),
                     agent_id="nocturne-deploy",
-                    machine_id=machine,
+                    machine_id=_DEPLOY_VERIFIER_MACHINE_ID,
                     principal_id=principal,
                     project_key=project,
                     agent_kind="verification",
@@ -1223,7 +1223,7 @@ async def _verify_remote_spine_async(service_url: str, token: str) -> None:
                         status=MemoryStatus.TOMBSTONED,
                         editor="nocturne-deploy",
                         reason="D3 remote verification cleanup",
-                        machine_id=machine,
+                        machine_id=_DEPLOY_VERIFIER_MACHINE_ID,
                     ),
                 )
                 if tombstoned.status is not MemoryStatus.TOMBSTONED:
