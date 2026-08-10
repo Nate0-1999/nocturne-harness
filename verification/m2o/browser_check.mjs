@@ -111,7 +111,7 @@ function seedCatalog() {
   const at = '2026-08-03T20:00:00.000Z'
   const catalog = [
     ['00000000-0000-4000-8000-000000000001', 'Open the H6 verification thread context.'],
-    ['00000000-0000-4000-8000-000000000002', 'Which Garden memory governs this handoff?'],
+    ['00000000-0000-4000-8000-000000000002', 'Map the release boundary and hold the queue open.'],
     ['00000000-0000-4000-8000-000000000003', 'Owner planning notes'],
   ].map(([thread_id, title]) => ({ thread_id, title, created_at: at, updated_at: at }))
   localStorage.setItem(

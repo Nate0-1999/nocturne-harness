@@ -1,0 +1,37 @@
+{
+  "evidence_scope": "Disposable local composition proof using the current Harness and Spine checkouts; not an owner Palace run",
+  "observed_on": "2026-08-09",
+  "components": {
+    "harness": "current checkout",
+    "spine": "current checkout",
+    "database": "disposable PostgreSQL",
+    "schema_revision": "0011"
+  },
+  "learning": {
+    "eligible_dispositions": 0,
+    "minimum_dispositions": 25,
+    "manual_retrain_requests": 1,
+    "manual_receipt": {
+      "trigger": "manual",
+      "result": "insufficient_data",
+      "eligible_dispositions": 0
+    },
+    "proposal_created": false
+  },
+  "active_configuration": {
+    "version": "v0",
+    "active": true,
+    "learner_marker": false
+  },
+  "database_observations": [
+    "manual|insufficient_data|0|t",
+    "v0|t|f",
+    "0011"
+  ],
+  "safety": {
+    "activation_attempts": 0,
+    "signals_synthesized": 0,
+    "owner_palace_mutated": false,
+    "deployed": false
+  }
+}

@@ -1,0 +1,703 @@
+{
+  "fixture": "M2Z4 REGRESSION",
+  "evidence_scope": "one disposable integration proof; fixture-graded events exist only in this fresh test database and never touch an owner Palace",
+  "schema_revision": "0011",
+  "worker": {
+    "implementation": "spine.learner.worker.LearnerWorker",
+    "wake_requests": [
+      {
+        "requested_at": "2026-08-10T04:24:44.043177+00:00",
+        "inserted_events": 5,
+        "eligible_dispositions": 4,
+        "test_only": true,
+        "database": "fresh disposable pgvector Testcontainer"
+      }
+    ],
+    "completions": [
+      {
+        "started_at": "2026-08-10T04:24:42.809526+00:00",
+        "completed_at": "2026-08-10T04:24:42.837081+00:00",
+        "status": "not_due",
+        "proposal_version": null,
+        "eligible_dispositions": null
+      },
+      {
+        "started_at": "2026-08-10T04:24:44.043254+00:00",
+        "completed_at": "2026-08-10T04:24:44.132609+00:00",
+        "status": "proposed",
+        "proposal_version": "m2f-675d09a1a20ed301",
+        "eligible_dispositions": 4
+      }
+    ]
+  },
+  "database": {
+    "learner_runs": [
+      {
+        "run_uid": "01KZMYMWTTNZ83MQQKAXJQ2MFP",
+        "trigger": "background",
+        "result": "proposed",
+        "incumbent_version": "v0",
+        "proposal_version": "m2f-675d09a1a20ed301",
+        "eligible_dispositions": 4,
+        "ts": "2026-08-10T04:24:44.150215+00:00"
+      }
+    ],
+    "active_versions": [
+      "v0"
+    ],
+    "learner_proposals": [
+      {
+        "version": "m2f-675d09a1a20ed301",
+        "active": false,
+        "learner_status": "proposed"
+      }
+    ],
+    "activation_rows": 0
+  },
+  "harness": {
+    "console_reads": 5,
+    "canonical_console": {
+      "as_of": "2026-08-10T04:24:49.028770Z",
+      "scope": "CURRENT",
+      "thread_id": "00000000-0000-4000-8000-000000000404",
+      "descriptors": [
+        {
+          "id": "scorer.tau",
+          "label": "Injection threshold",
+          "type": "number",
+          "range": {
+            "minimum": 0,
+            "maximum": 1,
+            "step": 0.01,
+            "exclusive_minimum": false
+          },
+          "default": 0.55,
+          "scope": "global",
+          "authority": "law-bound"
+        },
+        {
+          "id": "scorer.top_k",
+          "label": "Display limit",
+          "type": "integer",
+          "range": {
+            "minimum": 1,
+            "maximum": 8,
+            "step": 1,
+            "exclusive_minimum": false
+          },
+          "default": 8,
+          "scope": "global",
+          "authority": "law-bound"
+        },
+        {
+          "id": "scorer.budget_tokens",
+          "label": "Memory token budget",
+          "type": "integer",
+          "range": {
+            "minimum": 1,
+            "maximum": null,
+            "step": 128,
+            "exclusive_minimum": false
+          },
+          "default": 3000,
+          "scope": "global",
+          "authority": "law-bound"
+        },
+        {
+          "id": "scorer.half_life_time_days",
+          "label": "Recency half-life (days)",
+          "type": "number",
+          "range": {
+            "minimum": 0,
+            "maximum": null,
+            "step": 0.5,
+            "exclusive_minimum": true
+          },
+          "default": 14,
+          "scope": "global",
+          "authority": "law-bound"
+        },
+        {
+          "id": "scorer.half_life_hist_days",
+          "label": "Edit-history half-life (days)",
+          "type": "number",
+          "range": {
+            "minimum": 0,
+            "maximum": null,
+            "step": 0.5,
+            "exclusive_minimum": true
+          },
+          "default": 7,
+          "scope": "global",
+          "authority": "law-bound"
+        },
+        {
+          "id": "scorer.weight.sem",
+          "label": "SEM weight",
+          "type": "number",
+          "range": {
+            "minimum": 0,
+            "maximum": 1,
+            "step": 0.01,
+            "exclusive_minimum": false
+          },
+          "default": 0.42,
+          "scope": "global",
+          "authority": "law-bound"
+        },
+        {
+          "id": "scorer.weight.kw",
+          "label": "KW weight",
+          "type": "number",
+          "range": {
+            "minimum": 0,
+            "maximum": 1,
+            "step": 0.01,
+            "exclusive_minimum": false
+          },
+          "default": 0.16,
+          "scope": "global",
+          "authority": "law-bound"
+        },
+        {
+          "id": "scorer.weight.time",
+          "label": "TIME weight",
+          "type": "number",
+          "range": {
+            "minimum": 0,
+            "maximum": 1,
+            "step": 0.01,
+            "exclusive_minimum": false
+          },
+          "default": 0.11,
+          "scope": "global",
+          "authority": "law-bound"
+        },
+        {
+          "id": "scorer.weight.proj",
+          "label": "PROJ weight",
+          "type": "number",
+          "range": {
+            "minimum": 0,
+            "maximum": 1,
+            "step": 0.01,
+            "exclusive_minimum": false
+          },
+          "default": 0.16,
+          "scope": "global",
+          "authority": "law-bound"
+        },
+        {
+          "id": "scorer.weight.freq",
+          "label": "FREQ weight",
+          "type": "number",
+          "range": {
+            "minimum": 0,
+            "maximum": 1,
+            "step": 0.01,
+            "exclusive_minimum": false
+          },
+          "default": 0.08,
+          "scope": "global",
+          "authority": "law-bound"
+        },
+        {
+          "id": "scorer.weight.hist",
+          "label": "HIST weight",
+          "type": "number",
+          "range": {
+            "minimum": 0,
+            "maximum": 1,
+            "step": 0.01,
+            "exclusive_minimum": false
+          },
+          "default": 0.07,
+          "scope": "global",
+          "authority": "law-bound"
+        }
+      ],
+      "active_version": "v0",
+      "configurations": [
+        {
+          "version": "v0",
+          "created_at": "2026-08-10T04:24:42.757634Z",
+          "status": "active",
+          "values": {
+            "tau": 0.55,
+            "top_k": 8,
+            "budget_tokens": 3000,
+            "half_life_time_days": 14,
+            "half_life_hist_days": 7,
+            "weights": {
+              "sem": 0.42,
+              "kw": 0.16,
+              "time": 0.11,
+              "proj": 0.16,
+              "freq": 0.08,
+              "hist": 0.07
+            }
+          },
+          "replay": null
+        },
+        {
+          "version": "m2f-675d09a1a20ed301",
+          "created_at": "2026-08-10T04:24:44.150215Z",
+          "status": "proposed",
+          "values": {
+            "tau": 0.55,
+            "top_k": 8,
+            "budget_tokens": 3000,
+            "half_life_time_days": 14,
+            "half_life_hist_days": 7,
+            "weights": {
+              "sem": 0.7999984771585761,
+              "kw": 0.08250038071035608,
+              "time": 0.032500380710355985,
+              "proj": 0.08250038071035608,
+              "freq": 0.0025003807103557442,
+              "hist": 0
+            }
+          },
+          "replay": {
+            "incumbent": {
+              "disagreements": 2,
+              "injected_tokens": 9,
+              "weighted_disagreements": "2"
+            },
+            "challenger": {
+              "disagreements": 0,
+              "injected_tokens": 6,
+              "weighted_disagreements": "0"
+            }
+          }
+        }
+      ],
+      "activations": [],
+      "proposed_versions": [
+        {
+          "version": "m2f-675d09a1a20ed301",
+          "created_at": "2026-08-10T04:24:44.150215Z",
+          "status": "proposed",
+          "values": {
+            "tau": 0.55,
+            "top_k": 8,
+            "budget_tokens": 3000,
+            "half_life_time_days": 14,
+            "half_life_hist_days": 7,
+            "weights": {
+              "sem": 0.7999984771585761,
+              "kw": 0.08250038071035608,
+              "time": 0.032500380710355985,
+              "proj": 0.08250038071035608,
+              "freq": 0.0025003807103557442,
+              "hist": 0
+            }
+          },
+          "replay": {
+            "incumbent": {
+              "disagreements": 2,
+              "injected_tokens": 9,
+              "weighted_disagreements": "2"
+            },
+            "challenger": {
+              "disagreements": 0,
+              "injected_tokens": 6,
+              "weighted_disagreements": "0"
+            }
+          }
+        }
+      ],
+      "accuracy": [
+        {
+          "version": "v0",
+          "created_at": "2026-08-10T04:24:42.757634Z",
+          "status": "not_recorded",
+          "accuracy_percent": null,
+          "holdout_dispositions": null,
+          "disagreements": null,
+          "weighted_dispositions": null,
+          "weighted_wrong": null
+        },
+        {
+          "version": "m2f-675d09a1a20ed301",
+          "created_at": "2026-08-10T04:24:44.150215Z",
+          "status": "measured",
+          "accuracy_percent": "100",
+          "holdout_dispositions": 2,
+          "disagreements": 0,
+          "weighted_dispositions": "2",
+          "weighted_wrong": "0"
+        }
+      ],
+      "learning": {
+        "eligible_dispositions": 4,
+        "hygiene_excluded_dispositions": 0,
+        "minimum_dispositions": 4,
+        "remaining_to_floor": 0,
+        "floor_met": true,
+        "retrain_signal_stride": 2,
+        "evaluated_through": 4,
+        "signals_since_last_run": 0,
+        "signals_until_next_run": 2,
+        "active_scorer_version": "v0",
+        "right": 0,
+        "wrong": 4,
+        "weighted_right": "0",
+        "weighted_wrong": "4",
+        "weighted_agreement_percent": "0",
+        "live_agreement": [
+          {
+            "event_uid": "01KZ4Z0000000000000001001N",
+            "ts": "2026-08-09T18:00:00Z",
+            "scorer_version": "v0",
+            "right": 0,
+            "wrong": 1,
+            "weighted_right": "0",
+            "weighted_wrong": "1",
+            "weighted_agreement_percent": "0"
+          },
+          {
+            "event_uid": "01KZ4Z0000000000000001001P",
+            "ts": "2026-08-09T18:00:00Z",
+            "scorer_version": "v0",
+            "right": 0,
+            "wrong": 2,
+            "weighted_right": "0",
+            "weighted_wrong": "2",
+            "weighted_agreement_percent": "0"
+          },
+          {
+            "event_uid": "01KZ4Z0000000000000001002N",
+            "ts": "2026-08-09T19:00:00Z",
+            "scorer_version": "v0",
+            "right": 0,
+            "wrong": 2,
+            "weighted_right": "0",
+            "weighted_wrong": "2",
+            "weighted_agreement_percent": "0"
+          },
+          {
+            "event_uid": "01KZ4Z0000000000000001002P",
+            "ts": "2026-08-09T19:00:00Z",
+            "scorer_version": "v0",
+            "right": 0,
+            "wrong": 2,
+            "weighted_right": "0",
+            "weighted_wrong": "2",
+            "weighted_agreement_percent": "0"
+          }
+        ],
+        "retrain_runs": [
+          {
+            "run_uid": "01KZMYMWTTNZ83MQQKAXJQ2MFP",
+            "trigger": "background",
+            "result": "proposed",
+            "incumbent_version": "v0",
+            "proposal_version": "m2f-675d09a1a20ed301",
+            "eligible_dispositions": 4,
+            "training_dispositions": 2,
+            "holdout_dispositions": 2,
+            "training_pairs": 1,
+            "source_boundary": "01KZ4Z0000000000000001002P",
+            "incumbent": {
+              "disagreements": 2,
+              "weighted_disagreements": "2",
+              "injected_tokens": 9
+            },
+            "challenger": {
+              "disagreements": 0,
+              "weighted_disagreements": "0",
+              "injected_tokens": 6
+            },
+            "reason": "challenger won replay and remains inactive pending owner activation",
+            "ts": "2026-08-10T04:24:44.150215Z"
+          }
+        ],
+        "annotations": [
+          {
+            "kind": "retrain",
+            "event_uid": "01KZMYMWTTNZ83MQQKAXJQ2MFP",
+            "ts": "2026-08-10T04:24:44.150215Z",
+            "version": "m2f-675d09a1a20ed301",
+            "result": "proposed"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "memory_id": "00000000-0000-4000-8000-000000000405",
+          "label": "Recall the owner boundary",
+          "kind": "fact",
+          "points": [
+            {
+              "event_uid": "01KZ4Z0000000000000001001P",
+              "injection_id": "00000000-0000-4000-8000-000000001001",
+              "ts": "2026-08-09T18:00:00Z",
+              "scorer_version": "v0",
+              "score": "0.41999998688697815",
+              "rank": 2,
+              "shown_as": "near_miss",
+              "outcome": "added_back",
+              "features": {
+                "sem": 1,
+                "kw": 0,
+                "time": 0,
+                "proj": 0,
+                "freq": 0,
+                "hist": 0
+              },
+              "contributions": {
+                "sem": "0.420",
+                "kw": "0.000",
+                "time": "0.000",
+                "proj": "0.000",
+                "freq": "0.000",
+                "hist": "0.000",
+                "bias": "-0.00000001311302185"
+              }
+            },
+            {
+              "event_uid": "01KZ4Z0000000000000001002P",
+              "injection_id": "00000000-0000-4000-8000-000000001002",
+              "ts": "2026-08-09T19:00:00Z",
+              "scorer_version": "v0",
+              "score": "0.41999998688697815",
+              "rank": 2,
+              "shown_as": "near_miss",
+              "outcome": "added_back",
+              "features": {
+                "sem": 1,
+                "kw": 0,
+                "time": 0,
+                "proj": 0,
+                "freq": 0,
+                "hist": 0
+              },
+              "contributions": {
+                "sem": "0.420",
+                "kw": "0.000",
+                "time": "0.000",
+                "proj": "0.000",
+                "freq": "0.000",
+                "hist": "0.000",
+                "bias": "-0.00000001311302185"
+              }
+            }
+          ]
+        },
+        {
+          "memory_id": "00000000-0000-4000-8000-000000000406",
+          "label": "Ignore an irrelevant branch",
+          "kind": "fact",
+          "points": [
+            {
+              "event_uid": "01KZ4Z0000000000000001001N",
+              "injection_id": "00000000-0000-4000-8000-000000001001",
+              "ts": "2026-08-09T18:00:00Z",
+              "scorer_version": "v0",
+              "score": "0.0",
+              "rank": 1,
+              "shown_as": "injected",
+              "outcome": "removed:not_relevant",
+              "features": {
+                "sem": 0,
+                "kw": 0,
+                "time": 0,
+                "proj": 0,
+                "freq": 0,
+                "hist": 0
+              },
+              "contributions": {
+                "sem": "0.000",
+                "kw": "0.000",
+                "time": "0.000",
+                "proj": "0.000",
+                "freq": "0.000",
+                "hist": "0.000",
+                "bias": "0.000"
+              }
+            },
+            {
+              "event_uid": "01KZ4Z0000000000000001002N",
+              "injection_id": "00000000-0000-4000-8000-000000001002",
+              "ts": "2026-08-09T19:00:00Z",
+              "scorer_version": "v0",
+              "score": "0.0",
+              "rank": 1,
+              "shown_as": "injected",
+              "outcome": "removed:not_relevant",
+              "features": {
+                "sem": 0,
+                "kw": 0,
+                "time": 0,
+                "proj": 0,
+                "freq": 0,
+                "hist": 0
+              },
+              "contributions": {
+                "sem": "0.000",
+                "kw": "0.000",
+                "time": "0.000",
+                "proj": "0.000",
+                "freq": "0.000",
+                "hist": "0.000",
+                "bias": "0.000"
+              }
+            }
+          ]
+        },
+        {
+          "memory_id": "00000000-0000-4000-8000-000000000407",
+          "label": "No silent inference",
+          "kind": "fact",
+          "points": [
+            {
+              "event_uid": "01KZ4Z00000000000000001003",
+              "injection_id": "00000000-0000-4000-8000-000000001003",
+              "ts": "2026-08-09T20:00:00Z",
+              "scorer_version": "v0",
+              "score": "0.41999998688697815",
+              "rank": 1,
+              "shown_as": "near_miss",
+              "outcome": null,
+              "features": {
+                "sem": 1,
+                "kw": 0,
+                "time": 0,
+                "proj": 0,
+                "freq": 0,
+                "hist": 0
+              },
+              "contributions": {
+                "sem": "0.420",
+                "kw": "0.000",
+                "time": "0.000",
+                "proj": "0.000",
+                "freq": "0.000",
+                "hist": "0.000",
+                "bias": "-0.00000001311302185"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "simulations": [
+      {
+        "injection_id": null,
+        "base_version": "v0",
+        "values": {
+          "tau": 0.55,
+          "top_k": 8,
+          "budget_tokens": 3000,
+          "half_life_time_days": 14,
+          "half_life_hist_days": 7,
+          "weights": {
+            "sem": 0.42,
+            "kw": 0.16,
+            "time": 0.11,
+            "proj": 0.16,
+            "freq": 0.08,
+            "hist": 0.07
+          }
+        },
+        "slice_parameter_id": "scorer.tau"
+      },
+      {
+        "injection_id": "00000000-0000-4000-8000-000000001003",
+        "base_version": "v0",
+        "values": {
+          "tau": 0.55,
+          "top_k": 8,
+          "budget_tokens": 3000,
+          "half_life_time_days": 14,
+          "half_life_hist_days": 7,
+          "weights": {
+            "sem": 0.42,
+            "kw": 0.16,
+            "time": 0.11,
+            "proj": 0.16,
+            "freq": 0.08,
+            "hist": 0.07
+          }
+        },
+        "slice_parameter_id": "scorer.tau"
+      }
+    ],
+    "auditions": [
+      {
+        "request": {
+          "injection_id": "00000000-0000-4000-8000-000000001003",
+          "proposal_version": "m2f-675d09a1a20ed301"
+        },
+        "response": {
+          "incumbent_version": "v0",
+          "proposal_version": "m2f-675d09a1a20ed301",
+          "instant": {
+            "status": "ready",
+            "injection_id": "00000000-0000-4000-8000-000000001003",
+            "candidates": [
+              {
+                "memory_id": "00000000-0000-4000-8000-000000000407",
+                "label": "No silent inference",
+                "incumbent_score": "0.41999998688697815",
+                "preview_score": "0.7999984640455542",
+                "score_delta": "0.37999847715857605",
+                "incumbent_rank": 1,
+                "preview_rank": 1,
+                "incumbent_selected": false,
+                "preview_selected": true,
+                "disposition": "would_add"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "activation_attempts": []
+  },
+  "browser": {
+    "built_console": "current web/dist",
+    "proposal_version": "m2f-675d09a1a20ed301",
+    "rendered_proposal": "BACKGROUND PROPOSAL m2f-675d09a1a20ed301 100% held-out agreement 2 weighted held-out dispositions. Audition ACTIVATE",
+    "rendered_candidate": "No silent inference 0.7999984640455542 · #1 would add sem 0.420 kw 0.000 time 0.000 proj 0.000 freq 0.000 hist 0.000 bias -0.00000001311302185",
+    "rendered_active": "Current recipe v0",
+    "audition_heading": "Auditioning m2f-675d09a1a20ed301",
+    "activate_visible_but_not_clicked": true,
+    "network": {
+      "consoleQueries": [
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:60346/v1/rack/query?resource=scorer_console&as_of=now&thread_id=00000000-0000-4000-8000-000000000404"
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:60346/v1/rack/query?resource=scorer_console&as_of=now"
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:60346/v1/rack/query?resource=scorer_console&as_of=now"
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:60346/v1/rack/query?resource=scorer_console&as_of=now&thread_id=00000000-0000-4000-8000-000000000404"
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:60346/v1/rack/query?resource=scorer_console&as_of=now&thread_id=00000000-0000-4000-8000-000000000404"
+        }
+      ],
+      "auditions": [
+        {
+          "method": "POST",
+          "body": {
+            "injection_id": "00000000-0000-4000-8000-000000001003",
+            "proposal_version": "m2f-675d09a1a20ed301"
+          }
+        }
+      ],
+      "activations": []
+    },
+    "screenshot": "08-connected-worker-proposal-audition.png"
+  }
+}

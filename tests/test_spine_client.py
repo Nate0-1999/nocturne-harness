@@ -24,6 +24,7 @@ from harness.spine_client import (
     PatchMemoryConflict,
     PatchMemoryRequest,
     PatchMemoryResponse,
+    RetrainResponse,
     RevisionConflict,
     SearchRequest,
     SearchResponse,
@@ -112,6 +113,7 @@ def test_client_exposes_all_spine_routes() -> None:
         "thread_vitals_snapshot",
         "memory_graph",
         "scorer_console",
+        "retrain",
         "create_scorer_config",
         "simulate_scorer",
         "audition_scorer",
@@ -122,6 +124,44 @@ def test_client_exposes_all_spine_routes() -> None:
         "decide_queue_item",
         "decide_queue_batch",
     }
+
+
+def test_retrain_response_keeps_learning_receipts_strict_and_server_authored() -> None:
+    """A-051/P1.2.3 is defended by rejecting browser-invented or coerced learner
+    receipt data at the Harness-Spine boundary.
+    """
+    payload = {
+        "status": "proposed",
+        "incumbent_version": "v0",
+        "proposal_version": "m2f-a1",
+        "eligible_dispositions": 25,
+        "training_dispositions": 20,
+        "holdout_dispositions": 5,
+        "training_pairs": 12,
+        "incumbent": {
+            "disagreements": 2,
+            "weighted_disagreements": "1.25",
+            "injected_tokens": 400,
+        },
+        "challenger": {
+            "disagreements": 1,
+            "weighted_disagreements": "0.5",
+            "injected_tokens": 400,
+        },
+        "reason": "challenger won replay and remains inactive pending owner activation",
+    }
+
+    receipt = RetrainResponse.model_validate(payload)
+
+    assert receipt.proposal_version == "m2f-a1"
+    coerced = deepcopy(payload)
+    coerced["eligible_dispositions"] = "25"
+    with pytest.raises(ValidationError):
+        RetrainResponse.model_validate(coerced)
+    invented = deepcopy(payload)
+    invented["browser_accuracy"] = 96
+    with pytest.raises(ValidationError):
+        RetrainResponse.model_validate(invented)
 
 
 def test_prepare_request_mirrors_named_c4_fields() -> None:

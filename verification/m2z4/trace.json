@@ -1,0 +1,489 @@
+{
+  "fixture": "M2Z4 REGRESSION",
+  "evidence_scope": "Harness rack/UI regression only; not actual background-worker proof",
+  "actual_background_proof": "spine/tests/test_learner_worker.py and the Postgres-backed test_real_worker_startup_and_work_wake_persists_background_inactive_winner",
+  "state": {
+    "phase": "proposed",
+    "console_reads": 47,
+    "manual_retrains": [
+      {
+        "run_uid": "m2z4-manual-1",
+        "trigger": "manual",
+        "result": "insufficient_data",
+        "incumbent_version": "m2z4-incumbent",
+        "proposal_version": null,
+        "eligible_dispositions": 18,
+        "training_dispositions": 0,
+        "holdout_dispositions": 0,
+        "training_pairs": 0,
+        "source_boundary": null,
+        "incumbent": null,
+        "challenger": null,
+        "reason": "minimum disposition floor not reached: 18/25",
+        "ts": "2026-08-09T18:05:00+00:00"
+      }
+    ],
+    "scenario_background_triggers": 1,
+    "simulations": [
+      {
+        "injection_id": "00000000-0000-0000-0000-000000000404",
+        "base_version": "m2z4-incumbent",
+        "values": {
+          "tau": 0.55,
+          "top_k": 8,
+          "budget_tokens": 3000,
+          "half_life_time_days": 14,
+          "half_life_hist_days": 7,
+          "weights": {
+            "sem": 0.42,
+            "kw": 0.16,
+            "time": 0.11,
+            "proj": 0.16,
+            "freq": 0.08,
+            "hist": 0.07
+          }
+        },
+        "slice_parameter_id": "scorer.tau"
+      },
+      {
+        "injection_id": "00000000-0000-0000-0000-000000000404",
+        "base_version": "m2z4-incumbent",
+        "values": {
+          "tau": 0.55,
+          "top_k": 8,
+          "budget_tokens": 3000,
+          "half_life_time_days": 14,
+          "half_life_hist_days": 7,
+          "weights": {
+            "sem": 0.42,
+            "kw": 0.16,
+            "time": 0.11,
+            "proj": 0.16,
+            "freq": 0.08,
+            "hist": 0.07
+          }
+        },
+        "slice_parameter_id": "scorer.tau"
+      }
+    ],
+    "auditions": [
+      {
+        "injection_id": "00000000-0000-0000-0000-000000000404",
+        "proposal_version": "m2z4-proposal"
+      },
+      {
+        "injection_id": "00000000-0000-0000-0000-000000000404",
+        "proposal_version": "m2z4-proposal"
+      }
+    ],
+    "activation_attempts": [],
+    "active_version": "m2z4-incumbent"
+  },
+  "snapshot": {
+    "as_of": "2026-08-09T18:20:00+00:00",
+    "scope": "GLOBAL",
+    "thread_id": null,
+    "descriptors": [],
+    "active_version": "m2z4-incumbent",
+    "configurations": [
+      {
+        "version": "m2z4-incumbent",
+        "created_at": "2026-08-09T16:00:00+00:00",
+        "status": "active",
+        "values": {
+          "tau": 0.55,
+          "top_k": 8,
+          "budget_tokens": 3000,
+          "half_life_time_days": 14,
+          "half_life_hist_days": 7,
+          "weights": {
+            "sem": 0.42,
+            "kw": 0.16,
+            "time": 0.11,
+            "proj": 0.16,
+            "freq": 0.08,
+            "hist": 0.07
+          }
+        },
+        "replay": null
+      },
+      {
+        "version": "m2z4-proposal",
+        "created_at": "2026-08-09T18:15:00+00:00",
+        "status": "proposed",
+        "values": {
+          "tau": 0.49,
+          "top_k": 8,
+          "budget_tokens": 3000,
+          "half_life_time_days": 14,
+          "half_life_hist_days": 7,
+          "weights": {
+            "sem": 0.42,
+            "kw": 0.16,
+            "time": 0.11,
+            "proj": 0.16,
+            "freq": 0.08,
+            "hist": 0.07
+          }
+        },
+        "replay": {
+          "holdout_dispositions": 5,
+          "weighted_dispositions": "5",
+          "weighted_wrong": "0.4"
+        }
+      }
+    ],
+    "activations": [
+      {
+        "event_uid": "01KZ4L00000000000000000001",
+        "version": "m2z4-incumbent",
+        "previous_version": "v0",
+        "actor_class": "human",
+        "machine_id": "m2z4-fixture",
+        "reason": "learner_proposal",
+        "changes": {},
+        "ts": "2026-08-09T16:10:00+00:00"
+      }
+    ],
+    "proposed_versions": [
+      {
+        "version": "m2z4-proposal",
+        "created_at": "2026-08-09T18:15:00+00:00",
+        "status": "proposed",
+        "values": {
+          "tau": 0.49,
+          "top_k": 8,
+          "budget_tokens": 3000,
+          "half_life_time_days": 14,
+          "half_life_hist_days": 7,
+          "weights": {
+            "sem": 0.42,
+            "kw": 0.16,
+            "time": 0.11,
+            "proj": 0.16,
+            "freq": 0.08,
+            "hist": 0.07
+          }
+        },
+        "replay": {
+          "holdout_dispositions": 5,
+          "weighted_dispositions": "5",
+          "weighted_wrong": "0.4"
+        }
+      }
+    ],
+    "accuracy": [
+      {
+        "version": "v0",
+        "created_at": "2026-08-09T14:00:00+00:00",
+        "status": "measured",
+        "accuracy_percent": "80",
+        "holdout_dispositions": 25,
+        "disagreements": 5,
+        "weighted_dispositions": "25",
+        "weighted_wrong": "5"
+      },
+      {
+        "version": "m2z4-incumbent",
+        "created_at": "2026-08-09T16:00:00+00:00",
+        "status": "measured",
+        "accuracy_percent": "84",
+        "holdout_dispositions": 25,
+        "disagreements": 4,
+        "weighted_dispositions": "25",
+        "weighted_wrong": "4"
+      },
+      {
+        "version": "m2z4-proposal",
+        "created_at": "2026-08-09T18:15:00+00:00",
+        "status": "measured",
+        "accuracy_percent": "92",
+        "holdout_dispositions": 5,
+        "disagreements": 1,
+        "weighted_dispositions": "5",
+        "weighted_wrong": "0.4"
+      }
+    ],
+    "learning": {
+      "eligible_dispositions": 25,
+      "hygiene_excluded_dispositions": 6,
+      "minimum_dispositions": 25,
+      "remaining_to_floor": 0,
+      "floor_met": true,
+      "retrain_signal_stride": 25,
+      "evaluated_through": 25,
+      "signals_since_last_run": 0,
+      "signals_until_next_run": 25,
+      "active_scorer_version": "m2z4-incumbent",
+      "right": 10,
+      "wrong": 2,
+      "weighted_right": "10",
+      "weighted_wrong": "2",
+      "weighted_agreement_percent": "83.3333",
+      "live_agreement": [
+        {
+          "event_uid": "01KZ4L00000000000000000003",
+          "ts": "2026-08-09T17:10:00+00:00",
+          "scorer_version": "m2z4-incumbent",
+          "right": 1,
+          "wrong": 0,
+          "weighted_right": "1",
+          "weighted_wrong": "0",
+          "weighted_agreement_percent": "100"
+        },
+        {
+          "event_uid": "01KZ4L00000000000000000004",
+          "ts": "2026-08-09T17:20:00+00:00",
+          "scorer_version": "m2z4-incumbent",
+          "right": 2,
+          "wrong": 0,
+          "weighted_right": "2",
+          "weighted_wrong": "0",
+          "weighted_agreement_percent": "100"
+        },
+        {
+          "event_uid": "01KZ4L00000000000000000005",
+          "ts": "2026-08-09T17:30:00+00:00",
+          "scorer_version": "m2z4-incumbent",
+          "right": 2,
+          "wrong": 1,
+          "weighted_right": "2",
+          "weighted_wrong": "1",
+          "weighted_agreement_percent": "66.6667"
+        },
+        {
+          "event_uid": "01KZ4L00000000000000000006",
+          "ts": "2026-08-09T17:40:00+00:00",
+          "scorer_version": "m2z4-incumbent",
+          "right": 3,
+          "wrong": 1,
+          "weighted_right": "3",
+          "weighted_wrong": "1",
+          "weighted_agreement_percent": "75"
+        },
+        {
+          "event_uid": "01KZ4L00000000000000000007",
+          "ts": "2026-08-09T17:50:00+00:00",
+          "scorer_version": "m2z4-incumbent",
+          "right": 4,
+          "wrong": 1,
+          "weighted_right": "4",
+          "weighted_wrong": "1",
+          "weighted_agreement_percent": "80"
+        },
+        {
+          "event_uid": "01KZ4L00000000000000000008",
+          "ts": "2026-08-09T18:00:00+00:00",
+          "scorer_version": "m2z4-incumbent",
+          "right": 5,
+          "wrong": 1,
+          "weighted_right": "5",
+          "weighted_wrong": "1",
+          "weighted_agreement_percent": "83.3333"
+        },
+        {
+          "event_uid": "01KZ4L00000000000000000009",
+          "ts": "2026-08-09T18:02:00+00:00",
+          "scorer_version": "m2z4-incumbent",
+          "right": 5,
+          "wrong": 2,
+          "weighted_right": "5",
+          "weighted_wrong": "2",
+          "weighted_agreement_percent": "71.4286"
+        },
+        {
+          "event_uid": "01KZ4L00000000000000000010",
+          "ts": "2026-08-09T18:04:00+00:00",
+          "scorer_version": "m2z4-incumbent",
+          "right": 6,
+          "wrong": 2,
+          "weighted_right": "6",
+          "weighted_wrong": "2",
+          "weighted_agreement_percent": "75"
+        },
+        {
+          "event_uid": "01KZ4L00000000000000000011",
+          "ts": "2026-08-09T18:06:00+00:00",
+          "scorer_version": "m2z4-incumbent",
+          "right": 7,
+          "wrong": 2,
+          "weighted_right": "7",
+          "weighted_wrong": "2",
+          "weighted_agreement_percent": "77.7778"
+        },
+        {
+          "event_uid": "01KZ4L00000000000000000012",
+          "ts": "2026-08-09T18:08:00+00:00",
+          "scorer_version": "m2z4-incumbent",
+          "right": 8,
+          "wrong": 2,
+          "weighted_right": "8",
+          "weighted_wrong": "2",
+          "weighted_agreement_percent": "80"
+        },
+        {
+          "event_uid": "01KZ4L00000000000000000013",
+          "ts": "2026-08-09T18:10:00+00:00",
+          "scorer_version": "m2z4-incumbent",
+          "right": 9,
+          "wrong": 2,
+          "weighted_right": "9",
+          "weighted_wrong": "2",
+          "weighted_agreement_percent": "81.8182"
+        },
+        {
+          "event_uid": "01KZ4L00000000000000000014",
+          "ts": "2026-08-09T18:12:00+00:00",
+          "scorer_version": "m2z4-incumbent",
+          "right": 10,
+          "wrong": 2,
+          "weighted_right": "10",
+          "weighted_wrong": "2",
+          "weighted_agreement_percent": "83.3333"
+        }
+      ],
+      "retrain_runs": [
+        {
+          "run_uid": "m2z4-manual-1",
+          "trigger": "manual",
+          "result": "insufficient_data",
+          "incumbent_version": "m2z4-incumbent",
+          "proposal_version": null,
+          "eligible_dispositions": 18,
+          "training_dispositions": 0,
+          "holdout_dispositions": 0,
+          "training_pairs": 0,
+          "source_boundary": null,
+          "incumbent": null,
+          "challenger": null,
+          "reason": "minimum disposition floor not reached: 18/25",
+          "ts": "2026-08-09T18:05:00+00:00"
+        },
+        {
+          "run_uid": "m2z4-background-1",
+          "trigger": "background",
+          "result": "proposed",
+          "incumbent_version": "m2z4-incumbent",
+          "proposal_version": "m2z4-proposal",
+          "eligible_dispositions": 25,
+          "training_dispositions": 20,
+          "holdout_dispositions": 5,
+          "training_pairs": 12,
+          "source_boundary": "01KZ4L00000000000000000014",
+          "incumbent": {
+            "disagreements": 2,
+            "weighted_disagreements": "2",
+            "injected_tokens": 800
+          },
+          "challenger": {
+            "disagreements": 1,
+            "weighted_disagreements": "1",
+            "injected_tokens": 800
+          },
+          "reason": "challenger won replay and remains inactive pending owner activation",
+          "ts": "2026-08-09T18:15:00+00:00"
+        }
+      ],
+      "annotations": [
+        {
+          "kind": "activation",
+          "event_uid": "01KZ4L00000000000000000001",
+          "ts": "2026-08-09T16:10:00+00:00",
+          "version": "m2z4-incumbent",
+          "result": null
+        },
+        {
+          "kind": "force_values",
+          "event_uid": "01KZ4L00000000000000000002",
+          "ts": "2026-08-09T16:15:00+00:00",
+          "version": "m2z4-incumbent",
+          "result": null
+        },
+        {
+          "kind": "retrain",
+          "event_uid": "m2z4-manual-1",
+          "ts": "2026-08-09T18:05:00+00:00",
+          "version": "m2z4-incumbent",
+          "result": "insufficient_data"
+        },
+        {
+          "kind": "retrain",
+          "event_uid": "m2z4-background-1",
+          "ts": "2026-08-09T18:15:00+00:00",
+          "version": "m2z4-proposal",
+          "result": "proposed"
+        }
+      ]
+    },
+    "candidates": [
+      {
+        "memory_id": "00000000-0000-0000-0000-000000000405",
+        "label": "Owner architecture",
+        "kind": "fact",
+        "points": [
+          {
+            "event_uid": "01KZ4L00000000000000000015",
+            "injection_id": "00000000-0000-0000-0000-000000000404",
+            "ts": "2026-08-09T18:12:00+00:00",
+            "scorer_version": "m2z4-incumbent",
+            "score": "0.601",
+            "rank": 1,
+            "shown_as": "injected",
+            "outcome": "kept",
+            "features": {
+              "sem": 0.9,
+              "kw": 0.5,
+              "time": 0.8,
+              "proj": 0.4,
+              "freq": 0.2,
+              "hist": 0.6
+            },
+            "contributions": {
+              "sem": "0.378",
+              "kw": "0.080",
+              "time": "0.088",
+              "proj": "0.064",
+              "freq": "0.016",
+              "hist": "0.042",
+              "bias": "-0.067"
+            }
+          }
+        ]
+      },
+      {
+        "memory_id": "00000000-0000-0000-0000-000000000406",
+        "label": "No silent inference",
+        "kind": "preference",
+        "points": [
+          {
+            "event_uid": "01KZ4L00000000000000000016",
+            "injection_id": "00000000-0000-0000-0000-000000000404",
+            "ts": "2026-08-09T18:12:00+00:00",
+            "scorer_version": "m2z4-incumbent",
+            "score": "0.521",
+            "rank": 2,
+            "shown_as": "near_miss",
+            "outcome": null,
+            "features": {
+              "sem": 0.9,
+              "kw": 0.5,
+              "time": 0.8,
+              "proj": 0.4,
+              "freq": 0.2,
+              "hist": 0.6
+            },
+            "contributions": {
+              "sem": "0.378",
+              "kw": "0.080",
+              "time": "0.088",
+              "proj": "0.064",
+              "freq": "0.016",
+              "hist": "0.042",
+              "bias": "-0.067"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

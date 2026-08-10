@@ -10,9 +10,9 @@ from fastapi import FastAPI
 
 from harness.daemon import create_app
 from harness.spine_client import (
-    ActivateScorerConfigRequest,
-    CreateScorerConfigRequest,
     MemoryGraphSnapshot,
+    RackScorerActivateRequest,
+    RackScorerForceRequest,
     ScorerConfigurationView,
     ScorerConsoleSnapshot,
 )
@@ -87,6 +87,7 @@ def graph_payload() -> dict[str, object]:
 def console_payload(active: str = "v0") -> dict[str, object]:
     point = {
         "event_uid": "01KZ4S00000000000000000003",
+        "injection_id": "00000000-0000-0000-0000-000000000103",
         "ts": NOW.isoformat(),
         "scorer_version": active,
         "score": "0.6010000",
@@ -129,8 +130,51 @@ def console_payload(active: str = "v0") -> dict[str, object]:
                 "accuracy_percent": "88.0000",
                 "holdout_dispositions": 25,
                 "disagreements": 3,
+                "weighted_dispositions": "25",
+                "weighted_wrong": "3",
             }
         ],
+        "learning": {
+            "eligible_dispositions": 18,
+            "hygiene_excluded_dispositions": 4,
+            "minimum_dispositions": 25,
+            "remaining_to_floor": 7,
+            "floor_met": False,
+            "retrain_signal_stride": 25,
+            "evaluated_through": None,
+            "signals_since_last_run": 18,
+            "signals_until_next_run": 7,
+            "active_scorer_version": active,
+            "right": 5,
+            "wrong": 1,
+            "weighted_right": "5",
+            "weighted_wrong": "1",
+            "weighted_agreement_percent": "83.3333",
+            "live_agreement": [
+                {
+                    "event_uid": "01KZ4S00000000000000000004",
+                    "ts": NOW.isoformat(),
+                    "scorer_version": active,
+                    "right": 4,
+                    "wrong": 1,
+                    "weighted_right": "4",
+                    "weighted_wrong": "1",
+                    "weighted_agreement_percent": "80",
+                },
+                {
+                    "event_uid": "01KZ4S00000000000000000005",
+                    "ts": NOW.isoformat(),
+                    "scorer_version": active,
+                    "right": 5,
+                    "wrong": 1,
+                    "weighted_right": "5",
+                    "weighted_wrong": "1",
+                    "weighted_agreement_percent": "83.3333",
+                },
+            ],
+            "retrain_runs": [],
+            "annotations": [],
+        },
         "candidates": [
             {"memory_id": FIRST, "label": "Owner architecture", "kind": "fact", "points": [point]},
             {
@@ -152,7 +196,7 @@ def create_scenario_app() -> FastAPI:
     async def console(_thread_id: str | None) -> ScorerConsoleSnapshot:
         return ScorerConsoleSnapshot.model_validate(console_payload(state["active"]))
 
-    async def enact(body: CreateScorerConfigRequest) -> ScorerConfigurationView:
+    async def enact(body: RackScorerForceRequest) -> ScorerConfigurationView:
         state["active"] = f"m2k-{body.event_uid}"
         state["writes"].append(body.model_dump(mode="json"))
         return ScorerConfigurationView.model_validate(
@@ -165,7 +209,7 @@ def create_scenario_app() -> FastAPI:
             }
         )
 
-    async def activate(version: str, body: ActivateScorerConfigRequest) -> ScorerConfigurationView:
+    async def activate(version: str, body: RackScorerActivateRequest) -> ScorerConfigurationView:
         del body
         state["active"] = version
         return ScorerConfigurationView.model_validate(

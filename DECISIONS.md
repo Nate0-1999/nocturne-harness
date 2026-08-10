@@ -1489,3 +1489,48 @@ global project match would leak scoped memory, while placing the word
 Graph CURRENT to mean current project would silently replace A-035's injected-
 membership contract. A separate project screen or permanent sidebar would add
 navigation before owner use has earned it.
+
+## 053 — Give one learning truth two cockpit scales [ADR-005, ADR-009, A-051; PROVISIONAL-TASTE]
+
+**Decision.** Consume the scorer console's one server-authored learning view in
+two densities. Vitals gets an always-legible authentic-signal and right/wrong
+scoreboard with a compact held-out generation trace. The Injection Console gets
+the full scoreboard, live-agreement and generation series on one fixed
+0–100-percent timeline, and server-authored activation, force-values, and
+retrain annotations. Plot coordinates may convert exact percentage strings to
+numbers for SVG geometry; labels always retain the server strings, and the
+browser never classifies a disposition or calculates a score.
+
+Place the sole **FORCE RETRAIN** control beside authentic learning status, while
+the evidence-backed manual scorer control reads **Force values**. A background
+proposal enters as a distinct card carrying its held-out measurement and the
+existing **Audition** and **Activate** acts. Poll the scorer console every five
+seconds while the Console is mounted so proposals arrive without reopening it,
+but treat a poll as a quiet telemetry refresh: preserve the owner's draft,
+preview, exact DEEP receipt, and audition unless scope is explicitly reloaded or
+the active scorer version changes. The server remains responsible for rejecting
+a receipt invalidated by changed evidence.
+
+Keep already-polluted fixture catalogs cleanable by recognizing the retired
+title through a stable migration fingerprint, and mask that one title as
+**Verification thread** wherever catalog titles render. The retired phrase is
+therefore absent from the shipped bundle without abandoning old local data.
+**PROVISIONAL-TASTE:** the information density, cyan/pink series treatment,
+annotation chips, five-second refresh interval, and proposal-card placement are
+composition choices for owner evaluation, not new contract law.
+
+**Motivation.** A-051 deliberately creates one read model so Vitals and the
+Console cannot disagree. Reusing one presentation model at two scales keeps the
+everyday strip glanceable while leaving investigation detail in the instrument
+that already owns scorer control. Separating retraining from forcing values
+removes a dangerous naming collision, and quiet polling makes background work
+visible without stealing the controls currently under the owner's hand.
+
+**Rejected alternatives.** Recomputing agreement or floor progress in React
+would create a second learner. Resetting controls on every poll would erase
+work merely because a proposal arrived. Putting retrain in Vitals as well would
+create a second visible act. Auto-activating a proposal would bypass audition
+and human promotion. Deleting the old fixture-title literal without migration
+recognition would strand the exact catalogs the cleanup affordance exists to
+repair, while continuing to render it would leave the customer-visible leak in
+place.

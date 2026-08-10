@@ -10,7 +10,7 @@ from fastapi import FastAPI
 
 from harness.daemon import create_app
 from harness.spine_client import (
-    ActivateScorerConfigRequest,
+    RackScorerActivateRequest,
     RackScorerAuditionRequest,
     RackScorerForceRequest,
     RackScorerSimulationRequest,
@@ -100,7 +100,102 @@ def _console(active: str, active_values: dict[str, object]) -> dict[str, object]
                 "replay": {"holdout_dispositions": 25},
             }
         ],
-        "accuracy": [],
+        "accuracy": [
+            {
+                "version": "v0",
+                "created_at": NOW.isoformat(),
+                "status": "measured",
+                "accuracy_percent": "88",
+                "holdout_dispositions": 25,
+                "disagreements": 3,
+                "weighted_dispositions": "25",
+                "weighted_wrong": "3",
+            },
+            {
+                "version": "learner-m2p",
+                "created_at": NOW.isoformat(),
+                "status": "measured",
+                "accuracy_percent": "92",
+                "holdout_dispositions": 25,
+                "disagreements": 2,
+                "weighted_dispositions": "25",
+                "weighted_wrong": "2",
+            },
+        ],
+        "learning": {
+            "eligible_dispositions": 31,
+            "hygiene_excluded_dispositions": 3,
+            "minimum_dispositions": 25,
+            "remaining_to_floor": 0,
+            "floor_met": True,
+            "retrain_signal_stride": 25,
+            "evaluated_through": 31,
+            "signals_since_last_run": 0,
+            "signals_until_next_run": 25,
+            "active_scorer_version": active,
+            "right": 7,
+            "wrong": 2,
+            "weighted_right": "6.25",
+            "weighted_wrong": "2",
+            "weighted_agreement_percent": "75.7576",
+            "live_agreement": [
+                {
+                    "event_uid": "01KZ5P00000000000000000003",
+                    "ts": NOW.isoformat(),
+                    "scorer_version": active,
+                    "right": 6,
+                    "wrong": 2,
+                    "weighted_right": "5.25",
+                    "weighted_wrong": "2",
+                    "weighted_agreement_percent": "72.4138",
+                },
+                {
+                    "event_uid": "01KZ5P00000000000000000004",
+                    "ts": NOW.isoformat(),
+                    "scorer_version": active,
+                    "right": 7,
+                    "wrong": 2,
+                    "weighted_right": "6.25",
+                    "weighted_wrong": "2",
+                    "weighted_agreement_percent": "75.7576",
+                },
+            ],
+            "retrain_runs": [
+                {
+                    "run_uid": "01KZ5P00000000000000000005",
+                    "trigger": "background",
+                    "result": "proposed",
+                    "incumbent_version": active,
+                    "proposal_version": "learner-m2p",
+                    "eligible_dispositions": 31,
+                    "training_dispositions": 25,
+                    "holdout_dispositions": 6,
+                    "training_pairs": 14,
+                    "source_boundary": "01KZ5P00000000000000000004",
+                    "incumbent": {
+                        "disagreements": 3,
+                        "weighted_disagreements": "3",
+                        "injected_tokens": 900,
+                    },
+                    "challenger": {
+                        "disagreements": 2,
+                        "weighted_disagreements": "2",
+                        "injected_tokens": 900,
+                    },
+                    "reason": "challenger won replay and remains inactive pending owner activation",
+                    "ts": NOW.isoformat(),
+                }
+            ],
+            "annotations": [
+                {
+                    "kind": "retrain",
+                    "event_uid": "01KZ5P00000000000000000005",
+                    "ts": NOW.isoformat(),
+                    "version": "learner-m2p",
+                    "result": "proposed",
+                }
+            ],
+        },
         "candidates": [
             {
                 "memory_id": FIRST,
@@ -216,7 +311,7 @@ def create_scenario_app() -> FastAPI:
             }
         )
 
-    async def activate(version: str, body: ActivateScorerConfigRequest) -> ScorerConfigurationView:
+    async def activate(version: str, body: RackScorerActivateRequest) -> ScorerConfigurationView:
         del body
         state["active"] = version
         return ScorerConfigurationView.model_validate(

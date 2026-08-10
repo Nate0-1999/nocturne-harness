@@ -24,6 +24,7 @@ from harness.model_policy import ThreadModelResolution
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.spine_client import (
+    ActivateScorerConfigRequest,
     FeedbackRequest,
     FeedbackResponse,
     FeedbackSignal,
@@ -40,6 +41,7 @@ from harness.spine_client import (
     RackScorerAuditionRequest,
     RackScorerForceRequest,
     RackScorerSimulationRequest,
+    RetrainResponse,
     ScoredMemoryCard,
     ScorerAuditionResponse,
     ScorerConfigurationView,
@@ -166,6 +168,8 @@ class GateSpine:
     def __init__(self) -> None:
         self.prepare_requests: list[InjectPrepareRequest] = []
         self.commit_requests: list[InjectCommitRequest] = []
+        self.activation_requests: list[tuple[str, ActivateScorerConfigRequest]] = []
+        self.retrain_requests = 0
         self.vitals_requests = 0
         self.closed = False
 
@@ -193,6 +197,49 @@ class GateSpine:
     async def vitals_snapshot(self) -> VitalsSnapshot:
         self.vitals_requests += 1
         return vitals_snapshot()
+
+    async def retrain(self) -> RetrainResponse:
+        self.retrain_requests += 1
+        return RetrainResponse(
+            status="insufficient_data",
+            incumbent_version="v0",
+            proposal_version=None,
+            eligible_dispositions=7,
+            training_dispositions=0,
+            holdout_dispositions=0,
+            training_pairs=0,
+            incumbent=None,
+            challenger=None,
+            reason="minimum disposition floor not reached: 7/25",
+        )
+
+    async def activate_scorer_config(
+        self, version: str, request: ActivateScorerConfigRequest
+    ) -> ScorerConfigurationView:
+        self.activation_requests.append((version, request))
+        return ScorerConfigurationView.model_validate(
+            {
+                "version": version,
+                "created_at": "2026-08-09T12:00:00Z",
+                "status": "active",
+                "values": {
+                    "tau": 0.55,
+                    "top_k": 8,
+                    "budget_tokens": 4000,
+                    "half_life_time_days": 30.0,
+                    "half_life_hist_days": 120.0,
+                    "weights": {
+                        "sem": 0.4,
+                        "kw": 0.2,
+                        "time": 0.1,
+                        "proj": 0.1,
+                        "freq": 0.1,
+                        "hist": 0.1,
+                    },
+                },
+                "replay": None,
+            }
+        )
 
 
 class PanelGateSpine:
@@ -657,6 +704,79 @@ def test_dev_app_wires_the_owned_spine_into_the_public_rack_query(tmp_path: Path
     assert resources["daemon_rss_bytes"] > 0
     assert resources["disk_free_bytes"] > 0
     assert spine.vitals_requests == 1
+
+
+def test_dev_app_retrains_bodylessly_and_owns_activation_provenance(tmp_path: Path) -> None:
+    """A-051/P1.2.3 is defended by giving the owner one transparent retrain
+    bridge while keeping proposal activation human-only and daemon-attributed.
+    """
+
+    async def stream(_messages, _info):
+        yield "unused"
+
+    settings = HarnessSettings(
+        _env_file=None,
+        spine_token="test-token",
+        principal_id="principal-test",
+        machine_id="machine-test",
+        agent_id="agent-test",
+        anthropic_api_key=None,
+        openai_api_key=None,
+        openrouter_api_key=None,
+    )
+    agent = HarnessAgent(settings, model=FunctionModel(stream_function=stream))
+    spine = GateSpine()
+    app = create_dev_app(
+        tmp_path,
+        settings=settings,
+        agent=agent,
+        spine=spine,  # type: ignore[arg-type]
+        transcript_journal=TranscriptJournal(tmp_path / "transcripts"),
+    )
+
+    with TestClient(app) as client:
+        retrained = client.post("/v1/rack/scorers/retrain")
+        activated = client.post(
+            "/v1/rack/scorers/m2f-a1/activate",
+            json={"event_uid": PROMPT_ID},
+        )
+        spoofed = client.post(
+            "/v1/rack/scorers/m2f-a1/activate",
+            json={
+                "event_uid": SECOND_PROMPT_ID,
+                "actor_class": "human",
+                "machine_id": "browser-chosen",
+            },
+        )
+
+    assert retrained.status_code == 200
+    assert retrained.request.content == b""
+    assert retrained.json() == {
+        "status": "insufficient_data",
+        "incumbent_version": "v0",
+        "proposal_version": None,
+        "eligible_dispositions": 7,
+        "training_dispositions": 0,
+        "holdout_dispositions": 0,
+        "training_pairs": 0,
+        "incumbent": None,
+        "challenger": None,
+        "reason": "minimum disposition floor not reached: 7/25",
+    }
+    assert activated.status_code == 200
+    assert spoofed.status_code == 422
+    assert spine.retrain_requests == 1
+    assert spine.activation_requests == [
+        (
+            "m2f-a1",
+            ActivateScorerConfigRequest(
+                event_uid=PROMPT_ID,
+                actor_class="human",
+                machine_id="machine-test",
+            ),
+        )
+    ]
+    assert "requestBody" not in app.openapi()["paths"]["/v1/rack/scorers/retrain"]["post"]
 
 
 def test_dev_build_uses_locked_install_before_vite_build(

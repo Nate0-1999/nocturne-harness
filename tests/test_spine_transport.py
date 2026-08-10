@@ -167,6 +167,26 @@ async def test_global_instrument_requests_preserve_required_null_scope_fields() 
             "activations": [],
             "proposed_versions": [],
             "accuracy": [],
+            "learning": {
+                "eligible_dispositions": 0,
+                "hygiene_excluded_dispositions": 0,
+                "minimum_dispositions": 25,
+                "remaining_to_floor": 25,
+                "floor_met": False,
+                "retrain_signal_stride": 25,
+                "evaluated_through": None,
+                "signals_since_last_run": 0,
+                "signals_until_next_run": 25,
+                "active_scorer_version": "v0",
+                "right": 0,
+                "wrong": 0,
+                "weighted_right": "0",
+                "weighted_wrong": "0",
+                "weighted_agreement_percent": None,
+                "live_agreement": [],
+                "retrain_runs": [],
+                "annotations": [],
+            },
             "candidates": [],
         },
         "/v1/scorer-simulations": {
@@ -193,7 +213,9 @@ async def test_global_instrument_requests_preserve_required_null_scope_fields() 
         transport=httpx.MockTransport(handler),
     ) as client:
         await client.memory_graph(MemoryGraphQuery(principal_id="owner", memory_ids=None))
-        await client.scorer_console(ScorerConsoleQuery(principal_id="owner", thread_id=None))
+        console = await client.scorer_console(
+            ScorerConsoleQuery(principal_id="owner", thread_id=None)
+        )
         await client.simulate_scorer(
             ScorerSimulationRequest(
                 principal_id="owner",
@@ -220,6 +242,45 @@ async def test_global_instrument_requests_preserve_required_null_scope_fields() 
         "values": values,
         "slice_parameter_id": "scorer.tau",
     }
+    assert console.learning["minimum_dispositions"] == 25
+
+
+@pytest.mark.asyncio
+async def test_retrain_uses_the_existing_bodyless_spine_trigger() -> None:
+    """A-051/P1.2.3 is defended by keeping FORCE RETRAIN a transparent,
+    bodyless transport to Spine's authoritative learner receipt.
+    """
+    seen: list[httpx.Request] = []
+    payload = {
+        "status": "insufficient_data",
+        "incumbent_version": "v0",
+        "proposal_version": None,
+        "eligible_dispositions": 7,
+        "training_dispositions": 0,
+        "holdout_dispositions": 0,
+        "training_pairs": 0,
+        "incumbent": None,
+        "challenger": None,
+        "reason": "minimum disposition floor not reached: 7/25",
+    }
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return response(200, payload)
+
+    async with SpineClient(
+        "https://spine.invalid/prefix",
+        "token",
+        transport=httpx.MockTransport(handler),
+    ) as client:
+        receipt = await client.retrain()
+
+    assert receipt.model_dump(mode="json") == payload
+    assert len(seen) == 1
+    assert seen[0].method == "POST"
+    assert seen[0].url.path == "/prefix/retrain"
+    assert seen[0].content == b""
+    assert "content-type" not in seen[0].headers
 
 
 def _measure_reinforced(payload: dict[str, Any]) -> None:

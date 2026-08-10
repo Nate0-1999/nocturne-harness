@@ -41,7 +41,7 @@ from harness.spine_client import (
 from verification.fixture_isolation import install_fixture_isolation
 
 TRACE_PATH = Path(__file__).with_name("trace.jsonl")
-FIRST_PROMPT = "Which Garden memory governs this handoff?"
+FIRST_PROMPT = "Map the release boundary and hold the queue open."
 SECOND_PROMPT = "Now include the ambient scoring rule too."
 MACHINE_ID = "m2g-verification-machine"
 AGENT_ID = "m2g-verification-agent"

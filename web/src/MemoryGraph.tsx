@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { InstrumentClose } from './InstrumentClose'
 import { useRackPlugin, useRackSnapshot } from './rack'
 import {
   memoryGraphRequestKey,
@@ -66,7 +67,7 @@ export function MemoryGraph() {
     x: 14 + (index % 5) * 18, y: 18 + Math.floor(index / 5) * 25,
   }]))
   return <section className="instrument instrument--graph">
-    <header><div><small>MEMORY INSTRUMENT</small><h1>Memory Graph</h1></div><Scope value={scope} onChange={changeScope} /></header>
+    <header><div><small>MEMORY INSTRUMENT</small><h1>Memory Graph</h1></div><div className="instrument-header-actions"><Scope value={scope} onChange={changeScope} /><InstrumentClose /></div></header>
     {!requestIsQueryable ? <p role="status">Select a thread to inspect its current memory.</p> : visibleFailure !== null ? <p role="alert">{visibleFailure}</p> : snapshot === null ? <p role="status">Loading memory graph…</p> : <div className="graph-stage">
       <svg viewBox="0 0 100 76" role="img" aria-label={`${nodes.length} memories and ${snapshot?.edges.length ?? 0} relationships`}>
         {(snapshot?.edges ?? []).map((edge, index) => { const a = positions.get(edge.from_memory_id); const b = positions.get(edge.to_memory_id); return a && b ? <line key={`${edge.kind}-${index}`} x1={a.x} y1={a.y} x2={b.x + (a === b ? 2 : 0)} y2={b.y + (a === b ? 2 : 0)} data-kind={edge.kind} /> : null })}

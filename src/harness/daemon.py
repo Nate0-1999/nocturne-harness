@@ -69,9 +69,11 @@ from harness.spine_client import (
     QueueDecisionIntent,
     QueueDecisionRequest,
     QueueDecisionResponse,
+    RackScorerActivateRequest,
     RackScorerAuditionRequest,
     RackScorerForceRequest,
     RackScorerSimulationRequest,
+    RetrainResponse,
     ScorerAuditionRequest,
     ScorerAuditionResponse,
     ScorerConfigurationView,
@@ -104,8 +106,9 @@ type ScorerConsoleReader = Callable[[str | None], Awaitable[ScorerConsoleSnapsho
 type ScorerConfigWriter = Callable[[RackScorerForceRequest], Awaitable[ScorerConfigurationView]]
 type ScorerSimulator = Callable[[RackScorerSimulationRequest], Awaitable[ScorerSimulationResponse]]
 type ScorerAuditioner = Callable[[RackScorerAuditionRequest], Awaitable[ScorerAuditionResponse]]
+type ScorerRetrainer = Callable[[], Awaitable[RetrainResponse]]
 type ScorerProposalActivator = Callable[
-    [str, ActivateScorerConfigRequest], Awaitable[ScorerConfigurationView]
+    [str, RackScorerActivateRequest], Awaitable[ScorerConfigurationView]
 ]
 type ContextWindowReader = Callable[[str | None], ContextWindowSnapshot]
 
@@ -229,6 +232,7 @@ def create_app(
     scorer_config_writer: ScorerConfigWriter | None = None,
     scorer_simulator: ScorerSimulator | None = None,
     scorer_auditioner: ScorerAuditioner | None = None,
+    scorer_retrainer: ScorerRetrainer | None = None,
     scorer_proposal_activator: ScorerProposalActivator | None = None,
     context_window_reader: ContextWindowReader | None = None,
     before_static_mount: Callable[[FastAPI], None] | None = None,
@@ -377,9 +381,20 @@ def create_app(
         except SpineClientError:
             raise HTTPException(status_code=503, detail="Scorer audition is unavailable.") from None
 
+    @app.post("/v1/rack/scorers/retrain", response_model=RetrainResponse)
+    async def retrain_scorer() -> RetrainResponse:
+        if scorer_retrainer is None:
+            raise HTTPException(status_code=503, detail="Scorer retraining is unavailable.")
+        try:
+            return await scorer_retrainer()
+        except SpineClientError:
+            raise HTTPException(
+                status_code=503, detail="Scorer retraining is unavailable."
+            ) from None
+
     @app.post("/v1/rack/scorers/{version}/activate", response_model=ScorerConfigurationView)
     async def activate_scorer(
-        version: str, body: ActivateScorerConfigRequest
+        version: str, body: RackScorerActivateRequest
     ) -> ScorerConfigurationView:
         if scorer_proposal_activator is None:
             raise HTTPException(status_code=503, detail="Injection controls are unavailable.")
@@ -730,6 +745,21 @@ def create_dev_app(
             )
         )
 
+    async def retrain_scorer() -> RetrainResponse:
+        return await owned_spine.retrain()
+
+    async def activate_scorer(
+        version: str, body: RackScorerActivateRequest
+    ) -> ScorerConfigurationView:
+        return await owned_spine.activate_scorer_config(
+            version,
+            ActivateScorerConfigRequest(
+                event_uid=body.event_uid,
+                actor_class="human",
+                machine_id=machine_id,
+            ),
+        )
+
     loop = RunLoop(
         runner,
         factory,
@@ -842,7 +872,8 @@ def create_dev_app(
         scorer_config_writer=force_scorer,
         scorer_simulator=simulate_scorer,
         scorer_auditioner=audition_scorer,
-        scorer_proposal_activator=getattr(owned_spine, "activate_scorer_config", None),
+        scorer_retrainer=retrain_scorer,
+        scorer_proposal_activator=activate_scorer,
         context_window_reader=context_windows.snapshot,
         before_static_mount=configure_extraction_routes,
     )

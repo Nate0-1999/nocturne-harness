@@ -427,11 +427,13 @@ def test_remote_up_refuses_reverse_schema_skew_without_offering_deploy(
 
 
 def test_schema_direction_uses_the_packaged_migration_graph() -> None:
-    """SPEC D.2 099 and B.6 rule 12 classify known ancestors as forward-only updates."""
+    """A-051, SPEC D.2 099, and B.6 rule 12 classify known ancestors as
+    forward-only updates against the settled learner-receipt schema head.
+    """
 
-    assert onboarding._schema_relation("0002", "0010") == "older"
-    assert onboarding._schema_relation("0010", "0010") == "current"
-    assert onboarding._schema_relation("0011", "0010") == "newer"
+    assert onboarding._schema_relation("0002", "0011") == "older"
+    assert onboarding._schema_relation("0011", "0011") == "current"
+    assert onboarding._schema_relation("0012", "0011") == "newer"
 
 
 def test_up_adopts_an_existing_nocturne_without_starting_a_second_daemon(

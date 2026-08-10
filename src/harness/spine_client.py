@@ -764,7 +764,27 @@ class ScorerConsoleSnapshot(ContractModel):
     activations: list[JsonObject]
     proposed_versions: list[JsonObject]
     accuracy: list[JsonObject]
+    learning: JsonObject
     candidates: list[JsonObject]
+
+
+class ReplayScoreView(ContractModel):
+    disagreements: int = Field(strict=True, ge=0)
+    weighted_disagreements: NonNegativeDecimalString
+    injected_tokens: int = Field(strict=True, ge=0)
+
+
+class RetrainResponse(ContractModel):
+    status: Literal["insufficient_data", "not_better", "proposed"]
+    incumbent_version: NonBlankString
+    proposal_version: NonBlankString | None
+    eligible_dispositions: int = Field(strict=True, ge=0)
+    training_dispositions: int = Field(strict=True, ge=0)
+    holdout_dispositions: int = Field(strict=True, ge=0)
+    training_pairs: int = Field(strict=True, ge=0)
+    incumbent: ReplayScoreView | None
+    challenger: ReplayScoreView | None
+    reason: StrictStr
 
 
 class ScorerConfigurationView(ContractModel):
@@ -842,6 +862,10 @@ class RackScorerSimulationRequest(ContractModel):
 class RackScorerAuditionRequest(ContractModel):
     injection_id: UUID
     proposal_version: NonBlankString
+
+
+class RackScorerActivateRequest(ContractModel):
+    event_uid: ULID
 
 
 class ProblemDetail(BaseModel):
@@ -925,6 +949,7 @@ _SPEND_EVENTS_RESPONSE = TypeAdapter(SpendEventsResponse)
 _VITALS_SNAPSHOT = TypeAdapter(VitalsSnapshot)
 _MEMORY_GRAPH_SNAPSHOT = TypeAdapter(MemoryGraphSnapshot)
 _SCORER_CONSOLE_SNAPSHOT = TypeAdapter(ScorerConsoleSnapshot)
+_RETRAIN_RESPONSE = TypeAdapter(RetrainResponse)
 _SCORER_CONFIGURATION = TypeAdapter(ScorerConfigurationView)
 _SCORER_SIMULATION = TypeAdapter(ScorerSimulationResponse)
 _SCORER_AUDITION = TypeAdapter(ScorerAuditionResponse)
@@ -1111,6 +1136,12 @@ class SpineClient:
             json_body=request.model_dump(mode="json"),
         )
         return _expect_success(response, status=200, adapter=_SCORER_CONSOLE_SNAPSHOT)
+
+    async def retrain(self) -> RetrainResponse:
+        """Invoke A-051's existing bodyless manual learner trigger."""
+
+        response = await self._request("POST", "retrain")
+        return _expect_success(response, status=200, adapter=_RETRAIN_RESPONSE)
 
     async def create_scorer_config(
         self, request: CreateScorerConfigRequest

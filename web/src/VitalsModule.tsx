@@ -7,6 +7,11 @@ import {
 } from 'react'
 
 import { useRackPlugin, useRackSelection, useRackSnapshot } from './rack'
+import { LearningSummary, LearningTimeline } from './LearningTelemetry'
+import {
+  scorerConsoleTelemetry,
+  type ScorerConsoleTelemetry,
+} from './learning'
 import {
   accountingCopy,
   contiguousPolylineSegments,
@@ -71,6 +76,14 @@ export function VitalsModule() {
   })
   const [collapsed, setCollapsed] = useState(() => globalThis.innerHeight < 120)
   const [hoveredMinute, setHoveredMinute] = useState<string | null>(null)
+  const telemetryKey = `${scope}:${rack.selectedThreadId ?? ''}`
+  const [telemetryLoad, setTelemetryLoad] = useState<{
+    key: string
+    telemetry: ScorerConsoleTelemetry | null
+    unavailable: boolean
+  }>({ key: '', telemetry: null, unavailable: false })
+  const telemetry = telemetryLoad.key === telemetryKey ? telemetryLoad.telemetry : null
+  const telemetryUnavailable = telemetryLoad.key === telemetryKey && telemetryLoad.unavailable
 
   useEffect(() => {
     let active = true
@@ -100,6 +113,38 @@ export function VitalsModule() {
       active = false
     }
   }, [query, rack.selectedThreadId, requestSequence, scope])
+
+  useEffect(() => {
+    let active = true
+    void query.query({
+      resource: 'scorer_console', as_of: 'now',
+      thread_id: scope === 'CURRENT' ? rack.selectedThreadId ?? undefined : undefined,
+    })
+      .then((result) => {
+        if (result.status !== 'live' || result.data === null) {
+          throw new TypeError('Live learning telemetry was not returned')
+        }
+        const next = scorerConsoleTelemetry(result.data)
+        if (next === null) {
+          throw new TypeError('Learning telemetry is missing from the scorer console')
+        }
+        if (active) {
+          setTelemetryLoad({ key: telemetryKey, telemetry: next, unavailable: false })
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setTelemetryLoad((current) => ({
+            key: telemetryKey,
+            telemetry: current.key === telemetryKey ? current.telemetry : null,
+            unavailable: true,
+          }))
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [query, rack.selectedThreadId, requestSequence, scope, telemetryKey])
 
   useEffect(() => {
     void events.dispatch({ type: 'rack.scope.get', module_id: 'vitals' }).then(setScope)
@@ -192,6 +237,7 @@ export function VitalsModule() {
         aria-label="Palace vitals"
         data-failed={load.failed}
       >
+        {telemetry !== null && <LearningSummary learning={telemetry.learning} compact />}
         <button
           className="vitals-collapsed-summary"
           type="button"
@@ -276,6 +322,21 @@ export function VitalsModule() {
           {accountingCopy(snapshot.accounting)}
         </div>
       )}
+
+      {telemetry !== null ? (
+        <div className="vitals-learning" aria-label="Learning vitals">
+          <LearningSummary learning={telemetry.learning} compact />
+          <LearningTimeline
+            learning={telemetry.learning}
+            accuracy={telemetry.accuracy}
+            mode="generations"
+          />
+        </div>
+      ) : telemetryUnavailable ? (
+        <p className="vitals-learning-unavailable" role="status">
+          Learning scores are temporarily unavailable.
+        </p>
+      ) : null}
 
       <div className="vitals-gauges" aria-label="Resource, lifecycle and Palace gauges">
         <ResourceGauge

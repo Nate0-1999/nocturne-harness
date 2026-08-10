@@ -33,6 +33,7 @@ import {
   snapshotErrorAfterReconciliation,
   snapshotRequestError,
 } from './snapshotBarrier'
+import { isLegacyFixtureTitle, normalizedThreadTitle } from './threadTitles'
 
 export const THREAD_CATALOG_STORAGE_KEY = 'harness.thread-catalog.v1'
 
@@ -139,32 +140,6 @@ function emptyMemoryPanelState(): MemoryPanelState {
     lastResponse: null,
     completedEditRequestId: null,
   }
-}
-
-function normalizedTitle(prompt: string): string {
-  const normalized = prompt.trim().replace(/\s+/gu, ' ')
-  const codePoints = Array.from(normalized)
-  if (codePoints.length <= 48) {
-    return normalized
-  }
-  return `${codePoints.slice(0, 48).join('')}…`
-}
-
-const LEGACY_FIXTURE_TITLES = new Set([
-  'Map the release boundary and hold the queue open.',
-  'Turn that boundary into three calm checks.',
-  'Keep partial work visible while I stop this run.',
-  'Show the budget boundary without losing the draft.',
-  'Show a recoverable run error with partial work.',
-  'Use the H5 verification memories to explain the handoff.',
-  'Open the H6 verification thread context.',
-  '/remember H8 remembers that Markdown evidence needs readable tables and code.',
-  'Show the H8 Markdown proof. Keep **plain-user-text** literal in my message and treat <button data-h8-user-raw="true">unsafe</button> as text.',
-  'Which Garden memory governs this handoff?',
-].map(normalizedTitle))
-
-export function isLegacyFixtureTitle(title: string): boolean {
-  return LEGACY_FIXTURE_TITLES.has(title)
 }
 
 function nextIsoTimestamp(previous: string): string {
@@ -701,7 +676,7 @@ export const useHarnessStore = create<HarnessStoreState>()(
       },
 
       beginPrompt: (threadId, promptId, prompt) => {
-        const title = normalizedTitle(prompt)
+        const title = normalizedThreadTitle(prompt)
         if (!title) {
           throw new TypeError('prompt must not be blank')
         }

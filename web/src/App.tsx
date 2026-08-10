@@ -61,7 +61,7 @@ import {
   type DockedModuleId,
   type RackLayoutSet,
 } from './rackLayout'
-import { isLegacyFixtureTitle } from './store'
+import { isLegacyFixtureTitle, visibleThreadTitle } from './threadTitles'
 import { ProjectSelector } from './ProjectSelector'
 import { projectSelectorContextKey } from './projectPath'
 import {
@@ -892,7 +892,7 @@ function ThreadsModule() {
                   .catch(() => undefined)
               }}
             >
-              <span className="thread-item__title">{entry.title}</span>
+              <span className="thread-item__title">{visibleThreadTitle(entry.title)}</span>
               <span className="thread-item__meta">
                 <span>{detail}</span>
                 <span>{shortId(entry.thread_id)}</span>
@@ -1055,7 +1055,9 @@ function ChatModule() {
       <header className="chat-header">
         <div className="chat-header__identity">
           <p className="eyebrow">Active channel</p>
-          <h1 id="thread-title">{selectedMeta?.title ?? 'Opening thread'}</h1>
+          <h1 id="thread-title">
+            {selectedMeta === undefined ? 'Opening thread' : visibleThreadTitle(selectedMeta.title)}
+          </h1>
         </div>
         <div className="run-metrics" aria-label="Run status">
           {activeRun !== null && (
