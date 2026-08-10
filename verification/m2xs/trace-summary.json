@@ -1,0 +1,243 @@
+{
+  "packet": "M2XS",
+  "session": "codex / 2026-08-10 / xsr1",
+  "recorded_at": "2026-08-10T17:25:51Z",
+  "ground": {
+    "harness_head": "1efb18628b1c616653f2f6665949b426e0791409",
+    "spine_head": "1a455878a9e607bcbd30d49e90ce2da8f2de1f39",
+    "garden_claim_head": "f417e7d803b5ccf2c1261f4eecba5b0d257093a4"
+  },
+  "owner_path": {
+    "factory": "harness.daemon:create_dev_app",
+    "origin": "http://127.0.0.1:8796",
+    "palace": "released remote Spine 0.1.1 / schema 0011",
+    "principal_id": "m2x-sop-verification",
+    "machine_id": "m2x-sop-verification",
+    "agent_id": "harness-agent",
+    "temporary_home": "/private/tmp/nocturne-m2xs-xsr1",
+    "fixture_used": false
+  },
+  "inherited_verdicts": {
+    "2": "PASS via report 088",
+    "3": "PASS via report 088"
+  },
+  "learning_baseline": {
+    "active_version": "v0",
+    "proposed_versions": [],
+    "measured_generation_points": 0,
+    "advertised": {
+      "eligible_dispositions": 4,
+      "hygiene_excluded_dispositions": 87,
+      "minimum_dispositions": 25,
+      "remaining_to_floor": 21,
+      "right": 3,
+      "wrong": 1,
+      "weighted_agreement_percent": "75"
+    },
+    "correlated_owner_truth": {
+      "eligible_dispositions": 1,
+      "hygiene_excluded_dispositions": 90,
+      "remaining_to_floor": 24,
+      "right": 0,
+      "wrong": 1,
+      "weighted_agreement_percent": "0"
+    },
+    "eligible_event_classification": [
+      {
+        "event_uid": "01KY2JE3JKY1MXYCKVZ93KY399",
+        "machine_id": "d1-relay",
+        "principal_id": "d1-4f6500c7-336f-4ce4-871b-9f31ef770f9f",
+        "classification": "legacy D1 verification artifact"
+      },
+      {
+        "event_uid": "01KY54AX6YSYMXA4X7V1KZHH2A",
+        "machine_id": "local-machine",
+        "principal_id": "local",
+        "classification": "authentic owner signal"
+      },
+      {
+        "event_uid": "01KZD7697HE5ST1HMT7AGWRZK3",
+        "machine_id": "nocturne-deploy",
+        "principal_id": "nocturne-deploy-verify-ea5a431ef134474881a7f046bb52982e",
+        "classification": "M2T deploy verification artifact"
+      },
+      {
+        "event_uid": "01KZP578SD8RKF110T2FHV79NW",
+        "machine_id": "nocturne-deploy",
+        "principal_id": "nocturne-deploy-verify-5a9c7bada69b4629917630fcde814a55",
+        "classification": "M2Z5 deploy verification artifact"
+      }
+    ],
+    "forced_retrain_probe": {
+      "status": "insufficient_data",
+      "timestamp": "2026-08-10T17:01:35.098009Z",
+      "rendered_message": "Not enough authentic signals yet: 4 / 25 available.",
+      "durable_receipt_appended": true,
+      "proposal_created": false,
+      "activation_attempts": 0
+    },
+    "finding": "F033"
+  },
+  "autonomous_save": {
+    "thread_id": "898b207e-c7dc-48fb-b99c-14189fbdc0ce",
+    "daemon_authoritative_project_key": "build-test",
+    "visible_project_control_at_capture": "m2xs-build-test",
+    "created": [
+      {
+        "memory_id": "02a3636f-2dc3-48ce-87e6-6ff7287283f1",
+        "revision_before_cleanup": 1,
+        "kind": "preference",
+        "project_key": null,
+        "label": "verification summaries begin with Moonrise"
+      },
+      {
+        "memory_id": "d7005cd6-81d6-4deb-8e17-e2654537ca64",
+        "revision_before_cleanup": 6,
+        "kind": "project_note",
+        "project_key": "build-test",
+        "label": "M2XS-BLUE calibration marker",
+        "corrected_body_marker": "M2XS-COPPER"
+      }
+    ],
+    "near_duplicate_created": false,
+    "same_id_edit": true,
+    "label_and_keyword_caveat": "The corrected body says COPPER while the retained label and one keyword still say BLUE.",
+    "fake_secret_sentinel_sha256": "a3779467d7d7f9a20d9c7fa3e74f48c4f528c1da4c78aca635196298ec1bf393",
+    "sentinel_in_memory_heads_or_revisions": false,
+    "sentinel_in_remote_append_only_prompt_evidence": true,
+    "local_journal_containing_typed_sentinel_removed_with_temporary_home": true
+  },
+  "project_scope": {
+    "source_thread_id": "70f81a36-13e7-46d4-b5b2-5b3c5f6f9ee2",
+    "sibling_thread_id": "3ce3668b-2260-4a5f-b821-17fc80abced2",
+    "source_project": "build-test",
+    "sibling_project": "m2xs-other-test",
+    "source_injection_id": "a995af87-2e26-40df-bb42-70c54c49a8ee",
+    "source_selected_memory_id": "d7005cd6-81d6-4deb-8e17-e2654537ca64",
+    "source_project_feature": 1.0,
+    "sibling_injection_id": "6fcccad6-55ae-492d-b2af-08f17c83dd2d",
+    "sibling_selected_count": 0,
+    "sibling_project_memory_visible": false,
+    "current_graph_followed_switch": true,
+    "current_injection_followed_switch": true,
+    "global_vitals_remained_global": true,
+    "visible_source_project_before_reload": "m2xs-build-test",
+    "visible_source_project_after_reload": "build-test",
+    "project_control_matched_authoritative_binding_consistently": false,
+    "project_control_mismatch_root_cause_proven": false,
+    "finding": "F035"
+  },
+  "oversized_split": {
+    "thread_id": "13cf3b97-ac88-4c85-966f-3b4ec10a5ca7",
+    "model": "openrouter:openai/gpt-4.1",
+    "source_memory_id": "e5cc6f69-872b-49d5-a99f-0adbabde6a0f",
+    "source_revision_uid": "01KZPAR9NZ1SQQJSXKVVYKNP0R",
+    "source_status": "tombstoned_from_birth",
+    "child_memory_ids": [
+      "1b15bfa8-e2d3-4d53-8f72-3a7e56a2c76f",
+      "4f766bff-eb18-42b9-b002-da33cc48fb07",
+      "fb840052-a1ee-46e6-a8c9-6dc7e0254cba"
+    ],
+    "child_count": 3,
+    "directed_sibling_edges": 6,
+    "lossless_atomic_spans": true,
+    "project_key_caveat": "The UI path was m2xs-split-test; split children stored project_key null while origin_path retained m2xs-split-test. Item 17 does not require project scope."
+  },
+  "restart_and_journal": {
+    "same_home_restart": true,
+    "rehydrated_threads": true,
+    "rehydrated_project_binding": true,
+    "continued_thread_id": "70f81a36-13e7-46d4-b5b2-5b3c5f6f9ee2",
+    "continued_answer": "M2XS-COPPER",
+    "memory_prepare_warning": "Memory is unavailable; continuing without injected context.",
+    "memory_prepare_warning_effect": "The restored history still produced the correct continuation; no thread or transcript was lost.",
+    "doctor_status": "healthy",
+    "doctor_journal_bytes_display": "839.5 KiB",
+    "doctor_schema": "0011",
+    "journal_file_mode": "0600",
+    "journal_directory_mode": "0700",
+    "unwritable_probe_exit_code": 2,
+    "unwritable_probe_message": "Conversation journal is not writable at /private/tmp/nocturne-m2xs-xsr1/transcripts. Fix that directory's permissions, then run `nocturne up` again.",
+    "permission_restored": true
+  },
+  "window_ceiling": {
+    "thread_id": "34de397c-652f-4663-b524-8c43a3a68d42",
+    "model": "openrouter:rekaai/reka-edge",
+    "catalog_context_tokens": 16384,
+    "catalog_prompt_usd_per_million": "0.10",
+    "catalog_completion_usd_per_million": "0.10",
+    "thread_max_tokens": 8,
+    "successful_request": {
+      "requests": 1,
+      "input_tokens": 11644,
+      "output_tokens": 8,
+      "run_done_partial": false,
+      "stop_reason": "end_turn",
+      "context_bars": "11.6K / 16.4K",
+      "compaction_active": false
+    },
+    "next_request": {
+      "requests": 1,
+      "input_tokens_recorded": 0,
+      "output_tokens_recorded": 0,
+      "run_done_partial": true,
+      "stop_reason": "error",
+      "visible_message": "Run error · partial kept",
+      "context_bars_after_error": "0 / 16.4K"
+    },
+    "provider_error_class_visible": false,
+    "plain_limit_sentence_visible": false,
+    "archive_and_continue_remedy_visible": false,
+    "conclusion": "The bounded real route failed opaquely before the scout could prove an actual context-length rejection. No retry followed the first refusal.",
+    "finding": "F034"
+  },
+  "cleanup": {
+    "active_fixture_matches_after_cleanup": 0,
+    "tombstoned": [
+      "02a3636f-2dc3-48ce-87e6-6ff7287283f1@2",
+      "d7005cd6-81d6-4deb-8e17-e2654537ca64@7",
+      "1b15bfa8-e2d3-4d53-8f72-3a7e56a2c76f@2",
+      "4f766bff-eb18-42b9-b002-da33cc48fb07@2",
+      "fb840052-a1ee-46e6-a8c9-6dc7e0254cba@2"
+    ],
+    "already_tombstoned_source": "e5cc6f69-872b-49d5-a99f-0adbabde6a0f@1",
+    "cleanup_editor": "verification:m2xs",
+    "cleanup_reason": "M2XS verification cleanup",
+    "owner_memories_touched": 0,
+    "activation_attempts": 0
+  },
+  "browser": {
+    "console_warnings": [],
+    "console_errors": []
+  },
+  "checklist": {
+    "17": "PASS",
+    "22": "PASS",
+    "28": "ABSENT - M2Z7 not landed",
+    "29": "FAIL - F035",
+    "39": "FAIL - F033",
+    "42": "UNAVAILABLE - F033",
+    "47": "FAIL - F033",
+    "48": "FAIL - F033",
+    "49": "FAIL - F033",
+    "51": "PASS",
+    "52": "PASS",
+    "59": "PASS",
+    "60": "FAIL - F034"
+  },
+  "screenshots": [
+    "01-live-learning-baseline-1440x900.jpg",
+    "02-live-score-graph-1440x900.jpg",
+    "03-live-retrain-refusal-1440x900.jpg",
+    "04-autonomous-save-1440x900.jpg",
+    "06-same-project-gate-1440x900.jpg",
+    "07-same-project-answer-1440x900.jpg",
+    "08-sibling-project-isolation-1440x900.jpg",
+    "09-current-sibling-graph-1440x900.jpg",
+    "10-current-build-graph-1440x900.jpg",
+    "11-scope-coherence-build-1440x900.jpg",
+    "13-live-split-family-1440x900.jpg",
+    "14-restart-continuation-1440x900.jpg",
+    "15-real-context-ceiling-failure-1440x900.jpg"
+  ]
+}
