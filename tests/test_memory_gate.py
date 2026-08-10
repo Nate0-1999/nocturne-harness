@@ -8,6 +8,7 @@ from uuid import UUID
 
 import httpx
 import pytest
+from pydantic_ai.messages import BinaryContent
 
 from harness.envelope import GateCommitPayload, StopReason, WrongResolution
 from harness.memory_gate import MemoryGateTurnRunner
@@ -66,6 +67,31 @@ class RecordingDelegate:
             StopReason.END_TURN,
             (*history, f"{prompt}:done"),
             assistant_text=self.assistant_text,
+        )
+
+
+@dataclass
+class ImageRecordingDelegate:
+    calls: list[tuple[str, BinaryContent, str | None]] = field(default_factory=list)
+
+    async def run(
+        self,
+        *,
+        thread_id: str,
+        prompt: str,
+        image: BinaryContent,
+        message_history: Sequence[object],
+        emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
+        system_instructions: str | None = None,
+        excluded_memory_ids: frozenset[UUID] = frozenset(),
+    ) -> TurnOutcome:
+        del thread_id, emit, model_resolution, excluded_memory_ids
+        self.calls.append((prompt, image, system_instructions))
+        return TurnOutcome(
+            StopReason.END_TURN,
+            (*message_history, "image:done"),
+            assistant_text="image answer",
         )
 
 
@@ -322,6 +348,44 @@ async def test_first_chat_blocks_commits_and_keeps_system_instructions_current()
     assert len(spine.prepare_requests) == 2
     assert spine.prepare_requests[-1].mode == "autonomous"
     assert delegate.calls[-1][-2] == EMPTY_MEMORY_BLOCK
+
+
+@pytest.mark.asyncio
+async def test_capable_image_uses_text_only_for_spine_then_forwards_exact_binary() -> None:
+    """A-052 is defended by keeping image bytes outside Spine while forwarding them after the
+    ordinary memory gate; this avoids introducing multimodal memory or silent image loss.
+    """
+    spine = RecordingSpine()
+    delegate = ImageRecordingDelegate()
+    runner = MemoryGateTurnRunner(
+        delegate,  # type: ignore[arg-type]
+        spine,
+        context_factory(spine),
+        model_context_tokens=1_000_000,
+    )
+    emitter = RecordingEmitter()
+    image = BinaryContent(data=b"\x89PNG\r\n\x1a\nimage", media_type="image/png")
+
+    task = asyncio.create_task(
+        runner.run(
+            thread_id=THREAD_ID,
+            prompt="Inspect this",
+            image=image,
+            message_history=(),
+            emit=emitter,
+        )
+    )
+    await asyncio.wait_for(emitter.opened.wait(), 1)
+    assert spine.prepare_requests[0].prompt == "Inspect this"
+    assert "image" not in spine.prepare_requests[0].model_dump(mode="python")
+    assert delegate.calls == []
+    assert emitter.decision is not None
+    emitter.decision.set_result(decision())
+
+    outcome = await asyncio.wait_for(task, 1)
+
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert delegate.calls == [("Inspect this", image, EMPTY_MEMORY_BLOCK)]
 
 
 async def _record_ambient(values: list[str], thread_id: str) -> None:

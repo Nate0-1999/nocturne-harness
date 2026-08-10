@@ -12,6 +12,7 @@ from uuid import UUID
 import pytest
 from pydantic_ai import models
 from pydantic_ai.messages import (
+    BinaryContent,
     ModelRequest,
     ModelResponse,
     TextPart,
@@ -166,6 +167,39 @@ async def test_successful_model_response_is_receipted_before_turn_returns() -> N
     assert "output" in {event.quantity_type for event in request.events}
     assert {event.purpose for event in request.events} == {"building"}
     assert {event.thread_id for event in request.events} == {THREAD_UUID}
+
+
+@pytest.mark.asyncio
+async def test_image_turn_sends_text_then_exact_binary_content_to_pydantic_ai() -> None:
+    """A-052 is defended by verifying the runtime sends one text part before exact image bytes;
+    this prevents adapter coercion, URL substitution, or silent attachment loss.
+    """
+    observed: list[object] = []
+
+    async def stream(messages, _info):
+        request = messages[-1]
+        assert isinstance(request, ModelRequest)
+        part = request.parts[-1]
+        assert isinstance(part, UserPromptPart)
+        observed.extend(part.content)
+        yield "visual answer"
+
+    image = BinaryContent(data=b"\x89PNG\r\n\x1a\nimage", media_type="image/png")
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(),
+    )
+
+    outcome = await runner.run(
+        thread_id=str(THREAD_UUID),
+        prompt="Inspect this",
+        image=image,
+        message_history=(),
+        emit=RecordingEmitter(),
+    )
+
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert observed == ["Inspect this", image]
 
 
 @pytest.mark.asyncio

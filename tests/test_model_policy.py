@@ -314,6 +314,33 @@ def test_model_routes_prefer_standard_use_sole_variant_and_drop_real_ambiguity()
     }
 
 
+def test_model_routes_retain_only_structurally_valid_input_modalities() -> None:
+    """A-052 is defended by retaining exact catalog modalities while keeping malformed fields
+    unknown; this prevents provider names or incomplete rows from implying image capability.
+    """
+    routes = _parse_model_routes(
+        {
+            "data": [
+                {
+                    "id": "vendor/vision",
+                    "canonical_slug": "vendor/vision-v1",
+                    "context_length": 100_000,
+                    "architecture": {"input_modalities": ["text", "image"]},
+                },
+                {
+                    "id": "vendor/unknown",
+                    "canonical_slug": "vendor/unknown-v1",
+                    "context_length": 50_000,
+                    "architecture": {"input_modalities": "text,image"},
+                },
+            ]
+        }
+    )
+
+    assert routes["vendor/vision-v1"].input_modalities == frozenset({"text", "image"})
+    assert routes["vendor/unknown-v1"].input_modalities is None
+
+
 @pytest.mark.asyncio
 async def test_catalog_normalizes_per_token_prices_and_caches_for_strictly_under_24h() -> None:
     """A-021 is defended by verifying that catalog normalizes per token prices and caches for
@@ -447,6 +474,39 @@ async def test_pinned_resolution_bypasses_catalog_and_is_stable_per_thread() -> 
     assert first.context_tokens == 99
     assert first.price_sorted is False
     assert table.calls == 0
+
+
+@pytest.mark.asyncio
+async def test_first_pinned_image_lookup_is_exact_and_retained_for_stickiness_epoch() -> None:
+    """A-052 is defended by lazily resolving one exact pinned OpenRouter image capability and
+    retaining its proof; this preserves A-021's catalog bypass for every text-only turn.
+    """
+    table = FakeCatalog(
+        catalog((), {}),
+        named_routes={
+            "vendor/vision": ModelRoute(
+                "vendor/vision",
+                100_000,
+                frozenset({"text", "image"}),
+            )
+        },
+    )
+    resolver = ModelPolicyResolver(
+        policy="pinned:openrouter:vendor/vision",
+        static_model="openrouter:vendor/vision",
+        static_context_tokens=100_000,
+        catalog=table,
+    )
+
+    text_resolution = await resolver.resolve("thread-1")
+    first = await resolver.resolve_image_capability("thread-1", text_resolution)
+    second = await resolver.resolve_image_capability("thread-1", first)
+
+    assert text_resolution.input_modalities is None
+    assert first.input_modalities == frozenset({"text", "image"})
+    assert second is first
+    assert table.calls == 0
+    assert table.named_calls == ["vendor/vision"]
 
 
 @pytest.mark.asyncio

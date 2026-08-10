@@ -87,7 +87,7 @@ from harness.spine_client import (
     VitalsSnapshot,
 )
 from harness.tools_memory import MemoryToolContext
-from harness.transcript import TranscriptJournal
+from harness.transcript import TranscriptJournal, TranscriptJournalUnavailable
 
 DEFAULT_WEB_DIST = Path(__file__).resolve().parents[2] / "web" / "dist"
 DEFAULT_WEB_ROOT = DEFAULT_WEB_DIST.parent
@@ -506,6 +506,7 @@ def create_app(
                         thread_id=message.thread_id,
                         prompt_id=message.id,
                         prompt=message.payload.prompt,
+                        image=message.payload.image,
                         sink=send,
                     )
                 elif message.type is MessageType.RUN_CANCEL:
@@ -818,6 +819,34 @@ def create_dev_app(
                 principal_id, thread_id=thread_id, birthplace="thread"
             )
             return ThreadEndResult(thread_id, final_post, "", [], pending.cards, 0, True)
+
+        @app.get("/v1/threads/{thread_id}/messages/{prompt_id}/image")
+        async def thread_image(thread_id: UUID, prompt_id: str) -> Response:
+            try:
+                attachment = journal.read_image_attachment(str(thread_id), prompt_id)
+            except ValueError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Thread image was not found.",
+                ) from exc
+            except TranscriptJournalUnavailable as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Thread image journal is unavailable.",
+                ) from exc
+            if attachment is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Thread image was not found.",
+                )
+            return Response(
+                content=attachment.data,
+                media_type=attachment.view.media_type,
+                headers={
+                    "Cache-Control": "private, immutable",
+                    "ETag": f'"{attachment.view.sha256}"',
+                },
+            )
 
         @app.post("/v1/approval-queue/{item_uid}/decisions")
         async def decide_queue_item(

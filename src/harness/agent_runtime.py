@@ -11,6 +11,7 @@ from uuid import UUID
 from pydantic_ai import UsageLimitExceeded, capture_run_messages
 from pydantic_ai.messages import (
     AgentStreamEvent,
+    BinaryContent,
     ModelMessage,
     ModelRequest,
     ModelResponse,
@@ -78,6 +79,7 @@ class PydanticAITurnRunner:
         model_resolution: ThreadModelResolution | None = None,
         system_instructions: str | None = None,
         excluded_memory_ids: frozenset[UUID] = frozenset(),
+        image: BinaryContent | None = None,
     ) -> TurnOutcome:
         """Execute a turn and convert every terminal path to a stable outcome."""
 
@@ -118,9 +120,10 @@ class PydanticAITurnRunner:
                 return TurnOutcome(StopReason("end_turn"), prior_history, usage)
 
             prior_history = _strip_all_memory_blocks(prior_history)
+            user_prompt = prompt if image is None else [prompt, image]
             with capture_run_messages() as captured:
                 result = await self._agent.chat_agent.run(
-                    prompt,
+                    user_prompt,
                     deps=context,
                     instructions=system_instructions,
                     message_history=cast(Sequence[ModelMessage], prior_history),

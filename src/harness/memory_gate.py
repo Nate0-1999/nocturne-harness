@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable, Sequence
-from typing import Protocol
+from typing import Protocol, cast
 from uuid import UUID
+
+from pydantic_ai.messages import BinaryContent
 
 from harness.citation import cited_memory_ids
 from harness.commands import remember_command_text
 from harness.memory_panel import ThreadMemoryContextRegistry, ThreadMemorySnapshot
 from harness.model_policy import ThreadModelResolution
 from harness.run_protocol import (
+    ImageSystemInstructionTurnRunner,
     RunEmitter,
     SystemInstructionTurnRunner,
     TurnOutcome,
@@ -84,6 +87,7 @@ class MemoryGateTurnRunner:
         message_history: Sequence[object],
         emit: RunEmitter,
         model_resolution: ThreadModelResolution | None = None,
+        image: BinaryContent | None = None,
     ) -> TurnOutcome:
         """Prepare, block for a valid decision, commit, then invoke the model."""
 
@@ -94,6 +98,7 @@ class MemoryGateTurnRunner:
                 message_history=message_history,
                 emit=emit,
                 model_resolution=model_resolution,
+                image=image,
             )
         if thread_id in self._attempted_threads:
             if self._contexts.snapshot(thread_id) is None:
@@ -103,6 +108,7 @@ class MemoryGateTurnRunner:
                     message_history=message_history,
                     emit=emit,
                     model_resolution=model_resolution,
+                    image=image,
                 )
             return await self._run_autonomous(
                 thread_id=thread_id,
@@ -110,6 +116,7 @@ class MemoryGateTurnRunner:
                 message_history=message_history,
                 emit=emit,
                 model_resolution=model_resolution,
+                image=image,
             )
 
         # Claim before any fallible work. A cancelled or failed attempt must not
@@ -144,6 +151,7 @@ class MemoryGateTurnRunner:
                 message_history=message_history,
                 emit=emit,
                 model_resolution=model_resolution,
+                image=image,
             )
 
         decision = await emit.open_gate(
@@ -176,6 +184,7 @@ class MemoryGateTurnRunner:
                 emit=emit,
                 additional_excluded_memory_ids=excluded_memory_ids,
                 model_resolution=model_resolution,
+                image=image,
             )
 
         try:
@@ -196,6 +205,7 @@ class MemoryGateTurnRunner:
                 emit=emit,
                 additional_excluded_memory_ids=excluded_memory_ids,
                 model_resolution=model_resolution,
+                image=image,
             )
 
         for wrong in committed.wrong_removed:
@@ -214,6 +224,7 @@ class MemoryGateTurnRunner:
             emit=emit,
             additional_excluded_memory_ids=excluded_memory_ids,
             model_resolution=model_resolution,
+            image=image,
         )
 
     async def _resolve_wrong_memory(
@@ -289,6 +300,7 @@ class MemoryGateTurnRunner:
         emit: RunEmitter,
         additional_excluded_memory_ids: frozenset[UUID] = frozenset(),
         model_resolution: ThreadModelResolution | None = None,
+        image: BinaryContent | None = None,
     ) -> TurnOutcome:
         async with self._contexts.model_feedback_boundary(thread_id):
             context = self._contexts.snapshot(thread_id)
@@ -296,15 +308,27 @@ class MemoryGateTurnRunner:
             excluded_memory_ids = (
                 context.excluded_memory_ids if context is not None else frozenset()
             ) | additional_excluded_memory_ids
-            outcome = await self._delegate.run(
-                thread_id=thread_id,
-                prompt=prompt,
-                message_history=message_history,
-                emit=emit,
-                model_resolution=model_resolution,
-                system_instructions=system_instructions,
-                excluded_memory_ids=excluded_memory_ids,
-            )
+            if image is None:
+                outcome = await self._delegate.run(
+                    thread_id=thread_id,
+                    prompt=prompt,
+                    message_history=message_history,
+                    emit=emit,
+                    model_resolution=model_resolution,
+                    system_instructions=system_instructions,
+                    excluded_memory_ids=excluded_memory_ids,
+                )
+            else:
+                outcome = await cast(ImageSystemInstructionTurnRunner, self._delegate).run(
+                    thread_id=thread_id,
+                    prompt=prompt,
+                    image=image,
+                    message_history=message_history,
+                    emit=emit,
+                    model_resolution=model_resolution,
+                    system_instructions=system_instructions,
+                    excluded_memory_ids=excluded_memory_ids,
+                )
             await self._record_citations(context, outcome, emit)
             return outcome
 
@@ -316,6 +340,7 @@ class MemoryGateTurnRunner:
         message_history: Sequence[object],
         emit: RunEmitter,
         model_resolution: ThreadModelResolution | None,
+        image: BinaryContent | None = None,
     ) -> TurnOutcome:
         """Re-score once, update ambient state, then run without another gate."""
 
@@ -366,15 +391,27 @@ class MemoryGateTurnRunner:
 
             if changed and self._on_context_changed is not None:
                 await self._on_context_changed(thread_id)
-            outcome = await self._delegate.run(
-                thread_id=thread_id,
-                prompt=prompt,
-                message_history=message_history,
-                emit=emit,
-                model_resolution=model_resolution,
-                system_instructions=current.final_block,
-                excluded_memory_ids=current.excluded_memory_ids,
-            )
+            if image is None:
+                outcome = await self._delegate.run(
+                    thread_id=thread_id,
+                    prompt=prompt,
+                    message_history=message_history,
+                    emit=emit,
+                    model_resolution=model_resolution,
+                    system_instructions=current.final_block,
+                    excluded_memory_ids=current.excluded_memory_ids,
+                )
+            else:
+                outcome = await cast(ImageSystemInstructionTurnRunner, self._delegate).run(
+                    thread_id=thread_id,
+                    prompt=prompt,
+                    image=image,
+                    message_history=message_history,
+                    emit=emit,
+                    model_resolution=model_resolution,
+                    system_instructions=current.final_block,
+                    excluded_memory_ids=current.excluded_memory_ids,
+                )
             await self._record_citations(current, outcome, emit)
             return outcome
 

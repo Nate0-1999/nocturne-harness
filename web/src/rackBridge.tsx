@@ -21,6 +21,10 @@ import {
   type RackSelection,
   type RackSnapshot,
 } from './rack'
+import {
+  rackSnapshotForIframe,
+  rackValueForIframe,
+} from './rackSnapshotProjection'
 import type { RackEnvelopeEvent, RackResizeEvent } from './rackEvents'
 
 const BRIDGE_VERSION = 1
@@ -120,7 +124,10 @@ export function RackPluginIframe({
 
       unsubscribe = [
         api.events.subscribeState(() => {
-          send({ type: 'snapshot', snapshot: api.events.getSnapshot() })
+          send({
+            type: 'snapshot',
+            snapshot: rackSnapshotForIframe(api.events.getSnapshot()),
+          })
         }),
         api.events.subscribe((event) => send({ type: 'envelope', event })),
         api.events.subscribeResize((event) => send({ type: 'resize', event })),
@@ -133,7 +140,7 @@ export function RackPluginIframe({
         type: CONNECT_MESSAGE,
         version: BRIDGE_VERSION,
         manifest,
-        snapshot: api.events.getSnapshot(),
+        snapshot: rackSnapshotForIframe(api.events.getSnapshot()),
         selection: api.selection.getSnapshot(),
         regression_fixture: isRegressionFixture ? 'M2C REGRESSION' : null,
       }
@@ -141,7 +148,7 @@ export function RackPluginIframe({
     }
 
     const send = (message: HostMessage) => {
-      port?.postMessage(message)
+      port?.postMessage(rackValueForIframe(message))
     }
 
     const sendError = (requestId: string, error: unknown) => {

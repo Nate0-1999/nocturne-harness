@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
@@ -18,7 +19,7 @@ from vitals_fixture import vitals_payload
 from harness.agent import HarnessAgent
 from harness.config import HarnessSettings
 from harness.daemon import EnvelopeSender, _build_web, create_app, create_dev_app
-from harness.envelope import Envelope, EnvelopeFactory, MessageType, StopReason
+from harness.envelope import Envelope, EnvelopeFactory, ImageInput, MessageType, StopReason
 from harness.memory_panel import EMPTY_MEMORY_BLOCK
 from harness.model_policy import ThreadModelResolution
 from harness.run_loop import RunLoop
@@ -75,6 +76,14 @@ def valid_envelope() -> dict[str, object]:
         "type": "prompt.submit",
         "payload": {"prompt": "hello"},
     }
+
+
+def png_input(data: bytes = b"\x89PNG\r\n\x1a\ndaemon-image") -> ImageInput:
+    return ImageInput(
+        kind="image",
+        media_type="image/png",
+        data_base64=base64.b64encode(data).decode("ascii"),
+    )
 
 
 def frame(
@@ -1076,6 +1085,61 @@ def test_explicit_pinned_policy_does_not_resolve_unused_chat_model(tmp_path: Pat
 
     with TestClient(app):
         pass
+
+
+def test_dev_app_serves_exact_journal_image_from_message_oriented_path(tmp_path: Path) -> None:
+    """A-052 is defended by serving the exact durable image at the message-oriented local URL;
+    this keeps browser rendering journal-backed instead of dependent on a volatile Blob.
+    """
+
+    async def stream(_messages, _info):
+        yield "unused"
+
+    settings = HarnessSettings(
+        _env_file=None,
+        spine_token="test-token",
+        principal_id="principal-test",
+        machine_id="machine-test",
+        agent_id="agent-test",
+        anthropic_api_key=None,
+        openai_api_key=None,
+        openrouter_api_key=None,
+    )
+    agent = HarnessAgent(settings, model=FunctionModel(stream_function=stream))
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    thread_id = "22345678-1234-5678-1234-567812345678"
+    image = png_input()
+    view = journal.append_image_attachment(thread_id, PROMPT_ID, image)
+    journal.append_message(
+        thread_id,
+        {
+            "message_id": PROMPT_ID,
+            "run_id": SECOND_PROMPT_ID,
+            "role": "user",
+            "content": "Inspect this",
+            "state": "queued",
+            "image": view.model_dump(mode="json"),
+        },
+        parent_id=None,
+    )
+    app = create_dev_app(
+        tmp_path,
+        settings=settings,
+        agent=agent,
+        spine=GateSpine(),  # type: ignore[arg-type]
+        transcript_journal=journal,
+    )
+
+    with TestClient(app) as client:
+        response = client.get(f"/v1/threads/{thread_id}/messages/{PROMPT_ID}/image")
+        old_shape = client.get(f"/v1/threads/{thread_id}/images/{PROMPT_ID}")
+
+    assert response.status_code == 200
+    assert response.content == image.decoded_bytes()
+    assert response.headers["content-type"] == "image/png"
+    assert response.headers["etag"] == f'"{view.sha256}"'
+    assert response.headers["cache-control"] == "private, immutable"
+    assert old_shape.status_code == 404
 
 
 def test_dev_gate_round_trip_blocks_validates_commits_and_injects_system_block(

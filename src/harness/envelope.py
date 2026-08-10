@@ -1,5 +1,8 @@
 """Validated models and construction helpers for SPEC C.7 envelopes."""
 
+import base64
+import binascii
+import hashlib
 import re
 import secrets
 from collections.abc import Callable
@@ -47,6 +50,85 @@ def _require_non_blank(value: str) -> str:
 type ULID = Annotated[StrictStr, AfterValidator(_require_ulid)]
 type NonBlankString = Annotated[StrictStr, AfterValidator(_require_non_blank)]
 type NonNegativeInt = Annotated[StrictInt, Field(ge=0)]
+
+_MAX_IMAGE_BYTES = 5 * 1024 * 1024
+_MAX_IMAGE_BASE64_CHARS = 4 * ((_MAX_IMAGE_BYTES + 2) // 3)
+type ImageMediaType = Literal["image/png", "image/jpeg", "image/webp", "image/gif"]
+
+
+def _decode_canonical_image(value: str) -> bytes:
+    if len(value) > _MAX_IMAGE_BASE64_CHARS:
+        raise ValueError("image exceeds the 5 MiB decoded limit")
+    try:
+        decoded = base64.b64decode(value, validate=True)
+    except (binascii.Error, ValueError) as exc:
+        raise ValueError("image data must be canonical padded RFC 4648 base64") from exc
+    if not decoded:
+        raise ValueError("image data must not be empty")
+    if len(decoded) > _MAX_IMAGE_BYTES:
+        raise ValueError("image exceeds the 5 MiB decoded limit")
+    if base64.b64encode(decoded).decode("ascii") != value:
+        raise ValueError("image data must be canonical padded RFC 4648 base64")
+    return decoded
+
+
+def _matches_image_signature(media_type: ImageMediaType, data: bytes) -> bool:
+    if media_type == "image/png":
+        return data.startswith(b"\x89PNG\r\n\x1a\n")
+    if media_type == "image/jpeg":
+        return data.startswith(b"\xff\xd8\xff")
+    if media_type == "image/gif":
+        return data.startswith((b"GIF87a", b"GIF89a"))
+    return len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP"
+
+
+class ImageView(BaseModel):
+    """Compact server-authored view of one durable prompt attachment. [A-052]"""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+
+    kind: Literal["image"]
+    media_type: ImageMediaType
+    byte_count: Annotated[StrictInt, Field(gt=0, le=_MAX_IMAGE_BYTES)]
+    sha256: Annotated[StrictStr, Field(pattern=r"^[0-9a-f]{64}$")]
+
+
+class ImageInput(BaseModel):
+    """The singular validated image accepted by ``prompt.submit``. [A-052]"""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+
+    kind: Literal["image"]
+    media_type: ImageMediaType
+    data_base64: StrictStr
+
+    @field_validator("data_base64")
+    @classmethod
+    def validate_data_base64(cls, value: str) -> str:
+        _decode_canonical_image(value)
+        return value
+
+    @model_validator(mode="after")
+    def validate_signature(self) -> "ImageInput":
+        if not _matches_image_signature(self.media_type, self.decoded_bytes()):
+            raise ValueError("image media_type does not match its file signature")
+        return self
+
+    def decoded_bytes(self) -> bytes:
+        """Return bytes whose canonical form and bound were validated at construction."""
+
+        return _decode_canonical_image(self.data_base64)
+
+    def view(self) -> ImageView:
+        """Derive the only image metadata allowed in messages and server events."""
+
+        decoded = self.decoded_bytes()
+        return ImageView(
+            kind="image",
+            media_type=self.media_type,
+            byte_count=len(decoded),
+            sha256=hashlib.sha256(decoded).hexdigest(),
+        )
 
 
 class MessageType(StrEnum):
@@ -97,6 +179,7 @@ class _ExtensiblePayload(BaseModel):
 
 class PromptSubmitPayload(_ExtensiblePayload):
     prompt: NonBlankString
+    image: ImageInput | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class RunStartedPayload(_ExtensiblePayload):
@@ -106,6 +189,7 @@ class RunStartedPayload(_ExtensiblePayload):
         default=None,
         exclude_if=lambda value: value is None,
     )
+    image: ImageView | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class RunCancelPayload(_ExtensiblePayload):
@@ -115,6 +199,7 @@ class RunCancelPayload(_ExtensiblePayload):
 class PromptQueuedPayload(_ExtensiblePayload):
     run_id: ULID
     prompt_id: ULID
+    image: ImageView | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class RunDeltaTextPayload(_ExtensiblePayload):
@@ -235,6 +320,7 @@ class QueuedPromptSnapshot(_ExtensiblePayload):
     run_id: ULID
     prompt_id: ULID
     prompt: NonBlankString
+    image: ImageView | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class ActiveRunSnapshot(_ExtensiblePayload):

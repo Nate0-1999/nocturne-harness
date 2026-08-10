@@ -6,7 +6,7 @@ import asyncio
 import logging
 import time
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from decimal import Decimal, DecimalException, InvalidOperation, localcontext
 from typing import Literal, Protocol
@@ -56,6 +56,7 @@ class ModelRoute:
 
     model_id: str
     context_tokens: int
+    input_modalities: frozenset[str] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,6 +76,7 @@ class ThreadModelResolution:
     context_tokens: int
     policy: str
     price_sorted: bool = False
+    input_modalities: frozenset[str] | None = None
     benchmark: BenchmarkModel | None = None
     catalog_fetched_at: datetime | None = None
     stickiness_epoch: int = 0
@@ -88,6 +90,14 @@ class ThreadModelResolution:
             raise ValueError("context_tokens must be a positive integer")
         if type(self.stickiness_epoch) is not int or self.stickiness_epoch < 0:
             raise ValueError("stickiness_epoch must be a non-negative integer")
+        if self.input_modalities is not None and (
+            not isinstance(self.input_modalities, frozenset)
+            or any(
+                not isinstance(value, str) or not value or value != value.strip()
+                for value in self.input_modalities
+            )
+        ):
+            raise ValueError("input_modalities must be a frozenset of nonblank strings or None")
 
     @property
     def uses_openrouter(self) -> bool:
@@ -131,6 +141,18 @@ class ThreadModelResolver(Protocol):
     async def resolve(self, thread_id: str) -> ThreadModelResolution: ...
 
     async def resolve_named(self, thread_id: str, model: str) -> ThreadModelResolution: ...
+
+    async def resolve_hydrated(
+        self,
+        thread_id: str,
+        model: str,
+    ) -> ThreadModelResolution: ...
+
+    async def resolve_image_capability(
+        self,
+        thread_id: str,
+        resolution: ThreadModelResolution,
+    ) -> ThreadModelResolution: ...
 
 
 def parse_model_policy(value: str) -> ModelPolicy:
@@ -361,6 +383,7 @@ class ModelPolicyResolver:
         self._static_context_tokens = static_context_tokens
         self._catalog = catalog
         self._resolutions: dict[str, ThreadModelResolution] = {}
+        self._image_resolutions: dict[tuple[str, str, int], ThreadModelResolution] = {}
         self._lock = asyncio.Lock()
 
     async def resolve(self, thread_id: str) -> ThreadModelResolution:
@@ -399,6 +422,7 @@ class ModelPolicyResolver:
             model=f"openrouter:{route.model_id}",
             context_tokens=route.context_tokens,
             policy="human_command",
+            input_modalities=route.input_modalities,
             catalog_fetched_at=fetched_at,
         )
         logger.info(
@@ -409,6 +433,75 @@ class ModelPolicyResolver:
             resolved.context_tokens,
         )
         return resolved
+
+    async def resolve_hydrated(
+        self,
+        thread_id: str,
+        model: str,
+    ) -> ThreadModelResolution:
+        """Restore sticky model identity while catalog truth is optional. [A-052]"""
+
+        try:
+            return await self.resolve_named(thread_id, model)
+        except (ModelCatalogUnavailable, NamedModelResolutionError) as exc:
+            logger.warning(
+                "hydrated model catalog unavailable; retaining identity "
+                "thread=%s model=%s reason=%s",
+                thread_id,
+                model,
+                str(exc),
+            )
+            return ThreadModelResolution(
+                model=model,
+                context_tokens=self._static_context_tokens,
+                policy="hydrated_unverified",
+            )
+
+    async def resolve_image_capability(
+        self,
+        thread_id: str,
+        resolution: ThreadModelResolution,
+    ) -> ThreadModelResolution:
+        """Resolve exact OpenRouter image-input truth only for an image turn. [A-052]"""
+
+        if not isinstance(thread_id, str) or not thread_id.strip():
+            raise ValueError("thread_id must not be blank")
+        if not resolution.uses_openrouter or resolution.input_modalities is not None:
+            return resolution
+        if self._catalog is None:
+            raise ModelCatalogUnavailable("OpenRouter catalog is not configured")
+
+        cache_key = (thread_id, resolution.model, resolution.stickiness_epoch)
+        cached = self._image_resolutions.get(cache_key)
+        if cached is not None:
+            return cached
+
+        slug = resolution.model.removeprefix("openrouter:")
+        route, fetched_at = await self._catalog.load_named_route(slug)
+        if route.model_id != slug:
+            raise NamedModelResolutionError(f"unknown OpenRouter model: {slug}")
+        enriched = replace(
+            resolution,
+            input_modalities=route.input_modalities,
+            catalog_fetched_at=fetched_at,
+        )
+        # Only positive, structurally valid catalog truth is retained for the
+        # stickiness epoch. Unknown capability may be retried on a later turn.
+        if enriched.input_modalities is not None:
+            async with self._lock:
+                current = self._image_resolutions.get(cache_key)
+                if current is None:
+                    self._image_resolutions[cache_key] = enriched
+                    current = enriched
+                retained = self._resolutions.get(thread_id)
+                if (
+                    retained is not None
+                    and retained.model == resolution.model
+                    and retained.stickiness_epoch == resolution.stickiness_epoch
+                ):
+                    self._resolutions[thread_id] = current
+                return current
+        return enriched
 
     async def _resolve_uncached(self, thread_id: str) -> ThreadModelResolution:
         if self._policy.kind == "pinned":
@@ -456,6 +549,7 @@ class ModelPolicyResolver:
             context_tokens=route.context_tokens,
             policy=self._policy_text,
             price_sorted=True,
+            input_modalities=route.input_modalities,
             benchmark=selected,
             catalog_fetched_at=catalog.fetched_at,
         )
@@ -596,7 +690,7 @@ def _parse_benchmark_rows(payload: object) -> tuple[BenchmarkModel, ...]:
 
 def _parse_model_routes(payload: object) -> Mapping[str, ModelRoute]:
     data = _payload_data(payload, "models")
-    grouped: dict[str, dict[str, object]] = {}
+    grouped: dict[str, dict[str, tuple[object, frozenset[str] | None]]] = {}
     canonical_by_id: dict[str, str] = {}
     for raw in data:
         if not isinstance(raw, dict):
@@ -604,6 +698,7 @@ def _parse_model_routes(payload: object) -> Mapping[str, ModelRoute]:
         model_id = raw.get("id")
         permaslug = raw.get("canonical_slug")
         context_length = raw.get("context_length")
+        input_modalities = _parse_input_modalities(raw)
         if (
             not isinstance(model_id, str)
             or not model_id
@@ -618,9 +713,10 @@ def _parse_model_routes(payload: object) -> Mapping[str, ModelRoute]:
             raise ModelCatalogUnavailable("model table maps one route to multiple models")
         canonical_by_id[model_id] = permaslug
         routes = grouped.setdefault(permaslug, {})
-        if model_id in routes and routes[model_id] != context_length:
+        route_value = (context_length, input_modalities)
+        if model_id in routes and routes[model_id] != route_value:
             raise ModelCatalogUnavailable("model table contains conflicting route rows")
-        routes[model_id] = context_length
+        routes[model_id] = route_value
 
     resolved: dict[str, ModelRoute] = {}
     for permaslug, by_id in grouped.items():
@@ -632,11 +728,12 @@ def _parse_model_routes(payload: object) -> Mapping[str, ModelRoute]:
             selected_id = next(iter(by_id))
         if selected_id is None:
             continue
-        context_length = by_id[selected_id]
+        context_length, input_modalities = by_id[selected_id]
         if type(context_length) is int and context_length > 0:
             resolved[permaslug] = ModelRoute(
                 model_id=selected_id,
                 context_tokens=context_length,
+                input_modalities=input_modalities,
             )
     if not resolved:
         raise ModelCatalogUnavailable("model table has no unambiguous positive-context routes")
@@ -653,6 +750,7 @@ def _parse_named_routes(payload: object) -> Mapping[str, ModelRoute]:
             continue
         model_id = raw.get("id")
         context_length = raw.get("context_length")
+        input_modalities = _parse_input_modalities(raw)
         if (
             not isinstance(model_id, str)
             or not model_id
@@ -662,13 +760,29 @@ def _parse_named_routes(payload: object) -> Mapping[str, ModelRoute]:
         ):
             continue
         previous = resolved.get(model_id)
-        route = ModelRoute(model_id=model_id, context_tokens=context_length)
+        route = ModelRoute(
+            model_id=model_id,
+            context_tokens=context_length,
+            input_modalities=input_modalities,
+        )
         if previous is not None and previous != route:
             raise ModelCatalogUnavailable("model table contains conflicting named routes")
         resolved[model_id] = route
     if not resolved:
         raise ModelCatalogUnavailable("model table has no positive-context named routes")
     return resolved
+
+
+def _parse_input_modalities(raw: Mapping[str, object]) -> frozenset[str] | None:
+    architecture = raw.get("architecture")
+    if not isinstance(architecture, dict):
+        return None
+    value = architecture.get("input_modalities")
+    if not isinstance(value, list) or any(
+        not isinstance(item, str) or not item or item != item.strip() for item in value
+    ):
+        return None
+    return frozenset(value)
 
 
 def _payload_data(payload: object, label: str) -> list[object]:

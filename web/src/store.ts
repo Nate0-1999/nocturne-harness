@@ -9,11 +9,13 @@ import {
   type DecodedServerEvent,
   type Envelope,
   type GateOpenPayload,
+  type ImageAttachmentView,
   type JsonValue,
   type MemoryPanelItem,
   type MemoryPanelOperation,
   type MemoryPanelServerPayload,
   type PromptQueuedPayload,
+  type PromptImage,
   type QueuedPrompt,
   type RunDeltaPayload,
   type RunDonePayload,
@@ -57,6 +59,15 @@ export interface HarnessError {
 export interface OutboundPrompt {
   prompt_id: Ulid
   prompt: string
+  image_input?: PromptImage
+  image_view?: ImageAttachmentView
+  image_preview_data_url?: string
+}
+
+export interface OutboundImage {
+  input: PromptImage
+  view: ImageAttachmentView
+  image_preview_data_url: string
 }
 
 export interface MemoryPanelPending {
@@ -100,7 +111,12 @@ export interface HarnessStoreState extends PersistedHarnessState {
   createThread: (projectKey?: string | null) => string
   removeFixtureThreads: () => number
   selectThread: (threadId: string) => void
-  beginPrompt: (threadId: string, promptId: Ulid, prompt: string) => void
+  beginPrompt: (
+    threadId: string,
+    promptId: Ulid,
+    prompt: string,
+    image?: OutboundImage,
+  ) => void
   markCancelling: (threadId: string, runId: Ulid) => void
   markSnapshotPending: (threadId: string) => void
   beginMemoryPanelRequest: (
@@ -209,7 +225,12 @@ function applyStarted(thread: ThreadState, payload: RunStartedPayload): ThreadSt
   const messages = thread.messages.map((message): ChatMessage => {
     if (message.role === 'user' && message.message_id === payload.prompt_id) {
       foundUser = true
-      return { ...message, run_id: payload.run_id, state: 'running' }
+      return {
+        ...message,
+        run_id: payload.run_id,
+        state: 'running',
+        image: payload.image ?? message.image,
+      }
     }
     if (message.role === 'assistant' && message.run_id === payload.run_id) {
       foundAssistant = true
@@ -223,6 +244,7 @@ function applyStarted(thread: ThreadState, payload: RunStartedPayload): ThreadSt
       role: 'user',
       content: outbound.prompt,
       state: 'running',
+      image: payload.image ?? outbound.image_view,
     }
     const assistantIndex = messages.findIndex(
       (message) => message.role === 'assistant' && message.run_id === payload.run_id,
@@ -274,7 +296,12 @@ function applyQueued(thread: ThreadState, payload: PromptQueuedPayload): ThreadS
     if (message.role === 'user' && message.message_id === payload.prompt_id) {
       foundUser = true
       prompt = message.content
-      return { ...message, run_id: payload.run_id, state: 'queued' }
+      return {
+        ...message,
+        run_id: payload.run_id,
+        state: 'queued',
+        image: payload.image ?? message.image,
+      }
     }
     return message
   })
@@ -285,6 +312,7 @@ function applyQueued(thread: ThreadState, payload: PromptQueuedPayload): ThreadS
       role: 'user',
       content: outbound.prompt,
       state: 'queued',
+      image: payload.image ?? outbound.image_view,
     })
   }
   const exists = thread.queuedPrompts.some(
@@ -306,6 +334,7 @@ function applyQueued(thread: ThreadState, payload: PromptQueuedPayload): ThreadS
               run_id: payload.run_id,
               prompt_id: payload.prompt_id,
               prompt,
+              image: payload.image ?? outbound?.image_view,
             },
           ],
   }
@@ -675,7 +704,7 @@ export const useHarnessStore = create<HarnessStoreState>()(
         }))
       },
 
-      beginPrompt: (threadId, promptId, prompt) => {
+      beginPrompt: (threadId, promptId, prompt, image) => {
         const title = normalizedThreadTitle(prompt)
         if (!title) {
           throw new TypeError('prompt must not be blank')
@@ -698,7 +727,17 @@ export const useHarnessStore = create<HarnessStoreState>()(
               ...thread.outboundPrompts.filter(
                 (outbound) => outbound.prompt_id !== promptId,
               ),
-              { prompt_id: promptId, prompt },
+              {
+                prompt_id: promptId,
+                prompt,
+                ...(image === undefined
+                  ? {}
+                  : {
+                      image_input: image.input,
+                      image_view: image.view,
+                      image_preview_data_url: image.image_preview_data_url,
+                    }),
+              },
             ],
             lastError: null,
             projectConflictAwaitingSnapshot: false,

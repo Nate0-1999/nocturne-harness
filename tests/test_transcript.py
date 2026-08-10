@@ -1,21 +1,31 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import os
 import stat
+import threading
 from collections.abc import Sequence
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-from pydantic_ai.messages import ModelRequest, ModelResponse, TextPart, UserPromptPart
+from pydantic_ai.messages import (
+    BinaryContent,
+    ModelRequest,
+    ModelResponse,
+    TextPart,
+    UserPromptPart,
+)
 
 import harness.transcript as transcript_module
 from harness.envelope import (
     Envelope,
     EnvelopeFactory,
+    ImageInput,
     MessageType,
     StopReason,
     ThreadSnapshotResponsePayload,
@@ -28,6 +38,14 @@ from harness.transcript import TranscriptJournal, TranscriptJournalUnavailable
 
 def ulid(number: int) -> str:
     return f"{number:026d}"
+
+
+def png_input(data: bytes = b"\x89PNG\r\n\x1a\nowner-image") -> ImageInput:
+    return ImageInput(
+        kind="image",
+        media_type="image/png",
+        data_base64=base64.b64encode(data).decode("ascii"),
+    )
 
 
 @dataclass
@@ -257,6 +275,156 @@ def test_journal_is_private_append_only_and_path_safe(tmp_path: Path) -> None:
     assert path.read_bytes().endswith(b"\n")
     assert stat.S_IMODE(root.stat().st_mode) == 0o700
     assert stat.S_IMODE(path.stat().st_mode) == 0o600
+
+
+def test_image_attachment_is_exact_once_while_every_message_revision_stays_compact(
+    tmp_path: Path,
+) -> None:
+    """A-052 is defended by storing exact image bytes in one immutable attachment row while
+    every user-state revision keeps only the compact view; this bounds journal amplification.
+    """
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    thread_id = "thread-image"
+    prompt_id = ulid(1)
+    image = png_input()
+
+    view = journal.append_image_attachment(thread_id, prompt_id, image)
+    assert journal.append_image_attachment(thread_id, prompt_id, image) == view
+    with pytest.raises(TranscriptJournalUnavailable, match="changes image attachment"):
+        journal.append_image_attachment(
+            thread_id,
+            prompt_id,
+            png_input(b"\x89PNG\r\n\x1a\ndifferent-image"),
+        )
+    compact = {
+        "message_id": prompt_id,
+        "run_id": ulid(2),
+        "role": "user",
+        "content": "Inspect this",
+        "state": "queued",
+        "image": view.model_dump(mode="json"),
+    }
+    journal.append_message(thread_id, compact, parent_id=None)
+    journal.append_message(
+        thread_id,
+        {**compact, "state": "end_turn", "model_visible": True},
+        parent_id=None,
+    )
+
+    rows = records(journal, thread_id)
+    attachment_rows = [row for row in rows if row["record_type"] == "attachment"]
+    message_rows = [row for row in rows if row["record_type"] == "message"]
+    assert len(attachment_rows) == 1
+    assert attachment_rows[0]["image"]["data_base64"] == image.data_base64  # type: ignore[index]
+    assert all("data_base64" not in json.dumps(row) for row in message_rows)
+    restored = journal.read_image_attachment(thread_id, prompt_id)
+    assert restored is not None
+    assert restored.data == image.decoded_bytes()
+    assert restored.view == view
+
+
+@pytest.mark.parametrize("conflicting", [False, True])
+def test_two_journals_atomically_keep_one_attachment_per_prompt(
+    tmp_path: Path,
+    conflicting: bool,
+) -> None:
+    """A-052 is defended by holding the file lock across attachment compare and append;
+    this prevents two daemon instances from duplicating or racing one prompt attachment.
+    """
+    first_locked = threading.Event()
+    release_first = threading.Event()
+    second_opened = threading.Event()
+
+    class PausingJournal(TranscriptJournal):
+        def _append_encoded_locked(self, descriptor: int, encoded: bytes) -> None:
+            first_locked.set()
+            if not release_first.wait(2):
+                raise TimeoutError("attachment race test did not release the first writer")
+            super()._append_encoded_locked(descriptor, encoded)
+
+    class ObservedJournal(TranscriptJournal):
+        def _open_append_descriptor(self, thread_id: str) -> int:
+            descriptor = super()._open_append_descriptor(thread_id)
+            second_opened.set()
+            return descriptor
+
+    root = tmp_path / "transcripts"
+    first = PausingJournal(root)
+    second = ObservedJournal(root)
+    thread_id = "thread-image-race"
+    prompt_id = ulid(1)
+    first_image = png_input(b"\x89PNG\r\n\x1a\nfirst")
+    second_image = png_input(b"\x89PNG\r\n\x1a\nsecond") if conflicting else first_image
+
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        first_result = workers.submit(
+            first.append_image_attachment,
+            thread_id,
+            prompt_id,
+            first_image,
+        )
+        assert first_locked.wait(2)
+        second_result = workers.submit(
+            second.append_image_attachment,
+            thread_id,
+            prompt_id,
+            second_image,
+        )
+        assert second_opened.wait(2)
+        assert not second_result.done()
+        release_first.set()
+        assert first_result.result(timeout=2) == first_image.view()
+        if conflicting:
+            with pytest.raises(TranscriptJournalUnavailable, match="changes image attachment"):
+                second_result.result(timeout=2)
+        else:
+            assert second_result.result(timeout=2) == first_image.view()
+
+    rows = records(first, thread_id)
+    attachment_rows = [row for row in rows if row["record_type"] == "attachment"]
+    assert len(attachment_rows) == 1
+    restored = TranscriptJournal(root).read_image_attachment(thread_id, prompt_id)
+    assert restored is not None
+    assert restored.data == first_image.decoded_bytes()
+
+
+@pytest.mark.parametrize("damage", ["missing", "digest"])
+def test_image_hydration_fails_closed_on_missing_or_digest_mismatched_attachment(
+    tmp_path: Path,
+    damage: str,
+) -> None:
+    """A-052 is defended by failing image hydration on missing bytes or a mismatched digest;
+    this prevents compact metadata from standing in for unverified provider history.
+    """
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    thread_id = "thread-image"
+    prompt_id = ulid(1)
+    image = png_input()
+    view = image.view()
+    if damage == "digest":
+        journal.append_image_attachment(thread_id, prompt_id, image)
+        rows = records(journal, thread_id)
+        rows[0]["image"]["sha256"] = "0" * 64  # type: ignore[index]
+        journal.path_for_thread(thread_id).write_text(
+            "".join(f"{json.dumps(row)}\n" for row in rows),
+            encoding="utf-8",
+        )
+    journal.append_message(
+        thread_id,
+        {
+            "message_id": prompt_id,
+            "run_id": ulid(2),
+            "role": "user",
+            "content": "Inspect this",
+            "state": "end_turn",
+            "model_visible": True,
+            "image": view.model_dump(mode="json"),
+        },
+        parent_id=None,
+    )
+
+    with pytest.raises(TranscriptJournalUnavailable, match="image|attachment"):
+        journal.hydrate_threads()
 
 
 def test_journal_refuses_a_git_worktree_root(tmp_path: Path) -> None:
@@ -538,6 +706,69 @@ async def test_project_context_only_thread_hydrates_before_its_first_prompt(tmp_
     assert snapshot.project_key == "build-test/api"
     assert restarted.project_key("thread-project") == "build-test/api"
     await restarted.close()
+
+
+@pytest.mark.asyncio
+async def test_successful_image_turn_rehydrates_binary_content_in_text_then_image_order(
+    tmp_path: Path,
+) -> None:
+    """A-052 is defended by rebuilding successful image provider history from journal bytes;
+    this preserves the exact text-then-BinaryContent turn across restart.
+    """
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    thread_id = "thread-image"
+    prompt_id = ulid(1)
+    run_id = ulid(2)
+    image = png_input()
+    view = journal.append_image_attachment(thread_id, prompt_id, image)
+    journal.append_message(
+        thread_id,
+        {
+            "message_id": prompt_id,
+            "run_id": run_id,
+            "role": "user",
+            "content": "What is shown?",
+            "state": "end_turn",
+            "model_visible": True,
+            "image": view.model_dump(mode="json"),
+        },
+        parent_id=None,
+    )
+    journal.append_message(
+        thread_id,
+        {
+            "message_id": run_id,
+            "run_id": run_id,
+            "role": "assistant",
+            "content": "A screenshot.",
+            "thinking": "",
+            "events": [],
+            "partial": False,
+        },
+        parent_id=prompt_id,
+    )
+    runner = RecordingRunner()
+    loop = RunLoop(runner, factory(Ids()), transcript_journal=TranscriptJournal(journal.root))
+    sink = Sink()
+
+    await loop.submit(
+        thread_id=thread_id,
+        prompt_id=ulid(3),
+        prompt="Continue",
+        sink=sink,
+    )
+    await wait_for_done(sink, 1)
+
+    request = runner.histories[0][0]
+    assert isinstance(request, ModelRequest)
+    part = request.parts[0]
+    assert isinstance(part, UserPromptPart)
+    assert isinstance(part.content, list)
+    assert part.content[0] == "What is shown?"
+    assert isinstance(part.content[1], BinaryContent)
+    assert part.content[1].data == image.decoded_bytes()
+    assert part.content[1].media_type == "image/png"
+    await loop.close()
 
 
 def test_journal_refuses_a_thread_that_changes_project_context(tmp_path: Path) -> None:

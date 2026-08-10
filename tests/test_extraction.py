@@ -1,3 +1,5 @@
+import base64
+import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import UUID, uuid4
@@ -5,6 +7,7 @@ from uuid import UUID, uuid4
 import pytest
 
 from harness.agent import ExtractionCandidateDraft, ExtractionDraft, ExtractionVerdictDraft
+from harness.envelope import ImageInput
 from harness.extraction import ExtractionIdleScheduler, ExtractionService
 from harness.spine_client import (
     ExtractionResponse,
@@ -152,6 +155,56 @@ async def test_archive_reads_durable_transcript_and_is_idempotent_per_tail(tmp_p
     assert len(spine.requests) == 1
     assert spine.requests[0].candidates[0].verdict == "new"
     assert journal.extracted_tail(str(thread_id)) == journal.transcript_tail(str(thread_id))
+
+
+@pytest.mark.asyncio
+async def test_archive_exposes_only_compact_image_metadata_to_extraction(tmp_path: Path) -> None:
+    """A-052 is defended by proving extraction sees the compact image view but never the
+    attachment bytes; this prevents durable image data from being copied into model prompts.
+    """
+    thread_id = uuid4()
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    prompt_id = "01K1M2A0000000000000000001"
+    image = ImageInput(
+        kind="image",
+        media_type="image/png",
+        data_base64=base64.b64encode(b"\x89PNG\r\n\x1a\nimage").decode("ascii"),
+    )
+    view = journal.append_image_attachment(str(thread_id), prompt_id, image)
+    journal.append_message(
+        str(thread_id),
+        {
+            "message_id": prompt_id,
+            "role": "user",
+            "content": "Inspect this.",
+            "image": view.model_dump(mode="json"),
+        },
+        parent_id=None,
+    )
+    journal.append_message(
+        str(thread_id),
+        {
+            "message_id": "01K1M2A0000000000000000002",
+            "role": "assistant",
+            "content": "I inspected it.",
+        },
+        parent_id=prompt_id,
+    )
+    agent = FakeAgent()
+    service = ExtractionService(
+        journal=journal,
+        agent=agent,
+        spine=FakeSpine(),
+        principal_id="owner",
+        machine_id="mac",
+    )
+
+    await service.archive(thread_id)
+
+    extracted_messages = json.loads(agent.calls[0])
+    assert extracted_messages[0]["image"] == view.model_dump(mode="json")
+    assert image.data_base64 not in agent.calls[0]
+    assert "data_base64" not in agent.calls[0]
 
 
 @pytest.mark.asyncio

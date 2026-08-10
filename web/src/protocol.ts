@@ -48,12 +48,32 @@ export type StopReason =
 
 export type UserMessageState = 'queued' | 'running' | StopReason
 
+export type ImageMediaType =
+  | 'image/png'
+  | 'image/jpeg'
+  | 'image/webp'
+  | 'image/gif'
+
+export type PromptImage = JsonObject & {
+  kind: 'image'
+  media_type: ImageMediaType
+  data_base64: string
+}
+
+export type ImageAttachmentView = JsonObject & {
+  kind: 'image'
+  media_type: ImageMediaType
+  byte_count: number
+  sha256: string
+}
+
 export interface UserTranscriptMessage {
   message_id: Ulid
   run_id: Ulid
   role: 'user'
   content: string
   state: UserMessageState
+  image?: ImageAttachmentView
 }
 
 export interface AssistantTranscriptMessage {
@@ -74,6 +94,8 @@ export interface OptimisticUserMessage {
   role: 'user'
   content: string
   state: 'submitting'
+  image?: ImageAttachmentView
+  image_preview_data_url?: string
 }
 
 export type ChatMessage = TranscriptMessage | OptimisticUserMessage
@@ -90,6 +112,7 @@ export interface QueuedPrompt {
   run_id: Ulid
   prompt_id: Ulid
   prompt: string
+  image?: ImageAttachmentView
 }
 
 export interface ActiveRunSnapshot {
@@ -260,11 +283,13 @@ export interface RunStartedPayload {
   run_id: Ulid
   prompt_id: Ulid
   resolved_model: string | null
+  image?: ImageAttachmentView
 }
 
 export interface PromptQueuedPayload {
   run_id: Ulid
   prompt_id: Ulid
+  image?: ImageAttachmentView
 }
 
 export type RunDeltaPayload =
@@ -314,7 +339,7 @@ export type DecodedServerEvent =
 
 export interface BrowserPayloadMap {
   'thread.snapshot': { request: true; project_key: string | null }
-  'prompt.submit': { prompt: string }
+  'prompt.submit': { prompt: string; image?: PromptImage }
   'run.cancel': { run_id: Ulid }
   'gate.commit': GateCommitPayload
   'memory.panel.update': MemoryPanelRequestPayload
@@ -486,6 +511,43 @@ function parseUsage(value: unknown): Usage | null {
   }
 }
 
+const IMAGE_MEDIA_TYPES: readonly ImageMediaType[] = [
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
+]
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+const SHA256_PATTERN = /^[0-9a-f]{64}$/u
+
+function parseImageAttachmentView(value: unknown): ImageAttachmentView | null {
+  if (
+    !isRecord(value) ||
+    value.kind !== 'image' ||
+    !IMAGE_MEDIA_TYPES.includes(value.media_type as ImageMediaType) ||
+    !Number.isInteger(value.byte_count) ||
+    (value.byte_count as number) < 1 ||
+    (value.byte_count as number) > MAX_IMAGE_BYTES ||
+    typeof value.sha256 !== 'string' ||
+    !SHA256_PATTERN.test(value.sha256)
+  ) {
+    return null
+  }
+  return {
+    kind: 'image',
+    media_type: value.media_type as ImageMediaType,
+    byte_count: value.byte_count as number,
+    sha256: value.sha256,
+  }
+}
+
+function optionalImageAttachmentView(
+  value: Record<string, unknown>,
+): ImageAttachmentView | null | undefined {
+  if (value.image === undefined || value.image === null) return undefined
+  return parseImageAttachmentView(value.image)
+}
+
 function parseQueuedPrompt(value: unknown): QueuedPrompt | null {
   if (
     !isRecord(value) ||
@@ -496,10 +558,13 @@ function parseQueuedPrompt(value: unknown): QueuedPrompt | null {
   ) {
     return null
   }
+  const image = optionalImageAttachmentView(value)
+  if (image === null) return null
   return {
     run_id: value.run_id,
     prompt_id: value.prompt_id,
     prompt: value.prompt,
+    ...(image === undefined ? {} : { image }),
   }
 }
 
@@ -857,12 +922,15 @@ function parseTranscriptMessage(value: unknown): TranscriptMessage | null {
     ) {
       return null
     }
+    const image = optionalImageAttachmentView(value)
+    if (image === null) return null
     return {
       message_id: value.message_id,
       run_id: value.run_id,
       role: 'user',
       content: value.content,
       state: value.state as UserMessageState,
+      ...(image === undefined ? {} : { image }),
     }
   }
   if (
@@ -925,7 +993,13 @@ function parsePromptQueued(value: unknown): PromptQueuedPayload | null {
   if (!isRecord(value) || !isUlid(value.run_id) || !isUlid(value.prompt_id)) {
     return null
   }
-  return { run_id: value.run_id, prompt_id: value.prompt_id }
+  const image = optionalImageAttachmentView(value)
+  if (image === null) return null
+  return {
+    run_id: value.run_id,
+    prompt_id: value.prompt_id,
+    ...(image === undefined ? {} : { image }),
+  }
 }
 
 function parseRunStarted(value: unknown): RunStartedPayload | null {

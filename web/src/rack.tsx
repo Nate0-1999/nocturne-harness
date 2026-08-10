@@ -39,6 +39,7 @@ import {
   type ConnectionStatus,
   type HarnessError,
   type MemoryPanelState,
+  type OutboundImage,
   type ThreadState,
 } from './store'
 
@@ -76,7 +77,7 @@ export type RackAction =
   | { type: 'thread.select'; thread_id: string }
   | { type: 'project.select'; project_key: string }
   | { type: 'catalog.cleanup-fixtures' }
-  | { type: 'prompt.submit'; prompt: string }
+  | { type: 'prompt.submit'; prompt: string; image?: OutboundImage }
   | { type: 'run.cancel'; run_id?: Ulid }
   | { type: 'thread.archive' }
   | { type: 'queue.load'; thread_id?: string; birthplace?: 'thread' | 'seed' }
@@ -395,7 +396,7 @@ function dispatchRackAction<Action extends RackAction>(
       case 'catalog.cleanup-fixtures':
         return useHarnessStore.getState().removeFixtureThreads() as RackActionResult<Action>
       case 'prompt.submit':
-        return harnessClient.submitPrompt(action.prompt) as RackActionResult<Action>
+        return harnessClient.submitPrompt(action.prompt, action.image) as RackActionResult<Action>
       case 'run.cancel':
         return harnessClient.cancelRun(action.run_id) as RackActionResult<Action>
       case 'thread.archive': {

@@ -17,12 +17,21 @@ from errno import ELOOP, ENOENT, ENOTDIR
 from pathlib import Path
 from typing import Any
 
-from harness.envelope import Envelope
+from harness.envelope import Envelope, ImageInput, ImageView
 from harness.project_path import validate_artificial_project_path
 
 
 class TranscriptJournalUnavailable(RuntimeError):
     """The mandatory conversation journal cannot safely accept history."""
+
+
+@dataclass(frozen=True, slots=True)
+class ImageAttachment:
+    """One validated immutable image attachment reconstructed from the journal."""
+
+    prompt_id: str
+    view: ImageView
+    data: bytes
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,6 +42,7 @@ class HydratedTranscript:
     messages: tuple[dict[str, Any], ...]
     resolved_model: str | None
     project_key: str | None
+    attachments: Mapping[str, ImageAttachment]
 
 
 class TranscriptJournal:
@@ -87,6 +97,70 @@ class TranscriptJournal:
                 },
             )
             self._next_parent_ids[thread_id] = tail_message_id
+
+    def append_image_attachment(
+        self,
+        thread_id: str,
+        prompt_id: str,
+        image: ImageInput,
+    ) -> ImageView:
+        """Append exact image bytes once before its compact prompt message. [A-052]"""
+
+        self._require_thread_id(thread_id)
+        self._require_prompt_id(prompt_id)
+        validated = ImageInput.model_validate(image.model_dump(mode="json"))
+        view = validated.view()
+        with self._lock:
+            descriptor = self._open_append_descriptor(thread_id)
+            locked = False
+            try:
+                # Uniqueness is a file invariant, not a process invariant. Keep
+                # one exclusive advisory lock across read, compare, and append.
+                fcntl.flock(descriptor, fcntl.LOCK_EX)
+                locked = True
+                transcript = self._hydrate_rows(
+                    self._filename_for_thread(thread_id),
+                    self._read_descriptor_rows(descriptor),
+                )
+                existing = None if transcript is None else transcript.attachments.get(prompt_id)
+                if existing is not None:
+                    if existing.view != view or existing.data != validated.decoded_bytes():
+                        raise TranscriptJournalUnavailable(
+                            f"Conversation journal for thread {thread_id} changes image "
+                            f"attachment {prompt_id}. Restore the journal from a verified backup "
+                            "before starting Nocturne."
+                        )
+                    return existing.view
+                encoded = self._encode_record(
+                    thread_id,
+                    {
+                        "version": 1,
+                        "record_type": "attachment",
+                        "prompt_id": prompt_id,
+                        "image": {
+                            **view.model_dump(mode="json"),
+                            "data_base64": validated.data_base64,
+                        },
+                    },
+                )
+                self._append_encoded_locked(descriptor, encoded)
+            finally:
+                if locked:
+                    fcntl.flock(descriptor, fcntl.LOCK_UN)
+                os.close(descriptor)
+        return view
+
+    def read_image_attachment(
+        self,
+        thread_id: str,
+        prompt_id: str,
+    ) -> ImageAttachment | None:
+        """Read one journal-backed image for the local authenticated owner surface."""
+
+        self._require_thread_id(thread_id)
+        self._require_prompt_id(prompt_id)
+        with self._lock:
+            return self._existing_attachments(thread_id).get(prompt_id)
 
     def append_event(self, thread_id: str, envelope: Envelope) -> None:
         """Append one daemon-authored C.7 event, whether or not a client is attached."""
@@ -263,6 +337,19 @@ class TranscriptJournal:
         return found
 
     def _append(self, thread_id: str, record: dict[str, object]) -> None:
+        encoded = self._encode_record(thread_id, record)
+        descriptor = self._open_append_descriptor(thread_id)
+        locked = False
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_EX)
+            locked = True
+            self._append_encoded_locked(descriptor, encoded)
+        finally:
+            if locked:
+                fcntl.flock(descriptor, fcntl.LOCK_UN)
+            os.close(descriptor)
+
+    def _encode_record(self, thread_id: str, record: dict[str, object]) -> bytes:
         captured_at = self._clock()
         if captured_at.tzinfo is None:
             raise ValueError("transcript clock must return an aware datetime")
@@ -271,7 +358,7 @@ class TranscriptJournal:
             "captured_at": captured_at.isoformat(),
             "thread_id": thread_id,
         }
-        encoded = (
+        return (
             json.dumps(
                 row,
                 ensure_ascii=False,
@@ -281,39 +368,32 @@ class TranscriptJournal:
             ).encode("utf-8")
             + b"\n"
         )
-        descriptor = self._open_append_descriptor(thread_id)
-        locked = False
-        try:
-            fcntl.flock(descriptor, fcntl.LOCK_EX)
-            locked = True
-            file_size = os.fstat(descriptor).st_size
-            if file_size and os.pread(descriptor, 1, file_size - 1) != b"\n":
-                try:
-                    self._write_all(descriptor, b"\n")
-                    os.fsync(descriptor)
-                    file_size += 1
-                except BaseException:
-                    os.ftruncate(descriptor, file_size)
-                    try:
-                        os.fsync(descriptor)
-                    except OSError:
-                        pass
-                    raise
-            record_start = file_size
+
+    def _append_encoded_locked(self, descriptor: int, encoded: bytes) -> None:
+        file_size = os.fstat(descriptor).st_size
+        if file_size and os.pread(descriptor, 1, file_size - 1) != b"\n":
             try:
-                self._write_all(descriptor, encoded)
+                self._write_all(descriptor, b"\n")
                 os.fsync(descriptor)
+                file_size += 1
             except BaseException:
-                os.ftruncate(descriptor, record_start)
+                os.ftruncate(descriptor, file_size)
                 try:
                     os.fsync(descriptor)
                 except OSError:
                     pass
                 raise
-        finally:
-            if locked:
-                fcntl.flock(descriptor, fcntl.LOCK_UN)
-            os.close(descriptor)
+        record_start = file_size
+        try:
+            self._write_all(descriptor, encoded)
+            os.fsync(descriptor)
+        except BaseException:
+            os.ftruncate(descriptor, record_start)
+            try:
+                os.fsync(descriptor)
+            except OSError:
+                pass
+            raise
 
     def _preflight(self) -> None:
         filename = f".journal-preflight-{uuid.uuid4().hex}"
@@ -361,9 +441,17 @@ class TranscriptJournal:
             ) from failure
 
     def _hydrate_file(self, filename: str) -> HydratedTranscript | None:
-        rows = self._read_file_rows(filename)
+        return self._hydrate_rows(filename, self._read_file_rows(filename))
+
+    def _hydrate_rows(
+        self,
+        filename: str,
+        rows: list[bytes],
+    ) -> HydratedTranscript | None:
         thread_id: str | None = None
         latest_messages: dict[str, dict[str, Any]] = {}
+        attachments: dict[str, ImageAttachment] = {}
+        message_image_rows: list[tuple[str, object, bool, object]] = []
         tail_message_id: str | None = None
         saw_tail = False
         saw_message_row = False
@@ -397,12 +485,30 @@ class TranscriptJournal:
                 parent_id = message.get("parentId")
                 if parent_id is not None and (not isinstance(parent_id, str) or not parent_id):
                     continue
+                message_image_rows.append(
+                    (
+                        message_id,
+                        message.get("role"),
+                        "image" in message,
+                        deepcopy(message.get("image")),
+                    )
+                )
                 latest_messages[message_id] = deepcopy(message)
                 if "tail_message_id" in row:
                     candidate_tail = row["tail_message_id"]
                     if candidate_tail is None or isinstance(candidate_tail, str) and candidate_tail:
                         tail_message_id = candidate_tail
                         saw_tail = True
+            elif row.get("record_type") == "attachment":
+                attachment = self._attachment_from_row(row, candidate)
+                if attachment.prompt_id in attachments:
+                    raise TranscriptJournalUnavailable(
+                        f"Conversation journal for thread {candidate} duplicates image attachment "
+                        f"{attachment.prompt_id}. Restore the journal from a verified backup "
+                        "before "
+                        "starting Nocturne."
+                    )
+                attachments[attachment.prompt_id] = attachment
             elif row.get("record_type") == "event":
                 event = row.get("event")
                 if isinstance(event, dict):
@@ -426,6 +532,34 @@ class TranscriptJournal:
                     )
                 project_key = canonical_project
 
+        # Validate every immutable message revision, not only the latest one.
+        # A later compact snapshot cannot repair an earlier attachment conflict.
+        for message_id, role, has_view, raw_view in message_image_rows:
+            attachment = attachments.get(message_id)
+            if not has_view and attachment is None:
+                continue
+            if not has_view:
+                raise TranscriptJournalUnavailable(
+                    f"Conversation journal for thread {thread_id or 'unknown'} drops image view "
+                    f"{message_id}. Restore the journal from a verified backup before starting "
+                    "Nocturne."
+                )
+            try:
+                view = ImageView.model_validate(raw_view)
+            except ValueError as exc:
+                raise TranscriptJournalUnavailable(
+                    f"Conversation journal for thread {thread_id or 'unknown'} has an invalid "
+                    "image "
+                    f"view for {message_id}. Restore the journal from a verified backup before "
+                    "starting Nocturne."
+                ) from exc
+            if role != "user" or attachment is None or attachment.view != view:
+                raise TranscriptJournalUnavailable(
+                    f"Conversation journal for thread {thread_id or 'unknown'} cannot match image "
+                    f"attachment {message_id} to its compact view. Restore the journal from a "
+                    "verified backup before starting Nocturne."
+                )
+
         if not rows:
             return None
         if thread_id is None:
@@ -434,8 +568,14 @@ class TranscriptJournal:
                 "Restore the journal from a verified backup before starting Nocturne."
             )
         if not latest_messages:
-            if project_key is not None and not saw_message_row:
-                return HydratedTranscript(thread_id, (), resolved_model, project_key)
+            if not saw_message_row and (project_key is not None or attachments):
+                return HydratedTranscript(
+                    thread_id,
+                    (),
+                    resolved_model,
+                    project_key,
+                    attachments,
+                )
             raise TranscriptJournalUnavailable(
                 "Conversation journal contains an unreadable transcript. "
                 "Restore the journal from a verified backup before starting Nocturne."
@@ -466,7 +606,74 @@ class TranscriptJournal:
             parent_id = message.get("parentId")
             cursor = parent_id if isinstance(parent_id, str) else None
         branch.reverse()
-        return HydratedTranscript(thread_id, tuple(branch), resolved_model, project_key)
+        return HydratedTranscript(
+            thread_id,
+            tuple(branch),
+            resolved_model,
+            project_key,
+            attachments,
+        )
+
+    def _existing_attachments(self, thread_id: str) -> Mapping[str, ImageAttachment]:
+        path = self.path_for_thread(thread_id)
+        if not path.exists():
+            return {}
+        transcript = self._hydrate_file(path.name)
+        if transcript is None:
+            return {}
+        if transcript.thread_id != thread_id:  # pragma: no cover - filename binding guards this
+            raise TranscriptJournalUnavailable("Conversation journal attachment thread mismatch")
+        return transcript.attachments
+
+    @staticmethod
+    def _attachment_from_row(row: Mapping[str, Any], thread_id: str) -> ImageAttachment:
+        prompt_id = row.get("prompt_id")
+        raw = row.get("image")
+        expected_keys = {
+            "kind",
+            "media_type",
+            "byte_count",
+            "sha256",
+            "data_base64",
+        }
+        if (
+            not isinstance(prompt_id, str)
+            or not prompt_id
+            or not isinstance(raw, dict)
+            or set(raw) != expected_keys
+        ):
+            raise TranscriptJournalUnavailable(
+                f"Conversation journal for thread {thread_id} has an invalid image attachment. "
+                "Restore the journal from a verified backup before starting Nocturne."
+            )
+        try:
+            image = ImageInput.model_validate(
+                {
+                    "kind": raw["kind"],
+                    "media_type": raw["media_type"],
+                    "data_base64": raw["data_base64"],
+                }
+            )
+            view = ImageView.model_validate(
+                {
+                    "kind": raw["kind"],
+                    "media_type": raw["media_type"],
+                    "byte_count": raw["byte_count"],
+                    "sha256": raw["sha256"],
+                }
+            )
+        except ValueError as exc:
+            raise TranscriptJournalUnavailable(
+                f"Conversation journal for thread {thread_id} has an invalid image attachment "
+                f"{prompt_id}. Restore the journal from a verified backup before starting Nocturne."
+            ) from exc
+        if image.view() != view:
+            raise TranscriptJournalUnavailable(
+                f"Conversation journal for thread {thread_id} has a digest-mismatched image "
+                f"attachment {prompt_id}. Restore the journal from a verified backup before "
+                "starting Nocturne."
+            )
+        return ImageAttachment(prompt_id=prompt_id, view=view, data=image.decoded_bytes())
 
     def _read_file_rows(self, filename: str) -> list[bytes]:
         root_descriptor = self._open_root_descriptor()
@@ -497,27 +704,34 @@ class TranscriptJournal:
                 )
             fcntl.flock(descriptor, fcntl.LOCK_SH)
             locked = True
-            chunks: list[bytes] = []
-            while chunk := os.read(descriptor, 64 * 1024):
-                chunks.append(chunk)
-            return b"".join(chunks).splitlines()
+            return self._read_descriptor_rows(descriptor)
         finally:
             if locked:
                 fcntl.flock(descriptor, fcntl.LOCK_UN)
             os.close(descriptor)
 
     def _open_append_descriptor(self, thread_id: str) -> int:
-        root_descriptor = self._open_root_descriptor()
         filename = self._filename_for_thread(thread_id)
         flags = os.O_APPEND | os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0)
-        try:
-            descriptor = os.open(filename, flags, 0o600, dir_fd=root_descriptor)
-        except OSError as exc:
-            if exc.errno == ELOOP:
-                raise ValueError("transcript path must be a regular file") from exc
-            raise
-        finally:
-            os.close(root_descriptor)
+        descriptor: int | None = None
+        for attempt in range(2):
+            root_descriptor = self._open_root_descriptor()
+            try:
+                descriptor = os.open(filename, flags, 0o600, dir_fd=root_descriptor)
+            except OSError as exc:
+                if exc.errno == ELOOP:
+                    raise ValueError("transcript path must be a regular file") from exc
+                # macOS can return ENOENT to one of two simultaneous
+                # O_NOFOLLOW|O_CREAT opens of the same missing leaf. Retrying
+                # through a fresh verified directory descriptor is safe.
+                if exc.errno != ENOENT or attempt:
+                    raise
+            finally:
+                os.close(root_descriptor)
+            if descriptor is not None:
+                break
+        if descriptor is None:  # pragma: no cover - the second open raises
+            raise OSError(ENOENT, "transcript path could not be created")
         file_stat = os.fstat(descriptor)
         if not stat.S_ISREG(file_stat.st_mode):
             os.close(descriptor)
@@ -528,6 +742,15 @@ class TranscriptJournal:
             os.close(descriptor)
             raise
         return descriptor
+
+    @staticmethod
+    def _read_descriptor_rows(descriptor: int) -> list[bytes]:
+        chunks: list[bytes] = []
+        offset = 0
+        while chunk := os.pread(descriptor, 64 * 1024, offset):
+            chunks.append(chunk)
+            offset += len(chunk)
+        return b"".join(chunks).splitlines()
 
     def _read_last_tail_id(self, thread_id: str) -> str | None:
         root_descriptor = self._open_root_descriptor()
@@ -679,3 +902,8 @@ class TranscriptJournal:
     def _require_thread_id(thread_id: str) -> None:
         if not isinstance(thread_id, str) or not thread_id.strip():
             raise ValueError("thread_id must not be blank")
+
+    @staticmethod
+    def _require_prompt_id(prompt_id: str) -> None:
+        if not isinstance(prompt_id, str) or not prompt_id.strip():
+            raise ValueError("prompt_id must not be blank")

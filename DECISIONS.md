@@ -1534,3 +1534,54 @@ and human promotion. Deleting the old fixture-title literal without migration
 recognition would strand the exact catalogs the cleanup affordance exists to
 repair, while continuing to render it would leave the customer-visible leak in
 place.
+
+## 054 — Journal one image once, then move compact references [P3, ADR-019, C.7, A-052]
+
+**Decision.** Accept exactly one bounded local image on an ordinary chat turn,
+as enacted by A-052, rather than introducing a generic upload abstraction. The
+daemon validates the bytes, writes them once as an immutable attachment record
+in the existing append-only conversation journal, and binds the user message to
+that record. Later message revisions, thread snapshots, queue views, and Rack
+broadcasts carry only the attachment identity, media type, byte count, and
+SHA-256 digest. The browser renders the attachment through a daemon-owned,
+same-origin URL backed by that journal record; the URL is a view over journal
+authority, never a second copy or store. The accepted turn sends those exact
+validated bytes; restart reopens the journal bytes to reconstruct the same
+image content part.
+
+Authorize that broker send only when the current thread's resolved OpenRouter
+catalog row positively lists `image` in its input modalities. A known
+non-image route or missing capability evidence completes as a normal durable
+assistant refusal with the model-switch remedy and no provider attempt. Images
+attached to `/model` or `/remember` also refuse normally: model switching must
+happen first, and image memory is outside this rung. Transcript extraction sees
+the attachment's compact metadata only, never its bytes or an inferred image
+description.
+
+**Motivation.** ADR-019's first multimodal rung exists so the owner can paste a
+screenshot and have the active agent review it. C.7 makes snapshots
+authoritative and the journal makes history mandatory, but copying base64 into
+every evolving message and Rack snapshot would turn one bounded owner action
+into repeated disk, memory, and WebSocket amplification. One immutable byte
+record preserves exactly what was sent across restart; compact digest-bearing
+references preserve visible identity and integrity everywhere the conversation
+is projected. Catalog-positive capability prevents a silent drop or a paid
+provider failure, while a durable local refusal leaves an honest transcript
+and a concrete recovery path. Keeping extraction metadata-only prevents input
+passthrough from accidentally becoming multimodal memory or a second paid
+vision pass.
+
+**Non-goals.** This decision does not create remote-URL ingestion, multiple
+attachments, arbitrary file uploads, an object store, image output, image
+memory or embeddings, OCR, transcoding, or multimodal extraction. It does not
+change model selection policy beyond retaining the catalog capability required
+by A-052.
+
+**Rejected alternatives.** Inline base64 in every snapshot would satisfy
+literal availability by repeatedly broadcasting and journaling the same large
+value. Keeping only a browser Blob would lose the image on restart and make the
+browser, not the mandatory journal, authoritative. Sending first and learning
+capability from provider success or failure would spend money, produce opaque
+errors, and make refusal nondeterministic. A generic uploader or external
+object store would add lifecycle, authorization, cleanup, and distribution
+problems that one local image-input rung does not have.

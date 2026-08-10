@@ -10,12 +10,17 @@ import {
   type GateCommitPayload,
   type MemoryPanelOperation,
   type MemoryPanelRequestPayload,
+  type PromptImage,
   type Ulid,
 } from './protocol'
 import { publishRackEnvelope } from './rackEvents'
 import { canonicalProjectPath, newestProjectThread } from './projectPath'
 import { snapshotBarrierRoute } from './snapshotBarrier'
-import { useHarnessStore, type HarnessStoreState } from './store'
+import {
+  useHarnessStore,
+  type HarnessStoreState,
+  type OutboundImage,
+} from './store'
 
 const INITIAL_RECONNECT_DELAY_MS = 250
 const MAX_RECONNECT_DELAY_MS = 4_000
@@ -126,7 +131,7 @@ export class HarnessSocketClient {
     ).id
   }
 
-  submitPrompt(prompt: string): Ulid {
+  submitPrompt(prompt: string, image?: OutboundImage): Ulid {
     if (!prompt.trim()) {
       throw new TypeError('prompt must not be blank')
     }
@@ -138,8 +143,11 @@ export class HarnessSocketClient {
     if (selectedRuntime(state)?.awaitingSnapshot) {
       throw new Error('wait for the authoritative thread snapshot before submitting')
     }
-    const envelope = this.send('prompt.submit', { prompt }, threadId)
-    useHarnessStore.getState().beginPrompt(threadId, envelope.id, prompt)
+    const payload: { prompt: string; image?: PromptImage } = image === undefined
+      ? { prompt }
+      : { prompt, image: image.input }
+    const envelope = this.send('prompt.submit', payload, threadId)
+    useHarnessStore.getState().beginPrompt(threadId, envelope.id, prompt, image)
     return envelope.id
   }
 

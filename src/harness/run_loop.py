@@ -9,9 +9,16 @@ from collections.abc import Awaitable, Callable, Mapping
 from copy import deepcopy
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Literal, cast
 
-from pydantic_ai.messages import ModelRequest, ModelResponse, TextPart, UserPromptPart
+from pydantic_ai.messages import (
+    BinaryContent,
+    ModelRequest,
+    ModelResponse,
+    TextPart,
+    UserContent,
+    UserPromptPart,
+)
 
 from harness.commands import model_command_text, remember_command_text
 from harness.envelope import (
@@ -21,6 +28,8 @@ from harness.envelope import (
     GateCommitPayload,
     GateDismissPayload,
     GateOpenPayload,
+    ImageInput,
+    ImageView,
     MessageType,
     PromptQueuedPayload,
     QueuedPromptSnapshot,
@@ -49,7 +58,7 @@ from harness.parameter_registry import (
     ParameterWriteViolation,
 )
 from harness.project_path import validate_artificial_project_path
-from harness.run_protocol import RunEmitter, TurnOutcome, TurnRunner, UsageSnapshot
+from harness.run_protocol import ImageTurnRunner, RunEmitter, TurnOutcome, TurnRunner, UsageSnapshot
 from harness.transcript import HydratedTranscript, TranscriptJournal
 
 type EnvelopeSink = Callable[[Envelope], Awaitable[None]]
@@ -66,6 +75,8 @@ class _Turn:
     prompt_id: str
     prompt: str
     user_message: dict[str, Any]
+    image: BinaryContent | None = None
+    image_view: ImageView | None = None
     model_target: str | None = None
     parent_id: str | None = None
 
@@ -467,6 +478,7 @@ class RunLoop:
         thread_id: str,
         prompt_id: str,
         prompt: str,
+        image: ImageInput | None = None,
         sink: EnvelopeSink | None = None,
     ) -> str:
         """Accept a prompt, starting it now or reserving one FIFO run ID."""
@@ -474,11 +486,21 @@ class RunLoop:
         self._require_thread_id(thread_id)
         if not prompt.strip():
             raise ValueError("prompt must not be blank")
+        if image is not None and not isinstance(image, ImageInput):
+            raise TypeError("image must be an ImageInput or None")
+        if image is not None and self._transcript_journal is None:
+            raise RuntimeError("image input requires the mandatory transcript journal")
 
         run_id = self._run_id_factory()
         # Validate both correlation IDs before mutating process state.
         RunStartedPayload(run_id=run_id, prompt_id=prompt_id)
         model_target = model_command_text(prompt)
+        image_view = image.view() if image is not None else None
+        binary_image = (
+            None
+            if image is None
+            else BinaryContent(data=image.decoded_bytes(), media_type=image.media_type)
+        )
         user_message: dict[str, Any] = {
             "message_id": prompt_id,
             "run_id": run_id,
@@ -486,17 +508,25 @@ class RunLoop:
             "content": prompt,
             "state": "queued",
         }
+        if image_view is not None:
+            user_message["image"] = image_view.model_dump(mode="json")
         turn = _Turn(
             run_id=run_id,
             prompt_id=prompt_id,
             prompt=prompt,
             user_message=user_message,
+            image=binary_image,
+            image_view=image_view,
             model_target=model_target,
         )
         async with self._lock:
             self._require_open()
             submission_lock = self._submission_locks.setdefault(thread_id, asyncio.Lock())
             if self._transcript_journal is not None:
+                if image is not None:
+                    stored_view = self._capture_image_attachment(thread_id, prompt_id, image)
+                    if stored_view != image_view:  # pragma: no cover - both derive exact bytes
+                        raise RuntimeError("journal image view differs from validated input")
                 turn.parent_id = self._captured_parent_id(thread_id)
                 self._capture_message(thread_id, user_message, parent_id=turn.parent_id)
                 self._pending_captured.setdefault(thread_id, deque()).append(turn)
@@ -529,7 +559,11 @@ class RunLoop:
                             thread_id,
                             self._factory.create(
                                 MessageType.PROMPT_QUEUED,
-                                PromptQueuedPayload(run_id=run_id, prompt_id=prompt_id),
+                                PromptQueuedPayload(
+                                    run_id=run_id,
+                                    prompt_id=prompt_id,
+                                    image=turn.image_view,
+                                ),
                                 thread_id=thread_id,
                             ),
                         )
@@ -718,6 +752,7 @@ class RunLoop:
                     run_id=turn.run_id,
                     prompt_id=turn.prompt_id,
                     resolved_model=state.resolved_model,
+                    image=turn.image_view,
                 ),
                 thread_id=thread_id,
             ),
@@ -754,7 +789,47 @@ class RunLoop:
         outcome: TurnOutcome | None = None
         stop_reason = StopReason.ERROR
         try:
-            if active.turn.model_target is not None:
+            if active.turn.image is not None:
+                if active.turn.model_target is not None:
+                    outcome = await self._refuse_image(
+                        thread_id,
+                        active,
+                        history,
+                        model_resolution,
+                        reason="model_command",
+                    )
+                elif remember_command_text(active.turn.prompt) is not None:
+                    outcome = await self._refuse_image(
+                        thread_id,
+                        active,
+                        history,
+                        model_resolution,
+                        reason="remember_command",
+                    )
+                else:
+                    checked, capability = await self._image_capability_for_run(
+                        thread_id,
+                        active,
+                        model_resolution,
+                    )
+                    if capability != "supported":
+                        outcome = await self._refuse_image(
+                            thread_id,
+                            active,
+                            history,
+                            checked,
+                            reason=capability,
+                        )
+                    else:
+                        outcome = await cast(ImageTurnRunner, self._runner).run(
+                            thread_id=thread_id,
+                            prompt=active.turn.prompt,
+                            image=active.turn.image,
+                            message_history=history,
+                            emit=_Emitter(self, thread_id, active),
+                            model_resolution=checked,
+                        )
+            elif active.turn.model_target is not None:
                 outcome = await self._resolve_model_command(
                     thread_id=thread_id,
                     active=active,
@@ -792,6 +867,111 @@ class RunLoop:
                 # its outcome alive until terminalization preserves history.
                 continue
 
+    async def _image_capability_for_run(
+        self,
+        thread_id: str,
+        active: _ActiveRun,
+        resolution: ThreadModelResolution | None,
+    ) -> tuple[ThreadModelResolution | None, Literal["supported", "unsupported", "unknown"]]:
+        """Resolve positive, model-exact OpenRouter image capability. [A-052]"""
+
+        if resolution is None or not resolution.uses_openrouter:
+            return resolution, "unknown"
+        checked = resolution
+        if checked.input_modalities is None:
+            resolver = self._model_resolver
+            resolve_image = (
+                None if resolver is None else getattr(resolver, "resolve_image_capability", None)
+            )
+            if resolve_image is None:
+                return checked, "unknown"
+            try:
+                candidate = await resolve_image(thread_id, checked)
+                if (
+                    not isinstance(candidate, ThreadModelResolution)
+                    or candidate.model != checked.model
+                    or candidate.stickiness_epoch != checked.stickiness_epoch
+                ):
+                    raise ValueError("image capability lookup changed model identity")
+                checked = candidate
+            except Exception as exc:
+                logger.warning(
+                    "image capability unknown thread=%s model=%s reason=%s",
+                    thread_id,
+                    checked.model,
+                    str(exc),
+                )
+                return resolution, "unknown"
+
+            async with self._lock:
+                state = self._live_state_locked(thread_id, active)
+                if (
+                    state is not None
+                    and state.model_resolution is not None
+                    and state.model_resolution.model == checked.model
+                    and state.model_resolution.stickiness_epoch == checked.stickiness_epoch
+                ):
+                    state.model_resolution = checked
+
+        if checked.input_modalities is None:
+            return checked, "unknown"
+        if "image" in checked.input_modalities:
+            return checked, "supported"
+        return checked, "unsupported"
+
+    async def _refuse_image(
+        self,
+        thread_id: str,
+        active: _ActiveRun,
+        history: tuple[object, ...],
+        resolution: ThreadModelResolution | None,
+        *,
+        reason: Literal["model_command", "remember_command", "unsupported", "unknown"],
+    ) -> TurnOutcome:
+        """Complete a durable, zero-usage refusal without entering any runner. [A-052]"""
+
+        model = resolution.model if resolution is not None else "the unresolved model"
+        if reason == "model_command":
+            message = (
+                "I did not change models or send the image. Send the `/model "
+                "openrouter:provider/model` command alone, then resend the image."
+            )
+        elif reason == "remember_command":
+            message = (
+                "I did not store or send the image because `/remember` does not accept image "
+                "memories yet. Send `/remember` with text alone, or resend the image as a normal "
+                "prompt."
+            )
+        elif reason == "unsupported":
+            message = (
+                f"{model} does not accept image input, so I did not send this image. Switch to an "
+                "image-capable OpenRouter model in Model or with `/model "
+                "openrouter:provider/model`, then resend it."
+            )
+        else:
+            message = (
+                f"I could not verify image input for {model}, so I did not send this image. Switch "
+                "to an image-capable OpenRouter model in Model or with `/model "
+                "openrouter:provider/model`, then resend it."
+            )
+
+        emitter = _Emitter(self, thread_id, active)
+        await emitter.event(
+            {
+                "event_kind": "image_refusal",
+                "reason": reason,
+                "model": model,
+            }
+        )
+        await emitter.text(message)
+        return TurnOutcome(
+            StopReason.END_TURN,
+            history,
+            UsageSnapshot(),
+            assistant_text=message,
+            model_visible=False,
+        )
+
     async def _finish(
         self,
         thread_id: str,
@@ -808,6 +988,8 @@ class RunLoop:
                 stop_reason = StopReason.CANCELLED
             if outcome is not None:
                 state.message_history = outcome.message_history
+                if active.turn.image is not None:
+                    active.turn.user_message["model_visible"] = outcome.model_visible
                 if not self._usage_monotonic(active.usage, outcome.usage):
                     if stop_reason is not StopReason.CANCELLED:
                         stop_reason = StopReason.ERROR
@@ -818,10 +1000,15 @@ class RunLoop:
                     stop_reason is StopReason.END_TURN
                     and active.turn.model_target is None
                     and remember_command_text(active.turn.prompt) is None
+                    and outcome.model_visible
                 ):
                     state.cached_prefix_tokens = outcome.cacheable_prefix_tokens
 
-            if stop_reason is StopReason.END_TURN and active.turn.model_target is not None:
+            if (
+                stop_reason is StopReason.END_TURN
+                and active.turn.model_target is not None
+                and active.turn.image is None
+            ):
                 await self._commit_model_command_locked(thread_id, state, active)
 
             partial = stop_reason is not StopReason.END_TURN
@@ -1391,6 +1578,7 @@ class RunLoop:
                         run_id=turn.run_id,
                         prompt_id=turn.prompt_id,
                         prompt=turn.prompt,
+                        image=turn.image_view,
                     )
                     for turn in state.queued
                 ],
@@ -1588,15 +1776,31 @@ class RunLoop:
                 or assistant.get("role") != "assistant"
                 or user.get("state") != StopReason.END_TURN.value
                 or assistant.get("partial") is not False
+                or user.get("model_visible") is False
                 or not isinstance(prompt, str)
                 or not isinstance(answer, str)
                 or model_command_text(prompt) is not None
                 or remember_command_text(prompt) is not None
             ):
                 continue
+            user_content: str | list[UserContent] = prompt
+            if "image" in user:
+                prompt_id = user.get("message_id")
+                if not isinstance(prompt_id, str):  # pragma: no cover - journal validation
+                    continue
+                attachment = transcript.attachments.get(prompt_id)
+                if attachment is None:  # pragma: no cover - journal validation
+                    continue
+                user_content = [
+                    prompt,
+                    BinaryContent(
+                        data=attachment.data,
+                        media_type=attachment.view.media_type,
+                    ),
+                ]
             history.extend(
                 (
-                    ModelRequest([UserPromptPart(prompt)]),
+                    ModelRequest([UserPromptPart(user_content)]),
                     ModelResponse([TextPart(answer)]),
                 )
             )
@@ -1654,6 +1858,20 @@ class RunLoop:
             except Exception as exc:
                 self._fail_capture(exc)
 
+    def _capture_image_attachment(
+        self,
+        thread_id: str,
+        prompt_id: str,
+        image: ImageInput,
+    ) -> ImageView:
+        assert self._transcript_journal is not None
+        if self._capture_failure is not None:
+            self._fail_capture(self._capture_failure)
+        try:
+            return self._transcript_journal.append_image_attachment(thread_id, prompt_id, image)
+        except Exception as exc:
+            self._fail_capture(exc)
+
     def _capture_event(self, thread_id: str, envelope: Envelope) -> None:
         if self._transcript_journal is not None:
             if self._capture_failure is not None:
@@ -1683,7 +1901,19 @@ class RunLoop:
         if self._model_resolver is None:
             return None
         if hydrated_model is not None:
-            return await self._model_resolver.resolve_named(thread_id, hydrated_model)
+            resolve_hydrated = getattr(self._model_resolver, "resolve_hydrated", None)
+            try:
+                if resolve_hydrated is not None:
+                    return await resolve_hydrated(thread_id, hydrated_model)
+                return await self._model_resolver.resolve_named(thread_id, hydrated_model)
+            except (ModelCatalogUnavailable, NamedModelResolutionError):
+                fallback = await self._model_resolver.resolve(thread_id)
+                return ThreadModelResolution(
+                    model=hydrated_model,
+                    context_tokens=fallback.context_tokens,
+                    policy="hydrated_unverified",
+                    request_parameters=fallback.request_parameters,
+                )
         return await self._model_resolver.resolve(thread_id)
 
     @staticmethod

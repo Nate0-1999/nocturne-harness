@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+import base64
+import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
@@ -9,11 +11,13 @@ from typing import Any
 from uuid import UUID
 
 import pytest
+from pydantic_ai.messages import BinaryContent
 
 from harness.envelope import (
     Envelope,
     EnvelopeFactory,
     GateCommitPayload,
+    ImageInput,
     MessageType,
     StopReason,
     ThreadSnapshotResponsePayload,
@@ -21,6 +25,7 @@ from harness.envelope import (
 )
 from harness.model_policy import (
     ModelCatalogUnavailable,
+    ModelPolicyResolver,
     NamedModelResolutionError,
     ThreadModelResolution,
 )
@@ -94,6 +99,14 @@ def wrong_unit(*, revision: int = 2) -> dict[str, object]:
 
 def ulid(number: int) -> str:
     return f"{number:026d}"
+
+
+def png_input(data: bytes = b"\x89PNG\r\n\x1a\nrun-loop-image") -> ImageInput:
+    return ImageInput(
+        kind="image",
+        media_type="image/png",
+        data_base64=base64.b64encode(data).decode("ascii"),
+    )
 
 
 @dataclass
@@ -196,6 +209,31 @@ class ImmediateHistoryRunner:
         )
 
 
+class ImageRecordingRunner:
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, BinaryContent, ThreadModelResolution | None]] = []
+
+    async def run(
+        self,
+        *,
+        thread_id: str,
+        prompt: str,
+        image: BinaryContent,
+        message_history: Sequence[object],
+        emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
+    ) -> TurnOutcome:
+        del thread_id
+        self.calls.append((prompt, image, model_resolution))
+        await emit.text("visual answer")
+        return TurnOutcome(
+            StopReason.END_TURN,
+            (*message_history, "image:complete"),
+            UsageSnapshot(requests=1, input_tokens=5, output_tokens=2),
+            assistant_text="visual answer",
+        )
+
+
 class RecordingResolver:
     def __init__(
         self,
@@ -217,6 +255,65 @@ class RecordingResolver:
         if isinstance(value, Exception):
             raise value
         return value
+
+
+class OutageCatalog:
+    def __init__(self) -> None:
+        self.named_calls: list[str] = []
+
+    async def load(self):
+        raise ModelCatalogUnavailable("catalog offline")
+
+    async def load_named_route(self, model_id: str):
+        self.named_calls.append(model_id)
+        raise ModelCatalogUnavailable("catalog offline")
+
+
+def seed_hydrated_model(
+    journal: TranscriptJournal,
+    *,
+    thread_id: str,
+    model: str,
+) -> None:
+    prompt_id = ulid(80)
+    run_id = ulid(81)
+    journal.append_message(
+        thread_id,
+        {
+            "message_id": prompt_id,
+            "run_id": run_id,
+            "role": "user",
+            "content": "Earlier turn",
+            "state": "end_turn",
+            "model_visible": True,
+        },
+        parent_id=None,
+    )
+    journal.append_message(
+        thread_id,
+        {
+            "message_id": run_id,
+            "run_id": run_id,
+            "role": "assistant",
+            "content": "Earlier answer",
+            "thinking": "",
+            "events": [],
+            "partial": False,
+        },
+        parent_id=prompt_id,
+    )
+    journal.append_event(
+        thread_id,
+        factory(Ids(value=900)).create(
+            MessageType.RUN_STARTED,
+            {
+                "run_id": run_id,
+                "prompt_id": prompt_id,
+                "resolved_model": model,
+            },
+            thread_id=thread_id,
+        ),
+    )
 
 
 class ResolutionRecordingRunner:
@@ -1803,6 +1900,318 @@ async def test_cancel_without_outer_thread_finds_run_after_selection_changes() -
     done = next(message for message in sink.messages if message.type is MessageType.RUN_DONE)
     assert done.thread_id == "thread-1"
     assert payload(done)["stop_reason"] is StopReason.CANCELLED
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_supported_image_reaches_only_image_runner_with_compact_public_views(
+    tmp_path: Path,
+) -> None:
+    """A-052 is defended by sending exact BinaryContent only after positive route capability;
+    this keeps full bytes out of messages, snapshots, queued payloads, and run events.
+    """
+    image = png_input()
+    resolution = ThreadModelResolution(
+        model="openrouter:vendor/vision",
+        context_tokens=100_000,
+        policy="pinned:openrouter:vendor/vision",
+        input_modalities=frozenset({"text", "image"}),
+    )
+    runner = ImageRecordingRunner()
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    loop = RunLoop(
+        runner,  # type: ignore[arg-type]
+        factory(Ids()),
+        model_resolver=RecordingResolver({"thread-1": resolution}),
+        transcript_journal=journal,
+    )
+    sink = Sink()
+
+    await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(1),
+        prompt="Inspect this screenshot",
+        image=image,
+        sink=sink,
+    )
+    await _wait_for_done_count(sink, 1)
+
+    assert len(runner.calls) == 1
+    prompt, binary, used_resolution = runner.calls[0]
+    assert prompt == "Inspect this screenshot"
+    assert binary.data == image.decoded_bytes()
+    assert binary.media_type == "image/png"
+    assert used_resolution == resolution
+    assert all(
+        "data_base64" not in json.dumps(item.model_dump(mode="json")) for item in sink.messages
+    )
+    rows = journal.path_for_thread("thread-1").read_text(encoding="utf-8").splitlines()
+    assert json.loads(rows[0])["record_type"] == "attachment"
+    assert sum("data_base64" in row for row in rows) == 1
+    await loop.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("prompt", "modalities", "reason"),
+    [
+        ("Inspect this", frozenset({"text"}), "unsupported"),
+        ("Inspect this", None, "unknown"),
+        ("/model openrouter:vendor/vision", frozenset({"text", "image"}), "model_command"),
+        ("/remember keep this", frozenset({"text", "image"}), "remember_command"),
+    ],
+)
+async def test_image_refusal_is_local_plain_zero_usage_and_never_calls_runner(
+    tmp_path: Path,
+    prompt: str,
+    modalities: frozenset[str] | None,
+    reason: str,
+) -> None:
+    """A-052 is defended by completing unsupported, unknown, and command images locally;
+    this prevents MemoryGate, Spine, provider history, or spend from seeing refused bytes.
+    """
+    resolution = ThreadModelResolution(
+        model="openrouter:vendor/text",
+        context_tokens=100_000,
+        policy="pinned:openrouter:vendor/text",
+        input_modalities=modalities,
+    )
+    journal = TranscriptJournal(tmp_path / reason / "transcripts")
+    resolver = RecordingResolver({"thread-1": resolution})
+    loop = RunLoop(
+        NeverStartsRunner(),
+        factory(Ids()),
+        model_resolver=resolver,
+        transcript_journal=journal,
+    )
+    sink = Sink()
+
+    await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(1),
+        prompt=prompt,
+        image=png_input(),
+        sink=sink,
+    )
+    await _wait_for_done_count(sink, 1)
+
+    event = next(
+        payload(message)["event"]
+        for message in sink.messages
+        if message.type is MessageType.RUN_DELTA and payload(message).get("kind") == "event"
+    )
+    assert isinstance(event, dict)
+    assert event == {
+        "event_kind": "image_refusal",
+        "reason": reason,
+        "model": "openrouter:vendor/text",
+    }
+    done = next(message for message in sink.messages if message.type is MessageType.RUN_DONE)
+    assert payload(done)["stop_reason"] is StopReason.END_TURN
+    usage = next(message for message in sink.messages if message.type is MessageType.RUN_USAGE)
+    usage_value = payload(usage)
+    assert usage_value["requests"] == 0
+    assert usage_value["input_tokens"] == 0
+    assert usage_value["output_tokens"] == 0
+    assert usage_value.get("cache_read_tokens", 0) == 0
+    assert usage_value.get("cache_write_tokens", 0) == 0
+    assert any(
+        message.type is MessageType.RUN_DELTA
+        and payload(message).get("kind") == "text"
+        and "resend" in str(payload(message).get("text"))
+        for message in sink.messages
+    )
+    if reason == "model_command":
+        text_deltas = [
+            message
+            for message in sink.messages
+            if message.type is MessageType.RUN_DELTA and payload(message).get("kind") == "text"
+        ]
+        assert len(text_deltas) == 1
+        assert "Model unchanged" not in str(payload(text_deltas[0]).get("text"))
+        assert resolver.named_calls == []
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_refused_image_pair_remains_visible_but_is_skipped_after_restart(
+    tmp_path: Path,
+) -> None:
+    """A-052 is defended by journaling a complete image refusal while excluding its pair from
+    rehydrated provider history; this prevents a refused image from being sent after restart.
+    """
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    resolution = ThreadModelResolution(
+        model="openrouter:vendor/text",
+        context_tokens=100_000,
+        policy="pinned:openrouter:vendor/text",
+        input_modalities=frozenset({"text"}),
+    )
+    first = RunLoop(
+        NeverStartsRunner(),
+        factory(Ids()),
+        model_resolver=RecordingResolver({"thread-1": resolution}),
+        transcript_journal=journal,
+    )
+    sink = Sink()
+    await first.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(1),
+        prompt="Inspect this",
+        image=png_input(),
+        sink=sink,
+    )
+    await _wait_for_done_count(sink, 1)
+    await first.close()
+
+    runner = ImmediateHistoryRunner()
+    restarted = RunLoop(
+        runner,
+        factory(Ids(value=500)),
+        transcript_journal=TranscriptJournal(journal.root),
+    )
+    restart_sink = Sink()
+    await restarted.request_snapshot("thread-1", restart_sink)
+    snapshot = restart_sink.messages[0].payload
+    assert isinstance(snapshot, ThreadSnapshotResponsePayload)
+    assert len(snapshot.messages) == 2
+    assert snapshot.messages[0]["model_visible"] is False
+    await restarted.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(3),
+        prompt="Continue",
+        sink=restart_sink,
+    )
+    await _wait_for_done_count(restart_sink, 1)
+    assert runner.calls == [("Continue", ())]
+    await restarted.close()
+
+
+@pytest.mark.asyncio
+async def test_restarted_image_catalog_outage_finishes_as_durable_unknown_refusal(
+    tmp_path: Path,
+) -> None:
+    """A-052 is defended by converting a hydrated-model catalog outage into one durable
+    unknown image refusal; this prevents a pre-run lookup from stranding a queued attachment.
+    """
+    thread_id = "thread-1"
+    hydrated_model = "openrouter:vendor/owner-choice"
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    seed_hydrated_model(journal, thread_id=thread_id, model=hydrated_model)
+    catalog = OutageCatalog()
+    resolver = ModelPolicyResolver(
+        policy="pinned:openrouter:vendor/default",
+        static_model="openrouter:vendor/default",
+        static_context_tokens=64_000,
+        catalog=catalog,  # type: ignore[arg-type]
+    )
+    loop = RunLoop(
+        NeverStartsRunner(),
+        factory(Ids(value=1_000)),
+        model_resolver=resolver,
+        transcript_journal=TranscriptJournal(journal.root),
+    )
+    sink = Sink()
+    prompt_id = ulid(82)
+
+    await loop.submit(
+        thread_id=thread_id,
+        prompt_id=prompt_id,
+        prompt="Inspect this",
+        image=png_input(),
+        sink=sink,
+    )
+    await _wait_for_done_count(sink, 1)
+
+    refusal = next(
+        payload(message)["event"]
+        for message in sink.messages
+        if message.type is MessageType.RUN_DELTA and payload(message).get("kind") == "event"
+    )
+    assert refusal == {
+        "event_kind": "image_refusal",
+        "reason": "unknown",
+        "model": hydrated_model,
+    }
+    usage = next(
+        payload(message) for message in sink.messages if message.type is MessageType.RUN_USAGE
+    )
+    assert usage["requests"] == 0
+    assert usage["input_tokens"] == 0
+    assert usage["output_tokens"] == 0
+    assert usage.get("cache_read_tokens", 0) == 0
+    assert usage.get("cache_write_tokens", 0) == 0
+    done = next(
+        payload(message) for message in sink.messages if message.type is MessageType.RUN_DONE
+    )
+    assert done["stop_reason"] is StopReason.END_TURN
+    assert done["partial"] is False
+    hydrated = TranscriptJournal(journal.root).hydrate_threads()[0]
+    durable_user, durable_assistant = hydrated.messages[-2:]
+    assert durable_user["message_id"] == prompt_id
+    assert durable_user["state"] == StopReason.END_TURN.value
+    assert durable_user["model_visible"] is False
+    assert durable_assistant["partial"] is False
+    assert durable_assistant["events"] == [refusal]
+    attachment_rows = [
+        row
+        for row in journal.path_for_thread(thread_id).read_text(encoding="utf-8").splitlines()
+        if json.loads(row).get("record_type") == "attachment"
+        and json.loads(row).get("prompt_id") == prompt_id
+    ]
+    assert len(attachment_rows) == 1
+    assert catalog.named_calls
+    assert set(catalog.named_calls) == {"vendor/owner-choice"}
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_restarted_text_catalog_outage_keeps_hydrated_model_and_runs(
+    tmp_path: Path,
+) -> None:
+    """A-052 and A-021 are defended by retaining the hydrated owner model during catalog
+    outage for text; this prevents image fail-closed behavior from breaking text fail-open.
+    """
+    thread_id = "thread-1"
+    hydrated_model = "openrouter:vendor/owner-choice"
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    seed_hydrated_model(journal, thread_id=thread_id, model=hydrated_model)
+    catalog = OutageCatalog()
+    resolver = ModelPolicyResolver(
+        policy="pinned:openrouter:vendor/default",
+        static_model="openrouter:vendor/default",
+        static_context_tokens=64_000,
+        catalog=catalog,  # type: ignore[arg-type]
+    )
+    runner = ResolutionRecordingRunner()
+    loop = RunLoop(
+        runner,
+        factory(Ids(value=1_100)),
+        model_resolver=resolver,
+        transcript_journal=TranscriptJournal(journal.root),
+    )
+    sink = Sink()
+
+    await loop.submit(
+        thread_id=thread_id,
+        prompt_id=ulid(82),
+        prompt="Continue with text",
+        sink=sink,
+    )
+    await _wait_for_done_count(sink, 1)
+
+    assert len(runner.resolutions) == 1
+    resolution = runner.resolutions[0]
+    assert resolution is not None
+    assert resolution.model == hydrated_model
+    assert resolution.context_tokens == 64_000
+    assert resolution.input_modalities is None
+    assert resolution.policy == "hydrated_unverified"
+    done = next(
+        payload(message) for message in sink.messages if message.type is MessageType.RUN_DONE
+    )
+    assert done["stop_reason"] is StopReason.END_TURN
+    assert catalog.named_calls == ["vendor/owner-choice"]
     await loop.close()
 
 

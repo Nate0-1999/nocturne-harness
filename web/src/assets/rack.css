@@ -1901,6 +1901,21 @@
   color: #c9dce4;
 }
 
+.message-image img,
+.image-tile,
+.composer-attachment {
+  border-color: var(--line-strong);
+  background:
+    linear-gradient(120deg, rgb(56 215 255 / 5%), transparent 62%),
+    var(--surface-deep);
+}
+
+.composer__attach:focus-visible,
+.composer-attachment__remove:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .message__content--markdown code {
   color: var(--accent-strong);
 }

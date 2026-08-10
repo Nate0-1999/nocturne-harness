@@ -1,3 +1,4 @@
+import base64
 from collections.abc import Iterator
 from datetime import UTC, datetime
 
@@ -11,6 +12,8 @@ from harness.envelope import (
     GateCommitPayload,
     GateDismissPayload,
     GateOpenPayload,
+    ImageInput,
+    ImageView,
     MemoryPanelConflictPayload,
     MemoryPanelEditPayload,
     MemoryPanelErrorPayload,
@@ -123,6 +126,14 @@ def valid_envelope() -> dict[str, object]:
     }
 
 
+def image_payload(data: bytes = b"\x89PNG\r\n\x1a\nimage") -> dict[str, object]:
+    return {
+        "kind": "image",
+        "media_type": "image/png",
+        "data_base64": base64.b64encode(data).decode("ascii"),
+    }
+
+
 def envelope_for(message_type: str, payload: object) -> Envelope:
     return Envelope.model_validate({**valid_envelope(), "type": message_type, "payload": payload})
 
@@ -138,6 +149,86 @@ def test_valid_c7_envelope_has_named_type_and_typed_payload() -> None:
     assert isinstance(envelope.payload, PromptSubmitPayload)
     assert envelope.payload.prompt == "hello"
     assert isinstance(envelope.ts, datetime)
+
+
+def test_prompt_submit_accepts_one_exact_image_and_derives_only_a_compact_view() -> None:
+    """A-052 is defended by verifying one strict image input derives compact server metadata;
+    this prevents client-supplied digest authority or full bytes leaking into run views.
+    """
+    raw = valid_envelope()
+    raw["payload"] = {"prompt": "What is shown?", "image": image_payload()}
+
+    envelope = Envelope.model_validate(raw)
+
+    assert isinstance(envelope.payload, PromptSubmitPayload)
+    assert isinstance(envelope.payload.image, ImageInput)
+    view = envelope.payload.image.view()
+    assert view == ImageView(
+        kind="image",
+        media_type="image/png",
+        byte_count=13,
+        sha256="3c7474b4239ada3342d87f25ec8849eb8473ee35c5471452482686098b49e81b",
+    )
+    assert "data_base64" not in view.model_dump(mode="json")
+
+
+@pytest.mark.parametrize(
+    ("media_type", "data"),
+    [
+        ("image/png", b"\x89PNG\r\n\x1a\nimage"),
+        ("image/jpeg", b"\xff\xd8\xffimage"),
+        ("image/webp", b"RIFF\x04\x00\x00\x00WEBPimage"),
+        ("image/gif", b"GIF89aimage"),
+    ],
+)
+def test_prompt_submit_accepts_each_exact_image_signature(media_type: str, data: bytes) -> None:
+    """A-052 is defended by accepting each and only each named raster signature; this keeps
+    browser-valid PNG, JPEG, WebP, and GIF inputs aligned with daemon validation.
+    """
+    raw = valid_envelope()
+    raw["payload"] = {
+        "prompt": "What is shown?",
+        "image": {
+            "kind": "image",
+            "media_type": media_type,
+            "data_base64": base64.b64encode(data).decode("ascii"),
+        },
+    }
+
+    envelope = Envelope.model_validate(raw)
+
+    assert isinstance(envelope.payload, PromptSubmitPayload)
+    assert envelope.payload.image is not None
+    assert envelope.payload.image.decoded_bytes() == data
+
+
+@pytest.mark.parametrize(
+    "image",
+    [
+        {**image_payload(), "data_base64": "iVBORw0KGgo"},
+        {**image_payload(), "data_base64": "aVZCT1J3MEtHZ29pbWFnZQ==\n"},
+        {**image_payload(), "media_type": "image/jpeg"},
+        {**image_payload(), "filename": "owner.png"},
+        {
+            "kind": "image",
+            "media_type": "image/png",
+            "data_base64": base64.b64encode(b"\x89PNG\r\n\x1a\n" + b"x" * (5 * 1024 * 1024)).decode(
+                "ascii"
+            ),
+        },
+    ],
+)
+def test_prompt_submit_rejects_noncanonical_mismatched_extra_or_oversize_image(
+    image: dict[str, object],
+) -> None:
+    """A-052 is defended by rejecting malformed, mismatched, extensible, and oversize images;
+    this prevents ambiguous bytes from crossing the multimodal broker boundary.
+    """
+    raw = valid_envelope()
+    raw["payload"] = {"prompt": "Inspect this", "image": image}
+
+    with pytest.raises(ValidationError):
+        Envelope.model_validate(raw)
 
 
 def test_message_types_cover_m1_and_reserved_names() -> None:

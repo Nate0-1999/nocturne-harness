@@ -20,9 +20,18 @@ import { InjectionConsole } from './InjectionConsole'
 import { ModelDevice } from './ModelDevice'
 import { VitalsModule } from './VitalsModule'
 import { ContextBars } from './ContextBars'
+import {
+  IMAGE_ACCEPT,
+  ImageInputError,
+  formatImageBytes,
+  prepareImage,
+  type PendingImage,
+} from './imageInput'
 import type {
   AssistantTranscriptMessage,
   ChatMessage,
+  ImageAttachmentView,
+  ImageMediaType,
   JsonValue,
   UserMessageState,
 } from './protocol'
@@ -917,10 +926,16 @@ function ChatModule() {
   const selectedThread = selectedThreadId === null ? null : snapshot.threads[selectedThreadId]
   const selectedMeta = snapshot.catalog.find((entry) => entry.thread_id === selectedThreadId)
   const [draft, setDraft] = useState('')
+  const [pendingImage, setPendingImage] = useState<PendingImage | null>(null)
+  const [imageStatus, setImageStatus] = useState('')
+  const [imageBusy, setImageBusy] = useState(false)
+  const [promptBusy, setPromptBusy] = useState(false)
   const [hasUnread, setHasUnread] = useState(false)
   const [archiveBusy, setArchiveBusy] = useState(false)
   const transcriptRef = useRef<HTMLDivElement>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const imageReadGeneration = useRef(0)
   const followOutputRef = useRef(true)
   const messages = useMemo(() => {
     if (selectedThread === null) {
@@ -935,6 +950,8 @@ function ChatModule() {
         role: 'user',
         content: outbound.prompt,
         state: 'submitting',
+        image: outbound.image_view,
+        image_preview_data_url: outbound.image_preview_data_url,
       }))
     return optimistic.length === 0
       ? selectedThread.messages
@@ -945,10 +962,12 @@ function ChatModule() {
   const queuedPrompts = selectedThread?.queuedPrompts ?? []
   const awaitingSnapshot = selectedThread?.awaitingSnapshot ?? true
   const projectSwitching = awaitingSnapshot && rackSelection?.kind === 'project'
+  const composerDisabled =
+    snapshot.connection !== 'connected' || awaitingSnapshot || openGate !== null
   const canSend =
-    snapshot.connection === 'connected' &&
-    !awaitingSnapshot &&
-    openGate === null &&
+    !composerDisabled &&
+    !imageBusy &&
+    !promptBusy &&
     draft.trim().length > 0
   const runStates = useMemo(() => {
     const states = new Map<string, UserMessageState>()
@@ -1007,12 +1026,82 @@ function ChatModule() {
     if (!canSend) {
       return
     }
-    void events
-      .dispatch({ type: 'prompt.submit', prompt: draft.trim() })
-      .catch(() => undefined)
-    setDraft('')
+    const prompt = draft.trim()
+    const image = pendingImage
+    setPromptBusy(true)
+    const action = image === null
+      ? { type: 'prompt.submit' as const, prompt }
+      : {
+          type: 'prompt.submit' as const,
+          prompt,
+          image: {
+            input: image.input,
+            view: image.view,
+            image_preview_data_url: image.data_url,
+          },
+        }
+    void events.dispatch(action)
+      .then(() => {
+        imageReadGeneration.current += 1
+        setDraft('')
+        setPendingImage(null)
+        setImageStatus('')
+        if (imageInputRef.current !== null) imageInputRef.current.value = ''
+      })
+      .catch(() => {
+        setImageStatus('The prompt was not sent. Check the link and try again.')
+      })
+      .finally(() => setPromptBusy(false))
     followOutputRef.current = true
     setHasUnread(false)
+  }
+
+  async function attachImageFiles(files: readonly File[]) {
+    if (files.length === 0) return
+    if (files.length !== 1) {
+      setImageStatus('Attach one image at a time.')
+      return
+    }
+    if (pendingImage !== null) {
+      setImageStatus('Remove the current image before attaching another.')
+      return
+    }
+    const generation = ++imageReadGeneration.current
+    setImageBusy(true)
+    setImageStatus('Preparing image…')
+    try {
+      const prepared = await prepareImage(files[0]!)
+      if (imageReadGeneration.current !== generation) {
+        return
+      }
+      setPendingImage(prepared)
+      setImageStatus(`${prepared.local_filename} attached.`)
+    } catch (error) {
+      if (imageReadGeneration.current === generation) {
+        setImageStatus(
+          error instanceof ImageInputError
+            ? error.message
+            : 'The image could not be read. Choose it again.',
+        )
+      }
+    } finally {
+      if (imageReadGeneration.current === generation) setImageBusy(false)
+    }
+  }
+
+  function onComposerPaste(event: ClipboardEvent<HTMLTextAreaElement>) {
+    const files = Array.from(event.clipboardData.files)
+    if (files.length === 0) return
+    event.preventDefault()
+    void attachImageFiles(files)
+  }
+
+  function removePendingImage() {
+    imageReadGeneration.current += 1
+    setImageBusy(false)
+    setPendingImage(null)
+    setImageStatus('Image removed.')
+    if (imageInputRef.current !== null) imageInputRef.current.value = ''
   }
 
   function submitPrompt(event: FormEvent<HTMLFormElement>) {
@@ -1140,6 +1229,7 @@ function ChatModule() {
                 <MessageRow
                   key={message.message_id}
                   message={message}
+                  threadId={selectedThreadId ?? ''}
                   queuePosition={
                     message.role === 'user'
                       ? queuedPrompts.findIndex(
@@ -1165,6 +1255,34 @@ function ChatModule() {
 
       <form className="composer" onSubmit={submitPrompt} aria-label="Prompt composer">
         <div className="composer__body">
+          {pendingImage !== null && (
+            <div className="composer-attachment" role="group" aria-label="Attached image">
+              <img
+                className={pendingImage.input.media_type === 'image/gif' ? 'image-thumbnail--gif' : undefined}
+                src={pendingImage.data_url}
+                alt=""
+              />
+              {pendingImage.input.media_type === 'image/gif' && (
+                <span className="image-tile image-tile--gif-reduced" aria-hidden="true">GIF</span>
+              )}
+              <span className="composer-attachment__meta">
+                <strong>{pendingImage.local_filename}</strong>
+                <small>
+                  {imageFormatLabel(pendingImage.input.media_type)} ·{' '}
+                  {formatImageBytes(pendingImage.view.byte_count)}
+                </small>
+              </span>
+              <button
+                className="composer-attachment__remove"
+                type="button"
+                aria-label={`Remove ${pendingImage.local_filename}`}
+                disabled={promptBusy}
+                onClick={removePendingImage}
+              >
+                Remove
+              </button>
+            </div>
+          )}
           <label className="visually-hidden" htmlFor="prompt-input">
             Message Nocturne
           </label>
@@ -1175,10 +1293,47 @@ function ChatModule() {
             value={draft}
             rows={1}
             placeholder={snapshot.connection === 'connected' ? 'Transmit to Nocturne' : 'Waiting for link'}
-            disabled={snapshot.connection !== 'connected' || awaitingSnapshot || openGate !== null}
+            disabled={composerDisabled || promptBusy}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={onComposerKeyDown}
+            onPaste={onComposerPaste}
           />
+          <div className="composer__utility">
+            <input
+              id="prompt-image-input"
+              ref={imageInputRef}
+              className="visually-hidden"
+              data-testid="image-input"
+              type="file"
+              accept={IMAGE_ACCEPT}
+              tabIndex={-1}
+              aria-hidden="true"
+              disabled={composerDisabled || imageBusy || promptBusy || pendingImage !== null}
+              onChange={(event) => {
+                const files = Array.from(event.currentTarget.files ?? [])
+                event.currentTarget.value = ''
+                void attachImageFiles(files)
+              }}
+            />
+            <button
+              className="composer__attach"
+              type="button"
+              data-testid="attach-image"
+              aria-describedby="composer-image-status"
+              disabled={composerDisabled || imageBusy || promptBusy || pendingImage !== null}
+              onClick={() => imageInputRef.current?.click()}
+            >
+              {imageBusy ? 'Preparing…' : 'Attach image'}
+            </button>
+            <p
+              id="composer-image-status"
+              className="composer__image-status"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {imageStatus}
+            </p>
+          </div>
           <p className="composer__hint">
             {openGate !== null
               ? 'Review memory before the model starts'
@@ -1744,6 +1899,7 @@ function GateModule() {
 
 interface MessageRowProps {
   message: ChatMessage
+  threadId: string
   queuePosition: number
   runState: UserMessageState | undefined
   activeRunId: string | undefined
@@ -1752,6 +1908,7 @@ interface MessageRowProps {
 
 function MessageRow({
   message,
+  threadId,
   queuePosition,
   runState,
   activeRunId,
@@ -1769,7 +1926,23 @@ function MessageRow({
           <span>You</span>
           {status !== null && <span>{status}</span>}
         </header>
-        <p className="message__content">{message.content}</p>
+        <div className="message__user-body">
+          <p className="message__content">{message.content}</p>
+          {message.image !== undefined && (
+            <UserImage
+              key={message.state}
+              threadId={threadId}
+              messageId={message.message_id}
+              image={message.image}
+              previewDataUrl={
+                'image_preview_data_url' in message
+                  ? message.image_preview_data_url
+                  : undefined
+              }
+              available={message.state !== 'submitting'}
+            />
+          )}
+        </div>
       </article>
     )
   }
@@ -1805,6 +1978,61 @@ function MessageRow({
       )}
     </article>
   )
+}
+
+function UserImage({
+  threadId,
+  messageId,
+  image,
+  previewDataUrl,
+  available,
+}: {
+  threadId: string
+  messageId: string
+  image: ImageAttachmentView
+  previewDataUrl?: string
+  available: boolean
+}) {
+  const [failed, setFailed] = useState(false)
+  const source = available
+    ? journalImageSource(threadId, messageId)
+    : previewDataUrl
+  const useStaticTile = source === undefined || failed
+  return (
+    <figure className="message-image" data-sha256={image.sha256}>
+      {useStaticTile ? (
+        <span className="image-tile image-tile--message" aria-hidden="true">
+          {imageFormatLabel(image.media_type)}
+        </span>
+      ) : (
+        <img
+          className={image.media_type === 'image/gif' ? 'image-thumbnail--gif' : undefined}
+          src={source}
+          alt=""
+          loading="lazy"
+          onError={() => setFailed(true)}
+        />
+      )}
+      {!useStaticTile && image.media_type === 'image/gif' && (
+        <span className="image-tile image-tile--message image-tile--gif-reduced" aria-hidden="true">
+          GIF
+        </span>
+      )}
+      <figcaption>
+        Attached {imageFormatLabel(image.media_type)} image ·{' '}
+        {formatImageBytes(image.byte_count)}
+      </figcaption>
+    </figure>
+  )
+}
+
+function imageFormatLabel(mediaType: ImageMediaType): string {
+  if (mediaType === 'image/jpeg') return 'JPEG'
+  return mediaType.slice('image/'.length).toUpperCase()
+}
+
+function journalImageSource(threadId: string, messageId: string): string {
+  return `/v1/threads/${encodeURIComponent(threadId)}/messages/${encodeURIComponent(messageId)}/image`
 }
 
 export default App

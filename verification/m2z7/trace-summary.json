@@ -1,0 +1,170 @@
+{
+  "packet": "M2Z7",
+  "law": [
+    "garden/AMENDMENTS.md A-052",
+    "garden/PLAN.md M2Z7",
+    "garden/SPEC.md B.6 rule 10",
+    "garden/SPEC.md D.2 081-082"
+  ],
+  "observed_at": "2026-08-10T22:15:00Z",
+  "catalog_sources": {
+    "models": "https://openrouter.ai/api/v1/models",
+    "image_input_docs": "https://openrouter.ai/docs/guides/overview/multimodal/image-understanding"
+  },
+  "checkouts": {
+    "harness_base": "9f88a11b1237520358ed0c15a9833536c6e98def",
+    "spine": "1a455878a9e607bcbd30d49e90ce2da8f2de1f39",
+    "garden_claim": "7cb4b0c0763a8669a6ff4f02817b191072cd6e6f"
+  },
+  "composition": {
+    "factory": "harness.daemon:create_dev_app",
+    "fixture_used": false,
+    "origin": "http://127.0.0.1:8799",
+    "principal_id": "m2z7-sop-verification",
+    "machine_id": "m2z7-sop-verification",
+    "agent_id": "m2z7-sop-verification",
+    "palace": "released remote Spine 0.1.1 schema 0011",
+    "run_request_limit": 2,
+    "run_total_tokens_limit": 25000
+  },
+  "witness": {
+    "source": "source-card.html",
+    "source_sha256": "1cc4b762bbbff72f989cfd1e52e509a1d8ab61cbb3c8e07f05d2cb27c07ec866",
+    "image": "visual-witness.jpg",
+    "media_type": "image/jpeg",
+    "pixel_width": 720,
+    "pixel_height": 440,
+    "byte_count": 27863,
+    "sha256": "265782aa57a57de3d5837495f2d8557cae0a671683ccc3b47d6e1f16e5540478",
+    "visible_facts": {
+      "signal_count": "47 amber moths",
+      "compass_bearing": "Northwest"
+    }
+  },
+  "positive": {
+    "entry": "composer-local clipboard paste",
+    "thread_id": "7141c069-8ee1-4421-95f6-1d5d9ba0db5e",
+    "prompt_id": "01KZPVMWR38KY278SEQMS83V1B",
+    "run_id": "01KZPVMWR595JE3FFVEWETYMJ5",
+    "resolved_model": "openrouter:google/gemini-2.5-flash-lite",
+    "catalog_image_input": true,
+    "context_tokens": 1048576,
+    "max_output_tokens": 64,
+    "prompt": "Read the attached screenshot. In one sentence, give the signal count and compass bearing. Do not call tools.",
+    "memory_gate": {
+      "opened": true,
+      "injection_id": "5fce4a0e-db2e-482e-9ab4-10896d3704f7",
+      "injected": 0,
+      "near_misses": 0
+    },
+    "answer": "The signal count is 47 amber moths and the compass bearing is Northwest.",
+    "usage": {
+      "requests": 1,
+      "input_tokens": 2134,
+      "output_tokens": 16
+    },
+    "spend_usd": "0.000219800000",
+    "spend_receipts": 2,
+    "stop_reason": "end_turn",
+    "partial": false,
+    "model_visible": true,
+    "restart": {
+      "prompt_rehydrated": true,
+      "image_view_rehydrated": true,
+      "answer_rehydrated": true,
+      "image_get_status": 200,
+      "image_get_content_type": "image/jpeg",
+      "image_get_cache_control": "private, immutable",
+      "image_get_etag": "265782aa57a57de3d5837495f2d8557cae0a671683ccc3b47d6e1f16e5540478",
+      "image_get_sha256": "265782aa57a57de3d5837495f2d8557cae0a671683ccc3b47d6e1f16e5540478"
+    }
+  },
+  "refusal": {
+    "entry": "composer-local clipboard paste",
+    "thread_id": "d5ba0fa7-1677-4858-9765-30e23769af26",
+    "prompt_id": "01KZPVT6141SB2YV5K9EDDHRAD",
+    "run_id": "01KZPVT615QY04FG0Z8NW3D4CE",
+    "resolved_model": "openrouter:deepseek/deepseek-v4-flash-0731",
+    "catalog_image_input": false,
+    "prompt": "Read this screenshot.",
+    "reason": "unsupported",
+    "copy": "openrouter:deepseek/deepseek-v4-flash-0731 does not accept image input, so I did not send this image. Switch to an image-capable OpenRouter model in Model or with /model openrouter:provider/model, then resend it.",
+    "event_kind": "image_refusal",
+    "usage": {
+      "requests": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    "memory_gate_opened": false,
+    "stop_reason": "end_turn",
+    "partial": false,
+    "model_visible": false,
+    "restart": {
+      "image_view_rehydrated": true,
+      "refusal_rehydrated": true,
+      "queued_orphan": false
+    }
+  },
+  "journal": {
+    "attachment_rows": 2,
+    "data_base64_rows": 2,
+    "data_base64_rows_are_attachment_rows_only": true,
+    "positive": {
+      "filename": "395f83c71fa2ebcb89d541d8df581950daf50a16dac8383e433aa6c2d4286c59.jsonl",
+      "mode": "0600",
+      "byte_count": 51696,
+      "sha256": "d76f225521298c1dc5e3c73cc65261ba2825c19e2768ab831a4b7dba6b45e0a7",
+      "attachment_rows_for_prompt": 1,
+      "attachment_base64_chars": 37152
+    },
+    "refusal": {
+      "filename": "4fe3300d20e5c7c52e60edfcdf5e221798e2282615e4763195bec6e130eafb49.jsonl",
+      "mode": "0600",
+      "byte_count": 48979,
+      "sha256": "afc94df9c1366ae279e231e346d13b88f147965e724e471de00b5c801bab2d80",
+      "attachment_rows_for_prompt": 1,
+      "attachment_base64_chars": 37152
+    }
+  },
+  "browser": {
+    "desktop": {
+      "width": 1280,
+      "height": 720
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "chat_client_width": 390,
+      "chat_scroll_width": 390,
+      "remove_button_width": 52.515625,
+      "remove_button_height": 44
+    },
+    "second_image_remedy": "Remove the current image before attaching another.",
+    "warnings_and_errors": []
+  },
+  "cleanup": {
+    "active_verification_memories_before_cleanup": 0,
+    "memory_tombstones_required": 0,
+    "exact_daemon_stopped": true,
+    "port_8799_listener_after_stop": false,
+    "browser_tabs_finalized": true,
+    "temporary_home_removed_after_journal_hashes": true,
+    "durable_remote_residue": [
+      "one verification-identity injection event for the accepted turn",
+      "two provider spend receipts totaling 0.000219800000 USD"
+    ],
+    "owner_identity_touched": false,
+    "cloud_or_deploy_mutation": false
+  },
+  "artifacts": [
+    "source-card.html",
+    "visual-witness.jpg",
+    "01-paste-preview.jpg",
+    "02-real-openrouter-answer.jpg",
+    "03-restart-hydrated.jpg",
+    "04-text-only-refusal.jpg",
+    "05-mobile-refusal.jpg",
+    "06-mobile-image-preview.jpg",
+    "07-positive-vitals.jpg"
+  ]
+}

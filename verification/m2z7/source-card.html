@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>M2Z7 visual witness</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        background: #03070d;
+        color: #d8f7ff;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        display: grid;
+        min-height: 100vh;
+        margin: 0;
+        place-items: center;
+        background:
+          radial-gradient(circle at 18% 14%, rgb(40 218 255 / 18%), transparent 28rem),
+          linear-gradient(135deg, #03070d, #091421);
+      }
+
+      main {
+        position: relative;
+        width: 720px;
+        min-height: 440px;
+        padding: 64px;
+        overflow: hidden;
+        border: 1px solid #2bd9ff;
+        background: rgb(4 13 22 / 94%);
+        box-shadow: 0 0 80px rgb(43 217 255 / 16%);
+        clip-path: polygon(0 0, 94% 0, 100% 10%, 100% 100%, 6% 100%, 0 90%);
+      }
+
+      main::after {
+        position: absolute;
+        right: -52px;
+        bottom: -60px;
+        width: 230px;
+        height: 230px;
+        border: 28px solid rgb(235 156 62 / 75%);
+        border-radius: 50%;
+        content: "";
+      }
+
+      .eyebrow {
+        margin: 0 0 14px;
+        color: #2bd9ff;
+        font-size: 18px;
+        letter-spacing: .22em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0 0 54px;
+        font-family: Impact, Haettenschweiler, sans-serif;
+        font-size: 64px;
+        font-weight: 900;
+        letter-spacing: .035em;
+        line-height: .95;
+        text-transform: uppercase;
+      }
+
+      dl {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin: 0;
+      }
+
+      dl > div {
+        padding: 22px;
+        border-left: 3px solid #eb9c3e;
+        background: rgb(255 255 255 / 4%);
+      }
+
+      dt {
+        color: #8ba7b5;
+        font-size: 15px;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+      }
+
+      dd {
+        margin: 9px 0 0;
+        color: #fff2df;
+        font-size: 29px;
+        font-weight: 800;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">Visual dispatch / 07</p>
+      <h1>Orbital Garden</h1>
+      <dl>
+        <div>
+          <dt>Signal count</dt>
+          <dd>47 amber moths</dd>
+        </div>
+        <div>
+          <dt>Compass bearing</dt>
+          <dd>Northwest</dd>
+        </div>
+      </dl>
+    </main>
+  </body>
+</html>

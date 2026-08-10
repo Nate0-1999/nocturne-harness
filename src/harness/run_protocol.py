@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from typing import Protocol
 from uuid import UUID
 
+from pydantic_ai.messages import BinaryContent
+
 from harness.envelope import GateCommitPayload, StopReason
 from harness.model_policy import ThreadModelResolution
 
@@ -42,6 +44,7 @@ class TurnOutcome:
     usage: UsageSnapshot = UsageSnapshot()
     cacheable_prefix_tokens: int = 0
     assistant_text: str | None = None
+    model_visible: bool = True
 
     def __post_init__(self) -> None:
         if not isinstance(self.stop_reason, StopReason):
@@ -56,6 +59,8 @@ class TurnOutcome:
             raise ValueError("cacheable_prefix_tokens must be non-negative")
         if self.assistant_text is not None and not isinstance(self.assistant_text, str):
             raise TypeError("assistant_text must be a string or None")
+        if not isinstance(self.model_visible, bool):
+            raise TypeError("model_visible must be a boolean")
 
 
 class RunEmitter(Protocol):
@@ -98,6 +103,38 @@ class SystemInstructionTurnRunner(Protocol):
         *,
         thread_id: str,
         prompt: str,
+        message_history: Sequence[object],
+        emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
+        system_instructions: str | None = None,
+        excluded_memory_ids: frozenset[UUID] = frozenset(),
+    ) -> TurnOutcome: ...
+
+
+class ImageTurnRunner(Protocol):
+    """Execute one image-bearing turn without changing the text-only seam. [A-052]"""
+
+    async def run(
+        self,
+        *,
+        thread_id: str,
+        prompt: str,
+        image: BinaryContent,
+        message_history: Sequence[object],
+        emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
+    ) -> TurnOutcome: ...
+
+
+class ImageSystemInstructionTurnRunner(Protocol):
+    """Image-bearing form of the model adapter used behind the memory gate. [A-052]"""
+
+    async def run(
+        self,
+        *,
+        thread_id: str,
+        prompt: str,
+        image: BinaryContent,
         message_history: Sequence[object],
         emit: RunEmitter,
         model_resolution: ThreadModelResolution | None = None,
