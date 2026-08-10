@@ -20,6 +20,7 @@ def main() -> None:
     assert len(roots) == 1
     root = roots.pop()
     required = {
+        f"{root}/CHANGELOG.md",
         f"{root}/PKG-INFO",
         f"{root}/README.md",
         f"{root}/pyproject.toml",

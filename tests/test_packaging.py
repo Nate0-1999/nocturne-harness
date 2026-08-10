@@ -13,21 +13,20 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_public_distribution_and_lockstep_dependency_metadata() -> None:
-    """ADR-019 is defended by verifying that public distribution and lockstep dependency
-    metadata; this prevents drift in the public package and bundled-owner-app contract.
-    """
+    """F031 and SPEC D.2 100 keep the public 0.1.1 package in Spine lockstep."""
     metadata = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     project = metadata["project"]
 
     assert project["name"] == "nocturne-ai"
     assert project["dynamic"] == ["version"]
-    assert __version__ == "0.1.0"
-    assert "nocturne-spine==0.1.0" in project["dependencies"]
+    assert __version__ == "0.1.1"
+    assert "nocturne-spine==0.1.1" in project["dependencies"]
     assert project["scripts"]["nocturne"] == "harness.cli:main"
     assert metadata["tool"]["hatch"]["build"]["targets"]["wheel"]["force-include"] == {
         "web/dist": "harness/_web"
     }
     assert metadata["tool"]["hatch"]["build"]["targets"]["sdist"]["include"] == [
+        "/CHANGELOG.md",
         "/README.md",
         "/pyproject.toml",
         "/src/harness",

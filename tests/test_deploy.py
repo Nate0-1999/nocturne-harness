@@ -1669,14 +1669,7 @@ def test_database_url_rejects_remote_port_extra_query_and_fragment(
         backend._remember_database_password(database_url)
 
 
-def test_packaged_source_materializes_separate_complete_trees(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """ADR-019 is defended by verifying that packaged source materializes separate complete
-    trees; this prevents drift in the fixed-project deploy and drift-safety contract.
-    """
-    from spine import deploy_resources
-
+def _deploy_resource_fixture(tmp_path: Path) -> tuple[Path, Path]:
     resources = tmp_path / "resources"
     breaker = resources / "billing-breaker"
     breaker.mkdir(parents=True)
@@ -1692,6 +1685,21 @@ def test_packaged_source_materializes_separate_complete_trees(
         "requirements.txt",
     ):
         (breaker / filename).write_text(f"fixture:{filename}\n", encoding="utf-8")
+    unshipped_doc = resources / "docs" / "release-notes.md"
+    unshipped_doc.parent.mkdir()
+    unshipped_doc.write_text("before\n", encoding="utf-8")
+    return resources, unshipped_doc
+
+
+def test_packaged_source_materializes_separate_complete_trees(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """ADR-019 is defended by verifying that packaged source materializes separate complete
+    trees; this prevents drift in the fixed-project deploy and drift-safety contract.
+    """
+    from spine import deploy_resources
+
+    resources, _ = _deploy_resource_fixture(tmp_path)
     monkeypatch.setattr(deploy_resources, "_packaged_deploy_resources", lambda: resources)
 
     with packaged_spine_source() as source:
@@ -1706,7 +1714,7 @@ def test_packaged_source_materializes_separate_complete_trees(
 
 
 def test_deploy_source_digest_tracks_paths_modes_and_bytes(tmp_path: Path) -> None:
-    """SPEC D.2 099 binds an immutable release tag to the exact packaged source tree."""
+    """F031 and SPEC D.2 099/100 bind a release to shipped paths, modes, and bytes."""
 
     source = tmp_path / "source"
     source.mkdir()
@@ -1722,6 +1730,27 @@ def test_deploy_source_digest_tracks_paths_modes_and_bytes(tmp_path: Path) -> No
     second.write_text("second\n", encoding="utf-8")
     second.chmod(0o755)
     assert deploy_source_digest(source) != baseline
+
+
+def test_deploy_source_digest_ignores_unshipped_docs_outside_materialized_app(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """F031 and SPEC D.2 099/100 scope release provenance to shipped Spine source."""
+
+    from spine import deploy_resources
+
+    resources, unshipped_doc = _deploy_resource_fixture(tmp_path)
+    monkeypatch.setattr(deploy_resources, "_packaged_deploy_resources", lambda: resources)
+
+    with packaged_spine_source() as source:
+        assert not (source.app / "docs").exists()
+        baseline = deploy_source_digest(source.app)
+
+        unshipped_doc.write_text("after\n", encoding="utf-8")
+
+        assert not unshipped_doc.is_relative_to(source.app)
+        assert deploy_source_digest(source.app) == baseline
 
 
 def test_packaged_breaker_uses_exact_argv_without_shell_or_confirmation_synthesis(

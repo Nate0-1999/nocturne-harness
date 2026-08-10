@@ -16,8 +16,8 @@ def main() -> None:
     """Prove metadata, command wiring, bundled assets, and clone-free serving."""
 
     package = distribution("nocturne-ai")
-    assert version("nocturne-ai") == version("nocturne-spine") == __version__ == "0.1.0"
-    assert "nocturne-spine==0.1.0" in (package.requires or [])
+    assert version("nocturne-ai") == version("nocturne-spine") == __version__ == "0.1.1"
+    assert "nocturne-spine==0.1.1" in (package.requires or [])
     assert any(
         entry.name == "nocturne" and entry.value == "harness.cli:main"
         for entry in package.entry_points
