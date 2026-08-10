@@ -1747,8 +1747,10 @@ def test_deploy_source_digest_ignores_unshipped_docs_outside_materialized_app(
         assert not (source.app / "docs").exists()
         baseline = deploy_source_digest(source.app)
 
-        unshipped_doc.write_text("after\n", encoding="utf-8")
+    unshipped_doc.write_text("after\n", encoding="utf-8")
 
+    with packaged_spine_source() as source:
+        assert not (source.app / "docs").exists()
         assert not unshipped_doc.is_relative_to(source.app)
         assert deploy_source_digest(source.app) == baseline
 

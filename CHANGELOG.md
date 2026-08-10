@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.1 - 2026-08-09
+## 0.1.1 - 2026-08-10
 
 - Hardened local and remote Palace startup, health checks, backups, and guarded owner deployment
   flows through the `nocturne` command.
