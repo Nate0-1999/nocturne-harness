@@ -105,7 +105,7 @@ def test_deploy_loads_initialized_key_and_forwards_dry_run(
 def test_seed_command_posts_each_markdown_file_to_the_running_owner_pipeline(
     tmp_path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """ADR-019 clause 4 and B.6 rule 12 require CLI seeds to retain queue consent."""
+    """PLAN M2CI/P4 and B.6 rule 12 keep seed order independent of host glob order."""
 
     first = tmp_path / "first.md"
     second = tmp_path / "second.markdown"
@@ -128,6 +128,11 @@ def test_seed_command_posts_each_markdown_file_to_the_running_owner_pipeline(
         requests.append(json.loads(request.data))
         return Response()
 
+    monkeypatch.setattr(
+        cli.glob,
+        "glob",
+        lambda *_args, **_kwargs: [str(second), str(first)],
+    )
     monkeypatch.setattr(cli.urllib.request, "urlopen", open_request)
     output = io.StringIO()
 

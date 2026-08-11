@@ -676,8 +676,10 @@ def test_missing_web_build_is_explicit(tmp_path: Path) -> None:
     )
 
 
-def test_dev_app_wires_the_owned_spine_into_the_public_rack_query(tmp_path: Path) -> None:
-    """A-044 keeps the public Vitals boundary enriched with owner-local resources."""
+def test_dev_app_wires_the_owned_spine_into_the_public_rack_query(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """PLAN M2CI/P4, A-044, and B.6 rule 12 keep Vitals host-independent."""
 
     async def stream(_messages, _info):
         yield "unused"
@@ -692,6 +694,9 @@ def test_dev_app_wires_the_owned_spine_into_the_public_rack_query(tmp_path: Path
         openai_api_key=None,
         openrouter_api_key=None,
     )
+    rss_bytes = 128 * 1024**2
+    monkeypatch.setenv("NOCTURNE_HOME", str(tmp_path))
+    monkeypatch.setattr("harness.resources.current_rss_bytes", lambda: rss_bytes)
     agent = HarnessAgent(settings, model=FunctionModel(stream_function=stream))
     spine = GateSpine()
     app = create_dev_app(
@@ -710,7 +715,7 @@ def test_dev_app_wires_the_owned_spine_into_the_public_rack_query(tmp_path: Path
     resources = response.json()["data"]["resources"]
     assert resources["status"] == "measured"
     assert resources["database_bytes"] == vitals_snapshot().resources.database_bytes
-    assert resources["daemon_rss_bytes"] > 0
+    assert resources["daemon_rss_bytes"] == rss_bytes
     assert resources["disk_free_bytes"] > 0
     assert spine.vitals_requests == 1
 

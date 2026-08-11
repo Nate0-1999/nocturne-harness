@@ -74,7 +74,7 @@ def seed_nocturne(paths: Sequence[str], *, stdout: TextIO = sys.stdout) -> int:
 
     matched: list[Path] = []
     for pattern in paths:
-        candidates = [Path(value) for value in glob.glob(pattern, recursive=True)]
+        candidates = sorted(Path(value) for value in glob.glob(pattern, recursive=True))
         if not candidates and Path(pattern).exists():
             candidates = [Path(pattern)]
         if not candidates:
