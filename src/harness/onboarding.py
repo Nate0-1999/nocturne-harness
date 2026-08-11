@@ -44,10 +44,18 @@ _CONFIG_FILE = "env"
 _CONFIG_VERSION = "4"
 _DEFAULT_BACKUP_GENERATIONS = 5
 _LOWER_ULID_PATTERN = re.compile(r"[0-7][0-9a-hjkmnp-tv-z]{25}\Z")
+_API_CONTRACT_SEMVER_PATTERN = re.compile(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\Z")
+API_CONTRACT_MIN_VERSION = "0.1.0"
+API_CONTRACT_MAX_VERSION = "0.2.0"
+API_CONTRACT_RANGE = f">={API_CONTRACT_MIN_VERSION},<{API_CONTRACT_MAX_VERSION}"
 
 
 class OnboardingError(RuntimeError):
     """A safe, user-actionable onboarding failure."""
+
+
+class _ApiContractVersionError(OnboardingError):
+    """A reachable Palace declared a malformed public API contract version."""
 
 
 @dataclass(frozen=True)
@@ -303,14 +311,13 @@ def _up_remote(
 ) -> int:
     """Start only the local daemon against an owner-operated remote Palace."""
 
-    remote_schema, expected_schema, relation = _remote_palace_status(config)
+    _, relation = _remote_palace_status(config)
     if relation == "newer":
-        raise OnboardingError(_app_older_refusal(remote_schema, expected_schema))
+        raise OnboardingError(_app_older_refusal())
     if relation == "older":
         answer = prompt(
-            f"Your Palace is running older software (schema {remote_schema or 'unknown'}; "
-            f"this app expects {expected_schema}). Update now? Updates back up first and take "
-            "a few minutes. [y/N] "
+            "Your Palace needs an update to work with this version of Nocturne. Update now? "
+            "Nocturne backs it up first; this takes a few minutes. [y/N] "
         ).strip()
         if answer.lower() in {"y", "yes"}:
             from harness.deploy import run_cloud_deploy
@@ -342,7 +349,7 @@ def _up_remote(
         _stop_processes((harness,))
 
 
-def _remote_schema_version(service_url: str, token: str) -> str | None:
+def _remote_api_contract_version(service_url: str, token: str) -> str | None:
     request = urllib.request.Request(
         f"{service_url.rstrip('/')}/health",
         headers={"Authorization": f"Bearer {token}"},
@@ -352,55 +359,59 @@ def _remote_schema_version(service_url: str, token: str) -> str | None:
             payload = json.loads(response.read())
     except (OSError, ValueError) as exc:
         raise OnboardingError(
-            "The remote Palace version could not be read; check its health and try again."
+            "The remote Palace API contract could not be read; check its health and try again."
         ) from exc
-    value = payload.get("schema_version") if isinstance(payload, Mapping) else None
-    return value if isinstance(value, str) and value else None
-
-
-def _expected_schema_version() -> str:
-    from alembic.script import ScriptDirectory
-    from spine.db.migrate import make_alembic_config
-
-    heads = ScriptDirectory.from_config(
-        make_alembic_config("postgresql+asyncpg://unused:unused@127.0.0.1/unused")
-    ).get_heads()
-    if len(heads) != 1:
+    if not isinstance(payload, Mapping):
         raise OnboardingError(
-            "The installed Palace schema is ambiguous; reinstall Nocturne and try again."
+            "The remote Palace API contract could not be read; check its health and try again."
         )
-    return heads[0]
+    if "api_contract_version" not in payload:
+        return None
+    value = payload["api_contract_version"]
+    if not isinstance(value, str):
+        raise _invalid_api_contract_version()
+    _api_contract_semver(value)
+    return value
 
 
-def _schema_relation(remote_schema: str | None, expected_schema: str) -> str:
-    """Classify remote schema direction without guessing from revision spelling."""
-
-    if remote_schema == expected_schema:
-        return "current"
-    from alembic.script import ScriptDirectory
-    from spine.db.migrate import make_alembic_config
-
-    script = ScriptDirectory.from_config(
-        make_alembic_config("postgresql+asyncpg://unused:unused@127.0.0.1/unused")
+def _invalid_api_contract_version() -> _ApiContractVersionError:
+    return _ApiContractVersionError(
+        "The remote Palace reported an invalid API contract version. Update the Palace "
+        "software, then run `nocturne doctor` again."
     )
-    packaged = {revision.revision for revision in script.walk_revisions()}
-    return "older" if remote_schema in packaged else "newer"
 
 
-def _remote_palace_status(config: NocturneConfig) -> tuple[str | None, str, str]:
-    """Probe the remote Palace and compare it to the installed migration graph."""
+def _api_contract_semver(value: str) -> tuple[int, int, int]:
+    match = _API_CONTRACT_SEMVER_PATTERN.fullmatch(value)
+    if match is None:
+        raise _invalid_api_contract_version()
+    return tuple(int(part) for part in match.groups())
+
+
+def _api_contract_relation(remote_contract: str | None) -> str:
+    """Classify one Palace against the pinned pre-1.0 same-minor range."""
+
+    if remote_contract is None:
+        return "older"
+    remote = _api_contract_semver(remote_contract)
+    minimum = _api_contract_semver(API_CONTRACT_MIN_VERSION)
+    maximum = _api_contract_semver(API_CONTRACT_MAX_VERSION)
+    if remote < minimum:
+        return "older"
+    return "compatible" if remote < maximum else "newer"
+
+
+def _remote_palace_status(config: NocturneConfig) -> tuple[str | None, str]:
+    """Probe the remote Palace and compare only its public API contract."""
 
     _wait_for_url(f"{config.spine_url}/health", token=config.spine_token)
-    remote_schema = _remote_schema_version(config.spine_url, config.spine_token)
-    expected_schema = _expected_schema_version()
-    return remote_schema, expected_schema, _schema_relation(remote_schema, expected_schema)
+    remote_contract = _remote_api_contract_version(config.spine_url, config.spine_token)
+    return remote_contract, _api_contract_relation(remote_contract)
 
 
-def _app_older_refusal(remote_schema: str | None, expected_schema: str) -> str:
-    remote = remote_schema or "unknown"
+def _app_older_refusal() -> str:
     return (
-        "this app is older than your Palace — update the app first. "
-        f"Palace schema {remote}; app expects {expected_schema}."
+        "This Nocturne app is older than your Palace. Upgrade Nocturne, then run nocturne up again."
     )
 
 
@@ -492,24 +503,29 @@ def _doctor_remote(
 
     storage = local_storage_snapshot(config.home)
     remote_healthy = True
-    schema_warning: str | None = None
-    schema_failure: str | None = None
-    remote_schema: str | None = None
-    expected_schema: str | None = None
+    contract_warning: str | None = None
+    contract_failure: str | None = None
+    remote_contract: str | None = None
+    contract_display = "not reported"
     try:
-        remote_schema, expected_schema, relation = _remote_palace_status(config)
+        remote_contract, relation = _remote_palace_status(config)
+        contract_display = remote_contract or "not reported"
         if relation == "older":
-            schema_warning = (
-                f"Remote Palace schema {remote_schema} is older than app schema "
-                f"{expected_schema}; run `nocturne up` and accept the offered update."
+            contract_warning = (
+                f"Remote Palace API contract {remote_contract or 'not reported'} is older than "
+                f"this app's supported range {API_CONTRACT_RANGE}; run `nocturne up` and "
+                "accept the offered update."
             )
         elif relation == "newer":
-            schema_failure = _app_older_refusal(remote_schema, expected_schema)
+            contract_failure = _app_older_refusal()
+    except _ApiContractVersionError as exc:
+        contract_display = "invalid"
+        contract_failure = str(exc)
     except OnboardingError:
         remote_healthy = False
     low_disk = storage.low_disk
-    failed = not remote_healthy or schema_failure is not None or bool(preflight.failures)
-    warned = low_disk or schema_warning is not None
+    failed = not remote_healthy or contract_failure is not None or bool(preflight.failures)
+    warned = low_disk or contract_warning is not None
     status = "failed" if failed else "warning" if warned else "healthy"
     print(f"Palace doctor: {status}", file=stdout)
     print(
@@ -524,18 +540,21 @@ def _doctor_remote(
     )
     _print_daemon_preflight(preflight, stdout=stdout)
     print("Local database and backup checks are skipped for a remote Palace.", file=stdout)
-    if remote_healthy and remote_schema is not None:
-        print(f"Palace schema: {remote_schema} (app expects {expected_schema})", file=stdout)
+    if remote_healthy:
+        print(
+            f"Palace API contract: {contract_display} (app supports {API_CONTRACT_RANGE})",
+            file=stdout,
+        )
     if not remote_healthy:
         print(
             "Problem: Remote Palace is unreachable; check its URL and access token, then run "
             "`nocturne doctor` again.",
             file=stdout,
         )
-    if schema_failure is not None:
-        print(f"Problem: {schema_failure}", file=stdout)
-    if schema_warning is not None:
-        print(f"Warning: {schema_warning}", file=stdout)
+    if contract_failure is not None:
+        print(f"Problem: {contract_failure}", file=stdout)
+    if contract_warning is not None:
+        print(f"Warning: {contract_warning}", file=stdout)
     if low_disk:
         print("Warning: Free disk space is below the early warning boundary.", file=stdout)
     return 2 if failed else 1 if warned else 0
