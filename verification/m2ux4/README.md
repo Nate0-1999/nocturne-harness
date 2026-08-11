@@ -39,8 +39,9 @@ screenshot. It is deterministic regression evidence, not the owner-app SOP.
 - `neo-noir-pre-seam.png` and `neo-noir-post-seam.png`: worn-skin pixel proof.
 - `seraph-analysis-1280x900.png` and `theme-analysis.json`: plate-family,
   rare-shine, and chrome-bimodality analysis.
-- `sop-owner-*.png`: the real owner-app walkthrough, kept separate from the
-  deterministic fixture.
+- `SOP.md`: the real owner-app interaction record, kept separate from the
+  deterministic fixture. No live-Palace screenshot is retained because the
+  owner's memory text is not regression-fixture material.
 
 The NEO comparison excludes only the newly reserved control rows and volatile
 fixture identifiers/uptime rows; every other compared pixel must match. The
