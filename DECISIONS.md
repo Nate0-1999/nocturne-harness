@@ -1710,3 +1710,38 @@ Header's active launcher the only toggle would hide the remedy behind a control
 whose meaning changes by view. Deleting or hiding archived rows would add a new
 retention policy that the owner did not ask for. A separate archive endpoint or
 queue would fork ADR-021's existing consent and extraction path.
+
+## 059 — One template governs every composable stage module [P2.5, ADR-023, M2UX3]
+
+**Decision.** Channel Stack, Active Channel, Memory Palace, Palace Vitals, and
+Context Bars are the complete set of modules simultaneously composed in the
+constrained stage grid. They all inherit one host frame: title-chrome pointer
+drag with iframe-safe capture, keyboard dock movement, manifest-bounded whole-
+grid-unit resizing, visible edge and corner handles with directional cursors,
+resize telemetry, and persisted order and geometry. A conformance assertion
+enumerates that set against the production manifests and refuses a missing
+module, a non-movable module, invalid bounds, or a frame family without both an
+edge and a corner affordance.
+
+The current grid retains its two layout bands: panels trade width with panels,
+and the two instrument strips trade width with each other while their shared
+boundary trades height with the panels. This makes Palace Vitals genuinely
+movable and two-axis resizable without inventing empty cells or freeform
+coordinates. Full-screen modules retain Decision 058's host-owned lifecycle,
+and the memory Gate retains its governing hard pause; neither is presented as a
+floating stage module. The Header remains the fixed host rail that owns those
+launch and layout controls. M3 still owns the zoomable infinite canvas where
+all module families can move through arbitrary stage coordinates.
+
+**Motivation.** The owner-observed failures—grabs dying at iframe boundaries,
+invisible single-axis resize, and fixed Vitals/Context Bars—came from separate
+handling paths, not from module internals. One host template fixes that seam
+once and gives later UI packets a stable boundary. Keeping docking inside the
+existing grid answers the M2 defect while preserving the explicit M3 horizon.
+
+**Rejected alternatives.** Merely marking the old strips draggable would leave
+two chrome systems and the iframe crossing failure intact. Treating collapse as
+resize would still provide no chosen grid geometry. Giving every overlay fake
+drag handles would imply movement that a full-screen lifecycle cannot honor.
+Adding free x/y positions, gaps, zoom, or cross-band floating now would smuggle
+the Infinite Stage into M2UX3 and make this repair much larger than its proof.

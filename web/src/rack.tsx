@@ -23,11 +23,13 @@ import {
 } from './rackEvents'
 import {
   RACK_BOUNDS,
+  STRIP_RACK_BOUNDS,
   VITALS_RACK_BOUNDS,
   loadRackLayout,
   persistRackLayout,
   type RackBounds,
 } from './rackLayout'
+import { assertRackModuleTemplate } from './rackModuleTemplate'
 import { runRackAction } from './rackAction'
 import {
   canonicalProjectPath,
@@ -262,15 +264,15 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     streams: [],
     actions: ['rack.scope.get', 'rack.scope.set'],
     bounds: VITALS_RACK_BOUNDS,
-    movable: false,
+    movable: true,
     law_bound: false,
     default_scope: 'GLOBAL',
   },
   context_bars: {
     id: 'context_bars', name: 'Context Bars', version: '1.0.0', class: 'visualizer',
     slot: 'strip', streams: ['run.done'], actions: ['rack.scope.get', 'rack.scope.set'],
-    bounds: { min: { w: 3, h: 1 }, preferred: { w: 3, h: 4 }, max: { w: 3, h: 4 } },
-    movable: false, law_bound: false, default_scope: 'CURRENT',
+    bounds: STRIP_RACK_BOUNDS.context_bars,
+    movable: true, law_bound: false, default_scope: 'CURRENT',
   },
   gate: {
     id: 'gate',
@@ -346,6 +348,8 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     ], bounds: commonPanelBounds, movable: false, law_bound: true, default_scope: 'GLOBAL',
   },
 }
+
+assertRackModuleTemplate(RACK_MANIFESTS)
 
 let lastStoreState = useHarnessStore.getState()
 let lastRackSnapshot = snapshotFromState(lastStoreState)

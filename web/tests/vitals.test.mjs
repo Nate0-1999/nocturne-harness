@@ -201,12 +201,12 @@ test('does not invent a trend line across empty or unpriced minute buckets', () 
 
 /** SPEC B.6 responsive law requires a collapsed rack to preserve rather than obscure the primary chat surface. */
 test('collapse reallocates rows instead of overlaying Chat', () => {
-  assert.deepEqual(rackBodyRowAllocation(false), {
+  assert.deepEqual(rackBodyRowAllocation(4), {
     panelRows: 7,
     vitalsRows: 4,
     vitalsStart: 9,
   })
-  assert.deepEqual(rackBodyRowAllocation(true), {
+  assert.deepEqual(rackBodyRowAllocation(1), {
     panelRows: 10,
     vitalsRows: 1,
     vitalsStart: 12,

@@ -7,6 +7,8 @@ export const RACK_LAYOUT_STORAGE_KEY = 'nocturne.rack.layout.v1'
 export const RACK_SAVED_SET_STORAGE_KEY = 'nocturne.rack.saved-set.v1'
 
 export type DockedModuleId = 'threads' | 'chat' | 'memory'
+export type StripModuleId = 'vitals' | 'context_bars'
+export type StageModuleId = DockedModuleId | StripModuleId
 export type RackScope = 'GLOBAL' | 'CURRENT'
 
 export interface RackSize {
@@ -26,9 +28,17 @@ export interface DockedModuleLayout {
   width: number
 }
 
+export interface StripModuleLayout {
+  module_id: StripModuleId
+  order: number
+  width: number
+}
+
 export interface RackLayoutSet {
   version: 1
   modules: DockedModuleLayout[]
+  strips: StripModuleLayout[]
+  strip_rows: number
   scopes: Record<string, RackScope>
 }
 
@@ -50,18 +60,31 @@ export const RACK_BOUNDS: Record<DockedModuleId, RackBounds> = {
   },
 }
 
-export const VITALS_RACK_BOUNDS: RackBounds = {
-  min: { w: RACK_COLUMNS, h: VITALS_COLLAPSED_ROWS },
-  preferred: { w: RACK_COLUMNS, h: VITALS_EXPANDED_ROWS },
-  max: { w: RACK_COLUMNS, h: VITALS_EXPANDED_ROWS },
+export const STRIP_RACK_BOUNDS: Record<StripModuleId, RackBounds> = {
+  vitals: {
+    min: { w: 6, h: VITALS_COLLAPSED_ROWS },
+    preferred: { w: 9, h: VITALS_EXPANDED_ROWS },
+    max: { w: 10, h: VITALS_EXPANDED_ROWS },
+  },
+  context_bars: {
+    min: { w: 2, h: VITALS_COLLAPSED_ROWS },
+    preferred: { w: 3, h: VITALS_EXPANDED_ROWS },
+    max: { w: 6, h: VITALS_EXPANDED_ROWS },
+  },
 }
 
-export function rackBodyRowAllocation(vitalsCollapsed: boolean): {
+export const VITALS_RACK_BOUNDS = STRIP_RACK_BOUNDS.vitals
+
+export function rackBodyRowAllocation(stripRows: number): {
   panelRows: number
   vitalsRows: number
   vitalsStart: number
 } {
-  const vitalsRows = vitalsCollapsed ? VITALS_COLLAPSED_ROWS : VITALS_EXPANDED_ROWS
+  const vitalsRows = clamp(
+    Math.round(stripRows),
+    VITALS_COLLAPSED_ROWS,
+    VITALS_EXPANDED_ROWS,
+  )
   const panelRows = RACK_BODY_ROWS - vitalsRows
   return {
     panelRows,
@@ -83,6 +106,11 @@ export const FACTORY_RACK_LAYOUT: RackLayoutSet = {
     { module_id: 'chat', order: 1, width: 8 },
     { module_id: 'memory', order: 2, width: 2 },
   ],
+  strips: [
+    { module_id: 'vitals', order: 0, width: 9 },
+    { module_id: 'context_bars', order: 1, width: 3 },
+  ],
+  strip_rows: VITALS_EXPANDED_ROWS,
 }
 
 export function loadRackLayout(storage: Storage): RackLayoutSet {
@@ -106,11 +134,17 @@ export function cloneFactoryLayout(): RackLayoutSet {
     version: 1,
     scopes: { ...FACTORY_RACK_LAYOUT.scopes },
     modules: FACTORY_RACK_LAYOUT.modules.map((module) => ({ ...module })),
+    strips: FACTORY_RACK_LAYOUT.strips.map((module) => ({ ...module })),
+    strip_rows: FACTORY_RACK_LAYOUT.strip_rows,
   }
 }
 
 export function orderedModules(layout: RackLayoutSet): DockedModuleLayout[] {
   return [...layout.modules].sort((left, right) => left.order - right.order)
+}
+
+export function orderedStrips(layout: RackLayoutSet): StripModuleLayout[] {
+  return [...layout.strips].sort((left, right) => left.order - right.order)
 }
 
 export function moduleGridColumn(
@@ -127,12 +161,45 @@ export function moduleGridColumn(
   throw new RangeError(`unknown rack module ${moduleId}`)
 }
 
+export function stripGridColumn(
+  layout: RackLayoutSet,
+  moduleId: StripModuleId,
+): { x: number; w: number } {
+  let x = 1
+  for (const module of orderedStrips(layout)) {
+    if (module.module_id === moduleId) {
+      return { x, w: module.width }
+    }
+    x += module.width
+  }
+  throw new RangeError(`unknown rack strip ${moduleId}`)
+}
+
 export function moveRackModule(
   layout: RackLayoutSet,
-  sourceId: DockedModuleId,
-  targetId: DockedModuleId,
+  sourceId: StageModuleId,
+  targetId: StageModuleId,
 ): RackLayoutSet {
   if (sourceId === targetId) {
+    return layout
+  }
+  if (isStripModuleId(sourceId) && isStripModuleId(targetId)) {
+    const strips = orderedStrips(layout)
+    const sourceIndex = strips.findIndex((module) => module.module_id === sourceId)
+    const targetIndex = strips.findIndex((module) => module.module_id === targetId)
+    if (sourceIndex < 0 || targetIndex < 0) {
+      return layout
+    }
+    const [source] = strips.splice(sourceIndex, 1)
+    strips.splice(targetIndex, 0, source)
+    return {
+      ...layout,
+      scopes: { ...layout.scopes },
+      modules: layout.modules.map((module) => ({ ...module })),
+      strips: strips.map((module, order) => ({ ...module, order })),
+    }
+  }
+  if (!isDockedModuleId(sourceId) || !isDockedModuleId(targetId)) {
     return layout
   }
   const modules = orderedModules(layout)
@@ -144,8 +211,9 @@ export function moveRackModule(
   const [source] = modules.splice(sourceIndex, 1)
   modules.splice(targetIndex, 0, source)
   return {
-    version: 1,
+    ...layout,
     scopes: { ...layout.scopes },
+    strips: layout.strips.map((module) => ({ ...module })),
     modules: modules.map((module, order) => ({ ...module, order })),
   }
 }
@@ -154,6 +222,7 @@ export function resizeRackModule(
   layout: RackLayoutSet,
   moduleId: DockedModuleId,
   requestedWidth: number,
+  resizeEdge: 'left' | 'right' = 'right',
 ): RackLayoutSet {
   const modules = orderedModules(layout)
   const index = modules.findIndex((module) => module.module_id === moduleId)
@@ -161,7 +230,12 @@ export function resizeRackModule(
     return layout
   }
   const module = modules[index]
-  const neighborIndex = index < modules.length - 1 ? index + 1 : index - 1
+  const requestedNeighborIndex = resizeEdge === 'left' ? index - 1 : index + 1
+  const neighborIndex = requestedNeighborIndex >= 0 && requestedNeighborIndex < modules.length
+    ? requestedNeighborIndex
+    : resizeEdge === 'left'
+      ? index + 1
+      : index - 1
   const neighbor = modules[neighborIndex]
   const bounds = RACK_BOUNDS[moduleId]
   const neighborBounds = RACK_BOUNDS[neighbor.module_id]
@@ -179,17 +253,83 @@ export function resizeRackModule(
   modules[index] = { ...module, width: module.width + actualDelta }
   modules[neighborIndex] = { ...neighbor, width: neighborWidth }
   return {
-    version: 1,
+    ...layout,
     scopes: { ...layout.scopes },
+    strips: layout.strips.map((item) => ({ ...item })),
     modules: modules.map((item, order) => ({ ...item, order })),
   }
+}
+
+export function resizeRackStrip(
+  layout: RackLayoutSet,
+  moduleId: StripModuleId,
+  requestedWidth: number,
+): RackLayoutSet {
+  const strips = orderedStrips(layout)
+  const index = strips.findIndex((module) => module.module_id === moduleId)
+  if (index < 0) {
+    return layout
+  }
+  const module = strips[index]
+  const neighborIndex = index === 0 ? 1 : 0
+  const neighbor = strips[neighborIndex]
+  const bounds = STRIP_RACK_BOUNDS[moduleId]
+  const neighborBounds = STRIP_RACK_BOUNDS[neighbor.module_id]
+  const boundedRequest = clamp(Math.round(requestedWidth), bounds.min.w, bounds.max.w)
+  const requestedDelta = boundedRequest - module.width
+  const neighborWidth = clamp(
+    neighbor.width - requestedDelta,
+    neighborBounds.min.w,
+    neighborBounds.max.w,
+  )
+  const actualDelta = neighbor.width - neighborWidth
+  if (actualDelta === 0) {
+    return layout
+  }
+  strips[index] = { ...module, width: module.width + actualDelta }
+  strips[neighborIndex] = { ...neighbor, width: neighborWidth }
+  return {
+    ...layout,
+    scopes: { ...layout.scopes },
+    modules: layout.modules.map((item) => ({ ...item })),
+    strips: strips.map((item, order) => ({ ...item, order })),
+  }
+}
+
+export function resizeRackModuleHeight(
+  layout: RackLayoutSet,
+  moduleId: StageModuleId,
+  requestedHeight: number,
+): RackLayoutSet {
+  const requestedStripRows = isStripModuleId(moduleId)
+    ? requestedHeight
+    : RACK_BODY_ROWS - requestedHeight
+  const stripRows = clamp(
+    Math.round(requestedStripRows),
+    VITALS_COLLAPSED_ROWS,
+    VITALS_EXPANDED_ROWS,
+  )
+  return stripRows === layout.strip_rows
+    ? layout
+    : {
+        ...layout,
+        modules: layout.modules.map((item) => ({ ...item })),
+        strips: layout.strips.map((item) => ({ ...item })),
+        scopes: { ...layout.scopes },
+        strip_rows: stripRows,
+      }
 }
 
 export function rackLayoutsEqual(left: RackLayoutSet, right: RackLayoutSet): boolean {
   const leftModules = orderedModules(left)
   const rightModules = orderedModules(right)
-  return leftModules.every((module, index) => {
+  const leftStrips = orderedStrips(left)
+  const rightStrips = orderedStrips(right)
+  return left.strip_rows === right.strip_rows && leftModules.every((module, index) => {
     const other = rightModules[index]
+    return module.module_id === other?.module_id && module.width === other.width
+  }) && leftStrips.every((module, index) => {
+    const other = rightStrips[index]
     return module.module_id === other?.module_id && module.width === other.width
   }) && Object.keys(FACTORY_RACK_LAYOUT.scopes).every(
     (key) => left.scopes[key] === right.scopes[key],
@@ -239,14 +379,77 @@ function parseRackLayout(raw: string | null): RackLayoutSet | null {
   ) {
     return null
   }
+  const strips = parseStrips(value.strips)
+  if (strips === null) {
+    return null
+  }
+  const stripRows = value.strip_rows === undefined
+    ? FACTORY_RACK_LAYOUT.strip_rows
+    : value.strip_rows
+  if (
+    typeof stripRows !== 'number' ||
+    !Number.isInteger(stripRows) ||
+    stripRows < VITALS_COLLAPSED_ROWS ||
+    stripRows > VITALS_EXPANDED_ROWS
+  ) {
+    return null
+  }
   return {
     version: 1,
     scopes: parseScopes(value.scopes),
-    modules: orderedModules({ version: 1, modules, scopes: {} }).map((module, order) => ({
+    modules: orderedModules({
+      ...FACTORY_RACK_LAYOUT,
+      modules,
+      scopes: {},
+    }).map((module, order) => ({
       ...module,
       order,
     })),
+    strips,
+    strip_rows: stripRows,
   }
+}
+
+function parseStrips(value: unknown): StripModuleLayout[] | null {
+  if (value === undefined) {
+    return FACTORY_RACK_LAYOUT.strips.map((module) => ({ ...module }))
+  }
+  if (!Array.isArray(value)) {
+    return null
+  }
+  const strips: StripModuleLayout[] = []
+  for (const item of value) {
+    if (
+      !isRecord(item) ||
+      !isStripModuleId(item.module_id) ||
+      typeof item.order !== 'number' ||
+      !Number.isInteger(item.order) ||
+      typeof item.width !== 'number' ||
+      !Number.isInteger(item.width)
+    ) {
+      return null
+    }
+    const bounds = STRIP_RACK_BOUNDS[item.module_id]
+    if (item.width < bounds.min.w || item.width > bounds.max.w) {
+      return null
+    }
+    strips.push({ module_id: item.module_id, order: item.order, width: item.width })
+  }
+  if (
+    strips.length !== 2 ||
+    new Set(strips.map((module) => module.module_id)).size !== 2 ||
+    new Set(strips.map((module) => module.order)).size !== 2 ||
+    strips.reduce((total, module) => total + module.width, 0) !== RACK_COLUMNS
+  ) {
+    return null
+  }
+  return orderedStrips({
+    version: 1,
+    modules: [],
+    strips,
+    strip_rows: FACTORY_RACK_LAYOUT.strip_rows,
+    scopes: {},
+  }).map((module, order) => ({ ...module, order }))
 }
 
 function parseScopes(value: unknown): Record<string, RackScope> {
@@ -258,8 +461,12 @@ function parseScopes(value: unknown): Record<string, RackScope> {
   return scopes
 }
 
-function isDockedModuleId(value: unknown): value is DockedModuleId {
+export function isDockedModuleId(value: unknown): value is DockedModuleId {
   return value === 'threads' || value === 'chat' || value === 'memory'
+}
+
+export function isStripModuleId(value: unknown): value is StripModuleId {
+  return value === 'vitals' || value === 'context_bars'
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

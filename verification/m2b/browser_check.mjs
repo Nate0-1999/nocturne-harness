@@ -252,9 +252,11 @@ async function exerciseDesktopLayout(page) {
     throw new Error('ResizeObserver did not deliver a new thread-module rectangle')
   }
 
-  await page
-    .getByRole('button', { name: 'Dock Channel Stack; Alt plus arrow keys also moves it' })
-    .dragTo(page.getByRole('button', { name: 'Dock Memory Palace; Alt plus arrow keys also moves it' }))
+  await pointerDrag(
+    page,
+    page.getByRole('button', { name: 'Dock Channel Stack; Alt plus arrow keys also moves it' }),
+    page.getByRole('button', { name: 'Dock Memory Palace; Alt plus arrow keys also moves it' }),
+  )
   await page.waitForFunction(() =>
     document.querySelector('[data-rack-module="threads"]')?.getAttribute('data-grid-x') === '10',
   )
@@ -289,6 +291,22 @@ async function exerciseDesktopLayout(page) {
     ['threads', 10, 3],
   ])
   return { before, resized, docked, restored, reloaded }
+}
+
+async function pointerDrag(page, source, target) {
+  const sourceBox = await source.boundingBox()
+  const targetBox = await target.boundingBox()
+  if (sourceBox === null || targetBox === null) {
+    throw new Error('rack pointer-drag geometry was unavailable')
+  }
+  await page.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(
+    targetBox.x + targetBox.width / 2,
+    targetBox.y + targetBox.height / 2,
+    { steps: 8 },
+  )
+  await page.mouse.up()
 }
 
 async function exerciseMobileDrawers(page) {

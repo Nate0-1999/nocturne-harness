@@ -1,0 +1,55 @@
+{
+  "fixture": "M2UX3 REGRESSION",
+  "observations": [
+    {
+      "mounted_template_modules": [
+        "threads",
+        "chat",
+        "memory",
+        "vitals",
+        "context_bars"
+      ]
+    },
+    {
+      "hover_cursors": {
+        "w": "ew-resize",
+        "n": "ns-resize",
+        "nw": "nwse-resize"
+      }
+    },
+    {
+      "after_drag": {
+        "x": 4,
+        "width": 9,
+        "height": 4
+      }
+    },
+    {
+      "after_edges": {
+        "x": 3,
+        "width": 10,
+        "height": 2
+      }
+    },
+    {
+      "after_corner": {
+        "x": 4,
+        "width": 9,
+        "height": 4
+      }
+    },
+    {
+      "after_reload": {
+        "x": 4,
+        "width": 9,
+        "height": 4
+      },
+      "restored_order": [
+        "context_bars",
+        "vitals"
+      ]
+    }
+  ],
+  "console_problems": [],
+  "page_errors": []
+}

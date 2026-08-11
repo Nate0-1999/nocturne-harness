@@ -62,14 +62,22 @@ import {
   moduleGridColumn,
   moveRackModule,
   orderedModules,
+  orderedStrips,
   persistRackLayout,
   rackBodyRowAllocation,
   rackLayoutsEqual,
+  resizeRackModuleHeight,
   resizeRackModule,
+  resizeRackStrip,
   saveRackSet,
-  type DockedModuleId,
+  stripGridColumn,
   type RackLayoutSet,
+  type StageModuleId,
 } from './rackLayout'
+import {
+  rackResizeDirections,
+  type RackResizeDirection,
+} from './rackModuleTemplate'
 import { isLegacyFixtureTitle, visibleThreadTitle } from './threadTitles'
 import { ProjectSelector } from './ProjectSelector'
 import {
@@ -244,16 +252,20 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   const selection = useRackHostSelection()
   const [layout, setLayout] = useState<RackLayoutSet>(initialRackLayout)
   const [savedSet, setSavedSet] = useState<RackLayoutSet | null>(initialSavedRackSet)
-  const [vitalsCollapsed, setVitalsCollapsed] = useState(
+  const [pointerActive, setPointerActive] = useState(false)
+  const [mobileCollapsed, setMobileCollapsed] = useState(
     () => globalThis.matchMedia('(max-width: 48.9rem)').matches,
   )
+  const effectiveStripRows = mobileCollapsed ? 1 : layout.strip_rows
+  const vitalsCollapsed = effectiveStripRows === 1
   const selectedThread = snapshot.selectedThreadId === null
     ? null
     : snapshot.threads[snapshot.selectedThreadId]
   const openGate = selectedThread?.openGate ?? null
   const drawerModule = rackDrawerModule(selection)
   const ordered = orderedModules(layout)
-  const rowAllocation = rackBodyRowAllocation(vitalsCollapsed)
+  const strips = orderedStrips(layout)
+  const rowAllocation = rackBodyRowAllocation(effectiveStripRows)
   const dismissibleOverlay = drawerModule !== null && drawerModule in DISMISSIBLE_OVERLAY_CLASSES
     ? drawerModule as DismissibleOverlayModuleId
     : null
@@ -261,7 +273,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     const mobile = globalThis.matchMedia('(max-width: 48.9rem)')
     const collapseOnMobile = (event: MediaQueryListEvent) => {
       if (event.matches) {
-        setVitalsCollapsed(true)
+        setMobileCollapsed(true)
       }
     }
     mobile.addEventListener('change', collapseOnMobile)
@@ -293,6 +305,8 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     const copy: RackLayoutSet = {
       version: 1,
       modules: layout.modules.map((module) => ({ ...module })),
+      strips: layout.strips.map((module) => ({ ...module })),
+      strip_rows: layout.strip_rows,
       scopes: { ...layout.scopes },
     }
     try {
@@ -309,6 +323,8 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
       setLayout({
         version: 1,
         modules: savedSet.modules.map((module) => ({ ...module })),
+        strips: savedSet.strips.map((module) => ({ ...module })),
+        strip_rows: savedSet.strip_rows,
         scopes: { ...savedSet.scopes },
       })
     }
@@ -318,13 +334,43 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     setLayout(cloneFactoryLayout())
   }, [])
 
-  const moveModule = useCallback((source: DockedModuleId, target: DockedModuleId) => {
+  const moveModule = useCallback((source: StageModuleId, target: StageModuleId) => {
     setLayout((current) => moveRackModule(current, source, target))
   }, [])
 
-  const resizeModule = useCallback((moduleId: DockedModuleId, width: number) => {
-    setLayout((current) => resizeRackModule(current, moduleId, width))
+  const resizeModule = useCallback((
+    moduleId: StageModuleId,
+    width: number,
+    height: number,
+    direction: RackResizeDirection,
+  ) => {
+    setLayout((current) => {
+      const widthAdjusted = moduleId === 'vitals' || moduleId === 'context_bars'
+        ? resizeRackStrip(current, moduleId, width)
+        : resizeRackModule(
+            current,
+            moduleId,
+            width,
+            direction.includes('w') ? 'left' : 'right',
+          )
+      return resizeRackModuleHeight(widthAdjusted, moduleId, height)
+    })
   }, [])
+
+  const toggleVitals = useCallback(() => {
+    if (mobileCollapsed) {
+      setMobileCollapsed(false)
+      setLayout((current) => current.strip_rows === 1
+        ? resizeRackModuleHeight(current, 'vitals', 4)
+        : current)
+      return
+    }
+    setLayout((current) => resizeRackModuleHeight(
+      current,
+      'vitals',
+      current.strip_rows === 1 ? 4 : 1,
+    ))
+  }, [mobileCollapsed])
 
   const layoutStatus = savedSet !== null && rackLayoutsEqual(layout, savedSet)
     ? 'Saved set'
@@ -339,7 +385,11 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
       data-testid="rack-shell"
     >
       <div className="rack-ambient" aria-hidden="true" />
-      <div className="rack-grid" data-testid="rack-grid">
+      <div
+        className="rack-grid"
+        data-testid="rack-grid"
+        data-pointer-active={pointerActive ? 'true' : undefined}
+      >
         <RackModuleFrame
           manifest={RACK_MANIFESTS.header}
           x={1}
@@ -384,31 +434,33 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               resizeFrom={index === ordered.length - 1 ? 'left' : 'right'}
               onMove={moveModule}
               onResize={resizeModule}
+              onPointerActivity={setPointerActive}
               orderedIds={ordered.map((item) => item.module_id)}
               isRegressionFixture={isRegressionFixture}
             />
           )
         })}
-        <RackModuleFrame
-          manifest={RACK_MANIFESTS.vitals}
-          x={1}
-          y={rowAllocation.vitalsStart}
-          width={9}
-          height={rowAllocation.vitalsRows}
-          collapsed={vitalsCollapsed}
-          inert={openGate !== null || drawerModule !== null}
-          onCollapseToggle={() => setVitalsCollapsed((value) => !value)}
-          isRegressionFixture={isRegressionFixture}
-        />
-        <RackModuleFrame
-          manifest={RACK_MANIFESTS.context_bars}
-          x={10}
-          y={rowAllocation.vitalsStart}
-          width={3}
-          height={rowAllocation.vitalsRows}
-          inert={openGate !== null || drawerModule !== null}
-          isRegressionFixture={isRegressionFixture}
-        />
+        {strips.map((module) => {
+          const geometry = stripGridColumn(layout, module.module_id)
+          return (
+            <RackModuleFrame
+              key={module.module_id}
+              manifest={RACK_MANIFESTS[module.module_id]}
+              x={geometry.x}
+              y={rowAllocation.vitalsStart}
+              width={geometry.w}
+              height={rowAllocation.vitalsRows}
+              collapsed={vitalsCollapsed}
+              inert={openGate !== null || drawerModule !== null}
+              onMove={moveModule}
+              onResize={resizeModule}
+              onPointerActivity={setPointerActive}
+              orderedIds={strips.map((item) => item.module_id)}
+              onCollapseToggle={module.module_id === 'vitals' ? toggleVitals : undefined}
+              isRegressionFixture={isRegressionFixture}
+            />
+          )
+        })}
       </div>
 
       {drawerModule !== null && (
@@ -482,9 +534,15 @@ interface RackModuleFrameProps {
   collapsed?: boolean
   inert?: boolean
   resizeFrom?: 'left' | 'right'
-  orderedIds?: DockedModuleId[]
-  onMove?: (source: DockedModuleId, target: DockedModuleId) => void
-  onResize?: (moduleId: DockedModuleId, width: number) => void
+  orderedIds?: StageModuleId[]
+  onMove?: (source: StageModuleId, target: StageModuleId) => void
+  onResize?: (
+    moduleId: StageModuleId,
+    width: number,
+    height: number,
+    direction: RackResizeDirection,
+  ) => void
+  onPointerActivity?: (active: boolean) => void
   onCollapseToggle?: () => void
   isRegressionFixture?: boolean
 }
@@ -502,14 +560,18 @@ function RackModuleFrame({
   orderedIds = [],
   onMove,
   onResize,
+  onPointerActivity,
   onCollapseToggle,
   isRegressionFixture = false,
 }: RackModuleFrameProps) {
   const frameRef = useRef<HTMLDivElement>(null)
   const [resizeSequence, setResizeSequence] = useState(0)
+  const [dragging, setDragging] = useState(false)
   const isDocked = manifest.slot === 'panel'
   const isStrip = manifest.slot === 'strip'
-  const moduleId = manifest.id as DockedModuleId
+  const usesTemplate = isDocked || isStrip
+  const moduleId = manifest.id as StageModuleId
+  const resizeDirections = rackResizeDirections(manifest)
 
   useEffect(() => {
     const frame = frameRef.current
@@ -531,19 +593,8 @@ function RackModuleFrame({
     return () => observer.disconnect()
   }, [height, manifest.id, width])
 
-  function dropModule(event: DragEvent<HTMLDivElement>) {
-    if (!isDocked || onMove === undefined) {
-      return
-    }
-    event.preventDefault()
-    const source = event.dataTransfer.getData('application/x-nocturne-module')
-    if (source === 'threads' || source === 'chat' || source === 'memory') {
-      onMove(source, moduleId)
-    }
-  }
-
   function dockByKeyboard(event: KeyboardEvent<HTMLDivElement>) {
-    if (!isDocked || onMove === undefined || !event.altKey) {
+    if (!usesTemplate || onMove === undefined || !event.altKey) {
       return
     }
     const index = orderedIds.indexOf(moduleId)
@@ -559,26 +610,105 @@ function RackModuleFrame({
     }
   }
 
-  function beginResize(event: ReactPointerEvent<HTMLButtonElement>) {
-    if (!isDocked || onResize === undefined) {
+  function beginMove(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!usesTemplate || !manifest.movable || onMove === undefined || event.button !== 0) {
       return
     }
     event.preventDefault()
+    const handle = event.currentTarget
+    const pointerId = event.pointerId
+    handle.setPointerCapture(pointerId)
+    onPointerActivity?.(true)
+    const startX = event.clientX
+    const startY = event.clientY
+    let moved = false
+    setDragging(true)
+    const move = (moveEvent: globalThis.PointerEvent) => {
+      if (Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) >= 4) {
+        moved = true
+      }
+    }
+    const stop = (stopEvent: globalThis.PointerEvent) => {
+      globalThis.removeEventListener('pointermove', move)
+      globalThis.removeEventListener('pointerup', stop)
+      globalThis.removeEventListener('pointercancel', cancel)
+      if (handle.hasPointerCapture(pointerId)) {
+        handle.releasePointerCapture(pointerId)
+      }
+      onPointerActivity?.(false)
+      setDragging(false)
+      if (!moved) {
+        return
+      }
+      const target = globalThis.document
+        .elementFromPoint(stopEvent.clientX, stopEvent.clientY)
+        ?.closest<HTMLElement>('[data-rack-template-module="true"]')
+        ?.dataset.rackModule
+      if (target !== undefined && orderedIds.includes(target as StageModuleId)) {
+        onMove(moduleId, target as StageModuleId)
+      }
+    }
+    const cancel = () => {
+      globalThis.removeEventListener('pointermove', move)
+      globalThis.removeEventListener('pointerup', stop)
+      globalThis.removeEventListener('pointercancel', cancel)
+      if (handle.hasPointerCapture(pointerId)) {
+        handle.releasePointerCapture(pointerId)
+      }
+      onPointerActivity?.(false)
+      setDragging(false)
+    }
+    globalThis.addEventListener('pointermove', move)
+    globalThis.addEventListener('pointerup', stop)
+    globalThis.addEventListener('pointercancel', cancel)
+  }
+
+  function beginResize(
+    event: ReactPointerEvent<HTMLButtonElement>,
+    direction: RackResizeDirection,
+  ) {
+    if (!usesTemplate || onResize === undefined) {
+      return
+    }
+    event.preventDefault()
+    const handle = event.currentTarget
+    const pointerId = event.pointerId
     const grid = frameRef.current?.closest('.rack-grid')
     if (!(grid instanceof HTMLElement)) {
       return
     }
+    handle.setPointerCapture(pointerId)
+    onPointerActivity?.(true)
     const startX = event.clientX
+    const startY = event.clientY
     const startWidth = width
-    const unit = grid.getBoundingClientRect().width / RACK_COLUMNS
+    const startHeight = height
+    const gridRect = grid.getBoundingClientRect()
+    const unitX = gridRect.width / RACK_COLUMNS
+    const unitY = gridRect.height / 12
     const move = (moveEvent: globalThis.PointerEvent) => {
-      const delta = Math.round((moveEvent.clientX - startX) / unit)
-      onResize(moduleId, startWidth + (resizeFrom === 'left' ? -delta : delta))
+      const deltaX = Math.round((moveEvent.clientX - startX) / unitX)
+      const deltaY = Math.round((moveEvent.clientY - startY) / unitY)
+      const nextWidth = direction.includes('e')
+        ? startWidth + deltaX
+        : direction.includes('w')
+          ? startWidth - deltaX
+          : startWidth
+      const nextHeight = direction.includes('s')
+        ? startHeight + deltaY
+        : direction.includes('n')
+          ? startHeight - deltaY
+          : startHeight
+      onResize(moduleId, nextWidth, nextHeight, direction)
     }
     const stop = () => {
       globalThis.removeEventListener('pointermove', move)
       globalThis.removeEventListener('pointerup', stop)
       globalThis.removeEventListener('pointercancel', stop)
+      if (handle.hasPointerCapture(pointerId)) {
+        handle.releasePointerCapture(pointerId)
+      }
+      onPointerActivity?.(false)
     }
     globalThis.addEventListener('pointermove', move)
     globalThis.addEventListener('pointerup', stop)
@@ -609,62 +739,25 @@ function RackModuleFrame({
       data-grid-height={height}
       data-resize-sequence={resizeSequence}
       data-collapsed={isStrip ? collapsed : undefined}
+      data-rack-template-module={usesTemplate ? 'true' : undefined}
+      data-dragging={usesTemplate ? dragging : undefined}
       inert={inert || undefined}
-      onDragOver={(event) => {
-        if (isDocked) {
-          event.preventDefault()
-        }
-      }}
-      onDrop={dropModule}
     >
-      {isDocked && (
-        <div className="rack-module__chrome">
+      {usesTemplate && (
+        <div className={`rack-module__chrome${isStrip ? ' rack-module__chrome--strip' : ''}`}>
           <div
             className="rack-module__drag"
             role="button"
             tabIndex={0}
-            draggable
             aria-label={`Dock ${manifest.name}; Alt plus arrow keys also moves it`}
             onKeyDown={dockByKeyboard}
-            onDragStart={(event) => {
-              event.dataTransfer.effectAllowed = 'move'
-              event.dataTransfer.setData('application/x-nocturne-module', moduleId)
-            }}
+            onPointerDown={beginMove}
           >
-            <span aria-hidden="true">⠿</span>
+            <span aria-hidden="true">{isStrip ? '⌁' : '⠿'}</span>
             <strong>{manifest.name}</strong>
           </div>
-          <span className="rack-module__geometry" aria-label={`${width} grid units wide`}>
-            {String(width).padStart(2, '0')}u
-          </span>
-          <button
-            className={`rack-module__resize rack-module__resize--${resizeFrom}`}
-            type="button"
-            aria-label={`Resize ${manifest.name}`}
-            onPointerDown={beginResize}
-            onKeyDown={(event) => {
-              if (onResize === undefined) {
-                return
-              }
-              if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-                event.preventDefault()
-                const delta = event.key === 'ArrowRight' ? 1 : -1
-                onResize(moduleId, width + (resizeFrom === 'left' ? -delta : delta))
-              }
-            }}
-          >
-            <span aria-hidden="true">⋮</span>
-          </button>
-        </div>
-      )}
-      {isStrip && (
-        <div className="rack-module__chrome rack-module__chrome--strip">
-          <div className="rack-module__strip-title">
-            <span aria-hidden="true">⌁</span>
-            <strong>{manifest.name}</strong>
-          </div>
-          <span className="rack-module__geometry" aria-label={`${height} grid rows high`}>
-            12×{String(height).padStart(2, '0')}
+          <span className="rack-module__geometry" aria-label={`${width} by ${height} grid units`}>
+            {String(width).padStart(2, '0')}×{String(height).padStart(2, '0')}
           </span>
           {onCollapseToggle !== undefined && (
             <button
@@ -681,6 +774,45 @@ function RackModuleFrame({
           )}
         </div>
       )}
+      {resizeDirections.map((direction) => {
+        const primaryDirection = resizeFrom === 'left' ? 'w' : 'e'
+        return (
+          <button
+            key={direction}
+            className={`rack-module__resize-handle rack-module__resize-handle--${direction}`}
+            type="button"
+            data-testid={`rack-resize-${manifest.id}-${direction}`}
+            aria-label={direction === primaryDirection
+              ? `Resize ${manifest.name}`
+              : `${manifest.name} ${direction} resize handle`}
+            onPointerDown={(event) => beginResize(event, direction)}
+            onKeyDown={(event) => {
+              if (onResize === undefined) {
+                return
+              }
+              if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                event.preventDefault()
+                const delta = event.key === 'ArrowRight' ? 1 : -1
+                onResize(
+                  moduleId,
+                  width + (direction.includes('w') ? -delta : delta),
+                  height,
+                  direction,
+                )
+              } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+                event.preventDefault()
+                const delta = event.key === 'ArrowDown' ? 1 : -1
+                onResize(
+                  moduleId,
+                  width,
+                  height + (direction.includes('n') ? -delta : delta),
+                  direction,
+                )
+              }
+            }}
+          />
+        )
+      })}
       <div className="rack-module__content">
         <RackPluginIframe
           manifest={manifest}

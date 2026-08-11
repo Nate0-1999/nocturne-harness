@@ -1,0 +1,78 @@
+import type { RackBounds } from './rackLayout'
+
+export type StageRackModuleId =
+  | 'threads'
+  | 'chat'
+  | 'memory'
+  | 'vitals'
+  | 'context_bars'
+
+export type RackResizeDirection = 'n' | 'e' | 's' | 'w' | 'ne' | 'se' | 'sw' | 'nw'
+
+export interface RackTemplateManifest {
+  id: string
+  name: string
+  slot: 'header' | 'panel' | 'strip' | 'overlay'
+  bounds: RackBounds
+  movable: boolean
+}
+
+export const STAGE_RACK_MODULE_IDS: readonly StageRackModuleId[] = [
+  'threads',
+  'chat',
+  'memory',
+  'vitals',
+  'context_bars',
+]
+
+export function rackResizeDirections(
+  manifest: RackTemplateManifest,
+): readonly RackResizeDirection[] {
+  if (manifest.slot === 'panel') {
+    return ['w', 'e', 's', 'sw', 'se']
+  }
+  if (manifest.slot === 'strip') {
+    return ['w', 'e', 'n', 'nw', 'ne']
+  }
+  return []
+}
+
+export function assertRackModuleTemplate(
+  manifests: Record<string, RackTemplateManifest>,
+): void {
+  for (const moduleId of STAGE_RACK_MODULE_IDS) {
+    const manifest = manifests[moduleId]
+    if (manifest === undefined) {
+      throw new Error(`Rack module template is missing ${moduleId}`)
+    }
+    if (!manifest.movable) {
+      throw new Error(`${manifest.name} must use the shared drag affordance`)
+    }
+    assertGridBounds(manifest)
+    const directions = rackResizeDirections(manifest)
+    if (
+      !directions.some((direction) => direction.length === 1) ||
+      !directions.some((direction) => direction.length === 2)
+    ) {
+      throw new Error(`${manifest.name} needs edge and corner resize affordances`)
+    }
+  }
+}
+
+function assertGridBounds(manifest: RackTemplateManifest): void {
+  for (const axis of ['w', 'h'] as const) {
+    const minimum = manifest.bounds.min[axis]
+    const preferred = manifest.bounds.preferred[axis]
+    const maximum = manifest.bounds.max[axis]
+    if (
+      !Number.isInteger(minimum) ||
+      !Number.isInteger(preferred) ||
+      !Number.isInteger(maximum) ||
+      minimum < 1 ||
+      minimum > preferred ||
+      preferred > maximum
+    ) {
+      throw new Error(`${manifest.name} has invalid ${axis} grid-unit bounds`)
+    }
+  }
+}
