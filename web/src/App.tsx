@@ -235,7 +235,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   const [layout, setLayout] = useState<RackLayoutSet>(initialRackLayout)
   const [savedSet, setSavedSet] = useState<RackLayoutSet | null>(initialSavedRackSet)
   const [vitalsCollapsed, setVitalsCollapsed] = useState(
-    () => globalThis.matchMedia('(max-width: 47.99rem)').matches,
+    () => globalThis.matchMedia('(max-width: 48.9rem)').matches,
   )
   const selectedThread = snapshot.selectedThreadId === null
     ? null
@@ -245,7 +245,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   const ordered = orderedModules(layout)
   const rowAllocation = rackBodyRowAllocation(vitalsCollapsed)
   useEffect(() => {
-    const mobile = globalThis.matchMedia('(max-width: 47.99rem)')
+    const mobile = globalThis.matchMedia('(max-width: 48.9rem)')
     const collapseOnMobile = (event: MediaQueryListEvent) => {
       if (event.matches) {
         setVitalsCollapsed(true)
@@ -1655,6 +1655,7 @@ function markdownFile(markdown: string): File {
 
 function PalaceQueueModule() {
   const { events, selection } = useRackPlugin()
+  const seedInputRef = useRef<HTMLInputElement>(null)
   const [scope, setScope] = useState<'CURRENT' | 'GLOBAL'>(
     RACK_MANIFESTS.palace_queue.default_scope,
   )
@@ -1777,6 +1778,11 @@ function PalaceQueueModule() {
         <label
           className={`seed-drop${dragging ? ' seed-drop--active' : ''}`}
           tabIndex={0}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return
+            event.preventDefault()
+            seedInputRef.current?.click()
+          }}
           onDragEnter={(event) => { event.preventDefault(); setDragging(true) }}
           onDragOver={(event) => event.preventDefault()}
           onDragLeave={(event) => {
@@ -1787,10 +1793,13 @@ function PalaceQueueModule() {
         >
           <span>{busy ? 'Working…' : 'Drop, paste, or choose Markdown'}</span>
           <input
+            ref={seedInputRef}
             data-testid="seed-upload"
             type="file"
             accept=".md,.markdown,text/markdown"
             multiple
+            tabIndex={-1}
+            aria-hidden="true"
             disabled={busy}
             onChange={(event) => void upload(Array.from(event.currentTarget.files ?? []))}
           />

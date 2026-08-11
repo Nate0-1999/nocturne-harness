@@ -12,6 +12,7 @@ export interface LayoutAuditNode {
   label: string
   scope: string
   rect: LayoutAuditRect
+  interactive: boolean
   clipped: boolean
 }
 
@@ -33,8 +34,14 @@ export function auditLayout(nodes: readonly LayoutAuditNode[]): LayoutAuditResul
   const collisions: LayoutCollision[] = []
   for (let firstIndex = 0; firstIndex < nodes.length; firstIndex += 1) {
     const first = nodes[firstIndex]
+    if (!first.interactive) {
+      continue
+    }
     for (let secondIndex = firstIndex + 1; secondIndex < nodes.length; secondIndex += 1) {
       const second = nodes[secondIndex]
+      if (!second.interactive) {
+        continue
+      }
       const overlapWidth = Math.min(
         first.rect.x + first.rect.width,
         second.rect.x + second.rect.width,

@@ -1,0 +1,274 @@
+{
+  "base_url": "http://127.0.0.1:8801",
+  "widths": [
+    390,
+    480,
+    768,
+    1024,
+    1280,
+    1440,
+    1920
+  ],
+  "states": [
+    {
+      "width": 390,
+      "state": "factory",
+      "interactive": 11,
+      "text": 32
+    },
+    {
+      "width": 390,
+      "state": "threads-drawer",
+      "interactive": 8,
+      "text": 17
+    },
+    {
+      "width": 390,
+      "state": "palace_queue",
+      "interactive": 9,
+      "text": 19
+    },
+    {
+      "width": 390,
+      "state": "memory_graph",
+      "interactive": 10,
+      "text": 18
+    },
+    {
+      "width": 390,
+      "state": "injection_console",
+      "interactive": 13,
+      "text": 40
+    },
+    {
+      "width": 390,
+      "state": "model_device",
+      "interactive": 11,
+      "text": 26
+    },
+    {
+      "width": 390,
+      "state": "thread_end",
+      "interactive": 14,
+      "text": 31
+    },
+    {
+      "width": 480,
+      "state": "factory",
+      "interactive": 11,
+      "text": 32
+    },
+    {
+      "width": 480,
+      "state": "palace_queue",
+      "interactive": 9,
+      "text": 19
+    },
+    {
+      "width": 480,
+      "state": "memory_graph",
+      "interactive": 10,
+      "text": 18
+    },
+    {
+      "width": 480,
+      "state": "injection_console",
+      "interactive": 13,
+      "text": 40
+    },
+    {
+      "width": 480,
+      "state": "model_device",
+      "interactive": 13,
+      "text": 34
+    },
+    {
+      "width": 480,
+      "state": "thread_end",
+      "interactive": 16,
+      "text": 38
+    },
+    {
+      "width": 768,
+      "state": "factory",
+      "interactive": 9,
+      "text": 31
+    },
+    {
+      "width": 768,
+      "state": "palace_queue",
+      "interactive": 7,
+      "text": 15
+    },
+    {
+      "width": 768,
+      "state": "memory_graph",
+      "interactive": 8,
+      "text": 14
+    },
+    {
+      "width": 768,
+      "state": "injection_console",
+      "interactive": 11,
+      "text": 36
+    },
+    {
+      "width": 768,
+      "state": "model_device",
+      "interactive": 12,
+      "text": 35
+    },
+    {
+      "width": 768,
+      "state": "thread_end",
+      "interactive": 14,
+      "text": 39
+    },
+    {
+      "width": 1024,
+      "state": "factory",
+      "interactive": 25,
+      "text": 87
+    },
+    {
+      "width": 1024,
+      "state": "palace_queue",
+      "interactive": 9,
+      "text": 19
+    },
+    {
+      "width": 1024,
+      "state": "memory_graph",
+      "interactive": 10,
+      "text": 18
+    },
+    {
+      "width": 1024,
+      "state": "injection_console",
+      "interactive": 22,
+      "text": 92
+    },
+    {
+      "width": 1024,
+      "state": "model_device",
+      "interactive": 14,
+      "text": 39
+    },
+    {
+      "width": 1024,
+      "state": "thread_end",
+      "interactive": 16,
+      "text": 43
+    },
+    {
+      "width": 1280,
+      "state": "factory",
+      "interactive": 25,
+      "text": 97
+    },
+    {
+      "width": 1280,
+      "state": "palace_queue",
+      "interactive": 9,
+      "text": 21
+    },
+    {
+      "width": 1280,
+      "state": "memory_graph",
+      "interactive": 10,
+      "text": 20
+    },
+    {
+      "width": 1280,
+      "state": "injection_console",
+      "interactive": 22,
+      "text": 94
+    },
+    {
+      "width": 1280,
+      "state": "model_device",
+      "interactive": 14,
+      "text": 41
+    },
+    {
+      "width": 1280,
+      "state": "thread_end",
+      "interactive": 16,
+      "text": 45
+    },
+    {
+      "width": 1440,
+      "state": "factory",
+      "interactive": 25,
+      "text": 99
+    },
+    {
+      "width": 1440,
+      "state": "palace_queue",
+      "interactive": 9,
+      "text": 21
+    },
+    {
+      "width": 1440,
+      "state": "memory_graph",
+      "interactive": 10,
+      "text": 20
+    },
+    {
+      "width": 1440,
+      "state": "injection_console",
+      "interactive": 22,
+      "text": 94
+    },
+    {
+      "width": 1440,
+      "state": "model_device",
+      "interactive": 14,
+      "text": 41
+    },
+    {
+      "width": 1440,
+      "state": "thread_end",
+      "interactive": 16,
+      "text": 45
+    },
+    {
+      "width": 1920,
+      "state": "factory",
+      "interactive": 25,
+      "text": 105
+    },
+    {
+      "width": 1920,
+      "state": "palace_queue",
+      "interactive": 9,
+      "text": 21
+    },
+    {
+      "width": 1920,
+      "state": "memory_graph",
+      "interactive": 10,
+      "text": 20
+    },
+    {
+      "width": 1920,
+      "state": "injection_console",
+      "interactive": 22,
+      "text": 94
+    },
+    {
+      "width": 1920,
+      "state": "model_device",
+      "interactive": 14,
+      "text": 41
+    },
+    {
+      "width": 1920,
+      "state": "thread_end",
+      "interactive": 16,
+      "text": 45
+    }
+  ],
+  "console_problems": [],
+  "page_errors": []
+}

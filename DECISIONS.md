@@ -1645,14 +1645,26 @@ Save, Restore, and Factory controls. The host overlay occupies that same lane;
 neither side guesses around the other with an unowned margin. At phone widths
 both the reserve and the desktop controls disappear together. Thread titles
 wrap to their full height, including unbroken identifiers, instead of being
-line-clamped.
+line-clamped. The deliberately bounded prompt-derived title ends at its last
+complete word before the ellipsis instead of cutting through that word.
+Every ordinary Rack drawer begins below the live Header; the memory Gate alone
+retains its intentional modal cover. Programmatic file inputs stay outside the
+visual and keyboard geometry while their visible chooser owns activation.
+Graph labels remain visible and named by SVG title, but sit outside the node's
+interactive hit box so adjacent labels cannot create ambiguous click regions.
+The phone drawer already fills its entire available stage and owns a visible
+Close action, so its fully occluded host scrim is removed instead of leaving an
+unreachable button beneath every drawer action.
 
 The standing mechanical audit uses one shared rectangle rule at the exact
 390-to-1920 viewport ladder. Its rendered driver translates interactive boxes
 from each sandboxed module into host coordinates before testing positive-area
 overlap, so a host control colliding with an iframe button cannot hide behind
-the isolation boundary. Text nodes fail when their rendered scroll box exceeds
-their visible box. Pure geometry and source invariants remain in the ordinary
+the isolation boundary. Visible text nodes fail when their horizontal scroll
+box exceeds their visible box; intentional screen-reader-only labels are
+outside visual geometry. SVG text uses its rendered bounding box rather than
+HTML scroll metrics, whose values are incommensurate under a viewBox. Pure
+geometry and source invariants remain in the ordinary
 unit suite; the browser driver is the real-layout proof because CI cannot
 truthfully synthesize browser geometry.
 

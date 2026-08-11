@@ -20,7 +20,12 @@ export function normalizedThreadTitle(prompt: string): string {
   if (codePoints.length <= 48) {
     return normalized
   }
-  return `${codePoints.slice(0, 48).join('')}…`
+  const candidate = codePoints.slice(0, 48).join('')
+  const finalWordBoundary = candidate.lastIndexOf(' ')
+  const visible = finalWordBoundary > 0
+    ? candidate.slice(0, finalWordBoundary)
+    : candidate
+  return `${visible}…`
 }
 
 function titleFingerprint(title: string): string {

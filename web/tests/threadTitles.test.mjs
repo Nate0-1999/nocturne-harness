@@ -3,6 +3,7 @@ import test from 'node:test'
 
 import {
   isLegacyFixtureTitle,
+  normalizedThreadTitle,
   visibleThreadTitle,
 } from '../src/threadTitles.ts'
 
@@ -20,4 +21,14 @@ test('does not redact an owner thread or alter older cleanup recognition', () =>
   assert.equal(isLegacyFixtureTitle('Plan the courtyard planting'), false)
   assert.equal(isLegacyFixtureTitle('Open the H6 verification thread context.'), true)
   assert.equal(visibleThreadTitle('Open the H6 verification thread context.'), 'Open the H6 verification thread context.')
+})
+
+/** SPEC B.6 / M2UX1 keeps the secondary thread-list summary bounded without clipping its last word. */
+test('shortens a long generated title only at a complete-word boundary', () => {
+  assert.equal(
+    normalizedThreadTitle(
+      'Explain the mechanical no-overlap and no-clipped-text viewport sweep for the owner.',
+    ),
+    'Explain the mechanical no-overlap and…',
+  )
 })

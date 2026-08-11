@@ -224,6 +224,7 @@
 
 .thread-item__meta {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 0.5rem;
   color: var(--dim);
@@ -231,6 +232,11 @@
   font-size: 0.625rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+.thread-item__meta > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .thread-item--selected .thread-item__meta {
@@ -381,15 +387,13 @@
 .chat-header h1 {
   max-width: 42rem;
   margin: 0;
-  overflow: hidden;
   font-family: var(--display-font);
   font-size: clamp(1rem, 1.8vw, 1.3rem);
   font-stretch: condensed;
   font-weight: 760;
   letter-spacing: 0.015em;
   line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .run-metrics {
