@@ -60,3 +60,37 @@ def test_tracker_global_aggregates_only_observed_threads() -> None:
     assert snapshot.aggregate is not None
     assert snapshot.aggregate.used_tokens == 30
     assert snapshot.aggregate.context_tokens == 200
+
+
+def test_f034_zero_usage_error_response_cannot_erase_last_successful_measurement() -> None:
+    """F034 and v2.52 are defended by verifying that a zero-usage provider error response does
+    not replace the last successful Context Bars measurement with invented zero pressure.
+    """
+    tracker = ContextWindowTracker()
+    resolution = ThreadModelResolution(
+        model="openrouter:rekaai/reka-edge",
+        context_tokens=16_384,
+        policy="pinned:rekaai/reka-edge",
+    )
+    tracker.record(
+        thread_id="thread-a",
+        captured=[
+            ModelResponse(
+                parts=[TextPart("ok")],
+                usage=RequestUsage(input_tokens=11_800, output_tokens=8),
+            )
+        ],
+        resolution=resolution,
+        memory_block=None,
+    )
+    measured = tracker.snapshot("thread-a").aggregate
+    assert measured is not None
+
+    tracker.record(
+        thread_id="thread-a",
+        captured=[ModelResponse(parts=[], usage=RequestUsage(input_tokens=0, output_tokens=0))],
+        resolution=resolution,
+        memory_block=None,
+    )
+
+    assert tracker.snapshot("thread-a").aggregate == measured

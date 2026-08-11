@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import asyncio
+import json
+import re
 from collections.abc import AsyncIterable, Callable, Mapping, Sequence
 from dataclasses import replace
 from typing import Any, cast
 from uuid import UUID
 
-from pydantic_ai import UsageLimitExceeded, capture_run_messages
+from pydantic_ai import ModelHTTPError, UsageLimitExceeded, capture_run_messages
 from pydantic_ai.messages import (
     AgentStreamEvent,
     BinaryContent,
@@ -33,7 +35,7 @@ from pydantic_core import to_jsonable_python
 from harness.agent import HarnessAgent, RememberResult
 from harness.commands import remember_command_text
 from harness.context_window import ContextWindowTracker
-from harness.envelope import StopReason
+from harness.envelope import ProviderErrorPayload, StopReason
 from harness.model_policy import ThreadModelResolution
 from harness.receipt_queue import SpendReceiptQueue
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
@@ -50,6 +52,27 @@ type ContextFactory = Callable[[str], MemoryToolContext]
 _INTERRUPTED_TOOL_CONTENT = "Tool execution interrupted by run cancellation."
 _MEMORY_BLOCK_OPEN = "<memory_system>\n"
 _MEMORY_BLOCK_CLOSE = "\n</memory_system>"
+_MAX_PROVIDER_MESSAGE = 1_000
+_CONTEXT_CODES = frozenset(
+    {
+        "context_length_exceeded",
+        "context_window_exceeded",
+        "max_context_length_exceeded",
+        "prompt_too_long",
+        "prompt_is_too_long",
+        "too_many_tokens",
+    }
+)
+_CONTEXT_PATTERNS = tuple(
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in (
+        r"\bcontext (?:length|window|limit)\b.*\b(?:exceed|maximum|max|too (?:large|long))",
+        r"\b(?:exceed|maximum|max|too (?:large|long))\b.*\bcontext (?:length|window|limit)\b",
+        r"\b(?:prompt|input) (?:is )?too long\b",
+        r"\btoo many (?:input )?tokens\b",
+        r"\btoken limit\b.*\b(?:exceed|maximum|max|reached)",
+    )
+)
 
 
 class PydanticAITurnRunner:
@@ -162,7 +185,7 @@ class PydanticAITurnRunner:
                 _captured_history(prior_history, captured),
                 usage,
             )
-        except Exception:
+        except Exception as exc:
             usage = _failure_usage(run_usage, captured, prior_history)
             await bridge.publish_usage(usage)
             task = asyncio.current_task()
@@ -174,6 +197,23 @@ class PydanticAITurnRunner:
                     StopReason("cancelled"),
                     _repair_cancelled_tool_calls(history),
                     usage,
+                )
+            provider_error = _provider_error(exc, selected_model.model_name)
+            if provider_error is not None:
+                message = _provider_refusal_copy(provider_error)
+                await emit.event(
+                    {
+                        "event_kind": "provider_refusal",
+                        **provider_error.model_dump(mode="json", exclude_none=True),
+                    }
+                )
+                await emit.text(f"\n\n{message}")
+                return TurnOutcome(
+                    StopReason("error"),
+                    _captured_history(prior_history, captured),
+                    usage,
+                    assistant_text=message,
+                    provider_error=provider_error,
                 )
             return TurnOutcome(
                 StopReason("error"),
@@ -262,6 +302,147 @@ class PydanticAITurnRunner:
                 }
             )
             return
+
+
+def _provider_error(exc: Exception, fallback_model: str) -> ProviderErrorPayload | None:
+    """Retain only structured provider HTTP evidence; never relabel product faults. [A-054]"""
+
+    if not isinstance(exc, ModelHTTPError):
+        return None
+    body = _decoded_provider_body(exc.body)
+    message = _provider_message(body)
+    if message is None:
+        message = f"HTTP {exc.status_code} from {exc.model_name or fallback_model}"
+    message = _bounded_provider_text(message)
+    code = _provider_code(body)
+    provider_code = _native_provider_code(body)
+    classification = (
+        "context_length"
+        if _is_context_length(code=code, provider_code=provider_code, message=message)
+        else "provider_refusal"
+    )
+    return ProviderErrorPayload(
+        classification=classification,
+        message=message,
+        model=exc.model_name or fallback_model,
+        status_code=exc.status_code,
+        code=code,
+        provider_code=provider_code,
+    )
+
+
+def _decoded_provider_body(body: object | None) -> object | None:
+    if not isinstance(body, str):
+        return body
+    stripped = body.strip()
+    if stripped.startswith(("{", "[")):
+        try:
+            return json.loads(stripped)
+        except (json.JSONDecodeError, RecursionError):
+            pass
+    return stripped
+
+
+def _provider_message(body: object | None) -> str | None:
+    if isinstance(body, str):
+        return body or None
+    if isinstance(body, Mapping):
+        error = body.get("error")
+        if error is not None:
+            nested = _provider_message(error)
+            if nested is not None:
+                return nested
+        message = body.get("message")
+        metadata = body.get("metadata")
+        if isinstance(metadata, Mapping):
+            raw = metadata.get("raw")
+            if raw is not None:
+                nested = _provider_message(_decoded_provider_body(raw))
+                if nested is not None and (
+                    not isinstance(message, str)
+                    or message.strip().lower() in {"provider returned error", "provider error"}
+                ):
+                    return nested
+        if isinstance(message, str) and message.strip():
+            return message
+    return None
+
+
+def _provider_code(body: object | None) -> str | None:
+    if not isinstance(body, Mapping):
+        return None
+    error = body.get("error")
+    if isinstance(error, Mapping):
+        nested = _provider_code(error)
+        if nested is not None:
+            return nested
+    error_type = body.get("error_type")
+    if isinstance(error_type, str) and error_type.strip():
+        return _bounded_provider_text(error_type, limit=128)
+    metadata = body.get("metadata")
+    if isinstance(metadata, Mapping):
+        for key in ("error_type", "provider_code"):
+            candidate = metadata.get(key)
+            if isinstance(candidate, str) and candidate.strip():
+                return _bounded_provider_text(candidate, limit=128)
+        raw = metadata.get("raw")
+        if raw is not None:
+            nested = _provider_code(_decoded_provider_body(raw))
+            if nested is not None:
+                return nested
+    code = body.get("code")
+    if isinstance(code, str) and code.strip():
+        return _bounded_provider_text(code, limit=128)
+    return None
+
+
+def _native_provider_code(body: object | None) -> str | None:
+    if not isinstance(body, Mapping):
+        return None
+    error = body.get("error")
+    if isinstance(error, Mapping):
+        nested = _native_provider_code(error)
+        if nested is not None:
+            return nested
+    metadata = body.get("metadata")
+    if isinstance(metadata, Mapping):
+        candidate = metadata.get("provider_code")
+        if isinstance(candidate, str) and candidate.strip():
+            return _bounded_provider_text(candidate, limit=128)
+        raw = metadata.get("raw")
+        if raw is not None:
+            return _native_provider_code(_decoded_provider_body(raw))
+    return None
+
+
+def _bounded_provider_text(value: str, *, limit: int = _MAX_PROVIDER_MESSAGE) -> str:
+    normalized = " ".join(value.replace("\x00", "").split())
+    if not normalized:
+        return "Provider request failed without a message"
+    if len(normalized) <= limit:
+        return normalized
+    return normalized[: limit - 1].rstrip() + "…"
+
+
+def _is_context_length(*, code: str | None, provider_code: str | None, message: str) -> bool:
+    normalized_codes = {
+        value.strip().lower().replace("-", "_")
+        for value in (code, provider_code)
+        if value is not None
+    }
+    if normalized_codes & _CONTEXT_CODES:
+        return True
+    return any(pattern.search(message) is not None for pattern in _CONTEXT_PATTERNS)
+
+
+def _provider_refusal_copy(error: ProviderErrorPayload) -> str:
+    if error.classification == "context_length":
+        return (
+            f"This thread has reached {error.model}'s context limit. "
+            "Archive it, then continue in a fresh thread."
+        )
+    punctuation = "" if error.message.endswith((".", "!", "?")) else "."
+    return f"The provider refused: {error.message}{punctuation} Retry this turn or switch models."
 
 
 class _EventBridge:

@@ -601,6 +601,45 @@ def test_run_done_enforces_stop_reason_partial_invariant(stop_reason: str, parti
         )
 
 
+def test_f034_run_done_preserves_only_typed_provider_error_evidence() -> None:
+    """F034 and v2.52 are defended by verifying that run.done carries bounded provider error
+    evidence only on error outcomes; this prevents browser inference and invalid terminal states.
+    """
+    detail = {
+        "classification": "context_length",
+        "message": "maximum context length exceeded",
+        "model": "openrouter:provider/model",
+        "status_code": 400,
+        "code": "context_length_exceeded",
+        "provider_code": "prompt_is_too_long",
+    }
+
+    envelope = envelope_for(
+        "run.done",
+        {
+            "run_id": RUN_ID,
+            "stop_reason": "error",
+            "partial": True,
+            "provider_error": detail,
+        },
+    )
+    assert isinstance(envelope.payload, RunDonePayload)
+    assert envelope.payload.provider_error is not None
+    assert envelope.payload.provider_error.model_dump(exclude_none=True) == detail
+
+    for stop_reason, partial in (("end_turn", False), ("cancelled", True)):
+        with pytest.raises(ValidationError):
+            envelope_for(
+                "run.done",
+                {
+                    "run_id": RUN_ID,
+                    "stop_reason": stop_reason,
+                    "partial": partial,
+                    "provider_error": detail,
+                },
+            )
+
+
 def test_prompt_submit_requires_nonblank_prompt_and_outer_thread() -> None:
     """SPEC C.7 is defended by verifying that prompt submit requires nonblank prompt and outer
     thread; this prevents drift in the typed websocket envelope contract.

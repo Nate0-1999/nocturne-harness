@@ -130,6 +130,15 @@ function messageStatus(
     }
     return activeState === 'waiting_gate' ? 'Waiting for memory review' : 'Streaming'
   }
+  if (state === 'error') {
+    const providerRefusal = message.events.find((event) => event.event_kind === 'provider_refusal')
+    if (providerRefusal?.classification === 'context_length') {
+      return 'Context limit reached'
+    }
+    if (providerRefusal?.classification === 'provider_refusal') {
+      return 'Provider refused'
+    }
+  }
   return state === undefined ? (message.partial ? 'Partial' : null) : terminalCopy(state)
 }
 

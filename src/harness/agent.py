@@ -22,6 +22,7 @@ from spine.tokens import cl100k_token_count
 
 from harness.commands import remember_command_text
 from harness.config import HarnessSettings
+from harness.openrouter_runtime import PreservingOpenRouterModel
 from harness.pydantic_ai_adapter import MemoryCapability
 from harness.spine_client import (
     CreatedMemoryResponse,
@@ -667,6 +668,11 @@ def resolve_model(model: Model | str, settings: HarnessSettings) -> Model:
         return infer_provider(name)
 
     try:
+        if model.startswith("openrouter:"):
+            return PreservingOpenRouterModel(
+                model.removeprefix("openrouter:"),
+                provider=provider_factory("openrouter"),
+            )
         return infer_model(model, provider_factory=provider_factory)
     except ModelConfigurationError:
         raise

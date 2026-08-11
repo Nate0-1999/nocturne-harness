@@ -1050,6 +1050,7 @@ class RunLoop:
                         run_id=active.turn.run_id,
                         stop_reason=stop_reason,
                         partial=partial,
+                        provider_error=(None if outcome is None else outcome.provider_error),
                     ),
                     thread_id=thread_id,
                 ),

@@ -310,6 +310,16 @@ export interface RunDonePayload {
   run_id: Ulid
   stop_reason: StopReason
   partial: boolean
+  provider_error?: ProviderErrorPayload
+}
+
+export interface ProviderErrorPayload {
+  classification: 'context_length' | 'provider_refusal'
+  message: string
+  model: string
+  status_code?: number
+  code?: string
+  provider_code?: string
 }
 
 export interface GateDismissPayload {
@@ -1071,10 +1081,50 @@ function parseRunDone(value: unknown): RunDonePayload | null {
   if (value.partial !== (stopReason !== 'end_turn')) {
     return null
   }
-  return {
+  const providerError = value.provider_error === undefined
+    ? undefined
+    : parseProviderError(value.provider_error)
+  if (
+    (value.provider_error !== undefined && providerError === null) ||
+    (providerError !== undefined && stopReason !== 'error')
+  ) {
+    return null
+  }
+  const parsed: RunDonePayload = {
     run_id: value.run_id,
     stop_reason: stopReason,
     partial: value.partial,
+  }
+  if (providerError !== undefined && providerError !== null) {
+    parsed.provider_error = providerError
+  }
+  return parsed
+}
+
+function parseProviderError(value: unknown): ProviderErrorPayload | null {
+  if (
+    !isRecord(value) ||
+    !['context_length', 'provider_refusal'].includes(String(value.classification)) ||
+    typeof value.message !== 'string' || value.message.trim() === '' ||
+    typeof value.model !== 'string' || value.model.trim() === '' ||
+    (value.status_code !== undefined &&
+      (typeof value.status_code !== 'number' || !Number.isInteger(value.status_code) ||
+        value.status_code < 100 || value.status_code > 599)) ||
+    (value.code !== undefined && (typeof value.code !== 'string' || value.code.trim() === '')) ||
+    (value.provider_code !== undefined &&
+      (typeof value.provider_code !== 'string' || value.provider_code.trim() === ''))
+  ) {
+    return null
+  }
+  return {
+    classification: value.classification as ProviderErrorPayload['classification'],
+    message: value.message,
+    model: value.model,
+    ...(value.status_code === undefined ? {} : { status_code: value.status_code as number }),
+    ...(value.code === undefined ? {} : { code: value.code as string }),
+    ...(value.provider_code === undefined
+      ? {}
+      : { provider_code: value.provider_code as string }),
   }
 }
 

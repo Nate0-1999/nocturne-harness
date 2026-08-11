@@ -1585,3 +1585,33 @@ capability from provider success or failure would spend money, produce opaque
 errors, and make refusal nondeterministic. A generic uploader or external
 object store would add lifecycle, authorization, cleanup, and distribution
 problems that one local image-input rung does not have.
+
+## 055 — Preserve the provider's refusal, not a guessed failure [P2.2, C.7, A-054]
+
+**Decision.** Carry a structured provider HTTP failure from the model adapter
+through `TurnOutcome` and terminal `run.done`, and record the same bounded
+detail as a durable assistant event. Classify a context ceiling only from an
+explicit provider code or narrow context/token-limit wording. That class gets
+one plain archive-and-continue sentence. Other provider HTTP failures retain
+the provider's normalized words and a retry-or-switch remedy. Exceptions that
+are not structured provider HTTP failures keep the existing generic runtime
+error semantics.
+
+Keep Context Bars on its existing last-successful-response authority. A failed
+request has no new measured usage and therefore cannot replace that
+observation with zero. No retry is introduced at either the adapter or run-loop
+layer.
+
+**Motivation.** F034 showed that the provider's only useful diagnostic was
+discarded exactly when the owner needed it, while the last honest pressure
+measurement vanished with it. The adapter is the one place that still has the
+typed provider exception; preserving it there prevents both browser inference
+and generic error copy from erasing the remedy.
+
+**Rejected alternatives.** Parsing arbitrary assistant text in React would
+make the browser classify provider behavior. Calling every exception a
+provider refusal would hide product bugs. Treating any mention of `context` as
+a ceiling would create false guidance. Retrying could duplicate spend and does
+not make an overfull thread smaller. Resetting the gauge to zero would invent a
+measurement, while adding compaction or automatic archiving would pull M3 into
+this bounded repair.

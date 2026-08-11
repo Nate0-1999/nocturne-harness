@@ -19,6 +19,7 @@ from harness.envelope import (
     GateCommitPayload,
     ImageInput,
     MessageType,
+    ProviderErrorPayload,
     StopReason,
     ThreadSnapshotResponsePayload,
     WrongResolution,
@@ -1547,6 +1548,83 @@ async def test_invalid_gate_payload_ends_the_run_instead_of_stranding_the_ui() -
         "partial": True,
     }
     await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_f034_run_loop_preserves_provider_error_in_terminal_envelope_and_transcript(
+    tmp_path: Path,
+) -> None:
+    """F034 and v2.52 are defended by verifying that the run loop publishes and journals one
+    typed plain provider refusal instead of collapsing it into a generic runtime error.
+    """
+    detail = ProviderErrorPayload(
+        classification="context_length",
+        message="maximum context length exceeded",
+        model="openrouter:provider/model",
+        status_code=400,
+        code="context_length_exceeded",
+    )
+
+    class ProviderRefusalRunner:
+        async def run(
+            self,
+            *,
+            thread_id: str,
+            prompt: str,
+            message_history: Sequence[object],
+            emit: RunEmitter,
+            model_resolution: ThreadModelResolution | None = None,
+        ) -> TurnOutcome:
+            del thread_id, prompt, model_resolution
+            await emit.event(
+                {"event_kind": "provider_refusal", **detail.model_dump(exclude_none=True)}
+            )
+            await emit.text(
+                "This thread has reached the model's context limit. "
+                "Archive it, then continue in a fresh thread."
+            )
+            return TurnOutcome(
+                StopReason.ERROR,
+                tuple(message_history),
+                provider_error=detail,
+            )
+
+    ids = Ids()
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    loop = RunLoop(ProviderRefusalRunner(), factory(ids), transcript_journal=journal)
+    sink = Sink()
+    await loop.attach(sink)
+
+    run_id = await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(1),
+        prompt="cross the limit",
+        sink=sink,
+    )
+    await _wait_for_done_count(sink, 1)
+
+    done = next(message for message in sink.messages if message.type is MessageType.RUN_DONE)
+    assert payload(done) == {
+        "run_id": run_id,
+        "stop_reason": StopReason.ERROR,
+        "partial": True,
+        "provider_error": detail.model_dump(),
+    }
+    snapshot_sink = Sink()
+    await loop.request_snapshot("thread-1", snapshot_sink)
+    snapshot = snapshot_sink.messages[0].payload
+    assert isinstance(snapshot, ThreadSnapshotResponsePayload)
+    assistant = snapshot.messages[-1]
+    assert assistant["content"].endswith("continue in a fresh thread.")
+    assert assistant["events"] == [
+        {"event_kind": "provider_refusal", **detail.model_dump(exclude_none=True)}
+    ]
+    await loop.close()
+
+    hydrated = TranscriptJournal(journal.root).hydrate_threads()
+    durable = next(item for item in hydrated if item.thread_id == "thread-1")
+    assert durable.messages[-1]["events"] == assistant["events"]
+    assert durable.messages[-1]["content"] == assistant["content"]
 
 
 @pytest.mark.asyncio

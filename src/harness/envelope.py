@@ -250,16 +250,35 @@ class RunUsagePayload(UsagePayload):
     run_id: ULID
 
 
+class ProviderErrorPayload(BaseModel):
+    """Bounded structured provider refusal preserved by the runtime. [A-054]"""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+
+    classification: Literal["context_length", "provider_refusal"]
+    message: NonBlankString = Field(max_length=1_000)
+    model: NonBlankString = Field(max_length=256)
+    status_code: StrictInt | None = Field(default=None, ge=100, le=599)
+    code: NonBlankString | None = Field(default=None, max_length=128)
+    provider_code: NonBlankString | None = Field(default=None, max_length=128)
+
+
 class RunDonePayload(_ExtensiblePayload):
     run_id: ULID
     stop_reason: StopReason
     partial: StrictBool
+    provider_error: ProviderErrorPayload | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
 
     @model_validator(mode="after")
     def require_consistent_partial_marker(self) -> "RunDonePayload":
         expected = self.stop_reason is not StopReason.END_TURN
         if self.partial is not expected:
             raise ValueError("partial must be false exactly for end_turn")
+        if self.provider_error is not None and self.stop_reason is not StopReason.ERROR:
+            raise ValueError("provider_error requires stop_reason=error")
         return self
 
 

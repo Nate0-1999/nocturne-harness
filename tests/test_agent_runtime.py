@@ -10,7 +10,7 @@ from typing import Any
 from uuid import UUID
 
 import pytest
-from pydantic_ai import models
+from pydantic_ai import ModelHTTPError, models
 from pydantic_ai.messages import (
     BinaryContent,
     ModelRequest,
@@ -22,7 +22,7 @@ from pydantic_ai.messages import (
 )
 from pydantic_ai.models.function import DeltaThinkingPart, DeltaToolCall, FunctionModel
 from pydantic_ai.models.test import TestModel
-from pydantic_ai.usage import RunUsage
+from pydantic_ai.usage import RequestUsage, RunUsage
 
 from harness.agent import REMEMBER_SPLIT_GUIDANCE, HarnessAgent, RememberResult
 from harness.agent_runtime import (
@@ -31,6 +31,7 @@ from harness.agent_runtime import (
     _usage_snapshot,
 )
 from harness.config import HarnessSettings
+from harness.context_window import ContextWindowTracker
 from harness.envelope import GateCommitPayload, StopReason
 from harness.model_policy import ThreadModelResolution
 from harness.receipt_queue import SpendReceiptQueue
@@ -1057,6 +1058,117 @@ async def test_provider_failure_maps_to_error_and_preserves_capture_without_canc
         for message in outcome.message_history
         if isinstance(message, ModelRequest)
         for part in message.parts
+    )
+
+
+@pytest.mark.asyncio
+async def test_f034_context_refusal_keeps_class_words_remedy_and_last_measurement() -> None:
+    """F034 and v2.52 are defended by verifying that a structured context refusal keeps its
+    class, plain archive remedy, and prior measured Context Bars observation without retry.
+    """
+    calls = 0
+
+    async def stream(_messages, _info):
+        nonlocal calls
+        calls += 1
+        raise ModelHTTPError(
+            status_code=400,
+            model_name="rekaai/reka-edge",
+            body={
+                "error": {
+                    "code": 400,
+                    "message": "Maximum context length is 16384 tokens; this request has 17002.",
+                    "metadata": {
+                        "error_type": "invalid_request",
+                        "provider_code": "context_length_exceeded",
+                    },
+                }
+            },
+        )
+        yield  # pragma: no cover - keeps this an async generator
+
+    tracker = ContextWindowTracker()
+    emitter = RecordingEmitter()
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(),
+        context_windows=tracker,
+    )
+    resolution = ThreadModelResolution(
+        model="openrouter:rekaai/reka-edge",
+        context_tokens=16_384,
+        policy="pinned:rekaai/reka-edge",
+    )
+    tracker.record(
+        thread_id=str(THREAD_UUID),
+        captured=[
+            ModelResponse(
+                parts=[TextPart("ACK")],
+                usage=RequestUsage(input_tokens=11_644, output_tokens=8),
+            )
+        ],
+        resolution=resolution,
+        memory_block=None,
+    )
+    measured = tracker.snapshot(str(THREAD_UUID)).aggregate
+    assert measured is not None
+
+    refused = await runner.run(
+        thread_id=str(THREAD_UUID),
+        prompt="cross the real limit",
+        message_history=(),
+        emit=emitter,
+    )
+
+    assert calls == 1
+    assert refused.stop_reason is StopReason.ERROR
+    assert refused.provider_error is not None
+    assert refused.provider_error.classification == "context_length"
+    assert refused.provider_error.code == "invalid_request"
+    assert refused.provider_error.provider_code == "context_length_exceeded"
+    assert refused.provider_error.status_code == 400
+    assert refused.provider_error.message == (
+        "Maximum context length is 16384 tokens; this request has 17002."
+    )
+    assert emitter.events[-1]["event_kind"] == "provider_refusal"
+    assert emitter.texts[-1].strip() == (
+        "This thread has reached rekaai/reka-edge's context limit. "
+        "Archive it, then continue in a fresh thread."
+    )
+    assert tracker.snapshot(str(THREAD_UUID)).aggregate == measured
+
+
+@pytest.mark.asyncio
+async def test_f034_unknown_provider_http_failure_keeps_its_words_without_guessing() -> None:
+    """F034 and v2.52 are defended by verifying that an unknown provider HTTP class keeps the
+    provider's bounded words and retry-or-switch remedy rather than guessing a context ceiling.
+    """
+
+    async def refused(_messages, _info):
+        raise ModelHTTPError(
+            status_code=429,
+            model_name="provider/model",
+            body='{"error":{"code":"rate_limited","message":"Capacity is briefly full."}}',
+        )
+        yield  # pragma: no cover - keeps this an async generator
+
+    emitter = RecordingEmitter()
+    outcome = await PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=refused)),
+        lambda _: context(),
+    ).run(
+        thread_id=str(THREAD_UUID),
+        prompt="hello",
+        message_history=(),
+        emit=emitter,
+    )
+
+    assert outcome.stop_reason is StopReason.ERROR
+    assert outcome.provider_error is not None
+    assert outcome.provider_error.classification == "provider_refusal"
+    assert outcome.provider_error.code == "rate_limited"
+    assert emitter.texts[-1].strip() == (
+        "The provider refused: Capacity is briefly full. Retry this turn or switch models."
     )
 
 

@@ -1,0 +1,69 @@
+{
+  "packet": "M2ZB",
+  "observed_at": "2026-08-10T23:00:21-05:00",
+  "path": {
+    "fixture_used": false,
+    "provider": "OpenRouter",
+    "model": "openrouter:rekaai/reka-edge",
+    "advertised_context_tokens": 16384,
+    "max_output_tokens": 8,
+    "principal_id": "m2zb-sop-verification",
+    "machine_id": "m2zb-sop-verification",
+    "agent_id": "m2zb-sop-verification",
+    "thread_id": "4824dcca-f148-4e14-ae03-c6565e8e8804"
+  },
+  "successful_measurements": [
+    {
+      "requests": 1,
+      "input_tokens": 6079,
+      "output_tokens": 3
+    },
+    {
+      "requests": 1,
+      "input_tokens": 11790,
+      "output_tokens": 8
+    }
+  ],
+  "terminal": {
+    "run_id": "01KZQFMXBZATJSRVRSENDA602R",
+    "stop_reason": "error",
+    "partial": true,
+    "usage": {
+      "requests": 1,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    "provider_error": {
+      "classification": "context_length",
+      "status_code": 400,
+      "code": "invalid_request",
+      "provider_code": null,
+      "model": "rekaai/reka-edge",
+      "message": "This model's maximum context length is 16384 tokens. However, your request has 18072 input tokens. Please reduce the length of the input messages. None"
+    },
+    "owner_badge": "Context limit reached",
+    "owner_remedy": "This thread has reached rekaai/reka-edge's context limit. Archive it, then continue in a fresh thread."
+  },
+  "context_after_refusal": {
+    "used_tokens": 11790,
+    "context_tokens": 16384,
+    "compact_display": "11.8K / 16.4K",
+    "compaction_active": false,
+    "survived_reload": true
+  },
+  "safety": {
+    "automatic_retries": 0,
+    "memory_tool_calls": 0,
+    "memories_admitted": 0,
+    "archives": 0,
+    "cloud_mutations": 0,
+    "credentials_retained": false,
+    "expected_remote_residue": [
+      "verification-identity injection events",
+      "verification-identity spend receipts"
+    ]
+  },
+  "artifacts": [
+    "01-real-context-limit.jpg"
+  ]
+}

@@ -62,7 +62,11 @@ class ContextWindowTracker:
         if resolution is None:
             return
         response = next(
-            (message for message in reversed(captured) if isinstance(message, ModelResponse)),
+            (
+                message
+                for message in reversed(captured)
+                if isinstance(message, ModelResponse) and message.usage.input_tokens > 0
+            ),
             None,
         )
         if response is None:
