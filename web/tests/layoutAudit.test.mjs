@@ -30,7 +30,7 @@ test('layout audit reports clipped text independently of box collisions', () => 
   assert.deepEqual(result.clipped.map((item) => item.id), ['thread-title'])
 })
 
-/** SPEC B.6 / M2UX1 fixes the layout-control lane and removes thread-title clipping at their source. */
+/** SPEC B.6 / M2UX1 and PLAN M2UX4 reserve the host layout/theme lane and remove thread-title clipping at their source. */
 test('rack source reserves the host control lane and lets thread titles wrap in full', async () => {
   const [app, graph, rackCss, shellCss] = await Promise.all([
     readFile(new URL('src/App.tsx', webRoot), 'utf8'),
@@ -40,9 +40,12 @@ test('rack source reserves the host control lane and lets thread titles wrap in 
   ])
 
   assert.match(app, /className="rack-set-reserve" aria-hidden="true"/)
+  assert.match(app, /data-testid="theme-control"/)
   assert.match(app, /matchMedia\('\(max-width: 48\.9rem\)'\)/)
   assert.match(app, /data-testid="seed-upload"[\s\S]*tabIndex=\{-1\}[\s\S]*aria-hidden="true"/)
-  assert.match(rackCss, /grid-template-columns:\s*11\.5rem 13\.25rem max-content minmax\(0, 1fr\) max-content/)
+  assert.match(rackCss, /grid-template-columns:\s*11\.5rem 22rem max-content minmax\(0, 1fr\) max-content/)
+  assert.match(rackCss, /@media \(max-width: 48\.9rem\)[\s\S]*\.rack-set-controls\s*\{[\s\S]*top:\s*3\.25rem/)
+  assert.match(rackCss, /\.rack-shell--vitals-collapsed \.rack-module\[data-rack-module="chat"\]\s*\{[^}]*inset:\s*5\.35rem 0 3\.1rem/s)
   assert.match(rackCss, /\.rack-overlay-module--palace-queue,[\s\S]*inset:\s*3\.25rem 0 0/)
   assert.match(rackCss, /@media \(max-width: 48\.9rem\)[\s\S]*\.rack-drawer-scrim\s*\{\s*display:\s*none/)
   assert.match(rackCss, /\.learning-summary__metric > small\s*\{[^}]*overflow-wrap:\s*anywhere/s)

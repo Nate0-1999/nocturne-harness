@@ -76,10 +76,12 @@ test('Injection scope buttons persist through rack.scope.set', async () => {
 
 /** SPEC B.6 and A-051 require M2Z4 secondary acts to remain visibly readable. */
 test('Run DEEP and Audition share explicit readable secondary-action states', async () => {
-  const [source, css] = await Promise.all([
+  const [source, css, seamSource] = await Promise.all([
     readFile(new URL('../src/InjectionConsole.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/assets/rack.css', import.meta.url), 'utf8'),
+    readFile(new URL('../src/themes/seam-colors.json', import.meta.url), 'utf8'),
   ])
+  const seam = JSON.parse(seamSource).colors
   const classUses = source.match(/className="console-secondary-action"/gu) ?? []
   const normal = /\.instrument--console \.console-secondary-action\s*\{(?<body>[^}]*)\}/u.exec(css)
   const disabled = /\.instrument--console \.console-secondary-action:disabled\s*\{(?<body>[^}]*)\}/u.exec(css)
@@ -87,11 +89,18 @@ test('Run DEEP and Audition share explicit readable secondary-action states', as
   assert.equal(classUses.length, 2)
   assert.notEqual(normal, null)
   assert.match(normal.groups.body, /border:\s*1px solid/u)
-  assert.match(normal.groups.body, /background:\s*#071118/u)
-  assert.match(normal.groups.body, /color:\s*#dce9ee/u)
+  assertSeamValue(normal.groups.body, 'background', '#071118', seam)
+  assertSeamValue(normal.groups.body, 'color', '#dce9ee', seam)
   assert.match(css, /\.instrument--console \.console-secondary-action:hover:not\(:disabled\)/u)
   assert.match(css, /\.instrument--console \.console-secondary-action:focus-visible/u)
   assert.notEqual(disabled, null)
-  assert.match(disabled.groups.body, /background:\s*#081016/u)
-  assert.match(disabled.groups.body, /color:\s*#60767e/u)
+  assertSeamValue(disabled.groups.body, 'background', '#081016', seam)
+  assertSeamValue(disabled.groups.body, 'color', '#60767e', seam)
 })
+
+function assertSeamValue(cssBody, property, neoNoirValue, seam) {
+  const match = new RegExp(`(?:^|\\n)\\s*${property}:\\s*var\\((--seam-[0-9a-f]{12})\\)`, 'u').exec(cssBody)
+  assert.notEqual(match, null)
+  const entry = seam.find((color) => color.variable === match[1])
+  assert.equal(entry?.neo_noir, neoNoirValue)
+}

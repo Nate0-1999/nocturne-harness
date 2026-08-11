@@ -1,0 +1,288 @@
+{
+  "accents": {
+    "coral_peak": {
+      "area_share_percent": 0.582703,
+      "base": "#a34f4c",
+      "peak": "#cd352b"
+    },
+    "gold": {
+      "area_share_percent": 0.061437,
+      "base": "#ad8659",
+      "peak": "#db9969"
+    },
+    "iris_blue": {
+      "area_share_percent": 0.77741,
+      "base": "#2b58ba",
+      "peak": "#294cbd"
+    },
+    "specular": {
+      "area_share_percent": 1.216,
+      "base": "#ebecec",
+      "glint_census": 119,
+      "peak": "#fffffd"
+    }
+  },
+  "chrome_percentile_ramp": [
+    {
+      "hex": "#090807",
+      "l": 0.129,
+      "percentile": 2
+    },
+    {
+      "hex": "#100f15",
+      "l": 0.176,
+      "percentile": 50
+    },
+    {
+      "hex": "#302529",
+      "l": 0.28,
+      "percentile": 70
+    },
+    {
+      "hex": "#888d9b",
+      "l": 0.643,
+      "percentile": 85
+    },
+    {
+      "hex": "#a1aebd",
+      "l": 0.745,
+      "percentile": 93
+    },
+    {
+      "hex": "#bfcbd5",
+      "l": 0.836,
+      "percentile": 97
+    },
+    {
+      "hex": "#dbe5ee",
+      "l": 0.918,
+      "percentile": 99
+    },
+    {
+      "hex": "#eff8fa",
+      "l": 0.976,
+      "percentile": 99.8
+    }
+  ],
+  "clusters": [
+    {
+      "area_share_percent": 28.309546,
+      "hex": "#0a0909",
+      "oklch": {
+        "c": 0.001497,
+        "h": 353.448,
+        "l": 0.139748
+      }
+    },
+    {
+      "area_share_percent": 16.65879,
+      "hex": "#11233e",
+      "oklch": {
+        "c": 0.05765,
+        "h": 258.596,
+        "l": 0.255617
+      }
+    },
+    {
+      "area_share_percent": 11.333176,
+      "hex": "#14131b",
+      "oklch": {
+        "c": 0.015951,
+        "h": 294.282,
+        "l": 0.190788
+      }
+    },
+    {
+      "area_share_percent": 7.420132,
+      "hex": "#173474",
+      "oklch": {
+        "c": 0.114805,
+        "h": 262.985,
+        "l": 0.344496
+      }
+    },
+    {
+      "area_share_percent": 7.094045,
+      "hex": "#b3656d",
+      "oklch": {
+        "c": 0.100359,
+        "h": 14.501,
+        "l": 0.597615
+      }
+    },
+    {
+      "area_share_percent": 5.862476,
+      "hex": "#402c2c",
+      "oklch": {
+        "c": 0.029239,
+        "h": 17.406,
+        "l": 0.316072
+      }
+    },
+    {
+      "area_share_percent": 5.715501,
+      "hex": "#8e95ab",
+      "oklch": {
+        "c": 0.033351,
+        "h": 271.008,
+        "l": 0.671571
+      }
+    },
+    {
+      "area_share_percent": 4.426749,
+      "hex": "#3059a7",
+      "oklch": {
+        "c": 0.133482,
+        "h": 261.721,
+        "l": 0.47758
+      }
+    },
+    {
+      "area_share_percent": 4.161626,
+      "hex": "#aeb6c4",
+      "oklch": {
+        "c": 0.021846,
+        "h": 259.927,
+        "l": 0.774938
+      }
+    },
+    {
+      "area_share_percent": 4.132798,
+      "hex": "#665c63",
+      "oklch": {
+        "c": 0.017652,
+        "h": 337.092,
+        "l": 0.486947
+      }
+    },
+    {
+      "area_share_percent": 3.73724,
+      "hex": "#e6e8e9",
+      "oklch": {
+        "c": 0.002607,
+        "h": 220.263,
+        "l": 0.930233
+      }
+    },
+    {
+      "area_share_percent": 1.147921,
+      "hex": "#020101",
+      "oklch": {
+        "c": 0.007323,
+        "h": 6.446,
+        "l": 0.068748
+      }
+    }
+  ],
+  "contrast_repairs": [
+    {
+      "pair": "danger_on_ground",
+      "raw": "#a34f4c",
+      "worn": "#d94048"
+    },
+    {
+      "pair": "day_user_text",
+      "raw": "#dad8d2",
+      "worn": "#263452"
+    }
+  ],
+  "gradient_rails": {
+    "chrome": [
+      "#090807",
+      "#100f15",
+      "#302529",
+      "#888d9b",
+      "#bfcbd5",
+      "#dbe5ee",
+      "#eff8fa"
+    ],
+    "sky": [
+      "#04050c",
+      "#0a0d1a",
+      "#0e1a44",
+      "#1c3060",
+      "#412829",
+      "#3c2828"
+    ],
+    "warm": [
+      "#3c2828",
+      "#b66872",
+      "#db9969"
+    ]
+  },
+  "image": {
+    "height": 460,
+    "sha256": "40bfc4414de3fe5d252060dc806cf5c795180d6fcd20aae37ac059a69498e069",
+    "width": 460
+  },
+  "kmeans": {
+    "color_space": "OKLab",
+    "k": 12,
+    "seed": 40
+  },
+  "part_material_map": {
+    "body_ground": {
+      "material": "atmosphere",
+      "tokens": [
+        "ground",
+        "sky_rail"
+      ]
+    },
+    "danger": {
+      "material": "coral",
+      "tokens": [
+        "danger",
+        "coral_peak"
+      ]
+    },
+    "drag_resize_affordances": {
+      "material": "chrome_rim",
+      "tokens": [
+        "chrome_ramp",
+        "specular"
+      ]
+    },
+    "earned_badges": {
+      "material": "gold",
+      "tokens": [
+        "gold_base",
+        "gold_peak"
+      ]
+    },
+    "frame_border": {
+      "material": "liquid_chrome_rim",
+      "tokens": [
+        "chrome_ramp",
+        "sky_rail"
+      ]
+    },
+    "header_bar": {
+      "material": "dark_cel",
+      "tokens": [
+        "surface_deep",
+        "silver_linework"
+      ]
+    },
+    "human_surfaces": {
+      "material": "warm_cel",
+      "tokens": [
+        "warm",
+        "warm_well"
+      ]
+    },
+    "selection": {
+      "material": "cobalt",
+      "tokens": [
+        "cobalt",
+        "iris_blue"
+      ]
+    },
+    "vitals_top_border": {
+      "material": "horizon",
+      "tokens": [
+        "horizon_amber"
+      ]
+    }
+  },
+  "schema_version": 1
+}

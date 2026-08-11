@@ -1745,3 +1745,54 @@ resize would still provide no chosen grid geometry. Giving every overlay fake
 drag handles would imply movement that a full-screen lifecycle cannot honor.
 Adding free x/y positions, gaps, zoom, or cross-band floating now would smuggle
 the Infinite Stage into M2UX3 and make this repair much larger than its proof.
+
+## 060 — One literal seam carries three complete faces [P2, ADR-018, M2UX4]
+
+**Decision.** The exact Cobalt Seraph plate named by Garden is copied into the
+web source tree and reduced by one deterministic, standard-library extractor:
+seeded weighted OKLab k-means plus explicit accent masks, a percentile chrome
+ramp, and a checked-in part-to-material map. Generated JSON and CSS are build
+inputs, and normal generation is a byte-for-byte drift check. The plate hash,
+dimensions, seed, cluster count, and generated outputs are pinned by tests.
+
+Every raw color literal formerly present in `base.css`, `shell.css`, and
+`rack.css` now crosses one generated token seam. NEO-NOIR preserves those
+literal values exactly. SERAPH DRESSED and GOLD LINES supply complete alternate
+values for the same seam: the frozen R4A/R5B pairs are exact, while later Rack
+colors absent from those auditions use a deterministic semantic-family map.
+Theme choice is presentation state under the separate
+`nocturne.theme.v1` local-storage key. It is neither a Rack layout parameter nor
+an entry in the server-owned parameter registry. Sandboxed module frames receive
+the closed theme name as a query parameter; this conveys no new bridge action.
+
+The packet's previously undefined "dataviz six checks" means six mechanical
+palette assertions for each complete face: ink contrast, muted-text contrast,
+fleet-to-ground contrast, semantic-pair separation, deuteranopia-projected pair
+separation, and exactly one danger family. Retained rendered evidence adds three
+orthogonal checks: unchanged NEO pixels outside the new control and volatile
+fixture rows, palette-family distance from the plate, and a bimodal chrome rim.
+The emulation distance ceiling is 0.395, recorded from the first honest retained
+Rack render before closeout; it is a regression bound, not a claim that a flat
+UI can reproduce the plate's photographed material distribution.
+
+SERAPH DRESSED applies the two-sky wash and viewport-fixed banded chrome only to
+the ambient field and module rims. Idle rims stay one pixel, hover/focus may
+blaze to two, and interactive fills remain dark. GOLD LINES remains a separate
+day face. NEO-NOIR is the worn default. The responsive host reserves a dedicated
+theme-control lane, including a separate row at phone width.
+
+**Motivation.** Three usable faces fail as a product if each stylesheet owns a
+private approximation of the UI. A single literal seam makes selection complete
+across the host and every sandboxed module, preserves the worn skin exactly, and
+turns later color additions into a visible build failure. The extractor makes
+the reference plate provenance reproducible instead of relying on hand-picked
+swatches, while the material rules keep the most visually aggressive face from
+turning every control into chrome.
+
+**Rejected alternatives.** Three forked stylesheets would drift at every new
+module. Runtime image sampling would make startup and screenshots nondeterministic.
+Copying the plate as a background would imitate subject matter rather than
+material grammar. A generic theme marketplace, user-authored tokens, server
+storage, or Rack-manifest parameter would add product surface with no M2 need.
+Applying chrome to panel fills would erase hierarchy and violate the plate's
+rare-shine law.

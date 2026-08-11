@@ -1,0 +1,264 @@
+{
+  "fixture": "M2UX4 REGRESSION",
+  "observations": {
+    "desktop": {
+      "neo-noir": {
+        "root": "neo-noir",
+        "selected": "neo-noir",
+        "user_text": null,
+        "composer": {
+          "backgroundColor": "rgba(7, 18, 27, 0.94)",
+          "borderColor": "rgba(60, 210, 255, 0.42)"
+        },
+        "frames": {
+          "header": "neo-noir",
+          "threads": "neo-noir",
+          "chat": "neo-noir",
+          "memory": "neo-noir",
+          "vitals": "neo-noir",
+          "context_bars": "neo-noir"
+        },
+        "module_border": "rgba(60, 210, 255, 0.42)"
+      },
+      "seraph-dressed": {
+        "root": "seraph-dressed",
+        "selected": "seraph-dressed",
+        "user_text": null,
+        "composer": {
+          "backgroundColor": "rgba(7, 8, 15, 0.94)",
+          "borderColor": "rgba(219, 229, 238, 0.42)"
+        },
+        "frames": {
+          "header": "seraph-dressed",
+          "threads": "seraph-dressed",
+          "chat": "seraph-dressed",
+          "memory": "seraph-dressed",
+          "vitals": "seraph-dressed",
+          "context_bars": "seraph-dressed"
+        },
+        "module_border": "rgba(0, 0, 0, 0)"
+      },
+      "gold-lines": {
+        "root": "gold-lines",
+        "selected": "gold-lines",
+        "user_text": null,
+        "composer": {
+          "backgroundColor": "rgba(245, 248, 252, 0.94)",
+          "borderColor": "rgba(150, 104, 44, 0.42)"
+        },
+        "frames": {
+          "header": "gold-lines",
+          "threads": "gold-lines",
+          "chat": "gold-lines",
+          "memory": "gold-lines",
+          "vitals": "gold-lines",
+          "context_bars": "gold-lines"
+        },
+        "module_border": "rgb(176, 122, 63)"
+      }
+    },
+    "phone": {
+      "neo-noir": {
+        "root": "neo-noir",
+        "selected": "neo-noir",
+        "user_text": null,
+        "composer": {
+          "backgroundColor": "rgba(7, 18, 27, 0.97)",
+          "borderColor": "rgba(60, 210, 255, 0.42)"
+        },
+        "frames": {
+          "header": "neo-noir",
+          "threads": "neo-noir",
+          "chat": "neo-noir",
+          "memory": "neo-noir",
+          "vitals": "neo-noir",
+          "context_bars": "neo-noir"
+        },
+        "module_border": "rgb(232, 248, 255)"
+      },
+      "seraph-dressed": {
+        "root": "seraph-dressed",
+        "selected": "seraph-dressed",
+        "user_text": null,
+        "composer": {
+          "backgroundColor": "rgba(7, 8, 15, 0.97)",
+          "borderColor": "rgba(219, 229, 238, 0.42)"
+        },
+        "frames": {
+          "header": "seraph-dressed",
+          "threads": "seraph-dressed",
+          "chat": "seraph-dressed",
+          "memory": "seraph-dressed",
+          "vitals": "seraph-dressed",
+          "context_bars": "seraph-dressed"
+        },
+        "module_border": "rgba(0, 0, 0, 0)"
+      },
+      "gold-lines": {
+        "root": "gold-lines",
+        "selected": "gold-lines",
+        "user_text": null,
+        "composer": {
+          "backgroundColor": "rgba(245, 248, 252, 0.97)",
+          "borderColor": "rgba(150, 104, 44, 0.42)"
+        },
+        "frames": {
+          "header": "gold-lines",
+          "threads": "gold-lines",
+          "chat": "gold-lines",
+          "memory": "gold-lines",
+          "vitals": "gold-lines",
+          "context_bars": "gold-lines"
+        },
+        "module_border": "rgb(176, 122, 63)"
+      }
+    },
+    "phone_control_lane": {
+      "control": {
+        "x": 246.8125,
+        "y": 57.296875,
+        "width": 136,
+        "height": 22
+      },
+      "header_bottom": 51,
+      "chat_top": 85.59375
+    },
+    "seam": {
+      "desktop": {
+        "neo-noir": {
+          "root": "neo-noir",
+          "selected": "neo-noir",
+          "user_text": "rgb(201, 220, 228)",
+          "composer": {
+            "backgroundColor": "rgba(7, 18, 27, 0.94)",
+            "borderColor": "rgba(60, 210, 255, 0.42)"
+          },
+          "frames": {
+            "header": "neo-noir",
+            "threads": "neo-noir",
+            "chat": "neo-noir",
+            "memory": "neo-noir",
+            "vitals": "neo-noir",
+            "context_bars": "neo-noir"
+          },
+          "module_border": "rgba(60, 210, 255, 0.42)"
+        },
+        "seraph-dressed": {
+          "root": "seraph-dressed",
+          "selected": "seraph-dressed",
+          "user_text": "rgb(238, 244, 251)",
+          "composer": {
+            "backgroundColor": "rgba(7, 8, 15, 0.94)",
+            "borderColor": "rgba(219, 229, 238, 0.42)"
+          },
+          "frames": {
+            "header": "seraph-dressed",
+            "threads": "seraph-dressed",
+            "chat": "seraph-dressed",
+            "memory": "seraph-dressed",
+            "vitals": "seraph-dressed",
+            "context_bars": "seraph-dressed"
+          },
+          "module_border": "rgba(0, 0, 0, 0)"
+        },
+        "gold-lines": {
+          "root": "gold-lines",
+          "selected": "gold-lines",
+          "user_text": "rgb(38, 52, 82)",
+          "composer": {
+            "backgroundColor": "rgba(245, 248, 252, 0.94)",
+            "borderColor": "rgba(150, 104, 44, 0.42)"
+          },
+          "frames": {
+            "header": "gold-lines",
+            "threads": "gold-lines",
+            "chat": "gold-lines",
+            "memory": "gold-lines",
+            "vitals": "gold-lines",
+            "context_bars": "gold-lines"
+          },
+          "module_border": "rgb(176, 122, 63)"
+        }
+      },
+      "phone": {
+        "neo-noir": {
+          "root": "neo-noir",
+          "selected": "neo-noir",
+          "user_text": "rgb(201, 220, 228)",
+          "composer": {
+            "backgroundColor": "rgba(7, 18, 27, 0.97)",
+            "borderColor": "rgba(60, 210, 255, 0.42)"
+          },
+          "frames": {
+            "header": "neo-noir",
+            "threads": "neo-noir",
+            "chat": "neo-noir",
+            "memory": "neo-noir",
+            "vitals": "neo-noir",
+            "context_bars": "neo-noir"
+          },
+          "module_border": "rgb(232, 248, 255)"
+        },
+        "seraph-dressed": {
+          "root": "seraph-dressed",
+          "selected": "seraph-dressed",
+          "user_text": "rgb(238, 244, 251)",
+          "composer": {
+            "backgroundColor": "rgba(7, 8, 15, 0.97)",
+            "borderColor": "rgba(219, 229, 238, 0.42)"
+          },
+          "frames": {
+            "header": "seraph-dressed",
+            "threads": "seraph-dressed",
+            "chat": "seraph-dressed",
+            "memory": "seraph-dressed",
+            "vitals": "seraph-dressed",
+            "context_bars": "seraph-dressed"
+          },
+          "module_border": "rgba(0, 0, 0, 0)"
+        },
+        "gold-lines": {
+          "root": "gold-lines",
+          "selected": "gold-lines",
+          "user_text": "rgb(38, 52, 82)",
+          "composer": {
+            "backgroundColor": "rgba(245, 248, 252, 0.97)",
+            "borderColor": "rgba(150, 104, 44, 0.42)"
+          },
+          "frames": {
+            "header": "gold-lines",
+            "threads": "gold-lines",
+            "chat": "gold-lines",
+            "memory": "gold-lines",
+            "vitals": "gold-lines",
+            "context_bars": "gold-lines"
+          },
+          "module_border": "rgb(176, 122, 63)"
+        }
+      }
+    },
+    "persistence": {
+      "selected": "gold-lines",
+      "root": "gold-lines",
+      "chat_frame": "gold-lines"
+    },
+    "reflection": {
+      "before": {
+        "x": 7,
+        "y": 597,
+        "attachment": "fixed",
+        "image": "linear-gradient(135deg, rgb(239, 248, 250) 0px, rgb(239, 248, 250) 7%, rgb(16, 15, 21) 7%, rgb(16, 15, 21) 43%, rgb(219, 229, 238) 43%, rgb(219, 229, 238) 49%, rgb(9, 8, 7) 49%, rgb(9, 8, 7) 78%, rgb(239, 248, 250) 78%, rgb(239, 248, 250) 83%, rgb(16, 15, 21) 83%, rgb(16, 15, 21) 100%)",
+        "padding": "1px"
+      },
+      "after": {
+        "x": 325,
+        "y": 597,
+        "attachment": "fixed",
+        "image": "linear-gradient(135deg, rgb(239, 248, 250) 0px, rgb(239, 248, 250) 7%, rgb(16, 15, 21) 7%, rgb(16, 15, 21) 43%, rgb(219, 229, 238) 43%, rgb(219, 229, 238) 49%, rgb(9, 8, 7) 49%, rgb(9, 8, 7) 78%, rgb(239, 248, 250) 78%, rgb(239, 248, 250) 83%, rgb(16, 15, 21) 83%, rgb(16, 15, 21) 100%)",
+        "padding": "1px"
+      }
+    }
+  },
+  "console_problems": [],
+  "page_errors": []
+}

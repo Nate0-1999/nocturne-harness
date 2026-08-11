@@ -21,6 +21,7 @@ import {
   type RackSelection,
   type RackSnapshot,
 } from './rack'
+import type { ThemeId } from './themes'
 import {
   rackSnapshotForIframe,
   rackValueForIframe,
@@ -59,9 +60,11 @@ interface ConnectMessage {
 
 export function RackPluginIframe({
   manifest,
+  theme,
   isRegressionFixture = false,
 }: {
   manifest: RackModuleManifest
+  theme: ThemeId
   isRegressionFixture?: boolean
 }) {
   const frameRef = useRef<HTMLIFrameElement>(null)
@@ -191,12 +194,12 @@ export function RackPluginIframe({
       data-testid={`rack-plugin-frame-${manifest.id}`}
       title={manifest.name}
       sandbox="allow-scripts allow-same-origin"
-      src={rackFrameUrl(manifest.id)}
+      src={rackFrameUrl(manifest.id, theme)}
     />
   )
 }
 
-function rackFrameUrl(moduleId: RackModuleId): string {
+function rackFrameUrl(moduleId: RackModuleId, theme: ThemeId): string {
   const url = new URL(globalThis.location.href)
   const fixture = url.searchParams.get('fixture')
   url.hostname = 'rack.localhost'
@@ -204,6 +207,7 @@ function rackFrameUrl(moduleId: RackModuleId): string {
   url.search = ''
   url.searchParams.set('rack_module', moduleId)
   url.searchParams.set('rack_host', globalThis.location.origin)
+  url.searchParams.set('theme', theme)
   if (fixture === 'M2C REGRESSION' || fixture === 'M2G REGRESSION') {
     url.searchParams.set('fixture', fixture)
   }

@@ -81,6 +81,12 @@ import {
 import { isLegacyFixtureTitle, visibleThreadTitle } from './threadTitles'
 import { ProjectSelector } from './ProjectSelector'
 import {
+  THEMES,
+  applyTheme,
+  loadTheme,
+  type ThemeId,
+} from './themes'
+import {
   rackDrawerModule,
   rackModuleSelectionIsOpen,
 } from './graphOverlaySelection'
@@ -175,6 +181,14 @@ function initialSavedRackSet(): RackLayoutSet | null {
   }
 }
 
+function initialTheme(): ThemeId {
+  try {
+    return loadTheme(globalThis.localStorage)
+  } catch {
+    return 'neo-noir'
+  }
+}
+
 function App() {
   const requestedModule = new URLSearchParams(globalThis.location.search).get('rack_module')
   const isRemoteModule = isRackModuleId(requestedModule)
@@ -252,6 +266,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   const selection = useRackHostSelection()
   const [layout, setLayout] = useState<RackLayoutSet>(initialRackLayout)
   const [savedSet, setSavedSet] = useState<RackLayoutSet | null>(initialSavedRackSet)
+  const [theme, setTheme] = useState<ThemeId>(initialTheme)
   const [pointerActive, setPointerActive] = useState(false)
   const [mobileCollapsed, setMobileCollapsed] = useState(
     () => globalThis.matchMedia('(max-width: 48.9rem)').matches,
@@ -287,6 +302,14 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
       // The rack remains usable when a hardened browser denies local storage.
     }
   }, [layout])
+
+  useEffect(() => {
+    try {
+      applyTheme(theme, globalThis.localStorage)
+    } catch {
+      applyTheme(theme)
+    }
+  }, [theme])
 
   useEffect(() => {
     const syncScope = (event: Event) => {
@@ -381,7 +404,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   return (
     <div
       className={`rack-shell rack-shell--vitals-${vitalsCollapsed ? 'collapsed' : 'expanded'}`}
-      data-theme="neo-noir"
+      data-theme={theme}
       data-testid="rack-shell"
     >
       <div className="rack-ambient" aria-hidden="true" />
@@ -396,9 +419,22 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           y={1}
           width={RACK_COLUMNS}
           height={1}
+          theme={theme}
           isRegressionFixture={isRegressionFixture}
         />
         <div className="rack-set-controls" aria-label="Rack layout set">
+          <label className="theme-control">
+            <span>Theme</span>
+            <select
+              value={theme}
+              data-testid="theme-control"
+              onChange={(event) => setTheme(event.currentTarget.value as ThemeId)}
+            >
+              {THEMES.map((choice) => (
+                <option key={choice.id} value={choice.id}>{choice.label}</option>
+              ))}
+            </select>
+          </label>
           <span data-testid="layout-status">{layoutStatus}</span>
           <button type="button" data-testid="layout-save" onClick={saveCurrentSet}>
             Save
@@ -437,6 +473,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               onPointerActivity={setPointerActive}
               orderedIds={ordered.map((item) => item.module_id)}
               isRegressionFixture={isRegressionFixture}
+              theme={theme}
             />
           )
         })}
@@ -458,6 +495,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               orderedIds={strips.map((item) => item.module_id)}
               onCollapseToggle={module.module_id === 'vitals' ? toggleVitals : undefined}
               isRegressionFixture={isRegressionFixture}
+              theme={theme}
             />
           )
         })}
@@ -477,6 +515,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
         <div className="rack-overlay-module" data-rack-module="gate">
           <RackPluginIframe
             manifest={RACK_MANIFESTS.gate}
+            theme={theme}
             isRegressionFixture={isRegressionFixture}
           />
         </div>
@@ -484,6 +523,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
       {dismissibleOverlay !== null && openGate === null && (
         <DismissibleRackOverlay
           moduleId={dismissibleOverlay}
+          theme={theme}
           isRegressionFixture={isRegressionFixture}
         />
       )}
@@ -496,9 +536,11 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
 
 function DismissibleRackOverlay({
   moduleId,
+  theme,
   isRegressionFixture,
 }: {
   moduleId: DismissibleOverlayModuleId
+  theme: ThemeId
   isRegressionFixture: boolean
 }) {
   return (
@@ -518,6 +560,7 @@ function DismissibleRackOverlay({
       </button>
       <RackPluginIframe
         manifest={RACK_MANIFESTS[moduleId]}
+        theme={theme}
         isRegressionFixture={isRegressionFixture}
       />
     </div>
@@ -545,6 +588,7 @@ interface RackModuleFrameProps {
   onPointerActivity?: (active: boolean) => void
   onCollapseToggle?: () => void
   isRegressionFixture?: boolean
+  theme: ThemeId
 }
 
 function RackModuleFrame({
@@ -563,6 +607,7 @@ function RackModuleFrame({
   onPointerActivity,
   onCollapseToggle,
   isRegressionFixture = false,
+  theme,
 }: RackModuleFrameProps) {
   const frameRef = useRef<HTMLDivElement>(null)
   const [resizeSequence, setResizeSequence] = useState(0)
@@ -816,6 +861,7 @@ function RackModuleFrame({
       <div className="rack-module__content">
         <RackPluginIframe
           manifest={manifest}
+          theme={theme}
           isRegressionFixture={isRegressionFixture}
         />
       </div>

@@ -1,0 +1,92 @@
+/* Theme material law: motifs consume tokens; they never carry data authority. */
+:root {
+  --theme-sky-wash: none;
+  --theme-rim: var(--line-strong);
+  --theme-rim-hover: var(--accent);
+  --theme-horizon: var(--accent-secondary);
+}
+
+html[data-theme="seraph-dressed"] {
+  --theme-sky-wash: linear-gradient(
+    to bottom,
+    var(--plate-night),
+    var(--plate-night-deep) 34%,
+    var(--plate-cobalt) 72%,
+    var(--plate-cobalt-day) 90%,
+    var(--plate-horizon) 98.6%,
+    var(--plate-horizon-deep)
+  );
+  --theme-rim: linear-gradient(
+    135deg,
+    var(--plate-chrome-peak) 0 7%,
+    var(--plate-chrome-dark) 7% 43%,
+    var(--plate-chrome-blaze) 43% 49%,
+    var(--plate-chrome-seam) 49% 78%,
+    var(--plate-chrome-peak) 78% 83%,
+    var(--plate-chrome-dark) 83% 100%
+  );
+  --theme-rim-hover: linear-gradient(
+    135deg,
+    var(--plate-chrome-peak) 0 12%,
+    var(--plate-chrome-seam) 12% 38%,
+    var(--plate-chrome-blaze) 38% 52%,
+    var(--plate-chrome-dark) 52% 72%,
+    var(--plate-chrome-peak) 72% 88%,
+    var(--plate-chrome-seam) 88% 100%
+  );
+  --theme-horizon: var(--plate-horizon);
+}
+
+html[data-theme="gold-lines"] {
+  --theme-sky-wash: linear-gradient(
+    to bottom,
+    var(--surface-raised),
+    var(--ground) 55%,
+    var(--muted) 88%,
+    var(--accent-strong)
+  );
+  --theme-rim: var(--accent-secondary);
+  --theme-rim-hover: var(--accent-secondary);
+  --theme-horizon: var(--accent-secondary);
+}
+
+html[data-theme="seraph-dressed"] .rack-shell,
+html[data-theme="gold-lines"] .rack-shell {
+  background: var(--theme-sky-wash) fixed;
+}
+
+html[data-theme="seraph-dressed"] .rack-module {
+  border-color: transparent;
+}
+
+html[data-theme="seraph-dressed"] .rack-module::after {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  padding: 1px;
+  pointer-events: none;
+  background: var(--theme-rim) fixed;
+  content: "";
+  mask: linear-gradient(currentColor 0 0) content-box exclude, linear-gradient(currentColor 0 0);
+}
+
+html[data-theme="seraph-dressed"] .rack-module:hover::after,
+html[data-theme="seraph-dressed"] .rack-module:focus-within::after,
+html[data-theme="seraph-dressed"] .rack-module[data-dragging="true"]::after {
+  padding: 2px;
+  background: var(--theme-rim-hover) fixed;
+}
+
+html[data-theme="seraph-dressed"] .rack-module--strip::after {
+  border-top: 1px solid var(--theme-horizon);
+}
+
+html[data-theme="gold-lines"] .rack-module,
+html[data-theme="gold-lines"] .rack-overlay-module {
+  border-color: var(--theme-rim);
+}
+
+html[data-theme="seraph-dressed"] .rack-ambient,
+html[data-theme="gold-lines"] .rack-ambient {
+  filter: none;
+}
