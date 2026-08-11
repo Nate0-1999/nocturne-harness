@@ -1,0 +1,46 @@
+{
+  "fixture": "M2UX2 REGRESSION",
+  "crawl": [
+    {
+      "view": "palace_queue",
+      "return": "one-click"
+    },
+    {
+      "view": "memory_graph",
+      "return": "one-click"
+    },
+    {
+      "view": "injection_console",
+      "return": "one-click"
+    },
+    {
+      "view": "model_device",
+      "return": "one-click"
+    },
+    {
+      "view": "threads",
+      "return": "one-click"
+    },
+    {
+      "view": "memory",
+      "return": "one-click"
+    },
+    {
+      "view": "thread_end",
+      "return": "one-click",
+      "extraction_candidates": 5
+    }
+  ],
+  "trace": {
+    "pending_thread_candidates": 5,
+    "candidate_labels": [
+      "New relay note",
+      "Merge relay note",
+      "Supersede relay note",
+      "Contradiction warning",
+      "Visibility boundary"
+    ]
+  },
+  "console_problems": [],
+  "page_errors": []
+}

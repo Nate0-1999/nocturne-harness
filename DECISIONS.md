@@ -1680,3 +1680,33 @@ overlay cover iframe content. Making the default unit suite launch a system
 browser would turn an environment dependency into false red ground; keeping
 the pure rule there and the executable browser sweep beside it preserves both
 speed and rendered truth.
+
+## 058 — The Rack host owns the way back to the stage [P2.5, ADR-021, M2UX2]
+
+**Decision.** Every dismissible full-screen Rack module is rendered inside one
+host-owned shell with one visible **Back to stage** action. Thread End, Palace
+Queue, Model Device, Memory Graph, and Injection Console inherit that shell;
+the modules do not each invent their own close control. The memory Gate is
+excluded because its explicit Continue/Stop decision is the governing hard
+pause, while the phone Threads and Memory surfaces keep their existing visible
+Back actions.
+
+The thread catalog exposes **Archive** on each row. That action carries the
+row's exact thread identity into the existing `/v1/threads/{thread_id}/archive`
+endpoint, selects that thread in the ordinary client state when necessary, and
+opens the existing Thread End extraction review. It does not delete the
+catalog row or create a second archive lifecycle.
+
+**Motivation.** The owner finding was not five unrelated missing buttons. The
+Rack host could replace the stage with a full-screen child without retaining a
+route home, so every new overlay could repeat the dead end. Owning the return
+path at the same layer that owns the overlay makes reachability structural.
+Thread lifecycle had the same shape: the extraction/archive behavior already
+existed, but the catalog did not expose it where the owner chooses a thread.
+
+**Rejected alternatives.** Adding a different close button inside each iframe
+would duplicate policy and let future modules regress independently. Making the
+Header's active launcher the only toggle would hide the remedy behind a control
+whose meaning changes by view. Deleting or hiding archived rows would add a new
+retention policy that the owner did not ask for. A separate archive endpoint or
+queue would fork ADR-021's existing consent and extraction path.

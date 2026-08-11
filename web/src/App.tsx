@@ -87,6 +87,16 @@ const EMPTY_MEMORY_PANEL: RackMemoryPanelState = {
   completedEditRequestId: null,
 }
 
+const DISMISSIBLE_OVERLAY_CLASSES = {
+  thread_end: 'rack-overlay-module--thread-end',
+  palace_queue: 'rack-overlay-module--palace-queue',
+  model_device: 'rack-overlay-module--model-device',
+  memory_graph: 'rack-overlay-module--instrument',
+  injection_console: 'rack-overlay-module--instrument',
+} as const
+
+type DismissibleOverlayModuleId = keyof typeof DISMISSIBLE_OVERLAY_CLASSES
+
 function shortId(value: string): string {
   return value.slice(0, 8).toUpperCase()
 }
@@ -244,6 +254,9 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   const drawerModule = rackDrawerModule(selection)
   const ordered = orderedModules(layout)
   const rowAllocation = rackBodyRowAllocation(vitalsCollapsed)
+  const dismissibleOverlay = drawerModule !== null && drawerModule in DISMISSIBLE_OVERLAY_CLASSES
+    ? drawerModule as DismissibleOverlayModuleId
+    : null
   useEffect(() => {
     const mobile = globalThis.matchMedia('(max-width: 48.9rem)')
     const collapseOnMobile = (event: MediaQueryListEvent) => {
@@ -416,43 +429,45 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           />
         </div>
       )}
-      {drawerModule === 'thread_end' && openGate === null && (
-        <div className="rack-overlay-module rack-overlay-module--thread-end" data-rack-module="thread_end">
-          <RackPluginIframe
-            manifest={RACK_MANIFESTS.thread_end}
-            isRegressionFixture={isRegressionFixture}
-          />
-        </div>
-      )}
-      {drawerModule === 'palace_queue' && openGate === null && (
-        <div className="rack-overlay-module rack-overlay-module--palace-queue" data-rack-module="palace_queue">
-          <RackPluginIframe
-            manifest={RACK_MANIFESTS.palace_queue}
-            isRegressionFixture={isRegressionFixture}
-          />
-        </div>
-      )}
-      {drawerModule === 'model_device' && openGate === null && (
-        <div className="rack-overlay-module rack-overlay-module--model-device" data-rack-module="model_device">
-          <RackPluginIframe
-            manifest={RACK_MANIFESTS.model_device}
-            isRegressionFixture={isRegressionFixture}
-          />
-        </div>
-      )}
-      {drawerModule === 'memory_graph' && openGate === null && (
-        <div className="rack-overlay-module rack-overlay-module--instrument" data-rack-module="memory_graph">
-          <RackPluginIframe manifest={RACK_MANIFESTS.memory_graph} isRegressionFixture={isRegressionFixture} />
-        </div>
-      )}
-      {drawerModule === 'injection_console' && openGate === null && (
-        <div className="rack-overlay-module rack-overlay-module--instrument" data-rack-module="injection_console">
-          <RackPluginIframe manifest={RACK_MANIFESTS.injection_console} isRegressionFixture={isRegressionFixture} />
-        </div>
+      {dismissibleOverlay !== null && openGate === null && (
+        <DismissibleRackOverlay
+          moduleId={dismissibleOverlay}
+          isRegressionFixture={isRegressionFixture}
+        />
       )}
       {isRegressionFixture && (
         <RegressionFixtureMarker />
       )}
+    </div>
+  )
+}
+
+function DismissibleRackOverlay({
+  moduleId,
+  isRegressionFixture,
+}: {
+  moduleId: DismissibleOverlayModuleId
+  isRegressionFixture: boolean
+}) {
+  return (
+    <div
+      className={`rack-overlay-module rack-overlay-module--dismissible ${DISMISSIBLE_OVERLAY_CLASSES[moduleId]}`}
+      data-rack-module={moduleId}
+      data-stage-return="one-click"
+    >
+      <button
+        className="rack-stage-back"
+        type="button"
+        data-testid="back-to-stage"
+        onClick={clearRackSelection}
+      >
+        <span aria-hidden="true">←</span>
+        Back to stage
+      </button>
+      <RackPluginIframe
+        manifest={RACK_MANIFESTS[moduleId]}
+        isRegressionFixture={isRegressionFixture}
+      />
     </div>
   )
 }
@@ -827,6 +842,8 @@ function HeaderModule() {
 function ThreadsModule() {
   const snapshot = useRackSnapshot()
   const { events, selection } = useRackPlugin()
+  const [archiveBusyThreadId, setArchiveBusyThreadId] = useState<string | null>(null)
+  const [archiveFailure, setArchiveFailure] = useState<string | null>(null)
   const sortedCatalog = useMemo(
     () => [...snapshot.catalog].sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
     [snapshot.catalog],
@@ -897,29 +914,51 @@ function ThreadsModule() {
                       : runtime?.messages.length
                         ? `${runtime.messages.length} messages`
                         : 'Empty'
+          const archiveDisabled = archiveBusyThreadId !== null || liveState !== undefined
           return (
-            <button
+            <div
               key={entry.thread_id}
               className={`thread-item${isSelected ? ' thread-item--selected' : ''}`}
-              type="button"
               data-thread-id={entry.thread_id}
-              aria-current={isSelected ? 'page' : undefined}
-              onClick={() => {
-                selection.select({ kind: 'thread', id: entry.thread_id })
-                void events
-                  .dispatch({ type: 'thread.select', thread_id: entry.thread_id })
-                  .catch(() => undefined)
-              }}
             >
-              <span className="thread-item__title">{visibleThreadTitle(entry.title)}</span>
-              <span className="thread-item__meta">
-                <span>{detail}</span>
-                <span>{shortId(entry.thread_id)}</span>
-              </span>
-            </button>
+              <button
+                className="thread-item__select"
+                type="button"
+                aria-current={isSelected ? 'page' : undefined}
+                onClick={() => {
+                  selection.select({ kind: 'thread', id: entry.thread_id })
+                  void events
+                    .dispatch({ type: 'thread.select', thread_id: entry.thread_id })
+                    .catch(() => undefined)
+                }}
+              >
+                <span className="thread-item__title">{visibleThreadTitle(entry.title)}</span>
+                <span className="thread-item__meta">
+                  <span>{detail}</span>
+                  <span>{shortId(entry.thread_id)}</span>
+                </span>
+              </button>
+              <button
+                className="thread-item__archive"
+                type="button"
+                aria-label={`Archive ${visibleThreadTitle(entry.title)}`}
+                disabled={archiveDisabled}
+                onClick={() => {
+                  setArchiveBusyThreadId(entry.thread_id)
+                  setArchiveFailure(null)
+                  void events.dispatch({ type: 'thread.archive', thread_id: entry.thread_id })
+                    .catch(() => setArchiveFailure('That thread could not be archived. Try again from the thread.'))
+                    .finally(() => setArchiveBusyThreadId(null))
+                }}
+              >
+                {archiveBusyThreadId === entry.thread_id ? 'Archiving…' : 'Archive'}
+              </button>
+            </div>
           )
         })}
       </nav>
+
+      {archiveFailure !== null && <p className="thread-archive-error" role="alert">{archiveFailure}</p>}
 
       <p className="catalog-note">
         Factory-set navigation. The daemon snapshot remains authoritative.
@@ -1408,7 +1447,7 @@ interface ThreadEndQueueCard {
 
 function ThreadEndModule() {
   const snapshot = useRackSnapshot()
-  const { events, selection } = useRackPlugin()
+  const { events } = useRackPlugin()
   const [scope, setScope] = useState<'CURRENT' | 'GLOBAL'>(
     RACK_MANIFESTS.thread_end.default_scope,
   )
@@ -1437,11 +1476,6 @@ function ThreadEndModule() {
 
   return (
     <div className="thread-end-module">
-      <button
-        className="thread-end-module__close"
-        type="button"
-        onClick={() => selection.select(null)}
-      >Close review</button>
       {cards.length === 0 ? (
         <section className="thread-end-card thread-end-card--empty">
           <p className="eyebrow">Thread end · consent surface</p>
@@ -1654,7 +1688,7 @@ function markdownFile(markdown: string): File {
 }
 
 function PalaceQueueModule() {
-  const { events, selection } = useRackPlugin()
+  const { events } = useRackPlugin()
   const seedInputRef = useRef<HTMLInputElement>(null)
   const [scope, setScope] = useState<'CURRENT' | 'GLOBAL'>(
     RACK_MANIFESTS.palace_queue.default_scope,
@@ -1752,11 +1786,6 @@ function PalaceQueueModule() {
 
   return (
     <div className="palace-queue-module">
-      <button
-        className="thread-end-module__close"
-        type="button"
-        onClick={() => selection.select(null)}
-      >Close queue</button>
       <section className="palace-queue-card" aria-label="Palace seed queue">
         <header className="palace-queue-card__header">
           <div>

@@ -181,6 +181,8 @@
 .thread-item {
   position: relative;
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
   gap: 0.55rem;
   width: 100%;
   min-height: 4.35rem;
@@ -189,6 +191,49 @@
   background: transparent;
   color: var(--muted);
   text-align: left;
+}
+
+.thread-item__select {
+  display: grid;
+  min-width: 0;
+  gap: .55rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.thread-item__archive {
+  align-self: stretch;
+  min-width: 4.8rem;
+  padding: .35rem .45rem;
+  border: 1px solid var(--line);
+  background: rgb(255 255 255 / 3%);
+  color: var(--dim);
+  font-family: var(--data-font);
+  font-size: .56rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.thread-item__archive:hover:not(:disabled),
+.thread-item__archive:focus-visible {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.thread-item__archive:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
+.thread-archive-error {
+  margin: .55rem .35rem 0;
+  color: var(--danger);
+  font-size: .64rem;
+  line-height: 1.4;
 }
 
 .thread-item:hover {

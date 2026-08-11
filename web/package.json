@@ -13,7 +13,8 @@
     "verify:m2b:browser": "node ../verification/m2b/browser_check.mjs",
     "verify:m2b:layout": "node --experimental-strip-types --test ../verification/m2b/rack_layout.test.mjs",
     "verify:m2c:browser": "node ../verification/m2c/browser_check.mjs",
-    "verify:m2ux1:browser": "node --experimental-strip-types ../verification/m2ux1/browser_check.mjs"
+    "verify:m2ux1:browser": "node --experimental-strip-types ../verification/m2ux1/browser_check.mjs",
+    "verify:m2ux2:browser": "node --experimental-strip-types ../verification/m2ux2/browser_check.mjs"
   },
   "dependencies": {
     "react": "^19.2.7",

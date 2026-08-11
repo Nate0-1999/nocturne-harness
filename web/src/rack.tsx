@@ -79,7 +79,7 @@ export type RackAction =
   | { type: 'catalog.cleanup-fixtures' }
   | { type: 'prompt.submit'; prompt: string; image?: OutboundImage }
   | { type: 'run.cancel'; run_id?: Ulid }
-  | { type: 'thread.archive' }
+  | { type: 'thread.archive'; thread_id?: string }
   | { type: 'queue.load'; thread_id?: string; birthplace?: 'thread' | 'seed' }
   | { type: 'seed.upload'; batch_uid: string; source_name: string; markdown: string }
   | { type: 'queue.batch.decide'; batch_uid: string; decision: 'approve' | 'deny' }
@@ -221,7 +221,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'visualizer',
     slot: 'panel',
     streams: ['thread.snapshot', 'run.started', 'run.done', 'prompt.queued'],
-    actions: ['thread.create', 'thread.select', 'catalog.cleanup-fixtures'],
+    actions: ['thread.create', 'thread.select', 'thread.archive', 'catalog.cleanup-fixtures'],
     bounds: RACK_BOUNDS.threads,
     movable: true,
     law_bound: false,
@@ -400,9 +400,12 @@ function dispatchRackAction<Action extends RackAction>(
       case 'run.cancel':
         return harnessClient.cancelRun(action.run_id) as RackActionResult<Action>
       case 'thread.archive': {
-        const threadId = getRackSnapshot().selectedThreadId
+        const threadId = action.thread_id ?? getRackSnapshot().selectedThreadId
         if (threadId === null) {
           throw new Error('No selected thread to archive')
+        }
+        if (threadId !== getRackSnapshot().selectedThreadId) {
+          harnessClient.selectThread(threadId)
         }
         return fetchJson(`/v1/threads/${encodeURIComponent(threadId)}/archive`, {
           method: 'POST',

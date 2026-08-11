@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ContributionBars } from './ContributionBars'
-import { InstrumentClose } from './InstrumentClose'
 import { LearningSummary, LearningTimeline } from './LearningTelemetry'
 import {
   ACTIVATE_LABEL,
@@ -373,7 +372,6 @@ export function InjectionConsole() {
             <button aria-pressed={scope === 'GLOBAL'} onClick={() => changeScope('GLOBAL')}>Global</button>
             <button aria-pressed={scope === 'CURRENT'} onClick={() => changeScope('CURRENT')}>Current</button>
           </div>
-          <InstrumentClose />
         </div>
       </header>
       {failure !== null && <p role="alert">{failure}</p>}

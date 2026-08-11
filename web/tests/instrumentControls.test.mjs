@@ -2,28 +2,48 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
-/** SPEC B.6 and A-051 require one reachable in-frame close path above the host scrim. */
-test('both memory instruments share the selection-bridge close control', async () => {
-  const [close, graph, injection, css] = await Promise.all([
-    readFile(new URL('../src/InstrumentClose.tsx', import.meta.url), 'utf8'),
+/** PLAN M2UX2 and SPEC B.6 require every dismissible full-screen view to return to the stage in one obvious click. */
+test('every dismissible overlay shares the host-owned back-to-stage control', async () => {
+  const [app, graph, injection, css] = await Promise.all([
+    readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/MemoryGraph.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/InjectionConsole.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/assets/rack.css', import.meta.url), 'utf8'),
   ])
 
-  assert.match(close, /aria-label="Close instrument"/u)
-  assert.match(close, /selection\.select\(null\)/u)
-  assert.match(graph, /<InstrumentClose\s*\/>/u)
-  assert.match(injection, /<InstrumentClose\s*\/>/u)
-  assert.match(css, /\.instrument\s*>\s*header\s*\{[^}]*position:\s*sticky/u)
-  assert.match(
-    css,
-    /@media \(max-width:\s*760px\)[^{]*\{[\s\S]*?\.instrument\s*>\s*header\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/u,
-  )
-  assert.match(
-    css,
-    /\.instrument-header-actions\s*\{[^}]*justify-content:\s*space-between[^}]*width:\s*100%/u,
-  )
+  for (const moduleId of [
+    'thread_end',
+    'palace_queue',
+    'model_device',
+    'memory_graph',
+    'injection_console',
+  ]) {
+    assert.match(app, new RegExp(`${moduleId}:\\s*'rack-overlay-module--`, 'u'))
+  }
+  assert.match(app, /data-stage-return="one-click"/u)
+  assert.match(app, /data-testid="back-to-stage"/u)
+  assert.match(app, /Back to stage/u)
+  assert.match(app, /onClick=\{clearRackSelection\}/u)
+  assert.doesNotMatch(graph, /InstrumentClose/u)
+  assert.doesNotMatch(injection, /InstrumentClose/u)
+  assert.match(css, /\.rack-overlay-module--dismissible\s*\{[^}]*display:\s*grid/u)
+  assert.match(css, /\.rack-stage-back\s*\{/u)
+})
+
+/** PLAN M2UX2 and ADR-021 clause 4 require a thread-list archive act to reuse ordinary extraction instead of inventing deletion. */
+test('thread-list archive targets the existing extraction action by thread identity', async () => {
+  const [app, rack] = await Promise.all([
+    readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/rack.tsx', import.meta.url), 'utf8'),
+  ])
+
+  assert.match(rack, /actions:\s*\['thread\.create', 'thread\.select', 'thread\.archive'/u)
+  assert.match(rack, /\{ type: 'thread\.archive'; thread_id\?: string \}/u)
+  assert.match(rack, /action\.thread_id \?\? getRackSnapshot\(\)\.selectedThreadId/u)
+  assert.match(rack, /\/v1\/threads\/\$\{encodeURIComponent\(threadId\)\}\/archive/u)
+  assert.match(rack, /rackSelectionSurface\.select\(\{ kind: 'module', id: 'thread_end' \}\)/u)
+  assert.match(app, /aria-label=\{`Archive \$\{visibleThreadTitle\(entry\.title\)\}`\}/u)
+  assert.match(app, /type: 'thread\.archive', thread_id: entry\.thread_id/u)
 })
 
 /** SPEC B.6 requires the effective overlay rule to retain usable desktop/mobile insets. */
