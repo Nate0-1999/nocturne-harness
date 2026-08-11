@@ -214,13 +214,12 @@
 }
 
 .thread-item__title {
-  display: -webkit-box;
-  overflow: hidden;
+  display: block;
+  min-width: 0;
   font-size: 0.82rem;
   font-weight: 650;
   line-height: 1.25;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
 }
 
 .thread-item__meta {

@@ -773,6 +773,8 @@ function HeaderModule() {
         <span className="brand__mode">Linked</span>
       </div>
 
+      <span className="rack-set-reserve" aria-hidden="true" />
+
       <div className="mobile-navigation">
         <button
           className="mobile-threads"

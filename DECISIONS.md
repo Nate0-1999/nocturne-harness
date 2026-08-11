@@ -1637,3 +1637,34 @@ state transitions but does not model daemon acknowledgement. Making the local
 catalog or text field authoritative would duplicate the journal's project
 truth. Rebinding threads, adding a project database, or weakening scoped
 isolation would solve a display race by changing the product's data model.
+
+## 057 — Reserve one cross-frame lane; audit rendered boxes [P2.5, M2UX1]
+
+**Decision.** The Header module reserves an inert grid lane for the Rack host's
+Save, Restore, and Factory controls. The host overlay occupies that same lane;
+neither side guesses around the other with an unowned margin. At phone widths
+both the reserve and the desktop controls disappear together. Thread titles
+wrap to their full height, including unbroken identifiers, instead of being
+line-clamped.
+
+The standing mechanical audit uses one shared rectangle rule at the exact
+390-to-1920 viewport ladder. Its rendered driver translates interactive boxes
+from each sandboxed module into host coordinates before testing positive-area
+overlap, so a host control colliding with an iframe button cannot hide behind
+the isolation boundary. Text nodes fail when their rendered scroll box exceeds
+their visible box. Pure geometry and source invariants remain in the ordinary
+unit suite; the browser driver is the real-layout proof because CI cannot
+truthfully synthesize browser geometry.
+
+**Motivation.** M2UX1's two owner-visible defects share one cause: layout
+ownership stopped at an iframe edge, while tests stopped at source structure.
+One reserved lane fixes the ownership error; one translated-coordinate audit
+turns that class of failure into evidence across the entire Rack.
+
+**Rejected alternatives.** Moving the floating controls to another guessed
+offset merely changes which header action they can cover. A tooltip would leave
+thread words visibly missing. Per-module collision checks cannot see a host
+overlay cover iframe content. Making the default unit suite launch a system
+browser would turn an environment dependency into false red ground; keeping
+the pure rule there and the executable browser sweep beside it preserves both
+speed and rendered truth.
