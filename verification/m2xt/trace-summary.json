@@ -1,0 +1,157 @@
+{
+  "packet": "M2XT",
+  "observed_at": "2026-08-11T05:12:27Z",
+  "checkouts": {
+    "harness": "9509f1431b273cde178a8416d3139bcfa315a1fd",
+    "spine": "4f81e71d4351d4425f183b6227686a0d7897e253",
+    "garden_claim": "02b875267cb5dba5bfd3d2ff26489cd34b4e6810"
+  },
+  "owner_path": {
+    "fixture_used": false,
+    "factory": "harness.daemon:create_dev_app",
+    "origin": "http://localhost:8799/",
+    "bundle": "index-CeDaoHt_.js",
+    "bundle_sha256": "91dc12078c603f523d5849b2a56dd154d2e756da2ee9c57f36533f80e029bf90",
+    "principal_id": "m2x-sop-verification",
+    "machine_id": "m2x-sop-verification",
+    "agent_id": "m2x-sop-verification",
+    "prompts_sent": 0,
+    "provider_requests": 0,
+    "memories_created": 0,
+    "activations": 0
+  },
+  "item_28": {
+    "verdict": "PASS_CARRIED",
+    "authority": "report 090 and harness/verification/m2z7/trace-summary.json",
+    "real_provider": "OpenRouter",
+    "model": "openrouter:google/gemini-2.5-flash-lite",
+    "image_media_type": "image/jpeg",
+    "requests": 1,
+    "answer": "The signal count is 47 amber moths and the compass bearing is Northwest.",
+    "restart_preserved_image_and_answer": true
+  },
+  "item_29": {
+    "verdict": "PASS",
+    "stage": {
+      "project": "m2xt-stage",
+      "thread_id": "9feb6c0c-9359-4d27-a041-0adda3c5de0d"
+    },
+    "other": {
+      "project": "m2xt-other",
+      "thread_id": "2d169d71-b3fc-4c76-b825-88e9242216ab"
+    },
+    "current_queries_followed_selected_thread": [
+      "context_window",
+      "memory_graph",
+      "scorer_console"
+    ],
+    "global_vitals_omitted_thread_id": true,
+    "round_trip_returned_to_stage": true,
+    "context_current_remained_pressed": true,
+    "graph_current_remained_pressed_after_reopen": true,
+    "project_control_rendered_daemon_binding": true
+  },
+  "learning": {
+    "active_version": "v0",
+    "proposed_versions": [],
+    "activation_count": 0,
+    "eligible_dispositions": 1,
+    "hygiene_excluded_dispositions": 93,
+    "minimum_dispositions": 25,
+    "remaining_to_floor": 24,
+    "floor_met": false,
+    "right": 0,
+    "wrong": 1,
+    "weighted_right": "0",
+    "weighted_wrong": "1",
+    "weighted_agreement_percent": "0",
+    "live_agreement": [
+      {
+        "event_uid": "01KY54AX6YSYMXA4X7V1KZHH2A",
+        "scorer_version": "v0",
+        "right": 0,
+        "wrong": 1
+      }
+    ],
+    "generation_accuracy": [
+      {
+        "version": "v0",
+        "status": "not_recorded",
+        "accuracy_percent": null
+      }
+    ],
+    "owner_copy": {
+      "vitals": "No measured learning scores yet.",
+      "console": "1 legacy generation not recorded"
+    }
+  },
+  "item_39": {
+    "verdict": "FRESH_FLAG_F036",
+    "active_live_series": "PASS_ONE_AUTHENTIC_POINT",
+    "held_out_generation_series": "NOT_NATURALLY_AVAILABLE",
+    "reason": "Production has one authentic disposition and no measured learner generation; creating signals or activating a scorer would contaminate the owner-learning proof."
+  },
+  "item_47": {
+    "verdict": "FRESH_FLAG_F036",
+    "right_wrong_accounting": "PASS",
+    "per_generation_accuracy": "NOT_NATURALLY_AVAILABLE",
+    "reason": "Vitals honestly reports 0 right, 1 wrong, 0% weighted agreement, and no measured learning scores."
+  },
+  "item_48": {
+    "verdict": "PASS",
+    "request_count": 1,
+    "owner_copy": "Not enough authentic signals yet: 1 / 25 available.",
+    "run_uid": "01KZQKRZTXXBBFP778GNR1H4BY",
+    "trigger": "manual",
+    "result": "insufficient_data",
+    "eligible_dispositions": 1,
+    "proposal_version": null,
+    "reason": "minimum disposition floor not reached: 1/25",
+    "proposal_or_activation_created": false
+  },
+  "item_49": {
+    "verdict": "PASS",
+    "hygiene_excluded_dispositions": 93,
+    "only_live_event_uid": "01KY54AX6YSYMXA4X7V1KZHH2A",
+    "verification_events_in_live_series": 0,
+    "verification_events_in_floor": 0
+  },
+  "item_60": {
+    "verdict": "PASS_CARRIED",
+    "authority": "report 093 and harness/verification/m2zb/trace-summary.json",
+    "real_provider": "OpenRouter",
+    "model": "openrouter:rekaai/reka-edge",
+    "advertised_context_tokens": 16384,
+    "refused_input_tokens": 18072,
+    "owner_badge": "Context limit reached",
+    "owner_remedy": "This thread has reached rekaai/reka-edge's context limit. Archive it, then continue in a fresh thread.",
+    "last_good_context_display": "11.8K / 16.4K",
+    "survived_reload": true
+  },
+  "browser": {
+    "viewport": "1280x720",
+    "console_errors_or_warnings": [],
+    "unscripted_exploration": "Closed and reopened the instrument, switched stage to other and back through the Project control, then confirmed the daemon binding and CURRENT selections persisted."
+  },
+  "cleanup": {
+    "exact_daemon_stopped": true,
+    "port_8799_listener_after_stop": false,
+    "browser_tabs_finalized": true,
+    "temporary_home_removed": true,
+    "remote_memories_to_cleanup": 0,
+    "durable_remote_residue": [
+      "one manual insufficient-data learner-run receipt: 01KZQKRZTXXBBFP778GNR1H4BY"
+    ],
+    "owner_identity_touched": false,
+    "cloud_or_deploy_mutation": false
+  },
+  "artifacts": [
+    "01-stage-project-vitals.jpg",
+    "02-learning-console-current.jpg",
+    "03-retrain-refusal.jpg",
+    "04-other-project-vitals.jpg",
+    "05-stage-roundtrip-graph-current.jpg",
+    "SOP-SCOUT.md",
+    "SHA256SUMS"
+  ]
+}
