@@ -2,8 +2,10 @@ import { useState, type FormEvent, type KeyboardEvent } from 'react'
 
 import {
   canonicalProjectPath,
+  initialProjectControlState,
   projectPathEditValue,
   projectPathError,
+  reconcileProjectControlState,
   projectScopeLabel,
 } from './projectPath'
 
@@ -24,35 +26,57 @@ export function ProjectSelector({
   switching,
   onSelect,
 }: ProjectSelectorProps) {
-  const [projectEdit, setProjectEdit] = useState<string | null>(null)
-  const [feedback, setFeedback] = useState<string | null>(null)
-  const projectDraft = projectEdit ?? projectPathEditValue(currentProjectKey)
+  const [storedControl, setStoredControl] = useState(() =>
+    initialProjectControlState(selectedThreadId, currentProjectKey))
+  const control = reconcileProjectControlState(
+    storedControl,
+    selectedThreadId,
+    currentProjectKey,
+    awaitingSnapshot,
+  )
+  if (control !== storedControl) {
+    setStoredControl(control)
+  }
+  const projectDraft = control.edit ?? projectPathEditValue(currentProjectKey)
   const scopeLabel = projectScopeLabel(currentProjectKey)
   const status = switching
     ? 'Switching…'
-    : feedback ?? (awaitingSnapshot ? 'Loading…' : '')
+    : control.feedback ?? (awaitingSnapshot ? 'Loading…' : '')
 
   function openProject() {
-    if (projectEdit === null && currentProjectKey === null) {
-      setFeedback('This thread is unscoped. Enter a project path to open a scoped thread.')
+    if (control.edit === null && currentProjectKey === null) {
+      setStoredControl({
+        ...control,
+        feedback: 'This thread is unscoped. Enter a project path to open a scoped thread.',
+      })
       return
     }
     const validation = projectPathError(projectDraft)
     if (validation !== null) {
-      setFeedback(validation)
+      setStoredControl({ ...control, feedback: validation })
       return
     }
     const projectKey = canonicalProjectPath(projectDraft)
-    setProjectEdit(projectKey)
     if (projectKey === currentProjectKey && !awaitingSnapshot) {
-      setProjectEdit(null)
-      setFeedback(null)
+      setStoredControl(initialProjectControlState(selectedThreadId, currentProjectKey))
       return
     }
-    setFeedback(null)
+    const submittedControl = {
+      ...control,
+      edit: projectKey,
+      feedback: null,
+      submitted: true,
+    }
+    setStoredControl(submittedControl)
     void onSelect(projectKey).catch(() => {
-      setProjectEdit(null)
-      setFeedback('Couldn’t switch projects. Try again.')
+      setStoredControl((latest) => latest.contextKey === submittedControl.contextKey
+        ? {
+            ...latest,
+            edit: null,
+            feedback: 'Couldn’t switch projects. Try again.',
+            submitted: false,
+          }
+        : latest)
     })
   }
 
@@ -81,12 +105,16 @@ export function ProjectSelector({
           value={projectDraft}
           placeholder={currentProjectKey === null ? 'Enter project path' : 'Choose a project'}
           disabled={awaitingSnapshot || selectedThreadId === null}
-          aria-invalid={feedback !== null}
+          aria-invalid={control.feedback !== null}
           aria-describedby="project-selector-status"
           title={currentProjectKey ?? 'Unscoped thread'}
           onChange={(event) => {
-            setProjectEdit(event.currentTarget.value)
-            setFeedback(null)
+            setStoredControl({
+              ...control,
+              edit: event.currentTarget.value,
+              feedback: null,
+              submitted: false,
+            })
           }}
           onKeyDown={handleProjectKeyDown}
         />
@@ -98,7 +126,7 @@ export function ProjectSelector({
       <span
         id="project-selector-status"
         className="project-selector__status"
-        data-error={feedback !== null || undefined}
+        data-error={control.feedback !== null || undefined}
         aria-live="polite"
       >
         {scopeLabel !== null && <span className="project-selector__scope">{scopeLabel}</span>}

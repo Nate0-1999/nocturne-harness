@@ -5,12 +5,14 @@ import {
   DEFAULT_PROJECT_PATH,
   UNSCOPED_PROJECT_LABEL,
   canonicalProjectPath,
+  initialProjectControlState,
   knownProjectPaths,
   newestProjectThread,
   projectPathEditValue,
   projectPathError,
   projectScopeLabel,
   projectSelectorContextKey,
+  reconcileProjectControlState,
 } from '../src/projectPath.ts'
 
 /** F028 + SPEC C.3/C.4 + B.6 r12 require one canonical project key at every browser contract edge. */
@@ -50,6 +52,49 @@ test('changes project-editor identity when either thread or authoritative projec
   assert.notEqual(
     projectSelectorContextKey('thread-a', null),
     projectSelectorContextKey('thread-a', 'unscoped'),
+  )
+})
+
+/** F035, ADR-023 clause 5, and B.6 r12 require the daemon-owned project binding to
+ * replace a submitted browser draft after acceptance, refusal, reload, and thread switch.
+ */
+test('re-renders project control from authoritative context at every reconciliation boundary', () => {
+  const editing = {
+    ...initialProjectControlState('thread-a', 'build-test'),
+    edit: 'm2xs-build-test',
+    submitted: true,
+  }
+
+  assert.deepEqual(
+    reconcileProjectControlState(editing, 'thread-b', 'm2xs-build-test', false),
+    initialProjectControlState('thread-b', 'm2xs-build-test'),
+    'accepted project jump follows the acknowledged thread and project',
+  )
+  assert.deepEqual(
+    reconcileProjectControlState(editing, 'thread-a', 'build-test', false),
+    initialProjectControlState('thread-a', 'build-test'),
+    'refused project jump restores the unchanged daemon binding',
+  )
+  assert.deepEqual(
+    reconcileProjectControlState(
+      initialProjectControlState('thread-a', 'build-test'),
+      'thread-a',
+      'build-test',
+      false,
+    ),
+    initialProjectControlState('thread-a', 'build-test'),
+    'reload starts from daemon-hydrated context without a local draft',
+  )
+  assert.deepEqual(
+    reconcileProjectControlState(editing, 'thread-c', 'research', true),
+    initialProjectControlState('thread-c', 'research'),
+    'thread switch drops the previous thread draft even before hydration settles',
+  )
+  const switched = reconcileProjectControlState(editing, 'thread-c', 'research', true)
+  assert.deepEqual(
+    reconcileProjectControlState(switched, 'thread-a', 'build-test', false),
+    initialProjectControlState('thread-a', 'build-test'),
+    'returning to the original thread cannot resurrect its discarded draft',
   )
 })
 

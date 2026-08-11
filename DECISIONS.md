@@ -1615,3 +1615,25 @@ a ceiling would create false guidance. Retrying could duplicate spend and does
 not make an overfull thread smaller. Resetting the gauge to zero would invent a
 measurement, while adding compaction or automatic archiving would pull M3 into
 this bounded repair.
+
+## 056 — Project text is a draft; the daemon binding is the view [P2.5, ADR-023 clause 5, F035]
+
+**Decision.** Keep the Project control's local text only while the owner edits
+or while a submitted project jump awaits its authoritative thread snapshot.
+When that snapshot settles—or the selected thread or daemon project changes—
+derive the rendered value from the daemon-owned binding and discard the local
+draft. Apply the same projection after acceptance, refusal, reload, and thread
+switch; the control does not infer success from dispatch completion.
+
+**Motivation.** A project dispatch completes when navigation starts, before the
+daemon accepts or refuses the requested binding. Treating that dispatch as an
+acknowledgement can leave one visible Project name pointing somewhere other
+than the journal, injection, and every CURRENT module. A small reconciliation
+state keeps typing responsive while restoring ADR-023's one-selection law at
+the only boundary that knows the accepted value: the authoritative snapshot.
+
+**Rejected alternatives.** Remounting the control from a React key hides some
+state transitions but does not model daemon acknowledgement. Making the local
+catalog or text field authoritative would duplicate the journal's project
+truth. Rebinding threads, adding a project database, or weakening scoped
+isolation would solve a display race by changing the product's data model.

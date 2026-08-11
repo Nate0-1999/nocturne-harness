@@ -72,7 +72,6 @@ import {
 } from './rackLayout'
 import { isLegacyFixtureTitle, visibleThreadTitle } from './threadTitles'
 import { ProjectSelector } from './ProjectSelector'
-import { projectSelectorContextKey } from './projectPath'
 import {
   rackDrawerModule,
   rackModuleSelectionIsOpen,
@@ -1178,7 +1177,6 @@ function ChatModule() {
         </div>
         <div className="chat-header__context">
           <ProjectSelector
-            key={projectSelectorContextKey(selectedThreadId, snapshot.currentProjectKey)}
             selectedThreadId={selectedThreadId}
             currentProjectKey={snapshot.currentProjectKey}
             projectPaths={snapshot.projectPaths}

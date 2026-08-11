@@ -29,3 +29,18 @@ test('Project input Enter and form submit share one project-open path', async ()
   assert.match(source, /function handleProjectKeyDown\([^)]*\)[^{]*\{[\s\S]*?event\.preventDefault\(\)\s*openProject\(\)/u)
   assert.match(source, /onKeyDown=\{handleProjectKeyDown\}/u)
 })
+
+/** F035, ADR-023 clause 5, and B.6 r12 require the Project control itself to render
+ * the reconciled daemon value instead of relying on an App remount timing side effect.
+ */
+test('Project control derives its visible draft from snapshot reconciliation', async () => {
+  const [selector, app] = await Promise.all([
+    readFile(new URL('../src/ProjectSelector.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
+  ])
+
+  assert.match(selector, /reconcileProjectControlState\([\s\S]*?awaitingSnapshot/u)
+  assert.match(selector, /control !== storedControl[\s\S]*?setStoredControl\(control\)/u)
+  assert.match(selector, /const projectDraft = control\.edit \?\? projectPathEditValue\(currentProjectKey\)/u)
+  assert.doesNotMatch(app, /key=\{projectSelectorContextKey/u)
+})

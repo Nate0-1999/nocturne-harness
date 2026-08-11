@@ -17,6 +17,38 @@ export function projectSelectorContextKey(
   return JSON.stringify([selectedThreadId, currentProjectKey])
 }
 
+export interface ProjectControlState {
+  contextKey: string
+  edit: string | null
+  feedback: string | null
+  submitted: boolean
+}
+
+export function initialProjectControlState(
+  selectedThreadId: string | null,
+  currentProjectKey: string | null,
+): ProjectControlState {
+  return {
+    contextKey: projectSelectorContextKey(selectedThreadId, currentProjectKey),
+    edit: null,
+    feedback: null,
+    submitted: false,
+  }
+}
+
+export function reconcileProjectControlState(
+  state: ProjectControlState,
+  selectedThreadId: string | null,
+  currentProjectKey: string | null,
+  awaitingSnapshot: boolean,
+): ProjectControlState {
+  const contextKey = projectSelectorContextKey(selectedThreadId, currentProjectKey)
+  if (state.contextKey !== contextKey || (state.submitted && !awaitingSnapshot)) {
+    return initialProjectControlState(selectedThreadId, currentProjectKey)
+  }
+  return state
+}
+
 type ProjectCatalogEntry = {
   project_key: string | null
   thread_id: string

@@ -1,0 +1,67 @@
+{
+  "packet": "M2ZC",
+  "law": ["F035", "ADR-023 clause 5", "SPEC v2.40"],
+  "captured_at": "2026-08-11T04:25:56Z",
+  "source": {
+    "harness_head": "779bacaa7e8b2bbb5d0e8cd08181ab96b808bdaf",
+    "spine_head": "4f81e71d4351d4425f183b6227686a0d7897e253",
+    "garden_claim": "785b481f9df6e8f4f8b02a0abd70acbf24e60d12",
+    "candidate_bundle": "web/dist/assets/index-CeDaoHt_.js"
+  },
+  "runtime": {
+    "factory": "harness.daemon:create_dev_app",
+    "origin": "http://localhost:8795/",
+    "home": "/private/tmp/nocturne-m2zc-zcv1",
+    "principal_id": "m2zc-sop-verification",
+    "machine_id": "m2zc-sop-verification",
+    "agent_id": "m2zc-sop-verification",
+    "fixture_used": false,
+    "provider_requests": 0,
+    "prompt_submissions": 0,
+    "remote_data_writes": 0
+  },
+  "observations": {
+    "initial": {
+      "thread_id": "2977bd79-6748-4142-a1b9-5c206df04d2d",
+      "project_control": "m2zc-build-zcv1"
+    },
+    "accepted": {
+      "requested_project": "m2zc-accept-final",
+      "thread_id": "f20be5ac-7ea8-44ff-b50e-aae9fc9df808",
+      "project_control_after_snapshot": "m2zc-accept-final"
+    },
+    "reload": {
+      "thread_id": "2977bd79-6748-4142-a1b9-5c206df04d2d",
+      "project_control_after_snapshot": "m2zc-build-zcv1"
+    },
+    "thread_switch": {
+      "to_thread_id": "21c6c214-3286-493a-916a-941c64a2b837",
+      "project_control_after_snapshot": "build-test"
+    },
+    "refusal": {
+      "thread_id": "dfcf2d14-f2a5-4fbe-a808-2d3c1b7466ed",
+      "stale_local_request": "m2zc-refusal-final",
+      "daemon_journal_binding": "build-test",
+      "message": "This thread already belongs to project build-test. Start a new thread in project m2zc-refusal-final.",
+      "project_control_after_snapshot": "build-test"
+    },
+    "scope_coherence": {
+      "selected_thread_id": "f20be5ac-7ea8-44ff-b50e-aae9fc9df808",
+      "project_control": "m2zc-accept-final",
+      "vitals_scope": "CURRENT",
+      "context_bars_scope": "CURRENT",
+      "vitals_query_thread_id": "f20be5ac-7ea8-44ff-b50e-aae9fc9df808",
+      "context_query_thread_id": "f20be5ac-7ea8-44ff-b50e-aae9fc9df808"
+    }
+  },
+  "browser_console_errors": [],
+  "cleanup": {
+    "listener_stopped": true,
+    "tabs_closed": true,
+    "temporary_home_removed": true
+  },
+  "artifacts": [
+    "01-refusal-authority.jpg",
+    "02-current-scope-coherence.jpg"
+  ]
+}
