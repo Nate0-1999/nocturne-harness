@@ -55,7 +55,7 @@ test('the module template enumerates the complete mounted stage and refuses a pa
       ...manifests,
       vitals: { ...manifests.vitals, movable: false },
     }),
-    /Palace Vitals|vitals.*shared drag affordance/iu,
+    /Spend|vitals.*shared drag affordance/iu,
   )
 })
 

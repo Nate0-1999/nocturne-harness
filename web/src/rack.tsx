@@ -263,7 +263,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
   },
   vitals: {
     id: 'vitals',
-    name: 'Palace Vitals',
+    name: 'Spend',
     version: '1.0.0',
     class: 'visualizer',
     slot: 'strip',

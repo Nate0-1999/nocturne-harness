@@ -1893,3 +1893,34 @@ reset on every switch and reload. Deleting removed modules or layers and
 recreating factory defaults would lose owner layout. Infinite coordinates,
 overlap resolution, minimaps, arbitrary layer creation, and collaborative
 layouts are not needed for this packet.
+
+## 064 — Exact values stay authoritative; human numbers are a shared projection [P2.3, P2.4, M2ST3]
+
+**Decision.** The browser keeps exact decimal strings and measured values at
+the transport, snapshot, geometry, receipt, and inspector seams. A single
+presentation utility projects ordinary rack copy into human numbers: money is
+cents at or above one cent and three significant digits below one cent;
+percentages and measured quantities use one decimal; token counts use compact
+notation. Missing gauges render one em dash in a narrower cell with the reason
+in the native tooltip. The production manifest names the former Palace Vitals
+module **Spend**; its internal IDs and ledger contracts do not change.
+
+Memory Graph labels are a lossy visual index over lossless node titles and the
+inspector. Selected, current-context, and pinned nodes outrank injection count;
+labels are shortened, placed inside the viewbox, and admitted only when their
+estimated boxes do not collide. Hidden labels retain the node's complete SVG
+`title`, keyboard target, selection identity, and inspector text.
+
+**Motivation.** Raw accounting precision made P2.4 less truthful in practice:
+the owner could not distinguish the important number from its serialization.
+Long missing-state prose consumed the same width as observations, and colliding
+Graph labels hid P2.3's meaning. One projection prevents each module from
+inventing its own rounding while leaving the durable truth available where
+precision changes a decision.
+
+**Rejected alternatives.** Rounding the API or ledger would destroy evidence.
+Keeping exact strings in every glance surface would preserve bytes while
+discarding comprehension. Hiding every Graph label would avoid collisions by
+removing meaning; rendering all labels smaller would repeat the same failure at
+a different scale. A dynamic canvas text engine is unnecessary for the current
+deterministic grid and would expand M2ST3 into the M3 Graph rework.

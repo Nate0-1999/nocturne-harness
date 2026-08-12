@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
 import {
@@ -22,4 +23,11 @@ test('formats money, percentages, and quantities for a glanceable instrument', (
 test('rejects non-decimal money and non-finite measurements', () => {
   assert.throws(() => formatHumanUsd('1e-8'), /exact decimal string/u)
   assert.throws(() => formatHumanPercent(Number.NaN), /must be finite/u)
+})
+
+/** SPEC P2.4 and PLAN M2ST3 make Spend the owner-facing identity of the former Palace Vitals module. */
+test('names the owner-facing instrument Spend at the production manifest seam', async () => {
+  const rack = await readFile(new URL('../src/rack.tsx', import.meta.url), 'utf8')
+
+  assert.match(rack, /vitals:\s*\{[\s\S]*?name:\s*'Spend'/u)
 })

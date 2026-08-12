@@ -62,8 +62,9 @@ try {
   for (let step = 0; step < 6; step += 1) {
     await page.getByRole('button', { name: 'Zoom in' }).click()
   }
-  await page.getByTestId('stage-viewport').dispatchEvent('wheel', { deltaX: -250, deltaY: 680 })
+  await page.getByTestId('stage-viewport').dispatchEvent('wheel', { deltaX: -450, deltaY: 680 })
   await page.waitForTimeout(160)
+  await page.evaluate(() => globalThis.scrollTo(0, 0))
   await page.screenshot({ path: join(evidenceDir, '01-spend-human-numbers-1280x900.png') })
 
   let graph = frame(page, 'memory_graph')
