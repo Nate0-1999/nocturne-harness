@@ -1,0 +1,50 @@
+{
+  "fixture": "M2ST1 REGRESSION",
+  "observations": [
+    {
+      "factory_work_modules": [
+        "threads",
+        "chat",
+        "memory",
+        "vitals",
+        "context_bars"
+      ]
+    },
+    {
+      "background_pan": {
+        "before": {
+          "x": 36,
+          "y": 30,
+          "zoom": 0.64
+        },
+        "after": {
+          "x": 126,
+          "y": 75,
+          "zoom": 0.64
+        }
+      }
+    },
+    {
+      "whole_stage_zoom": "40%"
+    },
+    {
+      "graph_restored": {
+        "x": 3,
+        "y": 2,
+        "width": 12,
+        "height": 10
+      }
+    },
+    {
+      "offscreen_recall": [
+        "Channel Stack",
+        "Active Channel",
+        "Memory Palace",
+        "Palace Vitals",
+        "Context Bars"
+      ]
+    }
+  ],
+  "console_problems": [],
+  "page_errors": []
+}

@@ -25,22 +25,23 @@ test('rebinds a selected Graph node to the refreshed snapshot or clears it', () 
   assert.equal(reconcileMemoryGraphSelection(null, [refreshed]), null)
 })
 
-/** Decision 029, A-035, ADR-023, and F028 require a Graph node to publish its
- * shared memory identity while that same bus selection keeps the Graph overlay open.
+/** Decision 029, A-035, ADR-023, PLAN M2ST1, and F028 require a Graph node to
+ * publish its shared memory identity without changing the mounted stage layer.
  */
-test('Graph node activation publishes memory identity without unmounting its inspector', async () => {
-  const [graphSource, appSource] = await Promise.all([
+test('Graph node activation publishes memory identity without opening an overlay', async () => {
+  const [graphSource, appSource, stageSource] = await Promise.all([
     readFile(new URL('../src/MemoryGraph.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/stageLayout.ts', import.meta.url), 'utf8'),
   ])
   const memorySelection = { kind: 'memory', id: 'memory-a' }
 
-  assert.equal(rackDrawerModule(memorySelection), 'memory_graph')
-  assert.equal(rackModuleSelectionIsOpen(memorySelection, 'memory_graph'), true)
+  assert.equal(rackDrawerModule(memorySelection), null)
+  assert.equal(rackModuleSelectionIsOpen(memorySelection, 'memory_graph'), false)
   assert.match(graphSource, /function inspectNode\(node: Node\)[^{]*\{\s*setSelected\(node\)\s*selection\.select\(\{ kind: 'memory', id: node\.memory\.memory_id \}\)/u)
   assert.match(appSource, /const drawerModule = rackDrawerModule\(selection\)/u)
-  assert.match(appSource, /const graphOpen = rackModuleSelectionIsOpen\(selection, 'memory_graph'\)/u)
-  assert.match(appSource, /const alreadyOpen = rackModuleSelectionIsOpen\(selection, moduleId\)/u)
+  assert.match(stageSource, /name: 'Graph'[\s\S]*DEFAULT_MODULES\.memory_graph/u)
+  assert.doesNotMatch(appSource, /memory_graph:\s*'rack-overlay-module--/u)
 })
 
 /** SPEC C.3/C.4, ADR-010/023, and F028 prohibit showing one scope's graph under

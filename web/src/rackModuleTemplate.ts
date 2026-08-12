@@ -6,6 +6,8 @@ export type StageRackModuleId =
   | 'memory'
   | 'vitals'
   | 'context_bars'
+  | 'memory_graph'
+  | 'injection_console'
 
 export type RackResizeDirection = 'n' | 'e' | 's' | 'w' | 'ne' | 'se' | 'sw' | 'nw'
 
@@ -23,16 +25,15 @@ export const STAGE_RACK_MODULE_IDS: readonly StageRackModuleId[] = [
   'memory',
   'vitals',
   'context_bars',
+  'memory_graph',
+  'injection_console',
 ]
 
 export function rackResizeDirections(
   manifest: RackTemplateManifest,
 ): readonly RackResizeDirection[] {
-  if (manifest.slot === 'panel') {
-    return ['w', 'e', 's', 'sw', 'se']
-  }
-  if (manifest.slot === 'strip') {
-    return ['w', 'e', 'n', 'nw', 'ne']
+  if (manifest.slot === 'panel' || manifest.slot === 'strip') {
+    return ['n', 'e', 's', 'w', 'ne', 'se', 'sw', 'nw']
   }
   return []
 }

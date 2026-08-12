@@ -54,26 +54,38 @@ import {
 } from './rackBridge'
 import { publishRackResize } from './rackEvents'
 import {
-  FACTORY_RACK_LAYOUT,
-  RACK_COLUMNS,
-  cloneFactoryLayout,
-  loadRackLayout,
-  loadSavedRackSet,
-  moduleGridColumn,
-  moveRackModule,
-  orderedModules,
-  orderedStrips,
-  persistRackLayout,
-  rackBodyRowAllocation,
-  rackLayoutsEqual,
-  resizeRackModuleHeight,
-  resizeRackModule,
-  resizeRackStrip,
-  saveRackSet,
-  stripGridColumn,
-  type RackLayoutSet,
+  FACTORY_STAGE_LAYOUT,
+  STAGE_COLUMNS,
+  STAGE_MAX_ZOOM,
+  STAGE_MIN_ZOOM,
+  STAGE_MODULE_IDS,
+  STAGE_ROWS,
+  STAGE_UNIT_HEIGHT,
+  STAGE_UNIT_WIDTH,
+  activeStageLayer,
+  cloneFactoryStageLayout,
+  cloneStageLayout,
+  fitStageCamera,
+  focusStageModule,
+  loadSavedStageSet,
+  loadStageLayout,
+  moduleIsOffscreen,
+  moveStageModule,
+  persistStageLayout,
+  removeStageLayer,
+  removeStageModule,
+  resizeStageModule,
+  restoreStageLayer,
+  restoreStageModule,
+  saveStageSet,
+  selectStageLayer,
+  stageLayoutsEqual,
+  updateStageCamera,
+  type StageCamera,
+  type StageLayoutSet,
   type StageModuleId,
-} from './rackLayout'
+  type StageModuleLayout,
+} from './stageLayout'
 import {
   rackResizeDirections,
   type RackResizeDirection,
@@ -105,8 +117,6 @@ const DISMISSIBLE_OVERLAY_CLASSES = {
   thread_end: 'rack-overlay-module--thread-end',
   palace_queue: 'rack-overlay-module--palace-queue',
   model_device: 'rack-overlay-module--model-device',
-  memory_graph: 'rack-overlay-module--instrument',
-  injection_console: 'rack-overlay-module--instrument',
 } as const
 
 type DismissibleOverlayModuleId = keyof typeof DISMISSIBLE_OVERLAY_CLASSES
@@ -165,17 +175,17 @@ function messageStatus(
   return state === undefined ? (message.partial ? 'Partial' : null) : terminalCopy(state)
 }
 
-function initialRackLayout(): RackLayoutSet {
+function initialRackLayout(): StageLayoutSet {
   try {
-    return loadRackLayout(globalThis.localStorage)
+    return loadStageLayout(globalThis.localStorage)
   } catch {
-    return cloneFactoryLayout()
+    return cloneFactoryStageLayout()
   }
 }
 
-function initialSavedRackSet(): RackLayoutSet | null {
+function initialSavedRackSet(): StageLayoutSet | null {
   try {
-    return loadSavedRackSet(globalThis.localStorage)
+    return loadSavedStageSet(globalThis.localStorage)
   } catch {
     return null
   }
@@ -264,40 +274,106 @@ function useVerifiedRegressionFixture(enabled: boolean): boolean | null {
 function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }) {
   const snapshot = useRackHostSnapshot()
   const selection = useRackHostSelection()
-  const [layout, setLayout] = useState<RackLayoutSet>(initialRackLayout)
-  const [savedSet, setSavedSet] = useState<RackLayoutSet | null>(initialSavedRackSet)
+  const [layout, setLayout] = useState<StageLayoutSet>(initialRackLayout)
+  const [savedSet, setSavedSet] = useState<StageLayoutSet | null>(initialSavedRackSet)
   const [theme, setTheme] = useState<ThemeId>(initialTheme)
   const [pointerActive, setPointerActive] = useState(false)
-  const [mobileCollapsed, setMobileCollapsed] = useState(
-    () => globalThis.matchMedia('(max-width: 48.9rem)').matches,
-  )
-  const effectiveStripRows = mobileCollapsed ? 1 : layout.strip_rows
-  const vitalsCollapsed = effectiveStripRows === 1
+  const [libraryOpen, setLibraryOpen] = useState(false)
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 })
+  const viewportRef = useRef<HTMLDivElement>(null)
+  const layer = activeStageLayer(layout)
   const selectedThread = snapshot.selectedThreadId === null
     ? null
     : snapshot.threads[snapshot.selectedThreadId]
   const openGate = selectedThread?.openGate ?? null
   const drawerModule = rackDrawerModule(selection)
-  const ordered = orderedModules(layout)
-  const strips = orderedStrips(layout)
-  const rowAllocation = rackBodyRowAllocation(effectiveStripRows)
   const dismissibleOverlay = drawerModule !== null && drawerModule in DISMISSIBLE_OVERLAY_CLASSES
     ? drawerModule as DismissibleOverlayModuleId
     : null
+  const offscreenModules = layer.modules.filter((module) => moduleIsOffscreen(
+    module,
+    layer.camera,
+    viewportSize.width,
+    viewportSize.height,
+  ))
+
   useEffect(() => {
-    const mobile = globalThis.matchMedia('(max-width: 48.9rem)')
-    const collapseOnMobile = (event: MediaQueryListEvent) => {
-      if (event.matches) {
-        setMobileCollapsed(true)
-      }
-    }
-    mobile.addEventListener('change', collapseOnMobile)
-    return () => mobile.removeEventListener('change', collapseOnMobile)
+    const viewport = viewportRef.current
+    if (viewport === null || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(([entry]) => {
+      setViewportSize({
+        width: Math.round(entry.contentRect.width),
+        height: Math.round(entry.contentRect.height),
+      })
+    })
+    observer.observe(viewport)
+    return () => observer.disconnect()
   }, [])
 
   useEffect(() => {
+    const viewport = viewportRef.current
+    if (viewport === null) return
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault()
+      setLayout((current) => {
+        const currentLayer = activeStageLayer(current)
+        if (event.ctrlKey || event.metaKey) {
+          const rect = viewport.getBoundingClientRect()
+          const focusX = event.clientX - rect.left
+          const focusY = event.clientY - rect.top
+          const zoom = Math.max(
+            STAGE_MIN_ZOOM,
+            Math.min(STAGE_MAX_ZOOM, currentLayer.camera.zoom * Math.exp(-event.deltaY * 0.004)),
+          )
+          const ratio = zoom / currentLayer.camera.zoom
+          return updateStageCamera(current, {
+            x: focusX - (focusX - currentLayer.camera.x) * ratio,
+            y: focusY - (focusY - currentLayer.camera.y) * ratio,
+            zoom,
+          })
+        }
+        return updateStageCamera(current, {
+          ...currentLayer.camera,
+          x: currentLayer.camera.x - (event.shiftKey ? event.deltaY : event.deltaX),
+          y: currentLayer.camera.y - (event.shiftKey ? 0 : event.deltaY),
+        })
+      })
+    }
+    viewport.addEventListener('wheel', handleWheel, { passive: false })
+    return () => viewport.removeEventListener('wheel', handleWheel)
+  }, [])
+
+  useEffect(() => {
+    if (
+      selection?.kind !== 'module' ||
+      !STAGE_MODULE_IDS.includes(selection.id as StageModuleId)
+    ) return
+    const timeout = globalThis.setTimeout(() => {
+      setLayout((current) => {
+        const targetLayer = current.layers.find((candidate) => (
+          candidate.modules.some((module) => module.module_id === selection.id)
+        ))
+        if (targetLayer === undefined) return current
+        const selected = selectStageLayer(current, targetLayer.layer_id)
+        const module = activeStageLayer(selected).modules.find(
+          (candidate) => candidate.module_id === selection.id,
+        )
+        return module === undefined
+          ? selected
+          : updateStageCamera(selected, focusStageModule(
+              module,
+              viewportSize.width,
+              viewportSize.height,
+              Math.max(activeStageLayer(selected).camera.zoom, 0.72),
+            ))
+      })
+    }, 0)
+    return () => globalThis.clearTimeout(timeout)
+  }, [selection, viewportSize.height, viewportSize.width])
+
+  useEffect(() => {
     try {
-      persistRackLayout(globalThis.localStorage, layout)
+      persistStageLayout(globalThis.localStorage, layout)
     } catch {
       // The rack remains usable when a hardened browser denies local storage.
     }
@@ -325,15 +401,9 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   }, [])
 
   const saveCurrentSet = useCallback(() => {
-    const copy: RackLayoutSet = {
-      version: 1,
-      modules: layout.modules.map((module) => ({ ...module })),
-      strips: layout.strips.map((module) => ({ ...module })),
-      strip_rows: layout.strip_rows,
-      scopes: { ...layout.scopes },
-    }
+    const copy = cloneStageLayout(layout)
     try {
-      saveRackSet(globalThis.localStorage, copy)
+      saveStageSet(globalThis.localStorage, copy)
     } catch {
       // The visible status remains truthful: no saved set is claimed.
       return
@@ -343,22 +413,16 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
 
   const restoreSavedSet = useCallback(() => {
     if (savedSet !== null) {
-      setLayout({
-        version: 1,
-        modules: savedSet.modules.map((module) => ({ ...module })),
-        strips: savedSet.strips.map((module) => ({ ...module })),
-        strip_rows: savedSet.strip_rows,
-        scopes: { ...savedSet.scopes },
-      })
+      setLayout(cloneStageLayout(savedSet))
     }
   }, [savedSet])
 
   const resetFactorySet = useCallback(() => {
-    setLayout(cloneFactoryLayout())
+    setLayout(cloneFactoryStageLayout())
   }, [])
 
-  const moveModule = useCallback((source: StageModuleId, target: StageModuleId) => {
-    setLayout((current) => moveRackModule(current, source, target))
+  const moveModule = useCallback((moduleId: StageModuleId, x: number, y: number) => {
+    setLayout((current) => moveStageModule(current, moduleId, x, y))
   }, [])
 
   const resizeModule = useCallback((
@@ -367,62 +431,131 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     height: number,
     direction: RackResizeDirection,
   ) => {
-    setLayout((current) => {
-      const widthAdjusted = moduleId === 'vitals' || moduleId === 'context_bars'
-        ? resizeRackStrip(current, moduleId, width)
-        : resizeRackModule(
-            current,
-            moduleId,
-            width,
-            direction.includes('w') ? 'left' : 'right',
-          )
-      return resizeRackModuleHeight(widthAdjusted, moduleId, height)
-    })
+    setLayout((current) => resizeStageModule(
+      current,
+      moduleId,
+      width,
+      height,
+      direction,
+      RACK_MANIFESTS[moduleId].bounds,
+    ))
   }, [])
 
-  const toggleVitals = useCallback(() => {
-    if (mobileCollapsed) {
-      setMobileCollapsed(false)
-      setLayout((current) => current.strip_rows === 1
-        ? resizeRackModuleHeight(current, 'vitals', 4)
-        : current)
-      return
-    }
-    setLayout((current) => resizeRackModuleHeight(
-      current,
-      'vitals',
-      current.strip_rows === 1 ? 4 : 1,
-    ))
-  }, [mobileCollapsed])
-
-  const layoutStatus = savedSet !== null && rackLayoutsEqual(layout, savedSet)
+  const layoutStatus = savedSet !== null && stageLayoutsEqual(layout, savedSet)
     ? 'Saved set'
-    : rackLayoutsEqual(layout, FACTORY_RACK_LAYOUT)
+    : stageLayoutsEqual(layout, FACTORY_STAGE_LAYOUT)
       ? 'Factory set'
       : 'Edited set'
 
+  function changeCamera(camera: StageCamera) {
+    setLayout((current) => updateStageCamera(current, camera))
+  }
+
+  function zoomAt(nextZoom: number, clientX?: number, clientY?: number) {
+    const viewport = viewportRef.current
+    if (viewport === null) return
+    const rect = viewport.getBoundingClientRect()
+    const focusX = clientX === undefined ? rect.width / 2 : clientX - rect.left
+    const focusY = clientY === undefined ? rect.height / 2 : clientY - rect.top
+    const zoom = Math.max(STAGE_MIN_ZOOM, Math.min(STAGE_MAX_ZOOM, nextZoom))
+    const ratio = zoom / layer.camera.zoom
+    changeCamera({
+      x: focusX - (focusX - layer.camera.x) * ratio,
+      y: focusY - (focusY - layer.camera.y) * ratio,
+      zoom,
+    })
+  }
+
+  function beginPan(event: ReactPointerEvent<HTMLDivElement>) {
+    if (
+      event.button !== 0 ||
+      (event.target as HTMLElement).closest('[data-rack-module], button, select, input') !== null
+    ) return
+    event.preventDefault()
+    const handle = event.currentTarget
+    const pointerId = event.pointerId
+    handle.setPointerCapture(pointerId)
+    setPointerActive(true)
+    const startX = event.clientX
+    const startY = event.clientY
+    const startCamera = layer.camera
+    const move = (moveEvent: globalThis.PointerEvent) => {
+      changeCamera({
+        ...startCamera,
+        x: startCamera.x + moveEvent.clientX - startX,
+        y: startCamera.y + moveEvent.clientY - startY,
+      })
+    }
+    const stop = () => {
+      globalThis.removeEventListener('pointermove', move)
+      globalThis.removeEventListener('pointerup', stop)
+      globalThis.removeEventListener('pointercancel', stop)
+      if (handle.hasPointerCapture(pointerId)) handle.releasePointerCapture(pointerId)
+      setPointerActive(false)
+    }
+    globalThis.addEventListener('pointermove', move)
+    globalThis.addEventListener('pointerup', stop)
+    globalThis.addEventListener('pointercancel', stop)
+  }
+
+  function focusModule(module: StageModuleLayout) {
+    changeCamera(focusStageModule(
+      module,
+      viewportSize.width,
+      viewportSize.height,
+      Math.max(layer.camera.zoom, 0.72),
+    ))
+  }
+
   return (
     <div
-      className={`rack-shell rack-shell--vitals-${vitalsCollapsed ? 'collapsed' : 'expanded'}`}
+      className="rack-shell rack-shell--stage"
       data-theme={theme}
       data-testid="rack-shell"
     >
       <div className="rack-ambient" aria-hidden="true" />
-      <div
-        className="rack-grid"
-        data-testid="rack-grid"
-        data-pointer-active={pointerActive ? 'true' : undefined}
-      >
-        <RackModuleFrame
+      <div className="rack-stage-header" data-rack-module="header">
+        <RackPluginIframe
           manifest={RACK_MANIFESTS.header}
-          x={1}
-          y={1}
-          width={RACK_COLUMNS}
-          height={1}
           theme={theme}
           isRegressionFixture={isRegressionFixture}
         />
-        <div className="rack-set-controls" aria-label="Rack layout set">
+      </div>
+      <div className="stage-toolbar" aria-label="Stage controls">
+        <div className="stage-layers" role="tablist" aria-label="Stage layers">
+          {layout.layers.map((candidate) => (
+            <div className="stage-layer-tab" key={candidate.layer_id}>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={candidate.layer_id === layout.active_layer_id}
+                onClick={() => setLayout((current) => selectStageLayer(current, candidate.layer_id))}
+              >
+                {candidate.name}
+              </button>
+              <button
+                type="button"
+                aria-label={`Remove ${candidate.name} layer`}
+                onClick={() => setLayout((current) => removeStageLayer(current, candidate.layer_id))}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+        <div className="stage-camera-controls" aria-label="Stage camera">
+          <button type="button" aria-label="Zoom out" onClick={() => zoomAt(layer.camera.zoom - 0.1)}>−</button>
+          <output data-testid="stage-zoom">{Math.round(layer.camera.zoom * 100)}%</output>
+          <button type="button" aria-label="Zoom in" onClick={() => zoomAt(layer.camera.zoom + 0.1)}>+</button>
+          <button
+            type="button"
+            data-testid="stage-fit"
+            onClick={() => changeCamera(fitStageCamera(viewportSize.width, viewportSize.height))}
+          >
+            Whole stage
+          </button>
+        </div>
+        <div className="rack-set-controls" aria-label="Stage layout set">
           <label className="theme-control">
             <span>Theme</span>
             <select
@@ -451,55 +584,113 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             Factory
           </button>
         </div>
+        <button
+          className="stage-library-toggle"
+          type="button"
+          data-testid="stage-library-toggle"
+          aria-expanded={libraryOpen}
+          onClick={() => setLibraryOpen((open) => !open)}
+        >
+          Library
+        </button>
+      </div>
 
-        {ordered.map((module, index) => {
-          const geometry = moduleGridColumn(layout, module.module_id)
-          const isDrawerOpen = drawerModule === module.module_id
-          const otherDrawerOpen = drawerModule !== null && !isDrawerOpen
-          const isInert = openGate !== null || otherDrawerOpen
-          return (
+      <div
+        ref={viewportRef}
+        className="stage-viewport"
+        data-testid="stage-viewport"
+        data-pointer-active={pointerActive ? 'true' : undefined}
+        onPointerDown={beginPan}
+      >
+        <div
+          className="stage-canvas"
+          data-testid="stage-canvas"
+          style={{
+            width: STAGE_COLUMNS * STAGE_UNIT_WIDTH,
+            height: STAGE_ROWS * STAGE_UNIT_HEIGHT,
+            transform: `translate(${layer.camera.x}px, ${layer.camera.y}px) scale(${layer.camera.zoom})`,
+          }}
+        >
+          {layer.modules.map((module) => {
+            const isDrawerOpen = drawerModule === module.module_id
+            const isInert = openGate !== null || dismissibleOverlay !== null
+            return (
             <RackModuleFrame
               key={module.module_id}
               manifest={RACK_MANIFESTS[module.module_id]}
-              x={geometry.x}
-              y={2}
-              width={geometry.w}
-              height={rowAllocation.panelRows}
+              x={module.x}
+              y={module.y}
+              width={module.width}
+              height={module.height}
               drawerOpen={isDrawerOpen}
               inert={isInert}
-              resizeFrom={index === ordered.length - 1 ? 'left' : 'right'}
               onMove={moveModule}
               onResize={resizeModule}
+              onRemove={(moduleId) => setLayout((current) => removeStageModule(current, moduleId))}
               onPointerActivity={setPointerActive}
-              orderedIds={ordered.map((item) => item.module_id)}
+              cameraZoom={layer.camera.zoom}
               isRegressionFixture={isRegressionFixture}
               theme={theme}
             />
-          )
-        })}
-        {strips.map((module) => {
-          const geometry = stripGridColumn(layout, module.module_id)
-          return (
-            <RackModuleFrame
-              key={module.module_id}
-              manifest={RACK_MANIFESTS[module.module_id]}
-              x={geometry.x}
-              y={rowAllocation.vitalsStart}
-              width={geometry.w}
-              height={rowAllocation.vitalsRows}
-              collapsed={vitalsCollapsed}
-              inert={openGate !== null || drawerModule !== null}
-              onMove={moveModule}
-              onResize={resizeModule}
-              onPointerActivity={setPointerActive}
-              orderedIds={strips.map((item) => item.module_id)}
-              onCollapseToggle={module.module_id === 'vitals' ? toggleVitals : undefined}
-              isRegressionFixture={isRegressionFixture}
-              theme={theme}
-            />
-          )
-        })}
+            )
+          })}
+        </div>
+        {offscreenModules.length > 0 && (
+          <nav className="stage-recall" aria-label="Off-screen modules">
+            <span>Off-screen</span>
+            {offscreenModules.map((module) => (
+              <button key={module.module_id} type="button" onClick={() => focusModule(module)}>
+                {RACK_MANIFESTS[module.module_id].name}
+              </button>
+            ))}
+          </nav>
+        )}
       </div>
+
+      {libraryOpen && (
+        <aside className="stage-library" data-testid="stage-library" aria-label="Stage library">
+          <header>
+            <strong>Stage library</strong>
+            <button type="button" aria-label="Close stage library" onClick={() => setLibraryOpen(false)}>×</button>
+          </header>
+          <p>Put any instrument back on this layer.</p>
+          <ul>
+            {STAGE_MODULE_IDS.map((moduleId) => {
+              const present = layer.modules.some((module) => module.module_id === moduleId)
+              return (
+                <li key={moduleId}>
+                  <span>{RACK_MANIFESTS[moduleId].name}</span>
+                  <button
+                    type="button"
+                    disabled={present}
+                    onClick={() => setLayout((current) => restoreStageModule(current, moduleId))}
+                  >
+                    {present ? 'On stage' : 'Add'}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+          {layout.removed_layers.length > 0 && (
+            <>
+              <h2>Removed layers</h2>
+              <ul>
+                {layout.removed_layers.map((removed) => (
+                  <li key={removed.layer_id}>
+                    <span>{removed.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setLayout((current) => restoreStageLayer(current, removed.layer_id))}
+                    >
+                      Restore
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </aside>
+      )}
 
       {drawerModule !== null && (
         <button
@@ -576,17 +767,17 @@ interface RackModuleFrameProps {
   drawerOpen?: boolean
   collapsed?: boolean
   inert?: boolean
-  resizeFrom?: 'left' | 'right'
-  orderedIds?: StageModuleId[]
-  onMove?: (source: StageModuleId, target: StageModuleId) => void
+  onMove?: (moduleId: StageModuleId, x: number, y: number) => void
   onResize?: (
     moduleId: StageModuleId,
     width: number,
     height: number,
     direction: RackResizeDirection,
   ) => void
+  onRemove?: (moduleId: StageModuleId) => void
   onPointerActivity?: (active: boolean) => void
   onCollapseToggle?: () => void
+  cameraZoom?: number
   isRegressionFixture?: boolean
   theme: ThemeId
 }
@@ -600,12 +791,12 @@ function RackModuleFrame({
   drawerOpen = false,
   collapsed = false,
   inert = false,
-  resizeFrom = 'right',
-  orderedIds = [],
   onMove,
   onResize,
+  onRemove,
   onPointerActivity,
   onCollapseToggle,
+  cameraZoom = 1,
   isRegressionFixture = false,
   theme,
 }: RackModuleFrameProps) {
@@ -642,17 +833,11 @@ function RackModuleFrame({
     if (!usesTemplate || onMove === undefined || !event.altKey) {
       return
     }
-    const index = orderedIds.indexOf(moduleId)
-    const targetIndex = event.key === 'ArrowLeft'
-      ? index - 1
-      : event.key === 'ArrowRight'
-        ? index + 1
-        : index
-    const target = orderedIds[targetIndex]
-    if (target !== undefined && target !== moduleId) {
-      event.preventDefault()
-      onMove(moduleId, target)
-    }
+    const deltaX = event.key === 'ArrowLeft' ? -1 : event.key === 'ArrowRight' ? 1 : 0
+    const deltaY = event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0
+    if (deltaX === 0 && deltaY === 0) return
+    event.preventDefault()
+    onMove(moduleId, x + deltaX, y + deltaY)
   }
 
   function beginMove(event: ReactPointerEvent<HTMLDivElement>) {
@@ -666,14 +851,23 @@ function RackModuleFrame({
     onPointerActivity?.(true)
     const startX = event.clientX
     const startY = event.clientY
+    const startGridX = x
+    const startGridY = y
     let moved = false
     setDragging(true)
     const move = (moveEvent: globalThis.PointerEvent) => {
       if (Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) >= 4) {
         moved = true
       }
+      const deltaX = Math.round(
+        (moveEvent.clientX - startX) / (STAGE_UNIT_WIDTH * cameraZoom),
+      )
+      const deltaY = Math.round(
+        (moveEvent.clientY - startY) / (STAGE_UNIT_HEIGHT * cameraZoom),
+      )
+      onMove(moduleId, startGridX + deltaX, startGridY + deltaY)
     }
-    const stop = (stopEvent: globalThis.PointerEvent) => {
+    const stop = () => {
       globalThis.removeEventListener('pointermove', move)
       globalThis.removeEventListener('pointerup', stop)
       globalThis.removeEventListener('pointercancel', cancel)
@@ -682,16 +876,7 @@ function RackModuleFrame({
       }
       onPointerActivity?.(false)
       setDragging(false)
-      if (!moved) {
-        return
-      }
-      const target = globalThis.document
-        .elementFromPoint(stopEvent.clientX, stopEvent.clientY)
-        ?.closest<HTMLElement>('[data-rack-template-module="true"]')
-        ?.dataset.rackModule
-      if (target !== undefined && orderedIds.includes(target as StageModuleId)) {
-        onMove(moduleId, target as StageModuleId)
-      }
+      if (!moved) return
     }
     const cancel = () => {
       globalThis.removeEventListener('pointermove', move)
@@ -718,8 +903,8 @@ function RackModuleFrame({
     event.preventDefault()
     const handle = event.currentTarget
     const pointerId = event.pointerId
-    const grid = frameRef.current?.closest('.rack-grid')
-    if (!(grid instanceof HTMLElement)) {
+    const viewport = frameRef.current?.closest('.stage-viewport')
+    if (!(viewport instanceof HTMLElement)) {
       return
     }
     handle.setPointerCapture(pointerId)
@@ -728,9 +913,8 @@ function RackModuleFrame({
     const startY = event.clientY
     const startWidth = width
     const startHeight = height
-    const gridRect = grid.getBoundingClientRect()
-    const unitX = gridRect.width / RACK_COLUMNS
-    const unitY = gridRect.height / 12
+    const unitX = STAGE_UNIT_WIDTH * cameraZoom
+    const unitY = STAGE_UNIT_HEIGHT * cameraZoom
     const move = (moveEvent: globalThis.PointerEvent) => {
       const deltaX = Math.round((moveEvent.clientX - startX) / unitX)
       const deltaY = Math.round((moveEvent.clientY - startY) / unitY)
@@ -761,8 +945,10 @@ function RackModuleFrame({
   }
 
   const style: CSSProperties = {
-    gridColumn: `${x} / span ${width}`,
-    gridRow: `${y} / span ${height}`,
+    left: x * STAGE_UNIT_WIDTH,
+    top: y * STAGE_UNIT_HEIGHT,
+    width: width * STAGE_UNIT_WIDTH,
+    height: height * STAGE_UNIT_HEIGHT,
   }
   const className = [
     'rack-module',
@@ -794,7 +980,7 @@ function RackModuleFrame({
             className="rack-module__drag"
             role="button"
             tabIndex={0}
-            aria-label={`Dock ${manifest.name}; Alt plus arrow keys also moves it`}
+            aria-label={`Move ${manifest.name}; Alt plus arrow keys also moves it`}
             onKeyDown={dockByKeyboard}
             onPointerDown={beginMove}
           >
@@ -804,6 +990,16 @@ function RackModuleFrame({
           <span className="rack-module__geometry" aria-label={`${width} by ${height} grid units`}>
             {String(width).padStart(2, '0')}×{String(height).padStart(2, '0')}
           </span>
+          {onRemove !== undefined && (
+            <button
+              className="rack-module__remove"
+              type="button"
+              aria-label={`Remove ${manifest.name}`}
+              onClick={() => onRemove(moduleId)}
+            >
+              ×
+            </button>
+          )}
           {onCollapseToggle !== undefined && (
             <button
               className="rack-module__collapse"
@@ -820,16 +1016,13 @@ function RackModuleFrame({
         </div>
       )}
       {resizeDirections.map((direction) => {
-        const primaryDirection = resizeFrom === 'left' ? 'w' : 'e'
         return (
           <button
             key={direction}
             className={`rack-module__resize-handle rack-module__resize-handle--${direction}`}
             type="button"
             data-testid={`rack-resize-${manifest.id}-${direction}`}
-            aria-label={direction === primaryDirection
-              ? `Resize ${manifest.name}`
-              : `${manifest.name} ${direction} resize handle`}
+            aria-label={`${manifest.name} ${direction} resize handle`}
             onPointerDown={(event) => beginResize(event, direction)}
             onKeyDown={(event) => {
               if (onResize === undefined) {
@@ -950,10 +1143,8 @@ function HeaderModule() {
   const threadsOpen = rackModuleSelectionIsOpen(selection, 'threads')
   const memoriesOpen = rackModuleSelectionIsOpen(selection, 'memory')
   const queueOpen = rackModuleSelectionIsOpen(selection, 'palace_queue')
-  const graphOpen = rackModuleSelectionIsOpen(selection, 'memory_graph')
-  const consoleOpen = rackModuleSelectionIsOpen(selection, 'injection_console')
 
-  function toggleModule(moduleId: 'threads' | 'memory' | 'palace_queue' | 'memory_graph' | 'injection_console') {
+  function toggleModule(moduleId: 'threads' | 'memory' | 'palace_queue') {
     const alreadyOpen = rackModuleSelectionIsOpen(selection, moduleId)
     selectionBus.select(alreadyOpen ? null : { kind: 'module', id: moduleId })
   }
@@ -1000,11 +1191,6 @@ function HeaderModule() {
       >
         Palace queue
       </button>
-      <nav className="instrument-launchers" aria-label="Memory instruments">
-        <button type="button" aria-expanded={graphOpen} onClick={() => toggleModule('memory_graph')}>Graph</button>
-        <button type="button" aria-expanded={consoleOpen} onClick={() => toggleModule('injection_console')}>Injection</button>
-      </nav>
-
       <p
         className={`connection connection--${snapshot.connection}`}
         data-testid="connection"

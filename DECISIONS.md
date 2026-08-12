@@ -1853,3 +1853,43 @@ would split the release authority again. Running the full observation in a
 background thread would still spend resources the startup decision does not
 need and create cancellation races. Removing the guard would revive the exact
 prompt-then-refusal dead end M2LC fixed.
+
+## 063 — One persistent camera model replaces the screen-sized Rack [P2, ADR-023, M2ST1]
+
+**Decision.** The host stores a version-2 Stage set whose unit is
+layer → camera → module rectangles. Every layer has its own pan offset and zoom;
+every module keeps integer grid-unit x/y/width/height coordinates on a 32×22
+canvas. The existing Rack manifests, sandboxed frames, public plugin surfaces,
+scope state, and grid-unit bounds remain the only module authorities. The old
+version-1 docked layout migrates into the Work layer once; new factory state
+adds Graph and Injection layers whose Memory Graph and Injection Console are
+ordinary framed modules, not host overlays.
+
+Removing a module moves its complete rectangle into that layer's library.
+Removing a layer moves its complete camera, active rectangles, and removed
+rectangles into the same library. Recall restores the retained state, and a
+compact off-screen list recenters the camera without moving the module. If the
+last visible layer is removed, the host creates one empty replacement canvas so
+the library remains reachable. Save, Restore, Factory, and local persistence
+operate on the complete Stage set.
+
+The factory cameras, 0.25–1.6 zoom range, background-drag/trackpad feel, layer
+bar placement, and initial module composition are **PROVISIONAL-TASTE** for the
+next owner pass. Mechanical behavior—one model, layer-local persistence,
+grid-unit geometry, exact recovery, and no fixed Graph/Injection tabs—is not
+provisional.
+
+**Motivation.** The previous host made every resize trade pixels with a
+neighbor because its entire world was one viewport. That caused layout work to
+be a zero-sum fight and made off-screen placement impossible. A camera over a
+larger coordinate space removes the false scarcity while preserving the Rack's
+existing module and plugin contracts. Retaining removed state makes “everything
+removable” safe instead of turning customization into deletion.
+
+**Rejected alternatives.** Scaling each old tab independently would preserve
+three page shells instead of creating layers. A second freeform plugin registry
+would duplicate ADR-023. CSS-only transforms without a persisted camera would
+reset on every switch and reload. Deleting removed modules or layers and
+recreating factory defaults would lose owner layout. Infinite coordinates,
+overlap resolution, minimaps, arbitrary layer creation, and collaborative
+layouts are not needed for this packet.

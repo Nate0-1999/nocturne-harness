@@ -2,24 +2,26 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
-/** PLAN M2UX2 and SPEC B.6 require every dismissible full-screen view to return to the stage in one obvious click. */
-test('every dismissible overlay shares the host-owned back-to-stage control', async () => {
-  const [app, graph, injection, css] = await Promise.all([
+/** PLAN M2UX2, PLAN M2ST1, and SPEC B.6 keep lifecycle overlays dismissible while Graph and Injection become stage modules. */
+test('lifecycle overlays return in one click while instruments live on the stage', async () => {
+  const [app, graph, injection, css, stage] = await Promise.all([
     readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/MemoryGraph.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/InjectionConsole.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/assets/rack.css', import.meta.url), 'utf8'),
+    readFile(new URL('../src/stageLayout.ts', import.meta.url), 'utf8'),
   ])
 
   for (const moduleId of [
     'thread_end',
     'palace_queue',
     'model_device',
-    'memory_graph',
-    'injection_console',
   ]) {
     assert.match(app, new RegExp(`${moduleId}:\\s*'rack-overlay-module--`, 'u'))
   }
+  assert.doesNotMatch(app, /memory_graph:\s*'rack-overlay-module--/u)
+  assert.doesNotMatch(app, /injection_console:\s*'rack-overlay-module--/u)
+  assert.match(stage, /'memory_graph', 'injection_console'/u)
   assert.match(app, /data-stage-return="one-click"/u)
   assert.match(app, /data-testid="back-to-stage"/u)
   assert.match(app, /Back to stage/u)
@@ -46,22 +48,12 @@ test('thread-list archive targets the existing extraction action by thread ident
   assert.match(app, /type: 'thread\.archive', thread_id: entry\.thread_id/u)
 })
 
-/** SPEC B.6 requires the effective overlay rule to retain usable desktop/mobile insets. */
-test('instrument inset rules outrank the later generic overlay reset', async () => {
+/** PLAN M2ST1 and SPEC B.6 require Graph and Injection to use ordinary stage geometry instead of overlay insets. */
+test('instrument remotes remain scrollable without being fixed host overlays', async () => {
   const css = await readFile(new URL('../src/assets/rack.css', import.meta.url), 'utf8')
-  const genericIndex = css.indexOf('.rack-overlay-module {')
-  const instrumentIndex = css.indexOf('.rack-overlay-module.rack-overlay-module--instrument {')
 
-  assert.ok(genericIndex >= 0)
-  assert.ok(instrumentIndex > genericIndex)
-  assert.match(
-    css.slice(instrumentIndex),
-    /\.rack-overlay-module\.rack-overlay-module--instrument\s*\{\s*inset:\s*4\.5rem 3vw 2rem;/u,
-  )
-  assert.match(
-    css.slice(instrumentIndex),
-    /@media \(max-width:\s*760px\)[^{]*\{[\s\S]*?\.rack-overlay-module\.rack-overlay-module--instrument\s*\{\s*inset:\s*3\.25rem 0 0;/u,
-  )
+  assert.match(css, /\.stage-canvas > \.rack-module\s*\{[^}]*position:\s*absolute/su)
+  assert.match(css, /\.rack-remote--memory_graph\s*,\s*\.rack-remote--injection_console/u)
 })
 
 /** ADR-005 and A-051 require Injection scope to survive close/reopen like Graph scope. */

@@ -198,6 +198,12 @@ const commonPanelBounds: RackBounds = {
   max: { w: 12, h: 12 },
 }
 
+const instrumentStageBounds: RackBounds = {
+  min: { w: 6, h: 5 },
+  preferred: { w: 12, h: 10 },
+  max: { w: 18, h: 16 },
+}
+
 export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
   header: {
     id: 'header',
@@ -332,20 +338,20 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
   },
   memory_graph: {
     id: 'memory_graph', name: 'Memory Graph', version: '1.0.0', class: 'visualizer',
-    slot: 'overlay', streams: ['memory.panel.update'],
-    actions: ['rack.scope.get', 'rack.scope.set'], bounds: commonPanelBounds,
-    movable: false, law_bound: true, default_scope: 'GLOBAL',
+    slot: 'panel', streams: ['memory.panel.update'],
+    actions: ['rack.scope.get', 'rack.scope.set'], bounds: instrumentStageBounds,
+    movable: true, law_bound: true, default_scope: 'GLOBAL',
   },
   injection_console: {
     id: 'injection_console', name: 'Injection Console', version: '1.0.0', class: 'control',
-    slot: 'overlay', streams: ['scorer.change'],
+    slot: 'panel', streams: ['scorer.change'],
     actions: ['scorer.simulate', 'scorer.force', 'scorer.retrain', 'scorer.audition', 'scorer.activate', 'rack.scope.get', 'rack.scope.set'],
     bindings: [
       'scorer.tau', 'scorer.top_k', 'scorer.budget_tokens',
       'scorer.half_life_time_days', 'scorer.half_life_hist_days',
       'scorer.weight.sem', 'scorer.weight.kw', 'scorer.weight.time',
       'scorer.weight.proj', 'scorer.weight.freq', 'scorer.weight.hist',
-    ], bounds: commonPanelBounds, movable: false, law_bound: true, default_scope: 'GLOBAL',
+    ], bounds: instrumentStageBounds, movable: true, law_bound: true, default_scope: 'GLOBAL',
   },
 }
 
