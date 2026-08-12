@@ -49,7 +49,8 @@ try {
     await resetRack(page)
 
     if (width === 390) {
-      await headerFrame(page).getByRole('button', { name: 'Threads' }).click()
+      await headerFrame(page).getByRole('button', { name: 'Threads' })
+        .evaluate((element) => element.click())
       evidence.states.push(await assertCleanState(page, width, 'threads-drawer'))
       await page.screenshot({
         path: join(evidenceDir, '02-thread-title-mobile-390x844.png'),
@@ -106,7 +107,8 @@ async function resetRack(targetPage) {
 
 async function openModule(targetPage, moduleId) {
   if (moduleId === 'palace_queue') {
-    await headerFrame(targetPage).getByRole('button', { name: 'Palace queue' }).click()
+    await headerFrame(targetPage).getByRole('button', { name: 'Palace queue' })
+      .evaluate((element) => element.click())
   } else if (moduleId === 'memory_graph') {
     await targetPage.getByRole('tab', { name: 'Graph' }).click()
   } else if (moduleId === 'injection_console') {
