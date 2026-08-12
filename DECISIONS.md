@@ -1796,3 +1796,28 @@ material grammar. A generic theme marketplace, user-authored tokens, server
 storage, or Rack-manifest parameter would add product surface with no M2 need.
 Applying chrome to panel fills would erase hierarchy and violate the plate's
 rare-shine law.
+
+## 061 — The startup matrix characterizes the real command [P4, SPEC D.2 112]
+
+**Decision.** Keep the lifecycle matrix as an exhaustive table-driven test of
+the real `up_nocturne` entrypoint, with each physical dimension supplied
+through its existing authority: daemon preflight for assets and port state,
+the journal preflight for writability, the authenticated API-contract relation
+for Palace skew, and the exact read-only deploy path for the release guard.
+Only released/pass and development-drifted/block guard pairs are reachable;
+the matrix asserts the inverse pairs are impossible instead of inventing a
+second source-state detector. Clean-room and host rows must produce the same
+voice and action.
+
+**Motivation.** The incidents behind M2LC were not independent bugs. Startup
+made sequential decisions from partial state, so a later authority could
+contradict an earlier offer. Exercising the actual command keeps one behavioral
+authority while the independent expected table makes every combination and
+precedence explicit. Reusing the deploy dry-run makes the prompt and guard one
+mind without copying immutable-release logic into onboarding.
+
+**Rejected alternatives.** A second product state machine would duplicate the
+existing port, asset, journal, contract, and deploy authorities. Hashing source
+inside onboarding would create a second release guard. Listing only the seven
+historical rows would regress the next unanticipated combination; the full
+Cartesian table is cheap and is the point of the packet.

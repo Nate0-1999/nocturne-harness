@@ -400,6 +400,12 @@ def test_remote_up_keeps_running_with_a_visible_notice_when_update_is_declined(
         "_remote_palace_status",
         lambda config: ("0.0.9", "older"),
     )
+    monkeypatch.setattr(
+        "harness.deploy.preflight_cloud_deploy",
+        lambda **kwargs: type(
+            "Preflight", (), {"blocked_only_by_release_guard": False, "blocked": False}
+        )(),
+    )
     monkeypatch.setattr(onboarding, "_start_service", lambda *args, **kwargs: Process())
     monkeypatch.setattr(onboarding, "_supervise", lambda processes: None)
     monkeypatch.setattr(onboarding, "_stop_processes", lambda processes: None)
@@ -453,6 +459,12 @@ def test_remote_up_acceptance_runs_full_deploy_with_the_same_consent(
         "_remote_palace_status",
         lambda config: ("0.0.9", "older"),
     )
+    monkeypatch.setattr(
+        "harness.deploy.preflight_cloud_deploy",
+        lambda **kwargs: type(
+            "Preflight", (), {"blocked_only_by_release_guard": False, "blocked": False}
+        )(),
+    )
     monkeypatch.setattr(onboarding, "_start_service", lambda *args, **kwargs: Process())
     monkeypatch.setattr(onboarding, "_supervise", lambda processes: None)
     monkeypatch.setattr(onboarding, "_stop_processes", lambda processes: None)
@@ -477,6 +489,52 @@ def test_remote_up_acceptance_runs_full_deploy_with_the_same_consent(
             "credential_alignment_consent": True,
         }
     ]
+
+
+def test_remote_up_refuses_an_unrelated_deploy_blocker_before_prompt_or_start(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SPEC D.2 112 and B.6 rule 12 let only the immutable-source guard suppress
+    an update offer; every other deploy refusal stays a wall with a dry-run remedy.
+    """
+
+    config = onboarding.NocturneConfig(
+        home=tmp_path,
+        openrouter_api_key="openrouter-fixture",
+        spine_token="palace-token",
+        database_password="unused-local-password",
+        machine_id="fixture-machine",
+        palace_mode="remote",
+        spine_url="https://spine.example.test",
+    )
+    monkeypatch.setattr(
+        onboarding,
+        "_remote_palace_status",
+        lambda candidate: ("0.0.9", "older"),
+    )
+    monkeypatch.setattr(
+        "harness.deploy.preflight_cloud_deploy",
+        lambda **kwargs: type(
+            "Preflight", (), {"blocked_only_by_release_guard": False, "blocked": True}
+        )(),
+    )
+    monkeypatch.setattr(
+        onboarding,
+        "_start_service",
+        lambda *args, **kwargs: pytest.fail("blocked deploy started the daemon"),
+    )
+
+    with pytest.raises(onboarding.OnboardingError) as error:
+        onboarding._up_remote(
+            config,
+            open_browser=False,
+            prompt=lambda message: pytest.fail(f"blocked deploy prompted: {message}"),
+            stdout=io.StringIO(),
+        )
+
+    assert "cannot start safely" in str(error.value)
+    assert "`nocturne deploy --dry-run`" in str(error.value)
+    assert "`nocturne up` again" in str(error.value)
 
 
 def test_remote_up_refuses_newer_contract_without_offering_a_downgrade(

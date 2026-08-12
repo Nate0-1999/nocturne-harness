@@ -315,24 +315,42 @@ def _up_remote(
     if relation == "newer":
         raise OnboardingError(_app_older_refusal())
     if relation == "older":
-        answer = prompt(
-            "Your Palace needs an update to work with this version of Nocturne. Update now? "
-            "Nocturne backs it up first; this takes a few minutes. [y/N] "
-        ).strip()
-        if answer.lower() in {"y", "yes"}:
-            from harness.deploy import run_cloud_deploy
+        from harness.deploy import preflight_cloud_deploy
 
-            run_cloud_deploy(
-                dry_run=False,
-                openrouter_key=config.openrouter_api_key,
-                home=config.home,
-                credential_alignment_consent=True,
-            )
-        else:
+        deploy_preflight = preflight_cloud_deploy(
+            openrouter_key=config.openrouter_api_key,
+            home=config.home,
+        )
+        if deploy_preflight.blocked_only_by_release_guard:
             print(
-                "Your Palace update was postponed; some newer screens may be unavailable.",
+                "Your app includes unreleased changes; your Palace is compatible; "
+                "Nocturne will start normally.",
                 file=stdout,
             )
+        elif deploy_preflight.blocked:
+            raise OnboardingError(
+                "Your Palace update cannot start safely. Run `nocturne deploy --dry-run`, "
+                "fix the reported problem, then run `nocturne up` again."
+            )
+        else:
+            answer = prompt(
+                "Your Palace needs an update to work with this version of Nocturne. Update now? "
+                "Nocturne backs it up first; this takes a few minutes. [y/N] "
+            ).strip()
+            if answer.lower() in {"y", "yes"}:
+                from harness.deploy import run_cloud_deploy
+
+                run_cloud_deploy(
+                    dry_run=False,
+                    openrouter_key=config.openrouter_api_key,
+                    home=config.home,
+                    credential_alignment_consent=True,
+                )
+            else:
+                print(
+                    "Your Palace update was postponed; some newer screens may be unavailable.",
+                    file=stdout,
+                )
     harness = _start_service(
         "harness.packaged:create_app",
         port=8765,

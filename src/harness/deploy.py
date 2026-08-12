@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import io
 import json
 import os
 import re
@@ -204,6 +205,22 @@ class DeployPlan:
     @property
     def blocked(self) -> bool:
         return any(step.action is PlanAction.BLOCKED for step in self.steps)
+
+    @property
+    def release_guard_blocked(self) -> bool:
+        """Return whether immutable released source is one blocking cause."""
+
+        return self.step(DeployStage.SPINE_IMAGE).action is PlanAction.BLOCKED and (
+            self.step(DeployStage.SPINE_IMAGE).detail
+            == "this version is already released; bump the spine version to ship changes"
+        )
+
+    @property
+    def blocked_only_by_release_guard(self) -> bool:
+        """Return whether immutable source drift is the plan's sole refusal."""
+
+        blocked = tuple(step for step in self.steps if step.action is PlanAction.BLOCKED)
+        return len(blocked) == 1 and self.release_guard_blocked
 
     @property
     def mutations(self) -> tuple[PlanStep, ...]:
@@ -3364,6 +3381,25 @@ def run_cloud_deploy(
             source_provider=current_source,
             credential_alignment_consent=credential_alignment_consent,
         )
+
+
+def preflight_cloud_deploy(
+    *,
+    openrouter_key: str,
+    runner: CommandRunner = subprocess.run,
+    process_factory: ProcessFactory = subprocess.Popen,
+    home: Path | None = None,
+) -> DeployPlan:
+    """Run the exact read-only deploy path without exposing its operator plan."""
+
+    return run_cloud_deploy(
+        dry_run=True,
+        openrouter_key=openrouter_key,
+        stdout=io.StringIO(),
+        runner=runner,
+        process_factory=process_factory,
+        home=home,
+    )
 
 
 def create_owner_cloud_backup(

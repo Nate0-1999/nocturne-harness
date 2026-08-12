@@ -44,6 +44,7 @@ from harness.deploy import (
     DeployBlocked,
     DeployError,
     DeployIncomplete,
+    DeployPlan,
     DeployStage,
     DeployTarget,
     GcloudDeployBackend,
@@ -61,6 +62,7 @@ from harness.deploy import (
     invoke_packaged_breaker,
     local_image_build_argv,
     packaged_spine_source,
+    preflight_cloud_deploy,
 )
 
 TARGET = DeployTarget(
@@ -1468,6 +1470,50 @@ def test_released_image_requires_the_matching_packaged_source_tag() -> None:
     )
     assert step.action is PlanAction.BLOCKED
     assert step.detail == "this version is already released; bump the spine version to ship changes"
+
+
+def test_cloud_preflight_reuses_the_dry_run_and_hides_operator_plan(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """SPEC D.2 112 and B.6 rule 12 require `up` to consult the exact deploy guard
+    before offering an action, without duplicating guard logic or printing a dry-run plan.
+    """
+
+    expected = build_plan(observed(spine_image=ResourceState.SOURCE_CHANGED))
+    calls: list[dict[str, object]] = []
+
+    def run(**kwargs: object) -> DeployPlan:
+        calls.append(kwargs)
+        return expected
+
+    monkeypatch.setattr("harness.deploy.run_cloud_deploy", run)
+
+    actual = preflight_cloud_deploy(openrouter_key="fixture", home=Path("/tmp/nocturne"))
+
+    assert actual is expected
+    assert actual.release_guard_blocked is True
+    assert actual.blocked_only_by_release_guard is True
+    assert len(calls) == 1
+    assert calls[0]["dry_run"] is True
+    assert calls[0]["openrouter_key"] == "fixture"
+    assert calls[0]["home"] == Path("/tmp/nocturne")
+    assert isinstance(calls[0]["stdout"], io.StringIO)
+
+
+def test_release_guard_does_not_hide_an_unrelated_deploy_blocker() -> None:
+    """SPEC D.2 112 and B.6 rule 12 allow the dev-ground start only when the
+    immutable-source guard is the sole refusal; unrelated unsafe deployment state stays visible.
+    """
+
+    plan = build_plan(
+        observed(
+            spine_image=ResourceState.SOURCE_CHANGED,
+            breaker=BreakerState.PARTIAL_OR_DRIFTED,
+        )
+    )
+
+    assert plan.release_guard_blocked is True
+    assert plan.blocked_only_by_release_guard is False
 
 
 def sql_user_state(users: list[dict[str, object]]) -> ResourceState:
