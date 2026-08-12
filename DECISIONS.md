@@ -1821,3 +1821,35 @@ existing port, asset, journal, contract, and deploy authorities. Hashing source
 inside onboarding would create a second release guard. Listing only the seven
 historical rows would regress the next unanticipated combination; the full
 Cartesian table is cheap and is the point of the packet.
+
+## 062 — Startup asks two bounded questions, not for a deployment plan [P4, SPEC D.2 112, M2LC2]
+
+**Decision.** Before an older or legacy remote Palace may produce an update
+offer, `nocturne up` reads exactly two external facts: one authenticated
+`/health` response for API-contract compatibility and one Artifact Registry
+image listing for the existing immutable version/source guard. The registry
+result is classified by the deploy backend's existing image-tag authority; the
+onboarding path does not reproduce source hashing or tag semantics. The full
+20-stage dry-run remains the operator's deployment diagnostic and begins only
+after an affirmative update choice enters the normal deploy command.
+
+Remote startup prints `Checking your Palace — a few seconds…` and flushes it
+before either potentially slow fact. The health request has a four-second
+boundary and the registry command has a six-second boundary calibrated against
+the real warmed CLI; an unreadable guard refuses with the full
+dry-run remedy and never prompts. The lifecycle matrix records the first
+owner-visible line and the two-second speaking budget for every reachable row,
+and names the silent-preflight incident explicitly.
+
+**Motivation.** Compatibility and immutable-source drift are the only facts
+that decide whether the prompt itself is truthful. Asking the whole cloud
+topology to answer that small question made ordinary startup inherit SQL, IAM,
+Secret Manager, billing, Cloud Run, Docker, and network latency it did not need,
+turning a safety check into minutes of unexplained silence.
+
+**Rejected alternatives.** Keeping the full dry-run and adding a spinner would
+only narrate disproportionate work. Copying source-tag logic into onboarding
+would split the release authority again. Running the full observation in a
+background thread would still spend resources the startup decision does not
+need and create cancellation races. Removing the guard would revive the exact
+prompt-then-refusal dead end M2LC fixed.

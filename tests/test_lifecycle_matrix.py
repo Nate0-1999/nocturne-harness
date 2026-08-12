@@ -69,6 +69,9 @@ INCIDENT_ROWS = {
     "prompt-guard-dead-end": LifecycleState(
         "dev", "legacy", "block", "writable", "free", "present", "host"
     ),
+    "M2LC2-silent-preflight": LifecycleState(
+        "dev", "legacy", "block", "writable", "free", "present", "host"
+    ),
 }
 
 
@@ -96,6 +99,18 @@ def _expected_action(state: LifecycleState) -> str:
     if state.palace in {"behind", "legacy"}:
         return "dev-start" if state.guard == "block" else "postpone-start"
     return "start"
+
+
+def _expected_first_line(state: LifecycleState, action: str) -> str:
+    if action == "adopt":
+        return f"Nocturne is already running at {onboarding.LOCAL_URL}; using it."
+    if action == "refuse-assets":
+        return "Nocturne's web app is unavailable; reinstall Nocturne."
+    if action == "refuse-port":
+        return "Port 8765 is occupied by another process; stop that process."
+    if action == "refuse-journal":
+        return "Conversation journal is not writable"
+    return onboarding.PALACE_CHECKING_LINE
 
 
 @pytest.mark.parametrize("state", REACHABLE_STATES, ids=_case_id)
@@ -141,7 +156,11 @@ def test_every_reachable_lifecycle_state_has_one_voice_and_action(
     monkeypatch.setattr(onboarding, "load_config", lambda **kwargs: config)
     monkeypatch.setattr(onboarding, "_warn_if_low_disk", lambda *args, **kwargs: None)
     monkeypatch.setattr(onboarding, "_daemon_preflight", lambda candidate: preflight)
-    monkeypatch.setattr(onboarding, "_remote_palace_status", lambda candidate: relation)
+    monkeypatch.setattr(
+        onboarding,
+        "_remote_palace_status",
+        lambda candidate: (events.append("health"), relation)[1],
+    )
     monkeypatch.setattr(
         onboarding,
         "_require_writable_journal",
@@ -154,11 +173,11 @@ def test_every_reachable_lifecycle_state_has_one_voice_and_action(
         ),
     )
     monkeypatch.setattr(
-        "harness.deploy.preflight_cloud_deploy",
-        lambda **kwargs: SimpleNamespace(
-            blocked_only_by_release_guard=state.guard == "block",
-            blocked=state.guard == "block",
-        ),
+        "harness.deploy.preflight_release_guard",
+        lambda **kwargs: (
+            events.append("guard"),
+            SimpleNamespace(blocked=state.guard == "block"),
+        )[1],
     )
     monkeypatch.setattr(
         onboarding,
@@ -193,6 +212,10 @@ def test_every_reachable_lifecycle_state_has_one_voice_and_action(
         )
         rendered = output.getvalue()
 
+    spoken = output.getvalue() or rendered
+    assert spoken.splitlines()[0] == _expected_first_line(state, action)
+    assert onboarding.STARTUP_SPEAKING_BUDGET_SECONDS == 2.0
+
     if action == "adopt":
         assert "already running" in rendered
         assert events == []
@@ -207,25 +230,27 @@ def test_every_reachable_lifecycle_state_has_one_voice_and_action(
         assert events == []
     elif action == "refuse-ahead":
         assert "app is older than your Palace" in rendered
-        assert events == ["journal"]
+        assert events == ["journal", "health"]
     elif action == "dev-start":
-        assert rendered.startswith(
+        assert output.getvalue().startswith(
+            f"{onboarding.PALACE_CHECKING_LINE}\n"
             "Your app includes unreleased changes; your Palace is compatible; "
             "Nocturne will start normally.\n"
         )
         assert prompts == []
-        assert events == ["journal", "start"]
+        assert events == ["journal", "health", "guard", "start"]
     elif action == "postpone-start":
         assert len(prompts) == 1
         assert "Update now?" in prompts[0]
         assert "update was postponed" in rendered
-        assert events == ["journal", "start"]
+        assert events == ["journal", "health", "guard", "start"]
     else:
         assert prompts == []
         assert rendered == (
+            f"{onboarding.PALACE_CHECKING_LINE}\n"
             f"Nocturne is running at {onboarding.LOCAL_URL}. Press Ctrl-C to stop it.\n"
         )
-        assert events == ["journal", "start"]
+        assert events == ["journal", "health", "start"]
 
 
 @pytest.mark.parametrize("state", UNREACHABLE_STATES, ids=lambda state: state.id)
@@ -250,6 +275,7 @@ def test_each_historical_lifecycle_incident_is_a_named_reachable_row() -> None:
         "M2V-503",
         "M2CI-clean-room",
         "prompt-guard-dead-end",
+        "M2LC2-silent-preflight",
     }
     assert all(row in REACHABLE_STATES for row in INCIDENT_ROWS.values())
     assert len(ALL_STATES) == 384

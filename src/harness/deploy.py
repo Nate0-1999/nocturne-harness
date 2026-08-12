@@ -57,6 +57,7 @@ _BUDGET_RESOURCE_RE = re.compile(
 )
 _IMAGE_TAG_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _CLOUD_OPERATION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+STARTUP_RELEASE_GUARD_TIMEOUT_SECONDS = 6.0
 
 RUNTIME_SERVICE_ACCOUNT_EMAIL = f"{RUNTIME_SERVICE_ACCOUNT}@{PROJECT_ID}.iam.gserviceaccount.com"
 SQL_CONNECTION_NAME = f"{PROJECT_ID}:{REGION}:{SQL_INSTANCE}"
@@ -241,6 +242,17 @@ class DeployPlan:
             for index, step in enumerate(self.steps, start=1)
         )
         return "\n".join(lines)
+
+
+@dataclass(frozen=True, slots=True)
+class ReleaseGuardPreflight:
+    """The one immutable-image fact needed before an update offer."""
+
+    image_state: ResourceState
+
+    @property
+    def blocked(self) -> bool:
+        return self.image_state is ResourceState.SOURCE_CHANGED
 
 
 class DeployBackend(Protocol):
@@ -1852,6 +1864,11 @@ class GcloudDeployBackend:
             return ResourceState.EXACT
         return ResourceState.ABSENT
 
+    def release_guard_preflight(self) -> ReleaseGuardPreflight:
+        """Probe only the immutable image/source tags used by the release guard."""
+
+        return ReleaseGuardPreflight(self._image_state(self._artifact_images()))
+
     @staticmethod
     def _service_env(container: Mapping[str, Any]) -> tuple[dict[str, str], dict[str, str]]:
         plain: dict[str, str] = {}
@@ -3400,6 +3417,35 @@ def preflight_cloud_deploy(
         process_factory=process_factory,
         home=home,
     )
+
+
+def preflight_release_guard(
+    *,
+    openrouter_key: str,
+    runner: CommandRunner = subprocess.run,
+) -> ReleaseGuardPreflight:
+    """Read only the immutable image/source fact needed by ``nocturne up``."""
+
+    from spine import __version__ as spine_version
+
+    def bounded_runner(argv: Sequence[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        try:
+            return runner(
+                argv,
+                timeout=STARTUP_RELEASE_GUARD_TIMEOUT_SECONDS,
+                **kwargs,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise DeployError("release guard observation timed out without changing scope") from exc
+
+    with packaged_spine_source() as source:
+        backend = GcloudDeployBackend(
+            image_tag=spine_version.replace("+", "."),
+            openrouter_key=openrouter_key,
+            source_digest=deploy_source_digest(source.app),
+            runner=bounded_runner,
+        )
+        return backend.release_guard_preflight()
 
 
 def create_owner_cloud_backup(

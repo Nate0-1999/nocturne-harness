@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from harness import onboarding
+from harness.deploy import DeployError
 
 
 class _HealthResponse:
@@ -44,7 +45,11 @@ def _stub_remote_health(monkeypatch: pytest.MonkeyPatch, payload: dict[str, obje
     monkeypatch.setattr(
         onboarding.urllib.request,
         "urlopen",
-        lambda request, timeout: _HealthResponse(),
+        lambda request, timeout: (
+            pytest.fail(f"unexpected health timeout {timeout}")
+            if timeout != onboarding.PALACE_PROBE_TIMEOUT_SECONDS
+            else _HealthResponse()
+        ),
     )
 
 
@@ -317,22 +322,23 @@ def test_remote_up_starts_only_the_daemon_and_opens_the_browser(
         onboarding, "_open_browser", lambda url, *, stdout: events.append(("browser", url))
     )
 
+    output = io.StringIO()
     assert (
         onboarding.up_nocturne(
             home=tmp_path,
             prompt=lambda message: pytest.fail(f"compatible contract prompted: {message}"),
-            stdout=io.StringIO(),
+            stdout=output,
         )
         == 0
     )
     assert events == [
-        ("wait", "https://spine.example.test/health", "remote-bearer"),
         ("start", "harness.packaged:create_app", 8765, "https://spine.example.test"),
         ("wait", onboarding.LOCAL_URL, None),
         ("browser", onboarding.LOCAL_URL),
         ("supervise", 1),
         ("stop", 1),
     ]
+    assert output.getvalue().splitlines()[0] == onboarding.PALACE_CHECKING_LINE
 
 
 def test_remote_doctor_checks_spine_journal_and_disk_without_local_database(
@@ -349,22 +355,17 @@ def test_remote_doctor_checks_spine_journal_and_disk_without_local_database(
         prompt=lambda _: "remote-bearer",
         stdout=io.StringIO(),
     )
-    checks: list[tuple[str, str | None]] = []
-    monkeypatch.setattr(
-        onboarding,
-        "_wait_for_url",
-        lambda url, **kwargs: checks.append((url, kwargs.get("token"))),
-    )
+    checks: list[tuple[str, str]] = []
     monkeypatch.setattr(
         onboarding,
         "_remote_api_contract_version",
-        lambda service_url, token: "0.1.7",
+        lambda service_url, token: (checks.append((service_url, token)), "0.1.7")[1],
     )
     monkeypatch.setattr(onboarding, "_daemon_preflight", lambda config: _ready_preflight())
     output = io.StringIO()
 
     assert onboarding.doctor_nocturne(home=tmp_path, stdout=output) == 0
-    assert checks == [("https://spine.example.test/health", "remote-bearer")]
+    assert checks == [("https://spine.example.test", "remote-bearer")]
     rendered = output.getvalue()
     assert "Remote Palace: healthy" in rendered
     assert "Conversation journal:" in rendered
@@ -394,22 +395,25 @@ def test_remote_up_keeps_running_with_a_visible_notice_when_update_is_declined(
         def poll(self) -> None:
             return None
 
+    output = io.StringIO()
+    probes: list[str] = []
+
+    def palace_status(candidate: onboarding.NocturneConfig) -> tuple[str, str]:
+        assert output.getvalue() == f"{onboarding.PALACE_CHECKING_LINE}\n"
+        probes.append("health")
+        return "0.0.9", "older"
+
+    def release_guard(**kwargs: object) -> object:
+        assert output.getvalue() == f"{onboarding.PALACE_CHECKING_LINE}\n"
+        probes.append("guard")
+        return type("Preflight", (), {"blocked": False})()
+
     monkeypatch.setattr(onboarding, "_wait_for_url", lambda *args, **kwargs: None)
-    monkeypatch.setattr(
-        onboarding,
-        "_remote_palace_status",
-        lambda config: ("0.0.9", "older"),
-    )
-    monkeypatch.setattr(
-        "harness.deploy.preflight_cloud_deploy",
-        lambda **kwargs: type(
-            "Preflight", (), {"blocked_only_by_release_guard": False, "blocked": False}
-        )(),
-    )
+    monkeypatch.setattr(onboarding, "_remote_palace_status", palace_status)
+    monkeypatch.setattr("harness.deploy.preflight_release_guard", release_guard)
     monkeypatch.setattr(onboarding, "_start_service", lambda *args, **kwargs: Process())
     monkeypatch.setattr(onboarding, "_supervise", lambda processes: None)
     monkeypatch.setattr(onboarding, "_stop_processes", lambda processes: None)
-    output = io.StringIO()
     prompts: list[str] = []
 
     assert (
@@ -423,12 +427,14 @@ def test_remote_up_keeps_running_with_a_visible_notice_when_update_is_declined(
     )
     assert "update was postponed" in output.getvalue()
     assert "Nocturne is running" in output.getvalue()
+    assert output.getvalue().splitlines()[0] == onboarding.PALACE_CHECKING_LINE
     assert prompts == [
         "Your Palace needs an update to work with this version of Nocturne. Update now? "
         "Nocturne backs it up first; this takes a few minutes. [y/N] "
     ]
     assert "schema" not in prompts[0].lower()
     assert ">=" not in prompts[0]
+    assert probes == ["health", "guard"]
 
 
 def test_remote_up_acceptance_runs_full_deploy_with_the_same_consent(
@@ -460,10 +466,8 @@ def test_remote_up_acceptance_runs_full_deploy_with_the_same_consent(
         lambda config: ("0.0.9", "older"),
     )
     monkeypatch.setattr(
-        "harness.deploy.preflight_cloud_deploy",
-        lambda **kwargs: type(
-            "Preflight", (), {"blocked_only_by_release_guard": False, "blocked": False}
-        )(),
+        "harness.deploy.preflight_release_guard",
+        lambda **kwargs: type("Preflight", (), {"blocked": False})(),
     )
     monkeypatch.setattr(onboarding, "_start_service", lambda *args, **kwargs: Process())
     monkeypatch.setattr(onboarding, "_supervise", lambda processes: None)
@@ -491,11 +495,11 @@ def test_remote_up_acceptance_runs_full_deploy_with_the_same_consent(
     ]
 
 
-def test_remote_up_refuses_an_unrelated_deploy_blocker_before_prompt_or_start(
+def test_remote_up_refuses_when_the_narrow_release_guard_cannot_be_read(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """SPEC D.2 112 and B.6 rule 12 let only the immutable-source guard suppress
-    an update offer; every other deploy refusal stays a wall with a dry-run remedy.
+    """M2LC2, SPEC D.2 112, and B.6 rule 12 fail closed with the full dry-run
+    remedy when the one startup guard fact cannot be observed.
     """
 
     config = onboarding.NocturneConfig(
@@ -513,10 +517,8 @@ def test_remote_up_refuses_an_unrelated_deploy_blocker_before_prompt_or_start(
         lambda candidate: ("0.0.9", "older"),
     )
     monkeypatch.setattr(
-        "harness.deploy.preflight_cloud_deploy",
-        lambda **kwargs: type(
-            "Preflight", (), {"blocked_only_by_release_guard": False, "blocked": True}
-        )(),
+        "harness.deploy.preflight_release_guard",
+        lambda **kwargs: (_ for _ in ()).throw(DeployError("offline")),
     )
     monkeypatch.setattr(
         onboarding,
@@ -532,7 +534,7 @@ def test_remote_up_refuses_an_unrelated_deploy_blocker_before_prompt_or_start(
             stdout=io.StringIO(),
         )
 
-    assert "cannot start safely" in str(error.value)
+    assert "update guard could not be checked" in str(error.value)
     assert "`nocturne deploy --dry-run`" in str(error.value)
     assert "`nocturne up` again" in str(error.value)
 
@@ -613,6 +615,38 @@ def test_remote_contract_probe_never_reads_private_versions(
 
     assert remote == "0.1.8"
     assert onboarding._api_contract_relation(remote) == "compatible"
+
+
+def test_remote_palace_status_is_exactly_one_health_probe(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """M2LC2, SPEC D.2 112, and B.6 rule 12 make Palace compatibility one
+    authenticated health probe rather than a readiness request followed by the same read.
+    """
+
+    calls: list[tuple[str, str]] = []
+    config = onboarding.NocturneConfig(
+        home=Path("/tmp/nocturne-m2lc2"),
+        openrouter_api_key="openrouter-fixture",
+        spine_token="palace-token",
+        database_password="unused-local-password",
+        machine_id="fixture-machine",
+        palace_mode="remote",
+        spine_url="https://spine.example.test",
+    )
+    monkeypatch.setattr(
+        onboarding,
+        "_remote_api_contract_version",
+        lambda service_url, token: (calls.append((service_url, token)), "0.1.7")[1],
+    )
+    monkeypatch.setattr(
+        onboarding,
+        "_wait_for_url",
+        lambda *args, **kwargs: pytest.fail("status performed a second health request"),
+    )
+
+    assert onboarding._remote_palace_status(config) == ("0.1.7", "compatible")
+    assert calls == [("https://spine.example.test", "palace-token")]
 
 
 def test_absent_contract_member_is_the_only_legacy_update_bridge(

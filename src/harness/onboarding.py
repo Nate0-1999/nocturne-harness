@@ -48,6 +48,9 @@ _API_CONTRACT_SEMVER_PATTERN = re.compile(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0
 API_CONTRACT_MIN_VERSION = "0.1.0"
 API_CONTRACT_MAX_VERSION = "0.2.0"
 API_CONTRACT_RANGE = f">={API_CONTRACT_MIN_VERSION},<{API_CONTRACT_MAX_VERSION}"
+PALACE_CHECKING_LINE = "Checking your Palace — a few seconds…"
+STARTUP_SPEAKING_BUDGET_SECONDS = 2.0
+PALACE_PROBE_TIMEOUT_SECONDS = 4.0
 
 
 class OnboardingError(RuntimeError):
@@ -311,26 +314,28 @@ def _up_remote(
 ) -> int:
     """Start only the local daemon against an owner-operated remote Palace."""
 
+    print(PALACE_CHECKING_LINE, file=stdout, flush=True)
     _, relation = _remote_palace_status(config)
     if relation == "newer":
         raise OnboardingError(_app_older_refusal())
     if relation == "older":
-        from harness.deploy import preflight_cloud_deploy
+        from harness.deploy import DeployError, preflight_release_guard
 
-        deploy_preflight = preflight_cloud_deploy(
-            openrouter_key=config.openrouter_api_key,
-            home=config.home,
-        )
-        if deploy_preflight.blocked_only_by_release_guard:
+        try:
+            release_guard = preflight_release_guard(
+                openrouter_key=config.openrouter_api_key,
+            )
+        except DeployError as exc:
+            raise OnboardingError(
+                "The Palace update guard could not be checked. Run "
+                "`nocturne deploy --dry-run`, fix the reported problem, then run "
+                "`nocturne up` again."
+            ) from exc
+        if release_guard.blocked:
             print(
                 "Your app includes unreleased changes; your Palace is compatible; "
                 "Nocturne will start normally.",
                 file=stdout,
-            )
-        elif deploy_preflight.blocked:
-            raise OnboardingError(
-                "Your Palace update cannot start safely. Run `nocturne deploy --dry-run`, "
-                "fix the reported problem, then run `nocturne up` again."
             )
         else:
             answer = prompt(
@@ -373,7 +378,7 @@ def _remote_api_contract_version(service_url: str, token: str) -> str | None:
         headers={"Authorization": f"Bearer {token}"},
     )
     try:
-        with urllib.request.urlopen(request, timeout=15.0) as response:
+        with urllib.request.urlopen(request, timeout=PALACE_PROBE_TIMEOUT_SECONDS) as response:
             payload = json.loads(response.read())
     except (OSError, ValueError) as exc:
         raise OnboardingError(
@@ -422,7 +427,6 @@ def _api_contract_relation(remote_contract: str | None) -> str:
 def _remote_palace_status(config: NocturneConfig) -> tuple[str | None, str]:
     """Probe the remote Palace and compare only its public API contract."""
 
-    _wait_for_url(f"{config.spine_url}/health", token=config.spine_token)
     remote_contract = _remote_api_contract_version(config.spine_url, config.spine_token)
     return remote_contract, _api_contract_relation(remote_contract)
 
