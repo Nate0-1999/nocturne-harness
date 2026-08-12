@@ -51,15 +51,18 @@ html[data-theme="gold-lines"] {
 }
 
 html[data-theme="seraph-dressed"] .rack-shell,
-html[data-theme="gold-lines"] .rack-shell {
+html[data-theme="gold-lines"] .rack-shell,
+html[data-pressed-colorway] .rack-shell {
   background: var(--theme-sky-wash) fixed;
 }
 
-html[data-theme="seraph-dressed"] .rack-module {
+html[data-theme="seraph-dressed"] .rack-module,
+html[data-pressed-colorway] .rack-module {
   border-color: transparent;
 }
 
-html[data-theme="seraph-dressed"] .rack-module::after {
+html[data-theme="seraph-dressed"] .rack-module::after,
+html[data-pressed-colorway] .rack-module::after {
   position: absolute;
   z-index: 5;
   inset: 0;
@@ -72,12 +75,16 @@ html[data-theme="seraph-dressed"] .rack-module::after {
 
 html[data-theme="seraph-dressed"] .rack-module:hover::after,
 html[data-theme="seraph-dressed"] .rack-module:focus-within::after,
-html[data-theme="seraph-dressed"] .rack-module[data-dragging="true"]::after {
+html[data-theme="seraph-dressed"] .rack-module[data-dragging="true"]::after,
+html[data-pressed-colorway] .rack-module:hover::after,
+html[data-pressed-colorway] .rack-module:focus-within::after,
+html[data-pressed-colorway] .rack-module[data-dragging="true"]::after {
   padding: 2px;
   background: var(--theme-rim-hover) fixed;
 }
 
-html[data-theme="seraph-dressed"] .rack-module--strip::after {
+html[data-theme="seraph-dressed"] .rack-module--strip::after,
+html[data-pressed-colorway] .rack-module--strip::after {
   border-top: 1px solid var(--theme-horizon);
 }
 
@@ -87,6 +94,7 @@ html[data-theme="gold-lines"] .rack-overlay-module {
 }
 
 html[data-theme="seraph-dressed"] .rack-ambient,
-html[data-theme="gold-lines"] .rack-ambient {
+html[data-theme="gold-lines"] .rack-ambient,
+html[data-pressed-colorway] .rack-ambient {
   filter: none;
 }

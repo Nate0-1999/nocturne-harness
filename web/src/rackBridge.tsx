@@ -23,6 +23,11 @@ import {
 } from './rack'
 import type { ThemeId } from './themes'
 import {
+  applyColorwayTokens,
+  loadColorways,
+  type PressedColorway,
+} from './platePress.ts'
+import {
   rackSnapshotForIframe,
   rackValueForIframe,
 } from './rackSnapshotProjection'
@@ -56,6 +61,8 @@ interface ConnectMessage {
   snapshot: RackSnapshot
   selection: RackSelection
   regression_fixture: 'M2C REGRESSION' | null
+  theme: ThemeId
+  colorway: PressedColorway | null
 }
 
 export function RackPluginIframe({
@@ -70,6 +77,14 @@ export function RackPluginIframe({
   const frameRef = useRef<HTMLIFrameElement>(null)
   const api = useMemo(() => createHostPluginApi(manifest), [manifest])
   const frameOrigin = useMemo(() => rackFrameOrigin(), [])
+  const colorway = useMemo(() => {
+    if (!theme.startsWith('pressed-')) return null
+    try {
+      return loadColorways(globalThis.localStorage).find((candidate) => candidate.id === theme) ?? null
+    } catch {
+      return null
+    }
+  }, [theme])
 
   useEffect(() => {
     let port: MessagePort | null = null
@@ -146,6 +161,8 @@ export function RackPluginIframe({
         snapshot: rackSnapshotForIframe(api.events.getSnapshot()),
         selection: api.selection.getSnapshot(),
         regression_fixture: isRegressionFixture ? 'M2C REGRESSION' : null,
+        theme,
+        colorway,
       }
       target.postMessage(message, frameOrigin, [channel.port2])
     }
@@ -185,7 +202,7 @@ export function RackPluginIframe({
       globalThis.removeEventListener('message', onWindowMessage)
       closeBridge()
     }
-  }, [api, frameOrigin, isRegressionFixture, manifest])
+  }, [api, colorway, frameOrigin, isRegressionFixture, manifest, theme])
 
   return (
     <iframe
@@ -253,6 +270,8 @@ export function RackRemoteProvider({
       }
       activePort?.close()
       activePort = transferredPort
+      document.documentElement.dataset.theme = message.theme
+      applyColorwayTokens(document.documentElement, message.colorway)
       setApi(createRemoteApi(message, transferredPort))
       setIsRegressionFixture(message.regression_fixture === 'M2C REGRESSION')
     }

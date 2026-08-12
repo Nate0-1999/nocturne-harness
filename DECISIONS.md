@@ -1924,3 +1924,33 @@ discarding comprehension. Hiding every Graph label would avoid collisions by
 removing meaning; rendering all labels smaller would repeat the same failure at
 a different scale. A dynamic canvas text engine is unnecessary for the current
 deterministic grid and would expand M2ST3 into the M3 Graph rework.
+
+## 065 — A pressed colorway is one local data record projected through the existing theme seam [P2.5, ADR-018, M2UX5]
+
+**Decision.** The file picker runs the ratified deterministic extraction in the
+host browser, hashes the original image bytes for identity, and samples at most
+a 512-pixel long edge before clustering so large plates cannot stall the Rack.
+The result is one versioned local record: clusters and their area shares,
+accent and percentile evidence, raw-to-worn repairs, validation results, and
+CSS custom-property values. Only PNG, JPEG, and WebP input is admitted. Stored
+token names and values cross a narrow data grammar; executable CSS forms fail
+closed when reloaded.
+
+The existing theme selector remains the one control. A valid record joins it
+under `PLATE <hash>` and can be removed there. The host sends that same record
+through the existing structured-clone Rack bridge so sandboxed module frames
+wear the colorway without gaining file or storage access. Fonts, data
+encodings, plugin manifests, and module behavior remain outside the record.
+
+**Motivation.** The owner wants the audition recipe to become a zero-ceremony
+personal colorway feature. One inspectable data object preserves the proof of
+how the picture became a palette while keeping ADR-018's code boundary real.
+Bounded sampling protects the glance surface; reusing the selector and bridge
+keeps persistence, removal, and module propagation in one theme path.
+
+**Rejected alternatives.** Persisting the source image would retain private
+material the feature does not need. Generating a stylesheet or accepting
+arbitrary CSS would turn user input into code. A second colorway panel or a
+second iframe storage protocol would duplicate the theme authority. Server-side
+or LLM extraction would add latency, spend, and private-image movement to a
+fully deterministic local operation.

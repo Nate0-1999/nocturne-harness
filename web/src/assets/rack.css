@@ -1852,6 +1852,20 @@ button.rack-module__resize-handle--nw {
   letter-spacing: inherit;
 }
 
+.plate-press-status {
+  max-width: 12rem;
+  overflow: hidden;
+  color: var(--muted);
+  font-family: var(--data-font);
+  font-size: 0.54rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plate-remove-button {
+  color: var(--danger) !important;
+}
+
 .rack-set-controls > span {
   margin-right: 0.35rem;
   color: var(--dim);
@@ -2893,6 +2907,11 @@ button.rack-module__resize-handle--nw {
   .stage-toolbar .rack-set-controls > span,
   .stage-toolbar .rack-set-controls > button {
     display: none;
+  }
+
+  .stage-toolbar .rack-set-controls > .plate-press-button,
+  .stage-toolbar .rack-set-controls > .plate-remove-button {
+    display: inline-flex;
   }
 
   .stage-toolbar .rack-set-controls {

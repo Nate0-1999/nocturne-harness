@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type ChangeEvent,
   type ClipboardEvent,
   type DragEvent,
   type FormEvent,
@@ -99,11 +100,20 @@ import {
   type ThemeId,
 } from './themes'
 import {
+  loadColorways,
+  pressImage,
+  saveColorways,
+  type PressedColorway,
+  type SeamColorEntry,
+} from './platePress.ts'
+import seamColorsRaw from './themes/seam-colors.json?raw'
+import {
   rackDrawerModule,
   rackModuleSelectionIsOpen,
 } from './graphOverlaySelection'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
+const SEAM_COLORS = (JSON.parse(seamColorsRaw) as { colors: SeamColorEntry[] }).colors
 const EMPTY_MEMORY_PANEL: RackMemoryPanelState = {
   items: [],
   total: 0,
@@ -199,6 +209,14 @@ function initialTheme(): ThemeId {
   }
 }
 
+function initialColorways(): PressedColorway[] {
+  try {
+    return loadColorways(globalThis.localStorage)
+  } catch {
+    return []
+  }
+}
+
 function App() {
   const requestedModule = new URLSearchParams(globalThis.location.search).get('rack_module')
   const isRemoteModule = isRackModuleId(requestedModule)
@@ -277,6 +295,10 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   const [layout, setLayout] = useState<StageLayoutSet>(initialRackLayout)
   const [savedSet, setSavedSet] = useState<StageLayoutSet | null>(initialSavedRackSet)
   const [theme, setTheme] = useState<ThemeId>(initialTheme)
+  const [colorways, setColorways] = useState<PressedColorway[]>(initialColorways)
+  const [platePressStatus, setPlatePressStatus] = useState<string | null>(null)
+  const [platePressBusy, setPlatePressBusy] = useState(false)
+  const plateInputRef = useRef<HTMLInputElement>(null)
   const [pointerActive, setPointerActive] = useState(false)
   const [libraryOpen, setLibraryOpen] = useState(false)
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 })
@@ -296,6 +318,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     viewportSize.width,
     viewportSize.height,
   ))
+  const selectedColorway = colorways.find((colorway) => colorway.id === theme) ?? null
 
   useEffect(() => {
     const viewport = viewportRef.current
@@ -381,11 +404,11 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
 
   useEffect(() => {
     try {
-      applyTheme(theme, globalThis.localStorage)
+      applyTheme(theme, globalThis.localStorage, selectedColorway)
     } catch {
-      applyTheme(theme)
+      applyTheme(theme, undefined, selectedColorway)
     }
-  }, [theme])
+  }, [selectedColorway, theme])
 
   useEffect(() => {
     const syncScope = (event: Event) => {
@@ -507,6 +530,47 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     ))
   }
 
+  async function pressPlate(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0]
+    event.currentTarget.value = ''
+    if (file === undefined) return
+    setPlatePressBusy(true)
+    setPlatePressStatus('Pressing colorway…')
+    const result = await pressImage(file, SEAM_COLORS)
+    setPlatePressBusy(false)
+    if (!result.ok) {
+      setPlatePressStatus(result.message)
+      return
+    }
+    const next = [
+      ...colorways.filter((colorway) => colorway.id !== result.colorway.id),
+      result.colorway,
+    ].sort((left, right) => left.id.localeCompare(right.id))
+    try {
+      saveColorways(globalThis.localStorage, next)
+    } catch {
+      setPlatePressStatus('This colorway is valid, but the browser could not save it locally.')
+      return
+    }
+    setColorways(next)
+    setTheme(result.colorway.id)
+    setPlatePressStatus(`${result.colorway.label} is ready.`)
+  }
+
+  function removeSelectedColorway() {
+    if (selectedColorway === null) return
+    const next = colorways.filter((colorway) => colorway.id !== selectedColorway.id)
+    try {
+      saveColorways(globalThis.localStorage, next)
+    } catch {
+      setPlatePressStatus('The browser could not remove this colorway from local storage.')
+      return
+    }
+    setColorways(next)
+    setTheme('neo-noir')
+    setPlatePressStatus(`${selectedColorway.label} removed.`)
+  }
+
   return (
     <div
       className="rack-shell rack-shell--stage"
@@ -566,8 +630,41 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               {THEMES.map((choice) => (
                 <option key={choice.id} value={choice.id}>{choice.label}</option>
               ))}
+              {colorways.map((choice) => (
+                <option key={choice.id} value={choice.id}>{choice.label}</option>
+              ))}
             </select>
           </label>
+          <input
+            ref={plateInputRef}
+            className="visually-hidden"
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            data-testid="plate-press-input"
+            onChange={(event) => void pressPlate(event)}
+          />
+          <button
+            className="plate-press-button"
+            type="button"
+            disabled={platePressBusy}
+            data-testid="plate-press-button"
+            onClick={() => plateInputRef.current?.click()}
+          >
+            {platePressBusy ? 'Pressing…' : 'Press image'}
+          </button>
+          {selectedColorway !== null ? (
+            <button
+              className="plate-remove-button"
+              type="button"
+              data-testid="plate-remove-button"
+              onClick={removeSelectedColorway}
+            >
+              Remove colorway
+            </button>
+          ) : null}
+          <output className="plate-press-status" role="status" data-testid="plate-press-status">
+            {platePressStatus}
+          </output>
           <span data-testid="layout-status">{layoutStatus}</span>
           <button type="button" data-testid="layout-save" onClick={saveCurrentSet}>
             Save
