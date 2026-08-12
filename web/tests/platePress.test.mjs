@@ -44,10 +44,13 @@ const SEAM = [
 test('the Rack exposes one file press path and projects only the validated record', () => {
   const app = readFileSync(new URL('../src/App.tsx', import.meta.url), 'utf8')
   const bridge = readFileSync(new URL('../src/rackBridge.tsx', import.meta.url), 'utf8')
+  const rackCss = readFileSync(new URL('../src/assets/rack.css', import.meta.url), 'utf8')
   assert.match(app, /data-testid="plate-press-input"/)
   assert.match(app, /accept="image\/png,image\/jpeg,image\/webp"/)
   assert.match(app, /data-testid="plate-remove-button"/)
   assert.match(app, /saveColorways\(globalThis\.localStorage, next\)/)
+  assert.match(rackCss, /\.plate-press-status\s*\{[^}]*white-space:\s*normal/s)
+  assert.match(rackCss, /\.plate-press-status:not\(:empty\)\s*\{[^}]*display:\s*block/s)
   assert.match(bridge, /applyColorwayTokens\(document\.documentElement, message\.colorway\)/)
 })
 

@@ -662,9 +662,6 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               Remove colorway
             </button>
           ) : null}
-          <output className="plate-press-status" role="status" data-testid="plate-press-status">
-            {platePressStatus}
-          </output>
           <span data-testid="layout-status">{layoutStatus}</span>
           <button type="button" data-testid="layout-save" onClick={saveCurrentSet}>
             Save
@@ -691,6 +688,9 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           Library
         </button>
       </div>
+      <output className="plate-press-status" role="status" data-testid="plate-press-status">
+        {platePressStatus}
+      </output>
 
       <div
         ref={viewportRef}

@@ -14,6 +14,8 @@ sys.path.insert(0, str(WEB / "scripts"))
 
 from extract_cobalt_seraph import read_rgb_png  # noqa: E402
 
+from verification.m2ux5.scenario_app import _monochrome_png, _route_around_html  # noqa: E402
+
 EXPECTED_PLATE_SHA = "40bfc4414de3fe5d252060dc806cf5c795180d6fcd20aae37ac059a69498e069"
 
 
@@ -60,3 +62,13 @@ def test_second_real_image_yields_a_lawful_named_colorway(tmp_path: Path) -> Non
     assert result["ok"] is True
     assert result["colorway"]["id"].startswith("pressed-")
     assert result["colorway"]["validation"]["passed"] is True
+
+
+def test_fixture_route_around_only_bypasses_native_selection() -> None:
+    """Report 071 seam precedent keeps the real handler and audits repeat persistence."""
+    html = _route_around_html("canonical")
+    assert "/__scenario__/plate/canonical" in html
+    assert "input.dispatchEvent(new Event('change'" in html
+    assert "nocturne.colorways.v1" in html
+    assert "m2ux5StorageDigest" in html
+    assert _monochrome_png().startswith(b"\x89PNG\r\n\x1a\n")

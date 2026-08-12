@@ -1853,13 +1853,22 @@ button.rack-module__resize-handle--nw {
 }
 
 .plate-press-status {
-  max-width: 12rem;
-  overflow: hidden;
+  position: relative;
+  z-index: 54;
+  display: none;
+  margin: 0.3rem 0.42rem 0;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-deep);
   color: var(--muted);
   font-family: var(--data-font);
-  font-size: 0.54rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 0.62rem;
+  line-height: 1.45;
+  white-space: normal;
+}
+
+.plate-press-status:not(:empty) {
+  display: block;
 }
 
 .plate-remove-button {
@@ -2618,7 +2627,7 @@ button.rack-module__resize-handle--nw {
 /* M2ST1: the host is a camera over a persistent grid-unit stage. */
 .rack-shell--stage {
   display: grid;
-  grid-template-rows: 3.35rem 2.65rem minmax(0, 1fr);
+  grid-template-rows: 3.35rem 2.65rem auto minmax(0, 1fr);
   overflow: hidden;
 }
 
@@ -2921,7 +2930,7 @@ button.rack-module__resize-handle--nw {
 
 @media (max-width: 48.9rem) {
   .rack-shell--stage {
-    grid-template-rows: 3.25rem 2.5rem minmax(0, 1fr);
+    grid-template-rows: 3.25rem 2.5rem auto minmax(0, 1fr);
   }
 
   .rack-stage-header {
