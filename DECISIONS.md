@@ -1991,3 +1991,35 @@ scope action would invent behavior the underlying queries do not support.
 Disabled controls and geometry readouts would preserve visible chrome without
 giving the owner a decision. A broader copy rewrite, settings search, plugin
 preferences schema, or cloud-synced preferences are not needed for this packet.
+
+## 067 — One data-bearing rendered canon inherits every gate-day finding [P4, M2ST4]
+
+**Decision.** One foreground runner starts one fixture-isolated, populated Rack
+and executes the existing M2UX1, M2ST1, M2ST2, and M2ST3 browser proofs in
+sequence. The sweep measures iframe descendants at their rendered scale, clips
+nodes to visible overflow ancestors, and treats same-surface SVG/canvas text
+overlap as a failure alongside interactive collisions and clipped DOM text.
+Occluded Stage controls are inert while a full-screen module owns the work
+surface. The Stage shell assigns its header, toolbar, status, and viewport to
+explicit grid rows so an empty status cannot collapse the viewport.
+
+The fixture carries deliberately crowded Graph data, over-precise accounting,
+and live control state. Its Thread End response is isolated at the fixture seam
+because archive verification must not manufacture or mutate owner transcript
+history. Evidence lives in a temporary directory. The same command runs after
+a clean Harness and pinned Spine install in CI; the owner gate and M2XF scout
+remain real-app, real-provider passes.
+
+**Motivation.** Four useful rendered proofs were individually runnable but not
+one standing release barrier. Worse, the old collision collector compared
+unscaled iframe coordinates and invisible overflow content, so it could both
+invent collisions and miss visual-text failures. A single command makes today's
+eyes durable while keeping deterministic regression evidence separate from
+owner truth.
+
+**Rejected alternatives.** Four new duplicate suites would drift from the
+proofs they claim to preserve. Static empty screenshots would miss the dense
+states that caused the findings. Weakening collision tolerances would hide both
+measurement bugs and product bugs. Running the canon against the owner Palace
+would spend, mutate history, and violate fixture isolation. A second formatter,
+label engine, or Stage model is outside this packet.

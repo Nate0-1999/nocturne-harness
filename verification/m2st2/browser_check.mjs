@@ -1,17 +1,23 @@
-/** PLAN M2ST2 rendered proof: settings placement, live scope, fixed-scope honesty, and label diet. */
+/** PLAN M2ST2/M2ST4 and SPEC B.6 r12: live controls, fixed-scope honesty, and label diet. */
 
 import { createRequire } from 'node:module'
-import { writeFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const requireFromWeb = createRequire(new URL('../../web/package.json', import.meta.url))
 const { chromium } = requireFromWeb('playwright-core')
-const evidenceDir = dirname(fileURLToPath(import.meta.url))
-const baseUrl = process.argv.includes('--base-url')
-  ? process.argv[process.argv.indexOf('--base-url') + 1]
+const args = process.argv.slice(2)
+const evidenceDir = args.includes('--evidence-dir')
+  ? resolve(args[args.indexOf('--evidence-dir') + 1])
+  : dirname(fileURLToPath(import.meta.url))
+const baseUrl = args.includes('--base-url')
+  ? args[args.indexOf('--base-url') + 1]
   : 'http://127.0.0.1:8777'
-const fixtureUrl = `${baseUrl}/?fixture=${encodeURIComponent('M2ST2 REGRESSION')}`
+const fixture = args.includes('--fixture')
+  ? args[args.indexOf('--fixture') + 1]
+  : 'M2ST2 REGRESSION'
+const fixtureUrl = `${baseUrl}/?fixture=${encodeURIComponent(fixture)}`
 const browser = await chromium.launch({ channel: 'chrome', headless: true })
 const context = await browser.newContext({ viewport: { width: 1280, height: 900 } })
 const page = await context.newPage()
@@ -25,6 +31,7 @@ page.on('console', (message) => {
 page.on('pageerror', (error) => pageErrors.push(error.message))
 
 try {
+  await mkdir(evidenceDir, { recursive: true })
   await page.goto(fixtureUrl, { waitUntil: 'domcontentloaded' })
   await frame(page, 'header').getByTestId('connection').getByText('Link live').waitFor()
 
@@ -95,6 +102,7 @@ try {
       throw new Error(`internal label still visible: ${forbidden}`)
     }
   }
+  observations.control_conformance = await auditRenderedControls(page)
 
   await threadsGear.press('Enter')
   await page.setViewportSize({ width: 390, height: 844 })
@@ -111,7 +119,7 @@ try {
     throw new Error(JSON.stringify({ consoleProblems, pageErrors }))
   }
   await writeFile(join(evidenceDir, 'chrome-diet.json'), `${JSON.stringify({
-    fixture: 'M2ST2 REGRESSION',
+    fixture,
     observations,
     console_problems: consoleProblems,
     page_errors: pageErrors,
@@ -129,4 +137,55 @@ function frame(targetPage, moduleId) {
 function rectanglesOverlap(left, right) {
   return Math.min(left.x + left.width, right.x + right.width) > Math.max(left.x, right.x) &&
     Math.min(left.y + left.height, right.y + right.height) > Math.max(left.y, right.y)
+}
+
+async function auditRenderedControls(targetPage) {
+  const controls = []
+  for (const candidateFrame of targetPage.frames()) {
+    const scope = candidateFrame === targetPage.mainFrame()
+      ? 'shell'
+      : new URL(candidateFrame.url()).searchParams.get('rack_module') ?? 'unknown-module'
+    controls.push(...await candidateFrame.locator('button, select, input, textarea, a[href]').evaluateAll(
+      (elements, frameScope) => elements.flatMap((element) => {
+        const style = getComputedStyle(element)
+        const rect = element.getBoundingClientRect()
+        if (
+          style.display === 'none' ||
+          style.visibility === 'hidden' ||
+          Number(style.opacity) === 0 ||
+          rect.width <= 0 ||
+          rect.height <= 0 ||
+          element.closest('[aria-hidden="true"], [inert]') !== null
+        ) return []
+        const labels = 'labels' in element && element.labels !== null
+          ? [...element.labels].map((label) => label.textContent ?? '').join(' ')
+          : ''
+        const name = (
+          element.getAttribute('aria-label') ||
+          labels ||
+          element.textContent ||
+          element.getAttribute('title') ||
+          element.getAttribute('value') ||
+          ''
+        ).trim().replace(/\s+/gu, ' ')
+        return [{
+          scope: frameScope,
+          tag: element.tagName.toLowerCase(),
+          name,
+          disabled: 'disabled' in element && element.disabled,
+        }]
+      }),
+      scope,
+    ))
+  }
+  const unnamed = controls.filter((control) => control.name === '')
+  if (unnamed.length !== 0) {
+    throw new Error(`rendered controls without an accessible function name: ${JSON.stringify(unnamed)}`)
+  }
+  return {
+    rendered: controls.length,
+    enabled: controls.filter((control) => !control.disabled).length,
+    disabled_contextually: controls.filter((control) => control.disabled).length,
+    scopes: [...new Set(controls.map((control) => control.scope))].sort(),
+  }
 }

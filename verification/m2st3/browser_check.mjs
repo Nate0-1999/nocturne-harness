@@ -1,17 +1,23 @@
-/** PLAN M2ST3 rendered proof: human numbers, compact absence, and decluttered labels. */
+/** PLAN M2ST3/M2ST4 and SPEC B.6 r12: human numbers, compact absence, and label declutter. */
 
 import { createRequire } from 'node:module'
 import { mkdir, writeFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const requireFromWeb = createRequire(new URL('../../web/package.json', import.meta.url))
 const { chromium } = requireFromWeb('playwright-core')
-const evidenceDir = dirname(fileURLToPath(import.meta.url))
-const baseUrl = process.argv.includes('--base-url')
-  ? process.argv[process.argv.indexOf('--base-url') + 1]
+const args = process.argv.slice(2)
+const evidenceDir = args.includes('--evidence-dir')
+  ? resolve(args[args.indexOf('--evidence-dir') + 1])
+  : dirname(fileURLToPath(import.meta.url))
+const baseUrl = args.includes('--base-url')
+  ? args[args.indexOf('--base-url') + 1]
   : 'http://127.0.0.1:8807'
-const fixtureUrl = `${baseUrl}/?fixture=${encodeURIComponent('M2ST3 REGRESSION')}`
+const fixture = args.includes('--fixture')
+  ? args[args.indexOf('--fixture') + 1]
+  : 'M2ST3 REGRESSION'
+const fixtureUrl = `${baseUrl}/?fixture=${encodeURIComponent(fixture)}`
 const browser = await chromium.launch({ channel: 'chrome', headless: true })
 const context = await browser.newContext({ viewport: { width: 1280, height: 900 } })
 const page = await context.newPage()
@@ -59,6 +65,7 @@ try {
     throw new Error(`absent gauges still burn a measured column: ${JSON.stringify(gaugeWidths)}`)
   }
   observations.vitals = { lane_collisions: laneCollisions, gauge_widths: gaugeWidths }
+  observations.human_number_scan = await assertNoPrecisionLeaks(page, 'work')
   for (let step = 0; step < 6; step += 1) {
     await page.getByRole('button', { name: 'Zoom in' }).click()
   }
@@ -105,13 +112,14 @@ try {
     throw new Error(`graph label collision: ${JSON.stringify(graphAudit.collisions)}`)
   }
   observations.graph = graphAudit
+  observations.graph_human_number_scan = await assertNoPrecisionLeaks(page, 'graph')
   await page.screenshot({ path: join(evidenceDir, '02-graph-decluttered-1280x900.png') })
 
   if (consoleProblems.length !== 0 || pageErrors.length !== 0) {
     throw new Error(JSON.stringify({ consoleProblems, pageErrors }))
   }
   await writeFile(join(evidenceDir, 'honest-display.json'), `${JSON.stringify({
-    fixture: 'M2ST3 REGRESSION',
+    fixture,
     observations,
     console_problems: consoleProblems,
     page_errors: pageErrors,
@@ -124,4 +132,44 @@ try {
 
 function frame(targetPage, moduleId) {
   return targetPage.frameLocator(`iframe[data-testid="rack-plugin-frame-${moduleId}"]`)
+}
+
+async function assertNoPrecisionLeaks(targetPage, state) {
+  const leaks = []
+  const checkedScopes = []
+  for (const candidateFrame of targetPage.frames()) {
+    const scope = candidateFrame === targetPage.mainFrame()
+      ? 'shell'
+      : new URL(candidateFrame.url()).searchParams.get('rack_module') ?? 'unknown-module'
+    checkedScopes.push(scope)
+    const frameLeaks = await candidateFrame.locator('body').evaluate((body) => {
+      const visible = (element) => {
+        const style = getComputedStyle(element)
+        const rect = element.getBoundingClientRect()
+        return style.display !== 'none' && style.visibility !== 'hidden' &&
+          Number(style.opacity) !== 0 && rect.width > 0 && rect.height > 0 &&
+          element.closest('[aria-hidden="true"], [inert]') === null
+      }
+      const precisionPattern = /(?:^|[^\w.])[-+$]?\d+\.\d{4,}(?![\w.])/gu
+      return [...body.querySelectorAll('*')].flatMap((element) => {
+        if (
+          !visible(element) ||
+          element.closest('[data-raw-precision], .receipt, [data-testid*="receipt"], .instrument-inspector') !== null
+        ) return []
+        const directText = [...element.childNodes]
+          .filter((node) => node.nodeType === Node.TEXT_NODE)
+          .map((node) => node.textContent ?? '')
+          .join(' ')
+        return [...directText.matchAll(precisionPattern)].map((match) => ({
+          text: match[0].trim(),
+          element: element.tagName.toLowerCase(),
+        }))
+      })
+    })
+    leaks.push(...frameLeaks.map((leak) => ({ scope, ...leak })))
+  }
+  if (leaks.length !== 0) {
+    throw new Error(`human-number precision leaks in ${state}: ${JSON.stringify(leaks)}`)
+  }
+  return { state, checked_scopes: [...new Set(checkedScopes)].sort(), leaks }
 }

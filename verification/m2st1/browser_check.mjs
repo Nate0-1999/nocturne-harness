@@ -1,17 +1,23 @@
-/** PLAN M2ST1 rendered proof: camera, layers, removal, recall, and persistence. */
+/** PLAN M2ST1/M2ST4 and SPEC B.6 r12: camera, layers, removal, recall, and persistence. */
 
 import { createRequire } from 'node:module'
 import { mkdir, writeFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const requireFromWeb = createRequire(new URL('../../web/package.json', import.meta.url))
 const { chromium } = requireFromWeb('playwright-core')
-const evidenceDir = dirname(fileURLToPath(import.meta.url))
-const baseUrl = process.argv.includes('--base-url')
-  ? process.argv[process.argv.indexOf('--base-url') + 1]
+const args = process.argv.slice(2)
+const evidenceDir = args.includes('--evidence-dir')
+  ? resolve(args[args.indexOf('--evidence-dir') + 1])
+  : dirname(fileURLToPath(import.meta.url))
+const baseUrl = args.includes('--base-url')
+  ? args[args.indexOf('--base-url') + 1]
   : 'http://127.0.0.1:8806'
-const fixtureUrl = `${baseUrl}/?fixture=${encodeURIComponent('M2ST1 REGRESSION')}`
+const fixture = args.includes('--fixture')
+  ? args[args.indexOf('--fixture') + 1]
+  : 'M2ST1 REGRESSION'
+const fixtureUrl = `${baseUrl}/?fixture=${encodeURIComponent(fixture)}`
 const browser = await chromium.launch({ channel: 'chrome', headless: true })
 const context = await browser.newContext({ viewport: { width: 1280, height: 900 } })
 const page = await context.newPage()
@@ -123,7 +129,7 @@ try {
     throw new Error(JSON.stringify({ consoleProblems, pageErrors }))
   }
   const evidence = {
-    fixture: 'M2ST1 REGRESSION',
+    fixture,
     observations,
     console_problems: consoleProblems,
     page_errors: pageErrors,

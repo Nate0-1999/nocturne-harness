@@ -8,6 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "test:unit": "node --experimental-strip-types --test tests/*.test.mjs",
+    "test:canon": "python3 ../scripts/run_ui_canon.py",
+    "test:all": "npm run test:unit && npm run test:canon",
     "preview": "vite preview",
     "verify:h8:browser": "node ../verification/h8/browser_check.mjs",
     "verify:m2b:browser": "node ../verification/m2b/browser_check.mjs",

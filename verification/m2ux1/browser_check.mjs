@@ -1,16 +1,16 @@
-/** M2UX1 rendered no-overlap/no-clip sweep across the complete Rack module set. */
+/** PLAN M2ST4 and SPEC B.6 r12 keep the complete rendered Rack sweep standing. */
 
 import { createRequire } from 'node:module'
 import { mkdir, writeFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { auditLayout, LAYOUT_SWEEP_WIDTHS } from '../../web/src/layoutAudit.ts'
 
 const requireFromWeb = createRequire(new URL('../../web/package.json', import.meta.url))
 const { chromium } = requireFromWeb('playwright-core')
-const evidenceDir = dirname(fileURLToPath(import.meta.url))
 const args = process.argv.slice(2)
+const evidenceDir = parseOutputDir(args)
 const baseUrl = parseBaseUrl(args)
 const widths = parseWidths(args)
 const browser = await chromium.launch({ channel: 'chrome', headless: true })
@@ -21,6 +21,7 @@ const pageErrors = []
 const evidence = {
   base_url: baseUrl,
   widths,
+  data_bearing: null,
   states: [],
   console_problems: consoleProblems,
   page_errors: pageErrors,
@@ -31,16 +32,21 @@ page.on('console', (message) => {
 })
 page.on('pageerror', (error) => pageErrors.push(error.message))
 
+await page.addInitScript(installCanvasTextAudit)
+
 try {
   await mkdir(evidenceDir, { recursive: true })
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' })
   await waitForRack(page)
-  await ensureLongThread(page)
+  evidence.data_bearing = await assertDataBearingState(page)
 
   for (const width of widths) {
     await page.setViewportSize({ width, height: width < 768 ? 844 : 900 })
     await resetRack(page)
     evidence.states.push(await assertCleanState(page, width, 'factory'))
+    await openModule(page, 'model_device')
+    evidence.states.push(await assertCleanState(page, width, 'model_device'))
+    await resetRack(page)
 
     if (width === 390) {
       await headerFrame(page).getByRole('button', { name: 'Threads' }).click()
@@ -61,7 +67,7 @@ try {
       })
     }
 
-    for (const moduleId of ['palace_queue', 'memory_graph', 'injection_console', 'model_device', 'thread_end']) {
+    for (const moduleId of ['palace_queue', 'memory_graph', 'injection_console', 'thread_end']) {
       await openModule(page, moduleId)
       evidence.states.push(await assertCleanState(page, width, moduleId))
       await resetRack(page)
@@ -84,41 +90,34 @@ try {
 
 async function waitForRack(targetPage) {
   await headerFrame(targetPage).getByTestId('connection').getByText('Link live').waitFor({ state: 'attached' })
-  await targetPage.getByTestId('rack-grid').waitFor()
-}
-
-async function ensureLongThread(targetPage) {
-  const thread = threadsFrame(targetPage)
-  const expected = 'Explain the mechanical no-overlap and…'
-  if (await thread.getByText(expected, { exact: true }).count()) return
-
-  const composer = chatFrame(targetPage).getByTestId('composer')
-  await composer.fill(
-    'Explain the mechanical no-overlap and no-clipped-text viewport sweep for the owner.',
-  )
-  await chatFrame(targetPage).getByTestId('send').click()
-  await targetPage.getByTestId('rack-plugin-frame-gate').waitFor()
-  await frame(targetPage, 'gate').getByRole('button', { name: 'Stop run' }).click()
-  await targetPage.getByTestId('rack-plugin-frame-gate').waitFor({ state: 'detached' })
-  await thread.getByText(expected, { exact: true }).waitFor()
+  await targetPage.getByTestId('stage-viewport').waitFor()
 }
 
 async function resetRack(targetPage) {
   await targetPage.reload({ waitUntil: 'domcontentloaded' })
   await waitForRack(targetPage)
+  const workTab = targetPage.getByRole('tab', { name: 'Work' })
+  if ((await workTab.getAttribute('aria-selected')) !== 'true') {
+    await workTab.click()
+    await targetPage.reload({ waitUntil: 'domcontentloaded' })
+    await waitForRack(targetPage)
+  }
 }
 
 async function openModule(targetPage, moduleId) {
   if (moduleId === 'palace_queue') {
     await headerFrame(targetPage).getByRole('button', { name: 'Palace queue' }).click()
   } else if (moduleId === 'memory_graph') {
-    await headerFrame(targetPage).getByRole('button', { name: 'Graph' }).click()
+    await targetPage.getByRole('tab', { name: 'Graph' }).click()
   } else if (moduleId === 'injection_console') {
-    await headerFrame(targetPage).getByRole('button', { name: 'Injection' }).click()
+    await targetPage.getByRole('tab', { name: 'Injection' }).click()
   } else if (moduleId === 'model_device') {
-    await chatFrame(targetPage).locator('button[aria-label^="Active model:"]').click()
+    const modelControl = frame(targetPage, 'chat').locator('button[aria-label^="Active model:"]')
+    await modelControl.waitFor()
+    await modelControl.evaluate((element) => element.click())
   } else if (moduleId === 'thread_end') {
-    await chatFrame(targetPage).getByTestId('archive-thread').click()
+    await frame(targetPage, 'threads').getByRole('button', { name: /^Archive / })
+      .evaluate((element) => element.click())
   }
   await targetPage.getByTestId(`rack-plugin-frame-${moduleId}`).waitFor()
 }
@@ -127,7 +126,11 @@ async function assertCleanState(targetPage, width, state) {
   console.log(`M2UX1 audit ${width}px ${state}`)
   const nodes = await collectNodes(targetPage)
   const result = auditLayout(nodes)
-  if (result.collisions.length !== 0 || result.clipped.length !== 0) {
+  if (
+    result.collisions.length !== 0 ||
+    result.clipped.length !== 0 ||
+    result.text_collisions.length !== 0
+  ) {
     throw new Error(JSON.stringify({
       width,
       state,
@@ -138,6 +141,12 @@ async function assertCleanState(targetPage, width, state) {
         height: item.overlap_height,
       })),
       clipped: result.clipped.map((item) => `${item.scope}:${item.label}`),
+      text_collisions: result.text_collisions.map((item) => ({
+        first: `${item.first.scope}:${item.first.label}`,
+        second: `${item.second.scope}:${item.second.label}`,
+        width: item.overlap_width,
+        height: item.overlap_height,
+      })),
     }, null, 2))
   }
   return { width, state, interactive: nodes.filter((node) => node.interactive).length, text: nodes.length }
@@ -150,14 +159,26 @@ async function collectNodes(targetPage) {
     const box = await frameElement.boundingBox()
     const inert = await frameElement.evaluate((element) => Boolean(element.closest('[inert]')))
     if (box === null || inert) continue
+    const frameSize = await frameElement.evaluate((element) => ({
+      width: element.clientWidth,
+      height: element.clientHeight,
+    }))
     const url = new URL(childFrame.url())
     const scope = url.searchParams.get('rack_module') ?? 'unknown-module'
-    nodes.push(...await collectDocumentNodes(childFrame, scope, box.x, box.y))
+    nodes.push(...await collectDocumentNodes(
+      childFrame,
+      scope,
+      box.x,
+      box.y,
+      frameSize.width > 0 ? box.width / frameSize.width : 1,
+      frameSize.height > 0 ? box.height / frameSize.height : 1,
+    ))
   }
+  nodes.push(...await collectCanvasTextNodes(targetPage))
   return nodes
 }
 
-async function collectDocumentNodes(target, scope, offsetX, offsetY) {
+async function collectDocumentNodes(target, scope, offsetX, offsetY, scaleX = 1, scaleY = 1) {
   return target.locator('body').evaluate((body, options) => {
     const interactiveSelector = [
       'a[href]',
@@ -183,42 +204,145 @@ async function collectDocumentNodes(target, scope, offsetX, offsetY) {
       )
       return element.matches(interactiveSelector) || directText
     })
-    return candidates.filter(visible).map((element, index) => {
-      const rect = element.getBoundingClientRect()
+    const visualSurfaces = [...body.querySelectorAll('svg')]
+    const clippedRect = (element) => {
+      const raw = element.getBoundingClientRect()
+      let left = Math.max(raw.left, 0)
+      let top = Math.max(raw.top, 0)
+      let right = Math.min(raw.right, innerWidth)
+      let bottom = Math.min(raw.bottom, innerHeight)
+      for (let ancestor = element.parentElement; ancestor !== null; ancestor = ancestor.parentElement) {
+        const style = getComputedStyle(ancestor)
+        const ancestorRect = ancestor.getBoundingClientRect()
+        if (['auto', 'hidden', 'clip', 'scroll'].includes(style.overflowX)) {
+          left = Math.max(left, ancestorRect.left)
+          right = Math.min(right, ancestorRect.right)
+        }
+        if (['auto', 'hidden', 'clip', 'scroll'].includes(style.overflowY)) {
+          top = Math.max(top, ancestorRect.top)
+          bottom = Math.min(bottom, ancestorRect.bottom)
+        }
+      }
+      return right > left && bottom > top ? { left, top, right, bottom } : null
+    }
+    return candidates.filter(visible).flatMap((element, index) => {
+      const rect = clippedRect(element)
+      if (rect === null) return []
       const label = (
         element.getAttribute('aria-label') ??
         element.getAttribute('data-testid') ??
         element.textContent ??
         element.tagName
       ).trim().replace(/\s+/gu, ' ').slice(0, 100)
-      return {
+      return [{
         id: `${options.scope}-${index}`,
         label,
         scope: options.scope,
         rect: {
-          x: rect.x + options.offsetX,
-          y: rect.y + options.offsetY,
-          width: rect.width,
-          height: rect.height,
+          x: rect.left * options.scaleX + options.offsetX,
+          y: rect.top * options.scaleY + options.offsetY,
+          width: (rect.right - rect.left) * options.scaleX,
+          height: (rect.bottom - rect.top) * options.scaleY,
         },
         interactive: element.matches(interactiveSelector),
         clipped: !(element instanceof SVGElement) && element.clientWidth > 0 &&
           element.scrollWidth > element.clientWidth + 1,
-      }
+        text_renderer: element instanceof SVGTextElement ? 'svg' : 'dom',
+        text_surface: element instanceof SVGTextElement
+          ? `${options.scope}:svg-${visualSurfaces.indexOf(element.ownerSVGElement)}`
+          : undefined,
+      }]
     })
-  }, { scope, offsetX, offsetY })
+  }, { scope, offsetX, offsetY, scaleX, scaleY })
+}
+
+async function collectCanvasTextNodes(targetPage) {
+  const nodes = []
+  for (const candidateFrame of targetPage.frames()) {
+    const offset = candidateFrame === targetPage.mainFrame()
+      ? { x: 0, y: 0 }
+      : await candidateFrame.frameElement().then((element) => element.boundingBox())
+    if (offset === null) continue
+    const scope = candidateFrame === targetPage.mainFrame()
+      ? 'shell'
+      : new URL(candidateFrame.url()).searchParams.get('rack_module') ?? 'unknown-module'
+    const frameNodes = await candidateFrame.evaluate((options) => {
+      const records = globalThis.__nocturneCanvasTextAudit ?? []
+      const seen = new Set()
+      const canvases = [...document.querySelectorAll('canvas')]
+      return records.flatMap((record, index) => {
+        if (!(record.canvas instanceof HTMLCanvasElement) || !record.canvas.isConnected) return []
+        const canvasRect = record.canvas.getBoundingClientRect()
+        const scaleX = canvasRect.width / record.canvas.width
+        const scaleY = canvasRect.height / record.canvas.height
+        const key = [record.text, record.x, record.y, record.width, record.height].join(':')
+        if (seen.has(key)) return []
+        seen.add(key)
+        return [{
+          id: `${options.scope}-canvas-${index}`,
+          label: record.text.slice(0, 100),
+          scope: options.scope,
+          rect: {
+            x: canvasRect.x + record.x * scaleX + options.offsetX,
+            y: canvasRect.y + record.y * scaleY + options.offsetY,
+            width: record.width * scaleX,
+            height: record.height * scaleY,
+          },
+          interactive: false,
+          clipped: false,
+          text_renderer: 'canvas',
+          text_surface: `${options.scope}:canvas-${canvases.indexOf(record.canvas)}`,
+        }]
+      })
+    }, { scope, offsetX: offset.x, offsetY: offset.y })
+    nodes.push(...frameNodes)
+  }
+  return nodes
+}
+
+async function assertDataBearingState(targetPage) {
+  await frame(targetPage, 'vitals').getByText('Ledger drift · -$0.08').waitFor()
+  await targetPage.getByRole('tab', { name: 'Graph' }).click()
+  await frame(targetPage, 'memory_graph').locator('.graph-node').first().waitFor()
+  const graphNodes = await frame(targetPage, 'memory_graph').locator('.graph-node').count()
+  if (graphNodes < 2) throw new Error(`data-bearing graph needs multiple nodes, got ${graphNodes}`)
+  await targetPage.getByRole('tab', { name: 'Work' }).click()
+  return { spend: 'Ledger drift · -$0.08', graph_nodes: graphNodes }
+}
+
+function installCanvasTextAudit() {
+  const records = []
+  Object.defineProperty(globalThis, '__nocturneCanvasTextAudit', {
+    configurable: false,
+    value: records,
+  })
+  for (const method of ['fillText', 'strokeText']) {
+    const original = CanvasRenderingContext2D.prototype[method]
+    CanvasRenderingContext2D.prototype[method] = function patchedText(text, x, y, maxWidth) {
+      const metrics = this.measureText(String(text))
+      const width = Math.min(metrics.width, maxWidth ?? metrics.width)
+      const ascent = metrics.actualBoundingBoxAscent || Number.parseFloat(this.font) || 10
+      const descent = metrics.actualBoundingBoxDescent || 2
+      const left = this.textAlign === 'center'
+        ? x - width / 2
+        : this.textAlign === 'right' || this.textAlign === 'end'
+          ? x - width
+          : x
+      records.push({
+        canvas: this.canvas,
+        text: String(text),
+        x: left,
+        y: y - ascent,
+        width,
+        height: ascent + descent,
+      })
+      return original.call(this, text, x, y, maxWidth)
+    }
+  }
 }
 
 function headerFrame(targetPage) {
   return frame(targetPage, 'header')
-}
-
-function threadsFrame(targetPage) {
-  return frame(targetPage, 'threads')
-}
-
-function chatFrame(targetPage) {
-  return frame(targetPage, 'chat')
 }
 
 function frame(targetPage, moduleId) {
@@ -238,4 +362,11 @@ function parseWidths(args) {
     throw new Error(`--width must be one of ${LAYOUT_SWEEP_WIDTHS.join(', ')}`)
   }
   return [width]
+}
+
+function parseOutputDir(args) {
+  const index = args.indexOf('--evidence-dir')
+  return index === -1
+    ? dirname(fileURLToPath(import.meta.url))
+    : resolve(args[index + 1])
 }

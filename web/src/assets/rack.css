@@ -1837,6 +1837,8 @@ button.rack-module__resize-handle--nw {
 .m2c-regression-fixture {
   position: fixed;
   z-index: 1000;
+  grid-row: 1;
+  grid-column: 1;
   inset: 0;
   display: grid;
   place-content: start center;
@@ -1945,6 +1947,7 @@ button.rack-module__resize-handle--nw {
 .plate-press-status {
   position: relative;
   z-index: 54;
+  grid-row: 3;
   display: none;
   margin: 0.3rem 0.42rem 0;
   padding: 0.55rem 0.7rem;
@@ -2724,6 +2727,7 @@ button.rack-module__resize-handle--nw {
 .rack-stage-header {
   position: relative;
   z-index: 60;
+  grid-row: 1;
   min-width: 0;
   min-height: 0;
   margin: 0.42rem 0.42rem 0;
@@ -2856,6 +2860,7 @@ button.rack-module__resize-handle--nw {
 }
 
 .stage-toolbar {
+  grid-row: 2;
   position: relative;
   z-index: 55;
   display: flex;
@@ -2961,6 +2966,7 @@ button.rack-module__resize-handle--nw {
 
 .stage-viewport {
   position: relative;
+  grid-row: 4;
   min-width: 0;
   min-height: 0;
   overflow: hidden;

@@ -682,7 +682,11 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           </section>
         </aside>
       )}
-      <div className="stage-toolbar" aria-label="Stage controls">
+      <div
+        className="stage-toolbar"
+        aria-label="Stage controls"
+        inert={openGate !== null || dismissibleOverlay !== null || undefined}
+      >
         <div className="stage-layers" role="tablist" aria-label="Stage layers">
           {layout.layers.map((candidate) => (
             <div className="stage-layer-tab" key={candidate.layer_id}>
@@ -735,6 +739,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
         className="stage-viewport"
         data-testid="stage-viewport"
         data-pointer-active={pointerActive ? 'true' : undefined}
+        inert={openGate !== null || dismissibleOverlay !== null || undefined}
         onPointerDown={beginPan}
       >
         <div

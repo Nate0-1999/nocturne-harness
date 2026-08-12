@@ -19,6 +19,7 @@ test('layout audit catches interactive overlap without rejecting shared edges', 
     result.collisions.map(({ first, second }) => [first.id, second.id]),
     [['restore', 'queue']],
   )
+  assert.deepEqual(result.text_collisions, [])
 })
 
 /** SPEC B.6 / M2UX1 treats text scroll beyond its visible box as a first-class regression. */
@@ -28,6 +29,22 @@ test('layout audit reports clipped text independently of box collisions', () => 
 
   assert.deepEqual(result.collisions, [])
   assert.deepEqual(result.clipped.map((item) => item.id), ['thread-title'])
+})
+
+/** PLAN M2ST4 and SPEC B.6 require non-DOM SVG/canvas labels to join the standing collision sweep. */
+test('layout audit reports visual text collisions within each rendered surface', () => {
+  const result = auditLayout([
+    visualText('svg-a', 'svg', 'graph', 0, 0, 60, 18),
+    visualText('svg-b', 'svg', 'graph', 50, 0, 60, 18),
+    visualText('canvas-a', 'canvas', 'stage-canvas', 0, 40, 60, 18),
+    visualText('canvas-b', 'canvas', 'stage-canvas', 20, 40, 60, 18),
+    visualText('other-surface', 'svg', 'other-graph', 20, 40, 60, 18),
+  ])
+
+  assert.deepEqual(
+    result.text_collisions.map(({ first, second }) => [first.id, second.id]),
+    [['svg-a', 'svg-b'], ['canvas-a', 'canvas-b']],
+  )
 })
 
 /** SPEC B.6 / M2UX1 and PLAN M2ST1/M2ST2 keep the working lane sparse and owner text un-clipped. */
@@ -49,7 +66,11 @@ test('stage source keeps rare controls in settings and lets thread titles wrap i
   assert.match(app, /role="tablist" aria-label="Stage layers"/)
   assert.match(app, /data-testid="seed-upload"[\s\S]*tabIndex=\{-1\}[\s\S]*aria-hidden="true"/)
   assert.match(rackCss, /\.rack-shell--stage\s*\{[^}]*grid-template-rows:\s*3\.35rem 2\.65rem/s)
-  assert.match(rackCss, /\.stage-viewport\s*\{[^}]*overflow:\s*hidden/s)
+  assert.match(rackCss, /\.rack-stage-header\s*\{[^}]*grid-row:\s*1/s)
+  assert.match(rackCss, /\.stage-toolbar\s*\{[^}]*grid-row:\s*2/s)
+  assert.match(rackCss, /\.plate-press-status\s*\{[^}]*grid-row:\s*3/s)
+  assert.match(rackCss, /\.stage-viewport\s*\{[^}]*grid-row:\s*4;[^}]*overflow:\s*hidden/s)
+  assert.match(rackCss, /\.m2c-regression-fixture\s*\{[^}]*grid-row:\s*1;[^}]*grid-column:\s*1;/s)
   assert.match(rackCss, /\.stage-canvas\s*\{[^}]*transform-origin:\s*0 0/s)
   assert.match(rackCss, /\.rack-overlay-module--palace-queue,[\s\S]*inset:\s*3\.25rem 0 0/)
   assert.match(rackCss, /@media \(max-width: 48\.9rem\)[\s\S]*\.rack-drawer-scrim\s*\{\s*display:\s*none/)
@@ -69,5 +90,14 @@ function node(id, x, y, width, height) {
     rect: { x, y, width, height },
     interactive: true,
     clipped: false,
+  }
+}
+
+function visualText(id, renderer, surface, x, y, width, height) {
+  return {
+    ...node(id, x, y, width, height),
+    interactive: false,
+    text_renderer: renderer,
+    text_surface: surface,
   }
 }
