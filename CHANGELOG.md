@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.1.3 - 2026-08-12
+
+- Added the Infinite Stage with persistent layers, pan and zoom, removable/recoverable modules,
+  standardized drag/resize behavior, quieter chrome, and readable human-number projections.
+- Added three persistent built-in themes plus the deterministic Plate Press, which turns an owner
+  image into a validated, switchable, removable colorway without an LLM call.
+- Made startup and deployment one lifecycle decision: unreleased source starts with a plain
+  development-ground explanation instead of offering an update the immutable release guard will
+  refuse, backed by an enumerated clean-room lifecycle matrix.
+- Added the public API contract version to authenticated Palace health and a standing data-bearing
+  UI canon for Stage mechanics, live controls, responsive collisions, and display precision.
+
+### Upgrade note
+
+Remote Palace package version advances from `0.1.2` to `0.1.3` after a fresh verified backup.
+Database schema remains `0012`; authenticated health now declares API contract `0.1.0` separately
+from package and storage versions.
+
 ## 0.1.2 - 2026-08-10
 
 - Added durable single-image prompts with model-exact OpenRouter capability checks, restart-safe
