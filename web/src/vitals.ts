@@ -1,3 +1,5 @@
+import { formatHumanUsd } from './humanNumbers.ts'
+
 export type SpendLaneDimension = 'total' | 'purpose' | 'model'
 export type GaugeStatus = 'measured' | 'not_recorded' | 'placeholder'
 
@@ -183,8 +185,8 @@ export function formatSignedUsd(value: string | null): string {
   if (value === null || !SIGNED_DECIMAL.test(value)) {
     throw new TypeError('Drift must be an exact signed decimal string')
   }
-  const sign = value.startsWith('-') ? '-' : '+'
-  return `${sign}${formatExactUsd(value.replace(/^-/, ''))}`
+  const amount = formatHumanUsd(value)
+  return value.startsWith('-') || Number(value) === 0 ? amount : `+${amount}`
 }
 
 export function unpricedCopy(count: number): string | null {

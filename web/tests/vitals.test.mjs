@@ -116,7 +116,7 @@ test('parses the exact server-provided vitals shape without re-accounting', () =
   assert.equal(parsed.spend.lanes[0].points[0].cost_usd, '0.035000000000')
   assert.equal(spendLaneId(parsed.spend.lanes[0]), 'total')
   assert.equal(parsed.palace_counts[1].status, 'placeholder')
-  assert.equal(reconciliationCopy(parsed.reconciliation), 'Ledger drift · -$0.005000000000')
+  assert.equal(reconciliationCopy(parsed.reconciliation), 'Ledger drift · -$0.005')
   assert.equal(accountingCopy(parsed.accounting), 'Receipt drift · 2 lines pending')
   assert.equal(parsed.resources.database_bytes, 7864320)
   assert.equal(formatBytes(parsed.resources.disk_free_bytes), '100.0 GiB')

@@ -1,0 +1,31 @@
+.vitals-gauges > .vitals-gauge--not_recorded,
+.vitals-gauges > .vitals-gauge--placeholder {
+  flex: 0 0 5.25rem;
+}
+
+.vitals-gauges > .vitals-gauge--not_recorded > strong,
+.vitals-gauges > .vitals-gauge--placeholder > strong {
+  font-size: 0.72rem;
+}
+
+.vitals-lanes > .vitals-lane {
+  grid-template-columns: minmax(4.5rem, 0.8fr) minmax(0, 1.5fr) minmax(4.4rem, 0.7fr);
+  column-gap: 0.7rem;
+}
+
+.vitals-lane__identity,
+.vitals-lane__readout {
+  overflow: hidden;
+}
+
+.vitals-lane__readout {
+  justify-items: end;
+  text-align: right;
+}
+
+.graph-node-label {
+  paint-order: stroke;
+  stroke: var(--ground);
+  stroke-width: 0.45px;
+  stroke-linejoin: round;
+}

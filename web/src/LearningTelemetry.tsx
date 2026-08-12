@@ -9,6 +9,10 @@ import {
   type ScorerAccuracyPoint,
   type ScorerConsoleLearning,
 } from './learning'
+import {
+  formatHumanPercent,
+  formatHumanQuantity,
+} from './humanNumbers'
 
 export function LearningSummary({
   learning,
@@ -34,7 +38,7 @@ export function LearningSummary({
         <strong>
           {learning.weighted_agreement_percent === null
             ? 'Not recorded'
-            : `${learning.weighted_agreement_percent}%`}
+            : formatHumanPercent(learning.weighted_agreement_percent)}
         </strong>
       </div>
     )
@@ -50,19 +54,19 @@ export function LearningSummary({
       <div className="learning-summary__metric learning-summary__metric--right">
         <span>Right</span>
         <strong>{learning.right}</strong>
-        <small>{learning.weighted_right} weighted</small>
+        <small>{formatHumanQuantity(learning.weighted_right)} weighted</small>
       </div>
       <div className="learning-summary__metric learning-summary__metric--wrong">
         <span>Wrong</span>
         <strong>{learning.wrong}</strong>
-        <small>{learning.weighted_wrong} weighted</small>
+        <small>{formatHumanQuantity(learning.weighted_wrong)} weighted</small>
       </div>
       <div className="learning-summary__metric">
         <span>Weighted agreement</span>
         <strong>
           {learning.weighted_agreement_percent === null
             ? 'Not recorded'
-            : `${learning.weighted_agreement_percent}%`}
+            : formatHumanPercent(learning.weighted_agreement_percent)}
         </strong>
         <small>Active {learning.active_scorer_version}</small>
       </div>
@@ -86,10 +90,10 @@ export function LearningTimeline({
   const hasPoints = model.generations.length > 0 || (showLive && model.live.length > 0)
   const accessiblePoints = [
     ...(showLive ? model.live.map((point) => (
-      `Live ${point.percent}% at ${point.timestamp}, scorer ${point.version}`
+      `Live ${formatHumanPercent(point.percent)} at ${point.timestamp}, scorer ${point.version}`
     )) : []),
     ...model.generations.map((point) => (
-      `Generation ${point.version}, ${point.percent}% at ${point.timestamp}`
+      `Generation ${point.version}, ${formatHumanPercent(point.percent)} at ${point.timestamp}`
     )),
   ]
 
@@ -133,7 +137,7 @@ export function LearningTimeline({
               cy={point.y}
               r="1.4"
             >
-              <title>{point.percent}% live agreement · {point.timestamp}</title>
+              <title>{formatHumanPercent(point.percent)} live agreement · {point.timestamp}</title>
             </circle>
           ))}
           {model.generations.length > 1 && (
@@ -150,7 +154,7 @@ export function LearningTimeline({
               cy={point.y}
               r="2"
             >
-              <title>{point.version} · {point.percent}% held-out agreement</title>
+              <title>{point.version} · {formatHumanPercent(point.percent)} held-out agreement</title>
             </circle>
           ))}
         </svg>

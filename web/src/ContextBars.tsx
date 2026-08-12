@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 
 import type { JsonValue } from './protocol'
 import { useRackPlugin, useRackSnapshot } from './rack'
+import { formatHumanCount, formatHumanPercent } from './humanNumbers'
+import './assets/honest-display.css'
 
 type Scope = 'GLOBAL' | 'CURRENT'
 type Category = 'system' | 'history' | 'memory' | 'tools'
@@ -18,8 +20,6 @@ const CATEGORY_LABELS: Record<Category, string> = {
   system: 'System', history: 'History', memory: 'Memory', tools: 'Tools',
 }
 const CATEGORIES: Category[] = ['system', 'history', 'memory', 'tools']
-const number = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 })
-
 export function ContextBars() {
   const { events, query } = useRackPlugin()
   const rack = useRackSnapshot()
@@ -79,7 +79,9 @@ export function ContextBars() {
       <header className="context-bars__header">
         <div>
           <p className="eyebrow">Context</p>
-          <strong>{visibleObservation === null ? 'Waiting for a model response' : `${number.format(visibleObservation.used_tokens)} / ${number.format(visibleObservation.context_tokens)}`}</strong>
+          <strong title={visibleObservation === null ? 'Waiting for a model response' : undefined}>
+            {visibleObservation === null ? '—' : `${formatHumanCount(visibleObservation.used_tokens)} / ${formatHumanCount(visibleObservation.context_tokens)}`}
+          </strong>
         </div>
         <div className="scope-switch" aria-label="Context scope">
           <button aria-pressed={scope === 'GLOBAL'} onClick={() => choose('GLOBAL')}>Global</button>
@@ -88,7 +90,7 @@ export function ContextBars() {
       </header>
       {visibleObservation !== null && (
         <>
-          <div className="context-bars__track" aria-label={`${usedPercent.toFixed(1)}% of context used`}>
+          <div className="context-bars__track" aria-label={`${formatHumanPercent(usedPercent)} of context used`}>
             {CATEGORIES.map((category) => (
               <span
                 key={category}
@@ -101,7 +103,7 @@ export function ContextBars() {
           <table className="context-bars__legend">
             <caption>Estimated token breakdown</caption>
             <tbody>{CATEGORIES.map((category) => (
-              <tr key={category}><td><i className={`context-bars__key context-bars__key--${category}`} />{CATEGORY_LABELS[category]}</td><td>{number.format(visibleObservation.categories[category])}</td></tr>
+              <tr key={category}><td><i className={`context-bars__key context-bars__key--${category}`} />{CATEGORY_LABELS[category]}</td><td>{formatHumanCount(visibleObservation.categories[category])}</td></tr>
             ))}</tbody>
           </table>
           <p className="context-bars__note">Estimated breakdown · 80% line · Compaction is not active</p>

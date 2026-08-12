@@ -16,7 +16,8 @@
     "verify:m2ux1:browser": "node --experimental-strip-types ../verification/m2ux1/browser_check.mjs",
     "verify:m2ux2:browser": "node --experimental-strip-types ../verification/m2ux2/browser_check.mjs",
     "verify:m2ux3:browser": "node --experimental-strip-types ../verification/m2ux3/browser_check.mjs",
-    "verify:m2ux4:browser": "node --experimental-strip-types ../verification/m2ux4/browser_check.mjs"
+    "verify:m2ux4:browser": "node --experimental-strip-types ../verification/m2ux4/browser_check.mjs",
+    "verify:m2st3:browser": "node ../verification/m2st3/browser_check.mjs"
   },
   "dependencies": {
     "react": "^19.2.7",

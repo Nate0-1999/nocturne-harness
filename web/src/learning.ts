@@ -1,3 +1,5 @@
+import { formatHumanPercent, formatHumanQuantity } from './humanNumbers.ts'
+
 export type LearningMeasurementStatus = 'measured' | 'not_recorded'
 
 export const FORCE_RETRAIN_LABEL = 'FORCE RETRAIN'
@@ -139,19 +141,19 @@ export function learningHygieneCopy(learning: ScorerConsoleLearning): string {
 export function learningAgreementCopy(learning: ScorerConsoleLearning): string {
   const score = learning.weighted_agreement_percent === null
     ? 'weighted agreement not recorded'
-    : `${learning.weighted_agreement_percent}% weighted agreement`
+    : `${formatHumanPercent(learning.weighted_agreement_percent)} weighted agreement`
   return `${learning.right} right · ${learning.wrong} wrong · ${score}`
 }
 
 export function learningWeightedTotalsCopy(learning: ScorerConsoleLearning): string {
-  return `${learning.weighted_right} weighted right · ${learning.weighted_wrong} weighted wrong`
+  return `${formatHumanQuantity(learning.weighted_right)} weighted right · ${formatHumanQuantity(learning.weighted_wrong)} weighted wrong`
 }
 
 export function generationAccuracyCopy(point: ScorerAccuracyPoint | undefined): string {
   if (point === undefined || point.status === 'not_recorded' || point.accuracy_percent === null) {
     return 'Held-out agreement not recorded'
   }
-  return `${point.accuracy_percent}% held-out agreement`
+  return `${formatHumanPercent(point.accuracy_percent)} held-out agreement`
 }
 
 export interface ConsoleRefreshResetPolicy {

@@ -95,8 +95,8 @@ const accuracy = [
   },
 ]
 
-/** A-051 makes the browser a presenter of exact learner counts, never a second referee. */
-test('presents exact server-authored floor, hygiene and weighted scoreboard values', () => {
+/** A-051 preserves server authority while PLAN M2ST3 limits human-facing precision. */
+test('presents server-authored learning truth in human numbers', () => {
   const snapshot = learning()
 
   assert.equal(learningFloorCopy(snapshot), '18 / 25 authentic signals · 7 to floor')
@@ -106,11 +106,11 @@ test('presents exact server-authored floor, hygiene and weighted scoreboard valu
   )
   assert.equal(
     learningAgreementCopy(snapshot),
-    '900 right · 1 wrong · 87.125% weighted agreement',
+    '900 right · 1 wrong · 87.1% weighted agreement',
   )
   assert.equal(
     learningWeightedTotalsCopy(snapshot),
-    '14.25 weighted right · 2.10 weighted wrong',
+    '14.3 weighted right · 2.1 weighted wrong',
   )
 })
 

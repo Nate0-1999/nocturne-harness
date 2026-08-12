@@ -1,0 +1,48 @@
+{
+  "fixture": "M2ST3 REGRESSION",
+  "observations": {
+    "vitals": {
+      "lane_collisions": [],
+      "gauge_widths": {
+        "absent": [
+          84,
+          84,
+          84,
+          84,
+          84,
+          84,
+          84
+        ],
+        "measured": [
+          124.796875,
+          124.796875,
+          124.796875,
+          124.796875,
+          124.796875,
+          124.796875
+        ]
+      }
+    },
+    "graph": {
+      "node_count": 10,
+      "visible_label_count": 5,
+      "visible_labels": [
+        "Owner architectu…",
+        "Current project…",
+        "Human attention…",
+        "Module settings…",
+        "Receipts preserv…"
+      ],
+      "priorities": [
+        6011,
+        4009,
+        7,
+        2005,
+        3
+      ],
+      "collisions": []
+    }
+  },
+  "console_problems": [],
+  "page_errors": []
+}

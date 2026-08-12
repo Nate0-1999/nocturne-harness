@@ -15,7 +15,6 @@ import {
 import {
   accountingCopy,
   contiguousPolylineSegments,
-  formatExactUsd,
   formatBytes,
   formatUptime,
   laneChartPoints,
@@ -29,6 +28,11 @@ import {
   type SpendLane,
   type VitalsSnapshot,
 } from './vitals'
+import {
+  formatHumanQuantity,
+  formatHumanUsd,
+} from './humanNumbers'
+import './assets/honest-display.css'
 
 type LoadPhase = 'loading' | 'live' | 'refreshing' | 'stale' | 'failed'
 
@@ -57,10 +61,6 @@ const METRIC_LABELS: Record<string, string> = {
 const minuteFormatter = new Intl.DateTimeFormat(undefined, {
   hour: '2-digit',
   minute: '2-digit',
-})
-
-const countFormatter = new Intl.NumberFormat(undefined, {
-  maximumFractionDigits: 3,
 })
 
 export function VitalsModule() {
@@ -174,11 +174,11 @@ export function VitalsModule() {
 
   if (load.snapshot === null) {
     return (
-      <section className="vitals-strip vitals-strip--empty" aria-label="Palace vitals">
+      <section className="vitals-strip vitals-strip--empty" aria-label="Spend">
         <p className="vitals-strip__notice" role={load.phase === 'failed' ? 'alert' : 'status'}>
           {load.phase === 'failed'
-            ? 'Vitals couldn’t refresh. Chat is still available.'
-            : 'Reading the Palace vitals…'}
+            ? 'Spend couldn’t refresh. Chat is still available.'
+            : 'Reading spend…'}
         </p>
         {load.phase === 'failed' && (
           <button className="vitals-refresh" type="button" onClick={refresh}>
@@ -234,7 +234,7 @@ export function VitalsModule() {
     return (
       <section
         className="vitals-strip vitals-strip--collapsed"
-        aria-label="Palace vitals"
+        aria-label="Spend"
         data-failed={load.failed}
       >
         {telemetry !== null && <LearningSummary learning={telemetry.learning} compact />}
@@ -249,7 +249,7 @@ export function VitalsModule() {
           }}
         >
           <span>Spend · latest minute</span>
-          <strong>{totalPoint === null ? 'No spend recorded' : formatExactUsd(totalPoint.cost_usd)}</strong>
+          <strong>{totalPoint === null || totalPoint.cost_usd === null ? '—' : formatHumanUsd(totalPoint.cost_usd)}</strong>
           {partial !== null && <em>Partial · {partial}</em>}
           <small>
             {totalPoint === null
@@ -279,7 +279,7 @@ export function VitalsModule() {
         </span>
         {load.failed && (
           <span className="vitals-inline-failure" role="alert">
-            Vitals couldn’t refresh. Chat is still available.
+            Spend couldn’t refresh. Chat is still available.
           </span>
         )}
       </section>
@@ -287,19 +287,19 @@ export function VitalsModule() {
   }
 
   return (
-    <section className="vitals-strip vitals-strip--expanded" aria-label="Palace vitals">
+    <section className="vitals-strip vitals-strip--expanded" aria-label="Spend">
       <header className="vitals-strip__header">
         <p>
           Spend · last hour
           <span>Through {formatMinute(snapshot.as_of)}</span>
         </p>
         <div className="vitals-strip__status" aria-live="polite">
-          <div className="scope-switch" aria-label="Vitals scope">
+          <div className="scope-switch" aria-label="Spend scope">
             <button aria-pressed={scope === 'GLOBAL'} onClick={() => { setScope('GLOBAL'); void events.dispatch({ type: 'rack.scope.set', module_id: 'vitals', scope: 'GLOBAL' }) }}>Global</button>
             <button aria-pressed={scope === 'CURRENT'} onClick={() => { setScope('CURRENT'); void events.dispatch({ type: 'rack.scope.set', module_id: 'vitals', scope: 'CURRENT' }) }}>Current</button>
           </div>
           {load.failed && (
-            <span role="alert">Vitals couldn’t refresh. Chat is still available.</span>
+            <span role="alert">Spend couldn’t refresh. Chat is still available.</span>
           )}
           {load.phase === 'refreshing' && <span>Refreshing…</span>}
           <button className="vitals-refresh" type="button" onClick={refresh}>
@@ -424,15 +424,15 @@ function Gauge({
   value: number | null
   suffix?: string
 }) {
+  const missingCopy = status === 'placeholder' ? 'Not active yet' : 'Not recorded yet'
   const copy = status === 'measured' && value !== null
-    ? `${countFormatter.format(value)}${suffix}`
-    : status === 'placeholder'
-      ? 'Not active yet'
-      : 'Not recorded yet'
+    ? `${formatHumanQuantity(value)}${suffix}`
+    : '—'
   return (
     <div
       className={`vitals-gauge vitals-gauge--${status}`}
       data-source={source ?? undefined}
+      title={status === 'measured' ? undefined : `${METRIC_LABELS[metric] ?? metric} · ${missingCopy}`}
     >
       <span>{METRIC_LABELS[metric] ?? metric.replaceAll('_', ' ')}</span>
       <strong>{copy}</strong>
@@ -470,10 +470,10 @@ function SpendLaneRow({
   const partial = point === null ? null : unpricedCopy(point.unpriced_lines)
   const segments = contiguousPolylineSegments(chartPoints)
   const accessibleCost = missingSharedBucket
-    ? formatExactUsd('0')
+    ? formatHumanUsd('0')
     : point === null
       ? 'No samples'
-      : formatExactUsd(point.cost_usd)
+      : point.cost_usd === null ? 'Awaiting price' : formatHumanUsd(point.cost_usd)
   const accessibleMinute = missingSharedBucket
     ? formatMinute(sharedMinute ?? snapshot.as_of)
     : point === null
@@ -618,10 +618,10 @@ function SpendLaneRow({
       <div className="vitals-lane__readout" aria-live={focused ? 'polite' : 'off'}>
         <strong>
           {missingSharedBucket
-            ? formatExactUsd('0')
+            ? formatHumanUsd('0')
             : point === null
               ? 'No samples'
-              : formatExactUsd(point.cost_usd)}
+              : point.cost_usd === null ? '—' : formatHumanUsd(point.cost_usd)}
         </strong>
         <span>
           {missingSharedBucket
