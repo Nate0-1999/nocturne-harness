@@ -1,0 +1,35 @@
+{
+  "fixture": "M2ST2 REGRESSION",
+  "observations": {
+    "app_settings": {
+      "theme": "seraph-dressed",
+      "layout_actions": [
+        "Press image",
+        "Save",
+        "Restore",
+        "Factory"
+      ]
+    },
+    "module_settings": {
+      "spend_scope": "CURRENT",
+      "channel_stack_reason": "This module follows the selected thread."
+    },
+    "phone": {
+      "viewport": "390x844",
+      "gear_box": {
+        "x": 132.796875,
+        "y": 9.90625,
+        "width": 32,
+        "height": 32
+      },
+      "thread_button_box": {
+        "x": 206.640625,
+        "y": 3.5,
+        "width": 19.484375,
+        "height": 44
+      }
+    }
+  },
+  "console_problems": [],
+  "page_errors": []
+}

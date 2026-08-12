@@ -30,8 +30,8 @@ test('layout audit reports clipped text independently of box collisions', () => 
   assert.deepEqual(result.clipped.map((item) => item.id), ['thread-title'])
 })
 
-/** SPEC B.6 / M2UX1 and PLAN M2ST1 reserve a camera/layer lane and keep owner text un-clipped. */
-test('stage source reserves the host control lane and lets thread titles wrap in full', async () => {
+/** SPEC B.6 / M2UX1 and PLAN M2ST1/M2ST2 keep the working lane sparse and owner text un-clipped. */
+test('stage source keeps rare controls in settings and lets thread titles wrap in full', async () => {
   const [app, graph, rackCss, shellCss] = await Promise.all([
     readFile(new URL('src/App.tsx', webRoot), 'utf8'),
     readFile(new URL('src/MemoryGraph.tsx', webRoot), 'utf8'),
@@ -39,8 +39,11 @@ test('stage source reserves the host control lane and lets thread titles wrap in
     readFile(new URL('src/assets/shell.css', webRoot), 'utf8'),
   ])
 
-  assert.match(app, /className="rack-set-reserve" aria-hidden="true"/)
+  assert.match(app, /data-testid="app-settings-toggle"/)
+  assert.match(app, /data-testid="app-settings-panel"/)
   assert.match(app, /data-testid="theme-control"/)
+  assert.match(app, /data-testid="theme-control"[\s\S]*onChange=\{\(event\) => setTheme/u)
+  assert.doesNotMatch(app, /className="stage-toolbar"[\s\S]*className="theme-control"/u)
   assert.match(app, /data-testid="stage-viewport"/)
   assert.match(app, /data-testid="stage-fit"/)
   assert.match(app, /role="tablist" aria-label="Stage layers"/)

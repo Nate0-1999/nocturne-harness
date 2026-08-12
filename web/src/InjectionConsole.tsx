@@ -349,15 +349,6 @@ export function InjectionConsole() {
     }
   }
 
-  function changeScope(next: 'GLOBAL' | 'CURRENT') {
-    setScope(next)
-    void events.dispatch({
-      type: 'rack.scope.set',
-      module_id: 'injection_console',
-      scope: next,
-    })
-  }
-
   const comparisonByMemory = new Map(
     (audition?.instant.candidates ?? preview?.candidates ?? [])
       .map((row) => [row.memory_id, row]),
@@ -365,15 +356,7 @@ export function InjectionConsole() {
 
   return (
     <section className="instrument instrument--console">
-      <header>
-        <div><small>MEMORY TUNING</small><h1>Injection Console</h1></div>
-        <div className="instrument-header-actions">
-          <div className="scope-switch">
-            <button aria-pressed={scope === 'GLOBAL'} onClick={() => changeScope('GLOBAL')}>Global</button>
-            <button aria-pressed={scope === 'CURRENT'} onClick={() => changeScope('CURRENT')}>Current</button>
-          </div>
-        </div>
-      </header>
+      <header><h1>Injection Console</h1></header>
       {failure !== null && <p role="alert">{failure}</p>}
       {data?.learning && (
         <div className="console-learning-overview">

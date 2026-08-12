@@ -1954,3 +1954,40 @@ arbitrary CSS would turn user input into code. A second colorway panel or a
 second iframe storage protocol would duplicate the theme authority. Server-side
 or LLM extraction would add latency, spend, and private-image movement to a
 fully deterministic local operation.
+
+## 066 — Rare choices belong to one host setting surface; module gears expose only real actions [P2, ADR-023, M2ST2]
+
+**Decision.** One gear beside the Nocturne identity owns app-level choices that
+do not help with the immediate work: the existing theme selector, local plate
+pressing, and Stage Save/Restore/Factory actions. The work toolbar keeps only
+layer, camera, and library controls. Every ordinary module frame and
+dismissible full-screen module gets the same host-owned settings slot.
+
+That slot offers Palace/thread scope only when the module manifest declares the
+existing `rack.scope.set` action. Choosing a scope dispatches that action and
+remounts the sandboxed frame at the persisted scope. A fixed-scope module shows
+one sentence explaining whether it follows the selected thread or the whole
+Palace; it does not render a disabled or decorative switch. The Palace queue's
+unused scope declarations are removed. Implementation labels and redundant
+headers that do not change an owner decision are removed from the visible
+surfaces while accessible names and authoritative state remain intact.
+
+The gear glyph, popout composition, compact-phone title/navigation treatment,
+and exact surviving labels are **PROVISIONAL-TASTE** for the next owner pass.
+The single host authority, manifest-gated controls, real action binding, and
+absence of dead controls are not provisional.
+
+**Motivation.** The Stage had accumulated permanent controls and labels for
+rare configuration, internal boundaries, and scope behavior. That chrome made
+the owner scan system vocabulary before reaching the work, and one queue scope
+switch did nothing at all. Moving rare app choices behind one obvious door and
+deriving module controls from declared capabilities makes the interface quieter
+without hiding a choice that actually changes state.
+
+**Rejected alternatives.** A settings protocol inside every iframe would
+duplicate ADR-023's host authority. Keeping internal scope switches beside the
+shared gear would create two controllers for one value. Giving every module a
+scope action would invent behavior the underlying queries do not support.
+Disabled controls and geometry readouts would preserve visible chrome without
+giving the owner a decision. A broader copy rewrite, settings search, plugin
+preferences schema, or cloud-synced preferences are not needed for this packet.

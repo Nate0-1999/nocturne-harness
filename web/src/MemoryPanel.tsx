@@ -277,10 +277,7 @@ export function MemoryPanel({
       data-testid="memory-panel"
     >
       <header className="memory-panel__header">
-        <div>
-          <p className="eyebrow">Current principal</p>
-          <h2 id="memory-panel-title">Memory</h2>
-        </div>
+        <h2 id="memory-panel-title">Memory</h2>
         <button
           ref={closeRef}
           className="memory-panel__close"
@@ -345,7 +342,6 @@ export function MemoryPanel({
         {(panel.status === 'idle' || panel.status === 'loading') &&
         panel.items.length === 0 ? (
           <div className="memory-panel__empty" data-testid="memory-loading">
-            <p className="eyebrow">Authoritative state</p>
             <h3>Loading memories</h3>
             <p>Waiting for the daemon’s current-principal view.</p>
           </div>

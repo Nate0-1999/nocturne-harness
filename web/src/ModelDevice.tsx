@@ -86,11 +86,6 @@ export function ModelDevice() {
     }
   }, [events, load])
 
-  async function changeScope(next: 'CURRENT' | 'GLOBAL') {
-    await events.dispatch({ type: 'rack.scope.set', module_id: 'model_device', scope: next })
-    setScope(next)
-  }
-
   async function write(parameterId: string, value: ParameterValue) {
     if (threadId === null || scope !== 'CURRENT') return
     setStatus('Applying…')
@@ -139,20 +134,7 @@ export function ModelDevice() {
     <section className="model-device" aria-labelledby="model-device-title">
       <header className="model-device__header">
         <div>
-          <p className="eyebrow">This thread’s model</p>
           <h2 id="model-device-title">Model device</h2>
-        </div>
-        <div className="scope-toggle" aria-label="Model device scope">
-          {(['GLOBAL', 'CURRENT'] as const).map((value) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={scope === value}
-              onClick={() => { void changeScope(value) }}
-            >
-              {value === 'GLOBAL' ? 'Defaults' : 'This thread'}
-            </button>
-          ))}
         </div>
       </header>
 

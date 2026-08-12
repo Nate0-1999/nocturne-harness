@@ -54,7 +54,7 @@ test('the Rack exposes one file press path and projects only the validated recor
   assert.match(bridge, /applyColorwayTokens\(document\.documentElement, message\.colorway\)/)
 })
 
-/** D.2 107 and 114 require identical pixels and hash to emit byte-identical colorway data. */
+/** SPEC D.2 107 and 114 require identical pixels and hash to emit byte-identical colorway data. */
 test('double press is deterministic and emits only CSS token data', () => {
   const pixels = pixelsFromHex(LAWFUL_COLORS)
   const digest = 'a'.repeat(64)
@@ -70,7 +70,7 @@ test('double press is deterministic and emits only CSS token data', () => {
   assert.equal(JSON.stringify(first.colorway).includes('<script'), false)
 })
 
-/** D.2 114 requires fail-closed validation with the failing visual pair named plainly. */
+/** SPEC D.2 114 requires fail-closed validation with the failing visual pair named plainly. */
 test('a low-contrast monochrome plate is refused with a named remedy', () => {
   const grays = Array.from({ length: 12 }, (_, index) => {
     const value = (96 + index).toString(16).padStart(2, '0')

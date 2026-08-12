@@ -62,11 +62,6 @@ export function ContextBars() {
     setCollapsed(event.grid_height === 1)
   }), [events])
 
-  function choose(next: Scope) {
-    setScope(next)
-    void events.dispatch({ type: 'rack.scope.set', module_id: 'context_bars', scope: next })
-  }
-
   const visibleObservation = scope === 'CURRENT' && rack.selectedThreadId === null
     ? null
     : observation
@@ -78,14 +73,9 @@ export function ContextBars() {
     <section className={`context-bars${collapsed ? ' context-bars--collapsed' : ''}`} aria-label="Context usage">
       <header className="context-bars__header">
         <div>
-          <p className="eyebrow">Context</p>
           <strong title={visibleObservation === null ? 'Waiting for a model response' : undefined}>
             {visibleObservation === null ? '—' : `${formatHumanCount(visibleObservation.used_tokens)} / ${formatHumanCount(visibleObservation.context_tokens)}`}
           </strong>
-        </div>
-        <div className="scope-switch" aria-label="Context scope">
-          <button aria-pressed={scope === 'GLOBAL'} onClick={() => choose('GLOBAL')}>Global</button>
-          <button aria-pressed={scope === 'CURRENT'} onClick={() => choose('CURRENT')}>Current</button>
         </div>
       </header>
       {visibleObservation !== null && (

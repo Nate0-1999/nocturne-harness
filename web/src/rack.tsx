@@ -313,7 +313,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'visualizer',
     slot: 'overlay',
     streams: [],
-    actions: ['queue.load', 'seed.upload', 'queue.batch.decide', 'rack.scope.get', 'rack.scope.set'],
+    actions: ['queue.load', 'seed.upload', 'queue.batch.decide'],
     bounds: commonPanelBounds,
     movable: false,
     law_bound: true,

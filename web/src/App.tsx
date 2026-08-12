@@ -40,6 +40,7 @@ import {
   RackRuntime,
   RACK_MANIFESTS,
   clearRackSelection,
+  createHostPluginApi,
   isRackModuleId,
   useRackHostSnapshot,
   useRackHostSelection,
@@ -47,6 +48,7 @@ import {
   useRackSelection,
   useRackSnapshot,
   type RackMemoryPanelState,
+  type RackModuleId,
   type RackModuleManifest,
 } from './rack'
 import {
@@ -299,6 +301,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   const [platePressStatus, setPlatePressStatus] = useState<string | null>(null)
   const [platePressBusy, setPlatePressBusy] = useState(false)
   const plateInputRef = useRef<HTMLInputElement>(null)
+  const [appSettingsOpen, setAppSettingsOpen] = useState(false)
   const [pointerActive, setPointerActive] = useState(false)
   const [libraryOpen, setLibraryOpen] = useState(false)
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 })
@@ -444,6 +447,19 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     setLayout(cloneFactoryStageLayout())
   }, [])
 
+  const changeModuleScope = useCallback((
+    moduleId: RackModuleId,
+    scope: 'GLOBAL' | 'CURRENT',
+  ) => {
+    const manifest = RACK_MANIFESTS[moduleId]
+    if (!(manifest.actions as readonly string[]).includes('rack.scope.set')) return
+    void createHostPluginApi(manifest).events.dispatch({
+      type: 'rack.scope.set',
+      module_id: moduleId,
+      scope,
+    }).catch(() => undefined)
+  }, [])
+
   const moveModule = useCallback((moduleId: StageModuleId, x: number, y: number) => {
     setLayout((current) => moveStageModule(current, moduleId, x, y))
   }, [])
@@ -584,7 +600,88 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           theme={theme}
           isRegressionFixture={isRegressionFixture}
         />
+        <button
+          className="app-settings-toggle"
+          type="button"
+          data-testid="app-settings-toggle"
+          aria-label="App settings"
+          aria-expanded={appSettingsOpen}
+          onClick={() => setAppSettingsOpen((open) => !open)}
+        >
+          <span aria-hidden="true">⚙</span>
+        </button>
       </div>
+      {appSettingsOpen && (
+        <aside className="app-settings-panel" data-testid="app-settings-panel" aria-label="App settings">
+          <header>
+            <strong>Settings</strong>
+            <button type="button" aria-label="Close app settings" onClick={() => setAppSettingsOpen(false)}>×</button>
+          </header>
+          <section>
+            <h2>Appearance</h2>
+            <label className="theme-control">
+              <span>Theme</span>
+              <select
+                value={theme}
+                data-testid="theme-control"
+                onChange={(event) => setTheme(event.currentTarget.value as ThemeId)}
+              >
+                {THEMES.map((choice) => (
+                  <option key={choice.id} value={choice.id}>{choice.label}</option>
+                ))}
+                {colorways.map((choice) => (
+                  <option key={choice.id} value={choice.id}>{choice.label}</option>
+                ))}
+              </select>
+            </label>
+            <input
+              ref={plateInputRef}
+              className="visually-hidden"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              data-testid="plate-press-input"
+              onChange={(event) => void pressPlate(event)}
+            />
+            <div className="app-settings-actions">
+              <button
+                className="plate-press-button"
+                type="button"
+                disabled={platePressBusy}
+                data-testid="plate-press-button"
+                onClick={() => plateInputRef.current?.click()}
+              >
+                {platePressBusy ? 'Pressing…' : 'Press image'}
+              </button>
+              {selectedColorway !== null ? (
+                <button
+                  className="plate-remove-button"
+                  type="button"
+                  data-testid="plate-remove-button"
+                  onClick={removeSelectedColorway}
+                >
+                  Remove colorway
+                </button>
+              ) : null}
+            </div>
+          </section>
+          <section>
+            <h2>Stage layout</h2>
+            <p data-testid="layout-status">{layoutStatus}</p>
+            <div className="app-settings-actions">
+              <button type="button" data-testid="layout-save" onClick={saveCurrentSet}>Save</button>
+              <button
+                type="button"
+                data-testid="layout-restore"
+                disabled={savedSet === null}
+                onClick={restoreSavedSet}
+              >
+                Restore
+              </button>
+              <button type="button" data-testid="layout-reset" onClick={resetFactorySet}>Factory</button>
+            </div>
+          </section>
+        </aside>
+      )}
       <div className="stage-toolbar" aria-label="Stage controls">
         <div className="stage-layers" role="tablist" aria-label="Stage layers">
           {layout.layers.map((candidate) => (
@@ -617,65 +714,6 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             onClick={() => changeCamera(fitStageCamera(viewportSize.width, viewportSize.height))}
           >
             Whole stage
-          </button>
-        </div>
-        <div className="rack-set-controls" aria-label="Stage layout set">
-          <label className="theme-control">
-            <span>Theme</span>
-            <select
-              value={theme}
-              data-testid="theme-control"
-              onChange={(event) => setTheme(event.currentTarget.value as ThemeId)}
-            >
-              {THEMES.map((choice) => (
-                <option key={choice.id} value={choice.id}>{choice.label}</option>
-              ))}
-              {colorways.map((choice) => (
-                <option key={choice.id} value={choice.id}>{choice.label}</option>
-              ))}
-            </select>
-          </label>
-          <input
-            ref={plateInputRef}
-            className="visually-hidden"
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            data-testid="plate-press-input"
-            onChange={(event) => void pressPlate(event)}
-          />
-          <button
-            className="plate-press-button"
-            type="button"
-            disabled={platePressBusy}
-            data-testid="plate-press-button"
-            onClick={() => plateInputRef.current?.click()}
-          >
-            {platePressBusy ? 'Pressing…' : 'Press image'}
-          </button>
-          {selectedColorway !== null ? (
-            <button
-              className="plate-remove-button"
-              type="button"
-              data-testid="plate-remove-button"
-              onClick={removeSelectedColorway}
-            >
-              Remove colorway
-            </button>
-          ) : null}
-          <span data-testid="layout-status">{layoutStatus}</span>
-          <button type="button" data-testid="layout-save" onClick={saveCurrentSet}>
-            Save
-          </button>
-          <button
-            type="button"
-            data-testid="layout-restore"
-            disabled={savedSet === null}
-            onClick={restoreSavedSet}
-          >
-            Restore
-          </button>
-          <button type="button" data-testid="layout-reset" onClick={resetFactorySet}>
-            Factory
           </button>
         </div>
         <button
@@ -725,6 +763,8 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               onResize={resizeModule}
               onRemove={(moduleId) => setLayout((current) => removeStageModule(current, moduleId))}
               onPointerActivity={setPointerActive}
+              scope={layout.scopes[module.module_id]}
+              onScopeChange={changeModuleScope}
               cameraZoom={layer.camera.zoom}
               isRegressionFixture={isRegressionFixture}
               theme={theme}
@@ -811,6 +851,8 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
       {dismissibleOverlay !== null && openGate === null && (
         <DismissibleRackOverlay
           moduleId={dismissibleOverlay}
+          scope={layout.scopes[dismissibleOverlay]}
+          onScopeChange={changeModuleScope}
           theme={theme}
           isRegressionFixture={isRegressionFixture}
         />
@@ -824,10 +866,14 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
 
 function DismissibleRackOverlay({
   moduleId,
+  scope,
+  onScopeChange,
   theme,
   isRegressionFixture,
 }: {
   moduleId: DismissibleOverlayModuleId
+  scope: 'GLOBAL' | 'CURRENT'
+  onScopeChange: (moduleId: RackModuleId, scope: 'GLOBAL' | 'CURRENT') => void
   theme: ThemeId
   isRegressionFixture: boolean
 }) {
@@ -846,7 +892,13 @@ function DismissibleRackOverlay({
         <span aria-hidden="true">←</span>
         Back to stage
       </button>
+      <RackSettingsControl
+        manifest={RACK_MANIFESTS[moduleId]}
+        scope={scope}
+        onScopeChange={(value) => onScopeChange(moduleId, value)}
+      />
       <RackPluginIframe
+        key={`${moduleId}:${scope}`}
         manifest={RACK_MANIFESTS[moduleId]}
         theme={theme}
         isRegressionFixture={isRegressionFixture}
@@ -873,6 +925,8 @@ interface RackModuleFrameProps {
   ) => void
   onRemove?: (moduleId: StageModuleId) => void
   onPointerActivity?: (active: boolean) => void
+  scope: 'GLOBAL' | 'CURRENT'
+  onScopeChange?: (moduleId: StageModuleId, scope: 'GLOBAL' | 'CURRENT') => void
   onCollapseToggle?: () => void
   cameraZoom?: number
   isRegressionFixture?: boolean
@@ -892,6 +946,8 @@ function RackModuleFrame({
   onResize,
   onRemove,
   onPointerActivity,
+  scope,
+  onScopeChange,
   onCollapseToggle,
   cameraZoom = 1,
   isRegressionFixture = false,
@@ -900,6 +956,7 @@ function RackModuleFrame({
   const frameRef = useRef<HTMLDivElement>(null)
   const [resizeSequence, setResizeSequence] = useState(0)
   const [dragging, setDragging] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const isDocked = manifest.slot === 'panel'
   const isStrip = manifest.slot === 'strip'
   const usesTemplate = isDocked || isStrip
@@ -1069,6 +1126,7 @@ function RackModuleFrame({
       data-collapsed={isStrip ? collapsed : undefined}
       data-rack-template-module={usesTemplate ? 'true' : undefined}
       data-dragging={usesTemplate ? dragging : undefined}
+      data-settings-open={settingsOpen || undefined}
       inert={inert || undefined}
     >
       {usesTemplate && (
@@ -1084,9 +1142,12 @@ function RackModuleFrame({
             <span aria-hidden="true">{isStrip ? '⌁' : '⠿'}</span>
             <strong>{manifest.name}</strong>
           </div>
-          <span className="rack-module__geometry" aria-label={`${width} by ${height} grid units`}>
-            {String(width).padStart(2, '0')}×{String(height).padStart(2, '0')}
-          </span>
+          <RackSettingsControl
+            manifest={manifest}
+            scope={scope}
+            onScopeChange={(value) => onScopeChange?.(moduleId, value)}
+            onOpenChange={setSettingsOpen}
+          />
           {onRemove !== undefined && (
             <button
               className="rack-module__remove"
@@ -1103,7 +1164,7 @@ function RackModuleFrame({
               type="button"
               data-testid="vitals-collapse"
               aria-expanded={!collapsed}
-              aria-label={`${collapsed ? 'Expand' : 'Collapse'} Palace Vitals`}
+              aria-label={`${collapsed ? 'Expand' : 'Collapse'} ${manifest.name}`}
               onClick={onCollapseToggle}
             >
               <span aria-hidden="true">{collapsed ? '⌃' : '⌄'}</span>
@@ -1150,11 +1211,74 @@ function RackModuleFrame({
       })}
       <div className="rack-module__content">
         <RackPluginIframe
+          key={`${manifest.id}:${scope}`}
           manifest={manifest}
           theme={theme}
           isRegressionFixture={isRegressionFixture}
         />
       </div>
+    </div>
+  )
+}
+
+function RackSettingsControl({
+  manifest,
+  scope,
+  onScopeChange,
+  onOpenChange,
+}: {
+  manifest: RackModuleManifest
+  scope: 'GLOBAL' | 'CURRENT'
+  onScopeChange?: (scope: 'GLOBAL' | 'CURRENT') => void
+  onOpenChange?: (open: boolean) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const scopeAdjustable = (manifest.actions as readonly string[]).includes('rack.scope.set')
+  const fixedCopy = manifest.default_scope === 'GLOBAL'
+    ? 'This module always shows the whole Palace.'
+    : 'This module follows the selected thread.'
+
+  function toggle() {
+    const next = !open
+    setOpen(next)
+    onOpenChange?.(next)
+  }
+
+  return (
+    <div className="rack-module__settings" data-settings-open={open || undefined}>
+      <button
+        className="rack-module__settings-toggle"
+        type="button"
+        data-testid={`rack-settings-${manifest.id}`}
+        aria-label={`${manifest.name} settings`}
+        aria-expanded={open}
+        onClick={toggle}
+      >
+        <span aria-hidden="true">⚙</span>
+      </button>
+      {open && (
+        <div className="rack-module__settings-popout" role="dialog" aria-label={`${manifest.name} settings`}>
+          {scopeAdjustable ? (
+            <>
+              <strong>View</strong>
+              <div className="rack-module__scope" aria-label={`${manifest.name} view`}>
+                {(['GLOBAL', 'CURRENT'] as const).map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={scope === value}
+                    onClick={() => onScopeChange?.(value)}
+                  >
+                    {value === 'GLOBAL' ? 'Everything' : 'This thread'}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p>{fixedCopy}</p>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -1253,28 +1377,29 @@ function HeaderModule() {
         <span className="brand__word">Nocturne</span>
         <span className="brand__mode">Linked</span>
       </div>
-
-      <span className="rack-set-reserve" aria-hidden="true" />
+      <span className="app-settings-reserve" aria-hidden="true" />
 
       <div className="mobile-navigation">
         <button
           className="mobile-threads"
           type="button"
           data-testid="mobile-threads"
+          aria-label={`Threads ${snapshot.catalog.length.toString().padStart(2, '0')}`}
           aria-expanded={threadsOpen}
           onClick={() => toggleModule('threads')}
         >
-          Threads
+          <span className="mobile-navigation__label">Threads</span>
           <span>{snapshot.catalog.length.toString().padStart(2, '0')}</span>
         </button>
         <button
           className="mobile-memories"
           type="button"
           data-testid="mobile-memories"
+          aria-label={`Memory ${memoryTotal}`}
           aria-expanded={memoriesOpen}
           onClick={() => toggleModule('memory')}
         >
-          Memory
+          <span className="mobile-navigation__label">Memory</span>
           <span>{memoryTotal}</span>
         </button>
       </div>
@@ -1314,10 +1439,7 @@ function ThreadsModule() {
   return (
     <aside className="thread-rail" aria-labelledby="thread-rail-title">
       <div className="thread-rail__header">
-        <div>
-          <p className="eyebrow">Local channels</p>
-          <h2 id="thread-rail-title">Threads</h2>
-        </div>
+        <h2 id="thread-rail-title">Threads</h2>
         <button
           className="rail-close"
           type="button"
@@ -1652,12 +1774,9 @@ function ChatModule() {
   return (
     <main className="chat-panel" aria-labelledby="thread-title">
       <header className="chat-header">
-        <div className="chat-header__identity">
-          <p className="eyebrow">Active channel</p>
-          <h1 id="thread-title">
-            {selectedMeta === undefined ? 'Opening thread' : visibleThreadTitle(selectedMeta.title)}
-          </h1>
-        </div>
+        <h1 id="thread-title">
+          {selectedMeta === undefined ? 'Opening thread' : visibleThreadTitle(selectedMeta.title)}
+        </h1>
         <div className="run-metrics" aria-label="Run status">
           {activeRun !== null && (
             <span className={`run-state run-state--${activeRun.state}`}>
@@ -1722,13 +1841,11 @@ function ChatModule() {
         <div className="transcript__inner">
           {awaitingSnapshot ? (
             <div className="thread-empty thread-empty--loading" data-testid="thread-loading">
-              <p className="eyebrow">Authoritative state</p>
               <h2>Hydrating channel</h2>
               <p>Waiting for the daemon snapshot before accepting input.</p>
             </div>
           ) : messages.length === 0 ? (
             <div className="thread-empty" data-testid="thread-empty">
-              <p className="eyebrow">Channel open</p>
               <h2>New thread</h2>
               <p>Send a prompt when you’re ready. Nothing here demands a response.</p>
             </div>
@@ -1928,26 +2045,16 @@ function ThreadEndModule() {
     }).catch(() => setCards([]))
   }, [events, scope, selectedThreadId])
 
-  function changeScope(value: 'CURRENT' | 'GLOBAL') {
-    setScope(value)
-    void events.dispatch({
-      type: 'rack.scope.set', module_id: 'thread_end', scope: value,
-    }).catch(() => undefined)
-  }
-
   return (
     <div className="thread-end-module">
       {cards.length === 0 ? (
         <section className="thread-end-card thread-end-card--empty">
-          <p className="eyebrow">Thread end · consent surface</p>
           <h2>Nothing pending</h2>
           <p>Duplicate lessons were folded out, or this thread produced no durable candidates.</p>
         </section>
       ) : (
         <ThreadEndCard
           view={{ final_post: finalPost, cards }}
-          scope={scope}
-          onScopeChange={changeScope}
           onDecide={(itemUid, decision, mode) => events.dispatch({
             type: 'queue.decide', item_uid: itemUid, decision,
             approval_mode: mode,
@@ -1969,14 +2076,10 @@ interface ThreadEndView {
 
 function ThreadEndCard({
   view,
-  scope,
-  onScopeChange,
   onDecide,
   onChanged,
 }: {
   view: ThreadEndView
-  scope: 'CURRENT' | 'GLOBAL'
-  onScopeChange: (scope: 'CURRENT' | 'GLOBAL') => void
   onDecide: (
     itemUid: string,
     decision: 'approve' | 'deny',
@@ -2016,18 +2119,7 @@ function ThreadEndCard({
     <section className="thread-end-card" data-testid="thread-end-card" aria-label="Thread memory review">
       <header className="thread-end-card__header">
         <div>
-          <p className="eyebrow">Thread end · consent surface</p>
           <h2>What should survive?</h2>
-        </div>
-        <div className="scope-toggle" aria-label="Queue scope">
-          {(['GLOBAL', 'CURRENT'] as const).map((value) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={scope === value}
-              onClick={() => onScopeChange(value)}
-            >{value}</button>
-          ))}
         </div>
       </header>
       <div className="thread-end-card__final">
@@ -2151,9 +2243,6 @@ function markdownFile(markdown: string): File {
 function PalaceQueueModule() {
   const { events } = useRackPlugin()
   const seedInputRef = useRef<HTMLInputElement>(null)
-  const [scope, setScope] = useState<'CURRENT' | 'GLOBAL'>(
-    RACK_MANIFESTS.palace_queue.default_scope,
-  )
   const [cards, setCards] = useState<ThreadEndQueueCard[]>([])
   const [statusText, setStatusText] = useState('Choose Markdown files to grow the queue.')
   const [busy, setBusy] = useState(false)
@@ -2166,7 +2255,6 @@ function PalaceQueueModule() {
   }, [events])
 
   useEffect(() => {
-    void events.dispatch({ type: 'rack.scope.get', module_id: 'palace_queue' }).then(setScope)
     void load().catch(() => setStatusText('The Palace queue could not be loaded.'))
   }, [events, load])
 
@@ -2178,13 +2266,6 @@ function PalaceQueueModule() {
     }
     return [...grouped.entries()]
   }, [cards])
-
-  function changeScope(value: 'CURRENT' | 'GLOBAL') {
-    setScope(value)
-    void events.dispatch({
-      type: 'rack.scope.set', module_id: 'palace_queue', scope: value,
-    }).catch(() => undefined)
-  }
 
   async function upload(files: readonly File[]) {
     if (files.length === 0 || busy) return
@@ -2250,19 +2331,8 @@ function PalaceQueueModule() {
       <section className="palace-queue-card" aria-label="Palace seed queue">
         <header className="palace-queue-card__header">
           <div>
-            <p className="eyebrow">Corpus door · explicit consent</p>
             <h2>Grow the Palace from Markdown</h2>
             <p>Each document is split into standalone memories. Nothing enters until you approve its batch.</p>
-          </div>
-          <div className="scope-toggle" aria-label="Palace queue scope">
-            {(['GLOBAL', 'CURRENT'] as const).map((value) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={scope === value}
-                onClick={() => changeScope(value)}
-              >{value}</button>
-            ))}
           </div>
         </header>
         <label

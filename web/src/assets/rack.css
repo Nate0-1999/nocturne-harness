@@ -335,7 +335,7 @@
   display: flex;
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid var(--line-strong);
   background: var(--surface-glass);
   box-shadow:
@@ -467,9 +467,84 @@
   white-space: nowrap;
 }
 
-.rack-module__geometry {
+.rack-module[data-settings-open="true"] {
+  z-index: 40;
+}
+
+.rack-module__settings {
+  position: relative;
+  display: flex;
+  align-self: stretch;
   flex: none;
-  color: var(--accent);
+}
+
+.rack-module__settings-toggle {
+  width: 1.8rem;
+  height: 100%;
+  border: 0;
+  border-left: 1px solid var(--line);
+  background: transparent;
+  color: var(--dim);
+  font: inherit;
+}
+
+.rack-module__settings-toggle:hover,
+.rack-module__settings-toggle:focus-visible,
+.rack-module__settings-toggle[aria-expanded="true"] {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.rack-module__settings-popout {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 0.3rem);
+  right: 0;
+  display: grid;
+  width: min(14rem, calc(100% - 1rem));
+  gap: 0.55rem;
+  padding: 0.7rem;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-deep);
+  box-shadow: var(--shadow-neon);
+  color: var(--muted);
+  font-size: 0.62rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.rack-module__settings-popout strong {
+  color: var(--ink);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rack-module__settings-popout p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.rack-module__scope {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.rack-module__scope button {
+  min-height: 1.85rem;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+}
+
+.rack-module__scope button + button {
+  border-left: 0;
+}
+
+.rack-module__scope button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--ink);
 }
 
 .rack-module__chrome--strip {
@@ -608,6 +683,7 @@ button.rack-module__resize-handle--nw {
   width: 100%;
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
 }
 
 .rack-plugin-frame {
@@ -632,6 +708,20 @@ button.rack-module__resize-handle--nw {
   grid-template-rows: 2.7rem minmax(0, 1fr);
   overflow: hidden;
   background: var(--ground);
+}
+
+.rack-overlay-module--dismissible > .rack-module__settings {
+  position: fixed;
+  z-index: 115;
+  top: 0.65rem;
+  right: 0.65rem;
+  height: 2.15rem;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-deep);
+}
+
+.rack-overlay-module--dismissible > .rack-module__settings .rack-module__settings-popout {
+  width: min(14rem, calc(100vw - 1.3rem));
 }
 
 .rack-stage-back {
@@ -2641,6 +2731,130 @@ button.rack-module__resize-handle--nw {
   background: var(--seam-7c55824b04e6);
 }
 
+.app-settings-toggle {
+  position: absolute;
+  z-index: 70;
+  top: 0.62rem;
+  left: 11.75rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--dim);
+  font-size: 0.8rem;
+}
+
+.app-settings-toggle:hover,
+.app-settings-toggle:focus-visible,
+.app-settings-toggle[aria-expanded="true"] {
+  border-color: var(--line-strong);
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.app-settings-panel {
+  position: fixed;
+  z-index: 95;
+  top: 4.1rem;
+  left: 0.65rem;
+  display: grid;
+  width: min(24rem, calc(100vw - 1.3rem));
+  max-height: calc(100dvh - 4.75rem);
+  gap: 0.8rem;
+  padding: 0.8rem;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-deep);
+  box-shadow: var(--shadow-neon);
+  overflow: auto;
+  font-family: var(--data-font);
+}
+
+.app-settings-panel > header,
+.app-settings-panel section,
+.app-settings-actions {
+  display: flex;
+  align-items: center;
+}
+
+.app-settings-panel > header {
+  justify-content: space-between;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.app-settings-panel > header strong,
+.app-settings-panel h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.65rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.app-settings-panel > header button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+}
+
+.app-settings-panel section {
+  align-items: stretch;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.app-settings-panel section + section {
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--line);
+}
+
+.app-settings-panel .theme-control {
+  justify-content: space-between;
+}
+
+.app-settings-panel .theme-control > span {
+  position: static;
+  width: auto;
+  height: auto;
+  clip: auto;
+  color: var(--muted);
+  font-size: 0.62rem;
+}
+
+.app-settings-panel .theme-control select {
+  min-height: 2rem;
+}
+
+.app-settings-panel p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.62rem;
+  line-height: 1.45;
+}
+
+.app-settings-actions {
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.app-settings-actions button {
+  min-height: 2rem;
+  padding-inline: 0.65rem;
+  border: 1px solid var(--line);
+  background: var(--surface-glass);
+  color: var(--muted);
+  font: 0.56rem var(--data-font);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.app-settings-actions button:not(:disabled):hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
 .stage-toolbar {
   position: relative;
   z-index: 55;
@@ -2905,10 +3119,14 @@ button.rack-module__resize-handle--nw {
 }
 
 .rack-stage-header .topbar {
-  grid-template-columns: 11.5rem minmax(0, 1fr) max-content max-content;
+  grid-template-columns: 13.5rem minmax(0, 1fr) max-content max-content;
 }
 
 .rack-stage-header .rack-set-reserve {
+  display: none;
+}
+
+.app-settings-reserve {
   display: none;
 }
 
@@ -2940,6 +3158,25 @@ button.rack-module__resize-handle--nw {
 
   .rack-stage-header .topbar {
     display: flex;
+  }
+
+  .app-settings-toggle {
+    left: 8.3rem;
+  }
+
+  .rack-remote--header .app-settings-reserve {
+    display: block;
+    width: 2rem;
+    height: 2rem;
+    flex: none;
+  }
+
+  .rack-remote--header .mobile-navigation {
+    gap: 0.3rem;
+  }
+
+  .rack-remote--header .mobile-navigation__label {
+    display: none;
   }
 
   .stage-toolbar {

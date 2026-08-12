@@ -60,9 +60,6 @@ export function MemoryGraph() {
     selection.select({ kind: 'memory', id: node.memory.memory_id })
   }
 
-  function changeScope(next: 'GLOBAL' | 'CURRENT') {
-    setScope(next); void events.dispatch({ type: 'rack.scope.set', module_id: 'memory_graph', scope: next })
-  }
   const nodes = snapshot?.nodes ?? []
   const positions = new Map(nodes.map((node, index) => [node.memory.memory_id, {
     x: 14 + (index % 5) * 18, y: 18 + Math.floor(index / 5) * 25,
@@ -82,7 +79,7 @@ export function MemoryGraph() {
     }
   })).map((label) => [label.id, label]))
   return <section className="instrument instrument--graph">
-    <header><div><small>MEMORY INSTRUMENT</small><h1>Memory Graph</h1></div><div className="instrument-header-actions"><Scope value={scope} onChange={changeScope} /></div></header>
+    <header><h1>Memory Graph</h1></header>
     {!requestIsQueryable ? <p role="status">Select a thread to inspect its current memory.</p> : visibleFailure !== null ? <p role="alert">{visibleFailure}</p> : snapshot === null ? <p role="status">Loading memory graph…</p> : <div className="graph-stage">
       <svg viewBox="0 0 100 76" role="img" aria-label={`${nodes.length} memories and ${snapshot?.edges.length ?? 0} relationships`}>
         {(snapshot?.edges ?? []).map((edge, index) => { const a = positions.get(edge.from_memory_id); const b = positions.get(edge.to_memory_id); return a && b ? <line key={`${edge.kind}-${index}`} x1={a.x} y1={a.y} x2={b.x + (a === b ? 2 : 0)} y2={b.y + (a === b ? 2 : 0)} data-kind={edge.kind} /> : null })}
@@ -99,8 +96,4 @@ export function MemoryGraph() {
       <aside>{selected === null ? <p>Select a node to inspect its complete memory.</p> : <><small>{selected.memory.kind} · revision {selected.memory.revision}</small><h2>{selected.memory.label}</h2><p>Project · {selected.memory.project_key ?? 'Palace-wide'}</p><p>{selected.memory.body}</p><p>{selected.revisions.length} recorded revisions</p><em>Edit in Memory Palace</em></>}</aside>
     </div>}
   </section>
-}
-
-function Scope({ value, onChange }: { value: 'GLOBAL' | 'CURRENT'; onChange: (value: 'GLOBAL' | 'CURRENT') => void }) {
-  return <div className="scope-switch" aria-label="Graph scope"><button aria-pressed={value === 'GLOBAL'} onClick={() => onChange('GLOBAL')}>Global</button><button aria-pressed={value === 'CURRENT'} onClick={() => onChange('CURRENT')}>Current</button></div>
 }

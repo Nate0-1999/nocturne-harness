@@ -56,14 +56,19 @@ test('instrument remotes remain scrollable without being fixed host overlays', a
   assert.match(css, /\.rack-remote--memory_graph\s*,\s*\.rack-remote--injection_console/u)
 })
 
-/** ADR-005 and A-051 require Injection scope to survive close/reopen like Graph scope. */
-test('Injection scope buttons persist through rack.scope.set', async () => {
-  const source = await readFile(new URL('../src/InjectionConsole.tsx', import.meta.url), 'utf8')
+/** PLAN M2ST2 and ADR-023 move scope into shared settings while preserving the existing persisted action. */
+test('Injection scope is owned by the shared module settings slot', async () => {
+  const [app, source] = await Promise.all([
+    readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/InjectionConsole.tsx', import.meta.url), 'utf8'),
+  ])
 
-  assert.match(source, /type:\s*'rack\.scope\.set'/u)
-  assert.match(source, /module_id:\s*'injection_console'/u)
-  assert.match(source, /onClick=\{\(\) => changeScope\('GLOBAL'\)\}/u)
-  assert.match(source, /onClick=\{\(\) => changeScope\('CURRENT'\)\}/u)
+  assert.match(source, /type:\s*'rack\.scope\.get'/u)
+  assert.doesNotMatch(source, /className="scope-switch"/u)
+  assert.match(app, /className="rack-module__settings-toggle"/u)
+  assert.match(app, /type:\s*'rack\.scope\.set'/u)
+  assert.match(app, /scope=\{layout\.scopes\[module\.module_id\]\}/u)
+  assert.match(app, /key=\{`\$\{manifest\.id\}:\$\{scope\}`\}/u)
 })
 
 /** SPEC B.6 and A-051 require M2Z4 secondary acts to remain visibly readable. */

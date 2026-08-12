@@ -294,10 +294,6 @@ export function VitalsModule() {
           <span>Through {formatMinute(snapshot.as_of)}</span>
         </p>
         <div className="vitals-strip__status" aria-live="polite">
-          <div className="scope-switch" aria-label="Spend scope">
-            <button aria-pressed={scope === 'GLOBAL'} onClick={() => { setScope('GLOBAL'); void events.dispatch({ type: 'rack.scope.set', module_id: 'vitals', scope: 'GLOBAL' }) }}>Global</button>
-            <button aria-pressed={scope === 'CURRENT'} onClick={() => { setScope('CURRENT'); void events.dispatch({ type: 'rack.scope.set', module_id: 'vitals', scope: 'CURRENT' }) }}>Current</button>
-          </div>
           {load.failed && (
             <span role="alert">Spend couldn’t refresh. Chat is still available.</span>
           )}

@@ -91,7 +91,7 @@ test('panel edge resize trades with the neighbor under that edge', () => {
   ])
 })
 
-/** P2.5 / PLAN M2UX3 makes the pure conformance assertion a gate on the actual production manifest and shared chrome. */
+/** P2.5 / PLAN M2UX3 and M2ST2 make drag, resize, and settings one shared module template. */
 test('production manifests and frames are wired through the shared template', async () => {
   const [app, rack, rackCss] = await Promise.all([
     readFile(new URL('src/App.tsx', webRoot), 'utf8'),
@@ -103,6 +103,10 @@ test('production manifests and frames are wired through the shared template', as
   assert.match(app, /data-rack-template-module=\{usesTemplate \? 'true' : undefined\}/u)
   assert.match(app, /rackResizeDirections\(manifest\)/u)
   assert.match(app, /onPointerDown=\{beginMove\}/u)
+  assert.match(app, /data-testid=\{`rack-settings-\$\{manifest\.id\}`\}/u)
+  assert.match(app, /className="rack-module__settings-popout"/u)
+  assert.match(app, /This module follows the selected thread\./u)
+  assert.doesNotMatch(app, /rack-module__geometry/u)
   assert.match(rackCss, /\.rack-module:hover > \.rack-module__resize-handle/u)
   assert.match(rackCss, /cursor:\s*ew-resize/u)
   assert.match(rackCss, /cursor:\s*ns-resize/u)
