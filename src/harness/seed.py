@@ -1,5 +1,6 @@
 """M2I Markdown seed splitting into the standard approval queue."""
 
+import re
 from hashlib import sha256
 from pathlib import PurePath
 from uuid import UUID
@@ -15,6 +16,11 @@ from harness.spine_client import (
     SeedResponse,
     SpineClient,
     SpineClientError,
+)
+
+_SEED_VERDICT_NEIGHBOR_MIN_SCORE = 0.80
+_GENERATED_PASTE_NAME = re.compile(
+    r"^pasted-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}(?:\.\d+)?Z\.md$"
 )
 
 
@@ -42,18 +48,19 @@ class SeedIngestionService:
 
     async def ingest(self, upload: SeedUploadRequest) -> SeedResponse:
         _validate_upload(upload)
+        source_name = _canonical_seed_source_name(upload.source_name)
         source_sha256 = sha256(upload.markdown.encode("utf-8")).hexdigest()
         try:
             existing = await self._pending_batch(
                 upload.batch_uid,
-                upload.source_name,
+                source_name,
                 source_sha256,
             )
         except SpineClientError:
             existing = None
         if existing is not None:
             return existing
-        split = await self._agent.split_seed(upload.source_name, upload.markdown)
+        split = await self._agent.split_seed(source_name, upload.markdown)
         candidates: list[ExtractionCandidate] = []
         for item in split.candidates:
             neighbors = await self._spine.search(
@@ -71,6 +78,8 @@ class SeedIngestionService:
                     "body": neighbor.body,
                 }
                 for neighbor in neighbors.results
+                if neighbor.score is not None
+                and neighbor.score >= _SEED_VERDICT_NEIGHBOR_MIN_SCORE
             ]
             verdict = await self._agent.propose_extraction_verdict(item, neighbor_payload)
             candidates.append(
@@ -86,7 +95,7 @@ class SeedIngestionService:
         request = SeedRequest(
             principal_id=self._principal_id,
             batch_uid=upload.batch_uid,
-            source_name=upload.source_name,
+            source_name=source_name,
             source_sha256=source_sha256,
             markdown=upload.markdown,
             machine_id=self._machine_id,
@@ -123,8 +132,11 @@ class SeedIngestionService:
         )
         if not cards:
             return None
+        resolved_batch_uid = cards[0].batch_uid
+        if resolved_batch_uid is None:  # pragma: no cover - birthplace filter owns this shape
+            return None
         return SeedResponse(
-            batch_uid=batch_uid,
+            batch_uid=resolved_batch_uid,
             cards=cards,
             duplicate_count=0,
         )
@@ -141,6 +153,10 @@ def _validate_upload(upload: SeedUploadRequest) -> None:
         raise ValueError("The Markdown document exceeds 24 KiB.")
 
 
+def _canonical_seed_source_name(source_name: str) -> str:
+    return "pasted.md" if _GENERATED_PASTE_NAME.fullmatch(source_name) else source_name
+
+
 def _matching_seed_cards(
     cards: list[QueueCard],
     *,
@@ -148,10 +164,16 @@ def _matching_seed_cards(
     source_name: str,
     source_sha256: str,
 ) -> list[QueueCard]:
-    return [
+    matching_document = [
         card
         for card in cards
-        if card.batch_uid == batch_uid
-        and card.source_name == source_name
+        if card.source_name == source_name
         and card.source_sha256 == source_sha256
     ]
+    requested = [card for card in matching_document if card.batch_uid == batch_uid]
+    if requested:
+        return requested
+    if not matching_document:
+        return []
+    existing_batch_uid = matching_document[0].batch_uid
+    return [card for card in matching_document if card.batch_uid == existing_batch_uid]

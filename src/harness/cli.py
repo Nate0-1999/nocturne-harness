@@ -11,7 +11,6 @@ import urllib.request
 from collections.abc import Sequence
 from pathlib import Path
 from typing import TextIO
-from uuid import uuid4
 
 from harness.deploy import DeployError
 from harness.lifecycle import LifecycleError
@@ -25,6 +24,7 @@ from harness.onboarding import (
     restore_nocturne,
     up_nocturne,
 )
+from harness.seed_identity import seed_batch_uid
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -93,7 +93,11 @@ def seed_nocturne(paths: Sequence[str], *, stdout: TextIO = sys.stdout) -> int:
         if len(markdown.encode("utf-8")) > 24 * 1024:
             raise OnboardingError(f"{path.name} is larger than 24 KiB.")
         body = json.dumps(
-            {"batch_uid": str(uuid4()), "source_name": path.name, "markdown": markdown}
+            {
+                "batch_uid": str(seed_batch_uid(path.name, markdown)),
+                "source_name": path.name,
+                "markdown": markdown,
+            }
         ).encode("utf-8")
         request = urllib.request.Request(
             "http://127.0.0.1:8765/v1/seeds",

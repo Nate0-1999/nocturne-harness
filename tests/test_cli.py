@@ -141,6 +141,9 @@ def test_seed_command_posts_each_markdown_file_to_the_running_owner_pipeline(
     assert len({request["batch_uid"] for request in requests}) == 2
     assert output.getvalue().count("waiting for review") == 2
 
+    cli.seed_nocturne([str(first)], stdout=output)
+    assert requests[0]["batch_uid"] == requests[2]["batch_uid"]
+
 
 def test_seed_command_refuses_non_markdown_before_contacting_the_daemon(
     tmp_path, monkeypatch: pytest.MonkeyPatch
