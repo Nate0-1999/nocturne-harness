@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any, Literal
@@ -429,19 +430,22 @@ class HarnessAgent:
         """Plan one semantic family, then write all children or guide without a write."""
 
         try:
-            draft_result = await _run_structured_agent(
-                self._remember_splitter_agent,
-                (
-                    f"Label limit: {self._settings.label_max} Unicode code points\n"
-                    f"Body limit: {self._settings.memory_max_tokens} cl100k_base tokens\n"
-                    f"Memory source:\n{body}"
-                ),
-                model=model,
-                model_settings=model_settings,
-                usage_limits=self._remember_split_usage_limits,
-                usage=usage,
-                captured_messages=captured_messages,
-            )
+            async with asyncio.timeout(self._settings.remember_split_timeout_seconds):
+                draft_result = await _run_structured_agent(
+                    self._remember_splitter_agent,
+                    (
+                        f"Label limit: {self._settings.label_max} Unicode code points\n"
+                        f"Body limit: {self._settings.memory_max_tokens} cl100k_base tokens\n"
+                        f"Memory source:\n{body}"
+                    ),
+                    model=model,
+                    model_settings=model_settings,
+                    usage_limits=self._remember_split_usage_limits,
+                    usage=usage,
+                    captured_messages=captured_messages,
+                )
+        except TimeoutError:
+            return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
         except UnexpectedModelBehavior:
             return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
         except Exception:
@@ -449,6 +453,8 @@ class HarnessAgent:
                 raise
             return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
 
+        if draft_result.response.state != "complete":
+            return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
         draft = draft_result.output
         if not isinstance(draft, RememberSplitDraft):  # pragma: no cover - type guard
             return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)

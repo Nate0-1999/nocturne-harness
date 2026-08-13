@@ -20,6 +20,7 @@ def test_c5_defaults_are_local_minimax_with_bounded_runs_and_spine(monkeypatch) 
         "RUN_TOTAL_TOKENS_LIMIT",
         "LABEL_MAX",
         "MEMORY_MAX_TOKENS",
+        "REMEMBER_SPLIT_TIMEOUT_SECONDS",
     ):
         monkeypatch.delenv(name, raising=False)
     settings = HarnessSettings(
@@ -42,6 +43,7 @@ def test_c5_defaults_are_local_minimax_with_bounded_runs_and_spine(monkeypatch) 
     assert settings.run_total_tokens_limit == 500_000
     assert settings.label_max == 64
     assert settings.memory_max_tokens == 128
+    assert settings.remember_split_timeout_seconds == 30.0
 
 
 def test_settings_accept_environment_model_spine_and_limit_overrides(monkeypatch) -> None:
@@ -57,6 +59,7 @@ def test_settings_accept_environment_model_spine_and_limit_overrides(monkeypatch
     monkeypatch.setenv("MODEL_CONTEXT_TOKENS", "262144")
     monkeypatch.setenv("RUN_REQUEST_LIMIT", "12")
     monkeypatch.setenv("RUN_TOTAL_TOKENS_LIMIT", "3456")
+    monkeypatch.setenv("REMEMBER_SPLIT_TIMEOUT_SECONDS", "12.5")
 
     settings = HarnessSettings(_env_file=None)
 
@@ -70,6 +73,7 @@ def test_settings_accept_environment_model_spine_and_limit_overrides(monkeypatch
     assert settings.model_context_tokens == 262_144
     assert settings.run_request_limit == 12
     assert settings.run_total_tokens_limit == 3456
+    assert settings.remember_split_timeout_seconds == 12.5
 
 
 @pytest.mark.parametrize(
@@ -80,6 +84,7 @@ def test_settings_accept_environment_model_spine_and_limit_overrides(monkeypatch
         "run_total_tokens_limit",
         "label_max",
         "memory_max_tokens",
+        "remember_split_timeout_seconds",
     ],
 )
 def test_positive_configured_limits_are_enforced(field: str) -> None:

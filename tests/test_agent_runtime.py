@@ -912,6 +912,89 @@ async def test_a049_invalid_structured_split_guides_instead_of_failing_the_turn(
 
 
 @pytest.mark.asyncio
+async def test_f047_split_planner_timeout_ends_once_with_guidance_and_zero_writes() -> None:
+    """F047, F039, ADR-022, and SPEC D.2 112 require the over-cap split timeout
+    row to end once with no partial save or browser-side terminal fiction.
+    """
+    cancelled = asyncio.Event()
+
+    async def never_finishes(_messages, _info) -> ModelResponse:
+        try:
+            await asyncio.Future()
+        finally:
+            cancelled.set()
+
+    emitted = RecordingEmitter()
+    runner = PydanticAITurnRunner(
+        HarnessAgent(
+            settings(memory_max_tokens=1, remember_split_timeout_seconds=0.01),
+            model=FunctionModel(function=never_finishes),
+        ),
+        lambda _: context(),
+    )
+
+    outcome = await asyncio.wait_for(
+        runner.run(
+            thread_id="thread-1",
+            prompt="/remember Fact one. Fact two. Fact three.",
+            message_history=(),
+            emit=emitted,
+        ),
+        timeout=1,
+    )
+
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert outcome.message_history == ()
+    assert emitted.texts == [REMEMBER_SPLIT_GUIDANCE]
+    assert cancelled.is_set()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("state", ["incomplete", "suspended", "interrupted"])
+async def test_f047_nonterminal_split_outcome_uses_the_same_guidance_matrix_row(
+    state: str,
+) -> None:
+    """F047, F039, ADR-022, and SPEC D.2 112 require every nonterminal split
+    provider state to converge on the same one-voice, zero-write outcome.
+    """
+    output = {
+        "safe_to_save": True,
+        "candidates": [
+            {"label": "First fact", "body": "Fact one.", "keywords": ["fact", "one"]},
+            {"label": "Second fact", "body": "Fact two.", "keywords": ["fact", "two"]},
+        ],
+        "coverage": [
+            {"text": "Fact one. ", "classification": "durable", "candidate_index": 0},
+            {"text": "Fact two.", "classification": "durable", "candidate_index": 1},
+        ],
+    }
+
+    async def nonterminal(_messages, _info) -> ModelResponse:
+        return ModelResponse(
+            parts=[TextPart(json.dumps(output))],
+            finish_reason="length",
+            state=state,  # type: ignore[arg-type]
+        )
+
+    emitted = RecordingEmitter()
+    outcome = await PydanticAITurnRunner(
+        HarnessAgent(
+            settings(memory_max_tokens=1),
+            model=FunctionModel(function=nonterminal),
+        ),
+        lambda _: context(),
+    ).run(
+        thread_id="thread-1",
+        prompt="/remember Fact one. Fact two.",
+        message_history=(),
+        emit=emitted,
+    )
+
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert emitted.texts == [REMEMBER_SPLIT_GUIDANCE]
+
+
+@pytest.mark.asyncio
 async def test_a049_split_provider_failure_keeps_runtime_error_semantics() -> None:
     """F027, A-049, A-050, ADR-022, and SPEC B.6 rule 12 are defended here.
     Provider transport failure is not an invalid draft and must retain the ordinary ERROR outcome.

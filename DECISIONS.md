@@ -2079,3 +2079,28 @@ make prose into protocol. Per-flow patches would duplicate the same bug. A
 provider retry would violate F043 and could spend twice. Relaxing validation for
 non-null malformed values would turn one interoperability repair into a weaker
 wire contract.
+
+## 070 — Split planning ends at the server boundary [P1.3, F039, F047]
+
+**Decision.** Give the tools-free semantic `/remember` splitter one configurable
+server-side wall, `REMEMBER_SPLIT_TIMEOUT_SECONDS`, defaulting to 30 seconds.
+When that wall expires, or the provider completes with `incomplete`, `suspended`,
+or `interrupted` state, cancel the planning call and return the existing
+lossless no-write guidance through the ordinary `end_turn` path exactly once.
+Keep completed drafts on the existing exact-source validator and atomic family
+write path. Keep genuine provider transport failures on the ordinary error path.
+
+**Motivation.** Request and token limits bound how much work a split may buy,
+but they do not bound how long a provider may leave the owner in Working. F047
+recurred because the splitter had no wall-clock terminal boundary. Treating a
+provider's own nonterminal state like an invalid split proposal gives every
+bounded planning outcome one honest voice while preserving the source and
+writing nothing unless a complete draft passes every standing witness check.
+
+**Rejected alternatives.** A browser timer would only pretend the server run
+ended and could race late writes or output. Retrying could spend twice and still
+hang. Saving a partial provider result would violate exact-source lineage and
+atomicity. A timeout on every chat/model call would broaden this local repair
+beyond the split-planning defect. Converting transport failures into split
+guidance would hide an operational failure rather than classify a planning
+outcome.
