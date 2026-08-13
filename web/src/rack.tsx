@@ -32,6 +32,7 @@ import {
 import { assertRackModuleTemplate } from './rackModuleTemplate'
 import { runRackAction } from './rackAction'
 import {
+  authoritativeProjectPath,
   canonicalProjectPath,
   knownProjectPaths,
 } from './projectPath'
@@ -374,9 +375,14 @@ export function subscribeRackState(listener: () => void): () => void {
 }
 
 function snapshotFromState(state: ReturnType<typeof useHarnessStore.getState>): RackSnapshot {
-  const currentProjectKey = state.selectedThreadId === null
+  const selectedThreadId = state.selectedThreadId
+  const catalogProjectKey = selectedThreadId === null
     ? null
-    : state.catalog.find((entry) => entry.thread_id === state.selectedThreadId)?.project_key ?? null
+    : state.catalog.find((entry) => entry.thread_id === selectedThreadId)?.project_key ?? null
+  const currentProjectKey = authoritativeProjectPath(
+    catalogProjectKey,
+    selectedThreadId === null || (state.threads[selectedThreadId]?.awaitingSnapshot ?? true),
+  )
   return {
     catalog: state.catalog,
     selectedThreadId: state.selectedThreadId,
@@ -783,9 +789,16 @@ export function clearRackSelection(): void {
 
 export function RackRuntime({ children }: { children: ReactNode }) {
   const selectedThreadId = useHarnessStore((state) => state.selectedThreadId)
-  const currentProjectKey = useHarnessStore((state) => state.selectedThreadId === null
-    ? null
-    : state.catalog.find((entry) => entry.thread_id === state.selectedThreadId)?.project_key ?? null)
+  const currentProjectKey = useHarnessStore((state) => {
+    const threadId = state.selectedThreadId
+    const catalogProjectKey = threadId === null
+      ? null
+      : state.catalog.find((entry) => entry.thread_id === threadId)?.project_key ?? null
+    return authoritativeProjectPath(
+      catalogProjectKey,
+      threadId === null || (state.threads[threadId]?.awaitingSnapshot ?? true),
+    )
+  })
 
   useEffect(() => {
     harnessClient.connect()

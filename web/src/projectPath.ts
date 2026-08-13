@@ -10,6 +10,13 @@ export function projectScopeLabel(projectKey: string | null): string | null {
   return projectKey === null ? UNSCOPED_PROJECT_LABEL : null
 }
 
+export function authoritativeProjectPath(
+  projectKey: string | null,
+  awaitingSnapshot: boolean,
+): string | null {
+  return awaitingSnapshot ? null : projectKey
+}
+
 export function projectSelectorContextKey(
   selectedThreadId: string | null,
   currentProjectKey: string | null,
@@ -43,7 +50,24 @@ export function reconcileProjectControlState(
   awaitingSnapshot: boolean,
 ): ProjectControlState {
   const contextKey = projectSelectorContextKey(selectedThreadId, currentProjectKey)
-  if (state.contextKey !== contextKey || (state.submitted && !awaitingSnapshot)) {
+  if (state.submitted && awaitingSnapshot) {
+    return state.contextKey === contextKey ? state : { ...state, contextKey }
+  }
+  if (state.submitted) {
+    const accepted = state.edit === currentProjectKey
+    const initial = initialProjectControlState(selectedThreadId, currentProjectKey)
+    if (accepted) {
+      return initial
+    }
+    const destination = currentProjectKey === null
+      ? 'This thread remains unscoped.'
+      : `This thread remains in ${currentProjectKey}.`
+    return {
+      ...initial,
+      feedback: `Project ${state.edit ?? 'change'} was not bound. ${destination}`,
+    }
+  }
+  if (state.contextKey !== contextKey) {
     return initialProjectControlState(selectedThreadId, currentProjectKey)
   }
   return state

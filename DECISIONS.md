@@ -2023,3 +2023,36 @@ states that caused the findings. Weakening collision tolerances would hide both
 measurement bugs and product bugs. Running the canon against the owner Palace
 would spend, mutate history, and violate fixture isolation. A second formatter,
 label engine, or Stage model is outside this packet.
+
+## 068 — A write is visible only after its authoritative acknowledgement [P1, F038, F040, F041]
+
+**Decision.** Treat each owner memory write as incomplete until the daemon or
+Spine returns the exact state it accepted. A hard-duplicate `/remember`
+increments the reinforcement statistic and records the deliberate re-derivation
+through the existing user-authored CAS lineage with reason
+`remember/reinforce`, then confirms it in one plain sentence. A
+near-similar result writes nothing and points to the existing Memory edit path;
+scores, transport JSON, and `force=true` never reach the owner command surface.
+
+Memory Edit compares the submitted body with the current authoritative body
+before PATCH, refuses an exact no-op without a revision, and accepts success
+only when the typed PATCH result carries the requested body and next revision.
+That returned unit is the immediate panel authority, and the editor remains
+open on its Saved or refusal state until the owner dismisses or retries it.
+
+The local thread catalog may retain the project requested for a new thread so
+the snapshot request survives connection setup, but Rack projections treat it
+as unacknowledged while that thread awaits its daemon snapshot. Only the
+snapshot-updated catalog value renders as the current project binding.
+
+**Motivation.** The three M2XF findings looked unrelated, but all let a local
+request state impersonate a durable result: a create conflict became raw copy,
+a nominal PATCH response hid the unchanged body, and a catalog request looked
+like a journal binding. One acknowledgement rule makes the write surface tell
+the same truth as lineage, the current MemoryUnit, and the thread journal.
+
+**Rejected alternatives.** Auto-forcing near duplicates weakens the dedup
+decision and creates content the owner did not choose. A second reinforcement
+endpoint duplicates the existing CAS/revision authority. Optimistic project
+labels repeat F041 even if they later self-correct. Polling after every edit is
+both weaker than the PATCH result and unnecessary attention/traffic.

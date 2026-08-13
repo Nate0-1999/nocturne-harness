@@ -511,6 +511,58 @@ async def test_edit_uses_browser_revision_and_daemon_owned_provenance() -> None:
 
 
 @pytest.mark.asyncio
+async def test_edit_noop_refuses_without_advancing_revision() -> None:
+    """F040, ADR-004, and B.6 r12 require an unchanged body to remain a no-op;
+    this prevents a silent Save from manufacturing lineage without a memory change.
+    """
+    original = memory_unit(MEMORY_A, body="Unchanged body", revision=4)
+    spine = FakeSpine([original])
+
+    response = await handle(
+        controller(spine),
+        MemoryPanelEditPayload(
+            action="edit",
+            memory_id=MEMORY_A,
+            expected_revision=4,
+            body="Unchanged body",
+        ),
+    )
+
+    assert spine.patch_requests == []
+    assert spine.memories == [original]
+    assert isinstance(response.payload, MemoryPanelErrorPayload)
+    assert response.payload.code == "no_change"
+    assert response.payload.message == "Nothing changed. Edit the memory body before saving."
+
+
+@pytest.mark.asyncio
+async def test_edit_refuses_patch_result_that_does_not_confirm_requested_body() -> None:
+    """F040, ADR-004, and B.6 r12 require Edit Save to reconcile against the
+    authoritative PATCH result; a revision bump with the old body is never reported as success.
+    """
+    original = memory_unit(MEMORY_A, body="Old body", revision=4)
+    mismatched = memory_unit(MEMORY_A, body="Old body", revision=5)
+    spine = FakeSpine([original], patch_outcomes=[mismatched])
+
+    response = await handle(
+        controller(spine),
+        MemoryPanelEditPayload(
+            action="edit",
+            memory_id=MEMORY_A,
+            expected_revision=4,
+            body="Requested new body",
+        ),
+    )
+
+    assert len(spine.patch_requests) == 1
+    assert isinstance(response.payload, MemoryPanelErrorPayload)
+    assert response.payload.code == "invalid_response"
+    assert response.payload.message == (
+        "Memory did not confirm the requested change. Refresh and try again."
+    )
+
+
+@pytest.mark.asyncio
 async def test_pin_uses_browser_revision_and_daemon_owned_provenance() -> None:
     """A-030 is defended by verifying that pin uses browser revision and daemon owned
     provenance; this prevents drift in the owner memory control and context-rebinding

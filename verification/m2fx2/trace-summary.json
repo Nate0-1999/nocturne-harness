@@ -1,0 +1,28 @@
+{
+  "fixture_identity": "m2fx2-verification",
+  "owner_palace_used": false,
+  "browser": "in-app controlled Chromium",
+  "observations": {
+    "edit": {
+      "before_revision": 1,
+      "after_revision": 2,
+      "authoritative_body": "A write becomes visible only after the daemon returns the exact accepted state.",
+      "visible_result": "Saved. Per-message scoring refreshes this thread before the next response."
+    },
+    "edit_noop": {
+      "revision_after_retry": 2,
+      "visible_refusal": "Nothing changed. Edit the memory body before saving."
+    },
+    "duplicate_remember": {
+      "after_revision": 3,
+      "reinforcements": 1,
+      "visible_result": "Already known — reinforced 'Authoritative write rule'."
+    },
+    "project_conflict": {
+      "requested": "m2fx2-draft",
+      "authoritative": "build-test",
+      "control_value_after_snapshot": "build-test",
+      "control_title_after_snapshot": "build-test"
+    }
+  }
+}

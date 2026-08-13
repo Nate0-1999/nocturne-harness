@@ -44,3 +44,16 @@ test('Project control derives its visible draft from snapshot reconciliation', a
   assert.match(selector, /const projectDraft = control\.edit \?\? projectPathEditValue\(currentProjectKey\)/u)
   assert.doesNotMatch(app, /key=\{projectSelectorContextKey/u)
 })
+
+/** F041, ADR-005, and B.6 r12 require both Rack projections to withhold a
+ * catalog-requested project while the daemon snapshot is still pending.
+ */
+test('Rack exposes only snapshot-acknowledged project bindings', async () => {
+  const rack = await readFile(new URL('../src/rack.tsx', import.meta.url), 'utf8')
+  const selector = await readFile(new URL('../src/ProjectSelector.tsx', import.meta.url), 'utf8')
+
+  assert.equal((rack.match(/authoritativeProjectPath\(/gu) ?? []).length, 2)
+  assert.match(rack, /awaitingSnapshot \?\? true/u)
+  assert.match(selector, /const scopeLabel = awaitingSnapshot \? null : projectScopeLabel/u)
+  assert.match(selector, /Waiting for daemon project/u)
+})

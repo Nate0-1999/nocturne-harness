@@ -38,7 +38,7 @@ export function ProjectSelector({
     setStoredControl(control)
   }
   const projectDraft = control.edit ?? projectPathEditValue(currentProjectKey)
-  const scopeLabel = projectScopeLabel(currentProjectKey)
+  const scopeLabel = awaitingSnapshot ? null : projectScopeLabel(currentProjectKey)
   const status = switching
     ? 'Switching…'
     : control.feedback ?? (awaitingSnapshot ? 'Loading…' : '')
@@ -107,7 +107,9 @@ export function ProjectSelector({
           disabled={awaitingSnapshot || selectedThreadId === null}
           aria-invalid={control.feedback !== null}
           aria-describedby="project-selector-status"
-          title={currentProjectKey ?? 'Unscoped thread'}
+          title={awaitingSnapshot
+            ? 'Waiting for daemon project'
+            : currentProjectKey ?? 'Unscoped thread'}
           onChange={(event) => {
             setStoredControl({
               ...control,

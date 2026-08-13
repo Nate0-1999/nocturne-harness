@@ -231,8 +231,7 @@ export function MemoryPanel({
     }
   }, [panel.items, rackSelection])
 
-  async function submitEdit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function saveEdit() {
     if (editor === null || !editor.body.trim() || editSaved) {
       return
     }
@@ -257,6 +256,11 @@ export function MemoryPanel({
     } catch (error) {
       reportClientError(error, 'Memory body could not be saved')
     }
+  }
+
+  function submitEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    void saveEdit()
   }
 
   function onEditorKeyDown(event: ReactKeyboardEvent<HTMLTextAreaElement>) {
@@ -355,7 +359,7 @@ export function MemoryPanel({
           <div className="memory-panel__list" data-testid="memory-list">
             {panel.items.map(({ memory, in_context: inContext, thread_excluded: threadExcluded }) => {
               const editing =
-                editor?.memoryId === memory.memory_id && !editSaved
+                editor?.memoryId === memory.memory_id
               const unavailable = memory.status !== 'active'
               return (
                 <article
@@ -465,7 +469,7 @@ export function MemoryPanel({
                         {!editSaved && (
                           <button
                             className="principal-memory__primary"
-                            type="submit"
+                            type="button"
                             disabled={
                               !connected ||
                               busy ||
@@ -473,6 +477,7 @@ export function MemoryPanel({
                               (editConflict !== null &&
                                 editConflict.memory.status !== 'active')
                             }
+                            onClick={() => { void saveEdit() }}
                           >
                             {editConflict !== null || editError !== null
                               ? 'Retry save'

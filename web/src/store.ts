@@ -655,7 +655,7 @@ export const useHarnessStore = create<HarnessStoreState>()(
           selectedThreadId: threadId,
           threads: {
             ...state.threads,
-            [threadId]: emptyThreadState(),
+            [threadId]: { ...emptyThreadState(), awaitingSnapshot: true },
           },
           globalError: null,
         }))

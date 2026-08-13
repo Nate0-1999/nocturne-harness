@@ -34,11 +34,15 @@ from harness.spine_client import (
     CreateMemorySplitResponse,
     DuplicateMemoryConflict,
     LabelConflict,
+    ListMemoriesParams,
     MemoryKind,
     MemorySplitRequest,
     MemorySplitResponse,
     MemoryStatus,
     MemoryUnit,
+    PagedMemoryListResponse,
+    PatchMemoryRequest,
+    PatchMemoryResponse,
     ProblemDetail,
     SimilarMemoriesResponse,
     SpineClientError,
@@ -86,6 +90,10 @@ class FakeSpine:
     split_outcome: CreateMemorySplitResponse | SpineClientError | None = None
     create_requests: list[CreateMemoryRequest] = field(default_factory=list)
     split_requests: list[MemorySplitRequest] = field(default_factory=list)
+    memories: list[MemoryUnit] = field(default_factory=list)
+    patch_outcome: PatchMemoryResponse | SpineClientError | None = None
+    list_requests: list[ListMemoriesParams] = field(default_factory=list)
+    patch_requests: list[tuple[UUID, PatchMemoryRequest]] = field(default_factory=list)
 
     async def create_memory(
         self, request: CreateMemoryRequest
@@ -102,6 +110,27 @@ class FakeSpine:
         if isinstance(self.split_outcome, SpineClientError):
             raise self.split_outcome
         return self.split_outcome
+
+    async def list_memories(self, params: ListMemoriesParams) -> PagedMemoryListResponse:
+        self.list_requests.append(params)
+        return PagedMemoryListResponse(
+            items=self.memories[params.offset : params.offset + params.limit],
+            total=len(self.memories),
+            limit=params.limit,
+            offset=params.offset,
+        )
+
+    async def patch_memory(
+        self,
+        memory_id: UUID,
+        request: PatchMemoryRequest,
+    ) -> PatchMemoryResponse:
+        self.patch_requests.append((memory_id, request))
+        if self.patch_outcome is None:
+            raise AssertionError("unexpected patch call")
+        if isinstance(self.patch_outcome, SpineClientError):
+            raise self.patch_outcome
+        return self.patch_outcome
 
 
 def settings(**overrides: Any) -> HarnessSettings:
@@ -125,6 +154,8 @@ def memory_unit(
     label: str = "Editor preference",
     body: str = "Use tabs.",
     status: MemoryStatus = MemoryStatus.ACTIVE,
+    revision: int = 1,
+    reinforcements: int | None = None,
 ) -> MemoryUnit:
     now = datetime(2026, 7, 20, 12, 0, tzinfo=UTC)
     return MemoryUnit(
@@ -139,8 +170,8 @@ def memory_unit(
         origin_path="/workspace/notes.md",
         pin=False,
         status=status,
-        revision=1,
-        stats={},
+        revision=revision,
+        stats={} if reinforcements is None else {"reinforcements": reinforcements},
         bias=0,
         embedding_model="text-embedding-3-small",
         created_at=now,
@@ -1156,13 +1187,12 @@ def problem_error() -> SpineProblemError:
 @pytest.mark.parametrize(
     ("outcome", "expected"),
     [
-        (similar_response(), "similar memory exists"),
-        (duplicate_conflict(), "duplicate memory exists"),
-        (label_conflict(), "label already exists"),
+        (similar_response(), "looks similar"),
+        (label_conflict(), "label already belongs"),
         (problem_error(), "Spine unavailable: try later"),
         (SpineTransportError(), "memory service unavailable"),
     ],
-    ids=["similar", "duplicate", "label", "problem", "transport"],
+    ids=["similar", "label", "problem", "transport"],
 )
 async def test_remember_failures_are_truthful_visible_non_success(
     outcome: CreatedMemoryResponse | SimilarMemoriesResponse | SpineClientError,
@@ -1188,6 +1218,75 @@ async def test_remember_failures_are_truthful_visible_non_success(
     assert result.memory_id is None
     assert result.label is None
     assert len(spine.create_requests) == 1
+
+
+@pytest.mark.asyncio
+async def test_remember_hard_duplicate_records_plain_reinforcement() -> None:
+    """F038, SPEC C.4 v2.14, and B.6 r12 require `/remember` hard duplicates to
+    become one auditable reinforcement instead of raw transport JSON.
+    """
+    existing = memory_unit(label="Existing preference")
+    reinforced = memory_unit(label="Existing preference", revision=2, reinforcements=1)
+    spine = FakeSpine(
+        duplicate_conflict(),
+        memories=[existing],
+        patch_outcome=reinforced,
+    )
+    agent = HarnessAgent(
+        settings(),
+        model=TestModel(
+            call_tools=[],
+            custom_output_text=json.dumps({"label": "New fact", "keywords": ["new", "fact"]}),
+        ),
+    )
+
+    result = await agent.remember("A durable fact.", context=context(spine))
+
+    assert result == RememberResult(
+        True,
+        "Already known — reinforced 'Existing preference'.",
+        memory_id=MEMORY_ID,
+        label="Existing preference",
+    )
+    assert spine.list_requests == [
+        ListMemoriesParams(status=MemoryStatus.ACTIVE, limit=200, offset=0)
+    ]
+    assert spine.patch_requests == [
+        (
+            MEMORY_ID,
+            PatchMemoryRequest(
+                expected_revision=1,
+                body="Use tabs.",
+                editor="user",
+                reason="remember/reinforce",
+                machine_id="machine-1",
+            ),
+        )
+    ]
+
+
+@pytest.mark.asyncio
+async def test_remember_near_duplicate_guides_edit_without_transport_details() -> None:
+    """F038, SPEC C.4, and B.6 r12 require a near duplicate to guide the owner
+    toward the existing edit boundary without scores, JSON, or an automatic force write.
+    """
+    spine = FakeSpine(similar_response())
+    agent = HarnessAgent(
+        settings(),
+        model=TestModel(
+            call_tools=[],
+            custom_output_text=json.dumps({"label": "New fact", "keywords": ["new", "fact"]}),
+        ),
+    )
+
+    result = await agent.remember("A durable fact.", context=context(spine))
+
+    assert result.ok is False
+    assert "Open Memory and edit" in result.message
+    assert "0.86" not in result.message
+    assert "force=true" not in result.message
+    assert str(MEMORY_ID) not in result.message
+    assert spine.patch_requests == []
 
 
 @pytest.mark.asyncio

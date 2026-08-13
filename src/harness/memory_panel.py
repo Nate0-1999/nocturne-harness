@@ -456,6 +456,17 @@ class MemoryPanelController:
             )
             return
 
+        if isinstance(payload, MemoryPanelEditPayload) and payload.body == current.body:
+            await self._send_error(
+                thread_id=thread_id,
+                request_id=request_id,
+                operation=operation,
+                code="no_change",
+                message="Nothing changed. Edit the memory body before saving.",
+                send=send,
+            )
+            return
+
         request = PatchMemoryRequest(
             expected_revision=payload.expected_revision,
             body=payload.body if isinstance(payload, MemoryPanelEditPayload) else None,
@@ -517,22 +528,39 @@ class MemoryPanelController:
             updated.memory_id != payload.memory_id
             or updated.principal_id != self._principal_id
             or updated.status is not MemoryStatus.ACTIVE
+            or updated.revision != payload.expected_revision + 1
+            or (
+                isinstance(payload, MemoryPanelEditPayload)
+                and updated.body != payload.body
+            )
+            or (
+                isinstance(payload, MemoryPanelPinPayload)
+                and updated.pin is not payload.pin
+            )
         ):
             await self._send_error(
                 thread_id=thread_id,
                 request_id=request_id,
                 operation=operation,
                 code="invalid_response",
-                message="The memory service returned an invalid update response.",
+                message=(
+                    "Memory did not confirm the requested change. "
+                    "Refresh and try again."
+                ),
                 send=send,
             )
             return
+        authoritative = [
+            updated if memory.memory_id == updated.memory_id else memory
+            for memory in active
+        ]
         await self._send_state(
             thread_id=thread_id,
             request_id=request_id,
             result=result,
             operation=operation,
             send=send,
+            memories=authoritative,
         )
 
     async def _send_state(
@@ -543,12 +571,14 @@ class MemoryPanelController:
         result: PanelResult,
         operation: PanelOperation,
         send: EnvelopeSender,
+        memories: Sequence[MemoryUnit] | None = None,
     ) -> None:
-        try:
-            memories = await self._active_principal_memories()
-        except SpineClientError as exc:
-            await self._send_spine_error(thread_id, request_id, operation, exc, send)
-            return
+        if memories is None:
+            try:
+                memories = await self._active_principal_memories()
+            except SpineClientError as exc:
+                await self._send_spine_error(thread_id, request_id, operation, exc, send)
+                return
         context = self._contexts.snapshot(thread_id)
         members = context.member_ids if context is not None else frozenset()
         items = [

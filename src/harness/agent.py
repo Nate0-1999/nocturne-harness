@@ -27,8 +27,16 @@ from harness.pydantic_ai_adapter import MemoryCapability
 from harness.spine_client import (
     CreatedMemoryResponse,
     CreateMemoryConflictError,
+    DuplicateMemoryConflict,
+    LabelConflict,
+    ListMemoriesParams,
     MemorySplitChild,
     MemorySplitResponse,
+    MemoryStatus,
+    MemoryUnit,
+    PatchMemoryConflictError,
+    PatchMemoryRequest,
+    RevisionConflict,
     SimilarMemoriesResponse,
     SpineClientError,
 )
@@ -37,7 +45,6 @@ from harness.tools_memory import (
     create_remembered_memory,
     create_remembered_memory_split,
     render_create_conflict,
-    render_create_response,
     render_spine_error,
 )
 
@@ -514,12 +521,34 @@ class HarnessAgent:
                 keywords=keywords,
             )
         except CreateMemoryConflictError as exc:
-            return RememberResult(False, f"Could not remember: {render_create_conflict(exc)}")
+            if isinstance(exc.conflict, DuplicateMemoryConflict):
+                return await HarnessAgent._reinforce_duplicate_remember(
+                    context,
+                    exc.conflict.duplicate_of.memory_id,
+                )
+            assert isinstance(exc.conflict, LabelConflict)
+            conflict = exc.conflict.label_conflict
+            return RememberResult(
+                False,
+                "Not saved: that label already belongs to "
+                f"{conflict.label!r}. Open Memory and edit the existing memory, or try "
+                "/remember again with a more specific fact.",
+            )
         except SpineClientError as exc:
             return RememberResult(False, f"Could not remember: {render_spine_error('save', exc)}")
 
-        if not isinstance(response, CreatedMemoryResponse):
-            return RememberResult(False, f"Not saved: {render_create_response(response)}")
+        if isinstance(response, SimilarMemoriesResponse):
+            if not response.similar:
+                return RememberResult(False, "Not saved: Memory returned no similar memory.")
+            existing = response.similar[0]
+            return RememberResult(
+                False,
+                "Not saved: this looks similar to "
+                f"{existing.label!r}. Open Memory and edit that memory if this changes it; "
+                "otherwise rephrase this as a distinct fact and try /remember again.",
+            )
+        if not isinstance(response, CreatedMemoryResponse):  # pragma: no cover - closed union
+            return RememberResult(False, "Not saved: Memory returned an invalid response.")
         created = response.created
         return RememberResult(
             True,
@@ -527,6 +556,103 @@ class HarnessAgent:
             memory_id=created.memory_id,
             label=created.label,
         )
+
+    @staticmethod
+    async def _reinforce_duplicate_remember(
+        context: MemoryToolContext,
+        memory_id: UUID,
+    ) -> RememberResult:
+        """Record one deliberate re-derivation through the existing CAS lineage seam."""
+
+        try:
+            target = await HarnessAgent._active_memory_by_id(context, memory_id)
+        except SpineClientError as exc:
+            return RememberResult(
+                False,
+                f"Could not reinforce the existing memory: {render_spine_error('refresh', exc)}",
+            )
+        if target is None:
+            return RememberResult(
+                False,
+                "Not saved: the matching memory changed before it could be reinforced. "
+                "Refresh Memory and try again.",
+            )
+        previous_reinforcements = _reinforcement_count(target)
+        if previous_reinforcements is None:
+            return RememberResult(
+                False,
+                "Not saved: the matching memory has invalid reinforcement history. "
+                "Refresh Memory and try again.",
+            )
+
+        try:
+            updated = await context.spine.patch_memory(
+                target.memory_id,
+                PatchMemoryRequest(
+                    expected_revision=target.revision,
+                    body=target.body,
+                    editor="user",
+                    reason="remember/reinforce",
+                    machine_id=context.machine_id,
+                ),
+            )
+        except PatchMemoryConflictError as exc:
+            if isinstance(exc.conflict, RevisionConflict):
+                return RememberResult(
+                    False,
+                    "Not saved: the matching memory changed before it could be reinforced. "
+                    "Review its latest body in Memory, then try again.",
+                )
+            return RememberResult(
+                False,
+                "Not saved: the matching memory could not be reinforced because it now "
+                "conflicts with another memory. Review it in Memory.",
+            )
+        except SpineClientError as exc:
+            return RememberResult(
+                False,
+                f"Could not reinforce the existing memory: {render_spine_error('save', exc)}",
+            )
+
+        if (
+            updated.memory_id != target.memory_id
+            or updated.principal_id != context.principal_id
+            or updated.status is not MemoryStatus.ACTIVE
+            or updated.body != target.body
+            or updated.revision != target.revision + 1
+            or _reinforcement_count(updated) != previous_reinforcements + 1
+        ):
+            return RememberResult(
+                False,
+                "Not saved: Memory did not confirm the reinforcement. Refresh and try again.",
+            )
+        return RememberResult(
+            True,
+            f"Already known — reinforced {updated.label!r}.",
+            memory_id=updated.memory_id,
+            label=updated.label,
+        )
+
+    @staticmethod
+    async def _active_memory_by_id(
+        context: MemoryToolContext,
+        memory_id: UUID,
+    ) -> MemoryUnit | None:
+        offset = 0
+        while True:
+            page = await context.spine.list_memories(
+                ListMemoriesParams(status=MemoryStatus.ACTIVE, limit=200, offset=offset)
+            )
+            for memory in page.items:
+                if (
+                    memory.memory_id == memory_id
+                    and memory.principal_id == context.principal_id
+                    and memory.status is MemoryStatus.ACTIVE
+                ):
+                    return memory
+            if not page.items or offset + len(page.items) >= page.total:
+                return None
+            offset += len(page.items)
 
     async def extract_thread(
         self,
@@ -793,3 +919,10 @@ def _normalize_keywords(values: Sequence[str]) -> list[str] | None:
             keywords.append(normalized)
             seen.add(normalized)
     return keywords if 2 <= len(keywords) <= 5 else None
+
+
+def _reinforcement_count(memory: MemoryUnit) -> int | None:
+    value = memory.stats.get("reinforcements", 0)
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        return None
+    return value
