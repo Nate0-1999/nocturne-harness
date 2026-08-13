@@ -13,20 +13,33 @@ import {
  */
 test('admits only a same-thread error and snapshot while the barrier remains active', () => {
   const threadId = 'thread-a'
+  const requestId = 'request-a'
 
-  assert.deepEqual(snapshotBarrierRoute(threadId, threadId, 'error'), {
+  assert.deepEqual(snapshotBarrierRoute(threadId, requestId, threadId, 'error', null), {
     disposition: 'error', publish: true,
   })
-  assert.deepEqual(snapshotBarrierRoute(threadId, threadId, 'run.started'), {
+  assert.deepEqual(snapshotBarrierRoute(threadId, requestId, threadId, 'run.started', null), {
     disposition: 'drop', publish: false,
   })
-  assert.deepEqual(snapshotBarrierRoute(threadId, threadId, 'memory.panel.update'), {
+  assert.deepEqual(snapshotBarrierRoute(threadId, requestId, threadId, 'memory.panel.update', null), {
     disposition: 'drop', publish: false,
   })
-  assert.deepEqual(snapshotBarrierRoute(threadId, threadId, 'thread.snapshot'), {
+  assert.deepEqual(snapshotBarrierRoute(
+    threadId, requestId, threadId, 'thread.snapshot', requestId,
+  ), {
     disposition: 'snapshot', publish: true,
   })
-  assert.deepEqual(snapshotBarrierRoute(threadId, 'thread-b', 'run.started'), {
+  assert.deepEqual(snapshotBarrierRoute(
+    threadId, requestId, threadId, 'thread.snapshot', null,
+  ), {
+    disposition: 'drop', publish: false,
+  }, 'an automatic snapshot cannot acknowledge the project-open request')
+  assert.deepEqual(snapshotBarrierRoute(
+    threadId, requestId, threadId, 'thread.snapshot', 'request-b',
+  ), {
+    disposition: 'drop', publish: false,
+  }, 'an older request cannot acknowledge the current project-open request')
+  assert.deepEqual(snapshotBarrierRoute(threadId, requestId, 'thread-b', 'run.started', null), {
     disposition: 'outside', publish: true,
   })
 })

@@ -534,10 +534,9 @@ async def test_empty_remember_command_is_visible_and_does_not_call_model_or_spin
 
 
 @pytest.mark.asyncio
-async def test_remember_uses_selected_model_once_without_tools_and_maps_global_user_fact() -> None:
-    """ADR-013 is defended by verifying that remember uses selected model once without tools
-    and maps global user fact; this prevents drift in the agent composition and explicit
-    model boundary.
+async def test_remember_uses_selected_model_once_without_tools_and_maps_project_user_fact() -> None:
+    """F046/F041 and ADR-005 require remember to inherit the trusted thread project while
+    the metadata call remains tools-free and on the explicit selected model.
     """
     default_model = TestModel(call_tools=[], custom_output_text="wrong model")
     selected_calls: list[tuple[list[ModelMessage], AgentInfo]] = []
@@ -582,7 +581,7 @@ async def test_remember_uses_selected_model_once_without_tools_and_maps_global_u
     assert request.body == "Use tabs."
     assert request.kind is MemoryKind.FACT
     assert request.keywords == ["editor", "tabs"]
-    assert request.project_key is None
+    assert request.project_key == "project-that-remember-must-ignore"
     assert request.thread_origin == str(THREAD_ID)
     assert request.origin_path == "/workspace/notes.md"
     assert request.editor == "user"

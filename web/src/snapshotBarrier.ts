@@ -11,15 +11,24 @@ export interface SnapshotBarrierRoute {
 
 export function snapshotBarrierRoute(
   barrierThreadId: string | null,
+  barrierRequestId: string | null,
   envelopeThreadId: string | undefined,
   eventType: string | null,
+  snapshotRequestId: string | null,
 ): SnapshotBarrierRoute {
   let disposition: SnapshotBarrierDisposition
-  if (barrierThreadId === null || envelopeThreadId !== barrierThreadId) {
+  if (
+    barrierThreadId === null ||
+    barrierRequestId === null ||
+    envelopeThreadId !== barrierThreadId
+  ) {
     disposition = 'outside'
   } else if (eventType === 'error') {
     disposition = 'error'
-  } else if (eventType === 'thread.snapshot') {
+  } else if (
+    eventType === 'thread.snapshot' &&
+    snapshotRequestId === barrierRequestId
+  ) {
     disposition = 'snapshot'
   } else {
     disposition = 'drop'

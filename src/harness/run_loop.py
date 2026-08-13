@@ -406,8 +406,9 @@ class RunLoop:
         thread_id: str,
         sink: EnvelopeSink,
         project_key: str | None = None,
+        request_id: str | None = None,
     ) -> None:
-        """Select a thread and atomically send its one authoritative snapshot."""
+        """Select a thread and acknowledge its durable binding in one snapshot."""
 
         self._require_thread_id(thread_id)
         canonical_project = (
@@ -431,7 +432,7 @@ class RunLoop:
             self._subscriptions.append(subscription)
             pending = self._enqueue_locked(
                 subscription,
-                self._snapshot_envelope(thread_id, state),
+                self._snapshot_envelope(thread_id, state, request_id=request_id),
                 confirm=True,
             )
             assert pending is not None
@@ -1565,7 +1566,13 @@ class RunLoop:
             return None
         return state
 
-    def _snapshot_envelope(self, thread_id: str, state: _ThreadState) -> Envelope:
+    def _snapshot_envelope(
+        self,
+        thread_id: str,
+        state: _ThreadState,
+        *,
+        request_id: str | None = None,
+    ) -> Envelope:
         active_snapshot: ActiveRunSnapshot | None = None
         if state.active is not None:
             active = state.active
@@ -1591,6 +1598,7 @@ class RunLoop:
                 open_gate=state.open_gate,
                 active_run=active_snapshot,
                 project_key=state.project_key,
+                request_id=request_id,
                 resolved_model=state.resolved_model,
             ),
             thread_id=thread_id,

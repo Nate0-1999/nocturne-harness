@@ -507,8 +507,8 @@ def test_run_loop_rejects_invalid_resolved_model(resolved_model: str) -> None:
 async def test_project_binding_is_journaled_once_and_becomes_authoritative(
     tmp_path: Path,
 ) -> None:
-    """F028, SPEC C.3/C.4, ADR-005, and B.6 r12 require one trusted current project;
-    this proves an idempotent pristine bind is durable before its snapshot is exposed.
+    """F046/F041 and ADR-005 require one trusted current project; this proves an
+    idempotent pristine bind is durable before its correlated acknowledgement is exposed.
     """
 
     journal = TranscriptJournal(tmp_path / "transcripts")
@@ -518,11 +518,17 @@ async def test_project_binding_is_journaled_once_and_becomes_authoritative(
         transcript_journal=journal,
     )
     first = Sink()
-    await loop.request_snapshot("thread-1", first, project_key="build-test/api")
+    await loop.request_snapshot(
+        "thread-1",
+        first,
+        project_key="build-test/api",
+        request_id="01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    )
     await _wait_for_type_count(first, MessageType.THREAD_SNAPSHOT, 1)
     snapshot = first.messages[0].payload
     assert isinstance(snapshot, ThreadSnapshotResponsePayload)
     assert snapshot.project_key == "build-test/api"
+    assert snapshot.request_id == "01ARZ3NDEKTSV4RRFFQ69G5FAV"
     assert loop.project_key("thread-1") == "build-test/api"
 
     second = Sink()

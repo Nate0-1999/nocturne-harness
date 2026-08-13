@@ -2104,3 +2104,26 @@ atomicity. A timeout on every chat/model call would broaden this local repair
 beyond the split-planning defect. Converting transport failures into split
 guidance would hide an operational failure rather than classify a planning
 outcome.
+
+## 071 — A project opens on one correlated durable acknowledgement [P1.2.2, F041, F046]
+
+**Decision.** Echo the browser's `thread.snapshot` request id only on the
+authoritative snapshot produced after that request has validated and durably
+appended any new thread context. Keep the browser snapshot barrier closed until
+the same thread returns that exact request id; automatic reconnect snapshots and
+older request responses cannot release the composer. A direct single-memory
+`/remember` save takes `project_key` and `origin_path` from the same trusted
+thread context. An honestly unscoped thread continues to write a null project.
+
+**Motivation.** F046 showed two local states impersonating one accepted project:
+an uncorrelated snapshot could end the UI wait, and the direct save path then
+discarded the daemon's project even when it was bound. Correlating the existing
+request/response seam makes the journal append happen-before acknowledgement;
+carrying that daemon-owned value into the existing create makes save, injection,
+search, and CURRENT Graph agree without another source of project truth.
+
+**Rejected alternatives.** A new project endpoint or project database would
+duplicate the journal. Optimistic catalogue acknowledgement repeats F041. A
+client timer cannot prove a durable append. Rebinding a populated thread would
+mix conversation and memory provenance. Inferring the project from visible text
+would make the browser authoritative again.

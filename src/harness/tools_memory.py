@@ -209,7 +209,7 @@ async def create_remembered_memory(
     body: str,
     keywords: list[str],
 ) -> CreateMemoryResponse:
-    """Create the global, user-authored fact required by `/remember`."""
+    """Create the user-authored fact in the thread's authoritative project."""
 
     return await context.spine.create_memory(
         CreateMemoryRequest(
@@ -218,7 +218,7 @@ async def create_remembered_memory(
             body=body,
             kind=MemoryKind.FACT,
             keywords=keywords,
-            project_key=None,
+            project_key=context.project_key,
             thread_origin=str(context.thread_id) if context.thread_id is not None else None,
             origin_path=context.origin_path,
             editor="user",

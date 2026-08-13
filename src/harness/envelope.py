@@ -360,6 +360,7 @@ class ThreadSnapshotResponsePayload(_ExtensiblePayload):
     open_gate: GateOpenPayload | None
     active_run: ActiveRunSnapshot | None
     project_key: ArtificialProjectPath | None
+    request_id: ULID | None = Field(default=None, exclude_if=lambda value: value is None)
     resolved_model: NonBlankString | None = Field(
         default=None,
         exclude_if=lambda value: value is None,

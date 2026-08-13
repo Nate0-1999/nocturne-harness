@@ -922,8 +922,8 @@ def test_dev_app_wires_the_real_streaming_agent_adapter(
 
 
 def test_dev_app_project_binding_reaches_the_trusted_prepare_context(tmp_path: Path) -> None:
-    """F028, SPEC C.3/C.4, ADR-005, and B.6 r12 require one current project to reach
-    injection from daemon authority; this prevents the browser from becoming trusted identity.
+    """F046/F041 and ADR-005 require one current project to reach injection from daemon
+    authority only after the exact project-open request receives its durable acknowledgement.
     """
 
     async def stream(_messages, _info):
@@ -962,6 +962,7 @@ def test_dev_app_project_binding_reaches_the_trusted_prepare_context(tmp_path: P
         )
         snapshot = websocket.receive_json()
         assert snapshot["payload"]["project_key"] == "build-test/api"
+        assert snapshot["payload"]["request_id"] == PROMPT_ID
 
         websocket.send_json(
             frame(
@@ -1033,6 +1034,7 @@ def test_project_rebind_conflict_returns_error_then_authoritative_snapshot(tmp_p
         ),
     }
     assert authoritative["payload"]["project_key"] == "build-test"
+    assert authoritative["payload"]["request_id"] == SNAPSHOT_ID
     event_rows = [
         row
         for row in (
@@ -1771,6 +1773,7 @@ def test_unknown_type_without_forwarder_is_ignored_without_closing(tmp_path: Pat
         "open_gate": None,
         "active_run": None,
         "project_key": None,
+        "request_id": SNAPSHOT_ID,
     }
 
 

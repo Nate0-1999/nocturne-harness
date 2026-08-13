@@ -537,6 +537,7 @@ def create_app(
                             message.thread_id,
                             send,
                             project_key=message.payload.project_key,
+                            request_id=message.id,
                         )
                     except ProjectBindingConflict as exc:
                         existing = (
@@ -558,7 +559,11 @@ def create_app(
                                 thread_id=message.thread_id,
                             ),
                         )
-                        await loop.request_snapshot(message.thread_id, send)
+                        await loop.request_snapshot(
+                            message.thread_id,
+                            send,
+                            request_id=message.id,
+                        )
                 else:
                     await not_implemented(message, send)
         except WebSocketDisconnect:

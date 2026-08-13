@@ -48,7 +48,7 @@ export class HarnessSocketClient {
   private reconnectAttempt = 0
   private intentionallyClosed = true
   private generation = 0
-  private snapshotBarrierThreadId: string | null = null
+  private snapshotBarrier: { threadId: string; requestId: Ulid } | null = null
 
   connect(): void {
     this.intentionallyClosed = false
@@ -69,7 +69,7 @@ export class HarnessSocketClient {
   disconnect(): void {
     this.intentionallyClosed = true
     this.generation += 1
-    this.snapshotBarrierThreadId = null
+    this.snapshotBarrier = null
     if (this.reconnectTimer !== null) {
       globalThis.clearTimeout(this.reconnectTimer)
       this.reconnectTimer = null
@@ -119,16 +119,21 @@ export class HarnessSocketClient {
     }
 
     state.markSnapshotPending(selectedThreadId)
-    this.snapshotBarrierThreadId = selectedThreadId
+    this.snapshotBarrier = null
     if (!this.isOpen()) {
       this.connect()
       return null
     }
-    return this.send(
+    const envelope = this.send(
       'thread.snapshot',
       { request: true, project_key: entry.project_key },
       selectedThreadId,
-    ).id
+    )
+    this.snapshotBarrier = {
+      threadId: selectedThreadId,
+      requestId: envelope.id,
+    }
+    return envelope.id
   }
 
   submitPrompt(prompt: string, image?: OutboundImage): Ulid {
@@ -302,9 +307,11 @@ export class HarnessSocketClient {
       const store = useHarnessStore.getState()
       store.observeDaemon(envelope.machine_id)
       const barrierRoute = snapshotBarrierRoute(
-        this.snapshotBarrierThreadId,
+        this.snapshotBarrier?.threadId ?? null,
+        this.snapshotBarrier?.requestId ?? null,
         envelope.thread_id,
         decoded?.type ?? null,
+        decoded?.type === 'thread.snapshot' ? decoded.payload.request_id : null,
       )
       if (barrierRoute.publish) {
         publishRackEnvelope({ direction: 'inbound', envelope })
@@ -319,7 +326,7 @@ export class HarnessSocketClient {
           return
         }
         if (store.receiveEnvelope(envelope)) {
-          this.snapshotBarrierThreadId = null
+          this.snapshotBarrier = null
           this.refreshMemoryPanelIfIdle()
         }
         return

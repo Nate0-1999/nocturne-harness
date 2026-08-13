@@ -280,6 +280,7 @@ export interface ThreadSnapshotPayload {
   active_run: ActiveRunSnapshot | null
   resolved_model: string | null
   project_key: string | null
+  request_id: Ulid | null
 }
 
 export interface RunStartedPayload {
@@ -965,6 +966,9 @@ function parseSnapshot(value: unknown): ThreadSnapshotPayload | null {
     !Array.isArray(value.messages) ||
     !Object.hasOwn(value, 'project_key') ||
     (value.project_key !== null && !isCanonicalProjectPath(value.project_key)) ||
+    (value.request_id !== undefined &&
+      value.request_id !== null &&
+      !isUlid(value.request_id)) ||
     (value.resolved_model !== undefined &&
       (typeof value.resolved_model !== 'string' ||
         !value.resolved_model.trim()))
@@ -990,6 +994,7 @@ function parseSnapshot(value: unknown): ThreadSnapshotPayload | null {
     resolved_model:
       typeof value.resolved_model === 'string' ? value.resolved_model : null,
     project_key: value.project_key as string | null,
+    request_id: typeof value.request_id === 'string' ? value.request_id : null,
   }
 }
 

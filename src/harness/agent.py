@@ -345,7 +345,7 @@ class HarnessAgent:
         raise_model_errors: bool = False,
         captured_messages: list[ModelMessage] | None = None,
     ) -> RememberResult:
-        """Generate one valid draft, save one global user fact, and confirm honestly."""
+        """Generate one valid draft, save it in the thread project, and confirm honestly."""
 
         body = text.strip()
         if not body:
