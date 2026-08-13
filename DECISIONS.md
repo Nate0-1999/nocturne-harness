@@ -2056,3 +2056,26 @@ decision and creates content the owner did not choose. A second reinforcement
 endpoint duplicates the existing CAS/revision authority. Optimistic project
 labels repeat F041 even if they later self-correct. Polling after every edit is
 both weaker than the PATCH result and unnecessary attention/traffic.
+
+## 069 — Nullable provider detail is absence at the browser boundary [P1, F039, F043]
+
+**Decision.** The browser's typed provider-error decoder accepts `null` for the
+optional status, code, and provider-code fields emitted by the server and
+normalizes those values to absence. Present non-null values retain the existing
+strict number and nonblank-string validation. The enclosing `run.done` event
+then follows the one existing terminal reducer; neither the split path nor the
+context-limit path gets its own timer, retry, or state-clearing exception.
+
+**Motivation.** Both incidents had already reached a server terminal and a
+lawful owner voice. The server journal contained `run.done`, but its ordinary
+JSON serialization included null optional provider codes. The browser rejected
+the whole envelope and therefore kept the run active forever. Normalizing the
+wire representation at its typed boundary repairs the shared state machine
+without changing provider policy, atomic split law, or the Context observation.
+
+**Rejected alternatives.** A client timeout could hide a genuinely running
+turn and race late output. Clearing Streaming when refusal text appears would
+make prose into protocol. Per-flow patches would duplicate the same bug. A
+provider retry would violate F043 and could spend twice. Relaxing validation for
+non-null malformed values would turn one interoperability repair into a weaker
+wire contract.
