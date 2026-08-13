@@ -1,0 +1,34 @@
+{
+  "packet": "M2FX6",
+  "session": "codex / 2026-08-13 / fx6d",
+  "identity": {
+    "principal_id": "m2fx6-sop-verification",
+    "machine_id": "m2fx6-sop-verification"
+  },
+  "thread_id": "8c015ca2-f0bd-41fd-836b-d9e3334adc31",
+  "project_key": "m2fx6-fx6d-live",
+  "model": "openrouter:minimax/minimax-m3",
+  "source": "tests/test_agent.py:LIVE_SPLIT_SOURCE",
+  "timeline": {
+    "run_started": "2026-08-13T20:14:05.373011Z",
+    "guidance": "2026-08-13T20:14:35.429147Z",
+    "run_done": "2026-08-13T20:14:35.432127Z",
+    "elapsed_seconds": 30.059
+  },
+  "terminal": {
+    "stop_reason": "end_turn",
+    "partial": false,
+    "guidance_count": 1,
+    "guidance": "I couldn't split this into standalone memories without changing its meaning, so I didn't save it. Please break it into separate facts and try /remember again."
+  },
+  "writes": {
+    "new_sources": 0,
+    "new_children": 0,
+    "partial_family": false,
+    "cleanup_debt": false
+  },
+  "browser": {
+    "available_backends": 0,
+    "visual_capture": false
+  }
+}
