@@ -24,16 +24,32 @@ const page = await context.newPage()
 const consoleProblems = []
 const pageErrors = []
 const observations = {}
+const outageResponses = []
+let palaceOutageExpected = false
+let expectedOutageConsoleErrors = 0
 
 page.on('console', (message) => {
-  if (message.type() === 'error') consoleProblems.push(message.text())
+  if (message.type() !== 'error') return
+  if (
+    palaceOutageExpected &&
+    message.text() === 'Failed to load resource: the server responded with a status of 503 (Service Unavailable)'
+  ) {
+    expectedOutageConsoleErrors += 1
+    return
+  }
+  consoleProblems.push(message.text())
 })
 page.on('pageerror', (error) => pageErrors.push(error.message))
+page.on('response', (response) => {
+  if (palaceOutageExpected && response.status() >= 400) {
+    outageResponses.push({ status: response.status(), url: response.url() })
+  }
+})
 
 try {
   await mkdir(evidenceDir, { recursive: true })
   await page.goto(fixtureUrl, { waitUntil: 'domcontentloaded' })
-  await frame(page, 'header').getByTestId('connection').getByText('Link live').waitFor()
+  await frame(page, 'header').getByTestId('connection').getByText('Palace ready').waitFor()
   await page.getByTestId('stage-viewport').waitFor()
 
   const vitals = frame(page, 'vitals')
@@ -73,6 +89,19 @@ try {
   await page.waitForTimeout(160)
   await page.evaluate(() => globalThis.scrollTo(0, 0))
   await page.screenshot({ path: join(evidenceDir, '01-spend-human-numbers-1280x900.png') })
+
+  let consoleFrame = frame(page, 'injection_console')
+  if (await page.locator('iframe[data-testid="rack-plugin-frame-injection_console"]').count() === 0) {
+    await page.getByRole('tab', { name: 'Injection' }).click()
+    consoleFrame = frame(page, 'injection_console')
+  }
+  await consoleFrame.locator('.contribution-row output').first().waitFor()
+  const contributionCopy = await consoleFrame.locator('.contribution-row output').allTextContents()
+  if (!contributionCopy.includes('0.099') || !contributionCopy.includes('-2.86e-9')) {
+    throw new Error(`ordinary contribution cards did not use human numbers: ${JSON.stringify(contributionCopy)}`)
+  }
+  observations.card_contributions = contributionCopy
+  observations.card_human_number_scan = await assertNoPrecisionLeaks(page, 'ordinary-memory-cards')
 
   let graph = frame(page, 'memory_graph')
   if (await page.locator('iframe[data-testid="rack-plugin-frame-memory_graph"]').count() === 0) {
@@ -118,13 +147,44 @@ try {
   if (consoleProblems.length !== 0 || pageErrors.length !== 0) {
     throw new Error(JSON.stringify({ consoleProblems, pageErrors }))
   }
+  palaceOutageExpected = true
+  await page.request.post(`${baseUrl}/__scenario__/palace/unavailable`)
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  const degradedStatus = frame(page, 'header').getByTestId('connection')
+  await degradedStatus.getByText('Palace unavailable').waitFor()
+  if ((await degradedStatus.innerText()).includes('Palace ready')) {
+    throw new Error('the header claimed Palace health while its live query returned 503')
+  }
+  const unexpectedOutageResponses = outageResponses.filter(({ status, url }) => (
+    status !== 503 || !url.startsWith(`${baseUrl}/v1/rack/query?`)
+  ))
+  if (
+    expectedOutageConsoleErrors === 0 ||
+    !outageResponses.some(({ url }) => url.includes('resource=vitals')) ||
+    unexpectedOutageResponses.length !== 0
+  ) {
+    throw new Error(JSON.stringify({
+      expectedOutageConsoleErrors,
+      outageResponses,
+      unexpectedOutageResponses,
+    }))
+  }
+  observations.degraded_palace = {
+    header: (await degradedStatus.innerText()).trim(),
+    expected_console_503s: expectedOutageConsoleErrors,
+    failed_queries: outageResponses,
+  }
+
+  if (consoleProblems.length !== 0 || pageErrors.length !== 0) {
+    throw new Error(JSON.stringify({ consoleProblems, pageErrors }))
+  }
   await writeFile(join(evidenceDir, 'honest-display.json'), `${JSON.stringify({
     fixture,
     observations,
     console_problems: consoleProblems,
     page_errors: pageErrors,
   }, null, 2)}\n`, 'utf8')
-  console.log('M2ST3 honest display PASS: human numbers, compact absence, and graph declutter')
+  console.log('M2ST3 honest display PASS: human numbers, honest Palace status, compact absence, and graph declutter')
 } finally {
   await context.close()
   await browser.close()

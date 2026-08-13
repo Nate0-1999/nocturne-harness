@@ -59,6 +59,13 @@ test('internal implementation labels do not reach the owner surface', async () =
     'Corpus door',
     'MEMORY INSTRUMENT',
     'MEMORY TUNING',
+    'Factory-set navigation',
+    'Link live',
+    '>Linked<',
+    'Waiting for daemon',
+    'Awaiting daemon',
+    'Daemon memory',
+    'Daemon uptime',
   ]) {
     assert.doesNotMatch(joined, new RegExp(internalLabel, 'u'))
   }

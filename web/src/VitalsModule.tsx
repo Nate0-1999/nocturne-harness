@@ -341,8 +341,8 @@ export function VitalsModule() {
           warning={snapshot.resources.warning === 'low_disk'}
         />
         <ResourceGauge label="Database" value={formatBytes(snapshot.resources.database_bytes)} />
-        <ResourceGauge label="Daemon memory" value={formatBytes(snapshot.resources.daemon_rss_bytes)} />
-        <ResourceGauge label="Daemon uptime" value={formatUptime(snapshot.resources.daemon_uptime_seconds)} />
+        <ResourceGauge label="Nocturne memory" value={formatBytes(snapshot.resources.daemon_rss_bytes)} />
+        <ResourceGauge label="Nocturne uptime" value={formatUptime(snapshot.resources.daemon_uptime_seconds)} />
         <ResourceGauge label="Journal" value={formatBytes(snapshot.resources.journal_bytes)} />
         <ResourceGauge label="Backups" value={formatBytes(snapshot.resources.backup_bytes)} />
         {snapshot.lifecycle_rates.map((gauge) => (

@@ -9,6 +9,7 @@ import {
 import type { MemoryPanelState } from './store'
 import type { MemoryPanelConflictPayload, MemoryUnit, Ulid } from './protocol'
 import { ContributionBars, useContributionMap, useScorerAuditionMap } from './ContributionBars'
+import { formatHumanScore } from './humanNumbers.ts'
 import { useRackSelection } from './rack'
 
 interface MemoryPanelProps {
@@ -347,7 +348,7 @@ export function MemoryPanel({
         panel.items.length === 0 ? (
           <div className="memory-panel__empty" data-testid="memory-loading">
             <h3>Loading memories</h3>
-            <p>Waiting for the daemon’s current-principal view.</p>
+            <p>Loading memories from your Palace.</p>
           </div>
         ) : panel.items.length === 0 ? (
           <div className="memory-panel__empty" data-testid="memory-empty">
@@ -489,7 +490,7 @@ export function MemoryPanel({
                   ) : (
                     <>
                       <p className="principal-memory__body">{memory.body}</p>
-                      {auditions[memory.memory_id] !== undefined && <p className="scorer-preview-mark">Audition: {auditions[memory.memory_id].preview_score} · #{auditions[memory.memory_id].preview_rank} {auditions[memory.memory_id].disposition.replace('_', ' ')}</p>}
+                      {auditions[memory.memory_id] !== undefined && <p className="scorer-preview-mark">Audition: {formatHumanScore(auditions[memory.memory_id].preview_score)} · #{auditions[memory.memory_id].preview_rank} {auditions[memory.memory_id].disposition.replace('_', ' ')}</p>}
                       <ContributionBars values={contributions[memory.memory_id]} />
                       <div className="principal-memory__actions">
                         <button

@@ -10,7 +10,7 @@ export function ContributionBars({ values }: { values?: Record<string, string> |
         return <div className="contribution-row" key={key}>
           <span>{key}</span>
           <i><b style={{ width: `${Math.abs(value) / maximum * 100}%` }} data-negative={value < 0 || undefined} /></i>
-          <output>{values[key] ?? '0'}</output>
+          <output>{formatHumanScore(values[key] ?? 0)}</output>
         </div>
       })}
     </div>
@@ -57,4 +57,5 @@ export function useScorerAuditionMap(): Record<string, ScorerPreviewMark> {
   return values
 }
 import { useEffect, useState } from 'react'
+import { formatHumanScore } from './humanNumbers.ts'
 import { useRackPlugin, useRackSnapshot } from './rack'

@@ -55,5 +55,5 @@ test('Rack exposes only snapshot-acknowledged project bindings', async () => {
   assert.equal((rack.match(/authoritativeProjectPath\(/gu) ?? []).length, 2)
   assert.match(rack, /awaitingSnapshot \?\? true/u)
   assert.match(selector, /const scopeLabel = awaitingSnapshot \? null : projectScopeLabel/u)
-  assert.match(selector, /Waiting for daemon project/u)
+  assert.match(selector, /Confirming project/u)
 })

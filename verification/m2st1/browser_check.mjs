@@ -142,7 +142,7 @@ try {
 }
 
 async function waitForRack(targetPage) {
-  await frame(targetPage, 'header').getByTestId('connection').getByText('Link live').waitFor()
+  await frame(targetPage, 'header').getByTestId('connection').getByText('Palace ready').waitFor()
   await targetPage.getByTestId('stage-viewport').waitFor()
 }
 

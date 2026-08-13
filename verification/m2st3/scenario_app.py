@@ -10,7 +10,12 @@ from fastapi import FastAPI
 from harness.agent import HarnessAgent
 from harness.config import HarnessSettings
 from harness.daemon import create_dev_app
-from harness.spine_client import MemoryGraphSnapshot, ScorerConsoleSnapshot, VitalsSnapshot
+from harness.spine_client import (
+    MemoryGraphSnapshot,
+    ScorerConsoleSnapshot,
+    SpineTransportError,
+    VitalsSnapshot,
+)
 from verification.fixture_isolation import install_fixture_isolation
 from verification.m2h.scenario_app import _model
 from verification.m2k.scenario_app import graph_payload
@@ -23,20 +28,43 @@ FIXTURE = "M2ST3 REGRESSION"
 class HonestDisplaySpine(LayoutSpine):
     """Supply deliberately over-precise values and crowded graph labels."""
 
+    def __init__(self) -> None:
+        super().__init__()
+        self.palace_available = True
+
+    def _require_palace(self) -> None:
+        if not self.palace_available:
+            raise SpineTransportError
+
     async def vitals_snapshot(self) -> VitalsSnapshot:
+        self._require_palace()
         return _honest_vitals()
 
     async def thread_vitals_snapshot(self, _thread_id: UUID) -> VitalsSnapshot:
+        self._require_palace()
         return _honest_vitals()
 
     async def memory_graph(self, _request: object) -> MemoryGraphSnapshot:
+        self._require_palace()
         return MemoryGraphSnapshot.model_validate(_crowded_graph())
 
     async def scorer_console(self, _request: object) -> ScorerConsoleSnapshot:
+        self._require_palace()
         payload = _console_payload(self._learning_state)
         payload["learning"]["weighted_agreement_percent"] = "11.1111111111111111"
         payload["learning"]["weighted_right"] = "12.345678901234"
         payload["accuracy"][0]["accuracy_percent"] = "11.1111111111111111"
+        point = payload["candidates"][0]["points"][0]
+        point["score"] = "0.0990035717639611430"
+        point["contributions"] = {
+            "sem": "0.0990035746257907776",
+            "kw": "0",
+            "time": "0",
+            "proj": "0",
+            "freq": "0",
+            "hist": "0",
+            "bias": "-0.0000000028618296346",
+        }
         return ScorerConsoleSnapshot.model_validate(payload)
 
 

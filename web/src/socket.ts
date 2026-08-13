@@ -294,7 +294,7 @@ export class HarnessSocketClient {
       if (envelope === null) {
         useHarnessStore
           .getState()
-          .setTransportError('Received an invalid daemon envelope')
+          .setTransportError('Nocturne received an invalid message')
         return
       }
 

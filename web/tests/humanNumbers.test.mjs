@@ -6,6 +6,7 @@ import {
   formatHumanCount,
   formatHumanPercent,
   formatHumanQuantity,
+  formatHumanScore,
   formatHumanUsd,
 } from '../src/humanNumbers.ts'
 
@@ -17,6 +18,8 @@ test('formats money, percentages, and quantities for a glanceable instrument', (
   assert.equal(formatHumanPercent('11.1111111111111111'), '11.1%')
   assert.equal(formatHumanQuantity('12.345678'), '12.3')
   assert.equal(formatHumanCount(12_345), '12.3K')
+  assert.equal(formatHumanScore('0.0990035746257907776'), '0.099')
+  assert.equal(formatHumanScore('-0.0000000028618296346'), '-2.86e-9')
 })
 
 /** SPEC P2.4 and PLAN M2ST3 keep malformed display inputs loud instead of silently inventing a number. */

@@ -154,7 +154,7 @@ async function runMode(mode, viewport) {
 }
 
 async function waitForRack(page) {
-  await frame(page, 'header').getByTestId('connection').getByText('Link live').waitFor()
+  await frame(page, 'header').getByTestId('connection').getByText('Palace ready').waitFor()
   await frame(page, 'threads').getByTestId('new-thread').waitFor({ state: 'attached' })
   await frame(page, 'chat').getByTestId('composer').waitFor()
   await frame(page, 'memory').locator('.memory-panel').waitFor({ state: 'attached' })

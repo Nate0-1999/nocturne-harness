@@ -2040,6 +2040,11 @@ button.rack-module__resize-handle--nw {
   box-shadow: 0 0 0.65rem var(--accent);
 }
 
+.connection--palace-unavailable .connection__signal {
+  background: var(--danger);
+  box-shadow: 0 0 0.65rem var(--danger);
+}
+
 .thread-rail,
 .memory-panel {
   padding-top: 0.95rem;

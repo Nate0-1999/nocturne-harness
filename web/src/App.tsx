@@ -113,6 +113,7 @@ import {
   rackDrawerModule,
   rackModuleSelectionIsOpen,
 } from './graphOverlaySelection'
+import { ownerConnectionCopy, type PalaceStatus } from './surfaceHonesty'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
 const SEAM_COLORS = (JSON.parse(seamColorsRaw) as { colors: SeamColorEntry[] }).colors
@@ -135,19 +136,6 @@ type DismissibleOverlayModuleId = keyof typeof DISMISSIBLE_OVERLAY_CLASSES
 
 function shortId(value: string): string {
   return value.slice(0, 8).toUpperCase()
-}
-
-function connectionCopy(connection: string): string {
-  switch (connection) {
-    case 'connected':
-      return 'Link live'
-    case 'connecting':
-      return 'Connecting'
-    case 'reconnecting':
-      return 'Resyncing'
-    default:
-      return 'Offline'
-  }
 }
 
 function terminalCopy(reason: UserMessageState): string | null {
@@ -483,7 +471,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   const layoutStatus = savedSet !== null && stageLayoutsEqual(layout, savedSet)
     ? 'Saved set'
     : stageLayoutsEqual(layout, FACTORY_STAGE_LAYOUT)
-      ? 'Factory set'
+      ? 'Default layout'
       : 'Edited set'
 
   function changeCamera(camera: StageCamera) {
@@ -677,7 +665,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               >
                 Restore
               </button>
-              <button type="button" data-testid="layout-reset" onClick={resetFactorySet}>Factory</button>
+              <button type="button" data-testid="layout-reset" onClick={resetFactorySet}>Reset</button>
             </div>
           </section>
         </aside>
@@ -1361,7 +1349,8 @@ function ChatModuleSlot() {
 function HeaderModule() {
   const snapshot = useRackSnapshot()
   const selection = useRackSelection()
-  const { selection: selectionBus } = useRackPlugin()
+  const { query, selection: selectionBus } = useRackPlugin()
+  const [palaceStatus, setPalaceStatus] = useState<PalaceStatus>('checking')
   const selectedThread = snapshot.selectedThreadId === null
     ? null
     : snapshot.threads[snapshot.selectedThreadId]
@@ -1369,6 +1358,29 @@ function HeaderModule() {
   const threadsOpen = rackModuleSelectionIsOpen(selection, 'threads')
   const memoriesOpen = rackModuleSelectionIsOpen(selection, 'memory')
   const queueOpen = rackModuleSelectionIsOpen(selection, 'palace_queue')
+
+  useEffect(() => {
+    if (snapshot.connection !== 'connected') return
+    let active = true
+    const probe = () => {
+      void query.query({ resource: 'vitals', as_of: 'now' })
+        .then((result) => {
+          if (active) setPalaceStatus(result.status === 'live' ? 'ready' : 'unavailable')
+        })
+        .catch(() => {
+          if (active) setPalaceStatus('unavailable')
+        })
+    }
+    queueMicrotask(() => {
+      if (active) setPalaceStatus('checking')
+    })
+    probe()
+    const interval = globalThis.setInterval(probe, 60_000)
+    return () => {
+      active = false
+      globalThis.clearInterval(interval)
+    }
+  }, [query, snapshot.connection])
 
   function toggleModule(moduleId: 'threads' | 'memory' | 'palace_queue') {
     const alreadyOpen = rackModuleSelectionIsOpen(selection, moduleId)
@@ -1380,7 +1392,6 @@ function HeaderModule() {
       <div className="brand" aria-label="Nocturne">
         <span className="brand__mark" aria-hidden="true">N</span>
         <span className="brand__word">Nocturne</span>
-        <span className="brand__mode">Linked</span>
       </div>
       <span className="app-settings-reserve" aria-hidden="true" />
 
@@ -1419,12 +1430,12 @@ function HeaderModule() {
         Palace queue
       </button>
       <p
-        className={`connection connection--${snapshot.connection}`}
+        className={`connection connection--${snapshot.connection} connection--palace-${palaceStatus}`}
         data-testid="connection"
         aria-live="polite"
       >
         <span className="connection__signal" aria-hidden="true" />
-        {connectionCopy(snapshot.connection)}
+        {ownerConnectionCopy(snapshot.connection, palaceStatus)}
       </p>
     </header>
   )
@@ -1548,9 +1559,6 @@ function ThreadsModule() {
 
       {archiveFailure !== null && <p className="thread-archive-error" role="alert">{archiveFailure}</p>}
 
-      <p className="catalog-note">
-        Factory-set navigation. The daemon snapshot remains authoritative.
-      </p>
     </aside>
   )
 }
@@ -1817,12 +1825,12 @@ function ChatModule() {
             type="button"
             className="chat-header__model"
             data-testid="active-model"
-            aria-label={`Active model: ${selectedThread?.resolvedModel ?? 'awaiting daemon'}`}
+            aria-label={`Active model: ${selectedThread?.resolvedModel ?? 'being chosen'}`}
             onClick={() => selection.select({ kind: 'module', id: 'model_device' })}
           >
             <span aria-hidden="true">Model</span>
             <span className="chat-header__model-value">
-              {selectedThread?.resolvedModel ?? 'Awaiting daemon'}
+              {selectedThread?.resolvedModel ?? 'Choosing model'}
             </span>
           </button>
         </div>
@@ -1846,8 +1854,8 @@ function ChatModule() {
         <div className="transcript__inner">
           {awaitingSnapshot ? (
             <div className="thread-empty thread-empty--loading" data-testid="thread-loading">
-              <h2>Hydrating channel</h2>
-              <p>Waiting for the daemon snapshot before accepting input.</p>
+              <h2>Restoring thread</h2>
+              <p>Loading its latest messages before accepting input.</p>
             </div>
           ) : messages.length === 0 ? (
             <div className="thread-empty" data-testid="thread-empty">
@@ -1923,7 +1931,7 @@ function ChatModule() {
             data-testid="composer"
             value={draft}
             rows={1}
-            placeholder={snapshot.connection === 'connected' ? 'Transmit to Nocturne' : 'Waiting for link'}
+            placeholder={snapshot.connection === 'connected' ? 'Transmit to Nocturne' : 'Waiting for Nocturne'}
             disabled={composerDisabled || promptBusy}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={onComposerKeyDown}

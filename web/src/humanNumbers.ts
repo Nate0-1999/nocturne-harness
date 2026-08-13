@@ -27,6 +27,10 @@ const compactQuantity = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: 1,
 })
 
+const score = new Intl.NumberFormat(undefined, {
+  maximumFractionDigits: 3,
+})
+
 /** PLAN M2ST3 HUMAN NUMBERS is presentation-only; source decimals remain untouched. */
 export function formatHumanUsd(value: string): string {
   const numeric = decimal(value, 'Money')
@@ -48,6 +52,14 @@ export function formatHumanQuantity(value: string | number): string {
 /** SPEC P2.2 keeps token scale glanceable in Context Bars. */
 export function formatHumanCount(value: number): string {
   return compactQuantity.format(finite(value, 'Count'))
+}
+
+/** F044 keeps ordinary score readouts compact while exact decimals stay upstream. */
+export function formatHumanScore(value: string | number): string {
+  const numeric = finite(value, 'Score')
+  if (numeric === 0) return '0'
+  if (Math.abs(numeric) < 0.001) return numeric.toExponential(2)
+  return score.format(numeric)
 }
 
 function decimal(value: string, name: string): number {

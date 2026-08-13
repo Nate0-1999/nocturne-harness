@@ -17,9 +17,14 @@ The runner starts one isolated local fixture on a free loopback port and runs:
   geometry and SVG/canvas visual-text collision checks;
 - Stage layer, camera, remove/recall, and reload behavior;
 - live-control, accessible-name, fixed-scope, theme, and label-diet checks;
-- ordinary-screen human-number and raw-precision-leak checks.
+- ordinary-screen human-number and raw-precision-leak checks, including scorer
+  contributions and audition previews from F044's exact decimal examples;
+- owner-language checks for the F045 vocabulary leaks, plus a forced Palace
+  query outage proving that a live app socket cannot produce a false healthy
+  header.
 
 Evidence is written only to a temporary directory and removed after the run.
 The same command runs in the web CI job after a clean Spine and Harness install.
 This canon is deterministic regression evidence, not owner-app, provider, or
-M2XF scout evidence. Authority: `garden/PLAN.md` M2ST4 and SPEC B.6 rule 12.
+M2XF scout evidence. Authority: `garden/PLAN.md` M2ST4/M2FX4, FLAGS F044/F045,
+and SPEC B.6 rule 12.

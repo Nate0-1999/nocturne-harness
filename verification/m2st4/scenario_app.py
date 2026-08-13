@@ -25,13 +25,23 @@ def create_scenario_app() -> FastAPI:
         model_context_tokens=4096,
         extraction_idle_hours=None,
     )
+    spine = HonestDisplaySpine()
     harness_app = create_dev_app(
         settings=settings,
         agent=HarnessAgent(settings, model=_model()),
-        spine=HonestDisplaySpine(),  # type: ignore[arg-type]
+        spine=spine,  # type: ignore[arg-type]
     )
     app = FastAPI(title="M2ST4 standing UI canon")
     install_fixture_isolation(app, FIXTURE)
+
+    @app.post("/__scenario__/palace/{state}")
+    async def set_palace_state(state: str) -> dict[str, bool]:
+        """F045 exercises one health truth for the header and degraded modules."""
+
+        if state not in {"available", "unavailable"}:
+            raise ValueError("unknown fixture Palace state")
+        spine.palace_available = state == "available"
+        return {"palace_available": spine.palace_available}
 
     @app.post("/v1/threads/{thread_id}/archive")
     async def archive_fixture_thread(thread_id: UUID) -> dict[str, object]:

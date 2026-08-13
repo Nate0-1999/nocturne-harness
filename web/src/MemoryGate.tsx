@@ -19,6 +19,7 @@ import type {
   ScoredMemoryCard,
 } from './protocol'
 import { ContributionBars, useContributionMap, useScorerAuditionMap } from './ContributionBars'
+import { formatHumanScore } from './humanNumbers.ts'
 
 const LONG_PRESS_MS = 550
 const LONG_PRESS_MOVE_TOLERANCE_PX = 10
@@ -819,7 +820,7 @@ function MemoryCardFrame({ card, tone, status, action }: MemoryCardFrameProps) {
           <span>Total score</span>
           <strong>{score(card.score)}</strong>
         </div>
-        {audition !== undefined && <p className="scorer-preview-mark">Audition: {audition.preview_score} · #{audition.preview_rank} {audition.disposition.replace('_', ' ')}</p>}
+        {audition !== undefined && <p className="scorer-preview-mark">Audition: {formatHumanScore(audition.preview_score)} · #{audition.preview_rank} {audition.disposition.replace('_', ' ')}</p>}
         <FeatureScores features={card.features} />
         <ContributionBars values={contributions[card.memory_id]} />
       </div>

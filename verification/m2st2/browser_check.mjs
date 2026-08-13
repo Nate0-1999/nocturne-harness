@@ -33,7 +33,7 @@ page.on('pageerror', (error) => pageErrors.push(error.message))
 try {
   await mkdir(evidenceDir, { recursive: true })
   await page.goto(fixtureUrl, { waitUntil: 'domcontentloaded' })
-  await frame(page, 'header').getByTestId('connection').getByText('Link live').waitFor()
+  await frame(page, 'header').getByTestId('connection').getByText('Palace ready').waitFor()
 
   const appGear = page.getByTestId('app-settings-toggle')
   await appGear.click()
@@ -97,6 +97,13 @@ try {
     'Corpus door',
     'MEMORY INSTRUMENT',
     'MEMORY TUNING',
+    'Factory-set navigation',
+    'Link live',
+    'Linked',
+    'Waiting for daemon',
+    'Awaiting daemon',
+    'Daemon memory',
+    'Daemon uptime',
   ]) {
     if (visibleCopy.some((copy) => copy.includes(forbidden))) {
       throw new Error(`internal label still visible: ${forbidden}`)

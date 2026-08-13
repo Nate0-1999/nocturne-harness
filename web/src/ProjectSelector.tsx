@@ -108,7 +108,7 @@ export function ProjectSelector({
           aria-invalid={control.feedback !== null}
           aria-describedby="project-selector-status"
           title={awaitingSnapshot
-            ? 'Waiting for daemon project'
+            ? 'Confirming project'
             : currentProjectKey ?? 'Unscoped thread'}
           onChange={(event) => {
             setStoredControl({

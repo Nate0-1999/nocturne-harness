@@ -67,7 +67,7 @@ try {
   })
 
   await page.goto(options.baseUrl, { waitUntil: 'domcontentloaded' })
-  await page.getByTestId('connection').getByText('Link live').waitFor()
+  await page.getByTestId('connection').getByText('Palace ready').waitFor()
   await waitForModel(page, expectation.resolved_model)
 
   await typeAndSend(page, expectation.remember_command)

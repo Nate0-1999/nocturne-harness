@@ -104,7 +104,7 @@ try {
   await chooseTheme('gold-lines')
   await page.reload({ waitUntil: 'domcontentloaded' })
   console.log('M2UX4 step: persistence reload')
-  await frame('header').getByTestId('connection').getByText('Link live').waitFor({ state: 'attached' })
+  await frame('header').getByTestId('connection').getByText('Palace ready').waitFor({ state: 'attached' })
   await page.getByTestId('rack-grid').waitFor()
   observations.persistence = {
     selected: await page.getByTestId('theme-control').inputValue(),
@@ -135,7 +135,7 @@ try {
 }
 
 async function waitForRack() {
-  await frame('header').getByTestId('connection').getByText('Link live').waitFor()
+  await frame('header').getByTestId('connection').getByText('Palace ready').waitFor()
   await page.getByTestId('rack-grid').waitFor()
   await frame('vitals').getByText('Disk free').waitFor()
 }

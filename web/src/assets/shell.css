@@ -78,6 +78,10 @@
   background: var(--accent);
 }
 
+.connection--palace-unavailable .connection__signal {
+  background: var(--danger);
+}
+
 .connection--connecting .connection__signal,
 .connection--reconnecting .connection__signal {
   border: 1px solid var(--accent);

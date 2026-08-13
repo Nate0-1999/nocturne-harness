@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ContributionBars } from './ContributionBars'
+import { formatHumanPercent, formatHumanScore } from './humanNumbers.ts'
 import { LearningSummary, LearningTimeline } from './LearningTelemetry'
 import {
   ACTIVATE_LABEL,
@@ -488,11 +489,11 @@ export function InjectionConsole() {
               </div>
               {receipt && (
                 <div className="simulation-receipt" aria-label="Deep simulation receipt">
-                  <strong>{receipt.accuracy_percent ?? 'Not scored'} accuracy</strong>
+                  <strong>{receipt.accuracy_percent === null ? 'Not scored' : `${formatHumanPercent(receipt.accuracy_percent)} accuracy`}</strong>
                   <span>
                     {receipt.delta_percent === null
                       ? 'No held-out comparison'
-                      : `${Number(receipt.delta_percent) >= 0 ? '+' : ''}${receipt.delta_percent} points vs current`}
+                      : `${Number(receipt.delta_percent) >= 0 ? '+' : ''}${formatHumanScore(receipt.delta_percent)} points vs current`}
                   </span>
                   <small>
                     {receipt.holdout_dispositions} held-out dispositions · {receipt.simulation_digest.slice(0, 12)}
@@ -520,9 +521,9 @@ export function InjectionConsole() {
                   <strong>{candidate.label}</strong>
                   <span>
                     {comparison
-                      ? `${comparison.preview_score} · #${comparison.preview_rank} ${comparison.disposition.replace('_', ' ')}`
+                      ? `${formatHumanScore(comparison.preview_score)} · #${comparison.preview_rank} ${comparison.disposition.replace('_', ' ')}`
                       : point
-                        ? `${point.score} · #${point.rank} ${point.shown_as}`
+                        ? `${formatHumanScore(point.score)} · #${point.rank} ${point.shown_as}`
                         : 'Not measured yet'}
                   </span>
                 </header>

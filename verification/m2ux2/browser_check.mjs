@@ -94,7 +94,7 @@ try {
 }
 
 async function waitForRack(targetPage) {
-  await header(targetPage).getByTestId('connection').getByText('Link live').waitFor()
+  await header(targetPage).getByTestId('connection').getByText('Palace ready').waitFor()
   await targetPage.getByTestId('rack-grid').waitFor()
 }
 
