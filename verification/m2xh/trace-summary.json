@@ -1,0 +1,125 @@
+{
+  "packet": "M2XH",
+  "session": "codex / 2026-08-13 / xh1a",
+  "recorded_at": "2026-08-13T22:17:00Z",
+  "ground": {
+    "harness_head_at_scout": "ebeda34644b2cdd5cafc39a9e1f59025043e1943",
+    "spine_head_at_scout": "93fd5d7c4706c9bb53b3cb96356f08bdf0bc62e1",
+    "garden_claim_head": "daa2062977ecb30c0ad19ad9ef85b9f42b808955"
+  },
+  "owner_path": {
+    "factory": "harness.daemon:create_dev_app",
+    "origin": "http://127.0.0.1:8797",
+    "palace": "released production Palace",
+    "principal_id": "m2x-sop-verification",
+    "machine_id": "m2x-sop-verification",
+    "agent_id": "harness-agent",
+    "model": "openrouter:minimax/minimax-m3",
+    "fixture_used": false
+  },
+  "item_17": {
+    "verdict": "PASS",
+    "thread_id": "c4a924d1-2e8e-4cdf-b3ce-a2e3f2b95452",
+    "project_key": "m2xh-split-xh1a",
+    "source": "tests/test_agent.py LIVE_SPLIT_SOURCE",
+    "run_started": "2026-08-13T22:16:15.173956+00:00",
+    "run_done": "2026-08-13T22:16:45.185589+00:00",
+    "provider_requests": 0,
+    "partial": false,
+    "stop_reason": "end_turn",
+    "visible_guidance": "I couldn't split this into standalone memories without changing its meaning, so I didn't save it. Please break it into separate facts and try /remember again.",
+    "composer_recovered": true,
+    "palace_fixture_matches": {
+      "active": 0,
+      "quarantined": 0,
+      "tombstoned": 0
+    },
+    "partial_write": false
+  },
+  "item_22": {
+    "verdict": "PASS",
+    "source_thread_id": "c6548879-2f44-420f-8968-048bac0417ca",
+    "source_project": "m2xh-project-xh1b",
+    "source_journal_binding": "m2xh-project-xh1b",
+    "memory": {
+      "memory_id": "f2195923-036d-4228-9d97-a2275f16706f",
+      "revision_before_cleanup": 2,
+      "label": "Quartz metronome pulse count",
+      "body": "The temporary quartz metronome counts exactly thirty-seven quiet pulses under code XH1B-AMBER-HERON.",
+      "project_key": "m2xh-project-xh1b",
+      "origin_path": "m2xh-project-xh1b",
+      "thread_origin": "c6548879-2f44-420f-8968-048bac0417ca"
+    },
+    "source_gate": {
+      "injection_id": "e0e252e6-68a8-4bd2-9529-1868d080d97c",
+      "selected_memory_id": "f2195923-036d-4228-9d97-a2275f16706f",
+      "selected_count": 1,
+      "near_miss_count": 0,
+      "score": 0.7431614398956299,
+      "project_feature": 1.0
+    },
+    "source_answer": "The temporary quartz metronome counts thirty-seven (37) quiet pulses under the code XH1B-AMBER-HERON.",
+    "source_current_graph": {
+      "memory_count": 1,
+      "relationship_count": 1,
+      "inspector_project": "m2xh-project-xh1b",
+      "inspector_revision": 2
+    },
+    "sibling_thread_id": "d09f687f-ddb5-4950-98dc-39c12db8029b",
+    "sibling_project": "m2xh-other-xh1a",
+    "sibling_gate": {
+      "injection_id": "3af7cc89-d589-43f7-ac3b-59bfbf0792f8",
+      "selected_count": 0,
+      "near_miss_count": 0
+    },
+    "sibling_search_memory_calls": [
+      {
+        "query": "quiet pulses temporary quartz metronome",
+        "result": "no matching memories"
+      },
+      {
+        "query": "metronome counter code",
+        "k": 10,
+        "result": "no matching memories"
+      }
+    ],
+    "sibling_answer_disclosed_source_fact": false,
+    "sibling_current_graph": {
+      "memory_count": 0,
+      "relationship_count": 0
+    }
+  },
+  "discarded_setup": {
+    "reason": "Project value remained a draft when a visually hidden submit was clicked without a human pacing beat.",
+    "thread_id": "b7945254-4478-4297-a159-39289b3e13a5",
+    "authoritative_project": "build-test",
+    "memory_id": "f94e89a2-b853-408f-96c7-f6743a695463",
+    "counted_as_owner_evidence": false
+  },
+  "cleanup": {
+    "editor": "verification:m2xh",
+    "reason": "M2XH verification cleanup: tombstone exact fixture ID",
+    "tombstoned": [
+      "f94e89a2-b853-408f-96c7-f6743a695463@3",
+      "f2195923-036d-4228-9d97-a2275f16706f@3"
+    ],
+    "active_exact_id_matches_after_cleanup": 0,
+    "tombstoned_exact_id_matches_after_cleanup": 2,
+    "owner_memories_touched": 0
+  },
+  "handoff_tests": {
+    "spine": "265 passed in 13.77s",
+    "harness_non_contract": "1204 passed, 3 deselected in 37.86s"
+  },
+  "browser": {
+    "console_warnings": [],
+    "console_errors": [],
+    "invalid_setup_captures_discarded": true
+  },
+  "local_cleanup": {
+    "browser_tabs_finalized": true,
+    "daemon_stopped": true,
+    "port_8797_closed": true,
+    "disposable_home_moved_to_trash": true
+  }
+}
