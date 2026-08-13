@@ -1,8 +1,8 @@
 # M2XF full pre-review scout — executed 2026-08-12/13
 
 - Machine identity: `m2xf-sop-verification`
-- Harness ground: `70fd264` at start; `3cfbb1c` after the concurrent M2REL source-only release commit
-- Spine ground: `de50703`
+- Harness ground: `70fd264` at start; `3cfbb1c` after the concurrent M2REL release commit
+- Spine ground: `de50703` at start; `1ba98ce` after the concurrent M2REL release commit
 - Owner app: packaged `harness.packaged:create_app`, real Palace, real OpenRouter; isolated disposable homes on `127.0.0.1:8876` because the owner's existing daemon retained `127.0.0.1:8765`
 Thread: `ec310328-cf21-4587-a4f5-83930bc2a7c0`
 
@@ -87,7 +87,7 @@ Scout-safe checklist: **15 PASS / 4 FAIL**.
 | 65 | FAIL | Ordinary Memory cards render raw contributions such as `0.0990035746257907776` and `-0.0000000028618296346` ([phone card](21-phone-memory-drawer-390x844.png)). |
 | 66 | PASS | Pan/zoom, layer switch, module remove/recall, layer remove/restore, reload persistence, and one-click Back to stage all worked. |
 | 67 | FAIL | Owner UI leaks `Factory-set navigation. The daemon snapshot remains authoritative.`; degraded shell initially said `Linked / Link live` while Palace requests were 503. |
-| 68 | PASS | Local Harness `1191 passed, 3 deselected`, Spine `262 passed`, web 74 unit tests + 43-state/four-proof canon green; exact base CI [31643376020](https://github.com/Nate0-1999/nocturne-harness/actions/runs/31643376020) is green for `70fd264f9bbc4b39bfc43e825f41ffb1e724cb4d`. |
+| 68 | PASS | Local release-ground Harness `1191 passed, 3 deselected`, Spine `262 passed`, web 74 unit tests + 43-state/four-proof canon green; exact scout-start base CI [31643376020](https://github.com/Nate0-1999/nocturne-harness/actions/runs/31643376020) is green for `70fd264f9bbc4b39bfc43e825f41ffb1e724cb4d`. |
 
 ## Scout-safe verdicts (1–19)
 
