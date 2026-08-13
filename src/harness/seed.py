@@ -19,9 +19,7 @@ from harness.spine_client import (
 )
 
 _SEED_VERDICT_NEIGHBOR_MIN_SCORE = 0.80
-_GENERATED_PASTE_NAME = re.compile(
-    r"^pasted-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}(?:\.\d+)?Z\.md$"
-)
+_GENERATED_PASTE_NAME = re.compile(r"^pasted-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}(?:\.\d+)?Z\.md$")
 
 
 class SeedUploadRequest(BaseModel):
@@ -78,8 +76,7 @@ class SeedIngestionService:
                     "body": neighbor.body,
                 }
                 for neighbor in neighbors.results
-                if neighbor.score is not None
-                and neighbor.score >= _SEED_VERDICT_NEIGHBOR_MIN_SCORE
+                if neighbor.score is not None and neighbor.score >= _SEED_VERDICT_NEIGHBOR_MIN_SCORE
             ]
             verdict = await self._agent.propose_extraction_verdict(item, neighbor_payload)
             candidates.append(
@@ -167,8 +164,7 @@ def _matching_seed_cards(
     matching_document = [
         card
         for card in cards
-        if card.source_name == source_name
-        and card.source_sha256 == source_sha256
+        if card.source_name == source_name and card.source_sha256 == source_sha256
     ]
     requested = [card for card in matching_document if card.batch_uid == batch_uid]
     if requested:

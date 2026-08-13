@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.4 - 2026-08-13
+
+- Made exact duplicate saves reinforce the authoritative memory atomically, with plain guidance
+  for near matches and conflicts instead of raw protocol details.
+- Made memory edits and project selection visibly acknowledge daemon truth, including explicit
+  no-change and rejected-binding explanations rather than silent success.
+- Made provider refusals terminate streaming reliably and made pasted seed retries converge on one
+  durable review batch instead of duplicating or losing work after a rolled-back response.
+- Extended owner-surface honesty across memory scores, controls, loading states, and Palace health:
+  human-sized numbers, owner language, and live readiness rather than implementation vocabulary.
+
+### Upgrade note
+
+Remote Palace package version advances from `0.1.3` to `0.1.4` after a fresh verified backup.
+Database schema remains `0012`; authenticated health advances API contract `0.1.0` to `0.1.1`
+for the authoritative duplicate-reinforcement behavior.
+
 ## 0.1.3 - 2026-08-12
 
 - Added the Infinite Stage with persistent layers, pan and zoom, removable/recoverable modules,

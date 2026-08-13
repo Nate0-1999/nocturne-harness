@@ -529,30 +529,20 @@ class MemoryPanelController:
             or updated.principal_id != self._principal_id
             or updated.status is not MemoryStatus.ACTIVE
             or updated.revision != payload.expected_revision + 1
-            or (
-                isinstance(payload, MemoryPanelEditPayload)
-                and updated.body != payload.body
-            )
-            or (
-                isinstance(payload, MemoryPanelPinPayload)
-                and updated.pin is not payload.pin
-            )
+            or (isinstance(payload, MemoryPanelEditPayload) and updated.body != payload.body)
+            or (isinstance(payload, MemoryPanelPinPayload) and updated.pin is not payload.pin)
         ):
             await self._send_error(
                 thread_id=thread_id,
                 request_id=request_id,
                 operation=operation,
                 code="invalid_response",
-                message=(
-                    "Memory did not confirm the requested change. "
-                    "Refresh and try again."
-                ),
+                message=("Memory did not confirm the requested change. Refresh and try again."),
                 send=send,
             )
             return
         authoritative = [
-            updated if memory.memory_id == updated.memory_id else memory
-            for memory in active
+            updated if memory.memory_id == updated.memory_id else memory for memory in active
         ]
         await self._send_state(
             thread_id=thread_id,
