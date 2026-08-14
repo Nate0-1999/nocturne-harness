@@ -1058,24 +1058,6 @@
   display: none;
 }
 
-.palace-queue-launch {
-  margin-left: 0.5rem;
-  border: 1px solid color-mix(in srgb, var(--accent) 42%, transparent);
-  background: var(--seam-635c59be60a5);
-  color: var(--ink);
-  padding: .42rem .68rem;
-  font-family: var(--data-font);
-  font-size: .65rem;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.palace-queue-launch[aria-expanded="true"] {
-  background: var(--accent);
-  color: var(--seam-e8a34ac23b1e);
-}
-
 .memory-panel {
   position: relative;
   z-index: 10;
@@ -2089,10 +2071,6 @@
 
   .brand__mode {
     display: none;
-  }
-
-  .palace-queue-launch {
-    margin-left: 0;
   }
 
   .mobile-navigation {

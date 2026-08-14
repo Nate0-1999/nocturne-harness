@@ -1,0 +1,44 @@
+{
+  "packet": "M2MI",
+  "fixture_identity": "M2MI REGRESSION",
+  "owner_app_factory": "harness.daemon:create_dev_app",
+  "discovery_root": "repository root",
+  "source_offer": {
+    "relative_path": "AGENTS.md",
+    "byte_count": 1486
+  },
+  "before_queue": {
+    "pending_children": 0,
+    "palace_admissions": 0
+  },
+  "after_explicit_queue_action": {
+    "pending_children": 2,
+    "decisions": 0,
+    "status": "AGENTS.md is ready for review. Nothing entered your Palace."
+  },
+  "after_reload": {
+    "pending_documents": 1,
+    "offer_state": "Waiting for review",
+    "header_queue_launchers": 0
+  },
+  "stage_lifecycle": {
+    "removed_module_count": 0,
+    "restored_module_count": 1
+  },
+  "phone": {
+    "viewport": "390x844",
+    "module_rect": {
+      "x": 22,
+      "width": 346
+    },
+    "horizontal_overflow": false
+  },
+  "browser_console": {
+    "warnings": [],
+    "errors": []
+  },
+  "screenshots": {
+    "01-review-desktop.png": "353952971c09b074533edc422c1e0097600effad875a15b475b6bfafbbd22cae",
+    "02-review-mobile-390x844.png": "ba0580f3ca1fcc9f779deedd72c93b62defe31c59927c9474da5b0a88abd42c5"
+  }
+}

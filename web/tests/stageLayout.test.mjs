@@ -85,6 +85,31 @@ test('factory layers contain Graph and Injection as stage modules, never fixed t
   assert.deepEqual(injection?.modules.map((module) => module.module_id), ['injection_console'])
 })
 
+/** PLAN M2MI/P1.5 moves corpus ingestion off the header and onto the ordinary recoverable Stage. */
+test('Memory Ingest is a factory Stage module and joins an existing v3 layout once', () => {
+  const factoryWork = FACTORY_STAGE_LAYOUT.layers.find((layer) => layer.layer_id === 'work')
+  assert.equal(factoryWork?.modules.some((module) => module.module_id === 'palace_queue'), true)
+
+  const storage = memoryStorage()
+  const legacyV3 = cloneFactoryStageLayout()
+  legacyV3.layers = legacyV3.layers.map((layer) => ({
+    ...layer,
+    modules: layer.modules.filter((module) => module.module_id !== 'palace_queue'),
+    removed_modules: layer.removed_modules.filter((module) => module.module_id !== 'palace_queue'),
+  }))
+  storage.setItem(STAGE_LAYOUT_STORAGE_KEY, JSON.stringify(legacyV3))
+
+  const migrated = loadStageLayout(storage)
+  const work = migrated.layers.find((layer) => layer.layer_id === 'work')
+  assert.equal(work?.modules.filter((module) => module.module_id === 'palace_queue').length, 1)
+
+  const removed = removeStageModule(migrated, 'palace_queue')
+  persistStageLayout(storage, removed)
+  const reloaded = loadStageLayout(storage)
+  assert.equal(activeStageLayer(reloaded).modules.some((module) => module.module_id === 'palace_queue'), false)
+  assert.equal(activeStageLayer(reloaded).removed_modules.some((module) => module.module_id === 'palace_queue'), true)
+})
+
 /** PLAN M2TC / P2 removes per-module size caps: only the finite Stage grid limits huge and tiny resizing. */
 test('Spend can shrink to one cell and grow to the complete Stage grid', () => {
   const tiny = resizeStageModule(cloneFactoryStageLayout(), 'vitals', -20, 0, 'nw')

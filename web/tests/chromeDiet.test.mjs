@@ -33,7 +33,7 @@ test('module settings expose only bound scope controls and remove dead Palace sc
   assert.match(app, /type:\s*'rack\.scope\.set'/u)
   assert.match(app, /This module always shows the whole Palace\./u)
   assert.match(app, /This module follows the selected thread\./u)
-  assert.match(rack, /palace_queue:[\s\S]*actions:\s*\['queue\.load', 'seed\.upload', 'queue\.batch\.decide'\]/u)
+  assert.match(rack, /palace_queue:[\s\S]*actions:\s*\['queue\.load', 'seed\.jump-start\.load', 'seed\.upload', 'queue\.batch\.decide'\]/u)
   for (const moduleSource of [graph, consoleSource, context, vitals]) {
     assert.doesNotMatch(moduleSource, /className="(?:scope-switch|scope-toggle)"/u)
   }

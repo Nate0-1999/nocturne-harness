@@ -791,7 +791,6 @@ button.rack-module__resize-handle--nw {
 }
 
 .rack-overlay-module--thread-end,
-.rack-overlay-module--palace-queue,
 .rack-overlay-module--model-device {
   inset: 3.25rem 0 0;
 }
@@ -1062,13 +1061,17 @@ button.rack-module__resize-handle--nw {
 }
 
 .palace-queue-module {
-  width: min(70rem, calc(100% - 2rem));
-  margin: 2rem auto;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
 }
 
 .palace-queue-card {
   clear: both;
-  min-height: calc(100dvh - 7rem);
+  min-height: 100%;
+  box-sizing: border-box;
   border-left: 3px solid var(--accent);
   background: linear-gradient(145deg, var(--seam-7b1aa5c60b9c), var(--seam-eb47bcb0485c));
   box-shadow: 0 24px 70px var(--seam-86e5f6717d5a);
@@ -1107,6 +1110,75 @@ button.rack-module__resize-handle--nw {
   color: var(--ink);
   cursor: pointer;
   transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
+}
+
+.agent-file-jump-start {
+  margin-top: 1.2rem;
+  border-block: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  padding: 1rem 0;
+}
+
+.agent-file-jump-start > header,
+.agent-file-offers li,
+.agent-file-offers li > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+}
+
+.agent-file-jump-start > header {
+  align-items: flex-start;
+}
+
+.agent-file-jump-start > header p,
+.agent-file-jump-start__empty {
+  margin-top: .35rem;
+  color: var(--muted);
+}
+
+.agent-file-jump-start > header > span,
+.agent-file-offers span {
+  color: var(--muted);
+  font-family: var(--data-font);
+  font-size: .66rem;
+}
+
+.agent-file-offers {
+  display: grid;
+  gap: .45rem;
+  margin: .8rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agent-file-offers li {
+  border-left: 1px solid var(--seam-8ebafc96bf26);
+  background: var(--seam-635c59be60a5);
+  padding: .55rem .7rem;
+}
+
+.agent-file-offers li > div {
+  min-width: 0;
+  align-items: baseline;
+}
+
+.agent-file-offers strong {
+  overflow-wrap: anywhere;
+}
+
+.agent-file-offers button {
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  background: var(--seam-29d8623058d1);
+  color: var(--ink);
+  padding: .45rem .65rem;
+  cursor: pointer;
+}
+
+.agent-file-offers button:disabled {
+  cursor: default;
+  opacity: .58;
 }
 
 .seed-drop:focus-visible,
@@ -1203,6 +1275,17 @@ button.rack-module__resize-handle--nw {
 
   .seed-batch__actions button {
     flex: 1;
+  }
+
+  .agent-file-jump-start > header,
+  .agent-file-offers li,
+  .agent-file-offers li > div {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .agent-file-offers button {
+    width: 100%;
   }
 }
 

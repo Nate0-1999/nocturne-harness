@@ -107,8 +107,13 @@ async function resetRack(targetPage) {
 
 async function openModule(targetPage, moduleId) {
   if (moduleId === 'palace_queue') {
-    await headerFrame(targetPage).getByRole('button', { name: 'Palace queue' })
-      .evaluate((element) => element.click())
+    await targetPage.getByTestId('rack-plugin-frame-palace_queue').waitFor({ state: 'attached' })
+    await targetPage.locator('[data-rack-module="palace_queue"]')
+      .getByText('Memory Ingest', { exact: true })
+      .waitFor({ state: 'attached' })
+    if (await headerFrame(targetPage).getByRole('button', { name: 'Palace queue' }).count() !== 0) {
+      throw new Error('Memory Ingest must not return to the header')
+    }
   } else if (moduleId === 'memory_graph') {
     await targetPage.getByRole('tab', { name: 'Graph' }).click()
   } else if (moduleId === 'injection_console') {

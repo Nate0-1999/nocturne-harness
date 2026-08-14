@@ -11,6 +11,7 @@ from pydantic_ai.models.function import FunctionModel
 from harness.agent import HarnessAgent
 from harness.config import HarnessSettings
 from harness.daemon import create_dev_app
+from harness.seed_identity import seed_batch_uid
 from harness.spine_client import (
     BatchDecisionResponse,
     MemoryKind,
@@ -103,6 +104,7 @@ def _app(
     *,
     machine_id: str,
     spine: DecisionSpine,
+    seed_discovery_root: Path | None = None,
 ):
     state_home = tmp_path / machine_id
     monkeypatch.setenv("NOCTURNE_HOME", str(state_home))
@@ -127,6 +129,7 @@ def _app(
         agent=HarnessAgent(settings, model=FunctionModel(stream_function=stream)),
         spine=spine,  # type: ignore[arg-type]
         transcript_journal=TranscriptJournal(state_home / "transcripts"),
+        seed_discovery_root=seed_discovery_root,
     )
 
 
@@ -214,3 +217,36 @@ def test_owner_api_publishes_choice_fields_without_machine_identity(
     properties = document["components"]["schemas"][schema_name]["properties"]
 
     assert set(properties) == {"decision", "approval_mode", "actor_class"}
+
+
+def test_jump_start_route_only_offers_workspace_agent_files(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """M2MI discovery is a read-only offer and never calls the Palace."""
+
+    markdown = "# Owner rules\n\nNothing auto-admits.\n"
+    (tmp_path / "AGENTS.md").write_text(markdown, encoding="utf-8")
+    spine = DecisionSpine()
+    app = _app(
+        tmp_path,
+        monkeypatch,
+        machine_id="trusted-daemon",
+        spine=spine,
+        seed_discovery_root=tmp_path,
+    )
+
+    with TestClient(app) as client:
+        response = client.get("/v1/seeds/jump-start")
+
+    assert response.status_code == 200
+    assert response.json()["files"] == [
+        {
+            "batch_uid": str(seed_batch_uid("AGENTS.md", markdown)),
+            "relative_path": "AGENTS.md",
+            "source_name": "AGENTS.md",
+            "markdown": markdown,
+            "byte_count": len(markdown.encode("utf-8")),
+        }
+    ]
+    assert response.json()["truncated"] is False
+    assert spine.requests == []

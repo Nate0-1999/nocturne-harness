@@ -60,6 +60,7 @@ from harness.resources import ResourceWatch
 from harness.run_loop import ProjectBindingConflict, RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.seed import SeedIngestionService, SeedUploadRequest
+from harness.seed_jump_start import AgentFileOffers, discover_agent_files
 from harness.spine_client import (
     ActivateScorerConfigRequest,
     BatchDecisionResponse,
@@ -613,10 +614,12 @@ def create_dev_app(
     spine: SpineClient | None = None,
     transcript_journal: TranscriptJournal | None = None,
     model_resolver_override: ThreadModelResolver | None = None,
+    seed_discovery_root: str | Path | None = None,
 ) -> FastAPI:
     """Compose the real H3 agent loop with trusted local M1 run context."""
 
     configured = settings or HarnessSettings()
+    discovery_root = Path.cwd() if seed_discovery_root is None else Path(seed_discovery_root)
     principal_id = _required_identity(configured.principal_id, "PRINCIPAL_ID")
     machine_id = _required_identity(configured.machine_id, "MACHINE_ID")
     agent_id = _required_identity(configured.agent_id, "AGENT_ID")
@@ -877,6 +880,10 @@ def create_dev_app(
                 thread_id=thread_id,
                 birthplace=birthplace,
             )
+
+        @app.get("/v1/seeds/jump-start")
+        async def seed_jump_start() -> AgentFileOffers:
+            return discover_agent_files(discovery_root)
 
         @app.post("/v1/seeds")
         async def ingest_seed(upload: SeedUploadRequest):

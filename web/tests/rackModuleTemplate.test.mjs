@@ -33,6 +33,7 @@ test('the module template enumerates the complete mounted stage and refuses a pa
     'context_bars',
     'memory_graph',
     'injection_console',
+    'palace_queue',
   ])
 
   const manifests = Object.fromEntries(STAGE_RACK_MODULE_IDS.map((id) => [

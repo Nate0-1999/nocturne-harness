@@ -131,7 +131,6 @@ const EMPTY_MEMORY_PANEL: RackMemoryPanelState = {
 
 const DISMISSIBLE_OVERLAY_CLASSES = {
   thread_end: 'rack-overlay-module--thread-end',
-  palace_queue: 'rack-overlay-module--palace-queue',
   model_device: 'rack-overlay-module--model-device',
 } as const
 
@@ -1435,7 +1434,6 @@ function HeaderModule() {
   const memoryTotal = selectedThread?.memoryPanel.total ?? 0
   const threadsOpen = rackModuleSelectionIsOpen(selection, 'threads')
   const memoriesOpen = rackModuleSelectionIsOpen(selection, 'memory')
-  const queueOpen = rackModuleSelectionIsOpen(selection, 'palace_queue')
 
   useEffect(() => {
     if (snapshot.connection !== 'connected') return
@@ -1460,7 +1458,7 @@ function HeaderModule() {
     }
   }, [query, snapshot.connection])
 
-  function toggleModule(moduleId: 'threads' | 'memory' | 'palace_queue') {
+  function toggleModule(moduleId: 'threads' | 'memory') {
     const alreadyOpen = rackModuleSelectionIsOpen(selection, moduleId)
     selectionBus.select(alreadyOpen ? null : { kind: 'module', id: moduleId })
   }
@@ -1498,15 +1496,6 @@ function HeaderModule() {
         </button>
       </div>
 
-      <button
-        className="palace-queue-launch"
-        type="button"
-        data-testid="palace-queue-launch"
-        aria-expanded={queueOpen}
-        onClick={() => toggleModule('palace_queue')}
-      >
-        Palace queue
-      </button>
       <p
         className={`connection connection--${snapshot.connection} connection--palace-${palaceStatus}`}
         data-testid="connection"
@@ -2122,6 +2111,14 @@ interface ThreadEndQueueCard {
   neighbors: Array<{ memory_id: string; label: string }>
 }
 
+interface AgentFileOffer {
+  batch_uid: string
+  relative_path: string
+  source_name: string
+  markdown: string
+  byte_count: number
+}
+
 function ThreadEndModule() {
   const snapshot = useRackSnapshot()
   const { events } = useRackPlugin()
@@ -2316,6 +2313,32 @@ function queueCardsFrom(value: JsonValue): ThreadEndQueueCard[] {
   return cards
 }
 
+function agentFileOffersFrom(value: JsonValue): { files: AgentFileOffer[]; truncated: boolean } {
+  if (!isObject(value) || !Array.isArray(value.files) || typeof value.truncated !== 'boolean') {
+    return { files: [], truncated: false }
+  }
+  const files: AgentFileOffer[] = []
+  for (const item of value.files) {
+    if (
+      isObject(item) &&
+      typeof item.batch_uid === 'string' &&
+      typeof item.relative_path === 'string' &&
+      typeof item.source_name === 'string' &&
+      typeof item.markdown === 'string' &&
+      typeof item.byte_count === 'number' && Number.isInteger(item.byte_count)
+    ) {
+      files.push({
+        batch_uid: item.batch_uid,
+        relative_path: item.relative_path,
+        source_name: item.source_name,
+        markdown: item.markdown,
+        byte_count: item.byte_count,
+      })
+    }
+  }
+  return { files, truncated: value.truncated }
+}
+
 function isQueueCard(value: unknown): value is ThreadEndQueueCard {
   return isObject(value) && typeof value.item_uid === 'string' &&
     ['new', 'merge', 'supersede', 'contradict'].includes(String(value.verdict)) &&
@@ -2343,7 +2366,10 @@ function PalaceQueueModule() {
   const { events } = useRackPlugin()
   const seedInputRef = useRef<HTMLInputElement>(null)
   const [cards, setCards] = useState<ThreadEndQueueCard[]>([])
-  const [statusText, setStatusText] = useState('Choose Markdown files to grow the queue.')
+  const [agentFiles, setAgentFiles] = useState<AgentFileOffer[]>([])
+  const [agentFilesTruncated, setAgentFilesTruncated] = useState(false)
+  const [queuedAgentFiles, setQueuedAgentFiles] = useState(new Set<string>())
+  const [statusText, setStatusText] = useState('Add Markdown when you want to grow your Palace.')
   const [busy, setBusy] = useState(false)
   const [dragging, setDragging] = useState(false)
 
@@ -2353,9 +2379,19 @@ function PalaceQueueModule() {
     })
   }, [events])
 
+  const loadAgentFiles = useCallback(() => {
+    return events.dispatch({ type: 'seed.jump-start.load' }).then((value) => {
+      const discovered = agentFileOffersFrom(value)
+      setAgentFiles(discovered.files)
+      setAgentFilesTruncated(discovered.truncated)
+    })
+  }, [events])
+
   useEffect(() => {
-    void load().catch(() => setStatusText('The Palace queue could not be loaded.'))
-  }, [events, load])
+    void Promise.all([load(), loadAgentFiles()]).catch(() => {
+      setStatusText('Memory Ingest could not load its pending work or agent-file offers.')
+    })
+  }, [load, loadAgentFiles])
 
   const batches = useMemo(() => {
     const grouped = new Map<string, ThreadEndQueueCard[]>()
@@ -2384,12 +2420,33 @@ function PalaceQueueModule() {
         })
       }
       await load()
-      setStatusText('Split complete. Review each document as one batch.')
+      setStatusText('Split complete. Review each document before it enters your Palace.')
     } catch (error) {
       setStatusText(error instanceof Error ? error.message : 'Seed ingestion failed.')
     } finally {
       setBusy(false)
     }
+  }
+
+  function queueAgentFile(file: AgentFileOffer) {
+    if (busy) return
+    setBusy(true)
+    setStatusText(`Splitting ${file.relative_path} into reviewable memories…`)
+    void events.dispatch({
+      type: 'seed.upload',
+      batch_uid: file.batch_uid,
+      source_name: file.source_name,
+      markdown: file.markdown,
+    })
+      .then(() => load())
+      .then(() => {
+        setQueuedAgentFiles((current) => new Set(current).add(file.batch_uid))
+        setStatusText(`${file.relative_path} is ready for review. Nothing entered your Palace.`)
+      })
+      .catch((error) => {
+        setStatusText(error instanceof Error ? error.message : 'The agent file could not be queued.')
+      })
+      .finally(() => setBusy(false))
   }
 
   function dropped(event: DragEvent<HTMLElement>) {
@@ -2417,23 +2474,53 @@ function PalaceQueueModule() {
   function decideBatch(batchUid: string, decision: 'approve' | 'deny') {
     if (busy) return
     setBusy(true)
-    setStatusText(decision === 'approve' ? 'Planting the document…' : 'Rejecting the document…')
+    setStatusText(decision === 'approve' ? 'Approving the document…' : 'Rejecting the document…')
     void events.dispatch({ type: 'queue.batch.decide', batch_uid: batchUid, decision })
       .then(() => load())
-      .then(() => setStatusText(decision === 'approve' ? 'Document planted.' : 'Document rejected.'))
-      .catch(() => setStatusText('The batch changed before it could be decided.'))
+      .then(() => setStatusText(decision === 'approve' ? 'Document approved.' : 'Document rejected.'))
+      .catch(() => setStatusText('The document changed before it could be decided.'))
       .finally(() => setBusy(false))
   }
 
   return (
-    <div className="palace-queue-module">
-      <section className="palace-queue-card" aria-label="Palace seed queue">
+    <div className="palace-queue-module" data-testid="memory-ingest">
+      <section className="palace-queue-card" aria-label="Memory Ingest">
         <header className="palace-queue-card__header">
           <div>
-            <h2>Grow the Palace from Markdown</h2>
-            <p>Each document is split into standalone memories. Nothing enters until you approve its batch.</p>
+            <h2>Bring knowledge into your Palace</h2>
+            <p>Documents become standalone memories for review. Nothing enters until you approve the document.</p>
           </div>
         </header>
+        <section className="agent-file-jump-start" aria-labelledby="agent-file-jump-start-title">
+          <header>
+            <div>
+              <h3 id="agent-file-jump-start-title">Start with your agent files</h3>
+              <p>These files already guide agents in this workspace. Queue any one to review its memories first.</p>
+            </div>
+            {agentFilesTruncated ? <span>Showing the first 64 files</span> : null}
+          </header>
+          {agentFiles.length === 0 ? (
+            <p className="agent-file-jump-start__empty">No AGENTS.md or CLAUDE.md files were found here.</p>
+          ) : (
+            <ul className="agent-file-offers">
+              {agentFiles.map((file) => {
+                const pending = cards.some((card) => card.batch_uid === file.batch_uid)
+                const queued = pending || queuedAgentFiles.has(file.batch_uid)
+                return (
+                  <li key={`${file.relative_path}:${file.batch_uid}`} data-testid="agent-file-offer">
+                    <div>
+                      <strong>{file.relative_path}</strong>
+                      <span>{file.byte_count.toLocaleString()} bytes</span>
+                    </div>
+                    <button type="button" disabled={busy || queued} onClick={() => queueAgentFile(file)}>
+                      {queued ? 'Waiting for review' : 'Queue for review'}
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </section>
         <label
           className={`seed-drop${dragging ? ' seed-drop--active' : ''}`}
           tabIndex={0}
@@ -2475,12 +2562,12 @@ function PalaceQueueModule() {
               <article className="seed-batch" key={batchUid} data-batch-uid={batchUid}>
                 <header>
                   <div>
-                    <span>Markdown seed · {batchCards.length} memories</span>
+                    <span>Document · {batchCards.length} memories</span>
                     <h3>{batchCards[0]?.source_name ?? 'Untitled document'}</h3>
                   </div>
                   <div className="seed-batch__actions">
-                    <button type="button" disabled={busy} onClick={() => decideBatch(batchUid, 'deny')}>Reject batch</button>
-                    <button type="button" disabled={busy} onClick={() => decideBatch(batchUid, 'approve')}>Approve batch</button>
+                    <button type="button" disabled={busy} onClick={() => decideBatch(batchUid, 'deny')}>Reject document</button>
+                    <button type="button" disabled={busy} onClick={() => decideBatch(batchUid, 'approve')}>Approve document</button>
                   </div>
                 </header>
                 <div className="seed-batch__memories">

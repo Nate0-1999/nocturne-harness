@@ -84,6 +84,7 @@ export type RackAction =
   | { type: 'run.cancel'; run_id?: Ulid }
   | { type: 'thread.archive'; thread_id?: string }
   | { type: 'queue.load'; thread_id?: string; birthplace?: 'thread' | 'seed' }
+  | { type: 'seed.jump-start.load' }
   | { type: 'seed.upload'; batch_uid: string; source_name: string; markdown: string }
   | { type: 'queue.batch.decide'; batch_uid: string; decision: 'approve' | 'deny' }
   | { type: 'rack.scope.get'; module_id: RackModuleId }
@@ -187,7 +188,7 @@ export type RackActionResult<Action extends RackAction> =
       ? number
     : Action['type'] extends 'thread.select'
       ? void
-      : Action['type'] extends 'thread.archive' | 'queue.load' | 'queue.decide' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
+      : Action['type'] extends 'thread.archive' | 'queue.load' | 'queue.decide' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
         ? JsonValue
         : Action['type'] extends 'rack.scope.get' | 'rack.scope.set'
           ? 'GLOBAL' | 'CURRENT'
@@ -309,14 +310,14 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
   },
   palace_queue: {
     id: 'palace_queue',
-    name: 'Palace Queue',
+    name: 'Memory Ingest',
     version: '1.0.0',
     class: 'visualizer',
-    slot: 'overlay',
+    slot: 'panel',
     streams: [],
-    actions: ['queue.load', 'seed.upload', 'queue.batch.decide'],
-    bounds: commonPanelBounds,
-    movable: false,
+    actions: ['queue.load', 'seed.jump-start.load', 'seed.upload', 'queue.batch.decide'],
+    bounds: stageGridBounds({ w: 10, h: 20 }),
+    movable: true,
     law_bound: true,
     default_scope: 'GLOBAL',
   },
@@ -450,6 +451,8 @@ function dispatchRackAction<Action extends RackAction>(
         const query = params.size === 0 ? '' : `?${params.toString()}`
         return fetchJson(`/v1/approval-queue${query}`) as Promise<RackActionResult<Action>>
       }
+      case 'seed.jump-start.load':
+        return fetchJson('/v1/seeds/jump-start') as Promise<RackActionResult<Action>>
       case 'seed.upload':
         return fetchJson('/v1/seeds', {
           method: 'POST',

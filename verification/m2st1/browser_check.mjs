@@ -36,7 +36,9 @@ try {
   await waitForRack(page)
 
   const factoryModules = await mountedModules(page)
-  assertJsonEqual(factoryModules, ['threads', 'chat', 'memory', 'vitals', 'context_bars'])
+  assertJsonEqual(factoryModules, [
+    'threads', 'chat', 'memory', 'vitals', 'context_bars', 'palace_queue',
+  ])
   observations.push({ factory_work_modules: factoryModules })
 
   const cameraBeforeDrag = await activeCamera(page)

@@ -2197,3 +2197,41 @@ spend attention before an empty layer exists, and cloning the current layer
 would make creation destructive by surprise. Clipping whole module elements
 would also clip settings dialogs and resize affordances, so chamfers are drawn
 at the shared shell seam instead.
+
+## 074 — Agent files enter through one visible consent door [P1.5, M2MI]
+
+**Decision.** Turn the existing corpus queue resident into the ordinary movable,
+resizable, removable Stage module named **Memory Ingest**, and remove its header
+launcher and dismissible-overlay lifecycle. Place it beside the existing Work
+composition in the factory set. When a saved v3 layout predates the module, add
+it to the Work layer exactly once without moving existing modules; once an owner
+removes it, the retained removed-module record prevents it from being re-added
+on reload. Keep the established internal `palace_queue` identity so persisted
+scope and the one queue action surface do not fork merely to rename owner copy.
+
+At daemon start, treat the launch directory as the workspace discovery boundary.
+The jump-start read walks it deterministically without following symlinks, skips
+hidden and dependency/build trees, and offers at most 64 nonblank UTF-8
+`AGENTS.md` or `CLAUDE.md` documents that already fit the ordinary 24 KiB seed
+contract. Exact duplicate named documents collapse to one offer. An offer
+carries the existing deterministic seed-batch identity and exact Markdown, but
+performs no model, Palace, or queue work. Only **Queue for review** invokes the
+existing seed action; the resulting corpus-born document still needs the
+standing explicit approve or reject action before any child becomes active.
+
+**Motivation.** The agent files are the best cold-start knowledge because they
+already encode how work should happen, but discovery is not consent. One
+read-only offer followed by the existing seed pipeline preserves the chain
+`local guidance → semantic children → pending document → explicit decision`
+without creating a second ingest lifecycle or spending attention in the header.
+The launch directory is the narrow place where the owner already chose to run
+Nocturne, so discovery stays useful without turning the product into a home-disk
+indexer.
+
+**Rejected alternatives.** Auto-queueing discovered files would spend model
+calls and create pending data without an owner act; auto-approval would directly
+violate the unified queue. Scanning the home directory would be slow, invasive,
+and poorly scoped. A new agent-file endpoint that writes memories would fork the
+seed contract. Renaming the internal module id would force a persistence and
+plugin migration for no owner-visible gain. A dedicated layer or dialog would
+add navigation ceremony to a module that already fits the Work stage.

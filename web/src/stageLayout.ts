@@ -26,10 +26,11 @@ export type StageModuleId =
   | 'context_bars'
   | 'memory_graph'
   | 'injection_console'
+  | 'palace_queue'
 
 export const STAGE_MODULE_IDS: readonly StageModuleId[] = [
   'threads', 'chat', 'memory', 'vitals', 'context_bars',
-  'memory_graph', 'injection_console',
+  'memory_graph', 'injection_console', 'palace_queue',
 ]
 const FACTORY_LAYER_IDS = ['work', 'graph', 'injection'] as const
 
@@ -84,6 +85,9 @@ const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
   injection_console: expandLegacyModule({
     module_id: 'injection_console', x: 2, y: 2, width: 12, height: 10,
   }),
+  palace_queue: expandLegacyModule({
+    module_id: 'palace_queue', x: 20, y: 1, width: 5, height: 10,
+  }),
 }
 
 export const FACTORY_STAGE_LAYOUT: StageLayoutSet = {
@@ -95,7 +99,7 @@ export const FACTORY_STAGE_LAYOUT: StageLayoutSet = {
       layer_id: 'work',
       name: 'Work',
       camera: expandLegacyCamera({ x: 36, y: 30, zoom: 0.64 }),
-      modules: ['threads', 'chat', 'memory', 'vitals', 'context_bars']
+      modules: ['threads', 'chat', 'memory', 'vitals', 'context_bars', 'palace_queue']
         .map((moduleId) => ({ ...DEFAULT_MODULES[moduleId as StageModuleId] })),
       removed_modules: [],
     },
@@ -427,7 +431,8 @@ function normalizeCamera(camera: StageCamera): StageCamera {
 }
 
 function parseStageLayout(raw: string | null): StageLayoutSet | null {
-  return parseStageLayoutVersion(raw, 3, STAGE_COLUMNS, STAGE_ROWS) as StageLayoutSet | null
+  const parsed = parseStageLayoutVersion(raw, 3, STAGE_COLUMNS, STAGE_ROWS)
+  return parsed === null ? null : addMemoryIngestToExistingLayout(parsed as StageLayoutSet)
 }
 
 function parseStageLayoutVersion(
@@ -513,12 +518,36 @@ function expandLegacyStageLayout(layout: ParsedStageLayout): StageLayoutSet {
     modules: layer.modules.map(expandLegacyModule),
     removed_modules: layer.removed_modules.map(expandLegacyModule),
   })
-  return {
+  return addMemoryIngestToExistingLayout({
     version: 3,
     active_layer_id: layout.active_layer_id,
     layers: layout.layers.map(expandLayer),
     removed_layers: layout.removed_layers.map(expandLayer),
     scopes: { ...layout.scopes },
+  })
+}
+
+function addMemoryIngestToExistingLayout(layout: StageLayoutSet): StageLayoutSet {
+  const alreadyPlaced = [...layout.layers, ...layout.removed_layers].some((layer) =>
+    [...layer.modules, ...layer.removed_modules].some(
+      (module) => module.module_id === 'palace_queue',
+    )
+  )
+  if (alreadyPlaced) return layout
+  const targetLayerId = layout.layers.some((layer) => layer.layer_id === 'work')
+    ? 'work'
+    : layout.active_layer_id
+  return {
+    ...cloneStageLayout(layout),
+    layers: layout.layers.map((layer) => layer.layer_id === targetLayerId
+      ? {
+          ...cloneLayer(layer),
+          modules: [
+            ...layer.modules.map((module) => ({ ...module })),
+            { ...DEFAULT_MODULES.palace_queue },
+          ],
+        }
+      : cloneLayer(layer)),
   }
 }
 
@@ -596,7 +625,7 @@ function parseScopes(value: unknown): Record<string, RackScope> {
 function isStageModuleId(value: unknown): value is StageModuleId {
   return value === 'threads' || value === 'chat' || value === 'memory' ||
     value === 'vitals' || value === 'context_bars' || value === 'memory_graph' ||
-    value === 'injection_console'
+    value === 'injection_console' || value === 'palace_queue'
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
