@@ -263,6 +263,17 @@ def test_a057_discovery_accepts_only_one_spine_service(
     )
 
 
+def test_a057_discovery_without_an_active_gcloud_session_stays_local(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A-057 leaves ordinary init local when no owner gcloud session is available."""
+
+    monkeypatch.setattr(onboarding.shutil, "which", lambda _: "/usr/bin/gcloud")
+    monkeypatch.setattr(onboarding, "_gcloud_json", lambda arguments, environ: [])
+
+    assert onboarding._discover_cloud_palace({}) is None
+
+
 def test_a057_fresh_home_restores_palace_transcripts_before_daemon(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

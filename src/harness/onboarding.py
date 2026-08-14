@@ -921,6 +921,8 @@ def _discover_cloud_palace(environ: Mapping[str, str]) -> tuple[str, str, str] |
             "override and use one signed-in gcloud owner account."
         )
     accounts = _gcloud_json(["auth", "list", "--filter=status:ACTIVE"], environ)
+    if accounts == []:
+        return None
     if not isinstance(accounts, list) or len(accounts) != 1:
         raise OnboardingError(
             "Palace discovery needs exactly one active gcloud owner account. Run `gcloud auth "
