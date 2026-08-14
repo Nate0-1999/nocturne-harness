@@ -72,15 +72,17 @@ try {
   if (await page.locator('.rack-overlay-module--instrument').count() !== 0) {
     throw new Error('Graph still mounted as a fixed overlay')
   }
+  const initialGraph = await geometry(page, 'memory_graph')
   await page.getByTestId('rack-module-memory_graph').locator('.rack-module__drag').press('Alt+ArrowRight')
-  await expectGeometry(page, 'memory_graph', { x: 3, y: 2, width: 12, height: 10 })
+  const movedGraph = { ...initialGraph, x: initialGraph.x + 1 }
+  await expectGeometry(page, 'memory_graph', movedGraph)
 
   await page.getByRole('button', { name: 'Remove Memory Graph' }).click()
   assertJsonEqual(await mountedModules(page), [])
   await page.getByTestId('stage-library-toggle').click()
   const graphLibraryRow = page.getByTestId('stage-library').getByRole('listitem').filter({ hasText: 'Memory Graph' })
   await graphLibraryRow.getByRole('button', { name: 'Add' }).click()
-  await expectGeometry(page, 'memory_graph', { x: 3, y: 2, width: 12, height: 10 })
+  await expectGeometry(page, 'memory_graph', movedGraph)
   await page.getByRole('button', { name: 'Close stage library' }).click()
 
   await page.getByRole('button', { name: 'Remove Graph layer' }).click()
@@ -88,7 +90,7 @@ try {
   await page.getByTestId('stage-library-toggle').click()
   const removedGraphRow = page.getByTestId('stage-library').getByRole('listitem').filter({ hasText: 'Graph' })
   await removedGraphRow.getByRole('button', { name: 'Restore' }).click()
-  await expectGeometry(page, 'memory_graph', { x: 3, y: 2, width: 12, height: 10 })
+  await expectGeometry(page, 'memory_graph', movedGraph)
   observations.push({ graph_restored: await geometry(page, 'memory_graph') })
   await page.getByRole('button', { name: 'Close stage library' }).click()
 
@@ -122,7 +124,7 @@ try {
   await waitForRack(page)
   await expectGeometry(page, 'memory', initialMemory)
   await page.getByRole('tab', { name: 'Graph' }).click()
-  await expectGeometry(page, 'memory_graph', { x: 3, y: 2, width: 12, height: 10 })
+  await expectGeometry(page, 'memory_graph', movedGraph)
   await page.screenshot({ path: join(evidenceDir, '02-graph-layer-restored-1280x900.png') })
 
   if (consoleProblems.length !== 0 || pageErrors.length !== 0) {
@@ -154,7 +156,7 @@ async function mountedModules(targetPage) {
 
 async function activeCamera(targetPage) {
   return targetPage.evaluate(() => {
-    const layout = JSON.parse(localStorage.getItem('nocturne.stage.layout.v2'))
+    const layout = JSON.parse(localStorage.getItem('nocturne.stage.layout.v3'))
     return layout.layers.find((layer) => layer.layer_id === layout.active_layer_id).camera
   })
 }

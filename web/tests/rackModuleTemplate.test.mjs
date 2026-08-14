@@ -19,6 +19,7 @@ import {
   assertRackModuleTemplate,
   rackResizeDirections,
 } from '../src/rackModuleTemplate.ts'
+import { STAGE_COLUMNS, STAGE_ROWS } from '../src/stageLayout.ts'
 
 const webRoot = new URL('../', import.meta.url)
 
@@ -45,7 +46,7 @@ test('the module template enumerates the complete mounted stage and refuses a pa
         preferred: id === 'vitals' || id === 'context_bars'
           ? { w: 3, h: 2 }
           : { w: 4, h: 7 },
-        max: { w: 32, h: 22 },
+        max: { w: STAGE_COLUMNS, h: STAGE_ROWS },
       },
       movable: true,
     },

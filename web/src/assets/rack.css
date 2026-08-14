@@ -345,25 +345,36 @@
   backdrop-filter: blur(14px) saturate(116%);
 }
 
-.rack-module::before {
+.rack-module::before,
+.rack-module::after {
   position: absolute;
   z-index: 4;
-  top: -1px;
-  right: -1px;
-  width: 1.1rem;
-  height: 1.1rem;
-  border-bottom: 1px solid var(--line-strong);
+  width: 1.25rem;
+  height: 1.25rem;
   background: var(--ground);
-  clip-path: polygon(100% 0, 100% 100%, 0 0);
   content: "";
   pointer-events: none;
+}
+
+.rack-module::before {
+  top: -1px;
+  right: -1px;
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  filter: drop-shadow(-1px 1px 0 var(--line-strong));
+}
+
+.rack-module::after {
+  bottom: -1px;
+  left: -1px;
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+  filter: drop-shadow(1px -1px 0 var(--line-strong));
 }
 
 .rack-module--law-bound {
   border-color: var(--seam-845457e31628);
 }
 
-.rack-module--law-bound::after {
+.rack-module--law-bound .rack-module__chrome::after {
   position: absolute;
   z-index: 4;
   top: 0;
@@ -507,6 +518,7 @@
   font-size: 0.62rem;
   letter-spacing: 0.02em;
   text-transform: none;
+  clip-path: polygon(0 0, calc(100% - 0.65rem) 0, 100% 0.65rem, 100% 100%, 0.65rem 100%, 0 calc(100% - 0.65rem));
 }
 
 .rack-module__settings-dialog header {
@@ -2766,6 +2778,7 @@ button.rack-module__resize-handle--nw {
   margin: 0.42rem 0.42rem 0;
   border: 1px solid var(--line-strong);
   background: var(--seam-7c55824b04e6);
+  clip-path: polygon(0 0, calc(100% - 0.8rem) 0, 100% 0.8rem, 100% 100%, 0.8rem 100%, 0 calc(100% - 0.8rem));
 }
 
 .app-settings-toggle {
@@ -2806,6 +2819,7 @@ button.rack-module__resize-handle--nw {
   box-shadow: var(--shadow-neon);
   overflow: auto;
   font-family: var(--data-font);
+  clip-path: polygon(0 0, calc(100% - 0.8rem) 0, 100% 0.8rem, 100% 100%, 0.8rem 100%, 0 calc(100% - 0.8rem));
 }
 
 .app-settings-panel > header,
@@ -2928,6 +2942,7 @@ button.rack-module__resize-handle--nw {
 
 .stage-layer-tab button,
 .stage-camera-controls button,
+.stage-layer-create,
 .stage-library-toggle,
 .stage-library button,
 .stage-recall button {
@@ -2959,10 +2974,30 @@ button.rack-module__resize-handle--nw {
 
 .stage-layer-tab button:hover,
 .stage-camera-controls button:hover,
+.stage-layer-create:hover,
+.stage-layer-create:focus-visible,
 .stage-library-toggle:hover,
 .stage-library button:hover,
 .stage-recall button:hover {
   color: var(--ink);
+}
+
+.stage-layer-create {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  gap: 0.35rem;
+  padding-inline: 0.7rem;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  box-shadow: inset 0 -1px var(--accent);
+  clip-path: polygon(0 0, calc(100% - 0.45rem) 0, 100% 0.45rem, 100% 100%, 0.45rem 100%, 0 calc(100% - 0.45rem));
+}
+
+.stage-layer-create span {
+  font-size: 0.8rem;
+  line-height: 1;
 }
 
 .stage-camera-controls {
@@ -3021,9 +3056,13 @@ button.rack-module__resize-handle--nw {
   left: 0;
   transform-origin: 0 0;
   background-image:
+    radial-gradient(circle at 1px 1px, var(--line-strong) 0 0.8px, transparent 1px),
     linear-gradient(var(--line) 1px, transparent 1px),
     linear-gradient(90deg, var(--line) 1px, transparent 1px);
-  background-size: 96px 72px;
+  background-size:
+    var(--stage-fine-grid-size) var(--stage-fine-grid-size),
+    var(--stage-major-grid-width) var(--stage-major-grid-height),
+    var(--stage-major-grid-width) var(--stage-major-grid-height);
   box-shadow: inset 0 0 0 1px var(--line-strong);
   will-change: transform;
 }
@@ -3065,6 +3104,7 @@ button.rack-module__resize-handle--nw {
   background: var(--surface-deep);
   box-shadow: var(--shadow-neon);
   overflow-x: auto;
+  clip-path: polygon(0 0, calc(100% - 0.65rem) 0, 100% 0.65rem, 100% 100%, 0.65rem 100%, 0 calc(100% - 0.65rem));
 }
 
 .stage-recall > span {
@@ -3094,6 +3134,7 @@ button.rack-module__resize-handle--nw {
   background: var(--surface-deep);
   box-shadow: var(--shadow-neon);
   overflow: auto;
+  clip-path: polygon(0 0, calc(100% - 0.8rem) 0, 100% 0.8rem, 100% 100%, 0.8rem 100%, 0 calc(100% - 0.8rem));
 }
 
 .stage-library header,

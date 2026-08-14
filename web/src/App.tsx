@@ -59,6 +59,7 @@ import { publishRackResize } from './rackEvents'
 import {
   FACTORY_STAGE_LAYOUT,
   STAGE_COLUMNS,
+  STAGE_FINE_GRID_SIZE,
   STAGE_MAX_ZOOM,
   STAGE_MIN_ZOOM,
   STAGE_MODULE_IDS,
@@ -68,6 +69,7 @@ import {
   activeStageLayer,
   cloneFactoryStageLayout,
   cloneStageLayout,
+  createStageLayer,
   fitStageCamera,
   focusStageModule,
   loadSavedStageSet,
@@ -332,6 +334,14 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     viewportSize.height,
   ))
   const selectedColorway = colorways.find((colorway) => colorway.id === theme) ?? null
+  const stageCanvasStyle = {
+    width: STAGE_COLUMNS * STAGE_UNIT_WIDTH,
+    height: STAGE_ROWS * STAGE_UNIT_HEIGHT,
+    transform: `translate(${layer.camera.x}px, ${layer.camera.y}px) scale(${layer.camera.zoom})`,
+    '--stage-fine-grid-size': `${STAGE_FINE_GRID_SIZE}px`,
+    '--stage-major-grid-width': `${STAGE_UNIT_WIDTH}px`,
+    '--stage-major-grid-height': `${STAGE_UNIT_HEIGHT}px`,
+  } as CSSProperties
 
   useEffect(() => {
     const viewport = viewportRef.current
@@ -711,6 +721,17 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             </div>
           ))}
         </div>
+        <button
+          className="stage-layer-create"
+          type="button"
+          data-testid="stage-layer-create"
+          data-tooltip="Create a layer"
+          data-tooltip-detail="Open a new empty layer on this Stage."
+          onClick={() => setLayout(createStageLayer)}
+        >
+          <span aria-hidden="true">＋</span>
+          Layer
+        </button>
         <div className="stage-camera-controls" aria-label="Stage camera">
           <button type="button" aria-label="Zoom out" onClick={() => zoomAt(layer.camera.zoom - 0.1)}>−</button>
           <output data-testid="stage-zoom">{Math.round(layer.camera.zoom * 100)}%</output>
@@ -748,11 +769,9 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
         <div
           className="stage-canvas"
           data-testid="stage-canvas"
-          style={{
-            width: STAGE_COLUMNS * STAGE_UNIT_WIDTH,
-            height: STAGE_ROWS * STAGE_UNIT_HEIGHT,
-            transform: `translate(${layer.camera.x}px, ${layer.camera.y}px) scale(${layer.camera.zoom})`,
-          }}
+          data-stage-columns={STAGE_COLUMNS}
+          data-stage-rows={STAGE_ROWS}
+          style={stageCanvasStyle}
         >
           {layer.modules.map((module) => {
             const isDrawerOpen = drawerModule === module.module_id

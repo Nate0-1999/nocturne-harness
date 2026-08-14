@@ -2161,3 +2161,39 @@ inventing an infinite canvas here would cross into M2SP. Keeping manifest caps
 would preserve exactly the grow/shrink exception this packet removes. A second
 archive lifecycle or a second model chooser would violate the existing
 authorities instead of clarifying them.
+
+## 073 — The Stage grows around the work, not away from it [P2, M2SP]
+
+**Decision.** Expand the Stage to a `256 x 176` coordinate space whose
+`48 x 36` units preserve the prior module dimensions at twice the coordinate
+resolution. Center the former `32 x 22` work area within it, and migrate both
+live and saved v2 layouts to v3 by doubling module coordinates and dimensions,
+adding the centered origin, and offsetting each camera so its on-screen
+composition moves by less than one pixel. The resulting canvas is four times
+larger on each physical axis while an owner's existing arrangement still opens
+where they left it.
+
+Render a quiet 12-pixel dot field beneath the unit lines. The fine field supplies
+the near-continuous ComfyUI-like sense of motion; the stronger unit lattice
+retains exact drag and resize truth. Every module frame carries opposing corner
+cuts, and the Stage-owned floating shells use the same chamfer depth, following
+NATES_VISION sections 8 and 18 without changing any theme's semantic colors.
+Place one accented `+ Layer` action immediately beside the tabs. It creates and
+selects the next empty layer in one click, inherits only the current camera, and
+never copies modules or asks for a name.
+
+**Motivation.** A larger rectangle alone would leave the work against its old
+top-left wall, so two directions would still feel bounded immediately. Moving
+the work without migration would erase an owner's spatial memory. Centered
+coordinate expansion solves both problems, while a subordinate dot field makes
+panning feel continuous without hiding the grid that governs module geometry.
+The direct layer action finally gives the existing layer model a visible door.
+
+**Rejected alternatives.** Unbounded coordinates would make whole-stage fit,
+off-screen recall, persistence validation, and resize limits dishonest. A
+decorative grid that changed only CSS would preserve the coarse movement space.
+Resetting saved layouts would discard owner state. A creation dialog would
+spend attention before an empty layer exists, and cloning the current layer
+would make creation destructive by surprise. Clipping whole module elements
+would also clip settings dialogs and resize affordances, so chamfers are drawn
+at the shared shell seam instead.

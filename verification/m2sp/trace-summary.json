@@ -1,0 +1,47 @@
+{
+  "packet": "M2SP",
+  "fixture": "M2ST4 REGRESSION",
+  "surface": "production Rack SPA",
+  "viewport": {
+    "width": 1670,
+    "height": 936
+  },
+  "canvas": {
+    "columns": 256,
+    "rows": 176,
+    "unit_pixels": {
+      "width": 48,
+      "height": 36
+    },
+    "unscaled_pixels": {
+      "width": 12288,
+      "height": 6336
+    },
+    "zoom": 0.64,
+    "background_sizes": "12px 12px, 48px 36px, 48px 36px"
+  },
+  "hard_pan": {
+    "delta_x": -1200,
+    "delta_y": -600,
+    "canvas_rect_after": {
+      "left": -4113,
+      "top": -2258.0078125,
+      "right": 3751.31982421875,
+      "bottom": 1797.031982421875
+    },
+    "boundary_visible": false,
+    "offscreen_recall_visible": true
+  },
+  "chamfers": {
+    "module_top_right": "polygon(0px 0px, 100% 0px, 100% 100%)",
+    "module_bottom_left": "polygon(0px 0px, 100% 100%, 0px 100%)"
+  },
+  "layer_creation": {
+    "actions": 1,
+    "selected_layer": "Layer 1",
+    "mounted_modules": 0,
+    "survived_reload": true
+  },
+  "browser_warnings": [],
+  "browser_errors": []
+}

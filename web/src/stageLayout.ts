@@ -1,14 +1,22 @@
 import type { RackScope } from './rackLayout'
 
-export const STAGE_LAYOUT_STORAGE_KEY = 'nocturne.stage.layout.v2'
-export const STAGE_SAVED_SET_STORAGE_KEY = 'nocturne.stage.saved-set.v2'
+export const STAGE_LAYOUT_STORAGE_KEY = 'nocturne.stage.layout.v3'
+export const STAGE_SAVED_SET_STORAGE_KEY = 'nocturne.stage.saved-set.v3'
+const LEGACY_STAGE_LAYOUT_STORAGE_KEY = 'nocturne.stage.layout.v2'
+const LEGACY_STAGE_SAVED_SET_STORAGE_KEY = 'nocturne.stage.saved-set.v2'
 const LEGACY_RACK_LAYOUT_STORAGE_KEY = 'nocturne.rack.layout.v1'
-export const STAGE_COLUMNS = 32
-export const STAGE_ROWS = 22
-export const STAGE_UNIT_WIDTH = 96
-export const STAGE_UNIT_HEIGHT = 72
-export const STAGE_MIN_ZOOM = 0.25
+const LEGACY_STAGE_COLUMNS = 32
+const LEGACY_STAGE_ROWS = 22
+const STAGE_COORDINATE_SCALE = 2
+export const STAGE_COLUMNS = 256
+export const STAGE_ROWS = 176
+export const STAGE_UNIT_WIDTH = 48
+export const STAGE_UNIT_HEIGHT = 36
+export const STAGE_FINE_GRID_SIZE = 12
+export const STAGE_MIN_ZOOM = 0.06
 export const STAGE_MAX_ZOOM = 1.6
+const STAGE_ORIGIN_X = (STAGE_COLUMNS - LEGACY_STAGE_COLUMNS * STAGE_COORDINATE_SCALE) / 2
+const STAGE_ORIGIN_Y = (STAGE_ROWS - LEGACY_STAGE_ROWS * STAGE_COORDINATE_SCALE) / 2
 
 export type StageModuleId =
   | 'threads'
@@ -48,11 +56,15 @@ export interface StageLayer {
 }
 
 export interface StageLayoutSet {
-  version: 2
+  version: 3
   active_layer_id: string
   layers: StageLayer[]
   removed_layers: StageLayer[]
   scopes: Record<string, RackScope>
+}
+
+interface ParsedStageLayout extends Omit<StageLayoutSet, 'version'> {
+  version: 2 | 3
 }
 
 const DEFAULT_SCOPES: Record<string, RackScope> = {
@@ -63,26 +75,26 @@ const DEFAULT_SCOPES: Record<string, RackScope> = {
 }
 
 const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
-  threads: { module_id: 'threads', x: 1, y: 1, width: 4, height: 10 },
-  chat: { module_id: 'chat', x: 5, y: 1, width: 10, height: 10 },
-  memory: { module_id: 'memory', x: 15, y: 1, width: 4, height: 10 },
-  vitals: { module_id: 'vitals', x: 1, y: 12, width: 12, height: 4 },
-  context_bars: { module_id: 'context_bars', x: 13, y: 12, width: 6, height: 4 },
-  memory_graph: { module_id: 'memory_graph', x: 2, y: 2, width: 12, height: 10 },
-  injection_console: {
+  threads: expandLegacyModule({ module_id: 'threads', x: 1, y: 1, width: 4, height: 10 }),
+  chat: expandLegacyModule({ module_id: 'chat', x: 5, y: 1, width: 10, height: 10 }),
+  memory: expandLegacyModule({ module_id: 'memory', x: 15, y: 1, width: 4, height: 10 }),
+  vitals: expandLegacyModule({ module_id: 'vitals', x: 1, y: 12, width: 12, height: 4 }),
+  context_bars: expandLegacyModule({ module_id: 'context_bars', x: 13, y: 12, width: 6, height: 4 }),
+  memory_graph: expandLegacyModule({ module_id: 'memory_graph', x: 2, y: 2, width: 12, height: 10 }),
+  injection_console: expandLegacyModule({
     module_id: 'injection_console', x: 2, y: 2, width: 12, height: 10,
-  },
+  }),
 }
 
 export const FACTORY_STAGE_LAYOUT: StageLayoutSet = {
-  version: 2,
+  version: 3,
   active_layer_id: 'work',
   scopes: DEFAULT_SCOPES,
   layers: [
     {
       layer_id: 'work',
       name: 'Work',
-      camera: { x: 36, y: 30, zoom: 0.64 },
+      camera: expandLegacyCamera({ x: 36, y: 30, zoom: 0.64 }),
       modules: ['threads', 'chat', 'memory', 'vitals', 'context_bars']
         .map((moduleId) => ({ ...DEFAULT_MODULES[moduleId as StageModuleId] })),
       removed_modules: [],
@@ -90,14 +102,14 @@ export const FACTORY_STAGE_LAYOUT: StageLayoutSet = {
     {
       layer_id: 'graph',
       name: 'Graph',
-      camera: { x: 50, y: 36, zoom: 0.86 },
+      camera: expandLegacyCamera({ x: 50, y: 36, zoom: 0.86 }),
       modules: [{ ...DEFAULT_MODULES.memory_graph }],
       removed_modules: [],
     },
     {
       layer_id: 'injection',
       name: 'Injection',
-      camera: { x: 50, y: 36, zoom: 0.86 },
+      camera: expandLegacyCamera({ x: 50, y: 36, zoom: 0.86 }),
       modules: [{ ...DEFAULT_MODULES.injection_console }],
       removed_modules: [],
     },
@@ -111,7 +123,7 @@ export function cloneFactoryStageLayout(): StageLayoutSet {
 
 export function cloneStageLayout(layout: StageLayoutSet): StageLayoutSet {
   return {
-    version: 2,
+    version: 3,
     active_layer_id: layout.active_layer_id,
     scopes: { ...layout.scopes },
     layers: layout.layers.map(cloneLayer),
@@ -122,12 +134,27 @@ export function cloneStageLayout(layout: StageLayoutSet): StageLayoutSet {
 export function loadStageLayout(storage: Storage): StageLayoutSet {
   const current = parseStageLayout(storage.getItem(STAGE_LAYOUT_STORAGE_KEY))
   if (current !== null) return current
+  const legacyStage = parseStageLayoutVersion(
+    storage.getItem(LEGACY_STAGE_LAYOUT_STORAGE_KEY),
+    2,
+    LEGACY_STAGE_COLUMNS,
+    LEGACY_STAGE_ROWS,
+  )
+  if (legacyStage !== null) return expandLegacyStageLayout(legacyStage)
   const legacy = parseLegacyRackLayout(storage.getItem(LEGACY_RACK_LAYOUT_STORAGE_KEY))
   return legacy ?? cloneFactoryStageLayout()
 }
 
 export function loadSavedStageSet(storage: Storage): StageLayoutSet | null {
-  return parseStageLayout(storage.getItem(STAGE_SAVED_SET_STORAGE_KEY))
+  const current = parseStageLayout(storage.getItem(STAGE_SAVED_SET_STORAGE_KEY))
+  if (current !== null) return current
+  const legacy = parseStageLayoutVersion(
+    storage.getItem(LEGACY_STAGE_SAVED_SET_STORAGE_KEY),
+    2,
+    LEGACY_STAGE_COLUMNS,
+    LEGACY_STAGE_ROWS,
+  )
+  return legacy === null ? null : expandLegacyStageLayout(legacy)
 }
 
 export function persistStageLayout(storage: Storage, layout: StageLayoutSet): void {
@@ -147,6 +174,32 @@ export function selectStageLayer(layout: StageLayoutSet, layerId: string): Stage
   return layout.layers.some((layer) => layer.layer_id === layerId)
     ? { ...cloneStageLayout(layout), active_layer_id: layerId }
     : layout
+}
+
+export function createStageLayer(layout: StageLayoutSet): StageLayoutSet {
+  const occupiedIds = new Set([
+    ...layout.layers.map((layer) => layer.layer_id),
+    ...layout.removed_layers.map((layer) => layer.layer_id),
+  ])
+  let sequence = 1
+  while (occupiedIds.has(`layer-${sequence}`)) sequence += 1
+  const layerId = `layer-${sequence}`
+  const currentCamera = activeStageLayer(layout).camera
+  const layers = layout.layers.filter((layer) => !isEmptyReplacement(layer)).map(cloneLayer)
+  return {
+    ...cloneStageLayout(layout),
+    active_layer_id: layerId,
+    layers: [
+      ...layers,
+      {
+        layer_id: layerId,
+        name: `Layer ${sequence}`,
+        camera: { ...currentCamera },
+        modules: [],
+        removed_modules: [],
+      },
+    ],
+  }
 }
 
 export function updateStageCamera(
@@ -355,7 +408,7 @@ function emptyLayer(): StageLayer {
   return {
     layer_id: 'empty',
     name: 'Empty layer',
-    camera: { x: 36, y: 30, zoom: 0.64 },
+    camera: expandLegacyCamera({ x: 36, y: 30, zoom: 0.64 }),
     modules: [],
     removed_modules: [],
   }
@@ -374,6 +427,15 @@ function normalizeCamera(camera: StageCamera): StageCamera {
 }
 
 function parseStageLayout(raw: string | null): StageLayoutSet | null {
+  return parseStageLayoutVersion(raw, 3, STAGE_COLUMNS, STAGE_ROWS) as StageLayoutSet | null
+}
+
+function parseStageLayoutVersion(
+  raw: string | null,
+  version: 2 | 3,
+  columns: number,
+  rows: number,
+): ParsedStageLayout | null {
   if (raw === null) return null
   let value: unknown
   try {
@@ -381,10 +443,10 @@ function parseStageLayout(raw: string | null): StageLayoutSet | null {
   } catch {
     return null
   }
-  if (!isRecord(value) || value.version !== 2 || !Array.isArray(value.layers)) return null
-  const layers = value.layers.map(parseLayer)
+  if (!isRecord(value) || value.version !== version || !Array.isArray(value.layers)) return null
+  const layers = value.layers.map((layer) => parseLayer(layer, columns, rows))
   const removedLayers = Array.isArray(value.removed_layers)
-    ? value.removed_layers.map(parseLayer)
+    ? value.removed_layers.map((layer) => parseLayer(layer, columns, rows))
     : []
   if (
     layers.length === 0 ||
@@ -396,7 +458,7 @@ function parseStageLayout(raw: string | null): StageLayoutSet | null {
   const allLayers = [...layers, ...removedLayers] as StageLayer[]
   if (new Set(allLayers.map((layer) => layer.layer_id)).size !== allLayers.length) return null
   return {
-    version: 2,
+    version,
     active_layer_id: value.active_layer_id,
     layers: layers as StageLayer[],
     removed_layers: removedLayers as StageLayer[],
@@ -404,7 +466,7 @@ function parseStageLayout(raw: string | null): StageLayoutSet | null {
   }
 }
 
-function parseLayer(value: unknown): StageLayer | null {
+function parseLayer(value: unknown, columns: number, rows: number): StageLayer | null {
   if (
     !isRecord(value) ||
     typeof value.layer_id !== 'string' || value.layer_id.trim() === '' ||
@@ -414,8 +476,8 @@ function parseLayer(value: unknown): StageLayer | null {
     typeof value.camera.zoom !== 'number' ||
     !Array.isArray(value.modules) || !Array.isArray(value.removed_modules)
   ) return null
-  const modules = value.modules.map(parseModule)
-  const removedModules = value.removed_modules.map(parseModule)
+  const modules = value.modules.map((module) => parseModule(module, columns, rows))
+  const removedModules = value.removed_modules.map((module) => parseModule(module, columns, rows))
   if (
     modules.some((module) => module === null) ||
     removedModules.some((module) => module === null)
@@ -431,17 +493,51 @@ function parseLayer(value: unknown): StageLayer | null {
   }
 }
 
-function parseModule(value: unknown): StageModuleLayout | null {
+function parseModule(value: unknown, columns: number, rows: number): StageModuleLayout | null {
   if (
     !isRecord(value) || !isStageModuleId(value.module_id) ||
     !Number.isInteger(value.x) || !Number.isInteger(value.y) ||
     !Number.isInteger(value.width) || !Number.isInteger(value.height) ||
     (value.x as number) < 0 || (value.y as number) < 0 ||
     (value.width as number) < 1 || (value.height as number) < 1 ||
-    (value.x as number) + (value.width as number) > STAGE_COLUMNS ||
-    (value.y as number) + (value.height as number) > STAGE_ROWS
+    (value.x as number) + (value.width as number) > columns ||
+    (value.y as number) + (value.height as number) > rows
   ) return null
   return value as unknown as StageModuleLayout
+}
+
+function expandLegacyStageLayout(layout: ParsedStageLayout): StageLayoutSet {
+  const expandLayer = (layer: StageLayer): StageLayer => ({
+    ...layer,
+    camera: expandLegacyCamera(layer.camera),
+    modules: layer.modules.map(expandLegacyModule),
+    removed_modules: layer.removed_modules.map(expandLegacyModule),
+  })
+  return {
+    version: 3,
+    active_layer_id: layout.active_layer_id,
+    layers: layout.layers.map(expandLayer),
+    removed_layers: layout.removed_layers.map(expandLayer),
+    scopes: { ...layout.scopes },
+  }
+}
+
+function expandLegacyModule(module: StageModuleLayout): StageModuleLayout {
+  return {
+    ...module,
+    x: STAGE_ORIGIN_X + module.x * STAGE_COORDINATE_SCALE,
+    y: STAGE_ORIGIN_Y + module.y * STAGE_COORDINATE_SCALE,
+    width: module.width * STAGE_COORDINATE_SCALE,
+    height: module.height * STAGE_COORDINATE_SCALE,
+  }
+}
+
+function expandLegacyCamera(camera: StageCamera): StageCamera {
+  return normalizeCamera({
+    x: camera.x - STAGE_ORIGIN_X * STAGE_UNIT_WIDTH * camera.zoom,
+    y: camera.y - STAGE_ORIGIN_Y * STAGE_UNIT_HEIGHT * camera.zoom,
+    zoom: camera.zoom,
+  })
 }
 
 function parseLegacyRackLayout(raw: string | null): StageLayoutSet | null {
@@ -455,7 +551,7 @@ function parseLegacyRackLayout(raw: string | null): StageLayoutSet | null {
   if (!isRecord(value) || value.version !== 1 || !Array.isArray(value.modules)) return null
   const layout = cloneFactoryStageLayout()
   const work = layout.layers[0]
-  let x = 1
+  let x = STAGE_ORIGIN_X + STAGE_COORDINATE_SCALE
   for (const item of [...value.modules].sort(legacyOrder)) {
     if (!isRecord(item) || !isStageModuleId(item.module_id) || !Number.isInteger(item.width)) {
       return null
@@ -463,11 +559,11 @@ function parseLegacyRackLayout(raw: string | null): StageLayoutSet | null {
     const module = work.modules.find((candidate) => candidate.module_id === item.module_id)
     if (module === undefined) return null
     module.x = x
-    module.width = item.width as number
+    module.width = (item.width as number) * STAGE_COORDINATE_SCALE
     x += module.width
   }
   if (Array.isArray(value.strips)) {
-    x = 1
+    x = STAGE_ORIGIN_X + STAGE_COORDINATE_SCALE
     for (const item of [...value.strips].sort(legacyOrder)) {
       if (!isRecord(item) || !isStageModuleId(item.module_id) || !Number.isInteger(item.width)) {
         return null
@@ -475,7 +571,7 @@ function parseLegacyRackLayout(raw: string | null): StageLayoutSet | null {
       const module = work.modules.find((candidate) => candidate.module_id === item.module_id)
       if (module === undefined) return null
       module.x = x
-      module.width = item.width as number
+      module.width = (item.width as number) * STAGE_COORDINATE_SCALE
       x += module.width
     }
   }
