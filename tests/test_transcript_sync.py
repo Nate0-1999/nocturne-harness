@@ -35,9 +35,10 @@ def test_a057_exact_rows_restore_and_derive_the_catalog(tmp_path: Path) -> None:
 
     restored = TranscriptJournal(tmp_path / "restored")
     assert restored.restore_cloud_records(records) == 1
-    assert restored.path_for_thread(THREAD_ID).read_bytes() == source.path_for_thread(
-        THREAD_ID
-    ).read_bytes()
+    assert (
+        restored.path_for_thread(THREAD_ID).read_bytes()
+        == source.path_for_thread(THREAD_ID).read_bytes()
+    )
     catalog = restored.catalog()
     assert len(catalog) == 1
     assert catalog[0].thread_id == THREAD_ID

@@ -49,8 +49,10 @@ API_CONTRACT_MIN_VERSION = "0.1.0"
 API_CONTRACT_MAX_VERSION = "0.2.0"
 API_CONTRACT_RANGE = f">={API_CONTRACT_MIN_VERSION},<{API_CONTRACT_MAX_VERSION}"
 PALACE_CHECKING_LINE = "Checking your Palace — a few seconds…"
+PALACE_WARMING_LINE = "warming up your Palace — a few more seconds…"
 STARTUP_SPEAKING_BUDGET_SECONDS = 2.0
 PALACE_PROBE_TIMEOUT_SECONDS = 4.0
+PALACE_COLD_PROBE_TIMEOUT_SECONDS = 30.0
 
 
 class OnboardingError(RuntimeError):
@@ -316,7 +318,7 @@ def up_nocturne(
     harness: subprocess.Popen[str] | None = None
     try:
         _wait_for_url(f"{SPINE_URL}/healthz", token=config.spine_token, process=spine)
-        _restore_transcripts_from_palace(config)
+        _restore_transcripts_from_palace(config, stdout=stdout)
         harness = _start_service(
             "harness.packaged:create_app",
             port=8765,
@@ -342,7 +344,7 @@ def _up_remote(
     """Start only the local daemon against an owner-operated remote Palace."""
 
     print(PALACE_CHECKING_LINE, file=stdout, flush=True)
-    _, relation = _remote_palace_status(config)
+    _, relation = _remote_palace_status(config, stdout=stdout)
     if relation == "newer":
         raise OnboardingError(_app_older_refusal())
     if relation == "older":
@@ -383,7 +385,7 @@ def _up_remote(
                     "Your Palace update was postponed; some newer screens may be unavailable.",
                     file=stdout,
                 )
-    _restore_transcripts_from_palace(config)
+    _restore_transcripts_from_palace(config, stdout=stdout)
     harness = _start_service(
         "harness.packaged:create_app",
         port=8765,
@@ -400,18 +402,49 @@ def _up_remote(
         _stop_processes((harness,))
 
 
-def _remote_api_contract_version(service_url: str, token: str) -> str | None:
+def _read_palace_json(
+    request: urllib.request.Request,
+    *,
+    stdout: TextIO,
+    failure_message: str,
+) -> object:
+    """Read one Palace response, allowing exactly one scale-to-zero warm-up retry."""
+
+    def read_once(timeout: float) -> object:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return json.loads(response.read())
+
+    try:
+        return read_once(PALACE_PROBE_TIMEOUT_SECONDS)
+    except urllib.error.HTTPError as exc:
+        raise OnboardingError(failure_message) from exc
+    except OSError:
+        print(PALACE_WARMING_LINE, file=stdout, flush=True)
+        try:
+            return read_once(PALACE_COLD_PROBE_TIMEOUT_SECONDS)
+        except (OSError, ValueError) as exc:
+            raise OnboardingError(failure_message) from exc
+    except ValueError as exc:
+        raise OnboardingError(failure_message) from exc
+
+
+def _remote_api_contract_version(
+    service_url: str,
+    token: str,
+    *,
+    stdout: TextIO = sys.stdout,
+) -> str | None:
     request = urllib.request.Request(
         f"{service_url.rstrip('/')}/health",
         headers={"Authorization": f"Bearer {token}"},
     )
-    try:
-        with urllib.request.urlopen(request, timeout=PALACE_PROBE_TIMEOUT_SECONDS) as response:
-            payload = json.loads(response.read())
-    except (OSError, ValueError) as exc:
-        raise OnboardingError(
+    payload = _read_palace_json(
+        request,
+        stdout=stdout,
+        failure_message=(
             "The remote Palace API contract could not be read; check its health and try again."
-        ) from exc
+        ),
+    )
     if not isinstance(payload, Mapping):
         raise OnboardingError(
             "The remote Palace API contract could not be read; check its health and try again."
@@ -452,10 +485,18 @@ def _api_contract_relation(remote_contract: str | None) -> str:
     return "compatible" if remote < maximum else "newer"
 
 
-def _remote_palace_status(config: NocturneConfig) -> tuple[str | None, str]:
+def _remote_palace_status(
+    config: NocturneConfig,
+    *,
+    stdout: TextIO = sys.stdout,
+) -> tuple[str | None, str]:
     """Probe the remote Palace and compare only its public API contract."""
 
-    remote_contract = _remote_api_contract_version(config.spine_url, config.spine_token)
+    remote_contract = _remote_api_contract_version(
+        config.spine_url,
+        config.spine_token,
+        stdout=stdout,
+    )
     return remote_contract, _api_contract_relation(remote_contract)
 
 
@@ -564,7 +605,7 @@ def _doctor_remote(
     remote_contract: str | None = None
     contract_display = "not reported"
     try:
-        remote_contract, relation = _remote_palace_status(config)
+        remote_contract, relation = _remote_palace_status(config, stdout=stdout)
         contract_display = remote_contract or "not reported"
         if relation == "older":
             contract_warning = (
@@ -927,9 +968,7 @@ def _discover_cloud_palace(environ: Mapping[str, str]) -> tuple[str, str, str] |
         try:
             matches.append((region, _parse_remote_url(url)))
         except OnboardingError as exc:
-            raise OnboardingError(
-                "Palace discovery found a malformed Cloud Run service."
-            ) from exc
+            raise OnboardingError("Palace discovery found a malformed Cloud Run service.") from exc
     if not matches:
         return None
     if len(matches) != 1:
@@ -967,28 +1006,41 @@ def _read_discovered_palace_token(project: str, environ: Mapping[str, str]) -> s
     return token
 
 
-def _palace_json(config: NocturneConfig, path: str) -> object:
+def _palace_json(
+    config: NocturneConfig,
+    path: str,
+    *,
+    stdout: TextIO = sys.stdout,
+) -> object:
     request = urllib.request.Request(
         f"{config.spine_url.rstrip('/')}/{path.lstrip('/')}",
         headers={"Authorization": f"Bearer {config.spine_token}"},
     )
-    try:
-        with urllib.request.urlopen(request, timeout=PALACE_PROBE_TIMEOUT_SECONDS) as response:
-            return json.loads(response.read())
-    except (OSError, ValueError) as exc:
-        raise OnboardingError(
+    return _read_palace_json(
+        request,
+        stdout=stdout,
+        failure_message=(
             "Conversation backup could not reach the Palace transcript service. Update the "
             "Palace if offered, then run `nocturne doctor` and try again."
-        ) from exc
+        ),
+    )
 
 
-def _restore_transcripts_from_palace(config: NocturneConfig) -> int:
+def _restore_transcripts_from_palace(
+    config: NocturneConfig,
+    *,
+    stdout: TextIO = sys.stdout,
+) -> int:
     if not config.transcript_backup:
         return 0
     journal = TranscriptJournal(config.home / "transcripts")
     if journal.cloud_records():
         return 0
-    payload = _palace_json(config, "/v1/transcripts?principal_id=local")
+    payload = _palace_json(
+        config,
+        "/v1/transcripts?principal_id=local",
+        stdout=stdout,
+    )
     if not isinstance(payload, dict) or not isinstance(payload.get("records"), list):
         raise OnboardingError("The Palace returned an unreadable transcript backup.")
     records: list[JournalCloudRecord] = []
@@ -1014,7 +1066,11 @@ def _restore_transcripts_from_palace(config: NocturneConfig) -> int:
 
 def _print_transcript_backup_status(config: NocturneConfig, *, stdout: TextIO) -> None:
     try:
-        payload = _palace_json(config, "/v1/transcripts/status?principal_id=local")
+        payload = _palace_json(
+            config,
+            "/v1/transcripts/status?principal_id=local",
+            stdout=stdout,
+        )
         if not isinstance(payload, dict) or not isinstance(payload.get("record_count"), int):
             raise OnboardingError("The Palace returned an unreadable transcript status.")
         print(f"Palace transcript records: {payload['record_count']}", file=stdout)

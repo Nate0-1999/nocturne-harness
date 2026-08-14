@@ -222,7 +222,7 @@ def test_owner_api_publishes_choice_fields_without_machine_identity(
 def test_jump_start_route_only_offers_workspace_agent_files(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """M2MI discovery is a read-only offer and never calls the Palace."""
+    """P1.5 requires M2MI discovery to remain a read-only offer that never calls the Palace."""
 
     markdown = "# Owner rules\n\nNothing auto-admits.\n"
     (tmp_path / "AGENTS.md").write_text(markdown, encoding="utf-8")

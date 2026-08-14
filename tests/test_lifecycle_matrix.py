@@ -20,6 +20,7 @@ class LifecycleState:
     port: str
     assets: str
     ground: str
+    probe: str = "warm"
 
     @property
     def id(self) -> str:
@@ -32,6 +33,7 @@ class LifecycleState:
                 self.port,
                 self.assets,
                 self.ground,
+                self.probe,
             )
         )
 
@@ -50,6 +52,7 @@ ALL_STATES = tuple(
         ("free", "held-healthy", "held-dead"),
         ("present", "absent"),
         ("clean-room", "host"),
+        ("warm", "cold"),
     )
 )
 REACHABLE_STATES = tuple(state for state in ALL_STATES if state.reachable)
@@ -71,6 +74,16 @@ INCIDENT_ROWS = {
     ),
     "M2LC2-silent-preflight": LifecycleState(
         "dev", "legacy", "block", "writable", "free", "present", "host"
+    ),
+    "PALACE-COLD": LifecycleState(
+        "released",
+        "current",
+        "pass",
+        "writable",
+        "free",
+        "present",
+        "host",
+        "cold",
     ),
 }
 
@@ -156,11 +169,18 @@ def test_every_reachable_lifecycle_state_has_one_voice_and_action(
     monkeypatch.setattr(onboarding, "load_config", lambda **kwargs: config)
     monkeypatch.setattr(onboarding, "_warn_if_low_disk", lambda *args, **kwargs: None)
     monkeypatch.setattr(onboarding, "_daemon_preflight", lambda candidate: preflight)
-    monkeypatch.setattr(
-        onboarding,
-        "_remote_palace_status",
-        lambda candidate: (events.append("health"), relation)[1],
-    )
+
+    def palace_status(
+        candidate: onboarding.NocturneConfig,
+        *,
+        stdout: io.StringIO,
+    ) -> tuple[str | None, str]:
+        events.append("health")
+        if state.probe == "cold":
+            print(onboarding.PALACE_WARMING_LINE, file=stdout)
+        return relation
+
+    monkeypatch.setattr(onboarding, "_remote_palace_status", palace_status)
     monkeypatch.setattr(
         onboarding,
         "_require_writable_journal",
@@ -232,11 +252,14 @@ def test_every_reachable_lifecycle_state_has_one_voice_and_action(
         assert "app is older than your Palace" in rendered
         assert events == ["journal", "health"]
     elif action == "dev-start":
-        assert output.getvalue().startswith(
-            f"{onboarding.PALACE_CHECKING_LINE}\n"
+        expected = f"{onboarding.PALACE_CHECKING_LINE}\n"
+        if state.probe == "cold":
+            expected += f"{onboarding.PALACE_WARMING_LINE}\n"
+        expected += (
             "Your app includes unreleased changes; your Palace is compatible; "
             "Nocturne will start normally.\n"
         )
+        assert output.getvalue().startswith(expected)
         assert prompts == []
         assert events == ["journal", "health", "guard", "start"]
     elif action == "postpone-start":
@@ -246,10 +269,11 @@ def test_every_reachable_lifecycle_state_has_one_voice_and_action(
         assert events == ["journal", "health", "guard", "start"]
     else:
         assert prompts == []
-        assert rendered == (
-            f"{onboarding.PALACE_CHECKING_LINE}\n"
-            f"Nocturne is running at {onboarding.LOCAL_URL}. Press Ctrl-C to stop it.\n"
-        )
+        expected = f"{onboarding.PALACE_CHECKING_LINE}\n"
+        if state.probe == "cold":
+            expected += f"{onboarding.PALACE_WARMING_LINE}\n"
+        expected += f"Nocturne is running at {onboarding.LOCAL_URL}. Press Ctrl-C to stop it.\n"
+        assert rendered == expected
         assert events == ["journal", "health", "start"]
 
 
@@ -264,7 +288,8 @@ def test_unreachable_lifecycle_states_are_asserted_unreachable(state: LifecycleS
 
 def test_each_historical_lifecycle_incident_is_a_named_reachable_row() -> None:
     """SPEC D.2 112 and B.6 rule 12 require F016, F018, F019, F031, M2V, M2CI,
-    and the prompt/guard dead end to remain named rows before their fixes may stay closed.
+    the prompt/guard dead end, and PALACE-COLD to remain named rows before their fixes may
+    stay closed.
     """
 
     assert set(INCIDENT_ROWS) == {
@@ -276,8 +301,9 @@ def test_each_historical_lifecycle_incident_is_a_named_reachable_row() -> None:
         "M2CI-clean-room",
         "prompt-guard-dead-end",
         "M2LC2-silent-preflight",
+        "PALACE-COLD",
     }
     assert all(row in REACHABLE_STATES for row in INCIDENT_ROWS.values())
-    assert len(ALL_STATES) == 384
-    assert len(REACHABLE_STATES) == 192
-    assert len(UNREACHABLE_STATES) == 192
+    assert len(ALL_STATES) == 768
+    assert len(REACHABLE_STATES) == 384
+    assert len(UNREACHABLE_STATES) == 384

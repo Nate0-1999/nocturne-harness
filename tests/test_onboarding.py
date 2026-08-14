@@ -55,6 +55,112 @@ def _stub_remote_health(monkeypatch: pytest.MonkeyPatch, payload: dict[str, obje
     )
 
 
+def test_palace_cold_health_retries_once_with_warming_voice(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """SPEC D.2 112 requires the PALACE-COLD lifecycle row to recover from one
+    slow first health response while telling the owner why startup is still working.
+    """
+
+    timeouts: list[float] = []
+
+    def urlopen(request: object, timeout: float) -> _HealthResponse:
+        timeouts.append(timeout)
+        if len(timeouts) == 1:
+            raise TimeoutError("scale-to-zero cold start")
+        return _HealthResponse()
+
+    monkeypatch.setattr(onboarding.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(onboarding.json, "loads", lambda raw: {"api_contract_version": "0.1.7"})
+    output = io.StringIO()
+
+    assert (
+        onboarding._remote_api_contract_version(
+            "https://spine.example.test",
+            "token",
+            stdout=output,
+        )
+        == "0.1.7"
+    )
+    assert timeouts == [
+        onboarding.PALACE_PROBE_TIMEOUT_SECONDS,
+        onboarding.PALACE_COLD_PROBE_TIMEOUT_SECONDS,
+    ]
+    assert output.getvalue() == f"{onboarding.PALACE_WARMING_LINE}\n"
+
+
+def test_palace_cold_transcript_read_uses_the_same_single_retry(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """SPEC D.2 112 requires every Palace probe call site to share the bounded
+    PALACE-COLD retry instead of leaving transcript resurrection single-shot.
+    """
+
+    config = onboarding.NocturneConfig(
+        home=tmp_path,
+        openrouter_api_key="key",
+        spine_token="token",
+        database_password="password",
+        machine_id="machine",
+        palace_mode="remote",
+        spine_url="https://spine.example.test",
+    )
+    timeouts: list[float] = []
+
+    def urlopen(request: object, timeout: float) -> _HealthResponse:
+        timeouts.append(timeout)
+        if len(timeouts) == 1:
+            raise ConnectionError("cold connection")
+        return _HealthResponse()
+
+    monkeypatch.setattr(onboarding.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(onboarding.json, "loads", lambda raw: {"record_count": 3})
+    output = io.StringIO()
+
+    assert onboarding._palace_json(config, "/v1/transcripts/status", stdout=output) == {
+        "record_count": 3
+    }
+    assert timeouts == [
+        onboarding.PALACE_PROBE_TIMEOUT_SECONDS,
+        onboarding.PALACE_COLD_PROBE_TIMEOUT_SECONDS,
+    ]
+    assert output.getvalue() == f"{onboarding.PALACE_WARMING_LINE}\n"
+
+
+def test_dead_palace_refuses_after_exactly_one_cold_retry(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """SPEC D.2 112 keeps a truly dead Palace bounded: one warm-up retry, then
+    the existing plain health remedy rather than an unbounded startup wait.
+    """
+
+    timeouts: list[float] = []
+
+    def urlopen(request: object, timeout: float) -> _HealthResponse:
+        timeouts.append(timeout)
+        raise urllib.error.URLError("offline")
+
+    monkeypatch.setattr(onboarding.urllib.request, "urlopen", urlopen)
+    output = io.StringIO()
+
+    with pytest.raises(onboarding.OnboardingError) as caught:
+        onboarding._remote_api_contract_version(
+            "https://spine.example.test",
+            "token",
+            stdout=output,
+        )
+
+    assert str(caught.value) == (
+        "The remote Palace API contract could not be read; check its health and try again."
+    )
+    assert timeouts == [
+        onboarding.PALACE_PROBE_TIMEOUT_SECONDS,
+        onboarding.PALACE_COLD_PROBE_TIMEOUT_SECONDS,
+    ]
+    assert output.getvalue() == f"{onboarding.PALACE_WARMING_LINE}\n"
+
+
 def _ready_preflight() -> onboarding.DaemonPreflight:
     return onboarding.DaemonPreflight(
         existing=False,
@@ -84,8 +190,10 @@ def test_init_prompts_once_and_generates_private_config(
 
     path = onboarding.init_nocturne(
         home=tmp_path,
-        prompt=lambda message: prompts.append(message)
-        or ("one-owner-secret" if message == "OpenRouter API key: " else "n"),
+        prompt=lambda message: (
+            prompts.append(message)
+            or ("one-owner-secret" if message == "OpenRouter API key: " else "n")
+        ),
         stdout=output,
     )
     config = onboarding.load_config(home=tmp_path)
@@ -187,7 +295,7 @@ def test_a057_fresh_home_restores_palace_transcripts_before_daemon(
     monkeypatch.setattr(
         onboarding,
         "_palace_json",
-        lambda candidate, path: {
+        lambda candidate, path, **kwargs: {
             "principal_id": "local",
             "records": [
                 {
@@ -206,7 +314,7 @@ def test_a057_fresh_home_restores_palace_transcripts_before_daemon(
     monkeypatch.setattr(
         onboarding,
         "_palace_json",
-        lambda candidate, path: pytest.fail("existing journal must never be overwritten"),
+        lambda candidate, path, **kwargs: pytest.fail("existing journal must never be overwritten"),
     )
     assert onboarding._restore_transcripts_from_palace(config) == 0
 
@@ -253,8 +361,10 @@ def test_remote_init_records_one_palace_origin_and_prompts_only_for_its_bearer(
     onboarding.init_nocturne(
         home=tmp_path,
         remote="https://spine.example.test/",
-        prompt=lambda message: prompts.append(message)
-        or ("remote-bearer" if message == "Your Palace access token: " else "n"),
+        prompt=lambda message: (
+            prompts.append(message)
+            or ("remote-bearer" if message == "Your Palace access token: " else "n")
+        ),
         stdout=io.StringIO(),
     )
     config = onboarding.load_config(home=tmp_path)
@@ -403,7 +513,7 @@ def test_remote_up_starts_only_the_daemon_and_opens_the_browser(
     monkeypatch.setattr(
         onboarding,
         "_remote_api_contract_version",
-        lambda service_url, token: "0.1.7",
+        lambda service_url, token, **kwargs: "0.1.7",
     )
     monkeypatch.setattr(onboarding, "_daemon_preflight", lambda config: _ready_preflight())
 
@@ -481,7 +591,10 @@ def test_remote_doctor_checks_spine_journal_and_disk_without_local_database(
     monkeypatch.setattr(
         onboarding,
         "_remote_api_contract_version",
-        lambda service_url, token: (checks.append((service_url, token)), "0.1.7")[1],
+        lambda service_url, token, **kwargs: (
+            checks.append((service_url, token)),
+            "0.1.7",
+        )[1],
     )
     monkeypatch.setattr(onboarding, "_daemon_preflight", lambda config: _ready_preflight())
     output = io.StringIO()
@@ -520,7 +633,11 @@ def test_remote_up_keeps_running_with_a_visible_notice_when_update_is_declined(
     output = io.StringIO()
     probes: list[str] = []
 
-    def palace_status(candidate: onboarding.NocturneConfig) -> tuple[str, str]:
+    def palace_status(
+        candidate: onboarding.NocturneConfig,
+        *,
+        stdout: io.StringIO,
+    ) -> tuple[str, str]:
         assert output.getvalue() == f"{onboarding.PALACE_CHECKING_LINE}\n"
         probes.append("health")
         return "0.0.9", "older"
@@ -585,7 +702,7 @@ def test_remote_up_acceptance_runs_full_deploy_with_the_same_consent(
     monkeypatch.setattr(
         onboarding,
         "_remote_palace_status",
-        lambda config: ("0.0.9", "older"),
+        lambda config, **kwargs: ("0.0.9", "older"),
     )
     monkeypatch.setattr(
         "harness.deploy.preflight_release_guard",
@@ -636,7 +753,7 @@ def test_remote_up_refuses_when_the_narrow_release_guard_cannot_be_read(
     monkeypatch.setattr(
         onboarding,
         "_remote_palace_status",
-        lambda candidate: ("0.0.9", "older"),
+        lambda candidate, **kwargs: ("0.0.9", "older"),
     )
     monkeypatch.setattr(
         "harness.deploy.preflight_release_guard",
@@ -680,7 +797,7 @@ def test_remote_up_refuses_newer_contract_without_offering_a_downgrade(
     monkeypatch.setattr(
         onboarding,
         "_remote_palace_status",
-        lambda config: ("0.2.0", "newer"),
+        lambda config, **kwargs: ("0.2.0", "newer"),
     )
 
     with pytest.raises(onboarding.OnboardingError) as error:
@@ -759,7 +876,10 @@ def test_remote_palace_status_is_exactly_one_health_probe(
     monkeypatch.setattr(
         onboarding,
         "_remote_api_contract_version",
-        lambda service_url, token: (calls.append((service_url, token)), "0.1.7")[1],
+        lambda service_url, token, **kwargs: (
+            calls.append((service_url, token)),
+            "0.1.7",
+        )[1],
     )
     monkeypatch.setattr(
         onboarding,
@@ -861,7 +981,7 @@ def test_remote_doctor_matches_up_contract_skew_decisions(
     monkeypatch.setattr(
         onboarding,
         "_remote_palace_status",
-        lambda config: (remote_contract, relation),
+        lambda config, **kwargs: (remote_contract, relation),
     )
     output = io.StringIO()
 
@@ -953,7 +1073,7 @@ def test_up_and_doctor_share_every_daemon_preflight_failure(
     monkeypatch.setattr(
         onboarding,
         "_remote_palace_status",
-        lambda config: ("0.1.0", "compatible"),
+        lambda config, **kwargs: ("0.1.0", "compatible"),
     )
 
     with pytest.raises(onboarding.OnboardingError, match="Port 8765"):

@@ -1312,12 +1312,8 @@ class SpineClient:
         )
         return _expect_success(response, status=200, adapter=_BATCH_DECISION_RESPONSE)
 
-    async def append_transcripts(
-        self, request: AppendTranscriptsRequest
-    ) -> TranscriptAppendResult:
-        response = await self._request(
-            "POST", "v1/transcripts", json_body=_request_body(request)
-        )
+    async def append_transcripts(self, request: AppendTranscriptsRequest) -> TranscriptAppendResult:
+        response = await self._request("POST", "v1/transcripts", json_body=_request_body(request))
         return _expect_success(response, status=200, adapter=_TRANSCRIPT_APPEND_RESPONSE)
 
     async def transcripts(self, principal_id: str) -> TranscriptList:

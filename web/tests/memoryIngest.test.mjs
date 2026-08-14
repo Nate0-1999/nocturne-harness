@@ -16,7 +16,7 @@ test('agent-file jump-start offers one explicit route into ordinary seed review'
   assert.doesNotMatch(app, /data-testid="palace-queue-launch"/u)
 })
 
-/** PLAN M2MI and M2TC require Memory Ingest to inherit ordinary Stage chrome and geometry. */
+/** P1.5 requires M2MI Memory Ingest to inherit ordinary Stage chrome and geometry. */
 test('Memory Ingest is a movable panel rather than a header control or lifecycle overlay', async () => {
   const [app, rack, stage] = await Promise.all([
     source('App.tsx'),

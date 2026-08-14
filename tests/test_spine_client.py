@@ -126,11 +126,11 @@ def test_client_exposes_all_spine_routes() -> None:
         "create_seed",
         "approval_queue",
         "decide_queue_item",
-            "decide_queue_batch",
-            "append_transcripts",
-            "transcripts",
-            "transcript_status",
-        }
+        "decide_queue_batch",
+        "append_transcripts",
+        "transcripts",
+        "transcript_status",
+    }
 
 
 def test_injection_event_annotation_contract_is_strict_and_atomic() -> None:

@@ -2266,3 +2266,31 @@ on a remote copy makes network health stronger than local durability. Merging
 two divergent journals guesses at conversation lineage. Broad project scans,
 service-account credentials, or pre-consent secret reads widen owner authority
 for no resurrection benefit.
+
+## 076 — One bounded warm-up policy governs every Palace read [P4, SPEC D.2 112, M2CP]
+
+**Decision.** Route both onboarding Palace reads through one JSON probe helper.
+The first request retains the four-second warm-path timeout. Only a transport
+timeout or connection failure prints `warming up your Palace — a few more
+seconds…` and earns one 30-second retry. A server HTTP refusal or unreadable
+JSON is already a completed response, so it keeps the existing plain failure
+without pretending that the Palace is merely asleep. The contract handshake,
+transcript resurrection, and transcript-status doctor read all pass their
+owner-facing output stream into that same helper.
+
+Model PALACE-COLD as a lifecycle-matrix probe dimension rather than a new API
+contract relation. Cold and warm Palaces have the same compatibility and
+startup action; the cold row differs only by its visible intermediate voice and
+the single longer second attempt.
+
+**Motivation.** Cloud Run scale-to-zero is a normal Palace state, but a second
+ad hoc retry at only one caller would leave resurrection and doctor with the
+same false failure. One helper keeps the retry count, timeout pair, voice, and
+refusal boundary identical at every read while the matrix makes the incident a
+permanent startup state instead of a one-off timeout test.
+
+**Rejected alternatives.** Raising the first timeout to 30 seconds would make
+every genuine failure slow. Retrying forever would turn startup into an
+unbounded wait. Retrying HTTP and parse failures would mislabel authentication,
+server, or contract defects as cold starts. A second Palace compatibility state
+machine would duplicate the existing API-contract authority.

@@ -27,7 +27,7 @@ test('the centered canvas is four times larger per axis and carries a subordinat
   assert.match(css, /var\(--stage-fine-grid-size\) var\(--stage-fine-grid-size\)/u)
 })
 
-/** PLAN M2SP and NATES_VISION section 18 restore crafted chamfers instead of box-on-box shells. */
+/** P2 and NATES_VISION section 18 restore crafted chamfers instead of box-on-box shells. */
 test('every module and the stage-owned floating shells carry the shared chamfer language', async () => {
   const css = await readFile(new URL('src/assets/rack.css', webRoot), 'utf8')
 

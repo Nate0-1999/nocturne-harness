@@ -295,9 +295,7 @@ class TranscriptJournal:
 
         with self._lock:
             existing = [
-                name
-                for name in os.listdir(self._root)
-                if self._is_transcript_filename(name)
+                name for name in os.listdir(self._root) if self._is_transcript_filename(name)
             ]
             if existing:
                 raise TranscriptJournalUnavailable(
@@ -355,9 +353,7 @@ class TranscriptJournal:
             filename = self._filename_for_thread(transcript.thread_id)
             rows = [json.loads(raw) for raw in self._read_file_rows(filename)]
             times = [
-                row.get("captured_at")
-                for row in rows
-                if isinstance(row.get("captured_at"), str)
+                row.get("captured_at") for row in rows if isinstance(row.get("captured_at"), str)
             ]
             title = "Restored conversation"
             for message in transcript.messages:
