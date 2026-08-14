@@ -3,12 +3,14 @@ from __future__ import annotations
 import io
 import stat
 import urllib.error
+from dataclasses import asdict
 from pathlib import Path
 
 import pytest
 
 from harness import onboarding
 from harness.deploy import DeployError
+from harness.transcript import TranscriptJournal
 
 
 class _HealthResponse:
@@ -65,14 +67,15 @@ def _ready_preflight() -> onboarding.DaemonPreflight:
 
 def _initialized(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> onboarding.NocturneConfig:
     monkeypatch.setenv("OPENROUTER_API_KEY", "private-openrouter-key")
-    onboarding.init_nocturne(home=tmp_path, stdout=io.StringIO())
+    onboarding.init_nocturne(home=tmp_path, prompt=lambda _: "n", stdout=io.StringIO())
     return onboarding.load_config(home=tmp_path)
 
 
 def test_init_prompts_once_and_generates_private_config(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """ADR-019 is defended by verifying that init prompts once and generates private config;
+    """ADR-019 and A-057 are defended by verifying that init asks the backup choice and
+    generates private config;
     this prevents drift in the private local owner onboarding contract.
     """
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
@@ -81,20 +84,131 @@ def test_init_prompts_once_and_generates_private_config(
 
     path = onboarding.init_nocturne(
         home=tmp_path,
-        prompt=lambda message: prompts.append(message) or "one-owner-secret",
+        prompt=lambda message: prompts.append(message)
+        or ("one-owner-secret" if message == "OpenRouter API key: " else "n"),
         stdout=output,
     )
     config = onboarding.load_config(home=tmp_path)
 
-    assert prompts == ["OpenRouter API key: "]
+    assert prompts == [
+        "OpenRouter API key: ",
+        "Back up conversation transcripts to your cloud Palace? [y/N] ",
+    ]
     assert config.openrouter_api_key == "one-owner-secret"
     assert config.spine_token != config.database_password
     assert config.machine_id.startswith("nocturne-")
+    assert config.transcript_backup is False
     assert stat.S_IMODE(tmp_path.stat().st_mode) == 0o700
     assert stat.S_IMODE(path.stat().st_mode) == 0o600
     assert "one-owner-secret" not in output.getvalue()
     assert config.spine_token not in output.getvalue()
     assert config.database_password not in output.getvalue()
+
+
+def test_init_persists_the_a057_transcript_backup_opt_in(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A-057 makes transcript backup an explicit, default-off owner choice."""
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "environment-secret")
+    monkeypatch.setattr(onboarding.shutil, "which", lambda _: None)
+
+    onboarding.init_nocturne(
+        home=tmp_path,
+        prompt=lambda message: "yes" if "Back up conversation" in message else "",
+        stdout=io.StringIO(),
+    )
+
+    config = onboarding.load_config(home=tmp_path)
+    assert config.transcript_backup is True
+    assert config.process_environment({})["NOCTURNE_TRANSCRIPT_BACKUP"] == "true"
+
+
+def test_a057_discovery_accepts_only_one_spine_service(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A-057 finds one owner Palace without remembering or mutating cloud state."""
+
+    monkeypatch.setattr(onboarding.shutil, "which", lambda _: "/usr/bin/gcloud")
+
+    def result(arguments: list[str], environ) -> object:
+        del environ
+        if arguments[:2] == ["auth", "list"]:
+            return [{"account": "owner@example.test"}]
+        if arguments[:3] == ["config", "get", "project"]:
+            return "owner-project"
+        return [
+            {
+                "metadata": {
+                    "name": "nocturne-spine",
+                    "labels": {"cloud.googleapis.com/location": "us-central1"},
+                },
+                "status": {"url": "https://spine.example.test"},
+            }
+        ]
+
+    monkeypatch.setattr(onboarding, "_gcloud_json", result)
+    assert onboarding._discover_cloud_palace({}) == (
+        "owner-project",
+        "us-central1",
+        "https://spine.example.test",
+    )
+
+
+def test_a057_fresh_home_restores_palace_transcripts_before_daemon(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A-057 tier 2 restores exact Palace rows into an empty home."""
+
+    source = TranscriptJournal(tmp_path / "source")
+    thread_id = "00000000-0000-0000-0000-000000005702"
+    source.append_message(
+        thread_id,
+        {
+            "message_id": "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+            "run_id": "01ARZ3NDEKTSV4RRFFQ69G5FAW",
+            "role": "user",
+            "content": "resurrect",
+            "state": "complete",
+        },
+        parent_id=None,
+    )
+    records = source.cloud_records()
+    config = onboarding.NocturneConfig(
+        home=tmp_path / "fresh",
+        openrouter_api_key="key",
+        spine_token="token",
+        database_password="password",
+        machine_id="machine",
+        palace_mode="remote",
+        spine_url="https://spine.example.test",
+        transcript_backup=True,
+    )
+    monkeypatch.setattr(
+        onboarding,
+        "_palace_json",
+        lambda candidate, path: {
+            "principal_id": "local",
+            "records": [
+                {
+                    **asdict(record),
+                    "received_at": "2026-08-14T12:00:00Z",
+                }
+                for record in records
+            ],
+        },
+    )
+
+    assert onboarding._restore_transcripts_from_palace(config) == 1
+    restored = TranscriptJournal(config.home / "transcripts")
+    assert restored.cloud_records() == records
+
+    monkeypatch.setattr(
+        onboarding,
+        "_palace_json",
+        lambda candidate, path: pytest.fail("existing journal must never be overwritten"),
+    )
+    assert onboarding._restore_transcripts_from_palace(config) == 0
 
 
 def test_init_uses_environment_secret_and_existing_config_is_inert(
@@ -105,22 +219,26 @@ def test_init_uses_environment_secret_and_existing_config_is_inert(
     """
     monkeypatch.setenv("OPENROUTER_API_KEY", "environment-secret")
 
-    def unexpected_prompt(_: str) -> str:
-        pytest.fail("init must not prompt")
+    prompts: list[str] = []
+
+    def backup_prompt(message: str) -> str:
+        prompts.append(message)
+        return "n"
 
     first = onboarding.init_nocturne(
         home=tmp_path,
-        prompt=unexpected_prompt,
+        prompt=backup_prompt,
         stdout=io.StringIO(),
     )
     original = first.read_bytes()
     second = onboarding.init_nocturne(
         home=tmp_path,
-        prompt=unexpected_prompt,
+        prompt=lambda _: pytest.fail("existing config must not prompt"),
         stdout=io.StringIO(),
     )
 
     assert second == first
+    assert prompts == ["Back up conversation transcripts to your cloud Palace? [y/N] "]
     assert first.read_bytes() == original
 
 
@@ -135,12 +253,16 @@ def test_remote_init_records_one_palace_origin_and_prompts_only_for_its_bearer(
     onboarding.init_nocturne(
         home=tmp_path,
         remote="https://spine.example.test/",
-        prompt=lambda message: prompts.append(message) or "remote-bearer",
+        prompt=lambda message: prompts.append(message)
+        or ("remote-bearer" if message == "Your Palace access token: " else "n"),
         stdout=io.StringIO(),
     )
     config = onboarding.load_config(home=tmp_path)
 
-    assert prompts == ["Your Palace access token: "]
+    assert prompts == [
+        "Your Palace access token: ",
+        "Back up conversation transcripts to your cloud Palace? [y/N] ",
+    ]
     assert config.palace_mode == "remote"
     assert config.spine_url == "https://spine.example.test"
     assert config.spine_token == "remote-bearer"

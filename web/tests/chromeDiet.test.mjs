@@ -4,8 +4,8 @@ import test from 'node:test'
 
 const source = (path) => readFile(new URL(`../src/${path}`, import.meta.url), 'utf8')
 
-/** PLAN M2ST2 / P2 requires rare app choices to live behind one working gear instead of occupying the work lane. */
-test('app settings own the live theme and layout controls', async () => {
+/** PLAN M2ST2 / M2RR / P2 requires rare app choices to live behind one working gear instead of occupying the work lane. */
+test('app settings own the live theme, transcript backup, and layout controls', async () => {
   const [app, rackCss] = await Promise.all([
     source('App.tsx'),
     source('assets/rack.css'),
@@ -13,6 +13,8 @@ test('app settings own the live theme and layout controls', async () => {
 
   assert.match(app, /data-testid="app-settings-toggle"[\s\S]*aria-expanded=\{appSettingsOpen\}/u)
   assert.match(app, /data-testid="app-settings-panel"[\s\S]*data-testid="theme-control"[\s\S]*setTheme/u)
+  assert.match(app, /data-testid="app-settings-panel"[\s\S]*data-testid="transcript-backup-toggle"[\s\S]*changeTranscriptBackup/u)
+  assert.match(app, /Back up transcripts to your Palace/u)
   assert.match(app, /data-testid="app-settings-panel"[\s\S]*data-testid="layout-save"[\s\S]*data-testid="layout-restore"[\s\S]*data-testid="layout-reset"/u)
   assert.doesNotMatch(app, /<div className="stage-toolbar"[\s\S]*data-testid="theme-control"/u)
   assert.match(rackCss, /\.app-settings-toggle\s*\{[^}]*left:\s*11\.75rem/su)

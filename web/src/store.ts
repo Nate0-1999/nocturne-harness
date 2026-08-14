@@ -109,6 +109,7 @@ export interface HarnessStoreState extends PersistedHarnessState {
   daemonMachineId: string | null
   globalError: HarnessError | null
   createThread: (projectKey?: string | null) => string
+  hydrateCatalog: (catalog: ThreadCatalogEntry[]) => void
   removeFixtureThreads: () => number
   selectThread: (threadId: string) => void
   beginPrompt: (
@@ -660,6 +661,29 @@ export const useHarnessStore = create<HarnessStoreState>()(
           globalError: null,
         }))
         return threadId
+      },
+
+      hydrateCatalog: (incoming) => {
+        const restored = restoredState({ catalog: incoming, selectedThreadId: null }).catalog
+        set((state) => {
+          const restoredIds = new Set(restored.map((entry) => entry.thread_id))
+          const catalog = [
+            ...restored,
+            ...state.catalog.filter((entry) => !restoredIds.has(entry.thread_id)),
+          ]
+          const selectedThreadId = state.selectedThreadId !== null &&
+            catalog.some((entry) => entry.thread_id === state.selectedThreadId)
+            ? state.selectedThreadId
+            : catalog[0]?.thread_id ?? null
+          return {
+            catalog,
+            selectedThreadId,
+            threads: {
+              ...runtimeForCatalog(restored),
+              ...state.threads,
+            },
+          }
+        })
       },
 
       removeFixtureThreads: () => {

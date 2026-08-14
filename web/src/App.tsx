@@ -136,6 +136,14 @@ const DISMISSIBLE_OVERLAY_CLASSES = {
 
 type DismissibleOverlayModuleId = keyof typeof DISMISSIBLE_OVERLAY_CLASSES
 
+interface TranscriptBackupState {
+  enabled: boolean
+  state: string
+  record_count: number | null
+  latest_received_at: string | null
+  error: string | null
+}
+
 function shortId(value: string): string {
   return value.slice(0, 8).toUpperCase()
 }
@@ -313,6 +321,8 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   const [platePressBusy, setPlatePressBusy] = useState(false)
   const plateInputRef = useRef<HTMLInputElement>(null)
   const [appSettingsOpen, setAppSettingsOpen] = useState(false)
+  const [transcriptBackup, setTranscriptBackup] = useState<TranscriptBackupState | null>(null)
+  const [transcriptBackupBusy, setTranscriptBackupBusy] = useState(false)
   const [pointerActive, setPointerActive] = useState(false)
   const [libraryOpen, setLibraryOpen] = useState(false)
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 })
@@ -341,6 +351,42 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     '--stage-major-grid-width': `${STAGE_UNIT_WIDTH}px`,
     '--stage-major-grid-height': `${STAGE_UNIT_HEIGHT}px`,
   } as CSSProperties
+
+  useEffect(() => {
+    if (!appSettingsOpen || transcriptBackup !== null) return
+    void globalThis.fetch('/v1/transcripts/settings', { cache: 'no-store' })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Transcript backup status is unavailable.')
+        setTranscriptBackup(await response.json() as TranscriptBackupState)
+      })
+      .catch(() => setTranscriptBackup({
+        enabled: false,
+        state: 'unavailable',
+        record_count: null,
+        latest_received_at: null,
+        error: 'Transcript backup status is unavailable.',
+      }))
+  }, [appSettingsOpen, transcriptBackup])
+
+  async function changeTranscriptBackup(enabled: boolean) {
+    setTranscriptBackupBusy(true)
+    try {
+      const response = await globalThis.fetch('/v1/transcripts/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled }),
+      })
+      if (!response.ok) throw new Error('The setting could not be saved.')
+      setTranscriptBackup(await response.json() as TranscriptBackupState)
+    } catch {
+      setTranscriptBackup((current) => current === null ? null : {
+        ...current,
+        error: 'The setting could not be saved. Run nocturne doctor for details.',
+      })
+    } finally {
+      setTranscriptBackupBusy(false)
+    }
+  }
 
   useEffect(() => {
     const viewport = viewportRef.current
@@ -675,6 +721,28 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                 </button>
               ) : null}
             </div>
+          </section>
+          <section>
+            <h2>Conversation backup</h2>
+            <label className="transcript-backup-control">
+              <input
+                type="checkbox"
+                data-testid="transcript-backup-toggle"
+                checked={transcriptBackup?.enabled ?? false}
+                disabled={transcriptBackup === null || transcriptBackupBusy}
+                onChange={(event) => void changeTranscriptBackup(event.currentTarget.checked)}
+              />
+              <span>Back up transcripts to your Palace</span>
+            </label>
+            <p data-testid="transcript-backup-status">
+              {transcriptBackup === null
+                ? 'Checking Palace backup…'
+                : transcriptBackup.error ?? (
+                  transcriptBackup.enabled
+                    ? `${transcriptBackup.state} · ${transcriptBackup.record_count ?? 0} records`
+                    : 'Off · transcripts stay on this machine'
+                )}
+            </p>
           </section>
           <section>
             <h2>Stage layout</h2>

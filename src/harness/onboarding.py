@@ -36,12 +36,12 @@ from harness.lifecycle import (
     prepare_local_restore,
 )
 from harness.resources import local_storage_snapshot
-from harness.transcript import TranscriptJournal, TranscriptJournalUnavailable
+from harness.transcript import JournalCloudRecord, TranscriptJournal, TranscriptJournalUnavailable
 
 LOCAL_URL = "http://127.0.0.1:8765"
 SPINE_URL = "http://127.0.0.1:8000"
 _CONFIG_FILE = "env"
-_CONFIG_VERSION = "4"
+_CONFIG_VERSION = "5"
 _DEFAULT_BACKUP_GENERATIONS = 5
 _LOWER_ULID_PATTERN = re.compile(r"[0-7][0-9a-hjkmnp-tv-z]{25}\Z")
 _API_CONTRACT_SEMVER_PATTERN = re.compile(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\Z")
@@ -75,6 +75,7 @@ class NocturneConfig:
     postgres_port: int = 5432
     backup_generations: int = _DEFAULT_BACKUP_GENERATIONS
     postgres_volume: str | None = None
+    transcript_backup: bool = False
 
     @property
     def path(self) -> Path:
@@ -105,6 +106,7 @@ class NocturneConfig:
                 "PRINCIPAL_ID": "local",
                 "MACHINE_ID": self.machine_id,
                 "AGENT_ID": "nocturne",
+                "NOCTURNE_TRANSCRIPT_BACKUP": "true" if self.transcript_backup else "false",
             }
         )
         if self.palace_mode == "local":
@@ -155,6 +157,17 @@ def init_nocturne(
         print(f"Nocturne is already initialized at {target_home}.", file=stdout)
         return target
 
+    discovered = None if remote is not None else _discover_cloud_palace(values)
+    if discovered is not None:
+        project, region, discovered_url = discovered
+        answer = prompt(f"Found your Palace ({project}, {region}) — reconnect? [y/N] ").strip()
+        if answer.lower() in {"y", "yes"}:
+            remote = discovered_url
+            discovered_token = _read_discovered_palace_token(project, values)
+        else:
+            discovered_token = None
+    else:
+        discovered_token = None
     palace_mode = "remote" if remote is not None else "local"
     spine_url = _parse_remote_url(remote) if remote is not None else SPINE_URL
     openrouter_key = values.get("OPENROUTER_API_KEY", "").strip()
@@ -164,10 +177,13 @@ def init_nocturne(
         raise OnboardingError("An OpenRouter API key is required.")
     spine_token = secrets.token_urlsafe(32)
     if palace_mode == "remote":
-        spine_token = prompt("Your Palace access token: ").strip()
+        spine_token = discovered_token or prompt("Your Palace access token: ").strip()
         if not spine_token:
             raise OnboardingError("Your Palace access token is required for a remote Palace.")
     postgres_port = _parse_port(values.get("NOCTURNE_POSTGRES_PORT", "5432"))
+    transcript_backup = prompt(
+        "Back up conversation transcripts to your cloud Palace? [y/N] "
+    ).strip().lower() in {"y", "yes"}
 
     config = NocturneConfig(
         home=target_home,
@@ -178,6 +194,7 @@ def init_nocturne(
         palace_mode=palace_mode,
         spine_url=spine_url,
         postgres_port=postgres_port,
+        transcript_backup=transcript_backup,
     )
     _write_config(config)
     print(f"Initialized Nocturne at {target_home}. Run `nocturne up`.", file=stdout)
@@ -210,6 +227,10 @@ def load_config(*, home: Path | None = None) -> NocturneConfig:
         _upgrade_v3_config(path)
         values = _parse_config(path)
         version = values.get("NOCTURNE_CONFIG_VERSION")
+    if version == "4":
+        _upgrade_v4_config(path)
+        values = _parse_config(path)
+        version = values.get("NOCTURNE_CONFIG_VERSION")
     if version != _CONFIG_VERSION:
         raise OnboardingError("Unsupported Nocturne config version; reinstall or reinitialize.")
     port = _parse_port(values.get("NOCTURNE_POSTGRES_PORT", "5432"))
@@ -218,6 +239,10 @@ def load_config(*, home: Path | None = None) -> NocturneConfig:
     )
     postgres_volume = _parse_postgres_volume(
         values.get("NOCTURNE_POSTGRES_VOLUME", ""), target_home
+    )
+    transcript_backup = _parse_bool(
+        values.get("NOCTURNE_TRANSCRIPT_BACKUP", "false"),
+        "NOCTURNE_TRANSCRIPT_BACKUP",
     )
     palace_mode = _parse_palace_mode(values.get("NOCTURNE_PALACE_MODE", ""))
     spine_url = (
@@ -238,6 +263,7 @@ def load_config(*, home: Path | None = None) -> NocturneConfig:
         postgres_port=port,
         backup_generations=backup_generations,
         postgres_volume=postgres_volume,
+        transcript_backup=transcript_backup,
     )
 
 
@@ -290,6 +316,7 @@ def up_nocturne(
     harness: subprocess.Popen[str] | None = None
     try:
         _wait_for_url(f"{SPINE_URL}/healthz", token=config.spine_token, process=spine)
+        _restore_transcripts_from_palace(config)
         harness = _start_service(
             "harness.packaged:create_app",
             port=8765,
@@ -356,6 +383,7 @@ def _up_remote(
                     "Your Palace update was postponed; some newer screens may be unavailable.",
                     file=stdout,
                 )
+    _restore_transcripts_from_palace(config)
     harness = _start_service(
         "harness.packaged:create_app",
         port=8765,
@@ -508,6 +536,12 @@ def doctor_nocturne(*, home: Path | None = None, stdout: TextIO = sys.stdout) ->
 
     config = load_config(home=home)
     preflight = _daemon_preflight(config)
+    print(
+        f"Conversation transcript backup: {'on' if config.transcript_backup else 'off'}",
+        file=stdout,
+    )
+    if config.transcript_backup:
+        _print_transcript_backup_status(config, stdout=stdout)
     if config.palace_mode == "remote":
         return _doctor_remote(config, preflight=preflight, stdout=stdout)
     report = inspect_local_palace(config)
@@ -667,6 +701,7 @@ def _write_config(config: NocturneConfig) -> None:
         "NOCTURNE_POSTGRES_PORT": str(config.postgres_port),
         "NOCTURNE_BACKUP_GENERATIONS": str(config.backup_generations),
         "NOCTURNE_POSTGRES_VOLUME": config.active_postgres_volume,
+        "NOCTURNE_TRANSCRIPT_BACKUP": "true" if config.transcript_backup else "false",
         "MACHINE_ID": config.machine_id,
     }
     content = "".join(f"{name}={json.dumps(value)}\n" for name, value in values.items())
@@ -734,10 +769,40 @@ def _upgrade_v3_config(path: Path) -> None:
         raise OnboardingError("Nocturne config has an invalid version field.")
     if any(line.startswith(("NOCTURNE_PALACE_MODE=", "SPINE_URL=")) for line in lines):
         raise OnboardingError("Nocturne version 3 config has unexpected Palace fields.")
-    lines[version_lines[0]] = f"NOCTURNE_CONFIG_VERSION={json.dumps(_CONFIG_VERSION)}\n"
+    lines[version_lines[0]] = 'NOCTURNE_CONFIG_VERSION="4"\n'
     lines.append('NOCTURNE_PALACE_MODE="local"\n')
     lines.append(f"SPINE_URL={json.dumps(SPINE_URL)}\n")
     _atomic_write_config(path, "".join(lines))
+
+
+def _upgrade_v4_config(path: Path) -> None:
+    """Add the owner-controlled transcript backup choice, preserving opt-in."""
+
+    lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
+    version_lines = [
+        index for index, line in enumerate(lines) if line.startswith("NOCTURNE_CONFIG_VERSION=")
+    ]
+    if len(version_lines) != 1:
+        raise OnboardingError("Nocturne config has an invalid version field.")
+    if any(line.startswith("NOCTURNE_TRANSCRIPT_BACKUP=") for line in lines):
+        raise OnboardingError("Nocturne version 4 config has an unexpected transcript field.")
+    lines[version_lines[0]] = f"NOCTURNE_CONFIG_VERSION={json.dumps(_CONFIG_VERSION)}\n"
+    lines.append('NOCTURNE_TRANSCRIPT_BACKUP="false"\n')
+    _atomic_write_config(path, "".join(lines))
+
+
+def set_transcript_backup(config: NocturneConfig, enabled: bool) -> NocturneConfig:
+    """Atomically persist the settings-gear transcript choice."""
+
+    lines = config.path.read_text(encoding="utf-8").splitlines(keepends=True)
+    matches = [
+        index for index, line in enumerate(lines) if line.startswith("NOCTURNE_TRANSCRIPT_BACKUP=")
+    ]
+    if len(matches) != 1:
+        raise OnboardingError("Nocturne config has an invalid transcript backup field.")
+    lines[matches[0]] = f"NOCTURNE_TRANSCRIPT_BACKUP={json.dumps('true' if enabled else 'false')}\n"
+    _atomic_write_config(config.path, "".join(lines))
+    return load_config(home=config.home)
 
 
 def _set_active_postgres_volume(config: NocturneConfig, volume: str) -> NocturneConfig:
@@ -769,6 +834,196 @@ def _parse_config(path: Path) -> dict[str, str]:
             raise OnboardingError(f"Config value on line {line_number} must be a string.")
         values[name] = value
     return values
+
+
+def _parse_bool(value: str, name: str) -> bool:
+    if value == "true":
+        return True
+    if value == "false":
+        return False
+    raise OnboardingError(f"{name} must be true or false.")
+
+
+def _gcloud_json(arguments: list[str], environ: Mapping[str, str]) -> object:
+    try:
+        completed = subprocess.run(
+            ["gcloud", *arguments, "--format=json"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=15,
+            env=dict(environ),
+        )
+        return json.loads(completed.stdout)
+    except (OSError, subprocess.SubprocessError, json.JSONDecodeError) as exc:
+        raise OnboardingError(
+            "Google Cloud discovery could not safely read your account. Run `gcloud auth list` "
+            "and `gcloud config get project`, fix the reported problem, then retry."
+        ) from exc
+
+
+def _discover_cloud_palace(environ: Mapping[str, str]) -> tuple[str, str, str] | None:
+    """Return one unambiguous owner Palace using read-only ambient gcloud state."""
+
+    if shutil.which("gcloud") is None:
+        return None
+    if any(
+        environ.get(name, "").strip()
+        for name in (
+            "GOOGLE_APPLICATION_CREDENTIALS",
+            "CLOUDSDK_AUTH_ACCESS_TOKEN",
+            "CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE",
+        )
+    ):
+        raise OnboardingError(
+            "Palace discovery refuses credential overrides. Clear the Google credential "
+            "override and use one signed-in gcloud owner account."
+        )
+    accounts = _gcloud_json(["auth", "list", "--filter=status:ACTIVE"], environ)
+    if not isinstance(accounts, list) or len(accounts) != 1:
+        raise OnboardingError(
+            "Palace discovery needs exactly one active gcloud owner account. Run `gcloud auth "
+            "list` and select one account, then retry."
+        )
+    account = accounts[0]
+    if not isinstance(account, dict) or not isinstance(account.get("account"), str):
+        raise OnboardingError("Palace discovery received an unreadable gcloud account response.")
+    if account["account"].endswith(".gserviceaccount.com"):
+        raise OnboardingError(
+            "Palace discovery requires a signed-in human owner, not a service account. "
+            "Run `gcloud auth login`, select that account, then retry."
+        )
+    project_result = _gcloud_json(["config", "get", "project"], environ)
+    project = project_result if isinstance(project_result, str) else None
+    if project is None or not project.strip():
+        raise OnboardingError(
+            "Palace discovery needs one active gcloud project. Run `gcloud config set project "
+            "PROJECT_ID`, then retry."
+        )
+    try:
+        services = _gcloud_json(
+            ["run", "services", "list", "--project", project, "--platform=managed"], environ
+        )
+    except OnboardingError:
+        return None
+    if not isinstance(services, list):
+        raise OnboardingError("Palace discovery received an unreadable Cloud Run response.")
+    matches: list[tuple[str, str]] = []
+    for service in services:
+        if not isinstance(service, dict):
+            continue
+        metadata = service.get("metadata")
+        status_value = service.get("status")
+        if not isinstance(metadata, dict) or not isinstance(status_value, dict):
+            continue
+        name = metadata.get("name")
+        if not isinstance(name, str) or not name.endswith("-spine"):
+            continue
+        labels = metadata.get("labels")
+        url = status_value.get("url")
+        region = labels.get("cloud.googleapis.com/location") if isinstance(labels, dict) else None
+        if not isinstance(url, str) or not isinstance(region, str) or not region.strip():
+            raise OnboardingError("Palace discovery found a malformed Cloud Run service.")
+        try:
+            matches.append((region, _parse_remote_url(url)))
+        except OnboardingError as exc:
+            raise OnboardingError(
+                "Palace discovery found a malformed Cloud Run service."
+            ) from exc
+    if not matches:
+        return None
+    if len(matches) != 1:
+        return None
+    return project, matches[0][0], matches[0][1]
+
+
+def _read_discovered_palace_token(project: str, environ: Mapping[str, str]) -> str:
+    try:
+        completed = subprocess.run(
+            [
+                "gcloud",
+                "secrets",
+                "versions",
+                "access",
+                "latest",
+                "--secret=spine-token",
+                "--project",
+                project,
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=15,
+            env=dict(environ),
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise OnboardingError(
+            "Your Palace was selected, but its access token could not be read. Confirm Secret "
+            "Manager access with gcloud, then retry."
+        ) from exc
+    token = completed.stdout.strip()
+    if not token:
+        raise OnboardingError("Your Palace access token secret is empty.")
+    return token
+
+
+def _palace_json(config: NocturneConfig, path: str) -> object:
+    request = urllib.request.Request(
+        f"{config.spine_url.rstrip('/')}/{path.lstrip('/')}",
+        headers={"Authorization": f"Bearer {config.spine_token}"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=PALACE_PROBE_TIMEOUT_SECONDS) as response:
+            return json.loads(response.read())
+    except (OSError, ValueError) as exc:
+        raise OnboardingError(
+            "Conversation backup could not reach the Palace transcript service. Update the "
+            "Palace if offered, then run `nocturne doctor` and try again."
+        ) from exc
+
+
+def _restore_transcripts_from_palace(config: NocturneConfig) -> int:
+    if not config.transcript_backup:
+        return 0
+    journal = TranscriptJournal(config.home / "transcripts")
+    if journal.cloud_records():
+        return 0
+    payload = _palace_json(config, "/v1/transcripts?principal_id=local")
+    if not isinstance(payload, dict) or not isinstance(payload.get("records"), list):
+        raise OnboardingError("The Palace returned an unreadable transcript backup.")
+    records: list[JournalCloudRecord] = []
+    try:
+        for raw in payload["records"]:
+            if not isinstance(raw, dict):
+                raise ValueError
+            records.append(
+                JournalCloudRecord(
+                    thread_id=str(uuid.UUID(raw["thread_id"])),
+                    sequence=int(raw["sequence"]),
+                    journal_line=raw["journal_line"],
+                    sha256=raw["sha256"],
+                )
+            )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise OnboardingError("The Palace returned an unreadable transcript backup.") from exc
+    try:
+        return journal.restore_cloud_records(tuple(records))
+    except TranscriptJournalUnavailable as exc:
+        raise OnboardingError(str(exc)) from exc
+
+
+def _print_transcript_backup_status(config: NocturneConfig, *, stdout: TextIO) -> None:
+    try:
+        payload = _palace_json(config, "/v1/transcripts/status?principal_id=local")
+        if not isinstance(payload, dict) or not isinstance(payload.get("record_count"), int):
+            raise OnboardingError("The Palace returned an unreadable transcript status.")
+        print(f"Palace transcript records: {payload['record_count']}", file=stdout)
+    except OnboardingError:
+        print(
+            "Palace transcript records: waiting — check Palace reachability and run "
+            "`nocturne doctor` again.",
+            file=stdout,
+        )
 
 
 def _require_command(command: str) -> None:

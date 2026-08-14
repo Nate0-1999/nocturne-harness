@@ -2948,6 +2948,14 @@ button.rack-module__resize-handle--nw {
   justify-content: space-between;
 }
 
+.app-settings-panel .transcript-backup-control {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--ink);
+  font-size: 0.66rem;
+}
+
 .app-settings-panel .theme-control > span {
   position: static;
   width: auto;

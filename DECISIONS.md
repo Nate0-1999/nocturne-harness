@@ -2235,3 +2235,34 @@ and poorly scoped. A new agent-file endpoint that writes memories would fork the
 seed contract. Renaming the internal module id would force a persistence and
 plugin migration for no owner-visible gain. A dedicated layer or dialog would
 add navigation ceremony to a module that already fits the Work stage.
+
+## 075 — Conversation resurrection projects the journal; it does not replace it [A-057, P4, M2RR]
+
+**Decision.** Keep the private append-only JSONL journal as the only local
+conversation authority. When the owner enables transcript backup, a retrying
+daemon worker sends its exact fsynced lines, SHA-256 digests, and physical
+per-thread sequence to Spine in bounded batches. A cloud failure never turns a
+durable local turn into a failed turn; settings and doctor expose the waiting
+state. On an empty home, startup may restore exact Palace lines and must validate
+them through the ordinary journal hydrator before the daemon starts. It never
+overwrites or merges existing local files. Browser thread navigation is derived
+from that hydrated journal, while local-only empty threads remain browser-local.
+
+Config v5 records the default-off choice. Init asks every owner and, without an
+explicit remote URL, may offer exactly one conservatively discovered Cloud Run
+Spine. Discovery is read-only; Secret Manager is read only after consent, using
+one ambient human gcloud identity. The app settings gear persists the same value
+atomically and changes the worker live.
+
+**Motivation.** P4 asks the owner to lose code or a machine without losing the
+conversation that carries the work. Copying the journal's exact bytes makes
+that promise testable while retaining the existing fail-closed durability law.
+One derived catalog prevents navigation metadata from becoming a competing
+history store.
+
+**Rejected alternatives.** A bucket duplicates storage and custody. A separate
+cloud catalog introduces reconciliation and deletion semantics. Blocking turns
+on a remote copy makes network health stronger than local durability. Merging
+two divergent journals guesses at conversation lineage. Broad project scans,
+service-account credentials, or pre-consent secret reads widen owner authority
+for no resurrection benefit.

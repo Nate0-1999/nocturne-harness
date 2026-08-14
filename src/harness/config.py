@@ -32,6 +32,7 @@ class HarnessSettings(BaseSettings):
     memory_max_tokens: int = Field(default=128, ge=1)
     remember_split_timeout_seconds: float = Field(default=30.0, gt=0)
     extraction_idle_hours: float | None = Field(default=24.0, gt=0)
+    nocturne_transcript_backup: bool = False
 
     @field_validator("model_context_tokens", mode="before")
     @classmethod

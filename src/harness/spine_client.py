@@ -219,6 +219,50 @@ class InjectionEventAnnotationInput(ContractModel):
     annotator_origin_agent: NonBlankString
 
 
+class TranscriptRecordInput(ContractModel):
+    thread_id: UUID
+    sequence: int = Field(strict=True, gt=0)
+    journal_line: str
+    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+class AppendTranscriptsRequest(ContractModel):
+    principal_id: NonBlankString
+    records: list[TranscriptRecordInput] = Field(min_length=1, max_length=100)
+
+
+class TranscriptRecordView(TranscriptRecordInput):
+    received_at: datetime
+
+    @field_validator("received_at")
+    @classmethod
+    def require_aware_received_at(cls, value: datetime) -> datetime:
+        return _require_aware_timestamp(value)
+
+
+class TranscriptStatus(ContractModel):
+    principal_id: NonBlankString
+    thread_count: int = Field(ge=0)
+    record_count: int = Field(ge=0)
+    latest_received_at: datetime | None
+
+    @field_validator("latest_received_at")
+    @classmethod
+    def require_aware_latest(cls, value: datetime | None) -> datetime | None:
+        return None if value is None else _require_aware_timestamp(value)
+
+
+class TranscriptAppendResult(ContractModel):
+    accepted: int = Field(ge=0)
+    replayed: int = Field(ge=0)
+    status: TranscriptStatus
+
+
+class TranscriptList(ContractModel):
+    principal_id: NonBlankString
+    records: list[TranscriptRecordView]
+
+
 class InjectionEventAnnotationsRequest(ContractModel):
     """One nonempty atomic batch with unique target event identities."""
 
@@ -990,6 +1034,9 @@ _SEED_RESPONSE = TypeAdapter(SeedResponse)
 _QUEUE_RESPONSE = TypeAdapter(QueueResponse)
 _QUEUE_DECISION_RESPONSE = TypeAdapter(QueueDecisionResponse)
 _BATCH_DECISION_RESPONSE = TypeAdapter(BatchDecisionResponse)
+_TRANSCRIPT_APPEND_RESPONSE = TypeAdapter(TranscriptAppendResult)
+_TRANSCRIPT_LIST_RESPONSE = TypeAdapter(TranscriptList)
+_TRANSCRIPT_STATUS_RESPONSE = TypeAdapter(TranscriptStatus)
 _PROBLEM_DETAIL = TypeAdapter(ProblemDetail)
 
 
@@ -1264,6 +1311,26 @@ class SpineClient:
             json_body=_request_body(request),
         )
         return _expect_success(response, status=200, adapter=_BATCH_DECISION_RESPONSE)
+
+    async def append_transcripts(
+        self, request: AppendTranscriptsRequest
+    ) -> TranscriptAppendResult:
+        response = await self._request(
+            "POST", "v1/transcripts", json_body=_request_body(request)
+        )
+        return _expect_success(response, status=200, adapter=_TRANSCRIPT_APPEND_RESPONSE)
+
+    async def transcripts(self, principal_id: str) -> TranscriptList:
+        response = await self._request(
+            "GET", "v1/transcripts", params={"principal_id": principal_id}
+        )
+        return _expect_success(response, status=200, adapter=_TRANSCRIPT_LIST_RESPONSE)
+
+    async def transcript_status(self, principal_id: str) -> TranscriptStatus:
+        response = await self._request(
+            "GET", "v1/transcripts/status", params={"principal_id": principal_id}
+        )
+        return _expect_success(response, status=200, adapter=_TRANSCRIPT_STATUS_RESPONSE)
 
     async def _request(
         self,

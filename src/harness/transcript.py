@@ -45,6 +45,23 @@ class HydratedTranscript:
     attachments: Mapping[str, ImageAttachment]
 
 
+@dataclass(frozen=True, slots=True)
+class JournalCloudRecord:
+    thread_id: str
+    sequence: int
+    journal_line: str
+    sha256: str
+
+
+@dataclass(frozen=True, slots=True)
+class TranscriptCatalogEntry:
+    thread_id: str
+    title: str
+    created_at: str
+    updated_at: str
+    project_key: str | None
+
+
 class TranscriptJournal:
     """Durably append self-contained JSON records to one file per thread."""
 
@@ -247,6 +264,135 @@ class TranscriptJournal:
                 if transcript is not None:
                     hydrated.append(transcript)
             return tuple(hydrated)
+
+    def cloud_records(self) -> tuple[JournalCloudRecord, ...]:
+        """Return exact, ordered fsynced lines for the optional Palace projection."""
+
+        with self._lock:
+            transcripts = self.hydrate_threads()
+            records: list[JournalCloudRecord] = []
+            for transcript in sorted(transcripts, key=lambda item: item.thread_id):
+                filename = self._filename_for_thread(transcript.thread_id)
+                for sequence, raw in enumerate(self._read_file_rows(filename), start=1):
+                    try:
+                        line = raw.decode("utf-8")
+                    except UnicodeDecodeError as exc:
+                        raise TranscriptJournalUnavailable(
+                            f"Conversation journal for thread {transcript.thread_id} is not UTF-8."
+                        ) from exc
+                    records.append(
+                        JournalCloudRecord(
+                            thread_id=transcript.thread_id,
+                            sequence=sequence,
+                            journal_line=line,
+                            sha256=hashlib.sha256(raw).hexdigest(),
+                        )
+                    )
+            return tuple(records)
+
+    def restore_cloud_records(self, records: tuple[JournalCloudRecord, ...]) -> int:
+        """Restore exact Palace rows only into a completely empty local journal."""
+
+        with self._lock:
+            existing = [
+                name
+                for name in os.listdir(self._root)
+                if self._is_transcript_filename(name)
+            ]
+            if existing:
+                raise TranscriptJournalUnavailable(
+                    "Conversation resurrection refuses to overwrite existing local transcripts."
+                )
+            grouped: dict[str, list[JournalCloudRecord]] = {}
+            for record in records:
+                self._require_thread_id(record.thread_id)
+                raw = record.journal_line.encode("utf-8")
+                if "\n" in record.journal_line or "\r" in record.journal_line:
+                    raise TranscriptJournalUnavailable("Palace transcript row contains a newline.")
+                if hashlib.sha256(raw).hexdigest() != record.sha256:
+                    raise TranscriptJournalUnavailable(
+                        "Palace transcript row has a changed digest."
+                    )
+                try:
+                    row = json.loads(record.journal_line)
+                except json.JSONDecodeError as exc:
+                    raise TranscriptJournalUnavailable(
+                        "Palace transcript row is not JSON."
+                    ) from exc
+                if not isinstance(row, dict) or row.get("thread_id") != record.thread_id:
+                    raise TranscriptJournalUnavailable(
+                        "Palace transcript row changes thread identity."
+                    )
+                grouped.setdefault(record.thread_id, []).append(record)
+            for thread_id, rows in grouped.items():
+                if [row.sequence for row in rows] != list(range(1, len(rows) + 1)):
+                    raise TranscriptJournalUnavailable(
+                        f"Palace transcript for thread {thread_id} has a sequence gap."
+                    )
+            created: list[Path] = []
+            try:
+                for thread_id, rows in grouped.items():
+                    path = self.path_for_thread(thread_id)
+                    with path.open("xb") as stream:
+                        os.chmod(path, 0o600)
+                        for row in rows:
+                            stream.write(row.journal_line.encode("utf-8") + b"\n")
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                    created.append(path)
+                self.hydrate_threads()
+            except BaseException:
+                for path in created:
+                    path.unlink(missing_ok=True)
+                raise
+            return sum(len(rows) for rows in grouped.values())
+
+    def catalog(self) -> tuple[TranscriptCatalogEntry, ...]:
+        """Derive browser navigation from journal rows, never a second history store."""
+
+        entries: list[TranscriptCatalogEntry] = []
+        for transcript in self.hydrate_threads():
+            filename = self._filename_for_thread(transcript.thread_id)
+            rows = [json.loads(raw) for raw in self._read_file_rows(filename)]
+            times = [
+                row.get("captured_at")
+                for row in rows
+                if isinstance(row.get("captured_at"), str)
+            ]
+            title = "Restored conversation"
+            for message in transcript.messages:
+                if message.get("role") != "user":
+                    continue
+                content = message.get("content")
+                if isinstance(content, str) and content.strip():
+                    title = " ".join(content.split())[:80]
+                    break
+            if not times:
+                raise TranscriptJournalUnavailable("Conversation journal has no capture timestamp.")
+            entries.append(
+                TranscriptCatalogEntry(
+                    thread_id=transcript.thread_id,
+                    title=title,
+                    created_at=self._browser_timestamp(times[0]),
+                    updated_at=self._browser_timestamp(times[-1]),
+                    project_key=transcript.project_key,
+                )
+            )
+        return tuple(sorted(entries, key=lambda item: item.updated_at, reverse=True))
+
+    @staticmethod
+    def _browser_timestamp(value: str) -> str:
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise TranscriptJournalUnavailable(
+                "Conversation journal has an invalid capture timestamp."
+            ) from exc
+        if parsed.tzinfo is None or parsed.utcoffset() is None:
+            raise TranscriptJournalUnavailable(
+                "Conversation journal has an invalid capture timestamp."
+            )
+        return parsed.astimezone(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
     def transcript_tail(self, thread_id: str) -> str | None:
         """Return the durable tail identity used for idempotent archive extraction."""

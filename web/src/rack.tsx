@@ -804,16 +804,33 @@ export function RackRuntime({ children }: { children: ReactNode }) {
   })
 
   useEffect(() => {
-    harnessClient.connect()
-    const state = useHarnessStore.getState()
-    if (state.catalog.length === 0) {
-      harnessClient.createThread()
-    } else if (state.selectedThreadId === null) {
-      harnessClient.selectThread(state.catalog[0].thread_id)
-    } else {
-      harnessClient.requestSnapshot(state.selectedThreadId)
+    let active = true
+    void globalThis.fetch('/v1/transcripts/catalog', {
+      cache: 'no-store',
+      credentials: 'same-origin',
+    }).then(async (response) => {
+      if (response.ok) {
+        const payload = await response.json() as { threads?: ThreadCatalogEntry[] }
+        if (active && Array.isArray(payload.threads)) {
+          useHarnessStore.getState().hydrateCatalog(payload.threads)
+        }
+      }
+    }).catch(() => undefined).finally(() => {
+      if (!active) return
+      harnessClient.connect()
+      const state = useHarnessStore.getState()
+      if (state.catalog.length === 0) {
+        harnessClient.createThread()
+      } else if (state.selectedThreadId === null) {
+        harnessClient.selectThread(state.catalog[0].thread_id)
+      } else {
+        harnessClient.requestSnapshot(state.selectedThreadId)
+      }
+    })
+    return () => {
+      active = false
+      harnessClient.disconnect()
     }
-    return () => harnessClient.disconnect()
   }, [])
 
   useEffect(() => {

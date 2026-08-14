@@ -23,6 +23,7 @@ from fastapi import (
 )
 from fastapi.responses import PlainTextResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 from harness import __version__
 from harness.agent import HarnessAgent
@@ -48,7 +49,7 @@ from harness.model_policy import (
     ThreadModelResolution,
     ThreadModelResolver,
 )
-from harness.onboarding import nocturne_home
+from harness.onboarding import load_config, nocturne_home, set_transcript_backup
 from harness.parameter_registry import (
     ParameterSnapshot,
     ParameterWriteRequest,
@@ -89,6 +90,7 @@ from harness.spine_client import (
 )
 from harness.tools_memory import MemoryToolContext
 from harness.transcript import TranscriptJournal, TranscriptJournalUnavailable
+from harness.transcript_sync import TranscriptSyncEngine
 
 DEFAULT_WEB_DIST = Path(__file__).resolve().parents[2] / "web" / "dist"
 DEFAULT_WEB_ROOT = DEFAULT_WEB_DIST.parent
@@ -112,6 +114,10 @@ type ScorerProposalActivator = Callable[
     [str, RackScorerActivateRequest], Awaitable[ScorerConfigurationView]
 ]
 type ContextWindowReader = Callable[[str | None], ContextWindowSnapshot]
+
+
+class TranscriptBackupUpdate(BaseModel):
+    enabled: bool
 
 
 _OUTBOX_BUFFER_SIZE = 256
@@ -693,6 +699,12 @@ def create_dev_app(
         on_context_changed=publish_ambient_memory_panel,
     )
     journal = transcript_journal or TranscriptJournal(nocturne_home() / "transcripts")
+    transcript_sync = TranscriptSyncEngine(
+        journal,
+        owned_spine,
+        principal_id,
+        enabled=configured.nocturne_transcript_backup,
+    )
 
     async def read_vitals_snapshot() -> VitalsSnapshot:
         snapshot = await owned_spine.vitals_snapshot()
@@ -797,6 +809,27 @@ def create_dev_app(
     )
 
     def configure_extraction_routes(app: FastAPI) -> None:
+        @app.get("/v1/transcripts/settings")
+        async def transcript_settings():
+            return transcript_sync.snapshot()
+
+        @app.put("/v1/transcripts/settings")
+        async def update_transcript_settings(body: TranscriptBackupUpdate):
+            try:
+                config = load_config(home=nocturne_home())
+                set_transcript_backup(config, body.enabled)
+            except Exception as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Transcript backup setting could not be saved: {exc}",
+                ) from exc
+            transcript_sync.set_enabled(body.enabled)
+            return transcript_sync.snapshot()
+
+        @app.get("/v1/transcripts/catalog")
+        async def transcript_catalog():
+            return {"threads": journal.catalog()}
+
         async def flush_receipt_queue() -> None:
             await receipt_queue.flush(owned_spine)
 
@@ -919,6 +952,8 @@ def create_dev_app(
         before_static_mount=configure_extraction_routes,
     )
 
+    app.router.add_event_handler("startup", transcript_sync.start)
+    app.router.add_event_handler("shutdown", transcript_sync.stop)
     app.router.add_event_handler("shutdown", owned_spine.aclose)
     app.router.add_event_handler("shutdown", model_catalog.aclose)
     return app
