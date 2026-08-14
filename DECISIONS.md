@@ -2127,3 +2127,37 @@ duplicate the journal. Optimistic catalogue acknowledgement repeats F041. A
 client timer cannot prove a durable append. Rebinding a populated thread would
 mix conversation and memory provenance. Inferring the project from visible text
 would make the browser authoritative again.
+
+## 072 — The Stage template has one host-owned control language [P2, F016, F020, F022, F023, M2TC]
+
+**Decision.** Every mounted Stage module, including Spend and Context Bars, uses
+the same host-owned title, drag affordance, round settings gear beside remove,
+and edge/corner resize handles. Every module gear opens the same real dialog;
+scope choices appear only when the manifest declares the existing scope action,
+and fixed scope is explained instead of imitated with a dead control. The gate
+overlay receives the same settings launcher without creating a second lifecycle.
+
+The current finite Stage grid is the only resize bound: any Stage module may be
+one cell or the full `32 x 22` grid, while its preferred manifest size remains
+the factory layout. M2SP still owns any later change to the canvas or grid
+itself. One formatted host tooltip system covers every approachable control,
+and each sandboxed module installs the same system locally because iframe event
+boundaries cannot share hover state. Archive becomes a compact icon with its
+accessible name and extraction explanation intact. Model Device is a visibly
+bordered action with an explicit `Open` cue.
+
+**Motivation.** The remaining template defects had one cause: nearby controls
+looked or behaved as separate dialects. Spend and Context Bars retained special
+chrome and size caps, settings looked like an incidental popout, archive spent
+more attention than the thread work, and the model label hid a real navigation
+action. One control language lets an owner approach once, learn once, and then
+move, resize, configure, or remove any module without discovering exceptions.
+
+**Rejected alternatives.** Per-module tooltip components would duplicate copy,
+positioning, and accessibility behavior. Native `title` attributes cannot carry
+the calm title-plus-explanation format. A settings protocol inside each iframe
+would duplicate the host authority from Decision 066. Expanding the Stage or
+inventing an infinite canvas here would cross into M2SP. Keeping manifest caps
+would preserve exactly the grow/shrink exception this packet removes. A second
+archive lifecycle or a second model chooser would violate the existing
+authorities instead of clarifying them.

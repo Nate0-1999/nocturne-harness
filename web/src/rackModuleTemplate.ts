@@ -1,4 +1,5 @@
 import type { RackBounds } from './rackLayout'
+import { STAGE_COLUMNS, STAGE_ROWS } from './stageLayout.ts'
 
 export type StageRackModuleId =
   | 'threads'
@@ -17,6 +18,14 @@ export interface RackTemplateManifest {
   slot: 'header' | 'panel' | 'strip' | 'overlay'
   bounds: RackBounds
   movable: boolean
+}
+
+export function stageGridBounds(preferred: RackBounds['preferred']): RackBounds {
+  return {
+    min: { w: 1, h: 1 },
+    preferred: { ...preferred },
+    max: { w: STAGE_COLUMNS, h: STAGE_ROWS },
+  }
 }
 
 export const STAGE_RACK_MODULE_IDS: readonly StageRackModuleId[] = [
@@ -50,6 +59,12 @@ export function assertRackModuleTemplate(
       throw new Error(`${manifest.name} must use the shared drag affordance`)
     }
     assertGridBounds(manifest)
+    if (
+      manifest.bounds.min.w !== 1 || manifest.bounds.min.h !== 1 ||
+      manifest.bounds.max.w !== STAGE_COLUMNS || manifest.bounds.max.h !== STAGE_ROWS
+    ) {
+      throw new Error(`${manifest.name} must let the Stage grid govern resize limits`)
+    }
     const directions = rackResizeDirections(manifest)
     if (
       !directions.some((direction) => direction.length === 1) ||

@@ -703,34 +703,16 @@
       "variable": "--seam-7c55824b04e6"
     },
     {
-      "gold_lines": "rgba(150, 104, 44, 0.52)",
-      "neo_noir": "rgba(56, 215, 255, 0.52)",
-      "seraph_dressed": "rgba(93, 140, 242, 0.52)",
-      "variable": "--seam-6f59c290f936"
-    },
-    {
       "gold_lines": "rgba(150, 104, 44, 0.04)",
       "neo_noir": "rgba(56, 215, 255, 0.04)",
       "seraph_dressed": "rgba(93, 140, 242, 0.04)",
       "variable": "--seam-7dbf07b61736"
     },
     {
-      "gold_lines": "rgba(176, 122, 63, 0.035)",
-      "neo_noir": "rgba(242, 71, 155, 0.035)",
-      "seraph_dressed": "rgba(219, 153, 105, 0.035)",
-      "variable": "--seam-e23c46a150af"
-    },
-    {
       "gold_lines": "rgba(230, 236, 245, 0.96)",
       "neo_noir": "rgba(3, 10, 16, 0.96)",
       "seraph_dressed": "rgba(10, 13, 26, 0.96)",
       "variable": "--seam-c4438412564a"
-    },
-    {
-      "gold_lines": "rgba(176, 122, 63, 0.46)",
-      "neo_noir": "rgba(242, 71, 155, 0.46)",
-      "seraph_dressed": "rgba(219, 153, 105, 0.46)",
-      "variable": "--seam-f4642c0d336d"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.09)",
@@ -751,28 +733,10 @@
       "variable": "--seam-178e57842e50"
     },
     {
-      "gold_lines": "rgba(176, 122, 63, 0.28)",
-      "neo_noir": "rgba(242, 71, 155, 0.28)",
-      "seraph_dressed": "rgba(219, 153, 105, 0.28)",
-      "variable": "--seam-1bd64655e606"
-    },
-    {
       "gold_lines": "rgba(150, 104, 44, 0.24)",
       "neo_noir": "rgba(56, 215, 255, 0.24)",
       "seraph_dressed": "rgba(93, 140, 242, 0.24)",
       "variable": "--seam-f2a156f214e0"
-    },
-    {
-      "gold_lines": "rgba(176, 122, 63, 0.08)",
-      "neo_noir": "rgba(242, 71, 155, 0.08)",
-      "seraph_dressed": "rgba(219, 153, 105, 0.08)",
-      "variable": "--seam-ef84820f1c33"
-    },
-    {
-      "gold_lines": "rgba(215, 224, 238, 0.96)",
-      "neo_noir": "rgba(2, 9, 15, 0.96)",
-      "seraph_dressed": "rgba(5, 6, 15, 0.96)",
-      "variable": "--seam-c294beb31459"
     },
     {
       "gold_lines": "rgba(176, 122, 63, 0.025)",

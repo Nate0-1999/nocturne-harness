@@ -178,11 +178,10 @@ export function resizeStageModule(
   width: number,
   height: number,
   direction: string,
-  bounds: { min: { w: number; h: number }; max: { w: number; h: number } },
 ): StageLayoutSet {
   return updateActiveModule(layout, moduleId, (module) => {
-    const nextWidth = clamp(Math.round(width), bounds.min.w, bounds.max.w)
-    const nextHeight = clamp(Math.round(height), bounds.min.h, bounds.max.h)
+    const nextWidth = clamp(Math.round(width), 1, STAGE_COLUMNS)
+    const nextHeight = clamp(Math.round(height), 1, STAGE_ROWS)
     const nextX = direction.includes('w')
       ? clamp(module.x + module.width - nextWidth, 0, STAGE_COLUMNS - nextWidth)
       : clamp(module.x, 0, STAGE_COLUMNS - nextWidth)

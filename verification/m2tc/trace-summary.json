@@ -1,0 +1,49 @@
+{
+  "packet": "M2TC",
+  "date": "2026-08-14",
+  "viewport": { "width": 1670, "height": 936 },
+  "fixture": {
+    "identity": "M2UX3 REGRESSION",
+    "surface": "production Rack SPA",
+    "owner_app": false,
+    "provider_backed": false,
+    "port": 8806
+  },
+  "spend": {
+    "factory": { "x": 1, "y": 12, "width": 12, "height": 4 },
+    "tiny_after_pointer_drag": { "x": 1, "y": 12, "width": 1, "height": 1 },
+    "huge_after_pointer_drag": { "x": 0, "y": 0, "width": 32, "height": 22 },
+    "restored_before_shutdown": { "x": 1, "y": 12, "width": 12, "height": 4 }
+  },
+  "settings_dialog": {
+    "role": "dialog",
+    "name": "Spend settings",
+    "text": [
+      "Spend",
+      "Choose what this module follows.",
+      "Everything",
+      "This thread"
+    ]
+  },
+  "tooltips": [
+    {
+      "title": "Spend settings",
+      "detail": "Open its view and module options."
+    },
+    {
+      "title": "Resize Spend from the top-left corner",
+      "detail": "Drag or use the arrow keys. The Stage grid sets the limit."
+    },
+    {
+      "title": "Archive New thread",
+      "detail": "Extract its memories for review, then close the thread."
+    },
+    {
+      "title": "Open Model Device",
+      "detail": "Choose the model and tune this thread's request controls."
+    }
+  ],
+  "model_device_opened": true,
+  "browser_diagnostic_log": [],
+  "result": "pass"
+}

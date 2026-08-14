@@ -114,6 +114,7 @@ import {
   rackModuleSelectionIsOpen,
 } from './graphOverlaySelection'
 import { ownerConnectionCopy, type PalaceStatus } from './surfaceHonesty'
+import { ControlTooltip } from './ControlTooltip'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
 const SEAM_COLORS = (JSON.parse(seamColorsRaw) as { colors: SeamColorEntry[] }).colors
@@ -136,6 +137,19 @@ type DismissibleOverlayModuleId = keyof typeof DISMISSIBLE_OVERLAY_CLASSES
 
 function shortId(value: string): string {
   return value.slice(0, 8).toUpperCase()
+}
+
+function resizeDirectionName(direction: RackResizeDirection): string {
+  return ({
+    n: 'top edge',
+    e: 'right edge',
+    s: 'bottom edge',
+    w: 'left edge',
+    ne: 'top-right corner',
+    se: 'bottom-right corner',
+    sw: 'bottom-left corner',
+    nw: 'top-left corner',
+  } as const)[direction]
 }
 
 function terminalCopy(reason: UserMessageState): string | null {
@@ -212,7 +226,12 @@ function App() {
   const isRemoteModule = isRackModuleId(requestedModule)
   const isRegressionFixture = useVerifiedRegressionFixture(!isRemoteModule)
   if (isRemoteModule) {
-    return <RackRemoteApp moduleId={requestedModule} />
+    return (
+      <>
+        <RackRemoteApp moduleId={requestedModule} />
+        <ControlTooltip />
+      </>
+    )
   }
   if (isRegressionFixture === null) {
     return (
@@ -222,9 +241,12 @@ function App() {
     )
   }
   return (
-    <RackRuntime>
-      <RackWorkspace isRegressionFixture={isRegressionFixture} />
-    </RackRuntime>
+    <>
+      <RackRuntime>
+        <RackWorkspace isRegressionFixture={isRegressionFixture} />
+      </RackRuntime>
+      <ControlTooltip />
+    </>
   )
 }
 
@@ -458,14 +480,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     height: number,
     direction: RackResizeDirection,
   ) => {
-    setLayout((current) => resizeStageModule(
-      current,
-      moduleId,
-      width,
-      height,
-      direction,
-      RACK_MANIFESTS[moduleId].bounds,
-    ))
+    setLayout((current) => resizeStageModule(current, moduleId, width, height, direction))
   }, [])
 
   const layoutStatus = savedSet !== null && stageLayoutsEqual(layout, savedSet)
@@ -834,6 +849,10 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
 
       {openGate !== null && (
         <div className="rack-overlay-module" data-rack-module="gate">
+          <RackSettingsControl
+            manifest={RACK_MANIFESTS.gate}
+            scope={layout.scopes.gate}
+          />
           <RackPluginIframe
             manifest={RACK_MANIFESTS.gate}
             theme={theme}
@@ -1123,16 +1142,18 @@ function RackModuleFrame({
       inert={inert || undefined}
     >
       {usesTemplate && (
-        <div className={`rack-module__chrome${isStrip ? ' rack-module__chrome--strip' : ''}`}>
+        <div className="rack-module__chrome">
           <div
             className="rack-module__drag"
             role="button"
             tabIndex={0}
             aria-label={`Move ${manifest.name}; Alt plus arrow keys also moves it`}
+            data-tooltip={`Move ${manifest.name}`}
+            data-tooltip-detail="Drag the title or hold Alt and use the arrow keys."
             onKeyDown={dockByKeyboard}
             onPointerDown={beginMove}
           >
-            <span aria-hidden="true">{isStrip ? '⌁' : '⠿'}</span>
+            <span aria-hidden="true">⠿</span>
             <strong>{manifest.name}</strong>
           </div>
           <RackSettingsControl
@@ -1146,6 +1167,8 @@ function RackModuleFrame({
               className="rack-module__remove"
               type="button"
               aria-label={`Remove ${manifest.name}`}
+              data-tooltip={`Remove ${manifest.name}`}
+              data-tooltip-detail="Remove it from this layer. Restore it later from Library."
               onClick={() => onRemove(moduleId)}
             >
               ×
@@ -1174,6 +1197,8 @@ function RackModuleFrame({
             type="button"
             data-testid={`rack-resize-${manifest.id}-${direction}`}
             aria-label={`${manifest.name} ${direction} resize handle`}
+            data-tooltip={`Resize ${manifest.name} from the ${resizeDirectionName(direction)}`}
+            data-tooltip-detail="Drag or use the arrow keys. The Stage grid sets the limit."
             onPointerDown={(event) => beginResize(event, direction)}
             onKeyDown={(event) => {
               if (onResize === undefined) {
@@ -1226,6 +1251,7 @@ function RackSettingsControl({
   onOpenChange?: (open: boolean) => void
 }) {
   const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
   const scopeAdjustable = (manifest.actions as readonly string[]).includes('rack.scope.set')
   const fixedCopy = manifest.default_scope === 'GLOBAL'
     ? 'This module always shows the whole Palace.'
@@ -1237,23 +1263,56 @@ function RackSettingsControl({
     onOpenChange?.(next)
   }
 
+  useEffect(() => {
+    if (!open) return
+    const close = (event: PointerEvent) => {
+      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) {
+        setOpen(false)
+        onOpenChange?.(false)
+      }
+    }
+    const escape = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      setOpen(false)
+      onOpenChange?.(false)
+    }
+    document.addEventListener('pointerdown', close)
+    document.addEventListener('keydown', escape)
+    return () => {
+      document.removeEventListener('pointerdown', close)
+      document.removeEventListener('keydown', escape)
+    }
+  }, [onOpenChange, open])
+
   return (
-    <div className="rack-module__settings" data-settings-open={open || undefined}>
+    <div ref={rootRef} className="rack-module__settings" data-settings-open={open || undefined}>
       <button
         className="rack-module__settings-toggle"
         type="button"
         data-testid={`rack-settings-${manifest.id}`}
         aria-label={`${manifest.name} settings`}
         aria-expanded={open}
+        data-tooltip={`${manifest.name} settings`}
+        data-tooltip-detail="Open its view and module options."
         onClick={toggle}
       >
         <span aria-hidden="true">⚙</span>
       </button>
       {open && (
-        <div className="rack-module__settings-popout" role="dialog" aria-label={`${manifest.name} settings`}>
+        <dialog open className="rack-module__settings-dialog" aria-label={`${manifest.name} settings`}>
           {scopeAdjustable ? (
             <>
-              <strong>View</strong>
+              <header>
+                <strong>{manifest.name}</strong>
+                <button
+                  type="button"
+                  aria-label={`Close ${manifest.name} settings`}
+                  onClick={toggle}
+                >
+                  ×
+                </button>
+              </header>
+              <p>Choose what this module follows.</p>
               <div className="rack-module__scope" aria-label={`${manifest.name} view`}>
                 {(['GLOBAL', 'CURRENT'] as const).map((value) => (
                   <button
@@ -1270,7 +1329,7 @@ function RackSettingsControl({
           ) : (
             <p>{fixedCopy}</p>
           )}
-        </div>
+        </dialog>
       )}
     </div>
   )
@@ -1541,6 +1600,8 @@ function ThreadsModule() {
                 className="thread-item__archive"
                 type="button"
                 aria-label={`Archive ${visibleThreadTitle(entry.title)}`}
+                data-tooltip={`Archive ${visibleThreadTitle(entry.title)}`}
+                data-tooltip-detail="Extract its memories for review, then close the thread."
                 disabled={archiveDisabled}
                 onClick={() => {
                   setArchiveBusyThreadId(entry.thread_id)
@@ -1550,7 +1611,7 @@ function ThreadsModule() {
                     .finally(() => setArchiveBusyThreadId(null))
                 }}
               >
-                {archiveBusyThreadId === entry.thread_id ? 'Archiving…' : 'Archive'}
+                <span aria-hidden="true">{archiveBusyThreadId === entry.thread_id ? '…' : '⤓'}</span>
               </button>
             </div>
           )
@@ -1826,12 +1887,15 @@ function ChatModule() {
             className="chat-header__model"
             data-testid="active-model"
             aria-label={`Active model: ${selectedThread?.resolvedModel ?? 'being chosen'}`}
+            data-tooltip="Open Model Device"
+            data-tooltip-detail="Choose the model and tune this thread’s request controls."
             onClick={() => selection.select({ kind: 'module', id: 'model_device' })}
           >
             <span aria-hidden="true">Model</span>
             <span className="chat-header__model-value">
               {selectedThread?.resolvedModel ?? 'Choosing model'}
             </span>
+            <span className="chat-header__model-action" aria-hidden="true">Open ↗</span>
           </button>
         </div>
       </header>
@@ -1988,10 +2052,13 @@ function ChatModule() {
               className="archive-button"
               type="button"
               data-testid="archive-thread"
+              aria-label="Archive this thread"
+              data-tooltip="Archive this thread"
+              data-tooltip-detail="Extract its memories for review, then close the thread."
               disabled={archiveBusy || openGate !== null}
               onClick={archiveThread}
             >
-              {archiveBusy ? 'Extracting' : 'Archive'}
+              <span aria-hidden="true">{archiveBusy ? '…' : '⤓'}</span>
             </button>
           )}
           {activeRun !== null && (

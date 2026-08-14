@@ -29,7 +29,7 @@ import {
   persistRackLayout,
   type RackBounds,
 } from './rackLayout'
-import { assertRackModuleTemplate } from './rackModuleTemplate'
+import { assertRackModuleTemplate, stageGridBounds } from './rackModuleTemplate'
 import { runRackAction } from './rackAction'
 import {
   authoritativeProjectPath,
@@ -231,7 +231,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     slot: 'panel',
     streams: ['thread.snapshot', 'run.started', 'run.done', 'prompt.queued'],
     actions: ['thread.create', 'thread.select', 'thread.archive', 'catalog.cleanup-fixtures'],
-    bounds: RACK_BOUNDS.threads,
+    bounds: stageGridBounds(RACK_BOUNDS.threads.preferred),
     movable: true,
     law_bound: false,
     default_scope: 'CURRENT',
@@ -244,7 +244,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     slot: 'panel',
     streams: ['thread.snapshot', 'run.*', 'error'],
     actions: ['project.select', 'prompt.submit', 'run.cancel', 'thread.archive', 'queue.load', 'queue.decide'],
-    bounds: RACK_BOUNDS.chat,
+    bounds: stageGridBounds(RACK_BOUNDS.chat.preferred),
     movable: true,
     law_bound: false,
     default_scope: 'CURRENT',
@@ -257,7 +257,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     slot: 'panel',
     streams: ['thread.snapshot', 'memory.panel.update'],
     actions: ['memory.refresh', 'memory.add', 'memory.remove', 'memory.edit', 'memory.pin'],
-    bounds: RACK_BOUNDS.memory,
+    bounds: stageGridBounds(RACK_BOUNDS.memory.preferred),
     movable: true,
     law_bound: true,
     default_scope: 'CURRENT',
@@ -270,7 +270,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     slot: 'strip',
     streams: [],
     actions: ['rack.scope.get', 'rack.scope.set'],
-    bounds: VITALS_RACK_BOUNDS,
+    bounds: stageGridBounds(VITALS_RACK_BOUNDS.preferred),
     movable: true,
     law_bound: false,
     default_scope: 'GLOBAL',
@@ -278,7 +278,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
   context_bars: {
     id: 'context_bars', name: 'Context Bars', version: '1.0.0', class: 'visualizer',
     slot: 'strip', streams: ['run.done'], actions: ['rack.scope.get', 'rack.scope.set'],
-    bounds: STRIP_RACK_BOUNDS.context_bars,
+    bounds: stageGridBounds(STRIP_RACK_BOUNDS.context_bars.preferred),
     movable: true, law_bound: false, default_scope: 'CURRENT',
   },
   gate: {
@@ -340,7 +340,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
   memory_graph: {
     id: 'memory_graph', name: 'Memory Graph', version: '1.0.0', class: 'visualizer',
     slot: 'panel', streams: ['memory.panel.update'],
-    actions: ['rack.scope.get', 'rack.scope.set'], bounds: instrumentStageBounds,
+    actions: ['rack.scope.get', 'rack.scope.set'], bounds: stageGridBounds(instrumentStageBounds.preferred),
     movable: true, law_bound: true, default_scope: 'GLOBAL',
   },
   injection_console: {
@@ -352,7 +352,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
       'scorer.half_life_time_days', 'scorer.half_life_hist_days',
       'scorer.weight.sem', 'scorer.weight.kw', 'scorer.weight.time',
       'scorer.weight.proj', 'scorer.weight.freq', 'scorer.weight.hist',
-    ], bounds: instrumentStageBounds, movable: true, law_bound: true, default_scope: 'GLOBAL',
+    ], bounds: stageGridBounds(instrumentStageBounds.preferred), movable: true, law_bound: true, default_scope: 'GLOBAL',
   },
 }
 

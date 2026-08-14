@@ -14,6 +14,7 @@ import {
   persistStageLayout,
   removeStageLayer,
   removeStageModule,
+  resizeStageModule,
   restoreStageLayer,
   restoreStageModule,
   selectStageLayer,
@@ -77,6 +78,21 @@ test('factory layers contain Graph and Injection as stage modules, never fixed t
 
   assert.deepEqual(graph?.modules.map((module) => module.module_id), ['memory_graph'])
   assert.deepEqual(injection?.modules.map((module) => module.module_id), ['injection_console'])
+})
+
+/** PLAN M2TC / P2 removes per-module size caps: only the finite Stage grid limits huge and tiny resizing. */
+test('Spend can shrink to one cell and grow to the complete Stage grid', () => {
+  const tiny = resizeStageModule(cloneFactoryStageLayout(), 'vitals', -20, 0, 'nw')
+  assert.deepEqual(
+    activeStageLayer(tiny).modules.find((module) => module.module_id === 'vitals'),
+    { module_id: 'vitals', x: 12, y: 15, width: 1, height: 1 },
+  )
+
+  const huge = resizeStageModule(cloneFactoryStageLayout(), 'vitals', 100, 100, 'nw')
+  assert.deepEqual(
+    activeStageLayer(huge).modules.find((module) => module.module_id === 'vitals'),
+    { module_id: 'vitals', x: 0, y: 0, width: 32, height: 22 },
+  )
 })
 
 function memoryStorage() {
