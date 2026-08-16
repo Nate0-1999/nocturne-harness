@@ -1,0 +1,74 @@
+{
+  "instructions": [
+    "Save a memory when you learn a durable user preference, a correction to something you got wrong, a stable project fact, or a procedure the user wants repeated. Keep every memory ATOMIC: one fact per unit, at most a few sentences (hard cap 128 tokens); split larger content into multiple units. ALWAYS include 2-5 lowercase keywords (searchable nouns/terms — a memory without keywords is handicapped in retrieval). Prefer editing an existing memory over creating a near-duplicate. When a project-scoped save reports that no current project exists, surface that result and do not retry the save globally in the same turn. A global fallback requires explicit user confirmation in a later user turn. Never save secrets or credentials."
+  ],
+  "tools": [
+    {
+      "capability_id": "memory",
+      "description": "Save one atomic durable memory; use force only after reviewing a similar result.",
+      "name": "save_memory",
+      "parameters_json_schema": {
+        "$defs": {
+          "MemoryKind": {
+            "enum": [
+              "fact",
+              "preference",
+              "procedure",
+              "project_note",
+              "persona",
+              "pinned"
+            ],
+            "title": "MemoryKind",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "body": {"type": "string"},
+          "force": {"default": false, "type": "boolean"},
+          "keywords": {
+            "anyOf": [
+              {"items": {"type": "string"}, "type": "array"},
+              {"type": "null"}
+            ],
+            "default": null
+          },
+          "kind": {"$ref": "#/$defs/MemoryKind"},
+          "label": {"type": "string"},
+          "project_scoped": {"type": "boolean"}
+        },
+        "required": ["label", "body", "kind", "project_scoped"],
+        "type": "object"
+      }
+    },
+    {
+      "capability_id": "memory",
+      "description": "Search active memories for this user and current project; return up to k compact cards.",
+      "name": "search_memory",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "k": {"default": 5, "type": "integer"},
+          "query": {"type": "string"}
+        },
+        "required": ["query"],
+        "type": "object"
+      }
+    },
+    {
+      "capability_id": "memory",
+      "description": "Replace one memory body by exact label or ID; explain why the correction is needed.",
+      "name": "edit_memory",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "label_or_id": {"type": "string"},
+          "new_body": {"type": "string"},
+          "reason": {"type": "string"}
+        },
+        "required": ["label_or_id", "new_body", "reason"],
+        "type": "object"
+      }
+    }
+  ]
+}
