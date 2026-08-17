@@ -46,6 +46,7 @@ from harness.spine_client import (
     SpendEventsResponse,
 )
 from harness.tools_memory import MemoryToolContext
+from harness.toolset import ToolExecutionResult, ToolName
 
 THREAD_UUID = UUID("22345678-1234-5678-1234-567812345678")
 REMOVED_MEMORY_UUID = UUID("32345678-1234-5678-1234-567812345678")
@@ -78,7 +79,7 @@ class UnusedSpine:
         raise AssertionError(f"unexpected Spine call: {name}")
 
 
-def context(spine: object | None = None) -> MemoryToolContext:
+def context(spine: object | None = None, *, toolset: object | None = None) -> MemoryToolContext:
     return MemoryToolContext(
         spine=spine or UnusedSpine(),  # type: ignore[arg-type]
         principal_id="principal-1",
@@ -87,6 +88,7 @@ def context(spine: object | None = None) -> MemoryToolContext:
         thread_id=THREAD_UUID,
         project_key="project-1",
         origin_path="/workspace/notes.md",
+        toolset=toolset,  # type: ignore[arg-type]
     )
 
 
@@ -134,6 +136,17 @@ class RecordingSpend:
         return SpendEventsResponse(accepted=len(request.events))
 
 
+@dataclass
+class RecordingWorkspaceToolset:
+    calls: list[tuple[ToolName, Mapping[str, object]]] = field(default_factory=list)
+
+    async def execute(
+        self, tool_name: ToolName, arguments: Mapping[str, object]
+    ) -> ToolExecutionResult:
+        self.calls.append((tool_name, arguments))
+        return ToolExecutionResult(tool_name=tool_name, content="Wrote note.txt", success=True)
+
+
 class FailingSpend:
     async def record_spend_events(self, request: SpendEventsRequest) -> SpendEventsResponse:
         del request
@@ -168,6 +181,49 @@ async def test_successful_model_response_is_receipted_before_turn_returns() -> N
     assert "output" in {event.quantity_type for event in request.events}
     assert {event.purpose for event in request.events} == {"building"}
     assert {event.thread_id for event in request.events} == {THREAD_UUID}
+
+
+@pytest.mark.asyncio
+async def test_workspace_tool_events_and_spend_share_the_existing_turn_authorities() -> None:
+    model_calls = 0
+
+    async def stream(_messages: object, _info: object):
+        nonlocal model_calls
+        model_calls += 1
+        if model_calls == 1:
+            yield {
+                0: DeltaToolCall(
+                    name="write",
+                    json_args='{"path":"note.txt","content":"owner text\\n"}',
+                    tool_call_id="workspace-call-1",
+                )
+            }
+        else:
+            yield "The file is ready."
+
+    toolset = RecordingWorkspaceToolset()
+    spend = RecordingSpend()
+    emitter = RecordingEmitter()
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(toolset=toolset),
+        spend,
+    )
+
+    outcome = await runner.run(
+        thread_id=str(THREAD_UUID),
+        prompt="Write my note.",
+        message_history=(),
+        emit=emitter,
+    )
+
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert toolset.calls == [("write", {"path": "note.txt", "content": "owner text\n"})]
+    event_kinds = [event["event_kind"] for event in emitter.events]
+    assert "function_tool_call" in event_kinds
+    assert "function_tool_result" in event_kinds
+    assert spend.requests
+    assert {event.purpose for request in spend.requests for event in request.events} == {"building"}
 
 
 @pytest.mark.asyncio

@@ -13,10 +13,13 @@ from typing import Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, StrictBool, StrictInt, StrictStr, ValidationError
 
+from harness.envelope import generate_ulid
 from harness.toolset import (
     AgentLocation,
     PresenceEvent,
     PresenceSink,
+    ToolExecutionResult,
+    ToolName,
     ToolsetError,
     ToolsetProtocolError,
     ToolsetState,
@@ -27,6 +30,7 @@ _RUNTIME_ROOT = Path(__file__).with_name("_pi")
 _LOCATION_EXTENSION = _RUNTIME_ROOT / "nocturne_location.mjs"
 _MAX_RECORD_BYTES = 1_048_576
 _PRESENCE_STATUS_KEY = "nocturne-presence"
+_TOOL_RESULT_STATUS_KEY = "nocturne-tool-result"
 
 
 class _RpcState(BaseModel):
@@ -50,7 +54,24 @@ class _PresenceRecord(BaseModel):
     ts: datetime
 
 
+class _ToolResultRecord(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    invocation_id: StrictStr
+    tool_name: Literal["read", "edit", "write", "grep", "find", "ls", "bash", "move"]
+    success: StrictBool
+    content: StrictStr
+
+
 def _default_command() -> tuple[str, ...]:
+    configured = os.environ.get("NOCTURNE_PI_COMMAND", "").strip()
+    if configured:
+        executable = Path(configured).expanduser()
+        if executable.is_file():
+            return (str(executable),)
+        raise ToolsetUnavailableError(
+            "The configured PI runtime is missing; run `nocturne init` to repair it."
+        )
     executable = _RUNTIME_ROOT / "node_modules" / ".bin" / ("pi.cmd" if os.name == "nt" else "pi")
     if not executable.is_file():
         raise ToolsetUnavailableError(
@@ -79,6 +100,7 @@ class PiRpcToolset:
         self._request_lock = asyncio.Lock()
         self._request_sequence = 0
         self._pending: dict[str, asyncio.Future[Mapping[str, Any]]] = {}
+        self._tool_results: dict[str, asyncio.Future[_ToolResultRecord]] = {}
         self._reader_error: ToolsetError | None = None
         self._closing = False
         self._stderr_tail = bytearray()
@@ -205,6 +227,46 @@ class PiRpcToolset:
             raise ToolsetProtocolError("PI accepted move without emitting its presence event")
         return self._location
 
+    async def execute(
+        self,
+        tool_name: ToolName,
+        arguments: Mapping[str, object],
+    ) -> ToolExecutionResult:
+        """Execute one PI-owned tool through the single private RPC adapter."""
+
+        invocation_id = generate_ulid()
+        future: asyncio.Future[_ToolResultRecord] = asyncio.get_running_loop().create_future()
+        self._tool_results[invocation_id] = future
+        try:
+            await self._request(
+                "prompt",
+                message=(
+                    "/nocturne-tool "
+                    + json.dumps(
+                        {
+                            "invocation_id": invocation_id,
+                            "tool_name": tool_name,
+                            "arguments": dict(arguments),
+                        },
+                        ensure_ascii=False,
+                        separators=(",", ":"),
+                    )
+                ),
+            )
+            try:
+                record = await asyncio.wait_for(future, timeout=self._timeout_seconds)
+            except TimeoutError as exc:
+                raise ToolsetProtocolError("PI tool result timed out") from exc
+        finally:
+            self._tool_results.pop(invocation_id, None)
+        if record.tool_name != tool_name:
+            raise ToolsetProtocolError("PI correlated the wrong tool result")
+        return ToolExecutionResult(
+            tool_name=tool_name,
+            content=record.content,
+            success=record.success,
+        )
+
     async def close(self) -> None:
         self._closing = True
         if self._process.stdin is not None and not self._process.stdin.is_closing():
@@ -272,6 +334,8 @@ class PiRpcToolset:
                 raw = await self._process.stdout.readuntil(b"\n")
                 record = self._decode_record(raw)
                 if self._consume_presence(record):
+                    continue
+                if self._consume_tool_result(record):
                     continue
                 if record.get("type") != "response":
                     continue
@@ -350,9 +414,33 @@ class PiRpcToolset:
             self._presence_sink(event)
         return True
 
+    def _consume_tool_result(self, record: Mapping[str, Any]) -> bool:
+        if not (
+            record.get("type") == "extension_ui_request"
+            and record.get("method") == "setStatus"
+            and record.get("statusKey") == _TOOL_RESULT_STATUS_KEY
+        ):
+            return False
+        raw = record.get("statusText")
+        if not isinstance(raw, str):
+            raise ToolsetProtocolError("PI emitted an empty tool result")
+        try:
+            parsed = _ToolResultRecord.model_validate_json(raw)
+        except ValidationError as exc:
+            raise ToolsetProtocolError("PI emitted an invalid tool result") from exc
+        future = self._tool_results.get(parsed.invocation_id)
+        if future is None:
+            raise ToolsetProtocolError("PI emitted an uncorrelated tool result")
+        if not future.done():
+            future.set_result(parsed)
+        return True
+
     def _set_reader_error(self, error: ToolsetError) -> None:
         self._reader_error = error
         for future in self._pending.values():
+            if not future.done():
+                future.set_exception(error)
+        for future in self._tool_results.values():
             if not future.done():
                 future.set_exception(error)
 

@@ -91,12 +91,12 @@ export function ContextBars() {
             <i style={{ left: `${visibleObservation.threshold_tokens / visibleObservation.context_tokens * 100}%` }} title="80% threshold" />
           </div>
           <table className="context-bars__legend">
-            <caption>Estimated token breakdown</caption>
+            <caption>Token breakdown</caption>
             <tbody>{CATEGORIES.map((category) => (
               <tr key={category}><td><i className={`context-bars__key context-bars__key--${category}`} />{CATEGORY_LABELS[category]}</td><td>{formatHumanCount(visibleObservation.categories[category])}</td></tr>
             ))}</tbody>
           </table>
-          <p className="context-bars__note">Estimated breakdown · 80% line · Compaction is not active</p>
+          <p className="context-bars__note">Tools include measured traffic · other lanes estimated · 80% line · Compaction is not active</p>
         </>
       )}
       {failed && <button className="context-bars__retry" onClick={() => setRefresh((value) => value + 1)}>Context usage unavailable · retry</button>}

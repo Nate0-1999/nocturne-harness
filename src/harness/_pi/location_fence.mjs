@@ -3,6 +3,18 @@ import { basename, dirname, isAbsolute, relative, resolve, sep } from "node:path
 
 const READ_TOOLS = new Set(["read", "grep", "find", "ls"]);
 const WRITE_TOOLS = new Set(["edit", "write"]);
+const CREDENTIAL_SEGMENTS = new Set([".ssh", ".aws", ".gnupg", ".kube"]);
+
+function isCredentialPath(target) {
+  const segments = resolve(target).split(sep).filter(Boolean);
+  const name = segments.at(-1)?.toLowerCase() ?? "";
+  if (segments.some((segment) => CREDENTIAL_SEGMENTS.has(segment.toLowerCase()))) return true;
+  if (name === ".env" || name.startsWith(".env.")) return true;
+  if (/^(?:id_rsa|id_ed25519|credentials|service-account.*\.json)$/.test(name)) return true;
+  return segments.some((segment, index) =>
+    segment.toLowerCase() === ".config" && segments[index + 1]?.toLowerCase() === "gcloud"
+  );
+}
 
 function cleanPath(rawPath) {
   if (typeof rawPath !== "string" || rawPath.trim() === "") {
@@ -79,6 +91,12 @@ export class LocationFence {
     const supplied = input?.path;
     const rawPath = supplied === undefined && toolName !== "read" ? "." : supplied;
     const target = await canonicalize(resolve(this.location, cleanPath(rawPath)));
+    if (READ_TOOLS.has(toolName) && isCredentialPath(target)) {
+      return {
+        block: true,
+        reason: "That path may contain credentials. Ask the owner before reading it.",
+      };
+    }
     const fenced = WRITE_TOOLS.has(toolName) || this.fenceReads;
     if (fenced && !isInside(this.location, target)) {
       const remedy = WRITE_TOOLS.has(toolName) ? dirname(target) : target;

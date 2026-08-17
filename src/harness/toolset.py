@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -61,6 +61,18 @@ class PresenceEvent:
 type PresenceSink = Callable[[PresenceEvent], None]
 
 
+type ToolName = Literal["read", "edit", "write", "grep", "find", "ls", "bash", "move"]
+
+
+@dataclass(frozen=True, slots=True)
+class ToolExecutionResult:
+    """One bounded result returned by the adopted tool implementation."""
+
+    tool_name: ToolName
+    content: str
+    success: bool
+
+
 class StandardToolset(Protocol):
     """Nocturne's current toolset seam; extend only when a packet first uses more."""
 
@@ -71,6 +83,12 @@ class StandardToolset(Protocol):
     def presence_events(self) -> tuple[PresenceEvent, ...]: ...
 
     async def move(self, path: Path) -> AgentLocation: ...
+
+    async def execute(
+        self,
+        tool_name: ToolName,
+        arguments: Mapping[str, object],
+    ) -> ToolExecutionResult: ...
 
     async def close(self) -> None: ...
 

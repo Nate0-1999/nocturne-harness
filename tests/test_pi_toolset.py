@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from harness.pi_toolset_adapter import _default_command
 from harness.toolset import ToolsetProtocolError, ToolsetUnavailableError, open_standard_toolset
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -81,8 +82,24 @@ for line in sys.stdin.buffer:
             },
         }), flush=True)
     elif request.get("type") == "prompt":
-        target = json.loads(request["message"].removeprefix("/nocturne-move "))
-        presence("cwd_change", target)
+        message = request["message"]
+        if message.startswith("/nocturne-move "):
+            target = json.loads(message.removeprefix("/nocturne-move "))
+            presence("cwd_change", target)
+        elif message.startswith("/nocturne-tool "):
+            tool_request = json.loads(message.removeprefix("/nocturne-tool "))
+            print(json.dumps({
+                "type": "extension_ui_request",
+                "id": "tool-result",
+                "method": "setStatus",
+                "statusKey": "nocturne-tool-result",
+                "statusText": json.dumps({
+                    "invocation_id": tool_request["invocation_id"],
+                    "tool_name": tool_request["tool_name"],
+                    "success": True,
+                    "content": "tool output",
+                }),
+            }), flush=True)
         print(json.dumps({
             "id": request["id"],
             "type": "response",
@@ -175,6 +192,24 @@ async def test_location_state_is_defined_and_moves_only_inside_workspace(tmp_pat
     assert all(event.agent_id == "agent-location" for event in events)
 
 
+@pytest.mark.asyncio
+async def test_tool_execution_is_correlated_through_the_owned_seam(tmp_path: Path) -> None:
+    toolset = await open_standard_toolset(
+        command=(sys.executable, "-c", _FAKE_LOCATION_RPC),
+        cwd=tmp_path,
+        workspace_root=tmp_path,
+        session_id="session-tool",
+    )
+    try:
+        result = await toolset.execute("read", {"path": "note.txt"})
+    finally:
+        await toolset.close()
+
+    assert result.tool_name == "read"
+    assert result.success
+    assert result.content == "tool output"
+
+
 def test_location_fence_blocks_outside_writes_and_symlink_escapes(tmp_path: Path) -> None:
     """SPEC D.2 103 makes the location subtree a deterministic tool-layer fence."""
     node = shutil.which("node")
@@ -214,6 +249,8 @@ const strict = new LocationFence({{
 }});
 const strictRead = await strict.preflight("read", {{ path: sibling + "/note.txt" }});
 if (!strictRead.block) process.exit(15);
+const credentialRead = await fence.preflight("read", {{ path: current + "/.env" }});
+if (!credentialRead.block || !credentialRead.reason.includes("credentials")) process.exit(16);
 """
     subprocess.run([node, "--input-type=module", "-e", script], check=True)
 
@@ -249,10 +286,29 @@ def test_pi_protocol_has_one_import_fence() -> None:
     assert offenders == []
 
 
-def test_pi_activation_has_no_unfenced_shell_escape() -> None:
-    """SPEC D.2 103 keeps unfenced shell mutation outside the active PI tool set."""
+def test_installed_owner_runtime_is_selected_from_private_config(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    executable = tmp_path / "pi"
+    executable.write_bytes(b"standalone")
+    monkeypatch.setenv("NOCTURNE_PI_COMMAND", str(executable))
+
+    assert _default_command() == (str(executable),)
+
+    monkeypatch.setenv("NOCTURNE_PI_COMMAND", str(tmp_path / "missing"))
+    with pytest.raises(ToolsetUnavailableError, match="nocturne init"):
+        _default_command()
+
+
+def test_pi_activation_has_an_os_fenced_shell_and_plain_boundary_wall() -> None:
+    """ADR-015 allows in-location shell work only behind the default OS sandbox."""
     extension = (RUNTIME / "nocturne_location.mjs").read_text(encoding="utf-8")
     active_tools = extension.split("const ACTIVE_TOOLS =", 1)[1].split(";", 1)[0]
 
-    assert '"bash"' not in active_tools
+    assert '"bash"' in active_tools
     assert all(f'"{name}"' in active_tools for name in ("read", "edit", "write", "move"))
+    assert '"/usr/bin/sandbox-exec"' in extension
+    assert "(deny default)" in extension
+    assert "BOUNDARY_COMMAND" in extension
+    assert "safeEnvironment" in extension
+    assert "CREDENTIAL_COMMAND" in extension

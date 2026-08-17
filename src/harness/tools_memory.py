@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 from uuid import UUID
 
 from pydantic import ValidationError
+
+if TYPE_CHECKING:
+    from harness.toolset import StandardToolset
 
 from harness.spine_client import (
     CreatedMemoryResponse,
@@ -75,6 +78,7 @@ class MemoryToolContext:
     thread_id: UUID | None = None
     project_key: str | None = None
     origin_path: str | None = None
+    toolset: StandardToolset | None = None
     excluded_memory_ids: frozenset[UUID] = frozenset()
     _run_state: _MemoryToolRunState = field(
         default_factory=_MemoryToolRunState,

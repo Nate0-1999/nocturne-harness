@@ -2,16 +2,25 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-from pydantic_ai.messages import ModelMessage, ModelResponse
+from pydantic_ai.messages import (
+    ModelMessage,
+    ModelRequest,
+    ModelResponse,
+    ToolCallPart,
+    ToolReturnPart,
+)
+from pydantic_core import to_jsonable_python
 from spine.tokens import cl100k_token_count
 
 from harness.memory_capability import DEFAULT_MEMORY_FEATURE
 from harness.model_policy import ThreadModelResolution
+from harness.pydantic_ai_adapter import WORKSPACE_INSTRUCTIONS, WORKSPACE_TOOLS
 
 _THRESHOLD_RATIO = 0.8
 
@@ -79,7 +88,7 @@ class ContextWindowTracker:
             used_tokens=used,
             context_tokens=resolution.context_tokens,
             threshold_tokens=max(1, int(resolution.context_tokens * _THRESHOLD_RATIO)),
-            categories=_estimated_categories(used, memory_block),
+            categories=_estimated_categories(used, memory_block, captured),
         )
 
     def snapshot(self, thread_id: str | None) -> ContextWindowSnapshot:
@@ -101,11 +110,19 @@ class ContextWindowTracker:
         )
 
 
-def _estimated_categories(used: int, memory_block: str | None) -> ContextCategories:
+def _estimated_categories(
+    used: int, memory_block: str | None, captured: Sequence[ModelMessage]
+) -> ContextCategories:
     definition = DEFAULT_MEMORY_FEATURE.definition
     memory = cl100k_token_count(memory_block or "")
     system = sum(cl100k_token_count(item.text) for item in definition.instructions)
+    system += cl100k_token_count(WORKSPACE_INSTRUCTIONS)
     tools = sum(cl100k_token_count(f"{tool.name}\n{tool.description}") for tool in definition.tools)
+    tools += sum(
+        cl100k_token_count(f"{function.__name__}\n{function.__doc__ or ''}")
+        for function in WORKSPACE_TOOLS
+    )
+    tools += _tool_traffic_tokens(captured)
     overflow = max(0, memory + system + tools - used)
     tools, overflow = _reduce(tools, overflow)
     system, overflow = _reduce(system, overflow)
@@ -116,6 +133,21 @@ def _estimated_categories(used: int, memory_block: str | None) -> ContextCategor
         memory=memory,
         tools=tools,
     )
+
+
+def _tool_traffic_tokens(captured: Sequence[ModelMessage]) -> int:
+    """Measure serialized call/return traffic present in the observed provider exchange."""
+
+    total = 0
+    for message in captured:
+        if not isinstance(message, (ModelRequest, ModelResponse)):
+            continue
+        for part in message.parts:
+            if isinstance(part, (ToolCallPart, ToolReturnPart)):
+                total += cl100k_token_count(
+                    json.dumps(to_jsonable_python(part), sort_keys=True, separators=(",", ":"))
+                )
+    return total
 
 
 def _reduce(value: int, amount: int) -> tuple[int, int]:

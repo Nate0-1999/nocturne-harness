@@ -2374,3 +2374,50 @@ M3D rejected; the explicit extension uses PI's own hook and custom-tool seams.
 Hard-fencing reads by default would narrow useful inspection beyond the owner's
 ruling. Building the Spine presence table/API here would widen M3E into a second
 repository and pre-empt ADR-006's later transport packet.
+
+## 079 — The owner loop borrows PI's hands without yielding turn authority [ADR-015, ADR-024, M3H]
+
+**Decision.** Keep the existing Pydantic AI turn runner as the sole owner-model
+loop because it already owns memory gating, transcript events, cancellation,
+provider usage, and spend receipts. Add one workspace capability at that seam;
+each model tool call crosses the Harness-owned typed interface to PI's published
+tool implementation in the already pinned RPC process. The daemon owns one lazy
+toolset rooted at its launch project and closes it at shutdown. PI does not run a
+second model loop and does not gain memory, journal, provider, or spend authority.
+Source checkouts use the exact lock-installed package. Clone-free `nocturne init`
+is the explicit installed-owner materialization point: it downloads the matching
+standalone PI 0.84.2 release asset, verifies the committed platform SHA-256, and
+stores the executable plus receipt in the private Nocturne home. Ordinary startup
+and owner turns never install or update it.
+
+Activate PI's bash tool only behind macOS `sandbox-exec`: processes and reads are
+available, network and writes outside the current location are denied. Strip the
+owner process environment to a small non-secret allowlist before launch. Remote
+push/deploy/network command shapes and credential-shaped paths or shell commands
+return a plain owner-facing wall; they do not open a permission ladder. Direct
+read/discovery tools retain the adopted reads-free policy except for credential
+paths. Successful and refused tool calls flow through the turn runner's existing
+function-tool event stream, so the fail-closed transcript journal records them;
+provider usage continues through the existing ADR-024 `building` spend lane.
+
+Keep Context Bars' measured provider total and exact model limit unchanged. Its
+Tools lane now includes the serialized tool-call and tool-return traffic observed
+in the completed provider exchange, plus the still-estimated static tool schemas.
+The Rack labels that mixed basis plainly. Memory injection, exclusion, consent,
+and `/remember` behavior are unchanged.
+
+**Motivation.** The owner needed the adopted institutional toolset to act on a
+real project without creating a second agent with competing custody. Joining at
+the capability seam makes a PI edit an ordinary, journaled owner turn and reuses
+the memory and spend controls already proven there. The OS sandbox supplies the
+missing enforcement that kept bash inactive in Decision 078, while the scrubbed
+environment prevents a local command from turning process credentials into model
+context.
+
+**Rejected alternatives.** Replacing the current loop with PI would force memory
+gating, event durability, and spend accounting to move or be duplicated. Nesting
+a second PI model loop would double provider decisions and obscure which loop
+authorized an action. Reimplementing PI's file tools in Python would abandon the
+whole-toolset adoption ruling. Per-action approval prompts would recreate the
+permission ladder ADR-015 rejects; a plain boundary wall keeps irreversible or
+out-of-fence work with the owner.

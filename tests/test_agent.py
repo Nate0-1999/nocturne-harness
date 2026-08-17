@@ -9,7 +9,14 @@ from uuid import UUID
 
 import httpx
 import pytest
-from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart
+from pydantic_ai.messages import (
+    ModelMessage,
+    ModelRequest,
+    ModelResponse,
+    TextPart,
+    ToolCallPart,
+    ToolReturnPart,
+)
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 from pydantic_ai.models.test import TestModel
 from pydantic_ai.usage import RunUsage
@@ -50,6 +57,7 @@ from harness.spine_client import (
     SpineTransportError,
 )
 from harness.tools_memory import MemoryToolContext
+from harness.toolset import ToolExecutionResult, ToolName
 
 MEMORY_ID = UUID("12345678-1234-5678-1234-567812345678")
 THREAD_ID = UUID("22345678-1234-5678-1234-567812345678")
@@ -207,6 +215,17 @@ def context(spine: FakeSpine) -> MemoryToolContext:
         project_key="project-that-remember-must-ignore",
         origin_path="/workspace/notes.md",
     )
+
+
+@dataclass
+class FakeWorkspaceToolset:
+    calls: list[tuple[str, dict[str, object]]] = field(default_factory=list)
+
+    async def execute(
+        self, tool_name: ToolName, arguments: dict[str, object]
+    ) -> ToolExecutionResult:
+        self.calls.append((tool_name, arguments))
+        return ToolExecutionResult(tool_name=tool_name, content="Wrote note.txt", success=True)
 
 
 def conflict_response() -> httpx.Response:
@@ -421,10 +440,59 @@ async def test_chat_returns_output_and_reusable_full_history_with_exact_limits()
             "save_memory",
             "search_memory",
             "edit_memory",
+            "read",
+            "edit",
+            "write",
+            "grep",
+            "find",
+            "ls",
+            "bash",
+            "move",
         ]
         for _, info in calls
     )
     assert spine.create_requests == []
+
+
+@pytest.mark.asyncio
+async def test_chat_executes_adopted_workspace_tool_inside_the_existing_owner_loop() -> None:
+    async def respond(messages: list[ModelMessage], _info: AgentInfo) -> ModelResponse:
+        has_result = any(
+            isinstance(message, ModelRequest)
+            and any(isinstance(part, ToolReturnPart) for part in message.parts)
+            for message in messages
+        )
+        if has_result:
+            return ModelResponse(parts=[TextPart("The file is ready.")])
+        return ModelResponse(
+            parts=[
+                ToolCallPart(
+                    "write",
+                    {"path": "note.txt", "content": "owner text\n"},
+                    "workspace-call-1",
+                )
+            ]
+        )
+
+    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
+    toolset = FakeWorkspaceToolset()
+    owner_context = context(spine)
+    owner_context = MemoryToolContext(
+        spine=owner_context.spine,
+        principal_id=owner_context.principal_id,
+        machine_id=owner_context.machine_id,
+        agent_id=owner_context.agent_id,
+        thread_id=owner_context.thread_id,
+        project_key=owner_context.project_key,
+        origin_path=owner_context.origin_path,
+        toolset=toolset,  # type: ignore[arg-type]
+    )
+    agent = HarnessAgent(settings(), model=FunctionModel(respond))
+
+    result = await agent.chat("Write my note.", context=owner_context)
+
+    assert result.output == "The file is ready."
+    assert toolset.calls == [("write", {"path": "note.txt", "content": "owner text\n"})]
 
 
 @pytest.mark.asyncio
@@ -1311,5 +1379,13 @@ async def test_near_miss_remember_commands_are_ordinary_chat(ordinary_text: str)
         "save_memory",
         "search_memory",
         "edit_memory",
+        "read",
+        "edit",
+        "write",
+        "grep",
+        "find",
+        "ls",
+        "bash",
+        "move",
     ]
     assert spine.create_requests == []

@@ -1,0 +1,89 @@
+{
+  "packet": "M3H",
+  "captured_at": "2026-08-17T16:17:10Z",
+  "law": [
+    "garden/PLAN.md M3H",
+    "garden/DECISIONS.md ADR-015",
+    "garden/DECISIONS.md ADR-024",
+    "F051"
+  ],
+  "checkouts": {
+    "harness_base": "2ed724795a06101540ded53e0027752bbd53b7b3",
+    "spine": "b38f4ee6ba7caffb2dd70d7824eec7a2b5ee4c18",
+    "garden_claim": "33470af"
+  },
+  "composition": {
+    "factory": "harness.daemon:create_dev_app",
+    "fixture_used": false,
+    "provider": "OpenRouter",
+    "resolved_model": "openrouter:minimax/minimax-m3",
+    "pi_version": "0.84.2",
+    "pi_runtime": "checksummed standalone release executable",
+    "spine": "isolated local contract composition",
+    "owner_identity_touched": false
+  },
+  "owner_turn": {
+    "thread_id": "74fb420f-295d-4914-8d92-399c380e5cf7",
+    "run_id": "01M087YBK3YW8FG812EQ79X9SJ",
+    "project": "disposable verification project",
+    "result": "moved into notes, replaced the handoff status, and read the edited file back",
+    "final_file": "# M3H handoff\n\nStatus: edited by the live Nocturne owner agent.\n",
+    "tool_calls": {
+      "bash": 1,
+      "ls": 2,
+      "move": 1,
+      "read": 2,
+      "edit": 1
+    },
+    "tool_results": {
+      "success": 7,
+      "refused": 0
+    },
+    "disclosure": "The model used one sandboxed pwd despite the prompt saying not to use bash, then disclosed it in the final answer. The command stayed inside the location and crossed no boundary."
+  },
+  "journal": {
+    "mode": "0600",
+    "byte_count": 77993,
+    "sha256": "542cbb22a7d997b39e899088b984aa32c67ec6607b6a7c095157a865f4f76928",
+    "function_tool_call_events": 7,
+    "function_tool_result_events": 7,
+    "provider_key_or_bearer_token_present": false
+  },
+  "spend": {
+    "purpose": "building",
+    "provider": "Novita",
+    "model": "minimax/minimax-m3",
+    "receipt_lines": 27,
+    "cost_usd": "0.002573220000",
+    "rack_lanes_visible": [
+      "All spend",
+      "building",
+      "minimax/minimax-m3"
+    ]
+  },
+  "context_bars": {
+    "used_tokens": 2346,
+    "context_tokens": 1000000,
+    "system_tokens": 196,
+    "history_tokens": 965,
+    "memory_tokens": 0,
+    "tools_tokens_display": "1.2K",
+    "tools_note": "Tools include measured traffic; other lanes estimated"
+  },
+  "boundary_proof": {
+    "standalone_pi_smoke": true,
+    "in_location_write_edit_bash_read": true,
+    "outside_location_write_refused": true,
+    "process_secret_scrubbed": true,
+    "owner_consent_required": false,
+    "consent_reason": "The edit was reversible and wholly inside the current location."
+  },
+  "cleanup": {
+    "exact_owner_daemon_stopped": true,
+    "isolated_spine_removed": true,
+    "temporary_home_removed": true,
+    "browser_tab_closed": true,
+    "durable_owner_memory_created": false,
+    "cloud_or_deploy_mutation": false
+  }
+}

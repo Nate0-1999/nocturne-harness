@@ -89,6 +89,7 @@ from harness.spine_client import (
     VitalsSnapshot,
 )
 from harness.tools_memory import MemoryToolContext
+from harness.toolset_runtime import LazyStandardToolset
 from harness.transcript import TranscriptJournal, TranscriptJournalUnavailable
 from harness.transcript_sync import TranscriptSyncEngine
 
@@ -644,6 +645,13 @@ def create_dev_app(
         static_context_tokens=configured.model_context_tokens,
         catalog=completion_router.catalog,
     )
+    workspace_toolset = LazyStandardToolset(
+        cwd=discovery_root,
+        workspace_root=discovery_root,
+        agent_id=agent_id,
+        machine_id=machine_id,
+        fence_reads=configured.toolset_fence_reads,
+    )
 
     def context_factory(thread_id: str) -> MemoryToolContext:
         try:
@@ -659,6 +667,7 @@ def create_dev_app(
             thread_id=parsed_thread_id,
             project_key=project_key,
             origin_path=project_key,
+            toolset=workspace_toolset,
         )
 
     memory_contexts = ThreadMemoryContextRegistry()
@@ -949,6 +958,7 @@ def create_dev_app(
 
     app.router.add_event_handler("startup", transcript_sync.start)
     app.router.add_event_handler("shutdown", transcript_sync.stop)
+    app.router.add_event_handler("shutdown", workspace_toolset.close)
     app.router.add_event_handler("shutdown", owned_spine.aclose)
     app.router.add_event_handler("shutdown", completion_router.aclose)
     return app

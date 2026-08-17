@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from pydantic_ai.messages import ModelResponse, TextPart
+from pydantic_ai.messages import ModelRequest, ModelResponse, TextPart, ToolCallPart, ToolReturnPart
 from pydantic_ai.usage import RequestUsage
 
 from harness.context_window import ContextWindowTracker
@@ -60,6 +60,36 @@ def test_tracker_global_aggregates_only_observed_threads() -> None:
     assert snapshot.aggregate is not None
     assert snapshot.aggregate.used_tokens == 30
     assert snapshot.aggregate.context_tokens == 200
+
+
+def test_tools_lane_includes_measured_call_and_return_traffic() -> None:
+    tracker = ContextWindowTracker()
+    resolution = ThreadModelResolution(
+        model="openrouter:test/model", context_tokens=16_000, policy="pinned:test/model"
+    )
+    tracker.record(
+        thread_id="without-traffic",
+        captured=[ModelResponse(parts=[TextPart("ok")], usage=RequestUsage(input_tokens=1_250))],
+        resolution=resolution,
+        memory_block=None,
+    )
+    tracker.record(
+        thread_id="with-traffic",
+        captured=[
+            ModelResponse(
+                parts=[ToolCallPart("write", {"path": "note.txt", "content": "hello"}, "call-1")]
+            ),
+            ModelRequest(parts=[ToolReturnPart("write", "Wrote note.txt", "call-1")]),
+            ModelResponse(parts=[TextPart("ok")], usage=RequestUsage(input_tokens=1_250)),
+        ],
+        resolution=resolution,
+        memory_block=None,
+    )
+
+    without = tracker.snapshot("without-traffic").aggregate
+    with_traffic = tracker.snapshot("with-traffic").aggregate
+    assert without is not None and with_traffic is not None
+    assert with_traffic.categories.tools > without.categories.tools
 
 
 def test_f034_zero_usage_error_response_cannot_erase_last_successful_measurement() -> None:

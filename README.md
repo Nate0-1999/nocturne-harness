@@ -18,7 +18,10 @@ nocturne up
 `nocturne init` asks for one value: an OpenRouter API key. It generates the
 database password, Spine bearer token, and local identity, then stores them in
 `~/.nocturne/env` with owner-only permissions. Set `OPENROUTER_API_KEY` before
-running it to use an existing environment secret without a prompt.
+running it to use an existing environment secret without a prompt. Init also
+downloads the pinned, platform-specific PI runtime from its canonical GitHub
+release, verifies its committed SHA-256 digest, and keeps it under
+`$NOCTURNE_HOME/tools`; ordinary chat never installs or updates tools.
 
 `nocturne up` pulls pgvector, applies the packaged database migrations, starts
 the installed Spine and Harness wheels, and opens <http://127.0.0.1:8765>.
@@ -76,6 +79,15 @@ to owner-only JSONL files under `$NOCTURNE_HOME/transcripts`. These files are
 local, append-only, and never stored in Git. On startup, NOCTURNE verifies that
 the journal can durably accept writes and reloads each conversation from its
 durable tail before serving the UI.
+
+Ordinary owner chat can use the pinned PI workspace tools in the project where
+the daemon was launched. Reads are free; edit, write, and shell work stay inside
+the agent's current location, so the agent must move before acting elsewhere in
+that project. On macOS, shell commands run behind the operating-system sandbox
+with network denied and a scrubbed environment. Remote pushes, deploy commands,
+and credential reads stop with a plain boundary message. Every tool call and
+result is appended through the same conversation journal, and provider usage
+continues through the existing spend ledger.
 
 Archiving a thread runs the memory extractor over that durable journal, then
 opens the law-bound Thread Memory Review rack module. Candidate memories remain

@@ -35,6 +35,13 @@ from harness.lifecycle import (
     inspect_local_palace,
     prepare_local_restore,
 )
+from harness.pi_runtime import (
+    PiRuntimeError,
+    ensure_pi_runtime,
+    installed_pi_is_ready,
+    installed_pi_path,
+    pi_runtime_is_ready,
+)
 from harness.resources import local_storage_snapshot
 from harness.transcript import JournalCloudRecord, TranscriptJournal, TranscriptJournalUnavailable
 
@@ -119,6 +126,9 @@ class NocturneConfig:
                     "NOCTURNE_POSTGRES_VOLUME": self.active_postgres_volume,
                 }
             )
+        pi_command = installed_pi_path(self.home)
+        if installed_pi_is_ready(self.home):
+            environment["NOCTURNE_PI_COMMAND"] = str(pi_command)
         return environment
 
 
@@ -156,6 +166,12 @@ def init_nocturne(
     target = target_home / _CONFIG_FILE
     if target.exists():
         load_config(home=target_home)
+        if not pi_runtime_is_ready(target_home):
+            print("Preparing Nocturne's pinned workspace tools…", file=stdout, flush=True)
+        try:
+            ensure_pi_runtime(target_home)
+        except PiRuntimeError as exc:
+            raise OnboardingError(str(exc)) from exc
         print(f"Nocturne is already initialized at {target_home}.", file=stdout)
         return target
 
@@ -199,6 +215,12 @@ def init_nocturne(
         transcript_backup=transcript_backup,
     )
     _write_config(config)
+    if not pi_runtime_is_ready(target_home):
+        print("Preparing Nocturne's pinned workspace tools…", file=stdout, flush=True)
+    try:
+        ensure_pi_runtime(target_home)
+    except PiRuntimeError as exc:
+        raise OnboardingError(str(exc)) from exc
     print(f"Initialized Nocturne at {target_home}. Run `nocturne up`.", file=stdout)
     return target
 

@@ -25,7 +25,7 @@ from harness.model_router import (
 from harness.model_router import (
     ModelConfigurationError as ModelConfigurationError,
 )
-from harness.pydantic_ai_adapter import MemoryCapability
+from harness.pydantic_ai_adapter import MemoryCapability, WorkspaceCapability
 from harness.spine_client import (
     CreatedMemoryResponse,
     CreateMemoryConflictError,
@@ -240,7 +240,7 @@ class HarnessAgent:
         self._chat_agent = Agent(
             self._default_model,
             deps_type=MemoryToolContext,
-            capabilities=[MemoryCapability()],
+            capabilities=[MemoryCapability(), WorkspaceCapability()],
             name="harness-chat",
         )
         self._label_agent = Agent(
