@@ -19,6 +19,7 @@ import { MemoryGate } from './MemoryGate'
 import { MemoryPanel } from './MemoryPanel'
 import { MemoryGraph } from './MemoryGraph'
 import { InjectionConsole } from './InjectionConsole'
+import { RecipeModule } from './RecipeModule'
 import { ModelDevice } from './ModelDevice'
 import { VitalsModule } from './VitalsModule'
 import { ContextBars } from './ContextBars'
@@ -118,6 +119,7 @@ import {
 } from './graphOverlaySelection'
 import { ownerConnectionCopy, type PalaceStatus } from './surfaceHonesty'
 import { ControlTooltip } from './ControlTooltip'
+import { spatialAddresses, type SpatialSelectionContext } from './spatialSelection'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
 const SEAM_COLORS = (JSON.parse(seamColorsRaw) as { colors: SeamColorEntry[] }).colors
@@ -329,6 +331,10 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 })
   const viewportRef = useRef<HTMLDivElement>(null)
   const layer = activeStageLayer(layout)
+  const frameAddresses = useMemo(
+    () => spatialAddresses(layer.layer_id, layer.modules),
+    [layer.layer_id, layer.modules],
+  )
   const selectedThread = snapshot.selectedThreadId === null
     ? null
     : snapshot.threads[snapshot.selectedThreadId]
@@ -859,6 +865,10 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               onRemove={(moduleId) => setLayout((current) => removeStageModule(current, moduleId))}
               onPointerActivity={setPointerActive}
               scope={layout.scopes[module.module_id]}
+              spatialContext={{
+                ...frameAddresses.get(module.module_id)!,
+                scope: layout.scopes[module.module_id],
+              }}
               onScopeChange={changeModuleScope}
               cameraZoom={layer.camera.zoom}
               isRegressionFixture={isRegressionFixture}
@@ -1025,6 +1035,7 @@ interface RackModuleFrameProps {
   onRemove?: (moduleId: StageModuleId) => void
   onPointerActivity?: (active: boolean) => void
   scope: 'GLOBAL' | 'CURRENT'
+  spatialContext: SpatialSelectionContext
   onScopeChange?: (moduleId: StageModuleId, scope: 'GLOBAL' | 'CURRENT') => void
   onCollapseToggle?: () => void
   cameraZoom?: number
@@ -1046,6 +1057,7 @@ function RackModuleFrame({
   onRemove,
   onPointerActivity,
   scope,
+  spatialContext,
   onScopeChange,
   onCollapseToggle,
   cameraZoom = 1,
@@ -1318,6 +1330,7 @@ function RackModuleFrame({
         <RackPluginIframe
           key={`${manifest.id}:${scope}`}
           manifest={manifest}
+          spatialContext={spatialContext}
           theme={theme}
           isRegressionFixture={isRegressionFixture}
         />
@@ -1340,6 +1353,7 @@ function RackSettingsControl({
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const scopeAdjustable = (manifest.actions as readonly string[]).includes('rack.scope.set')
+  const spatial = manifest.id === 'recipe'
   const fixedCopy = manifest.default_scope === 'GLOBAL'
     ? 'This module always shows the whole Palace.'
     : 'This module follows the selected thread.'
@@ -1399,7 +1413,7 @@ function RackSettingsControl({
                   ×
                 </button>
               </header>
-              <p>Choose what this module follows.</p>
+              <p>Choose what this module {spatial ? 'watches' : 'follows'}.</p>
               <div className="rack-module__scope" aria-label={`${manifest.name} view`}>
                 {(['GLOBAL', 'CURRENT'] as const).map((value) => (
                   <button
@@ -1408,7 +1422,7 @@ function RackSettingsControl({
                     aria-pressed={scope === value}
                     onClick={() => onScopeChange?.(value)}
                   >
-                    {value === 'GLOBAL' ? 'Everything' : 'This thread'}
+                    {value === 'GLOBAL' ? 'Everything' : spatial ? 'This frame' : 'This thread'}
                   </button>
                 ))}
               </div>
@@ -1480,6 +1494,8 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
         <MemoryGraph />
       ) : moduleId === 'injection_console' ? (
         <InjectionConsole />
+      ) : moduleId === 'recipe' ? (
+        <RecipeModule />
       ) : (
         <GateModule />
       )}

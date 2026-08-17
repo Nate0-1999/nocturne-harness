@@ -58,6 +58,7 @@ from harness.parameter_registry import (
 from harness.progressive_prompt import workspace_location_path
 from harness.rack_query import RackQueryResult
 from harness.receipt_queue import SpendReceiptQueue
+from harness.recipe_graph import RecipeGraphSnapshot
 from harness.resources import ResourceWatch
 from harness.run_loop import ProjectBindingConflict, RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
@@ -117,6 +118,7 @@ type ScorerProposalActivator = Callable[
     [str, RackScorerActivateRequest], Awaitable[ScorerConfigurationView]
 ]
 type ContextWindowReader = Callable[[str | None], ContextWindowSnapshot]
+type RecipeGraphReader = Callable[[], RecipeGraphSnapshot]
 
 
 class TranscriptBackupUpdate(BaseModel):
@@ -140,6 +142,7 @@ _RACK_MODULE_IDS = frozenset(
         "model_device",
         "memory_graph",
         "injection_console",
+        "recipe",
     }
 )
 _RACK_FRAME_CSP = "; ".join(
@@ -245,6 +248,7 @@ def create_app(
     scorer_retrainer: ScorerRetrainer | None = None,
     scorer_proposal_activator: ScorerProposalActivator | None = None,
     context_window_reader: ContextWindowReader | None = None,
+    recipe_graph_reader: RecipeGraphReader | None = None,
     before_static_mount: Callable[[FastAPI], None] | None = None,
 ) -> FastAPI:
     """Create the daemon with process-scoped H7 state and extensible routing."""
@@ -279,13 +283,31 @@ def create_app(
     @app.get("/v1/rack/query", response_model=RackQueryResult)
     async def rack_query(
         resource: Literal[
-            "vitals", "parameters", "memory_graph", "scorer_console", "context_window"
+            "vitals",
+            "parameters",
+            "memory_graph",
+            "scorer_console",
+            "context_window",
+            "recipe_graph",
         ],
         as_of: str | None = None,
         thread_id: str | None = None,
     ) -> RackQueryResult:
         """Keep Spine credentials behind the public rack query surface."""
 
+        if resource == "recipe_graph":
+            if as_of not in {None, "now"}:
+                return RackQueryResult(status="historical_unavailable", as_of=as_of, data=None)
+            if recipe_graph_reader is None:
+                raise HTTPException(status_code=503, detail="The live recipe is unavailable.")
+            try:
+                snapshot = recipe_graph_reader()
+            except ValueError:
+                raise HTTPException(
+                    status_code=503,
+                    detail="The live recipe is unavailable.",
+                ) from None
+            return RackQueryResult(status="live", as_of=None, data=snapshot)
         if resource == "context_window":
             if as_of not in {None, "now"}:
                 return RackQueryResult(status="historical_unavailable", as_of=as_of, data=None)

@@ -10,6 +10,7 @@ export type StageRackModuleId =
   | 'memory_graph'
   | 'injection_console'
   | 'palace_queue'
+  | 'recipe'
 
 export type RackResizeDirection = 'n' | 'e' | 's' | 'w' | 'ne' | 'se' | 'sw' | 'nw'
 
@@ -38,6 +39,7 @@ export const STAGE_RACK_MODULE_IDS: readonly StageRackModuleId[] = [
   'memory_graph',
   'injection_console',
   'palace_queue',
+  'recipe',
 ]
 
 export function rackResizeDirections(

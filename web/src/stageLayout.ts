@@ -27,10 +27,12 @@ export type StageModuleId =
   | 'memory_graph'
   | 'injection_console'
   | 'palace_queue'
+  | 'recipe'
 
 export const STAGE_MODULE_IDS: readonly StageModuleId[] = [
   'threads', 'chat', 'memory', 'vitals', 'context_bars',
   'memory_graph', 'injection_console', 'palace_queue',
+  'recipe',
 ]
 const FACTORY_LAYER_IDS = ['work', 'graph', 'injection'] as const
 
@@ -73,6 +75,7 @@ const DEFAULT_SCOPES: Record<string, RackScope> = {
   vitals: 'GLOBAL', context_bars: 'CURRENT', gate: 'CURRENT', thread_end: 'CURRENT',
   palace_queue: 'GLOBAL', model_device: 'CURRENT', memory_graph: 'GLOBAL',
   injection_console: 'GLOBAL',
+  recipe: 'CURRENT',
 }
 
 const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
@@ -88,6 +91,7 @@ const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
   palace_queue: expandLegacyModule({
     module_id: 'palace_queue', x: 20, y: 1, width: 5, height: 10,
   }),
+  recipe: expandLegacyModule({ module_id: 'recipe', x: 14, y: 2, width: 12, height: 10 }),
 }
 
 export const FACTORY_STAGE_LAYOUT: StageLayoutSet = {
@@ -528,14 +532,22 @@ function expandLegacyStageLayout(layout: ParsedStageLayout): StageLayoutSet {
 }
 
 function addMemoryIngestToExistingLayout(layout: StageLayoutSet): StageLayoutSet {
+  return addFactoryModuleToExistingLayout(layout, 'palace_queue', 'work')
+}
+
+function addFactoryModuleToExistingLayout(
+  layout: StageLayoutSet,
+  moduleId: StageModuleId,
+  preferredLayerId: string,
+): StageLayoutSet {
   const alreadyPlaced = [...layout.layers, ...layout.removed_layers].some((layer) =>
     [...layer.modules, ...layer.removed_modules].some(
-      (module) => module.module_id === 'palace_queue',
+      (module) => module.module_id === moduleId,
     )
   )
   if (alreadyPlaced) return layout
-  const targetLayerId = layout.layers.some((layer) => layer.layer_id === 'work')
-    ? 'work'
+  const targetLayerId = layout.layers.some((layer) => layer.layer_id === preferredLayerId)
+    ? preferredLayerId
     : layout.active_layer_id
   return {
     ...cloneStageLayout(layout),
@@ -544,7 +556,7 @@ function addMemoryIngestToExistingLayout(layout: StageLayoutSet): StageLayoutSet
           ...cloneLayer(layer),
           modules: [
             ...layer.modules.map((module) => ({ ...module })),
-            { ...DEFAULT_MODULES.palace_queue },
+            { ...DEFAULT_MODULES[moduleId] },
           ],
         }
       : cloneLayer(layer)),
@@ -625,7 +637,7 @@ function parseScopes(value: unknown): Record<string, RackScope> {
 function isStageModuleId(value: unknown): value is StageModuleId {
   return value === 'threads' || value === 'chat' || value === 'memory' ||
     value === 'vitals' || value === 'context_bars' || value === 'memory_graph' ||
-    value === 'injection_console' || value === 'palace_queue'
+    value === 'injection_console' || value === 'palace_queue' || value === 'recipe'
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

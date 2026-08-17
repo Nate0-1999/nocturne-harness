@@ -2647,3 +2647,32 @@ would turn auto mode into hidden authority. A free-form JSON event would let the
 surface drift from conductor law. Calling the deterministic proof a production search
 would overclaim what the acceptance exercise proves; the owner surface therefore says
 “toy Symphony” everywhere it matters.
+
+## 087 — Recipe is a read-only graph instrument and selection follows position [P2.3, SYM12]
+
+**Decision.** Project the existing schema-versioned conductor and round history sink
+into one immutable current Recipe snapshot. The projection carries the authoritative
+packet and Bead identities, packet/search/judge roles, dependency and judged-by edges,
+mechanical node states, and the exact ready frontier. It owns no graph writes and is
+available to the template-conformant Recipe module only through ADR-023's public
+read-only query surface; unsupported history and a missing reader remain explicit.
+
+Enact the smallest R21 spatial-selection foundation needed by the module without
+closing the still-provisional taste question: snap-touching Stage rectangles form a
+deterministic transitive frame within one layer. A local watcher sees selections from
+that frame only; `GLOBAL` is the one escape and may watch all layers. Recipe remains an
+owner-added Library instrument; its default Graph-layer placement touches Memory Graph,
+and removing it stays a durable owner choice. No portals, link colors, or invisible
+cross-layer wiring exist.
+
+**Motivation.** P2.3 needs the plan to answer what can run, what blocks it, and where
+expensive judgment is happening without turning a visualization into a second source
+of orchestration truth. Position already exists as the Stage's owner-visible primitive,
+so using it for selection makes the relationship inspectable rather than adding a
+separate linking system.
+
+**Rejected alternatives.** Parsing `BOARD.md` in the daemon would bypass the Garden
+adapter and create another authority. Persisting a Recipe database would duplicate the
+graph-history sink. Treating every module as one global selection room would contradict
+R21's layer boundary. Portals and manual channel colors remain YAGNI until owner evidence
+shows that proximity plus the explicit global escape is insufficient.

@@ -76,7 +76,7 @@ test('whole-stage fit and off-screen classification use the same camera geometry
   assert.equal(moduleIsOffscreen(module, fitted, 1280, 720), false)
 })
 
-/** PLAN M2ST1 / P2 makes Graph and Injection ordinary removable modules on persistent layers. */
+/** PLAN M2ST1 / P2 keeps factory Graph and Injection ordinary removable Stage modules. */
 test('factory layers contain Graph and Injection as stage modules, never fixed tabs', () => {
   const graph = FACTORY_STAGE_LAYOUT.layers.find((layer) => layer.layer_id === 'graph')
   const injection = FACTORY_STAGE_LAYOUT.layers.find((layer) => layer.layer_id === 'injection')
@@ -108,6 +108,22 @@ test('Memory Ingest is a factory Stage module and joins an existing v3 layout on
   const reloaded = loadStageLayout(storage)
   assert.equal(activeStageLayer(reloaded).modules.some((module) => module.module_id === 'palace_queue'), false)
   assert.equal(activeStageLayer(reloaded).removed_modules.some((module) => module.module_id === 'palace_queue'), true)
+})
+
+/** SYM12 / P2.3 keeps Recipe owner-additive, removable, and exactly restorable. */
+test('Recipe joins the chosen layer from Library and round-trips its placement', () => {
+  const graphLayout = selectStageLayer(cloneFactoryStageLayout(), 'graph')
+  const added = restoreStageModule(graphLayout, 'recipe')
+  assert.deepEqual(activeStageLayer(added).modules.at(-1), {
+    module_id: 'recipe', x: 124, y: 70, width: 24, height: 20,
+  })
+
+  const removed = removeStageModule(added, 'recipe')
+  assert.equal(activeStageLayer(removed).modules.some((module) => module.module_id === 'recipe'), false)
+  const restored = restoreStageModule(removed, 'recipe')
+  assert.deepEqual(activeStageLayer(restored).modules.at(-1), {
+    module_id: 'recipe', x: 124, y: 70, width: 24, height: 20,
+  })
 })
 
 /** PLAN M2TC / P2 removes per-module size caps: only the finite Stage grid limits huge and tiny resizing. */

@@ -33,6 +33,11 @@ import {
 import { assertRackModuleTemplate, stageGridBounds } from './rackModuleTemplate'
 import { runRackAction } from './rackAction'
 import {
+  spatialSelectionIsVisible,
+  type SpatialAddress,
+  type SpatialSelectionContext,
+} from './spatialSelection'
+import {
   authoritativeProjectPath,
   canonicalProjectPath,
   knownProjectPaths,
@@ -47,7 +52,7 @@ import {
   type ThreadState,
 } from './store'
 
-export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'injection_console'
+export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'injection_console' | 'recipe'
 export type RackModuleSlot = 'header' | 'panel' | 'strip' | 'overlay'
 export type RackMemoryPanelState = MemoryPanelState
 
@@ -63,7 +68,8 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
     value === 'palace_queue' ||
     value === 'model_device' ||
     value === 'memory_graph' ||
-    value === 'injection_console'
+    value === 'injection_console' ||
+    value === 'recipe'
 }
 
 export interface RackSnapshot {
@@ -138,7 +144,7 @@ export interface RackModuleManifest {
 }
 
 export interface RackQueryRequest {
-  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'context_window' | 'parameters' | 'memory_graph' | 'scorer_console'
+  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'context_window' | 'parameters' | 'memory_graph' | 'scorer_console' | 'recipe_graph'
   as_of?: string | null
   thread_id?: string
 }
@@ -149,13 +155,16 @@ export interface RackQueryResult {
   data: JsonValue | null
 }
 
-export type RackSelection =
+type RackSelectionValue = (
   | { kind: 'thread'; id: string }
   | { kind: 'project'; id: string }
   | { kind: 'memory'; id: string }
   | { kind: 'module'; id: RackModuleId }
   | { kind: 'spend_lane'; id: string; as_of: string | null }
-  | null
+  | { kind: 'recipe_node'; id: string }
+)
+
+export type RackSelection = (RackSelectionValue & { spatial?: SpatialAddress }) | null
 
 export interface RackEventSurface {
   getSnapshot: () => RackSnapshot
@@ -355,6 +364,12 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
       'scorer.weight.sem', 'scorer.weight.kw', 'scorer.weight.time',
       'scorer.weight.proj', 'scorer.weight.freq', 'scorer.weight.hist',
     ], bounds: stageGridBounds(instrumentStageBounds.preferred), movable: true, law_bound: true, default_scope: 'GLOBAL',
+  },
+  recipe: {
+    id: 'recipe', name: 'Recipe', version: '1.0.0', class: 'visualizer',
+    slot: 'panel', streams: [], actions: ['rack.scope.get', 'rack.scope.set'],
+    bounds: stageGridBounds(instrumentStageBounds.preferred), movable: true,
+    law_bound: true, default_scope: 'CURRENT',
   },
 }
 
@@ -577,7 +592,7 @@ async function fetchJson(path: string, init?: RequestInit): Promise<JsonValue> {
 export const rackQuerySurface: RackQuerySurface = {
   async query(request) {
     const asOf = request.as_of ?? null
-    if (request.resource === 'vitals' || request.resource === 'context_window' || request.resource === 'memory_graph' || request.resource === 'scorer_console') {
+    if (request.resource === 'vitals' || request.resource === 'context_window' || request.resource === 'memory_graph' || request.resource === 'scorer_console' || request.resource === 'recipe_graph') {
       if (asOf !== null && asOf !== 'now') {
         return { status: 'historical_unavailable', as_of: asOf, data: null }
       }
@@ -590,7 +605,10 @@ export const rackQuerySurface: RackQuerySurface = {
         headers: { Accept: 'application/json' },
       })
       if (!response.ok) {
-        throw new Error(`Memory instrumentation is unavailable (${response.status})`)
+        const label = request.resource === 'recipe_graph'
+          ? 'The live recipe'
+          : 'Memory instrumentation'
+        throw new Error(`${label} is unavailable (${response.status})`)
       }
       return parseRackQueryResult(await response.json())
     }
@@ -657,9 +675,12 @@ export function rackSelectionsEqual(left: RackSelection, right: RackSelection): 
   if (left.kind !== right.kind || left.id !== right.id) {
     return false
   }
-  return left.kind !== 'spend_lane' || (
+  const sameValue = left.kind !== 'spend_lane' || (
     right.kind === 'spend_lane' && left.as_of === right.as_of
   )
+  return sameValue &&
+    left.spatial?.layer_id === right.spatial?.layer_id &&
+    left.spatial?.frame_id === right.spatial?.frame_id
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -706,7 +727,30 @@ function streamMatches(declarations: readonly string[], eventType: string): bool
   )
 }
 
-export function createHostPluginApi(manifest: RackModuleManifest): RackPluginApi {
+function spatialSelectionSurface(context: SpatialSelectionContext): RackSelectionSurface {
+  return {
+    getSnapshot() {
+      const selection = rackSelectionSurface.getSnapshot()
+      const origin = selection?.spatial ?? null
+      return spatialSelectionIsVisible(origin, context) ? selection : null
+    },
+    subscribe: rackSelectionSurface.subscribe,
+    select(selection) {
+      rackSelectionSurface.select(selection === null ? null : {
+        ...selection,
+        spatial: { layer_id: context.layer_id, frame_id: context.frame_id },
+      })
+    },
+  }
+}
+
+export function createHostPluginApi(
+  manifest: RackModuleManifest,
+  spatialContext: SpatialSelectionContext | null = null,
+): RackPluginApi {
+  const selection = spatialContext === null
+    ? rackSelectionSurface
+    : spatialSelectionSurface(spatialContext)
   return {
     manifest,
     events: {
@@ -737,7 +781,7 @@ export function createHostPluginApi(manifest: RackModuleManifest): RackPluginApi
       },
     },
     query: rackQuerySurface,
-    selection: rackSelectionSurface,
+    selection,
   }
 }
 

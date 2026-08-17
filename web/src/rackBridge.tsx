@@ -32,6 +32,7 @@ import {
   rackValueForIframe,
 } from './rackSnapshotProjection'
 import type { RackEnvelopeEvent, RackResizeEvent } from './rackEvents'
+import type { SpatialSelectionContext } from './spatialSelection'
 
 const BRIDGE_VERSION = 1
 const READY_MESSAGE = 'nocturne.rack.ready'
@@ -67,15 +68,28 @@ interface ConnectMessage {
 
 export function RackPluginIframe({
   manifest,
+  spatialContext = null,
   theme,
   isRegressionFixture = false,
 }: {
   manifest: RackModuleManifest
+  spatialContext?: SpatialSelectionContext | null
   theme: ThemeId
   isRegressionFixture?: boolean
 }) {
   const frameRef = useRef<HTMLIFrameElement>(null)
-  const api = useMemo(() => createHostPluginApi(manifest), [manifest])
+  const spatialLayerId = spatialContext?.layer_id ?? null
+  const spatialFrameId = spatialContext?.frame_id ?? null
+  const spatialScope = spatialContext?.scope ?? null
+  const api = useMemo(
+    () => createHostPluginApi(
+      manifest,
+      spatialLayerId === null || spatialFrameId === null || spatialScope === null
+        ? null
+        : { layer_id: spatialLayerId, frame_id: spatialFrameId, scope: spatialScope },
+    ),
+    [manifest, spatialFrameId, spatialLayerId, spatialScope],
+  )
   const frameOrigin = useMemo(() => rackFrameOrigin(), [])
   const colorway = useMemo(() => {
     if (!theme.startsWith('pressed-')) return null
@@ -426,7 +440,19 @@ function isRackSelection(value: unknown): value is RackSelection {
   if (!isRecord(value) || typeof value.id !== 'string') {
     return false
   }
-  if (value.kind === 'thread' || value.kind === 'project' || value.kind === 'memory') {
+  if (value.spatial !== undefined && (
+    !isRecord(value.spatial) ||
+    typeof value.spatial.layer_id !== 'string' ||
+    typeof value.spatial.frame_id !== 'string'
+  )) {
+    return false
+  }
+  if (
+    value.kind === 'thread' ||
+    value.kind === 'project' ||
+    value.kind === 'memory' ||
+    value.kind === 'recipe_node'
+  ) {
     return true
   }
   if (value.kind === 'spend_lane') {

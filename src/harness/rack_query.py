@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, model_validator
 
 from harness.context_window import ContextWindowSnapshot
 from harness.parameter_registry import ParameterSnapshot
+from harness.recipe_graph import RecipeGraphSnapshot
 from harness.spine_client import MemoryGraphSnapshot, ScorerConsoleSnapshot, VitalsSnapshot
 
 
@@ -24,6 +25,7 @@ class RackQueryResult(BaseModel):
         | MemoryGraphSnapshot
         | ScorerConsoleSnapshot
         | ContextWindowSnapshot
+        | RecipeGraphSnapshot
         | None
     )
 
