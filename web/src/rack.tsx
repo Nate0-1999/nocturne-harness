@@ -11,6 +11,7 @@ import {
 import type {
   GateCommitPayload,
   JsonValue,
+  SymphonyIntervention,
   SymphonyLaunch,
   ThreadCatalogEntry,
   Ulid,
@@ -52,7 +53,7 @@ import {
   type ThreadState,
 } from './store'
 
-export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'injection_console' | 'recipe'
+export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'injection_console' | 'recipe' | 'deck'
 export type RackModuleSlot = 'header' | 'panel' | 'strip' | 'overlay'
 export type RackMemoryPanelState = MemoryPanelState
 
@@ -69,7 +70,8 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
     value === 'model_device' ||
     value === 'memory_graph' ||
     value === 'injection_console' ||
-    value === 'recipe'
+    value === 'recipe' ||
+    value === 'deck'
 }
 
 export interface RackSnapshot {
@@ -88,6 +90,7 @@ export type RackAction =
   | { type: 'project.select'; project_key: string }
   | { type: 'catalog.cleanup-fixtures' }
   | { type: 'prompt.submit'; prompt: string; image?: OutboundImage; symphony?: SymphonyLaunch }
+  | { type: 'symphony.intervene'; intervention: SymphonyIntervention }
   | { type: 'run.cancel'; run_id?: Ulid }
   | { type: 'thread.archive'; thread_id?: string }
   | { type: 'queue.load'; thread_id?: string; birthplace?: 'thread' | 'seed' | 'symphony' }
@@ -371,6 +374,12 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     bounds: stageGridBounds(instrumentStageBounds.preferred), movable: true,
     law_bound: true, default_scope: 'CURRENT',
   },
+  deck: {
+    id: 'deck', name: 'The Deck', version: '1.0.0', class: 'control',
+    slot: 'panel', streams: ['thread.snapshot', 'run.*'], actions: ['symphony.intervene'],
+    bounds: stageGridBounds({ w: 20, h: 20 }), movable: true,
+    law_bound: true, default_scope: 'CURRENT',
+  },
 }
 
 assertRackModuleTemplate(RACK_MANIFESTS)
@@ -433,6 +442,13 @@ function dispatchRackAction<Action extends RackAction>(
           action.prompt,
           action.image,
           action.symphony,
+        ) as RackActionResult<Action>
+      case 'symphony.intervene':
+        return harnessClient.submitPrompt(
+          'Steer this symphony.',
+          undefined,
+          undefined,
+          action.intervention,
         ) as RackActionResult<Action>
       case 'run.cancel':
         return harnessClient.cancelRun(action.run_id) as RackActionResult<Action>

@@ -143,6 +143,7 @@ _RACK_MODULE_IDS = frozenset(
         "memory_graph",
         "injection_console",
         "recipe",
+        "deck",
     }
 )
 _RACK_FRAME_CSP = "; ".join(
@@ -540,6 +541,7 @@ def create_app(
                         prompt=message.payload.prompt,
                         image=message.payload.image,
                         symphony=message.payload.symphony,
+                        symphony_intervention=message.payload.symphony_intervention,
                         sink=send,
                     )
                 elif message.type is MessageType.RUN_CANCEL:

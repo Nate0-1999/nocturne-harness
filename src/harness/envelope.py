@@ -233,6 +233,7 @@ class SymphonyLaunchPayload(BaseModel):
     recipe: tuple[SymphonyRecipeStepPayload, ...] = Field(min_length=1, max_length=12)
     judge_charters: tuple[SymphonyJudgeCharterPayload, ...] = Field(min_length=3, max_length=3)
     authority: SymphonyAuthorityPayload
+    hold_for_steering: StrictBool = False
 
     @model_validator(mode="after")
     def require_fixed_deliberation_shape(self) -> "SymphonyLaunchPayload":
@@ -245,6 +246,56 @@ class SymphonyLaunchPayload(BaseModel):
         return self
 
 
+class SymphonyClarificationPayload(BaseModel):
+    """A logged follow-up inside the immutable deliberation boundary. [G19a]"""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+
+    kind: Literal["clarification"]
+    symphony_id: ULID
+    attempt_id: NonBlankString
+    instruction: NonBlankString
+
+
+class SymphonyCancelAttemptPayload(BaseModel):
+    """A cooperative attempt cancellation already authorized by T2. [G19b/G20]"""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+
+    kind: Literal["cancel_attempt"]
+    symphony_id: ULID
+    attempt_id: NonBlankString
+
+
+class SymphonyCharterForkPayload(BaseModel):
+    """A fresh signed deliberation that forks instead of rewriting a charter. [G19c]"""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+
+    kind: Literal["charter_change"]
+    symphony_id: ULID
+    charter: SymphonyJudgeCharterPayload
+    fork_signed: Literal[True]
+
+
+class SymphonyCompletePayload(BaseModel):
+    """Let a held toy proof finish after its steering exercise."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+
+    kind: Literal["complete"]
+    symphony_id: ULID
+
+
+type SymphonyInterventionPayload = Annotated[
+    SymphonyClarificationPayload
+    | SymphonyCancelAttemptPayload
+    | SymphonyCharterForkPayload
+    | SymphonyCompletePayload,
+    Field(discriminator="kind"),
+]
+
+
 class PromptSubmitPayload(_ExtensiblePayload):
     prompt: NonBlankString
     image: ImageInput | None = Field(default=None, exclude_if=lambda value: value is None)
@@ -252,6 +303,19 @@ class PromptSubmitPayload(_ExtensiblePayload):
         default=None,
         exclude_if=lambda value: value is None,
     )
+    symphony_intervention: SymphonyInterventionPayload | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+
+    @model_validator(mode="after")
+    def require_one_specialized_input(self) -> "PromptSubmitPayload":
+        specialized = sum(
+            value is not None for value in (self.image, self.symphony, self.symphony_intervention)
+        )
+        if specialized > 1:
+            raise ValueError("image, Symphony launch, and Symphony steering are mutually exclusive")
+        return self
 
 
 class RunStartedPayload(_ExtensiblePayload):

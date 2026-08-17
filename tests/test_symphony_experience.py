@@ -13,6 +13,10 @@ from harness.envelope import (
     EnvelopeFactory,
     MessageType,
     StopReason,
+    SymphonyCancelAttemptPayload,
+    SymphonyCharterForkPayload,
+    SymphonyClarificationPayload,
+    SymphonyCompletePayload,
     SymphonyLaunchPayload,
 )
 from harness.model_policy import ThreadModelResolution
@@ -244,6 +248,129 @@ async def test_durable_thread_event_reopens_launch_after_daemon_restart() -> Non
     )
 
     assert emitter.events[-1]["event_kind"] == "symphony_result"
+
+
+@pytest.mark.asyncio
+async def test_live_toy_stack_exercises_all_three_steering_classes_without_rewriting() -> None:
+    """ADR-014 and G19-G20 require typed, append-only steering classes."""
+
+    next_id = ids()
+    experience = SymphonyExperience(
+        id_factory=next_id,
+        clock=lambda: datetime(2026, 8, 17, 13, tzinfo=UTC),
+    )
+    opening = RecordingEmitter()
+    await experience.run(
+        thread_id="thread-a",
+        prompt="take this to a symphony",
+        launch=None,
+        message_history=(),
+        emit=opening,
+    )
+    original = launch(str(opening.events[0]["draft_id"]), hold_for_steering=True)
+    launched = RecordingEmitter()
+    await experience.run(
+        thread_id="thread-a",
+        prompt="Launch this symphony.",
+        launch=original,
+        message_history=(),
+        emit=launched,
+    )
+    live = launched.events[-1]
+    symphony_id = str(live["symphony_id"])
+    assert live["state"] == "running"
+
+    clarified = RecordingEmitter()
+    await experience.run(
+        thread_id="thread-a",
+        prompt="Steer this symphony.",
+        launch=None,
+        intervention=SymphonyClarificationPayload(
+            kind="clarification",
+            symphony_id=symphony_id,
+            attempt_id="attempt-1",
+            instruction="Show the owner-visible lineage mark.",
+        ),
+        message_history=(),
+        emit=clarified,
+    )
+    assert clarified.events[-1]["attempts"][0]["follow_ups"] == [  # type: ignore[index]
+        "Show the owner-visible lineage mark."
+    ]
+
+    # Rehydrate from the durable state snapshot before the next intervention.
+    restarted = SymphonyExperience(id_factory=next_id)
+    cancelled = RecordingEmitter()
+    await restarted.run(
+        thread_id="thread-a",
+        prompt="Steer this symphony.",
+        launch=None,
+        intervention=SymphonyCancelAttemptPayload(
+            kind="cancel_attempt",
+            symphony_id=symphony_id,
+            attempt_id="attempt-2",
+        ),
+        accepted_stack_events=(clarified.events[-1],),
+        message_history=(),
+        emit=cancelled,
+    )
+    assert [event["state"] for event in cancelled.events[:3]] == [
+        "requested",
+        "draining",
+        "cancelled",
+    ]
+    cancelled_state = cancelled.events[-1]
+    assert cancelled_state["attempts"][1]["partial_evidence"][-1] == (  # type: ignore[index]
+        "retained after drain"
+    )
+    assert cancelled_state["attempts"][1]["memories_admitted"] is False  # type: ignore[index]
+
+    forked = RecordingEmitter()
+    await restarted.run(
+        thread_id="thread-a",
+        prompt="Steer this symphony.",
+        launch=None,
+        intervention=SymphonyCharterForkPayload(
+            kind="charter_change",
+            symphony_id=symphony_id,
+            charter={
+                "seat": "motivation",
+                "rubric": ["Preserves the revised owner reason"],
+                "evidence_requirements": ["A fresh signed fork"],
+                "metrics": [],
+            },
+            fork_signed=True,
+        ),
+        accepted_stack_events=(cancelled_state,),
+        message_history=(),
+        emit=forked,
+    )
+    parent, child = forked.events
+    assert parent["state"] == "blocked"
+    assert (
+        parent["launch"]["judge_charters"]
+        == original.model_dump(mode="json")[  # type: ignore[index]
+            "judge_charters"
+        ]
+    )
+    assert child["forked_from"] == symphony_id
+    assert parent["forked_to"] == child["symphony_id"]
+    assert child["charter_digests"] != parent["charter_digests"]
+
+    completed = RecordingEmitter()
+    await restarted.run(
+        thread_id="thread-a",
+        prompt="Steer this symphony.",
+        launch=None,
+        intervention=SymphonyCompletePayload(
+            kind="complete",
+            symphony_id=str(child["symphony_id"]),
+        ),
+        accepted_stack_events=(parent, child),
+        message_history=(),
+        emit=completed,
+    )
+    assert completed.events[-1]["event_kind"] == "symphony_result"
 
 
 def test_launch_requires_core_charter_order_performance_metrics_and_signature() -> None:

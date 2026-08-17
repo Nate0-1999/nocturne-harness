@@ -20,6 +20,7 @@ import { MemoryPanel } from './MemoryPanel'
 import { MemoryGraph } from './MemoryGraph'
 import { InjectionConsole } from './InjectionConsole'
 import { RecipeModule } from './RecipeModule'
+import { SymphonyDeck } from './SymphonyDeck'
 import { ModelDevice } from './ModelDevice'
 import { VitalsModule } from './VitalsModule'
 import { ContextBars } from './ContextBars'
@@ -1496,6 +1497,8 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
         <InjectionConsole />
       ) : moduleId === 'recipe' ? (
         <RecipeModule />
+      ) : moduleId === 'deck' ? (
+        <SymphonyDeck />
       ) : (
         <GateModule />
       )}

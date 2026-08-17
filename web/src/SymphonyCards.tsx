@@ -167,6 +167,7 @@ export function SymphonyDeliberationCard({ event }: { event: JsonObject }) {
   const [authority, setAuthority] = useState<DraftAuthority | null>(draft?.authority ?? null)
   const [status, setStatus] = useState('Nothing launches until you sign.')
   const [busy, setBusy] = useState(false)
+  const [holdForSteering, setHoldForSteering] = useState(false)
 
   if (draft === null || authority === null) return null
   const draftId = draft.draft_id
@@ -210,6 +211,7 @@ export function SymphonyDeliberationCard({ event }: { event: JsonObject }) {
         metrics: charter.metrics.map((item) => item.trim()),
       })),
       authority: { ...currentAuthority, signed: true },
+      hold_for_steering: holdForSteering,
     }
     try {
       await events.dispatch({
@@ -259,6 +261,7 @@ export function SymphonyDeliberationCard({ event }: { event: JsonObject }) {
           <label>Minutes<input type="number" min="1" value={authority.duration_minutes} onChange={(event) => setAuthority({ ...authority, duration_minutes: event.target.valueAsNumber })} /></label>
         </div>
         <label className="symphony-check symphony-sign"><input type="checkbox" checked={authority.signed} onChange={(event) => setAuthority({ ...authority, signed: event.target.checked })} /> I authorize up to {authority.attempts} attempts, ${authority.spend_wall_usd}, {authority.max_rounds} rounds, depth {authority.depth_cap}, {authority.children_per_attempt} children per attempt, and {authority.duration_minutes} minutes.</label>
+        <label className="symphony-check"><input type="checkbox" checked={holdForSteering} onChange={(event) => setHoldForSteering(event.target.checked)} /> Hold the toy run live on the Deck so I can exercise steering.</label>
       </fieldset>
       <footer className="symphony-card__footer"><span role="status">{status}</span><button type="button" disabled={!complete || busy} onClick={() => void launch()}>{busy ? 'Launching…' : 'Sign & run toy Symphony'}</button></footer>
     </section>

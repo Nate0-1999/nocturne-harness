@@ -25,7 +25,7 @@ test('Symphony deliberation is human-fixed, signed, separately identified, and r
   assert.match(app, /!completedSymphonyDraftIds\.has\(event\.draft_id\)/u)
   assert.match(protocol, /judge_charters: SymphonyJudgeCharter\[\]/u)
   assert.match(protocol, /authority: SymphonyAuthority/u)
-  assert.match(socket, /if \(image !== undefined && symphony !== undefined\)/u)
+  assert.match(socket, /\[image, symphony, symphonyIntervention\]/u)
   assert.match(shell, /\.symphony-authority\s*\{[^}]*grid-template-columns:\s*repeat\(3/su)
   assert.match(shell, /@media \(max-width: 42rem\)[\s\S]*?\.symphony-authority\s*\{[^}]*grid-template-columns:\s*1fr/su)
 })

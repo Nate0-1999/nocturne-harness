@@ -32,7 +32,7 @@ test('composer image UX is focus-scoped, accessible, reconnectable, and responsi
   assert.match(app, /className=\{image\.media_type === 'image\/gif' \? 'image-thumbnail--gif' : undefined\}/u)
   assert.doesNotMatch(app, /source === undefined \|\| image\.media_type === 'image\/gif' \|\| failed/u)
 
-  assert.match(protocol, /'prompt\.submit': \{ prompt: string; image\?: PromptImage; symphony\?: SymphonyLaunch \}/u)
+  assert.match(protocol, /'prompt\.submit': \{[\s\S]*?image\?: PromptImage[\s\S]*?symphony\?: SymphonyLaunch[\s\S]*?\}/u)
   assert.match(protocol, /function parseImageAttachmentView/u)
   assert.match(store, /image_preview_data_url: image\.image_preview_data_url/u)
   assert.match(store, /image: payload\.image \?\? outbound\.image_view/u)

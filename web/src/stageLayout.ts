@@ -28,11 +28,12 @@ export type StageModuleId =
   | 'injection_console'
   | 'palace_queue'
   | 'recipe'
+  | 'deck'
 
 export const STAGE_MODULE_IDS: readonly StageModuleId[] = [
   'threads', 'chat', 'memory', 'vitals', 'context_bars',
   'memory_graph', 'injection_console', 'palace_queue',
-  'recipe',
+  'recipe', 'deck',
 ]
 const FACTORY_LAYER_IDS = ['work', 'graph', 'injection'] as const
 
@@ -76,6 +77,7 @@ const DEFAULT_SCOPES: Record<string, RackScope> = {
   palace_queue: 'GLOBAL', model_device: 'CURRENT', memory_graph: 'GLOBAL',
   injection_console: 'GLOBAL',
   recipe: 'CURRENT',
+  deck: 'CURRENT',
 }
 
 const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
@@ -92,6 +94,7 @@ const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
     module_id: 'palace_queue', x: 20, y: 1, width: 5, height: 10,
   }),
   recipe: expandLegacyModule({ module_id: 'recipe', x: 14, y: 2, width: 12, height: 10 }),
+  deck: expandLegacyModule({ module_id: 'deck', x: 20, y: 12, width: 10, height: 10 }),
 }
 
 export const FACTORY_STAGE_LAYOUT: StageLayoutSet = {
@@ -103,7 +106,7 @@ export const FACTORY_STAGE_LAYOUT: StageLayoutSet = {
       layer_id: 'work',
       name: 'Work',
       camera: expandLegacyCamera({ x: 36, y: 30, zoom: 0.64 }),
-      modules: ['threads', 'chat', 'memory', 'vitals', 'context_bars', 'palace_queue']
+      modules: ['threads', 'chat', 'memory', 'vitals', 'context_bars', 'palace_queue', 'deck']
         .map((moduleId) => ({ ...DEFAULT_MODULES[moduleId as StageModuleId] })),
       removed_modules: [],
     },
@@ -532,7 +535,11 @@ function expandLegacyStageLayout(layout: ParsedStageLayout): StageLayoutSet {
 }
 
 function addMemoryIngestToExistingLayout(layout: StageLayoutSet): StageLayoutSet {
-  return addFactoryModuleToExistingLayout(layout, 'palace_queue', 'work')
+  return addFactoryModuleToExistingLayout(
+    addFactoryModuleToExistingLayout(layout, 'palace_queue', 'work'),
+    'deck',
+    'work',
+  )
 }
 
 function addFactoryModuleToExistingLayout(
@@ -637,7 +644,8 @@ function parseScopes(value: unknown): Record<string, RackScope> {
 function isStageModuleId(value: unknown): value is StageModuleId {
   return value === 'threads' || value === 'chat' || value === 'memory' ||
     value === 'vitals' || value === 'context_bars' || value === 'memory_graph' ||
-    value === 'injection_console' || value === 'palace_queue' || value === 'recipe'
+    value === 'injection_console' || value === 'palace_queue' || value === 'recipe' ||
+    value === 'deck'
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

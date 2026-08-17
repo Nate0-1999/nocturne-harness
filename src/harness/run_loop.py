@@ -40,6 +40,11 @@ from harness.envelope import (
     RunStartedPayload,
     RunUsagePayload,
     StopReason,
+    SymphonyCancelAttemptPayload,
+    SymphonyCharterForkPayload,
+    SymphonyClarificationPayload,
+    SymphonyCompletePayload,
+    SymphonyInterventionPayload,
     SymphonyLaunchPayload,
     ThreadSnapshotResponsePayload,
     UsagePayload,
@@ -81,7 +86,9 @@ class _Turn:
     image_view: ImageView | None = None
     model_target: str | None = None
     symphony: SymphonyLaunchPayload | None = None
+    symphony_intervention: SymphonyInterventionPayload | None = None
     open_symphony_draft_ids: tuple[str, ...] = ()
+    accepted_symphony_stack_events: tuple[Mapping[str, object], ...] = ()
     parent_id: str | None = None
 
 
@@ -487,6 +494,7 @@ class RunLoop:
         prompt: str,
         image: ImageInput | None = None,
         symphony: SymphonyLaunchPayload | None = None,
+        symphony_intervention: SymphonyInterventionPayload | None = None,
         sink: EnvelopeSink | None = None,
     ) -> str:
         """Accept a prompt, starting it now or reserving one FIFO run ID."""
@@ -498,10 +506,22 @@ class RunLoop:
             raise TypeError("image must be an ImageInput or None")
         if symphony is not None and not isinstance(symphony, SymphonyLaunchPayload):
             raise TypeError("symphony must be a SymphonyLaunchPayload or None")
-        if image is not None and symphony is not None:
-            raise ValueError("a Symphony launch cannot carry an image")
-        if symphony is not None and self._symphony_experience is None:
-            raise RuntimeError("Symphony launch is unavailable in this runtime")
+        if symphony_intervention is not None and not isinstance(
+            symphony_intervention,
+            (
+                SymphonyClarificationPayload,
+                SymphonyCancelAttemptPayload,
+                SymphonyCharterForkPayload,
+                SymphonyCompletePayload,
+            ),
+        ):
+            raise TypeError("symphony_intervention must be a typed intervention or None")
+        if sum(value is not None for value in (image, symphony, symphony_intervention)) > 1:
+            raise ValueError("image, Symphony launch, and Symphony steering are mutually exclusive")
+        if (symphony is not None or symphony_intervention is not None) and (
+            self._symphony_experience is None
+        ):
+            raise RuntimeError("Symphony is unavailable in this runtime")
         if image is not None and self._transcript_journal is None:
             raise RuntimeError("image input requires the mandatory transcript journal")
 
@@ -533,6 +553,7 @@ class RunLoop:
             image_view=image_view,
             model_target=model_target,
             symphony=symphony,
+            symphony_intervention=symphony_intervention,
         )
         async with self._lock:
             self._require_open()
@@ -551,7 +572,9 @@ class RunLoop:
                 async with self._lock:
                     self._require_open()
                 local_symphony = self._symphony_experience is not None and (
-                    symphony is not None or self._symphony_experience.is_trigger(prompt)
+                    symphony is not None
+                    or symphony_intervention is not None
+                    or self._symphony_experience.is_trigger(prompt)
                 )
                 model_resolution = (
                     None if local_symphony else await self._resolution_for_thread(thread_id)
@@ -562,6 +585,9 @@ class RunLoop:
                     self._discard_pending_capture_locked(thread_id, turn)
                     state = self._state_for_locked(thread_id)
                     turn.open_symphony_draft_ids = self._open_symphony_draft_ids(state.messages)
+                    turn.accepted_symphony_stack_events = self._symphony_stack_events(
+                        state.messages
+                    )
                     if state.model_resolution is None:
                         state.model_resolution = model_resolution
                         if model_resolution is not None:
@@ -812,13 +838,16 @@ class RunLoop:
         try:
             if self._symphony_experience is not None and (
                 active.turn.symphony is not None
+                or active.turn.symphony_intervention is not None
                 or self._symphony_experience.is_trigger(active.turn.prompt)
             ):
                 outcome = await self._symphony_experience.run(
                     thread_id=thread_id,
                     prompt=active.turn.prompt,
                     launch=active.turn.symphony,
+                    intervention=active.turn.symphony_intervention,
                     accepted_draft_ids=active.turn.open_symphony_draft_ids,
+                    accepted_stack_events=active.turn.accepted_symphony_stack_events,
                     message_history=history,
                     emit=_Emitter(self, thread_id, active),
                 )
@@ -1789,6 +1818,28 @@ class RunLoop:
                     if isinstance(launch, dict) and isinstance(launch.get("draft_id"), str):
                         completed.add(launch["draft_id"])
         return tuple(draft_id for draft_id in opened if draft_id not in completed)
+
+    @staticmethod
+    def _symphony_stack_events(
+        messages: Sequence[Mapping[str, Any]],
+    ) -> tuple[Mapping[str, object], ...]:
+        """Recover the latest durable snapshot for each stack after a daemon restart."""
+
+        latest: dict[str, Mapping[str, object]] = {}
+        for message in messages:
+            events = message.get("events")
+            if not isinstance(events, list):
+                continue
+            for event in events:
+                if not isinstance(event, dict) or event.get("event_kind") not in {
+                    "symphony_state",
+                    "symphony_result",
+                }:
+                    continue
+                symphony_id = event.get("symphony_id")
+                if isinstance(symphony_id, str):
+                    latest[symphony_id] = event
+        return tuple(latest.values())
 
     def _bind_project_locked(
         self,

@@ -94,7 +94,19 @@ export type SymphonyLaunch = {
   recipe: SymphonyRecipeStep[]
   judge_charters: SymphonyJudgeCharter[]
   authority: SymphonyAuthority
+  hold_for_steering?: boolean
 }
+
+export type SymphonyIntervention =
+  | { kind: 'clarification'; symphony_id: Ulid; attempt_id: string; instruction: string }
+  | { kind: 'cancel_attempt'; symphony_id: Ulid; attempt_id: string }
+  | {
+      kind: 'charter_change'
+      symphony_id: Ulid
+      charter: SymphonyJudgeCharter
+      fork_signed: true
+    }
+  | { kind: 'complete'; symphony_id: Ulid }
 
 export type ImageAttachmentView = JsonObject & {
   kind: 'image'
@@ -378,7 +390,12 @@ export type DecodedServerEvent =
 
 export interface BrowserPayloadMap {
   'thread.snapshot': { request: true; project_key: string | null }
-  'prompt.submit': { prompt: string; image?: PromptImage; symphony?: SymphonyLaunch }
+  'prompt.submit': {
+    prompt: string
+    image?: PromptImage
+    symphony?: SymphonyLaunch
+    symphony_intervention?: SymphonyIntervention
+  }
   'run.cancel': { run_id: Ulid }
   'gate.commit': GateCommitPayload
   'memory.panel.update': MemoryPanelRequestPayload

@@ -7,6 +7,7 @@ import {
 } from 'react'
 
 import {
+  RACK_MANIFESTS,
   RackApiProvider,
   createHostPluginApi,
   isRackModuleId,
@@ -237,6 +238,7 @@ function rackFrameUrl(moduleId: RackModuleId, theme: ThemeId): string {
   url.pathname = '/'
   url.search = ''
   url.searchParams.set('rack_module', moduleId)
+  url.searchParams.set('module_version', RACK_MANIFESTS[moduleId].version)
   url.searchParams.set('rack_host', globalThis.location.origin)
   url.searchParams.set('theme', theme)
   if (fixture === 'M2C REGRESSION' || fixture === 'M2G REGRESSION') {
