@@ -456,6 +456,8 @@ async def test_chat_returns_output_and_reusable_full_history_with_exact_limits()
 
 @pytest.mark.asyncio
 async def test_chat_executes_adopted_workspace_tool_inside_the_existing_owner_loop() -> None:
+    """ADR-015 keeps adopted file acts inside the existing owner-loop authority."""
+
     async def respond(messages: list[ModelMessage], _info: AgentInfo) -> ModelResponse:
         has_result = any(
             isinstance(message, ModelRequest)

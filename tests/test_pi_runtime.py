@@ -26,6 +26,8 @@ def _release_archive(content: bytes) -> bytes:
 
 
 def test_materialize_pinned_runtime_at_explicit_init_boundary(tmp_path: Path, monkeypatch) -> None:
+    """ADR-013 permits pinned tool materialization only at the explicit init boundary."""
+
     content = b"standalone-pi"
     archive = _release_archive(content)
     machine = platform.machine().lower()
@@ -61,6 +63,8 @@ def test_materialize_pinned_runtime_at_explicit_init_boundary(tmp_path: Path, mo
 
 
 def test_existing_source_runtime_never_downloads(tmp_path: Path, monkeypatch) -> None:
+    """ADR-013 reuses a verified source runtime without hidden network mutation."""
+
     source = tmp_path / "source-pi"
     source.write_bytes(b"source")
     monkeypatch.setattr(pi_runtime, "_source_pi_path", lambda: source)

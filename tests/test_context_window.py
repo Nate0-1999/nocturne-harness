@@ -63,6 +63,8 @@ def test_tracker_global_aggregates_only_observed_threads() -> None:
 
 
 def test_tools_lane_includes_measured_call_and_return_traffic() -> None:
+    """ADR-024 keeps measured tool-call traffic visible in Context Bars."""
+
     tracker = ContextWindowTracker()
     resolution = ThreadModelResolution(
         model="openrouter:test/model", context_tokens=16_000, policy="pinned:test/model"
@@ -93,7 +95,7 @@ def test_tools_lane_includes_measured_call_and_return_traffic() -> None:
 
 
 def test_r16_workspace_prompt_is_counted_in_the_system_lane() -> None:
-    """R16 keeps Context Bars honest when movement changes progressive instructions."""
+    """ADR-010 keeps Context Bars honest when movement changes instructions."""
 
     tracker = ContextWindowTracker()
     resolution = ThreadModelResolution(

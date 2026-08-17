@@ -194,6 +194,8 @@ async def test_location_state_is_defined_and_moves_only_inside_workspace(tmp_pat
 
 @pytest.mark.asyncio
 async def test_tool_execution_is_correlated_through_the_owned_seam(tmp_path: Path) -> None:
+    """ADR-013 keeps adopted tool execution correlated through one owned seam."""
+
     toolset = await open_standard_toolset(
         command=(sys.executable, "-c", _FAKE_LOCATION_RPC),
         cwd=tmp_path,
@@ -289,6 +291,8 @@ def test_pi_protocol_has_one_import_fence() -> None:
 def test_installed_owner_runtime_is_selected_from_private_config(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """ADR-013 selects only the explicit private installed runtime for owner use."""
+
     executable = tmp_path / "pi"
     executable.write_bytes(b"standalone")
     monkeypatch.setenv("NOCTURNE_PI_COMMAND", str(executable))

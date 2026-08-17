@@ -218,6 +218,8 @@ async def test_successful_model_response_is_receipted_before_turn_returns() -> N
 
 @pytest.mark.asyncio
 async def test_workspace_tool_events_and_spend_share_the_existing_turn_authorities() -> None:
+    """ADR-024 keeps tool traffic and spend on the owner turn's existing ledger path."""
+
     model_calls = 0
 
     async def stream(_messages: object, _info: object):
@@ -261,7 +263,7 @@ async def test_workspace_tool_events_and_spend_share_the_existing_turn_authoriti
 
 @pytest.mark.asyncio
 async def test_r16_dynamic_instructions_are_reevaluated_after_move_tool_result() -> None:
-    """R16 reaches both real Pydantic-AI request steps in the one owner turn runner."""
+    """ADR-010 reaches both real request steps when movement reshapes instructions."""
 
     model_calls = 0
     observed_instructions: list[str | None] = []

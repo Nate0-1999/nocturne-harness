@@ -423,7 +423,7 @@ async def test_capable_image_uses_text_only_for_spine_then_forwards_exact_binary
 async def test_r16_move_reprompts_local_context_and_rescores_before_next_request(
     tmp_path: Path,
 ) -> None:
-    """R16 is defended at the live turn seam, not as an isolated prompt demo."""
+    """ADR-010 is defended at the live turn seam, not as an isolated prompt demo."""
 
     notes = tmp_path / "notes"
     notes.mkdir()

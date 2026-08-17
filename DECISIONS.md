@@ -2421,3 +2421,34 @@ authorized an action. Reimplementing PI's file tools in Python would abandon the
 whole-toolset adoption ruling. Per-action approval prompts would recreate the
 permission ladder ADR-015 rejects; a plain boundary wall keeps irreversible or
 out-of-fence work with the owner.
+
+## 080 — Worker liveness lives with the local Harness, under one durable authority [P3, SYM4]
+
+**Decision.** Place the Symphony supervisor inside the Harness process boundary,
+beside the local PI worker and location machinery, as an independently durable
+component. One private advisory lock permits exactly one supervisor authority.
+Its append-only, fsynced event journal reconstructs the worker registry after a
+Harness restart; heartbeats come only from supervisor observation of an OS birth
+fingerprint, never from a worker or model assertion.
+
+Launch workers through a private one-byte gate: the target command cannot execute
+until its process identity and accepted checkpoint are durably journaled. A death
+certificate requires that exact PID/birth fingerprint to be absent or changed.
+Recovery is never automatic and the journal deliberately retains only a command
+digest. The conductor must explicitly supply a successor command, the last
+accepted commit, and a fresh location. The dead location becomes quarantined
+evidence and is never inherited by the successor.
+
+**Motivation.** P3 needs one mechanical answer to whether a worker is alive, and
+G14 requires that answer not turn an uncertain mutation into accepted work. The
+Harness already owns local worker processes, worktree locations, the PI seam, and
+the private owner home, so colocating the authority keeps process evidence direct
+while a durable journal gives it a restart story. The launch gate closes the only
+window where a process could mutate before its identity was recorded.
+
+**Rejected alternatives.** A sibling service would add IPC, authentication,
+startup ordering, packaging, and another failure boundary before SYM5 has a
+conductor that could use it. Letting workers renew or revoke their own lives would
+make death a model claim. PID-only evidence is unsafe after PID reuse. Persisting
+and automatically replaying the old command could repeat an uncertain side
+effect; reusing the dead worktree would silently accept a half-written timeline.
