@@ -21,6 +21,7 @@ def test_c5_defaults_are_local_minimax_with_bounded_runs_and_spine(monkeypatch) 
         "LABEL_MAX",
         "MEMORY_MAX_TOKENS",
         "REMEMBER_SPLIT_TIMEOUT_SECONDS",
+        "TOOLSET_FENCE_READS",
     ):
         monkeypatch.delenv(name, raising=False)
     settings = HarnessSettings(
@@ -44,6 +45,7 @@ def test_c5_defaults_are_local_minimax_with_bounded_runs_and_spine(monkeypatch) 
     assert settings.label_max == 64
     assert settings.memory_max_tokens == 128
     assert settings.remember_split_timeout_seconds == 30.0
+    assert settings.toolset_fence_reads is False
 
 
 def test_settings_accept_environment_model_spine_and_limit_overrides(monkeypatch) -> None:
@@ -60,6 +62,7 @@ def test_settings_accept_environment_model_spine_and_limit_overrides(monkeypatch
     monkeypatch.setenv("RUN_REQUEST_LIMIT", "12")
     monkeypatch.setenv("RUN_TOTAL_TOKENS_LIMIT", "3456")
     monkeypatch.setenv("REMEMBER_SPLIT_TIMEOUT_SECONDS", "12.5")
+    monkeypatch.setenv("TOOLSET_FENCE_READS", "true")
 
     settings = HarnessSettings(_env_file=None)
 
@@ -74,6 +77,7 @@ def test_settings_accept_environment_model_spine_and_limit_overrides(monkeypatch
     assert settings.run_request_limit == 12
     assert settings.run_total_tokens_limit == 3456
     assert settings.remember_split_timeout_seconds == 12.5
+    assert settings.toolset_fence_reads is True
 
 
 @pytest.mark.parametrize(

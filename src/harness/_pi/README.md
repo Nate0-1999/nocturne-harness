@@ -29,9 +29,15 @@ second update surface without adding provenance, so dependency-first wins.
 `harness.toolset` is Nocturne's interface. Only
 `harness.pi_toolset_adapter` speaks PI's strict LF-delimited JSON RPC. The
 adapter launches the dependency with ephemeral sessions, project resources
-disabled, and startup network work disabled. No runtime path installs or
-updates packages; a missing dependency is a plain refusal with this ritual as
-the remedy. M3E adds movement-enforced file operations through the owned seam.
+disabled, unrelated extension discovery disabled, and startup network work
+disabled. The explicit `nocturne_location.mjs` extension keeps PI whole while
+making its file tools obey Nocturne's move-then-act law. Read/discovery,
+edit/write, and `move` stay active; `bash` stays inactive because a command can
+mutate paths the direct-tool preflight cannot prove. Reads are unfenced by
+default and may be tightened with `TOOLSET_FENCE_READS=true`. Every move and
+successful file touch emits one identity-bearing ADR-006 presence event over
+the same RPC wire. No runtime path installs or updates packages; a missing
+dependency is a plain refusal with this ritual as the remedy.
 
 ## Mechanical update
 

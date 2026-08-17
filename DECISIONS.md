@@ -2333,3 +2333,44 @@ and its incompatible Pydantic AI line would add another adapter problem.
 Auto-installing PI on first owner use would hide a network and supply-chain
 mutation inside an ordinary turn; installation stays an explicit build/update
 ritual.
+
+## 078 — One location truth fences every active PI file mutation [P2.1, ADR-010, SPEC D.2 103, M3E]
+
+**Decision.** Give each opened standard toolset one immutable workspace root,
+one always-defined current directory, one agent/machine/session identity, and
+one append-only session presence journal. Load exactly one explicit Nocturne
+extension into PI's published RPC process. Its `move` tool changes location only
+to a real directory inside the workspace, emits `cwd_change`, and deliberately
+finishes before a later tool act. The extension resolves every read/discovery/
+edit/write path relative to that current directory, canonicalizes existing
+symlink prefixes, and blocks every edit or write outside the location subtree
+with `Move to <directory> first.` Reads remain unfenced by default and share the
+same optional `TOOLSET_FENCE_READS` switch in config.
+
+Carry spawn, movement, successful read/write, idle, and exit facts over PI's
+existing JSONL extension-event channel as ADR-006-shaped records. The Python
+adapter validates identity and location continuity, appends every record to the
+toolset's in-process journal, updates the typed current-location view, and may
+fan each record into a caller-owned sink. This establishes the one location
+source that M3F can feed into `f_loc`; it does not mint a second presence
+transport or durable store before the enacted Spine presence packet exists.
+
+Keep PI's unfenced `bash` inactive. Read, grep, find, list, edit, write, and move
+are the complete active set for this rung. A shell command can redirect, rename,
+or script writes that argument inspection cannot prove, so exposing it before an
+OS-level subtree sandbox would make the location fence advisory. PI remains one
+intact pinned dependency; only its active surface is narrowed at the owned seam.
+
+**Motivation.** Location is both attention and authority: the Ant Farm, memory
+relevance, and the write fence must observe the same fact or they will disagree.
+Canonical tool-layer refusal turns move-then-act into a wall with a direct
+remedy, while one append-only event stream makes the wall watchable without
+asking the owner for per-file approval.
+
+**Rejected alternatives.** Prompt instructions rely on model goodwill and do
+not implement D.2 103. Wrapping only edit/write while leaving bash active keeps
+an immediate write escape. Forking PI's tools creates the maintenance surface
+M3D rejected; the explicit extension uses PI's own hook and custom-tool seams.
+Hard-fencing reads by default would narrow useful inspection beyond the owner's
+ruling. Building the Spine presence table/API here would widen M3E into a second
+repository and pre-empt ADR-006's later transport packet.

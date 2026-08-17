@@ -38,6 +38,8 @@ def main() -> None:
             "LICENSE.upstream",
             "README.md",
             "dependency.json",
+            "location_fence.mjs",
+            "nocturne_location.mjs",
             "package-lock.json",
             "package.json",
         )

@@ -9,9 +9,19 @@ from harness.toolset import open_standard_toolset
 
 
 async def _smoke() -> None:
-    toolset = await open_standard_toolset(cwd=Path.cwd())
+    root = Path.cwd()
+    events = []
+    toolset = await open_standard_toolset(
+        cwd=root,
+        workspace_root=root,
+        agent_id="pi-smoke-agent",
+        machine_id="pi-smoke-machine",
+        session_id="pi-smoke-session",
+        presence_sink=events.append,
+    )
     try:
         state = await toolset.state()
+        moved = await toolset.move(Path("src/harness"))
     finally:
         await toolset.close()
     assert not state.is_streaming
@@ -19,6 +29,8 @@ async def _smoke() -> None:
     assert state.auto_compaction_enabled
     assert state.message_count == 0
     assert state.pending_message_count == 0
+    assert moved.cwd == (root / "src/harness").resolve()
+    assert [event.event for event in events[:2]] == ["spawn", "cwd_change"]
 
 
 def main() -> None:

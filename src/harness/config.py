@@ -33,6 +33,7 @@ class HarnessSettings(BaseSettings):
     remember_split_timeout_seconds: float = Field(default=30.0, gt=0)
     extraction_idle_hours: float | None = Field(default=24.0, gt=0)
     nocturne_transcript_backup: bool = False
+    toolset_fence_reads: bool = False
 
     @field_validator("model_context_tokens", mode="before")
     @classmethod
