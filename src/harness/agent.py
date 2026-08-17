@@ -8,22 +8,23 @@ from dataclasses import dataclass
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, SecretStr, StrictBool, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
 from pydantic_ai import Agent, PromptedOutput, UsageLimits, capture_run_messages
-from pydantic_ai.exceptions import UnexpectedModelBehavior, UserError
+from pydantic_ai.exceptions import UnexpectedModelBehavior
 from pydantic_ai.messages import ModelMessage
-from pydantic_ai.models import Model, infer_model
-from pydantic_ai.providers import Provider, infer_provider
-from pydantic_ai.providers.anthropic import AnthropicProvider
-from pydantic_ai.providers.openai import OpenAIProvider
-from pydantic_ai.providers.openrouter import OpenRouterProvider
+from pydantic_ai.models import Model
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.usage import RunUsage
 from spine.tokens import cl100k_token_count
 
 from harness.commands import remember_command_text
 from harness.config import HarnessSettings
-from harness.openrouter_runtime import PreservingOpenRouterModel
+from harness.model_router import (
+    CompletionRouter,
+)
+from harness.model_router import (
+    ModelConfigurationError as ModelConfigurationError,
+)
 from harness.pydantic_ai_adapter import MemoryCapability
 from harness.spine_client import (
     CreatedMemoryResponse,
@@ -105,10 +106,6 @@ SEED_SPLIT_INSTRUCTION = (
     "tokens, and include its own short label, kind, and 2-5 distinct lowercase searchable "
     "keywords. Return one to 64 children in source order and structured data only."
 )
-
-
-class ModelConfigurationError(ValueError):
-    """The selected model cannot be constructed from its provider configuration."""
 
 
 class RememberDraft(BaseModel):
@@ -220,8 +217,10 @@ class HarnessAgent:
         settings: HarnessSettings,
         *,
         model: Model | None = None,
+        router: CompletionRouter | None = None,
     ) -> None:
         self._settings = settings
+        self._router = router or CompletionRouter(settings)
         self._default_model = model
         self._models_by_name: dict[str, Model] = (
             {settings.chat_model: model} if model is not None else {}
@@ -771,55 +770,17 @@ class HarnessAgent:
             return model
         resolved = self._models_by_name.get(model)
         if resolved is None:
-            resolved = resolve_model(model, self._settings)
+            resolved = self._router.model_for(model)
             self._models_by_name[model] = resolved
         return resolved
 
 
 def resolve_model(model: Model | str, settings: HarnessSettings) -> Model:
-    """Resolve default routes from settings and explicit others through Pydantic AI."""
+    """Compatibility wrapper over the explicit completion-router seam."""
 
     if not isinstance(model, str):
         return model
-    if not model or model != model.strip():
-        raise ModelConfigurationError("chat model must be nonblank without surrounding whitespace")
-
-    def provider_factory(name: str) -> Provider[Any]:
-        if name == "openrouter":
-            return OpenRouterProvider(
-                api_key=_required_secret(settings.openrouter_api_key, "OPENROUTER_API_KEY")
-            )
-        if name == "anthropic":
-            return AnthropicProvider(
-                api_key=_required_secret(settings.anthropic_api_key, "ANTHROPIC_API_KEY")
-            )
-        if name in {"openai", "openai-chat", "openai-responses"}:
-            return OpenAIProvider(
-                api_key=_required_secret(settings.openai_api_key, "OPENAI_API_KEY")
-            )
-        return infer_provider(name)
-
-    try:
-        if model.startswith("openrouter:"):
-            return PreservingOpenRouterModel(
-                model.removeprefix("openrouter:"),
-                provider=provider_factory("openrouter"),
-            )
-        return infer_model(model, provider_factory=provider_factory)
-    except ModelConfigurationError:
-        raise
-    except (UserError, ValueError) as exc:
-        raise ModelConfigurationError(str(exc)) from exc
-    except ImportError as exc:
-        raise ModelConfigurationError(
-            f"provider dependency is unavailable for {model!r}: {exc}"
-        ) from exc
-
-
-def _required_secret(value: SecretStr | None, name: str) -> str:
-    if value is None or not value.get_secret_value().strip():
-        raise ModelConfigurationError(f"{name} is required for the selected model provider")
-    return value.get_secret_value()
+    return CompletionRouter(settings).model_for(model)
 
 
 async def _run_structured_agent(

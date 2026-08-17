@@ -401,25 +401,18 @@ class ModelPolicyResolver:
             return resolved
 
     async def resolve_named(self, thread_id: str, model: str) -> ThreadModelResolution:
-        """Resolve one explicit OpenRouter model string without mutating thread truth."""
+        """Resolve one explicit adapter model string without mutating thread truth."""
 
         if not isinstance(thread_id, str) or not thread_id.strip():
             raise ValueError("thread_id must not be blank")
-        if (
-            not isinstance(model, str)
-            or not model.startswith("openrouter:")
-            or model != model.strip()
-            or not model.removeprefix("openrouter:")
-        ):
-            raise NamedModelResolutionError("model must be an openrouter:<broker-model-id> string")
+        slug = _parse_named_model(self._catalog, model)
         if self._catalog is None:
-            raise ModelCatalogUnavailable("OpenRouter catalog is not configured")
+            raise ModelCatalogUnavailable("model router catalog is not configured")
 
-        slug = model.removeprefix("openrouter:")
         route, fetched_at = await self._catalog.load_named_route(slug)
 
         resolved = ThreadModelResolution(
-            model=f"openrouter:{route.model_id}",
+            model=_qualify_model(self._catalog, route.model_id),
             context_tokens=route.context_tokens,
             policy="human_command",
             input_modalities=route.input_modalities,
@@ -545,7 +538,7 @@ class ModelPolicyResolver:
             )
 
         resolved = ThreadModelResolution(
-            model=f"openrouter:{route.model_id}",
+            model=_qualify_model(self._catalog, route.model_id),
             context_tokens=route.context_tokens,
             policy=self._policy_text,
             price_sorted=True,
@@ -575,6 +568,32 @@ def _select_max(rows: Sequence[BenchmarkModel]) -> BenchmarkModel:
         rows,
         key=lambda row: (-row.intelligence_index, row.prompt_price, row.permaslug),
     )
+
+
+def _parse_named_model(catalog: ModelCatalogLoader | None, model: str) -> str:
+    parser = getattr(catalog, "parse_named_model", None)
+    if callable(parser):
+        parsed = parser(model)
+        if not isinstance(parsed, str) or not parsed:
+            raise NamedModelResolutionError("model router returned an invalid model id")
+        return parsed
+    if (
+        not isinstance(model, str)
+        or not model.startswith("openrouter:")
+        or model != model.strip()
+        or not model.removeprefix("openrouter:")
+    ):
+        raise NamedModelResolutionError("model must be an openrouter:<broker-model-id> string")
+    return model.removeprefix("openrouter:")
+
+
+def _qualify_model(catalog: ModelCatalogLoader, model_id: str) -> str:
+    qualifier = getattr(catalog, "qualify_model", None)
+    if callable(qualifier):
+        qualified = qualifier(model_id)
+        _validate_model_name(qualified)
+        return qualified
+    return f"openrouter:{model_id}"
 
 
 def _select_elbow(frontier: Sequence[BenchmarkModel]) -> BenchmarkModel:

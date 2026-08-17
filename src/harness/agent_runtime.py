@@ -27,7 +27,6 @@ from pydantic_ai.messages import (
     ToolCallPart,
     ToolReturnPart,
 )
-from pydantic_ai.models.openrouter import OpenRouterModelSettings
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.usage import RunUsage
 from pydantic_core import to_jsonable_python
@@ -37,6 +36,7 @@ from harness.commands import remember_command_text
 from harness.context_window import ContextWindowTracker
 from harness.envelope import ProviderErrorPayload, StopReason
 from harness.model_policy import ThreadModelResolution
+from harness.model_router import model_settings_for
 from harness.receipt_queue import SpendReceiptQueue
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.spend import (
@@ -549,35 +549,9 @@ def _model_settings(
     resolution: ThreadModelResolution | None,
     thread_id: str,
 ) -> ModelSettings | None:
-    """Build a fresh per-run broker body; pydantic-ai mutates provider settings."""
+    """Compatibility wrapper over the completion adapter's request shape."""
 
-    if resolution is None:
-        return None
-    parameters = resolution.request_parameters
-    common: ModelSettings = {}
-    if parameters.temperature is not None:
-        common["temperature"] = parameters.temperature
-    if parameters.top_p is not None:
-        common["top_p"] = parameters.top_p
-    if parameters.top_k is not None:
-        common["top_k"] = parameters.top_k
-    if parameters.max_tokens is not None:
-        common["max_tokens"] = parameters.max_tokens
-    if not resolution.uses_openrouter:
-        return common or None
-    session_id = thread_id
-    if resolution.stickiness_epoch:
-        session_id = f"{thread_id}:epoch:{resolution.stickiness_epoch}"
-    settings: OpenRouterModelSettings = {
-        **common,
-        "extra_body": {"session_id": session_id},
-        "openrouter_usage": {"include": True},
-    }
-    if parameters.effort is not None:
-        settings["openrouter_reasoning"] = {"effort": parameters.effort}
-    if resolution.price_sorted:
-        settings["openrouter_provider"] = {"sort": "price"}
-    return cast(ModelSettings, settings)
+    return model_settings_for(resolution, thread_id)
 
 
 def _new_captured_messages(

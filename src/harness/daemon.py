@@ -45,10 +45,10 @@ from harness.memory_gate import MemoryGateTurnRunner
 from harness.memory_panel import MemoryPanelController, ThreadMemoryContextRegistry
 from harness.model_policy import (
     ModelPolicyResolver,
-    OpenRouterCatalogClient,
     ThreadModelResolution,
     ThreadModelResolver,
 )
+from harness.model_router import CompletionRouter
 from harness.onboarding import load_config, nocturne_home, set_transcript_backup
 from harness.parameter_registry import (
     ParameterSnapshot,
@@ -635,19 +635,14 @@ def create_dev_app(
         if token is None or not token.get_secret_value().strip():
             raise ValueError("SPINE_TOKEN is required for `harness dev`")
         owned_spine = SpineClient(configured.spine_url, token.get_secret_value())
-    owned_agent = agent or HarnessAgent(configured)
+    completion_router = CompletionRouter(configured)
+    owned_agent = agent or HarnessAgent(configured, router=completion_router)
     factory = EnvelopeFactory(machine_id=machine_id, agent_id=agent_id)
-    openrouter_key = (
-        configured.openrouter_api_key.get_secret_value()
-        if configured.openrouter_api_key is not None
-        else None
-    )
-    model_catalog = OpenRouterCatalogClient(openrouter_key)
     model_resolver = model_resolver_override or ModelPolicyResolver(
         policy=configured.effective_model_policy_chat,
         static_model=configured.chat_model,
         static_context_tokens=configured.model_context_tokens,
-        catalog=model_catalog,
+        catalog=completion_router.catalog,
     )
 
     def context_factory(thread_id: str) -> MemoryToolContext:
@@ -955,7 +950,7 @@ def create_dev_app(
     app.router.add_event_handler("startup", transcript_sync.start)
     app.router.add_event_handler("shutdown", transcript_sync.stop)
     app.router.add_event_handler("shutdown", owned_spine.aclose)
-    app.router.add_event_handler("shutdown", model_catalog.aclose)
+    app.router.add_event_handler("shutdown", completion_router.aclose)
     return app
 
 

@@ -362,7 +362,7 @@ def test_resolve_model_normalizes_a_missing_optional_provider_dependency(
     def missing_provider_dependency(name: str) -> None:
         raise ImportError(f"missing optional dependency for {name}")
 
-    monkeypatch.setattr("harness.agent.infer_provider", missing_provider_dependency)
+    monkeypatch.setattr("harness.model_router.infer_provider", missing_provider_dependency)
 
     with pytest.raises(
         ModelConfigurationError,

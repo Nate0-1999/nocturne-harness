@@ -53,3 +53,9 @@ class HarnessSettings(BaseSettings):
         """Preserve static behavior when MODEL_POLICY_CHAT is unset."""
 
         return self.model_policy_chat or f"pinned:{self.chat_model}"
+
+    @property
+    def model_policy_optimization_enabled(self) -> bool:
+        """Pinned is the first-class OFF mode; it needs no router catalog."""
+
+        return parse_model_policy(self.effective_model_policy_chat).kind != "pinned"
