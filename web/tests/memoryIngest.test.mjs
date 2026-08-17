@@ -28,3 +28,14 @@ test('Memory Ingest is a movable panel rather than a header control or lifecycle
   assert.match(stage, /'memory_graph', 'injection_console', 'palace_queue'/u)
   assert.doesNotMatch(app, /palace_queue:\s*'rack-overlay-module--/u)
 })
+
+/** A-059 keeps judged Symphony winners inside the existing explicit-consent queue. */
+test('judged Symphony batches reuse Palace Queue and retain explicit owner consent', async () => {
+  const [app, rack] = await Promise.all([source('App.tsx'), source('rack.tsx')])
+
+  assert.match(rack, /birthplace\?: 'thread' \| 'seed' \| 'symphony'/u)
+  assert.match(app, /card\.birthplace === 'seed' \|\| card\.birthplace === 'symphony'/u)
+  assert.match(app, /Judged Symphony winner/u)
+  assert.match(app, /explicit consent still required/u)
+  assert.match(app, /type: 'queue\.batch\.decide'/u)
+})

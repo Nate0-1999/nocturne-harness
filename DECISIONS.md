@@ -2492,3 +2492,28 @@ record. Passing the owner process environment would expose credentials to leaf
 workers. Reading arbitrary worker files or accepting prose would make prestige
 and filesystem residue into state authority. Automatic respawn or replacement
 after cancellation would spend budget and mutate lineage without a signed act.
+
+## 082 — Symphony borrows Palace memory through a thin run-scoped bridge [P1.6, SYM6]
+
+**Decision.** Keep orchestration in Harness and durable memory authority in Spine. A
+thin Harness bridge stamps each proposed memory with the Symphony run and materialized
+agent path, asks Spine for the caller's exact run-scoped view, and submits only a
+judge-selected winner prefix for one atomic resolution. Leaf workers receive a fixed
+smaller memory-context share than the conductor. They do not receive a private memory
+store or broad access to sibling staged results.
+
+Resolved winners enter the existing Palace Queue as one `symphony` batch carrying the
+judged context; they still require the owner's explicit batch approval. Losing attempts
+remain tombstoned lineage. The Palace Queue renders both document and Symphony batches,
+so this bridge does not create a second consent surface.
+
+**Motivation.** G6 needs useful results to survive within one attempt without letting
+siblings coordinate through hidden shared state, while G11 needs judged winners to
+reach the owner without silently becoming durable memory. Reusing Spine's transaction
+boundary and the Palace Queue gives both properties one authoritative lifecycle.
+
+**Rejected alternatives.** A Harness-side memory database would split authority and
+recovery. Exposing all staged run memories to every worker would turn Palace into a
+side channel. Auto-approving unanimous winners would confuse judge quality evidence
+with owner consent. Building a Symphony-only review screen would duplicate the queue
+lifecycle and its accessibility work.

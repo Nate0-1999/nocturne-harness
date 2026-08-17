@@ -911,7 +911,7 @@ def create_dev_app(
         @app.get("/v1/approval-queue")
         async def read_queue(
             thread_id: UUID | None = None,
-            birthplace: Literal["thread", "seed"] | None = None,
+            birthplace: Literal["thread", "seed", "symphony"] | None = None,
         ):
             return await owned_spine.approval_queue(
                 principal_id,

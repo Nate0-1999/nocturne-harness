@@ -2171,10 +2171,18 @@ function ChatModule() {
 interface ThreadEndQueueCard {
   item_uid: string
   verdict: 'new' | 'merge' | 'supersede' | 'contradict'
-  birthplace: 'thread' | 'seed'
+  birthplace: 'thread' | 'seed' | 'symphony'
   birthplace_thread_id: string | null
   batch_uid: string | null
   source_name: string | null
+  birthplace_run_id?: string | null
+  birthplace_origin_agent?: string | null
+  judged_context?: {
+    verdict: 'unanimous_pass'
+    summary: string
+    judge_ids: string[]
+    evidence_refs: string[]
+  } | null
   candidate: { label: string; body: string; keywords: string[] }
   neighbors: Array<{ memory_id: string; label: string }>
 }
@@ -2411,9 +2419,12 @@ function isQueueCard(value: unknown): value is ThreadEndQueueCard {
   return isObject(value) && typeof value.item_uid === 'string' &&
     ['new', 'merge', 'supersede', 'contradict'].includes(String(value.verdict)) &&
     (typeof value.birthplace_thread_id === 'string' || value.birthplace_thread_id === null) &&
-    (value.birthplace === 'thread' || value.birthplace === 'seed') &&
+    (value.birthplace === 'thread' || value.birthplace === 'seed' || value.birthplace === 'symphony') &&
     (typeof value.batch_uid === 'string' || value.batch_uid === null) &&
     (typeof value.source_name === 'string' || value.source_name === null) &&
+    (value.birthplace_run_id === undefined || typeof value.birthplace_run_id === 'string' || value.birthplace_run_id === null) &&
+    (value.birthplace_origin_agent === undefined || typeof value.birthplace_origin_agent === 'string' || value.birthplace_origin_agent === null) &&
+    (value.judged_context === undefined || value.judged_context === null || isObject(value.judged_context)) &&
     isObject(value.candidate) &&
     typeof value.candidate.label === 'string' && typeof value.candidate.body === 'string' &&
     Array.isArray(value.candidate.keywords) && value.candidate.keywords.every((item) => typeof item === 'string') &&
@@ -2442,8 +2453,10 @@ function PalaceQueueModule() {
   const [dragging, setDragging] = useState(false)
 
   const load = useCallback(() => {
-    return events.dispatch({ type: 'queue.load', birthplace: 'seed' }).then((value) => {
-      setCards(queueCardsFrom(value).filter((card) => card.birthplace === 'seed'))
+    return events.dispatch({ type: 'queue.load' }).then((value) => {
+      setCards(queueCardsFrom(value).filter((card) =>
+        card.birthplace === 'seed' || card.birthplace === 'symphony'
+      ))
     })
   }, [events])
 
@@ -2542,10 +2555,10 @@ function PalaceQueueModule() {
   function decideBatch(batchUid: string, decision: 'approve' | 'deny') {
     if (busy) return
     setBusy(true)
-    setStatusText(decision === 'approve' ? 'Approving the document…' : 'Rejecting the document…')
+    setStatusText(decision === 'approve' ? 'Approving the batch…' : 'Rejecting the batch…')
     void events.dispatch({ type: 'queue.batch.decide', batch_uid: batchUid, decision })
       .then(() => load())
-      .then(() => setStatusText(decision === 'approve' ? 'Document approved.' : 'Document rejected.'))
+      .then(() => setStatusText(decision === 'approve' ? 'Batch approved.' : 'Batch rejected.'))
       .catch(() => setStatusText('The document changed before it could be decided.'))
       .finally(() => setBusy(false))
   }
@@ -2630,12 +2643,20 @@ function PalaceQueueModule() {
               <article className="seed-batch" key={batchUid} data-batch-uid={batchUid}>
                 <header>
                   <div>
-                    <span>Document · {batchCards.length} memories</span>
-                    <h3>{batchCards[0]?.source_name ?? 'Untitled document'}</h3>
+                    <span>
+                      {batchCards[0]?.birthplace === 'symphony' ? 'Judged Symphony winner' : 'Document'}
+                      {' · '}{batchCards.length} memories
+                    </span>
+                    <h3>{batchCards[0]?.source_name ?? batchCards[0]?.judged_context?.summary ?? 'Untitled document'}</h3>
+                    {batchCards[0]?.birthplace === 'symphony' ? (
+                      <small>
+                        Run {batchCards[0].birthplace_run_id} · {batchCards[0].judged_context?.judge_ids.length ?? 0} judges · explicit consent still required
+                      </small>
+                    ) : null}
                   </div>
                   <div className="seed-batch__actions">
-                    <button type="button" disabled={busy} onClick={() => decideBatch(batchUid, 'deny')}>Reject document</button>
-                    <button type="button" disabled={busy} onClick={() => decideBatch(batchUid, 'approve')}>Approve document</button>
+                    <button type="button" disabled={busy} onClick={() => decideBatch(batchUid, 'deny')}>Reject batch</button>
+                    <button type="button" disabled={busy} onClick={() => decideBatch(batchUid, 'approve')}>Approve batch</button>
                   </div>
                 </header>
                 <div className="seed-batch__memories">

@@ -83,7 +83,7 @@ export type RackAction =
   | { type: 'prompt.submit'; prompt: string; image?: OutboundImage }
   | { type: 'run.cancel'; run_id?: Ulid }
   | { type: 'thread.archive'; thread_id?: string }
-  | { type: 'queue.load'; thread_id?: string; birthplace?: 'thread' | 'seed' }
+  | { type: 'queue.load'; thread_id?: string; birthplace?: 'thread' | 'seed' | 'symphony' }
   | { type: 'seed.jump-start.load' }
   | { type: 'seed.upload'; batch_uid: string; source_name: string; markdown: string }
   | { type: 'queue.batch.decide'; batch_uid: string; decision: 'approve' | 'deny' }

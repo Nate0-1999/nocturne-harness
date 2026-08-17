@@ -432,11 +432,14 @@ class SeedRequest(ContractModel):
 class QueueCard(ContractModel):
     item_uid: ULID
     candidate: MemoryUnit
-    birthplace: Literal["thread", "seed"]
+    birthplace: Literal["thread", "seed", "symphony"]
     birthplace_thread_id: UUID | None
     batch_uid: UUID | None
     source_name: str | None
     source_sha256: str | None
+    birthplace_run_id: str | None = None
+    birthplace_origin_agent: str | None = None
+    judged_context: JsonObject | None = None
     verdict: Literal["new", "merge", "supersede", "contradict"]
     neighbors: list[SimilarityMemoryCard]
     target_ids: list[UUID]
@@ -455,6 +458,97 @@ class SeedResponse(ExtractionResponse):
 
 class QueueResponse(ContractModel):
     cards: list[QueueCard]
+
+
+class SymphonyMemoryRecord(ContractModel):
+    memory_id: UUID
+    principal_id: str
+    label: str
+    body: str
+    kind: MemoryKind
+    keywords: list[str]
+    project_key: str | None
+    origin_path: str | None
+    pin: bool
+    status: Literal["active", "candidate", "staged", "quarantined", "tombstoned"]
+    revision: int
+    run_id: str | None
+    origin_agent: str | None
+    staged: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class StageSymphonyMemoryRequest(ContractModel):
+    memory_id: UUID
+    principal_id: NonBlankString
+    label: NonBlankString
+    body: NonBlankString
+    kind: MemoryKind
+    keywords: list[str] = Field(default_factory=list)
+    project_key: str | None = None
+    origin_path: str | None = None
+    run_id: ULID
+    origin_agent: NonBlankString
+    machine_id: NonBlankString
+
+    @model_validator(mode="after")
+    def require_materialized_path(self) -> StageSymphonyMemoryRequest:
+        _require_symphony_origin(self.run_id, self.origin_agent)
+        return self
+
+
+class StageSymphonyMemoryResponse(ContractModel):
+    memory: SymphonyMemoryRecord
+
+
+class SymphonyVisibilityRequest(ContractModel):
+    principal_id: NonBlankString
+    run_id: ULID
+    origin_agent: NonBlankString
+
+    @model_validator(mode="after")
+    def require_materialized_path(self) -> SymphonyVisibilityRequest:
+        _require_symphony_origin(self.run_id, self.origin_agent)
+        return self
+
+
+class SymphonyVisibilityResponse(ContractModel):
+    memories: list[SymphonyMemoryRecord]
+
+
+class JudgedContext(ContractModel):
+    verdict: Literal["unanimous_pass"]
+    summary: NonBlankString
+    judge_ids: list[NonBlankString] = Field(min_length=3)
+    evidence_refs: list[NonBlankString] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def require_independent_judges(self) -> JudgedContext:
+        if len(set(self.judge_ids)) != len(self.judge_ids):
+            raise ValueError("judge_ids must be unique")
+        return self
+
+
+class ResolveSymphonyRunRequest(ContractModel):
+    principal_id: NonBlankString
+    batch_uid: UUID
+    winner_origin_agent: NonBlankString
+    machine_id: NonBlankString
+    judged_context: JudgedContext
+
+
+class ResolveSymphonyRunResponse(ContractModel):
+    run_id: ULID
+    batch_uid: UUID
+    winner_origin_agent: str
+    queue_cards: list[QueueCard]
+    losers: list[SymphonyMemoryRecord]
+
+
+def _require_symphony_origin(run_id: str, origin_agent: str) -> None:
+    if not re.fullmatch(rf"{re.escape(run_id)}/root(?:\.[1-9][0-9]*)*", origin_agent):
+        raise ValueError("origin_agent must be <run_id>/root[.<positive integer>...]")
 
 
 class QueueDecisionIntent(ContractModel):
@@ -1034,6 +1128,9 @@ _SCORER_AUDITION = TypeAdapter(ScorerAuditionResponse)
 _EXTRACTION_RESPONSE = TypeAdapter(ExtractionResponse)
 _SEED_RESPONSE = TypeAdapter(SeedResponse)
 _QUEUE_RESPONSE = TypeAdapter(QueueResponse)
+_STAGE_SYMPHONY_MEMORY_RESPONSE = TypeAdapter(StageSymphonyMemoryResponse)
+_SYMPHONY_VISIBILITY_RESPONSE = TypeAdapter(SymphonyVisibilityResponse)
+_RESOLVE_SYMPHONY_RUN_RESPONSE = TypeAdapter(ResolveSymphonyRunResponse)
 _QUEUE_DECISION_RESPONSE = TypeAdapter(QueueDecisionResponse)
 _BATCH_DECISION_RESPONSE = TypeAdapter(BatchDecisionResponse)
 _TRANSCRIPT_APPEND_RESPONSE = TypeAdapter(TranscriptAppendResult)
@@ -1286,7 +1383,7 @@ class SpineClient:
         principal_id: str,
         *,
         thread_id: UUID | None = None,
-        birthplace: Literal["thread", "seed"] | None = None,
+        birthplace: Literal["thread", "seed", "symphony"] | None = None,
     ) -> QueueResponse:
         params: JsonObject = {"principal_id": principal_id}
         if thread_id is not None:
@@ -1295,6 +1392,30 @@ class SpineClient:
             params["birthplace"] = birthplace
         response = await self._request("GET", "v1/approval-queue", params=params)
         return _expect_success(response, status=200, adapter=_QUEUE_RESPONSE)
+
+    async def stage_symphony_memory(
+        self, request: StageSymphonyMemoryRequest
+    ) -> StageSymphonyMemoryResponse:
+        response = await self._request(
+            "POST", "v1/symphony/memories", json_body=_request_body(request)
+        )
+        return _expect_success(response, status=201, adapter=_STAGE_SYMPHONY_MEMORY_RESPONSE)
+
+    async def visible_symphony_memories(
+        self, request: SymphonyVisibilityRequest
+    ) -> SymphonyVisibilityResponse:
+        response = await self._request(
+            "POST", "v1/symphony/memories/query", json_body=_request_body(request)
+        )
+        return _expect_success(response, status=200, adapter=_SYMPHONY_VISIBILITY_RESPONSE)
+
+    async def resolve_symphony_run(
+        self, run_id: str, request: ResolveSymphonyRunRequest
+    ) -> ResolveSymphonyRunResponse:
+        response = await self._request(
+            "POST", f"v1/symphony/runs/{run_id}/resolve", json_body=_request_body(request)
+        )
+        return _expect_success(response, status=200, adapter=_RESOLVE_SYMPHONY_RUN_RESPONSE)
 
     async def decide_queue_item(
         self, item_uid: str, request: QueueDecisionRequest
