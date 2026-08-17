@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "package": "@earendil-works/pi-coding-agent",
+  "version": "0.84.2",
+  "source_repository": "https://github.com/earendil-works/pi",
+  "legacy_repository_redirect": "https://github.com/badlogic/pi-mono",
+  "source_tag": "v0.84.2",
+  "source_commit": "914cf1472e715297caa30db4b9535d534a9eb718",
+  "npm_git_head": "914cf1472e715297caa30db4b9535d534a9eb718",
+  "artifact_integrity": "sha512-l4E+B7hgXKWddRo8bC/eSue2aWZjEgJ9xIpf5p0Og+lq8a2TArCwJ0HCoCPCgaBP/tN4zbYH/wOwvx9pJpeLCA==",
+  "artifact_shasum": "e4d4c1e769963c816959f5cea02a0a10ccc0495a",
+  "artifact_tarball": "https://registry.npmjs.org/@earendil-works/pi-coding-agent/-/pi-coding-agent-0.84.2.tgz",
+  "license": "MIT",
+  "license_file": "LICENSE.upstream",
+  "license_sha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48",
+  "node_engine": ">=22.19.0",
+  "publishers": [
+    "badlogic <mario@badlogicgames.com>",
+    "mitsuhiko <armin.ronacher@active-4.com>",
+    "rwachtler <r.wachtler@outlook.com>"
+  ]
+}

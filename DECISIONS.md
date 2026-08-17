@@ -2294,3 +2294,42 @@ every genuine failure slow. Retrying forever would turn startup into an
 unbounded wait. Retrying HTTP and parse failures would mislabel authentication,
 server, or contract defects as cold starts. A second Palace compatibility state
 machine would duplicate the existing API-contract authority.
+
+## 077 — Adopt PI as one pinned process dependency behind the toolset seam [P4, M3D]
+
+**Decision.** Consume `@earendil-works/pi-coding-agent` 0.84.2 as one intact
+npm dependency, resolved by a committed lockfile and accompanied by its exact
+MIT notice and a machine-readable provenance receipt. GitHub permanently
+redirects `badlogic/pi-mono` to `earendil-works/pi`; both names resolve the same
+current repository and release tag; npm's 0.84.2 `gitHead` equals the canonical
+`v0.84.2` commit; and the publisher set still includes PI creator `badlogic`.
+Treat a future publisher-set or tag/artifact mismatch as a custody boundary
+that stops the mechanical updater for owner review.
+
+Keep PI out of the Python process. `harness.toolset` owns the typed interface;
+one private adapter launches PI's published JSONL RPC mode with no persistent
+session, no project-resource trust, and no startup network work. No caller
+knows PI commands or response fields. The first adopted operation is the
+bounded state probe needed to prove the package/process seam. M3E extends this
+same interface with movement-enforced file operations before the live turn
+runner can use PI's hands. Missing package state refuses plainly and never
+installs from the network during an owner turn.
+
+**Motivation.** P4 needs institutional implementations without creating a
+second standard-tool maintenance job. The verified repository transfer and
+npm/tag continuity make the published dependency more trustworthy and much
+cheaper to update than a copied source tree. A process wire honors the
+Python-runtime lock and ADR-013's import fence while preserving PI as a whole,
+upstream-owned toolset. Waiting for M3E to activate file tools avoids a
+zero-regression violation: unwrapped PI tools do not yet enforce Nocturne's
+move-then-act law.
+
+**Rejected alternatives.** Vendoring PI source would duplicate a healthy
+publisher and turn every upstream bump into source archaeology. Forking or
+selectively copying tools violates the whole-unit ruling. Importing the
+TypeScript SDK in-process violates the Python runtime boundary. Code Puppy
+remains the named fallback but is unnecessary while PI custody is continuous,
+and its incompatible Pydantic AI line would add another adapter problem.
+Auto-installing PI on first owner use would hide a network and supply-chain
+mutation inside an ordinary turn; installation stays an explicit build/update
+ritual.

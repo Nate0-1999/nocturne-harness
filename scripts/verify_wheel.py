@@ -31,6 +31,18 @@ def main() -> None:
     assert all(web_root.joinpath(reference).is_file() for reference in references)
     assert resources.files("harness").joinpath("resources", "docker-compose.yml").is_file()
 
+    pi_root = resources.files("harness").joinpath("_pi")
+    assert all(
+        pi_root.joinpath(name).is_file()
+        for name in (
+            "LICENSE.upstream",
+            "README.md",
+            "dependency.json",
+            "package-lock.json",
+            "package.json",
+        )
+    )
+
     installed_names = {str(path) for path in package.files or ()}
     assert not any("node_modules" in path for path in installed_names)
     assert not any("garden/" in path.lower() for path in installed_names)
