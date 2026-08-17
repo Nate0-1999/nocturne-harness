@@ -30,19 +30,21 @@ class FakeSpine:
 
 
 def test_leaf_context_share_is_strictly_smaller_than_conductor_share() -> None:
+    """A-059 and P1.6 require leaf memory share below the conductor's share."""
+
     policy = MemorySharePolicy()
 
     assert policy.tokens(100_000, role="leaf") == 5_000
     assert policy.tokens(100_000, role="conductor") == 10_000
-    assert policy.tokens(100_000, role="leaf") < policy.tokens(
-        100_000, role="conductor"
-    )
+    assert policy.tokens(100_000, role="leaf") < policy.tokens(100_000, role="conductor")
     with pytest.raises(ValueError, match="leaf < conductor"):
         MemorySharePolicy(leaf=0.1, conductor=0.1)
 
 
 @pytest.mark.asyncio
 async def test_bridge_preserves_run_scoped_visibility_and_judged_winner_routing() -> None:
+    """A-059 and P1.6 require own-run staging plus judged winner queue routing."""
+
     spine = FakeSpine()
     bridge = SymphonyMemoryBridge(  # type: ignore[arg-type]
         spine,

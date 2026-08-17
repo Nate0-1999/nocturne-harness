@@ -18,7 +18,7 @@ def _release_archive(content: bytes) -> bytes:
         member.size = len(content)
         archive.addfile(member, io.BytesIO(content))
         for name in pi_runtime._THEME_MEMBERS:  # noqa: SLF001 - release contract fixture
-            theme = b'{}\n'
+            theme = b"{}\n"
             member = tarfile.TarInfo(name)
             member.size = len(theme)
             archive.addfile(member, io.BytesIO(theme))

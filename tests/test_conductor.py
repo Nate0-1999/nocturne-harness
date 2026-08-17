@@ -5,6 +5,7 @@ import os
 import signal
 import sys
 import time
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -18,6 +19,12 @@ from harness.conductor import (
     ConductorError,
     IrreversibleBoundary,
     ScopeExpansionError,
+    SearchAttemptBrief,
+    SearchAttemptStatus,
+    SearchBrake,
+    SearchBudget,
+    SearchBudgetExceeded,
+    SearchNodeDeclaration,
 )
 from harness.supervisor import WorkerSupervisor
 
@@ -345,3 +352,278 @@ def test_two_failed_retries_flag_without_a_fourth_attempt(tmp_path: Path) -> Non
 
         assert status is ChildStatus.FLAGGED
         assert conductor.child_status("retry") is ChildStatus.FLAGGED
+
+
+def _search_attempt(
+    attempt_id: str,
+    approach: str,
+    location: Path,
+    *,
+    cost: str = "0.60",
+    seconds: float = 10.0,
+    children: int = 0,
+) -> SearchAttemptBrief:
+    return SearchAttemptBrief(
+        attempt_id=attempt_id,
+        approach=approach,
+        charge=f"Try {approach} and return direct evidence.",
+        location=location,
+        estimated_completion_cost_usd=Decimal(cost),
+        estimated_completion_seconds=seconds,
+        planned_children=children,
+    )
+
+
+def _search_child(parent: Path, attempts: tuple[SearchAttemptBrief, ...]) -> ChildCharge:
+    return ChildCharge(
+        child_id="hard-step",
+        title="The declared hard step",
+        charge="Search three distinct approaches without adding scope.",
+        surfaces=("component/hard-step",),
+        evidence_requirements=("Compile/coherence smoke, then typed completion evidence.",),
+        location=parent,
+        search=SearchNodeDeclaration(attempts=attempts),
+    )
+
+
+def test_unmarked_child_cannot_emerge_as_expensive_search(tmp_path: Path) -> None:
+    """SPEC D.2 114 and P3 require Symphony expense to be opt-in at deliberation."""
+
+    location = tmp_path / "ordinary"
+    location.mkdir()
+    with WorkerSupervisor(tmp_path / "supervisor") as supervisor:
+        conductor = Conductor(
+            supervisor=supervisor,
+            event_sink=lambda _event: None,
+            search_spend_reader=lambda _packet, _child: Decimal(0),
+        )
+        conductor.claim(_claim(("component/ordinary",)))
+        conductor.expand((_child("ordinary", "component/ordinary", location),))
+        with pytest.raises(ConductorError, match="opt-in"):
+            conductor.explode_search("ordinary", {})
+
+
+def test_marked_search_explodes_three_attempts_smoke_prunes_then_narrows(
+    tmp_path: Path,
+) -> None:
+    """SPEC D.2 114, ADR-017, and P3 require SYM7 staged search under R22 brakes."""
+
+    parent = tmp_path / "parent"
+    locations = [tmp_path / name for name in ("risk", "simple", "novel")]
+    parent.mkdir()
+    for location in locations:
+        location.mkdir()
+    attempts = (
+        _search_attempt("risk", "risk-first", locations[0]),
+        _search_attempt("simple", "minimal-first", locations[1]),
+        _search_attempt("novel", "independent alternative", locations[2]),
+    )
+    smoke_payloads = {
+        "risk": json.dumps(
+            {
+                "schema_version": 1,
+                "status": "pass",
+                "score": 0.90,
+                "checks": ["compiles", "coherent"],
+                "evidence_refs": ["smoke.json"],
+            }
+        ),
+        "simple": json.dumps(
+            {
+                "schema_version": 1,
+                "status": "pass",
+                "score": 0.70,
+                "checks": ["compiles", "coherent"],
+                "evidence_refs": ["smoke.json"],
+            }
+        ),
+        "novel": json.dumps(
+            {
+                "schema_version": 1,
+                "status": "fail",
+                "score": 0.20,
+                "checks": ["compiles", "coherent"],
+                "evidence_refs": ["smoke.json"],
+            }
+        ),
+    }
+    spend = {"value": Decimal("0")}
+    now = {"value": 100.0}
+    events: list[dict[str, object]] = []
+    with WorkerSupervisor(tmp_path / "supervisor") as supervisor:
+        conductor = Conductor(
+            supervisor=supervisor,
+            event_sink=events.append,
+            search_spend_reader=lambda _packet, _child: spend["value"],
+            search_clock=lambda: now["value"],
+        )
+        conductor.claim(_claim(("component/hard-step",)))
+        conductor.expand((_search_child(parent, attempts),))
+        handles = conductor.explode_search(
+            "hard-step",
+            {
+                attempt_id: (
+                    sys.executable,
+                    "-c",
+                    f"from pathlib import Path; Path('smoke.json').write_text({payload!r})",
+                )
+                for attempt_id, payload in smoke_payloads.items()
+            },
+        )
+        assert len(handles) == 3
+        assert all("do not perform completion" in handle.brief for handle in handles)
+        for attempt, location in zip(attempts, locations, strict=True):
+            _wait_for(location / "smoke.json")
+            deadline = time.monotonic() + 10
+            while conductor.observe_search_attempt("hard-step", attempt.attempt_id) is (
+                SearchAttemptStatus.SMOKE_RUNNING
+            ):
+                assert time.monotonic() < deadline
+                time.sleep(0.01)
+            conductor.accept_smoke_gate("hard-step", attempt.attempt_id, location / "smoke.json")
+
+        assert conductor.search_attempt_status("hard-step", "novel") is (
+            SearchAttemptStatus.SMOKE_FAILED
+        )
+        with pytest.raises(ConductorError, match="beam-admitted"):
+            conductor.dispatch_search_completion(
+                "hard-step", "novel", (sys.executable, "-c", "raise SystemExit(0)")
+            )
+
+        spend["value"] = Decimal("8.90")
+        selected = conductor.narrow_search_beam("hard-step")
+        assert [attempt.attempt_id for attempt in selected] == ["risk"]
+        assert conductor.search_attempt_status("hard-step", "simple") is (
+            SearchAttemptStatus.BEAM_PRUNED
+        )
+
+        completion_payload = _result(
+            status="completed",
+            claim="risk-first completion is coherent",
+            evidence="completion evidence",
+        )
+        conductor.dispatch_search_completion(
+            "hard-step",
+            "risk",
+            (
+                sys.executable,
+                "-c",
+                "from pathlib import Path; "
+                f"Path('distillate.json').write_text({completion_payload!r})",
+            ),
+        )
+        _wait_for(locations[0] / "distillate.json")
+        deadline = time.monotonic() + 10
+        while conductor.observe_search_attempt("hard-step", "risk") is (
+            SearchAttemptStatus.COMPLETION_RUNNING
+        ):
+            assert time.monotonic() < deadline
+            time.sleep(0.01)
+        conductor.accept_search_distillate("hard-step", "risk", locations[0] / "distillate.json")
+
+        assert conductor.child_status("hard-step") is ChildStatus.AWAITING_DISTILLATE
+        assert len(conductor.search_results("hard-step")) == 1
+    assert sum(event["event"] == "search_worker_admitted" for event in events) == 4
+    assert any(
+        event["event"] == "search_smoke_decided" and event["status"] == "fail" for event in events
+    )
+    assert any(
+        event["event"] == "search_beam_narrowed" and event["pruned"] == ["simple"]
+        for event in events
+    )
+
+
+def test_search_dual_brakes_stop_live_smoke_workers(tmp_path: Path) -> None:
+    """SPEC D.2 114 and P3 require R22's spend and clock walls to stop search."""
+
+    parent = tmp_path / "parent"
+    locations = [tmp_path / f"attempt-{index}" for index in range(3)]
+    parent.mkdir()
+    for location in locations:
+        location.mkdir()
+    attempts = tuple(
+        _search_attempt(f"a{index}", f"approach {index}", location)
+        for index, location in enumerate(locations)
+    )
+    spend = {"value": Decimal("0")}
+    now = {"value": 0.0}
+    events: list[dict[str, object]] = []
+    with WorkerSupervisor(tmp_path / "supervisor") as supervisor:
+        conductor = Conductor(
+            supervisor=supervisor,
+            event_sink=events.append,
+            search_spend_reader=lambda _packet, _child: spend["value"],
+            search_clock=lambda: now["value"],
+        )
+        conductor.claim(_claim(("component/hard-step",)))
+        conductor.expand((_search_child(parent, attempts),))
+        handles = conductor.explode_search(
+            "hard-step",
+            {
+                attempt.attempt_id: (sys.executable, "-c", "import time; time.sleep(30)")
+                for attempt in attempts
+            },
+        )
+        spend["value"] = Decimal("10")
+        now["value"] = 1800.0
+        snapshot = conductor.enforce_search_brakes("hard-step")
+        assert snapshot.brake is SearchBrake.SPEND_AND_CLOCK
+        assert all(
+            conductor.search_attempt_status("hard-step", attempt.attempt_id)
+            is SearchAttemptStatus.DRAINING
+            for attempt in attempts
+        )
+        deadline = time.monotonic() + 10
+        while any(supervisor.heartbeat(handle.worker_id) for handle in handles):
+            assert time.monotonic() < deadline
+            time.sleep(0.01)
+        assert all(
+            conductor.observe_search_attempt("hard-step", attempt.attempt_id)
+            is SearchAttemptStatus.CANCELLED
+            for attempt in attempts
+        )
+        with pytest.raises(SearchBudgetExceeded, match="wall"):
+            conductor.narrow_search_beam("hard-step")
+    assert any(
+        event["event"] == "search_brake_engaged" and event["brake"] == "spend_and_clock"
+        for event in events
+    )
+
+
+@pytest.mark.parametrize(
+    ("budget", "round_number", "depth", "children", "message"),
+    [
+        (SearchBudget(max_rounds=1), 2, 0, 0, "max_rounds"),
+        (SearchBudget(depth_cap=1), 1, 2, 0, "depth_cap"),
+        (SearchBudget(children_per_attempt=1), 1, 0, 2, "children_per_attempt"),
+    ],
+)
+def test_search_declaration_enforces_round_depth_and_children_caps(
+    tmp_path: Path,
+    budget: SearchBudget,
+    round_number: int,
+    depth: int,
+    children: int,
+    message: str,
+) -> None:
+    """SPEC D.2 114 and P3 require charge-declared R22 shape caps to be mechanical."""
+
+    locations = [tmp_path / f"attempt-{index}" for index in range(3)]
+    for location in locations:
+        location.mkdir()
+    attempts = tuple(
+        _search_attempt(
+            f"a{index}",
+            f"approach {index}",
+            location,
+            children=children if index == 0 else 0,
+        )
+        for index, location in enumerate(locations)
+    )
+    with pytest.raises(ValueError, match=message):
+        SearchNodeDeclaration(
+            budget=budget,
+            round_number=round_number,
+            depth=depth,
+            attempts=attempts,
+        )

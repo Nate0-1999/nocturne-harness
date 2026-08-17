@@ -2517,3 +2517,39 @@ recovery. Exposing all staged run memories to every worker would turn Palace int
 side channel. Auto-approving unanimous winners would confuse judge quality evidence
 with owner consent. Building a Symphony-only review screen would duplicate the queue
 lifecycle and its accessibility work.
+
+## 083 — Search expense is declared in the child charge and metered at every stage [P3, P4.2, SYM7]
+
+**Decision.** A conductor child becomes a search node only when its immutable
+deliberation charge carries the `symphony` marker, the complete set of distinct
+approach briefs, and the R22 envelope. The declaration validates attempt count,
+round, recursion depth, children per attempt, and distinct worktree locations before
+any process starts. An ordinary child cannot acquire search behavior at runtime.
+
+Search runs in two process stages. Every attempt first receives a smoke-only worker
+brief and must return a bounded typed compile/coherence result. Only smoke survivors
+may enter the completion beam.
+The conductor orders that beam by smoke score and admits the highest-scoring attempts
+whose declared completion projections fit the remaining dollars and wall time.
+Projections only narrow the beam: actual enforcement always reads parent-attributed
+Decimal spend from the authoritative ledger adapter and elapsed time from a monotonic
+clock. Either actual wall stops new work. Live smoke work drains immediately; live
+completion work preserves G20 by requiring a clear or reconciled irreversible
+boundary before termination.
+
+SYM7 emits typed search history and returns completion distillates as judge-eligible
+but never memory-admissible. It does not select a winner, mint feedback, advance a
+round, or promote a memory; those authorities remain SYM8, SYM9, and the existing
+Palace Queue boundary.
+
+**Motivation.** P3 needs the expensive machinery to appear only on the hard steps the
+owner and agent named during deliberation, while P4.2 requires both projected economy
+and hard measured walls. Keeping declaration, smoke evidence, beam admission, and
+actual brakes in one conductor state machine makes the cost boundary reviewable
+without creating a second spend ledger or a premature judge.
+
+**Rejected alternatives.** Emergent fan-out would make cost a worker decision.
+Fixed-width completion would spend equally on weak and strong smoke results. Using
+projected cost as accounting truth would let optimistic estimates cross the wall.
+Implementing unanimity or evolutionary rounds here would collapse the explicit
+SYM7/SYM8/SYM9 authority split.

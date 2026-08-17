@@ -108,14 +108,11 @@ def installed_pi_is_ready(home: Path) -> bool:
         return False
     required = (target, *(target.parent / "theme" / Path(member).name for member in _THEME_MEMBERS))
     try:
-        return (
-            hashlib.sha256(target.read_bytes()).hexdigest() == expected
-            and all(
-                isinstance(file_hashes.get(path.relative_to(target.parent).as_posix()), str)
-                and hashlib.sha256(path.read_bytes()).hexdigest()
-                == file_hashes[path.relative_to(target.parent).as_posix()]
-                for path in required
-            )
+        return hashlib.sha256(target.read_bytes()).hexdigest() == expected and all(
+            isinstance(file_hashes.get(path.relative_to(target.parent).as_posix()), str)
+            and hashlib.sha256(path.read_bytes()).hexdigest()
+            == file_hashes[path.relative_to(target.parent).as_posix()]
+            for path in required
         )
     except OSError:
         return False
