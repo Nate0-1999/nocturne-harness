@@ -12,6 +12,7 @@ from pydantic import ValidationError
 if TYPE_CHECKING:
     from harness.toolset import StandardToolset
 
+from harness.progressive_prompt import workspace_location_path
 from harness.spine_client import (
     CreatedMemoryResponse,
     CreateMemoryConflictError,
@@ -86,6 +87,13 @@ class MemoryToolContext:
         compare=False,
     )
 
+    def current_origin_path(self) -> str | None:
+        """Read provenance from the same live location used by workspace tools. [R16]"""
+
+        if self.toolset is None:
+            return self.origin_path
+        return workspace_location_path(self.toolset.location())
+
 
 async def save_memory(
     context: MemoryToolContext,
@@ -119,7 +127,7 @@ async def save_memory(
         keywords=keywords,
         project_key=context.project_key if project_scoped else None,
         thread_origin=str(context.thread_id) if context.thread_id is not None else None,
-        origin_path=context.origin_path,
+        origin_path=context.current_origin_path(),
         editor=f"agent:{context.agent_id}",
         machine_id=context.machine_id,
         force=force,
@@ -224,7 +232,7 @@ async def create_remembered_memory(
             keywords=keywords,
             project_key=context.project_key,
             thread_origin=str(context.thread_id) if context.thread_id is not None else None,
-            origin_path=context.origin_path,
+            origin_path=context.current_origin_path(),
             editor="user",
             machine_id=context.machine_id,
             force=False,
@@ -246,7 +254,7 @@ async def create_remembered_memory_split(
             source_body=source_body,
             children=children,
             thread_origin=str(context.thread_id) if context.thread_id is not None else None,
-            origin_path=context.origin_path,
+            origin_path=context.current_origin_path(),
             editor="user",
             machine_id=context.machine_id,
         )

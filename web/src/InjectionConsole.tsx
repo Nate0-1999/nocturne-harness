@@ -38,7 +38,7 @@ type Point = {
   score: string
   rank: number
   shown_as: string
-  contributions: Record<string, string>
+  contributions: Record<string, string | null>
 }
 type Candidate = { memory_id: string; label: string; points: Point[] }
 type Comparison = {

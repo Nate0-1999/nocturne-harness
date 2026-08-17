@@ -123,7 +123,8 @@ async function openModule(targetPage, moduleId) {
     await modelControl.waitFor()
     await modelControl.evaluate((element) => element.click())
   } else if (moduleId === 'thread_end') {
-    await frame(targetPage, 'threads').getByRole('button', { name: /^Archive / })
+    await frame(targetPage, 'threads').locator('.thread-item--selected')
+      .getByRole('button', { name: /^Archive / })
       .evaluate((element) => element.click())
   }
   await targetPage.getByTestId(`rack-plugin-frame-${moduleId}`).waitFor()

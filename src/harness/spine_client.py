@@ -108,6 +108,7 @@ class MemoryFeatures(ContractModel):
     proj: RawFeatureScore
     freq: RawFeatureScore
     hist: RawFeatureScore
+    loc: RawFeatureScore | None = None
 
 
 class MemoryCard(ContractModel):
@@ -163,6 +164,7 @@ class InjectPrepareRequest(ContractModel):
     machine_id: str
     principal_id: str
     project_key: str | None = None
+    location_path: str | None = None
     agent_kind: str | None = None
     prompt: str
     model_context_tokens: int = Field(gt=0)

@@ -38,7 +38,7 @@ from harness.envelope import ProviderErrorPayload, StopReason
 from harness.model_policy import ThreadModelResolution
 from harness.model_router import model_settings_for
 from harness.receipt_queue import SpendReceiptQueue
-from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
+from harness.run_protocol import DynamicSystemInstructions, RunEmitter, TurnOutcome, UsageSnapshot
 from harness.spend import (
     SpendGateway,
     SpendLineage,
@@ -101,6 +101,7 @@ class PydanticAITurnRunner:
         emit: RunEmitter,
         model_resolution: ThreadModelResolution | None = None,
         system_instructions: str | None = None,
+        dynamic_instructions: DynamicSystemInstructions | None = None,
         excluded_memory_ids: frozenset[UUID] = frozenset(),
         image: BinaryContent | None = None,
     ) -> TurnOutcome:
@@ -144,11 +145,24 @@ class PydanticAITurnRunner:
 
             prior_history = _strip_all_memory_blocks(prior_history)
             user_prompt = prompt if image is None else [prompt, image]
+
+            async def current_instructions(_context: object) -> str | None:
+                if dynamic_instructions is None:  # pragma: no cover - only passed dynamically
+                    return None
+                return await dynamic_instructions.render()
+
+            instructions: object = system_instructions
+            if dynamic_instructions is not None:
+                instructions = (
+                    [current_instructions]
+                    if system_instructions is None
+                    else [system_instructions, current_instructions]
+                )
             with capture_run_messages() as captured:
                 result = await self._agent.chat_agent.run(
                     user_prompt,
                     deps=context,
-                    instructions=system_instructions,
+                    instructions=instructions,
                     message_history=cast(Sequence[ModelMessage], prior_history),
                     model=selected_model,
                     model_settings=model_settings,
@@ -226,7 +240,16 @@ class PydanticAITurnRunner:
                     thread_id=thread_id,
                     captured=captured,
                     resolution=model_resolution,
-                    memory_block=system_instructions,
+                    memory_block=(
+                        dynamic_instructions.memory_block
+                        if dynamic_instructions is not None
+                        else system_instructions
+                    ),
+                    workspace_block=(
+                        dynamic_instructions.workspace_block
+                        if dynamic_instructions is not None
+                        else None
+                    ),
                 )
             await self._record_spend(
                 captured,

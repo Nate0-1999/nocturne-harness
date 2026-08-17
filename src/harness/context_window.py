@@ -67,6 +67,7 @@ class ContextWindowTracker:
         captured: Sequence[ModelMessage],
         resolution: ThreadModelResolution | None,
         memory_block: str | None,
+        workspace_block: str | None = None,
     ) -> None:
         if resolution is None:
             return
@@ -88,7 +89,7 @@ class ContextWindowTracker:
             used_tokens=used,
             context_tokens=resolution.context_tokens,
             threshold_tokens=max(1, int(resolution.context_tokens * _THRESHOLD_RATIO)),
-            categories=_estimated_categories(used, memory_block, captured),
+            categories=_estimated_categories(used, memory_block, workspace_block, captured),
         )
 
     def snapshot(self, thread_id: str | None) -> ContextWindowSnapshot:
@@ -111,12 +112,16 @@ class ContextWindowTracker:
 
 
 def _estimated_categories(
-    used: int, memory_block: str | None, captured: Sequence[ModelMessage]
+    used: int,
+    memory_block: str | None,
+    workspace_block: str | None,
+    captured: Sequence[ModelMessage],
 ) -> ContextCategories:
     definition = DEFAULT_MEMORY_FEATURE.definition
     memory = cl100k_token_count(memory_block or "")
     system = sum(cl100k_token_count(item.text) for item in definition.instructions)
     system += cl100k_token_count(WORKSPACE_INSTRUCTIONS)
+    system += cl100k_token_count(workspace_block or "")
     tools = sum(cl100k_token_count(f"{tool.name}\n{tool.description}") for tool in definition.tools)
     tools += sum(
         cl100k_token_count(f"{function.__name__}\n{function.__doc__ or ''}")

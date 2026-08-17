@@ -24,7 +24,7 @@ import { formatHumanScore } from './humanNumbers.ts'
 const LONG_PRESS_MS = 550
 const LONG_PRESS_MOVE_TOLERANCE_PX = 10
 
-type FeatureKey = 'sem' | 'kw' | 'time' | 'proj' | 'freq' | 'hist'
+type FeatureKey = 'sem' | 'kw' | 'time' | 'proj' | 'freq' | 'hist' | 'loc'
 type WrongResolutionAction = 'edit' | 'expire'
 
 const FEATURE_LABELS: readonly { key: FeatureKey; label: string }[] = [
@@ -34,6 +34,7 @@ const FEATURE_LABELS: readonly { key: FeatureKey; label: string }[] = [
   { key: 'proj', label: 'Project' },
   { key: 'freq', label: 'Citation' },
   { key: 'hist', label: 'Edit history' },
+  { key: 'loc', label: 'Location' },
 ]
 
 interface MemoryGateProps {
@@ -831,7 +832,7 @@ function MemoryCardFrame({ card, tone, status, action }: MemoryCardFrameProps) {
 
 function FeatureScores({ features }: { features: MemoryFeatures }) {
   return (
-    <div className="feature-scores" aria-label="Six raw, unweighted feature scores">
+    <div className="feature-scores" aria-label="Raw, unweighted feature scores">
       {FEATURE_LABELS.map(({ key, label }) => {
         const value = features[key]
         return (
@@ -843,9 +844,9 @@ function FeatureScores({ features }: { features: MemoryFeatures }) {
           >
             <span className="feature-score__label">{label}</span>
             <span className="feature-score__track" aria-hidden="true">
-              <span style={{ width: `${Math.min(1, Math.max(0, value)) * 100}%` }} />
+              <span style={{ width: `${Math.min(1, Math.max(0, value ?? 0)) * 100}%` }} />
             </span>
-            <span className="feature-score__value">{score(value)}</span>
+            <span className="feature-score__value">{value === null ? '—' : score(value)}</span>
           </div>
         )
       })}

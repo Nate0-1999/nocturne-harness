@@ -12,7 +12,9 @@ from harness.citation import cited_memory_ids
 from harness.commands import remember_command_text
 from harness.memory_panel import ThreadMemoryContextRegistry, ThreadMemorySnapshot
 from harness.model_policy import ThreadModelResolution
+from harness.progressive_prompt import render_workspace_context, workspace_location_path
 from harness.run_protocol import (
+    DynamicSystemInstructions,
     ImageSystemInstructionTurnRunner,
     RunEmitter,
     SystemInstructionTurnRunner,
@@ -40,6 +42,110 @@ type ContextFactory = Callable[[str], MemoryToolContext]
 type ContextChanged = Callable[[str], Awaitable[None]]
 
 _MEMORY_UNAVAILABLE_MESSAGE = "Memory is unavailable; continuing without injected context."
+
+
+def _live_location_path(context: MemoryToolContext) -> str | None:
+    toolset = context.toolset
+    return None if toolset is None else workspace_location_path(toolset.location())
+
+
+class _ProgressiveInstructions(DynamicSystemInstructions):
+    """Refresh location-sensitive context before each provider request. [R16]"""
+
+    def __init__(
+        self,
+        *,
+        thread_id: str,
+        prompt: str,
+        context: MemoryToolContext,
+        spine: InjectionGateway,
+        contexts: ThreadMemoryContextRegistry,
+        model_context_tokens: int,
+        emit: RunEmitter,
+        on_context_changed: ContextChanged | None,
+    ) -> None:
+        self._thread_id = thread_id
+        self._prompt = prompt
+        self._context = context
+        self._spine = spine
+        self._contexts = contexts
+        self._model_context_tokens = model_context_tokens
+        self._emit = emit
+        self._on_context_changed = on_context_changed
+        self._last_location = self._location_path()
+        snapshot = contexts.snapshot(thread_id)
+        self._memory_block = snapshot.final_block if snapshot is not None else None
+        self._workspace_block: str | None = None
+
+    @property
+    def memory_block(self) -> str | None:
+        return self._memory_block
+
+    @property
+    def workspace_block(self) -> str | None:
+        return self._workspace_block
+
+    async def render(self) -> str | None:
+        location_path = self._location_path()
+        if location_path != self._last_location:
+            self._last_location = location_path
+            await self._refresh_memory(location_path)
+        toolset = self._context.toolset
+        self._workspace_block = (
+            render_workspace_context(toolset.location()) if toolset is not None else None
+        )
+        snapshot = self._contexts.snapshot(self._thread_id)
+        self._memory_block = snapshot.final_block if snapshot is not None else None
+        blocks = [
+            block for block in (self._workspace_block, self._memory_block) if block is not None
+        ]
+        return "\n\n".join(blocks) or None
+
+    def _location_path(self) -> str | None:
+        toolset = self._context.toolset
+        return None if toolset is None else workspace_location_path(toolset.location())
+
+    async def _refresh_memory(self, location_path: str | None) -> None:
+        snapshot = self._contexts.snapshot(self._thread_id)
+        if snapshot is None or self._context.thread_id is None:
+            return
+        try:
+            prepared = await self._spine.prepare_injection(
+                InjectPrepareRequest(
+                    thread_id=self._context.thread_id,
+                    agent_id=self._context.agent_id,
+                    machine_id=self._context.machine_id,
+                    principal_id=self._context.principal_id,
+                    project_key=self._context.project_key,
+                    location_path=location_path,
+                    agent_kind=None,
+                    prompt=self._prompt,
+                    model_context_tokens=self._model_context_tokens,
+                    mode="autonomous",
+                    current_memory_ids=sorted(snapshot.member_ids, key=lambda value: value.int),
+                    confirmed_memory_ids=sorted(
+                        snapshot.confirmed_memory_ids, key=lambda value: value.int
+                    ),
+                    excluded_memory_ids=sorted(
+                        snapshot.excluded_memory_ids, key=lambda value: value.int
+                    ),
+                )
+            )
+            _, changed = self._contexts.replace_autonomous(
+                self._thread_id,
+                prepared=prepared,
+            )
+        except (SpineClientError, ValueError):
+            await self._emit.error(
+                {
+                    "code": "memory_unavailable",
+                    "phase": "movement_rescore",
+                    "message": _MEMORY_UNAVAILABLE_MESSAGE,
+                }
+            )
+            return
+        if changed and self._on_context_changed is not None:
+            await self._on_context_changed(self._thread_id)
 
 
 class InjectionGateway(Protocol):
@@ -134,6 +240,7 @@ class MemoryGateTurnRunner:
                     machine_id=context.machine_id,
                     principal_id=context.principal_id,
                     project_key=context.project_key,
+                    location_path=_live_location_path(context),
                     agent_kind=None,
                     prompt=prompt,
                     model_context_tokens=(
@@ -303,11 +410,18 @@ class MemoryGateTurnRunner:
         image: BinaryContent | None = None,
     ) -> TurnOutcome:
         async with self._contexts.model_feedback_boundary(thread_id):
+            run_context = self._context_factory(thread_id)
             context = self._contexts.snapshot(thread_id)
-            system_instructions = context.final_block if context is not None else None
             excluded_memory_ids = (
                 context.excluded_memory_ids if context is not None else frozenset()
             ) | additional_excluded_memory_ids
+            progressive = self._progressive_instructions(
+                thread_id=thread_id,
+                prompt=prompt,
+                context=run_context,
+                emit=emit,
+                model_resolution=model_resolution,
+            )
             if image is None:
                 outcome = await self._delegate.run(
                     thread_id=thread_id,
@@ -315,7 +429,7 @@ class MemoryGateTurnRunner:
                     message_history=message_history,
                     emit=emit,
                     model_resolution=model_resolution,
-                    system_instructions=system_instructions,
+                    dynamic_instructions=progressive,
                     excluded_memory_ids=excluded_memory_ids,
                 )
             else:
@@ -326,10 +440,10 @@ class MemoryGateTurnRunner:
                     message_history=message_history,
                     emit=emit,
                     model_resolution=model_resolution,
-                    system_instructions=system_instructions,
+                    dynamic_instructions=progressive,
                     excluded_memory_ids=excluded_memory_ids,
                 )
-            await self._record_citations(context, outcome, emit)
+            await self._record_citations(self._contexts.snapshot(thread_id), outcome, emit)
             return outcome
 
     async def _run_autonomous(
@@ -359,6 +473,7 @@ class MemoryGateTurnRunner:
                         machine_id=context.machine_id,
                         principal_id=context.principal_id,
                         project_key=context.project_key,
+                        location_path=_live_location_path(context),
                         agent_kind=None,
                         prompt=prompt,
                         model_context_tokens=(
@@ -391,6 +506,13 @@ class MemoryGateTurnRunner:
 
             if changed and self._on_context_changed is not None:
                 await self._on_context_changed(thread_id)
+            progressive = self._progressive_instructions(
+                thread_id=thread_id,
+                prompt=prompt,
+                context=context,
+                emit=emit,
+                model_resolution=model_resolution,
+            )
             if image is None:
                 outcome = await self._delegate.run(
                     thread_id=thread_id,
@@ -398,7 +520,7 @@ class MemoryGateTurnRunner:
                     message_history=message_history,
                     emit=emit,
                     model_resolution=model_resolution,
-                    system_instructions=current.final_block,
+                    dynamic_instructions=progressive,
                     excluded_memory_ids=current.excluded_memory_ids,
                 )
             else:
@@ -409,11 +531,35 @@ class MemoryGateTurnRunner:
                     message_history=message_history,
                     emit=emit,
                     model_resolution=model_resolution,
-                    system_instructions=current.final_block,
+                    dynamic_instructions=progressive,
                     excluded_memory_ids=current.excluded_memory_ids,
                 )
-            await self._record_citations(current, outcome, emit)
+            await self._record_citations(self._contexts.snapshot(thread_id), outcome, emit)
             return outcome
+
+    def _progressive_instructions(
+        self,
+        *,
+        thread_id: str,
+        prompt: str,
+        context: MemoryToolContext,
+        emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None,
+    ) -> _ProgressiveInstructions:
+        return _ProgressiveInstructions(
+            thread_id=thread_id,
+            prompt=prompt,
+            context=context,
+            spine=self._spine,
+            contexts=self._contexts,
+            model_context_tokens=(
+                model_resolution.context_tokens
+                if model_resolution is not None
+                else self._model_context_tokens
+            ),
+            emit=emit,
+            on_context_changed=self._on_context_changed,
+        )
 
     async def _record_citations(
         self,

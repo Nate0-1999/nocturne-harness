@@ -35,7 +35,7 @@ from harness.context_window import ContextWindowTracker
 from harness.envelope import GateCommitPayload, StopReason
 from harness.model_policy import ThreadModelResolution
 from harness.receipt_queue import SpendReceiptQueue
-from harness.run_protocol import UsageSnapshot
+from harness.run_protocol import DynamicSystemInstructions, UsageSnapshot
 from harness.spine_client import (
     MemoryKind,
     MemorySplitRequest,
@@ -147,6 +147,39 @@ class RecordingWorkspaceToolset:
         return ToolExecutionResult(tool_name=tool_name, content="Wrote note.txt", success=True)
 
 
+@dataclass
+class MovingWorkspaceToolset(RecordingWorkspaceToolset):
+    moved: bool = False
+
+    async def execute(
+        self, tool_name: ToolName, arguments: Mapping[str, object]
+    ) -> ToolExecutionResult:
+        self.calls.append((tool_name, arguments))
+        if tool_name == "move":
+            self.moved = True
+            return ToolExecutionResult(tool_name=tool_name, content="Moved to notes", success=True)
+        return ToolExecutionResult(tool_name=tool_name, content="ok", success=True)
+
+
+@dataclass
+class FeetInstructions(DynamicSystemInstructions):
+    toolset: MovingWorkspaceToolset
+    rendered: list[str] = field(default_factory=list)
+
+    @property
+    def memory_block(self) -> str | None:
+        return None
+
+    @property
+    def workspace_block(self) -> str | None:
+        return self.rendered[-1] if self.rendered else None
+
+    async def render(self) -> str:
+        value = "Current location: notes" if self.toolset.moved else "Current location: ."
+        self.rendered.append(value)
+        return value
+
+
 class FailingSpend:
     async def record_spend_events(self, request: SpendEventsRequest) -> SpendEventsResponse:
         del request
@@ -224,6 +257,55 @@ async def test_workspace_tool_events_and_spend_share_the_existing_turn_authoriti
     assert "function_tool_result" in event_kinds
     assert spend.requests
     assert {event.purpose for request in spend.requests for event in request.events} == {"building"}
+
+
+@pytest.mark.asyncio
+async def test_r16_dynamic_instructions_are_reevaluated_after_move_tool_result() -> None:
+    """R16 reaches both real Pydantic-AI request steps in the one owner turn runner."""
+
+    model_calls = 0
+    observed_instructions: list[str | None] = []
+
+    async def stream(messages: list[object], _info: object):
+        nonlocal model_calls
+        model_calls += 1
+        request = next(
+            message for message in reversed(messages) if isinstance(message, ModelRequest)
+        )
+        observed_instructions.append(request.instructions)
+        if model_calls == 1:
+            yield {
+                0: DeltaToolCall(
+                    name="move",
+                    json_args='{"path":"notes"}',
+                    tool_call_id="r16-move-1",
+                )
+            }
+        else:
+            yield "Now I am in notes."
+
+    toolset = MovingWorkspaceToolset()
+    dynamic = FeetInstructions(toolset)
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(toolset=toolset),
+    )
+
+    outcome = await runner.run(
+        thread_id=str(THREAD_UUID),
+        prompt="Move then answer.",
+        message_history=(),
+        emit=RecordingEmitter(),
+        dynamic_instructions=dynamic,
+    )
+
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert toolset.calls == [("move", {"path": "notes"})]
+    assert dynamic.rendered == ["Current location: .", "Current location: notes"]
+    assert observed_instructions[0] is not None
+    assert observed_instructions[1] is not None
+    assert observed_instructions[0].endswith("Current location: .")
+    assert observed_instructions[1].endswith("Current location: notes")
 
 
 @pytest.mark.asyncio

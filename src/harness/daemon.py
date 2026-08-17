@@ -55,6 +55,7 @@ from harness.parameter_registry import (
     ParameterWriteRequest,
     ParameterWriteViolation,
 )
+from harness.progressive_prompt import workspace_location_path
 from harness.rack_query import RackQueryResult
 from harness.receipt_queue import SpendReceiptQueue
 from harness.resources import ResourceWatch
@@ -666,7 +667,7 @@ def create_dev_app(
             agent_id=agent_id,
             thread_id=parsed_thread_id,
             project_key=project_key,
-            origin_path=project_key,
+            origin_path=workspace_location_path(workspace_toolset.location()),
             toolset=workspace_toolset,
         )
 

@@ -224,6 +224,7 @@ export type MemoryFeatures = JsonObject & {
   proj: number
   freq: number
   hist: number
+  loc: number | null
 }
 
 export type ScoredMemoryCard = JsonObject & {
@@ -611,7 +612,7 @@ const MEMORY_STATUSES: readonly MemoryStatus[] = [
   'tombstoned',
 ]
 
-const FEATURE_KEYS = ['sem', 'kw', 'time', 'proj', 'freq', 'hist'] as const
+const FEATURE_KEYS = ['sem', 'kw', 'time', 'proj', 'freq', 'hist', 'loc'] as const
 const CARD_KEYS = [
   'memory_id',
   'label',
@@ -656,6 +657,9 @@ function parseMemoryFeatures(value: unknown): MemoryFeatures | null {
   }
   for (const key of FEATURE_KEYS) {
     const feature = value[key]
+    if (key === 'loc' && feature === null) {
+      continue
+    }
     if (
       typeof feature !== 'number' ||
       !Number.isFinite(feature) ||
@@ -672,6 +676,7 @@ function parseMemoryFeatures(value: unknown): MemoryFeatures | null {
     proj: value.proj as number,
     freq: value.freq as number,
     hist: value.hist as number,
+    loc: value.loc as number | null,
   }
 }
 

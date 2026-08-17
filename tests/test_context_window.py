@@ -92,6 +92,36 @@ def test_tools_lane_includes_measured_call_and_return_traffic() -> None:
     assert with_traffic.categories.tools > without.categories.tools
 
 
+def test_r16_workspace_prompt_is_counted_in_the_system_lane() -> None:
+    """R16 keeps Context Bars honest when movement changes progressive instructions."""
+
+    tracker = ContextWindowTracker()
+    resolution = ThreadModelResolution(
+        model="openrouter:test/model", context_tokens=16_000, policy="pinned:test/model"
+    )
+    captured = [ModelResponse(parts=[TextPart("ok")], usage=RequestUsage(input_tokens=1_250))]
+    tracker.record(
+        thread_id="root",
+        captured=captured,
+        resolution=resolution,
+        memory_block=None,
+        workspace_block="Current location: .",
+    )
+    tracker.record(
+        thread_id="nested",
+        captured=captured,
+        resolution=resolution,
+        memory_block=None,
+        workspace_block="Current location: notes\n" + ("local instruction " * 80),
+    )
+
+    root = tracker.snapshot("root").aggregate
+    nested = tracker.snapshot("nested").aggregate
+    assert root is not None and nested is not None
+    assert nested.categories.system > root.categories.system
+    assert sum(nested.categories.model_dump().values()) == nested.used_tokens
+
+
 def test_f034_zero_usage_error_response_cannot_erase_last_successful_measurement() -> None:
     """F034 and v2.52 are defended by verifying that a zero-usage provider error response does
     not replace the last successful Context Bars measurement with invented zero pressure.

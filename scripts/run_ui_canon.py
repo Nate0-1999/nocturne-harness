@@ -37,6 +37,7 @@ def main() -> None:
 
     with tempfile.TemporaryDirectory(prefix="nocturne-m2st4-canon-") as temporary:
         output_root = Path(temporary)
+        environment["NOCTURNE_HOME"] = str(output_root / "nocturne-home")
         log_path = output_root / "fixture.log"
         with log_path.open("w", encoding="utf-8") as fixture_log:
             fixture = subprocess.Popen(

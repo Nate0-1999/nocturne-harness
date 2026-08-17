@@ -60,6 +60,7 @@ def scored_card() -> dict[str, object]:
             "proj": 0.6,
             "freq": 0.5,
             "hist": 0.4,
+            "loc": None,
         },
         "rank": 1,
     }

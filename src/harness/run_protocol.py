@@ -70,6 +70,18 @@ class TurnOutcome:
             raise ValueError("provider_error requires stop_reason=error")
 
 
+class DynamicSystemInstructions(Protocol):
+    """Re-evaluated instructions and their truthful Context Bars split. [R16]"""
+
+    async def render(self) -> str | None: ...
+
+    @property
+    def memory_block(self) -> str | None: ...
+
+    @property
+    def workspace_block(self) -> str | None: ...
+
+
 class RunEmitter(Protocol):
     """Events a model adapter may publish while its run is live."""
 
@@ -114,6 +126,7 @@ class SystemInstructionTurnRunner(Protocol):
         emit: RunEmitter,
         model_resolution: ThreadModelResolution | None = None,
         system_instructions: str | None = None,
+        dynamic_instructions: DynamicSystemInstructions | None = None,
         excluded_memory_ids: frozenset[UUID] = frozenset(),
     ) -> TurnOutcome: ...
 
@@ -146,5 +159,6 @@ class ImageSystemInstructionTurnRunner(Protocol):
         emit: RunEmitter,
         model_resolution: ThreadModelResolution | None = None,
         system_instructions: str | None = None,
+        dynamic_instructions: DynamicSystemInstructions | None = None,
         excluded_memory_ids: frozenset[UUID] = frozenset(),
     ) -> TurnOutcome: ...

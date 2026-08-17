@@ -4,6 +4,7 @@ import asyncio
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from pathlib import Path
 from uuid import UUID
 
 import httpx
@@ -14,7 +15,12 @@ from harness.envelope import GateCommitPayload, StopReason, WrongResolution
 from harness.memory_gate import MemoryGateTurnRunner
 from harness.memory_panel import EMPTY_MEMORY_BLOCK, ThreadMemoryContextRegistry
 from harness.model_policy import ThreadModelResolution
-from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
+from harness.run_protocol import (
+    DynamicSystemInstructions,
+    RunEmitter,
+    TurnOutcome,
+    UsageSnapshot,
+)
 from harness.spine_client import (
     FeedbackRequest,
     FeedbackResponse,
@@ -34,6 +40,7 @@ from harness.spine_client import (
     SpineTransportError,
 )
 from harness.tools_memory import MemoryToolContext
+from harness.toolset import AgentLocation
 
 THREAD_ID = "22345678-1234-5678-1234-567812345678"
 INJECTION_ID = UUID("32345678-1234-5678-1234-567812345678")
@@ -57,9 +64,13 @@ class RecordingDelegate:
         emit: RunEmitter,
         model_resolution: ThreadModelResolution | None = None,
         system_instructions: str | None = None,
+        dynamic_instructions: DynamicSystemInstructions | None = None,
         excluded_memory_ids: frozenset[UUID] = frozenset(),
     ) -> TurnOutcome:
         del emit
+        if dynamic_instructions is not None:
+            await dynamic_instructions.render()
+            system_instructions = dynamic_instructions.memory_block
         history = tuple(message_history)
         self.resolutions.append(model_resolution)
         self.calls.append((thread_id, prompt, history, system_instructions, excluded_memory_ids))
@@ -84,14 +95,34 @@ class ImageRecordingDelegate:
         emit: RunEmitter,
         model_resolution: ThreadModelResolution | None = None,
         system_instructions: str | None = None,
+        dynamic_instructions: DynamicSystemInstructions | None = None,
         excluded_memory_ids: frozenset[UUID] = frozenset(),
     ) -> TurnOutcome:
         del thread_id, emit, model_resolution, excluded_memory_ids
+        if dynamic_instructions is not None:
+            await dynamic_instructions.render()
+            system_instructions = dynamic_instructions.memory_block
         self.calls.append((prompt, image, system_instructions))
         return TurnOutcome(
             StopReason.END_TURN,
             (*message_history, "image:done"),
             assistant_text="image answer",
+        )
+
+
+@dataclass
+class MovingToolset:
+    root: Path
+    cwd: Path
+
+    def location(self) -> AgentLocation:
+        return AgentLocation(
+            agent_id="agent-1",
+            machine_id="machine-1",
+            session_id="test",
+            workspace_root=self.root,
+            cwd=self.cwd,
+            fence_reads=False,
         )
 
 
@@ -386,6 +417,90 @@ async def test_capable_image_uses_text_only_for_spine_then_forwards_exact_binary
 
     assert outcome.stop_reason is StopReason.END_TURN
     assert delegate.calls == [("Inspect this", image, EMPTY_MEMORY_BLOCK)]
+
+
+@pytest.mark.asyncio
+async def test_r16_move_reprompts_local_context_and_rescores_before_next_request(
+    tmp_path: Path,
+) -> None:
+    """R16 is defended at the live turn seam, not as an isolated prompt demo."""
+
+    notes = tmp_path / "notes"
+    notes.mkdir()
+    (tmp_path / "AGENTS.md").write_text("root instruction", encoding="utf-8")
+    (notes / "AGENTS.md").write_text("notes instruction", encoding="utf-8")
+    (notes / "local.txt").write_text("feet", encoding="utf-8")
+    toolset = MovingToolset(tmp_path, tmp_path)
+    first_id = UUID("52345678-1234-5678-1234-567812345678")
+    moved_id = UUID("62345678-1234-5678-1234-567812345678")
+    first_card = scored_card(first_id, label="Root", body="root memory", rank=1)
+    moved_card = scored_card(moved_id, label="Notes", body="notes memory", rank=1)
+    spine = RecordingSpine()
+    spine.prepare_response = spine.prepare_response.model_copy(update={"injected": [first_card]})
+    spine.commit_response = InjectCommitResponse(
+        final_block=final_block(first_card), wrong_removed=[]
+    )
+    spine.prepare_outcomes.append(
+        InjectPrepareResponse(
+            injection_id=UUID("72345678-1234-5678-1234-567812345678"),
+            snapshot_ts=datetime(2026, 8, 17, 12, 1, tzinfo=UTC),
+            scorer_version="m3f-location",
+            injected=[first_card, moved_card],
+            near_misses=[],
+            final_block=final_block(first_card, moved_card),
+        )
+    )
+    rendered: list[str] = []
+
+    class MoveBetweenRequests(RecordingDelegate):
+        async def run(self, **kwargs) -> TurnOutcome:  # type: ignore[no-untyped-def]
+            dynamic = kwargs["dynamic_instructions"]
+            rendered.append(await dynamic.render())
+            toolset.cwd = notes
+            rendered.append(await dynamic.render())
+            return TurnOutcome(StopReason.END_TURN, (), assistant_text="moved")
+
+    def create_context(thread_id: str) -> MemoryToolContext:
+        return MemoryToolContext(
+            spine=spine,
+            principal_id="principal-1",
+            machine_id="machine-1",
+            agent_id="agent-1",
+            thread_id=UUID(thread_id),
+            project_key="project-1",
+            origin_path=".",
+            toolset=toolset,  # type: ignore[arg-type]
+        )
+
+    runner = MemoryGateTurnRunner(
+        MoveBetweenRequests(),
+        spine,
+        create_context,
+        model_context_tokens=1_000_000,
+    )
+    emitter = RecordingEmitter()
+    task = asyncio.create_task(
+        runner.run(
+            thread_id=THREAD_ID, prompt="Where should this go?", message_history=(), emit=emitter
+        )
+    )
+    await asyncio.wait_for(emitter.opened.wait(), 1)
+    assert emitter.decision is not None
+    emitter.decision.set_result(decision())
+    await asyncio.wait_for(task, 1)
+
+    assert spine.prepare_requests[0].location_path == "."
+    assert spine.prepare_requests[1].location_path == "notes"
+    assert spine.prepare_requests[1].mode == "autonomous"
+    assert spine.prepare_requests[1].prompt == "Where should this go?"
+    assert "Current location: ." in rendered[0]
+    assert "root memory" in rendered[0]
+    assert "notes/AGENTS.md" not in rendered[0]
+    assert "Current location: notes" in rendered[1]
+    assert "local.txt" in rendered[1]
+    assert "notes instruction" in rendered[1]
+    assert "notes memory" in rendered[1]
+    assert "root memory" in rendered[1]  # Human-confirmed gate members remain locked.
 
 
 async def _record_ambient(values: list[str], thread_id: str) -> None:
