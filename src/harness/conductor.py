@@ -49,6 +49,7 @@ class ChildStatus(StrEnum):
     COMPLETED = "completed"
     CANCELLED = "cancelled"
     FLAGGED = "flagged"
+    FAILED_JUDGMENT = "failed_judgment"
 
 
 class CancellationState(StrEnum):
@@ -100,6 +101,55 @@ class SmokeGateStatus(StrEnum):
     FAIL = "fail"
 
 
+class JudgeSeat(StrEnum):
+    """The non-removable D.2 102 judge seats fixed during deliberation."""
+
+    MOTIVATION = "motivation"
+    IMPLEMENTATION = "implementation"
+    PERFORMANCE = "performance"
+
+
+class JudgeCharter(BaseModel):
+    """One immutable judge rubric, evidence fence, and compounding model policy."""
+
+    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+
+    seat: str
+    rubric: tuple[str, ...]
+    evidence_requirements: tuple[str, ...]
+    model_policy: str = "max"
+    metrics: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def _validate_charter(self) -> JudgeCharter:
+        values = (*self.rubric, *self.evidence_requirements, *self.metrics)
+        if (
+            not self.rubric
+            or not self.evidence_requirements
+            or any(not value.strip() for value in values)
+        ):
+            raise ValueError("judge charters require nonblank rubric and evidence entries")
+        if self.seat not in {seat.value for seat in JudgeSeat} and (
+            not self.seat.startswith("user:")
+            or _IDENTITY.fullmatch(self.seat.removeprefix("user:")) is None
+        ):
+            raise ValueError("judge seat must be a core seat or a compact user:<id> seat")
+        policy = parse_model_policy(self.model_policy)
+        if policy.kind not in {"pinned", "max"}:
+            raise ValueError("judge charters use only pinned or max model policies")
+        if self.seat == JudgeSeat.PERFORMANCE and not self.metrics:
+            raise ValueError("the performance charter requires precalculated metrics")
+        if self.seat != JudgeSeat.PERFORMANCE and self.metrics:
+            raise ValueError("precalculated metrics belong only to the performance charter")
+        return self
+
+    @property
+    def digest(self) -> str:
+        """Bind a fresh judge session to the exact deliberation artifact."""
+
+        return hashlib.sha256(self.model_dump_json().encode("utf-8")).hexdigest()
+
+
 class SearchBudget(BaseModel):
     """R22's per-search-node default envelope, overridable only in the charge."""
 
@@ -149,6 +199,7 @@ class SearchNodeDeclaration(BaseModel):
     depth: int = Field(default=0, ge=0)
     budget: SearchBudget = Field(default_factory=SearchBudget)
     attempts: tuple[SearchAttemptBrief, ...]
+    judge_charters: tuple[JudgeCharter, ...]
 
     @model_validator(mode="after")
     def _validate_declaration(self) -> SearchNodeDeclaration:
@@ -171,6 +222,20 @@ class SearchNodeDeclaration(BaseModel):
         locations = [attempt.location for attempt in self.attempts]
         if len(set(locations)) != len(locations):
             raise ValueError("search attempts require distinct worktree locations")
+        required_seats = (
+            JudgeSeat.MOTIVATION.value,
+            JudgeSeat.IMPLEMENTATION.value,
+            JudgeSeat.PERFORMANCE.value,
+        )
+        seats = tuple(charter.seat for charter in self.judge_charters)
+        if (
+            seats[:3] != required_seats
+            or len(set(seats)) != len(seats)
+            or any(not seat.startswith("user:") for seat in seats[3:])
+        ):
+            raise ValueError(
+                "deliberation must fix the three core charters before unique user seats"
+            )
         return self
 
 
@@ -204,6 +269,13 @@ class SearchBudgetSnapshot(BaseModel):
     elapsed_seconds: float = Field(ge=0)
     remaining_seconds: float = Field(ge=0)
     brake: SearchBrake
+
+
+class SearchJudgmentStatus(StrEnum):
+    """The only panel outcomes: exact unanimity or retained failure lineage."""
+
+    UNANIMOUS_PASS = "unanimous_pass"
+    FAILED_JUDGMENT = "failed_judgment"
 
 
 class ProductBaton(BaseModel):
@@ -256,6 +328,19 @@ class TypedDistillate(BaseModel):
         if self.status is DistillateStatus.CANCELLED and not self.evidence_refs:
             raise ValueError("a cancelled distillate must preserve partial evidence")
         return self
+
+
+class SearchAttemptRecord(BaseModel):
+    """One immutable judge-facing attempt record with no builder reasoning."""
+
+    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+
+    attempt_id: str
+    approach: str
+    artifact_root: Path
+    status: SearchAttemptStatus
+    smoke: SmokeGateResult | None
+    distillate: TypedDistillate | None
 
 
 class AuthoritativeClaim(BaseModel):
@@ -398,6 +483,11 @@ class _SearchRuntime:
     baseline_spend_usd: Decimal
     attempts: dict[str, _SearchAttemptRuntime]
     brake: SearchBrake = SearchBrake.NONE
+    ready_for_judging: bool = False
+    judgment_digest: str | None = None
+    judgment_status: SearchJudgmentStatus | None = None
+    winner_attempt_id: str | None = None
+    feedback_packet_ids: tuple[str, ...] = ()
 
 
 EventSink = Callable[[Mapping[str, Any]], None]
@@ -838,14 +928,90 @@ class Conductor:
     def search_attempt_status(self, child_id: str, attempt_id: str) -> SearchAttemptStatus:
         return self._search_attempt(child_id, attempt_id).status
 
-    def search_results(self, child_id: str) -> tuple[TypedDistillate, ...]:
-        """Return completion evidence for SYM8; no result is promoted here."""
+    def search_results(self, child_id: str) -> tuple[SearchAttemptRecord, ...]:
+        """Return only settled completion candidates after the judge gate opens."""
 
-        runtime = self._search(child_id)
+        runtime = self._require_search_ready(child_id)
         return tuple(
-            attempt.distillate
+            self._search_attempt_record(attempt)
             for attempt in runtime.attempts.values()
-            if attempt.distillate is not None
+            if attempt.status is SearchAttemptStatus.COMPLETED
+        )
+
+    def search_lineage(self, child_id: str) -> tuple[SearchAttemptRecord, ...]:
+        """Return every settled attempt, including pruned and failed branches."""
+
+        runtime = self._require_search_ready(child_id)
+        return tuple(self._search_attempt_record(attempt) for attempt in runtime.attempts.values())
+
+    def search_charters(self, child_id: str) -> tuple[JudgeCharter, ...]:
+        """Return the exact three charters frozen into the deliberation declaration."""
+
+        return self._search(child_id).declaration.judge_charters
+
+    def search_surface_fence(self, child_id: str) -> tuple[str, ...]:
+        """Return the parent-approved surfaces inherited by any feedback packet."""
+
+        return self._child(child_id).charge.surfaces
+
+    def search_charge(self, child_id: str) -> str:
+        """Return the deliberated child charge that every judge must hold."""
+
+        return self._child(child_id).charge.charge
+
+    def record_search_judgment(
+        self,
+        child_id: str,
+        *,
+        status: SearchJudgmentStatus,
+        decision_digest: str,
+        winner_attempt_id: str | None,
+        feedback_packet_ids: Sequence[str],
+    ) -> None:
+        """Bind one panel decision to conductor state without minting or merging here."""
+
+        runtime = self._require_search_ready(child_id)
+        if runtime.judgment_digest is not None:
+            raise ConductorError("a settled search node may be judged exactly once")
+        if (
+            len(decision_digest) != 64
+            or decision_digest != decision_digest.lower()
+            or any(character not in "0123456789abcdef" for character in decision_digest)
+        ):
+            raise ValueError("judge decision digest must be lowercase SHA-256")
+        feedback = tuple(feedback_packet_ids)
+        if len(set(feedback)) != len(feedback) or any(
+            _IDENTITY.fullmatch(packet_id) is None for packet_id in feedback
+        ):
+            raise ValueError("feedback packet identities must be unique compact values")
+        candidates = {record.attempt_id for record in self.search_results(child_id)}
+        if status is SearchJudgmentStatus.UNANIMOUS_PASS:
+            if winner_attempt_id not in candidates or feedback:
+                raise ConductorError(
+                    "unanimous judgment requires exactly one candidate and no feedback packets"
+                )
+            next_status = ChildStatus.COMPLETED
+        else:
+            if winner_attempt_id is not None or not feedback:
+                raise ConductorError(
+                    "FAILED_JUDGMENT requires no winner and at least one feedback packet"
+                )
+            next_status = ChildStatus.FAILED_JUDGMENT
+        runtime.judgment_digest = decision_digest
+        runtime.judgment_status = status
+        runtime.winner_attempt_id = winner_attempt_id
+        runtime.feedback_packet_ids = feedback
+        self._child(child_id).status = next_status
+        self._emit(
+            "search_judgment_recorded",
+            child_id=child_id,
+            status=status.value,
+            decision_digest=decision_digest,
+            winner_attempt_id=winner_attempt_id,
+            feedback_packet_ids=list(feedback),
+            attempt_lineage=[
+                record.model_dump(mode="json") for record in self.search_lineage(child_id)
+            ],
         )
 
     def dispatch(self, child_id: str, command: Sequence[str]) -> AdmissionHandle:
@@ -1290,6 +1456,23 @@ class Conductor:
         except KeyError as exc:
             raise KeyError(f"unknown search attempt {attempt_id!r}") from exc
 
+    def _require_search_ready(self, child_id: str) -> _SearchRuntime:
+        runtime = self._search(child_id)
+        if not runtime.ready_for_judging:
+            raise ConductorError("search results are unavailable before search_ready_for_judging")
+        return runtime
+
+    @staticmethod
+    def _search_attempt_record(attempt: _SearchAttemptRuntime) -> SearchAttemptRecord:
+        return SearchAttemptRecord(
+            attempt_id=attempt.brief.attempt_id,
+            approach=attempt.brief.approach,
+            artifact_root=attempt.brief.location,
+            status=attempt.status,
+            smoke=attempt.smoke,
+            distillate=attempt.distillate,
+        )
+
     def _engage_search_brake(self, runtime: _SearchRuntime, brake: SearchBrake) -> None:
         if runtime.brake is brake:
             return
@@ -1322,7 +1505,10 @@ class Conductor:
             SearchAttemptStatus.FAILED,
             SearchAttemptStatus.CANCELLED,
         }
-        if all(attempt.status in terminal for attempt in runtime.attempts.values()):
+        if not runtime.ready_for_judging and all(
+            attempt.status in terminal for attempt in runtime.attempts.values()
+        ):
+            runtime.ready_for_judging = True
             self._child(child_id).status = ChildStatus.AWAITING_DISTILLATE
             self._emit(
                 "search_ready_for_judging",

@@ -18,6 +18,8 @@ from harness.conductor import (
     Conductor,
     ConductorError,
     IrreversibleBoundary,
+    JudgeCharter,
+    JudgeSeat,
     ScopeExpansionError,
     SearchAttemptBrief,
     SearchAttemptStatus,
@@ -374,6 +376,27 @@ def _search_attempt(
     )
 
 
+def _judge_charters() -> tuple[JudgeCharter, ...]:
+    return (
+        JudgeCharter(
+            seat=JudgeSeat.MOTIVATION,
+            rubric=("The attempt solves the deliberated problem without scope drift.",),
+            evidence_requirements=("Trace every claimed outcome to direct evidence.",),
+        ),
+        JudgeCharter(
+            seat=JudgeSeat.IMPLEMENTATION,
+            rubric=("The implementation is coherent, minimal, and contract-safe.",),
+            evidence_requirements=("Read the patch and its adversarial proof.",),
+        ),
+        JudgeCharter(
+            seat=JudgeSeat.PERFORMANCE,
+            rubric=("The attempt meets the fixed performance guardrails.",),
+            evidence_requirements=("Compare measured results with the frozen baseline.",),
+            metrics=("suite remains green", "total spend stays within R22"),
+        ),
+    )
+
+
 def _search_child(parent: Path, attempts: tuple[SearchAttemptBrief, ...]) -> ChildCharge:
     return ChildCharge(
         child_id="hard-step",
@@ -382,7 +405,7 @@ def _search_child(parent: Path, attempts: tuple[SearchAttemptBrief, ...]) -> Chi
         surfaces=("component/hard-step",),
         evidence_requirements=("Compile/coherence smoke, then typed completion evidence.",),
         location=parent,
-        search=SearchNodeDeclaration(attempts=attempts),
+        search=SearchNodeDeclaration(attempts=attempts, judge_charters=_judge_charters()),
     )
 
 
@@ -626,4 +649,37 @@ def test_search_declaration_enforces_round_depth_and_children_caps(
             round_number=round_number,
             depth=depth,
             attempts=attempts,
+            judge_charters=_judge_charters(),
         )
+
+
+def test_search_declaration_keeps_the_three_core_seats_and_allows_user_charters(
+    tmp_path: Path,
+) -> None:
+    """SPEC D.2 102 requires the three-judge minimum while preserving added user seats."""
+
+    locations = [tmp_path / f"attempt-{index}" for index in range(3)]
+    for location in locations:
+        location.mkdir()
+    attempts = tuple(
+        _search_attempt(f"a{index}", f"approach {index}", location)
+        for index, location in enumerate(locations)
+    )
+    security = JudgeCharter(
+        seat="user:security",
+        rubric=("The attempt preserves the user's declared security boundary.",),
+        evidence_requirements=("Reproduce the declared adversarial case.",),
+        model_policy="max",
+    )
+
+    declaration = SearchNodeDeclaration(
+        attempts=attempts,
+        judge_charters=(*_judge_charters(), security),
+    )
+
+    assert tuple(charter.seat for charter in declaration.judge_charters) == (
+        "motivation",
+        "implementation",
+        "performance",
+        "user:security",
+    )

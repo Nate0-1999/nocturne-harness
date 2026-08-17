@@ -2553,3 +2553,36 @@ Fixed-width completion would spend equally on weak and strong smoke results. Usi
 projected cost as accounting truth would let optimistic estimates cross the wall.
 Implementing unanimity or evolutionary rounds here would collapse the explicit
 SYM7/SYM8/SYM9 authority split.
+
+## 084 — Judge sessions consume sealed evidence and receive only feedback mint power [P3, SYM8]
+
+**Decision.** Fix the motivation, implementation, and performance charters inside
+the immutable search-node declaration created at deliberation. Each charter carries
+its own rubric, evidence requirements, and an A-021 `max` or `pinned` policy; the
+performance charter additionally carries the exact precalculated metric names. Once
+SYM7 emits `search_ready_for_judging`, the Harness judge panel seals one brief per
+seat containing the complete motivation chain, child charge, candidate distillates,
+explicit artifact roots, and all attempt lineage, but no worker commands, ambient
+process context, or builder reasoning. The supervisor launches each seat as a
+distinct process in a distinct session directory and binds its verdict to the
+session, charter, and evidence digests.
+
+Only three PASS verdicts selecting the same attempt release a winner. Any dissent,
+or three passes selecting different attempts, produces deterministic feedback packet
+drafts. The panel holds only an injected feedback-mint callable; Garden's adapter
+authenticates the judge capability and forces every request through `MintKind.FEEDBACK`.
+After those graph receipts exist, the conductor records either `unanimous_pass` or
+`FAILED_JUDGMENT` with the decision digest and complete attempt lineage. It still does
+not merge work, advance rounds, or admit memory.
+
+**Motivation.** P3 needs outside verdicts that retain the complete why without letting
+builders grade themselves or letting judges quietly become planners. Sealed inputs,
+fresh process identity, and exact 3-of-3 agreement make independence mechanical;
+the injected adapter seam keeps remediation durable while preserving G1's authority
+wall.
+
+**Rejected alternatives.** Reusing a conductor/model session would retain builder
+context. Majority rule would contradict the enacted unanimity bar. Letting the panel
+mint arbitrary packets would collapse judge and gate authority. Synthesizing the next
+round here would steal SYM9's delta-frontier and graft responsibilities. Passing smoke
+scores as verdicts would turn a cheap pruning hint into the value function.
