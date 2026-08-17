@@ -2452,3 +2452,43 @@ conductor that could use it. Letting workers renew or revoke their own lives wou
 make death a model claim. PID-only evidence is unsafe after PID reuse. Persisting
 and automatically replaying the old command could repeat an uncertain side
 effect; reusing the dead worktree would silently accept a half-written timeline.
+
+## 081 — The conductor is a typed Harness coordinator, never a second graph authority [P3, SYM5]
+
+**Decision.** Place the conductor beside the existing Harness supervisor and
+consume an already-authoritative Garden/adapter claim handle. The conductor does
+not edit the board, Beads, or adapter directly; every accepted transition is
+emitted through one injected graph-history sink. This preserves today's manual
+Git claim mutex while SYM2 is still proving shadow parity and lets the same core
+survive the later authority switch without learning either storage format.
+
+Expansion is mechanical: each child carries a subset of the parent claim's exact
+surface fence, a distinct worktree location, explicit evidence requirements, and
+an acyclic dependency slice. Admission chooses `elbow` for judge-filtered leaf
+work and `max` for compounding work, following A-021's blast-radius rule. Worker
+processes receive only a tiny non-secret environment and the packaged standing
+mini-boot plus their assignment. The supervisor remains the only process
+liveness and termination authority.
+
+Results cross one strict G15 envelope: status, claims, evidence references,
+uncertainties, metrics references, optional artifacts/patch, and an explicit
+commit-or-not-applicable product baton. Prose and stdout never advance a child.
+G14 recovery always uses the admission's accepted commit and a fresh location;
+two failed successors flag the child. G20 cancellation records requested then
+draining, refuses to drain across an uncertain irreversible boundary, waits for
+real process termination, preserves a cancelled distillate as non-admittable
+evidence, and never manufactures a replacement attempt.
+
+**Motivation.** P3 needs charges to flow down and bounded, provenance-bearing
+distillates to flow up without creating another editable truth. Typed handles
+make the borders independently replaceable: Garden owns packet state, the
+supervisor owns life/death, the location owns the write fence, and the conductor
+alone decides whether a worker result advances its child.
+
+**Rejected alternatives.** Adding claim methods to the adapter here would race
+SYM2 and prematurely retire the manual board authority. A second conductor
+journal would duplicate the graph history instead of using its append-only
+record. Passing the owner process environment would expose credentials to leaf
+workers. Reading arbitrary worker files or accepting prose would make prestige
+and filesystem residue into state authority. Automatic respawn or replacement
+after cancellation would spend budget and mutate lineage without a signed act.

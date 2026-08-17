@@ -7,10 +7,11 @@ import hashlib
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
 import threading
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -25,6 +26,7 @@ _EVENT_TYPES = frozenset(
         "spawn_intent",
         "process_started",
         "heartbeat",
+        "termination_requested",
         "process_exit_observed",
         "launch_failed",
         "death_certified",
@@ -81,6 +83,14 @@ class DeathCertificate:
     accepted_commit: str
     process_identity: str | None
     reason: str
+
+
+@dataclass(frozen=True, slots=True)
+class TerminationReceipt:
+    event_id: str
+    worker_id: str
+    attempt_id: str
+    signal: int
 
 
 @dataclass(slots=True)
@@ -149,12 +159,15 @@ def _process_identity(pid: int) -> str | None:
         )
     except (OSError, subprocess.SubprocessError) as exc:
         raise SupervisorError("process evidence cannot be read safely") from exc
-    line = " ".join(completed.stdout.split())
-    if completed.returncode != 0 or not line:
+    fields = completed.stdout.split()
+    if completed.returncode != 0 or len(fields) < 7:
         return None
-    if line.startswith("Z"):
+    process_state = fields[0]
+    if process_state.startswith("Z"):
         return None
-    return f"posix:{pid}:{line}"
+    process_group = fields[-1]
+    process_started = " ".join(fields[1:-1])
+    return f"posix:{pid}:{process_group}:{process_started}"
 
 
 class WorkerSupervisor:
@@ -229,6 +242,7 @@ class WorkerSupervisor:
         *,
         location: Path,
         accepted_commit: str,
+        environment: Mapping[str, str] | None = None,
     ) -> WorkerAttempt:
         """Start a first attempt after journaling its accepted checkpoint."""
 
@@ -241,6 +255,7 @@ class WorkerSupervisor:
             location=location,
             accepted_commit=accepted_commit,
             recovery_of=None,
+            environment=environment,
         )
 
     def heartbeat(self, worker_id: str) -> bool:
@@ -277,8 +292,10 @@ class WorkerSupervisor:
                 reason = "process_absent" if observed is None else "process_identity_mismatch"
             elif attempt.status is WorkerStatus.EXIT_OBSERVED:
                 returncode = attempt.returncode
-                reason = f"signal:{-returncode}" if returncode is not None and returncode < 0 else (
-                    f"exit:{returncode}"
+                reason = (
+                    f"signal:{-returncode}"
+                    if returncode is not None and returncode < 0
+                    else (f"exit:{returncode}")
                 )
             elif attempt.status is WorkerStatus.STARTING:
                 reason = "launch_incomplete"
@@ -297,6 +314,42 @@ class WorkerSupervisor:
             refreshed = self.latest(worker_id)
             return self._certificate_from_event(refreshed, event)
 
+    def request_termination(
+        self,
+        worker_id: str,
+        *,
+        termination_signal: int = signal.SIGTERM,
+    ) -> TerminationReceipt:
+        """Journal and send one supervisor-owned cooperative stop request."""
+
+        if termination_signal != signal.SIGTERM:
+            raise ValueError("cooperative worker termination uses SIGTERM")
+        with self._thread_lock:
+            attempt = self._refresh_latest(worker_id)
+            if attempt.status is not WorkerStatus.RUNNING or attempt.pid is None:
+                raise SupervisorError("worker is not live at a cancellable process boundary")
+            if self._identity_reader(attempt.pid) != attempt.process_identity:
+                raise SupervisorError("worker identity changed before cancellation could drain")
+            event = self._append_event(
+                "termination_requested",
+                worker_id=worker_id,
+                attempt_id=attempt.attempt_id,
+                signal=termination_signal,
+                process_identity=attempt.process_identity,
+            )
+            try:
+                os.killpg(attempt.pid, termination_signal)
+            except ProcessLookupError:
+                pass
+            except PermissionError as exc:
+                raise SupervisorError("worker termination was permission-denied") from exc
+            return TerminationReceipt(
+                event_id=str(event["event_id"]),
+                worker_id=worker_id,
+                attempt_id=attempt.attempt_id,
+                signal=termination_signal,
+            )
+
     def recover(
         self,
         worker_id: str,
@@ -304,6 +357,7 @@ class WorkerSupervisor:
         *,
         location: Path,
         accepted_commit: str,
+        environment: Mapping[str, str] | None = None,
     ) -> WorkerAttempt:
         """Start an explicit successor from accepted truth in a fresh location."""
 
@@ -330,6 +384,7 @@ class WorkerSupervisor:
                 location=canonical_location,
                 accepted_commit=checkpoint,
                 recovery_of=previous.attempt_id,
+                environment=environment,
             )
 
     def _spawn(
@@ -340,10 +395,12 @@ class WorkerSupervisor:
         location: Path,
         accepted_commit: str,
         recovery_of: str | None,
+        environment: Mapping[str, str] | None,
     ) -> WorkerAttempt:
         canonical_location = self._validate_location(location)
         checkpoint = self._validate_checkpoint(accepted_commit)
         normalized_command = self._validate_command(command)
+        normalized_environment = self._validate_environment(environment)
         command_digest = hashlib.sha256(
             json.dumps(normalized_command, ensure_ascii=False, separators=(",", ":")).encode()
         ).hexdigest()
@@ -372,6 +429,7 @@ class WorkerSupervisor:
                     cwd=canonical_location,
                     pass_fds=(read_descriptor,),
                     start_new_session=True,
+                    env=normalized_environment,
                 )
                 os.close(read_descriptor)
                 read_descriptor = -1
@@ -518,6 +576,19 @@ class WorkerSupervisor:
             elif event_type == "heartbeat":
                 if attempt.status is not WorkerStatus.RUNNING:
                     raise SupervisorJournalUnavailable("heartbeat follows a terminal transition")
+            elif event_type == "termination_requested":
+                if attempt.status is not WorkerStatus.RUNNING:
+                    raise SupervisorJournalUnavailable(
+                        "termination request follows a terminal transition"
+                    )
+                if event.get("process_identity") != attempt.process_identity:
+                    raise SupervisorJournalUnavailable(
+                        "termination request changes process identity"
+                    )
+                if event.get("signal") != signal.SIGTERM:
+                    raise SupervisorJournalUnavailable(
+                        "termination request uses an unsupported signal"
+                    )
             elif event_type == "process_exit_observed":
                 if attempt.status is not WorkerStatus.RUNNING:
                     raise SupervisorJournalUnavailable("process exit follows an invalid state")
@@ -643,4 +714,21 @@ class WorkerSupervisor:
         normalized = tuple(command)
         if not normalized or any(not isinstance(item, str) or not item for item in normalized):
             raise ValueError("worker command must contain nonblank string arguments")
+        return normalized
+
+    @staticmethod
+    def _validate_environment(environment: Mapping[str, str] | None) -> dict[str, str] | None:
+        if environment is None:
+            return None
+        normalized = dict(environment)
+        if any(
+            not isinstance(key, str)
+            or not key
+            or "=" in key
+            or "\x00" in key
+            or not isinstance(value, str)
+            or "\x00" in value
+            for key, value in normalized.items()
+        ):
+            raise ValueError("worker environment must contain valid string pairs")
         return normalized
