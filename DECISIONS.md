@@ -2586,3 +2586,33 @@ context. Majority rule would contradict the enacted unanimity bar. Letting the p
 mint arbitrary packets would collapse judge and gate authority. Synthesizing the next
 round here would steal SYM9's delta-frontier and graft responsibilities. Passing smoke
 scores as verdicts would turn a cheap pruning hint into the value function.
+
+## 085 — Rounds schedule only judged deltas from accepted checkpoints [P3, SYM9]
+
+**Decision.** Keep round coordination beside the Harness conductor as a small typed
+state machine over SYM8's immutable `PanelDecision`. A unanimous decision exits at
+once. A failed decision exposes only the adapter-minted feedback receipts as the next
+frontier; already-passed children remain immutable accepted records and have no path
+back into the attempt plan. Passing judge selections identify surviving attempts.
+Their crossover requires one explicit evidence-bearing graft receipt, and every
+source-to-successor edge is emitted through the conductor's existing graph-history
+sink.
+
+Every successor attempt must use a fresh identity, a fresh worktree, and the exact
+last conductor-accepted commit. The panel record for that round must return the same
+worktree and checkpoint lineage before its decision is accepted. Prior worktrees
+remain evidence, never implicit input. The R22 attempt and round caps remain the
+outer brakes; a final failed allowed round stops with its feedback visible rather
+than pretending convergence.
+
+**Motivation.** P3 needs evolution without amnesia: judgment should spend the next
+round only on what failed, while proven work and the complete search history stand.
+Binding new work to an accepted checkpoint carries G14 across the judge boundary,
+and graph-sink events preserve graft provenance without making the Harness another
+editable Garden authority.
+
+**Rejected alternatives.** Re-expanding the original child DAG would rerun passed
+work and erase the value of feedback packets. Starting successors from a surviving
+worktree would silently inherit unaccepted residue. Letting the round coordinator
+mint feedback would duplicate SYM8's scoped authority. A second durable round journal
+would duplicate the graph history already designated for conductor transitions.

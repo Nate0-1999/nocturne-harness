@@ -338,6 +338,7 @@ class SearchAttemptRecord(BaseModel):
     attempt_id: str
     approach: str
     artifact_root: Path
+    accepted_commit: str
     status: SearchAttemptStatus
     smoke: SmokeGateResult | None
     distillate: TypedDistillate | None
@@ -1464,10 +1465,13 @@ class Conductor:
 
     @staticmethod
     def _search_attempt_record(attempt: _SearchAttemptRuntime) -> SearchAttemptRecord:
+        if attempt.handle is None:
+            raise ConductorError("a search attempt without an admission has no checkpoint lineage")
         return SearchAttemptRecord(
             attempt_id=attempt.brief.attempt_id,
             approach=attempt.brief.approach,
             artifact_root=attempt.brief.location,
+            accepted_commit=attempt.handle.accepted_commit,
             status=attempt.status,
             smoke=attempt.smoke,
             distillate=attempt.distillate,
