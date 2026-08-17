@@ -11,6 +11,7 @@ import {
   type MemoryPanelOperation,
   type MemoryPanelRequestPayload,
   type PromptImage,
+  type SymphonyLaunch,
   type Ulid,
 } from './protocol'
 import { publishRackEnvelope } from './rackEvents'
@@ -136,7 +137,7 @@ export class HarnessSocketClient {
     return envelope.id
   }
 
-  submitPrompt(prompt: string, image?: OutboundImage): Ulid {
+  submitPrompt(prompt: string, image?: OutboundImage, symphony?: SymphonyLaunch): Ulid {
     if (!prompt.trim()) {
       throw new TypeError('prompt must not be blank')
     }
@@ -148,9 +149,12 @@ export class HarnessSocketClient {
     if (selectedRuntime(state)?.awaitingSnapshot) {
       throw new Error('wait for the authoritative thread snapshot before submitting')
     }
-    const payload: { prompt: string; image?: PromptImage } = image === undefined
-      ? { prompt }
-      : { prompt, image: image.input }
+    if (image !== undefined && symphony !== undefined) {
+      throw new TypeError('a Symphony launch cannot carry an image')
+    }
+    const payload: { prompt: string; image?: PromptImage; symphony?: SymphonyLaunch } = { prompt }
+    if (image !== undefined) payload.image = image.input
+    if (symphony !== undefined) payload.symphony = symphony
     const envelope = this.send('prompt.submit', payload, threadId)
     useHarnessStore.getState().beginPrompt(threadId, envelope.id, prompt, image)
     return envelope.id

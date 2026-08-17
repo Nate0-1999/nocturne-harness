@@ -8,6 +8,7 @@ import secrets
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from decimal import Decimal
 from enum import StrEnum
 from typing import Annotated, Any, Literal
 from uuid import UUID
@@ -177,9 +178,80 @@ class _ExtensiblePayload(BaseModel):
     __pydantic_extra__: dict[str, JsonValue] = Field(init=False)
 
 
+class SymphonyRecipeStepPayload(BaseModel):
+    """One human-authored recipe step frozen by Symphony deliberation. [ADR-012]"""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+
+    step_id: NonBlankString
+    title: NonBlankString
+    done_when: NonBlankString
+    search: StrictBool
+
+
+class SymphonyJudgeCharterPayload(BaseModel):
+    """One human-fixed judge charter at the chat-to-Symphony boundary. [D.2 102]"""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+
+    seat: Literal["motivation", "implementation", "performance"]
+    rubric: tuple[NonBlankString, ...] = Field(min_length=1)
+    evidence_requirements: tuple[NonBlankString, ...] = Field(min_length=1)
+    metrics: tuple[NonBlankString, ...] = ()
+
+    @model_validator(mode="after")
+    def require_performance_metrics_only(self) -> "SymphonyJudgeCharterPayload":
+        if self.seat == "performance" and not self.metrics:
+            raise ValueError("the performance charter requires precalculated metrics")
+        if self.seat != "performance" and self.metrics:
+            raise ValueError("precalculated metrics belong only to performance")
+        return self
+
+
+class SymphonyAuthorityPayload(BaseModel):
+    """The plainly signed T2 authority wall for one Symphony stack. [T2, R22]"""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+
+    attempts: StrictInt = Field(ge=1)
+    spend_wall_usd: Decimal = Field(gt=0)
+    max_rounds: StrictInt = Field(ge=1)
+    depth_cap: StrictInt = Field(ge=0)
+    children_per_attempt: StrictInt = Field(ge=0)
+    duration_minutes: StrictInt = Field(gt=0)
+    signed: Literal[True]
+
+
+class SymphonyLaunchPayload(BaseModel):
+    """A ratified deliberation artifact; auto mode cannot synthesize it. [ADR-012]"""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+
+    draft_id: ULID
+    objective: NonBlankString
+    motivation: NonBlankString
+    recipe: tuple[SymphonyRecipeStepPayload, ...] = Field(min_length=1, max_length=12)
+    judge_charters: tuple[SymphonyJudgeCharterPayload, ...] = Field(min_length=3, max_length=3)
+    authority: SymphonyAuthorityPayload
+
+    @model_validator(mode="after")
+    def require_fixed_deliberation_shape(self) -> "SymphonyLaunchPayload":
+        step_ids = tuple(step.step_id for step in self.recipe)
+        if len(set(step_ids)) != len(step_ids):
+            raise ValueError("recipe step ids must be unique")
+        seats = tuple(charter.seat for charter in self.judge_charters)
+        if seats != ("motivation", "implementation", "performance"):
+            raise ValueError("judge charters must fix motivation, implementation, performance")
+        return self
+
+
 class PromptSubmitPayload(_ExtensiblePayload):
     prompt: NonBlankString
     image: ImageInput | None = Field(default=None, exclude_if=lambda value: value is None)
+    symphony: SymphonyLaunchPayload | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
 
 
 class RunStartedPayload(_ExtensiblePayload):

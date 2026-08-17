@@ -63,6 +63,39 @@ export type PromptImage = JsonObject & {
   data_base64: string
 }
 
+export type SymphonyRecipeStep = {
+  step_id: string
+  title: string
+  done_when: string
+  search: boolean
+}
+
+export type SymphonyJudgeCharter = {
+  seat: 'motivation' | 'implementation' | 'performance'
+  rubric: string[]
+  evidence_requirements: string[]
+  metrics: string[]
+}
+
+export type SymphonyAuthority = {
+  attempts: number
+  spend_wall_usd: string
+  max_rounds: number
+  depth_cap: number
+  children_per_attempt: number
+  duration_minutes: number
+  signed: true
+}
+
+export type SymphonyLaunch = {
+  draft_id: Ulid
+  objective: string
+  motivation: string
+  recipe: SymphonyRecipeStep[]
+  judge_charters: SymphonyJudgeCharter[]
+  authority: SymphonyAuthority
+}
+
 export type ImageAttachmentView = JsonObject & {
   kind: 'image'
   media_type: ImageMediaType
@@ -345,7 +378,7 @@ export type DecodedServerEvent =
 
 export interface BrowserPayloadMap {
   'thread.snapshot': { request: true; project_key: string | null }
-  'prompt.submit': { prompt: string; image?: PromptImage }
+  'prompt.submit': { prompt: string; image?: PromptImage; symphony?: SymphonyLaunch }
   'run.cancel': { run_id: Ulid }
   'gate.commit': GateCommitPayload
   'memory.panel.update': MemoryPanelRequestPayload

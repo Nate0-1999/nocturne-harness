@@ -89,6 +89,7 @@ from harness.spine_client import (
     VitalsAccounting,
     VitalsSnapshot,
 )
+from harness.symphony_experience import SymphonyExperience
 from harness.tools_memory import MemoryToolContext
 from harness.toolset_runtime import LazyStandardToolset
 from harness.transcript import TranscriptJournal, TranscriptJournalUnavailable
@@ -516,6 +517,7 @@ def create_app(
                         prompt_id=message.id,
                         prompt=message.payload.prompt,
                         image=message.payload.image,
+                        symphony=message.payload.symphony,
                         sink=send,
                     )
                 elif message.type is MessageType.RUN_CANCEL:
@@ -640,6 +642,7 @@ def create_dev_app(
     completion_router = CompletionRouter(configured)
     owned_agent = agent or HarnessAgent(configured, router=completion_router)
     factory = EnvelopeFactory(machine_id=machine_id, agent_id=agent_id)
+    symphony_experience = SymphonyExperience(id_factory=factory.new_id)
     model_resolver = model_resolver_override or ModelPolicyResolver(
         policy=configured.effective_model_policy_chat,
         static_model=configured.chat_model,
@@ -791,6 +794,7 @@ def create_dev_app(
         factory,
         model_resolver=model_resolver,
         transcript_journal=journal,
+        symphony_experience=symphony_experience,
     )
     extraction = ExtractionService(
         journal=journal,
@@ -814,6 +818,16 @@ def create_dev_app(
     )
 
     def configure_extraction_routes(app: FastAPI) -> None:
+        @app.get("/v1/symphonies/{symphony_id}")
+        async def read_symphony(symphony_id: str):
+            stack = await symphony_experience.read(symphony_id)
+            if stack is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Symphony stack was not found.",
+                )
+            return stack
+
         @app.get("/v1/transcripts/settings")
         async def transcript_settings():
             return transcript_sync.snapshot()

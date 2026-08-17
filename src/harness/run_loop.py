@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections import deque
-from collections.abc import Awaitable, Callable, Mapping
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from copy import deepcopy
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
@@ -40,6 +40,7 @@ from harness.envelope import (
     RunStartedPayload,
     RunUsagePayload,
     StopReason,
+    SymphonyLaunchPayload,
     ThreadSnapshotResponsePayload,
     UsagePayload,
 )
@@ -59,6 +60,7 @@ from harness.parameter_registry import (
 )
 from harness.project_path import validate_artificial_project_path
 from harness.run_protocol import ImageTurnRunner, RunEmitter, TurnOutcome, TurnRunner, UsageSnapshot
+from harness.symphony_experience import SymphonyExperience
 from harness.transcript import HydratedTranscript, TranscriptJournal
 
 type EnvelopeSink = Callable[[Envelope], Awaitable[None]]
@@ -78,6 +80,8 @@ class _Turn:
     image: BinaryContent | None = None
     image_view: ImageView | None = None
     model_target: str | None = None
+    symphony: SymphonyLaunchPayload | None = None
+    open_symphony_draft_ids: tuple[str, ...] = ()
     parent_id: str | None = None
 
 
@@ -184,6 +188,7 @@ class RunLoop:
         clock: Callable[[], datetime] | None = None,
         transcript_journal: TranscriptJournal | None = None,
         parameter_registry: ParameterRegistry | None = None,
+        symphony_experience: SymphonyExperience | None = None,
     ) -> None:
         if resolved_model is not None and model_resolver is not None:
             raise ValueError("use either resolved_model or model_resolver, not both")
@@ -201,6 +206,7 @@ class RunLoop:
         self._clock = clock or (lambda: datetime.now(UTC))
         self._transcript_journal = transcript_journal
         self._parameter_registry = parameter_registry or ParameterRegistry()
+        self._symphony_experience = symphony_experience
         self._lock = asyncio.Lock()
         self._submission_locks: dict[str, asyncio.Lock] = {}
         self._pending_captured: dict[str, deque[_Turn]] = {}
@@ -480,6 +486,7 @@ class RunLoop:
         prompt_id: str,
         prompt: str,
         image: ImageInput | None = None,
+        symphony: SymphonyLaunchPayload | None = None,
         sink: EnvelopeSink | None = None,
     ) -> str:
         """Accept a prompt, starting it now or reserving one FIFO run ID."""
@@ -489,6 +496,12 @@ class RunLoop:
             raise ValueError("prompt must not be blank")
         if image is not None and not isinstance(image, ImageInput):
             raise TypeError("image must be an ImageInput or None")
+        if symphony is not None and not isinstance(symphony, SymphonyLaunchPayload):
+            raise TypeError("symphony must be a SymphonyLaunchPayload or None")
+        if image is not None and symphony is not None:
+            raise ValueError("a Symphony launch cannot carry an image")
+        if symphony is not None and self._symphony_experience is None:
+            raise RuntimeError("Symphony launch is unavailable in this runtime")
         if image is not None and self._transcript_journal is None:
             raise RuntimeError("image input requires the mandatory transcript journal")
 
@@ -519,6 +532,7 @@ class RunLoop:
             image=binary_image,
             image_view=image_view,
             model_target=model_target,
+            symphony=symphony,
         )
         async with self._lock:
             self._require_open()
@@ -536,12 +550,18 @@ class RunLoop:
             async with submission_lock:
                 async with self._lock:
                     self._require_open()
-                model_resolution = await self._resolution_for_thread(thread_id)
+                local_symphony = self._symphony_experience is not None and (
+                    symphony is not None or self._symphony_experience.is_trigger(prompt)
+                )
+                model_resolution = (
+                    None if local_symphony else await self._resolution_for_thread(thread_id)
+                )
 
                 async with self._lock:
                     self._require_open()
                     self._discard_pending_capture_locked(thread_id, turn)
                     state = self._state_for_locked(thread_id)
+                    turn.open_symphony_draft_ids = self._open_symphony_draft_ids(state.messages)
                     if state.model_resolution is None:
                         state.model_resolution = model_resolution
                         if model_resolution is not None:
@@ -790,7 +810,19 @@ class RunLoop:
         outcome: TurnOutcome | None = None
         stop_reason = StopReason.ERROR
         try:
-            if active.turn.image is not None:
+            if self._symphony_experience is not None and (
+                active.turn.symphony is not None
+                or self._symphony_experience.is_trigger(active.turn.prompt)
+            ):
+                outcome = await self._symphony_experience.run(
+                    thread_id=thread_id,
+                    prompt=active.turn.prompt,
+                    launch=active.turn.symphony,
+                    accepted_draft_ids=active.turn.open_symphony_draft_ids,
+                    message_history=history,
+                    emit=_Emitter(self, thread_id, active),
+                )
+            elif active.turn.image is not None:
                 if active.turn.model_target is not None:
                     outcome = await self._refuse_image(
                         thread_id,
@@ -989,7 +1021,7 @@ class RunLoop:
                 stop_reason = StopReason.CANCELLED
             if outcome is not None:
                 state.message_history = outcome.message_history
-                if active.turn.image is not None:
+                if not outcome.model_visible:
                     active.turn.user_message["model_visible"] = outcome.model_visible
                 if not self._usage_monotonic(active.usage, outcome.usage):
                     if stop_reason is not StopReason.CANCELLED:
@@ -1734,6 +1766,29 @@ class RunLoop:
             state = _ThreadState(resolved_model=self._initial_resolved_model)
             self._threads[thread_id] = state
         return state
+
+    @staticmethod
+    def _open_symphony_draft_ids(messages: Sequence[Mapping[str, Any]]) -> tuple[str, ...]:
+        """Recover open deliberations from durable events without making them model history."""
+
+        opened: list[str] = []
+        completed: set[str] = set()
+        for message in messages:
+            events = message.get("events")
+            if not isinstance(events, list):
+                continue
+            for event in events:
+                if not isinstance(event, dict):
+                    continue
+                if event.get("event_kind") == "symphony_deliberation":
+                    draft_id = event.get("draft_id")
+                    if isinstance(draft_id, str):
+                        opened.append(draft_id)
+                elif event.get("event_kind") == "symphony_result":
+                    launch = event.get("launch")
+                    if isinstance(launch, dict) and isinstance(launch.get("draft_id"), str):
+                        completed.add(launch["draft_id"])
+        return tuple(draft_id for draft_id in opened if draft_id not in completed)
 
     def _bind_project_locked(
         self,

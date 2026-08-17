@@ -838,6 +838,218 @@
   white-space: pre-wrap;
 }
 
+.symphony-card {
+  display: grid;
+  grid-column: 2;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: clamp(0.9rem, 2.5vw, 1.35rem);
+  border: 1px solid var(--line-strong);
+  border-left: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--panel) 92%, var(--accent) 8%);
+}
+
+.symphony-card__header,
+.symphony-card__footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.symphony-card__header h3,
+.symphony-card__header p,
+.symphony-card__intro,
+.symphony-card p {
+  margin: 0;
+}
+
+.symphony-card__header > span,
+.symphony-card__eyebrow,
+.symphony-card__footer > span,
+.symphony-result dt {
+  color: var(--dim);
+  font-family: var(--data-font);
+  font-size: 0.62rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.symphony-card__eyebrow {
+  display: block;
+  margin-bottom: 0.2rem;
+  color: var(--accent);
+}
+
+.symphony-card__intro {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.symphony-card label,
+.symphony-card fieldset {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-family: var(--data-font);
+  font-size: 0.66rem;
+}
+
+.symphony-card fieldset {
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0.85rem;
+  border: 1px solid var(--line);
+}
+
+.symphony-card legend {
+  padding: 0 0.35rem;
+  color: var(--ink);
+  font-family: var(--display-font);
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+
+.symphony-card input,
+.symphony-card textarea {
+  width: 100%;
+  min-height: 2.4rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  outline: none;
+  background: var(--ground);
+  color: var(--ink);
+  font: 0.75rem/1.4 var(--body-font);
+}
+
+.symphony-card textarea {
+  min-height: 4.5rem;
+  resize: vertical;
+}
+
+.symphony-card input:focus,
+.symphony-card textarea:focus {
+  border-color: var(--accent);
+}
+
+.symphony-step,
+.symphony-judge {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+  gap: 0.65rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.symphony-judge strong {
+  grid-column: 1 / -1;
+  color: var(--accent);
+  font-family: var(--display-font);
+  text-transform: capitalize;
+}
+
+.symphony-check {
+  display: flex !important;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--ink) !important;
+}
+
+.symphony-check input {
+  width: 1rem;
+  min-height: 1rem;
+  accent-color: var(--accent);
+}
+
+.symphony-authority {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.symphony-sign {
+  padding: 0.7rem;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  line-height: 1.45;
+}
+
+.symphony-card button {
+  min-height: 2.5rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--ground);
+  font-family: var(--display-font);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.symphony-card button:disabled {
+  border-color: var(--line-strong);
+  background: var(--line);
+  color: var(--dim);
+}
+
+.symphony-card .symphony-card__minor {
+  justify-self: start;
+  border-color: var(--line-strong);
+  background: transparent;
+  color: var(--muted);
+}
+
+.symphony-card__footer {
+  align-items: center;
+}
+
+.symphony-result dl {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+}
+
+.symphony-result dl > div {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: 0.7rem;
+}
+
+.symphony-result dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-family: var(--data-font);
+  font-size: 0.68rem;
+}
+
+.symphony-result__back {
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--line);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+@media (max-width: 42rem) {
+  .symphony-card {
+    grid-column: 1;
+  }
+
+  .symphony-step,
+  .symphony-judge,
+  .symphony-authority {
+    grid-template-columns: 1fr;
+  }
+
+  .symphony-card__footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
 .run-detail pre {
   overflow-x: auto;
   font-family: var(--data-font);

@@ -11,6 +11,7 @@ import {
 import type {
   GateCommitPayload,
   JsonValue,
+  SymphonyLaunch,
   ThreadCatalogEntry,
   Ulid,
 } from './protocol'
@@ -80,7 +81,7 @@ export type RackAction =
   | { type: 'thread.select'; thread_id: string }
   | { type: 'project.select'; project_key: string }
   | { type: 'catalog.cleanup-fixtures' }
-  | { type: 'prompt.submit'; prompt: string; image?: OutboundImage }
+  | { type: 'prompt.submit'; prompt: string; image?: OutboundImage; symphony?: SymphonyLaunch }
   | { type: 'run.cancel'; run_id?: Ulid }
   | { type: 'thread.archive'; thread_id?: string }
   | { type: 'queue.load'; thread_id?: string; birthplace?: 'thread' | 'seed' | 'symphony' }
@@ -413,7 +414,11 @@ function dispatchRackAction<Action extends RackAction>(
       case 'catalog.cleanup-fixtures':
         return useHarnessStore.getState().removeFixtureThreads() as RackActionResult<Action>
       case 'prompt.submit':
-        return harnessClient.submitPrompt(action.prompt, action.image) as RackActionResult<Action>
+        return harnessClient.submitPrompt(
+          action.prompt,
+          action.image,
+          action.symphony,
+        ) as RackActionResult<Action>
       case 'run.cancel':
         return harnessClient.cancelRun(action.run_id) as RackActionResult<Action>
       case 'thread.archive': {

@@ -14,6 +14,7 @@ import {
 } from 'react'
 
 import { AssistantMarkdown } from './AssistantMarkdown'
+import { SymphonyDeliberationCard, SymphonyResultCard } from './SymphonyCards'
 import { MemoryGate } from './MemoryGate'
 import { MemoryPanel } from './MemoryPanel'
 import { MemoryGraph } from './MemoryGraph'
@@ -1760,6 +1761,21 @@ function ChatModule() {
     }
     return states
   }, [messages])
+  const completedSymphonyDraftIds = useMemo(() => {
+    const completed = new Set<string>()
+    for (const message of messages) {
+      if (message.role !== 'assistant') continue
+      for (const event of message.events) {
+        const launch = event.launch
+        if (
+          event.event_kind === 'symphony_result' &&
+          typeof launch === 'object' && launch !== null && !Array.isArray(launch) &&
+          typeof launch.draft_id === 'string'
+        ) completed.add(launch.draft_id)
+      }
+    }
+    return completed
+  }, [messages])
 
   useEffect(() => {
     followOutputRef.current = true
@@ -2019,6 +2035,7 @@ function ChatModule() {
                   runState={message.run_id === null ? undefined : runStates.get(message.run_id)}
                   activeRunId={activeRun?.run_id}
                   activeState={activeRun?.state}
+                  completedSymphonyDraftIds={completedSymphonyDraftIds}
                 />
               ))}
             </>
@@ -2757,6 +2774,7 @@ interface MessageRowProps {
   runState: UserMessageState | undefined
   activeRunId: string | undefined
   activeState: string | undefined
+  completedSymphonyDraftIds: ReadonlySet<string>
 }
 
 function MessageRow({
@@ -2766,6 +2784,7 @@ function MessageRow({
   runState,
   activeRunId,
   activeState,
+  completedSymphonyDraftIds,
 }: MessageRowProps) {
   if (message.role === 'user') {
     const status = message.state === 'submitting'
@@ -2806,6 +2825,17 @@ function MessageRow({
     : runState === 'budget_exceeded'
       ? 'budget'
       : 'normal'
+  const symphonyEvents = message.events.filter((event) =>
+    event.event_kind === 'symphony_result' ||
+    (
+      event.event_kind === 'symphony_deliberation' &&
+      typeof event.draft_id === 'string' &&
+      !completedSymphonyDraftIds.has(event.draft_id)
+    )
+  )
+  const diagnosticEvents = message.events.filter((event) =>
+    typeof event.event_kind !== 'string' || !event.event_kind.startsWith('symphony_')
+  )
   return (
     <article className={`message message--assistant message--${tone}`} data-role="assistant">
       <header className="message__label">
@@ -2823,10 +2853,14 @@ function MessageRow({
           <p>{message.thinking}</p>
         </details>
       )}
-      {message.events.length > 0 && (
+      {symphonyEvents.map((event, index) => event.event_kind === 'symphony_deliberation'
+        ? <SymphonyDeliberationCard key={`deliberation-${index}`} event={event} />
+        : <SymphonyResultCard key={`result-${index}`} event={event} />
+      )}
+      {diagnosticEvents.length > 0 && (
         <details className="run-detail">
-          <summary>{message.events.length} run event{message.events.length === 1 ? '' : 's'}</summary>
-          <pre>{JSON.stringify(message.events, null, 2)}</pre>
+          <summary>{diagnosticEvents.length} run event{diagnosticEvents.length === 1 ? '' : 's'}</summary>
+          <pre>{JSON.stringify(diagnosticEvents, null, 2)}</pre>
         </details>
       )}
     </article>

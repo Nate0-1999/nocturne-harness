@@ -2616,3 +2616,34 @@ work and erase the value of feedback packets. Starting successors from a survivi
 worktree would silently inherit unaccepted residue. Letting the round coordinator
 mint feedback would duplicate SYM8's scoped authority. A second durable round journal
 would duplicate the graph history already designated for conductor transitions.
+
+## 086 — Symphony escalation is a typed local turn with a separately identified stack [P3, SYM10]
+
+**Decision.** Treat “take this to a symphony” as an explicit daemon-owned turn in the
+ordinary chat FIFO, not as a thread mode. The turn emits an inline deliberation card
+whose objective, motivation, recipe steps, search marks, three core judge charters,
+performance metrics, and T2 authority remain blank or unsigned until the human fixes
+them. A launch is accepted only as one strict artifact bound to that draft and source
+thread. The authority line carries the actual R22 attempts, dollar wall, rounds,
+depth, children, and clock values and must be affirmatively signed.
+
+The first enacted executor is an explicitly labelled toy proof. It constructs the
+real `JudgeCharter` and `SearchBudget` boundary types, completes under a fresh
+Symphony identity, retains its own immutable stack record, and emits the result card
+back into the source thread. Both local turns are excluded from provider history but
+remain ordinary durable user/assistant transcript messages and run events. The
+separate stack is addressable through a read-only endpoint for headless verification.
+
+**Motivation.** P3 needs deliberation to feel like the conversation becoming more
+capable, not the owner entering a second application. Keeping the alignment artifact
+in chat makes the motivation and acceptance bargain visible; binding it to the real
+SYM7/SYM8 budget and charter types prevents the UI from becoming decorative fiction.
+A distinct stack identity proves orchestration can have its own lifecycle while the
+conversation remains the place where the owner asks, signs, and receives the result.
+
+**Rejected alternatives.** A thread-level Symphony mode would strand ordinary chat
+and contradict the alignment answer. Asking the model to infer acceptance criteria
+would turn auto mode into hidden authority. A free-form JSON event would let the web
+surface drift from conductor law. Calling the deterministic proof a production search
+would overclaim what the acceptance exercise proves; the owner surface therefore says
+“toy Symphony” everywhere it matters.
