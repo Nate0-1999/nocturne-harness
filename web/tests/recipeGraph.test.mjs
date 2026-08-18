@@ -48,7 +48,7 @@ test('recipe graph refuses edges and frontier marks that invent graph truth', ()
   assert.throws(() => parseRecipeGraphSnapshot(inventedReady), /frontier disagrees/)
 })
 
-/** SYM13 projects every packet and dependency join into the owner-directed recipe grid. */
+/** P2.3 projects every packet and dependency join into the owner-directed recipe grid. */
 test('completion grid keeps packet rows distinct and fuses dependency streams rightward', () => {
   const value = graph()
   value.nodes.splice(1, 0,
