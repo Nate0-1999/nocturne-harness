@@ -24,6 +24,7 @@ CANONS = (
         "verification.m2st4.scenario_app:create_scenario_app",
         "M2ST4 REGRESSION",
         (
+            ("fixture-curtain", "verification/m3fx/browser_check.mjs"),
             ("sweep-v2", "verification/m2ux1/browser_check.mjs"),
             ("stage", "verification/m2st1/browser_check.mjs"),
             ("controls", "verification/m2st2/browser_check.mjs"),
@@ -34,7 +35,10 @@ CANONS = (
         "sym13",
         "verification.sym13.scenario_app:create_scenario_app",
         "SYM13 REGRESSION",
-        (("recipe-grid", "verification/sym13/browser_check.mjs"),),
+        (
+            ("fixture-curtain", "verification/m3fx/browser_check.mjs"),
+            ("recipe-grid", "verification/sym13/browser_check.mjs"),
+        ),
     ),
 )
 
@@ -56,7 +60,10 @@ def main() -> None:
                 environment,
             )
 
-    print("UI canon PASS: sweep v2, live controls, human numbers, Stage, and SYM13 recipe")
+    print(
+        "UI canon PASS: fixture curtain, sweep v2, live controls, "
+        "human numbers, Stage, and SYM13 recipe"
+    )
 
 
 def _run_canon(

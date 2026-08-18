@@ -13,6 +13,8 @@ UV_CACHE_DIR=/tmp/n8-m2st4-harness uv run --locked python scripts/run_ui_canon.p
 
 The runner starts one isolated local fixture on a free loopback port and runs:
 
+- the M3FX fixture curtain against every canon server: the server-injected
+  banner visibly names the fixture and packet while Playwright stays headless;
 - the seven-width, 43-state Rack sweep, including rendered-scale iframe
   geometry and SVG/canvas visual-text collision checks;
 - Stage layer, camera, remove/recall, and reload behavior;

@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from starlette.responses import HTMLResponse
 
 from verification.fixture_isolation import FixtureIsolationMiddleware, install_fixture_isolation
 from verification.run_fixture import main as run_fixture
@@ -17,9 +19,9 @@ def fixture_app() -> FastAPI:
     app = FastAPI()
     install_fixture_isolation(app, "M2O REGRESSION")
 
-    @app.get("/")
-    async def root() -> dict[str, bool]:
-        return {"fixture": True}
+    @app.get("/", response_class=HTMLResponse)
+    async def root() -> str:
+        return "<!doctype html><html><body><main>fixture body</main></body></html>"
 
     return app
 
@@ -87,6 +89,21 @@ def test_fixture_redirects_to_server_verified_identity() -> None:
     }
 
 
+def test_fixture_wrapper_injects_an_unmistakable_packet_banner() -> None:
+    """F052 and SPEC D.2 120 require the fixture server, not the SPA, to mark HTML."""
+
+    client = TestClient(fixture_app(), base_url="http://127.0.0.1:8780")
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.headers["x-nocturne-fixture"] == "M2O REGRESSION"
+    assert response.headers["x-nocturne-fixture-packet"] == "M2O"
+    assert 'id="nocturne-fixture-curtain"' in response.text
+    assert 'data-fixture="M2O REGRESSION"' in response.text
+    assert 'data-packet-id="M2O"' in response.text
+    assert "FIXTURE · M2O REGRESSION · PACKET M2O · NOT THE OWNER APP" in response.text
+    assert response.text.index("fixture body") < response.text.index("nocturne-fixture-curtain")
+
+
 def test_fixture_launcher_rejects_owner_port(monkeypatch: pytest.MonkeyPatch) -> None:
     """A-038: the standard foreground launcher cannot bind the owner port."""
 
@@ -105,15 +122,91 @@ def test_fixture_launcher_rejects_owner_port(monkeypatch: pytest.MonkeyPatch) ->
     assert raised.value.code == 2
 
 
-def test_every_scenario_app_installs_the_shared_reachability_wall() -> None:
-    """SPEC B.6 rule 10 prevents legacy fixtures from escaping the shared isolation wall."""
+def test_every_fixture_server_installs_the_shared_curtain() -> None:
+    """F052 and SPEC D.2 120 keep every verification FastAPI behind one curtain."""
 
     root = Path(__file__).parents[1] / "verification"
-    scenario_files = sorted(root.glob("*/scenario_app.py"))
-    assert scenario_files
+    fixture_servers = sorted(
+        {
+            *root.glob("*/scenario_app.py"),
+            *(
+                path
+                for path in root.rglob("*.py")
+                if "FastAPI(" in path.read_text("utf-8")
+                and path.name != "fixture_isolation.py"
+            ),
+        }
+    )
+    assert fixture_servers
     missing = [
         path.relative_to(root).as_posix()
-        for path in scenario_files
+        for path in fixture_servers
         if "install_fixture_isolation(" not in path.read_text("utf-8")
     ]
     assert missing == []
+
+
+def test_scenario_class_has_no_browser_auto_open_path() -> None:
+    """F052 and SPEC D.2 120 forbid scenario servers from opening owner-visible windows."""
+
+    root = Path(__file__).parents[1] / "verification"
+    sources = sorted(root.glob("*/scenario_app.py")) + [root / "run_fixture.py"]
+    forbidden = ("webbrowser", "open_new(", "open_new_tab(", "startfile(", "osascript")
+    violations = [
+        f"{path.relative_to(root)}:{marker}"
+        for path in sources
+        for marker in forbidden
+        if marker in path.read_text("utf-8")
+    ]
+    assert violations == []
+
+
+def test_verification_browser_launches_are_explicitly_headless_without_fallback() -> None:
+    """F052 and SPEC D.2 120 require every verification browser launch to stay headless."""
+
+    root = Path(__file__).parents[1] / "verification"
+    launch_pattern = re.compile(r"(?:chromium|firefox|webkit)\.launch(?:PersistentContext)?\(")
+    headless_true = re.compile(r"headless\s*[:=]\s*(?:true|True)")
+    headed_value = re.compile(
+        r"headless\s*[:=]\s*(?:false\b|False\b|process\.env|os\.environ|getenv\()"
+    )
+    browser_sources = sorted((*root.rglob("*.mjs"), *root.rglob("*.js"), *root.rglob("*.py")))
+    launchers = [path for path in browser_sources if launch_pattern.search(path.read_text("utf-8"))]
+    assert launchers
+    violations = []
+    for path in launchers:
+        source = path.read_text("utf-8")
+        if (
+            len(launch_pattern.findall(source)) != len(headless_true.findall(source))
+            or headed_value.search(source)
+            or "--headed" in source
+        ):
+            violations.append(path.relative_to(root).as_posix())
+    assert violations == []
+
+
+def test_verification_sops_never_start_or_open_the_product_browser() -> None:
+    """F052 and SPEC D.2 120 require product-launching SOP commands to use --no-open."""
+
+    root = Path(__file__).parents[1] / "verification"
+    violations = []
+    for path in sorted(root.rglob("SOP*.md")):
+        in_code_block = False
+        for line_number, line in enumerate(path.read_text("utf-8").splitlines(), start=1):
+            if line.strip().startswith("```"):
+                in_code_block = not in_code_block
+                continue
+            quoted_history = line.lstrip().startswith(">")
+            negative_instruction = "Do not replace" in line or "was used only" in line
+            command_text = in_code_block or "`nocturne" in line or "`.venv/bin/nocturne" in line
+            if (
+                command_text
+                and not quoted_history
+                and not negative_instruction
+                and (
+                    "nocturne open" in line
+                    or ("nocturne up" in line and "--no-open" not in line)
+                )
+            ):
+                violations.append(f"{path.relative_to(root)}:{line_number}")
+    assert violations == []
