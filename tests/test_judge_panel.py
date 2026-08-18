@@ -27,6 +27,7 @@ from harness.judge_panel import (
     JudgeLaunch,
     JudgePanel,
     JudgePanelError,
+    JudgeSession,
 )
 from harness.supervisor import WorkerSupervisor
 
@@ -250,6 +251,23 @@ def _accept_all(panel: JudgePanel, launches: dict[JudgeSeat, JudgeLaunch]) -> No
         panel.accept_verdict(seat, verdict)
 
 
+def _wait_for_judges_to_stop(
+    supervisor: WorkerSupervisor,
+    sessions: tuple[JudgeSession, ...],
+    launches: dict[JudgeSeat, JudgeLaunch],
+    *,
+    timeout: float = 10.0,
+) -> None:
+    for seat in JudgeSeat:
+        _wait_for(launches[seat].location / "judge-verdict.json", timeout=timeout)
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if not any(supervisor.heartbeat(session.worker_id) for session in sessions):
+            return
+        time.sleep(0.01)
+    raise AssertionError("timed out waiting for judge sessions to stop")
+
+
 def test_three_fresh_chartered_judges_unanimously_release_exactly_one_attempt(
     tmp_path: Path,
 ) -> None:
@@ -281,8 +299,8 @@ def test_three_fresh_chartered_judges_unanimously_release_exactly_one_attempt(
             {seat: ("pass", "a") for seat in JudgeSeat},
         )
         sessions = panel.dispatch(launches)
+        _wait_for_judges_to_stop(supervisor, sessions, launches)
         motivation_verdict = launches[JudgeSeat.MOTIVATION].location / "judge-verdict.json"
-        _wait_for(motivation_verdict)
         original_verdict = motivation_verdict.read_text()
         tampered = json.loads(original_verdict)
         tampered["judge_session_id"] = "borrowed-builder-session"
@@ -346,7 +364,8 @@ def test_two_of_three_never_passes_and_dissent_mints_scoped_feedback_with_lineag
                 JudgeSeat.PERFORMANCE: ("pass", "a"),
             },
         )
-        panel.dispatch(launches)
+        sessions = panel.dispatch(launches)
+        _wait_for_judges_to_stop(supervisor, sessions, launches)
         _accept_all(panel, launches)
         decision = panel.resolve()
 
