@@ -22,11 +22,17 @@ const context = await browser.newContext({ viewport: { width: 1440, height: 900 
 const page = await context.newPage()
 const consoleProblems = []
 const pageErrors = []
+const failedResponses = []
 
 page.on('console', (message) => {
   if (message.type() === 'error') consoleProblems.push(message.text())
 })
 page.on('pageerror', (error) => pageErrors.push(error.message))
+page.on('response', (response) => {
+  if (response.status() >= 400) {
+    failedResponses.push({ status: response.status(), url: response.url() })
+  }
+})
 
 try {
   await mkdir(evidenceDir, { recursive: true })
@@ -94,9 +100,7 @@ try {
     throw new Error(`the selected current cell lost its why or identity: ${inspector}`)
   }
 
-  if (consoleProblems.length !== 0 || pageErrors.length !== 0) {
-    throw new Error(JSON.stringify({ consoleProblems, pageErrors }))
-  }
+  assertDiagnostics({ consoleProblems, pageErrors, failedResponses })
   await page.screenshot({ path: join(evidenceDir, 'recipe-grid.png') })
   await writeFile(join(evidenceDir, 'recipe-grid.json'), `${JSON.stringify({
     fixture,
@@ -105,6 +109,7 @@ try {
     inspector,
     console_problems: consoleProblems,
     page_errors: pageErrors,
+    failed_responses: failedResponses,
   }, null, 2)}\n`, 'utf8')
   console.log('SYM13 recipe canon PASS: packet rows, joins, dimming, frontier, served milestone')
 } finally {
@@ -115,5 +120,31 @@ try {
 function assertJsonEqual(actual, expected) {
   if (JSON.stringify(actual) !== JSON.stringify(expected)) {
     throw new Error(`expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`)
+  }
+}
+
+function assertDiagnostics({ consoleProblems, pageErrors, failedResponses }) {
+  const expectedFixtureGap = ({ status, url }) => {
+    const parsed = new URL(url)
+    if (status === 503 && parsed.pathname === '/v1/rack/query') {
+      return ['scorer_console', 'context_window'].includes(parsed.searchParams.get('resource'))
+    }
+    return status === 404 && ['/v1/approval-queue', '/v1/seeds/jump-start'].includes(parsed.pathname)
+  }
+  const unexpectedResponses = failedResponses.filter((response) => !expectedFixtureGap(response))
+  const unexpectedConsoleProblems = consoleProblems.filter(
+    (message) => !message.startsWith('Failed to load resource:'),
+  )
+  if (
+    unexpectedResponses.length !== 0
+    || unexpectedConsoleProblems.length !== 0
+    || pageErrors.length !== 0
+  ) {
+    throw new Error(JSON.stringify({
+      consoleProblems,
+      pageErrors,
+      failedResponses,
+      unexpectedResponses,
+    }))
   }
 }
