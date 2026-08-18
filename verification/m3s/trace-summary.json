@@ -1,0 +1,110 @@
+{
+  "scope": "M3S released owner-app scout",
+  "captured_at": "2026-08-18",
+  "owner_app": {
+    "url": "http://127.0.0.1:8883/",
+    "home": "disposable local home",
+    "principal_id": "m3s-sop-verification",
+    "machine_id": "m3s-sop-verification",
+    "thread_id": "e947d794-570a-4f48-97a9-68449bc36be7",
+    "fixture": false,
+    "browser_console_errors": 0,
+    "browser_console_warnings": 0
+  },
+  "released_palace": {
+    "ok": true,
+    "version": "0.1.5",
+    "schema_version": "0015",
+    "api_contract_version": "0.1.4"
+  },
+  "thread_journal": {
+    "records": 110,
+    "bytes": 100514,
+    "sha256": "04370a0731daccd0e171833c710bcdd3b9c6fbb2385efebbf5000fafee275276",
+    "record_counts": {
+      "thread_context": 1,
+      "message": 45,
+      "event": 64
+    },
+    "event_counts": {
+      "run.started": 9,
+      "run.delta": 34,
+      "run.usage": 10,
+      "run.done": 9,
+      "gate.open": 1,
+      "gate.dismiss": 1
+    }
+  },
+  "completed_stack": {
+    "symphony_id": "01M0AY6GAPTCNNTS4RS3QFV15A",
+    "state": "completed",
+    "attempt_states": ["completed", "completed", "completed"],
+    "memories_admitted": false
+  },
+  "steered_parent": {
+    "symphony_id": "01M0AY7BJDY61HWEFR0E93PVRR",
+    "state": "blocked",
+    "forked_to": "01M0AY8GXJHP06KRHAD632V4MC",
+    "search_step_ids": ["step-1"],
+    "charter_digest_count": 3,
+    "timeline": [
+      "deliberation_ratified",
+      "authority_signed",
+      "toy_attempts_running",
+      "clarified:attempt-1",
+      "cancel_requested:attempt-2",
+      "draining:attempt-2",
+      "cancelled:attempt-2",
+      "forked_to:01M0AY8GXJHP06KRHAD632V4MC",
+      "blocked"
+    ],
+    "attempt_1_follow_up": "Show the owner-visible lineage mark beside the final evidence.",
+    "attempt_2_state": "cancelled",
+    "attempt_2_partial_evidence": [
+      "bounded toy attempt admitted",
+      "retained after drain"
+    ],
+    "memories_admitted": false
+  },
+  "surviving_child": {
+    "symphony_id": "01M0AY8GXJHP06KRHAD632V4MC",
+    "state": "completed",
+    "forked_from": "01M0AY7BJDY61HWEFR0E93PVRR",
+    "charter_digest_count": 3,
+    "attempt_states": ["completed", "completed", "completed"],
+    "memories_admitted": false
+  },
+  "real_provider_turn": {
+    "run_id": "01M0AYDF8EQT0T3204KCTV1NVF",
+    "resolved_model": "openrouter:minimax/minimax-m3",
+    "provider_name": "openrouter",
+    "requests": 1,
+    "input_tokens": 2278,
+    "output_tokens": 76,
+    "stop_reason": "end_turn",
+    "answer": "Confirmed — this is the live M3S verification conversation."
+  },
+  "production_memory_bridge": {
+    "run_id": "01M0AYJJ8XN31RRWA49ZNY32AR",
+    "principal_id": "m3s-sop-verification-9zny32ar",
+    "machine_id": "m3s-sop-verification",
+    "batch_uid": "bca5ed26-c5d8-40a1-b0be-8ea28f61e727",
+    "winner_memory_id": "e58c9ec5-3282-4c68-96a7-e94ec8cc0d1a",
+    "loser_memory_id": "229d3414-0eae-4812-81e3-ed9727ecb6a6",
+    "stage_statuses": ["staged", "staged"],
+    "winner_sees_own_staged": true,
+    "winner_sees_sibling_staged": false,
+    "loser_sees_own_staged": true,
+    "loser_sees_sibling_staged": false,
+    "resolved_winner": "01M0AYJJ8XN31RRWA49ZNY32AR/root.1",
+    "judged_context_verdict": "unanimous_pass",
+    "queue_card_count": 1,
+    "queue_birthplace": "symphony",
+    "loser_status": "tombstoned",
+    "loser_origin_agent": "01M0AYJJ8XN31RRWA49ZNY32AR/root.2",
+    "cleanup_decision": "deny",
+    "cleanup_card_state": "rejected",
+    "pending_after_cleanup": 0,
+    "active_or_injectable_verification_residue": 0
+  }
+}
