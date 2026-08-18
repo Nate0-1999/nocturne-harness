@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.5 - 2026-08-18
+
+- Added optional append-only Palace backup and resurrection for conversation transcripts without
+  weakening the mandatory local journal.
+- Made memory relevance follow the agent's project-relative location while preserving the prior
+  scorer exactly when location cannot be proved.
+- Added run-scoped memory staging for multi-agent work: each attempt sees only its own drafts,
+  unanimous winners enter the existing explicit-consent Palace queue, and losing drafts retain
+  tombstoned lineage.
+- Kept broker routing behind one adapter seam without changing existing OpenRouter behavior.
+
+### Upgrade note
+
+Remote Palace package version advances from `0.1.4` to `0.1.5` after a fresh verified backup.
+Database schema advances from `0012` to `0015`; authenticated health advances API contract
+`0.1.1` to `0.1.4` for transcript backup, location-aware scoring, and run-scoped memory staging.
+
 ## 0.1.4 - 2026-08-13
 
 - Made exact duplicate saves reinforce the authoritative memory atomically, with plain guidance
