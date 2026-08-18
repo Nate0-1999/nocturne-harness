@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import {
+  buildRecipeCompletionGrid,
   layoutRecipeGraph,
   parseRecipeGraphSnapshot,
 } from '../src/recipeGraph.ts'
@@ -45,4 +46,42 @@ test('recipe graph refuses edges and frontier marks that invent graph truth', ()
   const inventedReady = graph()
   inventedReady.ready_node_ids = ['PREP']
   assert.throws(() => parseRecipeGraphSnapshot(inventedReady), /frontier disagrees/)
+})
+
+/** SYM13 projects every packet and dependency join into the owner-directed recipe grid. */
+test('completion grid keeps packet rows distinct and fuses dependency streams rightward', () => {
+  const value = graph()
+  value.nodes.splice(1, 0,
+    { node_id: 'FRAME', label: 'Build frame', kind: 'packet', state: 'running', bead_id: 'ng-frame', motivation: 'Make the plan visible.' },
+  )
+  value.nodes.push(
+    { node_id: 'SHIP', label: 'Serve result', kind: 'packet', state: 'blocked', bead_id: 'ng-ship', motivation: 'Prove the joined result.' },
+  )
+  value.edges.push(
+    { source: 'FRAME', target: 'SHIP', kind: 'blocks' },
+    { source: 'HARD', target: 'SHIP', kind: 'blocks' },
+  )
+  value.ready_node_ids = ['HARD']
+
+  const snapshot = parseRecipeGraphSnapshot(value)
+  const grid = buildRecipeCompletionGrid(snapshot)
+  const hard = grid.cells.find((cell) => cell.node_id === 'HARD')
+  const ship = grid.cells.find((cell) => cell.node_id === 'SHIP')
+
+  assert.deepEqual(grid.rows.map((node) => node.node_id), ['FRAME', 'PREP', 'HARD', 'SHIP'])
+  assert.deepEqual(hard.input_node_ids, ['PREP', 'HARD'])
+  assert.equal(hard.row_span, 2)
+  assert.deepEqual(hard.judge_node_ids, ['JUDGE'])
+  assert.deepEqual(ship.input_node_ids, ['FRAME', 'PREP', 'HARD', 'SHIP'])
+  assert.equal(ship.row_span, 4)
+  assert.ok(hard.column < ship.column)
+  assert.ok(ship.column < grid.milestone_column)
+  assert.equal(grid.milestone_state, 'running')
+})
+
+/** P2.3 treats a cyclic recipe as corrupt authority rather than drawing a plausible plan. */
+test('recipe graph refuses a cycle instead of inventing completion order', () => {
+  const cyclic = graph()
+  cyclic.edges.push({ source: 'JUDGE', target: 'PREP', kind: 'blocks' })
+  assert.throws(() => parseRecipeGraphSnapshot(cyclic), /must remain a DAG/)
 })

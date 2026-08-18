@@ -41,6 +41,22 @@ export interface RecipeNodePosition {
   depth: number
 }
 
+export interface RecipeCompletionCell {
+  node_id: string
+  judge_node_ids: string[]
+  input_node_ids: string[]
+  column: number
+  row_start: number
+  row_span: number
+}
+
+export interface RecipeCompletionGrid {
+  rows: RecipeGraphNode[]
+  cells: RecipeCompletionCell[]
+  milestone_column: number
+  milestone_state: RecipeNodeState
+}
+
 const NODE_KINDS = new Set<RecipeNodeKind>(['packet', 'search', 'judge'])
 const NODE_STATES = new Set<RecipeNodeState>([
   'blocked', 'ready', 'running', 'review', 'passed', 'failed', 'cancelled',
@@ -79,6 +95,7 @@ export function parseRecipeGraphSnapshot(value: unknown): RecipeGraphSnapshot {
   if (!sameSet(readyNodeIds, visibleReady)) {
     throw new TypeError('Recipe ready frontier disagrees with visible state')
   }
+  assertAcyclic(nodes, edges)
 
   return {
     schema_version: 1,
@@ -89,6 +106,101 @@ export function parseRecipeGraphSnapshot(value: unknown): RecipeGraphSnapshot {
     nodes,
     edges,
     ready_node_ids: readyNodeIds,
+  }
+}
+
+export function buildRecipeCompletionGrid(snapshot: RecipeGraphSnapshot): RecipeCompletionGrid {
+  const order = new Map(snapshot.nodes.map((node, index) => [node.node_id, index]))
+  const packets = snapshot.nodes.filter((node) => node.kind !== 'judge')
+  const packetIds = new Set(packets.map((node) => node.node_id))
+  const dependencies = new Map(packets.map((node) => [node.node_id, [] as string[]]))
+  const downstream = new Map(packets.map((node) => [node.node_id, [] as string[]]))
+  const judges = new Map(packets.map((node) => [node.node_id, [] as string[]]))
+
+  for (const edge of snapshot.edges) {
+    if (edge.kind === 'blocks' && packetIds.has(edge.source) && packetIds.has(edge.target)) {
+      dependencies.get(edge.target)?.push(edge.source)
+      downstream.get(edge.source)?.push(edge.target)
+    } else if (edge.kind === 'judged_by' && packetIds.has(edge.source)) {
+      judges.get(edge.source)?.push(edge.target)
+    }
+  }
+  for (const values of [...dependencies.values(), ...downstream.values(), ...judges.values()]) {
+    values.sort((left, right) => (order.get(left) ?? 0) - (order.get(right) ?? 0))
+  }
+
+  const rowIds: string[] = []
+  const visited = new Set<string>()
+  function placeWithInputs(nodeId: string) {
+    if (visited.has(nodeId)) return
+    for (const dependency of dependencies.get(nodeId) ?? []) placeWithInputs(dependency)
+    visited.add(nodeId)
+    rowIds.push(nodeId)
+  }
+  const terminals = packets
+    .filter((node) => (downstream.get(node.node_id) ?? []).length === 0)
+    .sort((left, right) => (order.get(left.node_id) ?? 0) - (order.get(right.node_id) ?? 0))
+  for (const node of terminals) placeWithInputs(node.node_id)
+  for (const node of packets) placeWithInputs(node.node_id)
+
+  const rows = rowIds.map((nodeId) => packets.find((node) => node.node_id === nodeId)!)
+  const rowIndex = new Map(rows.map((node, index) => [node.node_id, index + 1]))
+  const depths = new Map<string, number>()
+  function depthOf(nodeId: string): number {
+    const known = depths.get(nodeId)
+    if (known !== undefined) return known
+    const inputs = dependencies.get(nodeId) ?? []
+    const depth = inputs.length === 0 ? 0 : Math.max(...inputs.map(depthOf)) + 1
+    depths.set(nodeId, depth)
+    return depth
+  }
+
+  const ancestry = new Map<string, Set<string>>()
+  function inputsFor(nodeId: string): Set<string> {
+    const known = ancestry.get(nodeId)
+    if (known !== undefined) return known
+    const result = new Set<string>([nodeId])
+    for (const dependency of dependencies.get(nodeId) ?? []) {
+      for (const input of inputsFor(dependency)) result.add(input)
+    }
+    ancestry.set(nodeId, result)
+    return result
+  }
+
+  const occupied = new Map<number, Set<number>>()
+  const cells: RecipeCompletionCell[] = []
+  const staged = packets
+    .filter((node) => (dependencies.get(node.node_id) ?? []).length > 0)
+    .sort((left, right) => depthOf(left.node_id) - depthOf(right.node_id) ||
+      (rowIndex.get(left.node_id) ?? 0) - (rowIndex.get(right.node_id) ?? 0))
+  for (const node of staged) {
+    const inputNodeIds = [...inputsFor(node.node_id)]
+      .sort((left, right) => (rowIndex.get(left) ?? 0) - (rowIndex.get(right) ?? 0))
+    const inputRows = inputNodeIds.map((nodeId) => rowIndex.get(nodeId)!)
+    const rowStart = Math.min(...inputRows)
+    const rowEnd = Math.max(...inputRows)
+    let column = depthOf(node.node_id) + 2
+    while ([...Array(rowEnd - rowStart + 1)].some((_, offset) => (
+      occupied.get(column)?.has(rowStart + offset) ?? false
+    ))) column += 1
+    const columnRows = occupied.get(column) ?? new Set<number>()
+    for (let row = rowStart; row <= rowEnd; row += 1) columnRows.add(row)
+    occupied.set(column, columnRows)
+    cells.push({
+      node_id: node.node_id,
+      judge_node_ids: judges.get(node.node_id) ?? [],
+      input_node_ids: inputNodeIds,
+      column,
+      row_start: rowStart,
+      row_span: rowEnd - rowStart + 1,
+    })
+  }
+
+  return {
+    rows,
+    cells,
+    milestone_column: Math.max(3, ...cells.map((cell) => cell.column + 1)),
+    milestone_state: milestoneState(snapshot.nodes),
   }
 }
 
@@ -183,6 +295,38 @@ function stringArray(value: unknown[], label: string): string[] {
 function sameSet(left: string[], right: string[]): boolean {
   return left.length === right.length && new Set(left).size === left.length &&
     left.every((item) => right.includes(item))
+}
+
+function assertAcyclic(nodes: RecipeGraphNode[], edges: RecipeGraphEdge[]) {
+  const incoming = new Map(nodes.map((node) => [node.node_id, 0]))
+  const outgoing = new Map(nodes.map((node) => [node.node_id, [] as string[]]))
+  for (const edge of edges) {
+    incoming.set(edge.target, (incoming.get(edge.target) ?? 0) + 1)
+    outgoing.get(edge.source)?.push(edge.target)
+  }
+  const ready = [...incoming].filter(([, count]) => count === 0).map(([nodeId]) => nodeId)
+  let seen = 0
+  while (ready.length > 0) {
+    const nodeId = ready.shift()!
+    seen += 1
+    for (const target of outgoing.get(nodeId) ?? []) {
+      const count = (incoming.get(target) ?? 0) - 1
+      incoming.set(target, count)
+      if (count === 0) ready.push(target)
+    }
+  }
+  if (seen !== nodes.length) throw new TypeError('Recipe graph must remain a DAG')
+}
+
+function milestoneState(nodes: RecipeGraphNode[]): RecipeNodeState {
+  if (nodes.length > 0 && nodes.every((node) => node.state === 'passed')) return 'passed'
+  if (nodes.some((node) => node.state === 'failed')) return 'failed'
+  if (nodes.some((node) => node.state === 'running' || node.state === 'review')) return 'running'
+  if (nodes.some((node) => node.state === 'ready')) return 'ready'
+  if (nodes.length > 0 && nodes.every((node) => (
+    node.state === 'passed' || node.state === 'cancelled'
+  ))) return 'cancelled'
+  return 'blocked'
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

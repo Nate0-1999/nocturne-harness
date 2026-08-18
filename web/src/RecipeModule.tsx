@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 
 import {
-  layoutRecipeGraph,
+  buildRecipeCompletionGrid,
   parseRecipeGraphSnapshot,
   type RecipeGraphNode,
   type RecipeGraphSnapshot,
-  type RecipeNodePosition,
+  type RecipeNodeState,
 } from './recipeGraph'
 import { useRackPlugin, useRackSelection } from './rack'
 import './assets/recipe.css'
@@ -51,10 +51,8 @@ export function RecipeModule() {
     ? rackSelection.id
     : inspectedNodeId
 
-  const positions = useMemo(
-    () => snapshot === null ? new Map<string, RecipeNodePosition>() : new Map(
-      layoutRecipeGraph(snapshot).map((position) => [position.node_id, position]),
-    ),
+  const completion = useMemo(
+    () => snapshot === null ? null : buildRecipeCompletionGrid(snapshot),
     [snapshot],
   )
   const selected = snapshot?.nodes.find((node) => node.node_id === selectedNodeId) ?? null
@@ -71,10 +69,10 @@ export function RecipeModule() {
           <p>Living plan</p>
           <h1>Recipe</h1>
         </div>
-        {snapshot !== null && (
+        {snapshot !== null && completion !== null && (
           <div className="recipe-instrument__counts" aria-label="Recipe counts">
-            <strong>{snapshot.ready_node_ids.length}</strong>
-            <span>ready of {snapshot.nodes.length}</span>
+            <strong>{snapshot.nodes.filter((node) => node.state === 'passed').length}</strong>
+            <span>complete · {snapshot.ready_node_ids.length} ready</span>
           </div>
         )}
       </header>
@@ -82,73 +80,122 @@ export function RecipeModule() {
         <p className="recipe-instrument__message" role="alert">{failure}</p>
       ) : snapshot === null ? (
         <p className="recipe-instrument__message" role="status">Finding the live frontier…</p>
-      ) : snapshot.nodes.length === 0 ? (
+      ) : snapshot.nodes.length === 0 || completion === null ? (
         <p className="recipe-instrument__message" role="status">No recipe is running.</p>
       ) : (
         <div className="recipe-instrument__body">
-          <svg
-            className="recipe-graph"
-            viewBox="0 0 100 72"
-            role="img"
-            aria-label={`${snapshot.nodes.length} recipe nodes, ${snapshot.edges.length} dependency edges, ${snapshot.ready_node_ids.length} ready now`}
+          <div
+            className="recipe-grid-scroll"
+            aria-label={`${completion.rows.length} packet inputs moving left to right through ${completion.milestone_column - 2} stages`}
           >
-            <defs>
-              <marker id="recipe-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
-                <path d="M 0 0 L 10 5 L 0 10 z" />
-              </marker>
-            </defs>
-            {snapshot.edges.map((edge) => {
-              const source = positions.get(edge.source)
-              const target = positions.get(edge.target)
-              if (source === undefined || target === undefined) return null
-              return (
-                <line
-                  key={`${edge.source}:${edge.target}:${edge.kind}`}
-                  className="recipe-edge"
-                  data-kind={edge.kind}
-                  x1={source.x}
-                  y1={source.y}
-                  x2={target.x}
-                  y2={target.y}
-                  markerEnd="url(#recipe-arrow)"
-                />
-              )
-            })}
-            {snapshot.nodes.map((node) => {
-              const position = positions.get(node.node_id)
-              if (position === undefined) return null
-              const active = selectedNodeId === node.node_id
-              return (
-                <g
-                  key={node.node_id}
-                  className="recipe-node"
-                  data-kind={node.kind}
-                  data-state={node.state}
-                  data-selected={active || undefined}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`${node.label}, ${node.kind}, ${node.state}`}
-                  onClick={() => inspect(node)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      inspect(node)
-                    }
-                  }}
+            <div
+              className="recipe-grid"
+              role="table"
+              style={{
+                gridTemplateColumns: `minmax(11rem, 15rem) minmax(8rem, 11rem) repeat(${Math.max(0, completion.milestone_column - 3)}, minmax(7.5rem, 9.5rem)) minmax(9rem, 12rem)`,
+                gridTemplateRows: `auto repeat(${completion.rows.length}, minmax(5.5rem, auto))`,
+              }}
+            >
+              {Array.from({ length: completion.milestone_column }, (_, index) => (
+                <div
+                  key={`heading:${index + 1}`}
+                  className="recipe-grid__heading"
+                  role="columnheader"
+                  style={{ gridColumn: index + 1, gridRow: 1 }}
                 >
-                  <title>{node.label} · {node.state}</title>
-                  {node.kind === 'search' ? (
-                    <polygon points={diamond(position)} />
-                  ) : node.kind === 'judge' ? (
-                    <path d={gate(position)} />
-                  ) : (
-                    <rect x={position.x - 7} y={position.y - 4} width="14" height="8" rx="2" />
-                  )}
-                  <text x={position.x} y={position.y + 8}>{shortLabel(node)}</text>
-                </g>
-              )
-            })}
-          </svg>
+                  {columnHeading(index + 1, completion.milestone_column)}
+                </div>
+              ))}
+              {completion.rows.map((node, index) => (
+                <RecipeCell
+                  key={`ingredient:${node.node_id}`}
+                  className="recipe-grid__ingredient"
+                  node={node}
+                  selected={selectedNodeId === node.node_id}
+                  style={{ gridColumn: 1, gridRow: index + 2 }}
+                  onInspect={inspect}
+                >
+                  <span>{node.node_id} · 1 {node.kind === 'search' ? 'search packet' : 'packet'}</span>
+                  <strong>{node.motivation ?? node.label}</strong>
+                </RecipeCell>
+              ))}
+              {completion.rows.map((node, index) => (
+                <RecipeCell
+                  key={`prep:${node.node_id}`}
+                  className="recipe-grid__prep"
+                  node={node}
+                  selected={selectedNodeId === node.node_id}
+                  style={{ gridColumn: 2, gridRow: index + 2 }}
+                  onInspect={inspect}
+                >
+                  <span>Own work</span>
+                  <strong>{node.label}</strong>
+                </RecipeCell>
+              ))}
+              {emptyStageCells(completion).map(({ column, row }) => (
+                <div
+                  key={`empty:${column}:${row}`}
+                  className="recipe-grid__empty"
+                  aria-hidden="true"
+                  style={{ gridColumn: column, gridRow: row + 1 }}
+                />
+              ))}
+              {completion.cells.map((cell) => {
+                const node = snapshot.nodes.find((item) => item.node_id === cell.node_id)!
+                const judgeNodes = cell.judge_node_ids.map((nodeId) => (
+                  snapshot.nodes.find((item) => item.node_id === nodeId)!
+                ))
+                return (
+                  <div
+                    key={`stage:${cell.node_id}`}
+                    className="recipe-grid__stage"
+                    data-state={node.state}
+                    data-progress={progressOf(node.state)}
+                    data-selected={selectedNodeId === node.node_id || undefined}
+                    style={{
+                      gridColumn: cell.column,
+                      gridRow: `${cell.row_start + 1} / span ${cell.row_span}`,
+                    }}
+                  >
+                    <button type="button" onClick={() => inspect(node)}>
+                      <span>{cell.input_node_ids.length} streams join</span>
+                      <strong>{node.label}</strong>
+                      <small>After {cell.input_node_ids.filter((nodeId) => nodeId !== node.node_id).join(' + ')}</small>
+                    </button>
+                    {judgeNodes.length > 0 && (
+                      <div className="recipe-grid__judges" aria-label={`${judgeNodes.length} judge gates`}>
+                        {judgeNodes.map((judge) => (
+                          <button
+                            key={judge.node_id}
+                            type="button"
+                            data-state={judge.state}
+                            data-progress={progressOf(judge.state)}
+                            data-selected={selectedNodeId === judge.node_id || undefined}
+                            onClick={() => inspect(judge)}
+                          >
+                            {judge.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+              <div
+                className="recipe-grid__milestone"
+                data-state={completion.milestone_state}
+                data-progress={progressOf(completion.milestone_state)}
+                style={{
+                  gridColumn: completion.milestone_column,
+                  gridRow: `2 / span ${completion.rows.length}`,
+                }}
+              >
+                <span>Served</span>
+                <strong>{snapshot.packet_id ?? 'Current milestone'}</strong>
+                <small>{milestoneCopy(completion.milestone_state)}</small>
+              </div>
+            </div>
+          </div>
           <aside className="recipe-inspector" aria-live="polite">
             {selected === null ? (
               <>
@@ -171,19 +218,73 @@ export function RecipeModule() {
   )
 }
 
-function diamond(position: RecipeNodePosition): string {
-  return `${position.x},${position.y - 5} ${position.x + 7},${position.y} ${position.x},${position.y + 5} ${position.x - 7},${position.y}`
+function RecipeCell({
+  children,
+  className,
+  node,
+  onInspect,
+  selected,
+  style,
+}: {
+  children: ReactNode
+  className: string
+  node: RecipeGraphNode
+  onInspect: (node: RecipeGraphNode) => void
+  selected: boolean
+  style: CSSProperties
+}) {
+  return (
+    <button
+      type="button"
+      className={className}
+      data-kind={node.kind}
+      data-state={node.state}
+      data-progress={progressOf(node.state)}
+      data-selected={selected || undefined}
+      style={style}
+      onClick={() => onInspect(node)}
+    >
+      {children}
+    </button>
+  )
 }
 
-function gate(position: RecipeNodePosition): string {
-  return `M ${position.x - 5} ${position.y - 4} H ${position.x + 5} M ${position.x - 5} ${position.y + 4} H ${position.x + 5} M ${position.x - 2} ${position.y - 4} V ${position.y + 4} M ${position.x + 2} ${position.y - 4} V ${position.y + 4}`
+function columnHeading(column: number, milestoneColumn: number): string {
+  if (column === 1) return 'Packet / input'
+  if (column === 2) return 'Own prep'
+  if (column === milestoneColumn) return 'Milestone'
+  return `Stage ${column - 2}`
 }
 
-function shortLabel(node: RecipeGraphNode): string {
-  const compact = (
-    node.kind === 'judge' ? node.label.replace(/ judge$/iu, '') : node.label
-  ).trim()
-  return compact.length <= 18 ? compact : `${compact.slice(0, 16)}…`
+function progressOf(state: RecipeNodeState): 'done' | 'current' | 'waiting' | 'failed' {
+  if (state === 'passed') return 'done'
+  if (state === 'ready' || state === 'running' || state === 'review') return 'current'
+  if (state === 'failed') return 'failed'
+  return 'waiting'
+}
+
+function milestoneCopy(state: RecipeNodeState): string {
+  if (state === 'passed') return 'The whole plan is complete.'
+  if (state === 'failed') return 'A failed step still needs a new path.'
+  if (state === 'running' || state === 'review') return 'The plan is being cooked now.'
+  if (state === 'ready') return 'The next work is ready.'
+  return 'Every stream arrives here.'
+}
+
+function emptyStageCells(completion: ReturnType<typeof buildRecipeCompletionGrid>) {
+  const occupied = new Set<string>()
+  for (const cell of completion.cells) {
+    for (let row = cell.row_start; row < cell.row_start + cell.row_span; row += 1) {
+      occupied.add(`${cell.column}:${row}`)
+    }
+  }
+  const result: { column: number, row: number }[] = []
+  for (let column = 3; column < completion.milestone_column; column += 1) {
+    for (let row = 1; row <= completion.rows.length; row += 1) {
+      if (!occupied.has(`${column}:${row}`)) result.push({ column, row })
+    }
+  }
+  return result
 }
 
 function kindExplanation(node: RecipeGraphNode): string {

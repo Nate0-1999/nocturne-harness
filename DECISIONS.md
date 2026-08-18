@@ -2676,3 +2676,31 @@ adapter and create another authority. Persisting a Recipe database would duplica
 graph-history sink. Treating every module as one global selection room would contradict
 R21's layer boundary. Portals and manual channel colors remain YAGNI until owner evidence
 shows that proximity plus the explicit global escape is insufficient.
+
+## 088 — Recipe completion is a client-side grid over the same graph [P2.3, SYM13]
+
+**Decision.** Derive the bordered Recipe completion grid entirely in the web client
+from SYM12's immutable schema-1 snapshot. Each non-judge node keeps one packet/input
+row and one own-prep cell. A dependency walk orders those rows and projects each
+downstream step across the full span of its transitive inputs; judge nodes remain
+nested gates inside their search step. The snapshot packet identity supplies one
+full-height served-milestone cell. This layout is a view only: the graph remains the
+sole source of node state, frontier, dependency, judge, packet, and Bead truth.
+
+Map passed cells to the existing subdued tokens, map ready/running/review cells to
+the one existing accent, leave unstarted work quiet, and retain the existing inspector
+for identity and motivation. Reject cyclic snapshots instead of inventing a row order.
+The browser canon proves the concrete 13-row Symphony recipe, joined stages, completion
+dimming, current frontier, full-height milestone, inspector detail, and console-clean
+rendering.
+
+**Motivation.** The node-edge view preserved orchestration truth but made completion
+hard to read at a glance. The owner needs the plan to feel like a recipe being cooked:
+inputs stay distinct, work visibly joins from left to right, finished steps recede, and
+the live frontier and eventual served result remain obvious without learning graph
+notation.
+
+**Rejected alternatives.** A new grid schema, Garden parser, or completion store would
+create a second orchestration authority. Hand-authored stage columns would drift from
+dependencies. New colors would split the Rack's visual language. Changing backend
+events for a display-only need would expand the protocol without adding truth.
