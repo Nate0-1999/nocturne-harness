@@ -1,0 +1,125 @@
+{
+  "scope": "M3S2 standard owner-core rescout",
+  "captured_at": "2026-08-18",
+  "owner_app": {
+    "url": "http://127.0.0.1:8884/",
+    "home": "disposable local home",
+    "principal_id": "m3s2-sop-verification",
+    "machine_id": "m3s2-sop-verification",
+    "fixture": false,
+    "original_thread_id": "83dc9574-c597-46fb-9414-cdf75d7b654b",
+    "sibling_thread_id": "0bc1af45-da98-4ac0-891d-8a6838deac3e"
+  },
+  "released_palace": {
+    "ok": true,
+    "version": "0.1.5",
+    "schema_version": "0015",
+    "api_contract_version": "0.1.4"
+  },
+  "verification_memory": {
+    "memory_id": "6d95565e-f94a-46c9-aaca-0d38c74c9ed9",
+    "label": "M3S2 lantern phrase: cobalt moth",
+    "body": "For this disposable M3S2 verification run, the project-local lantern phrase is cobalt moth 🌙.",
+    "created_project_key": "build-test",
+    "revision_before_cleanup": 3,
+    "cleanup_status": "tombstoned",
+    "cleanup_revision": 4,
+    "active_exact_matches_after_cleanup": 0
+  },
+  "original_thread": {
+    "visible_project_attempt": "m3s2-core",
+    "durable_project_key": "build-test",
+    "records": 100,
+    "bytes": 56214,
+    "sha256": "9bb845558f35cd89464864fa80e2459e7cc392f8fc5297ab9751cfa2b22bea00",
+    "record_counts": {
+      "thread_context": 1,
+      "message": 15,
+      "event": 84
+    },
+    "event_counts": {
+      "run.started": 3,
+      "run.delta": 68,
+      "run.usage": 7,
+      "run.done": 3,
+      "gate.open": 1,
+      "gate.dismiss": 1,
+      "memory.panel.update": 1
+    },
+    "first_gate": {
+      "injection_id": "07fd28a6-9d6b-4004-8982-c8b3698771ef",
+      "scorer_version": "m3f-location-v1",
+      "injected_count": 0,
+      "near_miss_count": 0
+    },
+    "real_provider_turn": {
+      "run_id": "01M0B5WJJ5SEQF0YQBAZXCPCXX",
+      "resolved_model": "openrouter:minimax/minimax-m3",
+      "requests": 1,
+      "input_tokens": 3065,
+      "output_tokens": 40,
+      "cache_read_tokens": 128,
+      "stop_reason": "end_turn",
+      "answer": "cobalt moth 🌙"
+    },
+    "context_bars": {
+      "displayed_used": "3.1K",
+      "capacity": "1M",
+      "system": 728,
+      "history_displayed": "1.4K",
+      "memory": 100,
+      "tools": 869,
+      "compaction_active": false
+    }
+  },
+  "sibling_thread": {
+    "visible_project_attempt": "other-test",
+    "durable_project_key": "build-test",
+    "records": 22,
+    "bytes": 12958,
+    "sha256": "2ea6501a468fc6cecdad4c5fefe1a20c480b24f9ff7baa56c67a0626826aaa22",
+    "record_counts": {
+      "thread_context": 1,
+      "message": 5,
+      "event": 16
+    },
+    "gate": {
+      "injection_id": "122c2f2c-9cf8-45e5-95a3-78da7f5027da",
+      "scorer_version": "m3f-location-v1",
+      "injected_memory_id": "6d95565e-f94a-46c9-aaca-0d38c74c9ed9",
+      "rank": 1,
+      "score": 0.6542482376098633,
+      "raw_project_feature": 1.0
+    },
+    "real_provider_turn": {
+      "run_id": "01M0B61KJ2BC6NM8A8FNS71N2W",
+      "resolved_model": "openrouter:minimax/minimax-m3",
+      "requests": 1,
+      "input_tokens": 2336,
+      "output_tokens": 121,
+      "cache_read_tokens": 128,
+      "stop_reason": "end_turn",
+      "answer": "cobalt moth 🌙"
+    }
+  },
+  "vitals": {
+    "live_minutes": ["2026-08-18T19:33:00Z", "2026-08-18T19:34:00Z", "2026-08-18T19:37:00Z"],
+    "models": ["minimax/minimax-m3", "text-embedding-3-small"],
+    "purposes": ["building", "embedding", "remember"],
+    "latest_minute_cost_usd": "0.000815660000",
+    "latest_minute_receipt_lines": 4,
+    "accounting_status": "clear",
+    "reconciliation_status": "drift",
+    "reconciliation_drift_usd": "-0.218114122000",
+    "unpriced_lines": 0
+  },
+  "themes": {
+    "activated": ["neo-noir", "seraph-dressed", "gold-lines"],
+    "gold_lines_persisted_across_reload": true,
+    "final_theme": "neo-noir"
+  },
+  "exit_tests": {
+    "spine": "278 passed in 16.75s",
+    "harness": "1664 passed, 3 deselected in 69.77s"
+  }
+}
