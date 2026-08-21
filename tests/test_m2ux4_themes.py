@@ -69,11 +69,17 @@ def test_generated_plate_contract_keeps_shine_ratio_and_material_law() -> None:
     assert tokens["part_material_map"]["header_bar"]["material"] == "dark_cel"
 
 
-def test_css_seam_and_three_palette_checks_are_closed() -> None:
-    """PLAN M2UX4, ADR-018 clause 7, and D.2 112-113 forbid literal leaks and unsafe palettes."""
+def test_css_seam_and_built_in_palette_checks_are_closed() -> None:
+    """PLAN M2UX4/M2UX6, ADR-018 clause 7, and D.2 112-115 forbid unsafe themes."""
     run_script("build_theme_seam.py")
     result = json.loads(run_script("validate_theme_palettes.py").stdout)
-    assert set(result["themes"]) == {"neo-noir", "seraph-dressed", "gold-lines"}
+    assert set(result["themes"]) == {
+        "neo-noir",
+        "seraph-dressed",
+        "gold-lines",
+        "wizard-mode",
+        "technomancer",
+    }
     assert all(theme["passed"] for theme in result["themes"].values())
 
 

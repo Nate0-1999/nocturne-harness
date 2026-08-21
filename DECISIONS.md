@@ -2808,3 +2808,34 @@ text and controls too small to use. Treating a one-pixel intersection as recover
 the existing defect under a different camera position. A temporary full-screen overlay
 would create a second module lifecycle and require another escape action. Theme or shell
 CSS overrides would collide with M2UX6 and encode geometry in the wrong layer.
+
+## 093 — Grimoire motifs are generated decoration with state-bounded motion [P2, M2UX6]
+
+**Decision.** Add WIZARD MODE and TECHNOMANCER as two ordinary built-in theme
+identities at the existing exhaustive color seam. Reproduce the FINAL audition
+kit's seeded Elvish v2.1 and machine v1 SVG strips byte-for-byte with a checked
+generator, then map those strips onto the shared Rack template instead of
+copying the audition SPA. Module-head, module-bottom, message-label, composer,
+and topbar conjurations run once on mount, hover, arrival, or focus. Only the
+empty transcript's two motif axes and the non-data Rack scanline may loop.
+Reduced motion removes every animation while retaining a quiet static mark.
+
+Keep head strips at or below 7.5rem and right of module titles, constrain margin
+marks to narrow pointer-free overlays, and never target message bodies, memory
+cards, thread rows, or graph values. Palette validation names one danger family
+and runs all six ADR-018 checks independently for both new themes. The generated
+CSS and glyph-family digest are test-pinned so the frozen hands cannot drift by
+manual restyling.
+
+**Motivation.** P2 asks the Rack to feel inhabitable, while D.2 115-120 requires
+these two owner-blessed worlds without turning motion into a second claimant on
+attention. The real problem is not adding more color choices; it is carrying a
+recognizable magical or machine hand across every sandboxed surface while the
+owner's data remains the loudest thing on screen.
+
+**Rejected alternatives.** Importing either 6,000-line audition stylesheet would
+duplicate the production shell and fork layout authority. Continuous animation
+on modules, messages, or controls would make spectacle compete with work.
+Unicode pseudo-runes would discard the blessed forge and invite platform-font
+drift. Hand-authored data URIs or a second runtime theme engine would make a
+frozen visual language unauditable.

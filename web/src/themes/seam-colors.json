@@ -4,1201 +4,1601 @@
       "gold_lines": "#101c3a",
       "neo_noir": "#e8f8ff",
       "seraph_dressed": "#eef4fb",
-      "variable": "--seam-1b9a29d92971"
+      "technomancer": "#f0f7f2",
+      "variable": "--seam-1b9a29d92971",
+      "wizard_mode": "#f8f5ef"
     },
     {
       "gold_lines": "#d7e0ee",
       "neo_noir": "#03070c",
       "seraph_dressed": "#05060f",
-      "variable": "--seam-0a820a82e969"
+      "technomancer": "#07040b",
+      "variable": "--seam-0a820a82e969",
+      "wizard_mode": "#0b0704"
     },
     {
       "gold_lines": "#e6ecf5",
       "neo_noir": "#050c13",
       "seraph_dressed": "#0a0d1a",
-      "variable": "--seam-ee6623f1a8b4"
+      "technomancer": "#0c0612",
+      "variable": "--seam-ee6623f1a8b4",
+      "wizard_mode": "#110c07"
     },
     {
       "gold_lines": "#f2f5fa",
       "neo_noir": "#07121b",
       "seraph_dressed": "#0d1226",
-      "variable": "--seam-e111b4bdf402"
+      "technomancer": "#10081a",
+      "variable": "--seam-e111b4bdf402",
+      "wizard_mode": "#191009"
     },
     {
       "gold_lines": "#ffffff",
       "neo_noir": "#0b1b27",
       "seraph_dressed": "#141d3a",
-      "variable": "--seam-a89226244b3a"
+      "technomancer": "#180c26",
+      "variable": "--seam-a89226244b3a",
+      "wizard_mode": "#24180e"
     },
     {
       "gold_lines": "rgba(245, 248, 252, 0.9)",
       "neo_noir": "rgba(7, 18, 27, 0.9)",
       "seraph_dressed": "rgba(7, 8, 15, 0.9)",
-      "variable": "--seam-5b91e5b268de"
+      "technomancer": "rgba(16, 8, 26, 0.9)",
+      "variable": "--seam-5b91e5b268de",
+      "wizard_mode": "rgba(25, 16, 9, 0.9)"
     },
     {
       "gold_lines": "#3e5170",
       "neo_noir": "#95adbb",
       "seraph_dressed": "#9fb0c9",
-      "variable": "--seam-75142759e34b"
+      "technomancer": "#95bba2",
+      "variable": "--seam-75142759e34b",
+      "wizard_mode": "#bbae95"
     },
     {
       "gold_lines": "#5a6b8a",
       "neo_noir": "#627c8b",
       "seraph_dressed": "#6b7a99",
-      "variable": "--seam-205e0febd250"
+      "technomancer": "#628b70",
+      "variable": "--seam-205e0febd250",
+      "wizard_mode": "#8b7d62"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.18)",
       "neo_noir": "rgba(60, 210, 255, 0.18)",
       "seraph_dressed": "rgba(219, 229, 238, 0.18)",
-      "variable": "--seam-b76703e27aaa"
+      "technomancer": "rgba(65, 250, 127, 0.18)",
+      "variable": "--seam-b76703e27aaa",
+      "wizard_mode": "rgba(240, 185, 75, 0.18)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.42)",
       "neo_noir": "rgba(60, 210, 255, 0.42)",
       "seraph_dressed": "rgba(219, 229, 238, 0.42)",
-      "variable": "--seam-29784880c46b"
+      "technomancer": "rgba(65, 250, 127, 0.42)",
+      "variable": "--seam-29784880c46b",
+      "wizard_mode": "rgba(240, 185, 75, 0.42)"
     },
     {
       "gold_lines": "#1c3fa8",
       "neo_noir": "#38d7ff",
       "seraph_dressed": "#5d8cf2",
-      "variable": "--seam-a46956e36ca1"
+      "technomancer": "#3dfa7c",
+      "variable": "--seam-a46956e36ca1",
+      "wizard_mode": "#f0b847"
     },
     {
       "gold_lines": "#2a54a4",
       "neo_noir": "#7ce8ff",
       "seraph_dressed": "#a5c4ff",
-      "variable": "--seam-11a87d9b9e27"
+      "technomancer": "#7ffca9",
+      "variable": "--seam-11a87d9b9e27",
+      "wizard_mode": "#f5d086"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.12)",
       "neo_noir": "rgba(56, 215, 255, 0.12)",
       "seraph_dressed": "rgba(93, 140, 242, 0.12)",
-      "variable": "--seam-4e1285da7308"
+      "technomancer": "rgba(61, 250, 124, 0.12)",
+      "variable": "--seam-4e1285da7308",
+      "wizard_mode": "rgba(240, 184, 71, 0.12)"
     },
     {
       "gold_lines": "#b07a3f",
       "neo_noir": "#f2479b",
       "seraph_dressed": "#db9969",
-      "variable": "--seam-ad0061aa3454"
+      "technomancer": "#c747f2",
+      "variable": "--seam-ad0061aa3454",
+      "wizard_mode": "#5cddae"
     },
     {
       "gold_lines": "rgba(176, 122, 63, 0.12)",
       "neo_noir": "rgba(242, 71, 155, 0.12)",
       "seraph_dressed": "rgba(219, 153, 105, 0.12)",
-      "variable": "--seam-b1c7172b3c1a"
+      "technomancer": "rgba(199, 71, 242, 0.12)",
+      "variable": "--seam-b1c7172b3c1a",
+      "wizard_mode": "rgba(92, 221, 174, 0.12)"
     },
     {
       "gold_lines": "#b02a24",
       "neo_noir": "#ff405f",
       "seraph_dressed": "#d94048",
-      "variable": "--seam-7ff080c99f72"
+      "technomancer": "#f54a66",
+      "variable": "--seam-7ff080c99f72",
+      "wizard_mode": "#ec5360"
     },
     {
       "gold_lines": "rgba(176, 42, 36, 0.12)",
       "neo_noir": "rgba(255, 64, 95, 0.12)",
       "seraph_dressed": "rgba(217, 64, 72, 0.12)",
-      "variable": "--seam-b6642117663a"
+      "technomancer": "rgba(245, 74, 102, 0.12)",
+      "variable": "--seam-b6642117663a",
+      "wizard_mode": "rgba(236, 83, 96, 0.12)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.1)",
       "neo_noir": "rgba(56, 215, 255, 0.1)",
       "seraph_dressed": "rgba(93, 140, 242, 0.1)",
-      "variable": "--seam-4a8f71691312"
+      "technomancer": "rgba(61, 250, 124, 0.1)",
+      "variable": "--seam-4a8f71691312",
+      "wizard_mode": "rgba(240, 184, 71, 0.1)"
     },
     {
       "gold_lines": "#b07a3f",
       "neo_noir": "#e68a4c",
       "seraph_dressed": "#db9969",
-      "variable": "--seam-be43bbfc2ecc"
+      "technomancer": "#8dde54",
+      "variable": "--seam-be43bbfc2ecc",
+      "wizard_mode": "#e6b34c"
     },
     {
       "gold_lines": "rgb(16 28 58 / 3%)",
       "neo_noir": "rgb(255 255 255 / 3%)",
       "seraph_dressed": "rgb(238 244 251 / 3%)",
-      "variable": "--seam-635c59be60a5"
+      "technomancer": "rgb(255 255 255 / 3%)",
+      "variable": "--seam-635c59be60a5",
+      "wizard_mode": "rgb(255 255 255 / 3%)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.14)",
       "neo_noir": "rgba(56, 215, 255, 0.14)",
       "seraph_dressed": "rgba(93, 140, 242, 0.14)",
-      "variable": "--seam-437335a997fc"
+      "technomancer": "rgba(61, 250, 124, 0.14)",
+      "variable": "--seam-437335a997fc",
+      "wizard_mode": "rgba(240, 184, 71, 0.14)"
     },
     {
       "gold_lines": "#8f221d",
       "neo_noir": "#ff9ca4",
       "seraph_dressed": "#eda0a4",
-      "variable": "--seam-8ecfaf5b5293"
+      "technomancer": "#bfdcc9",
+      "variable": "--seam-8ecfaf5b5293",
+      "wizard_mode": "#dfd4bc"
     },
     {
       "gold_lines": "#f3ad78",
       "neo_noir": "#f3ad78",
       "seraph_dressed": "#f3ad78",
-      "variable": "--seam-8e6a0de0a345"
+      "technomancer": "#aced7e",
+      "variable": "--seam-8e6a0de0a345",
+      "wizard_mode": "#f3ca78"
     },
     {
       "gold_lines": "rgba(176, 42, 36, 0.35)",
       "neo_noir": "rgba(230, 64, 77, 0.35)",
       "seraph_dressed": "rgba(217, 64, 72, 0.35)",
-      "variable": "--seam-fe1142d9242b"
+      "technomancer": "rgba(230, 64, 92, 0.35)",
+      "variable": "--seam-fe1142d9242b",
+      "wizard_mode": "rgba(230, 64, 78, 0.35)"
     },
     {
       "gold_lines": "#263452",
       "neo_noir": "#dad8d2",
       "seraph_dressed": "#eef4fb",
-      "variable": "--seam-bdafc90f198e"
+      "technomancer": "#d2dad5",
+      "variable": "--seam-bdafc90f198e",
+      "wizard_mode": "#dbd8d1"
     },
     {
       "gold_lines": "#1c3fa8",
       "neo_noir": "#777a80",
       "seraph_dressed": "#dbe5ee",
-      "variable": "--seam-8f40aeba6419"
+      "technomancer": "#7c7780",
+      "variable": "--seam-8f40aeba6419",
+      "wizard_mode": "#7f7c78"
     },
     {
       "gold_lines": "#f2f5fa",
       "neo_noir": "#081017",
       "seraph_dressed": "#0d1226",
-      "variable": "--seam-e8a34ac23b1e"
+      "technomancer": "#0f0817",
+      "variable": "--seam-e8a34ac23b1e",
+      "wizard_mode": "#160f09"
     },
     {
       "gold_lines": "#cfd9e8",
       "neo_noir": "#0a0b0d",
       "seraph_dressed": "#07080f",
-      "variable": "--seam-3658ea098a06"
+      "technomancer": "#0b0710",
+      "variable": "--seam-3658ea098a06",
+      "wizard_mode": "#0f0b08"
     },
     {
       "gold_lines": "rgba(176, 42, 36, 0.55)",
       "neo_noir": "rgba(230, 64, 77, 0.55)",
       "seraph_dressed": "rgba(217, 64, 72, 0.55)",
-      "variable": "--seam-e5e42364511b"
+      "technomancer": "rgba(230, 64, 92, 0.55)",
+      "variable": "--seam-e5e42364511b",
+      "wizard_mode": "rgba(230, 64, 78, 0.55)"
     },
     {
       "gold_lines": "rgba(217, 122, 58, 0.55)",
       "neo_noir": "rgba(217, 122, 58, 0.55)",
       "seraph_dressed": "rgba(217, 122, 58, 0.55)",
-      "variable": "--seam-bc7491eef199"
+      "technomancer": "rgba(126, 209, 66, 0.55)",
+      "variable": "--seam-bc7491eef199",
+      "wizard_mode": "rgba(217, 164, 58, 0.55)"
     },
     {
       "gold_lines": "#f0a36f",
       "neo_noir": "#f0a36f",
       "seraph_dressed": "#f0a36f",
-      "variable": "--seam-47be9b9665e8"
+      "technomancer": "#a6ea75",
+      "variable": "--seam-47be9b9665e8",
+      "wizard_mode": "#f0c56f"
     },
     {
       "gold_lines": "#101c3a",
       "neo_noir": "#d7d5cf",
       "seraph_dressed": "#eef4fb",
-      "variable": "--seam-247674eb4dda"
+      "technomancer": "#cfd7d2",
+      "variable": "--seam-247674eb4dda",
+      "wizard_mode": "#d8d5ce"
     },
     {
       "gold_lines": "rgba(176, 42, 36, 0.45)",
       "neo_noir": "rgba(230, 64, 77, 0.45)",
       "seraph_dressed": "rgba(217, 64, 72, 0.45)",
-      "variable": "--seam-d595f5dac840"
+      "technomancer": "rgba(230, 64, 92, 0.45)",
+      "variable": "--seam-d595f5dac840",
+      "wizard_mode": "rgba(230, 64, 78, 0.45)"
     },
     {
       "gold_lines": "rgba(176, 42, 36, 0.5)",
       "neo_noir": "rgba(230, 64, 77, 0.5)",
       "seraph_dressed": "rgba(217, 64, 72, 0.5)",
-      "variable": "--seam-c746e3d9b955"
+      "technomancer": "rgba(230, 64, 92, 0.5)",
+      "variable": "--seam-c746e3d9b955",
+      "wizard_mode": "rgba(230, 64, 78, 0.5)"
     },
     {
       "gold_lines": "rgba(215, 224, 238, 0.25)",
       "neo_noir": "rgba(0, 0, 0, 0.25)",
       "seraph_dressed": "rgba(5, 6, 15, 0.25)",
-      "variable": "--seam-de697e75676f"
+      "technomancer": "rgba(0, 0, 0, 0.25)",
+      "variable": "--seam-de697e75676f",
+      "wizard_mode": "rgba(0, 0, 0, 0.25)"
     },
     {
       "gold_lines": "#5a6b8a",
       "neo_noir": "#686b72",
       "seraph_dressed": "#6b7a99",
-      "variable": "--seam-6ea56d5029ac"
+      "technomancer": "#6e6872",
+      "variable": "--seam-6ea56d5029ac",
+      "wizard_mode": "#716e69"
     },
     {
       "gold_lines": "rgba(215, 224, 238, 0.72)",
       "neo_noir": "rgba(0, 0, 0, 0.72)",
       "seraph_dressed": "rgba(5, 6, 15, 0.72)",
-      "variable": "--seam-7868d8734de9"
+      "technomancer": "rgba(0, 0, 0, 0.72)",
+      "variable": "--seam-7868d8734de9",
+      "wizard_mode": "rgba(0, 0, 0, 0.72)"
     },
     {
       "gold_lines": "rgba(215, 224, 238, 0.82)",
       "neo_noir": "rgba(2, 2, 3, 0.82)",
       "seraph_dressed": "rgba(5, 6, 15, 0.82)",
-      "variable": "--seam-2893d65fe086"
+      "technomancer": "rgba(2, 1, 4, 0.82)",
+      "variable": "--seam-2893d65fe086",
+      "wizard_mode": "rgba(3, 2, 2, 0.82)"
     },
     {
       "gold_lines": "#3e5170",
       "neo_noir": "#c9c7c1",
       "seraph_dressed": "#9fb0c9",
-      "variable": "--seam-b0cbc3ef605b"
+      "technomancer": "#c4c9c1",
+      "variable": "--seam-b0cbc3ef605b",
+      "wizard_mode": "#c9c6c1"
     },
     {
       "gold_lines": "rgba(217, 122, 58, 0.65)",
       "neo_noir": "rgba(217, 122, 58, 0.65)",
       "seraph_dressed": "rgba(217, 122, 58, 0.65)",
-      "variable": "--seam-b18d9dc68582"
+      "technomancer": "rgba(126, 209, 66, 0.65)",
+      "variable": "--seam-b18d9dc68582",
+      "wizard_mode": "rgba(217, 164, 58, 0.65)"
     },
     {
       "gold_lines": "#f2f5fa",
       "neo_noir": "#151619",
       "seraph_dressed": "#0d1226",
-      "variable": "--seam-b9b5dc7768ae"
+      "technomancer": "#17101e",
+      "variable": "--seam-b9b5dc7768ae",
+      "wizard_mode": "#1d1711"
     },
     {
       "gold_lines": "rgba(215, 224, 238, 0.6)",
       "neo_noir": "rgba(0, 0, 0, 0.6)",
       "seraph_dressed": "rgba(5, 6, 15, 0.6)",
-      "variable": "--seam-6ad401756512"
+      "technomancer": "rgba(0, 0, 0, 0.6)",
+      "variable": "--seam-6ad401756512",
+      "wizard_mode": "rgba(0, 0, 0, 0.6)"
     },
     {
       "gold_lines": "#5a6b8a",
       "neo_noir": "#73777f",
       "seraph_dressed": "#6b7a99",
-      "variable": "--seam-a5097f59d2f0"
+      "technomancer": "#7a737f",
+      "variable": "--seam-a5097f59d2f0",
+      "wizard_mode": "#7e7a74"
     },
     {
       "gold_lines": "rgba(215, 224, 238, 0.22)",
       "neo_noir": "rgba(0, 0, 0, 0.22)",
       "seraph_dressed": "rgba(5, 6, 15, 0.22)",
-      "variable": "--seam-f826f455ad20"
+      "technomancer": "rgba(0, 0, 0, 0.22)",
+      "variable": "--seam-f826f455ad20",
+      "wizard_mode": "rgba(0, 0, 0, 0.22)"
     },
     {
       "gold_lines": "rgba(90, 107, 138, 0.16)",
       "neo_noir": "rgba(29, 124, 164, 0.16)",
       "seraph_dressed": "rgba(107, 122, 153, 0.16)",
-      "variable": "--seam-fe6f565a6ec4"
+      "technomancer": "rgba(29, 164, 74, 0.16)",
+      "variable": "--seam-fe6f565a6ec4",
+      "wizard_mode": "rgba(164, 119, 29, 0.16)"
     },
     {
       "gold_lines": "rgba(176, 42, 36, 0.13)",
       "neo_noir": "rgba(185, 31, 104, 0.13)",
       "seraph_dressed": "rgba(217, 64, 72, 0.13)",
-      "variable": "--seam-f2593db89763"
+      "technomancer": "rgba(146, 31, 185, 0.13)",
+      "variable": "--seam-f2593db89763",
+      "wizard_mode": "rgba(50, 166, 123, 0.13)"
     },
     {
       "gold_lines": "#d7e0ee",
       "neo_noir": "#02050a",
       "seraph_dressed": "#05060f",
-      "variable": "--seam-ce4d060095a9"
+      "technomancer": "#060309",
+      "variable": "--seam-ce4d060095a9",
+      "wizard_mode": "#090603"
     },
     {
       "gold_lines": "#d7e0ee",
       "neo_noir": "#06050c",
       "seraph_dressed": "#05060f",
-      "variable": "--seam-6b101cfcc67b"
+      "technomancer": "#08040d",
+      "variable": "--seam-6b101cfcc67b",
+      "wizard_mode": "#0c0805"
     },
     {
       "gold_lines": "rgba(28,63,168,.25)",
       "neo_noir": "rgba(116,242,255,.25)",
       "seraph_dressed": "rgba(93,140,242,.25)",
-      "variable": "--seam-907e9f63c782"
+      "technomancer": "rgba(119, 252, 163, .25)",
+      "variable": "--seam-907e9f63c782",
+      "wizard_mode": "rgba(245, 205, 126, .25)"
     },
     {
       "gold_lines": "#16307e",
       "neo_noir": "#9df8ff",
       "seraph_dressed": "#bcd4ff",
-      "variable": "--seam-d5594b630084"
+      "technomancer": "#bfddc9",
+      "variable": "--seam-d5594b630084",
+      "wizard_mode": "#dfd5bd"
     },
     {
       "gold_lines": "#2b58ba",
       "neo_noir": "#74f2ff",
       "seraph_dressed": "#83aaf6",
-      "variable": "--seam-1cc748f7f308"
+      "technomancer": "#77fca3",
+      "variable": "--seam-1cc748f7f308",
+      "wizard_mode": "#f5cd7e"
     },
     {
       "gold_lines": "rgba(28,63,168,.14)",
       "neo_noir": "rgba(70,230,255,.14)",
       "seraph_dressed": "rgba(93,140,242,.14)",
-      "variable": "--seam-1fd4f831d07d"
+      "technomancer": "rgba(75, 250, 133, .14)",
+      "variable": "--seam-1fd4f831d07d",
+      "wizard_mode": "rgba(241, 189, 84, .14)"
     },
     {
       "gold_lines": "rgba(215,224,238,.96)",
       "neo_noir": "rgba(3,8,13,.96)",
       "seraph_dressed": "rgba(5,6,15,.96)",
-      "variable": "--seam-afaf575b9ab9"
+      "technomancer": "rgba(8, 4, 12, .96)",
+      "variable": "--seam-afaf575b9ab9",
+      "wizard_mode": "rgba(12, 8, 4, .96)"
     },
     {
       "gold_lines": "rgba(28,63,168,.24)",
       "neo_noir": "rgba(116,242,255,.24)",
       "seraph_dressed": "rgba(93,140,242,.24)",
-      "variable": "--seam-30f218adc639"
+      "technomancer": "rgba(119, 252, 163, .24)",
+      "variable": "--seam-30f218adc639",
+      "wizard_mode": "rgba(245, 205, 126, .24)"
     },
     {
       "gold_lines": "#d7e0ee",
       "neo_noir": "#000",
       "seraph_dressed": "#05060f",
-      "variable": "--seam-81ef715e3434"
+      "technomancer": "#000000",
+      "variable": "--seam-81ef715e3434",
+      "wizard_mode": "#000000"
     },
     {
       "gold_lines": "#101c3a",
       "neo_noir": "#dce9ee",
       "seraph_dressed": "#eef4fb",
-      "variable": "--seam-440c215a95af"
+      "technomancer": "#ddede2",
+      "variable": "--seam-440c215a95af",
+      "wizard_mode": "#eee9dc"
     },
     {
       "gold_lines": "rgba(90,107,138,.15)",
       "neo_noir": "rgba(27,103,120,.15)",
       "seraph_dressed": "rgba(107,122,153,.15)",
-      "variable": "--seam-d8e9af66c937"
+      "technomancer": "rgba(27, 120, 58, .15)",
+      "variable": "--seam-d8e9af66c937",
+      "wizard_mode": "rgba(120, 89, 27, .15)"
     },
     {
       "gold_lines": "#d7e0ee",
       "neo_noir": "#05090d",
       "seraph_dressed": "#05060f",
-      "variable": "--seam-af982d79b88d"
+      "technomancer": "#09040e",
+      "variable": "--seam-af982d79b88d",
+      "wizard_mode": "#0d0905"
     },
     {
       "gold_lines": "rgba(28,63,168,.2)",
       "neo_noir": "rgba(116,242,255,.2)",
       "seraph_dressed": "rgba(93,140,242,.2)",
-      "variable": "--seam-ba64e4ff64c2"
+      "technomancer": "rgba(119, 252, 163, .2)",
+      "variable": "--seam-ba64e4ff64c2",
+      "wizard_mode": "rgba(245, 205, 126, .2)"
     },
     {
       "gold_lines": "rgba(215, 224, 238, .94)",
       "neo_noir": "rgba(5, 9, 13, .94)",
       "seraph_dressed": "rgba(5, 6, 15, .94)",
-      "variable": "--seam-302957b8a588"
+      "technomancer": "rgba(9, 4, 14, .94)",
+      "variable": "--seam-302957b8a588",
+      "wizard_mode": "rgba(13, 9, 5, .94)"
     },
     {
       "gold_lines": "rgba(176, 122, 63, .65)",
       "neo_noir": "rgba(255, 145, 197, .65)",
       "seraph_dressed": "rgba(219, 153, 105, .65)",
-      "variable": "--seam-516f10054966"
+      "technomancer": "rgba(226, 148, 252, .65)",
+      "variable": "--seam-516f10054966",
+      "wizard_mode": "rgba(159, 241, 211, .65)"
     },
     {
       "gold_lines": "rgba(176, 122, 63, .08)",
       "neo_noir": "rgba(255, 145, 197, .08)",
       "seraph_dressed": "rgba(219, 153, 105, .08)",
-      "variable": "--seam-298373638a4c"
+      "technomancer": "rgba(226, 148, 252, .08)",
+      "variable": "--seam-298373638a4c",
+      "wizard_mode": "rgba(159, 241, 211, .08)"
     },
     {
       "gold_lines": "#5f421f",
       "neo_noir": "#ffd2e7",
       "seraph_dressed": "#f2e0c8",
-      "variable": "--seam-8dedc70482a1"
+      "technomancer": "#e2efe6",
+      "variable": "--seam-8dedc70482a1",
+      "wizard_mode": "#f0ece1"
     },
     {
       "gold_lines": "#1c3fa8",
       "neo_noir": "#66dce9",
       "seraph_dressed": "#5d8cf2",
-      "variable": "--seam-5a5fbb963b2e"
+      "technomancer": "#66e992",
+      "variable": "--seam-5a5fbb963b2e",
+      "wizard_mode": "#e9bd66"
     },
     {
       "gold_lines": "#5a6b8a",
       "neo_noir": "#45606b",
       "seraph_dressed": "#6b7a99",
-      "variable": "--seam-a2554ec1f8a2"
+      "technomancer": "#456b52",
+      "variable": "--seam-a2554ec1f8a2",
+      "wizard_mode": "#6b5e45"
     },
     {
       "gold_lines": "#e8916c",
       "neo_noir": "#e8916c",
       "seraph_dressed": "#e8916c",
-      "variable": "--seam-4f41763edadb"
+      "technomancer": "#e86c81",
+      "variable": "--seam-4f41763edadb",
+      "wizard_mode": "#e86c76"
     },
     {
       "gold_lines": "#5a6b8a",
       "neo_noir": "#296d7a",
       "seraph_dressed": "#6b7a99",
-      "variable": "--seam-e6b985626daa"
+      "technomancer": "#297a44",
+      "variable": "--seam-e6b985626daa",
+      "wizard_mode": "#7a5f29"
     },
     {
       "gold_lines": "#1c3fa8",
       "neo_noir": "#8af6ff",
       "seraph_dressed": "#5d8cf2",
-      "variable": "--seam-bfd7ec77a10a"
+      "technomancer": "#8dfcb2",
+      "variable": "--seam-bfd7ec77a10a",
+      "wizard_mode": "#f6d593"
     },
     {
       "gold_lines": "#704b86",
       "neo_noir": "#704b86",
       "seraph_dressed": "#704b86",
-      "variable": "--seam-5f909758d42a"
+      "technomancer": "#774b86",
+      "variable": "--seam-5f909758d42a",
+      "wizard_mode": "#527f6e"
     },
     {
       "gold_lines": "#5a6b8a",
       "neo_noir": "#7a6633",
       "seraph_dressed": "#6b7a99",
-      "variable": "--seam-2be7a20de69e"
+      "technomancer": "#517637",
+      "variable": "--seam-2be7a20de69e",
+      "wizard_mode": "#7a6233"
     },
     {
       "gold_lines": "#101c3a",
       "neo_noir": "#fff",
       "seraph_dressed": "#eef4fb",
-      "variable": "--seam-e08de713877c"
+      "technomancer": "#ffffff",
+      "variable": "--seam-e08de713877c",
+      "wizard_mode": "#ffffff"
     },
     {
       "gold_lines": "#e9c46a",
       "neo_noir": "#e9c46a",
       "seraph_dressed": "#e9c46a",
-      "variable": "--seam-74334a559f1f"
+      "technomancer": "#a0e370",
+      "variable": "--seam-74334a559f1f",
+      "wizard_mode": "#e9bf6a"
     },
     {
       "gold_lines": "#3e5170",
       "neo_noir": "#b9cbd1",
       "seraph_dressed": "#9fb0c9",
-      "variable": "--seam-476d40b9450f"
+      "technomancer": "#b9d1c1",
+      "variable": "--seam-476d40b9450f",
+      "wizard_mode": "#d1c9b9"
     },
     {
       "gold_lines": "rgba(28,63,168,.18)",
       "neo_noir": "rgba(116,242,255,.18)",
       "seraph_dressed": "rgba(93,140,242,.18)",
-      "variable": "--seam-663a186d018f"
+      "technomancer": "rgba(119, 252, 163, .18)",
+      "variable": "--seam-663a186d018f",
+      "wizard_mode": "rgba(245, 205, 126, .18)"
     },
     {
       "gold_lines": "#3e5170",
       "neo_noir": "#9db0b7",
       "seraph_dressed": "#9fb0c9",
-      "variable": "--seam-8aa96e18faa6"
+      "technomancer": "#9db7a6",
+      "variable": "--seam-8aa96e18faa6",
+      "wizard_mode": "#b7ae9d"
     },
     {
       "gold_lines": "#f2f5fa",
       "neo_noir": "#071118",
       "seraph_dressed": "#0d1226",
-      "variable": "--seam-417a529a45de"
+      "technomancer": "#0f0817",
+      "variable": "--seam-417a529a45de",
+      "wizard_mode": "#160f09"
     },
     {
       "gold_lines": "#101c3a",
       "neo_noir": "#dff",
       "seraph_dressed": "#eef4fb",
-      "variable": "--seam-30fd209c1525"
+      "technomancer": "#e9f3ec",
+      "variable": "--seam-30fd209c1525",
+      "wizard_mode": "#f4f0e8"
     },
     {
       "gold_lines": "#ffffff",
       "neo_noir": "#294b55",
       "seraph_dressed": "#141d3a",
-      "variable": "--seam-3b635677f903"
+      "technomancer": "#295538",
+      "variable": "--seam-3b635677f903",
+      "wizard_mode": "#554629"
     },
     {
       "gold_lines": "#69dfb0",
       "neo_noir": "#69dfb0",
       "seraph_dressed": "#69dfb0",
-      "variable": "--seam-4fbad7161e2a"
+      "technomancer": "#69df90",
+      "variable": "--seam-4fbad7161e2a",
+      "wizard_mode": "#dfb869"
     },
     {
       "gold_lines": "#b07a3f",
       "neo_noir": "#ff8b8b",
       "seraph_dressed": "#db9969",
-      "variable": "--seam-6c56aa245be4"
+      "technomancer": "#f991a2",
+      "variable": "--seam-6c56aa245be4",
+      "wizard_mode": "#f3979e"
     },
     {
       "gold_lines": "#e6ecf5",
       "neo_noir": "#041015",
       "seraph_dressed": "#0a0d1a",
-      "variable": "--seam-e5abfa9e0920"
+      "technomancer": "#0c0613",
+      "variable": "--seam-e5abfa9e0920",
+      "wizard_mode": "#120c07"
     },
     {
       "gold_lines": "rgba(28,63,168,.14)",
       "neo_noir": "rgba(116,242,255,.14)",
       "seraph_dressed": "rgba(93,140,242,.14)",
-      "variable": "--seam-7986ed5949f4"
+      "technomancer": "rgba(119, 252, 163, .14)",
+      "variable": "--seam-7986ed5949f4",
+      "wizard_mode": "rgba(245, 205, 126, .14)"
     },
     {
       "gold_lines": "#3e5170",
       "neo_noir": "#89a3ac",
       "seraph_dressed": "#9fb0c9",
-      "variable": "--seam-4ea186e53c42"
+      "technomancer": "#89ac95",
+      "variable": "--seam-4ea186e53c42",
+      "wizard_mode": "#aca089"
     },
     {
       "gold_lines": "rgba(28,63,168,.28)",
       "neo_noir": "rgba(116,242,255,.28)",
       "seraph_dressed": "rgba(93,140,242,.28)",
-      "variable": "--seam-d286138b1fbe"
+      "technomancer": "rgba(119, 252, 163, .28)",
+      "variable": "--seam-d286138b1fbe",
+      "wizard_mode": "rgba(245, 205, 126, .28)"
     },
     {
       "gold_lines": "rgba(230,236,245,.58)",
       "neo_noir": "rgba(2,14,20,.58)",
       "seraph_dressed": "rgba(10,13,26,.58)",
-      "variable": "--seam-71396310a958"
+      "technomancer": "rgba(11, 6, 16, .58)",
+      "variable": "--seam-71396310a958",
+      "wizard_mode": "rgba(16, 11, 6, .58)"
     },
     {
       "gold_lines": "rgba(28,63,168,.04)",
       "neo_noir": "rgba(116,242,255,.04)",
       "seraph_dressed": "rgba(93,140,242,.04)",
-      "variable": "--seam-a4347324cf8c"
+      "technomancer": "rgba(119, 252, 163, .04)",
+      "variable": "--seam-a4347324cf8c",
+      "wizard_mode": "rgba(245, 205, 126, .04)"
     },
     {
       "gold_lines": "rgba(28, 63, 168, .2)",
       "neo_noir": "rgba(116, 242, 255, .2)",
       "seraph_dressed": "rgba(93, 140, 242, .2)",
-      "variable": "--seam-96323b227b85"
+      "technomancer": "rgba(119, 252, 163, .2)",
+      "variable": "--seam-96323b227b85",
+      "wizard_mode": "rgba(245, 205, 126, .2)"
     },
     {
       "gold_lines": "rgba(230, 236, 245, .58)",
       "neo_noir": "rgba(2, 14, 20, .58)",
       "seraph_dressed": "rgba(10, 13, 26, .58)",
-      "variable": "--seam-4f65690bb165"
+      "technomancer": "rgba(11, 6, 16, .58)",
+      "variable": "--seam-4f65690bb165",
+      "wizard_mode": "rgba(16, 11, 6, .58)"
     },
     {
       "gold_lines": "rgba(28, 63, 168, .12)",
       "neo_noir": "rgba(116, 242, 255, .12)",
       "seraph_dressed": "rgba(93, 140, 242, .12)",
-      "variable": "--seam-2a7b3c8c7c5c"
+      "technomancer": "rgba(119, 252, 163, .12)",
+      "variable": "--seam-2a7b3c8c7c5c",
+      "wizard_mode": "rgba(245, 205, 126, .12)"
     },
     {
       "gold_lines": "#4a5d80",
       "neo_noir": "#78939d",
       "seraph_dressed": "#7f8ba8",
-      "variable": "--seam-1ee7d93665a5"
+      "technomancer": "#789d84",
+      "variable": "--seam-1ee7d93665a5",
+      "wizard_mode": "#9d9178"
     },
     {
       "gold_lines": "#8a5f2e",
       "neo_noir": "#ff91c5",
       "seraph_dressed": "#e8c39a",
-      "variable": "--seam-baa50ef130bb"
+      "technomancer": "#e294fc",
+      "variable": "--seam-baa50ef130bb",
+      "wizard_mode": "#9ff1d3"
     },
     {
       "gold_lines": "rgba(176, 122, 63, .07)",
       "neo_noir": "rgba(255, 145, 197, .07)",
       "seraph_dressed": "rgba(219, 153, 105, .07)",
-      "variable": "--seam-42f51c98138f"
+      "technomancer": "rgba(226, 148, 252, .07)",
+      "variable": "--seam-42f51c98138f",
+      "wizard_mode": "rgba(159, 241, 211, .07)"
     },
     {
       "gold_lines": "rgba(16, 28, 58, .12)",
       "neo_noir": "rgba(157, 248, 255, .12)",
       "seraph_dressed": "rgba(238, 244, 251, .12)",
-      "variable": "--seam-92f9a1f009b1"
+      "technomancer": "rgba(191, 221, 201, .12)",
+      "variable": "--seam-92f9a1f009b1",
+      "wizard_mode": "rgba(223, 213, 189, .12)"
     },
     {
       "gold_lines": "rgba(233, 196, 106, .65)",
       "neo_noir": "rgba(233, 196, 106, .65)",
       "seraph_dressed": "rgba(233, 196, 106, .65)",
-      "variable": "--seam-bf65b697f21d"
+      "technomancer": "rgba(160, 227, 112, .65)",
+      "variable": "--seam-bf65b697f21d",
+      "wizard_mode": "rgba(233, 191, 106, .65)"
     },
     {
       "gold_lines": "rgba(176, 122, 63, .72)",
       "neo_noir": "rgba(255, 145, 197, .72)",
       "seraph_dressed": "rgba(219, 153, 105, .72)",
-      "variable": "--seam-b8a555b93ea9"
+      "technomancer": "rgba(226, 148, 252, .72)",
+      "variable": "--seam-b8a555b93ea9",
+      "wizard_mode": "rgba(159, 241, 211, .72)"
     },
     {
       "gold_lines": "rgba(105, 223, 176, .72)",
       "neo_noir": "rgba(105, 223, 176, .72)",
       "seraph_dressed": "rgba(105, 223, 176, .72)",
-      "variable": "--seam-a31cdad5729a"
+      "technomancer": "rgba(105, 223, 144, .72)",
+      "variable": "--seam-a31cdad5729a",
+      "wizard_mode": "rgba(223, 184, 105, .72)"
     },
     {
       "gold_lines": "rgba(233, 196, 106, .28)",
       "neo_noir": "rgba(233, 196, 106, .28)",
       "seraph_dressed": "rgba(233, 196, 106, .28)",
-      "variable": "--seam-24d049fa591d"
+      "technomancer": "rgba(160, 227, 112, .28)",
+      "variable": "--seam-24d049fa591d",
+      "wizard_mode": "rgba(233, 191, 106, .28)"
     },
     {
       "gold_lines": "#d6bf88",
       "neo_noir": "#d6bf88",
       "seraph_dressed": "#d6bf88",
-      "variable": "--seam-5c4ba6e248af"
+      "technomancer": "#a9d28c",
+      "variable": "--seam-5c4ba6e248af",
+      "wizard_mode": "#d6bc88"
     },
     {
       "gold_lines": "rgba(176, 122, 63, .35)",
       "neo_noir": "rgba(255, 145, 197, .35)",
       "seraph_dressed": "rgba(219, 153, 105, .35)",
-      "variable": "--seam-f3c456237444"
+      "technomancer": "rgba(226, 148, 252, .35)",
+      "variable": "--seam-f3c456237444",
+      "wizard_mode": "rgba(159, 241, 211, .35)"
     },
     {
       "gold_lines": "rgba(255, 255, 255, .14)",
       "neo_noir": "rgba(75, 20, 49, .14)",
       "seraph_dressed": "rgba(20, 29, 58, .14)",
-      "variable": "--seam-18f59f729ba3"
+      "technomancer": "rgba(61, 20, 75, .14)",
+      "variable": "--seam-18f59f729ba3",
+      "wizard_mode": "rgba(27, 68, 53, .14)"
     },
     {
       "gold_lines": "rgba(28, 63, 168, .1)",
       "neo_noir": "rgba(116, 242, 255, .1)",
       "seraph_dressed": "rgba(93, 140, 242, .1)",
-      "variable": "--seam-c97a465b7cbb"
+      "technomancer": "rgba(119, 252, 163, .1)",
+      "variable": "--seam-c97a465b7cbb",
+      "wizard_mode": "rgba(245, 205, 126, .1)"
     },
     {
       "gold_lines": "#ffffff",
       "neo_noir": "#1c343c",
       "seraph_dressed": "#141d3a",
-      "variable": "--seam-6d74c0f8f133"
+      "technomancer": "#1c3c27",
+      "variable": "--seam-6d74c0f8f133",
+      "wizard_mode": "#3c311c"
     },
     {
       "gold_lines": "#f2f5fa",
       "neo_noir": "#081016",
       "seraph_dressed": "#0d1226",
-      "variable": "--seam-5af691ae6c00"
+      "technomancer": "#0e0816",
+      "variable": "--seam-5af691ae6c00",
+      "wizard_mode": "#160f08"
     },
     {
       "gold_lines": "#5a6b8a",
       "neo_noir": "#60767e",
       "seraph_dressed": "#6b7a99",
-      "variable": "--seam-6e3a89f2c9df"
+      "technomancer": "#607e6a",
+      "variable": "--seam-6e3a89f2c9df",
+      "wizard_mode": "#7e7460"
     },
     {
       "gold_lines": "#3e5170",
       "neo_noir": "#8ca5ad",
       "seraph_dressed": "#9fb0c9",
-      "variable": "--seam-a1c9bb362cd2"
+      "technomancer": "#8cad97",
+      "variable": "--seam-a1c9bb362cd2",
+      "wizard_mode": "#ada28c"
     },
     {
       "gold_lines": "#ffffff",
       "neo_noir": "#11242b",
       "seraph_dressed": "#141d3a",
-      "variable": "--seam-95a12bcf5755"
+      "technomancer": "#1d0f2d",
+      "variable": "--seam-95a12bcf5755",
+      "wizard_mode": "#2c1d10"
     },
     {
       "gold_lines": "#1c3fa8",
       "neo_noir": "#5de2ec",
       "seraph_dressed": "#5d8cf2",
-      "variable": "--seam-9df89ba8f574"
+      "technomancer": "#5dec8d",
+      "variable": "--seam-9df89ba8f574",
+      "wizard_mode": "#ecbc5d"
     },
     {
       "gold_lines": "#b07a3f",
       "neo_noir": "#e27878",
       "seraph_dressed": "#db9969",
-      "variable": "--seam-a294f950e499"
+      "technomancer": "#e2788a",
+      "variable": "--seam-a294f950e499",
+      "wizard_mode": "#e27881"
     },
     {
       "gold_lines": "#5a6b8a",
       "neo_noir": "#789098",
       "seraph_dressed": "#6b7a99",
-      "variable": "--seam-3fe560e43623"
+      "technomancer": "#789883",
+      "variable": "--seam-3fe560e43623",
+      "wizard_mode": "#988d78"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.035)",
       "neo_noir": "rgba(56, 215, 255, 0.035)",
       "seraph_dressed": "rgba(93, 140, 242, 0.035)",
-      "variable": "--seam-25a8333a4598"
+      "technomancer": "rgba(61, 250, 124, 0.035)",
+      "variable": "--seam-25a8333a4598",
+      "wizard_mode": "rgba(240, 184, 71, 0.035)"
     },
     {
       "gold_lines": "rgba(16, 28, 58, 0.12)",
       "neo_noir": "rgba(197, 242, 255, 0.12)",
       "seraph_dressed": "rgba(238, 244, 251, 0.12)",
-      "variable": "--seam-61914528a207"
+      "technomancer": "rgba(217, 235, 223, 0.12)",
+      "variable": "--seam-61914528a207",
+      "wizard_mode": "rgba(236, 230, 216, 0.12)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.16)",
       "neo_noir": "rgba(56, 215, 255, 0.16)",
       "seraph_dressed": "rgba(93, 140, 242, 0.16)",
-      "variable": "--seam-4fecbe26f924"
+      "technomancer": "rgba(61, 250, 124, 0.16)",
+      "variable": "--seam-4fecbe26f924",
+      "wizard_mode": "rgba(240, 184, 71, 0.16)"
     },
     {
       "gold_lines": "rgba(16, 28, 58, 0.04)",
       "neo_noir": "rgba(218, 248, 255, 0.04)",
       "seraph_dressed": "rgba(238, 244, 251, 0.04)",
-      "variable": "--seam-f5a343747308"
+      "technomancer": "rgba(231, 242, 235, 0.04)",
+      "variable": "--seam-f5a343747308",
+      "wizard_mode": "rgba(243, 239, 230, 0.04)"
     },
     {
       "gold_lines": "rgba(176, 122, 63, 0.38)",
       "neo_noir": "rgba(242, 71, 155, 0.38)",
       "seraph_dressed": "rgba(219, 153, 105, 0.38)",
-      "variable": "--seam-845457e31628"
+      "technomancer": "rgba(199, 71, 242, 0.38)",
+      "variable": "--seam-845457e31628",
+      "wizard_mode": "rgba(92, 221, 174, 0.38)"
     },
     {
       "gold_lines": "rgba(176, 122, 63, 0.5)",
       "neo_noir": "rgba(242, 71, 155, 0.5)",
       "seraph_dressed": "rgba(219, 153, 105, 0.5)",
-      "variable": "--seam-2455a39114f8"
+      "technomancer": "rgba(199, 71, 242, 0.5)",
+      "variable": "--seam-2455a39114f8",
+      "wizard_mode": "rgba(92, 221, 174, 0.5)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.5)",
       "neo_noir": "rgba(56, 215, 255, 0.5)",
       "seraph_dressed": "rgba(93, 140, 242, 0.5)",
-      "variable": "--seam-4d596628d200"
+      "technomancer": "rgba(61, 250, 124, 0.5)",
+      "variable": "--seam-4d596628d200",
+      "wizard_mode": "rgba(240, 184, 71, 0.5)"
     },
     {
       "gold_lines": "rgba(215, 224, 238, 0.94)",
       "neo_noir": "rgba(3, 9, 15, 0.94)",
       "seraph_dressed": "rgba(5, 6, 15, 0.94)",
-      "variable": "--seam-7c55824b04e6"
+      "technomancer": "rgba(9, 4, 14, 0.94)",
+      "variable": "--seam-7c55824b04e6",
+      "wizard_mode": "rgba(13, 9, 5, 0.94)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.04)",
       "neo_noir": "rgba(56, 215, 255, 0.04)",
       "seraph_dressed": "rgba(93, 140, 242, 0.04)",
-      "variable": "--seam-7dbf07b61736"
+      "technomancer": "rgba(61, 250, 124, 0.04)",
+      "variable": "--seam-7dbf07b61736",
+      "wizard_mode": "rgba(240, 184, 71, 0.04)"
     },
     {
       "gold_lines": "rgba(230, 236, 245, 0.96)",
       "neo_noir": "rgba(3, 10, 16, 0.96)",
       "seraph_dressed": "rgba(10, 13, 26, 0.96)",
-      "variable": "--seam-c4438412564a"
+      "technomancer": "rgba(9, 5, 14, 0.96)",
+      "variable": "--seam-c4438412564a",
+      "wizard_mode": "rgba(14, 9, 5, 0.96)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.09)",
       "neo_noir": "rgba(56, 215, 255, 0.09)",
       "seraph_dressed": "rgba(93, 140, 242, 0.09)",
-      "variable": "--seam-b1f66adee390"
+      "technomancer": "rgba(61, 250, 124, 0.09)",
+      "variable": "--seam-b1f66adee390",
+      "wizard_mode": "rgba(240, 184, 71, 0.09)"
     },
     {
       "gold_lines": "rgba(215, 224, 238, 0.88)",
       "neo_noir": "rgba(2, 9, 15, 0.88)",
       "seraph_dressed": "rgba(5, 6, 15, 0.88)",
-      "variable": "--seam-ff82f9842fa7"
+      "technomancer": "rgba(8, 4, 13, 0.88)",
+      "variable": "--seam-ff82f9842fa7",
+      "wizard_mode": "rgba(12, 8, 5, 0.88)"
     },
     {
       "gold_lines": "rgba(176, 122, 63, 0.1)",
       "neo_noir": "rgba(242, 71, 155, 0.1)",
       "seraph_dressed": "rgba(219, 153, 105, 0.1)",
-      "variable": "--seam-178e57842e50"
+      "technomancer": "rgba(199, 71, 242, 0.1)",
+      "variable": "--seam-178e57842e50",
+      "wizard_mode": "rgba(92, 221, 174, 0.1)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.24)",
       "neo_noir": "rgba(56, 215, 255, 0.24)",
       "seraph_dressed": "rgba(93, 140, 242, 0.24)",
-      "variable": "--seam-f2a156f214e0"
+      "technomancer": "rgba(61, 250, 124, 0.24)",
+      "variable": "--seam-f2a156f214e0",
+      "wizard_mode": "rgba(240, 184, 71, 0.24)"
     },
     {
       "gold_lines": "rgba(176, 122, 63, 0.025)",
       "neo_noir": "rgba(242, 71, 155, 0.025)",
       "seraph_dressed": "rgba(219, 153, 105, 0.025)",
-      "variable": "--seam-92d165cee6fb"
+      "technomancer": "rgba(199, 71, 242, 0.025)",
+      "variable": "--seam-92d165cee6fb",
+      "wizard_mode": "rgba(92, 221, 174, 0.025)"
     },
     {
       "gold_lines": "#d7e0ee",
       "neo_noir": "#03090f",
       "seraph_dressed": "#05060f",
-      "variable": "--seam-d07e4b81f716"
+      "technomancer": "#09040e",
+      "variable": "--seam-d07e4b81f716",
+      "wizard_mode": "#0d0905"
     },
     {
       "gold_lines": "rgb(215 224 238 / 92%)",
       "neo_noir": "rgb(2 7 11 / 92%)",
       "seraph_dressed": "rgb(5 6 15 / 92%)",
-      "variable": "--seam-7259c1b7a472"
+      "technomancer": "rgb(2 7 11 / 92%)",
+      "variable": "--seam-7259c1b7a472",
+      "wizard_mode": "rgb(2 7 11 / 92%)"
     },
     {
       "gold_lines": "rgb(150 104 44 / 10%)",
       "neo_noir": "rgb(56 215 255 / 10%)",
       "seraph_dressed": "rgb(93 140 242 / 10%)",
-      "variable": "--seam-7bfea5c9f214"
+      "technomancer": "rgb(56 215 255 / 10%)",
+      "variable": "--seam-7bfea5c9f214",
+      "wizard_mode": "rgb(56 215 255 / 10%)"
     },
     {
       "gold_lines": "rgb(215 224 238 / 98%)",
       "neo_noir": "rgb(2 7 11 / 98%)",
       "seraph_dressed": "rgb(5 6 15 / 98%)",
-      "variable": "--seam-512c1d0a2b0e"
+      "technomancer": "rgb(2 7 11 / 98%)",
+      "variable": "--seam-512c1d0a2b0e",
+      "wizard_mode": "rgb(2 7 11 / 98%)"
     },
     {
       "gold_lines": "rgb(230 236 245 / 98%)",
       "neo_noir": "rgb(8 10 16 / 98%)",
       "seraph_dressed": "rgb(10 13 26 / 98%)",
-      "variable": "--seam-33c9a99ef417"
+      "technomancer": "rgb(8 10 16 / 98%)",
+      "variable": "--seam-33c9a99ef417",
+      "wizard_mode": "rgb(8 10 16 / 98%)"
     },
     {
       "gold_lines": "rgb(176 122 63 / 12%)",
       "neo_noir": "rgb(242 71 155 / 12%)",
       "seraph_dressed": "rgb(219 153 105 / 12%)",
-      "variable": "--seam-41d71f12a8d4"
+      "technomancer": "rgb(242 71 155 / 12%)",
+      "variable": "--seam-41d71f12a8d4",
+      "wizard_mode": "rgb(242 71 155 / 12%)"
     },
     {
       "gold_lines": "rgb(215 224 238 / 99%)",
       "neo_noir": "rgb(2 7 11 / 99%)",
       "seraph_dressed": "rgb(5 6 15 / 99%)",
-      "variable": "--seam-4d6a4c015255"
+      "technomancer": "rgb(2 7 11 / 99%)",
+      "variable": "--seam-4d6a4c015255",
+      "wizard_mode": "rgb(2 7 11 / 99%)"
     },
     {
       "gold_lines": "rgb(230 236 245 / 98%)",
       "neo_noir": "rgb(7 15 22 / 98%)",
       "seraph_dressed": "rgb(10 13 26 / 98%)",
-      "variable": "--seam-b90b32646883"
+      "technomancer": "rgb(7 15 22 / 98%)",
+      "variable": "--seam-b90b32646883",
+      "wizard_mode": "rgb(7 15 22 / 98%)"
     },
     {
       "gold_lines": "rgb(150 104 44 / 4%)",
       "neo_noir": "rgb(56 215 255 / 4%)",
       "seraph_dressed": "rgb(93 140 242 / 4%)",
-      "variable": "--seam-c0397dffbbf0"
+      "technomancer": "rgb(56 215 255 / 4%)",
+      "variable": "--seam-c0397dffbbf0",
+      "wizard_mode": "rgb(56 215 255 / 4%)"
     },
     {
       "gold_lines": "rgb(215 224 238 / 92%)",
       "neo_noir": "rgb(4 10 15 / 92%)",
       "seraph_dressed": "rgb(5 6 15 / 92%)",
-      "variable": "--seam-7b3561f9e742"
+      "technomancer": "rgb(4 10 15 / 92%)",
+      "variable": "--seam-7b3561f9e742",
+      "wizard_mode": "rgb(4 10 15 / 92%)"
     },
     {
       "gold_lines": "rgb(215 224 238 / 55%)",
       "neo_noir": "rgb(0 0 0 / 55%)",
       "seraph_dressed": "rgb(5 6 15 / 55%)",
-      "variable": "--seam-cd6dda976ea8"
+      "technomancer": "rgb(0 0 0 / 55%)",
+      "variable": "--seam-cd6dda976ea8",
+      "wizard_mode": "rgb(0 0 0 / 55%)"
     },
     {
       "gold_lines": "rgb(230 236 245 / 90%)",
       "neo_noir": "rgb(4 12 18 / 90%)",
       "seraph_dressed": "rgb(10 13 26 / 90%)",
-      "variable": "--seam-d3c72ab27220"
+      "technomancer": "rgb(4 12 18 / 90%)",
+      "variable": "--seam-d3c72ab27220",
+      "wizard_mode": "rgb(4 12 18 / 90%)"
     },
     {
       "gold_lines": "rgb(150 104 44 / 5%)",
       "neo_noir": "rgb(56 215 255 / 5%)",
       "seraph_dressed": "rgb(93 140 242 / 5%)",
-      "variable": "--seam-407b4d300acc"
+      "technomancer": "rgb(56 215 255 / 5%)",
+      "variable": "--seam-407b4d300acc",
+      "wizard_mode": "rgb(56 215 255 / 5%)"
     },
     {
       "gold_lines": "rgb(215 224 238 / 70%)",
       "neo_noir": "rgb(1 5 8 / 70%)",
       "seraph_dressed": "rgb(5 6 15 / 70%)",
-      "variable": "--seam-997a0fddcb0d"
+      "technomancer": "rgb(1 5 8 / 70%)",
+      "variable": "--seam-997a0fddcb0d",
+      "wizard_mode": "rgb(1 5 8 / 70%)"
     },
     {
       "gold_lines": "rgb(242 245 250 / 94%)",
       "neo_noir": "rgb(10 18 24 / 94%)",
       "seraph_dressed": "rgb(13 18 38 / 94%)",
-      "variable": "--seam-7b1aa5c60b9c"
+      "technomancer": "rgb(10 18 24 / 94%)",
+      "variable": "--seam-7b1aa5c60b9c",
+      "wizard_mode": "rgb(10 18 24 / 94%)"
     },
     {
       "gold_lines": "rgb(215 224 238 / 97%)",
       "neo_noir": "rgb(5 9 14 / 97%)",
       "seraph_dressed": "rgb(5 6 15 / 97%)",
-      "variable": "--seam-eb47bcb0485c"
+      "technomancer": "rgb(5 9 14 / 97%)",
+      "variable": "--seam-eb47bcb0485c",
+      "wizard_mode": "rgb(5 9 14 / 97%)"
     },
     {
       "gold_lines": "rgb(215 224 238 / 40%)",
       "neo_noir": "rgb(0 0 0 / 40%)",
       "seraph_dressed": "rgb(5 6 15 / 40%)",
-      "variable": "--seam-86e5f6717d5a"
+      "technomancer": "rgb(0 0 0 / 40%)",
+      "variable": "--seam-86e5f6717d5a",
+      "wizard_mode": "rgb(0 0 0 / 40%)"
     },
     {
       "gold_lines": "rgb(150 104 44 / 3%)",
       "neo_noir": "rgb(56 215 255 / 3%)",
       "seraph_dressed": "rgb(93 140 242 / 3%)",
-      "variable": "--seam-9b204d181360"
+      "technomancer": "rgb(56 215 255 / 3%)",
+      "variable": "--seam-9b204d181360",
+      "wizard_mode": "rgb(56 215 255 / 3%)"
     },
     {
       "gold_lines": "rgb(150 104 44 / 9%)",
       "neo_noir": "rgb(56 215 255 / 9%)",
       "seraph_dressed": "rgb(93 140 242 / 9%)",
-      "variable": "--seam-f42fb54a49c4"
+      "technomancer": "rgb(56 215 255 / 9%)",
+      "variable": "--seam-f42fb54a49c4",
+      "wizard_mode": "rgb(56 215 255 / 9%)"
     },
     {
       "gold_lines": "rgb(150 104 44 / 8%)",
       "neo_noir": "rgb(56 215 255 / 8%)",
       "seraph_dressed": "rgb(93 140 242 / 8%)",
-      "variable": "--seam-ba6ed1e44a43"
+      "technomancer": "rgb(56 215 255 / 8%)",
+      "variable": "--seam-ba6ed1e44a43",
+      "wizard_mode": "rgb(56 215 255 / 8%)"
     },
     {
       "gold_lines": "rgb(16 28 58 / 8%)",
       "neo_noir": "rgb(255 255 255 / 8%)",
       "seraph_dressed": "rgb(238 244 251 / 8%)",
-      "variable": "--seam-3333c095fb2d"
+      "technomancer": "rgb(255 255 255 / 8%)",
+      "variable": "--seam-3333c095fb2d",
+      "wizard_mode": "rgb(255 255 255 / 8%)"
     },
     {
       "gold_lines": "rgb(16 28 58 / 16%)",
       "neo_noir": "rgb(255 255 255 / 16%)",
       "seraph_dressed": "rgb(238 244 251 / 16%)",
-      "variable": "--seam-8ebafc96bf26"
+      "technomancer": "rgb(255 255 255 / 16%)",
+      "variable": "--seam-8ebafc96bf26",
+      "wizard_mode": "rgb(255 255 255 / 16%)"
     },
     {
       "gold_lines": "rgb(16 28 58 / 4%)",
       "neo_noir": "rgb(255 255 255 / 4%)",
       "seraph_dressed": "rgb(238 244 251 / 4%)",
-      "variable": "--seam-29d8623058d1"
+      "technomancer": "rgb(255 255 255 / 4%)",
+      "variable": "--seam-29d8623058d1",
+      "wizard_mode": "rgb(255 255 255 / 4%)"
     },
     {
       "gold_lines": "rgb(16 28 58 / 18%)",
       "neo_noir": "rgb(255 255 255 / 18%)",
       "seraph_dressed": "rgb(238 244 251 / 18%)",
-      "variable": "--seam-539660590d01"
+      "technomancer": "rgb(255 255 255 / 18%)",
+      "variable": "--seam-539660590d01",
+      "wizard_mode": "rgb(255 255 255 / 18%)"
     },
     {
       "gold_lines": "rgba(16, 28, 58, 0.025)",
       "neo_noir": "rgba(255, 255, 255, 0.025)",
       "seraph_dressed": "rgba(238, 244, 251, 0.025)",
-      "variable": "--seam-37b0b11038dc"
+      "technomancer": "rgba(255, 255, 255, 0.025)",
+      "variable": "--seam-37b0b11038dc",
+      "wizard_mode": "rgba(255, 255, 255, 0.025)"
     },
     {
       "gold_lines": "rgba(16, 28, 58, 0.35)",
       "neo_noir": "rgba(255, 255, 255, 0.35)",
       "seraph_dressed": "rgba(238, 244, 251, 0.35)",
-      "variable": "--seam-1f37bea0c79e"
+      "technomancer": "rgba(255, 255, 255, 0.35)",
+      "variable": "--seam-1f37bea0c79e",
+      "wizard_mode": "rgba(255, 255, 255, 0.35)"
     },
     {
       "gold_lines": "#5a6b8a",
       "neo_noir": "#62778a",
       "seraph_dressed": "#6b7a99",
-      "variable": "--seam-988437660e49"
+      "technomancer": "#628a6f",
+      "variable": "--seam-988437660e49",
+      "wizard_mode": "#8a7d62"
     },
     {
       "gold_lines": "#b589ff",
       "neo_noir": "#b589ff",
       "seraph_dressed": "#b589ff",
-      "variable": "--seam-795eab265b1d"
+      "technomancer": "#ce89ff",
+      "variable": "--seam-795eab265b1d",
+      "wizard_mode": "#f3cc95"
     },
     {
       "gold_lines": "#e2b55f",
       "neo_noir": "#e2b55f",
       "seraph_dressed": "#e2b55f",
-      "variable": "--seam-74a182ca7d94"
+      "technomancer": "#97db66",
+      "variable": "--seam-74a182ca7d94",
+      "wizard_mode": "#e2b65f"
     },
     {
       "gold_lines": "rgb(242 245 250 / 96%)",
       "neo_noir": "rgb(12 18 24 / 96%)",
       "seraph_dressed": "rgb(13 18 38 / 96%)",
-      "variable": "--seam-8597f7aa1a6d"
+      "technomancer": "rgb(12 18 24 / 96%)",
+      "variable": "--seam-8597f7aa1a6d",
+      "wizard_mode": "rgb(12 18 24 / 96%)"
     },
     {
       "gold_lines": "rgb(230 236 245 / 98%)",
       "neo_noir": "rgb(8 12 17 / 98%)",
       "seraph_dressed": "rgb(10 13 26 / 98%)",
-      "variable": "--seam-7f456a7460e7"
+      "technomancer": "rgb(8 12 17 / 98%)",
+      "variable": "--seam-7f456a7460e7",
+      "wizard_mode": "rgb(8 12 17 / 98%)"
     },
     {
       "gold_lines": "rgb(215 224 238 / 32%)",
       "neo_noir": "rgb(0 0 0 / 32%)",
       "seraph_dressed": "rgb(5 6 15 / 32%)",
-      "variable": "--seam-c42ab7e5bb24"
+      "technomancer": "rgb(0 0 0 / 32%)",
+      "variable": "--seam-c42ab7e5bb24",
+      "wizard_mode": "rgb(0 0 0 / 32%)"
     },
     {
       "gold_lines": "rgb(16 28 58 / 14%)",
       "neo_noir": "rgb(255 255 255 / 14%)",
       "seraph_dressed": "rgb(238 244 251 / 14%)",
-      "variable": "--seam-c77b304acf9d"
+      "technomancer": "rgb(255 255 255 / 14%)",
+      "variable": "--seam-c77b304acf9d",
+      "wizard_mode": "rgb(255 255 255 / 14%)"
     },
     {
       "gold_lines": "rgb(16 28 58 / 9%)",
       "neo_noir": "rgb(255 255 255 / 9%)",
       "seraph_dressed": "rgb(238 244 251 / 9%)",
-      "variable": "--seam-6920851a5fcf"
+      "technomancer": "rgb(255 255 255 / 9%)",
+      "variable": "--seam-6920851a5fcf",
+      "wizard_mode": "rgb(255 255 255 / 9%)"
     },
     {
       "gold_lines": "rgb(16 28 58 / 2%)",
       "neo_noir": "rgb(255 255 255 / 2%)",
       "seraph_dressed": "rgb(238 244 251 / 2%)",
-      "variable": "--seam-7443162aef9d"
+      "technomancer": "rgb(255 255 255 / 2%)",
+      "variable": "--seam-7443162aef9d",
+      "wizard_mode": "rgb(255 255 255 / 2%)"
     },
     {
       "gold_lines": "rgb(16 28 58 / 10%)",
       "neo_noir": "rgb(255 255 255 / 10%)",
       "seraph_dressed": "rgb(238 244 251 / 10%)",
-      "variable": "--seam-c3eb6a13b0d3"
+      "technomancer": "rgb(255 255 255 / 10%)",
+      "variable": "--seam-c3eb6a13b0d3",
+      "wizard_mode": "rgb(255 255 255 / 10%)"
     },
     {
       "gold_lines": "rgb(215 224 238 / 18%)",
       "neo_noir": "rgb(0 0 0 / 18%)",
       "seraph_dressed": "rgb(5 6 15 / 18%)",
-      "variable": "--seam-9152f1900ac7"
+      "technomancer": "rgb(0 0 0 / 18%)",
+      "variable": "--seam-9152f1900ac7",
+      "wizard_mode": "rgb(0 0 0 / 18%)"
     },
     {
       "gold_lines": "rgb(176 122 63 / 50%)",
       "neo_noir": "rgb(255 112 102 / 50%)",
       "seraph_dressed": "rgb(219 153 105 / 50%)",
-      "variable": "--seam-e047dfe057c9"
+      "technomancer": "rgb(255 112 102 / 50%)",
+      "variable": "--seam-e047dfe057c9",
+      "wizard_mode": "rgb(255 112 102 / 50%)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, .12)",
       "neo_noir": "rgba(56, 215, 255, .12)",
       "seraph_dressed": "rgba(93, 140, 242, .12)",
-      "variable": "--seam-9e0866d51032"
+      "technomancer": "rgba(61, 250, 124, .12)",
+      "variable": "--seam-9e0866d51032",
+      "wizard_mode": "rgba(240, 184, 71, .12)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.05)",
       "neo_noir": "rgba(56, 215, 255, 0.05)",
       "seraph_dressed": "rgba(93, 140, 242, 0.05)",
-      "variable": "--seam-72fcdfe1c64b"
+      "technomancer": "rgba(61, 250, 124, 0.05)",
+      "variable": "--seam-72fcdfe1c64b",
+      "wizard_mode": "rgba(240, 184, 71, 0.05)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, .1)",
       "neo_noir": "rgba(56, 215, 255, .1)",
       "seraph_dressed": "rgba(93, 140, 242, .1)",
-      "variable": "--seam-db39d160715f"
+      "technomancer": "rgba(61, 250, 124, .1)",
+      "variable": "--seam-db39d160715f",
+      "wizard_mode": "rgba(240, 184, 71, .1)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, .025)",
       "neo_noir": "rgba(56, 215, 255, .025)",
       "seraph_dressed": "rgba(93, 140, 242, .025)",
-      "variable": "--seam-b5466d0e8367"
+      "technomancer": "rgba(61, 250, 124, .025)",
+      "variable": "--seam-b5466d0e8367",
+      "wizard_mode": "rgba(240, 184, 71, .025)"
     },
     {
       "gold_lines": "#3e5170",
       "neo_noir": "#b98da4",
       "seraph_dressed": "#9fb0c9",
-      "variable": "--seam-43a3a27e36e1"
+      "technomancer": "#ae8db9",
+      "variable": "--seam-43a3a27e36e1",
+      "wizard_mode": "#92b3a7"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.08)",
       "neo_noir": "rgba(56, 215, 255, 0.08)",
       "seraph_dressed": "rgba(93, 140, 242, 0.08)",
-      "variable": "--seam-629f7b0daf2a"
+      "technomancer": "rgba(61, 250, 124, 0.08)",
+      "variable": "--seam-629f7b0daf2a",
+      "wizard_mode": "rgba(240, 184, 71, 0.08)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.085)",
       "neo_noir": "rgba(56, 215, 255, 0.085)",
       "seraph_dressed": "rgba(93, 140, 242, 0.085)",
-      "variable": "--seam-b5f4de370f73"
+      "technomancer": "rgba(61, 250, 124, 0.085)",
+      "variable": "--seam-b5f4de370f73",
+      "wizard_mode": "rgba(240, 184, 71, 0.085)"
     },
     {
       "gold_lines": "rgba(90, 107, 138, 0.35)",
       "neo_noir": "rgba(98, 124, 139, 0.35)",
       "seraph_dressed": "rgba(107, 122, 153, 0.35)",
-      "variable": "--seam-c73fb2c0809f"
+      "technomancer": "rgba(98, 139, 112, 0.35)",
+      "variable": "--seam-c73fb2c0809f",
+      "wizard_mode": "rgba(139, 125, 98, 0.35)"
     },
     {
       "gold_lines": "rgba(176, 42, 36, 0.72)",
       "neo_noir": "rgba(255, 64, 95, 0.72)",
       "seraph_dressed": "rgba(217, 64, 72, 0.72)",
-      "variable": "--seam-5fdc013e6b45"
+      "technomancer": "rgba(245, 74, 102, 0.72)",
+      "variable": "--seam-5fdc013e6b45",
+      "wizard_mode": "rgba(236, 83, 96, 0.72)"
     },
     {
       "gold_lines": "rgba(176, 42, 36, 0.075)",
       "neo_noir": "rgba(255, 64, 95, 0.075)",
       "seraph_dressed": "rgba(217, 64, 72, 0.075)",
-      "variable": "--seam-269720efa4c9"
+      "technomancer": "rgba(245, 74, 102, 0.075)",
+      "variable": "--seam-269720efa4c9",
+      "wizard_mode": "rgba(236, 83, 96, 0.075)"
     },
     {
       "gold_lines": "#b07a3f",
       "neo_noir": "#ff6680",
       "seraph_dressed": "#db9969",
-      "variable": "--seam-71828e5a3eb2"
+      "technomancer": "#f76e85",
+      "variable": "--seam-71828e5a3eb2",
+      "wizard_mode": "#f0757f"
     },
     {
       "gold_lines": "rgba(215, 224, 238, 0.82)",
       "neo_noir": "rgba(3, 7, 12, 0.82)",
       "seraph_dressed": "rgba(5, 6, 15, 0.82)",
-      "variable": "--seam-5fe5cef911c8"
+      "technomancer": "rgba(7, 4, 11, 0.82)",
+      "variable": "--seam-5fe5cef911c8",
+      "wizard_mode": "rgba(11, 7, 4, 0.82)"
     },
     {
       "gold_lines": "rgba(215, 224, 238, 0.9)",
       "neo_noir": "rgba(3, 7, 12, 0.9)",
       "seraph_dressed": "rgba(5, 6, 15, 0.9)",
-      "variable": "--seam-d3741b57282e"
+      "technomancer": "rgba(7, 4, 11, 0.9)",
+      "variable": "--seam-d3741b57282e",
+      "wizard_mode": "rgba(11, 7, 4, 0.9)"
     },
     {
       "gold_lines": "rgba(176, 42, 36, 0.06)",
       "neo_noir": "rgba(255, 64, 95, 0.06)",
       "seraph_dressed": "rgba(217, 64, 72, 0.06)",
-      "variable": "--seam-98c7c3cceb98"
+      "technomancer": "rgba(245, 74, 102, 0.06)",
+      "variable": "--seam-98c7c3cceb98",
+      "wizard_mode": "rgba(236, 83, 96, 0.06)"
     },
     {
       "gold_lines": "rgba(242, 245, 250, 0.76)",
       "neo_noir": "rgba(5, 16, 24, 0.76)",
       "seraph_dressed": "rgba(13, 18, 38, 0.76)",
-      "variable": "--seam-56c6ff22c030"
+      "technomancer": "rgba(14, 7, 22, 0.76)",
+      "variable": "--seam-56c6ff22c030",
+      "wizard_mode": "rgba(21, 14, 8, 0.76)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.025)",
       "neo_noir": "rgba(56, 215, 255, 0.025)",
       "seraph_dressed": "rgba(93, 140, 242, 0.025)",
-      "variable": "--seam-a0cb19b5e0e9"
+      "technomancer": "rgba(61, 250, 124, 0.025)",
+      "variable": "--seam-a0cb19b5e0e9",
+      "wizard_mode": "rgba(240, 184, 71, 0.025)"
     },
     {
       "gold_lines": "rgba(230, 236, 245, 0.72)",
       "neo_noir": "rgba(4, 12, 19, 0.72)",
       "seraph_dressed": "rgba(10, 13, 26, 0.72)",
-      "variable": "--seam-9396c5bca7ef"
+      "technomancer": "rgba(11, 6, 17, 0.72)",
+      "variable": "--seam-9396c5bca7ef",
+      "wizard_mode": "rgba(17, 11, 6, 0.72)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.045)",
       "neo_noir": "rgba(56, 215, 255, 0.045)",
       "seraph_dressed": "rgba(93, 140, 242, 0.045)",
-      "variable": "--seam-67a88c092f29"
+      "technomancer": "rgba(61, 250, 124, 0.045)",
+      "variable": "--seam-67a88c092f29",
+      "wizard_mode": "rgba(240, 184, 71, 0.045)"
     },
     {
       "gold_lines": "rgba(215, 224, 238, 0.62)",
       "neo_noir": "rgba(2, 7, 12, 0.62)",
       "seraph_dressed": "rgba(5, 6, 15, 0.62)",
-      "variable": "--seam-55eb94661d6c"
+      "technomancer": "rgba(7, 4, 10, 0.62)",
+      "variable": "--seam-55eb94661d6c",
+      "wizard_mode": "rgba(10, 7, 4, 0.62)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.3)",
       "neo_noir": "rgba(56, 215, 255, 0.3)",
       "seraph_dressed": "rgba(93, 140, 242, 0.3)",
-      "variable": "--seam-64b40b65c930"
+      "technomancer": "rgba(61, 250, 124, 0.3)",
+      "variable": "--seam-64b40b65c930",
+      "wizard_mode": "rgba(240, 184, 71, 0.3)"
     },
     {
       "gold_lines": "rgba(28, 63, 168, 0.98)",
       "neo_noir": "rgba(124, 232, 255, 0.98)",
       "seraph_dressed": "rgba(93, 140, 242, 0.98)",
-      "variable": "--seam-4c53ef46e2d1"
+      "technomancer": "rgba(127, 252, 169, 0.98)",
+      "variable": "--seam-4c53ef46e2d1",
+      "wizard_mode": "rgba(245, 208, 134, 0.98)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.76)",
       "neo_noir": "rgba(56, 215, 255, 0.76)",
       "seraph_dressed": "rgba(93, 140, 242, 0.76)",
-      "variable": "--seam-90f5754b2c81"
+      "technomancer": "rgba(61, 250, 124, 0.76)",
+      "variable": "--seam-90f5754b2c81",
+      "wizard_mode": "rgba(240, 184, 71, 0.76)"
     },
     {
       "gold_lines": "#f2f5fa",
       "neo_noir": "#021018",
       "seraph_dressed": "#0d1226",
-      "variable": "--seam-39e5268646a8"
+      "technomancer": "#0d0614",
+      "variable": "--seam-39e5268646a8",
+      "wizard_mode": "#130d07"
     },
     {
       "gold_lines": "rgba(255, 255, 255, 0.74)",
       "neo_noir": "rgba(10, 26, 37, 0.74)",
       "seraph_dressed": "rgba(20, 29, 58, 0.74)",
-      "variable": "--seam-d64da5b6228e"
+      "technomancer": "rgba(23, 12, 35, 0.74)",
+      "variable": "--seam-d64da5b6228e",
+      "wizard_mode": "rgba(34, 23, 13, 0.74)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.06)",
       "neo_noir": "rgba(56, 215, 255, 0.06)",
       "seraph_dressed": "rgba(93, 140, 242, 0.06)",
-      "variable": "--seam-2bbcf197e7a5"
+      "technomancer": "rgba(61, 250, 124, 0.06)",
+      "variable": "--seam-2bbcf197e7a5",
+      "wizard_mode": "rgba(240, 184, 71, 0.06)"
     },
     {
       "gold_lines": "rgba(176, 122, 63, 0.42)",
       "neo_noir": "rgba(242, 71, 155, 0.42)",
       "seraph_dressed": "rgba(219, 153, 105, 0.42)",
-      "variable": "--seam-e381737757ab"
+      "technomancer": "rgba(199, 71, 242, 0.42)",
+      "variable": "--seam-e381737757ab",
+      "wizard_mode": "rgba(92, 221, 174, 0.42)"
     },
     {
       "gold_lines": "#263452",
       "neo_noir": "#c9dce4",
       "seraph_dressed": "#eef4fb",
-      "variable": "--seam-8a7fb4e92fdf"
+      "technomancer": "#cae3d2",
+      "variable": "--seam-8a7fb4e92fdf",
+      "wizard_mode": "#e4dcc9"
     },
     {
       "gold_lines": "rgba(242, 245, 250, 0.86)",
       "neo_noir": "rgba(5, 17, 25, 0.86)",
       "seraph_dressed": "rgba(13, 18, 38, 0.86)",
-      "variable": "--seam-5d7874315a69"
+      "technomancer": "rgba(14, 8, 22, 0.86)",
+      "variable": "--seam-5d7874315a69",
+      "wizard_mode": "rgba(22, 15, 8, 0.86)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.055)",
       "neo_noir": "rgba(56, 215, 255, 0.055)",
       "seraph_dressed": "rgba(93, 140, 242, 0.055)",
-      "variable": "--seam-e00d5f0f10c3"
+      "technomancer": "rgba(61, 250, 124, 0.055)",
+      "variable": "--seam-e00d5f0f10c3",
+      "wizard_mode": "rgba(240, 184, 71, 0.055)"
     },
     {
       "gold_lines": "rgba(245, 248, 252, 0.94)",
       "neo_noir": "rgba(7, 18, 27, 0.94)",
       "seraph_dressed": "rgba(7, 8, 15, 0.94)",
-      "variable": "--seam-a748717e957b"
+      "technomancer": "rgba(16, 8, 26, 0.94)",
+      "variable": "--seam-a748717e957b",
+      "wizard_mode": "rgba(25, 16, 9, 0.94)"
     },
     {
       "gold_lines": "rgba(215, 224, 238, 0.7)",
       "neo_noir": "rgba(0, 0, 0, 0.7)",
       "seraph_dressed": "rgba(5, 6, 15, 0.7)",
-      "variable": "--seam-d0e4b4894483"
+      "technomancer": "rgba(0, 0, 0, 0.7)",
+      "variable": "--seam-d0e4b4894483",
+      "wizard_mode": "rgba(0, 0, 0, 0.7)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.07)",
       "neo_noir": "rgba(56, 215, 255, 0.07)",
       "seraph_dressed": "rgba(93, 140, 242, 0.07)",
-      "variable": "--seam-8e022dc8f98c"
+      "technomancer": "rgba(61, 250, 124, 0.07)",
+      "variable": "--seam-8e022dc8f98c",
+      "wizard_mode": "rgba(240, 184, 71, 0.07)"
     },
     {
       "gold_lines": "rgba(215, 224, 238, 0.84)",
       "neo_noir": "rgba(0, 0, 0, 0.84)",
       "seraph_dressed": "rgba(5, 6, 15, 0.84)",
-      "variable": "--seam-28f98c040cb6"
+      "technomancer": "rgba(0, 0, 0, 0.84)",
+      "variable": "--seam-28f98c040cb6",
+      "wizard_mode": "rgba(0, 0, 0, 0.84)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.11)",
       "neo_noir": "rgba(56, 215, 255, 0.11)",
       "seraph_dressed": "rgba(93, 140, 242, 0.11)",
-      "variable": "--seam-eda1a84078a3"
+      "technomancer": "rgba(61, 250, 124, 0.11)",
+      "variable": "--seam-eda1a84078a3",
+      "wizard_mode": "rgba(240, 184, 71, 0.11)"
     },
     {
       "gold_lines": "rgba(215, 224, 238, 0.88)",
       "neo_noir": "rgba(1, 3, 7, 0.88)",
       "seraph_dressed": "rgba(5, 6, 15, 0.88)",
-      "variable": "--seam-a0678e625832"
+      "technomancer": "rgba(4, 2, 6, 0.88)",
+      "variable": "--seam-a0678e625832",
+      "wizard_mode": "rgba(6, 4, 2, 0.88)"
     },
     {
       "gold_lines": "rgba(230, 236, 245, 0.98)",
       "neo_noir": "rgba(4, 12, 19, 0.98)",
       "seraph_dressed": "rgba(10, 13, 26, 0.98)",
-      "variable": "--seam-3260d77b6ec5"
+      "technomancer": "rgba(11, 6, 17, 0.98)",
+      "variable": "--seam-3260d77b6ec5",
+      "wizard_mode": "rgba(17, 11, 6, 0.98)"
     },
     {
       "gold_lines": "rgba(215, 224, 238, 0.88)",
       "neo_noir": "rgba(3, 9, 15, 0.88)",
       "seraph_dressed": "rgba(5, 6, 15, 0.88)",
-      "variable": "--seam-4063e5c77a52"
+      "technomancer": "rgba(9, 4, 14, 0.88)",
+      "variable": "--seam-4063e5c77a52",
+      "wizard_mode": "rgba(13, 9, 5, 0.88)"
     },
     {
       "gold_lines": "rgba(245, 248, 252, 0.97)",
       "neo_noir": "rgba(7, 18, 27, 0.97)",
       "seraph_dressed": "rgba(7, 8, 15, 0.97)",
-      "variable": "--seam-df8ec2608c9e"
+      "technomancer": "rgba(16, 8, 26, 0.97)",
+      "variable": "--seam-df8ec2608c9e",
+      "wizard_mode": "rgba(25, 16, 9, 0.97)"
     }
   ],
   "schema_version": 1,

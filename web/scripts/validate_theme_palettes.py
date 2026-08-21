@@ -30,6 +30,22 @@ PALETTES = {
         "danger": "#b02a24",
         "fleet": ["#176b5b", "#1c3fa8", "#76501f", "#b02a24"],
     },
+    "wizard-mode": {
+        "ground": "#0b0704",
+        "ink": "#f8f5ef",
+        "muted": "#bbae95",
+        "accent": "#f0b847",
+        "danger": "#ec5360",
+        "fleet": ["#5cddae", "#8ea7ff", "#f0b847", "#ec5360"],
+    },
+    "technomancer": {
+        "ground": "#07040b",
+        "ink": "#f0f7f2",
+        "muted": "#95bba2",
+        "accent": "#3dfa7c",
+        "danger": "#f54a66",
+        "fleet": ["#3dfa7c", "#7c8cff", "#c747f2", "#f54a66"],
+    },
 }
 
 

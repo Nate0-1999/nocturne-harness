@@ -50,8 +50,26 @@ html[data-theme="gold-lines"] {
   --theme-horizon: var(--accent-secondary);
 }
 
+html[data-theme="wizard-mode"] {
+  --theme-sky-wash: radial-gradient(circle at 72% 12%, var(--accent-soft), transparent 34%),
+    linear-gradient(to bottom, var(--surface-deep), var(--ground) 68%, var(--surface));
+  --theme-rim: var(--line-strong);
+  --theme-rim-hover: var(--accent);
+  --theme-horizon: var(--accent-secondary);
+}
+
+html[data-theme="technomancer"] {
+  --theme-sky-wash: radial-gradient(circle at 18% 18%, var(--accent-secondary-soft), transparent 30%),
+    linear-gradient(to bottom, var(--surface-deep), var(--ground) 72%, var(--surface-raised));
+  --theme-rim: var(--line-strong);
+  --theme-rim-hover: var(--accent);
+  --theme-horizon: var(--accent-secondary);
+}
+
 html[data-theme="seraph-dressed"] .rack-shell,
 html[data-theme="gold-lines"] .rack-shell,
+html[data-theme="wizard-mode"] .rack-shell,
+html[data-theme="technomancer"] .rack-shell,
 html[data-pressed-colorway] .rack-shell {
   background: var(--theme-sky-wash) fixed;
 }
@@ -93,8 +111,17 @@ html[data-theme="gold-lines"] .rack-overlay-module {
   border-color: var(--theme-rim);
 }
 
+html[data-theme="wizard-mode"] .rack-module,
+html[data-theme="wizard-mode"] .rack-overlay-module,
+html[data-theme="technomancer"] .rack-module,
+html[data-theme="technomancer"] .rack-overlay-module {
+  border-color: var(--theme-rim);
+}
+
 html[data-theme="seraph-dressed"] .rack-ambient,
 html[data-theme="gold-lines"] .rack-ambient,
+html[data-theme="wizard-mode"] .rack-ambient,
+html[data-theme="technomancer"] .rack-ambient,
 html[data-pressed-colorway] .rack-ambient {
   filter: none;
 }

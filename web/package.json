@@ -19,6 +19,7 @@
     "verify:m2ux2:browser": "node --experimental-strip-types ../verification/m2ux2/browser_check.mjs",
     "verify:m2ux3:browser": "node --experimental-strip-types ../verification/m2ux3/browser_check.mjs",
     "verify:m2ux4:browser": "node --experimental-strip-types ../verification/m2ux4/browser_check.mjs",
+    "verify:m2ux6:browser": "node --experimental-strip-types ../verification/m2ux6/browser_check.mjs",
     "verify:m2st2:browser": "node ../verification/m2st2/browser_check.mjs",
     "verify:m2st3:browser": "node ../verification/m2st3/browser_check.mjs"
   },

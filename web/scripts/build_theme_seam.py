@@ -1,7 +1,7 @@
-"""Record and verify the exhaustive CSS color-token seam for M2UX4.
+"""Record and verify the exhaustive CSS color-token seam for M2UX4/M2UX6.
 
 The one-time --record operation moves every literal from the three production
-stylesheets into a generated three-theme variable table. Ordinary --check is
+stylesheets into one generated built-in-theme variable table. Ordinary --check is
 read-only and fails on either a new literal or generated-table drift.
 """
 
@@ -22,6 +22,8 @@ ASSET_FILES = (
 MANIFEST = Path("src/themes/seam-colors.json")
 THEMES_CSS = Path("src/themes/themes.css")
 COLOR = re.compile(r"#[0-9a-fA-F]{3,8}\b|(?:rgba?|hsla?)\([^()]*\)")
+GRIMOIRE_HEX = re.compile(r"#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b")
+GRIMOIRE_RGBA = re.compile(r"rgba?\(([^)]+)\)")
 
 SERAPH_HEX = {
     "#03070c": "#05060f",
@@ -180,6 +182,72 @@ def mapped(
     return value
 
 
+def grimoire_transform(rgb: tuple[float, float, float], theme: str) -> tuple[float, float, float]:
+    """D.2 116 freezes the FINAL kit's palette transform verbatim."""
+    hue, lightness, saturation = colorsys.rgb_to_hls(*rgb)
+    degrees = hue * 360
+    if theme == "wizard-mode":
+        if lightness < 0.16:
+            target, changed_saturation = 28, min(saturation + 0.18, 0.45)
+        elif lightness > 0.80:
+            target, changed_saturation = 42, min(max(saturation, 0.12), 0.35)
+        elif 150 <= degrees <= 215:
+            target, changed_saturation = 40, min(saturation, 0.85)
+        elif 215 < degrees <= 275:
+            target, changed_saturation = 35, saturation * 0.8
+        elif 275 < degrees <= 345:
+            target, changed_saturation = 158, saturation * 0.75
+        elif degrees > 345 or degrees <= 20:
+            target, changed_saturation = 355, min(saturation, 0.8)
+        else:
+            target, changed_saturation = 40, saturation
+    else:
+        if lightness < 0.16:
+            target, changed_saturation = 268, min(saturation + 0.22, 0.5)
+        elif lightness > 0.80:
+            target, changed_saturation = 140, min(max(saturation, 0.10), 0.3)
+        elif 150 <= degrees <= 215:
+            target, changed_saturation = 140, min(saturation, 0.95)
+        elif 215 < degrees <= 275:
+            target, changed_saturation = 275, saturation
+        elif 275 < degrees <= 345:
+            target, changed_saturation = 285, min(saturation, 0.95)
+        elif degrees > 345 or degrees <= 20:
+            target, changed_saturation = 350, min(saturation, 0.9)
+        else:
+            target, changed_saturation = 95, saturation * 0.9
+    return colorsys.hls_to_rgb(target / 360, lightness, changed_saturation)
+
+
+def grimoire_mapped(value: str, theme: str) -> str:
+    """Apply the reference kit's exact hex/comma-rgb rewrite behavior."""
+
+    def replace_hex(match: re.Match[str]) -> str:
+        digits = match.group(1)
+        if len(digits) == 3:
+            digits = "".join(character * 2 for character in digits)
+        source = tuple(int(digits[index : index + 2], 16) / 255 for index in (0, 2, 4))
+        changed = grimoire_transform(source, theme)  # type: ignore[arg-type]
+        return "#" + "".join(
+            f"{max(0, min(255, round(channel * 255))):02x}" for channel in changed
+        )
+
+    def replace_rgb(match: re.Match[str]) -> str:
+        parts = [part.strip() for part in match.group(1).split(",")]
+        if len(parts) < 3:
+            return match.group(0)
+        try:
+            source = tuple(float(part.split("/")[0]) / 255 for part in parts[:3])
+        except ValueError:
+            return match.group(0)
+        changed = grimoire_transform(source, theme)  # type: ignore[arg-type]
+        alpha = parts[3] if len(parts) == 4 else None
+        values = ", ".join(str(round(channel * 255)) for channel in changed)
+        return f"rgba({values}, {alpha})" if alpha else f"rgb({values})"
+
+    return GRIMOIRE_RGBA.sub(replace_rgb, GRIMOIRE_HEX.sub(replace_hex, value))
+
+
 def manifest_from_literals(literals: list[str]) -> dict[str, object]:
     unique = list(dict.fromkeys(literals))
     colors = []
@@ -191,7 +259,9 @@ def manifest_from_literals(literals: list[str]) -> dict[str, object]:
                 "seraph_dressed": mapped(
                     value, hex_map=SERAPH_HEX, rgb_map=SERAPH_RGB, theme_index=0
                 ),
+                "technomancer": grimoire_mapped(value, "technomancer"),
                 "variable": variable(value),
+                "wizard_mode": grimoire_mapped(value, "wizard-mode"),
             }
         )
     return {
@@ -209,6 +279,8 @@ def css_from_manifest(manifest: dict[str, object]) -> str:
         ("neo-noir", "neo_noir"),
         ("seraph-dressed", "seraph_dressed"),
         ("gold-lines", "gold_lines"),
+        ("wizard-mode", "wizard_mode"),
+        ("technomancer", "technomancer"),
     ):
         selector = ":root" if theme == "neo-noir" else f':root[data-theme="{theme}"]'
         if theme == "neo-noir":
@@ -275,6 +347,8 @@ def refresh() -> None:
             value, hex_map=SERAPH_HEX, rgb_map=SERAPH_RGB, theme_index=0
         )
         entry["gold_lines"] = mapped(value, hex_map=GOLD_HEX, rgb_map=GOLD_RGB, theme_index=1)
+        entry["wizard_mode"] = grimoire_mapped(value, "wizard-mode")
+        entry["technomancer"] = grimoire_mapped(value, "technomancer")
     MANIFEST.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     THEMES_CSS.write_text(css_from_manifest(manifest))
 

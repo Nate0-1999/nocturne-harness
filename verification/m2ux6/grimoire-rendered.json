@@ -1,0 +1,324 @@
+{
+  "fixture": "M2UX6 REGRESSION",
+  "themes": {
+    "wizard-mode": {
+      "mount": {
+        "theme": "wizard-mode",
+        "hostHead": {
+          "animationName": "grimoire-rune-inscribe",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "hostMargin": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "hostBottom": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": false
+        },
+        "topbar": {
+          "animationName": "grimoire-topbar-arrive",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "emptyAfter": {
+          "animationName": "grimoire-breathe-x",
+          "animationIterationCount": "infinite",
+          "hasGeneratedStrip": true
+        },
+        "emptyBefore": {
+          "animationName": "grimoire-breathe-y",
+          "animationIterationCount": "infinite",
+          "hasGeneratedStrip": true
+        },
+        "ambient": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": false
+        },
+        "messageContentAnimation": "none"
+      },
+      "hover": {
+        "theme": "wizard-mode",
+        "hostHead": {
+          "animationName": "grimoire-rune-inscribe",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "hostMargin": {
+          "animationName": "grimoire-margin-reveal",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "hostBottom": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": false
+        },
+        "topbar": {
+          "animationName": "grimoire-topbar-arrive",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "emptyAfter": {
+          "animationName": "grimoire-breathe-x",
+          "animationIterationCount": "infinite",
+          "hasGeneratedStrip": true
+        },
+        "emptyBefore": {
+          "animationName": "grimoire-breathe-y",
+          "animationIterationCount": "infinite",
+          "hasGeneratedStrip": true
+        },
+        "ambient": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": false
+        },
+        "messageContentAnimation": "none"
+      },
+      "empty": {
+        "theme": "wizard-mode",
+        "hostHead": {
+          "animationName": "grimoire-rune-inscribe",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "hostMargin": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "hostBottom": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": false
+        },
+        "topbar": {
+          "animationName": "grimoire-topbar-arrive",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "emptyAfter": {
+          "animationName": "grimoire-breathe-x",
+          "animationIterationCount": "infinite",
+          "hasGeneratedStrip": true
+        },
+        "emptyBefore": {
+          "animationName": "grimoire-breathe-y",
+          "animationIterationCount": "infinite",
+          "hasGeneratedStrip": true
+        },
+        "ambient": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": false
+        },
+        "messageContentAnimation": "none"
+      },
+      "reduced": {
+        "hostHead": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "hostMargin": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "hostBottom": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": false
+        },
+        "topbar": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "emptyAfter": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "emptyBefore": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "ambient": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": false
+        }
+      }
+    },
+    "technomancer": {
+      "mount": {
+        "theme": "technomancer",
+        "hostHead": {
+          "animationName": "grimoire-glitch-in",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "hostMargin": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": false
+        },
+        "hostBottom": {
+          "animationName": "grimoire-hexline-arrive",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "topbar": {
+          "animationName": "grimoire-topbar-arrive",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "emptyAfter": {
+          "animationName": "grimoire-glyph-rain",
+          "animationIterationCount": "infinite",
+          "hasGeneratedStrip": true
+        },
+        "emptyBefore": {
+          "animationName": "grimoire-glyph-rain",
+          "animationIterationCount": "infinite",
+          "hasGeneratedStrip": true
+        },
+        "ambient": {
+          "animationName": "grimoire-scan",
+          "animationIterationCount": "infinite",
+          "hasGeneratedStrip": false
+        },
+        "messageContentAnimation": "none"
+      },
+      "hover": {
+        "theme": "technomancer",
+        "hostHead": {
+          "animationName": "grimoire-glitch-in",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "hostMargin": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": false
+        },
+        "hostBottom": {
+          "animationName": "grimoire-hexline-arrive",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "topbar": {
+          "animationName": "grimoire-topbar-arrive",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "emptyAfter": {
+          "animationName": "grimoire-glyph-rain",
+          "animationIterationCount": "infinite",
+          "hasGeneratedStrip": true
+        },
+        "emptyBefore": {
+          "animationName": "grimoire-glyph-rain",
+          "animationIterationCount": "infinite",
+          "hasGeneratedStrip": true
+        },
+        "ambient": {
+          "animationName": "grimoire-scan",
+          "animationIterationCount": "infinite",
+          "hasGeneratedStrip": false
+        },
+        "messageContentAnimation": "none"
+      },
+      "empty": {
+        "theme": "technomancer",
+        "hostHead": {
+          "animationName": "grimoire-glitch-in",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "hostMargin": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": false
+        },
+        "hostBottom": {
+          "animationName": "grimoire-hexline-arrive",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "topbar": {
+          "animationName": "grimoire-topbar-arrive",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "emptyAfter": {
+          "animationName": "grimoire-glyph-rain",
+          "animationIterationCount": "infinite",
+          "hasGeneratedStrip": true
+        },
+        "emptyBefore": {
+          "animationName": "grimoire-glyph-rain",
+          "animationIterationCount": "infinite",
+          "hasGeneratedStrip": true
+        },
+        "ambient": {
+          "animationName": "grimoire-scan",
+          "animationIterationCount": "infinite",
+          "hasGeneratedStrip": false
+        },
+        "messageContentAnimation": "none"
+      },
+      "reduced": {
+        "hostHead": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "hostMargin": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": false
+        },
+        "hostBottom": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "topbar": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "emptyAfter": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "emptyBefore": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": true
+        },
+        "ambient": {
+          "animationName": "none",
+          "animationIterationCount": "1",
+          "hasGeneratedStrip": false
+        }
+      }
+    }
+  },
+  "persistence": {
+    "selected": "technomancer",
+    "host": "technomancer",
+    "chat": "technomancer"
+  },
+  "console_problems": [],
+  "page_errors": []
+}

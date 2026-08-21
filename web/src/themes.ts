@@ -8,6 +8,8 @@ export const THEMES = [
   { id: 'neo-noir', label: 'NEO-NOIR' },
   { id: 'seraph-dressed', label: 'SERAPH DRESSED' },
   { id: 'gold-lines', label: 'GOLD LINES' },
+  { id: 'wizard-mode', label: 'WIZARD MODE' },
+  { id: 'technomancer', label: 'TECHNOMANCER' },
 ] as const
 
 export type BuiltinThemeId = (typeof THEMES)[number]['id']
