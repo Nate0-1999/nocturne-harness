@@ -14,9 +14,11 @@ import {
   createStageLayer,
   fitStageCamera,
   loadStageLayout,
+  moduleFitsViewport,
   moduleIsOffscreen,
   moveStageModule,
   persistStageLayout,
+  recoverStageModule,
   removeStageLayer,
   removeStageModule,
   resizeStageModule,
@@ -74,6 +76,54 @@ test('whole-stage fit and off-screen classification use the same camera geometry
   const fitted = fitStageCamera(1280, 720)
   assert.ok(fitted.zoom >= STAGE_MIN_ZOOM)
   assert.equal(moduleIsOffscreen(module, fitted, 1280, 720), false)
+})
+
+/** F055 and SPEC B.6 rule 8 require one phone recovery action to return Recipe and Deck fully readable and operable. */
+test('off-screen recovery fits Recipe and Deck at native scale inside 390 by 844', () => {
+  const viewportWidth = 390
+  const viewportHeight = 749
+
+  let recipeLayout = selectStageLayer(cloneFactoryStageLayout(), 'graph')
+  recipeLayout = restoreStageModule(recipeLayout, 'recipe')
+  recipeLayout = updateStageCamera(recipeLayout, { x: -5000, y: -5000, zoom: 0.86 })
+  recipeLayout = recoverStageModule(recipeLayout, 'recipe', viewportWidth, viewportHeight)
+  const recipeLayer = activeStageLayer(recipeLayout)
+  const recipe = recipeLayer.modules.find((module) => module.module_id === 'recipe')
+  assert.deepEqual(recipe, { module_id: 'recipe', x: 124, y: 70, width: 7, height: 20 })
+  assert.equal(recipeLayer.camera.zoom, 1)
+  assert.equal(moduleFitsViewport(
+    recipe, recipeLayer.camera, viewportWidth, viewportHeight, 12,
+  ), true)
+  assert.equal(moduleIsOffscreen(
+    recipe, recipeLayer.camera, viewportWidth, viewportHeight,
+  ), false)
+
+  let deckLayout = updateStageCamera(
+    cloneFactoryStageLayout(),
+    { x: -5000, y: -5000, zoom: 0.64 },
+  )
+  deckLayout = recoverStageModule(deckLayout, 'deck', viewportWidth, viewportHeight)
+  const deckLayer = activeStageLayer(deckLayout)
+  const deck = deckLayer.modules.find((module) => module.module_id === 'deck')
+  assert.deepEqual(deck, { module_id: 'deck', x: 136, y: 90, width: 7, height: 20 })
+  assert.equal(deckLayer.camera.zoom, 1)
+  assert.equal(moduleFitsViewport(
+    deck, deckLayer.camera, viewportWidth, viewportHeight, 12,
+  ), true)
+})
+
+/** F055 keeps ordinary desktop recovery geometry intact when the complete module already fits. */
+test('off-screen recovery preserves module size when centered geometry fits', () => {
+  let layout = selectStageLayer(cloneFactoryStageLayout(), 'graph')
+  layout = restoreStageModule(layout, 'recipe')
+  const before = activeStageLayer(layout).modules.find((module) => module.module_id === 'recipe')
+  layout = updateStageCamera(layout, { x: -5000, y: -5000, zoom: 0.86 })
+  layout = recoverStageModule(layout, 'recipe', 1440, 900)
+  const layer = activeStageLayer(layout)
+  const recovered = layer.modules.find((module) => module.module_id === 'recipe')
+
+  assert.deepEqual(recovered, before)
+  assert.equal(moduleFitsViewport(recovered, layer.camera, 1440, 900, 12), true)
 })
 
 /** PLAN M2ST1 / P2 keeps factory Graph and Injection ordinary removable Stage modules. */

@@ -15,6 +15,9 @@ export const STAGE_UNIT_HEIGHT = 36
 export const STAGE_FINE_GRID_SIZE = 12
 export const STAGE_MIN_ZOOM = 0.06
 export const STAGE_MAX_ZOOM = 1.6
+const STAGE_RECOVERY_INSET = 12
+const STAGE_RECOVERY_ZOOM = 1
+const PHONE_REFLOW_MODULE_IDS: readonly StageModuleId[] = ['recipe', 'deck']
 const STAGE_ORIGIN_X = (STAGE_COLUMNS - LEGACY_STAGE_COLUMNS * STAGE_COORDINATE_SCALE) / 2
 const STAGE_ORIGIN_Y = (STAGE_ROWS - LEGACY_STAGE_ROWS * STAGE_COORDINATE_SCALE) / 2
 
@@ -362,6 +365,86 @@ export function focusStageModule(
     y: Math.round(viewportHeight / 2 - centerY * normalizedZoom),
     zoom: normalizedZoom,
   }
+}
+
+export function recoverStageModule(
+  layout: StageLayoutSet,
+  moduleId: StageModuleId,
+  viewportWidth: number,
+  viewportHeight: number,
+): StageLayoutSet {
+  const layer = activeStageLayer(layout)
+  const module = layer.modules.find((candidate) => candidate.module_id === moduleId)
+  if (module === undefined) return layout
+
+  const focusZoom = Math.max(layer.camera.zoom, 0.72)
+  const focusedCamera = focusStageModule(
+    module,
+    viewportWidth,
+    viewportHeight,
+    focusZoom,
+  )
+  if (!PHONE_REFLOW_MODULE_IDS.includes(moduleId)) {
+    return updateStageCamera(layout, focusedCamera)
+  }
+  if (
+    viewportWidth <= STAGE_RECOVERY_INSET * 2 ||
+    viewportHeight <= STAGE_RECOVERY_INSET * 2 ||
+    moduleFitsViewport(
+      module,
+      focusedCamera,
+      viewportWidth,
+      viewportHeight,
+      STAGE_RECOVERY_INSET,
+    )
+  ) {
+    return updateStageCamera(layout, focusedCamera)
+  }
+
+  const maxWidth = Math.max(1, Math.floor(
+    (viewportWidth - STAGE_RECOVERY_INSET * 2) /
+    (STAGE_UNIT_WIDTH * STAGE_RECOVERY_ZOOM),
+  ))
+  const maxHeight = Math.max(1, Math.floor(
+    (viewportHeight - STAGE_RECOVERY_INSET * 2) /
+    (STAGE_UNIT_HEIGHT * STAGE_RECOVERY_ZOOM),
+  ))
+  const recovered = {
+    ...module,
+    width: Math.min(module.width, maxWidth),
+    height: Math.min(module.height, maxHeight),
+  }
+  return updateActiveLayer(layout, (currentLayer) => ({
+    ...currentLayer,
+    camera: focusStageModule(
+      recovered,
+      viewportWidth,
+      viewportHeight,
+      STAGE_RECOVERY_ZOOM,
+    ),
+    modules: currentLayer.modules.map((candidate) => (
+      candidate.module_id === moduleId ? recovered : candidate
+    )),
+  }))
+}
+
+export function moduleFitsViewport(
+  module: StageModuleLayout,
+  camera: StageCamera,
+  viewportWidth: number,
+  viewportHeight: number,
+  inset = 0,
+): boolean {
+  const left = camera.x + module.x * STAGE_UNIT_WIDTH * camera.zoom
+  const top = camera.y + module.y * STAGE_UNIT_HEIGHT * camera.zoom
+  const right = left + module.width * STAGE_UNIT_WIDTH * camera.zoom
+  const bottom = top + module.height * STAGE_UNIT_HEIGHT * camera.zoom
+  return (
+    left >= inset &&
+    top >= inset &&
+    right <= viewportWidth - inset &&
+    bottom <= viewportHeight - inset
+  )
 }
 
 export function moduleIsOffscreen(

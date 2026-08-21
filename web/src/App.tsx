@@ -81,6 +81,7 @@ import {
   moduleIsOffscreen,
   moveStageModule,
   persistStageLayout,
+  recoverStageModule,
   removeStageLayer,
   removeStageModule,
   resizeStageModule,
@@ -605,11 +606,18 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   }
 
   function focusModule(module: StageModuleLayout) {
-    changeCamera(focusStageModule(
-      module,
+    if (module.module_id === 'recipe' || module.module_id === 'deck') {
+      const viewport = viewportRef.current
+      if (viewport !== null) {
+        viewport.scrollLeft = 0
+        viewport.scrollTop = 0
+      }
+    }
+    setLayout((current) => recoverStageModule(
+      current,
+      module.module_id,
       viewportSize.width,
       viewportSize.height,
-      Math.max(layer.camera.zoom, 0.72),
     ))
   }
 

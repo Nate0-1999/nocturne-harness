@@ -2778,3 +2778,33 @@ protocol would rebuild commodity behavior. Per-action approval would make normal
 iteration unusable; unrestricted navigation would erase the wall. A visible browser,
 separate screenshot store, or new Rack module would violate the headless and
 single-history boundaries.
+
+## 092 — Phone recall adapts Stage geometry instead of shrinking the instrument [P2, M3FB]
+
+**Decision.** Recipe and Deck recovery now returns the full module inside the viewport,
+not merely a one-pixel intersection. First center the retained module at the readable
+camera zoom. If its complete bounds still cannot fit, recover it at native scale by shrinking
+only the persisted Stage grid width or height that exceeds the viewport-safe bounds,
+then center it with a 12-pixel inset. Recipe and The Deck therefore reflow as ordinary
+modules at 390×844; their text and controls are not made microscopic by a fit-to-width
+camera zoom, and the recovered geometry remains the Rack's one durable layout truth.
+Their recall also returns the Stage viewport's hidden native scroll to the origin, so
+browser focus scrolling cannot silently offset the explicit camera transform.
+
+M3FB runs beside M2UX6 under the packet's explicit conditional parallel ruling. The
+surfaces are disjoint in practice: this packet changes only Stage geometry in
+`stageLayout.ts`, Stage scroll/recall handling in `App.tsx`, and geometry tests; it does
+not touch theme tokens, motif stylesheets, keyframes, the theme registry, or the switcher.
+Any later need to cross that file boundary stops the packet rather than racing the theme
+lane.
+
+**Motivation.** F055 exposed a false recovery: centering an oversized module at 72%
+left most of it beyond the phone edge. P2 and B.6 rule 8 require the visible escape hatch
+to return a readable, operable instrument in one action, while R21 keeps position and
+place as the native Stage primitives.
+
+**Rejected alternatives.** Zooming a 24-column Recipe down to fit 390 pixels makes its
+text and controls too small to use. Treating a one-pixel intersection as recovered keeps
+the existing defect under a different camera position. A temporary full-screen overlay
+would create a second module lifecycle and require another escape action. Theme or shell
+CSS overrides would collide with M2UX6 and encode geometry in the wrong layer.
