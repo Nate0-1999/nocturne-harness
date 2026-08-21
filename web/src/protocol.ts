@@ -190,6 +190,7 @@ export type MemoryUnit = JsonObject & {
   keywords: string[]
   project_key: string | null
   thread_origin: string | null
+  origin_thread_id: string | null
   origin_path: string | null
   pin: boolean
   status: MemoryStatus
@@ -270,6 +271,7 @@ export type MemoryFeatures = JsonObject & {
   freq: number
   hist: number
   loc: number | null
+  thread: number | null
 }
 
 export type ScoredMemoryCard = JsonObject & {
@@ -662,7 +664,7 @@ const MEMORY_STATUSES: readonly MemoryStatus[] = [
   'tombstoned',
 ]
 
-const FEATURE_KEYS = ['sem', 'kw', 'time', 'proj', 'freq', 'hist', 'loc'] as const
+const FEATURE_KEYS = ['sem', 'kw', 'time', 'proj', 'freq', 'hist', 'loc', 'thread'] as const
 const CARD_KEYS = [
   'memory_id',
   'label',
@@ -682,6 +684,7 @@ const MEMORY_UNIT_KEYS = [
   'keywords',
   'project_key',
   'thread_origin',
+  'origin_thread_id',
   'origin_path',
   'pin',
   'status',
@@ -707,7 +710,7 @@ function parseMemoryFeatures(value: unknown): MemoryFeatures | null {
   }
   for (const key of FEATURE_KEYS) {
     const feature = value[key]
-    if (key === 'loc' && feature === null) {
+    if ((key === 'loc' || key === 'thread') && feature === null) {
       continue
     }
     if (
@@ -727,6 +730,7 @@ function parseMemoryFeatures(value: unknown): MemoryFeatures | null {
     freq: value.freq as number,
     hist: value.hist as number,
     loc: value.loc as number | null,
+    thread: value.thread as number | null,
   }
 }
 
@@ -775,6 +779,7 @@ function parseMemoryUnit(value: unknown): MemoryUnit | null {
     !value.keywords.every((keyword) => typeof keyword === 'string') ||
     (value.project_key !== null && typeof value.project_key !== 'string') ||
     (value.thread_origin !== null && typeof value.thread_origin !== 'string') ||
+    (value.origin_thread_id !== null && !isUuid(value.origin_thread_id)) ||
     (value.origin_path !== null && typeof value.origin_path !== 'string') ||
     typeof value.pin !== 'boolean' ||
     !MEMORY_STATUSES.includes(value.status as MemoryStatus) ||
@@ -798,6 +803,7 @@ function parseMemoryUnit(value: unknown): MemoryUnit | null {
     keywords: value.keywords as string[],
     project_key: value.project_key as string | null,
     thread_origin: value.thread_origin as string | null,
+    origin_thread_id: value.origin_thread_id as string | null,
     origin_path: value.origin_path as string | null,
     pin: value.pin,
     status: value.status as MemoryStatus,

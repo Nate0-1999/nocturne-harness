@@ -10,6 +10,7 @@ from harness.spine_client import JudgedContext, MemoryKind
 RUN_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV"
 MEMORY_ID = UUID("60000000-0000-4000-8000-000000000001")
 BATCH_UID = UUID("70000000-0000-4000-8000-000000000001")
+THREAD_ID = UUID("80000000-0000-4000-8000-000000000001")
 
 
 class FakeSpine:
@@ -50,6 +51,7 @@ async def test_bridge_preserves_run_scoped_visibility_and_judged_winner_routing(
         spine,
         principal_id="owner",
         machine_id="machine-local",
+        thread_id=THREAD_ID,
     )
     origin = f"{RUN_ID}/root.2"
 
@@ -79,6 +81,7 @@ async def test_bridge_preserves_run_scoped_visibility_and_judged_winner_routing(
     visible = spine.calls[1][1]
     resolve = spine.calls[2][1]
     assert stage.run_id == RUN_ID and stage.origin_agent == origin
+    assert stage.origin_thread_id == THREAD_ID
     assert visible.run_id == RUN_ID and visible.origin_agent == origin
     assert resolve.winner_origin_agent == origin
     assert resolve.judged_context.judge_ids == ["judge-a", "judge-b", "judge-c"]

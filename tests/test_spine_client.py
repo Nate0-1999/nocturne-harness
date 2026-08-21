@@ -1,5 +1,6 @@
 import inspect
 from copy import deepcopy
+from uuid import UUID
 
 import pytest
 from pydantic import TypeAdapter, ValidationError
@@ -46,6 +47,7 @@ def memory_unit_payload() -> dict[str, object]:
         "keywords": ["editor", "tabs"],
         "project_key": None,
         "thread_origin": None,
+        "origin_thread_id": None,
         "origin_path": None,
         "pin": False,
         "status": "active",
@@ -267,6 +269,7 @@ def test_memory_unit_is_the_shared_c4_shape() -> None:
         "keywords",
         "project_key",
         "thread_origin",
+        "origin_thread_id",
         "origin_path",
         "pin",
         "status",
@@ -377,6 +380,7 @@ def test_a049_memory_split_models_are_closed_exact_c4_shapes() -> None:
             MemorySplitChild(label="Second", body="Fact two.", keywords=["fact", "two"]),
         ],
         thread_origin="22345678-1234-5678-1234-567812345678",
+        origin_thread_id=UUID("22345678-1234-5678-1234-567812345678"),
         origin_path="/workspace/notes.md",
         editor="user",
         machine_id="machine-1",
@@ -393,6 +397,7 @@ def test_a049_memory_split_models_are_closed_exact_c4_shapes() -> None:
         "source_body",
         "children",
         "thread_origin",
+        "origin_thread_id",
         "origin_path",
         "editor",
         "machine_id",

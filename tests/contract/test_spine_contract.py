@@ -80,6 +80,7 @@ def _create_request(
         keywords=["h2", "contract"],
         project_key=project_key,
         thread_origin="h2-live-contract",
+        origin_thread_id=uuid4(),
         origin_path="tests/contract",
         editor="user",
         machine_id="h2-contract-runner",
@@ -109,6 +110,7 @@ async def test_live_create_conflicts_and_dedup_bands(
     assert isinstance(hard_source, CreatedMemoryResponse)
     assert hard_source.created.embedding_model == expected_embedding_model
     assert hard_source.created.origin_path == "tests/contract"
+    assert hard_source.created.origin_thread_id is not None
 
     with pytest.raises(CreateMemoryConflictError) as label_error:
         await spine_client.create_memory(

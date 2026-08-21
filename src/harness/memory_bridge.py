@@ -45,11 +45,13 @@ class SymphonyMemoryBridge:
         *,
         principal_id: str,
         machine_id: str,
+        thread_id: UUID,
         shares: MemorySharePolicy | None = None,
     ) -> None:
         self._spine = spine
         self._principal_id = principal_id
         self._machine_id = machine_id
+        self._thread_id = thread_id
         self.shares = shares or MemorySharePolicy()
 
     async def visible(self, *, run_id: str, origin_agent: str) -> SymphonyVisibilityResponse:
@@ -83,6 +85,7 @@ class SymphonyMemoryBridge:
                 kind=kind,
                 keywords=[] if keywords is None else keywords,
                 project_key=project_key,
+                origin_thread_id=self._thread_id,
                 origin_path=origin_path,
                 run_id=run_id,
                 origin_agent=origin_agent,

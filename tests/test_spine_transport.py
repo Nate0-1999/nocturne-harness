@@ -58,6 +58,7 @@ def memory_unit_payload() -> dict[str, Any]:
         "keywords": ["editor", "tabs"],
         "project_key": None,
         "thread_origin": None,
+        "origin_thread_id": None,
         "origin_path": "src/editor.py",
         "pin": False,
         "status": "active",

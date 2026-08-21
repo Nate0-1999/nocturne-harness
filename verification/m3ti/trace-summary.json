@@ -1,0 +1,23 @@
+{
+  "fixture_curtain": "M3TI REGRESSION",
+  "prompt": "Show the thread-local memory ranking.",
+  "scorer_version": "m3ti-thread-v1",
+  "ranked_memories": [
+    {
+      "label": "Born in this thread",
+      "rank": 1,
+      "score": 0.6412,
+      "project": 1.0,
+      "thread": 1.0,
+      "location": null
+    },
+    {
+      "label": "Threadless legacy twin",
+      "rank": 2,
+      "score": 0.61,
+      "project": 1.0,
+      "thread": null,
+      "location": null
+    }
+  ]
+}

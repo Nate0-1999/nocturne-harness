@@ -73,6 +73,7 @@ def _card(*, item_uid: str, batch_uid: UUID | None, request: QueueDecisionReques
             keywords=["decision", "provenance"],
             project_key=None,
             thread_origin=None,
+            origin_thread_id=None,
             origin_path=None,
             pin=False,
             status=MemoryStatus.CANDIDATE,

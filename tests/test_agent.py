@@ -175,6 +175,7 @@ def memory_unit(
         keywords=[],
         project_key=None,
         thread_origin=str(THREAD_ID),
+        origin_thread_id=THREAD_ID,
         origin_path="/workspace/notes.md",
         pin=False,
         status=status,

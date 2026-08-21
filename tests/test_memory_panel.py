@@ -94,6 +94,7 @@ def memory_unit(
         keywords=["memory"],
         project_key=None,
         thread_origin=THREAD_ID,
+        origin_thread_id=UUID(THREAD_ID),
         origin_path=None,
         pin=pin,
         status=status,

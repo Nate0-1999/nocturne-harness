@@ -49,6 +49,7 @@ def _memory(*, body: str, revision: int, reinforcements: int = 0) -> MemoryUnit:
         keywords=["memory", "authority", "write"],
         project_key="build-test",
         thread_origin=None,
+        origin_thread_id=None,
         origin_path="verification/m2fx2",
         pin=False,
         status=MemoryStatus.ACTIVE,

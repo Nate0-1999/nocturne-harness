@@ -90,6 +90,7 @@ def _seed_card(*, batch_uid: UUID, source_name: str = "garden.md", source_sha256
             keywords=["seed", "consent"],
             project_key=None,
             thread_origin=None,
+            origin_thread_id=None,
             origin_path=source_name,
             pin=False,
             status=MemoryStatus.CANDIDATE,

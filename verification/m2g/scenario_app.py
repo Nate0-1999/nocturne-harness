@@ -60,6 +60,7 @@ def _unit(memory_id: UUID, label: str, body: str) -> MemoryUnit:
         keywords=["M2G", "verification"],
         project_key=None,
         thread_origin=None,
+        origin_thread_id=None,
         origin_path="verification/m2g",
         pin=False,
         status=MemoryStatus.ACTIVE,

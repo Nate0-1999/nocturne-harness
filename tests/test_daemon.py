@@ -297,6 +297,7 @@ class PanelGateSpine:
             keywords=["test"],
             project_key=None,
             thread_origin=None,
+            origin_thread_id=None,
             origin_path=None,
             pin=True,
             status=MemoryStatus.ACTIVE,

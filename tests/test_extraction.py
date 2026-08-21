@@ -85,6 +85,7 @@ def _thread_card(
             keywords=["queue", "consent"],
             project_key=None,
             thread_origin=str(thread_id),
+            origin_thread_id=thread_id,
             origin_path=None,
             pin=False,
             status=MemoryStatus.CANDIDATE,

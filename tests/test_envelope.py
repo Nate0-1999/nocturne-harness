@@ -61,6 +61,7 @@ def scored_card() -> dict[str, object]:
             "freq": 0.5,
             "hist": 0.4,
             "loc": None,
+            "thread": None,
         },
         "rank": 1,
     }
@@ -102,6 +103,7 @@ def wrong_unit() -> dict[str, object]:
         "keywords": [],
         "project_key": None,
         "thread_origin": "thread-1",
+        "origin_thread_id": None,
         "origin_path": None,
         "pin": False,
         "status": "active",

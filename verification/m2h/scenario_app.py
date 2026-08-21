@@ -72,6 +72,7 @@ def _memory(
         keywords=keywords or ["garden", "relay"],
         project_key="N8_Harness",
         thread_origin=thread_origin,
+        origin_thread_id=UUID(thread_origin) if thread_origin is not None else None,
         origin_path="verification/m2h",
         pin=False,
         status=status,

@@ -24,7 +24,7 @@ import { formatHumanScore } from './humanNumbers.ts'
 const LONG_PRESS_MS = 550
 const LONG_PRESS_MOVE_TOLERANCE_PX = 10
 
-type FeatureKey = 'sem' | 'kw' | 'time' | 'proj' | 'freq' | 'hist' | 'loc'
+type FeatureKey = 'sem' | 'kw' | 'time' | 'proj' | 'freq' | 'hist' | 'loc' | 'thread'
 type WrongResolutionAction = 'edit' | 'expire'
 
 const FEATURE_LABELS: readonly { key: FeatureKey; label: string }[] = [
@@ -32,9 +32,10 @@ const FEATURE_LABELS: readonly { key: FeatureKey; label: string }[] = [
   { key: 'kw', label: 'Keyword' },
   { key: 'time', label: 'Recency' },
   { key: 'proj', label: 'Project' },
+  { key: 'thread', label: 'Thread' },
+  { key: 'loc', label: 'Location' },
   { key: 'freq', label: 'Citation' },
   { key: 'hist', label: 'Edit history' },
-  { key: 'loc', label: 'Location' },
 ]
 
 interface MemoryGateProps {

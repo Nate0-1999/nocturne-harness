@@ -80,6 +80,7 @@ def wrong_unit(*, revision: int = 2) -> dict[str, object]:
         "keywords": [],
         "project_key": None,
         "thread_origin": "thread-1",
+        "origin_thread_id": None,
         "origin_path": None,
         "pin": False,
         "status": "active",

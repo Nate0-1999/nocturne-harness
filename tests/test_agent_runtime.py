@@ -943,6 +943,7 @@ async def test_a049_label_and_split_share_one_two_request_runtime_usage_wall() -
             "keywords": ["fact", "garden"],
             "project_key": None,
             "thread_origin": str(THREAD_UUID),
+            "origin_thread_id": THREAD_UUID,
             "origin_path": "/workspace/notes.md",
             "pin": False,
             "status": status,

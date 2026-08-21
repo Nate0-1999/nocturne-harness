@@ -254,6 +254,7 @@ def memory_unit(*, revision: int = 2, body: str = "Current wrong body") -> Memor
         keywords=[],
         project_key="project-1",
         thread_origin=THREAD_ID,
+        origin_thread_id=UUID(THREAD_ID),
         origin_path="/workspace/file.py",
         pin=False,
         status=MemoryStatus.ACTIVE,

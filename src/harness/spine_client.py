@@ -109,6 +109,7 @@ class MemoryFeatures(ContractModel):
     freq: RawFeatureScore
     hist: RawFeatureScore
     loc: RawFeatureScore | None = None
+    thread: RawFeatureScore | None = None
 
 
 class MemoryCard(ContractModel):
@@ -147,6 +148,7 @@ class MemoryUnit(ContractModel):
     keywords: list[str]
     project_key: str | None
     thread_origin: str | None
+    origin_thread_id: UUID | None
     origin_path: str | None
     pin: bool
     status: MemoryStatus
@@ -292,6 +294,7 @@ class CreateMemoryRequest(ContractModel):
     keywords: list[str] | None = None
     project_key: str | None = None
     thread_origin: str | None = None
+    origin_thread_id: UUID | None = None
     origin_path: str | None = None
     editor: str
     machine_id: str
@@ -321,6 +324,7 @@ class MemorySplitRequest(ContractModel):
     source_body: str
     children: list[MemorySplitChild] = Field(min_length=2, max_length=64)
     thread_origin: str | None = None
+    origin_thread_id: UUID | None = None
     origin_path: str | None = None
     editor: str
     machine_id: str
@@ -468,6 +472,7 @@ class SymphonyMemoryRecord(ContractModel):
     kind: MemoryKind
     keywords: list[str]
     project_key: str | None
+    origin_thread_id: UUID | None
     origin_path: str | None
     pin: bool
     status: Literal["active", "candidate", "staged", "quarantined", "tombstoned"]
@@ -487,6 +492,7 @@ class StageSymphonyMemoryRequest(ContractModel):
     kind: MemoryKind
     keywords: list[str] = Field(default_factory=list)
     project_key: str | None = None
+    origin_thread_id: UUID
     origin_path: str | None = None
     run_id: ULID
     origin_agent: NonBlankString
