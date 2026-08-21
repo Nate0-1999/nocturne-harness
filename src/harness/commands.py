@@ -21,3 +21,9 @@ def model_command_text(text: str) -> str | None:
     if text.startswith(prefix) and len(text) > len(prefix) and text[len(prefix)].isspace():
         return text[len(prefix) :].strip()
     return None
+
+
+def browser_open_web_command(text: str) -> bool:
+    """Match the sole owner command that grants this thread open-web access."""
+
+    return text.strip() == "/browser allow-web"

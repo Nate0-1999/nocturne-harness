@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
+from harness.browser_toolset import BrowserToolset
 from harness.toolset import (
     AgentLocation,
     PresenceEvent,
@@ -37,6 +38,7 @@ class LazyStandardToolset:
         self._machine_id = machine_id
         self._fence_reads = fence_reads
         self._toolset: StandardToolset | None = None
+        self._browser = BrowserToolset(location=self.location)
         self._lock = asyncio.Lock()
 
     async def _owned(self) -> StandardToolset:
@@ -79,9 +81,18 @@ class LazyStandardToolset:
         tool_name: ToolName,
         arguments: Mapping[str, object],
     ) -> ToolExecutionResult:
+        if self._browser.owns(tool_name):
+            return await self._browser.execute(tool_name, arguments)
         return await (await self._owned()).execute(tool_name, arguments)
 
+    def grant_open_web(self, thread_id: str) -> None:
+        self._browser.grant_open_web(thread_id)
+
+    def set_browser_consent_check(self, consent_check: Callable[[str], bool]) -> None:
+        self._browser.set_consent_check(consent_check)
+
     async def close(self) -> None:
+        await self._browser.close()
         if self._toolset is not None:
             await self._toolset.close()
             self._toolset = None

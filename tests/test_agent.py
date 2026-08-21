@@ -449,6 +449,11 @@ async def test_chat_returns_output_and_reusable_full_history_with_exact_limits()
             "ls",
             "bash",
             "move",
+            "navigate",
+            "click",
+            "type",
+            "read_page",
+            "screenshot",
         ]
         for _, info in calls
     )
@@ -1390,5 +1395,10 @@ async def test_near_miss_remember_commands_are_ordinary_chat(ordinary_text: str)
         "ls",
         "bash",
         "move",
+        "navigate",
+        "click",
+        "type",
+        "read_page",
+        "screenshot",
     ]
     assert spine.create_requests == []

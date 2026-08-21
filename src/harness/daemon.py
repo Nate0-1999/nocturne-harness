@@ -28,6 +28,7 @@ from pydantic import BaseModel
 from harness import __version__
 from harness.agent import HarnessAgent
 from harness.agent_runtime import PydanticAITurnRunner
+from harness.commands import browser_open_web_command
 from harness.config import HarnessSettings
 from harness.context_window import ContextWindowSnapshot, ContextWindowTracker
 from harness.envelope import (
@@ -732,6 +733,20 @@ def create_dev_app(
         on_context_changed=publish_ambient_memory_panel,
     )
     journal = transcript_journal or TranscriptJournal(nocturne_home() / "transcripts")
+
+    def browser_consent_was_journaled(thread_id: str) -> bool:
+        try:
+            return any(
+                message.get("role") == "user"
+                and message.get("state") == StopReason.END_TURN.value
+                and isinstance(message.get("content"), str)
+                and browser_open_web_command(message["content"])
+                for message in journal.read_messages(thread_id)
+            )
+        except TranscriptJournalUnavailable:
+            return False
+
+    workspace_toolset.set_browser_consent_check(browser_consent_was_journaled)
     transcript_sync = TranscriptSyncEngine(
         journal,
         owned_spine,

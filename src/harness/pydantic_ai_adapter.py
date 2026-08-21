@@ -3,7 +3,7 @@
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict
-from pydantic_ai import RunContext
+from pydantic_ai import BinaryContent, RunContext, ToolReturn
 from pydantic_ai.capabilities import Capability
 from pydantic_ai.tools import Tool
 
@@ -17,6 +17,9 @@ WORKSPACE_INSTRUCTIONS = (
     "Use move in its own tool step before edit, write, or bash in another directory. "
     "Reads are free. Writes and bash are confined to the current location. "
     "If a tool refuses a boundary crossing, explain the wall plainly; do not retry around it."
+    " Browser tools are headless and default to localhost or files beneath the current location."
+    " Never ask the owner for consent inside a tool call; a refused open-web request must wait"
+    " for the owner's exact `/browser allow-web` command."
 )
 
 
@@ -222,7 +225,74 @@ async def move(ctx: RunContext[MemoryToolContext], path: str) -> str:
     return await _execute_workspace_tool(ctx, "move", {"path": path})
 
 
-WORKSPACE_TOOLS = (read, edit, write, grep, find, ls, bash, move)
+async def _execute_browser_tool(
+    ctx: RunContext[MemoryToolContext],
+    tool_name: ToolName,
+    arguments: dict[str, object],
+) -> str | ToolReturn:
+    toolset = ctx.deps.toolset
+    if toolset is None or ctx.deps.thread_id is None:
+        return f"{tool_name} unavailable: this owner session has no browser toolset"
+    arguments["_thread_id"] = str(ctx.deps.thread_id)
+    try:
+        result = await toolset.execute(tool_name, arguments)
+    except (ToolsetError, OSError, ValueError) as exc:
+        return f"{tool_name} refused: {str(exc).strip() or type(exc).__name__}"
+    if not result.success:
+        return f"{tool_name} refused: {result.content}"
+    if result.image is None:
+        return result.content
+    if result.media_type is None:  # pragma: no cover - adapter contract guard
+        raise ValueError("browser image result requires a media type")
+    return ToolReturn(
+        return_value=result.content,
+        content=[result.content, BinaryContent(data=result.image, media_type=result.media_type)],
+        metadata={"tool": tool_name, "media_type": result.media_type},
+    )
+
+
+async def navigate(ctx: RunContext[MemoryToolContext], url: str) -> str | ToolReturn:
+    """Open an allowed URL in this thread's headless browser."""
+    return await _execute_browser_tool(ctx, "navigate", {"url": url})
+
+
+async def click(ctx: RunContext[MemoryToolContext], selector: str) -> str | ToolReturn:
+    """Click one element selected with a Playwright locator string."""
+    return await _execute_browser_tool(ctx, "click", {"selector": selector})
+
+
+async def type(
+    ctx: RunContext[MemoryToolContext], selector: str, text: str
+) -> str | ToolReturn:
+    """Replace the value of one selected form field."""
+    return await _execute_browser_tool(ctx, "type", {"selector": selector, "text": text})
+
+
+async def read_page(ctx: RunContext[MemoryToolContext]) -> str | ToolReturn:
+    """Read the current page URL, title, and visible body text."""
+    return await _execute_browser_tool(ctx, "read_page", {})
+
+
+async def screenshot(ctx: RunContext[MemoryToolContext]) -> str | ToolReturn:
+    """Capture the current page and send the PNG back as model-visible image input."""
+    return await _execute_browser_tool(ctx, "screenshot", {})
+
+
+WORKSPACE_TOOLS = (
+    read,
+    edit,
+    write,
+    grep,
+    find,
+    ls,
+    bash,
+    move,
+    navigate,
+    click,
+    type,
+    read_page,
+    screenshot,
+)
 
 
 class WorkspaceCapability(Capability[MemoryToolContext]):

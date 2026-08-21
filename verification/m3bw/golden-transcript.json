@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "thread_identity": "m3bw-verification",
+  "prompt": "Open the tiny page, read it, type real owner proof, click reveal, take a screenshot, then describe only what is visible.",
+  "tool_sequence": [
+    "navigate",
+    "read_page",
+    "type",
+    "click",
+    "screenshot"
+  ],
+  "expected_visible_facts": [
+    "Midnight Lantern",
+    "real owner proof",
+    "Reveal signal",
+    "Amber constellation — real owner proof"
+  ],
+  "walls": {
+    "default_allowed": ["localhost", "file beneath current agent location"],
+    "external_without_consent": "refused",
+    "consent_command": "/browser allow-web",
+    "scope": "one owner thread"
+  }
+}

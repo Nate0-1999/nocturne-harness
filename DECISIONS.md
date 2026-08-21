@@ -2747,3 +2747,34 @@ the product. Persisting a second Recipe graph would duplicate Symphony history a
 invite drift. Fabricating parallel dependencies that the launch does not sign would
 make the attractive grid less truthful than the plan. Keeping an empty reader after a
 real launch would preserve the 503's underlying absence under a different status code.
+
+## 091 — Browser hands use pinned Playwright behind the existing tool seam [P2, M3BW]
+
+**Decision.** Adopt the official Python Playwright package as the first browser
+dependency and keep it beside, not inside, the pinned PI toolset. One daemon-owned
+headless Chromium process gives each owner thread an isolated context and the five
+small tools `navigate`, `click`, `type`, `read_page`, and `screenshot`. `nocturne init`
+installs the version-matched browser payload at the same explicit tool-runtime boundary
+as PI; an owner turn never downloads or opens a visible browser.
+
+Enforce the URL boundary below every action and again on every browser request. By
+default only loopback HTTP(S) and `file://` paths beneath the agent's current location
+may load. The exact owner command `/browser allow-web` grants one thread open-web
+access; the ordinary transcript journal is its audit and restart authority. A
+screenshot returns a native pydantic-ai image alongside the textual tool result, so
+the model, run events, transcript journal, and the existing Rack Tools detail observe
+the same PNG. The Tools detail opens on the latest image rather than creating a new
+Rack module or a second browser history.
+
+**Motivation.** The agent could build a page but could not inhabit it. Browser hands
+must close that perception-action loop without weakening the workspace boundary or
+turning owner consent into repeated modal friction. Keeping one image on the existing
+tool traffic path also makes the action watchable without inventing another surface.
+
+**Rejected alternatives.** A PI extension would modify the vendored-whole dependency
+and couple web automation to coding-tool internals. Playwright MCP or a PI ecosystem
+browser remains a fallback only if the direct official seam fails. A custom browser
+protocol would rebuild commodity behavior. Per-action approval would make normal local
+iteration unusable; unrestricted navigation would erase the wall. A visible browser,
+separate screenshot store, or new Rack module would violate the headless and
+single-history boundaries.

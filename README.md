@@ -89,6 +89,13 @@ and credential reads stop with a plain boundary message. Every tool call and
 result is appended through the same conversation journal, and provider usage
 continues through the existing spend ledger.
 
+Chat also has five headless browser tools: navigate, click, type, read the page,
+and take a screenshot. Localhost and files beneath the agent's current location
+work by default. External sites stop at a thread-local wall until the owner sends
+the exact command `/browser allow-web`; that one grant is retained in the thread
+journal. Screenshots return to the model as images and appear in the existing
+Tools detail in the conversation.
+
 Archiving a thread runs the memory extractor over that durable journal, then
 opens the law-bound Thread Memory Review rack module. Candidate memories remain
 invisible to search and model context until approved. Rows wholly visible in

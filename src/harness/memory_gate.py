@@ -9,7 +9,7 @@ from uuid import UUID
 from pydantic_ai.messages import BinaryContent
 
 from harness.citation import cited_memory_ids
-from harness.commands import remember_command_text
+from harness.commands import browser_open_web_command, remember_command_text
 from harness.memory_panel import ThreadMemoryContextRegistry, ThreadMemorySnapshot
 from harness.model_policy import ThreadModelResolution
 from harness.progressive_prompt import render_workspace_context, workspace_location_path
@@ -197,7 +197,7 @@ class MemoryGateTurnRunner:
     ) -> TurnOutcome:
         """Prepare, block for a valid decision, commit, then invoke the model."""
 
-        if remember_command_text(prompt) is not None:
+        if remember_command_text(prompt) is not None or browser_open_web_command(prompt):
             return await self._run_model(
                 thread_id=thread_id,
                 prompt=prompt,

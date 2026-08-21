@@ -61,7 +61,21 @@ class PresenceEvent:
 type PresenceSink = Callable[[PresenceEvent], None]
 
 
-type ToolName = Literal["read", "edit", "write", "grep", "find", "ls", "bash", "move"]
+type ToolName = Literal[
+    "read",
+    "edit",
+    "write",
+    "grep",
+    "find",
+    "ls",
+    "bash",
+    "move",
+    "navigate",
+    "click",
+    "type",
+    "read_page",
+    "screenshot",
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,6 +85,8 @@ class ToolExecutionResult:
     tool_name: ToolName
     content: str
     success: bool
+    image: bytes | None = None
+    media_type: str | None = None
 
 
 class StandardToolset(Protocol):

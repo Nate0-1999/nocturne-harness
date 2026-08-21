@@ -13,6 +13,14 @@ from harness.deploy import DeployError
 from harness.transcript import TranscriptJournal
 
 
+@pytest.fixture(autouse=True)
+def _ready_browser_runtime(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Unit onboarding tests do not download Playwright's browser payload."""
+
+    monkeypatch.setattr(onboarding, "browser_runtime_is_ready", lambda _home: True)
+    monkeypatch.setattr(onboarding, "ensure_browser_runtime", lambda home: home / "tools")
+
+
 class _HealthResponse:
     def __enter__(self) -> _HealthResponse:
         return self

@@ -26,6 +26,12 @@ from pathlib import Path
 from typing import TextIO
 from urllib.parse import quote, urlsplit
 
+from harness.browser_runtime import (
+    BrowserRuntimeError,
+    browser_runtime_is_ready,
+    browser_runtime_path,
+    ensure_browser_runtime,
+)
 from harness.lifecycle import (
     DoctorReport,
     PreparedRestore,
@@ -129,6 +135,8 @@ class NocturneConfig:
         pi_command = installed_pi_path(self.home)
         if installed_pi_is_ready(self.home):
             environment["NOCTURNE_PI_COMMAND"] = str(pi_command)
+        if browser_runtime_is_ready(self.home):
+            environment["PLAYWRIGHT_BROWSERS_PATH"] = str(browser_runtime_path(self.home))
         return environment
 
 
@@ -166,12 +174,7 @@ def init_nocturne(
     target = target_home / _CONFIG_FILE
     if target.exists():
         load_config(home=target_home)
-        if not pi_runtime_is_ready(target_home):
-            print("Preparing Nocturne's pinned workspace tools…", file=stdout, flush=True)
-        try:
-            ensure_pi_runtime(target_home)
-        except PiRuntimeError as exc:
-            raise OnboardingError(str(exc)) from exc
+        _ensure_tool_runtimes(target_home, stdout=stdout)
         print(f"Nocturne is already initialized at {target_home}.", file=stdout)
         return target
 
@@ -215,14 +218,24 @@ def init_nocturne(
         transcript_backup=transcript_backup,
     )
     _write_config(config)
-    if not pi_runtime_is_ready(target_home):
-        print("Preparing Nocturne's pinned workspace tools…", file=stdout, flush=True)
-    try:
-        ensure_pi_runtime(target_home)
-    except PiRuntimeError as exc:
-        raise OnboardingError(str(exc)) from exc
+    _ensure_tool_runtimes(target_home, stdout=stdout)
     print(f"Initialized Nocturne at {target_home}. Run `nocturne up`.", file=stdout)
     return target
+
+
+def _ensure_tool_runtimes(home: Path, *, stdout: TextIO) -> None:
+    if not pi_runtime_is_ready(home):
+        print("Preparing Nocturne's pinned workspace tools…", file=stdout, flush=True)
+    try:
+        ensure_pi_runtime(home)
+    except PiRuntimeError as exc:
+        raise OnboardingError(str(exc)) from exc
+    if not browser_runtime_is_ready(home):
+        print("Preparing Nocturne's headless browser…", file=stdout, flush=True)
+    try:
+        ensure_browser_runtime(home)
+    except BrowserRuntimeError as exc:
+        raise OnboardingError(str(exc)) from exc
 
 
 def load_config(*, home: Path | None = None) -> NocturneConfig:

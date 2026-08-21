@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-08-21T15:45:00-05:00",
+  "identity": "m3bw-real-product-proof",
+  "provider_route": "openrouter",
+  "model": "google/gemini-2.5-flash",
+  "headless": true,
+  "journal_messages": 5,
+  "screenshot_event_base64_characters": 44056,
+  "model_description": "The screenshot shows a dark-themed webpage with the title Midnight Lantern, the real owner proof note, a Reveal signal button, and Amber constellation — real owner proof.",
+  "assertions": {
+    "real_provider_response": true,
+    "native_image_return": true,
+    "screenshot_in_run_event": true,
+    "screenshot_in_transcript_journal": true,
+    "open_web_without_consent_refused": true
+  }
+}

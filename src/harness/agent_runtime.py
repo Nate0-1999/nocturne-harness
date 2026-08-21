@@ -32,7 +32,7 @@ from pydantic_ai.usage import RunUsage
 from pydantic_core import to_jsonable_python
 
 from harness.agent import HarnessAgent, RememberResult
-from harness.commands import remember_command_text
+from harness.commands import browser_open_web_command, remember_command_text
 from harness.context_window import ContextWindowTracker
 from harness.envelope import ProviderErrorPayload, StopReason
 from harness.model_policy import ThreadModelResolution
@@ -112,6 +112,7 @@ class PydanticAITurnRunner:
         run_usage = RunUsage()
         bridge = _EventBridge(emit)
         is_remember = remember_command_text(prompt) is not None
+        is_browser_consent = browser_open_web_command(prompt)
         context: MemoryToolContext | None = None
         remembered_memory_id: UUID | None = None
         selected_model = self._agent.model_for(
@@ -124,6 +125,23 @@ class PydanticAITurnRunner:
                 self._context_factory(thread_id),
                 excluded_memory_ids=frozenset(excluded_memory_ids),
             )
+            if is_browser_consent:
+                message = "Open-web browser access is allowed for this thread."
+                if image is not None:
+                    message = "Send `/browser allow-web` without an image to cross this wall."
+                else:
+                    grant = getattr(context.toolset, "grant_open_web", None)
+                    if not callable(grant):
+                        raise RuntimeError("this owner session has no browser consent boundary")
+                    grant(thread_id)
+                await emit.text(message)
+                return TurnOutcome(
+                    StopReason("end_turn"),
+                    prior_history,
+                    UsageSnapshot(),
+                    assistant_text=message,
+                    model_visible=False,
+                )
             if is_remember:
                 with capture_run_messages() as captured:
                     dispatched = await self._agent.dispatch(

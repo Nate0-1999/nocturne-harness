@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>M3BW Browser Hands</title>
+    <style>
+      body { margin: 0; background: #090b12; color: #e9ddb7; font: 20px system-ui; }
+      main { width: 720px; margin: 80px auto; padding: 48px; border: 2px solid #d19a3e; }
+      h1 { margin-top: 0; color: #f3b84f; letter-spacing: 0.12em; }
+      input, button { box-sizing: border-box; padding: 12px; font: inherit; }
+      input { width: 100%; margin-bottom: 16px; }
+      button { background: #d19a3e; border: 0; color: #090b12; cursor: pointer; }
+      #signal { margin-top: 28px; color: #78d6c6; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Midnight Lantern</h1>
+      <p>A tiny page built by the agent for the M3BW real browser proof.</p>
+      <label for="owner-note">Owner note</label>
+      <input id="owner-note" placeholder="Type here" />
+      <button id="reveal" type="button">Reveal signal</button>
+      <p id="signal">Signal sleeping.</p>
+    </main>
+    <script>
+      document.querySelector('#reveal').addEventListener('click', () => {
+        const note = document.querySelector('#owner-note').value || 'no note';
+        document.querySelector('#signal').textContent = `Amber constellation — ${note}`;
+      });
+    </script>
+  </body>
+</html>
