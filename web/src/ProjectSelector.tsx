@@ -93,6 +93,18 @@ export function ProjectSelector({
     openProject()
   }
 
+  function handleProjectBlur() {
+    if (
+      control.edit === null ||
+      control.submitted ||
+      awaitingSnapshot ||
+      switching
+    ) {
+      return
+    }
+    openProject()
+  }
+
   return (
     <form className="project-selector" aria-label="Current project" onSubmit={submitProject}>
       <label htmlFor="current-project-path">
@@ -118,6 +130,7 @@ export function ProjectSelector({
               submitted: false,
             })
           }}
+          onBlur={handleProjectBlur}
           onKeyDown={handleProjectKeyDown}
         />
       </label>

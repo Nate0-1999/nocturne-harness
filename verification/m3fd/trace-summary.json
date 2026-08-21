@@ -1,0 +1,43 @@
+{
+  "packet": "M3FD",
+  "identity": "m3fd-sop-verification",
+  "fixture": false,
+  "candidate_bundle": {
+    "name": "index-Ck3czM-B.js",
+    "sha256": "97c1275551f25a85080740b77e0ae51b55bbcd7e7d7145caa3bc927307c71360"
+  },
+  "accepted_thread": {
+    "thread_id": "5c3ed619-2f92-4344-aa2a-6e3804235e0a",
+    "visible_project_key": "m3fd-accept-fd21",
+    "durable_project_key": "m3fd-accept-fd21",
+    "reload_preserved": true,
+    "switch_back_preserved": true
+  },
+  "sibling_thread": {
+    "thread_id": "72c65e1a-632a-476e-9788-5590c00e8dc2",
+    "visible_project_key": "m3fd-sibling-fd21",
+    "durable_project_key": "m3fd-sibling-fd21",
+    "gate": {
+      "injection_id": "834cbde6-ee31-48b5-85ff-814a545d4adc",
+      "scorer_version": "m3f-location-v1",
+      "injected_count": 0,
+      "near_miss_count": 0
+    }
+  },
+  "verification_memory": {
+    "memory_id": "754d6682-7a01-4630-b3f5-5bcbc6529420",
+    "project_key": "m3fd-accept-fd21",
+    "created_revision": 1,
+    "cleanup_status": "tombstoned",
+    "cleanup_revision": 2,
+    "active_units_after_cleanup": 0
+  },
+  "browser_console_issues": 0,
+  "exit_checks": {
+    "harness": "1664 passed, 3 deselected",
+    "spine": "278 passed",
+    "web_unit": "103 passed",
+    "web_lint": "passed",
+    "web_build": "passed"
+  }
+}

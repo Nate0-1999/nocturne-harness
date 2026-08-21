@@ -2704,3 +2704,24 @@ notation.
 create a second orchestration authority. Hand-authored stage columns would drift from
 dependencies. New colors would split the Rack's visual language. Changing backend
 events for a display-only need would expand the protocol without adding truth.
+
+## 089 — Leaving the Project field commits through the durable open path [P2, M3FD]
+
+**Decision.** Treat focus leaving an edited Project field as the owner's commit gesture,
+alongside Enter and the form submit path. Blur calls the same project-open action and
+does nothing while a submission or authoritative snapshot is already in flight. The
+field continues to show a local draft only while the owner is actively editing; after
+that boundary it renders solely from the request-correlated daemon snapshot. Existing
+project selection, new-thread creation, immutable thread binding, and conflict voice
+remain unchanged.
+
+**Motivation.** F056 showed the Rack retaining typed project text after the owner clicked
+away even though no request reached the daemon. That optimism made a durable
+`build-test` thread look like another project. P2 requires the visible control to tell
+the truth without making the owner discover an invisible keyboard-only save gesture.
+
+**Rejected alternatives.** Rebinding an existing thread would reverse the one-project-
+per-thread contract and corrupt its journal history. Persisting the draft in browser
+state would preserve the second authority that caused F056. Adding another permanent
+button would duplicate the existing form action and increase chrome for a normal text-
+field completion gesture.

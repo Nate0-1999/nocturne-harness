@@ -30,6 +30,16 @@ test('Project input Enter and form submit share one project-open path', async ()
   assert.match(source, /onKeyDown=\{handleProjectKeyDown\}/u)
 })
 
+/** F056, P2, and B.6 r12 require a Project draft to reach the daemon when the
+ * owner finishes editing instead of remaining indefinitely as optimistic UI.
+ */
+test('Project input commits an edited path when focus leaves the field', async () => {
+  const source = await readFile(new URL('../src/ProjectSelector.tsx', import.meta.url), 'utf8')
+
+  assert.match(source, /function handleProjectBlur\(\)[^{]*\{[\s\S]*?control\.edit === null[\s\S]*?control\.submitted[\s\S]*?openProject\(\)/u)
+  assert.match(source, /onBlur=\{handleProjectBlur\}/u)
+})
+
 /** F035, ADR-023 clause 5, and B.6 r12 require the Project control itself to render
  * the reconciled daemon value instead of relying on an App remount timing side effect.
  */
