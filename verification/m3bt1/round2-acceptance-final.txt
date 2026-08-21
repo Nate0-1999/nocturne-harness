@@ -1,0 +1,13 @@
+test_categories_are_sorted_and_escaped (__main__.CsvReportAcceptance.test_categories_are_sorted_and_escaped) ... ok
+test_category_averages_are_reported (__main__.CsvReportAcceptance.test_category_averages_are_reported) ... ok
+test_category_counts_are_reported (__main__.CsvReportAcceptance.test_category_counts_are_reported) ... ok
+test_category_totals_use_exact_two_decimal_money (__main__.CsvReportAcceptance.test_category_totals_use_exact_two_decimal_money) ... ok
+test_generates_complete_utf8_html (__main__.CsvReportAcceptance.test_generates_complete_utf8_html) ... ok
+test_invalid_amount_fails_without_partial_output_or_traceback (__main__.CsvReportAcceptance.test_invalid_amount_fails_without_partial_output_or_traceback) ... ok
+test_overall_count_and_total_are_reported (__main__.CsvReportAcceptance.test_overall_count_and_total_are_reported) ... ok
+test_project_ships_runnable_own_tests (__main__.CsvReportAcceptance.test_project_ships_runnable_own_tests) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.639s
+
+OK

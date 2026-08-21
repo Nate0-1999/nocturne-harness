@@ -1,0 +1,103 @@
+{
+  "scope": "M3BT1 iterative build test",
+  "captured_at": "2026-08-21",
+  "fixture": false,
+  "fresh_sources": {
+    "harness_commit": "0574535b316bcc073d4a805bf33bcc5c6616a72a",
+    "spine_commit": "165a3ba2b9744be6514638a7b85ab194694adf8b",
+    "nocturne_ai_version": "0.1.5",
+    "nocturne_spine_version": "0.1.5"
+  },
+  "released_palace": {
+    "ok": true,
+    "version": "0.1.5",
+    "schema_version": "0015",
+    "api_contract_version": "0.1.4"
+  },
+  "identity": {
+    "principal_id": "m3bt1-verification-20260821-bt21",
+    "machine_id": "m3bt1-sop-verification",
+    "agent_id": "m3bt1-owner-agent"
+  },
+  "acceptance_contracts": {
+    "frozen_at": "2026-08-21T20:20:28Z",
+    "round1_sha256": "adf9756d893c1505e738eb2be130f40fb43a10f4ae2dfe006514f1f1ba78ab5b",
+    "round2_sha256": "f99947d282c86077c1d37bdf7a848463f828bdc9be25715986353e9267573f27"
+  },
+  "round1": {
+    "thread_id": "fed80355-74b0-45d8-a570-4846b9059d8e",
+    "first_prompt_at": "2026-08-21T20:23:08.604Z",
+    "passing_acceptance_at": "2026-08-21T20:33:17.042302Z",
+    "wall_seconds": 608.438,
+    "model": "openrouter:minimax/minimax-m3",
+    "runs": [
+      {"run_id": "01M0JZVPMJSC52CAFCBHKXNATV", "requests": 35, "partial": false, "stop_reason": "end_turn"},
+      {"run_id": "01M0K09VR1EGMVQW60PX4V3TX0", "requests": 18, "partial": false, "stop_reason": "end_turn"}
+    ],
+    "first_gate": {
+      "injection_id": "18063b1c-ecfe-4843-84f4-e48bdd4db933",
+      "scorer_version": "m3f-location-v1",
+      "injected_count": 0,
+      "near_miss_count": 0
+    },
+    "first_external_pass_rate": {"own": "37/37", "acceptance": "6/8"},
+    "final_pass_rate": {"own": "41/41", "acceptance": "8/8"},
+    "ledger": {"cost_usd": "0.000018820000", "receipt_lines": 6, "unpriced_lines": 0},
+    "churn": {"added_lines": 828, "deleted_lines": 0, "total": 828},
+    "journal": {
+      "records": 8994,
+      "bytes": 4952109,
+      "sha256": "c9f09f479ab3693ce17bd3146a653e9c015920286a086f835b4debbd2cb2d6c3"
+    }
+  },
+  "round2": {
+    "thread_id": "b5d7c8d1-78f7-4954-b5b8-e21cb4fdcf56",
+    "first_prompt_at": "2026-08-21T20:34:24.874Z",
+    "passing_acceptance_at": "2026-08-21T20:47:09.909757Z",
+    "wall_seconds": 765.036,
+    "model": "openrouter:minimax/minimax-m3",
+    "runs": [
+      {"run_id": "01M0K0GBBR3B1N1ZY8EE24AZVE", "requests": 40, "partial": true, "stop_reason": "budget_exceeded"},
+      {"run_id": "01M0K11GQS1ZJXQ7KT80DTM1YB", "requests": 15, "partial": false, "stop_reason": "end_turn"}
+    ],
+    "gate": {
+      "injection_id": "6ba9ab44-4f73-4982-8d3f-b50746c1b22d",
+      "scorer_version": "m3f-location-v1",
+      "automatic_injected_count": 0,
+      "near_misses": [
+        {"memory_id": "e2a57cdd-adae-448f-aa47-483725f5643e", "rank": 1, "score": 0.3756079077720642, "owner_added": true},
+        {"memory_id": "d4695150-9fcb-40e4-80c1-c6a687e7f11d", "rank": 2, "score": 0.3528330326080322, "owner_added": true},
+        {"memory_id": "9ba18ac1-98e9-445a-9e2f-83044ac1741f", "rank": 3, "score": 0.34391409158706665, "owner_added": false}
+      ]
+    },
+    "first_external_pass_rate": {"own": "30/31", "acceptance": "7/8"},
+    "final_pass_rate": {"own": "31/31", "acceptance": "8/8"},
+    "ledger": {"cost_usd": "0.000015820000", "receipt_lines": 4, "unpriced_lines": 0},
+    "churn": {"added_lines": 719, "deleted_lines": 0, "total": 719},
+    "journal": {
+      "records": 2595,
+      "bytes": 1946593,
+      "sha256": "35068dd4cb544a6c61d9e1ff83d839b894106065f0d3f8c0c7a885a8afa449fa"
+    }
+  },
+  "comparison": {
+    "time_delta_percent": 25.7,
+    "ledger_cost_delta_percent": -15.9,
+    "churn_delta_percent": -13.2,
+    "tagline": "second build: +25.7% time, -15.9% ledger cost, -13.2% churn"
+  },
+  "cleanup": [
+    {"memory_id": "d4695150-9fcb-40e4-80c1-c6a687e7f11d", "status": "tombstoned", "revision": 5},
+    {"memory_id": "9ba18ac1-98e9-445a-9e2f-83044ac1741f", "status": "tombstoned", "revision": 2},
+    {"memory_id": "e2a57cdd-adae-448f-aa47-483725f5643e", "status": "tombstoned", "revision": 5},
+    {"memory_id": "ea5536d7-b502-4c8c-8f99-c15de23bb8f3", "status": "tombstoned", "revision": 2}
+  ],
+  "active_experiment_memories_after_cleanup": 0,
+  "credential_scan": "clean",
+  "exit_tests": {
+    "spine": "281 passed in 16.49s",
+    "spine_environment": "TESTCONTAINERS_RYUK_DISABLED=true",
+    "harness": "1677 passed, 3 deselected in 51.46s",
+    "harness_selection": "not contract"
+  }
+}

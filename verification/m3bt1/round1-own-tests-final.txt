@@ -1,0 +1,55 @@
+test_missing_input_dir_exits_nonzero (test_cli.CLIErrorTests.test_missing_input_dir_exits_nonzero) ... notes2site: input directory not found: '/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/tmpc7f418eg/does-not-exist'
+ok
+test_no_markdown_files_exits_nonzero (test_cli.CLIErrorTests.test_no_markdown_files_exits_nonzero) ... notes2site: no .md files found in '/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/tmp6of4x791'
+ok
+test_output_equal_to_input_exits_nonzero (test_cli.CLIErrorTests.test_output_equal_to_input_exits_nonzero) ... notes2site: INPUT_DIR and OUTPUT_DIR must differ
+ok
+test_wrong_number_of_args_exits_nonzero (test_cli.CLIErrorTests.test_wrong_number_of_args_exits_nonzero) ... usage: python -m notes2site INPUT_DIR OUTPUT_DIR
+notes2site: expected INPUT_DIR and OUTPUT_DIR
+usage: python -m notes2site INPUT_DIR OUTPUT_DIR
+notes2site: expected INPUT_DIR and OUTPUT_DIR
+usage: python -m notes2site INPUT_DIR OUTPUT_DIR
+notes2site: expected INPUT_DIR and OUTPUT_DIR
+ok
+test_builds_site_for_simple_input (test_cli.CLISuccessTests.test_builds_site_for_simple_input) ... ok
+test_deterministic_filename_order (test_cli.CLISuccessTests.test_deterministic_filename_order) ... ok
+test_every_note_page_links_to_index_and_every_note (test_cli.CLISuccessTests.test_every_note_page_links_to_index_and_every_note) ... ok
+test_external_link_in_source_is_preserved (test_cli.CLISuccessTests.test_external_link_in_source_is_preserved) ... ok
+test_first_h1_retained_in_body_with_escaping (test_cli.CLISuccessTests.test_first_h1_retained_in_body_with_escaping) ... ok
+test_navigation_links_index_and_every_generated_note (test_cli.CLISuccessTests.test_navigation_links_index_and_every_generated_note) ... ok
+test_output_directory_is_created_if_missing (test_cli.CLISuccessTests.test_output_directory_is_created_if_missing) ... ok
+test_output_is_valid_utf_8 (test_cli.CLISuccessTests.test_output_is_valid_utf_8) ... ok
+test_sibling_link_in_source_points_to_html (test_cli.CLISuccessTests.test_sibling_link_in_source_points_to_html) ... ok
+test_untrusted_html_is_escaped (test_cli.CLISuccessTests.test_untrusted_html_is_escaped) ... ok
+test_error_path_does_not_emit_traceback (test_cli.ModuleInvocationTests.test_error_path_does_not_emit_traceback) ... ok
+test_runs_as_python_module (test_cli.ModuleInvocationTests.test_runs_as_python_module) ... ok
+test_index_falls_back_to_stem_for_missing_title (test_render.RenderIndexTests.test_index_falls_back_to_stem_for_missing_title) ... ok
+test_index_lists_all_notes (test_render.RenderIndexTests.test_index_lists_all_notes) ... ok
+test_first_h1_keeps_html_special_chars_escaped (test_render.RenderMarkdownTests.test_first_h1_keeps_html_special_chars_escaped) ... ok
+test_h2_renders_as_h2 (test_render.RenderMarkdownTests.test_h2_renders_as_h2) ... ok
+test_html_special_chars_are_escaped (test_render.RenderMarkdownTests.test_html_special_chars_are_escaped) ... ok
+test_inline_code (test_render.RenderMarkdownTests.test_inline_code) ... ok
+test_inline_code_with_special_html (test_render.RenderMarkdownTests.test_inline_code_with_special_html) ... ok
+test_later_h1_still_renders_in_body (test_render.RenderMarkdownTests.test_later_h1_still_renders_in_body) ... ok
+test_link_label_is_escaped (test_render.RenderMarkdownTests.test_link_label_is_escaped) ... ok
+test_list_followed_by_paragraph (test_render.RenderMarkdownTests.test_list_followed_by_paragraph) ... ok
+test_markdown_link (test_render.RenderMarkdownTests.test_markdown_link) ... ok
+test_markdown_link_with_title (test_render.RenderMarkdownTests.test_markdown_link_with_title) ... ok
+test_no_title_returns_empty_title (test_render.RenderMarkdownTests.test_no_title_returns_empty_title) ... ok
+test_non_sibling_link_is_preserved (test_render.RenderMarkdownTests.test_non_sibling_link_is_preserved) ... ok
+test_paragraphs_join_soft_wrap_lines (test_render.RenderMarkdownTests.test_paragraphs_join_soft_wrap_lines) ... ok
+test_paragraphs_split_on_blank_lines (test_render.RenderMarkdownTests.test_paragraphs_split_on_blank_lines) ... ok
+test_sibling_link_is_rewritten_to_html (test_render.RenderMarkdownTests.test_sibling_link_is_rewritten_to_html) ... ok
+test_title_taken_from_first_h1 (test_render.RenderMarkdownTests.test_title_taken_from_first_h1) ... ok
+test_unordered_list_with_asterisk (test_render.RenderMarkdownTests.test_unordered_list_with_asterisk) ... ok
+test_unordered_list_with_dash (test_render.RenderMarkdownTests.test_unordered_list_with_dash) ... ok
+test_fallback_title_when_no_h1 (test_render.RenderPageTests.test_fallback_title_when_no_h1) ... ok
+test_navigation_includes_current_page_with_one_note (test_render.RenderPageTests.test_navigation_includes_current_page_with_one_note) ... ok
+test_navigation_includes_self_link_with_one_note (test_render.RenderPageTests.test_navigation_includes_self_link_with_one_note) ... ok
+test_page_contains_navigation_to_index_and_every_note (test_render.RenderPageTests.test_page_contains_navigation_to_index_and_every_note) ... ok
+test_page_is_complete_document (test_render.RenderPageTests.test_page_is_complete_document) ... ok
+
+----------------------------------------------------------------------
+Ran 41 tests in 0.047s
+
+OK

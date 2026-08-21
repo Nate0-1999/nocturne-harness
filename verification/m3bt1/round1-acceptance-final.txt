@@ -1,0 +1,13 @@
+test_creates_index_and_one_page_per_note (__main__.MarkdownSiteAcceptance.test_creates_index_and_one_page_per_note) ... ok
+test_every_note_page_has_navigation (__main__.MarkdownSiteAcceptance.test_every_note_page_has_navigation) ... ok
+test_headings_paragraphs_and_lists_render (__main__.MarkdownSiteAcceptance.test_headings_paragraphs_and_lists_render) ... ok
+test_html_is_a_complete_utf8_document (__main__.MarkdownSiteAcceptance.test_html_is_a_complete_utf8_document) ... ok
+test_index_is_deterministic_and_links_both_notes (__main__.MarkdownSiteAcceptance.test_index_is_deterministic_and_links_both_notes) ... ok
+test_inline_code_and_markdown_links_render (__main__.MarkdownSiteAcceptance.test_inline_code_and_markdown_links_render) ... ok
+test_missing_input_fails_without_traceback (__main__.MarkdownSiteAcceptance.test_missing_input_fails_without_traceback) ... ok
+test_project_ships_runnable_own_tests (__main__.MarkdownSiteAcceptance.test_project_ships_runnable_own_tests) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.223s
+
+OK

@@ -1,0 +1,37 @@
+test_basic_aggregates_and_sort (test_csv_report.BuildReportTests.test_basic_aggregates_and_sort) ... ok
+test_blank_category_raises (test_csv_report.BuildReportTests.test_blank_category_raises) ... ok
+test_decimal_precision_no_drift (test_csv_report.BuildReportTests.test_decimal_precision_no_drift) ... ok
+test_empty_input_raises (test_csv_report.BuildReportTests.test_empty_input_raises) ... ok
+test_html_is_escaped_in_category (test_csv_report.BuildReportTests.test_html_is_escaped_in_category) ... ok
+test_infinite_amount_raises (test_csv_report.BuildReportTests.test_infinite_amount_raises) ... ok
+test_invalid_amount_raises (test_csv_report.BuildReportTests.test_invalid_amount_raises) ... ok
+test_long_decimal_average_preserved (test_csv_report.BuildReportTests.test_long_decimal_average_preserved) ... ok
+test_nan_amount_raises (test_csv_report.BuildReportTests.test_nan_amount_raises) ... ok
+test_output_is_a_complete_html_document (test_csv_report.BuildReportTests.test_output_is_a_complete_html_document) ... ok
+test_whitespace_category_raises (test_csv_report.BuildReportTests.test_whitespace_category_raises) ... ok
+test_bad_headers_extra_column (test_csv_report.CliTests.test_bad_headers_extra_column) ... ok
+test_bad_headers_missing (test_csv_report.CliTests.test_bad_headers_missing) ... ok
+test_bad_headers_reordered (test_csv_report.CliTests.test_bad_headers_reordered) ... ok
+test_blank_category (test_csv_report.CliTests.test_blank_category) ... ok
+test_categories_sorted (test_csv_report.CliTests.test_categories_sorted) ... ok
+test_cli_escapes_category_html (test_csv_report.CliTests.test_cli_escapes_category_html) ... ok
+test_empty_data (test_csv_report.CliTests.test_empty_data) ... ok
+test_existing_output_preserved_on_failure (test_csv_report.CliTests.test_existing_output_preserved_on_failure) ... ok
+test_existing_output_preserved_on_input_collision (test_csv_report.CliTests.test_existing_output_preserved_on_input_collision) ... ok
+test_happy_path_creates_html (test_csv_report.CliTests.test_happy_path_creates_html) ... ok
+test_in_out_collision (test_csv_report.CliTests.test_in_out_collision) ... ok
+test_invalid_amount (test_csv_report.CliTests.test_invalid_amount) ... ok
+test_missing_input (test_csv_report.CliTests.test_missing_input) ... ok
+test_nan_amount (test_csv_report.CliTests.test_nan_amount) ... ok
+test_output_uses_decimal_precision (test_csv_report.CliTests.test_output_uses_decimal_precision) ... ok
+test_unwritable_output (test_csv_report.CliTests.test_unwritable_output) ... ok
+test_wrong_arg_count (test_csv_report.CliTests.test_wrong_arg_count) ... ok
+test_die_writes_progname_prefix (test_csv_report.MainInProcessTests.test_die_writes_progname_prefix) ... ok
+test_main_exits_via_systemexit_on_error (test_csv_report.MainInProcessTests.test_main_exits_via_systemexit_on_error) ... csvreport: input file not found: /var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/csvreport-test-jee3puec/nope.csv
+ok
+test_main_returns_zero_on_success (test_csv_report.MainInProcessTests.test_main_returns_zero_on_success) ... ok
+
+----------------------------------------------------------------------
+Ran 31 tests in 0.431s
+
+OK
