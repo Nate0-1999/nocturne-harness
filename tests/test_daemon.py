@@ -720,6 +720,139 @@ def test_dev_app_wires_the_owned_spine_into_the_public_rack_query(
     assert spine.vitals_requests == 1
 
 
+def test_dev_app_serves_the_real_symphony_recipe_through_the_live_rack_endpoint(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """F054/P2.3/B.6 r7: the owner path, not a fixture reader, feeds Recipe live data."""
+
+    async def stream(_messages, _info):
+        yield "unused"
+
+    settings = HarnessSettings(
+        _env_file=None,
+        spine_token="test-token",
+        principal_id="principal-test",
+        machine_id="machine-test",
+        agent_id="agent-test",
+        anthropic_api_key=None,
+        openai_api_key=None,
+        openrouter_api_key=None,
+    )
+    monkeypatch.setenv("NOCTURNE_HOME", str(tmp_path / "state"))
+    agent = HarnessAgent(settings, model=FunctionModel(stream_function=stream))
+    app = create_dev_app(
+        tmp_path,
+        settings=settings,
+        agent=agent,
+        spine=FailingPrepareSpine(),  # type: ignore[arg-type]
+    )
+    thread_id = "22345678-1234-5678-1234-567812345678"
+
+    with TestClient(app) as client:
+        empty = client.get("/v1/rack/query?resource=recipe_graph&as_of=now")
+        assert empty.status_code == 200
+        assert empty.json()["data"]["nodes"] == []
+
+        with client.websocket_connect("/ws") as websocket:
+            websocket.send_json(
+                frame(
+                    "prompt.submit",
+                    {"prompt": "take this to a symphony"},
+                    thread_id=thread_id,
+                )
+            )
+            opening: list[dict[str, object]] = []
+            while True:
+                message = websocket.receive_json()
+                opening.append(message)
+                if message["type"] == "run.done":
+                    break
+            draft = next(
+                message["payload"]["event"]
+                for message in opening
+                if message["type"] == "run.delta"
+                and message["payload"].get("kind") == "event"
+                and message["payload"]["event"].get("event_kind") == "symphony_deliberation"
+            )
+
+            websocket.send_json(
+                frame(
+                    "prompt.submit",
+                    {
+                        "prompt": "Launch this symphony.",
+                        "symphony": {
+                            "draft_id": draft["draft_id"],
+                            "objective": "Serve a real live Recipe graph",
+                            "motivation": "The owner needs the current plan instead of a 503",
+                            "recipe": [
+                                {
+                                    "step_id": "prepare",
+                                    "title": "Prepare the live source",
+                                    "done_when": "The source is available",
+                                    "search": False,
+                                },
+                                {
+                                    "step_id": "judge",
+                                    "title": "Judge the live result",
+                                    "done_when": "All three charters pass",
+                                    "search": True,
+                                },
+                            ],
+                            "judge_charters": [
+                                {
+                                    "seat": "motivation",
+                                    "rubric": ["Preserves the owner reason"],
+                                    "evidence_requirements": ["The signed launch"],
+                                    "metrics": [],
+                                },
+                                {
+                                    "seat": "implementation",
+                                    "rubric": ["Uses the owner-path stack"],
+                                    "evidence_requirements": ["The live Rack response"],
+                                    "metrics": [],
+                                },
+                                {
+                                    "seat": "performance",
+                                    "rubric": ["Completes inside the signed wall"],
+                                    "evidence_requirements": ["The terminal stack"],
+                                    "metrics": ["one live Recipe response"],
+                                },
+                            ],
+                            "authority": {
+                                "attempts": 3,
+                                "spend_wall_usd": "10",
+                                "max_rounds": 3,
+                                "depth_cap": 2,
+                                "children_per_attempt": 4,
+                                "duration_minutes": 30,
+                                "signed": True,
+                            },
+                            "hold_for_steering": True,
+                        },
+                    },
+                    message_id=SECOND_PROMPT_ID,
+                    thread_id=thread_id,
+                )
+            )
+            receive_until(websocket, "run.done")
+
+        live = client.get("/v1/rack/query?resource=recipe_graph&as_of=now")
+
+    assert live.status_code == 200
+    body = live.json()
+    assert body["status"] == "live"
+    assert body["data"]["packet_id"] is not None
+    nodes = {node["node_id"]: node for node in body["data"]["nodes"]}
+    assert nodes["prepare"]["state"] == "running"
+    assert nodes["judge"]["kind"] == "search"
+    assert nodes["judge"]["state"] == "blocked"
+    assert nodes["judge:judge:performance"]["state"] == "blocked"
+    assert {tuple(edge.values()) for edge in body["data"]["edges"]} >= {
+        ("prepare", "judge", "blocks"),
+        ("judge", "judge:judge:motivation", "judged_by"),
+    }
+
+
 def test_dev_app_retrains_bodylessly_and_owns_activation_provenance(tmp_path: Path) -> None:
     """A-051/P1.2.3 is defended by giving the owner one transparent retrain
     bridge while keeping proposal activation human-only and daemon-attributed.

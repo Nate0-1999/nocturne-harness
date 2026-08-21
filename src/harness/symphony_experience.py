@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import re
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
@@ -21,6 +22,7 @@ from harness.envelope import (
     SymphonyInterventionPayload,
     SymphonyLaunchPayload,
 )
+from harness.recipe_graph import RecipeGraphSnapshot, snapshot_from_symphony_stack
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 
 _TRIGGER = re.compile(r"^take this to a symphony[.!]?\s*$", re.IGNORECASE)
@@ -88,6 +90,17 @@ class SymphonyExperience:
         self._draft_threads: dict[str, str] = {}
         self._stacks: dict[str, SymphonyStackRecord] = {}
         self._lock = asyncio.Lock()
+        self._recipe_revision = 0
+        self._recipe_source_digest: str | None = None
+        self._recipe_snapshot = RecipeGraphSnapshot(
+            revision=0,
+            as_of=self._clock(),
+            packet_id=None,
+            bead_id=None,
+            nodes=(),
+            edges=(),
+            ready_node_ids=(),
+        )
 
     @staticmethod
     def is_trigger(prompt: str) -> bool:
@@ -144,6 +157,7 @@ class SymphonyExperience:
                 stack = self._complete(stack)
             self._stacks[stack.symphony_id] = stack
             self._draft_threads.pop(launch.draft_id, None)
+            self._publish_recipe(stack)
 
         await emit.event(
             {
@@ -173,6 +187,11 @@ class SymphonyExperience:
 
         async with self._lock:
             return self._stacks.get(symphony_id)
+
+    def recipe_snapshot(self) -> RecipeGraphSnapshot:
+        """Return the immutable latest signed Symphony plan for the Rack."""
+
+        return self._recipe_snapshot
 
     def _new_stack(
         self,
@@ -237,6 +256,7 @@ class SymphonyExperience:
                 raise ValueError("Symphony steering target does not belong to this thread")
             if stack.state != "running":
                 raise ValueError("only a running Symphony can be steered")
+            recipe_stack: SymphonyStackRecord | None = None
 
             if isinstance(intervention, SymphonyClarificationPayload):
                 stack = self._clarify(stack, intervention)
@@ -263,6 +283,7 @@ class SymphonyExperience:
                 stack, child = self._fork(stack, intervention)
                 self._stacks[child.symphony_id] = child
                 events = [self._state_event(stack), self._state_event(child)]
+                recipe_stack = child
                 text = (
                     f"Charter change forked {stack.symphony_id} to {child.symphony_id}; "
                     "the signed parent was not rewritten."
@@ -275,6 +296,7 @@ class SymphonyExperience:
                 raise TypeError("unsupported Symphony intervention")
 
             self._stacks[stack.symphony_id] = stack
+            self._publish_recipe(recipe_stack or stack)
 
         for event in events:
             await emit.event(event)
@@ -433,6 +455,19 @@ class SymphonyExperience:
             except ValueError:
                 continue
             self._stacks[stack.symphony_id] = stack
+            self._publish_recipe(stack)
+
+    def _publish_recipe(self, stack: SymphonyStackRecord) -> None:
+        source_digest = hashlib.sha256(stack.model_dump_json().encode("utf-8")).hexdigest()
+        if source_digest == self._recipe_source_digest:
+            return
+        self._recipe_revision += 1
+        self._recipe_snapshot = snapshot_from_symphony_stack(
+            stack.model_dump(mode="python"),
+            revision=self._recipe_revision,
+            as_of=self._clock(),
+        )
+        self._recipe_source_digest = source_digest
 
     @staticmethod
     def _state_event(stack: SymphonyStackRecord) -> dict[str, object]:

@@ -2725,3 +2725,25 @@ per-thread contract and corrupt its journal history. Persisting the draft in bro
 state would preserve the second authority that caused F056. Adding another permanent
 button would duplicate the existing form action and increase chrome for a normal text-
 field completion gesture.
+
+## 090 — Recipe reads the latest signed Symphony stack at the composition root [P2.3, M3FA]
+
+**Decision.** Make the daemon-owned `SymphonyExperience` the production reader for
+Recipe's existing immutable graph schema. Each accepted launch or intervention
+projects the latest signed stack into that schema; an owner-path app with no launched
+stack serves an honest empty snapshot instead of reporting a missing reader. The
+ordered recipe steps are projected as sequential `blocks` edges because order is the
+only dependency fact carried by the signed launch artifact. Search steps retain their
+explicit mark and point to the three signed judge seats. A fork replaces the displayed
+parent with its signed child, while the parent remains immutable in Symphony history.
+
+**Motivation.** F054 was not a rendering defect: SYM12's fixtures supplied a graph
+reader that the released app never assembled. The owner therefore saw a 503 where the
+live plan should have been. Reusing the stack already owned by the real composition
+root closes that wiring gap without creating another plan authority, store, or parser.
+
+**Rejected alternatives.** Parsing Garden's `BOARD.md` would leak build authority into
+the product. Persisting a second Recipe graph would duplicate Symphony history and
+invite drift. Fabricating parallel dependencies that the launch does not sign would
+make the attractive grid less truthful than the plan. Keeping an empty reader after a
+real launch would preserve the 503's underlying absence under a different status code.

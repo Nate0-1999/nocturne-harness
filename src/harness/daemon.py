@@ -649,6 +649,7 @@ def create_dev_app(
     transcript_journal: TranscriptJournal | None = None,
     model_resolver_override: ThreadModelResolver | None = None,
     seed_discovery_root: str | Path | None = None,
+    symphony_experience: SymphonyExperience | None = None,
 ) -> FastAPI:
     """Compose the real H3 agent loop with trusted local M1 run context."""
 
@@ -666,7 +667,7 @@ def create_dev_app(
     completion_router = CompletionRouter(configured)
     owned_agent = agent or HarnessAgent(configured, router=completion_router)
     factory = EnvelopeFactory(machine_id=machine_id, agent_id=agent_id)
-    symphony_experience = SymphonyExperience(id_factory=factory.new_id)
+    owned_symphony_experience = symphony_experience or SymphonyExperience(id_factory=factory.new_id)
     model_resolver = model_resolver_override or ModelPolicyResolver(
         policy=configured.effective_model_policy_chat,
         static_model=configured.chat_model,
@@ -818,7 +819,7 @@ def create_dev_app(
         factory,
         model_resolver=model_resolver,
         transcript_journal=journal,
-        symphony_experience=symphony_experience,
+        symphony_experience=owned_symphony_experience,
     )
     extraction = ExtractionService(
         journal=journal,
@@ -844,7 +845,7 @@ def create_dev_app(
     def configure_extraction_routes(app: FastAPI) -> None:
         @app.get("/v1/symphonies/{symphony_id}")
         async def read_symphony(symphony_id: str):
-            stack = await symphony_experience.read(symphony_id)
+            stack = await owned_symphony_experience.read(symphony_id)
             if stack is None:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -992,6 +993,7 @@ def create_dev_app(
         scorer_retrainer=retrain_scorer,
         scorer_proposal_activator=activate_scorer,
         context_window_reader=context_windows.snapshot,
+        recipe_graph_reader=owned_symphony_experience.recipe_snapshot,
         before_static_mount=configure_extraction_routes,
     )
 

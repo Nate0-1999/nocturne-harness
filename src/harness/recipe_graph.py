@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from enum import StrEnum
 from threading import RLock
@@ -460,6 +460,96 @@ class RecipeGraphProjection:
             )
 
 
+def snapshot_from_symphony_stack(
+    raw: Mapping[str, Any],
+    *,
+    revision: int,
+    as_of: datetime,
+) -> RecipeGraphSnapshot:
+    """Project the released owner-path Symphony stack into Recipe's read schema."""
+
+    symphony_id = _required_text(raw, "symphony_id")
+    state = raw.get("state")
+    if state not in {"running", "blocked", "completed"}:
+        raise ValueError("recipe source requires a supported Symphony state")
+    launch = raw.get("launch")
+    if not isinstance(launch, Mapping):
+        raise ValueError("recipe source requires the signed Symphony launch")
+    recipe = launch.get("recipe")
+    if not isinstance(recipe, Sequence) or isinstance(recipe, (str, bytes)) or not recipe:
+        raise ValueError("recipe source requires one or more signed steps")
+    motivation = _required_text(launch, "motivation")
+    charters = launch.get("judge_charters")
+    if not isinstance(charters, Sequence) or isinstance(charters, (str, bytes)) or not charters:
+        raise ValueError("recipe source requires its signed judge charters")
+
+    nodes: list[RecipeGraphNode] = []
+    edges: list[RecipeGraphEdge] = []
+    prior_step_id: str | None = None
+    seen_step_ids: set[str] = set()
+    for index, value in enumerate(recipe):
+        if not isinstance(value, Mapping):
+            raise ValueError("recipe source steps must be objects")
+        step_id = _required_text(value, "step_id")
+        if step_id in seen_step_ids:
+            raise ValueError("recipe source step identities must be unique")
+        seen_step_ids.add(step_id)
+        search = value.get("search")
+        if not isinstance(search, bool):
+            raise ValueError("recipe source steps require an explicit search mark")
+        step_state = _symphony_step_state(str(state), index)
+        nodes.append(
+            RecipeGraphNode(
+                node_id=step_id,
+                label=_required_text(value, "title"),
+                kind=RecipeNodeKind.SEARCH if search else RecipeNodeKind.PACKET,
+                state=step_state,
+                motivation=f"{motivation} Done when: {_required_text(value, 'done_when')}",
+            )
+        )
+        if prior_step_id is not None:
+            edges.append(RecipeGraphEdge(source=prior_step_id, target=step_id, kind="blocks"))
+        prior_step_id = step_id
+        if search:
+            for charter in charters:
+                if not isinstance(charter, Mapping):
+                    raise ValueError("recipe source judge charters must be objects")
+                seat = _required_text(charter, "seat")
+                judge_id = f"{step_id}:judge:{seat}"
+                nodes.append(
+                    RecipeGraphNode(
+                        node_id=judge_id,
+                        label=f"{seat.replace('_', ' ').title()} judge",
+                        kind=RecipeNodeKind.JUDGE,
+                        state=(
+                            RecipeNodeState.PASSED
+                            if state == "completed"
+                            else RecipeNodeState.BLOCKED
+                        ),
+                    )
+                )
+                edges.append(RecipeGraphEdge(source=step_id, target=judge_id, kind="judged_by"))
+
+    ready = tuple(node.node_id for node in nodes if node.state is RecipeNodeState.READY)
+    return RecipeGraphSnapshot(
+        revision=revision,
+        as_of=as_of,
+        packet_id=symphony_id,
+        bead_id=None,
+        nodes=tuple(nodes),
+        edges=tuple(edges),
+        ready_node_ids=ready,
+    )
+
+
+def _symphony_step_state(stack_state: str, index: int) -> RecipeNodeState:
+    if stack_state == "completed":
+        return RecipeNodeState.PASSED
+    if stack_state == "running" and index == 0:
+        return RecipeNodeState.RUNNING
+    return RecipeNodeState.BLOCKED
+
+
 def _required_text(value: Mapping[str, Any], key: str) -> str:
     found = value.get(key)
     if not isinstance(found, str) or not found.strip():
@@ -474,4 +564,5 @@ __all__ = [
     "RecipeGraphSnapshot",
     "RecipeNodeKind",
     "RecipeNodeState",
+    "snapshot_from_symphony_stack",
 ]

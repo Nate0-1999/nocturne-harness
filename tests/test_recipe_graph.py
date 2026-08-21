@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 import pytest
 from fastapi.testclient import TestClient
 
 from harness.daemon import create_app
-from harness.recipe_graph import RecipeGraphProjection, RecipeNodeKind, RecipeNodeState
+from harness.recipe_graph import (
+    RecipeGraphProjection,
+    RecipeNodeKind,
+    RecipeNodeState,
+    snapshot_from_symphony_stack,
+)
 
 
 def _event(event: str, **payload: object) -> dict[str, object]:
@@ -99,6 +106,65 @@ def test_projection_refuses_unversioned_or_repeated_authority() -> None:
     projection.record(_event("claim_accepted", packet_id="ROOT", bead_id="ng-root"))
     with pytest.raises(ValueError, match="only one authoritative claim"):
         projection.record(_event("claim_accepted", packet_id="OTHER", bead_id="ng-other"))
+
+
+def test_signed_symphony_stack_projects_current_work_without_inventing_parallelism() -> None:
+    """F054/P2.3/B.6 r7: signed order drives real Recipe dimming and judge gates."""
+
+    snapshot = snapshot_from_symphony_stack(
+        {
+            "symphony_id": "01M0JZZ3VAHCH0E13A5DQYWQQJ",
+            "state": "running",
+            "launch": {
+                "motivation": "The owner needs to see the live plan.",
+                "recipe": [
+                    {
+                        "step_id": "scout",
+                        "title": "Scout the released endpoint",
+                        "done_when": "The live source is known",
+                        "search": True,
+                    },
+                    {
+                        "step_id": "wire",
+                        "title": "Wire the composition root",
+                        "done_when": "Recipe reads the signed stack",
+                        "search": False,
+                    },
+                    {
+                        "step_id": "prove",
+                        "title": "Prove the rendered view",
+                        "done_when": "Current work is obvious",
+                        "search": False,
+                    },
+                ],
+                "judge_charters": [
+                    {"seat": "motivation"},
+                    {"seat": "implementation"},
+                    {"seat": "performance"},
+                ],
+            },
+        },
+        revision=4,
+        as_of=datetime(2026, 8, 21, 20, 25, tzinfo=UTC),
+    )
+
+    nodes = {node.node_id: node for node in snapshot.nodes}
+    assert snapshot.packet_id == "01M0JZZ3VAHCH0E13A5DQYWQQJ"
+    assert nodes["scout"].kind is RecipeNodeKind.SEARCH
+    assert nodes["scout"].state is RecipeNodeState.RUNNING
+    assert nodes["wire"].state is RecipeNodeState.BLOCKED
+    assert nodes["prove"].state is RecipeNodeState.BLOCKED
+    assert [edge.model_dump() for edge in snapshot.edges] == [
+        {"source": "scout", "target": "scout:judge:motivation", "kind": "judged_by"},
+        {
+            "source": "scout",
+            "target": "scout:judge:implementation",
+            "kind": "judged_by",
+        },
+        {"source": "scout", "target": "scout:judge:performance", "kind": "judged_by"},
+        {"source": "scout", "target": "wire", "kind": "blocks"},
+        {"source": "wire", "target": "prove", "kind": "blocks"},
+    ]
 
 
 def test_failed_judgment_exposes_the_minted_delta_and_next_round_lineage() -> None:
