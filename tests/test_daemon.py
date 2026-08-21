@@ -438,6 +438,10 @@ def test_static_shell_and_rack_frame_have_distinct_frame_policies(tmp_path: Path
         "/?rack_module=vitals",
         headers={"host": "rack.localhost:8765"},
     )
+    nebula_rack = client.get(
+        "/?rack_module=palace_nebula",
+        headers={"host": "rack.localhost:8765"},
+    )
     forged = client.get(
         "/?rack_module=chat",
         headers={"host": "127.0.0.1:8765"},
@@ -452,6 +456,7 @@ def test_static_shell_and_rack_frame_have_distinct_frame_policies(tmp_path: Path
         in rack.headers["content-security-policy"]
     )
     assert "connect-src 'none'" in vitals_rack.headers["content-security-policy"]
+    assert "connect-src 'none'" in nebula_rack.headers["content-security-policy"]
     assert forged.headers["x-frame-options"] == "DENY"
 
 

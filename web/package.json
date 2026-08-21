@@ -24,6 +24,7 @@
     "verify:m2st3:browser": "node ../verification/m2st3/browser_check.mjs"
   },
   "dependencies": {
+    "playcanvas": "2.21.4",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-markdown": "^10.1.0",

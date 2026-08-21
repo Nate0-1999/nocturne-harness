@@ -21,7 +21,7 @@ test('lifecycle overlays return in one click while instruments live on the stage
   assert.doesNotMatch(app, /memory_graph:\s*'rack-overlay-module--/u)
   assert.doesNotMatch(app, /injection_console:\s*'rack-overlay-module--/u)
   assert.doesNotMatch(app, /palace_queue:\s*'rack-overlay-module--/u)
-  assert.match(stage, /'memory_graph', 'injection_console', 'palace_queue'/u)
+  assert.match(stage, /'memory_graph', 'palace_nebula', 'injection_console', 'palace_queue'/u)
   assert.match(app, /data-stage-return="one-click"/u)
   assert.match(app, /data-testid="back-to-stage"/u)
   assert.match(app, /Back to stage/u)

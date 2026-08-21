@@ -132,7 +132,29 @@ test('factory layers contain Graph and Injection as stage modules, never fixed t
   const injection = FACTORY_STAGE_LAYOUT.layers.find((layer) => layer.layer_id === 'injection')
 
   assert.deepEqual(graph?.modules.map((module) => module.module_id), ['memory_graph'])
+  assert.deepEqual(graph?.removed_modules.map((module) => module.module_id), ['palace_nebula'])
   assert.deepEqual(injection?.modules.map((module) => module.module_id), ['injection_console'])
+})
+
+/** M3GE keeps the opt-in engine spike recoverable and migrates existing layouts exactly once. */
+test('Palace Nebula begins in the Graph library and migrates existing layouts once', () => {
+  const factoryGraph = FACTORY_STAGE_LAYOUT.layers.find((layer) => layer.layer_id === 'graph')
+  assert.deepEqual(factoryGraph?.removed_modules.map((module) => module.module_id), ['palace_nebula'])
+
+  const storage = memoryStorage()
+  const legacyV3 = cloneFactoryStageLayout()
+  legacyV3.layers = legacyV3.layers.map((layer) => ({
+    ...layer,
+    modules: layer.modules.filter((module) => module.module_id !== 'palace_nebula'),
+    removed_modules: layer.removed_modules.filter((module) => module.module_id !== 'palace_nebula'),
+  }))
+  storage.setItem(STAGE_LAYOUT_STORAGE_KEY, JSON.stringify(legacyV3))
+
+  const migrated = loadStageLayout(storage)
+  const graph = migrated.layers.find((layer) => layer.layer_id === 'graph')
+  assert.equal(graph?.removed_modules.filter((module) => module.module_id === 'palace_nebula').length, 1)
+  const restored = restoreStageModule(selectStageLayer(migrated, 'graph'), 'palace_nebula')
+  assert.equal(activeStageLayer(restored).modules.some((module) => module.module_id === 'palace_nebula'), true)
 })
 
 /** PLAN M2MI/P1.5 moves corpus ingestion off the header and onto the ordinary recoverable Stage. */

@@ -53,7 +53,7 @@ import {
   type ThreadState,
 } from './store'
 
-export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'injection_console' | 'recipe' | 'deck'
+export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'injection_console' | 'recipe' | 'deck'
 export type RackModuleSlot = 'header' | 'panel' | 'strip' | 'overlay'
 export type RackMemoryPanelState = MemoryPanelState
 
@@ -69,6 +69,7 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
     value === 'palace_queue' ||
     value === 'model_device' ||
     value === 'memory_graph' ||
+    value === 'palace_nebula' ||
     value === 'injection_console' ||
     value === 'recipe' ||
     value === 'deck'
@@ -356,6 +357,18 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     slot: 'panel', streams: ['memory.panel.update'],
     actions: ['rack.scope.get', 'rack.scope.set'], bounds: stageGridBounds(instrumentStageBounds.preferred),
     movable: true, law_bound: true, default_scope: 'GLOBAL',
+  },
+  palace_nebula: {
+    id: 'palace_nebula', name: 'Palace Nebula', version: '1.0.0', class: 'visualizer',
+    slot: 'panel', streams: ['memory.panel.update'],
+    actions: ['rack.scope.get', 'rack.scope.set'],
+    bindings: [
+      'memory.created_at', 'memory.updated_at', 'memory.stats.injections',
+      'memory.revision', 'memory.kind', 'memory.project_key',
+      'memory.origin_thread_id', 'memory.thread_origin', 'memory.origin_path', 'memory.pin',
+    ],
+    bounds: stageGridBounds(instrumentStageBounds.preferred), movable: true,
+    law_bound: true, default_scope: 'GLOBAL',
   },
   injection_console: {
     id: 'injection_console', name: 'Injection Console', version: '1.0.0', class: 'control',

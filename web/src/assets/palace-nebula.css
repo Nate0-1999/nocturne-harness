@@ -1,0 +1,57 @@
+.palace-nebula {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100%;
+  min-height: 0;
+  background: #070b18;
+  color: #e9efff;
+}
+
+.palace-nebula__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: end;
+  padding: .8rem 1rem;
+  border-bottom: 1px solid #283253;
+}
+
+.palace-nebula h1, .palace-nebula h2, .palace-nebula p { margin: 0; }
+.palace-nebula h1 { font-size: 1.4rem; }
+.palace-nebula small { color: #91a1cd; text-transform: uppercase; letter-spacing: .08em; }
+.palace-nebula__controls { display: flex; gap: .7rem; }
+.palace-nebula__controls label { display: grid; gap: .2rem; color: #aebce4; font-size: .72rem; }
+.palace-nebula select { color: #eef2ff; background: #111933; border: 1px solid #46537d; border-radius: .3rem; padding: .3rem .5rem; }
+
+.palace-nebula__viewport { position: relative; min-height: 0; overflow: hidden; }
+.palace-nebula__viewport canvas { display: block; width: 100%; height: 100%; }
+.palace-nebula__telemetry {
+  position: absolute;
+  top: .65rem;
+  left: .7rem;
+  display: grid;
+  padding: .45rem .6rem;
+  border: 1px solid #35426b;
+  border-radius: .35rem;
+  background: rgb(5 9 22 / 82%);
+  font: .72rem/1.4 ui-monospace, monospace;
+}
+.palace-nebula__telemetry span { color: #93a3ce; }
+.palace-nebula__notice { position: absolute; inset: 50% auto auto 50%; transform: translate(-50%, -50%); color: #c3cff2; }
+
+.palace-nebula__legend {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .7rem;
+  padding: .75rem 1rem 1rem;
+  border-top: 1px solid #283253;
+  background: #0b1125;
+}
+.palace-nebula__legend section { min-width: 0; }
+.palace-nebula__legend h2 { margin-bottom: .35rem; color: #bac8f3; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; }
+.palace-nebula__legend p { color: #8595c0; font-size: .68rem; line-height: 1.45; overflow-wrap: anywhere; }
+
+@media (max-width: 700px) {
+  .palace-nebula__header { align-items: stretch; flex-direction: column; }
+  .palace-nebula__legend { grid-template-columns: 1fr; }
+}

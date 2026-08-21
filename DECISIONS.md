@@ -2839,3 +2839,48 @@ on modules, messages, or controls would make spectacle compete with work.
 Unicode pseudo-runes would discard the blessed forge and invite platform-font
 drift. Hand-authored data URIs or a second runtime theme engine would make a
 frozen visual language unauditable.
+
+## 094 — Palace Nebula uses PlayCanvas behind the Rack plugin boundary [P2, M3GE]
+
+**Decision.** Adopt exact `playcanvas@2.21.4` for the first real-engine Rack
+module. Keep the engine inside the existing sandboxed plugin iframe; React DOM owns
+all labels, controls, telemetry, and the bindings legend. The module reads the
+existing immutable Memory Graph query and maps every `active` memory to exactly one
+3D body. Activity and provenance are two explicit, live-requeried axis bindings.
+The origin-thread axis reads current `origin_thread_id` and the released Palace's
+legacy `thread_origin` spelling as the same identity field during the compatibility
+window; the visible legend names both spellings.
+Size, color, shape, motion, amplitude, and brightness each name the Palace field that
+drives them. No random geometry, scorer write, parallel memory store, or private
+daemon path is admitted.
+
+The measured comparison used equivalent production Vite builds of 256 lit spheres
+on a MacBook Pro Mac16,5 (M4 Max, 14 CPU cores, 32 GPU cores, 36 GB RAM) on
+2026-08-21. PlayCanvas produced a 1,952,955-byte entry (500,865 gzip), became ready
+in 37.0 ms, and sustained 121.706 fps on the 120 Hz display. Babylon.js 9.22.1
+produced a 6,377,404-byte entry (1,395,881 gzip), became ready in 61.5 ms, and
+sustained 120.197 fps. The current official threaded Godot 4 web 3D Sprites demo
+declared a 37,322,260-byte WASM and 216,092-byte PCK; its compressed transfer was
+9,413,536 bytes WASM, 87,195 bytes JS, and 184,907 bytes PCK, and its loading status
+cleared in 5,156 ms. Godot's network figure is not an identical local build, so it
+is used only to establish its web delivery shape, not as a frame-rate comparison.
+
+Two owner-selectable hardware tiers retain the full active-memory population. Full
+caps device pixel ratio at 2, enables antialiasing and richer materials, and updates
+motion every frame. Efficient caps device pixel ratio at 1, uses simpler materials,
+and updates motion every other frame. The visible FPS counter makes the trade honest.
+
+**Motivation.** D.2 item 124 asks for a real game engine because the upper-end Rack
+should feel like a living spatial instrument, not because M3 needs an ornamental 3D
+dependency. PlayCanvas reached the display ceiling with the smallest measured entry,
+fits the existing TypeScript/Vite composition root, and offers WebGL2 with WebGPU
+progression without adding a separate authoring or export pipeline.
+
+**Rejected alternatives.** Babylon matched frame rate but cost 2.79 times the gzip
+entry and initialized 66% slower in the same scene. Godot's official web export was
+an order of magnitude heavier, remains WebGL2-only in Godot 4, and its threaded path
+requires cross-origin isolation that conflicts with the Rack iframe boundary; its
+GDScript/export toolchain would also create a second build system. Three.js is not a
+candidate because the packet explicitly requires a real game engine. A hand-built
+canvas, decorative particles, or capped/sampled memories would evade the functional
+law instead of satisfying it.

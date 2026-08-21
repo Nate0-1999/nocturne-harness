@@ -142,6 +142,7 @@ _RACK_MODULE_IDS = frozenset(
         "palace_queue",
         "model_device",
         "memory_graph",
+        "palace_nebula",
         "injection_console",
         "recipe",
         "deck",

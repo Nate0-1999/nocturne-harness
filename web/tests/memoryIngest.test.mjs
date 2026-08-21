@@ -25,7 +25,7 @@ test('Memory Ingest is a movable panel rather than a header control or lifecycle
   ])
 
   assert.match(rack, /palace_queue:[\s\S]*name:\s*'Memory Ingest'[\s\S]*slot:\s*'panel'[\s\S]*movable:\s*true/u)
-  assert.match(stage, /'memory_graph', 'injection_console', 'palace_queue'/u)
+  assert.match(stage, /'memory_graph', 'palace_nebula', 'injection_console', 'palace_queue'/u)
   assert.doesNotMatch(app, /palace_queue:\s*'rack-overlay-module--/u)
 })
 

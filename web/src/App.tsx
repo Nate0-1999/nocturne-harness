@@ -18,6 +18,7 @@ import { SymphonyDeliberationCard, SymphonyResultCard } from './SymphonyCards'
 import { MemoryGate } from './MemoryGate'
 import { MemoryPanel } from './MemoryPanel'
 import { MemoryGraph } from './MemoryGraph'
+import { PalaceNebula } from './PalaceNebula'
 import { InjectionConsole } from './InjectionConsole'
 import { RecipeModule } from './RecipeModule'
 import { SymphonyDeck } from './SymphonyDeck'
@@ -1502,6 +1503,8 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
         <ModelDevice />
       ) : moduleId === 'memory_graph' ? (
         <MemoryGraph />
+      ) : moduleId === 'palace_nebula' ? (
+        <PalaceNebula />
       ) : moduleId === 'injection_console' ? (
         <InjectionConsole />
       ) : moduleId === 'recipe' ? (

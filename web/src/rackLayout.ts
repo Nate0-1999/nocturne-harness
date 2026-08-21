@@ -99,7 +99,7 @@ export const FACTORY_RACK_LAYOUT: RackLayoutSet = {
     header: 'GLOBAL', threads: 'CURRENT', chat: 'CURRENT', memory: 'CURRENT',
     vitals: 'GLOBAL', context_bars: 'CURRENT', gate: 'CURRENT', thread_end: 'CURRENT', palace_queue: 'GLOBAL',
     model_device: 'CURRENT',
-    memory_graph: 'GLOBAL', injection_console: 'GLOBAL',
+    memory_graph: 'GLOBAL', palace_nebula: 'GLOBAL', injection_console: 'GLOBAL',
   },
   modules: [
     { module_id: 'threads', order: 0, width: 2 },
