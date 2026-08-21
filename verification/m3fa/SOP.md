@@ -54,4 +54,5 @@ returned the released-path 503.
   layer, current search selected; graph-derived grid, joins, dimming, and milestone.
 - `recipe-live-completed.jpg` — a second real signed Symphony on the same focused
   layer; all step and judge nodes passed, six complete, zero ready, and the served
-  milestone visible.
+  milestone visible. This capture was repeated from the exact pushed `c9b373f`
+  source and its committed web bundle.
