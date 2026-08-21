@@ -1,0 +1,99 @@
+{
+  "packet": "M3S3",
+  "identity": "codex / 2026-08-21 / s321",
+  "date": "2026-08-21",
+  "fixture": false,
+  "surface": "ordinary packaged owner app in real Chrome",
+  "runtime": {
+    "harness_commit": "43816ec",
+    "spine_commit": "3d8286d62abe80057467536d406c80c3650a00a2",
+    "spine_api_contract": "0.1.5",
+    "spine_schema": "0016",
+    "browser_console_warning_or_error_count": 0
+  },
+  "aligned_verdicts": [
+    {
+      "item": "recipe_real_graph",
+      "verdict": "PASS",
+      "stack_id": "01M0K3JHVK0H0EJM3C2NW8V9GM",
+      "revision": 1,
+      "running_state": {
+        "step_1": "search/running",
+        "step_2": "packet/blocked",
+        "step_3": "packet/blocked",
+        "judge_nodes_for_step_1": 3,
+        "blocking_edges": ["step-1->step-2", "step-2->step-3"]
+      },
+      "screenshot": "01-recipe-running.png"
+    },
+    {
+      "item": "completion_grid_live_state",
+      "verdict": "PASS",
+      "complete": 6,
+      "ready": 0,
+      "milestone": "The whole plan is complete.",
+      "screenshot": "02-recipe-completed.png"
+    },
+    {
+      "item": "phone_recovery",
+      "verdict": "PASS",
+      "viewport": {"width": 390, "height": 844},
+      "recipe": {
+        "clicks_to_recover": 1,
+        "rect": {"x": 28, "y": 122.4, "width": 334, "height": 691.6},
+        "grid_client_width": 310,
+        "grid_scroll_width": 916,
+        "observed_scroll_left": 580,
+        "settings_operable": true
+      },
+      "deck": {
+        "clicks_to_recover": 1,
+        "rect": {"x": 0, "y": 135.4, "width": 334, "height": 691.6},
+        "settings_dialog_count": 1
+      },
+      "screenshots": [
+        "03-phone-recipe-before.png",
+        "04-phone-recipe-after.png",
+        "05-phone-recipe-milestone.png",
+        "06-phone-deck-before.png",
+        "07-phone-deck-after.png"
+      ]
+    },
+    {
+      "item": "project_binding_and_sibling_zero",
+      "verdict": "PASS",
+      "primary": {
+        "project_key": "m3s3-primary-s321",
+        "thread_id": "5970ce07-78b0-43c5-8d2a-1ee1b0d2d2bc"
+      },
+      "sibling": {
+        "project_key": "m3s3-sibling-s321",
+        "thread_id": "611ee603-911e-4fc7-888b-4034c32cf565",
+        "persisted_after_reload": true
+      },
+      "gate": {
+        "injection_id": "590845b2-80ec-4573-9cf9-bbddbbb58171",
+        "scorer_version": "m3ti-thread-v1",
+        "injected_count": 0,
+        "near_miss_count": 0,
+        "wrong_removed_count": 0,
+        "resolution_error": null,
+        "model_continuation": "cancelled_at_review_gate"
+      },
+      "screenshots": [
+        "08-project-sibling-reload.png",
+        "09-project-sibling-zero.png"
+      ]
+    }
+  ],
+  "cleanup": {
+    "memory_id": "f21c2e51-6c37-4883-a483-c986e49973ba",
+    "final_revision": 2,
+    "final_status": "tombstoned",
+    "active_total_after_cleanup": 0,
+    "isolated_stack_removed": true,
+    "viewport_override_reset": true
+  },
+  "derived_items_tested": 0,
+  "new_findings": 0
+}
