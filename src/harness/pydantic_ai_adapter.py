@@ -1,5 +1,7 @@
 """The single adapter from harness capabilities to pydantic-ai v2."""
 
+from collections.abc import Sequence
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict
@@ -9,6 +11,7 @@ from pydantic_ai.tools import Tool
 
 from harness.capability import CapabilityHandler, CapabilityTool, HarnessCapability
 from harness.memory_capability import DEFAULT_MEMORY_FEATURE
+from harness.pydantic_harness_adapter import adopted_skills
 from harness.spine_client import MemoryKind
 from harness.tools_memory import MemoryToolContext
 from harness.toolset import ToolName, ToolsetError
@@ -118,6 +121,22 @@ class MemoryCapability(Capability[MemoryToolContext]):
             instructions=[instruction.text for instruction in definition.instructions],
             tools=[_adapt_tool(tool) for tool in definition.tools],
         )
+
+
+def adopted_skill_capabilities(
+    directories: Sequence[Path],
+) -> tuple[Capability[MemoryToolContext], ...]:
+    """Translate upstream skill data through the one Pydantic AI capability adapter."""
+
+    return tuple(
+        Capability[MemoryToolContext](
+            id=skill.id,
+            description=skill.description,
+            instructions=skill.instructions,
+            defer_loading=True,
+        )
+        for skill in adopted_skills(directories)
+    )
 
 
 class EditReplacement(BaseModel):
@@ -261,9 +280,7 @@ async def click(ctx: RunContext[MemoryToolContext], selector: str) -> str | Tool
     return await _execute_browser_tool(ctx, "click", {"selector": selector})
 
 
-async def type(
-    ctx: RunContext[MemoryToolContext], selector: str, text: str
-) -> str | ToolReturn:
+async def type(ctx: RunContext[MemoryToolContext], selector: str, text: str) -> str | ToolReturn:
     """Replace the value of one selected form field."""
     return await _execute_browser_tool(ctx, "type", {"selector": selector, "text": text})
 
@@ -296,7 +313,7 @@ WORKSPACE_TOOLS = (
 
 
 class WorkspaceCapability(Capability[MemoryToolContext]):
-    """The adopted PI file and shell tools inside the existing owner loop."""
+    """The adopted coding and browser tools inside the existing owner loop."""
 
     def __init__(self) -> None:
         super().__init__(

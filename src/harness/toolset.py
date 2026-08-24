@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -13,25 +13,6 @@ from harness.envelope import generate_ulid
 
 class ToolsetError(RuntimeError):
     """The adopted toolset could not satisfy the Harness-owned contract."""
-
-
-class ToolsetUnavailableError(ToolsetError):
-    """The pinned external runtime is not installed or could not start."""
-
-
-class ToolsetProtocolError(ToolsetError):
-    """The external runtime violated the bounded wire contract."""
-
-
-@dataclass(frozen=True, slots=True)
-class ToolsetState:
-    """The small process state Nocturne needs before exposing any file tools."""
-
-    is_streaming: bool
-    is_compacting: bool
-    auto_compaction_enabled: bool
-    message_count: int
-    pending_message_count: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,8 +73,6 @@ class ToolExecutionResult:
 class StandardToolset(Protocol):
     """Nocturne's current toolset seam; extend only when a packet first uses more."""
 
-    async def state(self) -> ToolsetState: ...
-
     def location(self) -> AgentLocation: ...
 
     def presence_events(self) -> tuple[PresenceEvent, ...]: ...
@@ -111,7 +90,6 @@ class StandardToolset(Protocol):
 
 async def open_standard_toolset(
     *,
-    command: Sequence[str] | None = None,
     cwd: Path | None = None,
     workspace_root: Path | None = None,
     agent_id: str = "harness-agent",
@@ -119,14 +97,12 @@ async def open_standard_toolset(
     session_id: str | None = None,
     fence_reads: bool = False,
     presence_sink: PresenceSink | None = None,
-    timeout_seconds: float = 5.0,
 ) -> StandardToolset:
     """Open the selected standard toolset without leaking its protocol to callers."""
 
-    from harness.pi_toolset_adapter import PiRpcToolset
+    from harness.pydantic_harness_adapter import PydanticHarnessToolset
 
-    return await PiRpcToolset.open(
-        command=command,
+    return await PydanticHarnessToolset.open(
         cwd=cwd,
         workspace_root=workspace_root,
         agent_id=agent_id,
@@ -134,5 +110,4 @@ async def open_standard_toolset(
         session_id=session_id or generate_ulid(),
         fence_reads=fence_reads,
         presence_sink=presence_sink,
-        timeout_seconds=timeout_seconds,
     )

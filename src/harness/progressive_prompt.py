@@ -29,7 +29,7 @@ def workspace_location_path(location: AgentLocation) -> str:
 
 
 def render_workspace_context(location: AgentLocation) -> str:
-    """Render bounded CWD facts and PI-compatible layered agent instructions."""
+    """Render bounded CWD facts and root-to-location agent instructions."""
 
     root = location.workspace_root.resolve(strict=True)
     cwd = location.cwd.resolve(strict=True)

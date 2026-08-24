@@ -105,7 +105,7 @@ async def test_vanilla_agent_discovers_three_memory_tools_and_instruction() -> N
     """ADR-005 is defended by verifying that vanilla agent discovers three memory tools and
     instruction; this prevents drift in the owned memory capability seam.
     """
-    assert pydantic_ai.__version__ == "2.12.0"
+    assert pydantic_ai.__version__ == "2.28.0"  # D.2 136 lockstep core upgrade
     model = TestModel(call_tools=[], custom_output_text="ok")
     capability = MemoryCapability()
     agent = Agent(

@@ -6,6 +6,5 @@ __pycache__/
 *.egg-info/
 *.py[cod]
 web/node_modules/
-src/harness/_pi/node_modules/
 verification/h5/trace.jsonl
 src/harness/_web/

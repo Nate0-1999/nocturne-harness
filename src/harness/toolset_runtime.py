@@ -13,13 +13,12 @@ from harness.toolset import (
     StandardToolset,
     ToolExecutionResult,
     ToolName,
-    ToolsetState,
     open_standard_toolset,
 )
 
 
 class LazyStandardToolset:
-    """Start PI only when an owner turn first asks for a workspace tool."""
+    """Construct the adopted tool layer only when an owner turn first needs it."""
 
     def __init__(
         self,
@@ -54,9 +53,6 @@ class LazyStandardToolset:
                     fence_reads=self._fence_reads,
                 )
             return self._toolset
-
-    async def state(self) -> ToolsetState:
-        return await (await self._owned()).state()
 
     def location(self) -> AgentLocation:
         if self._toolset is not None:

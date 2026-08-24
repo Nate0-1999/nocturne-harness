@@ -41,13 +41,6 @@ from harness.lifecycle import (
     inspect_local_palace,
     prepare_local_restore,
 )
-from harness.pi_runtime import (
-    PiRuntimeError,
-    ensure_pi_runtime,
-    installed_pi_is_ready,
-    installed_pi_path,
-    pi_runtime_is_ready,
-)
 from harness.resources import local_storage_snapshot
 from harness.transcript import JournalCloudRecord, TranscriptJournal, TranscriptJournalUnavailable
 
@@ -132,9 +125,6 @@ class NocturneConfig:
                     "NOCTURNE_POSTGRES_VOLUME": self.active_postgres_volume,
                 }
             )
-        pi_command = installed_pi_path(self.home)
-        if installed_pi_is_ready(self.home):
-            environment["NOCTURNE_PI_COMMAND"] = str(pi_command)
         if browser_runtime_is_ready(self.home):
             environment["PLAYWRIGHT_BROWSERS_PATH"] = str(browser_runtime_path(self.home))
         return environment
@@ -224,12 +214,6 @@ def init_nocturne(
 
 
 def _ensure_tool_runtimes(home: Path, *, stdout: TextIO) -> None:
-    if not pi_runtime_is_ready(home):
-        print("Preparing Nocturne's pinned workspace tools…", file=stdout, flush=True)
-    try:
-        ensure_pi_runtime(home)
-    except PiRuntimeError as exc:
-        raise OnboardingError(str(exc)) from exc
     if not browser_runtime_is_ready(home):
         print("Preparing Nocturne's headless browser…", file=stdout, flush=True)
     try:

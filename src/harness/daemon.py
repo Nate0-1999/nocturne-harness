@@ -57,6 +57,7 @@ from harness.parameter_registry import (
     ParameterWriteViolation,
 )
 from harness.progressive_prompt import workspace_location_path
+from harness.pydantic_harness_adapter import discover_skill_libraries
 from harness.rack_query import RackQueryResult
 from harness.receipt_queue import SpendReceiptQueue
 from harness.recipe_graph import RecipeGraphSnapshot
@@ -667,7 +668,11 @@ def create_dev_app(
             raise ValueError("SPINE_TOKEN is required for `harness dev`")
         owned_spine = SpineClient(configured.spine_url, token.get_secret_value())
     completion_router = CompletionRouter(configured)
-    owned_agent = agent or HarnessAgent(configured, router=completion_router)
+    owned_agent = agent or HarnessAgent(
+        configured,
+        router=completion_router,
+        skill_directories=discover_skill_libraries(discovery_root),
+    )
     factory = EnvelopeFactory(machine_id=machine_id, agent_id=agent_id)
     owned_symphony_experience = symphony_experience or SymphonyExperience(id_factory=factory.new_id)
     model_resolver = model_resolver_override or ModelPolicyResolver(

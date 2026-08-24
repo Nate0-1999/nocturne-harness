@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Literal
 from uuid import UUID
 
@@ -25,7 +26,11 @@ from harness.model_router import (
 from harness.model_router import (
     ModelConfigurationError as ModelConfigurationError,
 )
-from harness.pydantic_ai_adapter import MemoryCapability, WorkspaceCapability
+from harness.pydantic_ai_adapter import (
+    MemoryCapability,
+    WorkspaceCapability,
+    adopted_skill_capabilities,
+)
 from harness.spine_client import (
     CreatedMemoryResponse,
     CreateMemoryConflictError,
@@ -218,6 +223,7 @@ class HarnessAgent:
         *,
         model: Model | None = None,
         router: CompletionRouter | None = None,
+        skill_directories: Sequence[Path] = (),
     ) -> None:
         self._settings = settings
         self._router = router or CompletionRouter(settings)
@@ -237,10 +243,15 @@ class HarnessAgent:
             request_limit=2,
             total_tokens_limit=settings.run_total_tokens_limit,
         )
+        chat_capabilities = [
+            MemoryCapability(),
+            WorkspaceCapability(),
+            *adopted_skill_capabilities(skill_directories),
+        ]
         self._chat_agent = Agent(
             self._default_model,
             deps_type=MemoryToolContext,
-            capabilities=[MemoryCapability(), WorkspaceCapability()],
+            capabilities=chat_capabilities,
             name="harness-chat",
         )
         self._label_agent = Agent(

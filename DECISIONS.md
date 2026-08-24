@@ -2884,3 +2884,31 @@ GDScript/export toolchain would also create a second build system. Three.js is n
 candidate because the packet explicitly requires a real game engine. A hand-built
 canvas, decorative particles, or capped/sampled memories would evade the functional
 law instead of satisfying it.
+
+## 095 — Coding tools run in-process behind one Harness fence [P1, R14, M3TS]
+
+**Decision.** Adopt exact `pydantic-ai==2.28.0` and
+`pydantic-ai-harness[skills]==0.24.0` for the seven coding capabilities and deferred
+skill discovery. Keep the existing Harness toolset seam, broker, journal, receipts,
+and Pydantic AI owner loop. One Harness adapter owns canonical location resolution,
+the write-before-act fence, movement and presence refresh, shell containment, and
+credential refusal before it delegates to the upstream in-process capabilities.
+
+Keep only the two proven compatibility shims on our side: grep context expansion
+through upstream search and reads, and explicit discovery of a skill package's
+bundled references, assets, and scripts through the same fenced read tool. Preserve
+exact multi-edit all-or-none behavior. Retire the PI subprocess adapter, its vendored
+Node package, and the init-time PI download; the version-matched Playwright Chromium
+prepared by `nocturne init` remains browser-hands law under Decision 091.
+
+**Motivation.** The owner approved the M3PV candidate because the useful tool layer
+can now share the Python process and native location law. Removing the foreign RPC
+runtime makes prompting, movement, policy, and action agree at one boundary while
+dropping the 139 MB vendored payload from the source tree and wheel.
+
+**Rejected alternatives.** Patching the foreign package would make our location and
+resource law depend on an unreleasable fork. Rebuilding grep or skill loading would
+duplicate upstream behavior. Keeping PI as a fallback would preserve two conflicting
+tool authorities and the runtime download this packet exists to remove. Removing the
+Chromium preparation would satisfy an over-broad reading of M3TS by regressing the
+already-shipped browser capability.

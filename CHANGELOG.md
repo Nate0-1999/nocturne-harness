@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Replaced the downloaded PI/Node tool runtime with the in-process official
+  `pydantic-ai-harness` filesystem, shell, and Skills capabilities while retaining
+  NOCTURNE's location fence, movement refresh, journal, broker, and owner loop.
+- Added context lines to the adopted grep path and model-visible access to each
+  skill package's bundled resources through small NOCTURNE-owned shims.
+
 ## 0.1.5 - 2026-08-18
 
 - Added optional append-only Palace backup and resurrection for conversation transcripts without

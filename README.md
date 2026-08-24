@@ -19,9 +19,9 @@ nocturne up
 database password, Spine bearer token, and local identity, then stores them in
 `~/.nocturne/env` with owner-only permissions. Set `OPENROUTER_API_KEY` before
 running it to use an existing environment secret without a prompt. Init also
-downloads the pinned, platform-specific PI runtime from its canonical GitHub
-release, verifies its committed SHA-256 digest, and keeps it under
-`$NOCTURNE_HOME/tools`; ordinary chat never installs or updates tools.
+installs the headless browser runtime used by the browser tools. The coding
+tools are Python dependencies in the `nocturne-ai` wheel; init does not download
+Node or a second agent runtime.
 
 `nocturne up` pulls pgvector, applies the packaged database migrations, starts
 the installed Spine and Harness wheels, and opens <http://127.0.0.1:8765>.
@@ -80,14 +80,18 @@ local, append-only, and never stored in Git. On startup, NOCTURNE verifies that
 the journal can durably accept writes and reloads each conversation from its
 durable tail before serving the UI.
 
-Ordinary owner chat can use the pinned PI workspace tools in the project where
-the daemon was launched. Reads are free; edit, write, and shell work stay inside
-the agent's current location, so the agent must move before acting elsewhere in
-that project. On macOS, shell commands run behind the operating-system sandbox
-with network denied and a scrubbed environment. Remote pushes, deploy commands,
-and credential reads stop with a plain boundary message. Every tool call and
-result is appended through the same conversation journal, and provider usage
-continues through the existing spend ledger.
+Ordinary owner chat uses the official `pydantic-ai-harness` filesystem, shell,
+and Skills capabilities through NOCTURNE's owned adapter. Reads are free; edit,
+write, and shell work stay inside the agent's current location, so the agent
+must move before acting elsewhere in that project. On macOS, shell commands run
+behind the operating-system sandbox with network denied and a scrubbed
+environment. Remote pushes, deploy commands, and credential reads stop with a
+plain boundary message. Skills in project `.agents/skills` or legacy
+`.pi/skills`, plus their user-level equivalents, are deferred until useful;
+their bundled references, assets, and scripts remain available through the
+same fenced tools. Every tool call and result is appended through the same
+conversation journal, and provider usage continues through the existing spend
+ledger.
 
 Chat also has five headless browser tools: navigate, click, type, read the page,
 and take a screenshot. Localhost and files beneath the agent's current location
