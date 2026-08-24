@@ -2884,3 +2884,34 @@ GDScript/export toolchain would also create a second build system. Three.js is n
 candidate because the packet explicitly requires a real game engine. A hand-built
 canvas, decorative particles, or capped/sampled memories would evade the functional
 law instead of satisfying it.
+
+## 095 — Garden archival projection preserves near-duplicate handoffs [P4, M3PR]
+
+**Decision.** The M3PR verification script projects each Garden section, D.2
+row, note section, product decision, and handoff report as one bounded memory
+under the verification-only `garden-record` principal. It uses released seed
+ingestion in batches of at most 12, proves an identical replay before explicit
+owner-authorized approval, and then CAS-patches only the child provenance from
+the seed filename to the exact `file#section` origin.
+
+If the released service times out after writing only part of a seed batch, the
+script admits only exact known pending children, proves the partial replay, and
+requeues the missing units. If the 0.92 semantic duplicate band suppresses a
+distinct historical handoff, only that suppressed unit is retried with a
+deterministic source-integrity fingerprint prepended to its bounded body. An
+unchanged re-run accepts either the ordinary or fingerprinted representation
+and writes nothing.
+
+**Motivation.** P4 needs the relay's institutional record to remain searchable
+without silently losing provenance. At archive scale, ADR-019 exposed two
+normal memory behaviors that are unsafe to interpret as archival success:
+provider failure can leave a partial batch, and semantically close retry
+reports can be legitimate distinct records. The verifier reconciles those
+conditions at the existing consent boundary without changing Palace product
+code or weakening dedup for ordinary memories.
+
+**Rejected alternatives.** Treating a partial or deduplicated batch as complete
+would lose named record origins. Bypassing seed ingestion with direct creates
+would not exercise the adopted product path. Disabling product dedup, adding an
+archive mode, or raising provider timeouts would expand M3PR into a product
+change. Writing to the owner's principal would violate the packet's authority.
