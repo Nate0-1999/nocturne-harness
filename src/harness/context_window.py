@@ -21,6 +21,7 @@ from spine.tokens import cl100k_token_count
 from harness.memory_capability import DEFAULT_MEMORY_FEATURE
 from harness.model_policy import ThreadModelResolution
 from harness.pydantic_ai_adapter import WORKSPACE_INSTRUCTIONS, WORKSPACE_TOOLS
+from harness.spine_client import MemoryAllocation
 
 _THRESHOLD_RATIO = 0.8
 
@@ -44,6 +45,19 @@ class ContextObservation(BaseModel):
     categories: ContextCategories
     breakdown_basis: Literal["estimated"] = "estimated"
     compaction_active: Literal[False] = False
+    memory_allocation: ContextMemoryAllocation | None = None
+
+
+class ContextMemoryAllocation(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    memory_context_share: float = Field(ge=0.01, le=0.50)
+    share_tokens: int = Field(ge=0)
+    regular_tokens: int = Field(ge=0)
+    pinned_tokens: int = Field(ge=0)
+    total_tokens: int = Field(ge=0)
+    pinned_overflow_tokens: int = Field(ge=0)
+    actual_block_tokens: int = Field(ge=0)
+    unused_share_tokens: int = Field(ge=0)
 
 
 class ContextWindowSnapshot(BaseModel):
@@ -68,6 +82,7 @@ class ContextWindowTracker:
         resolution: ThreadModelResolution | None,
         memory_block: str | None,
         workspace_block: str | None = None,
+        memory_allocation: MemoryAllocation | None = None,
     ) -> None:
         if resolution is None:
             return
@@ -90,6 +105,7 @@ class ContextWindowTracker:
             context_tokens=resolution.context_tokens,
             threshold_tokens=max(1, int(resolution.context_tokens * _THRESHOLD_RATIO)),
             categories=_estimated_categories(used, memory_block, workspace_block, captured),
+            memory_allocation=_context_memory_allocation(memory_allocation, memory_block),
         )
 
     def snapshot(self, thread_id: str | None) -> ContextWindowSnapshot:
@@ -160,6 +176,20 @@ def _reduce(value: int, amount: int) -> tuple[int, int]:
     return value - reduction, amount - reduction
 
 
+def _context_memory_allocation(
+    allocation: MemoryAllocation | None,
+    memory_block: str | None,
+) -> ContextMemoryAllocation | None:
+    if allocation is None:
+        return None
+    actual = cl100k_token_count(memory_block or "")
+    return ContextMemoryAllocation(
+        **allocation.model_dump(),
+        actual_block_tokens=actual,
+        unused_share_tokens=max(0, allocation.share_tokens - allocation.regular_tokens),
+    )
+
+
 def _aggregate(observations: Sequence[ContextObservation]) -> ContextObservation | None:
     if not observations:
         return None
@@ -169,6 +199,22 @@ def _aggregate(observations: Sequence[ContextObservation]) -> ContextObservation
         memory=sum(item.categories.memory for item in observations),
         tools=sum(item.categories.tools for item in observations),
     )
+    allocation_observations = [item for item in observations if item.memory_allocation]
+    allocations = [item.memory_allocation for item in allocation_observations]
+    memory_allocation = None
+    if allocations:
+        context_tokens = sum(item.context_tokens for item in allocation_observations)
+        share_tokens = sum(item.share_tokens for item in allocations)
+        memory_allocation = ContextMemoryAllocation(
+            memory_context_share=share_tokens / context_tokens,
+            share_tokens=share_tokens,
+            regular_tokens=sum(item.regular_tokens for item in allocations),
+            pinned_tokens=sum(item.pinned_tokens for item in allocations),
+            total_tokens=sum(item.total_tokens for item in allocations),
+            pinned_overflow_tokens=sum(item.pinned_overflow_tokens for item in allocations),
+            actual_block_tokens=sum(item.actual_block_tokens for item in allocations),
+            unused_share_tokens=sum(item.unused_share_tokens for item in allocations),
+        )
     return ContextObservation(
         thread_id="GLOBAL",
         model=f"{len(observations)} observed thread{'s' if len(observations) != 1 else ''}",
@@ -177,12 +223,14 @@ def _aggregate(observations: Sequence[ContextObservation]) -> ContextObservation
         context_tokens=sum(item.context_tokens for item in observations),
         threshold_tokens=sum(item.threshold_tokens for item in observations),
         categories=categories,
+        memory_allocation=memory_allocation,
     )
 
 
 __all__ = [
     "ContextCategories",
     "ContextObservation",
+    "ContextMemoryAllocation",
     "ContextWindowSnapshot",
     "ContextWindowTracker",
 ]

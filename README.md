@@ -100,6 +100,13 @@ the exact command `/browser allow-web`; that one grant is retained in the thread
 journal. Screenshots return to the model as images and appear in the existing
 Tools detail in the conversation.
 
+The Injection Console owns the memory-context share beside the other scorer
+parameters. It can DEEP-simulate and informed-force a versioned starting point;
+the ordinary learner resumes from that generation once 100 authentic owner
+dispositions make share and threshold trainable. Context Bars shows the actual
+memory block against the share and names pinned overflow. The share is a
+ceiling, so unused room remains available to chat; pins always inject.
+
 Archiving a thread runs the memory extractor over that durable journal, then
 opens the law-bound Thread Memory Review rack module. Candidate memories remain
 invisible to search and model context until approved. Rows wholly visible in

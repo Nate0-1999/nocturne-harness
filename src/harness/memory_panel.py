@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from typing import Literal, Protocol
 from uuid import UUID
 
+from spine.tokens import cl100k_token_count
+
 from harness.envelope import (
     Envelope,
     EnvelopeFactory,
@@ -30,6 +32,7 @@ from harness.spine_client import (
     InjectPrepareResponse,
     LabelConflict,
     ListMemoriesParams,
+    MemoryAllocation,
     MemoryStatus,
     MemoryUnit,
     PagedMemoryListResponse,
@@ -80,6 +83,7 @@ class ThreadMemorySnapshot:
     confirmed_memory_ids: frozenset[UUID]
     event_sources: Mapping[UUID, UUID]
     memory_bodies: Mapping[UUID, str]
+    memory_allocation: MemoryAllocation
 
 
 @dataclass(slots=True)
@@ -90,6 +94,9 @@ class _ThreadMemoryState:
     confirmed_memory_ids: set[UUID]
     event_sources: dict[UUID, UUID]
     memory_bodies: dict[UUID, str]
+    pinned_memory_ids: set[UUID]
+    memory_context_share: float
+    share_tokens: int
 
     def snapshot(self) -> ThreadMemorySnapshot:
         return ThreadMemorySnapshot(
@@ -100,6 +107,31 @@ class _ThreadMemoryState:
             confirmed_memory_ids=frozenset(self.confirmed_memory_ids),
             event_sources=dict(self.event_sources),
             memory_bodies=dict(self.memory_bodies),
+            memory_allocation=self._allocation(),
+        )
+
+    def _allocation(self) -> MemoryAllocation:
+        pinned_tokens = sum(
+            cl100k_token_count(body)
+            for memory_id, body in self.memory_bodies.items()
+            if memory_id in self.pinned_memory_ids
+        )
+        regular_tokens = sum(
+            cl100k_token_count(body)
+            for memory_id, body in self.memory_bodies.items()
+            if memory_id not in self.pinned_memory_ids
+        )
+        total_tokens = pinned_tokens + regular_tokens
+        return MemoryAllocation(
+            memory_context_share=self.memory_context_share,
+            share_tokens=self.share_tokens,
+            regular_tokens=regular_tokens,
+            pinned_tokens=pinned_tokens,
+            total_tokens=total_tokens,
+            pinned_overflow_tokens=min(
+                pinned_tokens,
+                max(0, total_tokens - self.share_tokens),
+            ),
         )
 
 
@@ -158,6 +190,9 @@ class ThreadMemoryContextRegistry:
             confirmed_memory_ids={card.memory_id for card in selected},
             event_sources={memory_id: prepared.injection_id for memory_id in prepared_ids},
             memory_bodies={card.memory_id: card.body for card in selected},
+            pinned_memory_ids={card.memory_id for card in selected if card.pin},
+            memory_context_share=prepared.memory_allocation.memory_context_share,
+            share_tokens=prepared.memory_allocation.share_tokens,
         )
         self._threads[thread_id] = state
         return state.snapshot()
@@ -174,6 +209,7 @@ class ThreadMemoryContextRegistry:
             return False
         del state.fragments[memory_id]
         del state.memory_bodies[memory_id]
+        state.pinned_memory_ids.discard(memory_id)
         state.confirmed_memory_ids.discard(memory_id)
         state.excluded_memory_ids.add(memory_id)
         return True
@@ -186,6 +222,8 @@ class ThreadMemoryContextRegistry:
             return False
         state.fragments[memory.memory_id] = _memory_unit_fragment(memory)
         state.memory_bodies[memory.memory_id] = memory.body
+        if memory.pin:
+            state.pinned_memory_ids.add(memory.memory_id)
         state.excluded_memory_ids.remove(memory.memory_id)
         state.confirmed_memory_ids.add(memory.memory_id)
         return True
@@ -215,10 +253,24 @@ class ThreadMemoryContextRegistry:
         changed = set(state.fragments) != set(ids)
         state.fragments = dict(zip(ids, fragments, strict=True))
         state.memory_bodies = {card.memory_id: card.body for card in cards}
+        state.pinned_memory_ids = {card.memory_id for card in cards if card.pin}
+        state.memory_context_share = prepared.memory_allocation.memory_context_share
+        state.share_tokens = prepared.memory_allocation.share_tokens
         state.injection_id = prepared.injection_id
         for card in (*prepared.injected, *prepared.near_misses):
             state.event_sources[card.memory_id] = prepared.injection_id
         return state.snapshot(), changed
+
+    def update_memory(self, thread_id: str, memory: MemoryUnit) -> None:
+        """Refresh pin accounting without mutating the turn's frozen memory text."""
+
+        state = self._threads.get(thread_id)
+        if state is None or memory.memory_id not in state.fragments:
+            return
+        if memory.pin:
+            state.pinned_memory_ids.add(memory.memory_id)
+        else:
+            state.pinned_memory_ids.discard(memory.memory_id)
 
     @asynccontextmanager
     async def model_feedback_boundary(self, thread_id: str) -> AsyncIterator[None]:
@@ -544,6 +596,7 @@ class MemoryPanelController:
         authoritative = [
             updated if memory.memory_id == updated.memory_id else memory for memory in active
         ]
+        self._contexts.update_memory(thread_id, updated)
         await self._send_state(
             thread_id=thread_id,
             request_id=request_id,

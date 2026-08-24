@@ -28,6 +28,7 @@ from harness.spine_client import (
     InjectCommitResponse,
     InjectPrepareRequest,
     InjectPrepareResponse,
+    MemoryAllocation,
     MemoryStatus,
     MemoryUnit,
     PatchMemoryConflictError,
@@ -84,6 +85,11 @@ class _ProgressiveInstructions(DynamicSystemInstructions):
     @property
     def workspace_block(self) -> str | None:
         return self._workspace_block
+
+    @property
+    def memory_allocation(self) -> MemoryAllocation | None:
+        snapshot = self._contexts.snapshot(self._thread_id)
+        return snapshot.memory_allocation if snapshot is not None else None
 
     async def render(self) -> str | None:
         location_path = self._location_path()

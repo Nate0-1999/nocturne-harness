@@ -2912,3 +2912,29 @@ duplicate upstream behavior. Keeping PI as a fallback would preserve two conflic
 tool authorities and the runtime download this packet exists to remove. Removing the
 Chromium preparation would satisfy an over-broad reading of M3TS by regressing the
 already-shipped browser capability.
+
+## 096 — Retain one memory allocation from gate to Context Bars [P1.2, P2.2, A-061]
+
+**Decision.** Retain Spine's exact per-injection memory allocation in the
+thread's memory-panel state and attach it to the completed model observation.
+Context Bars renders the observed memory block against regular share tokens,
+the share percentage, and pinned overflow; when no regular memory uses the
+ceiling, unused room is reported by the allocation rather than filled. The
+Injection Console remains the only control surface and adds share to the
+existing DEEP-simulate and informed-force generation flow.
+
+The Console names the separate 100-authentic-signal floor for share and
+threshold even while the older feature-weight learner reports its 25-signal
+floor. Manual values create a normal versioned generation; no local UI lock is
+introduced.
+
+**Motivation.** The owner needs to see whether memory is taking room because it
+earned it or because a pin deliberately crossed the ceiling. Carrying the
+allocation that actually shaped the turn makes that answer trustworthy and
+keeps the balance dial in the one place already used to understand scoring.
+
+**Rejected alternatives.** Reconstructing allocation from rendered text would
+lose scorer provenance and confuse instruction overhead with selected memory.
+A Context Bars control would duplicate the Console. Hiding pin overflow would
+make an owner override look like a broken ceiling. Combining the two learning
+floors would misstate when existing weight training begins.

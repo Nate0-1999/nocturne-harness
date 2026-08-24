@@ -268,6 +268,11 @@ class PydanticAITurnRunner:
                         if dynamic_instructions is not None
                         else None
                     ),
+                    memory_allocation=(
+                        getattr(dynamic_instructions, "memory_allocation", None)
+                        if dynamic_instructions is not None
+                        else None
+                    ),
                 )
             await self._record_spend(
                 captured,

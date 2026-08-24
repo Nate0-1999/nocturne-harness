@@ -140,7 +140,7 @@ async def test_global_instrument_requests_preserve_required_null_scope_fields() 
     values = {
         "tau": 0.55,
         "top_k": 8,
-        "budget_tokens": 4000,
+        "memory_context_share": 0.10,
         "half_life_time_days": 30.0,
         "half_life_hist_days": 120.0,
         "weights": {
@@ -176,6 +176,9 @@ async def test_global_instrument_requests_preserve_required_null_scope_fields() 
                 "minimum_dispositions": 25,
                 "remaining_to_floor": 25,
                 "floor_met": False,
+                "share_tuning_minimum": 100,
+                "share_tuning_remaining": 100,
+                "share_tuning_active": False,
                 "retrain_signal_stride": 25,
                 "evaluated_through": None,
                 "signals_since_last_run": 0,
@@ -325,6 +328,14 @@ async def test_all_routes_send_exact_http_contract() -> None:
                 "injected": [],
                 "near_misses": [],
                 "final_block": None,
+                "memory_allocation": {
+                    "memory_context_share": 0.10,
+                    "share_tokens": 100,
+                    "regular_tokens": 0,
+                    "pinned_tokens": 0,
+                    "total_tokens": 0,
+                    "pinned_overflow_tokens": 0,
+                },
             },
         ),
         ("POST", "/prefix/v1/inject/commit"): response(

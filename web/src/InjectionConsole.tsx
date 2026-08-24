@@ -20,7 +20,7 @@ import { useRackPlugin, useRackSnapshot } from './rack'
 type Values = {
   tau: number
   top_k: number
-  budget_tokens: number
+  memory_context_share: number
   half_life_time_days: number
   half_life_hist_days: number
   weights: Record<string, number>
@@ -91,7 +91,7 @@ const POLL_INTERVAL_MS = 5_000
 const CONTROL_LABELS: Record<string, string> = {
   tau: 'Minimum match',
   top_k: 'Memories considered',
-  budget_tokens: 'Context budget',
+  memory_context_share: 'Memory share',
   half_life_time_days: 'Recent-use fade (days)',
   half_life_hist_days: 'Past-choice fade (days)',
 }
@@ -381,6 +381,13 @@ export function InjectionConsole() {
       <div className="console-grid">
         <section>
           <p className="console-active">Current recipe <strong>{data?.active_version}</strong></p>
+          {data?.learning && (
+            <p className="console-note">
+              Memory share + injection line {data.learning.share_tuning_active
+                ? 'learn with each new generation.'
+                : `stay fixed until ${data.learning.share_tuning_minimum} authentic signals · ${data.learning.share_tuning_remaining} to go.`}
+            </p>
+          )}
           {(data?.proposed_versions ?? []).map((proposal) => {
             const point = data?.accuracy.find((candidate) => candidate.version === proposal.version)
             return (
@@ -418,16 +425,16 @@ export function InjectionConsole() {
           })}
           {draft && (
             <div className="control-bank">
-              {(['tau', 'top_k', 'budget_tokens', 'half_life_time_days', 'half_life_hist_days'] as const)
+              {(['tau', 'top_k', 'memory_context_share', 'half_life_time_days', 'half_life_hist_days'] as const)
                 .map((key) => (
                   <label key={key}>
                     <span>{CONTROL_LABELS[key]}</span>
                     <input
                       type="number"
                       value={draft[key]}
-                      min={key === 'tau' ? 0 : 1}
-                      max={key === 'tau' ? 1 : undefined}
-                      step={key === 'tau' ? 0.01 : 1}
+                      min={key === 'tau' ? 0 : key === 'memory_context_share' ? 0.01 : 1}
+                      max={key === 'tau' ? 1 : key === 'memory_context_share' ? 0.5 : undefined}
+                      step={key === 'tau' || key === 'memory_context_share' ? 0.01 : 1}
                       onChange={(event) => setNumber(key, Number(event.target.value))}
                     />
                   </label>
@@ -460,7 +467,7 @@ export function InjectionConsole() {
                   {[
                     'tau',
                     'top_k',
-                    'budget_tokens',
+                    'memory_context_share',
                     'half_life_time_days',
                     'half_life_hist_days',
                     ...Object.keys(draft.weights).map((key) => `weight.${key}`),

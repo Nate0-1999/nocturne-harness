@@ -33,6 +33,8 @@ export interface ReplayScoreView {
   disagreements: number
   weighted_disagreements: string
   injected_tokens: number
+  share_disagreements: number
+  weighted_share_disagreements: string
 }
 
 export interface LearnerRunView {
@@ -66,6 +68,9 @@ export interface ScorerConsoleLearning {
   minimum_dispositions: number
   remaining_to_floor: number
   floor_met: boolean
+  share_tuning_minimum: number
+  share_tuning_remaining: number
+  share_tuning_active: boolean
   retrain_signal_stride: number
   evaluated_through: number | null
   signals_since_last_run: number

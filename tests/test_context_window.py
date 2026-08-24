@@ -5,6 +5,7 @@ from pydantic_ai.usage import RequestUsage
 
 from harness.context_window import ContextWindowTracker
 from harness.model_policy import ThreadModelResolution
+from harness.spine_client import MemoryAllocation
 
 
 def test_tracker_keeps_measured_total_and_exact_limit_with_estimated_split() -> None:
@@ -25,6 +26,14 @@ def test_tracker_keeps_measured_total_and_exact_limit_with_estimated_split() -> 
             model="openrouter:test/model", context_tokens=16_000, policy="pinned:test/model"
         ),
         memory_block="a remembered preference",
+        memory_allocation=MemoryAllocation(
+            memory_context_share=0.10,
+            share_tokens=1_600,
+            regular_tokens=120,
+            pinned_tokens=1_700,
+            total_tokens=1_820,
+            pinned_overflow_tokens=220,
+        ),
     )
 
     observation = tracker.snapshot("thread-a").aggregate
@@ -35,6 +44,11 @@ def test_tracker_keeps_measured_total_and_exact_limit_with_estimated_split() -> 
     assert sum(observation.categories.model_dump().values()) == 1_250
     assert observation.breakdown_basis == "estimated"
     assert observation.compaction_active is False
+    assert observation.memory_allocation is not None
+    assert observation.memory_allocation.share_tokens == 1_600
+    assert observation.memory_allocation.pinned_overflow_tokens == 220
+    assert observation.memory_allocation.actual_block_tokens > 0
+    assert observation.memory_allocation.unused_share_tokens == 1_480
 
 
 def test_tracker_global_aggregates_only_observed_threads() -> None:

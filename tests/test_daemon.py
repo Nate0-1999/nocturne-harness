@@ -34,6 +34,7 @@ from harness.spine_client import (
     InjectPrepareRequest,
     InjectPrepareResponse,
     ListMemoriesParams,
+    MemoryAllocation,
     MemoryFeatures,
     MemoryKind,
     MemoryStatus,
@@ -59,6 +60,17 @@ SECOND_PROMPT_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAW"
 CANCEL_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAX"
 SNAPSHOT_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAY"
 INJECTION_ID = "32345678-1234-5678-1234-567812345678"
+
+
+def memory_allocation() -> MemoryAllocation:
+    return MemoryAllocation(
+        memory_context_share=0.10,
+        share_tokens=100,
+        regular_tokens=0,
+        pinned_tokens=0,
+        total_tokens=0,
+        pinned_overflow_tokens=0,
+    )
 
 
 def vitals_snapshot() -> VitalsSnapshot:
@@ -191,6 +203,7 @@ class GateSpine:
             injected=[],
             near_misses=[],
             final_block=None,
+            memory_allocation=memory_allocation(),
         )
 
     async def commit_injection(self, request: InjectCommitRequest) -> InjectCommitResponse:
@@ -234,7 +247,7 @@ class GateSpine:
                 "values": {
                     "tau": 0.55,
                     "top_k": 8,
-                    "budget_tokens": 4000,
+                    "memory_context_share": 0.10,
                     "half_life_time_days": 30.0,
                     "half_life_hist_days": 120.0,
                     "weights": {
@@ -337,6 +350,7 @@ class PanelGateSpine:
             injected=self.cards,
             near_misses=[],
             final_block=None,
+            memory_allocation=memory_allocation(),
         )
 
     async def commit_injection(self, request: InjectCommitRequest) -> InjectCommitResponse:
@@ -494,7 +508,7 @@ def test_rack_scorer_simulation_force_and_audition_use_public_actions() -> None:
     values = {
         "tau": 0.55,
         "top_k": 8,
-        "budget_tokens": 4000,
+        "memory_context_share": 0.10,
         "half_life_time_days": 30.0,
         "half_life_hist_days": 120.0,
         "weights": {

@@ -18,6 +18,7 @@ from harness.spine_client import (
     InjectPrepareResponse,
     LabelConflict,
     ListMemoriesParams,
+    MemoryAllocation,
     MemoryCard,
     MemoryKind,
     MemorySplitChild,
@@ -64,6 +65,17 @@ def memory_unit_payload() -> dict[str, object]:
         "created_at": "2026-07-17T12:00:00Z",
         "updated_at": "2026-07-17T12:00:00Z",
     }
+
+
+def memory_allocation() -> MemoryAllocation:
+    return MemoryAllocation(
+        memory_context_share=0.10,
+        share_tokens=100,
+        regular_tokens=1,
+        pinned_tokens=0,
+        total_tokens=1,
+        pinned_overflow_tokens=0,
+    )
 
 
 def similarity_card_payload() -> dict[str, object]:
@@ -311,6 +323,7 @@ def test_prepare_cards_require_concrete_features_and_rank() -> None:
         injected=[scored_card_payload()],
         near_misses=[],
         final_block=None,
+        memory_allocation=memory_allocation(),
     )
 
     assert response.injected[0].features.sem == pytest.approx(0.9)
@@ -323,6 +336,7 @@ def test_prepare_cards_require_concrete_features_and_rank() -> None:
             injected=[similarity_card_payload()],
             near_misses=[],
             final_block=None,
+            memory_allocation=memory_allocation(),
         )
 
 

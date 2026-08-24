@@ -14,6 +14,17 @@ interface Observation {
   context_tokens: number
   threshold_tokens: number
   categories: Record<Category, number>
+  memory_allocation: MemoryAllocation | null
+}
+interface MemoryAllocation {
+  memory_context_share: number
+  share_tokens: number
+  regular_tokens: number
+  pinned_tokens: number
+  total_tokens: number
+  pinned_overflow_tokens: number
+  actual_block_tokens: number
+  unused_share_tokens: number
 }
 
 const CATEGORY_LABELS: Record<Category, string> = {
@@ -96,6 +107,14 @@ export function ContextBars() {
               <tr key={category}><td><i className={`context-bars__key context-bars__key--${category}`} />{CATEGORY_LABELS[category]}</td><td>{formatHumanCount(visibleObservation.categories[category])}</td></tr>
             ))}</tbody>
           </table>
+          {visibleObservation.memory_allocation !== null && (
+            <p className="context-bars__memory-room">
+              Memory block {formatHumanCount(visibleObservation.memory_allocation.actual_block_tokens)} / {formatHumanCount(visibleObservation.memory_allocation.share_tokens)} share ({formatHumanPercent(visibleObservation.memory_allocation.memory_context_share * 100)})
+              {visibleObservation.memory_allocation.pinned_overflow_tokens > 0
+                ? ` · Pinned overflow +${formatHumanCount(visibleObservation.memory_allocation.pinned_overflow_tokens)}`
+                : ` · ${formatHumanCount(visibleObservation.memory_allocation.unused_share_tokens)} unused returns to chat`}
+            </p>
+          )}
           <p className="context-bars__note">Tools include measured traffic · other lanes estimated · 80% line · Compaction is not active</p>
         </>
       )}
@@ -114,13 +133,25 @@ function parseObservation(value: JsonValue | null): Observation | null {
   ) return null
   const categories = item.categories
   if (!CATEGORIES.every((key) => typeof categories[key] === 'number')) return null
+  const memoryAllocation = parseMemoryAllocation(item.memory_allocation)
   return {
     model: item.model,
     used_tokens: item.used_tokens,
     context_tokens: item.context_tokens,
     threshold_tokens: item.threshold_tokens,
     categories: categories as unknown as Record<Category, number>,
+    memory_allocation: memoryAllocation,
   }
+}
+
+function parseMemoryAllocation(value: JsonValue | undefined): MemoryAllocation | null {
+  if (!isRecord(value)) return null
+  const keys = [
+    'memory_context_share', 'share_tokens', 'regular_tokens', 'pinned_tokens',
+    'total_tokens', 'pinned_overflow_tokens', 'actual_block_tokens', 'unused_share_tokens',
+  ] as const
+  if (!keys.every((key) => typeof value[key] === 'number')) return null
+  return value as unknown as MemoryAllocation
 }
 
 function isRecord(value: unknown): value is Record<string, JsonValue> {

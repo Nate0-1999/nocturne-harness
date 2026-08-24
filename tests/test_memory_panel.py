@@ -31,6 +31,7 @@ from harness.spine_client import (
     FeedbackSignal,
     InjectPrepareResponse,
     ListMemoriesParams,
+    MemoryAllocation,
     MemoryFeatures,
     MemoryKind,
     MemoryStatus,
@@ -52,6 +53,17 @@ MEMORY_A = UUID("42345678-1234-5678-1234-567812345678")
 MEMORY_B = UUID("52345678-1234-5678-1234-567812345678")
 MEMORY_C = UUID("62345678-1234-5678-1234-567812345678")
 SNAPSHOT_TS = datetime(2026, 7, 28, 12, tzinfo=UTC)
+
+
+def memory_allocation() -> MemoryAllocation:
+    return MemoryAllocation(
+        memory_context_share=0.10,
+        share_tokens=100,
+        regular_tokens=0,
+        pinned_tokens=0,
+        total_tokens=0,
+        pinned_overflow_tokens=0,
+    )
 
 
 def memory_card(
@@ -142,6 +154,7 @@ def prepared(cards: list[ScoredMemoryCard]) -> InjectPrepareResponse:
         injected=cards,
         near_misses=[],
         final_block=None,
+        memory_allocation=memory_allocation(),
     )
 
 
@@ -604,7 +617,11 @@ async def test_pin_uses_browser_revision_and_daemon_owned_provenance() -> None:
     assert response.payload.result == "pin_changed"
     assert response.payload.items[0].memory.pin is True
     assert response.payload.items[0].memory.revision == 8
-    assert contexts.snapshot(THREAD_ID) == frozen
+    updated_context = contexts.snapshot(THREAD_ID)
+    assert updated_context is not None
+    assert updated_context.final_block == frozen.final_block
+    assert updated_context.memory_allocation.pinned_tokens > 0
+    assert updated_context.memory_allocation.regular_tokens == 0
 
 
 @pytest.mark.asyncio
@@ -753,6 +770,7 @@ def test_context_install_binds_commit_membership_in_rank_order() -> None:
         injected=[removed, retained],
         near_misses=[added],
         final_block=None,
+        memory_allocation=memory_allocation(),
     )
     contexts = ThreadMemoryContextRegistry()
 

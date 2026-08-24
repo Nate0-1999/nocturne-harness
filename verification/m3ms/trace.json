@@ -1,0 +1,45 @@
+{
+  "packet": "M3MS",
+  "captured_at": "2026-08-24T21:23:35.168768Z",
+  "fixture": false,
+  "principal_id": "m3ms-owner",
+  "thread_id": "fbeb45cb-7eba-4283-a8b8-79820aad8a6d",
+  "injection_id": "24bd85ec-642e-4a9a-b4c2-98a1954244da",
+  "model": "openrouter:minimax/minimax-m3",
+  "usage": {"requests": 1, "input_tokens": 2817, "output_tokens": 505},
+  "active_scorer_version": "m2k-01M0TT9E38FM528FRTHH5WAKYV",
+  "memory_context_share": 0.01,
+  "learning": {
+    "eligible_authentic_dispositions": 2,
+    "share_tuning_minimum": 100,
+    "share_tuning_remaining": 98,
+    "share_tuning_active": false
+  },
+  "deep_simulation": {
+    "receipt_digest_prefix": "6172062f6850",
+    "held_out_dispositions": 0,
+    "status": "not_scored"
+  },
+  "injection": {
+    "selected_memories": 2,
+    "pinned_memories": 2,
+    "regular_memories": 0,
+    "share_tokens": 10,
+    "pinned_tokens": 123,
+    "total_tokens": 123,
+    "pinned_overflow_tokens": 113,
+    "outcomes": ["cited", "kept"]
+  },
+  "context_bars": {
+    "used_tokens": 2817,
+    "context_tokens": 1000,
+    "memory_category_tokens": 238,
+    "actual_memory_block_tokens": 238,
+    "share_tokens": 10,
+    "pinned_overflow_tokens": 113,
+    "unused_share_tokens": 10,
+    "rendered_label": "Memory block 238 / 10 share (1.0%) · Pinned overflow +113"
+  },
+  "browser_console_errors_or_warnings": [],
+  "response": "Memory share stays fixed until one hundred authentic feedback signals have accumulated, then begins learning by training beside the existing scorer weights, and pinned overflow is still allowed because pins may cross the regular share without displacing useful regular memories — preserving provenance, visible accounting, and the owner override, provided the overflow is reported plainly in Context Bars."
+}

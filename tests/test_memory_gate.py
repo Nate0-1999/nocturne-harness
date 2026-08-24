@@ -29,6 +29,7 @@ from harness.spine_client import (
     InjectCommitResponse,
     InjectPrepareRequest,
     InjectPrepareResponse,
+    MemoryAllocation,
     MemoryFeatures,
     MemoryKind,
     MemoryStatus,
@@ -45,6 +46,17 @@ from harness.toolset import AgentLocation
 THREAD_ID = "22345678-1234-5678-1234-567812345678"
 INJECTION_ID = UUID("32345678-1234-5678-1234-567812345678")
 RUN_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAW"
+
+
+def memory_allocation() -> MemoryAllocation:
+    return MemoryAllocation(
+        memory_context_share=0.10,
+        share_tokens=100,
+        regular_tokens=0,
+        pinned_tokens=0,
+        total_tokens=0,
+        pinned_overflow_tokens=0,
+    )
 
 
 @dataclass
@@ -181,6 +193,7 @@ class RecordingSpine:
             injected=[],
             near_misses=[],
             final_block=None,
+            memory_allocation=memory_allocation(),
         )
         self.prepare_outcomes: list[InjectPrepareResponse | Exception] = []
         self.patch_outcomes: list[MemoryUnit | Exception] = []
@@ -449,6 +462,7 @@ async def test_r16_move_reprompts_local_context_and_rescores_before_next_request
             injected=[first_card, moved_card],
             near_misses=[],
             final_block=final_block(first_card, moved_card),
+            memory_allocation=memory_allocation(),
         )
     )
     rendered: list[str] = []
@@ -531,6 +545,7 @@ async def test_post_first_turn_rescores_without_gate_and_publishes_ambient_membe
             injected=[first_card, entered_card],
             near_misses=[],
             final_block=final_block(first_card, entered_card),
+            memory_allocation=memory_allocation(),
         )
     )
     ambient: list[str] = []
@@ -594,6 +609,7 @@ async def test_citations_follow_each_model_calls_exact_event_source() -> None:
             injected=[card],
             near_misses=[],
             final_block=final_block(card),
+            memory_allocation=memory_allocation(),
         )
     )
     delegate = RecordingDelegate(assistant_text=f"Agreed: {body}")

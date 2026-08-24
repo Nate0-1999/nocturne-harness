@@ -9,6 +9,7 @@ from pydantic_ai.messages import BinaryContent
 
 from harness.envelope import GateCommitPayload, ProviderErrorPayload, StopReason
 from harness.model_policy import ThreadModelResolution
+from harness.spine_client import MemoryAllocation
 
 
 @dataclass(frozen=True, slots=True)
@@ -80,6 +81,9 @@ class DynamicSystemInstructions(Protocol):
 
     @property
     def workspace_block(self) -> str | None: ...
+
+    @property
+    def memory_allocation(self) -> MemoryAllocation | None: ...
 
 
 class RunEmitter(Protocol):

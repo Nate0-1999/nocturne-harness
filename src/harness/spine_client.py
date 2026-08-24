@@ -176,6 +176,15 @@ class InjectPrepareRequest(ContractModel):
     excluded_memory_ids: list[UUID] = Field(default_factory=list)
 
 
+class MemoryAllocation(ContractModel):
+    memory_context_share: float = Field(strict=True, ge=0.01, le=0.50)
+    share_tokens: int = Field(strict=True, ge=0)
+    regular_tokens: int = Field(strict=True, ge=0)
+    pinned_tokens: int = Field(strict=True, ge=0)
+    total_tokens: int = Field(strict=True, ge=0)
+    pinned_overflow_tokens: int = Field(strict=True, ge=0)
+
+
 class InjectPrepareResponse(ContractModel):
     injection_id: UUID
     snapshot_ts: datetime
@@ -183,6 +192,7 @@ class InjectPrepareResponse(ContractModel):
     injected: list[ScoredMemoryCard]
     near_misses: list[ScoredMemoryCard]
     final_block: str | None
+    memory_allocation: MemoryAllocation
 
 
 class RemovedMemory(ContractModel):
@@ -925,7 +935,7 @@ class ScorerConsoleQuery(ContractModel):
 class ScorerValues(ContractModel):
     tau: float = Field(strict=True, ge=0, le=1)
     top_k: int = Field(strict=True, ge=1, le=8)
-    budget_tokens: int = Field(strict=True, gt=0)
+    memory_context_share: float = Field(strict=True, ge=0.01, le=0.50)
     half_life_time_days: float = Field(strict=True, gt=0)
     half_life_hist_days: float = Field(strict=True, gt=0)
     weights: dict[Literal["sem", "kw", "time", "proj", "freq", "hist"], float]
@@ -949,6 +959,8 @@ class ReplayScoreView(ContractModel):
     disagreements: int = Field(strict=True, ge=0)
     weighted_disagreements: NonNegativeDecimalString
     injected_tokens: int = Field(strict=True, ge=0)
+    share_disagreements: int = Field(default=0, strict=True, ge=0)
+    weighted_share_disagreements: NonNegativeDecimalString = "0"
 
 
 class RetrainResponse(ContractModel):
