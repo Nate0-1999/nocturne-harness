@@ -43,6 +43,8 @@ model-visible outputs are pinned in `tests/golden/test_workspace_tool_outputs.py
 
 ## Payload proof
 
-The built wheel was 934,634 bytes. Archive inspection found no `_pi`, `node_modules`,
-`pi_runtime`, or `pi_toolset` payload. The removed ignored `_pi/node_modules` tree was
-139 MB; the tracked PI adapter remains recoverable from git history.
+The final clean-commit wheel was 934,617 bytes with SHA-256
+`4dce2116475de0fbeabceb054c547f1686093bb68292d698637da01741ba92dd`.
+Archive inspection found no `_pi`, `node_modules`, `pi_runtime`, or `pi_toolset`
+payload. The removed ignored `_pi/node_modules` tree was 139 MB; the tracked PI
+adapter remains recoverable from git history.
