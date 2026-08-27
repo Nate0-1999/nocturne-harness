@@ -2938,3 +2938,26 @@ lose scorer provenance and confuse instruction overhead with selected memory.
 A Context Bars control would duplicate the Console. Hiding pin overflow would
 make an owner override look like a broken ceiling. Combining the two learning
 floors would misstate when existing weight training begins.
+
+## 097 — Preserve OpenRouter cost at the stream-validation boundary [P2.4, P4.1, M3BC]
+
+**Decision.** Extend the existing Harness-owned OpenRouter streamed-response
+wrapper to retain billing metadata from a terminal usage-only chunk before
+Pydantic AI's generic OpenAI stream loop skips provider-detail mapping for an
+empty `choices` array. Keep Pydantic AI's token accounting, the existing
+`model_response_receipts` normalization, and the one Spine `spend_event` ledger
+unchanged. The compatibility shim copies only the typed OpenRouter usage fields
+that its ordinary provider-detail mapper would preserve on a choice-bearing
+chunk.
+
+**Motivation.** SD-023 and ADR-024 require every build request to reach Vitals
+with honest token classes and native dollars. Pydantic AI 2.28 retains token
+usage before its empty-choice guard, but OpenRouter may place native cost only
+on that same terminal chunk; without this shim, the request reaches the ledger
+with measured quantities and no price.
+
+**Rejected alternatives.** Querying OpenRouter after each request would create
+a second cost system, lose request lineage, and duplicate reconciliation.
+Estimating dollars from catalog prices would demote broker-native truth and
+misprice routed providers. Patching or forking Pydantic AI would violate M3TS's
+owned-shim boundary for a four-field compatibility gap.

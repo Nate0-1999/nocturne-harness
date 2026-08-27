@@ -1,0 +1,87 @@
+{
+  "captured_at": "2026-08-27T19:09:19.124393Z",
+  "scope": "M3BC real OpenRouter build-cost verification",
+  "identity": {
+    "principal_id": "m3bc-verification-20260827-bc27",
+    "machine_id": "m3bc-sop-verification",
+    "agent_id": "m3bc-owner-agent",
+    "thread_id": "38649a11-fe5c-42c2-a9f0-e574c2c6fc18",
+    "run_id": "01M129QJ8RQ7MGVNBXPKCX5GM4",
+    "prompt_id": "01M129QJ8Q8H9WFS406HKMB4SY"
+  },
+  "fresh_sources": {
+    "harness_before_change": "c9b5b9bd517fcfc98e4eb70a37cb35e83789f179",
+    "spine": "2309aa37033205e6e4d5ab0223dd802124868d06"
+  },
+  "run": {
+    "started_at": "2026-08-27T19:04:15.385651Z",
+    "completed_at": "2026-08-27T19:05:56.954306Z",
+    "model": "minimax/minimax-m3",
+    "provider": "openrouter",
+    "stop_reason": "end_turn",
+    "partial": false,
+    "requests": 10,
+    "input_tokens": 61044,
+    "cache_read_tokens": 46805,
+    "output_tokens": 7865
+  },
+  "artifact": {
+    "files": [
+      {
+        "path": "note_stats.py",
+        "sha256": "f9551bcac42107f00d993e1b43303ed29cf88b916c71df3c553e6eea069e22f9"
+      },
+      {
+        "path": "test_note_stats.py",
+        "sha256": "0ac0d0c0daa3c8afb66ae9526502ecbfdb10e3eae17160ae4f3f333db93c61cf"
+      }
+    ],
+    "independent_tests": {
+      "passed": 7,
+      "failed": 0,
+      "duration_seconds": 0.143
+    }
+  },
+  "vitals": {
+    "source_view": "spend_event",
+    "window_minutes": 60,
+    "latest_minute": "2026-08-27T19:05:00Z",
+    "building": {
+      "cost_usd": "0.009913320000",
+      "receipt_lines": 26,
+      "unpriced_lines": 0
+    },
+    "model": {
+      "name": "minimax/minimax-m3",
+      "cost_usd": "0.009913320000",
+      "receipt_lines": 26,
+      "unpriced_lines": 0
+    },
+    "memory_prepare_embedding": {
+      "minute": "2026-08-27T19:04:00Z",
+      "model": "text-embedding-3-small",
+      "cost_usd": "0.000001300000",
+      "receipt_lines": 1,
+      "unpriced_lines": 0,
+      "result": "memory_unavailable; chat continued"
+    },
+    "reconciliation": {
+      "status": "drift",
+      "checked_at": "2026-08-27T19:03:58.750833Z",
+      "drift_usd": "-0.786847782000",
+      "unpriced_lines": 0
+    }
+  },
+  "screenshot": {
+    "path": "vitals-priced-build.jpg",
+    "sha256": "697f4a79edb34b81b080bb3b991f1dcb985b256c2de063ff0bb859073bda24bc",
+    "width": 1650,
+    "height": 972
+  },
+  "cleanup": {
+    "memory_saved": false,
+    "local_process_stopped": true,
+    "disposable_root_moved_to_trash": true,
+    "remote_spend_receipts_retained": true
+  }
+}

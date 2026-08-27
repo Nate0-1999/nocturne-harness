@@ -5,10 +5,12 @@ import json
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 from uuid import UUID
 
+import httpx
 import pytest
 from pydantic_ai import ModelHTTPError, models
 from pydantic_ai.messages import (
@@ -22,6 +24,7 @@ from pydantic_ai.messages import (
 )
 from pydantic_ai.models.function import DeltaThinkingPart, DeltaToolCall, FunctionModel
 from pydantic_ai.models.test import TestModel
+from pydantic_ai.providers.openrouter import OpenRouterProvider
 from pydantic_ai.usage import RequestUsage, RunUsage
 
 from harness.agent import REMEMBER_SPLIT_GUIDANCE, HarnessAgent, RememberResult
@@ -34,6 +37,7 @@ from harness.config import HarnessSettings
 from harness.context_window import ContextWindowTracker
 from harness.envelope import GateCommitPayload, StopReason
 from harness.model_policy import ThreadModelResolution
+from harness.openrouter_runtime import PreservingOpenRouterModel
 from harness.receipt_queue import SpendReceiptQueue
 from harness.run_protocol import DynamicSystemInstructions, UsageSnapshot
 from harness.spine_client import (
@@ -259,6 +263,136 @@ async def test_workspace_tool_events_and_spend_share_the_existing_turn_authoriti
     assert "function_tool_result" in event_kinds
     assert spend.requests
     assert {event.purpose for request in spend.requests for event in request.events} == {"building"}
+
+
+@pytest.mark.asyncio
+async def test_sd023_openrouter_usage_only_chunks_price_every_build_request() -> None:
+    """SD-023 and ADR-024 preserve native cost from usage-only chunks for every build request."""
+
+    calls = 0
+
+    def response_stream(*, tool_call: bool, cost: str, prompt: int, completion: int) -> str:
+        choice = {
+            "index": 0,
+            "delta": (
+                {
+                    "tool_calls": [
+                        {
+                            "index": 0,
+                            "id": "m3bc-write-1",
+                            "type": "function",
+                            "function": {
+                                "name": "write",
+                                "arguments": '{"path":"note.txt","content":"owner text\\n"}',
+                            },
+                        }
+                    ]
+                }
+                if tool_call
+                else {"content": "The file is ready."}
+            ),
+            "finish_reason": "tool_calls" if tool_call else "stop",
+            "native_finish_reason": "tool_calls" if tool_call else "stop",
+        }
+        chunks = [
+            {
+                "id": f"gen-m3bc-{calls}",
+                "object": "chat.completion.chunk",
+                "created": 1787850000 + calls,
+                "model": "vendor/build-model",
+                "provider": "MockProvider",
+                "choices": [choice],
+            },
+            {
+                "id": f"gen-m3bc-{calls}",
+                "object": "chat.completion.chunk",
+                "created": 1787850000 + calls,
+                "model": "vendor/build-model",
+                "provider": "MockProvider",
+                "choices": [],
+                "usage": {
+                    "prompt_tokens": prompt,
+                    "completion_tokens": completion,
+                    "total_tokens": prompt + completion,
+                    "cost": float(cost),
+                    "is_byok": False,
+                    "prompt_tokens_details": {"cached_tokens": 10},
+                    "completion_tokens_details": {"reasoning_tokens": 5},
+                    "cost_details": {
+                        "upstream_inference_cost": float(cost),
+                        "upstream_inference_prompt_cost": float(Decimal(cost) * Decimal("0.6")),
+                        "upstream_inference_completions_cost": float(
+                            Decimal(cost) * Decimal("0.4")
+                        ),
+                    },
+                },
+            },
+        ]
+        return "".join(f"data: {json.dumps(chunk)}\n\n" for chunk in chunks) + ("data: [DONE]\n\n")
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        body = response_stream(
+            tool_call=calls == 1,
+            cost="0.003" if calls == 1 else "0.004",
+            prompt=100 if calls == 1 else 140,
+            completion=20 if calls == 1 else 30,
+        )
+        return httpx.Response(200, headers={"content-type": "text/event-stream"}, text=body)
+
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(handler),
+        base_url="https://openrouter.ai/api/v1",
+    ) as http_client:
+        model = PreservingOpenRouterModel(
+            "vendor/build-model",
+            provider=OpenRouterProvider(api_key="test", http_client=http_client),
+        )
+        toolset = RecordingWorkspaceToolset()
+        spend = RecordingSpend()
+        runner = PydanticAITurnRunner(
+            HarnessAgent(
+                settings(
+                    openrouter_api_key="test",
+                    chat_model="openrouter:vendor/build-model",
+                ),
+                model=model,
+            ),
+            lambda _: context(toolset=toolset),
+            spend,
+        )
+        with models.override_allow_model_requests(True):
+            outcome = await runner.run(
+                thread_id=str(THREAD_UUID),
+                prompt="Write my note.",
+                message_history=(),
+                emit=RecordingEmitter(),
+                model_resolution=ThreadModelResolution(
+                    model="openrouter:vendor/build-model",
+                    context_tokens=16_384,
+                    policy="pinned:openrouter:vendor/build-model",
+                ),
+            )
+
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert calls == 2
+    assert toolset.calls == [("write", {"path": "note.txt", "content": "owner text\n"})]
+    assert len(spend.requests) == 1
+    events = spend.requests[0].events
+    assert len({event.ref for event in events}) == 2
+    assert all(event.cost_usd is not None for event in events)
+    assert sum((event.cost_usd or Decimal(0) for event in events), Decimal(0)) == Decimal(
+        "0.007000000000"
+    )
+    assert {event.quantity_type for event in events} == {
+        "input_fresh",
+        "input_cached",
+        "output",
+        "reasoning",
+    }
+    assert {event.provider for event in events} == {"MockProvider"}
+    assert {event.purpose for event in events} == {"building"}
 
 
 @pytest.mark.asyncio
