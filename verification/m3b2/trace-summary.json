@@ -1,0 +1,153 @@
+{
+  "scope": "M3B2 iterative build test round two",
+  "captured_at": "2026-08-27",
+  "fixture": false,
+  "fresh_sources": {
+    "harness_commit": "fb11867865d7cbded968aefda6a3ad4e3a2b1b98",
+    "spine_commit": "2309aa37033205e6e4d5ab0223dd802124868d06",
+    "nocturne_ai_version": "0.1.5",
+    "nocturne_spine_version": "0.1.6"
+  },
+  "released_palace": {
+    "ok": true,
+    "version": "0.1.5",
+    "schema_version": "0015",
+    "api_contract_version": "0.1.4"
+  },
+  "identity": {
+    "principal_id": "m3bt1-verification-20260821-bt21",
+    "machine_id": "m3b2-sop-verification",
+    "agent_id": "m3b2-owner-agent",
+    "thread_id": "70895102-dfb1-453c-baef-5d4d0c85dd05",
+    "project_key": "build-test"
+  },
+  "acceptance": {
+    "frozen_at": "2026-08-27T19:19:24Z",
+    "sha256": "435a15cd0d28ce9dd2622b0805be8d96b065219c61979939d3706c5a4f8fdbe5",
+    "first_prompt_at": "2026-08-27T19:21:03.224Z",
+    "first_external_pass_at": "2026-08-27T19:26:41Z"
+  },
+  "runs": [
+    {
+      "run_id": "01M12APAGY0QJXVK9Z59AH30NC",
+      "requests": 29,
+      "input_tokens": 491229,
+      "cache_read_tokens": 431212,
+      "output_tokens": 22659,
+      "partial": true,
+      "stop_reason": "budget_exceeded"
+    },
+    {
+      "run_id": "01M12B1JTCM78W8T3AQQDVG1MZ",
+      "purpose": "summary only; after metric stop",
+      "requests": 1,
+      "input_tokens": 30135,
+      "cache_read_tokens": 29988,
+      "output_tokens": 1068,
+      "partial": false,
+      "stop_reason": "end_turn"
+    }
+  ],
+  "memory": {
+    "active_before": 0,
+    "prepare": {
+      "result": "memory_unavailable",
+      "phase": "prepare"
+    },
+    "explicit_searches": 2,
+    "explicit_search_results": ["no matching memories", "no matching memories"],
+    "saved": false,
+    "active_after": 0
+  },
+  "scorer_before_and_after": {
+    "active_version": "m3f-location-v1",
+    "tau": 0.55,
+    "memory_context_share": null,
+    "share_note": "absent from released Palace 0.1.5",
+    "eligible_dispositions": 3,
+    "minimum_dispositions": 25,
+    "floor_met": false
+  },
+  "metrics": {
+    "wall_seconds": 337.776,
+    "building_through_pass": {
+      "cost_usd": "0.071068620000",
+      "receipt_lines": 86,
+      "unpriced_lines": 0
+    },
+    "building_full_thread": {
+      "cost_usd": "0.074193600000",
+      "receipt_lines": 90,
+      "unpriced_lines": 0
+    },
+    "memory_embedding": {
+      "cost_usd": "0.000004480000",
+      "receipt_lines": 1,
+      "included_in_build_cost": false
+    },
+    "churn": {
+      "added_lines": 1170,
+      "deleted_lines": 0,
+      "total": 1170,
+      "binary_bytecode_files": 9
+    },
+    "pass_rate": {
+      "project": "47/47",
+      "acceptance": "8/8"
+    }
+  },
+  "comparison_to_m3bt1_round_one": {
+    "time_delta_percent": -44.5,
+    "cost_delta_percent": null,
+    "cost_delta_note": "round-one model cost was not recorded; its embedding-only ledger number is not comparable",
+    "churn_delta_percent": 41.3,
+    "tagline": "second build: -44.5% time, cost delta unavailable ($0.07106862 honestly measured now), +41.3% churn; final pass rate stayed 100%"
+  },
+  "artifact_hashes": {
+    "jsonlog_report/__init__.py": "f45610de6d296d8c56c5cdbecd991ee516c30a2e77c4ba9a7b5669d5465c6dcf",
+    "jsonlog_report/__main__.py": "6fb6a3de72ed69660d00fcf9c72a7178c51f3811d7614b7a68ac089672bfa6fc",
+    "jsonlog_report/core.py": "951d0ff7c2fdea006dc7cc162d226283faa599a5952acbe74b7b37310c2390cf",
+    "tests/test_jsonlog_report.py": "35871f7a53cff1bd262103e9917dc36068e1ca8729ad4724bb2a3d90ad9f51aa",
+    "demo/run_demo.py": "ba297c5ef28f77f2510727c08ee0771665ebf8ee67dfb11487a0acc9f97cb9b6"
+  },
+  "journal": {
+    "records": 1238,
+    "bytes": 1273975,
+    "sha256": "7f08493422a77d3e96870eebee256ad88ba29081a532c913836b35206aa41213"
+  },
+  "screenshots": [
+    {
+      "path": "01-preflight-zero-active.png",
+      "sha256": "2316d4c8d66928030a0f471388b593ae20a3d120556325e934289ca25692bfb1",
+      "width": 1650,
+      "height": 916
+    },
+    {
+      "path": "02-agent-working.png",
+      "sha256": "0cdda145b92380f6b08401d7b4d6cbeddd3f02c1b5c18dbe106ad88163676984",
+      "width": 1650,
+      "height": 916
+    },
+    {
+      "path": "03-build-complete.png",
+      "sha256": "a150bb1152dbca93055328eb2b665c012c084c37df7ec3ec4e729a27ef879ede",
+      "width": 1650,
+      "height": 916
+    }
+  ],
+  "exit_tests": {
+    "spine": "285 passed in 15.89s",
+    "spine_environment": "TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock; TESTCONTAINERS_RYUK_DISABLED=true",
+    "harness": "1680 passed, 3 deselected in 69.89s",
+    "harness_selection": "not contract"
+  },
+  "cleanup": {
+    "memory_saved": false,
+    "active_memories_after": 0,
+    "local_process_stopped": true,
+    "disposable_root_moved_to_trash": true,
+    "trash_path": "~/.Trash/nocturne-m3b2-b227-20260827T1929",
+    "credential_scan": "clean",
+    "remote_spend_receipts_retained": true
+  }
+}

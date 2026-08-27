@@ -1,0 +1,8 @@
+command: python verification/m3b2/acceptance.py <scratch-project>
+result: 8 tests passed
+duration: 0.273s
+status: OK
+acceptance_sha256: 435a15cd0d28ce9dd2622b0805be8d96b065219c61979939d3706c5a4f8fdbe5
+frozen_at: 2026-08-27T19:19:24Z
+first_prompt_at: 2026-08-27T19:21:03.224Z
+first_external_pass_at: 2026-08-27T19:26:41Z

@@ -1,0 +1,4 @@
+command: python -m unittest discover -s tests -v
+result: 47 tests passed
+duration: 0.095s
+status: OK
