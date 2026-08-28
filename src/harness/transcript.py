@@ -60,6 +60,7 @@ class TranscriptCatalogEntry:
     created_at: str
     updated_at: str
     project_key: str | None
+    proposed_response: Mapping[str, Any] | None = None
 
 
 class TranscriptJournal:
@@ -372,9 +373,56 @@ class TranscriptJournal:
                     created_at=self._browser_timestamp(times[0]),
                     updated_at=self._browser_timestamp(times[-1]),
                     project_key=transcript.project_key,
+                    proposed_response=self._outstanding_proposed_response(transcript.messages),
                 )
             )
         return tuple(sorted(entries, key=lambda item: item.updated_at, reverse=True))
+
+    @staticmethod
+    def _outstanding_proposed_response(
+        messages: tuple[dict[str, Any], ...],
+    ) -> Mapping[str, Any] | None:
+        """Project one current Deck card without creating another history store."""
+
+        fired = {
+            proposed["proposal_run_id"]
+            for message in messages
+            if message.get("role") == "user"
+            if isinstance((proposed := message.get("proposed_response")), Mapping)
+            if isinstance(proposed.get("proposal_run_id"), str)
+        }
+        latest: dict[str, Any] | None = None
+        for message in messages:
+            run_id = message.get("run_id")
+            if (
+                message.get("role") != "assistant"
+                or message.get("partial") is not False
+                or not isinstance(run_id, str)
+                or run_id in fired
+            ):
+                continue
+            events = message.get("events")
+            if not isinstance(events, list):
+                continue
+            for event in events:
+                if not isinstance(event, Mapping) or (
+                    event.get("event_kind") != "proposed_response"
+                    or event.get("proposal_run_id") != run_id
+                    or not isinstance(event.get("primary"), str)
+                    or not event["primary"].strip()
+                    or not isinstance(event.get("alternatives"), list)
+                    or not all(isinstance(item, str) for item in event["alternatives"])
+                    or not isinstance(event.get("created_at"), str)
+                ):
+                    continue
+                latest = {
+                    "proposal_run_id": run_id,
+                    "primary": event["primary"],
+                    "alternatives": list(event["alternatives"]),
+                    "created_at": event["created_at"],
+                    "assistant_text": message.get("content", ""),
+                }
+        return latest
 
     @staticmethod
     def _browser_timestamp(value: str) -> str:

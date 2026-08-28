@@ -11,6 +11,7 @@ import {
   type MemoryPanelOperation,
   type MemoryPanelRequestPayload,
   type PromptImage,
+  type ProposedResponseReference,
   type SymphonyIntervention,
   type SymphonyLaunch,
   type Ulid,
@@ -143,6 +144,7 @@ export class HarnessSocketClient {
     image?: OutboundImage,
     symphony?: SymphonyLaunch,
     symphonyIntervention?: SymphonyIntervention,
+    proposedResponse?: ProposedResponseReference,
   ): Ulid {
     if (!prompt.trim()) {
       throw new TypeError('prompt must not be blank')
@@ -158,17 +160,24 @@ export class HarnessSocketClient {
     if ([image, symphony, symphonyIntervention].filter((value) => value !== undefined).length > 1) {
       throw new TypeError('image, Symphony launch, and Symphony steering are mutually exclusive')
     }
+    if (proposedResponse !== undefined && [image, symphony, symphonyIntervention].some(
+      (value) => value !== undefined,
+    )) {
+      throw new TypeError('a proposed response must be an ordinary text prompt')
+    }
     const payload: {
       prompt: string
       image?: PromptImage
       symphony?: SymphonyLaunch
       symphony_intervention?: SymphonyIntervention
+      proposed_response?: ProposedResponseReference
     } = { prompt }
     if (image !== undefined) payload.image = image.input
     if (symphony !== undefined) payload.symphony = symphony
     if (symphonyIntervention !== undefined) {
       payload.symphony_intervention = symphonyIntervention
     }
+    if (proposedResponse !== undefined) payload.proposed_response = proposedResponse
     const envelope = this.send('prompt.submit', payload, threadId)
     useHarnessStore.getState().beginPrompt(threadId, envelope.id, prompt, image)
     return envelope.id

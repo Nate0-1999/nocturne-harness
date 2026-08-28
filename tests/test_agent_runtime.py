@@ -221,6 +221,43 @@ async def test_successful_model_response_is_receipted_before_turn_returns() -> N
 
 
 @pytest.mark.asyncio
+async def test_m3dk_same_turn_proposal_is_hidden_from_chat_and_emitted_as_one_card() -> None:
+    """M3DK and Invariant 14 keep the proposal in one paid turn and expose only its card."""
+
+    async def stream(_messages: object, _info: object):
+        yield "The change is ready.\n\n<nocturne-proposed-"
+        yield 'response>{"primary":"Ship it with the proof.","alternatives":['
+        yield '"Show me the evidence first."]}</nocturne-proposed-response>'
+
+    emitter = RecordingEmitter()
+    instant = datetime(2026, 8, 28, 12, tzinfo=UTC)
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(),
+        clock=lambda: instant,
+    )
+
+    outcome = await runner.run(
+        thread_id=str(THREAD_UUID),
+        prompt="finish it",
+        message_history=(),
+        emit=emitter,
+    )
+
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert outcome.usage.requests == 1
+    assert outcome.assistant_text.rstrip() == "The change is ready."
+    assert "".join(emitter.texts).rstrip() == "The change is ready."
+    assert emitter.events[-1] == {
+        "event_kind": "proposed_response",
+        "proposal_run_id": emitter.run_id,
+        "primary": "Ship it with the proof.",
+        "alternatives": ["Show me the evidence first."],
+        "created_at": instant.isoformat(),
+    }
+
+
+@pytest.mark.asyncio
 async def test_workspace_tool_events_and_spend_share_the_existing_turn_authorities() -> None:
     """ADR-024 keeps tool traffic and spend on the owner turn's existing ledger path."""
 

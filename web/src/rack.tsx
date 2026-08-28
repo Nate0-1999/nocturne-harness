@@ -90,7 +90,13 @@ export type RackAction =
   | { type: 'thread.select'; thread_id: string }
   | { type: 'project.select'; project_key: string }
   | { type: 'catalog.cleanup-fixtures' }
-  | { type: 'prompt.submit'; prompt: string; image?: OutboundImage; symphony?: SymphonyLaunch }
+  | {
+      type: 'prompt.submit'
+      prompt: string
+      image?: OutboundImage
+      symphony?: SymphonyLaunch
+      proposed_response?: { proposal_run_id: string }
+    }
   | { type: 'symphony.intervene'; intervention: SymphonyIntervention }
   | { type: 'run.cancel'; run_id?: Ulid }
   | { type: 'thread.archive'; thread_id?: string }
@@ -389,7 +395,8 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
   },
   deck: {
     id: 'deck', name: 'The Deck', version: '1.0.0', class: 'control',
-    slot: 'panel', streams: ['thread.snapshot', 'run.*'], actions: ['symphony.intervene'],
+    slot: 'panel', streams: ['thread.snapshot', 'run.*'],
+    actions: ['thread.select', 'prompt.submit', 'symphony.intervene'],
     bounds: stageGridBounds({ w: 20, h: 20 }), movable: true,
     law_bound: true, default_scope: 'CURRENT',
   },
@@ -455,6 +462,8 @@ function dispatchRackAction<Action extends RackAction>(
           action.prompt,
           action.image,
           action.symphony,
+          undefined,
+          action.proposed_response,
         ) as RackActionResult<Action>
       case 'symphony.intervene':
         return harnessClient.submitPrompt(

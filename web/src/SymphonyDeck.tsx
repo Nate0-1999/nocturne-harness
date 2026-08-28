@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 
 /* eslint-disable react-refresh/only-export-components -- durable event parsers are tested beside their owning Deck */
 
@@ -8,6 +8,7 @@ import type {
   SymphonyIntervention,
   SymphonyJudgeCharter,
   SymphonyLaunch,
+  UserTranscriptMessage,
 } from './protocol'
 import { useRackPlugin, useRackSnapshot } from './rack'
 import './assets/symphonyDeck.css'
@@ -31,6 +32,16 @@ export interface DeckStack {
   forked_from: string | null
   forked_to: string | null
   blocked_reason: string | null
+}
+
+export interface ProposedResponseCard {
+  thread_id: string
+  thread_title: string
+  proposal_run_id: string
+  primary: string
+  alternatives: string[]
+  created_at: string
+  assistant_text: string
 }
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -100,8 +111,67 @@ export function latestDeckStacks(messages: AssistantTranscriptMessage[]): DeckSt
   return [...latest.values()].reverse()
 }
 
+export function proposedResponseCards(
+  snapshot: ReturnType<typeof useRackSnapshot>,
+): ProposedResponseCard[] {
+  const titles = new Map(snapshot.catalog.map((entry) => [entry.thread_id, entry.title]))
+  const latest = new Map(snapshot.catalog.flatMap((entry): [string, ProposedResponseCard][] => {
+    const proposal = entry.proposed_response
+    if (proposal === null || proposal === undefined) return []
+    return [[entry.thread_id, {
+      thread_id: entry.thread_id,
+      thread_title: entry.title,
+      proposal_run_id: proposal.proposal_run_id,
+      primary: proposal.primary,
+      alternatives: proposal.alternatives,
+      created_at: proposal.created_at,
+      assistant_text: proposal.assistant_text,
+    }]]
+  }))
+  for (const [threadId, thread] of Object.entries(snapshot.threads)) {
+    if (thread.awaitingSnapshot) continue
+    latest.delete(threadId)
+    const fired = new Set(
+      thread.messages
+        .filter((message): message is UserTranscriptMessage => (
+          message.role === 'user' && message.run_id !== null
+        ))
+        .map((message) => message.proposed_response?.proposal_run_id)
+        .filter((runId): runId is string => typeof runId === 'string'),
+    )
+    for (const message of thread.messages) {
+      if (message.role !== 'assistant' || message.partial) continue
+      for (const event of message.events) {
+        if (
+          event.event_kind !== 'proposed_response' ||
+          event.proposal_run_id !== message.run_id ||
+          fired.has(message.run_id) ||
+          typeof event.primary !== 'string' || !event.primary.trim() ||
+          !Array.isArray(event.alternatives) ||
+          !event.alternatives.every((alternative) => typeof alternative === 'string') ||
+          typeof event.created_at !== 'string' || Number.isNaN(Date.parse(event.created_at))
+        ) continue
+        latest.set(threadId, {
+          thread_id: threadId,
+          thread_title: titles.get(threadId) ?? `Thread ${threadId.slice(-6)}`,
+          proposal_run_id: message.run_id,
+          primary: event.primary.trim(),
+          alternatives: event.alternatives.map((alternative) => alternative.trim()),
+          created_at: event.created_at,
+          assistant_text: message.content,
+        })
+      }
+    }
+  }
+  return [...latest.values()].sort((left, right) => (
+    Date.parse(left.created_at) - Date.parse(right.created_at) ||
+    left.proposal_run_id.localeCompare(right.proposal_run_id)
+  ))
+}
+
 export function SymphonyDeck() {
   const snapshot = useRackSnapshot()
+  const { events } = useRackPlugin()
   const selected = snapshot.selectedThreadId === null
     ? null
     : snapshot.threads[snapshot.selectedThreadId]
@@ -110,24 +180,168 @@ export function SymphonyDeck() {
       (message): message is AssistantTranscriptMessage => message.role === 'assistant',
     ),
   ), [selected?.messages])
+  const cards = useMemo(() => proposedResponseCards(snapshot), [snapshot])
+  const [drafts, setDrafts] = useState<Record<string, string>>({})
+  const [locallyFired, setLocallyFired] = useState<Set<string>>(() => new Set())
+  const [undo, setUndo] = useState<{ card: ProposedResponseCard; text: string } | null>(null)
+  const [status, setStatus] = useState('')
+  const timer = useRef<number | null>(null)
+  const visibleCards = cards.filter((card) => !locallyFired.has(card.proposal_run_id))
+
+  useEffect(() => () => {
+    if (timer.current !== null) globalThis.clearTimeout(timer.current)
+  }, [])
+
+  function recall() {
+    if (undo === null) return
+    if (timer.current !== null) globalThis.clearTimeout(timer.current)
+    timer.current = null
+    setLocallyFired((current) => {
+      const next = new Set(current)
+      next.delete(undo.card.proposal_run_id)
+      return next
+    })
+    setStatus(`Recalled before sending to ${undo.card.thread_title}.`)
+    setUndo(null)
+  }
+
+  function fire(card: ProposedResponseCard) {
+    const text = (drafts[card.proposal_run_id] ?? card.primary).trim()
+    if (!text || undo !== null) return
+    void events.dispatch({ type: 'thread.select', thread_id: card.thread_id })
+    setLocallyFired((current) => new Set(current).add(card.proposal_run_id))
+    setStatus(`Next up: ${visibleCards.find((candidate) => (
+      candidate.proposal_run_id !== card.proposal_run_id
+    ))?.thread_title ?? 'queue clear'}.`)
+    setUndo({ card, text })
+    timer.current = globalThis.setTimeout(() => {
+      timer.current = null
+      void events.dispatch({
+        type: 'prompt.submit',
+        prompt: text,
+        proposed_response: { proposal_run_id: card.proposal_run_id },
+      }).then(() => {
+        setStatus(`Fired to ${card.thread_title}.`)
+        setUndo(null)
+      }).catch(() => {
+        setLocallyFired((current) => {
+          const next = new Set(current)
+          next.delete(card.proposal_run_id)
+          return next
+        })
+        setStatus(`Nothing sent to ${card.thread_title}. Check the connection and try again.`)
+        setUndo(null)
+      })
+    }, 6_000)
+  }
 
   return (
     <section className="symphony-deck" data-testid="symphony-deck">
       <header className="symphony-deck__header">
         <div><p>Conductor channel</p><h1>The Deck</h1></div>
-        <span>{stacks.filter((stack) => stack.state === 'running').length} live</span>
+        <span>{visibleCards.length} waiting · {stacks.filter((stack) => stack.state === 'running').length} live</span>
       </header>
-      <p className="symphony-deck__rule">You steer the conductor here. Workers are never directly addressable.</p>
+      <p className="symphony-deck__rule">The longest-waiting reply stays first. Browse freely. You steer the conductor here. Workers are never directly addressable.</p>
+      {visibleCards.length === 0 ? (
+        <p className="symphony-deck__empty" data-testid="deck-empty">No reply needs you right now.</p>
+      ) : (
+        <div className="deck-proposal-queue" data-testid="deck-proposal-queue">
+          {visibleCards.map((card, index) => (
+            <ProposedResponseCardView
+              key={card.proposal_run_id}
+              card={card}
+              primary={index === 0}
+              draft={drafts[card.proposal_run_id] ?? card.primary}
+              fireDisabled={undo !== null}
+              onDraft={(value) => setDrafts((current) => ({
+                ...current,
+                [card.proposal_run_id]: value,
+              }))}
+              onFire={() => fire(card)}
+            />
+          ))}
+        </div>
+      )}
+      {undo !== null && (
+        <aside className="deck-undo" role="status" data-testid="deck-undo">
+          <span>Firing to {undo.card.thread_title} in 6 seconds.</span>
+          <button type="button" onClick={recall}>Undo</button>
+        </aside>
+      )}
+      <p className="deck-status" role="status">{status}</p>
       {snapshot.selectedThreadId === null ? (
         <p className="symphony-deck__empty">Select a conversation to see its Symphony lineages.</p>
-      ) : stacks.length === 0 ? (
-        <p className="symphony-deck__empty">No Symphony stack has launched in this conversation.</p>
-      ) : (
-        <div className="symphony-deck__stacks">
+      ) : stacks.length > 0 && (
+        <div className="symphony-deck__stacks" aria-label="Symphony steering">
           {stacks.map((stack) => <DeckStackCard key={stack.symphony_id} stack={stack} />)}
         </div>
       )}
     </section>
+  )
+}
+
+function ProposedResponseCardView({
+  card,
+  primary,
+  draft,
+  fireDisabled,
+  onDraft,
+  onFire,
+}: {
+  card: ProposedResponseCard
+  primary: boolean
+  draft: string
+  fireDisabled: boolean
+  onDraft: (value: string) => void
+  onFire: () => void
+}) {
+  function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return
+    event.preventDefault()
+    onFire()
+  }
+
+  return (
+    <article
+      className="deck-proposal"
+      data-primary={primary ? 'true' : 'false'}
+      data-testid={`deck-proposal-${card.proposal_run_id}`}
+    >
+      <header>
+        <div>
+          <span>{primary ? 'Longest waiting' : 'Waiting'}</span>
+          <h2>{card.thread_title}</h2>
+        </div>
+        <time dateTime={card.created_at}>{new Date(card.created_at).toLocaleTimeString()}</time>
+      </header>
+      <p className="deck-proposal__answer">{card.assistant_text}</p>
+      {card.alternatives.length > 0 && (
+        <div className="deck-alternatives" aria-label="Alternative replies">
+          {card.alternatives.map((alternative) => (
+            <button key={alternative} type="button" onClick={() => onDraft(alternative)}>
+              {alternative}
+            </button>
+          ))}
+        </div>
+      )}
+      <label>
+        <span>Proposed response · edit freely</span>
+        <textarea
+          data-testid={`deck-reply-${card.proposal_run_id}`}
+          value={draft}
+          rows={3}
+          maxLength={4_000}
+          onChange={(event) => onDraft(event.target.value)}
+          onKeyDown={onKeyDown}
+        />
+      </label>
+      <footer>
+        <small>Enter fires · Shift+Enter adds a line</small>
+        <button type="button" disabled={fireDisabled || !draft.trim()} onClick={onFire}>
+          Fire reply
+        </button>
+      </footer>
+    </article>
   )
 }
 

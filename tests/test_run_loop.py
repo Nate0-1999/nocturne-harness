@@ -19,6 +19,7 @@ from harness.envelope import (
     GateCommitPayload,
     ImageInput,
     MessageType,
+    ProposedResponseFirePayload,
     ProviderErrorPayload,
     StopReason,
     ThreadSnapshotResponsePayload,
@@ -487,6 +488,94 @@ def payload(message: Envelope) -> dict[str, object]:
         return value.model_dump(mode="python")
     assert isinstance(value, dict)
     return value
+
+
+@pytest.mark.asyncio
+async def test_m3dk_fire_derives_exact_delta_and_preserves_source_provenance(
+    tmp_path: Path,
+) -> None:
+    """M3DK/G19 records the owner's tweak without letting the client rewrite its source."""
+
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    source_run_id = ulid(10)
+    source_prompt_id = ulid(9)
+    proposal = {
+        "event_kind": "proposed_response",
+        "proposal_run_id": source_run_id,
+        "primary": "Ship it.",
+        "alternatives": ["Show me the proof."],
+        "created_at": "2026-08-28T12:00:00+00:00",
+    }
+    judge = {
+        "event_kind": "symphony_result",
+        "symphony_id": ulid(8),
+        "verdict": "unanimous_pass",
+    }
+    journal.append_message(
+        "thread-1",
+        {
+            "message_id": source_prompt_id,
+            "run_id": source_run_id,
+            "role": "user",
+            "content": "Is it ready?",
+            "state": "end_turn",
+        },
+        parent_id=None,
+        advance_tail=False,
+    )
+    journal.append_message(
+        "thread-1",
+        {
+            "message_id": source_run_id,
+            "run_id": source_run_id,
+            "role": "assistant",
+            "content": "It is ready.",
+            "thinking": "",
+            "events": [judge, proposal],
+            "partial": False,
+        },
+        parent_id=source_prompt_id,
+    )
+    instant = datetime(2026, 8, 28, 12, 5, tzinfo=UTC)
+    loop = RunLoop(
+        ImmediateHistoryRunner(),
+        factory(Ids()),
+        transcript_journal=journal,
+        clock=lambda: instant,
+    )
+    sink = Sink()
+    await loop.attach(sink)
+
+    await loop.submit(
+        thread_id="thread-1",
+        prompt_id=ulid(11),
+        prompt="Ship it with the browser proof.",
+        proposed_response=ProposedResponseFirePayload(proposal_run_id=source_run_id),
+        sink=sink,
+    )
+    await _wait_for_done_count(sink, 1)
+
+    messages = journal.read_messages("thread-1")
+    fired = next(message for message in messages if message["message_id"] == ulid(11))
+    assert fired["proposed_response"] == {
+        "proposal_run_id": source_run_id,
+        "proposed_text": "Ship it.",
+        "fired_text": "Ship it with the browser proof.",
+        "edit_distance": 23,
+        "provenance": "owner_authored_with_assist",
+        "fired_at": instant.isoformat(),
+        "judge_provenance": [judge],
+    }
+    source = next(message for message in messages if message["message_id"] == source_run_id)
+    assert source["events"] == [judge, proposal]
+    with pytest.raises(ValueError, match="already fired"):
+        await loop.submit(
+            thread_id="thread-1",
+            prompt_id=ulid(12),
+            prompt="Try again.",
+            proposed_response=ProposedResponseFirePayload(proposal_run_id=source_run_id),
+        )
+    await loop.close()
 
 
 @pytest.mark.parametrize("resolved_model", ["", " \t", " model "])

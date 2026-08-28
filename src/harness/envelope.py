@@ -296,6 +296,14 @@ type SymphonyInterventionPayload = Annotated[
 ]
 
 
+class ProposedResponseFirePayload(BaseModel):
+    """Reference one server-authored Deck proposal; fired text is the prompt itself. [M3DK]"""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+
+    proposal_run_id: ULID
+
+
 class PromptSubmitPayload(_ExtensiblePayload):
     prompt: NonBlankString
     image: ImageInput | None = Field(default=None, exclude_if=lambda value: value is None)
@@ -307,6 +315,10 @@ class PromptSubmitPayload(_ExtensiblePayload):
         default=None,
         exclude_if=lambda value: value is None,
     )
+    proposed_response: ProposedResponseFirePayload | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
 
     @model_validator(mode="after")
     def require_one_specialized_input(self) -> "PromptSubmitPayload":
@@ -315,6 +327,8 @@ class PromptSubmitPayload(_ExtensiblePayload):
         )
         if specialized > 1:
             raise ValueError("image, Symphony launch, and Symphony steering are mutually exclusive")
+        if self.proposed_response is not None and specialized:
+            raise ValueError("a proposed response must be an ordinary text prompt")
         return self
 
 

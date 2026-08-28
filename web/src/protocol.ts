@@ -41,6 +41,13 @@ export interface ThreadCatalogEntry {
   created_at: string
   updated_at: string
   project_key: string | null
+  proposed_response?: {
+    proposal_run_id: string
+    primary: string
+    alternatives: string[]
+    created_at: string
+    assistant_text: string
+  } | null
 }
 
 export type StopReason =
@@ -115,6 +122,20 @@ export type ImageAttachmentView = JsonObject & {
   sha256: string
 }
 
+export type ProposedResponseReference = JsonObject & {
+  proposal_run_id: Ulid
+}
+
+export type ProposedResponseFireView = JsonObject & {
+  proposal_run_id: Ulid
+  proposed_text: string
+  fired_text: string
+  edit_distance: number
+  provenance: 'owner_authored_with_assist'
+  fired_at: string
+  judge_provenance?: JsonObject[]
+}
+
 export interface UserTranscriptMessage {
   message_id: Ulid
   run_id: Ulid
@@ -122,6 +143,7 @@ export interface UserTranscriptMessage {
   content: string
   state: UserMessageState
   image?: ImageAttachmentView
+  proposed_response?: ProposedResponseFireView
 }
 
 export interface AssistantTranscriptMessage {
@@ -397,6 +419,7 @@ export interface BrowserPayloadMap {
     image?: PromptImage
     symphony?: SymphonyLaunch
     symphony_intervention?: SymphonyIntervention
+    proposed_response?: ProposedResponseReference
   }
   'run.cancel': { run_id: Ulid }
   'gate.commit': GateCommitPayload
@@ -990,6 +1013,8 @@ function parseTranscriptMessage(value: unknown): TranscriptMessage | null {
     }
     const image = optionalImageAttachmentView(value)
     if (image === null) return null
+    const proposedResponse = optionalProposedResponseFire(value.proposed_response)
+    if (proposedResponse === null) return null
     return {
       message_id: value.message_id,
       run_id: value.run_id,
@@ -997,6 +1022,7 @@ function parseTranscriptMessage(value: unknown): TranscriptMessage | null {
       content: value.content,
       state: value.state as UserMessageState,
       ...(image === undefined ? {} : { image }),
+      ...(proposedResponse === undefined ? {} : { proposed_response: proposedResponse }),
     }
   }
   if (
@@ -1019,6 +1045,24 @@ function parseTranscriptMessage(value: unknown): TranscriptMessage | null {
     events: value.events,
     partial: value.partial,
   }
+}
+
+function optionalProposedResponseFire(
+  value: unknown,
+): ProposedResponseFireView | undefined | null {
+  if (value === undefined) return undefined
+  if (
+    !isJsonObject(value) || !isUlid(value.proposal_run_id) ||
+    typeof value.proposed_text !== 'string' || !value.proposed_text.trim() ||
+    typeof value.fired_text !== 'string' || !value.fired_text.trim() ||
+    !Number.isInteger(value.edit_distance) || (value.edit_distance as number) < 0 ||
+    value.provenance !== 'owner_authored_with_assist' ||
+    !isIso8601Timestamp(value.fired_at) ||
+    (value.judge_provenance !== undefined && (
+      !Array.isArray(value.judge_provenance) || !value.judge_provenance.every(isJsonObject)
+    ))
+  ) return null
+  return value as ProposedResponseFireView
 }
 
 function parseSnapshot(value: unknown): ThreadSnapshotPayload | null {

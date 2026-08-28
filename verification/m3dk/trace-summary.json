@@ -1,0 +1,60 @@
+{
+  "captured_at": "2026-08-28T14:29:12.745154Z",
+  "scope": "M3DK real OpenRouter multi-thread Deck verification",
+  "identity": {
+    "principal_id": "m3dk-verification-20260828-dk27",
+    "machine_id": "m3dk-browser-verification",
+    "agent_id": "m3dk-owner-agent"
+  },
+  "provider": {
+    "broker": "openrouter",
+    "model": "minimax/minimax-m3",
+    "source": "real Rack model label and provider-backed journal events"
+  },
+  "threads": {
+    "alpha": {
+      "thread_id": "ae1b91fb-f761-4b4b-84fb-f5b469ad5800",
+      "proposal_run_id": "01M14C9JCCKEKS1YAR7B889B5Z",
+      "proposal_created_at": "2026-08-28T14:27:36.766791+00:00",
+      "visible_answer": "Alpha is ready.",
+      "proposed_text": "Approve Alpha."
+    },
+    "beta": {
+      "thread_id": "3e35ee1b-c14e-4567-831b-77b8c101fb3c",
+      "proposal_run_id": "01M14CA6BH73DVEA2JFAGP4280",
+      "proposal_created_at": "2026-08-28T14:28:21.057312+00:00",
+      "proposed_text": "Approve Beta"
+    }
+  },
+  "queue": {
+    "client_height_css_px": 429,
+    "scroll_height_css_px": 580,
+    "scroll_top_before_css_px": 0,
+    "scroll_top_after_css_px": 151,
+    "primary_before": "alpha",
+    "primary_after_scroll": "alpha",
+    "primary_immediately_after_alpha_enter": "beta"
+  },
+  "alpha_fire_journal": {
+    "fired_run_id": "01M14CC1271SKC2JCK9TKHWJ7T",
+    "proposed_text": "Approve Alpha.",
+    "fired_text": "Approve Alpha after the browser walk.",
+    "edit_distance": 23,
+    "provenance": "owner_authored_with_assist",
+    "fired_at": "2026-08-28T14:28:51.911535+00:00"
+  },
+  "beta_undo": {
+    "draft_before": "Approve Beta",
+    "draft_after": "Approve Beta",
+    "fire_record_written": false,
+    "owner_status": "Recalled before sending"
+  },
+  "cold_reload": {
+    "selected_thread": "alpha",
+    "beta_snapshot_state": "not_loaded",
+    "deck_waiting": 2,
+    "first_card": "beta",
+    "second_card": "alpha",
+    "source": "journal-derived transcript catalog"
+  }
+}

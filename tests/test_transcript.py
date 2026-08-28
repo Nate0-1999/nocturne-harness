@@ -684,6 +684,68 @@ async def test_startup_hydrates_every_journal_thread(tmp_path: Path) -> None:
     await loop.close()
 
 
+def test_catalog_projects_one_unresolved_proposal_for_the_global_deck(tmp_path: Path) -> None:
+    """M3DK keeps the Deck global after restart without inventing a second proposal store."""
+
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    prompt_id = ulid(1)
+    run_id = ulid(2)
+    journal.append_message(
+        "thread-deck",
+        {
+            "message_id": prompt_id,
+            "run_id": run_id,
+            "role": "user",
+            "content": "Is it ready?",
+            "state": "end_turn",
+        },
+        parent_id=None,
+    )
+    journal.append_message(
+        "thread-deck",
+        {
+            "message_id": run_id,
+            "run_id": run_id,
+            "role": "assistant",
+            "content": "Ready.",
+            "thinking": "",
+            "events": [
+                {
+                    "event_kind": "proposed_response",
+                    "proposal_run_id": run_id,
+                    "primary": "Ship it.",
+                    "alternatives": ["Show proof."],
+                    "created_at": "2026-08-28T12:00:00+00:00",
+                }
+            ],
+            "partial": False,
+        },
+        parent_id=prompt_id,
+    )
+
+    assert journal.catalog()[0].proposed_response == {
+        "proposal_run_id": run_id,
+        "primary": "Ship it.",
+        "alternatives": ["Show proof."],
+        "created_at": "2026-08-28T12:00:00+00:00",
+        "assistant_text": "Ready.",
+    }
+
+    journal.append_message(
+        "thread-deck",
+        {
+            "message_id": ulid(3),
+            "run_id": ulid(4),
+            "role": "user",
+            "content": "Ship it.",
+            "state": "end_turn",
+            "proposed_response": {"proposal_run_id": run_id},
+        },
+        parent_id=run_id,
+    )
+    assert journal.catalog()[0].proposed_response is None
+
+
 @pytest.mark.asyncio
 async def test_project_context_only_thread_hydrates_before_its_first_prompt(tmp_path: Path) -> None:
     """F028, ADR-005, ADR-023, and B.6 r12 require project identity to survive restart from

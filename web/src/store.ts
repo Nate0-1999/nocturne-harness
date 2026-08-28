@@ -176,6 +176,29 @@ function newCatalogEntry(threadId: string, projectKey: string): ThreadCatalogEnt
   }
 }
 
+function catalogProposedResponse(
+  value: unknown,
+): NonNullable<ThreadCatalogEntry['proposed_response']> | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return null
+  const proposal = value as Record<string, unknown>
+  if (
+    typeof proposal.proposal_run_id !== 'string' ||
+    typeof proposal.primary !== 'string' || !proposal.primary.trim() ||
+    !Array.isArray(proposal.alternatives) ||
+    !proposal.alternatives.every((item) => typeof item === 'string') ||
+    typeof proposal.created_at !== 'string' ||
+    Number.isNaN(Date.parse(proposal.created_at)) ||
+    typeof proposal.assistant_text !== 'string'
+  ) return null
+  return {
+    proposal_run_id: proposal.proposal_run_id,
+    primary: proposal.primary,
+    alternatives: proposal.alternatives,
+    created_at: proposal.created_at,
+    assistant_text: proposal.assistant_text,
+  }
+}
+
 function errorFromPayload(payload: JsonValue): HarnessError {
   let message = 'Harness error'
   if (typeof payload === 'string' && payload.trim()) {
@@ -607,6 +630,7 @@ function restoredState(value: unknown): PersistedHarnessState {
         created_at: entry.created_at,
         updated_at: entry.updated_at,
         project_key: projectKey,
+        proposed_response: catalogProposedResponse(entry.proposed_response),
       })
     }
   }
@@ -890,7 +914,10 @@ export const useHarnessStore = create<HarnessStoreState>()(
     {
       name: THREAD_CATALOG_STORAGE_KEY,
       partialize: (state) => ({
-        catalog: state.catalog,
+        catalog: state.catalog.map(({ proposed_response, ...entry }) => {
+          void proposed_response
+          return entry
+        }),
         selectedThreadId: state.selectedThreadId,
       }),
       merge: (persisted, current) => {

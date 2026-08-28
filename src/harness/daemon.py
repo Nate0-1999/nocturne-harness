@@ -545,6 +545,7 @@ def create_app(
                         image=message.payload.image,
                         symphony=message.payload.symphony,
                         symphony_intervention=message.payload.symphony_intervention,
+                        proposed_response=message.payload.proposed_response,
                         sink=send,
                     )
                 elif message.type is MessageType.RUN_CANCEL:

@@ -32,6 +32,7 @@ from harness.envelope import (
     ImageView,
     MessageType,
     PromptQueuedPayload,
+    ProposedResponseFirePayload,
     QueuedPromptSnapshot,
     RunDeltaEventPayload,
     RunDeltaTextPayload,
@@ -64,6 +65,11 @@ from harness.parameter_registry import (
     ParameterWriteViolation,
 )
 from harness.project_path import validate_artificial_project_path
+from harness.proposed_response import (
+    find_proposed_response,
+    proposal_was_fired,
+    proposed_response_fire_record,
+)
 from harness.run_protocol import ImageTurnRunner, RunEmitter, TurnOutcome, TurnRunner, UsageSnapshot
 from harness.symphony_experience import SymphonyExperience
 from harness.transcript import HydratedTranscript, TranscriptJournal
@@ -495,6 +501,7 @@ class RunLoop:
         image: ImageInput | None = None,
         symphony: SymphonyLaunchPayload | None = None,
         symphony_intervention: SymphonyInterventionPayload | None = None,
+        proposed_response: ProposedResponseFirePayload | None = None,
         sink: EnvelopeSink | None = None,
     ) -> str:
         """Accept a prompt, starting it now or reserving one FIFO run ID."""
@@ -516,14 +523,24 @@ class RunLoop:
             ),
         ):
             raise TypeError("symphony_intervention must be a typed intervention or None")
+        if proposed_response is not None and not isinstance(
+            proposed_response, ProposedResponseFirePayload
+        ):
+            raise TypeError("proposed_response must be a typed proposal reference or None")
         if sum(value is not None for value in (image, symphony, symphony_intervention)) > 1:
             raise ValueError("image, Symphony launch, and Symphony steering are mutually exclusive")
+        if proposed_response is not None and any(
+            value is not None for value in (image, symphony, symphony_intervention)
+        ):
+            raise ValueError("a proposed response must be an ordinary text prompt")
         if (symphony is not None or symphony_intervention is not None) and (
             self._symphony_experience is None
         ):
             raise RuntimeError("Symphony is unavailable in this runtime")
         if image is not None and self._transcript_journal is None:
             raise RuntimeError("image input requires the mandatory transcript journal")
+        if proposed_response is not None and self._transcript_journal is None:
+            raise RuntimeError("a proposed response requires the mandatory transcript journal")
 
         run_id = self._run_id_factory()
         # Validate both correlation IDs before mutating process state.
@@ -558,6 +575,26 @@ class RunLoop:
         async with self._lock:
             self._require_open()
             submission_lock = self._submission_locks.setdefault(thread_id, asyncio.Lock())
+            if proposed_response is not None:
+                messages = self._state_for_locked(thread_id).messages
+                source = find_proposed_response(
+                    messages,
+                    proposed_response.proposal_run_id,
+                )
+                if source is None or source[0].get("partial") is not False:
+                    raise ValueError("proposed response is not available in this thread")
+                if proposal_was_fired(
+                    messages,
+                    proposed_response.proposal_run_id,
+                ):
+                    raise ValueError("proposed response was already fired")
+                user_message["proposed_response"] = proposed_response_fire_record(
+                    source_message=source[0],
+                    proposal=source[1],
+                    proposal_run_id=proposed_response.proposal_run_id,
+                    fired_text=prompt,
+                    fired_at=self._aware_clock(),
+                )
             if self._transcript_journal is not None:
                 if image is not None:
                     stored_view = self._capture_image_attachment(thread_id, prompt_id, image)

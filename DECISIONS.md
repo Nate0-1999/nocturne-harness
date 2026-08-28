@@ -2961,3 +2961,39 @@ a second cost system, lose request lineage, and duplicate reconciliation.
 Estimating dollars from catalog prices would demote broker-native truth and
 misprice routed providers. Patching or forking Pydantic AI would violate M3TS's
 owned-shim boundary for a four-field compatibility gap.
+
+## 098 — Proposed replies are same-turn events with owner-authored fire records [P2, G19, M3DK]
+
+**Decision.** Instruct every ordinary provider turn to append one terminal
+`<nocturne-proposed-response>` JSON block. The streaming bridge withholds that block
+from visible chat and emits its validated primary text and up to three alternatives as
+one event on the same assistant run. A missing or malformed block never creates a card
+or a second provider call.
+
+Project the latest unresolved proposal from each hydrated thread into one global Deck
+queue ordered by server event time, then run id. Scrolling changes only the queue's
+viewport. Its first item remains primary. The primary text pre-fills an ordinary
+editable composer; a chip replaces that draft without constraining free text. Enter
+begins a six-second client grace, locally advances the queue at once, and appends the
+user prompt only when the grace expires. Undo restores the exact draft before any
+prompt exists.
+
+The client sends only the immutable source proposal run id. The Harness resolves that
+source from its transcript, refuses missing, partial, or already-fired proposals, and
+derives an append-only fire record containing the exact proposed and fired strings,
+character Levenshtein distance, timestamp, and `owner_authored_with_assist` provenance.
+Any judge or Symphony result attached to the source is copied as provenance evidence;
+the source assistant message is never rewritten.
+
+**Motivation.** The Deck should reduce the owner's work without impersonating them or
+buying a hidden second answer. P2 and Invariant 14 make one glance, one editable action,
+and immediate motion to the next waiting card the useful shape. G19 requires the tweak
+itself to remain authentic learning evidence rather than disappearing into an opaque
+submit.
+
+**Rejected alternatives.** A second model call would add cost and latency solely for
+the control surface. A parallel proposal store or polling endpoint would split Deck
+truth from the durable transcript. Treating a chip as the only allowed reply would erase
+owner authorship. Client-supplied proposed text or distance would let the browser invent
+training evidence. Rewriting a Symphony result after an owner tweak would destroy judge
+provenance.

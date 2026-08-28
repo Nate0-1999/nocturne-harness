@@ -7,6 +7,7 @@ import json
 import re
 from collections.abc import AsyncIterable, Callable, Mapping, Sequence
 from dataclasses import replace
+from datetime import UTC, datetime
 from typing import Any, cast
 from uuid import UUID
 
@@ -37,6 +38,12 @@ from harness.context_window import ContextWindowTracker
 from harness.envelope import ProviderErrorPayload, StopReason
 from harness.model_policy import ThreadModelResolution
 from harness.model_router import model_settings_for
+from harness.proposed_response import (
+    BLOCK_OPEN,
+    PROPOSED_RESPONSE_INSTRUCTION,
+    parse_proposed_response_output,
+    proposed_response_event,
+)
 from harness.receipt_queue import SpendReceiptQueue
 from harness.run_protocol import DynamicSystemInstructions, RunEmitter, TurnOutcome, UsageSnapshot
 from harness.spend import (
@@ -85,12 +92,14 @@ class PydanticAITurnRunner:
         spend: SpendGateway | None = None,
         receipt_queue: SpendReceiptQueue | None = None,
         context_windows: ContextWindowTracker | None = None,
+        clock: Callable[[], datetime] | None = None,
     ) -> None:
         self._agent = agent
         self._context_factory = context_factory
         self._spend = spend
         self._receipt_queue = receipt_queue
         self._context_windows = context_windows
+        self._clock = clock or (lambda: datetime.now(UTC))
 
     async def run(
         self,
@@ -161,7 +170,9 @@ class PydanticAITurnRunner:
                 await bridge.publish_usage(usage)
                 return TurnOutcome(StopReason("end_turn"), prior_history, usage)
 
-            prior_history = _strip_all_memory_blocks(prior_history)
+            prior_history = _strip_all_proposed_response_blocks(
+                _strip_all_memory_blocks(prior_history)
+            )
             user_prompt = prompt if image is None else [prompt, image]
 
             async def current_instructions(_context: object) -> str | None:
@@ -169,13 +180,11 @@ class PydanticAITurnRunner:
                     return None
                 return await dynamic_instructions.render()
 
-            instructions: object = system_instructions
+            instructions: list[object] = [PROPOSED_RESPONSE_INSTRUCTION]
+            if system_instructions is not None:
+                instructions.append(system_instructions)
             if dynamic_instructions is not None:
-                instructions = (
-                    [current_instructions]
-                    if system_instructions is None
-                    else [system_instructions, current_instructions]
-                )
+                instructions.append(current_instructions)
             with capture_run_messages() as captured:
                 result = await self._agent.chat_agent.run(
                     user_prompt,
@@ -190,6 +199,11 @@ class PydanticAITurnRunner:
                 )
             if not isinstance(result.output, str):
                 raise TypeError("chat agent returned a non-text output")
+            visible_output = await bridge.finalize(
+                result.output,
+                run_id=emit.run_id,
+                created_at=self._clock(),
+            )
             usage = _usage_snapshot(result.usage)
             await bridge.publish_usage(usage)
             history = tuple(result.all_messages())
@@ -198,7 +212,7 @@ class PydanticAITurnRunner:
                 history,
                 usage,
                 cacheable_prefix_tokens=_cacheable_prefix_tokens(history),
-                assistant_text=result.output,
+                assistant_text=visible_output,
             )
         except asyncio.CancelledError:
             usage = _failure_usage(run_usage, captured, prior_history)
@@ -497,6 +511,9 @@ class _EventBridge:
     def __init__(self, emit: RunEmitter) -> None:
         self._emit = emit
         self._last_usage = UsageSnapshot()
+        self._pending_text = ""
+        self._visible_text = ""
+        self._proposal_started = False
 
     async def handle(
         self,
@@ -506,10 +523,10 @@ class _EventBridge:
         async for event in events:
             if isinstance(event, PartStartEvent) and isinstance(event.part, TextPart):
                 if event.part.content:
-                    await self._emit.text(event.part.content)
+                    await self._accept_text(event.part.content)
             elif isinstance(event, PartDeltaEvent) and isinstance(event.delta, TextPartDelta):
                 if event.delta.content_delta:
-                    await self._emit.text(event.delta.content_delta)
+                    await self._accept_text(event.delta.content_delta)
             elif isinstance(event, PartStartEvent) and isinstance(event.part, ThinkingPart):
                 if event.part.content:
                     await self._emit.thinking(event.part.content)
@@ -520,6 +537,42 @@ class _EventBridge:
                 await self._emit.event(_json_event(event))
             await self.publish_usage(_usage_snapshot(context.usage))
         await self.publish_usage(_usage_snapshot(context.usage))
+
+    async def _accept_text(self, value: str) -> None:
+        if self._proposal_started:
+            self._pending_text += value
+            return
+        self._pending_text += value
+        marker = self._pending_text.find(BLOCK_OPEN)
+        if marker >= 0:
+            await self._publish_visible(self._pending_text[:marker])
+            self._pending_text = self._pending_text[marker:]
+            self._proposal_started = True
+            return
+        retained = _marker_prefix_suffix_length(self._pending_text, BLOCK_OPEN)
+        safe_length = len(self._pending_text) - retained
+        await self._publish_visible(self._pending_text[:safe_length])
+        self._pending_text = self._pending_text[safe_length:]
+
+    async def _publish_visible(self, value: str) -> None:
+        if not value:
+            return
+        self._visible_text += value
+        await self._emit.text(value)
+
+    async def finalize(self, output: str, *, run_id: str, created_at: datetime) -> str:
+        """Reconcile the streamed answer and publish one same-turn proposal event."""
+
+        visible, proposal = parse_proposed_response_output(output)
+        if not visible.startswith(self._visible_text):
+            raise RuntimeError("terminal model text differs from streamed model text")
+        await self._publish_visible(visible[len(self._visible_text) :])
+        self._pending_text = ""
+        if proposal is not None:
+            await self._emit.event(
+                proposed_response_event(proposal, run_id=run_id, created_at=created_at)
+            )
+        return visible
 
     async def publish_usage(self, usage: UsageSnapshot) -> None:
         if usage == self._last_usage:
@@ -541,6 +594,14 @@ def _json_event(event: AgentStreamEvent) -> Mapping[str, object]:
     if not isinstance(value, dict):  # pragma: no cover - all AgentStreamEvent values are objects
         raise TypeError("pydantic-ai emitted a non-object event")
     return cast(dict[str, object], value)
+
+
+def _marker_prefix_suffix_length(value: str, marker: str) -> int:
+    maximum = min(len(value), len(marker) - 1)
+    for length in range(maximum, 0, -1):
+        if value.endswith(marker[:length]):
+            return length
+    return 0
 
 
 def _usage_snapshot(usage: RunUsage) -> UsageSnapshot:
@@ -671,6 +732,30 @@ def _strip_all_memory_blocks(history: Sequence[object]) -> tuple[object, ...]:
     """Remove dynamic C.6 instructions from history before adding the current block."""
 
     return tuple(_strip_request_memory_block(message) for message in history)
+
+
+def _strip_all_proposed_response_blocks(history: Sequence[object]) -> tuple[object, ...]:
+    """Keep hidden Deck control blocks out of later provider context."""
+
+    cleaned: list[object] = []
+    for message in history:
+        if not isinstance(message, ModelResponse):
+            cleaned.append(message)
+            continue
+        parts = []
+        changed = False
+        for part in message.parts:
+            if not isinstance(part, TextPart):
+                parts.append(part)
+                continue
+            visible, proposal = parse_proposed_response_output(part.content)
+            if proposal is None and BLOCK_OPEN not in part.content:
+                parts.append(part)
+                continue
+            parts.append(replace(part, content=visible))
+            changed = True
+        cleaned.append(replace(message, parts=parts) if changed else message)
+    return tuple(cleaned)
 
 
 def _strip_request_memory_block(message: object) -> object:
