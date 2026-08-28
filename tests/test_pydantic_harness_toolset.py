@@ -109,12 +109,14 @@ async def test_atomic_multi_edit_refuses_before_any_write(tmp_path: Path) -> Non
 
 @pytest.mark.asyncio
 async def test_location_fence_precedes_act_and_move_precedes_next_act(tmp_path: Path) -> None:
-    """D.2 103 keeps writes local, reads free, and symlink escapes refused."""
+    """P1 and D.2 141 require exact-directory presence while reads remain free."""
 
     current = tmp_path / "current"
+    deep = current / "deep"
     sibling = tmp_path / "sibling"
-    current.mkdir()
+    deep.mkdir(parents=True)
     sibling.mkdir()
+    (deep / "editable.txt").write_text("before\n")
     (sibling / "readable.txt").write_text("reads are free\n")
     (current / "escape").symlink_to(sibling, target_is_directory=True)
     toolset = await open_standard_toolset(cwd=current, workspace_root=tmp_path)
@@ -122,22 +124,49 @@ async def test_location_fence_precedes_act_and_move_precedes_next_act(tmp_path: 
         outside = await toolset.execute(
             "write", {"path": str(sibling / "blocked.txt"), "content": "no"}
         )
+        nested_write = await toolset.execute("write", {"path": "deep/blocked.txt", "content": "no"})
+        nested_edit = await toolset.execute(
+            "edit",
+            {
+                "path": "deep/editable.txt",
+                "edits": [{"oldText": "before", "newText": "after"}],
+            },
+        )
         read = await toolset.execute(
             "read", {"path": str(sibling / "readable.txt"), "offset": 1, "limit": 20}
         )
         symlink = await toolset.execute("write", {"path": "escape/symlink.txt", "content": "no"})
-        moved = await toolset.execute("move", {"path": str(sibling)})
+        moved = await toolset.execute("move", {"path": "deep"})
+        edited = await toolset.execute(
+            "edit",
+            {
+                "path": "editable.txt",
+                "edits": [{"oldText": "before", "newText": "after"}],
+            },
+        )
         allowed = await toolset.execute("write", {"path": "allowed.txt", "content": "yes"})
     finally:
         await toolset.close()
 
     assert not outside.success and "Move to" in outside.content
+    assert not nested_write.success and f"Move to {deep.resolve()} first" in nested_write.content
+    assert not nested_edit.success and f"Move to {deep.resolve()} first" in nested_edit.content
     assert read.success and "reads are free" in read.content
     assert not symlink.success and "Move to" in symlink.content
-    assert moved.success and allowed.success
+    assert moved.success and edited.success and allowed.success
     assert not (sibling / "blocked.txt").exists()
     assert not (sibling / "symlink.txt").exists()
-    assert (sibling / "allowed.txt").read_text() == "yes"
+    assert not (deep / "blocked.txt").exists()
+    assert (deep / "editable.txt").read_text() == "after\n"
+    assert (deep / "allowed.txt").read_text() == "yes"
+    assert [(event.event, event.path) for event in toolset.presence_events()] == [
+        ("spawn", current.resolve()),
+        ("read", (sibling / "readable.txt").resolve()),
+        ("cwd_change", deep.resolve()),
+        ("write", (deep / "editable.txt").resolve()),
+        ("write", (deep / "allowed.txt").resolve()),
+        ("exit", deep.resolve()),
+    ]
 
 
 @pytest.mark.asyncio

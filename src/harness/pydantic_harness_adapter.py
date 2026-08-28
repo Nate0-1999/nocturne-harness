@@ -303,11 +303,18 @@ class PydanticHarnessToolset:
             raise ToolsetError(
                 "That path may contain credentials. Ask the owner before reading it."
             )
-        fenced = tool_name in _WRITE_TOOLS or self._location.fence_reads
-        if fenced and not _inside(self._location.cwd, target):
-            remedy = target.parent if tool_name in _WRITE_TOOLS else target
+        if tool_name in _WRITE_TOOLS and target.parent != self._location.cwd:
             raise ToolsetError(
-                f"That path is outside this agent's location. Move to {remedy} first."
+                "Modification requires presence in the file's directory. "
+                f"Move to {target.parent} first."
+            )
+        if (
+            self._location.fence_reads
+            and tool_name in _READ_TOOLS
+            and not _inside(self._location.cwd, target)
+        ):
+            raise ToolsetError(
+                f"That path is outside this agent's location. Move to {target} first."
             )
         return target
 

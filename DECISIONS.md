@@ -2997,3 +2997,29 @@ truth from the durable transcript. Treating a chip as the only allowed reply wou
 owner authorship. Client-supplied proposed text or distance would let the browser invent
 training evidence. Rewriting a Symphony result after an owner tweak would destroy judge
 provenance.
+
+## 099 — Resolve the exact file fence before upstream delegation [P1, M3EF]
+
+**Decision.** At the Harness-owned preflight seam, resolve every edit/write target
+without requiring it to exist, then require its resolved parent to equal the agent's
+resolved current directory. Refuse before reading edit contents or invoking the
+adopted filesystem capability, and name the resolved parent as the move remedy.
+Retain the existing symlink-safe workspace boundary for movement. Reads remain free;
+the optional strict-read mode keeps its prior subtree rule. Bash retains its separate
+macOS sandbox profile and may write through the current location's subtree.
+
+Pin the new refusal and the exact prompt sentence in the golden suite. The prompt and
+tool descriptions distinguish file modification from bash so the model is never told
+that subtree permission satisfies edit/write presence.
+
+**Motivation.** D.2 141 restores the founding movement law literally: deliberate file
+modification should create a presence event in that file's directory. A resolved-parent
+check makes that fact deterministic before action, strengthens the Ant Farm trail and
+parallel-safety signal, and avoids treating a nested pathname as proof that the agent
+actually moved there.
+
+**Rejected alternatives.** Retaining `target.is_relative_to(cwd)` would preserve the
+drift this packet exists to remove. Checking the lexical parent would permit symlink
+escapes. Tightening bash to one directory would break ordinary builds and contradict
+the owner's explicit subtree ruling. Fencing reads would add friction without serving
+the modification-presence problem.

@@ -81,12 +81,13 @@ the journal can durably accept writes and reloads each conversation from its
 durable tail before serving the UI.
 
 Ordinary owner chat uses the official `pydantic-ai-harness` filesystem, shell,
-and Skills capabilities through NOCTURNE's owned adapter. Reads are free; edit,
-write, and shell work stay inside the agent's current location, so the agent
-must move before acting elsewhere in that project. On macOS, shell commands run
-behind the operating-system sandbox with network denied and a scrubbed
-environment. Remote pushes, deploy commands, and credential reads stop with a
-plain boundary message. Skills in project `.agents/skills` or legacy
+and Skills capabilities through NOCTURNE's owned adapter. Reads are free. Edit
+and write require the agent to stand in the file's exact directory; shell work
+may span only the current location's subtree. The agent must move before a
+deliberate file modification elsewhere in that project. On macOS, shell
+commands run behind the operating-system sandbox with network denied and a
+scrubbed environment. Remote pushes, deploy commands, and credential reads stop
+with a plain boundary message. Skills in project `.agents/skills` or legacy
 `.pi/skills`, plus their user-level equivalents, are deferred until useful;
 their bundled references, assets, and scripts remain available through the
 same fenced tools. Every tool call and result is appended through the same

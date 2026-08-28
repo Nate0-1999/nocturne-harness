@@ -17,8 +17,9 @@ from harness.tools_memory import MemoryToolContext
 from harness.toolset import ToolName, ToolsetError
 
 WORKSPACE_INSTRUCTIONS = (
-    "Use move in its own tool step before edit, write, or bash in another directory. "
-    "Reads are free. Writes and bash are confined to the current location. "
+    "To edit or write a file, you must use move in its own tool step to enter that file's "
+    "directory first. Reads are free. Bash may modify files only within the current location's "
+    "subtree. "
     "If a tool refuses a boundary crossing, explain the wall plainly; do not retry around it."
     " Browser tools are headless and default to localhost or files beneath the current location."
     " Never ask the owner for consent inside a tool call; a refused open-web request must wait"
@@ -172,7 +173,7 @@ async def read(
 
 
 async def edit(ctx: RunContext[MemoryToolContext], path: str, edits: list[EditReplacement]) -> str:
-    """Replace exact text in a file inside the current location."""
+    """Replace exact text in a file in the current directory."""
     return await _execute_workspace_tool(
         ctx,
         "edit",
@@ -187,7 +188,7 @@ async def edit(ctx: RunContext[MemoryToolContext], path: str, edits: list[EditRe
 
 
 async def write(ctx: RunContext[MemoryToolContext], path: str, content: str) -> str:
-    """Create or replace a file inside the current location."""
+    """Create or replace a file in the current directory."""
     return await _execute_workspace_tool(ctx, "write", {"path": path, "content": content})
 
 

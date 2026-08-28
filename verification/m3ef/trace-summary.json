@@ -1,0 +1,64 @@
+{
+  "packet": "M3EF",
+  "proof_class": "real owner browser and real OpenRouter model",
+  "identity": {
+    "principal_id": "m3ef-verification-20260828-ef28",
+    "machine_id": "m3ef-browser-verification",
+    "agent_id": "m3ef-owner-agent"
+  },
+  "model": "openrouter:minimax/minimax-m3",
+  "thread_id": "38649a11-fe5c-42c2-a9f0-e574c2c6fc18",
+  "run_id": "01M14DARETW165JK1EMHG8GV85",
+  "prompt": "At the workspace root, use edit on src/deep/proof.txt to replace before with after. Do not move first. When it refuses, use move to src/deep, retry the edit on proof.txt, then read proof.txt and report what happened.",
+  "tool_sequence": [
+    {
+      "tool": "edit",
+      "path": "src/deep/proof.txt",
+      "timestamp": "2026-08-28T14:45:50.730394Z",
+      "outcome": "refused",
+      "content": "edit refused: Modification requires presence in the file's directory. Move to <disposable-workspace>/src/deep first."
+    },
+    {
+      "tool": "move",
+      "path": "src/deep",
+      "timestamp": "2026-08-28T14:45:55.719519Z",
+      "outcome": "success"
+    },
+    {
+      "tool": "edit",
+      "path": "proof.txt",
+      "timestamp": "2026-08-28T14:46:00.291530Z",
+      "outcome": "success",
+      "short_hash": "7b9a72466d39"
+    },
+    {
+      "tool": "read",
+      "path": "proof.txt",
+      "timestamp": "2026-08-28T14:46:04.525377Z",
+      "outcome": "success",
+      "content": "after",
+      "short_hash": "7b9a72466d39"
+    }
+  ],
+  "usage": {
+    "requests": 5,
+    "input_tokens": 11629,
+    "output_tokens": 907,
+    "cache_read_tokens": 6928
+  },
+  "final_file_sha256": "7b9a72466d3960eb2aacccfc848939453490db0678bd4725def3f789b891c919",
+  "captures": [
+    {
+      "path": "verification/m3ef/01-real-agent-outcome.png",
+      "sha256": "1c5c74f19619e7edabb28e6d77635f530348b64b979b8e819906a8cc3f6087ef"
+    },
+    {
+      "path": "verification/m3ef/02-real-tool-trace.png",
+      "sha256": "6804f772a5704b0723bd1e65381c310e60c69ed0857a82142fecbce72fa80101"
+    }
+  ],
+  "notes": [
+    "The configured Palace prepare failed open for this disposable verification identity; the real provider turn continued without injected memory.",
+    "tests/test_pydantic_harness_toolset.py asserts the successful move emits cwd_change before successful modification events and that refused modifications emit no write event."
+  ]
+}

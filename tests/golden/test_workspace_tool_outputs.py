@@ -6,14 +6,17 @@ from pathlib import Path
 
 import pytest
 
+from harness.pydantic_ai_adapter import WORKSPACE_INSTRUCTIONS
 from harness.toolset import open_standard_toolset
 
 
 @pytest.mark.asyncio
 async def test_seven_coding_tool_outputs_are_explicit(tmp_path: Path) -> None:
-    """D.2 136 pins the intentional post-PI output delta at the owned seam."""
+    """P1 and D.2 136/141 pin intentional model-visible tool output deltas."""
 
-    (tmp_path / "sub").mkdir()
+    sub = tmp_path / "sub"
+    sub.mkdir()
+    (sub / "deep.txt").write_text("before\n")
     (tmp_path / "note.txt").write_text("zero\nmatch one\nnext\nmatch two\nend\n")
     toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
     try:
@@ -29,6 +32,16 @@ async def test_seven_coding_tool_outputs_are_explicit(tmp_path: Path) -> None:
             {
                 "path": "new.txt",
                 "edits": [{"oldText": "hello", "newText": "world"}],
+            },
+        )
+        refused_write = await toolset.execute(
+            "write", {"path": "sub/new.txt", "content": "blocked\n"}
+        )
+        refused_edit = await toolset.execute(
+            "edit",
+            {
+                "path": "sub/deep.txt",
+                "edits": [{"oldText": "before", "newText": "after"}],
             },
         )
         shell = await toolset.execute("bash", {"command": "printf shell-output"})
@@ -53,6 +66,13 @@ async def test_seven_coding_tool_outputs_are_explicit(tmp_path: Path) -> None:
     assert listed.content == "note.txt  (34 bytes)\nsub/"
     assert written.content == "Wrote 6 chars (1 lines) to new.txt. [hash:5891b5b522d5]"
     assert edited.content == "Edited new.txt. [hash:e258d248fda9]"
+    exact_refusal = (
+        f"Modification requires presence in the file's directory. Move to {sub.resolve()} first."
+    )
+    assert not refused_write.success and refused_write.content == exact_refusal
+    assert not refused_edit.success and refused_edit.content == exact_refusal
+    assert not (sub / "new.txt").exists()
+    assert (sub / "deep.txt").read_text() == "before\n"
     if Path("/usr/bin/sandbox-exec").is_file():
         assert shell.success
         assert shell.content == "[stdout]\nshell-output"
@@ -61,3 +81,16 @@ async def test_seven_coding_tool_outputs_are_explicit(tmp_path: Path) -> None:
         assert shell.content == (
             "Secure shell is unavailable on this host; use read, edit, and write instead."
         )
+
+
+def test_exact_movement_law_is_model_visible() -> None:
+    """P1 and D.2 141 sharpen the prompt without giving bash the file-tool fence."""
+
+    assert WORKSPACE_INSTRUCTIONS == (
+        "To edit or write a file, you must use move in its own tool step to enter that file's "
+        "directory first. Reads are free. Bash may modify files only within the current "
+        "location's subtree. If a tool refuses a boundary crossing, explain the wall plainly; "
+        "do not retry around it. Browser tools are headless and default to localhost or files "
+        "beneath the current location. Never ask the owner for consent inside a tool call; a "
+        "refused open-web request must wait for the owner's exact `/browser allow-web` command."
+    )
