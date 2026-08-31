@@ -9,7 +9,12 @@ from pydantic import BaseModel, ConfigDict, model_validator
 from harness.context_window import ContextWindowSnapshot
 from harness.parameter_registry import ParameterSnapshot
 from harness.recipe_graph import RecipeGraphSnapshot
-from harness.spine_client import MemoryGraphSnapshot, ScorerConsoleSnapshot, VitalsSnapshot
+from harness.spine_client import (
+    MemoryGraphSnapshot,
+    ScorerConsoleSnapshot,
+    SpendTableSnapshot,
+    VitalsSnapshot,
+)
 
 
 class RackQueryResult(BaseModel):
@@ -21,6 +26,7 @@ class RackQueryResult(BaseModel):
     as_of: str | None
     data: (
         VitalsSnapshot
+        | SpendTableSnapshot
         | ParameterSnapshot
         | MemoryGraphSnapshot
         | ScorerConsoleSnapshot

@@ -2,6 +2,7 @@ import json
 from collections.abc import Callable
 from copy import deepcopy
 from typing import Any
+from uuid import UUID
 
 import httpx
 import pytest
@@ -129,6 +130,59 @@ async def _assert_vitals_payload_rejected(payload: dict[str, Any]) -> None:
     ) as client:
         with pytest.raises(SpineResponseError, match="outside C.4"):
             await client.vitals_snapshot()
+
+
+def spend_table_payload() -> dict[str, Any]:
+    metrics = {
+        "input_tokens": "1200.5",
+        "kv_cache_tokens": "400",
+        "reasoning_tokens": "72",
+        "output_tokens": "180",
+        "total_usd": "0.042500000000",
+        "total_receipt_lines": 4,
+        "total_unpriced_lines": 0,
+        "spend_per_hour_usd": "0.012500000000",
+        "hourly_receipt_lines": 2,
+        "hourly_unpriced_lines": 0,
+    }
+    return {
+        "as_of": "2026-08-31T17:00:00Z",
+        "window_minutes": 60,
+        "threads": [
+            {
+                "thread_id": THREAD_ID,
+                "models": [{"model": "openai/gpt-5.4", **metrics}],
+                **metrics,
+            }
+        ],
+        "purposes": [{"purpose": "embedding", "label": "Embeddings", **metrics}],
+    }
+
+
+@pytest.mark.asyncio
+async def test_spend_table_uses_repeated_thread_filters_and_tolerates_older_palace() -> None:
+    """M3SP adds one optional authenticated read without broadening the browser boundary."""
+    seen: list[httpx.Request] = []
+    responses = [response(200, spend_table_payload()), response(404, {})]
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return responses.pop(0)
+
+    second = "32345678-1234-5678-1234-567812345678"
+    async with SpineClient(
+        "https://spine.invalid/prefix",
+        "token",
+        transport=httpx.MockTransport(handler),
+    ) as client:
+        snapshot = await client.spend_table([UUID(THREAD_ID), UUID(second)])
+        missing = await client.spend_table()
+
+    assert snapshot is not None
+    assert snapshot.threads[0].models[0].reasoning_tokens == "72"
+    assert seen[0].url.path == "/prefix/v1/spend/table"
+    assert seen[0].url.params.get_list("thread_id") == [THREAD_ID, second]
+    assert missing is None
 
 
 @pytest.mark.asyncio

@@ -21,6 +21,7 @@ test('owner surfaces state the situation without daemon, factory, or link jargon
     'ProjectSelector.tsx',
     'socket.ts',
     'VitalsModule.tsx',
+    'PalaceStateModule.tsx',
   ].map((path) => readFile(new URL(`../src/${path}`, import.meta.url), 'utf8')))
   const source = files.join('\n')
 

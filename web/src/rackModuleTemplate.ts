@@ -6,6 +6,7 @@ export type StageRackModuleId =
   | 'chat'
   | 'memory'
   | 'vitals'
+  | 'palace_state'
   | 'context_bars'
   | 'memory_graph'
   | 'palace_nebula'
@@ -38,6 +39,7 @@ export const STAGE_RACK_MODULE_IDS: readonly StageRackModuleId[] = [
   'memory',
   'vitals',
   'context_bars',
+  'palace_state',
   'memory_graph',
   'palace_nebula',
   'injection_console',

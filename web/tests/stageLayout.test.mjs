@@ -106,7 +106,7 @@ test('off-screen recovery fits Recipe and Deck at native scale inside 390 by 844
   deckLayout = recoverStageModule(deckLayout, 'deck', viewportWidth, viewportHeight)
   const deckLayer = activeStageLayer(deckLayout)
   const deck = deckLayer.modules.find((module) => module.module_id === 'deck')
-  assert.deepEqual(deck, { instance_id: 'deck', module_id: 'deck', x: 136, y: 90, width: 7, height: 20 })
+  assert.deepEqual(deck, { instance_id: 'deck', module_id: 'deck', x: 144, y: 90, width: 7, height: 20 })
   assert.equal(deckLayer.camera.zoom, 1)
   assert.equal(moduleFitsViewport(
     deck, deckLayer.camera, viewportWidth, viewportHeight, 12,
@@ -135,6 +135,23 @@ test('factory layers contain Graph and Injection as stage modules, never fixed t
   assert.deepEqual(graph?.modules.map((module) => module.module_id), ['memory_graph'])
   assert.deepEqual(graph?.removed_modules.map((module) => module.module_id), ['palace_nebula'])
   assert.deepEqual(injection?.modules.map((module) => module.module_id), ['injection_console'])
+})
+
+/** PLAN M3SP makes Palace State a small ordinary Stage module, including removal and restore. */
+test('Palace State is mounted beside Spend and survives the shared library lifecycle', () => {
+  const factory = FACTORY_STAGE_LAYOUT.layers.find((layer) => layer.layer_id === 'work')
+  assert.deepEqual(
+    factory?.modules.filter((module) => ['vitals', 'palace_state'].includes(module.module_id)).map((module) => module.module_id),
+    ['vitals', 'palace_state'],
+  )
+
+  const removed = removeStageModule(cloneFactoryStageLayout(), 'palace_state')
+  assert.equal(activeStageLayer(removed).modules.some((module) => module.module_id === 'palace_state'), false)
+  const restored = restoreStageModule(removed, 'palace_state')
+  assert.deepEqual(
+    activeStageLayer(restored).modules.find((module) => module.module_id === 'palace_state'),
+    factory?.modules.find((module) => module.module_id === 'palace_state'),
+  )
 })
 
 /** PLAN M3GE / P2 keeps the opt-in engine spike recoverable with one migration. */

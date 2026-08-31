@@ -3085,3 +3085,34 @@ dual-target path unused. Shipping r183+ would make every mount noisy; patching o
 forking r3f solely to replace its Clock would violate dependency-first/YAGNI when the
 compatible r182 release is available. Sampling memories or changing the legend would
 trade function for renderer convenience.
+
+## 102 — Spend reads one ledger projection; Palace State keeps every non-money Vital [P2.4, ADR-024, M3SP]
+
+**Decision.** Replace the former Vitals body with a money-only table sourced from one
+optional authenticated Palace read. The Palace, not the browser, groups authoritative
+`spend_event` receipt lines into conversation totals, expandable model rows, and
+non-thread purpose rows. Input is `input_fresh`; KV cache combines `input_cached` and
+`cache_write`; reasoning and output retain their named lanes. Totals are all-time and
+spend per hour is the trailing sixty-minute cost window. Every quantity crosses the
+wire as an exact decimal string, with receipt and unpriced counts preserving partial
+pricing rather than inventing zero.
+
+Resolve conversation names only from the local Harness catalog. `GLOBAL` requests the
+whole projection; `ATTUNED` passes the proximity-derived thread or stack members to
+that same read. A 404 from an older Palace becomes a local Spend-unavailable state and
+never changes chat readiness. Move lifecycle rates, Palace counts, queue depth,
+resources, reconciliation, and learning into one small fixed-GLOBAL Palace State
+module using the ordinary Stage drag, resize, remove, and restore lifecycle.
+
+**Motivation.** P2.4 asks one glanceable question—what did this work cost? Mixing
+memory health and process state into that answer made both harder to read. Server-side
+projection preserves ADR-024's single ledger authority, while the existing spatial
+attunement makes a scoped cost question visible without adding a picker or second
+accounting system.
+
+**Rejected alternatives.** Reconstructing totals from Vitals lanes in the browser
+would lose thread/model nesting and fork accounting truth. Adding separate global,
+thread, and stack endpoints would duplicate one filter. Sending thread names into the
+Palace would couple the durable ledger to a local journal. Requiring the new endpoint
+would let a display upgrade break chat against an older Palace. Leaving non-money
+gauges in Spend would preserve the problem this packet exists to solve.

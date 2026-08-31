@@ -652,6 +652,85 @@ class SpendEventsResponse(ContractModel):
     accepted: int = Field(strict=True, ge=1)
 
 
+class SpendTableMetrics(ContractModel):
+    """Exact quantities and honest known-cost state for one ledger grouping."""
+
+    input_tokens: NonNegativeDecimalString
+    kv_cache_tokens: NonNegativeDecimalString
+    reasoning_tokens: NonNegativeDecimalString
+    output_tokens: NonNegativeDecimalString
+    total_usd: NonNegativeDecimalString | None
+    total_receipt_lines: int = Field(strict=True, ge=0)
+    total_unpriced_lines: int = Field(strict=True, ge=0)
+    spend_per_hour_usd: NonNegativeDecimalString | None
+    hourly_receipt_lines: int = Field(strict=True, ge=0)
+    hourly_unpriced_lines: int = Field(strict=True, ge=0)
+
+    @model_validator(mode="after")
+    def require_honest_costs(self) -> SpendTableMetrics:
+        _require_honest_spend_table_cost(
+            self.total_usd, self.total_receipt_lines, self.total_unpriced_lines
+        )
+        _require_honest_spend_table_cost(
+            self.spend_per_hour_usd,
+            self.hourly_receipt_lines,
+            self.hourly_unpriced_lines,
+        )
+        return self
+
+
+class ModelSpendRow(SpendTableMetrics):
+    model: NonBlankString | None
+
+
+class ThreadSpendRow(SpendTableMetrics):
+    thread_id: UUID
+    models: list[ModelSpendRow]
+
+    @field_validator("models")
+    @classmethod
+    def require_unique_models(cls, value: list[ModelSpendRow]) -> list[ModelSpendRow]:
+        keys = [row.model for row in value]
+        if len(keys) != len(set(keys)):
+            raise ValueError("thread model rows must be unique")
+        return value
+
+
+class PurposeSpendRow(SpendTableMetrics):
+    purpose: Literal[
+        "building",
+        "extraction",
+        "curation",
+        "judge",
+        "remember",
+        "embedding",
+        "scout",
+    ]
+    label: NonBlankString
+
+
+class SpendTableSnapshot(ContractModel):
+    as_of: datetime
+    window_minutes: Literal[60]
+    threads: list[ThreadSpendRow]
+    purposes: list[PurposeSpendRow]
+
+    @field_validator("as_of")
+    @classmethod
+    def require_aware_as_of(cls, value: datetime) -> datetime:
+        return _require_aware_timestamp(value)
+
+    @model_validator(mode="after")
+    def require_unique_groups(self) -> SpendTableSnapshot:
+        thread_ids = [row.thread_id for row in self.threads]
+        purposes = [row.purpose for row in self.purposes]
+        if len(thread_ids) != len(set(thread_ids)):
+            raise ValueError("spend table thread rows must be unique")
+        if len(purposes) != len(set(purposes)):
+            raise ValueError("spend table purpose rows must be unique")
+        return self
+
+
 class VitalsSpendPoint(ContractModel):
     minute: datetime
     cost_usd: NonNegativeDecimalString | None
@@ -1136,6 +1215,7 @@ _PATCH_CONFLICT = TypeAdapter(PatchMemoryConflict)
 _MEMORY_LIST_RESPONSE = TypeAdapter(PagedMemoryListResponse)
 _SEARCH_RESPONSE = TypeAdapter(SearchResponse)
 _SPEND_EVENTS_RESPONSE = TypeAdapter(SpendEventsResponse)
+_SPEND_TABLE_SNAPSHOT = TypeAdapter(SpendTableSnapshot)
 _VITALS_SNAPSHOT = TypeAdapter(VitalsSnapshot)
 _MEMORY_GRAPH_SNAPSHOT = TypeAdapter(MemoryGraphSnapshot)
 _SCORER_CONSOLE_SNAPSHOT = TypeAdapter(ScorerConsoleSnapshot)
@@ -1334,6 +1414,17 @@ class SpineClient:
         response = await self._request("GET", f"v1/vitals/threads/{thread_id}")
         return _expect_success(response, status=200, adapter=_VITALS_SNAPSHOT)
 
+    async def spend_table(self, thread_ids: list[UUID] | None = None) -> SpendTableSnapshot | None:
+        """Read M3SP's table projection; a 404 is an older Palace, not broken chat."""
+
+        params: JsonObject | None = None
+        if thread_ids is not None:
+            params = {"thread_id": [str(thread_id) for thread_id in thread_ids]}
+        response = await self._request("GET", "v1/spend/table", params=params)
+        if response.status_code == 404:
+            return None
+        return _expect_success(response, status=200, adapter=_SPEND_TABLE_SNAPSHOT)
+
     async def memory_graph(self, request: MemoryGraphQuery) -> MemoryGraphSnapshot:
         response = await self._request(
             "POST",
@@ -1496,6 +1587,20 @@ def _require_aware_timestamp(value: datetime) -> datetime:
     if value.tzinfo is None or value.utcoffset() is None:
         raise ValueError("timestamp must include a UTC offset")
     return value
+
+
+def _require_honest_spend_table_cost(
+    cost: str | None,
+    receipt_lines: int,
+    unpriced_lines: int,
+) -> None:
+    if unpriced_lines > receipt_lines:
+        raise ValueError("spend table unpriced lines cannot exceed receipt lines")
+    all_unpriced = receipt_lines == unpriced_lines
+    if all_unpriced and receipt_lines > 0 and cost is not None:
+        raise ValueError("an all-unpriced spend table row must have null cost")
+    if not all_unpriced and cost is None:
+        raise ValueError("a spend table row with priced lines must carry known cost")
 
 
 def _require_gauge_value(

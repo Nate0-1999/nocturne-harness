@@ -28,6 +28,7 @@ export type StageModuleId =
   | 'chat'
   | 'memory'
   | 'vitals'
+  | 'palace_state'
   | 'context_bars'
   | 'memory_graph'
   | 'palace_nebula'
@@ -37,7 +38,7 @@ export type StageModuleId =
   | 'deck'
 
 export const STAGE_MODULE_IDS: readonly StageModuleId[] = [
-  'threads', 'chat', 'memory', 'vitals', 'context_bars',
+  'threads', 'chat', 'memory', 'vitals', 'context_bars', 'palace_state',
   'memory_graph', 'palace_nebula', 'injection_console', 'palace_queue',
   'recipe', 'deck',
 ]
@@ -85,6 +86,7 @@ interface ParsedStageLayout extends Omit<StageLayoutSet, 'version'> {
 const DEFAULT_SCOPES: Record<string, RackScope> = {
   header: 'GLOBAL', threads: 'ATTUNED', chat: 'ATTUNED', memory: 'ATTUNED',
   vitals: 'GLOBAL', context_bars: 'ATTUNED', gate: 'ATTUNED', thread_end: 'ATTUNED',
+  palace_state: 'GLOBAL',
   palace_queue: 'GLOBAL', model_device: 'ATTUNED', memory_graph: 'GLOBAL', palace_nebula: 'GLOBAL',
   injection_console: 'GLOBAL',
   recipe: 'ATTUNED',
@@ -96,6 +98,7 @@ const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
   chat: expandLegacyModule({ instance_id: 'chat', module_id: 'chat', x: 5, y: 1, width: 10, height: 10 }),
   memory: expandLegacyModule({ instance_id: 'memory', module_id: 'memory', x: 15, y: 1, width: 4, height: 10 }),
   vitals: expandLegacyModule({ instance_id: 'vitals', module_id: 'vitals', x: 1, y: 12, width: 12, height: 4 }),
+  palace_state: expandLegacyModule({ instance_id: 'palace_state', module_id: 'palace_state', x: 19, y: 12, width: 5, height: 4 }),
   context_bars: expandLegacyModule({ instance_id: 'context_bars', module_id: 'context_bars', x: 13, y: 12, width: 6, height: 4 }),
   memory_graph: expandLegacyModule({ instance_id: 'memory_graph', module_id: 'memory_graph', x: 2, y: 2, width: 12, height: 10 }),
   palace_nebula: expandLegacyModule({ instance_id: 'palace_nebula', module_id: 'palace_nebula', x: 14, y: 2, width: 12, height: 10 }),
@@ -106,7 +109,7 @@ const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
     instance_id: 'palace_queue', module_id: 'palace_queue', x: 20, y: 1, width: 5, height: 10,
   }),
   recipe: expandLegacyModule({ instance_id: 'recipe', module_id: 'recipe', x: 14, y: 2, width: 12, height: 10 }),
-  deck: expandLegacyModule({ instance_id: 'deck', module_id: 'deck', x: 20, y: 12, width: 10, height: 10 }),
+  deck: expandLegacyModule({ instance_id: 'deck', module_id: 'deck', x: 24, y: 12, width: 8, height: 10 }),
 }
 
 export const FACTORY_STAGE_LAYOUT: StageLayoutSet = {
@@ -118,7 +121,7 @@ export const FACTORY_STAGE_LAYOUT: StageLayoutSet = {
       layer_id: 'work',
       name: 'Work',
       camera: expandLegacyCamera({ x: 36, y: 30, zoom: 0.64 }),
-      modules: ['threads', 'chat', 'memory', 'vitals', 'context_bars', 'palace_queue', 'deck']
+      modules: ['threads', 'chat', 'memory', 'vitals', 'context_bars', 'palace_state', 'palace_queue', 'deck']
         .map((moduleId) => ({ ...DEFAULT_MODULES[moduleId as StageModuleId] })),
       removed_modules: [],
     },
@@ -847,7 +850,7 @@ function parseScopes(value: unknown): Record<string, RackScope> {
 
 function isStageModuleId(value: unknown): value is StageModuleId {
   return value === 'threads' || value === 'chat' || value === 'memory' ||
-    value === 'vitals' || value === 'context_bars' || value === 'memory_graph' || value === 'palace_nebula' ||
+    value === 'vitals' || value === 'palace_state' || value === 'context_bars' || value === 'memory_graph' || value === 'palace_nebula' ||
     value === 'injection_console' || value === 'palace_queue' || value === 'recipe' ||
     value === 'deck'
 }

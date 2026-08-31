@@ -1,678 +1,208 @@
-import {
-  useEffect,
-  useId,
-  useState,
-  type KeyboardEvent,
-  type PointerEvent as ReactPointerEvent,
-} from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 
-import { useRackPlugin, useRackSelection, useRackSnapshot } from './rack'
-import { LearningSummary, LearningTimeline } from './LearningTelemetry'
+import { formatHumanQuantity, formatHumanUsd } from './humanNumbers'
+import { useRackPlugin, useRackSnapshot } from './rack'
 import {
-  scorerConsoleTelemetry,
-  type ScorerConsoleTelemetry,
-} from './learning'
-import {
-  accountingCopy,
-  contiguousPolylineSegments,
-  formatBytes,
-  formatUptime,
-  laneChartPoints,
-  latestSpendPoint,
-  nearestSpendPoint,
-  parseVitalsSnapshot,
-  reconciliationCopy,
-  spendLaneId,
-  unpricedCopy,
-  type GaugeStatus,
-  type SpendLane,
-  type VitalsSnapshot,
-} from './vitals'
-import {
-  formatHumanQuantity,
-  formatHumanUsd,
-} from './humanNumbers'
+  parseSpendTableSnapshot,
+  partialSpendCopy,
+  type SpendMetrics,
+  type SpendTableSnapshot,
+} from './spendTable'
 import './assets/honest-display.css'
 
-type LoadPhase = 'loading' | 'live' | 'refreshing' | 'stale' | 'failed'
+type LoadPhase = 'loading' | 'live' | 'refreshing' | 'failed'
 
-interface VitalsLoadState {
-  snapshot: VitalsSnapshot | null
-  phase: LoadPhase
-  failed: boolean
-}
-
-const METRIC_LABELS: Record<string, string> = {
-  created: 'Created',
-  reinforced: 'Reinforced',
-  superseded: 'Superseded',
-  merged: 'Merged',
-  quarantined: 'Quarantined',
-  tombstoned: 'Tombstoned',
-  add_backs: 'Add-backs',
-  active_units: 'Active units',
-  pinned_units: 'Pinned units',
-  candidates_pending: 'Candidates pending',
-  edges: 'Edges',
-  staged_units: 'Staged units',
-  queue_depth: 'Queue depth',
-}
-
-const minuteFormatter = new Intl.DateTimeFormat(undefined, {
-  hour: '2-digit',
-  minute: '2-digit',
-})
-
+/** PLAN M3SP / P2.4: Spend contains money only, grouped conversation then model. */
 export function VitalsModule() {
-  const { events, query, selection: selectionBus } = useRackPlugin()
-  const selection = useRackSelection()
+  const { events, query } = useRackPlugin()
   const rack = useRackSnapshot()
   const [scope, setScope] = useState<'GLOBAL' | 'ATTUNED'>('GLOBAL')
-  const [requestSequence, setRequestSequence] = useState(0)
-  const [load, setLoad] = useState<VitalsLoadState>({
-    snapshot: null,
-    phase: 'loading',
-    failed: false,
-  })
+  const [sequence, setSequence] = useState(0)
+  const [phase, setPhase] = useState<LoadPhase>('loading')
+  const [snapshot, setSnapshot] = useState<SpendTableSnapshot | null>(null)
+  const [expandedThreads, setExpandedThreads] = useState<ReadonlySet<string>>(new Set())
   const [collapsed, setCollapsed] = useState(() => globalThis.innerHeight < 120)
-  const [hoveredMinute, setHoveredMinute] = useState<string | null>(null)
-  const telemetryKey = `${scope}:${rack.selectedThreadId ?? ''}`
-  const [telemetryLoad, setTelemetryLoad] = useState<{
-    key: string
-    telemetry: ScorerConsoleTelemetry | null
-    unavailable: boolean
-  }>({ key: '', telemetry: null, unavailable: false })
-  const telemetry = telemetryLoad.key === telemetryKey ? telemetryLoad.telemetry : null
-  const telemetryUnavailable = telemetryLoad.key === telemetryKey && telemetryLoad.unavailable
-  const attunedWithoutThread = scope === 'ATTUNED' && rack.selectedThreadId === null
-
-  useEffect(() => {
-    if (attunedWithoutThread) return
-    let active = true
-    void query.query({
-      resource: 'vitals', as_of: 'now',
-      thread_id: scope === 'ATTUNED' ? rack.selectedThreadId ?? undefined : undefined,
-    })
-      .then((result) => {
-        if (result.status !== 'live' || result.data === null) {
-          throw new TypeError('Live Palace vitals were not returned')
-        }
-        const snapshot = parseVitalsSnapshot(result.data)
-        if (active) {
-          setLoad({ snapshot, phase: 'live', failed: false })
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setLoad((current) => ({
-            ...current,
-            phase: current.snapshot === null ? 'failed' : 'stale',
-            failed: true,
-          }))
-        }
-      })
-    return () => {
-      active = false
-    }
-  }, [attunedWithoutThread, query, rack.selectedThreadId, requestSequence, scope])
-
-  useEffect(() => {
-    if (attunedWithoutThread) return
-    let active = true
-    void query.query({
-      resource: 'scorer_console', as_of: 'now',
-      thread_id: scope === 'ATTUNED' ? rack.selectedThreadId ?? undefined : undefined,
-    })
-      .then((result) => {
-        if (result.status !== 'live' || result.data === null) {
-          throw new TypeError('Live learning telemetry was not returned')
-        }
-        const next = scorerConsoleTelemetry(result.data)
-        if (next === null) {
-          throw new TypeError('Learning telemetry is missing from the scorer console')
-        }
-        if (active) {
-          setTelemetryLoad({ key: telemetryKey, telemetry: next, unavailable: false })
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setTelemetryLoad((current) => ({
-            key: telemetryKey,
-            telemetry: current.key === telemetryKey ? current.telemetry : null,
-            unavailable: true,
-          }))
-        }
-      })
-    return () => {
-      active = false
-    }
-  }, [attunedWithoutThread, query, rack.selectedThreadId, requestSequence, scope, telemetryKey])
+  const attunedWithoutTarget = scope === 'ATTUNED' && rack.attunement === null
 
   useEffect(() => {
     void events.dispatch({ type: 'rack.scope.get', module_id: 'vitals' }).then(setScope)
   }, [events])
 
-  useEffect(() => {
-    const interval = globalThis.setInterval(() => {
-      setRequestSequence((value) => value + 1)
-    }, 60_000)
-    return () => globalThis.clearInterval(interval)
-  }, [])
+  useEffect(() => events.subscribeResize((event) => setCollapsed(event.grid_height === 1)), [events])
 
   useEffect(() => {
-    return events.subscribeResize((event) => {
-      setCollapsed(event.grid_height === 1)
-    })
-  }, [events])
+    if (attunedWithoutTarget) return
+    let active = true
+    void query.query({ resource: 'spend_table', as_of: 'now' })
+      .then((result) => {
+        if (result.status !== 'live' || result.data === null) {
+          throw new TypeError('Live spend rows were not returned')
+        }
+        const next = parseSpendTableSnapshot(result.data)
+        if (active) {
+          setSnapshot(next)
+          setPhase('live')
+        }
+      })
+      .catch(() => {
+        if (active) setPhase('failed')
+      })
+    return () => { active = false }
+  }, [attunedWithoutTarget, query, rack.attunement, sequence])
+
+  const threadNames = useMemo(
+    () => new Map(rack.catalog.map((entry) => [entry.thread_id, entry.title])),
+    [rack.catalog],
+  )
 
   function refresh() {
-    setLoad((current) => ({
-      ...current,
-      phase: current.snapshot === null ? 'loading' : 'refreshing',
-      failed: false,
-    }))
-    setRequestSequence((value) => value + 1)
+    setPhase(snapshot === null ? 'loading' : 'refreshing')
+    setSequence((value) => value + 1)
   }
 
-  if (attunedWithoutThread) {
+  if (attunedWithoutTarget) {
+    return <SpendNotice>No conversation or stack is attuned.</SpendNotice>
+  }
+  if (snapshot === null) {
     return (
-      <section className="vitals-strip vitals-strip--empty" aria-label="Spend">
-        <p className="vitals-strip__notice" role="status">
-          {rack.attunement?.kind === 'stack'
-            ? `${rack.attunement.name} spend is not available yet.`
-            : 'No thread is attuned.'}
-        </p>
-      </section>
+      <SpendNotice alert={phase === 'failed'}>
+        {phase === 'failed'
+          ? 'Detailed spend needs a newer Palace. Chat is still available.'
+          : 'Reading spend…'}
+        {phase === 'failed' && <button type="button" onClick={refresh}>Try again</button>}
+      </SpendNotice>
     )
   }
 
-  if (load.snapshot === null) {
-    return (
-      <section className="vitals-strip vitals-strip--empty" aria-label="Spend">
-        <p className="vitals-strip__notice" role={load.phase === 'failed' ? 'alert' : 'status'}>
-          {load.phase === 'failed'
-            ? 'Spend couldn’t refresh. Chat is still available.'
-            : 'Reading spend…'}
-        </p>
-        {load.phase === 'failed' && (
-          <button className="vitals-refresh" type="button" onClick={refresh}>
-            Try again
-          </button>
-        )}
-      </section>
-    )
-  }
-
-  const snapshot = load.snapshot
-  const totalLane = snapshot.spend.lanes.find((lane) => lane.dimension === 'total') ?? null
-  const defaultLane = totalLane ?? snapshot.spend.lanes[0] ?? null
-  const laneIds = new Set(snapshot.spend.lanes.map(spendLaneId))
-  const requestedLaneId = selection?.kind === 'spend_lane' ? selection.id : null
-  const focusedLaneId = requestedLaneId !== null && laneIds.has(requestedLaneId)
-    ? requestedLaneId
-    : defaultLane === null
-      ? null
-      : spendLaneId(defaultLane)
-  const snapshotMinutes = new Set(
-    snapshot.spend.lanes.flatMap((lane) => lane.points.map((point) => point.minute)),
-  )
-  const requestedMinute = selection?.kind === 'spend_lane' ? selection.as_of : null
-  const selectedMinute = requestedMinute !== null && snapshotMinutes.has(requestedMinute)
-    ? requestedMinute
-    : null
-  const liveHoveredMinute = hoveredMinute !== null && snapshotMinutes.has(hoveredMinute)
-    ? hoveredMinute
-    : null
-  const sharedMinute = liveHoveredMinute ?? selectedMinute ?? snapshot.spend.latest_minute
-  const hasSpend = snapshot.spend.lanes.some((lane) => lane.points.length > 0)
-
-  function focusLane(lane: SpendLane, asOf: string | null) {
-    setHoveredMinute(asOf)
-    selectionBus.select({
-      kind: 'spend_lane',
-      id: spendLaneId(lane),
-      as_of: asOf,
-    })
-  }
-
-  function scrub(asOf: string) {
-    setHoveredMinute(asOf)
-    if (focusedLaneId !== null) {
-      selectionBus.select({ kind: 'spend_lane', id: focusedLaneId, as_of: asOf })
-    }
-  }
-
+  const rowCount = snapshot.threads.length + snapshot.purposes.length
   if (collapsed) {
-    const totalPoint = totalLane === null ? null : latestSpendPoint(totalLane)
-    const partial = totalPoint === null ? null : unpricedCopy(totalPoint.unpriced_lines)
     return (
-      <section
-        className="vitals-strip vitals-strip--collapsed"
-        aria-label="Spend"
-        data-failed={load.failed}
-      >
-        {telemetry !== null && <LearningSummary learning={telemetry.learning} compact />}
-        <button
-          className="vitals-collapsed-summary"
-          type="button"
-          disabled={totalLane === null || totalPoint === null}
-          onClick={() => {
-            if (totalLane !== null && totalPoint !== null) {
-              focusLane(totalLane, totalPoint.minute)
-            }
-          }}
-        >
-          <span>Spend · latest minute</span>
-          <strong>{totalPoint === null || totalPoint.cost_usd === null ? '—' : formatHumanUsd(totalPoint.cost_usd)}</strong>
-          {partial !== null && <em>Partial · {partial}</em>}
-          <small>
-            {totalPoint === null
-              ? `Through ${formatMinute(snapshot.as_of)}`
-              : `At ${formatMinute(totalPoint.minute)}`}
-          </small>
-        </button>
-        <span
-          className={`vitals-reconciliation vitals-reconciliation--${snapshot.reconciliation.status}`}
-          title="Palace-wide broker audit"
-        >
-          {reconciliationCopy(snapshot.reconciliation)}
-        </span>
-        {snapshot.accounting.status !== 'clear' && (
-          <span
-            className={`vitals-reconciliation vitals-reconciliation--${snapshot.accounting.status}`}
-            title="Owner-local receipt queue"
-          >
-            {accountingCopy(snapshot.accounting)}
-          </span>
-        )}
-        <span
-          className={`vitals-reconciliation${snapshot.resources.warning === null ? '' : ' vitals-reconciliation--low-disk'}`}
-          title="Owner-local storage and Palace database"
-        >
-          Resources · {formatBytes(snapshot.resources.disk_free_bytes)} free · DB {formatBytes(snapshot.resources.database_bytes)}
-        </span>
-        {load.failed && (
-          <span className="vitals-inline-failure" role="alert">
-            Spend couldn’t refresh. Chat is still available.
-          </span>
-        )}
+      <section className="spend-table spend-table--collapsed" aria-label="Spend">
+        <strong>Spend</strong>
+        <span>{rowCount} {rowCount === 1 ? 'group' : 'groups'}</span>
+        <small>Through {formatTime(snapshot.as_of)}</small>
+        {phase === 'failed' && <em role="alert">Couldn’t refresh</em>}
       </section>
     )
   }
 
   return (
-    <section className="vitals-strip vitals-strip--expanded" aria-label="Spend">
-      <header className="vitals-strip__header">
-        <p>
-          Spend · last hour
-          <span>Through {formatMinute(snapshot.as_of)}</span>
-        </p>
-        <div className="vitals-strip__status" aria-live="polite">
-          {load.failed && (
-            <span role="alert">Spend couldn’t refresh. Chat is still available.</span>
-          )}
-          {load.phase === 'refreshing' && <span>Refreshing…</span>}
-          <button className="vitals-refresh" type="button" onClick={refresh}>
-            Refresh
-          </button>
+    <section className="spend-table" aria-label="Spend">
+      <div className="spend-table__toolbar">
+        <p>Conversations and model costs <span>Through {formatTime(snapshot.as_of)}</span></p>
+        <div aria-live="polite">
+          {phase === 'failed' && <span role="alert">Spend couldn’t refresh.</span>}
+          {phase === 'refreshing' && <span>Refreshing…</span>}
+          <button type="button" onClick={refresh}>Refresh</button>
         </div>
-      </header>
-
-      <div
-        className={`vitals-reconciliation vitals-reconciliation--${snapshot.reconciliation.status}`}
-        title="Palace-wide broker audit"
-      >
-        {reconciliationCopy(snapshot.reconciliation)}
       </div>
-      {snapshot.accounting.status !== 'clear' && (
-        <div
-          className={`vitals-reconciliation vitals-reconciliation--${snapshot.accounting.status}`}
-          title="Owner-local receipt queue"
-        >
-          {accountingCopy(snapshot.accounting)}
-        </div>
-      )}
-
-      {telemetry !== null ? (
-        <div className="vitals-learning" aria-label="Learning vitals">
-          <LearningSummary learning={telemetry.learning} compact />
-          <LearningTimeline
-            learning={telemetry.learning}
-            accuracy={telemetry.accuracy}
-            mode="generations"
-          />
-        </div>
-      ) : telemetryUnavailable ? (
-        <p className="vitals-learning-unavailable" role="status">
-          Learning scores are temporarily unavailable.
+      {rowCount === 0 ? (
+        <p className="spend-table__empty">
+          {scope === 'ATTUNED' ? `No spend for ${rack.attunement?.name ?? 'this view'}.` : 'No spend recorded.'}
         </p>
-      ) : null}
-
-      <div className="vitals-gauges" aria-label="Resource, lifecycle and Palace gauges">
-        <ResourceGauge
-          label="Disk free"
-          value={formatBytes(snapshot.resources.disk_free_bytes)}
-          warning={snapshot.resources.warning === 'low_disk'}
-        />
-        <ResourceGauge label="Database" value={formatBytes(snapshot.resources.database_bytes)} />
-        <ResourceGauge label="Nocturne memory" value={formatBytes(snapshot.resources.daemon_rss_bytes)} />
-        <ResourceGauge label="Nocturne uptime" value={formatUptime(snapshot.resources.daemon_uptime_seconds)} />
-        <ResourceGauge label="Journal" value={formatBytes(snapshot.resources.journal_bytes)} />
-        <ResourceGauge label="Backups" value={formatBytes(snapshot.resources.backup_bytes)} />
-        {snapshot.lifecycle_rates.map((gauge) => (
-          <Gauge
-            key={`rate:${gauge.metric}`}
-            metric={gauge.metric}
-            status={gauge.status}
-            source={gauge.source}
-            value={gauge.per_hour}
-            suffix="/hr"
-          />
-        ))}
-        {snapshot.palace_counts.map((gauge) => (
-          <Gauge
-            key={`count:${gauge.metric}`}
-            metric={gauge.metric}
-            status={gauge.status}
-            source={gauge.source}
-            value={gauge.count}
-          />
-        ))}
-      </div>
-
-      {!hasSpend ? (
-        <p className="vitals-spend-empty">No spend recorded in this window.</p>
       ) : (
-        <div
-          className={`vitals-lanes${focusedLaneId === null ? '' : ' vitals-lanes--focused'}`}
-          aria-label="Server-provided spend lanes"
-        >
-          {snapshot.spend.lanes.map((lane) => (
-            <SpendLaneRow
-              key={spendLaneId(lane)}
-              lane={lane}
-              snapshot={snapshot}
-              focused={focusedLaneId === spendLaneId(lane)}
-              sharedMinute={sharedMinute}
-              onFocus={focusLane}
-              onScrub={scrub}
-            />
-          ))}
+        <div className="spend-table__scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Conversation / model</th>
+                <th scope="col">Input</th>
+                <th scope="col">KV cache</th>
+                <th scope="col">Reasoning</th>
+                <th scope="col">Output</th>
+                <th scope="col">Total ($)</th>
+                <th scope="col">Spend per hour</th>
+              </tr>
+            </thead>
+            <tbody>
+              {snapshot.threads.map((row) => {
+                const expanded = expandedThreads.has(row.thread_id)
+                const fallback = `Conversation ${row.thread_id.slice(0, 8)}`
+                return [
+                  <SpendRow
+                    key={row.thread_id}
+                    name={threadNames.get(row.thread_id) ?? fallback}
+                    metrics={row}
+                    disclosure={{
+                      expanded,
+                      count: row.models.length,
+                      toggle: () => setExpandedThreads((current) => {
+                        const next = new Set(current)
+                        if (next.has(row.thread_id)) next.delete(row.thread_id)
+                        else next.add(row.thread_id)
+                        return next
+                      }),
+                    }}
+                  />,
+                  ...(expanded ? row.models.map((model, index) => (
+                    <SpendRow
+                      key={`${row.thread_id}:${model.model ?? 'unreported'}:${index}`}
+                      name={model.model ?? 'Model not reported'}
+                      metrics={model}
+                      nested
+                    />
+                  )) : []),
+                ]
+              })}
+              {snapshot.purposes.map((row) => (
+                <SpendRow key={`purpose:${row.purpose}`} name={row.label} metrics={row} purpose />
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </section>
   )
 }
 
-function ResourceGauge({
-  label,
-  value,
-  warning = false,
+function SpendNotice({ children, alert = false }: { children: ReactNode; alert?: boolean }) {
+  return <section className="spend-table spend-table--notice" aria-label="Spend" role={alert ? 'alert' : 'status'}>{children}</section>
+}
+
+function SpendRow({
+  name,
+  metrics,
+  nested = false,
+  purpose = false,
+  disclosure,
 }: {
-  label: string
-  value: string
-  warning?: boolean
+  name: string
+  metrics: SpendMetrics
+  nested?: boolean
+  purpose?: boolean
+  disclosure?: { expanded: boolean; count: number; toggle: () => void }
 }) {
+  const partial = partialSpendCopy(metrics)
   return (
-    <div className={`vitals-gauge vitals-gauge--resource${warning ? ' vitals-gauge--warning' : ''}`}>
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
+    <tr className={nested ? 'spend-table__model' : purpose ? 'spend-table__purpose' : undefined}>
+      <th scope="row">
+        {disclosure === undefined ? <span>{name}</span> : (
+          <button type="button" aria-expanded={disclosure.expanded} onClick={disclosure.toggle}>
+            <span aria-hidden="true">{disclosure.expanded ? '−' : '+'}</span>
+            {name}
+            <small>{disclosure.count} {disclosure.count === 1 ? 'model' : 'models'}</small>
+          </button>
+        )}
+        {purpose && <small>Other work</small>}
+      </th>
+      <Metric value={metrics.input_tokens} />
+      <Metric value={metrics.kv_cache_tokens} />
+      <Metric value={metrics.reasoning_tokens} />
+      <Metric value={metrics.output_tokens} />
+      <td title={partial ?? undefined}>{money(metrics.total_usd)}</td>
+      <td title={partial ?? undefined}>{money(metrics.spend_per_hour_usd)}</td>
+    </tr>
   )
 }
 
-function Gauge({
-  metric,
-  status,
-  source,
-  value,
-  suffix = '',
-}: {
-  metric: string
-  status: GaugeStatus
-  source: string | null
-  value: number | null
-  suffix?: string
-}) {
-  const missingCopy = status === 'placeholder' ? 'Not active yet' : 'Not recorded yet'
-  const copy = status === 'measured' && value !== null
-    ? `${formatHumanQuantity(value)}${suffix}`
-    : '—'
-  return (
-    <div
-      className={`vitals-gauge vitals-gauge--${status}`}
-      data-source={source ?? undefined}
-      title={status === 'measured' ? undefined : `${METRIC_LABELS[metric] ?? metric} · ${missingCopy}`}
-    >
-      <span>{METRIC_LABELS[metric] ?? metric.replaceAll('_', ' ')}</span>
-      <strong>{copy}</strong>
-    </div>
-  )
+function Metric({ value }: { value: string }) {
+  return <td>{formatHumanQuantity(value)}</td>
 }
 
-function SpendLaneRow({
-  lane,
-  snapshot,
-  focused,
-  sharedMinute,
-  onFocus,
-  onScrub,
-}: {
-  lane: SpendLane
-  snapshot: VitalsSnapshot
-  focused: boolean
-  sharedMinute: string | null
-  onFocus: (lane: SpendLane, asOf: string | null) => void
-  onScrub: (asOf: string) => void
-}) {
-  const descriptionId = useId()
-  const chartPoints = laneChartPoints(lane, snapshot.as_of, snapshot.window_minutes)
-  const point = sharedMinute === null
-    ? latestSpendPoint(lane)
-    : lane.points.find((entry) => entry.minute === sharedMinute) ?? null
-  const missingSharedBucket = sharedMinute !== null && point === null
-  const cursorPoint = point === null
-    ? null
-    : chartPoints.find((entry) => entry.point.minute === point.minute) ?? null
-  const cursorX = sharedMinute === null
-    ? cursorPoint?.x ?? null
-    : chartX(sharedMinute, snapshot.as_of, snapshot.window_minutes)
-  const partial = point === null ? null : unpricedCopy(point.unpriced_lines)
-  const segments = contiguousPolylineSegments(chartPoints)
-  const accessibleCost = missingSharedBucket
-    ? formatHumanUsd('0')
-    : point === null
-      ? 'No samples'
-      : point.cost_usd === null ? 'Awaiting price' : formatHumanUsd(point.cost_usd)
-  const accessibleMinute = missingSharedBucket
-    ? formatMinute(sharedMinute ?? snapshot.as_of)
-    : point === null
-      ? 'this window'
-      : formatMinute(point.minute)
-  const accessibleReceipts = missingSharedBucket ? 0 : point?.receipt_lines ?? 0
-
-  function scrubFromPointer(event: ReactPointerEvent<HTMLDivElement>) {
-    const chart = event.currentTarget.querySelector('svg')
-    if (!(chart instanceof SVGSVGElement)) {
-      return
-    }
-    const rect = chart.getBoundingClientRect()
-    if (event.clientX < rect.left || event.clientX > rect.right) {
-      return
-    }
-    const nearest = nearestSpendPoint(
-      lane.points,
-      snapshot.as_of,
-      rect.width === 0 ? 1 : (event.clientX - rect.left) / rect.width,
-      snapshot.window_minutes,
-    )
-    if (nearest !== null) {
-      onScrub(nearest.minute)
-    }
-  }
-
-  function scrubFromKeyboard(event: KeyboardEvent<HTMLDivElement>) {
-    if (
-      (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') ||
-      lane.points.length === 0
-    ) {
-      return
-    }
-    event.preventDefault()
-    const exactIndex = sharedMinute === null
-      ? -1
-      : lane.points.findIndex((entry) => entry.minute === sharedMinute)
-    const currentIndex = exactIndex < 0 ? lane.points.length - 1 : exactIndex
-    const delta = event.key === 'ArrowLeft' ? -1 : 1
-    const nextIndex = Math.max(0, Math.min(lane.points.length - 1, currentIndex + delta))
-    onScrub(lane.points[nextIndex].minute)
-  }
-
-  const sliderMinute = sharedMinute ?? latestSpendPoint(lane)?.minute ?? snapshot.as_of
-  const sliderValue = Math.max(
-    0,
-    Math.min(
-      snapshot.window_minutes,
-      Math.round(
-        (Date.parse(sliderMinute) - (
-          Date.parse(snapshot.as_of) - snapshot.window_minutes * 60_000
-        )) / 60_000,
-      ),
-    ),
-  )
-
-  return (
-    <div
-      className={`vitals-lane${focused ? ' vitals-lane--selected' : ''}`}
-    >
-      <button
-        className="vitals-lane__identity"
-        type="button"
-        aria-pressed={focused}
-        aria-label={`${lane.label} spend lane`}
-        onClick={() => onFocus(lane, sharedMinute ?? latestSpendPoint(lane)?.minute ?? null)}
-      >
-        <span>{dimensionLabel(lane.dimension)}</span>
-        <strong>{lane.label}</strong>
-      </button>
-      <div
-        className="vitals-lane__scrubber"
-        role="slider"
-        tabIndex={0}
-        aria-label={`${lane.label} spend timeline`}
-        aria-describedby={descriptionId}
-        aria-valuemin={0}
-        aria-valuemax={snapshot.window_minutes}
-        aria-valuenow={sliderValue}
-        aria-valuetext={`${accessibleCost} at ${accessibleMinute}, ${receiptCopy(accessibleReceipts)}`}
-        onKeyDown={scrubFromKeyboard}
-        onClick={() => onFocus(lane, sharedMinute ?? latestSpendPoint(lane)?.minute ?? null)}
-        onPointerDown={(event) => {
-          if (event.pointerType !== 'mouse') {
-            event.currentTarget.setPointerCapture(event.pointerId)
-          }
-          scrubFromPointer(event)
-        }}
-        onPointerMove={(event) => {
-          if (event.pointerType === 'mouse' || event.buttons > 0) {
-            scrubFromPointer(event)
-          }
-        }}
-      >
-        <svg
-          className="vitals-lane__chart"
-          viewBox="0 0 100 24"
-          preserveAspectRatio="none"
-          aria-hidden="true"
-        >
-          <line className="vitals-chart__axis" x1="0" y1="21" x2="100" y2="21" />
-          {segments.map((segment, index) => (
-            <polyline key={index} className="vitals-chart__line" points={segment} />
-          ))}
-          {chartPoints.map((entry) => entry.y === null ? (
-            <path
-              key={`unpriced:${entry.point.minute}`}
-              className="vitals-chart__unpriced"
-              d={`M ${entry.x - 1.3} 18 L ${entry.x} 16.5 L ${entry.x + 1.3} 18 L ${entry.x} 19.5 Z`}
-            />
-          ) : (
-            <circle
-              key={`priced:${entry.point.minute}`}
-              className="vitals-chart__point"
-              cx={entry.x}
-              cy={entry.y}
-              r="0.9"
-            />
-          ))}
-          {cursorX !== null && (
-            <>
-              <line
-                className="vitals-chart__cursor"
-                x1={cursorX}
-                y1="1"
-                x2={cursorX}
-                y2="23"
-              />
-              {cursorPoint?.y !== null && cursorPoint?.y !== undefined && (
-                <circle
-                  className="vitals-chart__cursor-point"
-                  cx={cursorX}
-                  cy={cursorPoint.y}
-                  r="1.6"
-                />
-              )}
-            </>
-          )}
-        </svg>
-      </div>
-      <div className="vitals-lane__readout" aria-live={focused ? 'polite' : 'off'}>
-        <strong>
-          {missingSharedBucket
-            ? formatHumanUsd('0')
-            : point === null
-              ? 'No samples'
-              : point.cost_usd === null ? '—' : formatHumanUsd(point.cost_usd)}
-        </strong>
-        <span>
-          {missingSharedBucket
-            ? `${formatMinute(sharedMinute ?? snapshot.as_of)} · ${receiptCopy(0)}`
-            : point === null
-              ? 'This window'
-              : `${formatMinute(point.minute)} · ${receiptCopy(point.receipt_lines)}`}
-        </span>
-        {missingSharedBucket && <em>No spend in this lane</em>}
-        {partial !== null && <em>Partial · {partial}</em>}
-      </div>
-      <span id={descriptionId} className="visually-hidden">
-        Use Left and Right Arrow keys to move among minutes with receipts. Missing minutes
-        are intentionally not connected. {partial ?? ''}
-      </span>
-    </div>
-  )
+function money(value: string | null): string {
+  return value === null ? 'Awaiting price' : formatHumanUsd(value)
 }
 
-function chartX(minute: string, asOf: string, windowMinutes: number): number {
-  const end = Date.parse(asOf)
-  const start = end - windowMinutes * 60_000
-  return Math.max(0, Math.min(100, ((Date.parse(minute) - start) / (end - start)) * 100))
-}
-
-function dimensionLabel(dimension: SpendLane['dimension']): string {
-  switch (dimension) {
-    case 'total':
-      return 'Total'
-    case 'purpose':
-      return 'Purpose'
-    case 'model':
-      return 'Model'
-  }
-}
-
-function receiptCopy(count: number): string {
-  return `${count} ${count === 1 ? 'receipt' : 'receipts'}`
-}
-
-function formatMinute(value: string): string {
-  return minuteFormatter.format(new Date(value))
+function formatTime(value: string): string {
+  return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(new Date(value))
 }

@@ -55,7 +55,7 @@ import {
   type ThreadState,
 } from './store'
 
-export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'injection_console' | 'recipe' | 'deck'
+export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'palace_state' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'injection_console' | 'recipe' | 'deck'
 export type RackModuleSlot = 'header' | 'panel' | 'strip' | 'overlay'
 export type RackMemoryPanelState = MemoryPanelState
 
@@ -65,6 +65,7 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
     value === 'chat' ||
     value === 'memory' ||
     value === 'vitals' ||
+    value === 'palace_state' ||
     value === 'context_bars' ||
     value === 'gate' ||
     value === 'thread_end' ||
@@ -157,9 +158,10 @@ export interface RackModuleManifest {
 }
 
 export interface RackQueryRequest {
-  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'context_window' | 'parameters' | 'memory_graph' | 'scorer_console' | 'recipe_graph'
+  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'spend_table' | 'context_window' | 'parameters' | 'memory_graph' | 'scorer_console' | 'recipe_graph'
   as_of?: string | null
   thread_id?: string
+  thread_ids?: string[]
 }
 
 export interface RackQueryResult {
@@ -297,6 +299,19 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     bounds: stageGridBounds(VITALS_RACK_BOUNDS.preferred),
     movable: true,
     law_bound: false,
+    default_scope: 'GLOBAL',
+  },
+  palace_state: {
+    id: 'palace_state',
+    name: 'Palace State',
+    version: '1.0.0',
+    class: 'visualizer',
+    slot: 'strip',
+    streams: [],
+    actions: [],
+    bounds: stageGridBounds(STRIP_RACK_BOUNDS.context_bars.preferred),
+    movable: true,
+    law_bound: true,
     default_scope: 'GLOBAL',
   },
   context_bars: {
@@ -637,7 +652,7 @@ async function fetchJson(path: string, init?: RequestInit): Promise<JsonValue> {
 export const rackQuerySurface: RackQuerySurface = {
   async query(request) {
     const asOf = request.as_of ?? null
-    if (request.resource === 'vitals' || request.resource === 'context_window' || request.resource === 'memory_graph' || request.resource === 'scorer_console' || request.resource === 'recipe_graph') {
+    if (request.resource === 'vitals' || request.resource === 'spend_table' || request.resource === 'context_window' || request.resource === 'memory_graph' || request.resource === 'scorer_console' || request.resource === 'recipe_graph') {
       if (asOf !== null && asOf !== 'now') {
         return { status: 'historical_unavailable', as_of: asOf, data: null }
       }
@@ -645,6 +660,7 @@ export const rackQuerySurface: RackQuerySurface = {
       url.searchParams.set('resource', request.resource)
       url.searchParams.set('as_of', 'now')
       if (request.thread_id !== undefined) url.searchParams.set('thread_id', request.thread_id)
+      if (request.thread_ids !== undefined) url.searchParams.set('thread_ids', request.thread_ids.join(','))
       const response = await globalThis.fetch(url, {
         cache: 'no-store',
         headers: { Accept: 'application/json' },
@@ -865,8 +881,12 @@ function contextualRackQuery(
   request: RackQueryRequest,
   attunement: AttunementTarget | null,
 ): RackQueryRequest {
-  if (request.thread_id !== undefined || attunement?.kind !== 'thread') return request
-  return { ...request, thread_id: attunement.id }
+  if (request.thread_id !== undefined || request.thread_ids !== undefined || attunement === null) return request
+  return request.resource === 'spend_table'
+    ? { ...request, thread_ids: [...attunement.thread_ids] }
+    : attunement.kind === 'thread'
+      ? { ...request, thread_id: attunement.id }
+      : request
 }
 
 function contextualRackAction<Action extends RackAction>(

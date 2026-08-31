@@ -50,6 +50,7 @@ from harness.spine_client import (
     ScorerSimulationResponse,
     SpendEventsRequest,
     SpendEventsResponse,
+    SpendTableSnapshot,
     SpineTransportError,
     VitalsSnapshot,
 )
@@ -75,6 +76,35 @@ def memory_allocation() -> MemoryAllocation:
 
 def vitals_snapshot() -> VitalsSnapshot:
     return VitalsSnapshot.model_validate(vitals_payload())
+
+
+def spend_table_snapshot() -> SpendTableSnapshot:
+    metrics = {
+        "input_tokens": "1200.5",
+        "kv_cache_tokens": "400",
+        "reasoning_tokens": "72",
+        "output_tokens": "180",
+        "total_usd": "0.042500000000",
+        "total_receipt_lines": 4,
+        "total_unpriced_lines": 0,
+        "spend_per_hour_usd": "0.012500000000",
+        "hourly_receipt_lines": 2,
+        "hourly_unpriced_lines": 0,
+    }
+    return SpendTableSnapshot.model_validate(
+        {
+            "as_of": "2026-08-31T17:00:00Z",
+            "window_minutes": 60,
+            "threads": [
+                {
+                    "thread_id": "22345678-1234-5678-1234-567812345678",
+                    "models": [{"model": "openai/gpt-5.4", **metrics}],
+                    **metrics,
+                }
+            ],
+            "purposes": [{"purpose": "embedding", "label": "Embeddings", **metrics}],
+        }
+    )
 
 
 def valid_envelope() -> dict[str, object]:
@@ -538,6 +568,48 @@ def test_rack_vitals_query_uses_the_injected_reader_before_static_mount(tmp_path
         "data": vitals_snapshot().model_dump(mode="json"),
     }
     assert calls == 1
+
+
+def test_rack_spend_table_passes_global_and_attuned_scope_to_one_optional_reader() -> None:
+    """M3SP keeps GLOBAL and ATTUNED reads on one projection without browser accounting."""
+    seen: list[list[UUID] | None] = []
+
+    async def read_spend(thread_ids: list[UUID] | None) -> SpendTableSnapshot:
+        seen.append(thread_ids)
+        return spend_table_snapshot()
+
+    client = TestClient(create_app(spend_table_snapshot_reader=read_spend))
+    first = "22345678-1234-5678-1234-567812345678"
+    second = "32345678-1234-5678-1234-567812345678"
+
+    global_response = client.get("/v1/rack/query?resource=spend_table&as_of=now")
+    attuned_response = client.get(
+        "/v1/rack/query",
+        params={"resource": "spend_table", "as_of": "now", "thread_ids": f"{first},{second}"},
+    )
+
+    assert [global_response.status_code, attuned_response.status_code] == [200, 200]
+    assert global_response.json()["data"] == spend_table_snapshot().model_dump(mode="json")
+    assert seen == [None, [UUID(first), UUID(second)]]
+
+
+def test_rack_spend_table_tolerates_an_older_palace_without_disturbing_chat() -> None:
+    """M3SP is optional until Palace exposes the read; absence must stay local to Spend."""
+
+    async def older_palace(_thread_ids: list[UUID] | None) -> None:
+        return None
+
+    app = create_app(spend_table_snapshot_reader=older_palace)
+    with TestClient(app) as client:
+        failed = client.get("/v1/rack/query?resource=spend_table")
+        assert failed.status_code == 503
+        assert failed.json() == {"detail": "Detailed spend needs a newer Palace."}
+
+        with client.websocket_connect("/ws") as websocket:
+            websocket.send_json(valid_envelope())
+            types = [websocket.receive_json()["type"] for _ in range(3)]
+
+    assert types == ["run.started", "run.usage", "run.done"]
 
 
 def test_rack_scorer_simulation_force_and_audition_use_public_actions() -> None:

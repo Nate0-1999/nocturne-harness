@@ -33,4 +33,5 @@ test('names the owner-facing instrument Spend at the production manifest seam', 
   const rack = await readFile(new URL('../src/rack.tsx', import.meta.url), 'utf8')
 
   assert.match(rack, /vitals:\s*\{[\s\S]*?name:\s*'Spend'/u)
+  assert.match(rack, /palace_state:\s*\{[\s\S]*?name:\s*'Palace State'/u)
 })

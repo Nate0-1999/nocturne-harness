@@ -31,6 +31,7 @@ test('the module template enumerates the complete mounted stage and refuses a pa
     'memory',
     'vitals',
     'context_bars',
+    'palace_state',
     'memory_graph',
     'palace_nebula',
     'injection_console',
@@ -44,10 +45,10 @@ test('the module template enumerates the complete mounted stage and refuses a pa
     {
       id,
       name: id,
-      slot: id === 'vitals' || id === 'context_bars' ? 'strip' : 'panel',
+      slot: id === 'vitals' || id === 'context_bars' || id === 'palace_state' ? 'strip' : 'panel',
       bounds: {
         min: { w: 1, h: 1 },
-        preferred: id === 'vitals' || id === 'context_bars'
+        preferred: id === 'vitals' || id === 'context_bars' || id === 'palace_state'
           ? { w: 3, h: 2 }
           : { w: 4, h: 7 },
         max: { w: STAGE_COLUMNS, h: STAGE_ROWS },

@@ -87,6 +87,7 @@ from harness.spine_client import (
     ScorerConsoleSnapshot,
     ScorerSimulationRequest,
     ScorerSimulationResponse,
+    SpendTableSnapshot,
     SpineClient,
     SpineClientError,
     VitalsAccounting,
@@ -110,6 +111,7 @@ type EnvelopeHandler = Callable[[Envelope, EnvelopeSender], Awaitable[None]]
 type EnvelopeForwarder = Callable[[Envelope], Awaitable[None]]
 type VitalsSnapshotReader = Callable[[], Awaitable[VitalsSnapshot]]
 type ThreadVitalsSnapshotReader = Callable[[UUID], Awaitable[VitalsSnapshot]]
+type SpendTableSnapshotReader = Callable[[list[UUID] | None], Awaitable[SpendTableSnapshot | None]]
 type MemoryGraphReader = Callable[[str | None], Awaitable[MemoryGraphSnapshot]]
 type ScorerConsoleReader = Callable[[str | None], Awaitable[ScorerConsoleSnapshot]]
 type ScorerConfigWriter = Callable[[RackScorerForceRequest], Awaitable[ScorerConfigurationView]]
@@ -155,6 +157,7 @@ _RACK_MODULE_IDS = frozenset(
         "memory",
         "gate",
         "vitals",
+        "palace_state",
         "context_bars",
         "thread_end",
         "palace_queue",
@@ -261,6 +264,7 @@ def create_app(
     envelope_factory: EnvelopeFactory | None = None,
     vitals_snapshot_reader: VitalsSnapshotReader | None = None,
     thread_vitals_snapshot_reader: ThreadVitalsSnapshotReader | None = None,
+    spend_table_snapshot_reader: SpendTableSnapshotReader | None = None,
     memory_graph_reader: MemoryGraphReader | None = None,
     scorer_console_reader: ScorerConsoleReader | None = None,
     scorer_config_writer: ScorerConfigWriter | None = None,
@@ -305,6 +309,7 @@ def create_app(
     async def rack_query(
         resource: Literal[
             "vitals",
+            "spend_table",
             "parameters",
             "memory_graph",
             "scorer_console",
@@ -313,9 +318,29 @@ def create_app(
         ],
         as_of: str | None = None,
         thread_id: str | None = None,
+        thread_ids: str | None = None,
     ) -> RackQueryResult:
         """Keep Spine credentials behind the public rack query surface."""
 
+        if resource == "spend_table":
+            if as_of not in {None, "now"}:
+                return RackQueryResult(status="historical_unavailable", as_of=as_of, data=None)
+            if spend_table_snapshot_reader is None:
+                raise HTTPException(status_code=503, detail="Detailed spend needs a newer Palace.")
+            try:
+                scoped_threads = (
+                    None
+                    if thread_ids is None
+                    else [UUID(value) for value in thread_ids.split(",") if value]
+                )
+                snapshot = await spend_table_snapshot_reader(scoped_threads)
+            except (SpineClientError, ValueError):
+                raise HTTPException(
+                    status_code=503, detail="Detailed spend needs a newer Palace."
+                ) from None
+            if snapshot is None:
+                raise HTTPException(status_code=503, detail="Detailed spend needs a newer Palace.")
+            return RackQueryResult(status="live", as_of=None, data=snapshot)
         if resource == "recipe_graph":
             if as_of not in {None, "now"}:
                 return RackQueryResult(status="historical_unavailable", as_of=as_of, data=None)
@@ -818,6 +843,11 @@ def create_dev_app(
             }
         )
 
+    async def read_spend_table_snapshot(
+        thread_ids: list[UUID] | None,
+    ) -> SpendTableSnapshot | None:
+        return await owned_spine.spend_table(thread_ids)
+
     async def read_memory_graph(thread_id: str | None) -> MemoryGraphSnapshot:
         memory_ids = None
         if thread_id is not None:
@@ -1046,6 +1076,7 @@ def create_dev_app(
         envelope_factory=factory,
         vitals_snapshot_reader=read_vitals_snapshot,
         thread_vitals_snapshot_reader=read_thread_vitals_snapshot,
+        spend_table_snapshot_reader=read_spend_table_snapshot,
         memory_graph_reader=read_memory_graph,
         scorer_console_reader=read_scorer_console,
         scorer_config_writer=force_scorer,

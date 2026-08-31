@@ -127,6 +127,7 @@ def test_client_exposes_all_spine_routes() -> None:
         "list_memories",
         "search",
         "record_spend_events",
+        "spend_table",
         "vitals_snapshot",
         "thread_vitals_snapshot",
         "memory_graph",

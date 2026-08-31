@@ -24,6 +24,7 @@ import { RecipeModule } from './RecipeModule'
 import { SymphonyDeck } from './SymphonyDeck'
 import { ModelDevice } from './ModelDevice'
 import { VitalsModule } from './VitalsModule'
+import { PalaceStateModule } from './PalaceStateModule'
 import { ContextBars } from './ContextBars'
 import {
   IMAGE_ACCEPT,
@@ -1610,6 +1611,8 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
         <MemoryModule />
       ) : moduleId === 'vitals' ? (
         <VitalsModule />
+      ) : moduleId === 'palace_state' ? (
+        <PalaceStateModule />
       ) : moduleId === 'context_bars' ? (
         <ContextBars />
       ) : moduleId === 'thread_end' ? (
