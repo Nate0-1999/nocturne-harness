@@ -37,15 +37,29 @@ try {
 
   const factoryModules = await mountedModules(page)
   assertJsonEqual(factoryModules, [
-    'threads', 'chat', 'memory', 'vitals', 'context_bars', 'palace_queue', 'deck',
+    'threads', 'chat', 'memory', 'vitals', 'context_bars', 'palace_state', 'palace_queue', 'deck',
   ])
   observations.push({ factory_work_modules: factoryModules })
 
   const cameraBeforeDrag = await activeCamera(page)
   const viewportBox = await page.getByTestId('stage-viewport').boundingBox()
   if (viewportBox === null) throw new Error('stage viewport geometry unavailable')
-  const panX = viewportBox.x + viewportBox.width - 40
-  const panY = viewportBox.y + viewportBox.height - 40
+  const panPoint = await page.getByTestId('stage-viewport').evaluate((viewport) => {
+    const rect = viewport.getBoundingClientRect()
+    for (let y = rect.bottom - 32; y > rect.top + 32; y -= 32) {
+      for (let x = rect.right - 32; x > rect.left + 32; x -= 32) {
+        const hit = document.elementFromPoint(x, y)
+        if (
+          hit?.closest('.stage-canvas') !== null &&
+          hit?.closest('[data-rack-module],button,input,select,textarea,a,[role="tab"]') === null
+        ) return { x, y }
+      }
+    }
+    return null
+  })
+  if (panPoint === null) throw new Error('no empty Stage background was available for panning')
+  const panX = panPoint.x
+  const panY = panPoint.y
   await page.mouse.move(panX, panY)
   await page.mouse.down()
   await page.mouse.move(panX + 90, panY + 45, { steps: 6 })

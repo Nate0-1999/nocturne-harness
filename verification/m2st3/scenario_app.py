@@ -16,6 +16,7 @@ from harness.spine_client import (
     MemoryStatus,
     QueueCard,
     ScorerConsoleSnapshot,
+    SpendTableSnapshot,
     SpineTransportError,
     VitalsSnapshot,
 )
@@ -77,6 +78,18 @@ class HonestDisplaySpine(LayoutSpine):
     async def thread_vitals_snapshot(self, _thread_id: UUID) -> VitalsSnapshot:
         self._require_palace()
         return _honest_vitals()
+
+    async def spend_table(
+        self, thread_ids: list[UUID] | None = None
+    ) -> SpendTableSnapshot:
+        self._require_palace()
+        snapshot = _honest_spend_table()
+        if thread_ids is None:
+            return snapshot
+        threads = [row for row in snapshot.threads if row.thread_id in thread_ids]
+        return snapshot.model_copy(
+            update={"threads": threads, "purposes": snapshot.purposes if threads else []}
+        )
 
     async def memory_graph(self, _request: object) -> MemoryGraphSnapshot:
         self._require_palace()
@@ -168,6 +181,50 @@ def _honest_vitals() -> VitalsSnapshot:
         "error_code": None,
     }
     return VitalsSnapshot.model_validate(payload)
+
+
+def _honest_spend_table() -> SpendTableSnapshot:
+    metrics = {
+        "input_tokens": "1200.5",
+        "kv_cache_tokens": "400",
+        "reasoning_tokens": "72",
+        "output_tokens": "180",
+        "total_usd": "0.084555772000",
+        "total_receipt_lines": 4,
+        "total_unpriced_lines": 0,
+        "spend_per_hour_usd": "0.012500000000",
+        "hourly_receipt_lines": 2,
+        "hourly_unpriced_lines": 0,
+    }
+    return SpendTableSnapshot.model_validate(
+        {
+            "as_of": "2026-08-31T17:00:00Z",
+            "window_minutes": 60,
+            "threads": [
+                {
+                    "thread_id": "307e6141-bc47-44d8-be1d-365dbc18f9d6",
+                    "models": [{"model": "openrouter:minimax/minimax-m3", **metrics}],
+                    **metrics,
+                }
+            ],
+            "purposes": [
+                {"purpose": "curation", "label": "Memory curation", **metrics},
+                {
+                    "purpose": "building",
+                    "label": "Owner app",
+                    **{
+                        **metrics,
+                        "total_usd": None,
+                        "total_receipt_lines": 1,
+                        "total_unpriced_lines": 1,
+                        "spend_per_hour_usd": None,
+                        "hourly_receipt_lines": 1,
+                        "hourly_unpriced_lines": 1,
+                    },
+                },
+            ],
+        }
+    )
 
 
 def _crowded_graph() -> dict[str, object]:

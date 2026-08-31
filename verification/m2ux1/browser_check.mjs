@@ -309,13 +309,15 @@ async function collectCanvasTextNodes(targetPage) {
 }
 
 async function assertDataBearingState(targetPage) {
-  await frame(targetPage, 'vitals').getByText('Ledger drift · -$0.08').waitFor()
+  const spend = frame(targetPage, 'vitals')
+  await spend.getByRole('columnheader', { name: 'Reasoning' }).waitFor()
+  await spend.getByText('Memory curation', { exact: true }).waitFor()
   await targetPage.getByRole('tab', { name: 'Graph' }).click()
   await frame(targetPage, 'memory_graph').locator('.graph-node').first().waitFor()
   const graphNodes = await frame(targetPage, 'memory_graph').locator('.graph-node').count()
   if (graphNodes < 2) throw new Error(`data-bearing graph needs multiple nodes, got ${graphNodes}`)
   await targetPage.getByRole('tab', { name: 'Work' }).click()
-  return { spend: 'Ledger drift · -$0.08', graph_nodes: graphNodes }
+  return { spend: 'conversation/model/purpose table', graph_nodes: graphNodes }
 }
 
 function installCanvasTextAudit() {

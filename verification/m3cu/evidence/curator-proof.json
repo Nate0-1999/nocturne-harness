@@ -1,0 +1,12 @@
+{
+  "fixture": "M2ST3 REGRESSION",
+  "palace_state": "latest completed; 9 writes or 2 removals; 1 proposal waiting",
+  "proposal": "keyword_repair with visible rationale",
+  "decision": "explicit human denial; Palace unchanged",
+  "decision_transport": {
+    "url": "http://127.0.0.1:8807/v1/approval-queue/01J00000000000000000000301/decisions",
+    "status": 200
+  },
+  "console_problems": [],
+  "page_errors": []
+}
