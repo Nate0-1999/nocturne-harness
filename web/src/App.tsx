@@ -2338,8 +2338,8 @@ function ChatModule() {
 
 interface ThreadEndQueueCard {
   item_uid: string
-  verdict: 'new' | 'merge' | 'supersede' | 'contradict'
-  birthplace: 'thread' | 'seed' | 'symphony'
+  verdict: 'new' | 'merge' | 'supersede' | 'contradict' | 'retire' | 'keyword_repair' | 'split'
+  birthplace: 'thread' | 'seed' | 'symphony' | 'curator'
   birthplace_thread_id: string | null
   batch_uid: string | null
   source_name: string | null
@@ -2351,8 +2351,20 @@ interface ThreadEndQueueCard {
     judge_ids: string[]
     evidence_refs: string[]
   } | null
+  curator_run_uid?: string | null
+  curator_finding_uid?: string | null
+  proposal_payload?: Record<string, unknown> | null
   candidate: { label: string; body: string; keywords: string[] }
   neighbors: Array<{ memory_id: string; label: string }>
+  target_ids: string[]
+}
+
+interface CuratorActivityView {
+  admitted_writes: number
+  trigger_every: number
+  writes_until_run: number
+  pending_cards: number
+  latest_run: { status: 'completed' | 'failed'; completed_at: string } | null
 }
 
 interface AgentFileOffer {
@@ -2585,9 +2597,9 @@ function agentFileOffersFrom(value: JsonValue): { files: AgentFileOffer[]; trunc
 
 function isQueueCard(value: unknown): value is ThreadEndQueueCard {
   return isObject(value) && typeof value.item_uid === 'string' &&
-    ['new', 'merge', 'supersede', 'contradict'].includes(String(value.verdict)) &&
+    ['new', 'merge', 'supersede', 'contradict', 'retire', 'keyword_repair', 'split'].includes(String(value.verdict)) &&
     (typeof value.birthplace_thread_id === 'string' || value.birthplace_thread_id === null) &&
-    (value.birthplace === 'thread' || value.birthplace === 'seed' || value.birthplace === 'symphony') &&
+    (value.birthplace === 'thread' || value.birthplace === 'seed' || value.birthplace === 'symphony' || value.birthplace === 'curator') &&
     (typeof value.batch_uid === 'string' || value.batch_uid === null) &&
     (typeof value.source_name === 'string' || value.source_name === null) &&
     (value.birthplace_run_id === undefined || typeof value.birthplace_run_id === 'string' || value.birthplace_run_id === null) &&
@@ -2596,7 +2608,29 @@ function isQueueCard(value: unknown): value is ThreadEndQueueCard {
     isObject(value.candidate) &&
     typeof value.candidate.label === 'string' && typeof value.candidate.body === 'string' &&
     Array.isArray(value.candidate.keywords) && value.candidate.keywords.every((item) => typeof item === 'string') &&
-    Array.isArray(value.neighbors)
+    Array.isArray(value.neighbors) && Array.isArray(value.target_ids) &&
+    value.target_ids.every((item) => typeof item === 'string') &&
+    (value.proposal_payload === undefined || value.proposal_payload === null || isObject(value.proposal_payload))
+}
+
+function curatorActivityFrom(value: JsonValue): CuratorActivityView | null {
+  if (!isObject(value) || typeof value.admitted_writes !== 'number' ||
+    typeof value.trigger_every !== 'number' || typeof value.writes_until_run !== 'number' ||
+    typeof value.pending_cards !== 'number') return null
+  const latest = value.latest_run
+  if (latest !== null && (!isObject(latest) ||
+    (latest.status !== 'completed' && latest.status !== 'failed') ||
+    typeof latest.completed_at !== 'string')) return null
+  return {
+    admitted_writes: value.admitted_writes,
+    trigger_every: value.trigger_every,
+    writes_until_run: value.writes_until_run,
+    pending_cards: value.pending_cards,
+    latest_run: latest === null ? null : {
+      status: latest.status,
+      completed_at: latest.completed_at,
+    },
+  }
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -2613,6 +2647,7 @@ function PalaceQueueModule() {
   const { events } = useRackPlugin()
   const seedInputRef = useRef<HTMLInputElement>(null)
   const [cards, setCards] = useState<ThreadEndQueueCard[]>([])
+  const [curatorActivity, setCuratorActivity] = useState<CuratorActivityView | null>(null)
   const [agentFiles, setAgentFiles] = useState<AgentFileOffer[]>([])
   const [agentFilesTruncated, setAgentFilesTruncated] = useState(false)
   const [queuedAgentFiles, setQueuedAgentFiles] = useState(new Set<string>())
@@ -2623,8 +2658,14 @@ function PalaceQueueModule() {
   const load = useCallback(() => {
     return events.dispatch({ type: 'queue.load' }).then((value) => {
       setCards(queueCardsFrom(value).filter((card) =>
-        card.birthplace === 'seed' || card.birthplace === 'symphony'
+        card.birthplace === 'seed' || card.birthplace === 'symphony' || card.birthplace === 'curator'
       ))
+    })
+  }, [events])
+
+  const loadCuratorActivity = useCallback(() => {
+    return events.dispatch({ type: 'curation.load' }).then((value) => {
+      setCuratorActivity(curatorActivityFrom(value))
     })
   }, [events])
 
@@ -2637,10 +2678,15 @@ function PalaceQueueModule() {
   }, [events])
 
   useEffect(() => {
-    void Promise.all([load(), loadAgentFiles()]).catch(() => {
+    void Promise.all([load(), loadCuratorActivity(), loadAgentFiles()]).catch(() => {
       setStatusText('Memory Ingest could not load its pending work or agent-file offers.')
     })
-  }, [load, loadAgentFiles])
+  }, [load, loadAgentFiles, loadCuratorActivity])
+
+  const curatorCards = useMemo(
+    () => cards.filter((card) => card.birthplace === 'curator'),
+    [cards],
+  )
 
   const batches = useMemo(() => {
     const grouped = new Map<string, ThreadEndQueueCard[]>()
@@ -2731,6 +2777,23 @@ function PalaceQueueModule() {
       .finally(() => setBusy(false))
   }
 
+  function decideCurator(itemUid: string, decision: 'approve' | 'deny') {
+    if (busy) return
+    setBusy(true)
+    setStatusText(decision === 'approve' ? 'Applying the approved repair…' : 'Leaving the Palace unchanged…')
+    void events.dispatch({
+      type: 'queue.decide',
+      item_uid: itemUid,
+      decision,
+      approval_mode: 'explicit',
+      actor_class: 'human',
+    })
+      .then(() => Promise.all([load(), loadCuratorActivity()]))
+      .then(() => setStatusText(decision === 'approve' ? 'Repair applied and journaled.' : 'Proposal rejected. The Palace was not changed.'))
+      .catch(() => setStatusText('That memory changed after diagnosis. Run the curators again.'))
+      .finally(() => setBusy(false))
+  }
+
   return (
     <div className="palace-queue-module" data-testid="memory-ingest">
       <section className="palace-queue-card" aria-label="Memory Ingest">
@@ -2740,6 +2803,41 @@ function PalaceQueueModule() {
             <p>Documents become standalone memories for review. Nothing enters until you approve the document.</p>
           </div>
         </header>
+        <section className="curator-state" aria-labelledby="curator-state-title" data-testid="curator-state">
+          <header>
+            <div>
+              <span>Palace state · Curators</span>
+              <h3 id="curator-state-title">Corpus maintenance</h3>
+            </div>
+            <strong>{curatorCards.length} awaiting your tap</strong>
+          </header>
+          <p>
+            {curatorActivity === null
+              ? 'Curator activity is unavailable.'
+              : curatorActivity.latest_run === null
+                ? `${curatorActivity.admitted_writes} admitted writes · first pass in ${curatorActivity.writes_until_run}`
+                : `Latest ${curatorActivity.latest_run.status} · ${curatorActivity.writes_until_run} admitted writes until the next pass`}
+          </p>
+          {curatorCards.length === 0 ? (
+            <small>No surgery is waiting. Curators never change memories without this queue.</small>
+          ) : (
+            <div className="curator-proposals">
+              {curatorCards.map((card) => (
+                <article key={card.item_uid} data-verdict={card.verdict}>
+                  <span>{card.verdict.replace('_', ' ')} · finding {card.curator_finding_uid?.slice(-8)}</span>
+                  <strong>{card.candidate.label}</strong>
+                  <p>{typeof card.proposal_payload?.rationale === 'string'
+                    ? card.proposal_payload.rationale
+                    : 'The curator supplied no readable rationale.'}</p>
+                  <div>
+                    <button type="button" disabled={busy} onClick={() => decideCurator(card.item_uid, 'deny')}>Keep as is</button>
+                    <button type="button" disabled={busy} onClick={() => decideCurator(card.item_uid, 'approve')}>Approve repair</button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
         <section className="agent-file-jump-start" aria-labelledby="agent-file-jump-start-title">
           <header>
             <div>

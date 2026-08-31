@@ -104,7 +104,8 @@ export type RackAction =
   | { type: 'symphony.intervene'; intervention: SymphonyIntervention }
   | { type: 'run.cancel'; run_id?: Ulid }
   | { type: 'thread.archive'; thread_id?: string }
-  | { type: 'queue.load'; thread_id?: string; birthplace?: 'thread' | 'seed' | 'symphony' }
+  | { type: 'queue.load'; thread_id?: string; birthplace?: 'thread' | 'seed' | 'symphony' | 'curator' }
+  | { type: 'curation.load' }
   | { type: 'seed.jump-start.load' }
   | { type: 'seed.upload'; batch_uid: string; source_name: string; markdown: string }
   | { type: 'queue.batch.decide'; batch_uid: string; decision: 'approve' | 'deny' }
@@ -213,7 +214,7 @@ export type RackActionResult<Action extends RackAction> =
       ? number
     : Action['type'] extends 'thread.select'
       ? void
-      : Action['type'] extends 'thread.archive' | 'queue.load' | 'queue.decide' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
+      : Action['type'] extends 'thread.archive' | 'queue.load' | 'curation.load' | 'queue.decide' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
         ? JsonValue
         : Action['type'] extends 'rack.scope.get' | 'rack.scope.set'
           ? RackScope
@@ -353,7 +354,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'visualizer',
     slot: 'panel',
     streams: [],
-    actions: ['queue.load', 'seed.jump-start.load', 'seed.upload', 'queue.batch.decide'],
+    actions: ['queue.load', 'curation.load', 'queue.decide', 'seed.jump-start.load', 'seed.upload', 'queue.batch.decide'],
     bounds: stageGridBounds({ w: 10, h: 20 }),
     movable: true,
     law_bound: true,
@@ -528,6 +529,8 @@ function dispatchRackAction<Action extends RackAction>(
         const query = params.size === 0 ? '' : `?${params.toString()}`
         return fetchJson(`/v1/approval-queue${query}`) as Promise<RackActionResult<Action>>
       }
+      case 'curation.load':
+        return fetchJson('/v1/curation') as Promise<RackActionResult<Action>>
       case 'seed.jump-start.load':
         return fetchJson('/v1/seeds/jump-start') as Promise<RackActionResult<Action>>
       case 'seed.upload':

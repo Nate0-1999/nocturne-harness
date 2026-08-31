@@ -446,7 +446,7 @@ class SeedRequest(ContractModel):
 class QueueCard(ContractModel):
     item_uid: ULID
     candidate: MemoryUnit
-    birthplace: Literal["thread", "seed", "symphony"]
+    birthplace: Literal["thread", "seed", "symphony", "curator"]
     birthplace_thread_id: UUID | None
     batch_uid: UUID | None
     source_name: str | None
@@ -454,7 +454,19 @@ class QueueCard(ContractModel):
     birthplace_run_id: str | None = None
     birthplace_origin_agent: str | None = None
     judged_context: JsonObject | None = None
-    verdict: Literal["new", "merge", "supersede", "contradict"]
+    candidate_revision: int | None = None
+    curator_run_uid: str | None = None
+    curator_finding_uid: str | None = None
+    proposal_payload: JsonObject | None = None
+    verdict: Literal[
+        "new",
+        "merge",
+        "supersede",
+        "contradict",
+        "retire",
+        "keyword_repair",
+        "split",
+    ]
     neighbors: list[SimilarityMemoryCard]
     target_ids: list[UUID]
     state: Literal["pending", "approved", "rejected"]
@@ -472,6 +484,16 @@ class SeedResponse(ExtractionResponse):
 
 class QueueResponse(ContractModel):
     cards: list[QueueCard]
+
+
+class CuratorActivity(ContractModel):
+    principal_id: str
+    admitted_writes: int = Field(ge=0)
+    last_run_writes: int = Field(ge=0)
+    trigger_every: int = Field(gt=0)
+    writes_until_run: int = Field(ge=0)
+    latest_run: JsonObject | None
+    pending_cards: int = Field(ge=0)
 
 
 class SymphonyMemoryRecord(ContractModel):
@@ -1226,6 +1248,7 @@ _SCORER_AUDITION = TypeAdapter(ScorerAuditionResponse)
 _EXTRACTION_RESPONSE = TypeAdapter(ExtractionResponse)
 _SEED_RESPONSE = TypeAdapter(SeedResponse)
 _QUEUE_RESPONSE = TypeAdapter(QueueResponse)
+_CURATOR_ACTIVITY = TypeAdapter(CuratorActivity)
 _STAGE_SYMPHONY_MEMORY_RESPONSE = TypeAdapter(StageSymphonyMemoryResponse)
 _SYMPHONY_VISIBILITY_RESPONSE = TypeAdapter(SymphonyVisibilityResponse)
 _RESOLVE_SYMPHONY_RUN_RESPONSE = TypeAdapter(ResolveSymphonyRunResponse)
@@ -1495,7 +1518,7 @@ class SpineClient:
         principal_id: str,
         *,
         thread_id: UUID | None = None,
-        birthplace: Literal["thread", "seed", "symphony"] | None = None,
+        birthplace: Literal["thread", "seed", "symphony", "curator"] | None = None,
     ) -> QueueResponse:
         params: JsonObject = {"principal_id": principal_id}
         if thread_id is not None:
@@ -1504,6 +1527,12 @@ class SpineClient:
             params["birthplace"] = birthplace
         response = await self._request("GET", "v1/approval-queue", params=params)
         return _expect_success(response, status=200, adapter=_QUEUE_RESPONSE)
+
+    async def curator_activity(self, principal_id: str) -> CuratorActivity:
+        response = await self._request(
+            "GET", "v1/curation", params={"principal_id": principal_id}
+        )
+        return _expect_success(response, status=200, adapter=_CURATOR_ACTIVITY)
 
     async def stage_symphony_memory(
         self, request: StageSymphonyMemoryRequest

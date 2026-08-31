@@ -33,9 +33,23 @@ test('Memory Ingest is a movable panel rather than a header control or lifecycle
 test('judged Symphony batches reuse Palace Queue and retain explicit owner consent', async () => {
   const [app, rack] = await Promise.all([source('App.tsx'), source('rack.tsx')])
 
-  assert.match(rack, /birthplace\?: 'thread' \| 'seed' \| 'symphony'/u)
-  assert.match(app, /card\.birthplace === 'seed' \|\| card\.birthplace === 'symphony'/u)
+  assert.match(rack, /birthplace\?: 'thread' \| 'seed' \| 'symphony' \| 'curator'/u)
+  assert.match(app, /card\.birthplace === 'seed' \|\| card\.birthplace === 'symphony' \|\| card\.birthplace === 'curator'/u)
   assert.match(app, /Judged Symphony winner/u)
   assert.match(app, /explicit consent still required/u)
   assert.match(app, /type: 'queue\.batch\.decide'/u)
+})
+
+/** M3CU keeps model judgment visible while all corpus changes require an owner tap. */
+test('curator proposals expose Palace activity and use only explicit queue decisions', async () => {
+  const [app, rack] = await Promise.all([source('App.tsx'), source('rack.tsx')])
+
+  assert.match(rack, /case 'curation\.load':[\s\S]*fetchJson\('\/v1\/curation'\)/u)
+  assert.match(app, /Palace state · Curators/u)
+  assert.match(app, /Curators never change memories without this queue/u)
+  assert.match(app, /card\.proposal_payload\?\.rationale/u)
+  assert.match(app, /approval_mode: 'explicit'/u)
+  assert.match(app, /actor_class: 'human'/u)
+  assert.match(app, /Keep as is/u)
+  assert.match(app, /Approve repair/u)
 })

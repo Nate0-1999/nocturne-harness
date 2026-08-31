@@ -1041,13 +1041,17 @@ def create_dev_app(
         @app.get("/v1/approval-queue")
         async def read_queue(
             thread_id: UUID | None = None,
-            birthplace: Literal["thread", "seed", "symphony"] | None = None,
+            birthplace: Literal["thread", "seed", "symphony", "curator"] | None = None,
         ):
             return await owned_spine.approval_queue(
                 principal_id,
                 thread_id=thread_id,
                 birthplace=birthplace,
             )
+
+        @app.get("/v1/curation")
+        async def read_curator_activity():
+            return await owned_spine.curator_activity(principal_id)
 
         @app.get("/v1/seeds/jump-start")
         async def seed_jump_start() -> AgentFileOffers:
