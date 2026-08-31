@@ -1,0 +1,45 @@
+{
+  "captured_at": "2026-08-31T19:58:12Z",
+  "provider": "openrouter",
+  "resolved_chat_model": "openrouter:openai/gpt-5.4",
+  "fixture": false,
+  "palace": "disposable local pgvector",
+  "owner_palace_touched": false,
+  "projection": {
+    "status": "live",
+    "window_minutes": 60,
+    "threads": [
+      {
+        "thread_id": "5aa65b50-7476-4e32-8616-9419460efac2",
+        "input_tokens": "1096.000000000",
+        "reasoning_tokens": "0",
+        "output_tokens": "31.000000000",
+        "total_usd": "0.003187640000"
+      },
+      {
+        "thread_id": "a2bb4a7b-d18c-4dd7-acf5-8fde88f097ff",
+        "input_tokens": "1321.000000000",
+        "reasoning_tokens": "79.000000000",
+        "output_tokens": "234.000000000",
+        "total_usd": "0.007888380000",
+        "models": [
+          "openai/gpt-5.4",
+          "text-embedding-3-small"
+        ]
+      }
+    ],
+    "purposes": [
+      {
+        "purpose": "embedding",
+        "label": "Embeddings",
+        "input_tokens": "31.000000000",
+        "total_usd": "0.000000620000"
+      }
+    ]
+  },
+  "rendered_scope": {
+    "global_groups": 3,
+    "attuned_label": "New thread",
+    "attuned_groups": 1
+  }
+}
