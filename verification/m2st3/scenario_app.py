@@ -11,13 +11,16 @@ from harness.agent import HarnessAgent
 from harness.config import HarnessSettings
 from harness.daemon import create_dev_app
 from harness.spine_client import (
+    CuratorActivity,
     MemoryGraphSnapshot,
+    MemoryStatus,
+    QueueCard,
     ScorerConsoleSnapshot,
     SpineTransportError,
     VitalsSnapshot,
 )
 from verification.fixture_isolation import install_fixture_isolation
-from verification.m2h.scenario_app import _model
+from verification.m2h.scenario_app import NEIGHBOR_ID, UPDATED, _memory, _model, _uid
 from verification.m2k.scenario_app import graph_payload
 from verification.m2ux1.scenario_app import LayoutSpine
 from verification.m2z4.scenario_app import _console_payload, _vitals_snapshot
@@ -31,6 +34,37 @@ class HonestDisplaySpine(LayoutSpine):
     def __init__(self) -> None:
         super().__init__()
         self.palace_available = True
+        item_uid = _uid(301)
+        self.cards[item_uid] = QueueCard(
+            item_uid=item_uid,
+            candidate=_memory(
+                UUID("30000000-0000-4000-8000-000000000301"),
+                "Owner architecture",
+                "The owner architecture stays local and provenance-preserving.",
+                status=MemoryStatus.ACTIVE,
+                keywords=["owner", "architecture"],
+            ),
+            birthplace="curator",
+            birthplace_thread_id=None,
+            batch_uid=None,
+            source_name=None,
+            source_sha256=None,
+            candidate_revision=3,
+            curator_run_uid="01K3CURATORRUN000000000301",
+            curator_finding_uid="01K3CURATORFIND00000000301",
+            proposal_payload={
+                "action": "keyword_repair",
+                "rationale": (
+                    "Two stable terms make this memory findable without changing its claim."
+                ),
+                "keywords": ["owner", "architecture"],
+            },
+            verdict="keyword_repair",
+            neighbors=[],
+            target_ids=[NEIGHBOR_ID],
+            state="pending",
+            created_at=UPDATED,
+        )
 
     def _require_palace(self) -> None:
         if not self.palace_available:
@@ -66,6 +100,30 @@ class HonestDisplaySpine(LayoutSpine):
             "bias": "-0.0000000028618296346",
         }
         return ScorerConsoleSnapshot.model_validate(payload)
+
+    async def curator_activity(self, principal_id: str) -> CuratorActivity:
+        self._require_palace()
+        return CuratorActivity.model_validate(
+            {
+                "principal_id": principal_id,
+                "admitted_writes": 41,
+                "last_run_writes": 25,
+                "pressure_events": 4,
+                "last_run_pressure": 3,
+                "trigger_every": 25,
+                "pressure_trigger_every": 3,
+                "writes_until_run": 9,
+                "pressure_until_run": 2,
+                "latest_run": {
+                    "status": "completed",
+                    "completed_at": "2026-08-31T18:00:00Z",
+                },
+                "pending_cards": sum(
+                    card.birthplace == "curator" and card.state == "pending"
+                    for card in self.cards.values()
+                ),
+            }
+        )
 
 
 def _honest_vitals() -> VitalsSnapshot:

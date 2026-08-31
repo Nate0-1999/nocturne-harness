@@ -21,7 +21,8 @@
     "verify:m2ux4:browser": "node --experimental-strip-types ../verification/m2ux4/browser_check.mjs",
     "verify:m2ux6:browser": "node --experimental-strip-types ../verification/m2ux6/browser_check.mjs",
     "verify:m2st2:browser": "node ../verification/m2st2/browser_check.mjs",
-    "verify:m2st3:browser": "node ../verification/m2st3/browser_check.mjs"
+    "verify:m2st3:browser": "node ../verification/m2st3/browser_check.mjs",
+    "verify:m3cu:browser": "node ../verification/m3cu/browser_check.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "9.7.0",
