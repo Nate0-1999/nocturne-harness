@@ -1,0 +1,84 @@
+{
+  "packet": "M3B3",
+  "session": "codex / 2026-08-31 / b331",
+  "principal_id": "m3bt1-verification-20260821-bt21",
+  "machine_id": "m3b3-sop-verification",
+  "agent_id": "m3b3-owner-agent",
+  "project_key": "build-test",
+  "thread_id": "2ebf7b46-ce26-4621-9a66-2d794f9f348e",
+  "model": "openrouter:minimax/minimax-m3",
+  "fresh_sources": {
+    "harness": "9984d80eff4e2f6af1950d1f48e249060dad8c26",
+    "spine": "d62b6f039011e823b7a2dafe4747de860006a07f"
+  },
+  "released_palace": {
+    "product_version": "0.1.6",
+    "api_contract_version": "0.1.6",
+    "schema_version": "0017"
+  },
+  "metric_window": {
+    "start": "2026-08-31T18:58:35.133787Z",
+    "stop": "2026-08-31T19:09:20.856821Z",
+    "seconds": 645.723034
+  },
+  "runs": [
+    {
+      "run_id": "01M1CK01ZX1259GEYMZYH8CGMX",
+      "stop_reason": "budget_exceeded",
+      "requests": 24,
+      "input_tokens": 467755,
+      "cache_read_tokens": 282128,
+      "output_tokens": 42224
+    },
+    {
+      "run_id": "01M1CKFZKS78RVSBSDTMVQ7RQ2",
+      "stop_reason": "budget_exceeded",
+      "requests": 16,
+      "input_tokens": 504161,
+      "cache_read_tokens": 438127,
+      "output_tokens": 7279
+    },
+    {
+      "run_id": "01M1CKY5D9R9012RAZRGYENKQ9",
+      "purpose": "post-pass remember completion",
+      "stop_reason": "end_turn",
+      "requests": 1,
+      "input_tokens": 334,
+      "cache_read_tokens": 107,
+      "output_tokens": 182
+    }
+  ],
+  "metrics": {
+    "time_seconds": 645.723034,
+    "building_cost_usd": "0.178117200000",
+    "building_receipt_lines": 159,
+    "building_unpriced_lines": 0,
+    "churn_lines": 1038,
+    "own_tests": {"passed": 52, "total": 52},
+    "acceptance_tests": {"passed": 8, "total": 8},
+    "final_pass_rate_percent": 100.0
+  },
+  "round_two_delta_percent": {
+    "time": 91.169,
+    "building_cost": 150.627,
+    "churn": -11.282,
+    "final_pass_rate_points": 0.0
+  },
+  "carryover": {
+    "first_gate_automatic_injections": 0,
+    "first_gate_near_misses": 3,
+    "owner_add_backs": 2,
+    "later_injected_and_kept": 2,
+    "active_units_at_close": 5,
+    "tombstoned_at_close": 0
+  },
+  "scorer": {
+    "version": "m3ms-share-v1",
+    "tau": 0.55,
+    "memory_context_share": 0.10,
+    "eligible_dispositions": 3,
+    "learning_floor": 25,
+    "tuned": false
+  }
+}
+

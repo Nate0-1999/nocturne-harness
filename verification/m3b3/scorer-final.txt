@@ -1,0 +1,19 @@
+Active scorer version: m3ms-share-v1
+tau: 0.55
+memory_context_share: 0.10
+eligible dispositions: 3 / 25
+remaining to learning floor: 22
+share tuning: inactive; 97 dispositions remain to its 100-signal minimum
+
+No scorer, tau, share, or learning configuration was changed.
+
+First gate result:
+- automatic injections: 0
+- near misses shown: 3
+- owner add-backs: 2
+- irrelevant near miss left out: 1
+
+The two owner-added memories were subsequently injected and kept on later
+turns. That is real carryover participation, but it is not evidence that the
+deployed scorer crossed tau naturally on the initial prompt.
+

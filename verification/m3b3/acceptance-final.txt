@@ -1,0 +1,6 @@
+Command: python verification/m3b3/acceptance.py <fresh-project>
+Frozen acceptance SHA-256: 4048f2faa299152a9389aeb2415fc5e124966f57137921f9bca6ff08010d9a7c
+Result: 8 passed, 0 failed, 0 errors
+Elapsed: 0.446s
+Status: OK
+

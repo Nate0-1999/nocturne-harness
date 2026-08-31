@@ -1,0 +1,10 @@
+Final live Memory Palace panel: 5 active units.
+
+- configparser error handling and option case — STORED, fact, revision 1
+- Single _error helper for clean CLI exits — IN CONTEXT, procedure, revision 14
+- Derive CLI progname from sys.argv[0] defensively — IN CONTEXT, procedure, revision 11
+- Deterministic input order + link rewriting — STORED, procedure, revision 3
+- Escape once, then layer inline transforms — STORED, procedure, revision 6
+
+No experiment memory was tombstoned at close. The series continues.
+

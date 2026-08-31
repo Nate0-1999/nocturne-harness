@@ -1,0 +1,22 @@
+Metric boundary: first simultaneous full pass ended 2026-08-31T19:09:20.856821Z.
+
+Building through boundary:
+- cost: $0.178117200000
+- priced receipt lines: 159
+- unpriced receipt lines: 0
+
+Embedding through boundary:
+- cost: $0.000023880000
+- priced receipt lines: 8
+- unpriced receipt lines: 0
+
+Post-pass owner-requested /remember completion:
+- remember cost: $0.000292920000 / 4 priced lines
+- embedding cost: $0.000001520000 / 1 priced line
+
+Full thread at close:
+- cost: $0.178435520000
+- priced receipt lines: 172
+- unpriced receipt lines: 0
+- accounting: clear; pending lines: 0
+

@@ -1,0 +1,21 @@
+# M3B3 exit checklist
+
+- [x] Owner fired the packet, approving experiment continuity.
+- [x] Fresh Harness and Spine clones used.
+- [x] Empty scratch Git repository used for a varied stdlib CLI task.
+- [x] Real OpenRouter-backed owner thread used.
+- [x] Acceptance frozen before the build; hash recorded.
+- [x] Findings freeze held: verification artifacts only.
+- [x] First full pass measured at a fixed checkpoint.
+- [x] Own suite: 52/52.
+- [x] Frozen acceptance: 8/8.
+- [x] Time, true building cost, churn, and final pass rate recorded.
+- [x] Cost and deltas compared to M3B2's true baseline.
+- [x] Natural injection outcome and owner add-backs distinguished.
+- [x] Active scorer, tau, share, and learning floor observed without tuning.
+- [x] All four carried lessons and the new round lesson active at close.
+- [x] No series memory tombstoned.
+- [x] Host-ground Spine suite green at exit: 291 passed.
+- [x] Host-ground Harness suite green at exit: 1,688 passed, 3 deselected.
+- [x] Evidence hashes verified and credential scan clean.
+- [x] Local verification daemon stopped.

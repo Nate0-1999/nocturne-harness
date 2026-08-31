@@ -1,0 +1,12 @@
+Spine exit suite
+Command: TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock TESTCONTAINERS_RYUK_DISABLED=true uv run pytest -q
+Result: 291 passed in 18.90s
+
+Harness exit suite
+Command: uv run pytest -q -m 'not contract'
+Result: 1688 passed, 3 deselected in 70.48s
+
+Note: an earlier Spine invocation without the host socket override produced
+126 Testcontainers setup errors because Ryuk attempted to mount the Colima
+socket path. The correctly configured host-ground rerun above is green.
+
