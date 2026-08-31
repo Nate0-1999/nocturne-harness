@@ -490,8 +490,12 @@ class CuratorActivity(ContractModel):
     principal_id: str
     admitted_writes: int = Field(ge=0)
     last_run_writes: int = Field(ge=0)
+    pressure_events: int = Field(ge=0)
+    last_run_pressure: int = Field(ge=0)
     trigger_every: int = Field(gt=0)
+    pressure_trigger_every: int = Field(gt=0)
     writes_until_run: int = Field(ge=0)
+    pressure_until_run: int = Field(ge=0)
     latest_run: JsonObject | None
     pending_cards: int = Field(ge=0)
 

@@ -2363,6 +2363,7 @@ interface CuratorActivityView {
   admitted_writes: number
   trigger_every: number
   writes_until_run: number
+  pressure_until_run: number
   pending_cards: number
   latest_run: { status: 'completed' | 'failed'; completed_at: string } | null
 }
@@ -2616,7 +2617,7 @@ function isQueueCard(value: unknown): value is ThreadEndQueueCard {
 function curatorActivityFrom(value: JsonValue): CuratorActivityView | null {
   if (!isObject(value) || typeof value.admitted_writes !== 'number' ||
     typeof value.trigger_every !== 'number' || typeof value.writes_until_run !== 'number' ||
-    typeof value.pending_cards !== 'number') return null
+    typeof value.pressure_until_run !== 'number' || typeof value.pending_cards !== 'number') return null
   const latest = value.latest_run
   if (latest !== null && (!isObject(latest) ||
     (latest.status !== 'completed' && latest.status !== 'failed') ||
@@ -2625,6 +2626,7 @@ function curatorActivityFrom(value: JsonValue): CuratorActivityView | null {
     admitted_writes: value.admitted_writes,
     trigger_every: value.trigger_every,
     writes_until_run: value.writes_until_run,
+    pressure_until_run: value.pressure_until_run,
     pending_cards: value.pending_cards,
     latest_run: latest === null ? null : {
       status: latest.status,
@@ -2815,8 +2817,8 @@ function PalaceQueueModule() {
             {curatorActivity === null
               ? 'Curator activity is unavailable.'
               : curatorActivity.latest_run === null
-                ? `${curatorActivity.admitted_writes} admitted writes · first pass in ${curatorActivity.writes_until_run}`
-                : `Latest ${curatorActivity.latest_run.status} · ${curatorActivity.writes_until_run} admitted writes until the next pass`}
+                ? `${curatorActivity.admitted_writes} admitted writes · first pass in ${curatorActivity.writes_until_run} writes or ${curatorActivity.pressure_until_run} removals`
+                : `Latest ${curatorActivity.latest_run.status} · next pass in ${curatorActivity.writes_until_run} writes or ${curatorActivity.pressure_until_run} removals`}
           </p>
           {curatorCards.length === 0 ? (
             <small>No surgery is waiting. Curators never change memories without this queue.</small>
