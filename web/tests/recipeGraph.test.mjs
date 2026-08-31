@@ -1,11 +1,16 @@
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
+import path from 'node:path'
 import test from 'node:test'
+import { fileURLToPath } from 'node:url'
 
 import {
   buildRecipeCompletionGrid,
   layoutRecipeGraph,
   parseRecipeGraphSnapshot,
 } from '../src/recipeGraph.ts'
+
+const webRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 function graph() {
   return {
@@ -84,4 +89,19 @@ test('recipe graph refuses a cycle instead of inventing completion order', () =>
   const cyclic = graph()
   cyclic.edges.push({ source: 'JUDGE', target: 'PREP', kind: 'blocks' })
   assert.throws(() => parseRecipeGraphSnapshot(cyclic), /must remain a DAG/)
+})
+
+/** ADR-018 and P2 keep the analytical face honest: the sheet labels every live visual channel. */
+test('recipe module declares the annotated-sheet grammar and its complete data key', async () => {
+  const component = await readFile(path.join(webRoot, 'src', 'RecipeModule.tsx'), 'utf8')
+  const stylesheet = await readFile(path.join(webRoot, 'src', 'assets', 'recipe.css'), 'utf8')
+
+  assert.match(component, /data-grammar="annotated-sheet"/u)
+  assert.match(component, /<b>Row<\/b> packet identity/u)
+  assert.match(component, /<b>Column<\/b> dependency depth/u)
+  assert.match(component, /<b>Ink<\/b> live node state/u)
+  assert.match(component, /<b>Rule<\/b> blocks or judged-by edge/u)
+  assert.match(stylesheet, /Annotated field sheet · live projection/u)
+  assert.match(stylesheet, /:root\[data-theme='gold-lines'\].*annotated-sheet/u)
+  assert.doesNotMatch(stylesheet, /@keyframes/u)
 })

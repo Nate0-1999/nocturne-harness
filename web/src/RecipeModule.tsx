@@ -63,7 +63,7 @@ export function RecipeModule() {
   }
 
   return (
-    <section className="recipe-instrument" data-testid="recipe-module">
+    <section className="recipe-instrument" data-testid="recipe-module" data-grammar="annotated-sheet">
       <header className="recipe-instrument__header">
         <div>
           <p>Living plan</p>
@@ -76,6 +76,12 @@ export function RecipeModule() {
           </div>
         )}
       </header>
+      <aside className="recipe-sheet-key" aria-label="Annotated sheet data bindings">
+        <span><b>Row</b> packet identity</span>
+        <span><b>Column</b> dependency depth</span>
+        <span><b>Ink</b> live node state</span>
+        <span><b>Rule</b> blocks or judged-by edge</span>
+      </aside>
       {failure !== null ? (
         <p className="recipe-instrument__message" role="alert">{failure}</p>
       ) : snapshot === null ? (

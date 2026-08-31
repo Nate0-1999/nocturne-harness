@@ -1,0 +1,35 @@
+{
+  "surface": "packaged NOCTURNE owner app",
+  "url": "http://127.0.0.1:8895/",
+  "palace": {
+    "configured_live_service": true,
+    "nodes": 52,
+    "active_nodes": 3,
+    "edges": 60,
+    "revision_events": 123,
+    "active_similarity_or_lineage_filaments": 0,
+    "historical_similarity_families": 12,
+    "split_events": 18,
+    "merge_events": 0,
+    "scorer_version": "m3ms-share-v1",
+    "scorer_signals": 3,
+    "scorer_runs": 3,
+    "browser_console_warnings_or_errors": 0
+  },
+  "recipe": {
+    "source": "ordinary owner-app Symphony websocket protocol",
+    "provider_requests": 0,
+    "packet_id": "01M1D19RN8BFQS44ZBQM50ZD45",
+    "nodes": 4,
+    "running_nodes": 1,
+    "blocked_nodes": 3,
+    "edges": 3,
+    "browser_console_warnings_or_errors": 0
+  },
+  "writes": {
+    "palace": 0,
+    "provider": 0,
+    "release_or_deploy": 0,
+    "disposable_local_symphony": 1
+  }
+}

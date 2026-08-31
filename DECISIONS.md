@@ -3145,3 +3145,40 @@ Rack action would duplicate the Stage layout's existing authority. Reimplementin
 Deck inside the combined shell would risk regressing finished conductor behavior.
 Treating posture as iframe-local state would leave attunement and persistence unable to
 observe the owner's choice.
+
+## 104 — Existing Palace truth wears the four reference grammars [P2, ADR-018, M3SL]
+
+**Decision.** Keep the Palace Nebula on its existing `memory_graph` query and turn its
+released revision trail into the TORRENT × CONSTELLATION current. Each revision row
+creates exactly one still particle; its recorded reason selects add, delete, modify,
+merge, or split hue, and its timestamp selects curve position and event density. Real
+similarity and lineage edges alone create filaments between active bodies.
+Similarity-connected graph memories create deterministic stipple families at their
+latest recorded event positions, so absorbed history remains visible; their recorded
+split and merge events become the creature's division and absorption counts. The existing
+optional scorer projection may supply a margin readout, but never a particle.
+
+D.2 146 supersedes Decision 101's decorative per-frame body motion. Bodies now derive
+size from injections, shape from revision, kind color from identity, brightness from
+pin/current membership, and recency glow from `updated_at` frozen at the graph
+snapshot. With no revision event, no current particle exists; replaying a snapshot is
+byte-identical. Camera interaction and the one-second FPS instrument may move without
+claiming to be data.
+
+Give the existing Recipe instrument an ANNOTATED SHEET face under the existing day
+theme. Its key names row identity, dependency depth, live state ink, and dependency
+rules; the underlying `recipe_graph`, module identity, interactions, and persistence
+remain unchanged. Both faces remain visual layers over released surfaces, not a new
+curation subsystem or visual-state authority.
+
+**Motivation.** The owner supplied the looks, but P2 requires the product to wear them
+over reality. Binding every visible mark to an existing graph or recipe quantity gets
+the luminous, organic hero and the analytical field sheet without buying a second
+data lifecycle. Freezing the render when reality is idle makes the visual current
+trustworthy enough to inspect and compare.
+
+**Rejected alternatives.** Decorative particles, random stipple, time-based bobbing,
+or inferring deletions from a memory's current status would make activity that never
+happened. A new curation endpoint, creature module, or sheet-mode preference would
+cross the packet's visual-only boundary. Copying the owner's reference images into the
+product would replace emulation with imitation and add provenance risk.

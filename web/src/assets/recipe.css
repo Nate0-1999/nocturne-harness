@@ -64,6 +64,24 @@
   gap: 0.8rem;
 }
 
+.recipe-sheet-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin: -0.2rem 0 0.8rem;
+  padding: 0.48rem 0;
+  border-block: 1px solid var(--line);
+  color: var(--muted);
+  font: 0.58rem/1.25 var(--data-font);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.recipe-sheet-key b {
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
 .recipe-grid-scroll {
   overflow: auto;
   max-width: 100%;
@@ -188,8 +206,11 @@
 }
 
 .recipe-grid__milestone strong {
+  width: 100%;
+  max-width: 100%;
   color: var(--ink);
   font: 600 1rem/1.25 var(--display-font);
+  word-break: break-all;
 }
 
 .recipe-grid__milestone small {
@@ -244,6 +265,11 @@
   border-top: 1px solid var(--line);
 }
 
+.recipe-inspector > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .recipe-inspector h2 {
   font: 500 1rem/1.2 var(--display-font);
 }
@@ -279,6 +305,74 @@
 .recipe-instrument__message {
   margin: 2rem 0;
   color: var(--muted);
+}
+
+/* R4 annotated-sheet face: the day theme turns the same live recipe into a
+   technical field sheet. No mark is decorative; the key above names each
+   visual channel and the grid still derives only from recipe_graph. */
+:root[data-theme='gold-lines'] .recipe-instrument[data-grammar='annotated-sheet'] {
+  position: relative;
+  color: var(--ink);
+  background:
+    linear-gradient(color-mix(in srgb, var(--line) 26%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--line) 22%, transparent) 1px, transparent 1px),
+    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--earned) 9%, transparent), transparent 28%),
+    var(--surface-deep);
+  background-size: 1.15rem 1.15rem, 1.15rem 1.15rem, auto, auto;
+}
+
+:root[data-theme='gold-lines'] .recipe-instrument[data-grammar='annotated-sheet']::before {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.75rem;
+  color: var(--dim);
+  font: 0.54rem/1 var(--data-font);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  content: 'Annotated field sheet · live projection';
+}
+
+:root[data-theme='gold-lines'] .recipe-grid-scroll {
+  border-color: var(--earned);
+  background: color-mix(in srgb, var(--surface-deep) 94%, var(--earned));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--earned) 9%, transparent);
+}
+
+:root[data-theme='gold-lines'] .recipe-grid {
+  min-width: 100%;
+  gap: 0;
+  background: transparent;
+}
+
+:root[data-theme='gold-lines'] .recipe-grid__heading,
+:root[data-theme='gold-lines'] .recipe-grid button,
+:root[data-theme='gold-lines'] .recipe-grid__stage,
+:root[data-theme='gold-lines'] .recipe-grid__milestone,
+:root[data-theme='gold-lines'] .recipe-grid__empty {
+  border-right: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  background-color: color-mix(in srgb, var(--surface) 88%, transparent);
+}
+
+:root[data-theme='gold-lines'] .recipe-grid__heading {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--earned) 14%, var(--surface-deep));
+}
+
+:root[data-theme='gold-lines'] .recipe-grid [data-progress='current'] {
+  background:
+    repeating-linear-gradient(-45deg, color-mix(in srgb, var(--accent) 11%, transparent) 0 3px, transparent 3px 7px),
+    var(--surface);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+:root[data-theme='gold-lines'] .recipe-grid [data-progress='done'] {
+  opacity: 0.64;
+  filter: grayscale(0.28);
+}
+
+:root[data-theme='gold-lines'] .recipe-inspector {
+  border-top: 2px solid var(--earned);
 }
 
 @media (max-width: 560px) {
