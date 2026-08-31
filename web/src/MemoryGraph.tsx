@@ -17,11 +17,11 @@ type Snapshot = { as_of: string; graph_edge_sim: number; nodes: Node[]; edges: E
 export function MemoryGraph() {
   const { query, events, selection } = useRackPlugin()
   const rack = useRackSnapshot()
-  const [scope, setScope] = useState<'GLOBAL' | 'CURRENT'>('GLOBAL')
+  const [scope, setScope] = useState<'GLOBAL' | 'ATTUNED'>('GLOBAL')
   const [loadedSnapshot, setLoadedSnapshot] = useState<KeyedMemoryGraphSnapshot<Snapshot> | null>(null)
   const [selected, setSelected] = useState<Node | null>(null)
   const [failure, setFailure] = useState<{ requestKey: string; message: string } | null>(null)
-  const threadId = scope === 'CURRENT' ? rack.selectedThreadId : null
+  const threadId = scope === 'ATTUNED' ? rack.selectedThreadId : null
   const requestKey = memoryGraphRequestKey(scope, threadId)
   const requestIsQueryable = memoryGraphRequestIsQueryable(scope, threadId)
   const snapshot = memoryGraphSnapshotForRequest(loadedSnapshot, requestKey)
@@ -80,7 +80,7 @@ export function MemoryGraph() {
   })).map((label) => [label.id, label]))
   return <section className="instrument instrument--graph">
     <header><h1>Memory Graph</h1></header>
-    {!requestIsQueryable ? <p role="status">Select a thread to inspect its current memory.</p> : visibleFailure !== null ? <p role="alert">{visibleFailure}</p> : snapshot === null ? <p role="status">Loading memory graph…</p> : <div className="graph-stage">
+    {!requestIsQueryable ? <p role="status">{rack.attunement?.kind === 'stack' ? `${rack.attunement.name} graph is not available yet.` : 'No thread is attuned.'}</p> : visibleFailure !== null ? <p role="alert">{visibleFailure}</p> : snapshot === null ? <p role="status">Loading memory graph…</p> : <div className="graph-stage">
       <svg viewBox="0 0 100 76" role="img" aria-label={`${nodes.length} memories and ${snapshot?.edges.length ?? 0} relationships`}>
         {(snapshot?.edges ?? []).map((edge, index) => { const a = positions.get(edge.from_memory_id); const b = positions.get(edge.to_memory_id); return a && b ? <line key={`${edge.kind}-${index}`} x1={a.x} y1={a.y} x2={b.x + (a === b ? 2 : 0)} y2={b.y + (a === b ? 2 : 0)} data-kind={edge.kind} /> : null })}
         {nodes.map((node) => { const p = positions.get(node.memory.memory_id)!; const r = 3 + Math.min(Number(node.memory.stats.injections ?? 0), 12) / 8; const label = labels.get(node.memory.memory_id); return <g key={node.memory.memory_id}>

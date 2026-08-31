@@ -114,7 +114,7 @@ test('production manifests and frames are wired through the shared template', as
   assert.match(app, /onPointerDown=\{beginMove\}/u)
   assert.match(app, /data-testid=\{`rack-settings-\$\{manifest\.id\}`\}/u)
   assert.match(app, /<dialog open className="rack-module__settings-dialog"/u)
-  assert.match(app, /This module follows the selected thread\./u)
+  assert.match(app, /This module follows the nearest thread or stack\./u)
   assert.doesNotMatch(app, /rack-module__geometry/u)
   assert.match(rackCss, /\.rack-module:hover > \.rack-module__resize-handle/u)
   assert.match(rackCss, /cursor:\s*ew-resize/u)

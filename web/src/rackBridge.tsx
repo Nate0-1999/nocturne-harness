@@ -34,6 +34,7 @@ import {
 } from './rackSnapshotProjection'
 import type { RackEnvelopeEvent, RackResizeEvent } from './rackEvents'
 import type { SpatialSelectionContext } from './spatialSelection'
+import type { AttunementTarget } from './attunement'
 
 const BRIDGE_VERSION = 1
 const READY_MESSAGE = 'nocturne.rack.ready'
@@ -69,12 +70,16 @@ interface ConnectMessage {
 
 export function RackPluginIframe({
   manifest,
+  instanceId = manifest.id,
   spatialContext = null,
+  attunement = null,
   theme,
   isRegressionFixture = false,
 }: {
   manifest: RackModuleManifest
+  instanceId?: string
   spatialContext?: SpatialSelectionContext | null
+  attunement?: AttunementTarget | null
   theme: ThemeId
   isRegressionFixture?: boolean
 }) {
@@ -88,8 +93,10 @@ export function RackPluginIframe({
       spatialLayerId === null || spatialFrameId === null || spatialScope === null
         ? null
         : { layer_id: spatialLayerId, frame_id: spatialFrameId, scope: spatialScope },
+      instanceId,
+      attunement,
     ),
-    [manifest, spatialFrameId, spatialLayerId, spatialScope],
+    [attunement, instanceId, manifest, spatialFrameId, spatialLayerId, spatialScope],
   )
   const frameOrigin = useMemo(() => rackFrameOrigin(), [])
   const colorway = useMemo(() => {
@@ -213,6 +220,9 @@ export function RackPluginIframe({
     }
 
     globalThis.addEventListener('message', onWindowMessage)
+    // Rebind an already-loaded remote immediately when this instance's
+    // attunement changes. The READY message is only guaranteed on frame load.
+    connect()
     return () => {
       globalThis.removeEventListener('message', onWindowMessage)
       closeBridge()

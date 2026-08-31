@@ -61,9 +61,9 @@ try {
   const spendGear = page.getByTestId('rack-settings-vitals')
   await spendGear.press('Enter')
   const spendDialog = page.getByRole('dialog', { name: 'Spend settings' })
-  const thisThread = spendDialog.getByRole('button', { name: 'This thread' })
-  await thisThread.press('Enter')
-  if (await thisThread.getAttribute('aria-pressed') !== 'true') {
+  const nearestSource = spendDialog.getByRole('button', { name: 'Nearest source' })
+  await nearestSource.press('Enter')
+  if (await nearestSource.getAttribute('aria-pressed') !== 'true') {
     throw new Error('Spend scope control did not persist through the real Rack action')
   }
   await spendGear.press('Enter')
@@ -71,14 +71,14 @@ try {
   const threadsGear = page.getByTestId('rack-settings-threads')
   await threadsGear.press('Enter')
   const threadsDialog = page.getByRole('dialog', { name: 'Channel Stack settings' })
-  if ((await threadsDialog.innerText()).trim() !== 'This module follows the selected thread.') {
+  if ((await threadsDialog.innerText()).trim() !== 'This module follows the nearest thread or stack.') {
     throw new Error('fixed thread scope lacks its reason')
   }
   if (await threadsDialog.getByRole('button').count() !== 0) {
     throw new Error('fixed thread scope exposed a dead control')
   }
   observations.module_settings = {
-    spend_scope: 'CURRENT',
+    spend_scope: 'ATTUNED',
     channel_stack_reason: (await threadsDialog.innerText()).trim(),
   }
 

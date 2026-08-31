@@ -37,7 +37,7 @@ export function ModelDevice() {
   const snapshot = useRackSnapshot()
   const { events, query } = useRackPlugin()
   const threadId = snapshot.selectedThreadId
-  const [scope, setScope] = useState<'CURRENT' | 'GLOBAL'>(
+  const [scope, setScope] = useState<'ATTUNED' | 'GLOBAL'>(
     RACK_MANIFESTS.model_device.default_scope,
   )
   const [live, setLive] = useState<ParameterSnapshot | null>(null)
@@ -87,7 +87,7 @@ export function ModelDevice() {
   }, [events, load])
 
   async function write(parameterId: string, value: ParameterValue) {
-    if (threadId === null || scope !== 'CURRENT') return
+    if (threadId === null || scope !== 'ATTUNED') return
     setStatus('Applying…')
     try {
       await events.dispatch({
@@ -119,7 +119,7 @@ export function ModelDevice() {
     await load(asOf)
   }
 
-  const editable = scope === 'CURRENT' && historyIndex === (live?.changes.length ?? 0)
+  const editable = scope === 'ATTUNED' && historyIndex === (live?.changes.length ?? 0)
   const descriptors = useMemo(
     () => view?.descriptors ?? live?.descriptors ?? [],
     [live?.descriptors, view?.descriptors],

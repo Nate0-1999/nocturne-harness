@@ -9,7 +9,7 @@ export const RACK_SAVED_SET_STORAGE_KEY = 'nocturne.rack.saved-set.v1'
 export type DockedModuleId = 'threads' | 'chat' | 'memory'
 export type StripModuleId = 'vitals' | 'context_bars'
 export type StageModuleId = DockedModuleId | StripModuleId
-export type RackScope = 'GLOBAL' | 'CURRENT'
+export type RackScope = 'GLOBAL' | 'ATTUNED'
 
 export interface RackSize {
   w: number
@@ -96,9 +96,9 @@ export function rackBodyRowAllocation(stripRows: number): {
 export const FACTORY_RACK_LAYOUT: RackLayoutSet = {
   version: 1,
   scopes: {
-    header: 'GLOBAL', threads: 'CURRENT', chat: 'CURRENT', memory: 'CURRENT',
-    vitals: 'GLOBAL', context_bars: 'CURRENT', gate: 'CURRENT', thread_end: 'CURRENT', palace_queue: 'GLOBAL',
-    model_device: 'CURRENT',
+    header: 'GLOBAL', threads: 'ATTUNED', chat: 'ATTUNED', memory: 'ATTUNED',
+    vitals: 'GLOBAL', context_bars: 'ATTUNED', gate: 'ATTUNED', thread_end: 'ATTUNED', palace_queue: 'GLOBAL',
+    model_device: 'ATTUNED',
     memory_graph: 'GLOBAL', palace_nebula: 'GLOBAL', injection_console: 'GLOBAL',
   },
   modules: [
@@ -456,7 +456,8 @@ function parseScopes(value: unknown): Record<string, RackScope> {
   const scopes = { ...FACTORY_RACK_LAYOUT.scopes }
   if (!isRecord(value)) return scopes
   for (const key of Object.keys(scopes)) {
-    if (value[key] === 'GLOBAL' || value[key] === 'CURRENT') scopes[key] = value[key]
+    if (value[key] === 'GLOBAL') scopes[key] = 'GLOBAL'
+    if (value[key] === 'ATTUNED' || value[key] === 'CURRENT') scopes[key] = 'ATTUNED'
   }
   return scopes
 }

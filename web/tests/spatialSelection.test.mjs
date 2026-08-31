@@ -23,12 +23,12 @@ test('snap-touching modules form one transitive frame within their layer', () =>
 /** P2.3 keeps local selection spatial while preserving one deliberate global escape. */
 test('a local watcher sees only its frame while GLOBAL escapes position', () => {
   const origin = { layer_id: 'recipe', frame_id: 'recipe:recipe+vitals' }
-  assert.equal(spatialSelectionIsVisible(origin, { ...origin, scope: 'CURRENT' }), true)
+  assert.equal(spatialSelectionIsVisible(origin, { ...origin, scope: 'ATTUNED' }), true)
   assert.equal(spatialSelectionIsVisible(origin, {
-    layer_id: 'recipe', frame_id: 'recipe:chat', scope: 'CURRENT',
+    layer_id: 'recipe', frame_id: 'recipe:chat', scope: 'ATTUNED',
   }), false)
   assert.equal(spatialSelectionIsVisible(origin, {
-    layer_id: 'work', frame_id: 'work:chat', scope: 'CURRENT',
+    layer_id: 'work', frame_id: 'work:chat', scope: 'ATTUNED',
   }), false)
   assert.equal(spatialSelectionIsVisible(origin, {
     layer_id: 'work', frame_id: 'work:chat', scope: 'GLOBAL',

@@ -128,7 +128,7 @@ function latestInjection(candidates: Candidate[]): string | undefined {
 export function InjectionConsole() {
   const { query, events } = useRackPlugin()
   const rack = useRackSnapshot()
-  const [scope, setScope] = useState<'GLOBAL' | 'CURRENT'>('GLOBAL')
+  const [scope, setScope] = useState<'GLOBAL' | 'ATTUNED'>('GLOBAL')
   const [data, setData] = useState<Snapshot | null>(null)
   const dataRef = useRef<Snapshot | null>(null)
   const loadGeneration = useRef(0)
@@ -173,7 +173,7 @@ export function InjectionConsole() {
       const result = await query.query({
         resource: 'scorer_console',
         as_of: 'now',
-        thread_id: scope === 'CURRENT' ? rack.selectedThreadId ?? undefined : undefined,
+        thread_id: scope === 'ATTUNED' ? rack.selectedThreadId ?? undefined : undefined,
       })
       if (generation !== undefined && generation !== loadGeneration.current) {
         return
@@ -210,7 +210,7 @@ export function InjectionConsole() {
     : Object.values(draft.weights).reduce((sum, value) => sum + value, 0)
   const valid = draft !== null && Math.abs(weightSum - 1) < 0.000001
   const injectionId = useMemo(
-    () => scope === 'CURRENT' && data !== null ? latestInjection(data.candidates) : undefined,
+    () => scope === 'ATTUNED' && data !== null ? latestInjection(data.candidates) : undefined,
     [data, scope],
   )
   const activeVersion = data?.active_version

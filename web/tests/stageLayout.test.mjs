@@ -10,6 +10,7 @@ import {
   STAGE_UNIT_HEIGHT,
   STAGE_UNIT_WIDTH,
   activeStageLayer,
+  addStageModuleInstance,
   cloneFactoryStageLayout,
   createStageLayer,
   fitStageCamera,
@@ -44,7 +45,7 @@ test('layer switching preserves independent camera and module layouts through re
   assert.deepEqual(work?.camera, { x: -410, y: 92, zoom: 0.48 })
   assert.deepEqual(
     work?.modules.find((module) => module.module_id === 'chat'),
-    { module_id: 'chat', x: 20, y: 8, width: 20, height: 20 },
+    { instance_id: 'chat', module_id: 'chat', source_thread_id: undefined, x: 20, y: 8, width: 20, height: 20 },
   )
 })
 
@@ -89,7 +90,7 @@ test('off-screen recovery fits Recipe and Deck at native scale inside 390 by 844
   recipeLayout = recoverStageModule(recipeLayout, 'recipe', viewportWidth, viewportHeight)
   const recipeLayer = activeStageLayer(recipeLayout)
   const recipe = recipeLayer.modules.find((module) => module.module_id === 'recipe')
-  assert.deepEqual(recipe, { module_id: 'recipe', x: 124, y: 70, width: 7, height: 20 })
+  assert.deepEqual(recipe, { instance_id: 'recipe', module_id: 'recipe', x: 124, y: 70, width: 7, height: 20 })
   assert.equal(recipeLayer.camera.zoom, 1)
   assert.equal(moduleFitsViewport(
     recipe, recipeLayer.camera, viewportWidth, viewportHeight, 12,
@@ -105,7 +106,7 @@ test('off-screen recovery fits Recipe and Deck at native scale inside 390 by 844
   deckLayout = recoverStageModule(deckLayout, 'deck', viewportWidth, viewportHeight)
   const deckLayer = activeStageLayer(deckLayout)
   const deck = deckLayer.modules.find((module) => module.module_id === 'deck')
-  assert.deepEqual(deck, { module_id: 'deck', x: 136, y: 90, width: 7, height: 20 })
+  assert.deepEqual(deck, { instance_id: 'deck', module_id: 'deck', x: 136, y: 90, width: 7, height: 20 })
   assert.equal(deckLayer.camera.zoom, 1)
   assert.equal(moduleFitsViewport(
     deck, deckLayer.camera, viewportWidth, viewportHeight, 12,
@@ -136,7 +137,7 @@ test('factory layers contain Graph and Injection as stage modules, never fixed t
   assert.deepEqual(injection?.modules.map((module) => module.module_id), ['injection_console'])
 })
 
-/** M3GE keeps the opt-in engine spike recoverable and migrates existing layouts exactly once. */
+/** PLAN M3GE / P2 keeps the opt-in engine spike recoverable with one migration. */
 test('Palace Nebula begins in the Graph library and migrates existing layouts once', () => {
   const factoryGraph = FACTORY_STAGE_LAYOUT.layers.find((layer) => layer.layer_id === 'graph')
   assert.deepEqual(factoryGraph?.removed_modules.map((module) => module.module_id), ['palace_nebula'])
@@ -187,14 +188,14 @@ test('Recipe joins the chosen layer from Library and round-trips its placement',
   const graphLayout = selectStageLayer(cloneFactoryStageLayout(), 'graph')
   const added = restoreStageModule(graphLayout, 'recipe')
   assert.deepEqual(activeStageLayer(added).modules.at(-1), {
-    module_id: 'recipe', x: 124, y: 70, width: 24, height: 20,
+    instance_id: 'recipe', module_id: 'recipe', x: 124, y: 70, width: 24, height: 20,
   })
 
   const removed = removeStageModule(added, 'recipe')
   assert.equal(activeStageLayer(removed).modules.some((module) => module.module_id === 'recipe'), false)
   const restored = restoreStageModule(removed, 'recipe')
   assert.deepEqual(activeStageLayer(restored).modules.at(-1), {
-    module_id: 'recipe', x: 124, y: 70, width: 24, height: 20,
+    instance_id: 'recipe', module_id: 'recipe', x: 124, y: 70, width: 24, height: 20,
   })
 })
 
@@ -203,14 +204,31 @@ test('Spend can shrink to one cell and grow to the complete Stage grid', () => {
   const tiny = resizeStageModule(cloneFactoryStageLayout(), 'vitals', -20, 0, 'nw')
   assert.deepEqual(
     activeStageLayer(tiny).modules.find((module) => module.module_id === 'vitals'),
-    { module_id: 'vitals', x: 121, y: 97, width: 1, height: 1 },
+    { instance_id: 'vitals', module_id: 'vitals', x: 121, y: 97, width: 1, height: 1 },
   )
 
   const huge = resizeStageModule(cloneFactoryStageLayout(), 'vitals', 1000, 1000, 'nw')
   assert.deepEqual(
     activeStageLayer(huge).modules.find((module) => module.module_id === 'vitals'),
-    { module_id: 'vitals', x: 0, y: 0, width: STAGE_COLUMNS, height: STAGE_ROWS },
+    { instance_id: 'vitals', module_id: 'vitals', x: 0, y: 0, width: STAGE_COLUMNS, height: STAGE_ROWS },
   )
+})
+
+/** SPEC D.2 138-139: duplicate consumer identity survives layout edits and reload. */
+test('Context Bars, Spend, and Graph can each add independent Stage instances', () => {
+  const storage = memoryStorage()
+  let layout = cloneFactoryStageLayout()
+  for (const moduleId of ['context_bars', 'vitals', 'memory_graph']) {
+    layout = addStageModuleInstance(layout, moduleId)
+  }
+  persistStageLayout(storage, layout)
+
+  const restored = loadStageLayout(storage)
+  const instances = restored.layers.flatMap((layer) => layer.modules.map((module) => module.instance_id))
+  assert.ok(instances.includes('context_bars:2'))
+  assert.ok(instances.includes('vitals:2'))
+  assert.ok(instances.includes('memory_graph:2'))
+  assert.equal(new Set(instances).size, instances.length)
 })
 
 /** PLAN M2SP / P2 requires a new layer to be one obvious click and immediately usable. */
@@ -249,7 +267,7 @@ test('v2 layouts migrate into the centered fine coordinate space with screen geo
 
   const migrated = loadStageLayout(storage)
   const chat = activeStageLayer(migrated).modules[0]
-  assert.equal(migrated.version, 3)
+  assert.equal(migrated.version, 4)
   assert.ok(chat.x > STAGE_COLUMNS / 3)
   assert.ok(chat.y > STAGE_ROWS / 3)
   assert.equal(chat.width * STAGE_UNIT_WIDTH, 10 * 96)

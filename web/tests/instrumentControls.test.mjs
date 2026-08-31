@@ -67,8 +67,8 @@ test('Injection scope is owned by the shared module settings slot', async () => 
   assert.doesNotMatch(source, /className="scope-switch"/u)
   assert.match(app, /className="rack-module__settings-toggle"/u)
   assert.match(app, /type:\s*'rack\.scope\.set'/u)
-  assert.match(app, /scope=\{layout\.scopes\[module\.module_id\]\}/u)
-  assert.match(app, /key=\{`\$\{manifest\.id\}:\$\{scope\}`\}/u)
+  assert.match(app, /layout\.scopes\[module\.instance_id\]/u)
+  assert.match(app, /key=\{`\$\{instanceId\}:\$\{scope\}:\$\{attunement\?\.source_instance_id/u)
 })
 
 /** SPEC B.6 and A-051 require M2Z4 secondary acts to remain visibly readable. */

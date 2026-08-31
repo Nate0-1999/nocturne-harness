@@ -12,7 +12,7 @@ export interface SpatialAddress {
 }
 
 export interface SpatialSelectionContext extends SpatialAddress {
-  scope: 'GLOBAL' | 'CURRENT'
+  scope: 'GLOBAL' | 'ATTUNED'
 }
 
 /** Resolve snap-touching modules into deterministic proximity frames. */
@@ -48,7 +48,7 @@ export function spatialAddresses(
   return result
 }
 
-/** GLOBAL is the one escape; local watchers see only their own layer and frame. */
+/** GLOBAL is the one escape; attuned watchers see only their resolved frame. */
 export function spatialSelectionIsVisible(
   origin: SpatialAddress | null,
   target: SpatialSelectionContext,

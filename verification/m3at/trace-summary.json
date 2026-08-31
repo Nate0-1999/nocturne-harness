@@ -1,0 +1,63 @@
+{
+  "scope": "M3AT distance-based multi-instance attunement",
+  "captured_at": "2026-08-31",
+  "owner_app": {
+    "url": "http://127.0.0.1:8797/",
+    "home": "disposable local home",
+    "principal_id": "m3at-verification-20260831",
+    "machine_id": "m3at-browser-verification",
+    "agent_id": "m3at-owner-agent",
+    "fixture": false,
+    "palace": "deliberately unavailable"
+  },
+  "side_by_side": {
+    "chat_sources": [
+      {
+        "instance_id": "chat",
+        "x": 106,
+        "y": 68,
+        "thread_badge": "What exact phrase does the M2XH project beacon…"
+      },
+      {
+        "instance_id": "chat:2",
+        "x": 130,
+        "y": 70,
+        "thread_badge": "/remember The M2XH scoped beacon reads…"
+      }
+    ],
+    "consumer_badges_distinct": true,
+    "screenshot_captured": true
+  },
+  "pointer_drag": {
+    "consumer_instance_id": "context_bars",
+    "from": {"x": 106, "y": 70},
+    "to": {"x": 128, "y": 70},
+    "reattuned_to": "chat:2"
+  },
+  "equal_distance_tie": {
+    "consumer_instance_id": "context_bars",
+    "position": {"x": 118, "y": 69},
+    "tied_source_instance_ids": ["chat", "chat:2"],
+    "selected_source_instance_id": "chat",
+    "journal_event_id": "01M1CDHZT7SHG2JXG60688PZHK",
+    "event_type": "rack.attunement.pick",
+    "sticky_across_reload": true
+  },
+  "cross_layer": {
+    "consumer_instance_id": "memory_graph",
+    "consumer_layer": "graph",
+    "source_layer": "work",
+    "scope": "ATTUNED",
+    "resolved_source_instance_id": "chat"
+  },
+  "browser_console": {
+    "warnings": 0,
+    "errors": 0
+  },
+  "exit_tests": {
+    "spine": "285 passed in 16.12s",
+    "harness": "1685 passed, 3 deselected in 68.96s",
+    "web": "120 passed; lint and production build passed",
+    "ui_canon": "43-state sweep, Stage, controls, honest display, and SYM13 recipe passed"
+  }
+}

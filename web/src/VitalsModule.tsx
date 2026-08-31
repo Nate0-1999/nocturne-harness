@@ -67,7 +67,7 @@ export function VitalsModule() {
   const { events, query, selection: selectionBus } = useRackPlugin()
   const selection = useRackSelection()
   const rack = useRackSnapshot()
-  const [scope, setScope] = useState<'GLOBAL' | 'CURRENT'>('GLOBAL')
+  const [scope, setScope] = useState<'GLOBAL' | 'ATTUNED'>('GLOBAL')
   const [requestSequence, setRequestSequence] = useState(0)
   const [load, setLoad] = useState<VitalsLoadState>({
     snapshot: null,
@@ -84,12 +84,14 @@ export function VitalsModule() {
   }>({ key: '', telemetry: null, unavailable: false })
   const telemetry = telemetryLoad.key === telemetryKey ? telemetryLoad.telemetry : null
   const telemetryUnavailable = telemetryLoad.key === telemetryKey && telemetryLoad.unavailable
+  const attunedWithoutThread = scope === 'ATTUNED' && rack.selectedThreadId === null
 
   useEffect(() => {
+    if (attunedWithoutThread) return
     let active = true
     void query.query({
       resource: 'vitals', as_of: 'now',
-      thread_id: scope === 'CURRENT' ? rack.selectedThreadId ?? undefined : undefined,
+      thread_id: scope === 'ATTUNED' ? rack.selectedThreadId ?? undefined : undefined,
     })
       .then((result) => {
         if (result.status !== 'live' || result.data === null) {
@@ -112,13 +114,14 @@ export function VitalsModule() {
     return () => {
       active = false
     }
-  }, [query, rack.selectedThreadId, requestSequence, scope])
+  }, [attunedWithoutThread, query, rack.selectedThreadId, requestSequence, scope])
 
   useEffect(() => {
+    if (attunedWithoutThread) return
     let active = true
     void query.query({
       resource: 'scorer_console', as_of: 'now',
-      thread_id: scope === 'CURRENT' ? rack.selectedThreadId ?? undefined : undefined,
+      thread_id: scope === 'ATTUNED' ? rack.selectedThreadId ?? undefined : undefined,
     })
       .then((result) => {
         if (result.status !== 'live' || result.data === null) {
@@ -144,7 +147,7 @@ export function VitalsModule() {
     return () => {
       active = false
     }
-  }, [query, rack.selectedThreadId, requestSequence, scope, telemetryKey])
+  }, [attunedWithoutThread, query, rack.selectedThreadId, requestSequence, scope, telemetryKey])
 
   useEffect(() => {
     void events.dispatch({ type: 'rack.scope.get', module_id: 'vitals' }).then(setScope)
@@ -170,6 +173,18 @@ export function VitalsModule() {
       failed: false,
     }))
     setRequestSequence((value) => value + 1)
+  }
+
+  if (attunedWithoutThread) {
+    return (
+      <section className="vitals-strip vitals-strip--empty" aria-label="Spend">
+        <p className="vitals-strip__notice" role="status">
+          {rack.attunement?.kind === 'stack'
+            ? `${rack.attunement.name} spend is not available yet.`
+            : 'No thread is attuned.'}
+        </p>
+      </section>
+    )
   }
 
   if (load.snapshot === null) {

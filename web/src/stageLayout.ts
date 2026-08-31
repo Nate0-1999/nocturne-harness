@@ -1,7 +1,9 @@
 import type { RackScope } from './rackLayout'
 
-export const STAGE_LAYOUT_STORAGE_KEY = 'nocturne.stage.layout.v3'
-export const STAGE_SAVED_SET_STORAGE_KEY = 'nocturne.stage.saved-set.v3'
+export const STAGE_LAYOUT_STORAGE_KEY = 'nocturne.stage.layout.v4'
+export const STAGE_SAVED_SET_STORAGE_KEY = 'nocturne.stage.saved-set.v4'
+const LEGACY_STAGE_V3_LAYOUT_STORAGE_KEY = 'nocturne.stage.layout.v3'
+const LEGACY_STAGE_V3_SAVED_SET_STORAGE_KEY = 'nocturne.stage.saved-set.v3'
 const LEGACY_STAGE_LAYOUT_STORAGE_KEY = 'nocturne.stage.layout.v2'
 const LEGACY_STAGE_SAVED_SET_STORAGE_KEY = 'nocturne.stage.saved-set.v2'
 const LEGACY_RACK_LAYOUT_STORAGE_KEY = 'nocturne.rack.layout.v1'
@@ -39,6 +41,9 @@ export const STAGE_MODULE_IDS: readonly StageModuleId[] = [
   'memory_graph', 'palace_nebula', 'injection_console', 'palace_queue',
   'recipe', 'deck',
 ]
+export const MULTI_INSTANCE_MODULE_IDS: readonly StageModuleId[] = [
+  'chat', 'vitals', 'context_bars', 'memory_graph',
+]
 const FACTORY_LAYER_IDS = ['work', 'graph', 'injection'] as const
 
 export interface StageCamera {
@@ -48,7 +53,9 @@ export interface StageCamera {
 }
 
 export interface StageModuleLayout {
+  instance_id: string
   module_id: StageModuleId
+  source_thread_id?: string | null
   x: number
   y: number
   width: number
@@ -64,7 +71,7 @@ export interface StageLayer {
 }
 
 export interface StageLayoutSet {
-  version: 3
+  version: 4
   active_layer_id: string
   layers: StageLayer[]
   removed_layers: StageLayer[]
@@ -72,38 +79,38 @@ export interface StageLayoutSet {
 }
 
 interface ParsedStageLayout extends Omit<StageLayoutSet, 'version'> {
-  version: 2 | 3
+  version: 2 | 3 | 4
 }
 
 const DEFAULT_SCOPES: Record<string, RackScope> = {
-  header: 'GLOBAL', threads: 'CURRENT', chat: 'CURRENT', memory: 'CURRENT',
-  vitals: 'GLOBAL', context_bars: 'CURRENT', gate: 'CURRENT', thread_end: 'CURRENT',
-  palace_queue: 'GLOBAL', model_device: 'CURRENT', memory_graph: 'GLOBAL', palace_nebula: 'GLOBAL',
+  header: 'GLOBAL', threads: 'ATTUNED', chat: 'ATTUNED', memory: 'ATTUNED',
+  vitals: 'GLOBAL', context_bars: 'ATTUNED', gate: 'ATTUNED', thread_end: 'ATTUNED',
+  palace_queue: 'GLOBAL', model_device: 'ATTUNED', memory_graph: 'GLOBAL', palace_nebula: 'GLOBAL',
   injection_console: 'GLOBAL',
-  recipe: 'CURRENT',
-  deck: 'CURRENT',
+  recipe: 'ATTUNED',
+  deck: 'ATTUNED',
 }
 
 const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
-  threads: expandLegacyModule({ module_id: 'threads', x: 1, y: 1, width: 4, height: 10 }),
-  chat: expandLegacyModule({ module_id: 'chat', x: 5, y: 1, width: 10, height: 10 }),
-  memory: expandLegacyModule({ module_id: 'memory', x: 15, y: 1, width: 4, height: 10 }),
-  vitals: expandLegacyModule({ module_id: 'vitals', x: 1, y: 12, width: 12, height: 4 }),
-  context_bars: expandLegacyModule({ module_id: 'context_bars', x: 13, y: 12, width: 6, height: 4 }),
-  memory_graph: expandLegacyModule({ module_id: 'memory_graph', x: 2, y: 2, width: 12, height: 10 }),
-  palace_nebula: expandLegacyModule({ module_id: 'palace_nebula', x: 14, y: 2, width: 12, height: 10 }),
+  threads: expandLegacyModule({ instance_id: 'threads', module_id: 'threads', x: 1, y: 1, width: 4, height: 10 }),
+  chat: expandLegacyModule({ instance_id: 'chat', module_id: 'chat', x: 5, y: 1, width: 10, height: 10 }),
+  memory: expandLegacyModule({ instance_id: 'memory', module_id: 'memory', x: 15, y: 1, width: 4, height: 10 }),
+  vitals: expandLegacyModule({ instance_id: 'vitals', module_id: 'vitals', x: 1, y: 12, width: 12, height: 4 }),
+  context_bars: expandLegacyModule({ instance_id: 'context_bars', module_id: 'context_bars', x: 13, y: 12, width: 6, height: 4 }),
+  memory_graph: expandLegacyModule({ instance_id: 'memory_graph', module_id: 'memory_graph', x: 2, y: 2, width: 12, height: 10 }),
+  palace_nebula: expandLegacyModule({ instance_id: 'palace_nebula', module_id: 'palace_nebula', x: 14, y: 2, width: 12, height: 10 }),
   injection_console: expandLegacyModule({
-    module_id: 'injection_console', x: 2, y: 2, width: 12, height: 10,
+    instance_id: 'injection_console', module_id: 'injection_console', x: 2, y: 2, width: 12, height: 10,
   }),
   palace_queue: expandLegacyModule({
-    module_id: 'palace_queue', x: 20, y: 1, width: 5, height: 10,
+    instance_id: 'palace_queue', module_id: 'palace_queue', x: 20, y: 1, width: 5, height: 10,
   }),
-  recipe: expandLegacyModule({ module_id: 'recipe', x: 14, y: 2, width: 12, height: 10 }),
-  deck: expandLegacyModule({ module_id: 'deck', x: 20, y: 12, width: 10, height: 10 }),
+  recipe: expandLegacyModule({ instance_id: 'recipe', module_id: 'recipe', x: 14, y: 2, width: 12, height: 10 }),
+  deck: expandLegacyModule({ instance_id: 'deck', module_id: 'deck', x: 20, y: 12, width: 10, height: 10 }),
 }
 
 export const FACTORY_STAGE_LAYOUT: StageLayoutSet = {
-  version: 3,
+  version: 4,
   active_layer_id: 'work',
   scopes: DEFAULT_SCOPES,
   layers: [
@@ -139,7 +146,7 @@ export function cloneFactoryStageLayout(): StageLayoutSet {
 
 export function cloneStageLayout(layout: StageLayoutSet): StageLayoutSet {
   return {
-    version: 3,
+    version: 4,
     active_layer_id: layout.active_layer_id,
     scopes: { ...layout.scopes },
     layers: layout.layers.map(cloneLayer),
@@ -150,6 +157,13 @@ export function cloneStageLayout(layout: StageLayoutSet): StageLayoutSet {
 export function loadStageLayout(storage: Storage): StageLayoutSet {
   const current = parseStageLayout(storage.getItem(STAGE_LAYOUT_STORAGE_KEY))
   if (current !== null) return current
+  const legacyV3 = parseStageLayoutVersion(
+    storage.getItem(LEGACY_STAGE_V3_LAYOUT_STORAGE_KEY),
+    3,
+    STAGE_COLUMNS,
+    STAGE_ROWS,
+  )
+  if (legacyV3 !== null) return upgradeStageLayout(legacyV3)
   const legacyStage = parseStageLayoutVersion(
     storage.getItem(LEGACY_STAGE_LAYOUT_STORAGE_KEY),
     2,
@@ -164,6 +178,13 @@ export function loadStageLayout(storage: Storage): StageLayoutSet {
 export function loadSavedStageSet(storage: Storage): StageLayoutSet | null {
   const current = parseStageLayout(storage.getItem(STAGE_SAVED_SET_STORAGE_KEY))
   if (current !== null) return current
+  const legacyV3 = parseStageLayoutVersion(
+    storage.getItem(LEGACY_STAGE_V3_SAVED_SET_STORAGE_KEY),
+    3,
+    STAGE_COLUMNS,
+    STAGE_ROWS,
+  )
+  if (legacyV3 !== null) return upgradeStageLayout(legacyV3)
   const legacy = parseStageLayoutVersion(
     storage.getItem(LEGACY_STAGE_SAVED_SET_STORAGE_KEY),
     2,
@@ -230,11 +251,11 @@ export function updateStageCamera(
 
 export function moveStageModule(
   layout: StageLayoutSet,
-  moduleId: StageModuleId,
+  instanceId: string,
   x: number,
   y: number,
 ): StageLayoutSet {
-  return updateActiveModule(layout, moduleId, (module) => ({
+  return updateActiveModule(layout, instanceId, (module) => ({
     ...module,
     x: clamp(Math.round(x), 0, STAGE_COLUMNS - module.width),
     y: clamp(Math.round(y), 0, STAGE_ROWS - module.height),
@@ -243,12 +264,12 @@ export function moveStageModule(
 
 export function resizeStageModule(
   layout: StageLayoutSet,
-  moduleId: StageModuleId,
+  instanceId: string,
   width: number,
   height: number,
   direction: string,
 ): StageLayoutSet {
-  return updateActiveModule(layout, moduleId, (module) => {
+  return updateActiveModule(layout, instanceId, (module) => {
     const nextWidth = clamp(Math.round(width), 1, STAGE_COLUMNS)
     const nextHeight = clamp(Math.round(height), 1, STAGE_ROWS)
     const nextX = direction.includes('w')
@@ -263,16 +284,16 @@ export function resizeStageModule(
 
 export function removeStageModule(
   layout: StageLayoutSet,
-  moduleId: StageModuleId,
+  instanceId: string,
 ): StageLayoutSet {
   return updateActiveLayer(layout, (layer) => {
-    const module = layer.modules.find((item) => item.module_id === moduleId)
+    const module = layer.modules.find((item) => item.instance_id === instanceId)
     if (module === undefined) return layer
     return {
       ...layer,
-      modules: layer.modules.filter((item) => item.module_id !== moduleId),
+      modules: layer.modules.filter((item) => item.instance_id !== instanceId),
       removed_modules: [
-        ...layer.removed_modules.filter((item) => item.module_id !== moduleId),
+        ...layer.removed_modules.filter((item) => item.instance_id !== instanceId),
         { ...module },
       ],
     }
@@ -281,20 +302,50 @@ export function removeStageModule(
 
 export function restoreStageModule(
   layout: StageLayoutSet,
-  moduleId: StageModuleId,
+  instanceId: string,
 ): StageLayoutSet {
   return updateActiveLayer(layout, (layer) => {
-    if (layer.modules.some((item) => item.module_id === moduleId)) return layer
-    const removed = layer.removed_modules.find((item) => item.module_id === moduleId)
-    const fallback = DEFAULT_MODULES[moduleId]
+    if (layer.modules.some((item) => item.instance_id === instanceId)) return layer
+    const removed = layer.removed_modules.find((item) => item.instance_id === instanceId)
+    const fallback = isStageModuleId(instanceId) ? DEFAULT_MODULES[instanceId] : undefined
+    if (removed === undefined && fallback === undefined) return layer
     return {
       ...layer,
-      modules: [...layer.modules, { ...(removed ?? fallback) }].sort(
+      modules: [...layer.modules, { ...(removed ?? fallback!) }].sort(
         (left, right) => STAGE_MODULE_IDS.indexOf(left.module_id) - STAGE_MODULE_IDS.indexOf(right.module_id),
       ),
-      removed_modules: layer.removed_modules.filter((item) => item.module_id !== moduleId),
+      removed_modules: layer.removed_modules.filter((item) => item.instance_id !== instanceId),
     }
   })
+}
+
+export function addStageModuleInstance(
+  layout: StageLayoutSet,
+  moduleId: StageModuleId,
+  sourceThreadId: string | null = null,
+): StageLayoutSet {
+  if (!MULTI_INSTANCE_MODULE_IDS.includes(moduleId)) {
+    return restoreStageModule(layout, moduleId)
+  }
+  const allModules = [...layout.layers, ...layout.removed_layers]
+    .flatMap((layer) => [...layer.modules, ...layer.removed_modules])
+  let sequence = 2
+  while (allModules.some((module) => module.instance_id === `${moduleId}:${sequence}`)) {
+    sequence += 1
+  }
+  const instanceId = `${moduleId}:${sequence}`
+  const offset = (sequence - 1) * 2
+  const fallback = DEFAULT_MODULES[moduleId]
+  return updateActiveLayer(layout, (layer) => ({
+    ...layer,
+    modules: [...layer.modules, {
+      ...fallback,
+      instance_id: instanceId,
+      source_thread_id: moduleId === 'chat' ? sourceThreadId : undefined,
+      x: clamp(fallback.x + offset, 0, STAGE_COLUMNS - fallback.width),
+      y: clamp(fallback.y + offset, 0, STAGE_ROWS - fallback.height),
+    }],
+  }))
 }
 
 export function removeStageLayer(layout: StageLayoutSet, layerId: string): StageLayoutSet {
@@ -371,12 +422,12 @@ export function focusStageModule(
 
 export function recoverStageModule(
   layout: StageLayoutSet,
-  moduleId: StageModuleId,
+  instanceId: string,
   viewportWidth: number,
   viewportHeight: number,
 ): StageLayoutSet {
   const layer = activeStageLayer(layout)
-  const module = layer.modules.find((candidate) => candidate.module_id === moduleId)
+  const module = layer.modules.find((candidate) => candidate.instance_id === instanceId)
   if (module === undefined) return layout
 
   const focusZoom = Math.max(layer.camera.zoom, 0.72)
@@ -386,7 +437,7 @@ export function recoverStageModule(
     viewportHeight,
     focusZoom,
   )
-  if (!PHONE_REFLOW_MODULE_IDS.includes(moduleId)) {
+  if (!PHONE_REFLOW_MODULE_IDS.includes(module.module_id)) {
     return updateStageCamera(layout, focusedCamera)
   }
   if (
@@ -425,7 +476,7 @@ export function recoverStageModule(
       STAGE_RECOVERY_ZOOM,
     ),
     modules: currentLayer.modules.map((candidate) => (
-      candidate.module_id === moduleId ? recovered : candidate
+      candidate.instance_id === instanceId ? recovered : candidate
     )),
   }))
 }
@@ -480,13 +531,13 @@ function updateActiveLayer(
 
 function updateActiveModule(
   layout: StageLayoutSet,
-  moduleId: StageModuleId,
+  instanceId: string,
   update: (module: StageModuleLayout) => StageModuleLayout,
 ): StageLayoutSet {
   return updateActiveLayer(layout, (layer) => ({
     ...layer,
     modules: layer.modules.map((module) => (
-      module.module_id === moduleId ? update({ ...module }) : { ...module }
+      module.instance_id === instanceId ? update({ ...module }) : { ...module }
     )),
   }))
 }
@@ -523,13 +574,13 @@ function normalizeCamera(camera: StageCamera): StageCamera {
 }
 
 function parseStageLayout(raw: string | null): StageLayoutSet | null {
-  const parsed = parseStageLayoutVersion(raw, 3, STAGE_COLUMNS, STAGE_ROWS)
+  const parsed = parseStageLayoutVersion(raw, 4, STAGE_COLUMNS, STAGE_ROWS)
   return parsed === null ? null : addMemoryIngestToExistingLayout(parsed as StageLayoutSet)
 }
 
 function parseStageLayoutVersion(
   raw: string | null,
-  version: 2 | 3,
+  version: 2 | 3 | 4,
   columns: number,
   rows: number,
 ): ParsedStageLayout | null {
@@ -541,9 +592,9 @@ function parseStageLayoutVersion(
     return null
   }
   if (!isRecord(value) || value.version !== version || !Array.isArray(value.layers)) return null
-  const layers = value.layers.map((layer) => parseLayer(layer, columns, rows))
+  const layers = value.layers.map((layer) => parseLayer(layer, columns, rows, version))
   const removedLayers = Array.isArray(value.removed_layers)
-    ? value.removed_layers.map((layer) => parseLayer(layer, columns, rows))
+    ? value.removed_layers.map((layer) => parseLayer(layer, columns, rows, version))
     : []
   if (
     layers.length === 0 ||
@@ -554,6 +605,13 @@ function parseStageLayoutVersion(
   ) return null
   const allLayers = [...layers, ...removedLayers] as StageLayer[]
   if (new Set(allLayers.map((layer) => layer.layer_id)).size !== allLayers.length) return null
+  const allInstances = allLayers.flatMap((layer) => [
+    ...layer.modules,
+    ...layer.removed_modules,
+  ])
+  if (new Set(allInstances.map((module) => module.instance_id)).size !== allInstances.length) {
+    return null
+  }
   return {
     version,
     active_layer_id: value.active_layer_id,
@@ -563,7 +621,12 @@ function parseStageLayoutVersion(
   }
 }
 
-function parseLayer(value: unknown, columns: number, rows: number): StageLayer | null {
+function parseLayer(
+  value: unknown,
+  columns: number,
+  rows: number,
+  version: 2 | 3 | 4,
+): StageLayer | null {
   if (
     !isRecord(value) ||
     typeof value.layer_id !== 'string' || value.layer_id.trim() === '' ||
@@ -573,14 +636,14 @@ function parseLayer(value: unknown, columns: number, rows: number): StageLayer |
     typeof value.camera.zoom !== 'number' ||
     !Array.isArray(value.modules) || !Array.isArray(value.removed_modules)
   ) return null
-  const modules = value.modules.map((module) => parseModule(module, columns, rows))
-  const removedModules = value.removed_modules.map((module) => parseModule(module, columns, rows))
+  const modules = value.modules.map((module) => parseModule(module, columns, rows, version))
+  const removedModules = value.removed_modules.map((module) => parseModule(module, columns, rows, version))
   if (
     modules.some((module) => module === null) ||
     removedModules.some((module) => module === null)
   ) return null
   const allModules = [...modules, ...removedModules] as StageModuleLayout[]
-  if (new Set(allModules.map((module) => module.module_id)).size !== allModules.length) return null
+  if (new Set(allModules.map((module) => module.instance_id)).size !== allModules.length) return null
   return {
     layer_id: value.layer_id,
     name: value.name,
@@ -590,7 +653,12 @@ function parseLayer(value: unknown, columns: number, rows: number): StageLayer |
   }
 }
 
-function parseModule(value: unknown, columns: number, rows: number): StageModuleLayout | null {
+function parseModule(
+  value: unknown,
+  columns: number,
+  rows: number,
+  version: 2 | 3 | 4,
+): StageModuleLayout | null {
   if (
     !isRecord(value) || !isStageModuleId(value.module_id) ||
     !Number.isInteger(value.x) || !Number.isInteger(value.y) ||
@@ -600,7 +668,37 @@ function parseModule(value: unknown, columns: number, rows: number): StageModule
     (value.x as number) + (value.width as number) > columns ||
     (value.y as number) + (value.height as number) > rows
   ) return null
-  return value as unknown as StageModuleLayout
+  const instanceId = version === 4 ? value.instance_id : value.module_id
+  if (typeof instanceId !== 'string' || !/^[a-z_]+(?::[1-9][0-9]*)?$/.test(instanceId)) {
+    return null
+  }
+  if (
+    Object.hasOwn(value, 'source_thread_id') &&
+    value.source_thread_id !== null &&
+    typeof value.source_thread_id !== 'string'
+  ) return null
+  return {
+    instance_id: instanceId,
+    module_id: value.module_id,
+    source_thread_id: value.source_thread_id as string | null | undefined,
+    x: value.x as number,
+    y: value.y as number,
+    width: value.width as number,
+    height: value.height as number,
+  }
+}
+
+function upgradeStageLayout(layout: ParsedStageLayout): StageLayoutSet {
+  return addMemoryIngestToExistingLayout({
+    version: 4,
+    active_layer_id: layout.active_layer_id,
+    layers: layout.layers.map(cloneLayer),
+    removed_layers: layout.removed_layers.map(cloneLayer),
+    scopes: Object.fromEntries(Object.entries(layout.scopes).map(([key, scope]) => [
+      key,
+      scope === 'GLOBAL' ? 'GLOBAL' : 'ATTUNED',
+    ])),
+  })
 }
 
 function expandLegacyStageLayout(layout: ParsedStageLayout): StageLayoutSet {
@@ -611,7 +709,7 @@ function expandLegacyStageLayout(layout: ParsedStageLayout): StageLayoutSet {
     removed_modules: layer.removed_modules.map(expandLegacyModule),
   })
   return addMemoryIngestToExistingLayout({
-    version: 3,
+    version: 4,
     active_layer_id: layout.active_layer_id,
     layers: layout.layers.map(expandLayer),
     removed_layers: layout.removed_layers.map(expandLayer),
@@ -740,8 +838,9 @@ function legacyOrder(left: unknown, right: unknown): number {
 function parseScopes(value: unknown): Record<string, RackScope> {
   const scopes = { ...DEFAULT_SCOPES }
   if (!isRecord(value)) return scopes
-  for (const key of Object.keys(scopes)) {
-    if (value[key] === 'GLOBAL' || value[key] === 'CURRENT') scopes[key] = value[key]
+  for (const key of Object.keys(value)) {
+    if (value[key] === 'GLOBAL') scopes[key] = 'GLOBAL'
+    if (value[key] === 'ATTUNED' || value[key] === 'CURRENT') scopes[key] = 'ATTUNED'
   }
   return scopes
 }

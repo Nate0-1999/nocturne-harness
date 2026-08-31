@@ -158,7 +158,7 @@ async function mountedModules(targetPage) {
 
 async function activeCamera(targetPage) {
   return targetPage.evaluate(() => {
-    const layout = JSON.parse(localStorage.getItem('nocturne.stage.layout.v3'))
+    const layout = JSON.parse(localStorage.getItem('nocturne.stage.layout.v4'))
     return layout.layers.find((layer) => layer.layer_id === layout.active_layer_id).camera
   })
 }

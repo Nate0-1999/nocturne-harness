@@ -30,6 +30,7 @@ import {
   loadRackLayout,
   persistRackLayout,
   type RackBounds,
+  type RackScope,
 } from './rackLayout'
 import { assertRackModuleTemplate, stageGridBounds } from './rackModuleTemplate'
 import { runRackAction } from './rackAction'
@@ -38,6 +39,7 @@ import {
   type SpatialAddress,
   type SpatialSelectionContext,
 } from './spatialSelection'
+import type { AttunementTarget } from './attunement'
 import {
   authoritativeProjectPath,
   canonicalProjectPath,
@@ -83,6 +85,7 @@ export interface RackSnapshot {
   threads: Record<string, ThreadState>
   connection: ConnectionStatus
   globalError: HarnessError | null
+  attunement: AttunementTarget | null
 }
 
 export type RackAction =
@@ -104,8 +107,8 @@ export type RackAction =
   | { type: 'seed.jump-start.load' }
   | { type: 'seed.upload'; batch_uid: string; source_name: string; markdown: string }
   | { type: 'queue.batch.decide'; batch_uid: string; decision: 'approve' | 'deny' }
-  | { type: 'rack.scope.get'; module_id: RackModuleId }
-  | { type: 'rack.scope.set'; module_id: RackModuleId; scope: 'GLOBAL' | 'CURRENT' }
+  | { type: 'rack.scope.get'; module_id: RackModuleId; instance_id?: string }
+  | { type: 'rack.scope.set'; module_id: RackModuleId; instance_id?: string; scope: RackScope }
   | { type: 'parameter.write'; thread_id: string; parameter_id: string; value: string | number | null }
   | { type: 'scorer.simulate'; injection_id?: string; base_version: string; values: JsonValue; slice_parameter_id: string }
   | { type: 'scorer.force'; event_uid: string; base_version: string; values: JsonValue; simulation_digest: string }
@@ -149,7 +152,7 @@ export interface RackModuleManifest {
   bounds: RackBounds
   movable: boolean
   law_bound: boolean
-  default_scope: 'GLOBAL' | 'CURRENT'
+  default_scope: RackScope
   bindings?: readonly string[]
 }
 
@@ -211,7 +214,7 @@ export type RackActionResult<Action extends RackAction> =
       : Action['type'] extends 'thread.archive' | 'queue.load' | 'queue.decide' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
         ? JsonValue
         : Action['type'] extends 'rack.scope.get' | 'rack.scope.set'
-          ? 'GLOBAL' | 'CURRENT'
+          ? RackScope
       : Ulid
 
 const commonPanelBounds: RackBounds = {
@@ -255,7 +258,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     bounds: stageGridBounds(RACK_BOUNDS.threads.preferred),
     movable: true,
     law_bound: false,
-    default_scope: 'CURRENT',
+    default_scope: 'ATTUNED',
   },
   chat: {
     id: 'chat',
@@ -268,7 +271,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     bounds: stageGridBounds(RACK_BOUNDS.chat.preferred),
     movable: true,
     law_bound: false,
-    default_scope: 'CURRENT',
+    default_scope: 'ATTUNED',
   },
   memory: {
     id: 'memory',
@@ -281,7 +284,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     bounds: stageGridBounds(RACK_BOUNDS.memory.preferred),
     movable: true,
     law_bound: true,
-    default_scope: 'CURRENT',
+    default_scope: 'ATTUNED',
   },
   vitals: {
     id: 'vitals',
@@ -300,7 +303,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     id: 'context_bars', name: 'Context Bars', version: '1.0.0', class: 'visualizer',
     slot: 'strip', streams: ['run.done'], actions: ['rack.scope.get', 'rack.scope.set'],
     bounds: stageGridBounds(STRIP_RACK_BOUNDS.context_bars.preferred),
-    movable: true, law_bound: false, default_scope: 'CURRENT',
+    movable: true, law_bound: false, default_scope: 'ATTUNED',
   },
   gate: {
     id: 'gate',
@@ -313,7 +316,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     bounds: commonPanelBounds,
     movable: false,
     law_bound: true,
-    default_scope: 'CURRENT',
+    default_scope: 'ATTUNED',
   },
   thread_end: {
     id: 'thread_end',
@@ -326,7 +329,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     bounds: commonPanelBounds,
     movable: false,
     law_bound: true,
-    default_scope: 'CURRENT',
+    default_scope: 'ATTUNED',
   },
   palace_queue: {
     id: 'palace_queue',
@@ -356,7 +359,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     bounds: commonPanelBounds,
     movable: false,
     law_bound: false,
-    default_scope: 'CURRENT',
+    default_scope: 'ATTUNED',
   },
   memory_graph: {
     id: 'memory_graph', name: 'Memory Graph', version: '1.0.0', class: 'visualizer',
@@ -391,14 +394,14 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     id: 'recipe', name: 'Recipe', version: '1.0.0', class: 'visualizer',
     slot: 'panel', streams: [], actions: ['rack.scope.get', 'rack.scope.set'],
     bounds: stageGridBounds(instrumentStageBounds.preferred), movable: true,
-    law_bound: true, default_scope: 'CURRENT',
+    law_bound: true, default_scope: 'ATTUNED',
   },
   deck: {
     id: 'deck', name: 'The Deck', version: '1.0.0', class: 'control',
     slot: 'panel', streams: ['thread.snapshot', 'run.*'],
     actions: ['thread.select', 'prompt.submit', 'symphony.intervene'],
     bounds: stageGridBounds({ w: 20, h: 20 }), movable: true,
-    law_bound: true, default_scope: 'CURRENT',
+    law_bound: true, default_scope: 'ATTUNED',
   },
 }
 
@@ -437,6 +440,7 @@ function snapshotFromState(state: ReturnType<typeof useHarnessStore.getState>): 
     threads: state.threads,
     connection: state.connection,
     globalError: state.globalError,
+    attunement: null,
   }
 }
 
@@ -531,14 +535,17 @@ function dispatchRackAction<Action extends RackAction>(
           },
         ) as Promise<RackActionResult<Action>>
       case 'rack.scope.get':
-        return loadRackLayout(globalThis.localStorage).scopes[action.module_id] as
+        return (loadRackLayout(globalThis.localStorage).scopes[action.instance_id ?? action.module_id]
+          ?? loadRackLayout(globalThis.localStorage).scopes[action.module_id]
+          ?? RACK_MANIFESTS[action.module_id].default_scope) as
           RackActionResult<Action>
       case 'rack.scope.set': {
         const layout = loadRackLayout(globalThis.localStorage)
-        layout.scopes[action.module_id] = action.scope
+        const instanceId = action.instance_id ?? action.module_id
+        layout.scopes[instanceId] = action.scope
         persistRackLayout(globalThis.localStorage, layout)
         globalThis.dispatchEvent(new CustomEvent('nocturne:rack-scope', {
-          detail: { module_id: action.module_id, scope: action.scope },
+          detail: { module_id: action.module_id, instance_id: instanceId, scope: action.scope },
         }))
         return action.scope as RackActionResult<Action>
       }
@@ -652,7 +659,7 @@ export const rackQuerySurface: RackQuerySurface = {
     }
     if (request.resource === 'parameters') {
       if (request.thread_id === undefined) {
-        throw new Error('CURRENT parameter query requires a thread')
+        throw new Error('ATTUNED parameter query requires a thread')
       }
       const url = new URL('/v1/rack/query', globalThis.location.origin)
       url.searchParams.set('resource', 'parameters')
@@ -785,14 +792,23 @@ function spatialSelectionSurface(context: SpatialSelectionContext): RackSelectio
 export function createHostPluginApi(
   manifest: RackModuleManifest,
   spatialContext: SpatialSelectionContext | null = null,
+  instanceId: string = manifest.id,
+  attunement: AttunementTarget | null = null,
 ): RackPluginApi {
+  const attuned = spatialContext?.scope === 'ATTUNED'
+  const ownsAttunementSource = attunement?.source_instance_id === instanceId
   const selection = spatialContext === null
     ? rackSelectionSurface
     : spatialSelectionSurface(spatialContext)
   return {
     manifest,
     events: {
-      getSnapshot: getRackSnapshot,
+      getSnapshot: () => contextualRackSnapshot(
+        getRackSnapshot(),
+        attunement,
+        attuned,
+        ownsAttunementSource,
+      ),
       subscribeState: subscribeRackState,
       subscribe(listener) {
         return subscribeRackEnvelopes((event) => {
@@ -813,14 +829,62 @@ export function createHostPluginApi(
           throw new Error(`${manifest.id} is not permitted to dispatch ${action.type}`)
         }
         return runRackAction(
-          () => dispatchRackAction(action),
+          () => dispatchRackAction(contextualRackAction(action, instanceId, attunement)),
           (message) => useHarnessStore.getState().setTransportError(message),
         )
       },
     },
-    query: rackQuerySurface,
+    query: {
+      query: (request) => rackQuerySurface.query(contextualRackQuery(request, attunement)),
+    },
     selection,
   }
+}
+
+function contextualRackSnapshot(
+  snapshot: RackSnapshot,
+  attunement: AttunementTarget | null,
+  attuned: boolean,
+  ownsAttunementSource: boolean,
+): RackSnapshot {
+  if (attunement?.kind !== 'thread') {
+    return attuned && !ownsAttunementSource
+      ? { ...snapshot, selectedThreadId: null, currentProjectKey: null, attunement }
+      : { ...snapshot, attunement }
+  }
+  const entry = snapshot.catalog.find((candidate) => candidate.thread_id === attunement.id)
+  return {
+    ...snapshot,
+    selectedThreadId: attunement.id,
+    currentProjectKey: entry?.project_key ?? null,
+    attunement,
+  }
+}
+
+function contextualRackQuery(
+  request: RackQueryRequest,
+  attunement: AttunementTarget | null,
+): RackQueryRequest {
+  if (request.thread_id !== undefined || attunement?.kind !== 'thread') return request
+  return { ...request, thread_id: attunement.id }
+}
+
+function contextualRackAction<Action extends RackAction>(
+  action: Action,
+  instanceId: string,
+  attunement: AttunementTarget | null,
+): Action {
+  if (action.type === 'rack.scope.get' || action.type === 'rack.scope.set') {
+    return { ...action, instance_id: instanceId } as Action
+  }
+  if (
+    attunement?.kind === 'thread' &&
+    ['prompt.submit', 'run.cancel', 'thread.archive', 'memory.refresh', 'memory.add',
+      'memory.remove', 'memory.edit', 'memory.pin', 'parameter.write'].includes(action.type)
+  ) {
+    harnessClient.selectThread(attunement.id)
+  }
+  return action
 }
 
 const RackPluginContext = createContext<RackPluginApi | null>(null)

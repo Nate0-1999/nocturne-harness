@@ -90,6 +90,46 @@ def valid_envelope() -> dict[str, object]:
     }
 
 
+def test_attunement_tie_pick_is_durably_journaled(tmp_path: Path) -> None:
+    """SPEC D.2 138-139: an equal-distance pick is durable owner evidence."""
+
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    factory = EnvelopeFactory(machine_id="daemon-test")
+    loop = RunLoop(CancellableRunner(), factory, transcript_journal=journal)
+    thread_id = "22345678-1234-5678-1234-567812345678"
+    body = {
+        "thread_id": thread_id,
+        "consumer_instance_id": "context_bars:2",
+        "source_instance_id": "chat:2",
+        "target": {
+            "kind": "thread",
+            "id": thread_id,
+            "name": "Second thread",
+            "thread_ids": [thread_id],
+            "source_instance_id": "chat:2",
+        },
+        "tied_source_instance_ids": ["chat", "chat:2"],
+        "layout_signature": "layout-v4-proof",
+    }
+
+    with TestClient(
+        create_app(tmp_path / "missing-web", run_loop=loop, envelope_factory=factory)
+    ) as client:
+        response = client.post("/v1/rack/attunement-picks", json=body)
+
+    assert response.status_code == 200
+    assert response.json()["type"] == "rack.attunement.pick"
+    rows = [
+        json.loads(line)
+        for line in journal.path_for_thread(thread_id).read_text(encoding="utf-8").splitlines()
+    ]
+    assert len(rows) == 1
+    assert rows[0]["version"] == 1
+    assert rows[0]["record_type"] == "event"
+    assert rows[0]["thread_id"] == thread_id
+    assert rows[0]["event"] == response.json()
+
+
 def png_input(data: bytes = b"\x89PNG\r\n\x1a\ndaemon-image") -> ImageInput:
     return ImageInput(
         kind="image",

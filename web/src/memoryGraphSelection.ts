@@ -2,7 +2,7 @@ export interface MemoryGraphSelectableNode {
   memory: { memory_id: string }
 }
 
-export type MemoryGraphScope = 'GLOBAL' | 'CURRENT'
+export type MemoryGraphScope = 'GLOBAL' | 'ATTUNED'
 
 export interface KeyedMemoryGraphSnapshot<SnapshotType> {
   requestKey: string
@@ -15,7 +15,7 @@ export function memoryGraphRequestKey(
 ): string {
   return JSON.stringify({
     scope,
-    thread_id: scope === 'CURRENT' ? selectedThreadId : null,
+    thread_id: scope === 'ATTUNED' ? selectedThreadId : null,
   })
 }
 

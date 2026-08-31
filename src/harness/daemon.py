@@ -23,7 +23,7 @@ from fastapi import (
 )
 from fastapi.responses import PlainTextResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from harness import __version__
 from harness.agent import HarnessAgent
@@ -125,6 +125,23 @@ type RecipeGraphReader = Callable[[], RecipeGraphSnapshot]
 
 class TranscriptBackupUpdate(BaseModel):
     enabled: bool
+
+
+class AttunementTargetRequest(BaseModel):
+    kind: Literal["thread", "stack"]
+    id: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    thread_ids: list[str]
+    source_instance_id: str = Field(min_length=1)
+
+
+class AttunementPickRequest(BaseModel):
+    thread_id: str = Field(min_length=1)
+    consumer_instance_id: str = Field(min_length=1)
+    source_instance_id: str = Field(min_length=1)
+    target: AttunementTargetRequest
+    tied_source_instance_ids: list[str] = Field(min_length=2)
+    layout_signature: str = Field(min_length=1)
 
 
 _OUTBOX_BUFFER_SIZE = 256
@@ -461,6 +478,28 @@ def create_app(
                 status_code=code,
                 detail=f"Parameter write refused: {exc.reason}.",
             ) from None
+
+    @app.post("/v1/rack/attunement-picks", response_model=Envelope)
+    async def journal_attunement_pick(body: AttunementPickRequest) -> Envelope:
+        """Journal a random proximity-tie choice before the browser treats it as sticky."""
+
+        if body.source_instance_id not in body.tied_source_instance_ids:
+            raise HTTPException(
+                status_code=422,
+                detail="Tie winner is not one of the tied sources.",
+            )
+        if body.target.source_instance_id != body.source_instance_id:
+            raise HTTPException(
+                status_code=422,
+                detail="Tie target does not match its source.",
+            )
+        event = factory.create(
+            "rack.attunement.pick",
+            body.model_dump(mode="json", exclude={"thread_id"}),
+            thread_id=body.thread_id,
+        )
+        await loop.publish(body.thread_id, event)
+        return event
 
     async def not_implemented(message: Envelope, send: EnvelopeSender) -> None:
         await loop.send_direct(

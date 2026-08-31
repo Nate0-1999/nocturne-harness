@@ -49,8 +49,8 @@ test('Graph node activation publishes memory identity without opening an overlay
  */
 test('only exposes a Graph snapshot matching the pending scope and thread request', () => {
   const globalKey = memoryGraphRequestKey('GLOBAL', 'ignored-thread')
-  const currentAKey = memoryGraphRequestKey('CURRENT', 'thread-a')
-  const currentBKey = memoryGraphRequestKey('CURRENT', 'thread-b')
+  const currentAKey = memoryGraphRequestKey('ATTUNED', 'thread-a')
+  const currentBKey = memoryGraphRequestKey('ATTUNED', 'thread-b')
   const loaded = { requestKey: globalKey, data: { marker: 'global truth' } }
 
   assert.deepEqual(memoryGraphSnapshotForRequest(loaded, globalKey), { marker: 'global truth' })
@@ -59,15 +59,15 @@ test('only exposes a Graph snapshot matching the pending scope and thread reques
   assert.notEqual(currentAKey, currentBKey)
 })
 
-/** SPEC C.3/C.4, ADR-023, and F028 forbid a CURRENT query without a thread:
- * omitting thread_id is the daemon's GLOBAL contract, not empty CURRENT truth.
+/** SPEC C.3/C.4, ADR-023, and F028 forbid an ATTUNED query without a thread:
+ * omitting thread_id is the daemon's GLOBAL contract, not empty ATTUNED truth.
  */
-test('does not query CURRENT memory until a thread identity exists', async () => {
+test('does not query ATTUNED memory until a thread identity exists', async () => {
   const source = await readFile(new URL('../src/MemoryGraph.tsx', import.meta.url), 'utf8')
 
   assert.equal(memoryGraphRequestIsQueryable('GLOBAL', null), true)
-  assert.equal(memoryGraphRequestIsQueryable('CURRENT', 'thread-a'), true)
-  assert.equal(memoryGraphRequestIsQueryable('CURRENT', null), false)
+  assert.equal(memoryGraphRequestIsQueryable('ATTUNED', 'thread-a'), true)
+  assert.equal(memoryGraphRequestIsQueryable('ATTUNED', null), false)
   assert.match(source, /if \(!requestIsQueryable\) \{\s*return\s*\}\s*let active = true/u)
-  assert.match(source, /!requestIsQueryable \? <p role="status">Select a thread to inspect its current memory\.<\/p>/u)
+  assert.match(source, /!requestIsQueryable \? <p role="status">\{rack\.attunement\?\.kind === 'stack'/u)
 })

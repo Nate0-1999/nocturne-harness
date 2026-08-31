@@ -5,7 +5,7 @@ import { useRackPlugin, useRackSnapshot } from './rack'
 import { formatHumanCount, formatHumanPercent } from './humanNumbers'
 import './assets/honest-display.css'
 
-type Scope = 'GLOBAL' | 'CURRENT'
+type Scope = 'GLOBAL' | 'ATTUNED'
 type Category = 'system' | 'history' | 'memory' | 'tools'
 
 interface Observation {
@@ -34,7 +34,7 @@ const CATEGORIES: Category[] = ['system', 'history', 'memory', 'tools']
 export function ContextBars() {
   const { events, query } = useRackPlugin()
   const rack = useRackSnapshot()
-  const [scope, setScope] = useState<Scope>('CURRENT')
+  const [scope, setScope] = useState<Scope>('ATTUNED')
   const [observation, setObservation] = useState<Observation | null>(null)
   const [failed, setFailed] = useState(false)
   const [refresh, setRefresh] = useState(0)
@@ -46,10 +46,10 @@ export function ContextBars() {
 
   useEffect(() => {
     let active = true
-    if (scope === 'CURRENT' && rack.selectedThreadId === null) {
+    if (scope === 'ATTUNED' && rack.selectedThreadId === null) {
       return () => { active = false }
     }
-    const threadId = scope === 'CURRENT' ? rack.selectedThreadId ?? undefined : undefined
+    const threadId = scope === 'ATTUNED' ? rack.selectedThreadId ?? undefined : undefined
     void query.query({ resource: 'context_window', as_of: 'now', thread_id: threadId })
       .then((result) => {
         if (!active) return
@@ -73,7 +73,7 @@ export function ContextBars() {
     setCollapsed(event.grid_height === 1)
   }), [events])
 
-  const visibleObservation = scope === 'CURRENT' && rack.selectedThreadId === null
+  const visibleObservation = scope === 'ATTUNED' && rack.selectedThreadId === null
     ? null
     : observation
   const usedPercent = visibleObservation === null

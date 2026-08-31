@@ -3023,3 +3023,32 @@ drift this packet exists to remove. Checking the lexical parent would permit sym
 escapes. Tightening bash to one directory would break ordinary builds and contradict
 the owner's explicit subtree ruling. Fencing reads would add friction without serving
 the modification-presence problem.
+
+## 100 — Attune each instrument instance to the nearest source [P2, D.2 138-139, M3AT]
+
+**Decision.** Give every Stage instrument a durable instance id and migrate the saved
+Stage to schema v4. Chat copies are explicit thread sources; Channel Stack and The Deck
+are stack sources. Context Bars, Spend, and Memory Graph may each have multiple
+instances. Their `ATTUNED` scope resolves the nearest source using Euclidean distance
+over Stage x, y, and layer order, with one layer step equal to one grid unit. `GLOBAL`
+continues to mean the whole Palace. Every attuned instrument names its resolved thread
+or stack in its chrome, and names itself unattuned when no source exists.
+
+An exact-distance tie is selected with browser cryptographic randomness, retained for
+the same layout signature across reload, and appended to the source thread as a
+`rack.attunement.pick` event. Moving any participating frame changes that signature and
+allows a new pick. Moving an instrument therefore reattunes it without a separate
+picker. The Rack bridge immediately republishes changed instance context to an already
+loaded iframe. A source instrument keeps its own selected stack view; a consumer bound
+to a stack or to nothing never falls through to the globally selected thread.
+
+**Motivation.** The owner should be able to arrange two simultaneous conversations and
+understand what each nearby instrument means by looking at the Stage itself. Position
+becomes a visible, reversible context control instead of an invisible selected-thread
+singleton, while the badge and tie journal keep ambiguity honest.
+
+**Rejected alternatives.** A per-instrument thread picker would duplicate the spatial
+gesture and add chrome. Relabeling every copy from the currently selected thread would
+make two instances lie in unison. A second persistence lifecycle would split Stage
+truth. Treating a stack target as the global selected thread would leak unrelated
+conversation state through an apparently scoped instrument.

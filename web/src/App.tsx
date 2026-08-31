@@ -68,10 +68,12 @@ import {
   STAGE_MAX_ZOOM,
   STAGE_MIN_ZOOM,
   STAGE_MODULE_IDS,
+  MULTI_INSTANCE_MODULE_IDS,
   STAGE_ROWS,
   STAGE_UNIT_HEIGHT,
   STAGE_UNIT_WIDTH,
   activeStageLayer,
+  addStageModuleInstance,
   cloneFactoryStageLayout,
   cloneStageLayout,
   createStageLayer,
@@ -97,6 +99,7 @@ import {
   type StageModuleId,
   type StageModuleLayout,
 } from './stageLayout'
+import type { RackScope } from './rackLayout'
 import {
   rackResizeDirections,
   type RackResizeDirection,
@@ -124,6 +127,14 @@ import {
 import { ownerConnectionCopy, type PalaceStatus } from './surfaceHonesty'
 import { ControlTooltip } from './ControlTooltip'
 import { spatialAddresses, type SpatialSelectionContext } from './spatialSelection'
+import {
+  attunementBadge,
+  loadStickyAttunementPicks,
+  persistStickyAttunementPicks,
+  resolveAttunements,
+  type AttunementTarget,
+  type StickyAttunementPick,
+} from './attunement'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
 const SEAM_COLORS = (JSON.parse(seamColorsRaw) as { colors: SeamColorEntry[] }).colors
@@ -153,6 +164,12 @@ interface TranscriptBackupState {
 
 function shortId(value: string): string {
   return value.slice(0, 8).toUpperCase()
+}
+
+function secureRandom(): number {
+  const value = new Uint32Array(1)
+  globalThis.crypto.getRandomValues(value)
+  return value[0] / 0x1_0000_0000
 }
 
 function resizeDirectionName(direction: RackResizeDirection): string {
@@ -234,6 +251,14 @@ function initialColorways(): PressedColorway[] {
     return loadColorways(globalThis.localStorage)
   } catch {
     return []
+  }
+}
+
+function initialStickyAttunements(): Record<string, StickyAttunementPick> {
+  try {
+    return loadStickyAttunementPicks(globalThis.localStorage)
+  } catch {
+    return {}
   }
 }
 
@@ -334,11 +359,31 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   const [libraryOpen, setLibraryOpen] = useState(false)
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 })
   const viewportRef = useRef<HTMLDivElement>(null)
+  const initialAttunementPicks = useMemo(() => initialStickyAttunements(), [])
+  const stickyAttunements = useRef<Record<string, StickyAttunementPick>>(
+    initialAttunementPicks,
+  )
+  const journaledAttunementPicks = useRef(new Set<string>())
   const layer = activeStageLayer(layout)
   const frameAddresses = useMemo(
-    () => spatialAddresses(layer.layer_id, layer.modules),
+    () => spatialAddresses(layer.layer_id, layer.modules.map((module) => ({
+      ...module,
+      module_id: module.instance_id,
+    }))),
     [layer.layer_id, layer.modules],
   )
+  const attunements = useMemo(() => resolveAttunements(
+    layout,
+    snapshot.catalog.map((thread) => ({
+      thread_id: thread.thread_id,
+      title: visibleThreadTitle(thread.title),
+    })),
+    snapshot.selectedThreadId,
+    // The resolver owns sticky tie identity between renders; layout changes invalidate its signature.
+    // eslint-disable-next-line react-hooks/refs
+    stickyAttunements.current,
+    secureRandom,
+  ), [layout, snapshot.catalog, snapshot.selectedThreadId])
   const selectedThread = snapshot.selectedThreadId === null
     ? null
     : snapshot.threads[snapshot.selectedThreadId]
@@ -362,6 +407,27 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     '--stage-major-grid-width': `${STAGE_UNIT_WIDTH}px`,
     '--stage-major-grid-height': `${STAGE_UNIT_HEIGHT}px`,
   } as CSSProperties
+
+  useEffect(() => {
+    stickyAttunements.current = attunements.sticky_picks
+    try {
+      persistStickyAttunementPicks(globalThis.localStorage, attunements.sticky_picks)
+    } catch {
+      // The visible binding remains stable for this page when storage is denied.
+    }
+    for (const pick of attunements.new_tie_picks) {
+      const threadId = pick.target.thread_ids[0]
+      if (threadId === undefined) continue
+      const journalKey = `${pick.consumer_instance_id}:${pick.layout_signature}`
+      if (journaledAttunementPicks.current.has(journalKey)) continue
+      journaledAttunementPicks.current.add(journalKey)
+      void globalThis.fetch('/v1/rack/attunement-picks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...pick, thread_id: threadId }),
+      }).catch(() => undefined)
+    }
+  }, [attunements])
 
   useEffect(() => {
     if (!appSettingsOpen || transcriptBackup !== null) return
@@ -491,11 +557,16 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
 
   useEffect(() => {
     const syncScope = (event: Event) => {
-      const detail = (event as CustomEvent).detail as { module_id?: string; scope?: string }
-      if (detail.module_id === undefined || !['GLOBAL', 'CURRENT'].includes(detail.scope ?? '')) return
+      const detail = (event as CustomEvent).detail as {
+        module_id?: string
+        instance_id?: string
+        scope?: string
+      }
+      const instanceId = detail.instance_id ?? detail.module_id
+      if (instanceId === undefined || !['GLOBAL', 'ATTUNED'].includes(detail.scope ?? '')) return
       setLayout((current) => ({
         ...current,
-        scopes: { ...current.scopes, [detail.module_id!]: detail.scope as 'GLOBAL' | 'CURRENT' },
+        scopes: { ...current.scopes, [instanceId]: detail.scope as RackScope },
       }))
     }
     globalThis.addEventListener('nocturne:rack-scope', syncScope)
@@ -524,29 +595,31 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   }, [])
 
   const changeModuleScope = useCallback((
+    instanceId: string,
     moduleId: RackModuleId,
-    scope: 'GLOBAL' | 'CURRENT',
+    scope: RackScope,
   ) => {
     const manifest = RACK_MANIFESTS[moduleId]
     if (!(manifest.actions as readonly string[]).includes('rack.scope.set')) return
-    void createHostPluginApi(manifest).events.dispatch({
+    void createHostPluginApi(manifest, null, instanceId).events.dispatch({
       type: 'rack.scope.set',
       module_id: moduleId,
+      instance_id: instanceId,
       scope,
     }).catch(() => undefined)
   }, [])
 
-  const moveModule = useCallback((moduleId: StageModuleId, x: number, y: number) => {
-    setLayout((current) => moveStageModule(current, moduleId, x, y))
+  const moveModule = useCallback((instanceId: string, x: number, y: number) => {
+    setLayout((current) => moveStageModule(current, instanceId, x, y))
   }, [])
 
   const resizeModule = useCallback((
-    moduleId: StageModuleId,
+    instanceId: string,
     width: number,
     height: number,
     direction: RackResizeDirection,
   ) => {
-    setLayout((current) => resizeStageModule(current, moduleId, width, height, direction))
+    setLayout((current) => resizeStageModule(current, instanceId, width, height, direction))
   }, [])
 
   const layoutStatus = savedSet !== null && stageLayoutsEqual(layout, savedSet)
@@ -616,7 +689,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     }
     setLayout((current) => recoverStageModule(
       current,
-      module.module_id,
+      module.instance_id,
       viewportSize.width,
       viewportSize.height,
     ))
@@ -861,9 +934,14 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           {layer.modules.map((module) => {
             const isDrawerOpen = drawerModule === module.module_id
             const isInert = openGate !== null || dismissibleOverlay !== null
+            const scope = layout.scopes[module.instance_id]
+              ?? layout.scopes[module.module_id]
+              ?? RACK_MANIFESTS[module.module_id].default_scope
+            const attunement = attunements.targets.get(module.instance_id) ?? null
             return (
             <RackModuleFrame
-              key={module.module_id}
+              key={module.instance_id}
+              instanceId={module.instance_id}
               manifest={RACK_MANIFESTS[module.module_id]}
               x={module.x}
               y={module.y}
@@ -873,12 +951,13 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               inert={isInert}
               onMove={moveModule}
               onResize={resizeModule}
-              onRemove={(moduleId) => setLayout((current) => removeStageModule(current, moduleId))}
+              onRemove={(instanceId) => setLayout((current) => removeStageModule(current, instanceId))}
               onPointerActivity={setPointerActive}
-              scope={layout.scopes[module.module_id]}
+              scope={scope}
+              attunement={attunement}
               spatialContext={{
-                ...frameAddresses.get(module.module_id)!,
-                scope: layout.scopes[module.module_id],
+                ...frameAddresses.get(module.instance_id)!,
+                scope,
               }}
               onScopeChange={changeModuleScope}
               cameraZoom={layer.camera.zoom}
@@ -892,7 +971,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           <nav className="stage-recall" aria-label="Off-screen modules">
             <span>Off-screen</span>
             {offscreenModules.map((module) => (
-              <button key={module.module_id} type="button" onClick={() => focusModule(module)}>
+              <button key={module.instance_id} type="button" onClick={() => focusModule(module)}>
                 {RACK_MANIFESTS[module.module_id].name}
               </button>
             ))}
@@ -910,20 +989,44 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           <ul>
             {STAGE_MODULE_IDS.map((moduleId) => {
               const present = layer.modules.some((module) => module.module_id === moduleId)
+              const multiInstance = MULTI_INSTANCE_MODULE_IDS.includes(moduleId)
               return (
                 <li key={moduleId}>
                   <span>{RACK_MANIFESTS[moduleId].name}</span>
                   <button
                     type="button"
-                    disabled={present}
-                    onClick={() => setLayout((current) => restoreStageModule(current, moduleId))}
+                    disabled={present && !multiInstance}
+                    onClick={() => setLayout((current) => multiInstance && present
+                      ? addStageModuleInstance(current, moduleId, snapshot.selectedThreadId)
+                      : restoreStageModule(current, moduleId))}
                   >
-                    {present ? 'On stage' : 'Add'}
+                    {present ? multiInstance ? 'Add another' : 'On stage' : 'Add'}
                   </button>
                 </li>
               )
             })}
           </ul>
+          {layer.removed_modules.length > 0 && (
+            <>
+              <h2>Removed instruments</h2>
+              <ul>
+                {layer.removed_modules.map((removed) => (
+                  <li key={removed.instance_id}>
+                    <span>{RACK_MANIFESTS[removed.module_id].name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setLayout((current) => restoreStageModule(
+                        current,
+                        removed.instance_id,
+                      ))}
+                    >
+                      Restore
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
           {layout.removed_layers.length > 0 && (
             <>
               <h2>Removed layers</h2>
@@ -959,7 +1062,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
         <div className="rack-overlay-module" data-rack-module="gate">
           <RackSettingsControl
             manifest={RACK_MANIFESTS.gate}
-            scope={layout.scopes.gate}
+            scope={layout.scopes.gate ?? RACK_MANIFESTS.gate.default_scope}
           />
           <RackPluginIframe
             manifest={RACK_MANIFESTS.gate}
@@ -971,7 +1074,8 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
       {dismissibleOverlay !== null && openGate === null && (
         <DismissibleRackOverlay
           moduleId={dismissibleOverlay}
-          scope={layout.scopes[dismissibleOverlay]}
+          scope={layout.scopes[dismissibleOverlay]
+            ?? RACK_MANIFESTS[dismissibleOverlay].default_scope}
           onScopeChange={changeModuleScope}
           theme={theme}
           isRegressionFixture={isRegressionFixture}
@@ -992,8 +1096,8 @@ function DismissibleRackOverlay({
   isRegressionFixture,
 }: {
   moduleId: DismissibleOverlayModuleId
-  scope: 'GLOBAL' | 'CURRENT'
-  onScopeChange: (moduleId: RackModuleId, scope: 'GLOBAL' | 'CURRENT') => void
+  scope: RackScope
+  onScopeChange: (instanceId: string, moduleId: RackModuleId, scope: RackScope) => void
   theme: ThemeId
   isRegressionFixture: boolean
 }) {
@@ -1015,7 +1119,7 @@ function DismissibleRackOverlay({
       <RackSettingsControl
         manifest={RACK_MANIFESTS[moduleId]}
         scope={scope}
-        onScopeChange={(value) => onScopeChange(moduleId, value)}
+        onScopeChange={(value) => onScopeChange(moduleId, moduleId, value)}
       />
       <RackPluginIframe
         key={`${moduleId}:${scope}`}
@@ -1028,6 +1132,7 @@ function DismissibleRackOverlay({
 }
 
 interface RackModuleFrameProps {
+  instanceId: string
   manifest: RackModuleManifest
   x: number
   y: number
@@ -1036,18 +1141,19 @@ interface RackModuleFrameProps {
   drawerOpen?: boolean
   collapsed?: boolean
   inert?: boolean
-  onMove?: (moduleId: StageModuleId, x: number, y: number) => void
+  onMove?: (instanceId: string, x: number, y: number) => void
   onResize?: (
-    moduleId: StageModuleId,
+    instanceId: string,
     width: number,
     height: number,
     direction: RackResizeDirection,
   ) => void
-  onRemove?: (moduleId: StageModuleId) => void
+  onRemove?: (instanceId: string) => void
   onPointerActivity?: (active: boolean) => void
-  scope: 'GLOBAL' | 'CURRENT'
+  scope: RackScope
+  attunement: AttunementTarget | null
   spatialContext: SpatialSelectionContext
-  onScopeChange?: (moduleId: StageModuleId, scope: 'GLOBAL' | 'CURRENT') => void
+  onScopeChange?: (instanceId: string, moduleId: StageModuleId, scope: RackScope) => void
   onCollapseToggle?: () => void
   cameraZoom?: number
   isRegressionFixture?: boolean
@@ -1055,6 +1161,7 @@ interface RackModuleFrameProps {
 }
 
 function RackModuleFrame({
+  instanceId,
   manifest,
   x,
   y,
@@ -1068,6 +1175,7 @@ function RackModuleFrame({
   onRemove,
   onPointerActivity,
   scope,
+  attunement,
   spatialContext,
   onScopeChange,
   onCollapseToggle,
@@ -1113,7 +1221,7 @@ function RackModuleFrame({
     const deltaY = event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0
     if (deltaX === 0 && deltaY === 0) return
     event.preventDefault()
-    onMove(moduleId, x + deltaX, y + deltaY)
+    onMove(instanceId, x + deltaX, y + deltaY)
   }
 
   function beginMove(event: ReactPointerEvent<HTMLDivElement>) {
@@ -1141,7 +1249,7 @@ function RackModuleFrame({
       const deltaY = Math.round(
         (moveEvent.clientY - startY) / (STAGE_UNIT_HEIGHT * cameraZoom),
       )
-      onMove(moduleId, startGridX + deltaX, startGridY + deltaY)
+      onMove(instanceId, startGridX + deltaX, startGridY + deltaY)
     }
     const stop = () => {
       globalThis.removeEventListener('pointermove', move)
@@ -1204,7 +1312,7 @@ function RackModuleFrame({
         : direction.includes('n')
           ? startHeight - deltaY
           : startHeight
-      onResize(moduleId, nextWidth, nextHeight, direction)
+      onResize(instanceId, nextWidth, nextHeight, direction)
     }
     const stop = () => {
       globalThis.removeEventListener('pointermove', move)
@@ -1239,7 +1347,8 @@ function RackModuleFrame({
       className={className}
       style={style}
       data-rack-module={manifest.id}
-      data-testid={`rack-module-${manifest.id}`}
+      data-rack-instance={instanceId}
+      data-testid={`rack-module-${instanceId}`}
       data-grid-x={x}
       data-grid-y={y}
       data-grid-width={width}
@@ -1265,11 +1374,17 @@ function RackModuleFrame({
           >
             <span aria-hidden="true">⠿</span>
             <strong>{manifest.name}</strong>
+            <span
+              className="rack-module__attunement"
+              data-testid={`attunement-${instanceId}`}
+            >
+              {attunementBadge(scope, attunement)}
+            </span>
           </div>
           <RackSettingsControl
             manifest={manifest}
             scope={scope}
-            onScopeChange={(value) => onScopeChange?.(moduleId, value)}
+            onScopeChange={(value) => onScopeChange?.(instanceId, moduleId, value)}
             onOpenChange={setSettingsOpen}
           />
           {onRemove !== undefined && (
@@ -1279,7 +1394,7 @@ function RackModuleFrame({
               aria-label={`Remove ${manifest.name}`}
               data-tooltip={`Remove ${manifest.name}`}
               data-tooltip-detail="Remove it from this layer. Restore it later from Library."
-              onClick={() => onRemove(moduleId)}
+              onClick={() => onRemove(instanceId)}
             >
               ×
             </button>
@@ -1318,7 +1433,7 @@ function RackModuleFrame({
                 event.preventDefault()
                 const delta = event.key === 'ArrowRight' ? 1 : -1
                 onResize(
-                  moduleId,
+                  instanceId,
                   width + (direction.includes('w') ? -delta : delta),
                   height,
                   direction,
@@ -1327,7 +1442,7 @@ function RackModuleFrame({
                 event.preventDefault()
                 const delta = event.key === 'ArrowDown' ? 1 : -1
                 onResize(
-                  moduleId,
+                  instanceId,
                   width,
                   height + (direction.includes('n') ? -delta : delta),
                   direction,
@@ -1339,9 +1454,11 @@ function RackModuleFrame({
       })}
       <div className="rack-module__content">
         <RackPluginIframe
-          key={`${manifest.id}:${scope}`}
+          key={`${instanceId}:${scope}:${attunement?.source_instance_id ?? 'none'}`}
+          instanceId={instanceId}
           manifest={manifest}
           spatialContext={spatialContext}
+          attunement={scope === 'ATTUNED' ? attunement : null}
           theme={theme}
           isRegressionFixture={isRegressionFixture}
         />
@@ -1357,8 +1474,8 @@ function RackSettingsControl({
   onOpenChange,
 }: {
   manifest: RackModuleManifest
-  scope: 'GLOBAL' | 'CURRENT'
-  onScopeChange?: (scope: 'GLOBAL' | 'CURRENT') => void
+  scope: RackScope
+  onScopeChange?: (scope: RackScope) => void
   onOpenChange?: (open: boolean) => void
 }) {
   const [open, setOpen] = useState(false)
@@ -1367,7 +1484,7 @@ function RackSettingsControl({
   const spatial = manifest.id === 'recipe'
   const fixedCopy = manifest.default_scope === 'GLOBAL'
     ? 'This module always shows the whole Palace.'
-    : 'This module follows the selected thread.'
+    : 'This module follows the nearest thread or stack.'
 
   function toggle() {
     const next = !open
@@ -1426,14 +1543,14 @@ function RackSettingsControl({
               </header>
               <p>Choose what this module {spatial ? 'watches' : 'follows'}.</p>
               <div className="rack-module__scope" aria-label={`${manifest.name} view`}>
-                {(['GLOBAL', 'CURRENT'] as const).map((value) => (
+                {(['GLOBAL', 'ATTUNED'] as const).map((value) => (
                   <button
                     key={value}
                     type="button"
                     aria-pressed={scope === value}
                     onClick={() => onScopeChange?.(value)}
                   >
-                    {value === 'GLOBAL' ? 'Everything' : spatial ? 'This frame' : 'This thread'}
+                    {value === 'GLOBAL' ? 'Everything' : spatial ? 'Nearest frame' : 'Nearest source'}
                   </button>
                 ))}
               </div>
@@ -2246,7 +2363,7 @@ interface AgentFileOffer {
 function ThreadEndModule() {
   const snapshot = useRackSnapshot()
   const { events } = useRackPlugin()
-  const [scope, setScope] = useState<'CURRENT' | 'GLOBAL'>(
+  const [scope, setScope] = useState<RackScope>(
     RACK_MANIFESTS.thread_end.default_scope,
   )
   const [cards, setCards] = useState<ThreadEndQueueCard[]>([])
@@ -2259,7 +2376,7 @@ function ThreadEndModule() {
   }, [events])
 
   useEffect(() => {
-    const threadId = scope === 'CURRENT' ? selectedThreadId ?? undefined : undefined
+    const threadId = scope === 'ATTUNED' ? selectedThreadId ?? undefined : undefined
     void events.dispatch({ type: 'queue.load', thread_id: threadId, birthplace: 'thread' }).then((value) => {
       setCards(queueCardsFrom(value))
     }).catch(() => setCards([]))
