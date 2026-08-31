@@ -1,0 +1,66 @@
+{
+  "packet": "M3ES",
+  "captured_at": "2026-08-31T18:52:00.766155Z",
+  "app": "harness.packaged:create_app",
+  "fixture": false,
+  "query": {
+    "resource": "memory_graph",
+    "as_of": "now",
+    "nodes": 52,
+    "active_bodies": 3
+  },
+  "engine": {
+    "three": "0.182.0 (r182)",
+    "react_three_fiber": "9.7.0",
+    "material": "MeshStandardNodeMaterial with TSL color and emissive nodes",
+    "backend": "WebGPU",
+    "fallback": "WebGL2"
+  },
+  "full": {
+    "axis": "activity",
+    "snapshot": "2026-08-31T18:51:54.687253Z",
+    "active_bodies": 3,
+    "fps": 120,
+    "canvas_engine": "three.js r182 webgpu",
+    "capture": "real-owner-three-full.jpg",
+    "sha256": "4deab8c9349166c2f48c690571d41e7057cf8e047a0b0dc5e3d48af395af07e2"
+  },
+  "efficient": {
+    "axis": "provenance",
+    "snapshot": "2026-08-31T18:52:00.766155Z",
+    "active_bodies": 3,
+    "fps": 119,
+    "canvas_engine": "three.js r182 webgpu",
+    "capture": "real-owner-three-efficient.jpg",
+    "sha256": "95d7fbc2ae3a05cde24fe73d6c7a06e2ec24e86aec9bebbbdb2b489eca6d861f"
+  },
+  "bindings": {
+    "activity": [
+      "X · memory.created_at (chronological rank)",
+      "Y · memory.stats.injections (log scale)",
+      "Z · memory.revision (linear scale)"
+    ],
+    "provenance": [
+      "X · memory.project_key (deterministic identity)",
+      "Y · memory origin thread (origin_thread_id; legacy thread_origin)",
+      "Z · memory.origin_path (path depth)"
+    ],
+    "shared": [
+      "Size · memory.stats.injections (log scale)",
+      "Color · memory.kind (deterministic palette)",
+      "Shape · memory.revision (vertical stretch)",
+      "Motion · memory.updated_at (recency speed)",
+      "Motion amplitude · memory.stats.injections",
+      "Brightness · memory.pin or current-context membership"
+    ]
+  },
+  "console": {
+    "warnings": 0,
+    "errors": 0
+  },
+  "writes": {
+    "palace": 0,
+    "provider_calls": 0
+  }
+}
+

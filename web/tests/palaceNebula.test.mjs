@@ -47,15 +47,25 @@ test('provenance binds the released Palace thread_origin compatibility field', (
   assert.notEqual(bodies[0].position[1], bodies[1].position[1])
 })
 
-/** ADR-018/023: text stays in React DOM and the engine has no random decorative variables. */
-test('production source keeps the legend in DOM and forbids random geometry', async () => {
-  const [component, bindings] = await Promise.all([
+/** ADR-018/023 and D.2 130: Three/r3f/TSL replace PlayCanvas without moving text into the scene. */
+test('production source uses the ruled Three stack and forbids random geometry', async () => {
+  const [component, bindings, packageText] = await Promise.all([
     readFile(new URL('src/PalaceNebula.tsx', webRoot), 'utf8'),
     readFile(new URL('src/nebulaBindings.ts', webRoot), 'utf8'),
+    readFile(new URL('package.json', webRoot), 'utf8'),
   ])
+  const dependencies = JSON.parse(packageText).dependencies
   assert.match(component, /className="palace-nebula__legend"/u)
   assert.match(component, /query\.query\(\{ resource: 'memory_graph', as_of: 'now' \}\)/u)
-  assert.match(component, /new Application\(canvas/u)
+  assert.match(component, /<Canvas/u)
+  assert.match(component, /new WebGPURenderer\(parameters\)/u)
+  assert.match(component, /new MeshStandardNodeMaterial/u)
+  assert.match(component, /tslColor/u)
+  assert.match(component, /useFrame/u)
+  assert.equal(dependencies.three, '0.182.0')
+  assert.equal(dependencies['@react-three/fiber'], '9.7.0')
+  assert.equal(dependencies.playcanvas, undefined)
+  assert.doesNotMatch(component, /playcanvas|PlayCanvas/u)
   assert.doesNotMatch(`${component}\n${bindings}`, /Math\.random/u)
 })
 

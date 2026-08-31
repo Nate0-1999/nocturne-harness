@@ -3052,3 +3052,36 @@ gesture and add chrome. Relabeling every copy from the currently selected thread
 make two instances lie in unison. A second persistence lifecycle would split Stage
 truth. Treating a stack target as the global selected thread would leak unrelated
 conversation state through an apparently scoped instrument.
+
+## 101 — The Nebula uses the ruled Three stack without moving its data seam [P2, D.2 124/130, M3ES]
+
+**Decision.** Replace only the Palace Nebula renderer lifecycle with exact
+`three==0.182.0` and `@react-three/fiber==9.7.0`. R3F owns scene composition and
+frame callbacks; Three's `WebGPURenderer` selects WebGPU when available and its
+native WebGL2 backend otherwise. Each memory uses `MeshStandardNodeMaterial` with
+TSL color and emissive nodes. Per-frame motion mutates mesh refs inside `useFrame`;
+React state receives only the settled one-second FPS sample.
+
+Keep `nebulaBindings.ts` as the complete deterministic data-to-visual transform.
+The same active-memory population, two axis modes, six shared bindings, DOM legend,
+and Full/Efficient tier meanings survive the swap. Full retains richer geometry,
+material, antialiasing, DPR up to 2, and every-frame motion; Efficient retains every
+body while reducing geometry/material/DPR and updating motion every other frame.
+Decision 094's PlayCanvas selection is overruled by D.2 130 and remains history.
+
+Pin Three at r182 because Three deprecates `Clock` beginning in r183 while current
+r3f Canvas still instantiates it; r183+ emits a console warning on every mount. The
+pin is the last pre-deprecation release, not a fork, and remains inside r3f's declared
+Three compatibility range.
+
+**Motivation.** The owner ruled that the contract stack and the built Nebula may not
+remain split. Preserving the existing functional seam changes the engine without
+changing the meaning of a pixel, while WebGPU/TSL restores ADR-008's intended renderer
+path and visible FPS keeps the hardware trade honest.
+
+**Rejected alternatives.** Rebuilding the bindings in JSX would create two truths
+and invite visual drift. Defaulting to r3f's WebGL renderer would leave the ruled TSL
+dual-target path unused. Shipping r183+ would make every mount noisy; patching or
+forking r3f solely to replace its Clock would violate dependency-first/YAGNI when the
+compatible r182 release is available. Sampling memories or changing the legend would
+trade function for renderer convenience.
