@@ -2359,15 +2359,6 @@ interface ThreadEndQueueCard {
   target_ids: string[]
 }
 
-interface CuratorActivityView {
-  admitted_writes: number
-  trigger_every: number
-  writes_until_run: number
-  pressure_until_run: number
-  pending_cards: number
-  latest_run: { status: 'completed' | 'failed'; completed_at: string } | null
-}
-
 interface AgentFileOffer {
   batch_uid: string
   relative_path: string
@@ -2614,27 +2605,6 @@ function isQueueCard(value: unknown): value is ThreadEndQueueCard {
     (value.proposal_payload === undefined || value.proposal_payload === null || isObject(value.proposal_payload))
 }
 
-function curatorActivityFrom(value: JsonValue): CuratorActivityView | null {
-  if (!isObject(value) || typeof value.admitted_writes !== 'number' ||
-    typeof value.trigger_every !== 'number' || typeof value.writes_until_run !== 'number' ||
-    typeof value.pressure_until_run !== 'number' || typeof value.pending_cards !== 'number') return null
-  const latest = value.latest_run
-  if (latest !== null && (!isObject(latest) ||
-    (latest.status !== 'completed' && latest.status !== 'failed') ||
-    typeof latest.completed_at !== 'string')) return null
-  return {
-    admitted_writes: value.admitted_writes,
-    trigger_every: value.trigger_every,
-    writes_until_run: value.writes_until_run,
-    pressure_until_run: value.pressure_until_run,
-    pending_cards: value.pending_cards,
-    latest_run: latest === null ? null : {
-      status: latest.status,
-      completed_at: latest.completed_at,
-    },
-  }
-}
-
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -2649,7 +2619,6 @@ function PalaceQueueModule() {
   const { events } = useRackPlugin()
   const seedInputRef = useRef<HTMLInputElement>(null)
   const [cards, setCards] = useState<ThreadEndQueueCard[]>([])
-  const [curatorActivity, setCuratorActivity] = useState<CuratorActivityView | null>(null)
   const [agentFiles, setAgentFiles] = useState<AgentFileOffer[]>([])
   const [agentFilesTruncated, setAgentFilesTruncated] = useState(false)
   const [queuedAgentFiles, setQueuedAgentFiles] = useState(new Set<string>())
@@ -2665,12 +2634,6 @@ function PalaceQueueModule() {
     })
   }, [events])
 
-  const loadCuratorActivity = useCallback(() => {
-    return events.dispatch({ type: 'curation.load' }).then((value) => {
-      setCuratorActivity(curatorActivityFrom(value))
-    })
-  }, [events])
-
   const loadAgentFiles = useCallback(() => {
     return events.dispatch({ type: 'seed.jump-start.load' }).then((value) => {
       const discovered = agentFileOffersFrom(value)
@@ -2680,10 +2643,10 @@ function PalaceQueueModule() {
   }, [events])
 
   useEffect(() => {
-    void Promise.all([load(), loadCuratorActivity(), loadAgentFiles()]).catch(() => {
+    void Promise.all([load(), loadAgentFiles()]).catch(() => {
       setStatusText('Memory Ingest could not load its pending work or agent-file offers.')
     })
-  }, [load, loadAgentFiles, loadCuratorActivity])
+  }, [load, loadAgentFiles])
 
   const curatorCards = useMemo(
     () => cards.filter((card) => card.birthplace === 'curator'),
@@ -2790,7 +2753,7 @@ function PalaceQueueModule() {
       approval_mode: 'explicit',
       actor_class: 'human',
     })
-      .then(() => Promise.all([load(), loadCuratorActivity()]))
+      .then(load)
       .then(() => setStatusText(decision === 'approve' ? 'Repair applied and journaled.' : 'Proposal rejected. The Palace was not changed.'))
       .catch(() => setStatusText('That memory changed after diagnosis. Run the curators again.'))
       .finally(() => setBusy(false))
@@ -2805,21 +2768,14 @@ function PalaceQueueModule() {
             <p>Documents become standalone memories for review. Nothing enters until you approve the document.</p>
           </div>
         </header>
-        <section className="curator-state" aria-labelledby="curator-state-title" data-testid="curator-state">
+        <section className="curator-state" aria-labelledby="curator-proposals-title" data-testid="curator-proposals">
           <header>
             <div>
-              <span>Palace state · Curators</span>
-              <h3 id="curator-state-title">Corpus maintenance</h3>
+              <span>Curator proposals</span>
+              <h3 id="curator-proposals-title">Corpus repairs need your consent</h3>
             </div>
             <strong>{curatorCards.length} awaiting your tap</strong>
           </header>
-          <p>
-            {curatorActivity === null
-              ? 'Curator activity is unavailable.'
-              : curatorActivity.latest_run === null
-                ? `${curatorActivity.admitted_writes} admitted writes · first pass in ${curatorActivity.writes_until_run} writes or ${curatorActivity.pressure_until_run} removals`
-                : `Latest ${curatorActivity.latest_run.status} · next pass in ${curatorActivity.writes_until_run} writes or ${curatorActivity.pressure_until_run} removals`}
-          </p>
           {curatorCards.length === 0 ? (
             <small>No surgery is waiting. Curators never change memories without this queue.</small>
           ) : (

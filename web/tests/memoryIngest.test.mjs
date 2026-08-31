@@ -42,11 +42,14 @@ test('judged Symphony batches reuse Palace Queue and retain explicit owner conse
 
 /** M3CU keeps model judgment visible while all corpus changes require an owner tap. */
 test('curator proposals expose Palace activity and use only explicit queue decisions', async () => {
-  const [app, rack] = await Promise.all([source('App.tsx'), source('rack.tsx')])
+  const [app, rack, palaceState] = await Promise.all([
+    source('App.tsx'), source('rack.tsx'), source('PalaceStateModule.tsx'),
+  ])
 
   assert.match(rack, /case 'curation\.load':[\s\S]*fetchJson\('\/v1\/curation'\)/u)
-  assert.match(app, /Palace state · Curators/u)
-  assert.match(app, /writes or.*removals/u)
+  assert.match(rack, /palace_state:[\s\S]*actions: \['curation\.load'\]/u)
+  assert.match(palaceState, /aria-label="Curator activity"/u)
+  assert.match(palaceState, /writes or.*removals/u)
   assert.match(app, /Curators never change memories without this queue/u)
   assert.match(app, /card\.proposal_payload\?\.rationale/u)
   assert.match(app, /approval_mode: 'explicit'/u)

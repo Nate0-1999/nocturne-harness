@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { LearningSummary, LearningTimeline } from './LearningTelemetry'
+import { type CuratorActivityView, curatorActivityFrom } from './curation'
 import { scorerConsoleTelemetry, type ScorerConsoleTelemetry } from './learning'
 import { formatHumanQuantity } from './humanNumbers'
 import { useRackPlugin } from './rack'
@@ -36,6 +37,7 @@ export function PalaceStateModule() {
   const [sequence, setSequence] = useState(0)
   const [snapshot, setSnapshot] = useState<VitalsSnapshot | null>(null)
   const [telemetry, setTelemetry] = useState<ScorerConsoleTelemetry | null>(null)
+  const [curatorActivity, setCuratorActivity] = useState<CuratorActivityView | null>(null)
   const [failed, setFailed] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [collapsed, setCollapsed] = useState(() => globalThis.innerHeight < 120)
@@ -46,7 +48,8 @@ export function PalaceStateModule() {
     void Promise.all([
       query.query({ resource: 'vitals', as_of: 'now' }),
       query.query({ resource: 'scorer_console', as_of: 'now' }).catch(() => null),
-    ]).then(([vitalsResult, telemetryResult]) => {
+      events.dispatch({ type: 'curation.load' }).catch(() => null),
+    ]).then(([vitalsResult, telemetryResult, curatorResult]) => {
       if (vitalsResult.status !== 'live' || vitalsResult.data === null) {
         throw new TypeError('Live Palace state was not returned')
       }
@@ -57,6 +60,7 @@ export function PalaceStateModule() {
       if (active) {
         setSnapshot(next)
         setTelemetry(nextTelemetry)
+        setCuratorActivity(curatorResult === null ? null : curatorActivityFrom(curatorResult))
         setFailed(false)
         setRefreshing(false)
       }
@@ -67,7 +71,7 @@ export function PalaceStateModule() {
       }
     })
     return () => { active = false }
-  }, [query, sequence])
+  }, [events, query, sequence])
 
   useEffect(() => {
     const interval = globalThis.setInterval(() => setSequence((value) => value + 1), 60_000)
@@ -121,6 +125,20 @@ export function PalaceStateModule() {
             {accountingCopy(snapshot.accounting)}
           </span>
         )}
+      </div>
+
+      <div className="palace-state__curators" aria-label="Curator activity" data-testid="curator-state">
+        <div>
+          <span>Curators</span>
+          <strong>{curatorActivity === null ? 'Activity unavailable' : `${curatorActivity.pending_cards} proposals waiting`}</strong>
+        </div>
+        <p>
+          {curatorActivity === null
+            ? 'The Palace remains readable; curator cadence could not be read.'
+            : curatorActivity.latest_run === null
+              ? `${curatorActivity.admitted_writes} admitted writes · first pass in ${curatorActivity.writes_until_run} writes or ${curatorActivity.pressure_until_run} removals`
+              : `Latest ${curatorActivity.latest_run.status} · next pass in ${curatorActivity.writes_until_run} writes or ${curatorActivity.pressure_until_run} removals`}
+        </p>
       </div>
 
       {telemetry !== null && (

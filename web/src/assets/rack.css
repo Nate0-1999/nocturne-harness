@@ -3638,6 +3638,42 @@ button.rack-module__resize-handle--nw {
   padding: 0.55rem 0.65rem;
 }
 
+.palace-state__curators {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  margin: 0.55rem 0.65rem 0;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line));
+  border-radius: 0.28rem;
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+.palace-state__curators > div {
+  display: grid;
+  gap: 0.15rem;
+  white-space: nowrap;
+}
+
+.palace-state__curators span {
+  color: var(--text-dim);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.palace-state__curators strong,
+.palace-state__curators p {
+  margin: 0;
+  font: 600 0.68rem/1.3 var(--font-data);
+}
+
+.palace-state__curators p {
+  color: var(--text-dim);
+  text-align: right;
+}
+
 .palace-state__gauges {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
