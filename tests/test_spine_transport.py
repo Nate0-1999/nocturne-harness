@@ -181,6 +181,7 @@ async def test_spend_table_uses_repeated_thread_filters_and_tolerates_older_pala
     assert snapshot is not None
     assert snapshot.threads[0].models[0].reasoning_tokens == "72"
     assert seen[0].url.path == "/prefix/v1/spend/table"
+    assert seen[0].url.params["scope"] == "threads"
     assert seen[0].url.params.get_list("thread_id") == [THREAD_ID, second]
     assert missing is None
 

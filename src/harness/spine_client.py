@@ -1419,7 +1419,10 @@ class SpineClient:
 
         params: JsonObject | None = None
         if thread_ids is not None:
-            params = {"thread_id": [str(thread_id) for thread_id in thread_ids]}
+            params = {
+                "scope": "threads",
+                "thread_id": [str(thread_id) for thread_id in thread_ids],
+            }
         response = await self._request("GET", "v1/spend/table", params=params)
         if response.status_code == 404:
             return None
