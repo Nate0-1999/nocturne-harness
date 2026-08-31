@@ -35,6 +35,7 @@ import {
 import type { RackEnvelopeEvent, RackResizeEvent } from './rackEvents'
 import type { SpatialSelectionContext } from './spatialSelection'
 import type { AttunementTarget } from './attunement'
+import type { ConversationMode } from './stageLayout'
 
 const BRIDGE_VERSION = 1
 const READY_MESSAGE = 'nocturne.rack.ready'
@@ -73,6 +74,7 @@ export function RackPluginIframe({
   instanceId = manifest.id,
   spatialContext = null,
   attunement = null,
+  conversationMode,
   theme,
   isRegressionFixture = false,
 }: {
@@ -80,6 +82,7 @@ export function RackPluginIframe({
   instanceId?: string
   spatialContext?: SpatialSelectionContext | null
   attunement?: AttunementTarget | null
+  conversationMode?: ConversationMode
   theme: ThemeId
   isRegressionFixture?: boolean
 }) {
@@ -236,12 +239,16 @@ export function RackPluginIframe({
       data-testid={`rack-plugin-frame-${manifest.id}`}
       title={manifest.name}
       sandbox="allow-scripts allow-same-origin"
-      src={rackFrameUrl(manifest.id, theme)}
+      src={rackFrameUrl(manifest.id, theme, conversationMode)}
     />
   )
 }
 
-function rackFrameUrl(moduleId: RackModuleId, theme: ThemeId): string {
+function rackFrameUrl(
+  moduleId: RackModuleId,
+  theme: ThemeId,
+  conversationMode?: ConversationMode,
+): string {
   const url = new URL(globalThis.location.href)
   const fixture = url.searchParams.get('fixture')
   url.hostname = 'rack.localhost'
@@ -251,6 +258,9 @@ function rackFrameUrl(moduleId: RackModuleId, theme: ThemeId): string {
   url.searchParams.set('module_version', RACK_MANIFESTS[moduleId].version)
   url.searchParams.set('rack_host', globalThis.location.origin)
   url.searchParams.set('theme', theme)
+  if (moduleId === 'conversation') {
+    url.searchParams.set('conversation_mode', conversationMode ?? 'focused')
+  }
   if (fixture === 'M2C REGRESSION' || fixture === 'M2G REGRESSION') {
     url.searchParams.set('fixture', fixture)
   }

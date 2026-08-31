@@ -55,14 +55,14 @@ import {
   type ThreadState,
 } from './store'
 
-export type RackModuleId = 'header' | 'threads' | 'chat' | 'memory' | 'vitals' | 'palace_state' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'injection_console' | 'recipe' | 'deck'
+export type RackModuleId = 'header' | 'threads' | 'conversation' | 'memory' | 'vitals' | 'palace_state' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'injection_console' | 'recipe'
 export type RackModuleSlot = 'header' | 'panel' | 'strip' | 'overlay'
 export type RackMemoryPanelState = MemoryPanelState
 
 export function isRackModuleId(value: unknown): value is RackModuleId {
   return value === 'header' ||
     value === 'threads' ||
-    value === 'chat' ||
+    value === 'conversation' ||
     value === 'memory' ||
     value === 'vitals' ||
     value === 'palace_state' ||
@@ -74,8 +74,7 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
     value === 'memory_graph' ||
     value === 'palace_nebula' ||
     value === 'injection_console' ||
-    value === 'recipe' ||
-    value === 'deck'
+    value === 'recipe'
 }
 
 export interface RackSnapshot {
@@ -263,17 +262,20 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     law_bound: false,
     default_scope: 'ATTUNED',
   },
-  chat: {
-    id: 'chat',
-    name: 'Active Channel',
+  conversation: {
+    id: 'conversation',
+    name: 'Conversation',
     version: '1.0.0',
-    class: 'visualizer',
+    class: 'control',
     slot: 'panel',
     streams: ['thread.snapshot', 'run.*', 'error'],
-    actions: ['project.select', 'prompt.submit', 'run.cancel', 'thread.archive', 'queue.load', 'queue.decide'],
-    bounds: stageGridBounds(RACK_BOUNDS.chat.preferred),
+    actions: [
+      'project.select', 'prompt.submit', 'run.cancel', 'thread.archive',
+      'queue.load', 'queue.decide', 'thread.select', 'symphony.intervene',
+    ],
+    bounds: stageGridBounds({ w: 20, h: 20 }),
     movable: true,
-    law_bound: false,
+    law_bound: true,
     default_scope: 'ATTUNED',
   },
   memory: {
@@ -410,13 +412,6 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     id: 'recipe', name: 'Recipe', version: '1.0.0', class: 'visualizer',
     slot: 'panel', streams: [], actions: ['rack.scope.get', 'rack.scope.set'],
     bounds: stageGridBounds(instrumentStageBounds.preferred), movable: true,
-    law_bound: true, default_scope: 'ATTUNED',
-  },
-  deck: {
-    id: 'deck', name: 'The Deck', version: '1.0.0', class: 'control',
-    slot: 'panel', streams: ['thread.snapshot', 'run.*'],
-    actions: ['thread.select', 'prompt.submit', 'symphony.intervene'],
-    bounds: stageGridBounds({ w: 20, h: 20 }), movable: true,
     law_bound: true, default_scope: 'ATTUNED',
   },
 }

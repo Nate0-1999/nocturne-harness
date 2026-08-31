@@ -31,7 +31,7 @@ test('the finished Deck keeps proposed replies same-turn, editable, ordered, and
   assert.match(deck, /setLocallyFired[\s\S]*setUndo[\s\S]*setTimeout/u)
   assert.match(deck, /Firing to \{undo\.card\.thread_title\} in 6 seconds/u)
   assert.match(deck, />Undo</u)
-  assert.match(rack, /actions: \['thread.select', 'prompt.submit', 'symphony.intervene'\]/u)
+  assert.match(rack, /id: 'conversation'[\s\S]*?'thread.select', 'symphony.intervene'/u)
   assert.match(protocol, /proposed_response\?: ProposedResponseReference/u)
   assert.match(css, /\.deck-proposal-queue\s*\{[^}]*overflow-y:\s*auto/su)
   assert.match(css, /\.deck-proposal\[data-primary="true"\]/u)

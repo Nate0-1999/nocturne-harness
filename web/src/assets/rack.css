@@ -483,6 +483,35 @@
   white-space: nowrap;
 }
 
+.conversation-mode {
+  display: flex;
+  flex: none;
+  align-self: center;
+  gap: 0.12rem;
+  margin-inline: 0.18rem;
+  padding: 0.12rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ground) 82%, transparent);
+}
+
+.conversation-mode button {
+  min-height: 1.25rem;
+  padding: 0.16rem 0.42rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dim);
+  font: 600 0.52rem/1 var(--font-data);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.conversation-mode button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
 .rack-module[data-settings-open="true"] {
   z-index: 40;
 }
@@ -2560,12 +2589,12 @@ button.rack-module__resize-handle--nw {
     border-bottom: 1px solid var(--line-strong);
   }
 
-  .rack-shell--vitals-collapsed .rack-module[data-rack-module="chat"] {
+  .rack-shell--vitals-collapsed .rack-module[data-rack-module="conversation"] {
     position: absolute;
     inset: 5.35rem 0 3.1rem;
   }
 
-  .rack-shell--vitals-expanded .rack-module[data-rack-module="chat"] {
+  .rack-shell--vitals-expanded .rack-module[data-rack-module="conversation"] {
     position: absolute;
     inset: 5.35rem 0 min(42dvh, 22rem);
   }
@@ -2664,7 +2693,7 @@ button.rack-module__resize-handle--nw {
     background: transparent;
   }
 
-  .rack-module[data-rack-module="chat"] .chat-panel {
+  .rack-module[data-rack-module="conversation"] .chat-panel {
     height: 100%;
   }
 
@@ -3445,7 +3474,7 @@ button.rack-module__resize-handle--nw {
 
   .stage-canvas > .rack-module,
   .stage-canvas > .rack-module[data-rack-module="threads"],
-  .stage-canvas > .rack-module[data-rack-module="chat"],
+  .stage-canvas > .rack-module[data-rack-module="conversation"],
   .stage-canvas > .rack-module[data-rack-module="memory"],
   .stage-canvas > .rack-module[data-rack-module="vitals"],
   .stage-canvas > .rack-module[data-rack-module="palace_state"],

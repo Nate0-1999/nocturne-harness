@@ -1,7 +1,9 @@
 import type { RackScope } from './rackLayout'
 
-export const STAGE_LAYOUT_STORAGE_KEY = 'nocturne.stage.layout.v4'
-export const STAGE_SAVED_SET_STORAGE_KEY = 'nocturne.stage.saved-set.v4'
+export const STAGE_LAYOUT_STORAGE_KEY = 'nocturne.stage.layout.v5'
+export const STAGE_SAVED_SET_STORAGE_KEY = 'nocturne.stage.saved-set.v5'
+const LEGACY_STAGE_V4_LAYOUT_STORAGE_KEY = 'nocturne.stage.layout.v4'
+const LEGACY_STAGE_V4_SAVED_SET_STORAGE_KEY = 'nocturne.stage.saved-set.v4'
 const LEGACY_STAGE_V3_LAYOUT_STORAGE_KEY = 'nocturne.stage.layout.v3'
 const LEGACY_STAGE_V3_SAVED_SET_STORAGE_KEY = 'nocturne.stage.saved-set.v3'
 const LEGACY_STAGE_LAYOUT_STORAGE_KEY = 'nocturne.stage.layout.v2'
@@ -19,13 +21,13 @@ export const STAGE_MIN_ZOOM = 0.06
 export const STAGE_MAX_ZOOM = 1.6
 const STAGE_RECOVERY_INSET = 12
 const STAGE_RECOVERY_ZOOM = 1
-const PHONE_REFLOW_MODULE_IDS: readonly StageModuleId[] = ['recipe', 'deck']
+const PHONE_REFLOW_MODULE_IDS: readonly StageModuleId[] = ['recipe', 'conversation']
 const STAGE_ORIGIN_X = (STAGE_COLUMNS - LEGACY_STAGE_COLUMNS * STAGE_COORDINATE_SCALE) / 2
 const STAGE_ORIGIN_Y = (STAGE_ROWS - LEGACY_STAGE_ROWS * STAGE_COORDINATE_SCALE) / 2
 
 export type StageModuleId =
   | 'threads'
-  | 'chat'
+  | 'conversation'
   | 'memory'
   | 'vitals'
   | 'palace_state'
@@ -35,15 +37,16 @@ export type StageModuleId =
   | 'injection_console'
   | 'palace_queue'
   | 'recipe'
-  | 'deck'
+
+export type ConversationMode = 'focused' | 'stack'
 
 export const STAGE_MODULE_IDS: readonly StageModuleId[] = [
-  'threads', 'chat', 'memory', 'vitals', 'context_bars', 'palace_state',
+  'threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state',
   'memory_graph', 'palace_nebula', 'injection_console', 'palace_queue',
-  'recipe', 'deck',
+  'recipe',
 ]
 export const MULTI_INSTANCE_MODULE_IDS: readonly StageModuleId[] = [
-  'chat', 'vitals', 'context_bars', 'memory_graph',
+  'conversation', 'vitals', 'context_bars', 'memory_graph',
 ]
 const FACTORY_LAYER_IDS = ['work', 'graph', 'injection'] as const
 
@@ -57,6 +60,7 @@ export interface StageModuleLayout {
   instance_id: string
   module_id: StageModuleId
   source_thread_id?: string | null
+  conversation_mode?: ConversationMode
   x: number
   y: number
   width: number
@@ -72,7 +76,7 @@ export interface StageLayer {
 }
 
 export interface StageLayoutSet {
-  version: 4
+  version: 5
   active_layer_id: string
   layers: StageLayer[]
   removed_layers: StageLayer[]
@@ -80,22 +84,24 @@ export interface StageLayoutSet {
 }
 
 interface ParsedStageLayout extends Omit<StageLayoutSet, 'version'> {
-  version: 2 | 3 | 4
+  version: 2 | 3 | 4 | 5
 }
 
 const DEFAULT_SCOPES: Record<string, RackScope> = {
-  header: 'GLOBAL', threads: 'ATTUNED', chat: 'ATTUNED', memory: 'ATTUNED',
+  header: 'GLOBAL', threads: 'ATTUNED', conversation: 'ATTUNED', memory: 'ATTUNED',
   vitals: 'GLOBAL', context_bars: 'ATTUNED', gate: 'ATTUNED', thread_end: 'ATTUNED',
   palace_state: 'GLOBAL',
   palace_queue: 'GLOBAL', model_device: 'ATTUNED', memory_graph: 'GLOBAL', palace_nebula: 'GLOBAL',
   injection_console: 'GLOBAL',
   recipe: 'ATTUNED',
-  deck: 'ATTUNED',
 }
 
 const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
   threads: expandLegacyModule({ instance_id: 'threads', module_id: 'threads', x: 1, y: 1, width: 4, height: 10 }),
-  chat: expandLegacyModule({ instance_id: 'chat', module_id: 'chat', x: 5, y: 1, width: 10, height: 10 }),
+  conversation: expandLegacyModule({
+    instance_id: 'conversation', module_id: 'conversation', conversation_mode: 'focused',
+    x: 5, y: 1, width: 10, height: 10,
+  }),
   memory: expandLegacyModule({ instance_id: 'memory', module_id: 'memory', x: 15, y: 1, width: 4, height: 10 }),
   vitals: expandLegacyModule({ instance_id: 'vitals', module_id: 'vitals', x: 1, y: 12, width: 12, height: 4 }),
   palace_state: expandLegacyModule({ instance_id: 'palace_state', module_id: 'palace_state', x: 19, y: 12, width: 5, height: 4 }),
@@ -109,11 +115,10 @@ const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
     instance_id: 'palace_queue', module_id: 'palace_queue', x: 20, y: 1, width: 5, height: 10,
   }),
   recipe: expandLegacyModule({ instance_id: 'recipe', module_id: 'recipe', x: 14, y: 2, width: 12, height: 10 }),
-  deck: expandLegacyModule({ instance_id: 'deck', module_id: 'deck', x: 24, y: 12, width: 8, height: 10 }),
 }
 
 export const FACTORY_STAGE_LAYOUT: StageLayoutSet = {
-  version: 4,
+  version: 5,
   active_layer_id: 'work',
   scopes: DEFAULT_SCOPES,
   layers: [
@@ -121,7 +126,7 @@ export const FACTORY_STAGE_LAYOUT: StageLayoutSet = {
       layer_id: 'work',
       name: 'Work',
       camera: expandLegacyCamera({ x: 36, y: 30, zoom: 0.64 }),
-      modules: ['threads', 'chat', 'memory', 'vitals', 'context_bars', 'palace_state', 'palace_queue', 'deck']
+      modules: ['threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state', 'palace_queue']
         .map((moduleId) => ({ ...DEFAULT_MODULES[moduleId as StageModuleId] })),
       removed_modules: [],
     },
@@ -149,7 +154,7 @@ export function cloneFactoryStageLayout(): StageLayoutSet {
 
 export function cloneStageLayout(layout: StageLayoutSet): StageLayoutSet {
   return {
-    version: 4,
+    version: 5,
     active_layer_id: layout.active_layer_id,
     scopes: { ...layout.scopes },
     layers: layout.layers.map(cloneLayer),
@@ -160,6 +165,13 @@ export function cloneStageLayout(layout: StageLayoutSet): StageLayoutSet {
 export function loadStageLayout(storage: Storage): StageLayoutSet {
   const current = parseStageLayout(storage.getItem(STAGE_LAYOUT_STORAGE_KEY))
   if (current !== null) return current
+  const legacyV4 = parseStageLayoutVersion(
+    storage.getItem(LEGACY_STAGE_V4_LAYOUT_STORAGE_KEY),
+    4,
+    STAGE_COLUMNS,
+    STAGE_ROWS,
+  )
+  if (legacyV4 !== null) return upgradeStageLayout(legacyV4)
   const legacyV3 = parseStageLayoutVersion(
     storage.getItem(LEGACY_STAGE_V3_LAYOUT_STORAGE_KEY),
     3,
@@ -181,6 +193,13 @@ export function loadStageLayout(storage: Storage): StageLayoutSet {
 export function loadSavedStageSet(storage: Storage): StageLayoutSet | null {
   const current = parseStageLayout(storage.getItem(STAGE_SAVED_SET_STORAGE_KEY))
   if (current !== null) return current
+  const legacyV4 = parseStageLayoutVersion(
+    storage.getItem(LEGACY_STAGE_V4_SAVED_SET_STORAGE_KEY),
+    4,
+    STAGE_COLUMNS,
+    STAGE_ROWS,
+  )
+  if (legacyV4 !== null) return upgradeStageLayout(legacyV4)
   const legacyV3 = parseStageLayoutVersion(
     storage.getItem(LEGACY_STAGE_V3_SAVED_SET_STORAGE_KEY),
     3,
@@ -344,11 +363,25 @@ export function addStageModuleInstance(
     modules: [...layer.modules, {
       ...fallback,
       instance_id: instanceId,
-      source_thread_id: moduleId === 'chat' ? sourceThreadId : undefined,
+      source_thread_id: moduleId === 'conversation' ? sourceThreadId : undefined,
+      conversation_mode: moduleId === 'conversation' ? 'focused' : undefined,
       x: clamp(fallback.x + offset, 0, STAGE_COLUMNS - fallback.width),
       y: clamp(fallback.y + offset, 0, STAGE_ROWS - fallback.height),
     }],
   }))
+}
+
+/** PLAN M3OM / P2: posture is durable per conversation-module instance. */
+export function setConversationMode(
+  layout: StageLayoutSet,
+  instanceId: string,
+  mode: ConversationMode,
+): StageLayoutSet {
+  return updateActiveModule(layout, instanceId, (module) => (
+    module.module_id === 'conversation'
+      ? { ...module, conversation_mode: mode }
+      : module
+  ))
 }
 
 export function removeStageLayer(layout: StageLayoutSet, layerId: string): StageLayoutSet {
@@ -577,13 +610,13 @@ function normalizeCamera(camera: StageCamera): StageCamera {
 }
 
 function parseStageLayout(raw: string | null): StageLayoutSet | null {
-  const parsed = parseStageLayoutVersion(raw, 4, STAGE_COLUMNS, STAGE_ROWS)
+  const parsed = parseStageLayoutVersion(raw, 5, STAGE_COLUMNS, STAGE_ROWS)
   return parsed === null ? null : addMemoryIngestToExistingLayout(parsed as StageLayoutSet)
 }
 
 function parseStageLayoutVersion(
   raw: string | null,
-  version: 2 | 3 | 4,
+  version: 2 | 3 | 4 | 5,
   columns: number,
   rows: number,
 ): ParsedStageLayout | null {
@@ -595,9 +628,14 @@ function parseStageLayoutVersion(
     return null
   }
   if (!isRecord(value) || value.version !== version || !Array.isArray(value.layers)) return null
-  const layers = value.layers.map((layer) => parseLayer(layer, columns, rows, version))
+  const context: ParseContext = {
+    version,
+    legacy_conversation_instances: new Map(),
+    next_conversation_instance: 1,
+  }
+  const layers = value.layers.map((layer) => parseLayer(layer, columns, rows, context))
   const removedLayers = Array.isArray(value.removed_layers)
-    ? value.removed_layers.map((layer) => parseLayer(layer, columns, rows, version))
+    ? value.removed_layers.map((layer) => parseLayer(layer, columns, rows, context))
     : []
   if (
     layers.length === 0 ||
@@ -620,15 +658,21 @@ function parseStageLayoutVersion(
     active_layer_id: value.active_layer_id,
     layers: layers as StageLayer[],
     removed_layers: removedLayers as StageLayer[],
-    scopes: parseScopes(value.scopes),
+    scopes: parseScopes(value.scopes, context.legacy_conversation_instances),
   }
+}
+
+interface ParseContext {
+  version: 2 | 3 | 4 | 5
+  legacy_conversation_instances: Map<string, string>
+  next_conversation_instance: number
 }
 
 function parseLayer(
   value: unknown,
   columns: number,
   rows: number,
-  version: 2 | 3 | 4,
+  context: ParseContext,
 ): StageLayer | null {
   if (
     !isRecord(value) ||
@@ -639,8 +683,8 @@ function parseLayer(
     typeof value.camera.zoom !== 'number' ||
     !Array.isArray(value.modules) || !Array.isArray(value.removed_modules)
   ) return null
-  const modules = value.modules.map((module) => parseModule(module, columns, rows, version))
-  const removedModules = value.removed_modules.map((module) => parseModule(module, columns, rows, version))
+  const modules = value.modules.map((module) => parseModule(module, columns, rows, context))
+  const removedModules = value.removed_modules.map((module) => parseModule(module, columns, rows, context))
   if (
     modules.some((module) => module === null) ||
     removedModules.some((module) => module === null)
@@ -660,10 +704,18 @@ function parseModule(
   value: unknown,
   columns: number,
   rows: number,
-  version: 2 | 3 | 4,
+  context: ParseContext,
 ): StageModuleLayout | null {
+  const rawModuleId = isRecord(value) ? value.module_id : null
+  const legacyConversationMode = rawModuleId === 'chat'
+    ? 'focused'
+    : rawModuleId === 'deck'
+      ? 'stack'
+      : null
   if (
-    !isRecord(value) || !isStageModuleId(value.module_id) ||
+    !isRecord(value) ||
+    (!isStageModuleId(rawModuleId) && legacyConversationMode === null) ||
+    (context.version === 5 && legacyConversationMode !== null) ||
     !Number.isInteger(value.x) || !Number.isInteger(value.y) ||
     !Number.isInteger(value.width) || !Number.isInteger(value.height) ||
     (value.x as number) < 0 || (value.y as number) < 0 ||
@@ -671,8 +723,8 @@ function parseModule(
     (value.x as number) + (value.width as number) > columns ||
     (value.y as number) + (value.height as number) > rows
   ) return null
-  const instanceId = version === 4 ? value.instance_id : value.module_id
-  if (typeof instanceId !== 'string' || !/^[a-z_]+(?::[1-9][0-9]*)?$/.test(instanceId)) {
+  const rawInstanceId = context.version >= 4 ? value.instance_id : rawModuleId
+  if (typeof rawInstanceId !== 'string' || !/^[a-z_]+(?::[1-9][0-9]*)?$/.test(rawInstanceId)) {
     return null
   }
   if (
@@ -680,10 +732,29 @@ function parseModule(
     value.source_thread_id !== null &&
     typeof value.source_thread_id !== 'string'
   ) return null
+  let instanceId = rawInstanceId
+  let moduleId = rawModuleId as StageModuleId
+  let conversationMode: ConversationMode | undefined
+  if (legacyConversationMode !== null) {
+    moduleId = 'conversation'
+    conversationMode = legacyConversationMode
+    const existing = context.legacy_conversation_instances.get(rawInstanceId)
+    if (existing !== undefined) {
+      instanceId = existing
+    } else {
+      const sequence = context.next_conversation_instance++
+      instanceId = sequence === 1 ? 'conversation' : `conversation:${sequence}`
+      context.legacy_conversation_instances.set(rawInstanceId, instanceId)
+    }
+  } else if (moduleId === 'conversation') {
+    if (value.conversation_mode !== 'focused' && value.conversation_mode !== 'stack') return null
+    conversationMode = value.conversation_mode
+  }
   return {
     instance_id: instanceId,
-    module_id: value.module_id,
+    module_id: moduleId,
     source_thread_id: value.source_thread_id as string | null | undefined,
+    conversation_mode: conversationMode,
     x: value.x as number,
     y: value.y as number,
     width: value.width as number,
@@ -693,7 +764,7 @@ function parseModule(
 
 function upgradeStageLayout(layout: ParsedStageLayout): StageLayoutSet {
   return addMemoryIngestToExistingLayout({
-    version: 4,
+    version: 5,
     active_layer_id: layout.active_layer_id,
     layers: layout.layers.map(cloneLayer),
     removed_layers: layout.removed_layers.map(cloneLayer),
@@ -712,7 +783,7 @@ function expandLegacyStageLayout(layout: ParsedStageLayout): StageLayoutSet {
     removed_modules: layer.removed_modules.map(expandLegacyModule),
   })
   return addMemoryIngestToExistingLayout({
-    version: 4,
+    version: 5,
     active_layer_id: layout.active_layer_id,
     layers: layout.layers.map(expandLayer),
     removed_layers: layout.removed_layers.map(expandLayer),
@@ -721,11 +792,15 @@ function expandLegacyStageLayout(layout: ParsedStageLayout): StageLayoutSet {
 }
 
 function addMemoryIngestToExistingLayout(layout: StageLayoutSet): StageLayoutSet {
-  return addFactoryRemovedModuleToExistingLayout(addFactoryModuleToExistingLayout(
-    addFactoryModuleToExistingLayout(layout, 'palace_queue', 'work'),
-    'deck',
-    'work',
-  ), 'palace_nebula', 'graph')
+  return addFactoryRemovedModuleToExistingLayout(
+    addFactoryModuleToExistingLayout(
+      addFactoryModuleToExistingLayout(layout, 'palace_queue', 'work'),
+      'conversation',
+      'work',
+    ),
+    'palace_nebula',
+    'graph',
+  )
 }
 
 function addFactoryRemovedModuleToExistingLayout(
@@ -807,10 +882,11 @@ function parseLegacyRackLayout(raw: string | null): StageLayoutSet | null {
   const work = layout.layers[0]
   let x = STAGE_ORIGIN_X + STAGE_COORDINATE_SCALE
   for (const item of [...value.modules].sort(legacyOrder)) {
-    if (!isRecord(item) || !isStageModuleId(item.module_id) || !Number.isInteger(item.width)) {
+    if (!isRecord(item) || !isLegacyRackModuleId(item.module_id) || !Number.isInteger(item.width)) {
       return null
     }
-    const module = work.modules.find((candidate) => candidate.module_id === item.module_id)
+    const moduleId = item.module_id === 'chat' ? 'conversation' : item.module_id
+    const module = work.modules.find((candidate) => candidate.module_id === moduleId)
     if (module === undefined) return null
     module.x = x
     module.width = (item.width as number) * STAGE_COORDINATE_SCALE
@@ -829,7 +905,7 @@ function parseLegacyRackLayout(raw: string | null): StageLayoutSet | null {
       x += module.width
     }
   }
-  layout.scopes = parseScopes(value.scopes)
+  layout.scopes = parseScopes(value.scopes, new Map([['chat', 'conversation']]))
   return layout
 }
 
@@ -838,21 +914,28 @@ function legacyOrder(left: unknown, right: unknown): number {
   return Number(left.order ?? 0) - Number(right.order ?? 0)
 }
 
-function parseScopes(value: unknown): Record<string, RackScope> {
+function parseScopes(
+  value: unknown,
+  legacyConversationInstances: ReadonlyMap<string, string> = new Map(),
+): Record<string, RackScope> {
   const scopes = { ...DEFAULT_SCOPES }
   if (!isRecord(value)) return scopes
   for (const key of Object.keys(value)) {
-    if (value[key] === 'GLOBAL') scopes[key] = 'GLOBAL'
-    if (value[key] === 'ATTUNED' || value[key] === 'CURRENT') scopes[key] = 'ATTUNED'
+    const migratedKey = legacyConversationInstances.get(key) ?? key
+    if (value[key] === 'GLOBAL') scopes[migratedKey] = 'GLOBAL'
+    if (value[key] === 'ATTUNED' || value[key] === 'CURRENT') scopes[migratedKey] = 'ATTUNED'
   }
   return scopes
 }
 
 function isStageModuleId(value: unknown): value is StageModuleId {
-  return value === 'threads' || value === 'chat' || value === 'memory' ||
+  return value === 'threads' || value === 'conversation' || value === 'memory' ||
     value === 'vitals' || value === 'palace_state' || value === 'context_bars' || value === 'memory_graph' || value === 'palace_nebula' ||
-    value === 'injection_console' || value === 'palace_queue' || value === 'recipe' ||
-    value === 'deck'
+    value === 'injection_console' || value === 'palace_queue' || value === 'recipe'
+}
+
+function isLegacyRackModuleId(value: unknown): value is 'threads' | 'chat' | 'memory' {
+  return value === 'threads' || value === 'chat' || value === 'memory'
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

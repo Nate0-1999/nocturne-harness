@@ -1,0 +1,53 @@
+{
+  "scope": "M3OM one conversation module with focused and stack posture",
+  "captured_at": "2026-08-31",
+  "owner_app": {
+    "url": "http://127.0.0.1:8798/",
+    "home": "disposable local home",
+    "principal_id": "m3om-verification-20260831",
+    "machine_id": "m3om-browser-verification",
+    "agent_id": "m3om-owner-agent",
+    "fixture": false,
+    "palace": "deliberately unavailable"
+  },
+  "conversation_instance": {
+    "instance_id": "conversation",
+    "rack_module": "conversation",
+    "iframe_count": 1,
+    "focused_heading": "Restored conversation",
+    "stack_heading": "The Deck",
+    "stack_persisted_across_reload": true
+  },
+  "neighbor_attunement": {
+    "consumer_instance_id": "context_bars",
+    "focused_badge": "Restored conversation",
+    "stack_badge": "The Deck",
+    "changed_on_same_instance_mode_switch": true
+  },
+  "migration": {
+    "from_schema": 4,
+    "to_schema": 5,
+    "legacy_chat_mode": "focused",
+    "legacy_deck_mode": "stack",
+    "distinct_instances_preserved": true,
+    "geometry_and_scopes_preserved": true,
+    "evidence": "web/tests/stageLayout.test.mjs"
+  },
+  "deck_behavior": {
+    "proposed_replies_same_turn": true,
+    "proposed_replies_editable": true,
+    "enter_advances": true,
+    "queue_scroll_preserved": true,
+    "evidence": "web/tests/m3dkDeckSource.test.mjs"
+  },
+  "browser_console": {
+    "warnings": 0,
+    "errors": 0
+  },
+  "exit_tests": {
+    "spine": "296 passed in 21.21s",
+    "harness": "1688 passed, 3 deselected in 70.34s",
+    "web": "127 passed; lint and production build passed",
+    "ui_canon": "43-state sweep, Stage, controls, honest display, fixture curtain, and SYM13 recipe passed"
+  }
+}

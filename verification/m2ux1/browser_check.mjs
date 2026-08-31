@@ -119,7 +119,7 @@ async function openModule(targetPage, moduleId) {
   } else if (moduleId === 'injection_console') {
     await targetPage.getByRole('tab', { name: 'Injection' }).click()
   } else if (moduleId === 'model_device') {
-    const modelControl = frame(targetPage, 'chat').locator('button[aria-label^="Active model:"]')
+    const modelControl = frame(targetPage, 'conversation').locator('button[aria-label^="Active model:"]')
     await modelControl.waitFor()
     await modelControl.evaluate((element) => element.click())
   } else if (moduleId === 'thread_end') {

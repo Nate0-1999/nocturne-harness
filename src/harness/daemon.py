@@ -153,7 +153,7 @@ _RACK_MODULE_IDS = frozenset(
     {
         "header",
         "threads",
-        "chat",
+        "conversation",
         "memory",
         "gate",
         "vitals",
@@ -166,7 +166,6 @@ _RACK_MODULE_IDS = frozenset(
         "palace_nebula",
         "injection_console",
         "recipe",
-        "deck",
     }
 )
 _RACK_FRAME_CSP = "; ".join(

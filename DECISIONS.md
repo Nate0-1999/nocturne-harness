@@ -3116,3 +3116,32 @@ thread, and stack endpoints would duplicate one filter. Sending thread names int
 Palace would couple the durable ledger to a local journal. Requiring the new endpoint
 would let a display upgrade break chat against an older Palace. Leaving non-money
 gauges in Spend would preserve the problem this packet exists to solve.
+
+## 103 — One conversation instrument owns focused and stack posture [P2, D.2 138-139, M3OM]
+
+**Decision.** Replace the separate Chat and Deck Stage identities with one
+`conversation` instrument whose per-instance `conversation_mode` is either `focused`
+or `stack`. Focused mode renders the existing traditional thread; stack mode renders
+The Deck exactly as built. The Stage's shared chrome owns the two-state posture
+control, and the existing layout persistence advances to schema v5. Each v4 Chat or
+Deck instance migrates in place to a distinct Conversation instance, preserving its
+geometry, source thread, and scope while assigning the matching posture.
+
+The same Rack manifest, iframe boundary, daemon allowlist, remove/restore lifecycle,
+and instance id serve both postures. Attunement resolves a focused instance as its
+single thread and a stack instance as The Deck's thread set. Posture participates in
+the layout signature, so a neighboring instrument re-resolves immediately when the
+same Conversation instance switches modes. Existing proposed-reply, Enter-to-advance,
+and queue-scroll behavior remains owned by the unchanged Deck implementation.
+
+**Motivation.** The owner identified one conversational instrument seen at two
+different scales, not two products. Making posture durable on the instance preserves
+that identity across reload and turns a visible mode change into the complete context
+gesture for neighboring instruments.
+
+**Rejected alternatives.** Keeping separate module ids behind a cosmetic switch would
+retain two lifecycles and make migration dishonest. Adding a new server preference or
+Rack action would duplicate the Stage layout's existing authority. Reimplementing The
+Deck inside the combined shell would risk regressing finished conductor behavior.
+Treating posture as iframe-local state would leave attunement and persistence unable to
+observe the owner's choice.

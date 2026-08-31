@@ -515,7 +515,7 @@ def test_static_shell_and_rack_frame_have_distinct_frame_policies(tmp_path: Path
 
     shell = client.get("/", headers={"host": "127.0.0.1:8765"})
     rack = client.get(
-        "/?rack_module=chat",
+        "/?rack_module=conversation&conversation_mode=focused",
         headers={"host": "rack.localhost:8765"},
     )
     vitals_rack = client.get(
@@ -527,7 +527,7 @@ def test_static_shell_and_rack_frame_have_distinct_frame_policies(tmp_path: Path
         headers={"host": "rack.localhost:8765"},
     )
     forged = client.get(
-        "/?rack_module=chat",
+        "/?rack_module=conversation&conversation_mode=stack",
         headers={"host": "127.0.0.1:8765"},
     )
 

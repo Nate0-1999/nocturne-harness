@@ -27,7 +27,7 @@ const webRoot = new URL('../', import.meta.url)
 test('the module template enumerates the complete mounted stage and refuses a partial affordance', () => {
   assert.deepEqual(STAGE_RACK_MODULE_IDS, [
     'threads',
-    'chat',
+    'conversation',
     'memory',
     'vitals',
     'context_bars',
@@ -37,7 +37,6 @@ test('the module template enumerates the complete mounted stage and refuses a pa
     'injection_console',
     'palace_queue',
     'recipe',
-    'deck',
   ])
 
   const manifests = Object.fromEntries(STAGE_RACK_MODULE_IDS.map((id) => [
@@ -58,8 +57,8 @@ test('the module template enumerates the complete mounted stage and refuses a pa
   ]))
 
   assert.doesNotThrow(() => assertRackModuleTemplate(manifests))
-  assert.ok(rackResizeDirections(manifests.chat).some((direction) => direction.length === 1))
-  assert.ok(rackResizeDirections(manifests.chat).some((direction) => direction.length === 2))
+  assert.ok(rackResizeDirections(manifests.conversation).some((direction) => direction.length === 1))
+  assert.ok(rackResizeDirections(manifests.conversation).some((direction) => direction.length === 2))
   assert.throws(
     () => assertRackModuleTemplate({
       ...manifests,

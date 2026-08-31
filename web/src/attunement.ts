@@ -178,6 +178,7 @@ export function attunementLayoutSignature(layout: StageLayoutSet): string {
       instance_id: module.instance_id,
       module_id: module.module_id,
       source_thread_id: module.source_thread_id ?? null,
+      conversation_mode: module.conversation_mode ?? null,
       x: module.x,
       y: module.y,
       width: module.width,
@@ -192,7 +193,7 @@ function sourceTarget(
   threadIds: string[],
   selectedThreadId: string | null,
 ): AttunementTarget | null {
-  if (module.module_id === 'chat') {
+  if (module.module_id === 'conversation' && module.conversation_mode === 'focused') {
     const threadId = module.source_thread_id ?? selectedThreadId
     const thread = threadId === null ? undefined : threadById.get(threadId)
     return thread === undefined ? null : {
@@ -213,7 +214,7 @@ function sourceTarget(
       source_instance_id: module.instance_id,
     }
   }
-  if (module.module_id === 'deck') {
+  if (module.module_id === 'conversation' && module.conversation_mode === 'stack') {
     if (threadIds.length === 0) return null
     return {
       kind: 'stack',

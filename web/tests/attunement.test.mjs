@@ -14,11 +14,12 @@ const threads = [
   { thread_id: 'thread-b', title: 'Beta Thread' },
 ]
 
-function module(instanceId, moduleId, x, y, sourceThreadId) {
+function module(instanceId, moduleId, x, y, sourceThreadId, conversationMode = 'focused') {
   return {
     instance_id: instanceId,
     module_id: moduleId,
     ...(sourceThreadId === undefined ? {} : { source_thread_id: sourceThreadId }),
+    ...(moduleId === 'conversation' ? { conversation_mode: conversationMode } : {}),
     x,
     y,
     width: 1,
@@ -28,7 +29,7 @@ function module(instanceId, moduleId, x, y, sourceThreadId) {
 
 function layout(layers, scopes = {}) {
   return {
-    version: 4,
+    version: 5,
     active_layer_id: layers[0].layer_id,
     layers,
     removed_layers: [],
@@ -49,10 +50,10 @@ function layer(layerId, modules) {
 /** SPEC D.2 r138-139: duplicate consumers bind independently to nearest thread sources. */
 test('two Context Bars instances can attune to two different nearby threads', () => {
   const stage = layout([layer('work', [
-    module('chat', 'chat', 0, 0, 'thread-a'),
+    module('conversation', 'conversation', 0, 0, 'thread-a'),
     module('context_bars', 'context_bars', 1, 0),
     module('context_bars:2', 'context_bars', 9, 0),
-    module('chat:2', 'chat', 10, 0, 'thread-b'),
+    module('conversation:2', 'conversation', 10, 0, 'thread-b'),
   ])])
 
   const resolved = resolveAttunements(stage, threads, null)
@@ -65,9 +66,9 @@ test('two Context Bars instances can attune to two different nearby threads', ()
 /** SPEC D.2 138-139: moving a consumer changes its live binding without a picker. */
 test('drag geometry immediately reattunes a consumer', () => {
   const before = layout([layer('work', [
-    module('chat', 'chat', 0, 0, 'thread-a'),
+    module('conversation', 'conversation', 0, 0, 'thread-a'),
     module('context_bars', 'context_bars', 1, 0),
-    module('chat:2', 'chat', 10, 0, 'thread-b'),
+    module('conversation:2', 'conversation', 10, 0, 'thread-b'),
   ])])
   const moved = structuredClone(before)
   moved.layers[0].modules[1].x = 9
@@ -79,9 +80,9 @@ test('drag geometry immediately reattunes a consumer', () => {
 /** SPEC D.2 139: equal distances emit one sticky, journal-ready random choice. */
 test('an exact tie is random once and sticky until the layout changes', () => {
   const stage = layout([layer('work', [
-    module('chat', 'chat', 0, 0, 'thread-a'),
+    module('conversation', 'conversation', 0, 0, 'thread-a'),
     module('context_bars', 'context_bars', 1, 0),
-    module('chat:2', 'chat', 2, 0, 'thread-b'),
+    module('conversation:2', 'conversation', 2, 0, 'thread-b'),
   ])])
   const first = resolveAttunements(stage, threads, null, {}, () => 0.99)
   const retained = resolveAttunements(stage, threads, null, first.sticky_picks, () => 0)
@@ -91,7 +92,7 @@ test('an exact tie is random once and sticky until the layout changes', () => {
 
   assert.equal(first.targets.get('context_bars')?.id, 'thread-b')
   assert.equal(first.new_tie_picks.length, 1)
-  assert.deepEqual(first.new_tie_picks[0].tied_source_instance_ids, ['chat', 'chat:2'])
+  assert.deepEqual(first.new_tie_picks[0].tied_source_instance_ids, ['conversation', 'conversation:2'])
   assert.equal(retained.targets.get('context_bars')?.id, 'thread-b')
   assert.equal(retained.new_tie_picks.length, 0)
   assert.equal(rerolled.targets.get('context_bars')?.id, 'thread-a')
@@ -114,13 +115,31 @@ test('a sticky tie pick survives reload but rejects malformed stored state', () 
 /** SPEC D.2 139: tab order is the third Euclidean axis at one unit per step. */
 test('layer distance participates in proximity with one unit per tab step', () => {
   const stage = layout([
-    layer('first', [module('chat', 'chat', 0, 0, 'thread-a')]),
-    layer('second', [module('chat:2', 'chat', 2, 0, 'thread-b')]),
+    layer('first', [module('conversation', 'conversation', 0, 0, 'thread-a')]),
+    layer('second', [module('conversation:2', 'conversation', 2, 0, 'thread-b')]),
     layer('third', [module('context_bars', 'context_bars', 1, 0)]),
   ])
 
   const resolved = resolveAttunements(stage, threads, null)
   assert.equal(resolved.targets.get('context_bars')?.id, 'thread-b')
+})
+
+/** PLAN M3OM / P2: one conversation instance changes attunement meaning with its posture. */
+test('conversation mode switches the same source between one thread and the Deck stack', () => {
+  const focused = layout([layer('work', [
+    module('conversation', 'conversation', 0, 0, 'thread-a', 'focused'),
+  ])])
+  const stack = structuredClone(focused)
+  stack.layers[0].modules[0].conversation_mode = 'stack'
+
+  assert.deepEqual(resolveAttunements(focused, threads, null).targets.get('conversation'), {
+    kind: 'thread', id: 'thread-a', name: 'Alpha Thread', thread_ids: ['thread-a'],
+    source_instance_id: 'conversation',
+  })
+  assert.deepEqual(resolveAttunements(stack, threads, null).targets.get('conversation'), {
+    kind: 'stack', id: 'the-deck', name: 'The Deck', thread_ids: ['thread-a', 'thread-b'],
+    source_instance_id: 'conversation',
+  })
 })
 
 /** SPEC D.2 138-139: badges expose global and zero-source truth without inference. */

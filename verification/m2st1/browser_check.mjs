@@ -37,7 +37,7 @@ try {
 
   const factoryModules = await mountedModules(page)
   assertJsonEqual(factoryModules, [
-    'threads', 'chat', 'memory', 'vitals', 'context_bars', 'palace_state', 'palace_queue', 'deck',
+    'threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state', 'palace_queue',
   ])
   observations.push({ factory_work_modules: factoryModules })
 
@@ -102,7 +102,7 @@ try {
   await page.getByRole('button', { name: 'Close stage library' }).click()
 
   await page.getByRole('button', { name: 'Remove Graph layer' }).click()
-  await page.getByTestId('rack-module-chat').waitFor()
+  await page.getByTestId('rack-module-conversation').waitFor()
   await page.getByTestId('stage-library-toggle').click()
   const removedGraphRow = page.getByTestId('stage-library').getByRole('listitem').filter({ hasText: 'Graph' })
   await removedGraphRow.getByRole('button', { name: 'Restore' }).click()
@@ -125,15 +125,15 @@ try {
   await recall.waitFor()
   const recalledNames = await recall.getByRole('button').allTextContents()
   if (recalledNames.length === 0) throw new Error('off-screen recall stayed empty after panning away')
-  await recall.getByRole('button', { name: 'Active Channel' }).click()
-  const intersects = await page.getByTestId('rack-module-chat').evaluate((module) => {
+  await recall.getByRole('button', { name: 'Conversation' }).click()
+  const intersects = await page.getByTestId('rack-module-conversation').evaluate((module) => {
     const moduleRect = module.getBoundingClientRect()
     const viewportRect = document.querySelector('[data-testid="stage-viewport"]')?.getBoundingClientRect()
     return viewportRect !== undefined && moduleRect.right > viewportRect.left &&
       moduleRect.left < viewportRect.right && moduleRect.bottom > viewportRect.top &&
       moduleRect.top < viewportRect.bottom
   })
-  if (!intersects) throw new Error('recall did not return Active Channel to the viewport')
+  if (!intersects) throw new Error('recall did not return Conversation to the viewport')
   observations.push({ offscreen_recall: recalledNames })
 
   await page.reload({ waitUntil: 'domcontentloaded' })
@@ -172,7 +172,7 @@ async function mountedModules(targetPage) {
 
 async function activeCamera(targetPage) {
   return targetPage.evaluate(() => {
-    const layout = JSON.parse(localStorage.getItem('nocturne.stage.layout.v4'))
+    const layout = JSON.parse(localStorage.getItem('nocturne.stage.layout.v5'))
     return layout.layers.find((layer) => layer.layer_id === layout.active_layer_id).camera
   })
 }

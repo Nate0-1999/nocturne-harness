@@ -3,7 +3,7 @@ import { STAGE_COLUMNS, STAGE_ROWS } from './stageLayout.ts'
 
 export type StageRackModuleId =
   | 'threads'
-  | 'chat'
+  | 'conversation'
   | 'memory'
   | 'vitals'
   | 'palace_state'
@@ -13,7 +13,6 @@ export type StageRackModuleId =
   | 'injection_console'
   | 'palace_queue'
   | 'recipe'
-  | 'deck'
 
 export type RackResizeDirection = 'n' | 'e' | 's' | 'w' | 'ne' | 'se' | 'sw' | 'nw'
 
@@ -35,7 +34,7 @@ export function stageGridBounds(preferred: RackBounds['preferred']): RackBounds 
 
 export const STAGE_RACK_MODULE_IDS: readonly StageRackModuleId[] = [
   'threads',
-  'chat',
+  'conversation',
   'memory',
   'vitals',
   'context_bars',
@@ -45,7 +44,6 @@ export const STAGE_RACK_MODULE_IDS: readonly StageRackModuleId[] = [
   'injection_console',
   'palace_queue',
   'recipe',
-  'deck',
 ]
 
 export function rackResizeDirections(

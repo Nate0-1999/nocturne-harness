@@ -93,9 +93,11 @@ import {
   restoreStageModule,
   saveStageSet,
   selectStageLayer,
+  setConversationMode,
   stageLayoutsEqual,
   updateStageCamera,
   type StageCamera,
+  type ConversationMode,
   type StageLayoutSet,
   type StageModuleId,
   type StageModuleLayout,
@@ -623,6 +625,13 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     setLayout((current) => resizeStageModule(current, instanceId, width, height, direction))
   }, [])
 
+  const changeConversationMode = useCallback((
+    instanceId: string,
+    mode: ConversationMode,
+  ) => {
+    setLayout((current) => setConversationMode(current, instanceId, mode))
+  }, [])
+
   const layoutStatus = savedSet !== null && stageLayoutsEqual(layout, savedSet)
     ? 'Saved set'
     : stageLayoutsEqual(layout, FACTORY_STAGE_LAYOUT)
@@ -681,7 +690,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   }
 
   function focusModule(module: StageModuleLayout) {
-    if (module.module_id === 'recipe' || module.module_id === 'deck') {
+    if (module.module_id === 'recipe' || module.module_id === 'conversation') {
       const viewport = viewportRef.current
       if (viewport !== null) {
         viewport.scrollLeft = 0
@@ -956,6 +965,8 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               onPointerActivity={setPointerActive}
               scope={scope}
               attunement={attunement}
+              conversationMode={module.conversation_mode}
+              onConversationModeChange={changeConversationMode}
               spatialContext={{
                 ...frameAddresses.get(module.instance_id)!,
                 scope,
@@ -1153,6 +1164,8 @@ interface RackModuleFrameProps {
   onPointerActivity?: (active: boolean) => void
   scope: RackScope
   attunement: AttunementTarget | null
+  conversationMode?: ConversationMode
+  onConversationModeChange?: (instanceId: string, mode: ConversationMode) => void
   spatialContext: SpatialSelectionContext
   onScopeChange?: (instanceId: string, moduleId: StageModuleId, scope: RackScope) => void
   onCollapseToggle?: () => void
@@ -1177,6 +1190,8 @@ function RackModuleFrame({
   onPointerActivity,
   scope,
   attunement,
+  conversationMode,
+  onConversationModeChange,
   spatialContext,
   onScopeChange,
   onCollapseToggle,
@@ -1382,6 +1397,20 @@ function RackModuleFrame({
               {attunementBadge(scope, attunement)}
             </span>
           </div>
+          {manifest.id === 'conversation' && conversationMode !== undefined && (
+            <div className="conversation-mode" role="group" aria-label="Conversation mode">
+              {(['focused', 'stack'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  aria-pressed={conversationMode === mode}
+                  onClick={() => onConversationModeChange?.(instanceId, mode)}
+                >
+                  {mode === 'focused' ? 'Focused' : 'Stack'}
+                </button>
+              ))}
+            </div>
+          )}
           <RackSettingsControl
             manifest={manifest}
             scope={scope}
@@ -1458,6 +1487,7 @@ function RackModuleFrame({
           key={`${instanceId}:${scope}:${attunement?.source_instance_id ?? 'none'}`}
           instanceId={instanceId}
           manifest={manifest}
+          conversationMode={conversationMode}
           spatialContext={spatialContext}
           attunement={scope === 'ATTUNED' ? attunement : null}
           theme={theme}
@@ -1595,6 +1625,9 @@ function RegressionFixtureMarker({ remote = false }: { remote?: boolean }) {
 function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] }) {
   const selection = useRackSelection()
   const drawerOpen = rackModuleSelectionIsOpen(selection, moduleId)
+  const conversationMode = new URLSearchParams(globalThis.location.search).get('conversation_mode') === 'stack'
+    ? 'stack'
+    : 'focused'
   return (
     <div
       className={`rack-remote rack-remote--${moduleId}`}
@@ -1605,8 +1638,8 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
         <HeaderModule />
       ) : moduleId === 'threads' ? (
         <ThreadsModule />
-      ) : moduleId === 'chat' ? (
-        <ChatModuleSlot />
+      ) : moduleId === 'conversation' ? (
+        conversationMode === 'stack' ? <SymphonyDeck /> : <ChatModuleSlot />
       ) : moduleId === 'memory' ? (
         <MemoryModule />
       ) : moduleId === 'vitals' ? (
@@ -1629,8 +1662,6 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
         <InjectionConsole />
       ) : moduleId === 'recipe' ? (
         <RecipeModule />
-      ) : moduleId === 'deck' ? (
-        <SymphonyDeck />
       ) : (
         <GateModule />
       )}

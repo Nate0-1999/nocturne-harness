@@ -26,13 +26,14 @@ import {
   restoreStageLayer,
   restoreStageModule,
   selectStageLayer,
+  setConversationMode,
   updateStageCamera,
 } from '../src/stageLayout.ts'
 
 /** PLAN M2ST1 / P2 requires each layer to retain its own camera and grid-unit module geometry. */
 test('layer switching preserves independent camera and module layouts through reload', () => {
   const storage = memoryStorage()
-  let layout = moveStageModule(cloneFactoryStageLayout(), 'chat', 20, 8)
+  let layout = moveStageModule(cloneFactoryStageLayout(), 'conversation', 20, 8)
   layout = updateStageCamera(layout, { x: -410, y: 92, zoom: 0.48 })
   layout = selectStageLayer(layout, 'graph')
   layout = updateStageCamera(layout, { x: 75, y: 44, zoom: 1.15 })
@@ -44,8 +45,11 @@ test('layer switching preserves independent camera and module layouts through re
   const work = restored.layers.find((layer) => layer.layer_id === 'work')
   assert.deepEqual(work?.camera, { x: -410, y: 92, zoom: 0.48 })
   assert.deepEqual(
-    work?.modules.find((module) => module.module_id === 'chat'),
-    { instance_id: 'chat', module_id: 'chat', source_thread_id: undefined, x: 20, y: 8, width: 20, height: 20 },
+    work?.modules.find((module) => module.module_id === 'conversation'),
+    {
+      instance_id: 'conversation', module_id: 'conversation', source_thread_id: undefined,
+      conversation_mode: 'focused', x: 20, y: 8, width: 20, height: 20,
+    },
   )
 })
 
@@ -79,8 +83,8 @@ test('whole-stage fit and off-screen classification use the same camera geometry
   assert.equal(moduleIsOffscreen(module, fitted, 1280, 720), false)
 })
 
-/** F055 and SPEC B.6 rule 8 require one phone recovery action to return Recipe and Deck fully readable and operable. */
-test('off-screen recovery fits Recipe and Deck at native scale inside 390 by 844', () => {
+/** F055, M3OM, and B.6 r8 require one phone recovery action for Recipe and the Conversation stack. */
+test('off-screen recovery fits Recipe and Conversation stack at native scale inside 390 by 844', () => {
   const viewportWidth = 390
   const viewportHeight = 749
 
@@ -100,13 +104,16 @@ test('off-screen recovery fits Recipe and Deck at native scale inside 390 by 844
   ), false)
 
   let deckLayout = updateStageCamera(
-    cloneFactoryStageLayout(),
+    setConversationMode(cloneFactoryStageLayout(), 'conversation', 'stack'),
     { x: -5000, y: -5000, zoom: 0.64 },
   )
-  deckLayout = recoverStageModule(deckLayout, 'deck', viewportWidth, viewportHeight)
+  deckLayout = recoverStageModule(deckLayout, 'conversation', viewportWidth, viewportHeight)
   const deckLayer = activeStageLayer(deckLayout)
-  const deck = deckLayer.modules.find((module) => module.module_id === 'deck')
-  assert.deepEqual(deck, { instance_id: 'deck', module_id: 'deck', x: 144, y: 90, width: 7, height: 20 })
+  const deck = deckLayer.modules.find((module) => module.module_id === 'conversation')
+  assert.deepEqual(deck, {
+    instance_id: 'conversation', module_id: 'conversation',
+    conversation_mode: 'stack', x: 106, y: 68, width: 7, height: 20,
+  })
   assert.equal(deckLayer.camera.zoom, 1)
   assert.equal(moduleFitsViewport(
     deck, deckLayer.camera, viewportWidth, viewportHeight, 12,
@@ -231,17 +238,18 @@ test('Spend can shrink to one cell and grow to the complete Stage grid', () => {
   )
 })
 
-/** SPEC D.2 138-139: duplicate consumer identity survives layout edits and reload. */
-test('Context Bars, Spend, and Graph can each add independent Stage instances', () => {
+/** SPEC D.2 138-139 and M3OM: sources and consumers retain independent instance identity. */
+test('Conversation, Context Bars, Spend, and Graph can each add independent Stage instances', () => {
   const storage = memoryStorage()
   let layout = cloneFactoryStageLayout()
-  for (const moduleId of ['context_bars', 'vitals', 'memory_graph']) {
+  for (const moduleId of ['conversation', 'context_bars', 'vitals', 'memory_graph']) {
     layout = addStageModuleInstance(layout, moduleId)
   }
   persistStageLayout(storage, layout)
 
   const restored = loadStageLayout(storage)
   const instances = restored.layers.flatMap((layer) => layer.modules.map((module) => module.instance_id))
+  assert.ok(instances.includes('conversation:2'))
   assert.ok(instances.includes('context_bars:2'))
   assert.ok(instances.includes('vitals:2'))
   assert.ok(instances.includes('memory_graph:2'))
@@ -265,6 +273,43 @@ test('create layer appends one active empty tab without disturbing existing laye
   assert.deepEqual(original, FACTORY_STAGE_LAYOUT)
 })
 
+/** PLAN M3OM / P2: v4 Chat and Deck instances migrate in place into one module with durable postures. */
+test('v4 Chat and Deck layouts migrate cleanly into focused and stack Conversation instances', () => {
+  const storage = memoryStorage()
+  storage.setItem('nocturne.stage.layout.v4', JSON.stringify({
+    version: 4,
+    active_layer_id: 'work',
+    scopes: { chat: 'ATTUNED', deck: 'GLOBAL' },
+    layers: [{
+      layer_id: 'work',
+      name: 'Work',
+      camera: { x: 12, y: 18, zoom: 0.75 },
+      modules: [
+        { instance_id: 'chat', module_id: 'chat', source_thread_id: 'thread-a', x: 8, y: 9, width: 20, height: 20 },
+        { instance_id: 'deck', module_id: 'deck', x: 42, y: 11, width: 16, height: 20 },
+      ],
+      removed_modules: [],
+    }],
+    removed_layers: [],
+  }))
+
+  const migrated = loadStageLayout(storage)
+  assert.equal(migrated.version, 5)
+  assert.deepEqual(activeStageLayer(migrated).modules, [
+    {
+      instance_id: 'conversation', module_id: 'conversation', source_thread_id: 'thread-a',
+      conversation_mode: 'focused', x: 8, y: 9, width: 20, height: 20,
+    },
+    {
+      instance_id: 'conversation:2', module_id: 'conversation', source_thread_id: undefined,
+      conversation_mode: 'stack', x: 42, y: 11, width: 16, height: 20,
+    },
+    FACTORY_STAGE_LAYOUT.layers[0].modules.find((module) => module.module_id === 'palace_queue'),
+  ])
+  assert.equal(migrated.scopes.conversation, 'ATTUNED')
+  assert.equal(migrated.scopes['conversation:2'], 'GLOBAL')
+})
+
 /** PLAN M2SP / P2 enlarges and recenters the Stage without moving an owner's saved v2 layout on screen. */
 test('v2 layouts migrate into the centered fine coordinate space with screen geometry preserved', () => {
   const storage = memoryStorage()
@@ -283,18 +328,20 @@ test('v2 layouts migrate into the centered fine coordinate space with screen geo
   }))
 
   const migrated = loadStageLayout(storage)
-  const chat = activeStageLayer(migrated).modules[0]
-  assert.equal(migrated.version, 4)
-  assert.ok(chat.x > STAGE_COLUMNS / 3)
-  assert.ok(chat.y > STAGE_ROWS / 3)
-  assert.equal(chat.width * STAGE_UNIT_WIDTH, 10 * 96)
-  assert.equal(chat.height * STAGE_UNIT_HEIGHT, 10 * 72)
+  const conversation = activeStageLayer(migrated).modules[0]
+  assert.equal(migrated.version, 5)
+  assert.equal(conversation.module_id, 'conversation')
+  assert.equal(conversation.conversation_mode, 'focused')
+  assert.ok(conversation.x > STAGE_COLUMNS / 3)
+  assert.ok(conversation.y > STAGE_ROWS / 3)
+  assert.equal(conversation.width * STAGE_UNIT_WIDTH, 10 * 96)
+  assert.equal(conversation.height * STAGE_UNIT_HEIGHT, 10 * 72)
   assert.ok(Math.abs(
-    migrated.layers[0].camera.x + chat.x * STAGE_UNIT_WIDTH * 0.64 -
+    migrated.layers[0].camera.x + conversation.x * STAGE_UNIT_WIDTH * 0.64 -
     (36 + 5 * 96 * 0.64)
   ) < 1)
   assert.ok(Math.abs(
-    migrated.layers[0].camera.y + chat.y * STAGE_UNIT_HEIGHT * 0.64 -
+    migrated.layers[0].camera.y + conversation.y * STAGE_UNIT_HEIGHT * 0.64 -
     (30 + 1 * 72 * 0.64)
   ) < 1)
 })
