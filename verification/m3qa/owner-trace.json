@@ -1,0 +1,27 @@
+{
+  "packet": "M3QA",
+  "session": "codex / 2026-09-01 / qa01",
+  "scenario": {
+    "palace_version": "0.1.6",
+    "schema_version": "0017",
+    "api_contract_version": "0.1.6",
+    "curator_activity_capability": "absent",
+    "fixture_identity": "M3QA REGRESSION"
+  },
+  "adapter": {
+    "upstream_status": 404,
+    "local_status": 200,
+    "local_body": null
+  },
+  "rendered": {
+    "curator_activity_copy": "Activity unavailable",
+    "curator_remedy_copy": "The Palace remains readable; curator cadence could not be read.",
+    "conversation_rack_action_failures": 0,
+    "browser_warnings_or_errors": 0
+  },
+  "scope": {
+    "owner_data_writes": 0,
+    "provider_calls": 0,
+    "palace_writes": 0
+  }
+}

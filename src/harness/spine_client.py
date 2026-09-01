@@ -1532,10 +1532,12 @@ class SpineClient:
         response = await self._request("GET", "v1/approval-queue", params=params)
         return _expect_success(response, status=200, adapter=_QUEUE_RESPONSE)
 
-    async def curator_activity(self, principal_id: str) -> CuratorActivity:
-        response = await self._request(
-            "GET", "v1/curation", params={"principal_id": principal_id}
-        )
+    async def curator_activity(self, principal_id: str) -> CuratorActivity | None:
+        """Read curator activity; a 404 is an older Palace, not broken chat."""
+
+        response = await self._request("GET", "v1/curation", params={"principal_id": principal_id})
+        if response.status_code == 404:
+            return None
         return _expect_success(response, status=200, adapter=_CURATOR_ACTIVITY)
 
     async def stage_symphony_memory(

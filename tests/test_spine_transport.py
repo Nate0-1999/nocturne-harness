@@ -159,6 +159,22 @@ def spend_table_payload() -> dict[str, Any]:
     }
 
 
+def curator_activity_payload() -> dict[str, Any]:
+    return {
+        "principal_id": "principal-1",
+        "admitted_writes": 9,
+        "last_run_writes": 4,
+        "pressure_events": 2,
+        "last_run_pressure": 1,
+        "trigger_every": 25,
+        "pressure_trigger_every": 3,
+        "writes_until_run": 20,
+        "pressure_until_run": 2,
+        "latest_run": None,
+        "pending_cards": 1,
+    }
+
+
 @pytest.mark.asyncio
 async def test_spend_table_uses_repeated_thread_filters_and_tolerates_older_palace() -> None:
     """M3SP adds one optional authenticated read without broadening the browser boundary."""
@@ -184,6 +200,42 @@ async def test_spend_table_uses_repeated_thread_filters_and_tolerates_older_pala
     assert seen[0].url.params["scope"] == "threads"
     assert seen[0].url.params.get_list("thread_id") == [THREAD_ID, second]
     assert missing is None
+
+
+@pytest.mark.asyncio
+async def test_curator_activity_contains_only_an_older_palace_404() -> None:
+    """PLAN M3QA/F062/P2: absent curator capability degrades in Palace State only."""
+    seen: list[httpx.Request] = []
+    responses = [
+        response(200, curator_activity_payload()),
+        response(404, {}),
+        response(503, problem_payload(), PROBLEM_JSON),
+    ]
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return responses.pop(0)
+
+    async with SpineClient(
+        "https://spine.invalid/prefix",
+        "token",
+        transport=httpx.MockTransport(handler),
+    ) as client:
+        activity = await client.curator_activity("principal-1")
+        missing = await client.curator_activity("principal-1")
+        with pytest.raises(SpineProblemError) as failure:
+            await client.curator_activity("principal-1")
+
+    assert activity is not None
+    assert activity.pending_cards == 1
+    assert missing is None
+    assert failure.value.status_code == 503
+    assert [request.url.path for request in seen] == [
+        "/prefix/v1/curation",
+        "/prefix/v1/curation",
+        "/prefix/v1/curation",
+    ]
+    assert all(request.url.params.get("principal_id") == "principal-1" for request in seen)
 
 
 @pytest.mark.asyncio

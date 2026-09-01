@@ -852,6 +852,49 @@ def test_dev_app_wires_the_owned_spine_into_the_public_rack_query(
     assert spine.vitals_requests == 1
 
 
+def test_dev_app_contains_missing_curator_activity_to_palace_state(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """PLAN M3QA/F062/P2: an older Palace's absent read is a quiet module state."""
+
+    async def stream(_messages, _info):
+        yield "unused"
+
+    class OlderPalaceSpine(GateSpine):
+        async def curator_activity(self, principal_id: str):
+            assert principal_id == "principal-test"
+            return None
+
+    settings = HarnessSettings(
+        _env_file=None,
+        spine_token="test-token",
+        principal_id="principal-test",
+        machine_id="machine-test",
+        agent_id="agent-test",
+        anthropic_api_key=None,
+        openai_api_key=None,
+        openrouter_api_key=None,
+    )
+    monkeypatch.setenv("NOCTURNE_HOME", str(tmp_path))
+    agent = HarnessAgent(settings, model=FunctionModel(stream_function=stream))
+    app = create_dev_app(
+        tmp_path,
+        settings=settings,
+        agent=agent,
+        spine=OlderPalaceSpine(),  # type: ignore[arg-type]
+        transcript_journal=TranscriptJournal(tmp_path / "transcripts"),
+    )
+
+    with TestClient(app) as client:
+        curator = client.get("/v1/curation")
+        palace_state = client.get("/v1/rack/query?resource=vitals&as_of=now")
+
+    assert curator.status_code == 200
+    assert curator.json() is None
+    assert palace_state.status_code == 200
+    assert palace_state.json()["status"] == "live"
+
+
 def test_dev_app_serves_the_real_symphony_recipe_through_the_live_rack_endpoint(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
