@@ -1,0 +1,71 @@
+{
+  "packet": "M3PS",
+  "session": "codex / 2026-09-01 / ps01",
+  "authority": {
+    "principal_class": "verification",
+    "disposable_home": true,
+    "disposable_workspace": true,
+    "owner_writes": 0,
+    "fixture_used_for_verdicts": false
+  },
+  "released_palace": {
+    "ok": true,
+    "version": "0.1.6",
+    "schema_version": "0017",
+    "api_contract_version": "0.1.6"
+  },
+  "verdicts": {
+    "aligned_items": 21,
+    "pass": 6,
+    "fail": 15,
+    "needs_taste": 0
+  },
+  "browser_surfaces": [
+    "Chrome",
+    "Codex in-app browser"
+  ],
+  "corrected_root_thread": {
+    "thread_id": "cc6ab218-6275-4062-b55d-ab2598d03f4a",
+    "project_key": "build-test",
+    "journal_records": 1,
+    "journal_record_types": [
+      "thread_context"
+    ],
+    "prompt_records": 0,
+    "gate_records": 0,
+    "provider_records": 0,
+    "tool_records": 0
+  },
+  "workspace_probe": {
+    "relative_path": "src/deep/proof.txt",
+    "before": "before",
+    "after": "before",
+    "sha256": "9160d4be34c8695bd172a76c7c7966587ea5a4d991ad22c87b2b91af54aa9ebb"
+  },
+  "observed_http": {
+    "spend_table_local_status": 503,
+    "curator_activity_local_status": 500,
+    "context_window_local_status": 200,
+    "scorer_console_local_status": 200,
+    "vitals_local_status": 200
+  },
+  "independent_passes": {
+    "theme_reload": "wizard-mode",
+    "theme_restored": "neo-noir",
+    "graph_scope_changed_and_restored": true,
+    "pointer_drag_changed_context_badge": "New thread -> Restored conversation",
+    "empty_thread_catalog_survived_restart": true
+  },
+  "exit": {
+    "spine": "296 passed in 21.10s",
+    "harness": "1688 passed, 3 deselected in 71.89s",
+    "web_unit": "131 passed",
+    "web_lint": "passed",
+    "web_build": "passed",
+    "ui_canon": "passed",
+    "credential_scan": "no findings",
+    "listener_8896": false,
+    "disposable_home_removed": true,
+    "disposable_workspace_removed": true
+  }
+}
