@@ -1,0 +1,8 @@
+{
+  "fixture": "M3FP REGRESSION",
+  "packaged_assets": true,
+  "first_prompt_prepare_calls": 1,
+  "first_prompt_commit_calls": 1,
+  "receipt_lines": 2,
+  "journal_has_prompt_and_answer": true
+}

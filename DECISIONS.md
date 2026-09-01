@@ -3182,3 +3182,26 @@ or inferring deletions from a memory's current status would make activity that n
 happened. A new curation endpoint, creature module, or sheet-mode preference would
 cross the packet's visual-only boundary. Copying the owner's reference images into the
 product would replace emulation with imitation and add provenance risk.
+
+## 105 — An authoritative Conversation does not reselect its own thread [P0, D.2 148, M3FP]
+
+**Decision.** Before a thread-bound Rack action, proximity attunement selects its
+target only when that target differs from the host's already-authoritative selected
+thread. A same-thread action crosses the existing bridge directly. A different-thread
+action still uses the ordinary selection and snapshot request, so H7's fail-closed
+ordering remains the gate before any prompt, cancellation, archive, memory write, or
+parameter write.
+
+**Motivation.** M3AT commit `9984d80e` introduced the shared contextual-action adapter,
+but the owner chat did not yet send through that path. M3OM commit `94f54e1` made the
+focused Conversation both the action surface and its own attunement source, activating
+the latent defect and becoming the landing that broke the owner front door. The adapter
+then redundantly called `selectThread` for every send. That call marked the settled
+thread snapshot-pending; the immediately following `submitPrompt` correctly refused,
+so no socket frame reached the daemon. Skipping only the no-op reselection restores the
+front door without loosening snapshot authority.
+
+**Rejected alternatives.** Removing the snapshot barrier would violate H7 and A-018.
+Retrying the prompt after hydration could duplicate a user act. Special-casing the
+Conversation component would fork the shared Rack action seam. Making thread selection
+globally idempotent would change explicit navigation semantics outside this defect.

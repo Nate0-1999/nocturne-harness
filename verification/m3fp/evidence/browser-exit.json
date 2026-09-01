@@ -1,0 +1,18 @@
+{
+  "packet": "M3FP",
+  "captured_at": "2026-09-01",
+  "chrome": {
+    "fresh_daemon": true,
+    "fresh_thread": true,
+    "first_prompt_gate_visible": true,
+    "heading": "REVIEW WHAT HARNESS REMEMBERS",
+    "screenshot": "03-chrome-first-prompt-gate.png"
+  },
+  "in_app_browser": {
+    "fresh_daemon": true,
+    "fresh_thread": true,
+    "first_prompt_gate_visible": true,
+    "heading": "REVIEW WHAT HARNESS REMEMBERS",
+    "screenshot": "04-in-app-first-prompt-gate.png"
+  }
+}

@@ -40,6 +40,7 @@ import {
   type SpatialSelectionContext,
 } from './spatialSelection'
 import type { AttunementTarget } from './attunement'
+import { attunedThreadSelection } from './frontDoor'
 import {
   authoritativeProjectPath,
   canonicalProjectPath,
@@ -898,12 +899,13 @@ function contextualRackAction<Action extends RackAction>(
   if (action.type === 'rack.scope.get' || action.type === 'rack.scope.set') {
     return { ...action, instance_id: instanceId } as Action
   }
-  if (
-    attunement?.kind === 'thread' &&
-    ['prompt.submit', 'run.cancel', 'thread.archive', 'memory.refresh', 'memory.add',
-      'memory.remove', 'memory.edit', 'memory.pin', 'parameter.write'].includes(action.type)
-  ) {
-    harnessClient.selectThread(attunement.id)
+  const threadToSelect = attunedThreadSelection(
+    action.type,
+    attunement,
+    useHarnessStore.getState().selectedThreadId,
+  )
+  if (threadToSelect !== null) {
+    harnessClient.selectThread(threadToSelect)
   }
   return action
 }

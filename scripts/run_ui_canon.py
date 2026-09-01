@@ -20,6 +20,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CANONS = (
     (
+        "m3fp-heartbeat",
+        "verification.m3fp.scenario_app:create_scenario_app",
+        "M3FP REGRESSION",
+        (("packaged-heartbeat", "verification/m3fp/browser_check.mjs"),),
+    ),
+    (
         "m2st4",
         "verification.m2st4.scenario_app:create_scenario_app",
         "M2ST4 REGRESSION",
@@ -61,8 +67,8 @@ def main() -> None:
             )
 
     print(
-        "UI canon PASS: fixture curtain, sweep v2, live controls, "
-        "human numbers, Stage, and SYM13 recipe"
+        "UI canon PASS: packaged heartbeat, fixture curtain, sweep v2, "
+        "live controls, human numbers, Stage, and SYM13 recipe"
     )
 
 
