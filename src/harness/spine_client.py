@@ -110,6 +110,7 @@ class MemoryFeatures(ContractModel):
     hist: RawFeatureScore
     loc: RawFeatureScore | None = None
     thread: RawFeatureScore | None = None
+    where: RawFeatureScore | None = None
 
 
 class MemoryCard(ContractModel):
@@ -150,6 +151,7 @@ class MemoryUnit(ContractModel):
     thread_origin: str | None
     origin_thread_id: UUID | None
     origin_path: str | None
+    origin_location: str | None = None
     pin: bool
     status: MemoryStatus
     revision: int
@@ -167,6 +169,7 @@ class InjectPrepareRequest(ContractModel):
     principal_id: str
     project_key: str | None = None
     location_path: str | None = None
+    current_location: str | None = None
     agent_kind: str | None = None
     prompt: str
     model_context_tokens: int = Field(gt=0)
@@ -306,6 +309,7 @@ class CreateMemoryRequest(ContractModel):
     thread_origin: str | None = None
     origin_thread_id: UUID | None = None
     origin_path: str | None = None
+    origin_location: str | None = None
     editor: str
     machine_id: str
     force: bool = False
@@ -336,6 +340,7 @@ class MemorySplitRequest(ContractModel):
     thread_origin: str | None = None
     origin_thread_id: UUID | None = None
     origin_path: str | None = None
+    origin_location: str | None = None
     editor: str
     machine_id: str
 
@@ -429,6 +434,7 @@ class ExtractionRequest(ContractModel):
     thread_id: UUID
     machine_id: str
     editor: str
+    origin_location: str | None = None
     candidates: list[ExtractionCandidate]
 
 
@@ -510,6 +516,7 @@ class SymphonyMemoryRecord(ContractModel):
     project_key: str | None
     origin_thread_id: UUID | None
     origin_path: str | None
+    origin_location: str | None
     pin: bool
     status: Literal["active", "candidate", "staged", "quarantined", "tombstoned"]
     revision: int
@@ -530,6 +537,7 @@ class StageSymphonyMemoryRequest(ContractModel):
     project_key: str | None = None
     origin_thread_id: UUID
     origin_path: str | None = None
+    origin_location: str | None = None
     run_id: ULID
     origin_agent: NonBlankString
     machine_id: NonBlankString

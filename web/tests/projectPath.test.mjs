@@ -26,14 +26,15 @@ test('renders a project path only after authoritative snapshot acknowledgement',
 })
 
 /** F028 + SPEC C.3/C.4 + B.6 r12 require one canonical project key at every browser contract edge. */
-test('accepts relative project paths and plainly rejects ambiguous path shapes', () => {
+test('accepts canonical filesystem and legacy project paths and rejects ambiguous shapes', () => {
   assert.equal(canonicalProjectPath('  build-test/agent-ui  '), 'build-test/agent-ui')
+  assert.equal(canonicalProjectPath('/workspace/build-test'), '/workspace/build-test')
   assert.equal(projectPathError('build-test'), null)
 
-  for (const invalid of ['', '   ', '/absolute', 'one\\two', 'one//two', 'one/', '.', '..', 'one/../two']) {
+  for (const invalid of ['', '   ', 'one\\two', 'one//two', 'one/', '.', '..', 'one/../two']) {
     assert.notEqual(projectPathError(invalid), null, invalid)
   }
-  assert.throws(() => canonicalProjectPath('x'.repeat(257)), /256 characters or fewer/)
+  assert.throws(() => canonicalProjectPath('x'.repeat(4097)), /4096 characters or fewer/)
 })
 
 /** ADR-005 and F028 preserve explicit legacy null scope while seeding the first usable project path. */

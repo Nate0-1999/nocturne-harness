@@ -28,6 +28,7 @@ class LazyStandardToolset:
         agent_id: str,
         machine_id: str,
         fence_reads: bool = False,
+        on_move: Callable[[Path], None] | None = None,
     ) -> None:
         self._cwd = cwd.resolve(strict=True)
         self._workspace_root = workspace_root.resolve(strict=True)
@@ -36,6 +37,7 @@ class LazyStandardToolset:
         self._agent_id = agent_id
         self._machine_id = machine_id
         self._fence_reads = fence_reads
+        self._on_move = on_move
         self._toolset: StandardToolset | None = None
         self._browser = BrowserToolset(location=self.location)
         self._lock = asyncio.Lock()
@@ -70,7 +72,10 @@ class LazyStandardToolset:
         return () if self._toolset is None else self._toolset.presence_events()
 
     async def move(self, path: Path) -> AgentLocation:
-        return await (await self._owned()).move(path)
+        location = await (await self._owned()).move(path)
+        if self._on_move is not None:
+            self._on_move(location.cwd)
+        return location
 
     async def execute(
         self,

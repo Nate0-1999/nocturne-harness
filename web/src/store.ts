@@ -108,7 +108,7 @@ export interface HarnessStoreState extends PersistedHarnessState {
   connection: ConnectionStatus
   daemonMachineId: string | null
   globalError: HarnessError | null
-  createThread: (projectKey?: string | null) => string
+  createThread: (binding?: string | null | ThreadWorkspaceBinding) => string
   hydrateCatalog: (catalog: ThreadCatalogEntry[]) => void
   removeFixtureThreads: () => number
   selectThread: (threadId: string) => void
@@ -165,7 +165,16 @@ function nextIsoTimestamp(previous: string): string {
   return new Date(nextTime).toISOString()
 }
 
-function newCatalogEntry(threadId: string, projectKey: string): ThreadCatalogEntry {
+export interface ThreadWorkspaceBinding {
+  workspaceRoot: string
+  projectLabel?: string | null
+}
+
+function newCatalogEntry(
+  threadId: string,
+  projectKey: string,
+  binding?: ThreadWorkspaceBinding,
+): ThreadCatalogEntry {
   const timestamp = new Date().toISOString()
   return {
     thread_id: threadId,
@@ -173,6 +182,9 @@ function newCatalogEntry(threadId: string, projectKey: string): ThreadCatalogEnt
     created_at: timestamp,
     updated_at: timestamp,
     project_key: canonicalProjectPath(projectKey),
+    project_label: binding?.projectLabel?.trim() || null,
+    workspace_root: binding?.workspaceRoot ?? null,
+    current_location: binding?.workspaceRoot ?? null,
   }
 }
 
@@ -630,6 +642,9 @@ function restoredState(value: unknown): PersistedHarnessState {
         created_at: entry.created_at,
         updated_at: entry.updated_at,
         project_key: projectKey,
+        project_label: typeof entry.project_label === 'string' ? entry.project_label : null,
+        workspace_root: typeof entry.workspace_root === 'string' ? entry.workspace_root : null,
+        current_location: typeof entry.current_location === 'string' ? entry.current_location : null,
         proposed_response: catalogProposedResponse(entry.proposed_response),
       })
     }
@@ -661,12 +676,15 @@ export const useHarnessStore = create<HarnessStoreState>()(
       daemonMachineId: null,
       globalError: null,
 
-      createThread: (requestedProjectKey) => {
+      createThread: (binding) => {
         const current = get()
         const selectedProjectKey = current.selectedThreadId === null
           ? null
           : current.catalog.find((entry) => entry.thread_id === current.selectedThreadId)
             ?.project_key ?? null
+        const requestedProjectKey = typeof binding === 'object' && binding !== null
+          ? binding.workspaceRoot
+          : binding
         const projectKey = canonicalProjectPath(
           requestedProjectKey ?? selectedProjectKey ?? DEFAULT_PROJECT_PATH,
         )
@@ -674,7 +692,11 @@ export const useHarnessStore = create<HarnessStoreState>()(
         while (get().catalog.some((entry) => entry.thread_id === threadId)) {
           threadId = globalThis.crypto.randomUUID()
         }
-        const entry = newCatalogEntry(threadId, projectKey)
+        const entry = newCatalogEntry(
+          threadId,
+          projectKey,
+          typeof binding === 'object' && binding !== null ? binding : undefined,
+        )
         set((state) => ({
           catalog: [...state.catalog, entry],
           selectedThreadId: threadId,
@@ -889,7 +911,13 @@ export const useHarnessStore = create<HarnessStoreState>()(
         if (event.type === 'thread.snapshot') {
           set((state) => ({
             catalog: state.catalog.map((entry) => entry.thread_id === selectedThreadId
-              ? { ...entry, project_key: event.payload.project_key }
+              ? {
+                  ...entry,
+                  project_key: event.payload.project_key,
+                  project_label: event.payload.project_label,
+                  workspace_root: event.payload.workspace_root,
+                  current_location: event.payload.current_location,
+                }
               : entry),
             threads: {
               ...state.threads,

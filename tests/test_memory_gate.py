@@ -508,10 +508,12 @@ async def test_r16_move_reprompts_local_context_and_rescores_before_next_request
     assert spine.prepare_requests[1].location_path == "notes"
     assert spine.prepare_requests[1].mode == "autonomous"
     assert spine.prepare_requests[1].prompt == "Where should this go?"
-    assert "Current location: ." in rendered[0]
+    assert f"Current location: {tmp_path.resolve()}" in rendered[0]
+    assert "Workspace-relative location: ." in rendered[0]
     assert "root memory" in rendered[0]
     assert "notes/AGENTS.md" not in rendered[0]
-    assert "Current location: notes" in rendered[1]
+    assert f"Current location: {notes.resolve()}" in rendered[1]
+    assert "Workspace-relative location: notes" in rendered[1]
     assert "local.txt" in rendered[1]
     assert "notes instruction" in rendered[1]
     assert "notes memory" in rendered[1]

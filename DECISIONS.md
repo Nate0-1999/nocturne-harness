@@ -3205,3 +3205,26 @@ front door without loosening snapshot authority.
 Retrying the prompt after hydration could duplicate a user act. Special-casing the
 Conversation component would fork the shared Rack action seam. Making thread selection
 globally idempotent would change explicit navigation semantics outside this defect.
+
+## 106 — A thread owns canonical feet; its label is only a label [P1, P2, M3TL]
+
+**Decision.** Bind each new conversation once to an existing canonical directory and
+use that same path as workspace root, initial current location, and memory project key.
+Give every thread its own lazily opened toolset, persist successful moves in the
+transcript journal, and render both absolute root and live location into its dynamic
+system context. Let the owner rename only the presentation label. Keep relative typed
+project threads readable until they are explicitly bound while pristine.
+
+Stamp every conversation-created memory route with the live canonical location, from
+ordinary save and remember through split and compaction extraction. Send that location
+on every prepare. The browser shows it on thread, conversation, memory, and Injection
+Console surfaces; it does not infer location for old memories.
+
+**Motivation.** Thread identity, tool authority, prompt context, and memory provenance
+must agree or a location badge is theater. Canonical path identity prevents renamed
+labels from fragmenting memory while per-thread toolsets stop one conversation's move
+from silently moving another.
+
+**Rejected alternatives.** One process-wide CWD leaks state between threads. Using the
+editable label as scope makes a cosmetic rename rewrite identity. Reusing only the old
+workspace-relative `origin_path` cannot compare memories across different roots.

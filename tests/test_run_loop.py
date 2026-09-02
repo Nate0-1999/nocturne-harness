@@ -634,6 +634,76 @@ async def test_project_binding_is_journaled_once_and_becomes_authoritative(
 
 
 @pytest.mark.asyncio
+async def test_thread_workspaces_move_independently_and_survive_restart(tmp_path: Path) -> None:
+    """A-063 gives every thread durable feet without moving its siblings."""
+
+    first_root = tmp_path / "first"
+    second_root = tmp_path / "second"
+    nested = first_root / "notes"
+    nested.mkdir(parents=True)
+    second_root.mkdir()
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    loop = RunLoop(ImmediateHistoryRunner(), factory(Ids()), transcript_journal=journal)
+
+    await loop.request_snapshot(
+        "thread-a",
+        Sink(),
+        workspace_root=str(first_root),
+        project_label="Alpha",
+    )
+    await loop.request_snapshot(
+        "thread-b",
+        Sink(),
+        workspace_root=str(second_root),
+        project_label="Beta",
+    )
+    loop.record_thread_location("thread-a", str(nested))
+
+    assert loop.thread_workspace("thread-a") == (str(first_root), str(nested))
+    assert loop.thread_workspace("thread-b") == (str(second_root), str(second_root))
+    await loop.close()
+
+    restarted = RunLoop(
+        ImmediateHistoryRunner(),
+        factory(Ids()),
+        transcript_journal=TranscriptJournal(journal.root),
+    )
+    assert restarted.thread_workspace("thread-a") == (str(first_root), str(nested))
+    assert restarted.thread_workspace("thread-b") == (str(second_root), str(second_root))
+    catalog = {
+        entry.thread_id: entry for entry in TranscriptJournal(journal.root).catalog()
+    }
+    assert catalog["thread-a"].project_label == "Alpha"
+    assert catalog["thread-b"].project_label == "Beta"
+    await restarted.close()
+
+
+@pytest.mark.asyncio
+async def test_legacy_typed_project_can_explicitly_bind_a_folder(tmp_path: Path) -> None:
+    """A-063 preserves the old key until an explicit folder bind replaces it."""
+
+    root = tmp_path / "bound-project"
+    root.mkdir()
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    loop = RunLoop(ImmediateHistoryRunner(), factory(Ids()), transcript_journal=journal)
+
+    await loop.request_snapshot("thread-legacy", Sink(), project_key="old/typed-project")
+    await loop.request_snapshot(
+        "thread-legacy",
+        Sink(),
+        project_key="old/typed-project",
+        workspace_root=str(root),
+    )
+
+    assert loop.project_key("thread-legacy") == str(root)
+    assert loop.thread_workspace("thread-legacy") == (str(root), str(root))
+    catalog = {entry.thread_id: entry for entry in journal.catalog()}
+    assert catalog["thread-legacy"].project_key == str(root)
+    assert catalog["thread-legacy"].project_label == "bound-project"
+    await loop.close()
+
+
+@pytest.mark.asyncio
 async def test_legacy_nonempty_thread_cannot_be_silently_reprojected() -> None:
     """F028 and ADR-005 forbid treating legacy None as a global project match; this proves a
     nonempty unscoped thread must remain unscoped instead of changing Spine identity.

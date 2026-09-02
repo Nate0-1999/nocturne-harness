@@ -50,6 +50,7 @@ def memory_unit_payload() -> dict[str, object]:
         "thread_origin": None,
         "origin_thread_id": None,
         "origin_path": None,
+        "origin_location": None,
         "pin": False,
         "status": "active",
         "revision": 1,
@@ -285,6 +286,7 @@ def test_memory_unit_is_the_shared_c4_shape() -> None:
         "thread_origin",
         "origin_thread_id",
         "origin_path",
+        "origin_location",
         "pin",
         "status",
         "revision",
@@ -415,6 +417,7 @@ def test_a049_memory_split_models_are_closed_exact_c4_shapes() -> None:
         "thread_origin",
         "origin_thread_id",
         "origin_path",
+        "origin_location",
         "editor",
         "machine_id",
     }

@@ -91,6 +91,7 @@ class ExtractionService:
             thread_id=thread_id,
             machine_id=self._machine_id,
             editor="extraction",
+            origin_location=self._journal.thread_location(text_id),
             candidates=candidates,
         )
         try:

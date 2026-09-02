@@ -43,6 +43,9 @@ class HydratedTranscript:
     resolved_model: str | None
     project_key: str | None
     attachments: Mapping[str, ImageAttachment]
+    project_label: str | None = None
+    workspace_root: str | None = None
+    current_location: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,6 +63,9 @@ class TranscriptCatalogEntry:
     created_at: str
     updated_at: str
     project_key: str | None
+    project_label: str | None = None
+    workspace_root: str | None = None
+    current_location: str | None = None
     proposed_response: Mapping[str, Any] | None = None
 
 
@@ -193,8 +199,16 @@ class TranscriptJournal:
                 },
             )
 
-    def append_thread_context(self, thread_id: str, project_key: str) -> None:
-        """Append the immutable artificial project path before exposing the thread."""
+    def append_thread_context(
+        self,
+        thread_id: str,
+        project_key: str,
+        *,
+        project_label: str | None = None,
+        workspace_root: str | None = None,
+        current_location: str | None = None,
+    ) -> None:
+        """Append immutable thread feet before exposing the thread."""
 
         canonical = validate_artificial_project_path(project_key)
         with self._lock:
@@ -204,6 +218,22 @@ class TranscriptJournal:
                     "version": 1,
                     "record_type": "thread_context",
                     "project_key": canonical,
+                    "project_label": project_label,
+                    "workspace_root": workspace_root,
+                    "current_location": current_location,
+                },
+            )
+
+    def append_thread_location(self, thread_id: str, current_location: str) -> None:
+        """Append a successful movement so restart restores this thread alone."""
+
+        with self._lock:
+            self._append(
+                thread_id,
+                {
+                    "version": 1,
+                    "record_type": "thread_location",
+                    "current_location": current_location,
                 },
             )
 
@@ -238,6 +268,13 @@ class TranscriptJournal:
             if isinstance(message, dict):
                 messages.append(deepcopy(message))
         return messages
+
+    def thread_location(self, thread_id: str) -> str | None:
+        """Read the latest durable location for compaction provenance."""
+
+        filename = self._filename_for_thread(thread_id)
+        transcript = self._hydrate_file(filename)
+        return None if transcript is None else transcript.current_location
 
     def hydrate_threads(self) -> tuple[HydratedTranscript, ...]:
         """Reconstruct every current transcript branch from durable journal rows."""
@@ -373,6 +410,9 @@ class TranscriptJournal:
                     created_at=self._browser_timestamp(times[0]),
                     updated_at=self._browser_timestamp(times[-1]),
                     project_key=transcript.project_key,
+                    project_label=transcript.project_label,
+                    workspace_root=transcript.workspace_root,
+                    current_location=transcript.current_location,
                     proposed_response=self._outstanding_proposed_response(transcript.messages),
                 )
             )
@@ -647,6 +687,9 @@ class TranscriptJournal:
         saw_message_row = False
         resolved_model: str | None = None
         project_key: str | None = None
+        project_label: str | None = None
+        workspace_root: str | None = None
+        current_location: str | None = None
 
         for raw in rows:
             try:
@@ -715,12 +758,60 @@ class TranscriptJournal:
                         "context. Restore the journal from a verified backup before starting "
                         "Nocturne."
                     ) from exc
-                if project_key is not None and canonical_project != project_key:
+                raw_label = row.get("project_label")
+                raw_root = row.get("workspace_root")
+                raw_location = row.get("current_location")
+                legacy_binding_upgrade = (
+                    project_key is not None
+                    and not project_key.startswith("/")
+                    and canonical_project.startswith("/")
+                    and isinstance(raw_root, str)
+                    and isinstance(raw_location, str)
+                )
+                if (
+                    project_key is not None
+                    and canonical_project != project_key
+                    and not legacy_binding_upgrade
+                ):
                     raise TranscriptJournalUnavailable(
                         f"Conversation journal for thread {candidate} changes project context. "
                         "Restore the journal from a verified backup before starting Nocturne."
                     )
                 project_key = canonical_project
+                if raw_label is not None:
+                    if not isinstance(raw_label, str) or not raw_label.strip():
+                        raise TranscriptJournalUnavailable(
+                            "Conversation journal has invalid project label"
+                        )
+                    project_label = raw_label
+                if raw_root is not None or raw_location is not None:
+                    if not isinstance(raw_root, str) or not isinstance(raw_location, str):
+                        raise TranscriptJournalUnavailable(
+                            "Conversation journal has incomplete thread feet"
+                        )
+                    root_path = Path(raw_root)
+                    location_path = Path(raw_location)
+                    if (
+                        not root_path.is_absolute()
+                        or not location_path.is_absolute()
+                        or not location_path.is_relative_to(root_path)
+                    ):
+                        raise TranscriptJournalUnavailable(
+                            "Conversation journal has invalid thread feet"
+                        )
+                    workspace_root = raw_root
+                    current_location = raw_location
+            elif row.get("record_type") == "thread_location":
+                raw_location = row.get("current_location")
+                if workspace_root is None or not isinstance(raw_location, str):
+                    raise TranscriptJournalUnavailable(
+                        "Conversation journal moves an unbound thread"
+                    )
+                if not Path(raw_location).is_relative_to(Path(workspace_root)):
+                    raise TranscriptJournalUnavailable(
+                        "Conversation journal moves outside thread workspace"
+                    )
+                current_location = raw_location
 
         # Validate every immutable message revision, not only the latest one.
         # A later compact snapshot cannot repair an earlier attachment conflict.
@@ -765,6 +856,9 @@ class TranscriptJournal:
                     resolved_model,
                     project_key,
                     attachments,
+                    project_label,
+                    workspace_root,
+                    current_location,
                 )
             raise TranscriptJournalUnavailable(
                 "Conversation journal contains an unreadable transcript. "
@@ -802,6 +896,9 @@ class TranscriptJournal:
             resolved_model,
             project_key,
             attachments,
+            project_label,
+            workspace_root,
+            current_location,
         )
 
     def _existing_attachments(self, thread_id: str) -> Mapping[str, ImageAttachment]:

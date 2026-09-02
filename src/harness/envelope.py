@@ -503,6 +503,8 @@ class ActiveRunSnapshot(_ExtensiblePayload):
 class ThreadSnapshotRequestPayload(_ExtensiblePayload):
     request: Literal[True]
     project_key: ArtificialProjectPath | None = None
+    workspace_root: NonBlankString | None = None
+    project_label: NonBlankString | None = None
 
 
 class ThreadSnapshotResponsePayload(_ExtensiblePayload):
@@ -510,6 +512,15 @@ class ThreadSnapshotResponsePayload(_ExtensiblePayload):
     open_gate: GateOpenPayload | None
     active_run: ActiveRunSnapshot | None
     project_key: ArtificialProjectPath | None
+    project_label: NonBlankString | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+    workspace_root: NonBlankString | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+    current_location: NonBlankString | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     request_id: ULID | None = Field(default=None, exclude_if=lambda value: value is None)
     resolved_model: NonBlankString | None = Field(
         default=None,

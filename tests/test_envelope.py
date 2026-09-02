@@ -62,6 +62,7 @@ def scored_card() -> dict[str, object]:
             "hist": 0.4,
             "loc": None,
             "thread": None,
+            "where": None,
         },
         "rank": 1,
     }
@@ -105,6 +106,7 @@ def wrong_unit() -> dict[str, object]:
         "thread_origin": "thread-1",
         "origin_thread_id": None,
         "origin_path": None,
+        "origin_location": None,
         "pin": False,
         "status": "active",
         "revision": 2,
@@ -818,20 +820,19 @@ def test_thread_snapshot_request_requires_outer_thread() -> None:
     [
         "",
         " ",
-        "/build-test",
         "build\\test",
         "build//test",
         "build/./test",
         "build/../test",
-        "x" * 257,
-        "🪴" * 257,
+        "x" * 4097,
+        "🪴" * 4097,
     ],
 )
-def test_thread_snapshot_project_context_requires_a_canonical_artificial_path(
+def test_thread_snapshot_project_context_requires_a_canonical_scope_path(
     project_key: str,
 ) -> None:
-    """F028, ADR-010, ADR-023, and B.6 r12 require one canonical relative project path;
-    this prevents browser spelling variants from fragmenting project identity.
+    """A-063 accepts canonical filesystem identities and legacy artificial paths while
+    rejecting spelling variants that would fragment project identity.
     """
 
     with pytest.raises(ValidationError):
@@ -854,6 +855,10 @@ def test_thread_snapshot_project_context_accepts_the_seed_and_descendants() -> N
         "thread.snapshot",
         {"request": True, "project_key": "build-test/api"},
     )
+    filesystem = envelope_for(
+        "thread.snapshot",
+        {"request": True, "project_key": "/workspace/build-test"},
+    )
     unicode_boundary = envelope_for(
         "thread.snapshot",
         {"request": True, "project_key": "🪴" * 256},
@@ -861,6 +866,7 @@ def test_thread_snapshot_project_context_accepts_the_seed_and_descendants() -> N
 
     assert seeded.payload.project_key == "build-test"
     assert child.payload.project_key == "build-test/api"
+    assert filesystem.payload.project_key == "/workspace/build-test"
     assert unicode_boundary.payload.project_key == "🪴" * 256
 
 

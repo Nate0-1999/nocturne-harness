@@ -9,6 +9,7 @@ from collections.abc import Awaitable, Callable, Mapping, Sequence
 from copy import deepcopy
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any, Literal, cast
 
 from pydantic_ai.messages import (
@@ -123,6 +124,9 @@ class _ThreadState:
     model_resolution: ThreadModelResolution | None = None
     cached_prefix_tokens: int = 0
     project_key: str | None = None
+    project_label: str | None = None
+    workspace_root: str | None = None
+    current_location: str | None = None
 
 
 class ProjectBindingConflict(RuntimeError):
@@ -425,6 +429,8 @@ class RunLoop:
         thread_id: str,
         sink: EnvelopeSink,
         project_key: str | None = None,
+        workspace_root: str | None = None,
+        project_label: str | None = None,
         request_id: str | None = None,
     ) -> None:
         """Select a thread and acknowledge its durable binding in one snapshot."""
@@ -437,7 +443,14 @@ class RunLoop:
         async with self._lock:
             self._require_open()
             state = self._state_for_locked(thread_id)
-            if canonical_project is not None:
+            if workspace_root is not None:
+                self._bind_workspace_locked(
+                    thread_id,
+                    state,
+                    workspace_root=workspace_root,
+                    project_label=project_label,
+                )
+            elif canonical_project is not None:
                 self._bind_project_locked(thread_id, state, canonical_project)
             self._selected_thread_id = thread_id
             existing = self._find_sink_locked(sink)
@@ -464,6 +477,33 @@ class RunLoop:
         self._require_thread_id(thread_id)
         state = self._threads.get(thread_id)
         return None if state is None else state.project_key
+
+    def thread_workspace(self, thread_id: str) -> tuple[str, str] | None:
+        """Return this thread's durable workspace root and current location."""
+
+        self._require_thread_id(thread_id)
+        state = self._threads.get(thread_id)
+        if state is None or state.workspace_root is None or state.current_location is None:
+            return None
+        return state.workspace_root, state.current_location
+
+    def record_thread_location(self, thread_id: str, current_location: str) -> None:
+        """Persist movement for one thread without touching any sibling."""
+
+        self._require_thread_id(thread_id)
+        state = self._threads.get(thread_id)
+        if state is None or state.workspace_root is None:
+            raise ValueError("thread has no bound workspace")
+        location = Path(current_location).resolve(strict=True)
+        root = Path(state.workspace_root)
+        if not location.is_dir() or not location.is_relative_to(root):
+            raise ValueError("thread location must remain inside its workspace")
+        canonical = str(location)
+        if state.current_location == canonical:
+            return
+        if self._transcript_journal is not None:
+            self._transcript_journal.append_thread_location(thread_id, canonical)
+        state.current_location = canonical
 
     async def detach(self, sink: EnvelopeSink) -> None:
         """Detach a connection without changing daemon-lifetime thread state."""
@@ -1696,6 +1736,9 @@ class RunLoop:
                 open_gate=state.open_gate,
                 active_run=active_snapshot,
                 project_key=state.project_key,
+                project_label=state.project_label,
+                workspace_root=state.workspace_root,
+                current_location=state.current_location,
                 request_id=request_id,
                 resolved_model=state.resolved_model,
             ),
@@ -1898,6 +1941,50 @@ class RunLoop:
             self._transcript_journal.append_thread_context(thread_id, project_key)
         state.project_key = project_key
 
+    def _bind_workspace_locked(
+        self,
+        thread_id: str,
+        state: _ThreadState,
+        *,
+        workspace_root: str,
+        project_label: str | None,
+    ) -> None:
+        root = Path(workspace_root).expanduser().resolve(strict=True)
+        if not root.is_dir():
+            raise ValueError("thread workspace must be an existing directory")
+        canonical = str(root)
+        label = (project_label or root.name).strip()
+        if not label:
+            raise ValueError("project label must not be blank")
+        if state.workspace_root is not None:
+            if state.workspace_root != canonical:
+                raise ProjectBindingConflict(canonical, state.project_key)
+            if project_label is not None and label != state.project_label:
+                if self._transcript_journal is not None:
+                    self._transcript_journal.append_thread_context(
+                        thread_id,
+                        canonical,
+                        project_label=label,
+                        workspace_root=canonical,
+                        current_location=state.current_location,
+                    )
+                state.project_label = label
+            return
+        if state.project_key is not None and state.project_key.startswith("/"):
+            raise ProjectBindingConflict(canonical, state.project_key)
+        if self._transcript_journal is not None:
+            self._transcript_journal.append_thread_context(
+                thread_id,
+                canonical,
+                project_label=label,
+                workspace_root=canonical,
+                current_location=canonical,
+            )
+        state.project_key = canonical
+        state.project_label = label
+        state.workspace_root = canonical
+        state.current_location = canonical
+
     def _hydrate_threads(
         self,
         journal: TranscriptJournal | None,
@@ -1910,6 +1997,9 @@ class RunLoop:
                 message_history=self._rehydrate_model_history(transcript),
                 resolved_model=transcript.resolved_model or self._initial_resolved_model,
                 project_key=transcript.project_key,
+                project_label=transcript.project_label,
+                workspace_root=transcript.workspace_root,
+                current_location=transcript.current_location,
             )
             for transcript in journal.hydrate_threads()
         }

@@ -94,6 +94,13 @@ class MemoryToolContext:
             return self.origin_path
         return workspace_location_path(self.toolset.location())
 
+    def current_origin_location(self) -> str | None:
+        """Return the canonical folder where this thread is standing."""
+
+        if self.toolset is None:
+            return None
+        return str(self.toolset.location().cwd.resolve(strict=True))
+
 
 async def save_memory(
     context: MemoryToolContext,
@@ -129,6 +136,7 @@ async def save_memory(
         thread_origin=str(context.thread_id) if context.thread_id is not None else None,
         origin_thread_id=context.thread_id,
         origin_path=context.current_origin_path(),
+        origin_location=context.current_origin_location(),
         editor=f"agent:{context.agent_id}",
         machine_id=context.machine_id,
         force=force,
@@ -235,6 +243,7 @@ async def create_remembered_memory(
             thread_origin=str(context.thread_id) if context.thread_id is not None else None,
             origin_thread_id=context.thread_id,
             origin_path=context.current_origin_path(),
+            origin_location=context.current_origin_location(),
             editor="user",
             machine_id=context.machine_id,
             force=False,
@@ -258,6 +267,7 @@ async def create_remembered_memory_split(
             thread_origin=str(context.thread_id) if context.thread_id is not None else None,
             origin_thread_id=context.thread_id,
             origin_path=context.current_origin_path(),
+            origin_location=context.current_origin_location(),
             editor="user",
             machine_id=context.machine_id,
         )

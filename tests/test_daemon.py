@@ -1377,6 +1377,44 @@ def test_project_rebind_conflict_returns_error_then_authoritative_snapshot(tmp_p
     ]
 
 
+def test_invalid_workspace_returns_error_then_unbound_snapshot(tmp_path: Path) -> None:
+    """A bad typed folder stays recoverable instead of tearing down the browser socket."""
+
+    instant = datetime(2026, 9, 2, 12, tzinfo=UTC)
+    outbound_ids = iter((PROMPT_ID, SECOND_PROMPT_ID, CANCEL_ID))
+    factory = EnvelopeFactory(
+        machine_id="daemon-test",
+        id_factory=lambda: next(outbound_ids),
+        clock=lambda: instant,
+    )
+    loop = RunLoop(CancellableRunner(), factory, transcript_journal=TranscriptJournal(tmp_path))
+    client = TestClient(create_app(tmp_path, run_loop=loop, envelope_factory=factory))
+    missing = tmp_path / "does-not-exist"
+
+    with client.websocket_connect("/ws") as websocket:
+        websocket.send_json(
+            frame(
+                "thread.snapshot",
+                {
+                    "request": True,
+                    "workspace_root": str(missing),
+                    "project_label": "missing",
+                },
+                message_id=SNAPSHOT_ID,
+            )
+        )
+        error = websocket.receive_json()
+        authoritative = websocket.receive_json()
+
+    assert error["type"] == "error"
+    assert error["payload"]["code"] == "invalid_workspace"
+    assert str(missing) in error["payload"]["message"]
+    assert authoritative["type"] == "thread.snapshot"
+    assert authoritative["payload"]["request_id"] == SNAPSHOT_ID
+    assert authoritative["payload"]["project_key"] is None
+    assert authoritative["payload"].get("workspace_root") is None
+
+
 def test_explicit_pinned_policy_does_not_resolve_unused_chat_model(tmp_path: Path) -> None:
     """SPEC C.7 is defended by verifying that explicit pinned policy does not resolve unused
     chat model; this prevents drift in the daemon transport and event-loop contract.
@@ -2080,8 +2118,8 @@ def test_unknown_type_without_forwarder_is_ignored_without_closing(tmp_path: Pat
         "messages": [],
         "open_gate": None,
         "active_run": None,
-        "project_key": None,
-        "request_id": SNAPSHOT_ID,
+            "project_key": None,
+            "request_id": SNAPSHOT_ID,
     }
 
 

@@ -403,6 +403,10 @@ export function MemoryPanel({
                     </div>
                   </header>
 
+                  <p className="principal-memory__where" data-testid="memory-origin-location">
+                    WHERE · {memory.origin_location ?? 'Older memory · location unavailable'}
+                  </p>
+
                   {editing && editor !== null ? (
                     <form
                       className="principal-memory__editor"

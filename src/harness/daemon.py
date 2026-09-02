@@ -639,6 +639,8 @@ def create_app(
                             message.thread_id,
                             send,
                             project_key=message.payload.project_key,
+                            workspace_root=message.payload.workspace_root,
+                            project_label=message.payload.project_label,
                             request_id=message.id,
                         )
                     except ProjectBindingConflict as exc:
@@ -657,6 +659,23 @@ def create_app(
                                         f"This thread already belongs to {existing}. "
                                         f"Start a new thread in project {exc.requested}."
                                     ),
+                                },
+                                thread_id=message.thread_id,
+                            ),
+                        )
+                        await loop.request_snapshot(
+                            message.thread_id,
+                            send,
+                            request_id=message.id,
+                        )
+                    except (OSError, ValueError) as exc:
+                        await loop.send_direct(
+                            send,
+                            factory.create(
+                                MessageType.ERROR,
+                                {
+                                    "code": "invalid_workspace",
+                                    "message": str(exc),
                                 },
                                 thread_id=message.thread_id,
                             ),
@@ -745,13 +764,34 @@ def create_dev_app(
         static_context_tokens=configured.model_context_tokens,
         catalog=completion_router.catalog,
     )
-    workspace_toolset = LazyStandardToolset(
-        cwd=discovery_root,
-        workspace_root=discovery_root,
-        agent_id=agent_id,
-        machine_id=machine_id,
-        fence_reads=configured.toolset_fence_reads,
-    )
+    journal = transcript_journal or TranscriptJournal(nocturne_home() / "transcripts")
+    workspace_toolsets: dict[str, LazyStandardToolset] = {}
+
+    def workspace_toolset_for(thread_id: str) -> LazyStandardToolset:
+        existing = workspace_toolsets.get(thread_id)
+        if existing is not None:
+            return existing
+        workspace = loop.thread_workspace(thread_id)
+        root, cwd = (
+            (discovery_root, discovery_root)
+            if workspace is None
+            else (Path(workspace[0]), Path(workspace[1]))
+        )
+        def record_move(location: Path) -> None:
+            if loop.thread_workspace(thread_id) is not None:
+                loop.record_thread_location(thread_id, str(location))
+
+        toolset = LazyStandardToolset(
+            cwd=cwd,
+            workspace_root=root,
+            agent_id=agent_id,
+            machine_id=machine_id,
+            fence_reads=configured.toolset_fence_reads,
+            on_move=record_move,
+        )
+        toolset.set_browser_consent_check(browser_consent_was_journaled)
+        workspace_toolsets[thread_id] = toolset
+        return toolset
 
     def context_factory(thread_id: str) -> MemoryToolContext:
         try:
@@ -759,6 +799,7 @@ def create_dev_app(
         except ValueError as exc:
             raise ValueError("agent thread_id must be a UUID") from exc
         project_key = loop.project_key(thread_id)
+        workspace_toolset = workspace_toolset_for(thread_id)
         return MemoryToolContext(
             spine=owned_spine,
             principal_id=principal_id,
@@ -802,8 +843,6 @@ def create_dev_app(
         contexts=memory_contexts,
         on_context_changed=publish_ambient_memory_panel,
     )
-    journal = transcript_journal or TranscriptJournal(nocturne_home() / "transcripts")
-
     def browser_consent_was_journaled(thread_id: str) -> bool:
         try:
             return any(
@@ -816,7 +855,6 @@ def create_dev_app(
         except TranscriptJournalUnavailable:
             return False
 
-    workspace_toolset.set_browser_consent_check(browser_consent_was_journaled)
     transcript_sync = TranscriptSyncEngine(
         journal,
         owned_spine,
@@ -962,7 +1000,16 @@ def create_dev_app(
 
         @app.get("/v1/transcripts/catalog")
         async def transcript_catalog():
-            return {"threads": journal.catalog()}
+            root = discovery_root.resolve(strict=True)
+            return {
+                "threads": journal.catalog(),
+                "default_workspace": {"path": str(root), "label": root.name},
+            }
+
+        @app.get("/v1/workspace/default")
+        async def default_workspace():
+            root = discovery_root.resolve(strict=True)
+            return {"path": str(root), "label": root.name}
 
         async def flush_receipt_queue() -> None:
             await receipt_queue.flush(owned_spine)
@@ -1094,7 +1141,11 @@ def create_dev_app(
 
     app.router.add_event_handler("startup", transcript_sync.start)
     app.router.add_event_handler("shutdown", transcript_sync.stop)
-    app.router.add_event_handler("shutdown", workspace_toolset.close)
+    async def close_workspace_toolsets() -> None:
+        for toolset in tuple(workspace_toolsets.values()):
+            await toolset.close()
+
+    app.router.add_event_handler("shutdown", close_workspace_toolsets)
     app.router.add_event_handler("shutdown", owned_spine.aclose)
     app.router.add_event_handler("shutdown", completion_router.aclose)
     return app

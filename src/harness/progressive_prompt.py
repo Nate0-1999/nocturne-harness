@@ -38,7 +38,10 @@ def render_workspace_context(location: AgentLocation) -> str:
     instruction_sections = _instruction_sections(root, cwd)
     lines = [
         "<workspace_context>",
-        f"Current location: {relative}",
+        f"Workspace root: {root}",
+        f"Current location: {cwd}",
+        f"Workspace-relative location: {relative}",
+        "Treat the workspace root as the hard file-operation boundary for this thread.",
         "Directory entries:",
         *(f"- {entry}" for entry in entries),
     ]

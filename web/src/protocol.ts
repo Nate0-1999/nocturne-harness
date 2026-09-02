@@ -41,6 +41,9 @@ export interface ThreadCatalogEntry {
   created_at: string
   updated_at: string
   project_key: string | null
+  project_label: string | null
+  workspace_root: string | null
+  current_location: string | null
   proposed_response?: {
     proposal_run_id: string
     primary: string
@@ -214,6 +217,7 @@ export type MemoryUnit = JsonObject & {
   thread_origin: string | null
   origin_thread_id: string | null
   origin_path: string | null
+  origin_location: string | null
   pin: boolean
   status: MemoryStatus
   revision: number
@@ -294,6 +298,7 @@ export type MemoryFeatures = JsonObject & {
   hist: number
   loc: number | null
   thread: number | null
+  where: number | null
 }
 
 export type ScoredMemoryCard = JsonObject & {
@@ -350,6 +355,9 @@ export interface ThreadSnapshotPayload {
   active_run: ActiveRunSnapshot | null
   resolved_model: string | null
   project_key: string | null
+  project_label: string | null
+  workspace_root: string | null
+  current_location: string | null
   request_id: Ulid | null
 }
 
@@ -413,7 +421,12 @@ export type DecodedServerEvent =
   | { type: 'unknown'; payload: JsonValue }
 
 export interface BrowserPayloadMap {
-  'thread.snapshot': { request: true; project_key: string | null }
+  'thread.snapshot': {
+    request: true
+    project_key: string | null
+    project_label: string | null
+    workspace_root: string | null
+  }
   'prompt.submit': {
     prompt: string
     image?: PromptImage
@@ -687,7 +700,9 @@ const MEMORY_STATUSES: readonly MemoryStatus[] = [
   'tombstoned',
 ]
 
-const FEATURE_KEYS = ['sem', 'kw', 'time', 'proj', 'freq', 'hist', 'loc', 'thread'] as const
+const FEATURE_KEYS = [
+  'sem', 'kw', 'time', 'proj', 'freq', 'hist', 'loc', 'thread', 'where',
+] as const
 const CARD_KEYS = [
   'memory_id',
   'label',
@@ -709,6 +724,7 @@ const MEMORY_UNIT_KEYS = [
   'thread_origin',
   'origin_thread_id',
   'origin_path',
+  'origin_location',
   'pin',
   'status',
   'revision',
@@ -733,7 +749,7 @@ function parseMemoryFeatures(value: unknown): MemoryFeatures | null {
   }
   for (const key of FEATURE_KEYS) {
     const feature = value[key]
-    if ((key === 'loc' || key === 'thread') && feature === null) {
+    if ((key === 'loc' || key === 'thread' || key === 'where') && feature === null) {
       continue
     }
     if (
@@ -754,6 +770,7 @@ function parseMemoryFeatures(value: unknown): MemoryFeatures | null {
     hist: value.hist as number,
     loc: value.loc as number | null,
     thread: value.thread as number | null,
+    where: value.where as number | null,
   }
 }
 
@@ -804,6 +821,7 @@ function parseMemoryUnit(value: unknown): MemoryUnit | null {
     (value.thread_origin !== null && typeof value.thread_origin !== 'string') ||
     (value.origin_thread_id !== null && !isUuid(value.origin_thread_id)) ||
     (value.origin_path !== null && typeof value.origin_path !== 'string') ||
+    (value.origin_location !== null && typeof value.origin_location !== 'string') ||
     typeof value.pin !== 'boolean' ||
     !MEMORY_STATUSES.includes(value.status as MemoryStatus) ||
     !Number.isInteger(value.revision) ||
@@ -828,6 +846,7 @@ function parseMemoryUnit(value: unknown): MemoryUnit | null {
     thread_origin: value.thread_origin as string | null,
     origin_thread_id: value.origin_thread_id as string | null,
     origin_path: value.origin_path as string | null,
+    origin_location: value.origin_location as string | null,
     pin: value.pin,
     status: value.status as MemoryStatus,
     revision: value.revision as number,
@@ -1071,6 +1090,12 @@ function parseSnapshot(value: unknown): ThreadSnapshotPayload | null {
     !Array.isArray(value.messages) ||
     !Object.hasOwn(value, 'project_key') ||
     (value.project_key !== null && !isCanonicalProjectPath(value.project_key)) ||
+    (value.project_label !== undefined && value.project_label !== null &&
+      typeof value.project_label !== 'string') ||
+    (value.workspace_root !== undefined && value.workspace_root !== null &&
+      typeof value.workspace_root !== 'string') ||
+    (value.current_location !== undefined && value.current_location !== null &&
+      typeof value.current_location !== 'string') ||
     (value.request_id !== undefined &&
       value.request_id !== null &&
       !isUlid(value.request_id)) ||
@@ -1099,6 +1124,9 @@ function parseSnapshot(value: unknown): ThreadSnapshotPayload | null {
     resolved_model:
       typeof value.resolved_model === 'string' ? value.resolved_model : null,
     project_key: value.project_key as string | null,
+    project_label: typeof value.project_label === 'string' ? value.project_label : null,
+    workspace_root: typeof value.workspace_root === 'string' ? value.workspace_root : null,
+    current_location: typeof value.current_location === 'string' ? value.current_location : null,
     request_id: typeof value.request_id === 'string' ? value.request_id : null,
   }
 }

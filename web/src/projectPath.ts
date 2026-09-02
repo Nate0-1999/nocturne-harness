@@ -1,5 +1,5 @@
 export const DEFAULT_PROJECT_PATH = 'build-test'
-export const MAX_PROJECT_PATH_CODE_POINTS = 256
+export const MAX_PROJECT_PATH_CODE_POINTS = 4096
 export const UNSCOPED_PROJECT_LABEL = 'Unscoped'
 
 export function projectPathEditValue(projectKey: string | null): string {
@@ -85,15 +85,12 @@ export function canonicalProjectPath(value: string): string {
     throw new TypeError('Enter a project path.')
   }
   if (Array.from(path).length > MAX_PROJECT_PATH_CODE_POINTS) {
-    throw new TypeError('Project paths must be 256 characters or fewer.')
-  }
-  if (path.startsWith('/')) {
-    throw new TypeError('Project paths must be relative.')
+    throw new TypeError('Project paths must be 4096 characters or fewer.')
   }
   if (path.includes('\\')) {
     throw new TypeError('Use forward slashes in project paths.')
   }
-  const segments = path.split('/')
+  const segments = path.split('/').slice(path.startsWith('/') ? 1 : 0)
   if (segments.some((segment) => segment.length === 0)) {
     throw new TypeError('Project paths cannot contain empty sections.')
   }

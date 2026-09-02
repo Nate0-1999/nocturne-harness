@@ -158,6 +158,37 @@
   background: var(--seam-be43bbfc2ecc);
 }
 
+.thread-create {
+  display: grid;
+  gap: .4rem;
+  margin: -.45rem 0 .8rem;
+  color: var(--dim);
+  font-family: var(--data-font);
+  font-size: .62rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.thread-create__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .35rem;
+}
+
+.thread-create input,
+.thread-create button {
+  min-width: 0;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-deep);
+  color: var(--ink);
+  font: inherit;
+}
+
+.thread-create input {
+  padding: .55rem;
+  text-transform: none;
+}
+
 .fixture-catalog-cleanup {
   margin: -0.45rem 0 0.75rem;
   border: 1px solid color-mix(in srgb, var(--danger) 58%, transparent);
@@ -292,6 +323,17 @@
   color: var(--muted);
 }
 
+.thread-item__location {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--accent);
+  font-family: var(--data-font);
+  font-size: .56rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .catalog-note {
   margin: 0.85rem 0.35rem 0;
   color: var(--dim);
@@ -397,6 +439,18 @@
 
 .project-selector__status[data-error="true"] {
   color: var(--seam-8ecfaf5b5293);
+}
+
+.thread-workspace {
+  flex-basis: min(34rem, 100%);
+}
+
+.thread-workspace__location {
+  max-width: min(28rem, 72vw);
+  overflow: hidden;
+  color: var(--accent);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .chat-header__model {

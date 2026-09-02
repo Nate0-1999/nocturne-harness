@@ -90,8 +90,10 @@ export interface RackSnapshot {
 }
 
 export type RackAction =
-  | { type: 'thread.create' }
+  | { type: 'thread.create'; workspace_root: string; project_label?: string }
   | { type: 'thread.select'; thread_id: string }
+  | { type: 'thread.rename_project'; thread_id: string; project_label: string }
+  | { type: 'thread.bind_workspace'; thread_id: string; workspace_root: string }
   | { type: 'project.select'; project_key: string }
   | { type: 'catalog.cleanup-fixtures' }
   | {
@@ -212,7 +214,7 @@ export type RackActionResult<Action extends RackAction> =
     ? string
     : Action['type'] extends 'catalog.cleanup-fixtures'
       ? number
-    : Action['type'] extends 'thread.select'
+    : Action['type'] extends 'thread.select' | 'thread.rename_project'
       ? void
       : Action['type'] extends 'thread.archive' | 'queue.load' | 'curation.load' | 'queue.decide' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
         ? JsonValue
@@ -464,10 +466,23 @@ function dispatchRackAction<Action extends RackAction>(
 ): RackActionResult<Action> | Promise<RackActionResult<Action>> {
   switch (action.type) {
       case 'thread.create':
-        return harnessClient.createThread() as RackActionResult<Action>
+        return harnessClient.createThread({
+          workspaceRoot: action.workspace_root,
+          projectLabel: action.project_label,
+        }) as RackActionResult<Action>
       case 'thread.select':
         harnessClient.selectThread(action.thread_id)
         return undefined as RackActionResult<Action>
+      case 'thread.rename_project':
+        return harnessClient.renameProject(
+          action.thread_id,
+          action.project_label,
+        ) as RackActionResult<Action>
+      case 'thread.bind_workspace':
+        return harnessClient.bindWorkspace(
+          action.thread_id,
+          action.workspace_root,
+        ) as RackActionResult<Action>
       case 'project.select': {
         const projectKey = canonicalProjectPath(action.project_key)
         const threadId = harnessClient.selectProject(projectKey)
@@ -979,14 +994,25 @@ export function RackRuntime({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true
-    void globalThis.fetch('/v1/transcripts/catalog', {
+    const catalogRequest = globalThis.fetch('/v1/transcripts/catalog', {
       cache: 'no-store',
       credentials: 'same-origin',
-    }).then(async (response) => {
+    })
+    let defaultWorkspace: { path: string; label: string } | null = null
+    void catalogRequest.then(async (response) => {
       if (response.ok) {
-        const payload = await response.json() as { threads?: ThreadCatalogEntry[] }
+        const payload = await response.json() as {
+          threads?: ThreadCatalogEntry[]
+          default_workspace?: { path: string; label: string }
+        }
         if (active && Array.isArray(payload.threads)) {
           useHarnessStore.getState().hydrateCatalog(payload.threads)
+        }
+        if (
+          typeof payload.default_workspace?.path === 'string' &&
+          typeof payload.default_workspace.label === 'string'
+        ) {
+          defaultWorkspace = payload.default_workspace
         }
       }
     }).catch(() => undefined).finally(() => {
@@ -994,7 +1020,12 @@ export function RackRuntime({ children }: { children: ReactNode }) {
       harnessClient.connect()
       const state = useHarnessStore.getState()
       if (state.catalog.length === 0) {
-        harnessClient.createThread()
+        if (defaultWorkspace !== null) {
+          harnessClient.createThread({
+            workspaceRoot: defaultWorkspace.path,
+            projectLabel: defaultWorkspace.label,
+          })
+        }
       } else if (state.selectedThreadId === null) {
         harnessClient.selectThread(state.catalog[0].thread_id)
       } else {

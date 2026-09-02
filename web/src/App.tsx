@@ -40,6 +40,7 @@ import type {
   ImageMediaType,
   JsonObject,
   JsonValue,
+  ThreadCatalogEntry,
   UserMessageState,
 } from './protocol'
 import {
@@ -1764,6 +1765,20 @@ function ThreadsModule() {
   const { events, selection } = useRackPlugin()
   const [archiveBusyThreadId, setArchiveBusyThreadId] = useState<string | null>(null)
   const [archiveFailure, setArchiveFailure] = useState<string | null>(null)
+  const [creating, setCreating] = useState(false)
+  const [workspaceDraft, setWorkspaceDraft] = useState('')
+  const [bindingLegacy, setBindingLegacy] = useState(false)
+  const [legacyWorkspaceDraft, setLegacyWorkspaceDraft] = useState('')
+  const selectedEntry = snapshot.catalog.find(
+    (entry) => entry.thread_id === snapshot.selectedThreadId,
+  )
+  const knownLocations = useMemo(
+    () => Array.from(new Set(snapshot.catalog.flatMap((entry) => [
+      entry.current_location,
+      entry.workspace_root,
+    ]).filter((value): value is string => value !== null))),
+    [snapshot.catalog],
+  )
   const sortedCatalog = useMemo(
     () => [...snapshot.catalog].sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
     [snapshot.catalog],
@@ -1790,12 +1805,96 @@ function ThreadsModule() {
         type="button"
         data-testid="new-thread"
         onClick={() => {
-          void events.dispatch({ type: 'thread.create' }).catch(() => undefined)
+          setWorkspaceDraft(
+            selectedEntry?.current_location ?? selectedEntry?.workspace_root ?? '',
+          )
+          setCreating((value) => !value)
         }}
       >
         <span aria-hidden="true">＋</span>
         New thread
       </button>
+
+      {creating && (
+        <form
+          className="thread-create"
+          data-testid="thread-create"
+          onSubmit={(event) => {
+            event.preventDefault()
+            const workspaceRoot = workspaceDraft.trim()
+            if (workspaceRoot === '') return
+            void events.dispatch({
+              type: 'thread.create',
+              workspace_root: workspaceRoot,
+            }).then(() => setCreating(false)).catch(() => undefined)
+          }}
+        >
+          <label htmlFor="thread-workspace-root">Start this thread in</label>
+          <div className="thread-create__row">
+            <input
+              id="thread-workspace-root"
+              data-testid="thread-workspace-root"
+              type="text"
+              list="known-thread-locations"
+              value={workspaceDraft}
+              placeholder="Choose or type a folder path"
+              autoFocus
+              onChange={(event) => setWorkspaceDraft(event.currentTarget.value)}
+            />
+            <button type="submit" disabled={workspaceDraft.trim() === ''}>Create</button>
+          </div>
+          <datalist id="known-thread-locations">
+            {knownLocations.map((location) => <option value={location} key={location} />)}
+          </datalist>
+        </form>
+      )}
+
+      {selectedEntry?.workspace_root === null && selectedEntry.project_key !== null && (
+        <>
+          <button
+            className="new-thread"
+            type="button"
+            data-testid="bind-thread-folder"
+            onClick={() => {
+              setLegacyWorkspaceDraft('')
+              setBindingLegacy((value) => !value)
+            }}
+          >
+            Bind this thread to a folder
+          </button>
+          {bindingLegacy && (
+            <form
+              className="thread-create"
+              data-testid="thread-bind-workspace"
+              onSubmit={(event) => {
+                event.preventDefault()
+                const workspaceRoot = legacyWorkspaceDraft.trim()
+                if (workspaceRoot === '') return
+                void events.dispatch({
+                  type: 'thread.bind_workspace',
+                  thread_id: selectedEntry.thread_id,
+                  workspace_root: workspaceRoot,
+                }).then(() => setBindingLegacy(false)).catch(() => undefined)
+              }}
+            >
+              <label htmlFor="legacy-thread-workspace-root">Folder for this thread</label>
+              <div className="thread-create__row">
+                <input
+                  id="legacy-thread-workspace-root"
+                  data-testid="legacy-thread-workspace-root"
+                  type="text"
+                  list="known-thread-locations"
+                  value={legacyWorkspaceDraft}
+                  placeholder="Choose or type a folder path"
+                  autoFocus
+                  onChange={(event) => setLegacyWorkspaceDraft(event.currentTarget.value)}
+                />
+                <button type="submit" disabled={legacyWorkspaceDraft.trim() === ''}>Bind</button>
+              </div>
+            </form>
+          )}
+        </>
+      )}
 
       {fixtureThreadCount > 0 && (
         <button
@@ -1854,6 +1953,11 @@ function ThreadsModule() {
                   <span>{detail}</span>
                   <span>{shortId(entry.thread_id)}</span>
                 </span>
+                {entry.current_location !== null && (
+                  <span className="thread-item__location" title={entry.current_location}>
+                    {entry.current_location}
+                  </span>
+                )}
               </button>
               <button
                 className="thread-item__archive"
@@ -1880,6 +1984,63 @@ function ThreadsModule() {
       {archiveFailure !== null && <p className="thread-archive-error" role="alert">{archiveFailure}</p>}
 
     </aside>
+  )
+}
+
+function ThreadWorkspaceContext({
+  entry,
+  disabled,
+  onRename,
+}: {
+  entry: ThreadCatalogEntry
+  disabled: boolean
+  onRename: (label: string) => Promise<unknown>
+}) {
+  const [label, setLabel] = useState(entry.project_label ?? '')
+  const [status, setStatus] = useState('')
+
+  function saveLabel() {
+    const next = label.trim()
+    if (next === '' || next === entry.project_label) return
+    setStatus('Saving…')
+    void onRename(next)
+      .then(() => setStatus('Saved'))
+      .catch(() => setStatus('Couldn’t rename this project.'))
+  }
+
+  return (
+    <form
+      className="project-selector thread-workspace"
+      aria-label="Thread workspace"
+      onSubmit={(event) => {
+        event.preventDefault()
+        saveLabel()
+      }}
+    >
+      <label htmlFor="current-project-label">
+        <span>Project</span>
+        <input
+          id="current-project-label"
+          data-testid="current-project"
+          type="text"
+          value={label}
+          disabled={disabled}
+          onChange={(event) => {
+            setLabel(event.currentTarget.value)
+            setStatus('')
+          }}
+          onBlur={saveLabel}
+        />
+      </label>
+      <span
+        className="thread-workspace__location"
+        data-testid="thread-location"
+        title={entry.current_location ?? undefined}
+      >
+        WHERE · {entry.current_location ?? 'Location unavailable'}
+      </span>
+      <span className="project-selector__status" aria-live="polite">{status}</span>
+    </form>
   )
 }
 
@@ -2145,17 +2306,30 @@ function ChatModule() {
           {selectedThreadId !== null && <span>{shortId(selectedThreadId)}</span>}
         </div>
         <div className="chat-header__context">
-          <ProjectSelector
-            selectedThreadId={selectedThreadId}
-            currentProjectKey={snapshot.currentProjectKey}
-            projectPaths={snapshot.projectPaths}
-            awaitingSnapshot={awaitingSnapshot}
-            switching={projectSwitching}
-            onSelect={(projectKey) => events.dispatch({
-              type: 'project.select',
-              project_key: projectKey,
-            })}
-          />
+          {selectedMeta?.workspace_root !== null && selectedMeta !== undefined ? (
+            <ThreadWorkspaceContext
+              key={`${selectedMeta.thread_id}:${selectedMeta.project_label ?? ''}`}
+              entry={selectedMeta}
+              disabled={awaitingSnapshot}
+              onRename={(projectLabel) => events.dispatch({
+                type: 'thread.rename_project',
+                thread_id: selectedMeta.thread_id,
+                project_label: projectLabel,
+              })}
+            />
+          ) : (
+            <ProjectSelector
+              selectedThreadId={selectedThreadId}
+              currentProjectKey={snapshot.currentProjectKey}
+              projectPaths={snapshot.projectPaths}
+              awaitingSnapshot={awaitingSnapshot}
+              switching={projectSwitching}
+              onSelect={(projectKey) => events.dispatch({
+                type: 'project.select',
+                project_key: projectKey,
+              })}
+            />
+          )}
           <button
             type="button"
             className="chat-header__model"

@@ -128,6 +128,9 @@ function latestInjection(candidates: Candidate[]): string | undefined {
 export function InjectionConsole() {
   const { query, events } = useRackPlugin()
   const rack = useRackSnapshot()
+  const selectedLocation = rack.catalog.find(
+    (entry) => entry.thread_id === rack.selectedThreadId,
+  )?.current_location ?? null
   const [scope, setScope] = useState<'GLOBAL' | 'ATTUNED'>('GLOBAL')
   const [data, setData] = useState<Snapshot | null>(null)
   const dataRef = useRef<Snapshot | null>(null)
@@ -357,7 +360,12 @@ export function InjectionConsole() {
 
   return (
     <section className="instrument instrument--console">
-      <header><h1>Injection Console</h1></header>
+      <header>
+        <h1>Injection Console</h1>
+        <p data-testid="injection-current-location">
+          WHERE · {selectedLocation ?? 'No attuned thread location'}
+        </p>
+      </header>
       {failure !== null && <p role="alert">{failure}</p>}
       {data?.learning && (
         <div className="console-learning-overview">

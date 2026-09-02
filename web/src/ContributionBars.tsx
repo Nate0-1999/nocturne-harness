@@ -1,4 +1,6 @@
-const FEATURES = ['sem', 'kw', 'time', 'proj', 'thread', 'loc', 'freq', 'hist', 'bias'] as const
+const FEATURES = [
+  'sem', 'kw', 'time', 'proj', 'thread', 'loc', 'where', 'freq', 'hist', 'bias',
+] as const
 
 export function ContributionBars({ values }: { values?: Record<string, string | null> | null }) {
   if (values == null) return <p className="contribution-empty">Not scored yet.</p>

@@ -24,6 +24,7 @@ import {
   type HarnessStoreState,
   type OutboundImage,
 } from './store'
+import type { ThreadWorkspaceBinding } from './store'
 
 const INITIAL_RECONNECT_DELAY_MS = 250
 const MAX_RECONNECT_DELAY_MS = 4_000
@@ -89,8 +90,8 @@ export class HarnessSocketClient {
     useHarnessStore.getState().setConnection('disconnected')
   }
 
-  createThread(projectKey?: string | null): string {
-    const threadId = useHarnessStore.getState().createThread(projectKey)
+  createThread(binding?: string | null | ThreadWorkspaceBinding): string {
+    const threadId = useHarnessStore.getState().createThread(binding)
     this.requestSnapshot(threadId)
     return threadId
   }
@@ -110,7 +111,10 @@ export class HarnessSocketClient {
     return existing.thread_id
   }
 
-  requestSnapshot(threadId?: string): Ulid | null {
+  requestSnapshot(
+    threadId?: string,
+    overrides?: { projectLabel?: string; workspaceRoot?: string },
+  ): Ulid | null {
     const state = useHarnessStore.getState()
     const selectedThreadId = threadId ?? state.selectedThreadId
     if (selectedThreadId === null) {
@@ -129,7 +133,12 @@ export class HarnessSocketClient {
     }
     const envelope = this.send(
       'thread.snapshot',
-      { request: true, project_key: entry.project_key },
+      {
+        request: true,
+        project_key: overrides?.workspaceRoot === undefined ? entry.project_key : null,
+        project_label: overrides?.projectLabel ?? entry.project_label,
+        workspace_root: overrides?.workspaceRoot ?? entry.workspace_root,
+      },
       selectedThreadId,
     )
     this.snapshotBarrier = {
@@ -137,6 +146,25 @@ export class HarnessSocketClient {
       requestId: envelope.id,
     }
     return envelope.id
+  }
+
+  renameProject(threadId: string, projectLabel: string): Ulid | null {
+    const state = useHarnessStore.getState()
+    const entry = state.catalog.find((candidate) => candidate.thread_id === threadId)
+    if (entry === undefined || entry.workspace_root === null) {
+      throw new Error('thread has no bound workspace')
+    }
+    return this.requestSnapshot(threadId, { projectLabel: projectLabel.trim() })
+  }
+
+  bindWorkspace(threadId: string, workspaceRoot: string): Ulid | null {
+    const entry = useHarnessStore.getState().catalog.find(
+      (candidate) => candidate.thread_id === threadId,
+    )
+    if (entry === undefined || entry.workspace_root !== null) {
+      throw new Error('only an unbound legacy thread can bind a workspace')
+    }
+    return this.requestSnapshot(threadId, { workspaceRoot: workspaceRoot.trim() })
   }
 
   submitPrompt(

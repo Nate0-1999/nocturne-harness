@@ -50,6 +50,11 @@ def _live_location_path(context: MemoryToolContext) -> str | None:
     return None if toolset is None else workspace_location_path(toolset.location())
 
 
+def _live_current_location(context: MemoryToolContext) -> str | None:
+    toolset = context.toolset
+    return None if toolset is None else str(toolset.location().cwd.resolve(strict=True))
+
+
 class _ProgressiveInstructions(DynamicSystemInstructions):
     """Refresh location-sensitive context before each provider request. [R16]"""
 
@@ -124,6 +129,7 @@ class _ProgressiveInstructions(DynamicSystemInstructions):
                     principal_id=self._context.principal_id,
                     project_key=self._context.project_key,
                     location_path=location_path,
+                    current_location=_live_current_location(self._context),
                     agent_kind=None,
                     prompt=self._prompt,
                     model_context_tokens=self._model_context_tokens,
@@ -247,6 +253,7 @@ class MemoryGateTurnRunner:
                     principal_id=context.principal_id,
                     project_key=context.project_key,
                     location_path=_live_location_path(context),
+                    current_location=_live_current_location(context),
                     agent_kind=None,
                     prompt=prompt,
                     model_context_tokens=(
@@ -480,6 +487,7 @@ class MemoryGateTurnRunner:
                         principal_id=context.principal_id,
                         project_key=context.project_key,
                         location_path=_live_location_path(context),
+                        current_location=_live_current_location(context),
                         agent_kind=None,
                         prompt=prompt,
                         model_context_tokens=(

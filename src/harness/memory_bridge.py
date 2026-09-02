@@ -75,6 +75,7 @@ class SymphonyMemoryBridge:
         keywords: list[str] | None = None,
         project_key: str | None = None,
         origin_path: str | None = None,
+        origin_location: str | None = None,
     ) -> StageSymphonyMemoryResponse:
         return await self._spine.stage_symphony_memory(
             StageSymphonyMemoryRequest(
@@ -87,6 +88,7 @@ class SymphonyMemoryBridge:
                 project_key=project_key,
                 origin_thread_id=self._thread_id,
                 origin_path=origin_path,
+                origin_location=origin_location,
                 run_id=run_id,
                 origin_agent=origin_agent,
                 machine_id=self._machine_id,
