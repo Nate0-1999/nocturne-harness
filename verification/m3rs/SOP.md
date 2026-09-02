@@ -12,7 +12,7 @@
 
 1. Ran the packaged heartbeat, full Spine suite, and full Harness suite before live work.
 2. Claimed M3RS through the Garden mutex and pushed the claim.
-3. Cloned clean released bases into `/tmp`, initialized a disposable Nocturne home, and ran ordinary `nocturne up` once from a fresh terminal.
+3. Cloned clean released bases into `/tmp`, initialized a disposable Nocturne home, and ran ordinary `nocturne up --no-open` once from a fresh terminal.
 4. Used a direct packaged daemon with the verification principal for write-bearing checks, because ordinary `up` stamps the local owner identity.
 5. Walked all fifteen charge items in order. Each observed shortfall was frozen; no product file was edited.
 6. Used a real OpenRouter model for synthetic chat/build/image prompts and the real Palace for the isolated verification identity.
@@ -39,4 +39,3 @@
 - Chrome chooser upload timed out. The in-app browser clipboard path accepted the same synthetic JPEG and the switched model described it correctly.
 - Browser screenshots are JPEG bytes and are named `.jpg`; an initial `.png` extension was corrected before hashing.
 - The two pure-render captures share SHA-256 `c1b008217925ecdbd2c5352a0b6a02fb095d3bda12f76a06e1816f120e51fd6f`.
-

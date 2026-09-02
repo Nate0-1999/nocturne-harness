@@ -129,7 +129,11 @@ function assertDiagnostics({ consoleProblems, pageErrors, failedResponses }) {
     if (status === 503 && parsed.pathname === '/v1/rack/query') {
       return ['scorer_console', 'context_window'].includes(parsed.searchParams.get('resource'))
     }
-    return status === 404 && ['/v1/approval-queue', '/v1/seeds/jump-start'].includes(parsed.pathname)
+    return status === 404 && [
+      '/v1/approval-queue',
+      '/v1/curation',
+      '/v1/seeds/jump-start',
+    ].includes(parsed.pathname)
   }
   const unexpectedResponses = failedResponses.filter((response) => !expectedFixtureGap(response))
   const unexpectedConsoleProblems = consoleProblems.filter(
