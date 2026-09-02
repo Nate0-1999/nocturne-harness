@@ -1,0 +1,19 @@
+M3RS old-core readout — 2026-09-02
+
+nocturne doctor
+Conversation transcript backup: off
+Palace doctor: healthy
+Remote Palace: healthy
+Conversation journal: 240.1 KiB
+Disk: 583.1 GiB free of 926.4 GiB
+Web app: served by the running Nocturne daemon
+Port: 8765 is owned by the running Nocturne daemon
+Startup toolchain: already running
+Local database and backup checks are skipped for a remote Palace.
+Palace API contract: 0.1.9 (app supports >=0.1.0,<0.2.0)
+
+nocturne backup
+Cloud SQL backup verified.
+Provider receipt status: SUCCESSFUL
+Reason: manual
+Type: ON_DEMAND

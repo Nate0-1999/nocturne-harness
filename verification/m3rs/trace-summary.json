@@ -1,0 +1,49 @@
+{
+  "packet": "M3RS",
+  "date": "2026-09-02",
+  "mode": "findings-freeze",
+  "released_palace_api": "0.1.9",
+  "verification_identity": "m3rs-sop-verification",
+  "source_bases": {
+    "harness": "8b1b046ef2931fd3c92890b4e0925d53f7591cbf",
+    "spine": "950bc07c70e933a6a2a8b8f609d31d13066a2b36"
+  },
+  "verdict_counts": {
+    "pass": 5,
+    "fail": 10
+  },
+  "steps": [
+    {"step": 1, "feature": "cold start", "verdict": "FAIL", "reason": "rack connected but did not show version"},
+    {"step": 2, "feature": "a place to work", "verdict": "FAIL", "reason": "project key and filesystem location diverged; no location badge"},
+    {"step": 3, "feature": "plan before build", "verdict": "FAIL", "reason": "symphony ended partial error without card; plain build passed"},
+    {"step": 4, "feature": "hands and location rule", "verdict": "FAIL", "reason": "move/edit/tests/readback worked but required refusal did not"},
+    {"step": 5, "feature": "every module across tabs", "verdict": "FAIL", "reason": "modules and thread-bound drag worked; recipe completion dimming unproven"},
+    {"step": 6, "feature": "memory loop", "verdict": "FAIL", "reason": "remember/inject/provenance/remove worked; no near miss existed to add back"},
+    {"step": 7, "feature": "isolation and continuity", "verdict": "FAIL", "reason": "zero-selected isolation passed; restart restored empty stubs"},
+    {"step": 8, "feature": "the Deck", "verdict": "FAIL", "reason": "prefill/edit/button fire/mode toggle worked; Enter and multi-card advance unproven"},
+    {"step": 9, "feature": "steering", "verdict": "FAIL", "reason": "no Symphony reached running state"},
+    {"step": 10, "feature": "learning machinery", "verdict": "PASS", "reason": "insufficient-corpus ledger row written; recipe/share unmoved below floor"},
+    {"step": 11, "feature": "curators", "verdict": "FAIL", "reason": "fixture-only path unavailable; owner corpus not substituted"},
+    {"step": 12, "feature": "themes and looks", "verdict": "PASS", "reason": "five themes, persistence, graph/nebula, and byte-identical idle pair"},
+    {"step": 13, "feature": "money", "verdict": "PASS", "reason": "six-column build spend and per-model expansion rendered"},
+    {"step": 14, "feature": "old core", "verdict": "PASS", "reason": "markdown, image, model switch, both seeds, decisions, phone, doctor, backup"},
+    {"step": 15, "feature": "gallery", "verdict": "PASS", "reason": "named screenshot coverage, hashes, structured trace, and report"}
+  ],
+  "pure_render": {
+    "equal": true,
+    "sha256": "c1b008217925ecdbd2c5352a0b6a02fb095d3bda12f76a06e1816f120e51fd6f"
+  },
+  "exit": {
+    "spine": "296 passed in 20.85s",
+    "harness": "1690 passed, 3 deselected in 69.23s",
+    "ui_canon": "PASS including packaged heartbeat and 43 responsive states",
+    "doctor": "healthy; API contract 0.1.9",
+    "backup": "verified cloud receipt created in disposable home"
+  },
+  "cleanup": {
+    "active_m3rs_memories": 0,
+    "verification_queue_cards": 0,
+    "pending_curator_cards": 0,
+    "daemon_running": false
+  }
+}
