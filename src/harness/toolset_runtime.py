@@ -84,7 +84,11 @@ class LazyStandardToolset:
     ) -> ToolExecutionResult:
         if self._browser.owns(tool_name):
             return await self._browser.execute(tool_name, arguments)
-        return await (await self._owned()).execute(tool_name, arguments)
+        toolset = await self._owned()
+        result = await toolset.execute(tool_name, arguments)
+        if tool_name == "move" and self._on_move is not None:
+            self._on_move(toolset.location().cwd)
+        return result
 
     def grant_open_web(self, thread_id: str) -> None:
         self._browser.grant_open_web(thread_id)

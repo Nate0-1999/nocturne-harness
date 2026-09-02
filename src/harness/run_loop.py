@@ -505,6 +505,16 @@ class RunLoop:
             self._transcript_journal.append_thread_location(thread_id, canonical)
         state.current_location = canonical
 
+    async def publish_thread_snapshot(self, thread_id: str) -> None:
+        """Publish current durable thread context after an out-of-band tool move."""
+
+        self._require_thread_id(thread_id)
+        async with self._lock:
+            state = self._threads.get(thread_id)
+            if state is None:
+                return
+            await self._publish_locked(thread_id, self._snapshot_envelope(thread_id, state))
+
     async def detach(self, sink: EnvelopeSink) -> None:
         """Detach a connection without changing daemon-lifetime thread state."""
 

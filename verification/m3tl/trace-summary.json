@@ -1,0 +1,54 @@
+{
+  "packet": "M3TL",
+  "principal_id": "m3tl-sop-verification",
+  "real_palace": true,
+  "real_openrouter": true,
+  "paths": {
+    "launch": "/private/tmp/nocturne-m3tl-tl02.japUC3/launch",
+    "alpha_root": "/private/tmp/nocturne-m3tl-tl02.japUC3/projects/alpha",
+    "alpha_current": "/private/tmp/nocturne-m3tl-tl02.japUC3/projects/alpha/nested",
+    "beta_root": "/private/tmp/nocturne-m3tl-tl02.japUC3/projects/beta",
+    "beta_current": "/private/tmp/nocturne-m3tl-tl02.japUC3/projects/beta",
+    "gamma_root": "/private/tmp/nocturne-m3tl-tl02.japUC3/projects/gamma"
+  },
+  "wrong_folder_edit": {
+    "refused": true,
+    "target_unchanged": "M3TL original synthetic target.",
+    "beta_unchanged": "M3TL beta thread remains independent."
+  },
+  "ranking": [
+    {
+      "rank": 2,
+      "label": "M3TL locality pair indigo",
+      "score": 0.5918607115745544,
+      "where": 1.0,
+      "origin_location": "/private/tmp/nocturne-m3tl-tl02.japUC3/projects/beta"
+    },
+    {
+      "rank": 3,
+      "label": "M3TL locality pair amber",
+      "score": 0.5324112772941589,
+      "where": 0.0,
+      "origin_location": "/private/tmp/nocturne-m3tl-tl02.japUC3/projects/alpha/nested"
+    }
+  ],
+  "compaction": {
+    "label": "Folder-fence rule for edit tool",
+    "decision": "approve",
+    "state": "approved",
+    "origin_location": "/private/tmp/nocturne-m3tl-tl02.japUC3/projects/alpha/nested"
+  },
+  "cleanup": {
+    "tombstoned_memories": 7,
+    "active_memories": 0,
+    "pending_queue_items": 0,
+    "pending_curator_cards": 0
+  },
+  "exit": {
+    "harness": "1693 passed, 3 deselected in 69.12s",
+    "web": "eslint pass; 132 passed; production build pass",
+    "heartbeat": "pass",
+    "ui_canon": "pass",
+    "spine": "298 passed in 21.34s"
+  }
+}

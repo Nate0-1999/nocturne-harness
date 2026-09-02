@@ -1,0 +1,7 @@
+6de3b6931bf8d98928920df83e04e10e9fa84ab987f3c309ceca9b9f459d6cc1  01-two-thread-folders.png
+515868d4d3c32d26023f0d27acbcdcf58deae99e313eb0fee53819346fe20b37  02-wrong-folder-edit-refused.png
+d70f3318d99fdacfbf2af72e80e09284a060e4ab90864ccf3cb936cff597f3c6  03-move-alpha-beta-unchanged.png
+52c5d0f21512471966226bebb7faa5999242e342975911b3bd32722b9aef8a6a  04-fresh-folder-becomes-project.png
+325708e52856a836bf0cb8d182d705d498311ae2d85af1e6751a86695ab02fcb  05-same-folder-ranks-over-sibling.png
+f12502ab60395285c59897ecd051175da850af2fa39076aa0aa69b18b39f67d8  07-compacted-memory-shows-where.png
+cf1690d237e0e8764ae7299be09481fdf6c154c4f7977c2d423cc04dec2080b1  08-restart-preserves-thread-locations.png

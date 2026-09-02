@@ -1767,6 +1767,7 @@ function ThreadsModule() {
   const [archiveFailure, setArchiveFailure] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [workspaceDraft, setWorkspaceDraft] = useState('')
+  const [createFailure, setCreateFailure] = useState<string | null>(null)
   const [bindingLegacy, setBindingLegacy] = useState(false)
   const [legacyWorkspaceDraft, setLegacyWorkspaceDraft] = useState('')
   const selectedEntry = snapshot.catalog.find(
@@ -1784,6 +1785,19 @@ function ThreadsModule() {
     [snapshot.catalog],
   )
   const fixtureThreadCount = snapshot.catalog.filter((entry) => isLegacyFixtureTitle(entry.title)).length
+  const createThreadAtDraft = () => {
+    const workspaceRoot = workspaceDraft.trim()
+    if (workspaceRoot === '') return
+    setCreateFailure(null)
+    void events.dispatch({
+      type: 'thread.create',
+      workspace_root: workspaceRoot,
+    }).then(() => setCreating(false)).catch((error: unknown) => {
+      setCreateFailure(
+        error instanceof Error ? error.message : 'This folder could not be opened.',
+      )
+    })
+  }
 
   return (
     <aside className="thread-rail" aria-labelledby="thread-rail-title">
@@ -1805,6 +1819,7 @@ function ThreadsModule() {
         type="button"
         data-testid="new-thread"
         onClick={() => {
+          setCreateFailure(null)
           setWorkspaceDraft(
             selectedEntry?.current_location ?? selectedEntry?.workspace_root ?? '',
           )
@@ -1821,12 +1836,7 @@ function ThreadsModule() {
           data-testid="thread-create"
           onSubmit={(event) => {
             event.preventDefault()
-            const workspaceRoot = workspaceDraft.trim()
-            if (workspaceRoot === '') return
-            void events.dispatch({
-              type: 'thread.create',
-              workspace_root: workspaceRoot,
-            }).then(() => setCreating(false)).catch(() => undefined)
+            createThreadAtDraft()
           }}
         >
           <label htmlFor="thread-workspace-root">Start this thread in</label>
@@ -1841,11 +1851,21 @@ function ThreadsModule() {
               autoFocus
               onChange={(event) => setWorkspaceDraft(event.currentTarget.value)}
             />
-            <button type="submit" disabled={workspaceDraft.trim() === ''}>Create</button>
+            <button
+              type="submit"
+              disabled={workspaceDraft.trim() === ''}
+              onClick={(event) => {
+                event.preventDefault()
+                createThreadAtDraft()
+              }}
+            >
+              Create
+            </button>
           </div>
           <datalist id="known-thread-locations">
             {knownLocations.map((location) => <option value={location} key={location} />)}
           </datalist>
+          {createFailure !== null && <p role="alert">{createFailure}</p>}
         </form>
       )}
 

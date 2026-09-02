@@ -214,7 +214,7 @@ export type RackActionResult<Action extends RackAction> =
     ? string
     : Action['type'] extends 'catalog.cleanup-fixtures'
       ? number
-    : Action['type'] extends 'thread.select' | 'thread.rename_project'
+    : Action['type'] extends 'thread.select' | 'thread.rename_project' | 'thread.bind_workspace'
       ? void
       : Action['type'] extends 'thread.archive' | 'queue.load' | 'curation.load' | 'queue.decide' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
         ? JsonValue
@@ -259,7 +259,8 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'visualizer',
     slot: 'panel',
     streams: ['thread.snapshot', 'run.started', 'run.done', 'prompt.queued'],
-    actions: ['thread.create', 'thread.select', 'thread.archive', 'catalog.cleanup-fixtures'],
+    actions: ['thread.create', 'thread.select', 'thread.archive',
+      'thread.bind_workspace', 'catalog.cleanup-fixtures'],
     bounds: stageGridBounds(RACK_BOUNDS.threads.preferred),
     movable: true,
     law_bound: false,

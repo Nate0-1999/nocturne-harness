@@ -780,6 +780,7 @@ def create_dev_app(
         def record_move(location: Path) -> None:
             if loop.thread_workspace(thread_id) is not None:
                 loop.record_thread_location(thread_id, str(location))
+                asyncio.create_task(loop.publish_thread_snapshot(thread_id))
 
         toolset = LazyStandardToolset(
             cwd=cwd,
