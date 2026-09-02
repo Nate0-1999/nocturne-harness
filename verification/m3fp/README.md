@@ -23,5 +23,8 @@ check for clean-room CI and future boot sequences.
 - `evidence/heartbeat.json` — exact machine-readable boundary counts.
 - `evidence/03-chrome-first-prompt-gate.png` — required visible Chrome exit, fresh daemon.
 - `evidence/04-in-app-first-prompt-gate.png` — required in-app-browser exit, fresh thread and daemon.
+- `evidence/05-real-packaged-front-door.png` — D.2 149 owner-app walk on the real Palace,
+  with no fixture curtain; the walk stops at the gate before provider or memory mutation.
+- `evidence/real-walk.json` — machine-readable owner-app walk facts.
 
 All screenshots are visibly marked `M3FP REGRESSION` and `NOT THE OWNER APP`.
