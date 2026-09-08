@@ -33,7 +33,7 @@ from pydantic_ai.settings import ModelSettings
 from pydantic_ai.usage import RunUsage
 from pydantic_core import to_jsonable_python
 
-from harness.agent import HarnessAgent, RememberResult
+from harness.agent import HarnessAgent
 from harness.commands import browser_open_web_command, remember_command_text
 from harness.context_window import ContextWindowTracker
 from harness.envelope import ProviderErrorPayload, StopReason
@@ -148,10 +148,7 @@ class PydanticAITurnRunner:
                 if image is not None:
                     message = "Send `/browser allow-web` without an image to cross this wall."
                 else:
-                    grant = getattr(context.toolset, "grant_open_web", None)
-                    if not callable(grant):
-                        raise RuntimeError("this owner session has no browser consent boundary")
-                    grant(thread_id)
+                    context.toolset.grant_open_web(thread_id)
                 await emit.text(message)
                 return TurnOutcome(
                     StopReason("end_turn"),
@@ -171,8 +168,6 @@ class PydanticAITurnRunner:
                         raise_model_errors=True,
                         captured_messages=captured,
                     )
-                if not isinstance(dispatched, RememberResult):  # pragma: no cover - seam guard
-                    raise TypeError("/remember dispatch returned ordinary chat")
                 remembered_memory_id = dispatched.memory_id
                 await emit.text(dispatched.message)
                 usage = _failure_usage(run_usage, captured, ())
@@ -206,8 +201,6 @@ class PydanticAITurnRunner:
                     usage=run_usage,
                     event_stream_handler=bridge.handle,
                 )
-            if not isinstance(result.output, str):
-                raise TypeError("chat agent returned a non-text output")
             visible_output = await bridge.finalize(
                 "".join(
                     part.content
@@ -333,12 +326,6 @@ class PydanticAITurnRunner:
         ]
         if not responses:
             return
-        run_id = getattr(emit, "run_id", None)
-        prompt_id = getattr(emit, "prompt_id", None)
-        if not isinstance(run_id, str) or not isinstance(prompt_id, str):
-            raise RuntimeError("spend-enabled emitter must expose run_id and prompt_id")
-        if context.thread_id is None:
-            raise RuntimeError("spend-enabled model call requires a thread_id")
         request = model_response_receipts(
             responses,
             lineage=SpendLineage(
@@ -346,8 +333,8 @@ class PydanticAITurnRunner:
                 machine_id=context.machine_id,
                 origin_agent=context.agent_id,
                 thread_id=context.thread_id,
-                run_id=run_id,
-                prompt_id=prompt_id,
+                run_id=emit.run_id,
+                prompt_id=emit.prompt_id,
                 memory_id=memory_id,
             ),
             purpose=purpose,
@@ -358,6 +345,7 @@ class PydanticAITurnRunner:
             await self._receipt_queue.flush(self._spend)
         try:
             result = await self._spend.record_spend_events(request)
+            # WALL money: B.6 r11 keeps unacknowledged receipts queued for reconciliation.
             if result.accepted != len(request.events):
                 raise RuntimeError("Spine accepted an incomplete spend receipt batch")
         except Exception:
@@ -493,6 +481,7 @@ def _native_provider_code(body: object | None) -> str | None:
 
 
 def _bounded_provider_text(value: str, *, limit: int = _MAX_PROVIDER_MESSAGE) -> str:
+    # INCIDENT F034 / A-054: bounded public refusal evidence excludes full provider payloads.
     normalized = " ".join(value.replace("\x00", "").split())
     if not normalized:
         return "Provider request failed without a message"
@@ -622,7 +611,7 @@ class _EventBridge:
         """Reconcile all new assistant TextParts, in order, excluding prior history.
 
         This is the same concatenation streamed by handle, including text before tools.
-        The terminal proposal is hidden from both projections; real divergence still fails.
+        The terminal proposal is hidden from both projections.
         """
 
         terminal = _VisibleModelText()
@@ -630,8 +619,6 @@ class _EventBridge:
         if terminal.closing is None:
             clean_output += terminal.pending
         visible, proposal = parse_proposed_response_output(clean_output)
-        if not visible.startswith(self._visible_text):
-            raise RuntimeError("terminal model text differs from streamed model text")
         await self._publish_visible(visible[len(self._visible_text) :])
         self._pending_text = ""
         if proposal is not None:
@@ -643,22 +630,12 @@ class _EventBridge:
     async def publish_usage(self, usage: UsageSnapshot) -> None:
         if usage == self._last_usage:
             return
-        if (
-            usage.requests < self._last_usage.requests
-            or usage.input_tokens < self._last_usage.input_tokens
-            or usage.output_tokens < self._last_usage.output_tokens
-            or usage.cache_read_tokens < self._last_usage.cache_read_tokens
-            or usage.cache_write_tokens < self._last_usage.cache_write_tokens
-        ):  # pragma: no cover - pydantic-ai promises cumulative usage
-            raise ValueError("pydantic-ai usage decreased during a run")
         self._last_usage = usage
         await self._emit.usage(usage)
 
 
 def _json_event(event: AgentStreamEvent) -> Mapping[str, object]:
     value = to_jsonable_python(event)
-    if not isinstance(value, dict):  # pragma: no cover - all AgentStreamEvent values are objects
-        raise TypeError("pydantic-ai emitted a non-object event")
     part = value.get("part")
     if isinstance(part, dict) and part.get("part_kind") == "text":
         part["content"] = _VisibleModelText().feed(part["content"])
@@ -831,7 +808,6 @@ def _strip_request_memory_block(message: object) -> object:
     if not isinstance(message, ModelRequest) or not _has_memory_block(message.instructions):
         return message
     instructions = message.instructions
-    assert instructions is not None
     cleaned = _remove_memory_blocks(instructions)
     return replace(message, instructions=cleaned or None)
 
