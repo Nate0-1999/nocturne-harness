@@ -11,7 +11,7 @@ Real `harness.packaged:create_app`, canonical built `web/dist`, Palace 0.1.10/sc
 `m3fz-sop-verification-fz08`, machine/agent `m3fz-sop-verification`, transcript backup
 disabled, and an empty `/tmp/nocturne-m3fz-fz08/project`. Credentials were loaded from
 the authorized ignored `.env`; no credential contents are retained here. This uses the
-packaged factory directly, not an installed-wheel or ordinary `nocturne up` identity proof.
+packaged factory directly, not an installed-wheel or ordinary `nocturne up --no-open` identity proof.
 
 | Action | Observed result | Evidence |
 |---|---|---|
