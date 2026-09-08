@@ -1194,6 +1194,10 @@ class SpineClientError(RuntimeError):
     """Base class for typed failures at the Spine client boundary."""
 
 
+class SpineOwnershipError(SpineClientError):
+    """The requested queue decision is outside the client's principal scope."""
+
+
 class SpineTransportError(SpineClientError):
     """A request failed before Spine returned an HTTP response."""
 
@@ -1633,7 +1637,7 @@ class SpineClient:
             return
         await self.approval_queue(self._principal_id)
         if item_uid not in self._owned_queue_items and batch_uid not in self._owned_queue_batches:
-            raise SpineClientError(
+            raise SpineOwnershipError(
                 "This queue decision does not belong to this identity. Refresh the queue."
             )
 

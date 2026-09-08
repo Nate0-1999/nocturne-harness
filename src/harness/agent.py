@@ -235,10 +235,6 @@ class HarnessAgent:
             request_limit=settings.run_request_limit,
             total_tokens_limit=settings.run_total_tokens_limit,
         )
-        self._label_usage_limits = UsageLimits(
-            request_limit=1,
-            total_tokens_limit=settings.run_total_tokens_limit,
-        )
         self._remember_split_usage_limits = UsageLimits(
             request_limit=2,
             total_tokens_limit=settings.run_total_tokens_limit,
@@ -379,7 +375,7 @@ class HarnessAgent:
                 f"Memory:\n{body}",
                 model=selected_model,
                 model_settings=model_settings,
-                usage_limits=self._label_usage_limits,
+                usage_limits=self._usage_limits,
                 usage=remember_usage,
                 captured_messages=captured_messages,
             )
@@ -699,7 +695,7 @@ class HarnessAgent:
         result = await self._extraction_verdict_agent.run(
             f"Candidate: {candidate.model_dump_json()}\nNeighbors: {neighbors!r}",
             model=self._select_model(model),
-            usage_limits=self._label_usage_limits,
+            usage_limits=self._usage_limits,
         )
         if not isinstance(result.output, ExtractionVerdictDraft):
             raise TypeError("extraction verdict agent returned no structured result")

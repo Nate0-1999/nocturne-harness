@@ -33,6 +33,10 @@ try {
   await waitUntil(async () => conversation.getByTestId('composer').isEnabled())
 
   await conversation.getByTestId('composer').fill(prompt)
+  // F077: changing the iframe's Conversation mode must preserve its unsent draft.
+  await page.getByRole('button', { name: 'Stack', exact: true }).click()
+  await page.getByRole('button', { name: 'Focused', exact: true }).click()
+  await waitUntil(async () => await conversation.getByTestId('composer').inputValue() === prompt)
   await conversation.getByTestId('composer').press('Enter')
   await frame('gate').getByTestId('memory-gate').waitFor({ state: 'visible' })
   await page.screenshot({ path: resolve(evidenceDir, '01-first-prompt-gate.png') })

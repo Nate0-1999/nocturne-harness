@@ -1,0 +1,93 @@
+{
+  "principal_id": "nocturne-verification-6949a261-686d-4f49-996e-db07c6e9c482",
+  "retired": [
+    {
+      "memory_id": "5d54d9aa-4c60-40a2-b521-474832b22531",
+      "status": "tombstoned",
+      "revision": 5
+    },
+    {
+      "memory_id": "144013d7-a34d-47cb-9033-534585e60645",
+      "status": "tombstoned",
+      "revision": 2
+    }
+  ],
+  "queue_decision": {
+    "batch_uid": "f26fa116-6b65-463c-918d-856a821d06a1",
+    "decision": "deny",
+    "cards": [
+      {
+        "item_uid": "01M21FXEJ305EWXRTHG9ARP1M9",
+        "candidate": {
+          "memory_id": "f16554f5-b87e-4fc3-bba0-a56af2c8ccc2",
+          "principal_id": "nocturne-verification-6949a261-686d-4f49-996e-db07c6e9c482",
+          "label": "Disposable queue telescope cover",
+          "body": "The disposable M3ST queue telescope uses an amber calibration cover.",
+          "kind": "fact",
+          "keywords": [
+            "telescope",
+            "amber",
+            "calibration"
+          ],
+          "project_key": null,
+          "thread_origin": null,
+          "origin_thread_id": null,
+          "origin_path": "m3st-disposable-queue.md",
+          "origin_location": null,
+          "pin": false,
+          "status": "tombstoned",
+          "revision": 2,
+          "stats": {
+            "removals": 0,
+            "citations": 0,
+            "injections": 0,
+            "never_kills": 0,
+            "last_injected_at": null
+          },
+          "bias": 0.0,
+          "embedding_model": "openai/text-embedding-3-small",
+          "created_at": "2026-09-08T21:48:47.006898Z",
+          "updated_at": "2026-09-08T21:58:11.534876Z"
+        },
+        "birthplace": "seed",
+        "birthplace_thread_id": null,
+        "batch_uid": "f26fa116-6b65-463c-918d-856a821d06a1",
+        "source_name": "m3st-disposable-queue.md",
+        "source_sha256": "069efafa61b5ba0fdf89082acd5fe45d4e4bd5e6134bf3c109bc77696324db5f",
+        "birthplace_run_id": null,
+        "birthplace_origin_agent": null,
+        "judged_context": null,
+        "candidate_revision": null,
+        "curator_run_uid": null,
+        "curator_finding_uid": null,
+        "proposal_payload": null,
+        "verdict": "new",
+        "neighbors": [],
+        "target_ids": [],
+        "state": "rejected",
+        "created_at": "2026-09-08T21:48:47.055672Z"
+      }
+    ]
+  },
+  "active": 0,
+  "candidates": 0,
+  "pending": 0,
+  "curator_activity": {
+    "principal_id": "nocturne-verification-6949a261-686d-4f49-996e-db07c6e9c482",
+    "admitted_writes": 2,
+    "last_run_writes": 0,
+    "pressure_events": 0,
+    "last_run_pressure": 0,
+    "trigger_every": 25,
+    "pressure_trigger_every": 3,
+    "writes_until_run": 23,
+    "pressure_until_run": 3,
+    "latest_run": null,
+    "pending_cards": 0
+  },
+  "second_identity": {
+    "principal_id": "nocturne-verification-e6fe060b-86ce-459f-ad5c-2f6070c9aea9",
+    "active": 0,
+    "pending": 0
+  }
+}

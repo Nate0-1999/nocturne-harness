@@ -106,6 +106,8 @@ interface PersistedHarnessState {
 
 export interface HarnessStoreState extends PersistedHarnessState {
   threads: Record<string, ThreadState>
+  drafts: Record<string, string>
+  setDraft: (threadId: string, draft: string) => void
   connection: ConnectionStatus
   daemonMachineId: string | null
   globalError: HarnessError | null
@@ -681,6 +683,10 @@ export const useHarnessStore = create<HarnessStoreState>()(
       catalog: [],
       selectedThreadId: null,
       threads: {},
+      drafts: {},
+      setDraft: (threadId, draft) => set((state) => ({
+        drafts: { ...state.drafts, [threadId]: draft },
+      })),
       connection: 'disconnected',
       daemonMachineId: null,
       globalError: null,
@@ -789,6 +795,7 @@ export const useHarnessStore = create<HarnessStoreState>()(
           throw new TypeError('prompt must not be blank')
         }
         set((state) => ({
+          drafts: { ...state.drafts, [threadId]: '' },
           catalog: state.catalog.map((entry) => {
             if (entry.thread_id !== threadId) {
               return entry

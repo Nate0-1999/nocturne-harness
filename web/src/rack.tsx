@@ -79,6 +79,7 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
 }
 
 export interface RackSnapshot {
+  drafts: Record<string, string>
   catalog: ThreadCatalogEntry[]
   selectedThreadId: string | null
   currentProjectKey: string | null
@@ -90,6 +91,7 @@ export interface RackSnapshot {
 }
 
 export type RackAction =
+  | { type: 'draft.update'; thread_id: string; draft: string }
   | { type: 'thread.create'; workspace_root: string; project_label?: string }
   | { type: 'thread.select'; thread_id: string }
   | { type: 'thread.rename_project'; thread_id: string; project_label: string }
@@ -214,7 +216,7 @@ export type RackActionResult<Action extends RackAction> =
     ? string
     : Action['type'] extends 'catalog.cleanup-fixtures'
       ? number
-    : Action['type'] extends 'thread.select' | 'thread.rename_project' | 'thread.bind_workspace'
+    : Action['type'] extends 'thread.select' | 'thread.rename_project' | 'thread.bind_workspace' | 'draft.update'
       ? void
       : Action['type'] extends 'thread.archive' | 'queue.load' | 'curation.load' | 'queue.decide' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
         ? JsonValue
@@ -274,7 +276,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     slot: 'panel',
     streams: ['thread.snapshot', 'run.*', 'error'],
     actions: [
-      'project.select', 'prompt.submit', 'run.cancel', 'thread.archive',
+      'project.select', 'prompt.submit', 'draft.update', 'run.cancel', 'thread.archive',
       'queue.load', 'queue.decide', 'thread.select', 'symphony.intervene', 'thread.rename_project',
     ],
     bounds: stageGridBounds({ w: 20, h: 20 }),
@@ -451,6 +453,7 @@ function snapshotFromState(state: ReturnType<typeof useHarnessStore.getState>): 
     selectedThreadId === null || (state.threads[selectedThreadId]?.awaitingSnapshot ?? true),
   )
   return {
+    drafts: state.drafts,
     catalog: state.catalog,
     selectedThreadId: state.selectedThreadId,
     currentProjectKey,
@@ -466,6 +469,9 @@ function dispatchRackAction<Action extends RackAction>(
   action: Action,
 ): RackActionResult<Action> | Promise<RackActionResult<Action>> {
   switch (action.type) {
+      case 'draft.update':
+        useHarnessStore.getState().setDraft(action.thread_id, action.draft)
+        return undefined as RackActionResult<Action>
       case 'thread.create':
         return harnessClient.createThread({
           workspaceRoot: action.workspace_root,

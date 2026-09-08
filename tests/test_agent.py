@@ -610,6 +610,29 @@ async def test_empty_remember_command_is_visible_and_does_not_call_model_or_spin
 
 
 @pytest.mark.asyncio
+async def test_remember_allows_framework_metadata_retry_within_run_limits() -> None:
+    """F075: a structured-output retry must not hit a bespoke one-request budget."""
+    calls = []
+    model = structured_sequence_model([
+        {"label": "Retry needs keywords"},
+        {"label": "Editor preference", "keywords": ["editor", "tabs"]},
+    ], calls)
+    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
+    usage = RunUsage()
+    agent = HarnessAgent(settings(), model=model)
+
+    result = await agent.remember(
+        "Use tabs.", context=context(spine), usage=usage, raise_model_errors=True,
+    )
+
+    assert result.ok
+    assert len(calls) == usage.requests == 2
+    assert len(spine.create_requests) == 1
+    assert spine.create_requests[0].body == "Use tabs."
+    assert agent.usage_limits.total_tokens_limit == agent._settings.run_total_tokens_limit
+
+
+@pytest.mark.asyncio
 async def test_remember_uses_selected_model_once_without_tools_and_maps_project_user_fact() -> None:
     """F046/F041 and ADR-005 require remember to inherit the trusted thread project while
     the metadata call remains tools-free and on the explicit selected model.

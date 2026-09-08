@@ -1,0 +1,102 @@
+I001 [*] Import block is un-sorted or un-formatted
+  --> verification/m3b2/acceptance.py:4:1
+   |
+ 2 |   """Frozen acceptance for M3B2's JSONL build-event report CLI."""
+ 3 |
+ 4 | / from __future__ import annotations
+ 5 | |
+ 6 | | import subprocess
+ 7 | | import sys
+ 8 | | import tempfile
+ 9 | | import unittest
+10 | | from pathlib import Path
+   | |________________________^
+   |
+help: Organize imports
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> verification/m3b3/acceptance.py:4:1
+   |
+ 2 |   """Frozen acceptance for round three's INI audit-report CLI."""
+ 3 |
+ 4 | / from __future__ import annotations
+ 5 | |
+ 6 | | import subprocess
+ 7 | | import sys
+ 8 | | import tempfile
+ 9 | | import unittest
+10 | | from pathlib import Path
+   | |________________________^
+   |
+help: Organize imports
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> verification/m3b3/restore_continuity.py:4:1
+   |
+ 2 |   """Restore the four exact build-test lessons tombstoned after round one."""
+ 3 |
+ 4 | / from __future__ import annotations
+ 5 | |
+ 6 | | import asyncio
+ 7 | | import json
+ 8 | | import os
+ 9 | | from uuid import UUID
+10 | |
+11 | | from harness.spine_client import (
+12 | |     ListMemoriesParams,
+13 | |     MemoryStatus,
+14 | |     PatchMemoryRequest,
+15 | |     SpineClient,
+16 | | )
+   | |_^
+   |
+help: Organize imports
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> verification/m3bt1/round1_acceptance.py:4:1
+   |
+ 2 |   """Fixed pre-round acceptance for the M3BT1 Markdown site generator."""
+ 3 |
+ 4 | / from __future__ import annotations
+ 5 | |
+ 6 | | import subprocess
+ 7 | | import sys
+ 8 | | import tempfile
+ 9 | | import unittest
+10 | | from pathlib import Path
+   | |________________________^
+   |
+help: Organize imports
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> verification/m3bt1/round2_acceptance.py:4:1
+   |
+ 2 |   """Fixed pre-round acceptance for the M3BT1 CSV summary-report CLI."""
+ 3 |
+ 4 | / from __future__ import annotations
+ 5 | |
+ 6 | | import subprocess
+ 7 | | import sys
+ 8 | | import tempfile
+ 9 | | import unittest
+10 | | from pathlib import Path
+   | |________________________^
+   |
+help: Organize imports
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> verification/m3sl/check_emulation.py:4:1
+  |
+2 |   """Check the two M3SL owner captures against pinned visual-character bounds."""
+3 |
+4 | / from __future__ import annotations
+5 | |
+6 | | import json
+7 | | import subprocess
+8 | | from pathlib import Path
+  | |________________________^
+  |
+help: Organize imports
+
+Found 6 errors.
+[*] 6 fixable with the `--fix` option.

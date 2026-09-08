@@ -3300,3 +3300,20 @@ shows the actual failure; the old-version copy remains for a missing capability.
 Conversation declares its existing project-rename action. No Spine or envelope
 contract changes. F073/F074 are duplicated with reversed labels in FLAGS; this
 decision resolves both behaviors without rewriting their historical entries.
+
+## 111 — Let remember retry; preserve refusals and unfinished text [P1.5, P2, P3, M3ST]
+
+PLAN M3ST supersedes F075's older instruction to preserve the one-request bound.
+Delete the shared label budget; both metadata and extraction verdicts use the
+ordinary run limits, retaining the token ceiling. The existing two-request split
+budget is separate. A framework metadata retry now completes without a new guard.
+
+Keep M3VI's ownership check before queue writes. Give that refusal its own
+SpineClientError subtype and map it to 403 at the existing daemon boundary.
+Queue surfaces preserve the explanation; the real stale-card walk found that
+Memory Ingest otherwise replaced it with a misleading document-change message.
+
+Conversation drafts live per thread in the existing host store and cross the
+existing rack bridge. The composer mirrors text locally while typing and restores
+it on remount; successful send clears the host draft. This covers mode and thread
+switches, without adding durable draft storage or changing the snapshot barrier.

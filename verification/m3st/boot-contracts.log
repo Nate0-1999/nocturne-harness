@@ -1,0 +1,9 @@
+Verification home: /tmp/m3st-verification/home principal: nocturne-verification-6949a261-686d-4f49-996e-db07c6e9c482
+...                                                                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/_pytest/config/__init__.py:1345
+  /Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/_pytest/config/__init__.py:1345: PytestAssertRewriteWarning: Module already imported so cannot be rewritten; logfire
+    self._mark_plugins_for_rewrite(hook, disable_autoload)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+3 passed, 1 warning in 26.16s

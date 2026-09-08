@@ -1,0 +1,304 @@
+[
+  {
+    "agent_id": "nocturne",
+    "id": "01M21FRPWMK94J6WVH2K8MBYVT",
+    "machine_id": "nocturne-e3cd9ef0-0a24-486e-a961-3e191d254f36",
+    "payload": {
+      "prompt_id": "01M21FRPWKZ848XTQ27G7F0PSZ",
+      "resolved_model": "openrouter:minimax/minimax-m3",
+      "run_id": "01M21FRPWK1KE122WTNRNW26VP"
+    },
+    "thread_id": "2686af84-671e-448e-8cbe-3da309b78548",
+    "ts": "2026-09-08T21:46:11.732681Z",
+    "type": "run.started",
+    "v": 1
+  },
+  {
+    "agent_id": "nocturne",
+    "id": "01M21FS50EBCP3G5R2YWWT1YJV",
+    "machine_id": "nocturne-e3cd9ef0-0a24-486e-a961-3e191d254f36",
+    "payload": {
+      "cache_read_tokens": 128,
+      "input_tokens": 318,
+      "output_tokens": 157,
+      "requests": 1,
+      "run_id": "01M21FRPWK1KE122WTNRNW26VP"
+    },
+    "thread_id": "2686af84-671e-448e-8cbe-3da309b78548",
+    "ts": "2026-09-08T21:46:26.190076Z",
+    "type": "run.usage",
+    "v": 1
+  },
+  {
+    "agent_id": "nocturne",
+    "id": "01M21FS539ZWDJH3VHGT61JQ8A",
+    "machine_id": "nocturne-e3cd9ef0-0a24-486e-a961-3e191d254f36",
+    "payload": {
+      "partial": false,
+      "run_id": "01M21FRPWK1KE122WTNRNW26VP",
+      "stop_reason": "end_turn"
+    },
+    "thread_id": "2686af84-671e-448e-8cbe-3da309b78548",
+    "ts": "2026-09-08T21:46:26.281054Z",
+    "type": "run.done",
+    "v": 1
+  },
+  {
+    "agent_id": "nocturne",
+    "id": "01M21FSXXN5B277513M4NXKPWV",
+    "machine_id": "nocturne-e3cd9ef0-0a24-486e-a961-3e191d254f36",
+    "payload": {
+      "prompt_id": "01M21FSXXK8PZC48VY56CZARC3",
+      "resolved_model": "openrouter:minimax/minimax-m3",
+      "run_id": "01M21FSXXKZQMXHWSD535Q0YJR"
+    },
+    "thread_id": "2686af84-671e-448e-8cbe-3da309b78548",
+    "ts": "2026-09-08T21:46:51.701207Z",
+    "type": "run.started",
+    "v": 1
+  },
+  {
+    "agent_id": "nocturne",
+    "id": "01M21FSYG7RZ3H0Z80Q95YQXG7",
+    "machine_id": "nocturne-e3cd9ef0-0a24-486e-a961-3e191d254f36",
+    "payload": {
+      "injected": [
+        {
+          "body": "The disposable M3ST lighthouse flashes violet twice at noon.",
+          "features": {
+            "freq": 0.0,
+            "hist": 0.9999702325554743,
+            "kw": 0.3,
+            "loc": 1.0,
+            "proj": 1.0,
+            "sem": 0.817374947086141,
+            "thread": 1.0,
+            "time": 0.9999851161669729,
+            "where": 1.0
+          },
+          "kind": "fact",
+          "label": "M3ST lighthouse violet noon flash",
+          "memory_id": "5d54d9aa-4c60-40a2-b521-474832b22531",
+          "pin": false,
+          "rank": 1,
+          "score": 0.7816643714904785
+        }
+      ],
+      "injection_id": "cb5c1ab7-be0f-4c22-9489-fedea4b2bb50",
+      "kind": "memory_gate",
+      "near_misses": [],
+      "resolution_error": null,
+      "run_id": "01M21FSXXKZQMXHWSD535Q0YJR",
+      "scorer_version": "m3tl-where-v1",
+      "snapshot_ts": "2026-09-08T21:46:52.158903Z",
+      "stage": "review",
+      "wrong_removed": []
+    },
+    "thread_id": "2686af84-671e-448e-8cbe-3da309b78548",
+    "ts": "2026-09-08T21:46:52.295344Z",
+    "type": "gate.open",
+    "v": 1
+  },
+  {
+    "agent_id": "nocturne",
+    "id": "01M21FTTWJ51E35M0X5VXRRSBQ",
+    "machine_id": "nocturne-e3cd9ef0-0a24-486e-a961-3e191d254f36",
+    "payload": {
+      "run_id": "01M21FSXXKZQMXHWSD535Q0YJR"
+    },
+    "thread_id": "2686af84-671e-448e-8cbe-3da309b78548",
+    "ts": "2026-09-08T21:47:21.362738Z",
+    "type": "gate.dismiss",
+    "v": 1
+  },
+  {
+    "agent_id": "nocturne",
+    "id": "01M21FTYGBK4F9Y1H1GNM19ZPS",
+    "machine_id": "nocturne-e3cd9ef0-0a24-486e-a961-3e191d254f36",
+    "payload": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "requests": 1,
+      "run_id": "01M21FSXXKZQMXHWSD535Q0YJR"
+    },
+    "thread_id": "2686af84-671e-448e-8cbe-3da309b78548",
+    "ts": "2026-09-08T21:47:25.067209Z",
+    "type": "run.usage",
+    "v": 1
+  },
+  {
+    "agent_id": "nocturne",
+    "id": "01M21FV41ZAZTZA9WVPNRMMTX7",
+    "machine_id": "nocturne-e3cd9ef0-0a24-486e-a961-3e191d254f36",
+    "payload": {
+      "cache_read_tokens": 128,
+      "input_tokens": 2350,
+      "output_tokens": 167,
+      "requests": 1,
+      "run_id": "01M21FSXXKZQMXHWSD535Q0YJR"
+    },
+    "thread_id": "2686af84-671e-448e-8cbe-3da309b78548",
+    "ts": "2026-09-08T21:47:30.751608Z",
+    "type": "run.usage",
+    "v": 1
+  },
+  {
+    "agent_id": "nocturne",
+    "id": "01M21FV7DFF8X7NFNW9NBDBEPN",
+    "machine_id": "nocturne-e3cd9ef0-0a24-486e-a961-3e191d254f36",
+    "payload": {
+      "partial": false,
+      "run_id": "01M21FSXXKZQMXHWSD535Q0YJR",
+      "stop_reason": "end_turn"
+    },
+    "thread_id": "2686af84-671e-448e-8cbe-3da309b78548",
+    "ts": "2026-09-08T21:47:34.191560Z",
+    "type": "run.done",
+    "v": 1
+  },
+  {
+    "agent_id": "nocturne",
+    "id": "01M21FVEGCX6DT6P9NVB977SM4",
+    "machine_id": "nocturne-e3cd9ef0-0a24-486e-a961-3e191d254f36",
+    "payload": {
+      "prompt_id": "01M21FVEGB6AJZ6ZRW17J35NTQ",
+      "resolved_model": "openrouter:minimax/minimax-m3",
+      "run_id": "01M21FVEGBNCRSK5PARC57Z2CS"
+    },
+    "thread_id": "2686af84-671e-448e-8cbe-3da309b78548",
+    "ts": "2026-09-08T21:47:41.452547Z",
+    "type": "run.started",
+    "v": 1
+  },
+  {
+    "agent_id": "nocturne",
+    "id": "01M21FVHNHWAN331AY06JM54H3",
+    "machine_id": "nocturne-e3cd9ef0-0a24-486e-a961-3e191d254f36",
+    "payload": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "requests": 0,
+      "run_id": "01M21FVEGBNCRSK5PARC57Z2CS"
+    },
+    "thread_id": "2686af84-671e-448e-8cbe-3da309b78548",
+    "ts": "2026-09-08T21:47:44.689426Z",
+    "type": "run.usage",
+    "v": 1
+  },
+  {
+    "agent_id": "nocturne",
+    "id": "01M21FVHNM2D8NFPDWM85JMC98",
+    "machine_id": "nocturne-e3cd9ef0-0a24-486e-a961-3e191d254f36",
+    "payload": {
+      "partial": false,
+      "run_id": "01M21FVEGBNCRSK5PARC57Z2CS",
+      "stop_reason": "end_turn"
+    },
+    "thread_id": "2686af84-671e-448e-8cbe-3da309b78548",
+    "ts": "2026-09-08T21:47:44.692779Z",
+    "type": "run.done",
+    "v": 1
+  },
+  {
+    "agent_id": "nocturne",
+    "id": "01M21FW829120EWMTFN7R7VXF6",
+    "machine_id": "nocturne-e3cd9ef0-0a24-486e-a961-3e191d254f36",
+    "payload": {
+      "prompt_id": "01M21FW827P79V94PP50D4AT9Q",
+      "resolved_model": "openrouter:openai/gpt-4.1-mini",
+      "run_id": "01M21FW827WGFVSM6CG9WWYGBC"
+    },
+    "thread_id": "2686af84-671e-448e-8cbe-3da309b78548",
+    "ts": "2026-09-08T21:48:07.625221Z",
+    "type": "run.started",
+    "v": 1
+  },
+  {
+    "agent_id": "nocturne",
+    "id": "01M21FWFFWNS88CN1SXNK89D5W",
+    "machine_id": "nocturne-e3cd9ef0-0a24-486e-a961-3e191d254f36",
+    "payload": {
+      "input_tokens": 168,
+      "output_tokens": 29,
+      "requests": 1,
+      "run_id": "01M21FW827WGFVSM6CG9WWYGBC"
+    },
+    "thread_id": "2686af84-671e-448e-8cbe-3da309b78548",
+    "ts": "2026-09-08T21:48:15.228241Z",
+    "type": "run.usage",
+    "v": 1
+  },
+  {
+    "agent_id": "nocturne",
+    "id": "01M21FWFJJTQNHZMYVH09A2KGE",
+    "machine_id": "nocturne-e3cd9ef0-0a24-486e-a961-3e191d254f36",
+    "payload": {
+      "partial": false,
+      "run_id": "01M21FW827WGFVSM6CG9WWYGBC",
+      "stop_reason": "end_turn"
+    },
+    "thread_id": "2686af84-671e-448e-8cbe-3da309b78548",
+    "ts": "2026-09-08T21:48:15.314449Z",
+    "type": "run.done",
+    "v": 1
+  },
+  {
+    "agent_id": "nocturne",
+    "id": "01M21FZ6DXHEDYJ1TQH1ADAT6E",
+    "machine_id": "nocturne-e3cd9ef0-0a24-486e-a961-3e191d254f36",
+    "payload": {
+      "prompt_id": "01M21FZ6DV953SKD1RF3TP3YJH",
+      "resolved_model": "openrouter:openai/gpt-4.1-mini",
+      "run_id": "01M21FZ6DW8G5M3T478VVZFJT8"
+    },
+    "thread_id": "2686af84-671e-448e-8cbe-3da309b78548",
+    "ts": "2026-09-08T21:49:44.253292Z",
+    "type": "run.started",
+    "v": 1
+  },
+  {
+    "agent_id": "nocturne",
+    "id": "01M21FZDY8627JTC659J792X0C",
+    "machine_id": "nocturne-e3cd9ef0-0a24-486e-a961-3e191d254f36",
+    "payload": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "requests": 1,
+      "run_id": "01M21FZ6DW8G5M3T478VVZFJT8"
+    },
+    "thread_id": "2686af84-671e-448e-8cbe-3da309b78548",
+    "ts": "2026-09-08T21:49:51.944396Z",
+    "type": "run.usage",
+    "v": 1
+  },
+  {
+    "agent_id": "nocturne",
+    "id": "01M21FZENC6BCZ7VDKD63B96ZS",
+    "machine_id": "nocturne-e3cd9ef0-0a24-486e-a961-3e191d254f36",
+    "payload": {
+      "cache_read_tokens": 1152,
+      "input_tokens": 1235,
+      "output_tokens": 30,
+      "requests": 1,
+      "run_id": "01M21FZ6DW8G5M3T478VVZFJT8"
+    },
+    "thread_id": "2686af84-671e-448e-8cbe-3da309b78548",
+    "ts": "2026-09-08T21:49:52.684530Z",
+    "type": "run.usage",
+    "v": 1
+  },
+  {
+    "agent_id": "nocturne",
+    "id": "01M21FZERAMSNPGB4D950AV4XG",
+    "machine_id": "nocturne-e3cd9ef0-0a24-486e-a961-3e191d254f36",
+    "payload": {
+      "partial": false,
+      "run_id": "01M21FZ6DW8G5M3T478VVZFJT8",
+      "stop_reason": "end_turn"
+    },
+    "thread_id": "2686af84-671e-448e-8cbe-3da309b78548",
+    "ts": "2026-09-08T21:49:52.778916Z",
+    "type": "run.done",
+    "v": 1
+  }
+]

@@ -1,0 +1,1 @@
+PASS: item and batch return plain 403; foreign card stayed pending; own denial and two tombstones; both verification scopes empty.

@@ -1,0 +1,9 @@
+{
+  "credential_scan": "PASS: neither authorized credential appears in evidence",
+  "removed_disposable_homes": [
+    "/tmp/m3st-verification/home",
+    "/tmp/m3st-verification/second-home"
+  ],
+  "daemon": "stopped; final process 64862 exited 0",
+  "scope": "Only the two homes created by M3ST were removed."
+}

@@ -207,3 +207,32 @@ async def test_bound_client_refuses_foreign_queue_decisions_and_retries_own(batc
             else:
                 await restarted.decide_queue_item(ITEM_UID, request)
     assert len(writes) == 2
+
+
+@pytest.mark.parametrize("batch", [False, True])
+def test_foreign_queue_http_decision_is_plain_ownership_refusal(tmp_path, monkeypatch, batch):
+    """F076: the principal wall refuses item and batch writes with useful copy, never a 500."""
+    def palace(request):
+        assert request.method == "GET", "foreign queue decision reached the Palace write"
+        return httpx.Response(200, json={"cards": []})
+
+    monkeypatch.setattr(
+        "harness.daemon.SpineClient",
+        lambda url, token, **kwargs: SpineClient(
+            url, token, transport=httpx.MockTransport(palace), **kwargs,
+        ),
+    )
+    settings = HarnessSettings(
+        _env_file=None, principal_id="nocturne-verification-m3st",
+        nocturne_home=tmp_path, spine_url="https://palace.example.test", spine_token="test-token",
+    )
+    app = create_dev_app(tmp_path, settings=settings)
+    path = f"batches/{BATCH_UID}" if batch else ITEM_UID
+    with TestClient(app) as client:
+        response = client.post(f"/v1/approval-queue/{path}/decisions", json={
+            "decision": "approve", "approval_mode": "explicit", "actor_class": "human",
+        })
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": "This queue decision does not belong to this identity. Refresh the queue.",
+    }

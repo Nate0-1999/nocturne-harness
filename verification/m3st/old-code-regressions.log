@@ -1,0 +1,184 @@
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+_______ test_remember_allows_framework_metadata_retry_within_run_limits ________
+
+    @pytest.mark.asyncio
+    async def test_remember_allows_framework_metadata_retry_within_run_limits() -> None:
+        """F075: a structured-output retry must not hit a bespoke one-request budget."""
+        calls = []
+        model = structured_sequence_model([
+            {"label": "Retry needs keywords"},
+            {"label": "Editor preference", "keywords": ["editor", "tabs"]},
+        ], calls)
+        spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
+        usage = RunUsage()
+        agent = HarnessAgent(settings(), model=model)
+    
+>       result = await agent.remember(
+            "Use tabs.", context=context(spine), usage=usage, raise_model_errors=True,
+        )
+
+tests/test_agent.py:624: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/tmp/m3st-verification/old-code/harness/agent.py:377: in remember
+    draft_result = await _run_structured_agent(
+/tmp/m3st-verification/old-code/harness/agent.py:819: in _run_structured_agent
+    return await run()
+           ^^^^^^^^^^^
+/tmp/m3st-verification/old-code/harness/agent.py:810: in run
+    return await agent.run(
+.venv/lib/python3.12/site-packages/pydantic_ai/agent/abstract.py:660: in run
+    node = await agent_run.next(node)  # pyright: ignore[reportArgumentType]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/run.py:470: in next
+    return await self._run_node_with_hooks(node, self._stream_and_advance)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/run.py:392: in _run_node_with_hooks
+    return await self._wrap_and_advance(run_context, node, step_fn)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/run.py:343: in _wrap_and_advance
+    result = await cap.on_node_run_error(run_context, node=node, error=e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py:391: in on_node_run_error
+    raise error
+.venv/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py:388: in on_node_run_error
+    return await capability.on_node_run_error(cap_ctx, node=node, error=error)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py:647: in on_node_run_error
+    raise error
+.venv/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py:388: in on_node_run_error
+    return await capability.on_node_run_error(cap_ctx, node=node, error=error)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py:647: in on_node_run_error
+    raise error
+.venv/lib/python3.12/site-packages/pydantic_ai/run.py:341: in _wrap_and_advance
+    result = await cap.wrap_node_run(run_context, node=node, handler=step_fn)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py:374: in wrap_node_run
+    return await chain(node)
+           ^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py:809: in wrapped
+    return await cap.wrap_node_run(_ctx_for_cap(cap, ctx), node=node, handler=inner)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py:626: in wrap_node_run
+    return await handler(node)
+           ^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py:809: in wrapped
+    return await cap.wrap_node_run(_ctx_for_cap(cap, ctx), node=node, handler=inner)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py:626: in wrap_node_run
+    return await handler(node)
+           ^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/run.py:484: in _stream_and_advance
+    return await self._advance_graph(node)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/run.py:318: in _advance_graph
+    task = await self._graph_run.next(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_graph/graph_builder.py:584: in next
+    return await anext(self)
+           ^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_graph/graph_builder.py:561: in __anext__
+    raise self._next.error
+.venv/lib/python3.12/site-packages/pydantic_graph/graph_builder.py:860: in _run_tracked_task
+    result = await self._run_task(t_)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_graph/graph_builder.py:911: in _run_task
+    output = await node.call(step_context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_graph/step.py:253: in _call_node
+    return await node.run(GraphRunContext(state=ctx.state, deps=ctx.deps))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/_agent_graph.py:1118: in run
+    return await self._make_request(ctx)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/_agent_graph.py:1363: in _make_request
+    model, model_settings, model_request_parameters, message_history, run_context = await self._prepare_request(
+.venv/lib/python3.12/site-packages/pydantic_ai/_agent_graph.py:1601: in _prepare_request
+    ctx.deps.usage_limits.check_before_request(usage)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = UsageLimits(request_limit=1, total_tokens_limit=500000)
+usage = RunUsage(input_tokens=54, output_tokens=6, requests=1)
+
+    def check_before_request(self, usage: RunUsage) -> None:
+        """Raises a `UsageLimitExceeded` exception if the next request would exceed any of the limits."""
+        request_limit = self.request_limit
+        if request_limit is not None and usage.requests >= request_limit:
+>           raise UsageLimitExceeded(f'The next request would exceed the request_limit of {request_limit}')
+E           pydantic_ai.exceptions.UsageLimitExceeded: The next request would exceed the request_limit of 1. Consider raising the limit, or see the docs on usage limits for budget-aware patterns: https://ai.pydantic.dev/agent/#usage-limits
+
+.venv/lib/python3.12/site-packages/pydantic_ai/usage.py:496: UsageLimitExceeded
+______ test_foreign_queue_http_decision_is_plain_ownership_refusal[False] ______
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-364/test_foreign_queue_http_decisi0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x113987800>
+batch = False
+
+    @pytest.mark.parametrize("batch", [False, True])
+    def test_foreign_queue_http_decision_is_plain_ownership_refusal(tmp_path, monkeypatch, batch):
+        """F076: the principal wall refuses item and batch writes with useful copy, never a 500."""
+        def palace(request):
+            assert request.method == "GET", "foreign queue decision reached the Palace write"
+            return httpx.Response(200, json={"cards": []})
+    
+        monkeypatch.setattr(
+            "harness.daemon.SpineClient",
+            lambda url, token, **kwargs: SpineClient(
+                url, token, transport=httpx.MockTransport(palace), **kwargs,
+            ),
+        )
+        settings = HarnessSettings(
+            _env_file=None, principal_id="nocturne-verification-m3st",
+            nocturne_home=tmp_path, spine_url="https://palace.example.test", spine_token="test-token",
+        )
+        app = create_dev_app(tmp_path, settings=settings)
+        path = f"batches/{BATCH_UID}" if batch else ITEM_UID
+        with TestClient(app) as client:
+            response = client.post(f"/v1/approval-queue/{path}/decisions", json={
+                "decision": "approve", "approval_mode": "explicit", "actor_class": "human",
+            })
+>       assert response.status_code == 403
+E       assert 503 == 403
+E        +  where 503 = <Response [503 Service Unavailable]>.status_code
+
+tests/test_verification_identity.py:235: AssertionError
+______ test_foreign_queue_http_decision_is_plain_ownership_refusal[True] _______
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-364/test_foreign_queue_http_decisi1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x115fdbcb0>
+batch = True
+
+    @pytest.mark.parametrize("batch", [False, True])
+    def test_foreign_queue_http_decision_is_plain_ownership_refusal(tmp_path, monkeypatch, batch):
+        """F076: the principal wall refuses item and batch writes with useful copy, never a 500."""
+        def palace(request):
+            assert request.method == "GET", "foreign queue decision reached the Palace write"
+            return httpx.Response(200, json={"cards": []})
+    
+        monkeypatch.setattr(
+            "harness.daemon.SpineClient",
+            lambda url, token, **kwargs: SpineClient(
+                url, token, transport=httpx.MockTransport(palace), **kwargs,
+            ),
+        )
+        settings = HarnessSettings(
+            _env_file=None, principal_id="nocturne-verification-m3st",
+            nocturne_home=tmp_path, spine_url="https://palace.example.test", spine_token="test-token",
+        )
+        app = create_dev_app(tmp_path, settings=settings)
+        path = f"batches/{BATCH_UID}" if batch else ITEM_UID
+        with TestClient(app) as client:
+            response = client.post(f"/v1/approval-queue/{path}/decisions", json={
+                "decision": "approve", "approval_mode": "explicit", "actor_class": "human",
+            })
+>       assert response.status_code == 403
+E       assert 503 == 403
+E        +  where 503 = <Response [503 Service Unavailable]>.status_code
+
+tests/test_verification_identity.py:235: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_agent.py::test_remember_allows_framework_metadata_retry_within_run_limits
+FAILED tests/test_verification_identity.py::test_foreign_queue_http_decision_is_plain_ownership_refusal[False]
+FAILED tests/test_verification_identity.py::test_foreign_queue_http_decision_is_plain_ownership_refusal[True]
+3 failed in 1.33s

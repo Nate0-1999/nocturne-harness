@@ -90,6 +90,7 @@ from harness.spine_client import (
     SpendTableSnapshot,
     SpineClient,
     SpineClientError,
+    SpineOwnershipError,
     SpineResponseError,
     VitalsAccounting,
     VitalsSnapshot,
@@ -280,7 +281,9 @@ def create_app(
     app = FastAPI(title="NOCTURNE", version=__version__)
 
     @app.exception_handler(SpineClientError)
-    async def palace_read_failure(_request: Request, exc: SpineClientError) -> JSONResponse:
+    async def palace_failure(_request: Request, exc: SpineClientError) -> JSONResponse:
+        if isinstance(exc, SpineOwnershipError):
+            return JSONResponse(status_code=403, content={"detail": str(exc)})
         busy = isinstance(exc, SpineResponseError) and exc.status_code == 429
         return JSONResponse(
             status_code=429 if busy else 503,

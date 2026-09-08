@@ -2075,7 +2075,8 @@ function ChatModule() {
   const selectedThreadId = snapshot.selectedThreadId
   const selectedThread = selectedThreadId === null ? null : snapshot.threads[selectedThreadId]
   const selectedMeta = snapshot.catalog.find((entry) => entry.thread_id === selectedThreadId)
-  const [draft, setDraft] = useState('')
+  const [draft, setDraft] = useState(() =>
+    selectedThreadId === null ? '' : snapshot.drafts[selectedThreadId] ?? '')
   const [pendingImage, setPendingImage] = useState<PendingImage | null>(null)
   const [imageStatus, setImageStatus] = useState('')
   const [imageBusy, setImageBusy] = useState(false)
@@ -2470,7 +2471,13 @@ function ChatModule() {
             rows={1}
             placeholder={snapshot.connection === 'connected' ? 'Transmit to Nocturne' : 'Waiting for Nocturne'}
             disabled={composerDisabled || promptBusy}
-            onChange={(event) => setDraft(event.target.value)}
+            onChange={(event) => {
+              const value = event.target.value
+              setDraft(value)
+              if (selectedThreadId !== null) {
+                void events.dispatch({ type: 'draft.update', thread_id: selectedThreadId, draft: value })
+              }
+            }}
             onKeyDown={onComposerKeyDown}
             onPaste={onComposerPaste}
           />
@@ -2661,6 +2668,7 @@ function ThreadEndCard({
   onChanged: (itemUid: string) => void
 }) {
   const [collapsed, setCollapsed] = useState(false)
+  const [decisionError, setDecisionError] = useState<string | null>(null)
   const seen = useRef(new Set<string>())
   const [busy, setBusy] = useState(new Set<string>())
 
@@ -2670,7 +2678,10 @@ function ThreadEndCard({
     mode: 'explicit' | 'passive',
   ) {
     setBusy((current) => new Set(current).add(itemUid))
-    void onDecide(itemUid, decision, mode).then(() => onChanged(itemUid)).finally(() => {
+    setDecisionError(null)
+    void onDecide(itemUid, decision, mode).then(() => onChanged(itemUid)).catch((error: unknown) => {
+      setDecisionError(error instanceof Error ? error.message : 'This queue decision could not be completed.')
+    }).finally(() => {
       setBusy((current) => {
         const next = new Set(current)
         next.delete(itemUid)
@@ -2690,6 +2701,7 @@ function ThreadEndCard({
 
   return (
     <section className="thread-end-card" data-testid="thread-end-card" aria-label="Thread memory review">
+      {decisionError && <p role="alert">{decisionError}</p>}
       <header className="thread-end-card__header">
         <div>
           <h2>What should survive?</h2>
@@ -2967,7 +2979,7 @@ function PalaceQueueModule() {
     void events.dispatch({ type: 'queue.batch.decide', batch_uid: batchUid, decision })
       .then(() => load())
       .then(() => setStatusText(decision === 'approve' ? 'Batch approved.' : 'Batch rejected.'))
-      .catch(() => setStatusText('The document changed before it could be decided.'))
+      .catch((error: unknown) => setStatusText(error instanceof Error ? error.message : 'The document changed before it could be decided.'))
       .finally(() => setBusy(false))
   }
 
@@ -2984,7 +2996,7 @@ function PalaceQueueModule() {
     })
       .then(load)
       .then(() => setStatusText(decision === 'approve' ? 'Repair applied and journaled.' : 'Proposal rejected. The Palace was not changed.'))
-      .catch(() => setStatusText('That memory changed after diagnosis. Run the curators again.'))
+      .catch((error: unknown) => setStatusText(error instanceof Error ? error.message : 'That memory changed after diagnosis. Run the curators again.'))
       .finally(() => setBusy(false))
   }
 

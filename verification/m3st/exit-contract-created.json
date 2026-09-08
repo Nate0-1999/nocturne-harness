@@ -1,0 +1,22 @@
+[
+  {
+    "memory_id": "bec07269-ce65-445e-93ec-f0dcf9cef8d9",
+    "principal_id": "hard-18205277b10b48a8b549a084085b50d8"
+  },
+  {
+    "memory_id": "aa9956d0-e873-4f39-b05a-ea6241d93f35",
+    "principal_id": "similar-18205277b10b48a8b549a084085b50d8"
+  },
+  {
+    "memory_id": "08468128-7f9c-4a2a-af5c-ba81268f3dc4",
+    "principal_id": "similar-18205277b10b48a8b549a084085b50d8"
+  },
+  {
+    "memory_id": "95ff3f1b-be32-4fae-930d-6ef0a3bfe8c7",
+    "principal_id": "cas-1797c028b37b4a1da46230bc36dab517"
+  },
+  {
+    "memory_id": "16d353d6-af49-4b95-8c74-2c6678dc0757",
+    "principal_id": "cas-1797c028b37b4a1da46230bc36dab517"
+  }
+]

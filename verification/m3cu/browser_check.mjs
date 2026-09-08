@@ -59,6 +59,21 @@ try {
   await queue.getByRole('button', { name: 'Approve repair' }).waitFor()
   await page.screenshot({ path: join(evidenceDir, 'curator-state-and-consent.png'), fullPage: true })
   const keepButton = queue.getByRole('button', { name: 'Keep as is' })
+  // PLAN M3ST / F076: a refused decision must preserve the daemon's explanation.
+  const ownershipRefusal = 'This queue decision does not belong to this identity. Refresh the queue.'
+  await page.route('**/v1/approval-queue/*/decisions', (route) => route.fulfill({
+    status: 403, contentType: 'application/json', body: JSON.stringify({ detail: ownershipRefusal }),
+  }), { times: 1 })
+  await keepButton.focus()
+  await keepButton.press('Enter')
+  await queue.getByText(ownershipRefusal, { exact: true }).waitFor()
+  if (decisions.length !== 1 || decisions[0]?.status !== 403) {
+    throw new Error(JSON.stringify({ decisions }))
+  }
+  decisions.length = 0
+  for (let index = consoleProblems.length - 1; index >= 0; index -= 1) {
+    if (consoleProblems[index].includes('403')) consoleProblems.splice(index, 1)
+  }
   await keepButton.focus()
   await keepButton.press('Enter')
   await queue.locator('.seed-status').waitFor()
