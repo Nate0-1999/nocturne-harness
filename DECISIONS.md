@@ -3274,3 +3274,10 @@ The sourced-env replay fails on old code and passes now using only temporary
 homes. Verification refuses the default home; `up` refuses to adopt an unrelated
 daemon on its port. `/v1/identity` and doctor name the running principal/home.
 Transcript restore/status also use that principal instead of literal `local`.
+
+Queue decision IDs carry no principal in the Palace API. Bound clients first
+prove item/batch ownership through their scoped queue; foreign IDs never reach
+the write endpoint. Proven IDs remain known for safe same-session retries.
+After restart an already-decided, no-longer-pending ID fails closed: the client
+cannot establish its ownership from the legacy API. No second durable ledger
+or authentication contract is introduced.

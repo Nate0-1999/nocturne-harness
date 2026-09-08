@@ -1291,6 +1291,8 @@ class SpineClient:
             raise ValueError("token must not contain surrounding whitespace")
         self.base_url = str(normalized_url)
         self._principal_id = principal_id
+        self._owned_queue_items: set[str] = set()
+        self._owned_queue_batches: set[UUID] = set()
         self._client = httpx.AsyncClient(
             base_url=normalized_url,
             headers={
@@ -1562,7 +1564,13 @@ class SpineClient:
         if birthplace is not None:
             params["birthplace"] = birthplace
         response = await self._request("GET", "v1/approval-queue", params=params)
-        return _expect_success(response, status=200, adapter=_QUEUE_RESPONSE)
+        result = _expect_success(response, status=200, adapter=_QUEUE_RESPONSE)
+        for card in result.cards:
+            if card.candidate.principal_id == self._principal_id:
+                self._owned_queue_items.add(card.item_uid)
+                if card.batch_uid is not None:
+                    self._owned_queue_batches.add(card.batch_uid)
+        return result
 
     async def curator_activity(self, principal_id: str) -> CuratorActivity | None:
         """Read curator activity; a 404 is an older Palace, not broken chat."""
@@ -1599,6 +1607,7 @@ class SpineClient:
     async def decide_queue_item(
         self, item_uid: str, request: QueueDecisionRequest
     ) -> QueueDecisionResponse:
+        await self._require_owned_queue(item_uid=item_uid)
         response = await self._request(
             "POST", f"v1/approval-queue/{item_uid}/decisions", json_body=_request_body(request)
         )
@@ -1607,12 +1616,26 @@ class SpineClient:
     async def decide_queue_batch(
         self, batch_uid: UUID, request: QueueDecisionRequest
     ) -> BatchDecisionResponse:
+        await self._require_owned_queue(batch_uid=batch_uid)
         response = await self._request(
             "POST",
             f"v1/approval-queue/batches/{batch_uid}/decisions",
             json_body=_request_body(request),
         )
         return _expect_success(response, status=200, adapter=_BATCH_DECISION_RESPONSE)
+
+    async def _require_owned_queue(
+        self, *, item_uid: str | None = None, batch_uid: UUID | None = None
+    ) -> None:
+        if self._principal_id is None:
+            return
+        if item_uid in self._owned_queue_items or batch_uid in self._owned_queue_batches:
+            return
+        await self.approval_queue(self._principal_id)
+        if item_uid not in self._owned_queue_items and batch_uid not in self._owned_queue_batches:
+            raise SpineClientError(
+                "This queue decision does not belong to this identity. Refresh the queue."
+            )
 
     async def append_transcripts(self, request: AppendTranscriptsRequest) -> TranscriptAppendResult:
         response = await self._request("POST", "v1/transcripts", json_body=_request_body(request))

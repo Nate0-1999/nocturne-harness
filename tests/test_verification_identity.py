@@ -12,12 +12,13 @@ from fastapi.testclient import TestClient
 from pydantic_ai.models.function import FunctionModel
 from test_daemon import GateSpine, frame, receive_until
 from test_memory_panel import memory_unit
+from test_queue_provenance import BATCH_UID, ITEM_UID, DecisionSpine
 
 from harness import onboarding
 from harness.agent import HarnessAgent
 from harness.config import HarnessSettings
 from harness.daemon import create_dev_app
-from harness.spine_client import SpineClient
+from harness.spine_client import QueueDecisionRequest, SpineClient, SpineClientError
 
 
 def initialize(home, monkeypatch, *, verification=True):
@@ -154,3 +155,55 @@ def test_up_and_doctor_refuse_to_adopt_a_different_running_identity(tmp_path, mo
     assert onboarding._daemon_preflight(config).failures
     with pytest.raises(onboarding.OnboardingError, match="Another Nocturne identity"):
         onboarding.up_nocturne(home=config.home, open_browser=False)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("batch", [False, True])
+async def test_bound_client_refuses_foreign_queue_decisions_and_retries_own(batch):
+    """PLAN M3VI / F069: a supplied queue ID cannot bypass the daemon's principal boundary."""
+    principal = "nocturne-verification-queue"
+    request = QueueDecisionRequest(
+        decision="approve", approval_mode="explicit", actor_class="human",
+        machine_id="m3vi-verification",
+    )
+    decisions = DecisionSpine()
+    result = (await decisions.decide_queue_batch(BATCH_UID, request) if batch
+              else await decisions.decide_queue_item(ITEM_UID, request))
+    card = result.cards[0] if batch else result.card
+    card.candidate.principal_id = principal
+    pending = [card.model_copy(update={"state": "pending"}).model_dump(mode="json")]
+    writes = []
+
+    def palace(http_request):
+        if http_request.method == "GET":
+            assert http_request.url.params["principal_id"] == principal
+            return httpx.Response(200, json={"cards": pending})
+        writes.append(http_request.url.path)
+        pending.clear()
+        return httpx.Response(200, json=result.model_dump(mode="json"))
+
+    async with SpineClient(
+        "https://palace.example.test", "test-token", principal_id=principal,
+        transport=httpx.MockTransport(palace),
+    ) as client:
+        with pytest.raises(SpineClientError, match="does not belong"):
+            if batch:
+                await client.decide_queue_batch(uuid4(), request)
+            else:
+                await client.decide_queue_item("01ARZ3NDEKTSV4RRFFQ69G5FA0", request)
+        assert writes == []
+        for _ in range(2):
+            received = (await client.decide_queue_batch(BATCH_UID, request) if batch
+                        else await client.decide_queue_item(ITEM_UID, request))
+            assert received == result
+        assert len(writes) == 2
+    async with SpineClient(
+        "https://palace.example.test", "test-token", principal_id=principal,
+        transport=httpx.MockTransport(palace),
+    ) as restarted:
+        with pytest.raises(SpineClientError, match="does not belong"):
+            if batch:
+                await restarted.decide_queue_batch(BATCH_UID, request)
+            else:
+                await restarted.decide_queue_item(ITEM_UID, request)
+    assert len(writes) == 2
