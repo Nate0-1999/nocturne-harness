@@ -1,0 +1,23 @@
+{
+  "principal_id": "nocturne-verification-cb49eb66-85cf-474c-b337-ca8fd4326c7f",
+  "active_memories": 0,
+  "pending_queue_cards": 0,
+  "curator_activity": {
+    "principal_id": "nocturne-verification-cb49eb66-85cf-474c-b337-ca8fd4326c7f",
+    "admitted_writes": 0,
+    "last_run_writes": 0,
+    "pressure_events": 0,
+    "last_run_pressure": 0,
+    "trigger_every": 25,
+    "pressure_trigger_every": 3,
+    "writes_until_run": 25,
+    "pressure_until_run": 3,
+    "latest_run": null,
+    "pending_cards": 0
+  },
+  "pending_receipt_files": 0,
+  "credential_scan": "PASS",
+  "disposable_homes_and_project_removed": true,
+  "browser_tabs_closed": true,
+  "verification_listeners_stopped": true
+}

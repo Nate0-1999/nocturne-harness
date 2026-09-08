@@ -1,0 +1,60 @@
+[
+  {
+    "thread_id": "69741227-9c42-4603-908e-8618913729c3",
+    "title": "New thread",
+    "message_count": 0
+  },
+  {
+    "thread_id": "045f8f85-e829-4f65-b3d2-8d74169af9ab",
+    "title": "Think carefully: three boxes contain apples, oranges, or both, and every label i",
+    "message_count": 4,
+    "messages": [
+      {
+        "role": "user",
+        "state": "end_turn",
+        "partial": null,
+        "thinking_chars": 0,
+        "literal_think_tag_in_answer": false,
+        "tool_results": []
+      },
+      {
+        "role": "assistant",
+        "state": null,
+        "partial": false,
+        "thinking_chars": 1748,
+        "literal_think_tag_in_answer": false,
+        "tool_results": []
+      },
+      {
+        "role": "user",
+        "state": "end_turn",
+        "partial": null,
+        "thinking_chars": 0,
+        "literal_think_tag_in_answer": false,
+        "tool_results": []
+      },
+      {
+        "role": "assistant",
+        "state": null,
+        "partial": false,
+        "thinking_chars": 1235,
+        "literal_think_tag_in_answer": false,
+        "tool_results": [
+          "write",
+          "navigate",
+          "screenshot"
+        ]
+      }
+    ]
+  },
+  {
+    "thread_id": "70895102-dfb1-453c-baef-5d4d0c85dd05",
+    "title": "New thread",
+    "message_count": 0
+  },
+  {
+    "thread_id": "38649a11-fe5c-42c2-a9f0-e574c2c6fc18",
+    "title": "New thread",
+    "message_count": 0
+  }
+]
