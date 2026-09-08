@@ -52,6 +52,7 @@ export interface ActiveRunState {
 }
 
 export interface HarnessError {
+  source?: string
   message: string
   detail: JsonValue
 }
@@ -127,7 +128,8 @@ export interface HarnessStoreState extends PersistedHarnessState {
   ) => void
   observeDaemon: (machineId: string) => void
   setConnection: (connection: ConnectionStatus) => void
-  setTransportError: (message: string) => void
+  setTransportError: (message: string, source?: string) => void
+  clearTransportError: (source: string) => void
   clearError: (threadId?: string) => void
   receiveEnvelope: (envelope: Envelope) => boolean
 }
@@ -876,10 +878,14 @@ export const useHarnessStore = create<HarnessStoreState>()(
 
       setConnection: (connection) => set({ connection }),
 
-      setTransportError: (message) => {
+      setTransportError: (message, source) => {
         set({
-          globalError: { message, detail: message },
+          globalError: { message, detail: message, source },
         })
+      },
+
+      clearTransportError: (source) => {
+        if (get().globalError?.source === source) set({ globalError: null })
       },
 
       clearError: (threadId) => {

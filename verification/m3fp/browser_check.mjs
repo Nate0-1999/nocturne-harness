@@ -39,6 +39,9 @@ try {
 
   await frame('gate').getByTestId('memory-gate-continue').click()
   await conversation.getByText(answer, { exact: true }).waitFor({ state: 'visible' })
+  if ((await conversation.locator('.message--assistant').innerText()).includes('Private heartbeat')) {
+    throw new Error('Tagged model reasoning leaked into the answer')
+  }
   await page.screenshot({ path: resolve(evidenceDir, '02-first-answer.png') })
 
   let trace

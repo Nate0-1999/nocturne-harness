@@ -759,6 +759,7 @@ async def test_project_context_only_thread_hydrates_before_its_first_prompt(tmp_
     assert len(hydrated) == 1
     assert hydrated[0].messages == ()
     assert hydrated[0].project_key == "build-test/api"
+    assert TranscriptJournal(journal.root).catalog()[0].title == "New thread"
 
     restarted = RunLoop(RecordingRunner(), factory(Ids()), transcript_journal=journal)
     sink = Sink()

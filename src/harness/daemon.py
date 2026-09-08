@@ -21,7 +21,7 @@ from fastapi import (
     WebSocketDisconnect,
     status,
 )
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -90,6 +90,7 @@ from harness.spine_client import (
     SpendTableSnapshot,
     SpineClient,
     SpineClientError,
+    SpineResponseError,
     VitalsAccounting,
     VitalsSnapshot,
 )
@@ -277,6 +278,16 @@ def create_app(
 ) -> FastAPI:
     """Create the daemon with process-scoped H7 state and extensible routing."""
     app = FastAPI(title="NOCTURNE", version=__version__)
+
+    @app.exception_handler(SpineClientError)
+    async def palace_read_failure(_request: Request, exc: SpineClientError) -> JSONResponse:
+        busy = isinstance(exc, SpineResponseError) and exc.status_code == 429
+        return JSONResponse(
+            status_code=429 if busy else 503,
+            content={"detail": "The Palace is busy, retrying." if busy
+                     else "The Palace is unavailable. Try again."},
+            headers={"Retry-After": exc.response.headers.get("Retry-After", "1")} if busy else None,
+        )
     factory = envelope_factory or EnvelopeFactory(machine_id="harness-daemon")
     loop = run_loop or RunLoop(_UnavailableTurnRunner(), factory)
     app.router.add_event_handler("shutdown", loop.close)
@@ -333,9 +344,11 @@ def create_app(
                     else [UUID(value) for value in thread_ids.split(",") if value]
                 )
                 snapshot = await spend_table_snapshot_reader(scoped_threads)
-            except (SpineClientError, ValueError):
+            except SpineClientError:
+                raise
+            except ValueError:
                 raise HTTPException(
-                    status_code=503, detail="Detailed spend needs a newer Palace."
+                    status_code=503, detail="Detailed spend is unavailable. Try again."
                 ) from None
             if snapshot is None:
                 raise HTTPException(status_code=503, detail="Detailed spend needs a newer Palace.")
@@ -401,7 +414,9 @@ def create_app(
                 )
             try:
                 snapshot = await reader(thread_id)
-            except (SpineClientError, ValueError):
+            except SpineClientError:
+                raise
+            except ValueError:
                 raise HTTPException(
                     status_code=503, detail="Memory instrumentation is unavailable."
                 ) from None
@@ -420,10 +435,11 @@ def create_app(
                 snapshot = await thread_vitals_snapshot_reader(UUID(thread_id))
             else:
                 snapshot = await vitals_snapshot_reader()
-        except SpineClientError:
+        except SpineClientError as exc:
+            if isinstance(exc, SpineResponseError) and exc.status_code == 429:
+                raise
             raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Palace Vitals are unavailable.",
+                status_code=503, detail="Palace Vitals are unavailable.",
             ) from None
         return RackQueryResult(status="live", as_of=None, data=snapshot)
 

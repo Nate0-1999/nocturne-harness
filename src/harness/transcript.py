@@ -393,7 +393,7 @@ class TranscriptJournal:
             times = [
                 row.get("captured_at") for row in rows if isinstance(row.get("captured_at"), str)
             ]
-            title = "Restored conversation"
+            title = "Restored conversation" if transcript.messages else "New thread"
             for message in transcript.messages:
                 if message.get("role") != "user":
                     continue

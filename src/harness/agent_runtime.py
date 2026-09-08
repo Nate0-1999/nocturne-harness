@@ -522,6 +522,45 @@ def _provider_refusal_copy(error: ProviderErrorPayload) -> str:
     return f"The provider refused: {error.message}{punctuation} Retry this turn or switch models."
 
 
+_THINKING_DELIMITERS = {
+    "<mm:think>": "</mm:think>",
+    "<think>": "</think>",
+    "<thinking>": "</thinking>",
+}
+
+
+class _VisibleModelText:
+    """Keep tagged reasoning private even when a delimiter spans stream chunks."""
+
+    def __init__(self) -> None:
+        self.pending = ""
+        self.closing: str | None = None
+
+    def feed(self, value: str) -> str:
+        self.pending += value
+        visible = ""
+        while self.pending:
+            markers = (self.closing,) if self.closing else tuple(_THINKING_DELIMITERS)
+            matches = [(self.pending.find(marker), marker) for marker in markers]
+            matches = [(index, marker) for index, marker in matches if index >= 0]
+            if matches:
+                index, marker = min(matches)
+                if self.closing is None:
+                    visible += self.pending[:index]
+                    self.closing = _THINKING_DELIMITERS[marker]
+                else:
+                    self.closing = None
+                self.pending = self.pending[index + len(marker):]
+                continue
+            retained = max(_marker_prefix_suffix_length(self.pending, marker) for marker in markers)
+            safe = len(self.pending) - retained
+            if self.closing is None:
+                visible += self.pending[:safe]
+            self.pending = self.pending[safe:]
+            break
+        return visible
+
+
 class _EventBridge:
     """Translate pydantic-ai events and mutable usage into owned run events."""
 
@@ -531,6 +570,7 @@ class _EventBridge:
         self._pending_text = ""
         self._visible_text = ""
         self._proposal_started = False
+        self._model_text = _VisibleModelText()
 
     async def handle(
         self,
@@ -556,6 +596,7 @@ class _EventBridge:
         await self.publish_usage(_usage_snapshot(context.usage))
 
     async def _accept_text(self, value: str) -> None:
+        value = self._model_text.feed(value)
         if self._proposal_started:
             self._pending_text += value
             return
@@ -584,7 +625,11 @@ class _EventBridge:
         The terminal proposal is hidden from both projections; real divergence still fails.
         """
 
-        visible, proposal = parse_proposed_response_output(output)
+        terminal = _VisibleModelText()
+        clean_output = terminal.feed(output)
+        if terminal.closing is None:
+            clean_output += terminal.pending
+        visible, proposal = parse_proposed_response_output(clean_output)
         if not visible.startswith(self._visible_text):
             raise RuntimeError("terminal model text differs from streamed model text")
         await self._publish_visible(visible[len(self._visible_text) :])
@@ -614,6 +659,9 @@ def _json_event(event: AgentStreamEvent) -> Mapping[str, object]:
     value = to_jsonable_python(event)
     if not isinstance(value, dict):  # pragma: no cover - all AgentStreamEvent values are objects
         raise TypeError("pydantic-ai emitted a non-object event")
+    part = value.get("part")
+    if isinstance(part, dict) and part.get("part_kind") == "text":
+        part["content"] = _VisibleModelText().feed(part["content"])
     return cast(dict[str, object], value)
 
 

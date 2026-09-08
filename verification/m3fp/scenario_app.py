@@ -53,6 +53,8 @@ def _model() -> FunctionModel:
             yield "The partial answer is preserved."
             raise RuntimeError("The heartbeat model stopped unexpectedly.")
         if prompt != TOOL_PROMPT:
+            yield "<mm:thi"
+            yield "nk>Private heartbeat reasoning.</mm:think>"
             yield ANSWER
         elif any(isinstance(part, ToolReturnPart) for part in messages[-1].parts):
             yield TOOL_AFTER

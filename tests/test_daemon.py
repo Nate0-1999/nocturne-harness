@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from uuid import UUID, uuid4
 
+import httpx
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -51,6 +52,7 @@ from harness.spine_client import (
     SpendEventsRequest,
     SpendEventsResponse,
     SpendTableSnapshot,
+    SpineResponseError,
     SpineTransportError,
     VitalsSnapshot,
 )
@@ -591,6 +593,27 @@ def test_rack_spend_table_passes_global_and_attuned_scope_to_one_optional_reader
     assert [global_response.status_code, attuned_response.status_code] == [200, 200]
     assert global_response.json()["data"] == spend_table_snapshot().model_dump(mode="json")
     assert seen == [None, [UUID(first), UUID(second)]]
+
+
+def test_busy_palace_preserves_retry_status_and_recovers_spend() -> None:
+    """F073 / SPEC C.8: a temporary Palace refusal must never pretend a version is old."""
+    calls = 0
+
+    async def read_spend(_thread_ids):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise SpineResponseError(httpx.Response(
+                429, text="Too Many Requests", headers={"Retry-After": "2"},
+            ), "Spine returned an unexpected media type")
+        return spend_table_snapshot()
+
+    with TestClient(create_app(spend_table_snapshot_reader=read_spend)) as client:
+        busy = client.get("/v1/rack/query?resource=spend_table")
+        assert busy.status_code == 429
+        assert busy.headers["Retry-After"] == "2"
+        assert busy.json()["detail"] == "The Palace is busy, retrying."
+        assert client.get("/v1/rack/query?resource=spend_table").status_code == 200
 
 
 def test_rack_spend_table_tolerates_an_older_palace_without_disturbing_chat() -> None:

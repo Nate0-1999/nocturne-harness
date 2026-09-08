@@ -3281,3 +3281,22 @@ the write endpoint. Proven IDs remain known for safe same-session retries.
 After restart an already-decided, no-longer-pending ID fails closed: the client
 cannot establish its ownership from the legacy API. No second durable ledger
 or authentication contract is introduced.
+
+## 110 — Keep reasoning and bytes out of the answer; recover the failed read [P0, P2, M3RL]
+
+F070 and PLAN M3RL require one registered delimiter table before both streamed and
+terminal text reach the proposal parser. Buffer split tags; discard unfinished
+private blocks. Native thinking remains on its existing channel. Keep ADR-014's
+stream/final divergence check. The heartbeat now supplies split MiniMax tags.
+
+The screenshot sits outside collapsed Tools. Elision affects displayed JSON only;
+the original events remain intact. The real walk exposed Pydantic's URL-safe base64,
+so image data URLs normalize its alphabet. The figure retains the answer's grid
+column at desktop and narrow frame widths. Empty journals use `New thread`.
+
+Preserve Palace 429 and Retry-After through HTTP. Rack retries a throttled GET once,
+never a write, and clears a banner only when its recorded source succeeds. Spend
+shows the actual failure; the old-version copy remains for a missing capability.
+Conversation declares its existing project-rename action. No Spine or envelope
+contract changes. F073/F074 are duplicated with reversed labels in FLAGS; this
+decision resolves both behaviors without rewriting their historical entries.

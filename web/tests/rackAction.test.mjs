@@ -19,11 +19,13 @@ test('reports an asynchronous rack action failure before rethrowing it', async (
 /** F022 requires successful reconciliation to stay quiet and continue to its review handoff. */
 test('does not report a rack action that reconciles successfully', async () => {
   const reported = []
+  let recovered = false
 
   const result = await runRackAction(async () => ({ cards: ['existing'] }), (message) => {
     reported.push(message)
-  })
+  }, () => { recovered = true })
 
   assert.deepEqual(result, { cards: ['existing'] })
   assert.deepEqual(reported, [])
+  assert.equal(recovered, true)
 })

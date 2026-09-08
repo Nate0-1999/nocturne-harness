@@ -259,6 +259,33 @@ async def test_m3dk_same_turn_proposal_is_hidden_from_chat_and_emitted_as_one_ca
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("opening,closing", [
+    ("<mm:think>", "</mm:think>"), ("<think>", "</think>"),
+    ("<thinking>", "</thinking>"),
+])
+async def test_m3rl_private_tags_never_enter_stream_or_final_answer(opening, closing) -> None:
+    """F070 / SPEC C.7: every chunk boundary keeps tagged reasoning out of visible text."""
+    raw = f"Before.{opening}private scratch work{closing}After."
+    raw += '<nocturne-proposed-response>{"primary":"Continue."}</nocturne-proposed-response>'
+    for split in range(len(raw) + 1):
+        emitter = RecordingEmitter()
+        bridge = _EventBridge(emitter)
+        await bridge._accept_text(raw[:split])
+        await bridge._accept_text(raw[split:])
+        answer = await bridge.finalize(raw, run_id="test", created_at=datetime.now(UTC))
+        assert answer == "Before.After."
+        assert "".join(emitter.texts) == answer
+        assert emitter.events[-1]["primary"] == "Continue."
+    emitter = RecordingEmitter()
+    bridge = _EventBridge(emitter)
+    await bridge._accept_text(f"Answer.{opening}unfinished private work")
+    assert "".join(emitter.texts) == "Answer."
+    assert await bridge.finalize(
+        f"Answer.{opening}unfinished private work", run_id="test", created_at=datetime.now(UTC)
+    ) == "Answer."
+
+
+@pytest.mark.asyncio
 async def test_m3fz_terminal_divergence_still_refuses_completion() -> None:
     """ADR-014 / M3FZ retains the real stream/final invariant instead of suppressing its error."""
     bridge = _EventBridge(RecordingEmitter())

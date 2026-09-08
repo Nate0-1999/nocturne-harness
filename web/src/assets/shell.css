@@ -893,6 +893,7 @@
 }
 
 .browser-screenshot {
+  grid-column: 2;
   margin: 0.7rem 0 0;
 }
 
@@ -2573,7 +2574,8 @@
     max-height: 40dvh;
   }
 
-  .run-detail {
+  .run-detail,
+  .browser-screenshot {
     grid-column: 1;
   }
 

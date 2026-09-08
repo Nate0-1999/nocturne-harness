@@ -19,6 +19,7 @@ export function VitalsModule() {
   const [scope, setScope] = useState<'GLOBAL' | 'ATTUNED'>('GLOBAL')
   const [sequence, setSequence] = useState(0)
   const [phase, setPhase] = useState<LoadPhase>('loading')
+  const [failure, setFailure] = useState('')
   const [snapshot, setSnapshot] = useState<SpendTableSnapshot | null>(null)
   const [expandedThreads, setExpandedThreads] = useState<ReadonlySet<string>>(new Set())
   const [collapsed, setCollapsed] = useState(() => globalThis.innerHeight < 120)
@@ -44,8 +45,11 @@ export function VitalsModule() {
           setPhase('live')
         }
       })
-      .catch(() => {
-        if (active) setPhase('failed')
+      .catch((error: unknown) => {
+        if (active) {
+          setFailure(error instanceof Error ? error.message : 'Spend is unavailable. Try again.')
+          setPhase('failed')
+        }
       })
     return () => { active = false }
   }, [attunedWithoutTarget, query, rack.attunement, sequence])
@@ -67,7 +71,7 @@ export function VitalsModule() {
     return (
       <SpendNotice alert={phase === 'failed'}>
         {phase === 'failed'
-          ? 'Detailed spend needs a newer Palace. Chat is still available.'
+          ? failure
           : 'Reading spend…'}
         {phase === 'failed' && <button type="button" onClick={refresh}>Try again</button>}
       </SpendNotice>

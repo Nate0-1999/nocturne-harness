@@ -275,7 +275,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     streams: ['thread.snapshot', 'run.*', 'error'],
     actions: [
       'project.select', 'prompt.submit', 'run.cancel', 'thread.archive',
-      'queue.load', 'queue.decide', 'thread.select', 'symphony.intervene',
+      'queue.load', 'queue.decide', 'thread.select', 'symphony.intervene', 'thread.rename_project',
     ],
     bounds: stageGridBounds({ w: 20, h: 20 }),
     movable: true,
@@ -656,15 +656,43 @@ function dispatchRackAction<Action extends RackAction>(
 }
 
 async function fetchJson(path: string, init?: RequestInit): Promise<JsonValue> {
-  const response = await globalThis.fetch(path, {
+  const response = await fetchRackResponse(path, {
     cache: 'no-store',
     credentials: 'same-origin',
     ...init,
   })
   if (!response.ok) {
-    throw new Error(`Rack action failed (${response.status})`)
+    throw await rackResponseError(response)
   }
   return await response.json() as JsonValue
+}
+
+async function rackResponseError(response: Response): Promise<Error> {
+  if (response.status === 429) return new Error('The Palace is busy. Try again.')
+  const body = await response.json().catch(() => null) as { detail?: unknown } | null
+  return new Error(typeof body?.detail === 'string'
+    ? body.detail
+    : `Rack action failed (${response.status})`)
+}
+
+async function fetchRackResponse(path: string | URL, init?: RequestInit): Promise<Response> {
+  const source = String(path)
+  let response = await globalThis.fetch(path, init)
+  // F073: retry a throttled read once; never replay a write or a consent decision.
+  if (response.status === 429 && (init?.method ?? 'GET') === 'GET') {
+    useHarnessStore.getState().setTransportError('The Palace is busy, retrying.', source)
+    const retryAfter = response.headers.get('Retry-After')
+    const seconds = retryAfter === null ? 1 : Number(retryAfter)
+    const delay = Number.isFinite(seconds) ? seconds * 1000
+      : Math.max(0, Date.parse(retryAfter!) - Date.now())
+    await new Promise((resolve) => globalThis.setTimeout(resolve, Number.isFinite(delay) ? delay : 1000))
+    response = await globalThis.fetch(path, init)
+  }
+  if (response.ok) useHarnessStore.getState().clearTransportError(source)
+  else if (response.status === 429) {
+    useHarnessStore.getState().setTransportError('The Palace is busy. Try again.', source)
+  }
+  return response
 }
 
 export const rackQuerySurface: RackQuerySurface = {
@@ -679,15 +707,12 @@ export const rackQuerySurface: RackQuerySurface = {
       url.searchParams.set('as_of', 'now')
       if (request.thread_id !== undefined) url.searchParams.set('thread_id', request.thread_id)
       if (request.thread_ids !== undefined) url.searchParams.set('thread_ids', request.thread_ids.join(','))
-      const response = await globalThis.fetch(url, {
+      const response = await fetchRackResponse(url, {
         cache: 'no-store',
         headers: { Accept: 'application/json' },
       })
       if (!response.ok) {
-        const label = request.resource === 'recipe_graph'
-          ? 'The live recipe'
-          : 'Memory instrumentation'
-        throw new Error(`${label} is unavailable (${response.status})`)
+        throw await rackResponseError(response)
       }
       return parseRackQueryResult(await response.json())
     }
@@ -864,7 +889,8 @@ export function createHostPluginApi(
         }
         return runRackAction(
           () => dispatchRackAction(contextualRackAction(action, instanceId, attunement)),
-          (message) => useHarnessStore.getState().setTransportError(message),
+          (message) => useHarnessStore.getState().setTransportError(message, `${instanceId}:${action.type}`),
+          () => useHarnessStore.getState().clearTransportError(`${instanceId}:${action.type}`),
         )
       },
     },

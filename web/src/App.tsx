@@ -14,6 +14,7 @@ import {
 } from 'react'
 
 import { AssistantMarkdown } from './AssistantMarkdown'
+import { browserScreenshotDataUrl, elideBinaryPayload } from './runEventDisplay'
 import { SymphonyDeliberationCard, SymphonyResultCard } from './SymphonyCards'
 import { MemoryGate } from './MemoryGate'
 import { MemoryPanel } from './MemoryPanel'
@@ -38,7 +39,6 @@ import type {
   ChatMessage,
   ImageAttachmentView,
   ImageMediaType,
-  JsonObject,
   JsonValue,
   ThreadCatalogEntry,
   UserMessageState,
@@ -3297,39 +3297,20 @@ function MessageRow({
         ? <SymphonyDeliberationCard key={`deliberation-${index}`} event={event} />
         : <SymphonyResultCard key={`result-${index}`} event={event} />
       )}
+      {latestBrowserScreenshot !== null && (
+        <figure className="browser-screenshot">
+          <img src={latestBrowserScreenshot} alt="Latest headless browser screenshot" />
+          <figcaption>Latest browser screenshot</figcaption>
+        </figure>
+      )}
       {diagnosticEvents.length > 0 && (
-        <details className="run-detail" open={latestBrowserScreenshot !== null}>
+        <details className="run-detail">
           <summary>Tools · {diagnosticEvents.length} run event{diagnosticEvents.length === 1 ? '' : 's'}</summary>
-          {latestBrowserScreenshot !== null && (
-            <figure className="browser-screenshot">
-              <img src={latestBrowserScreenshot} alt="Latest headless browser screenshot" />
-              <figcaption>Latest browser screenshot</figcaption>
-            </figure>
-          )}
-          <pre>{JSON.stringify(diagnosticEvents, null, 2)}</pre>
+          <pre>{JSON.stringify(diagnosticEvents, elideBinaryPayload, 2)}</pre>
         </details>
       )}
     </article>
   )
-}
-
-function browserScreenshotDataUrl(event: JsonObject): string | null {
-  if (event.event_kind !== 'function_tool_result') return null
-  const part = event.part
-  if (part === null || Array.isArray(part) || typeof part !== 'object') return null
-  if (part.tool_name !== 'screenshot' || !Array.isArray(event.content)) return null
-  for (const value of event.content) {
-    if (value === null || Array.isArray(value) || typeof value !== 'object') continue
-    if (
-      value.kind === 'binary' &&
-      typeof value.media_type === 'string' &&
-      value.media_type.startsWith('image/') &&
-      typeof value.data === 'string'
-    ) {
-      return `data:${value.media_type};base64,${value.data}`
-    }
-  }
-  return null
 }
 
 function UserImage({
