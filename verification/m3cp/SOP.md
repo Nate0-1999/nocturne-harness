@@ -10,8 +10,8 @@ canonical built assets, Palace 0.1.10/schema 0021, and real OpenRouter
 `minimax/minimax-m3`. The home and empty project were under
 `/tmp/nocturne-m3cp-cp08`; principal `m3cp-sop-verification-cp08`, machine/agent
 `m3cp-sop-verification`, transcript backup off. Credentials came from the authorized
-ignored env. This is the packaged factory, not an installed wheel or `nocturne up`
-identity proof; ordinary CLI walks use `--no-open` to avoid unsolicited windows.
+ignored env. This exercises the packaged factory directly; it does not certify
+installed-wheel startup or the ordinary CLI identity path.
 
 1. I asked for “First send received,” approved the empty first-turn memory gate,
    and saw that exact answer. The composer was empty and editable. PASS:
