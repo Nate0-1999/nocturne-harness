@@ -1,0 +1,33 @@
+{
+  "memory_id": "10d6f0ad-9ce4-44e3-b39b-3ef52566f19f",
+  "principal_id": "nocturne-verification-38c5c9a7-6657-43bc-a63f-ba0455aa16c3",
+  "label": "disposable verification lighthouse",
+  "body": "The disposable verification lighthouse flashes violet twice at noon.",
+  "kind": "fact",
+  "keywords": [
+    "lighthouse",
+    "verification",
+    "flashes",
+    "violet",
+    "noon"
+  ],
+  "project_key": "/private/tmp/m3vi-vi08-verification/project",
+  "thread_origin": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+  "origin_thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+  "origin_path": ".",
+  "origin_location": "/private/tmp/m3vi-vi08-verification/project",
+  "pin": false,
+  "status": "active",
+  "revision": 3,
+  "stats": {
+    "removals": 0,
+    "citations": 1,
+    "injections": 1,
+    "never_kills": 0,
+    "last_injected_at": "2026-09-08T20:39:31.586738+00:00"
+  },
+  "bias": 0.0,
+  "embedding_model": "openai/text-embedding-3-small",
+  "created_at": "2026-09-08T20:38:02.298378Z",
+  "updated_at": "2026-09-08T20:40:06.464014Z"
+}

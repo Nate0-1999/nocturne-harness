@@ -1,0 +1,30 @@
+{
+  "ports_closed": [
+    8883,
+    8884
+  ],
+  "browser_tab_closed": true,
+  "evidence_files_scanned": 45,
+  "credential_matches": 0,
+  "homes_removed": [
+    "/private/tmp/m3vi-vi08-verification/home",
+    "/private/tmp/m3vi-vi08-verification/observer"
+  ],
+  "owner_home_accessed": false,
+  "home_journal_files": 2,
+  "home_receipt_files": [
+    "tools/playwright-1.62.0/nocturne-receipt.json"
+  ],
+  "observer_journal_files": 1,
+  "observer_receipt_files": [
+    "tools/playwright-1.62.0/nocturne-receipt.json"
+  ],
+  "disposable_root_removed": true,
+  "additional_disposable_directories_removed": [
+    "/tmp/m3vi-vi08-base",
+    "/tmp/m3vi-vi08-before",
+    "/tmp/m3vi-vi08-test-user",
+    "/tmp/m3vi-vi08-tests",
+    "/tmp/m3vi-vi08-boot-heartbeat"
+  ]
+}

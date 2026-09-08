@@ -1,0 +1,11 @@
+Identity: nocturne-verification-38c5c9a7-6657-43bc-a63f-ba0455aa16c3; home: /tmp/m3vi-vi08-verification/home
+Conversation transcript backup: off
+Palace doctor: healthy
+Remote Palace: healthy at https://n8-memory-palace-spine-713925718873.us-central1.run.app
+Conversation journal: 26.9 KiB
+Disk: 589.7 GiB free of 926.4 GiB
+Web app: ready at /private/tmp/m3vi-vi08-base/web/dist
+Port: 8765 is available
+Startup toolchain: no local Palace toolchain is required
+Local database and backup checks are skipped for a remote Palace.
+Palace API contract: 0.1.10 (app supports >=0.1.0,<0.2.0)

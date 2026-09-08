@@ -123,7 +123,7 @@ def test_nondefault_home_env_keeps_all_daemon_files_out_of_owner_home(tmp_path, 
 
 
 def test_verification_init_refuses_default_or_existing_owner_home(tmp_path, monkeypatch):
-    """PLAN M3VI: verification must never adopt or modify an owner's home."""
+    """SPEC D.2 113b / M3VI: verification must never adopt or modify an owner's home."""
     monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
     with pytest.raises(onboarding.OnboardingError, match="disposable folder"):
         onboarding.init_nocturne(verification=True, environ={})

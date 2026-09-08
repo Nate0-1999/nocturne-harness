@@ -1,0 +1,839 @@
+{
+  "identity": {
+    "principal_id": "nocturne-verification-38c5c9a7-6657-43bc-a63f-ba0455aa16c3",
+    "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+    "home": "/private/tmp/m3vi-vi08-verification/home"
+  },
+  "identity_unchanged": true,
+  "message_records": 20,
+  "thread_ids": [
+    "ef022b59-b2d8-4262-bffc-afa0ca46c22b"
+  ],
+  "unique_message_count": 8,
+  "messages": [
+    {
+      "content": "/remember The disposable verification lighthouse flashes violet twice at noon.",
+      "message_id": "01M21BSD487G1NC6043TGTPXBJ",
+      "parentId": null,
+      "role": "user",
+      "run_id": "01M21BSD49540T1ZVDGXK5PKMV",
+      "state": "budget_exceeded"
+    },
+    {
+      "content": "",
+      "events": [],
+      "message_id": "01M21BSD49540T1ZVDGXK5PKMV",
+      "parentId": "01M21BSD487G1NC6043TGTPXBJ",
+      "partial": true,
+      "role": "assistant",
+      "run_id": "01M21BSD49540T1ZVDGXK5PKMV",
+      "thinking": ""
+    },
+    {
+      "content": "/model openrouter:openai/gpt-4.1-mini",
+      "message_id": "01M21BTYCA00G02KHGBACB4E60",
+      "parentId": "01M21BSD49540T1ZVDGXK5PKMV",
+      "role": "user",
+      "run_id": "01M21BTYCBCYG7ECX733XXWD44",
+      "state": "end_turn"
+    },
+    {
+      "content": "Model changed from openrouter:minimax/minimax-m3 to openrouter:openai/gpt-4.1-mini. Context window: 1047576 tokens.",
+      "events": [
+        {
+          "context_tokens": 1047576,
+          "event_kind": "model_change",
+          "new_model": "openrouter:openai/gpt-4.1-mini",
+          "old_model": "openrouter:minimax/minimax-m3",
+          "reason": "human_command",
+          "sacrificed_cached_prefix_tokens": 0,
+          "stickiness_epoch": 1,
+          "timestamp": "2026-09-08T20:37:33.839213+00:00"
+        }
+      ],
+      "message_id": "01M21BTYCBCYG7ECX733XXWD44",
+      "parentId": "01M21BTYCA00G02KHGBACB4E60",
+      "partial": false,
+      "role": "assistant",
+      "run_id": "01M21BTYCBCYG7ECX733XXWD44",
+      "thinking": ""
+    },
+    {
+      "content": "/remember The disposable verification lighthouse flashes violet twice at noon.",
+      "message_id": "01M21BVNF1K6CTJGEQJ71EFHTA",
+      "parentId": "01M21BTYCBCYG7ECX733XXWD44",
+      "role": "user",
+      "run_id": "01M21BVNF1S294GJ4GTNCEGP17",
+      "state": "end_turn"
+    },
+    {
+      "content": "Remembered 'disposable verification lighthouse' (10d6f0ad-9ce4-44e3-b39b-3ef52566f19f).",
+      "events": [],
+      "message_id": "01M21BVNF1S294GJ4GTNCEGP17",
+      "parentId": "01M21BVNF1K6CTJGEQJ71EFHTA",
+      "partial": false,
+      "role": "assistant",
+      "run_id": "01M21BVNF1S294GJ4GTNCEGP17",
+      "thinking": ""
+    },
+    {
+      "content": "What color does the disposable verification lighthouse flash, and how often?",
+      "message_id": "01M21BYGTASY1SA4SN7MDF0QWP",
+      "parentId": "01M21BVNF1S294GJ4GTNCEGP17",
+      "role": "user",
+      "run_id": "01M21BYGTACT6DMS4EP7G6FX1N",
+      "state": "end_turn"
+    },
+    {
+      "content": "The disposable verification lighthouse flashes violet twice at noon.\n\n",
+      "events": [
+        {
+          "event_kind": "final_result",
+          "tool_call_id": null,
+          "tool_name": null
+        },
+        {
+          "event_kind": "part_end",
+          "index": 0,
+          "next_part_kind": null,
+          "part": {
+            "content": "The disposable verification lighthouse flashes violet twice at noon.\n\n<nocturne-proposed-response>\n{\"primary\":\"The disposable verification lighthouse flashes violet twice at noon.\",\"alternatives\":[\"The lighthouse flashes violet twice a day at noon.\",\"At noon, the disposable verification lighthouse flashes violet two times.\"]}\n</nocturne-proposed-response>",
+            "id": null,
+            "part_kind": "text",
+            "provider_details": null,
+            "provider_name": null
+          }
+        },
+        {
+          "alternatives": [
+            "The lighthouse flashes violet twice a day at noon.",
+            "At noon, the disposable verification lighthouse flashes violet two times."
+          ],
+          "created_at": "2026-09-08T20:40:06.247673+00:00",
+          "event_kind": "proposed_response",
+          "primary": "The disposable verification lighthouse flashes violet twice at noon.",
+          "proposal_run_id": "01M21BYGTACT6DMS4EP7G6FX1N"
+        }
+      ],
+      "message_id": "01M21BYGTACT6DMS4EP7G6FX1N",
+      "parentId": "01M21BYGTASY1SA4SN7MDF0QWP",
+      "partial": false,
+      "role": "assistant",
+      "run_id": "01M21BYGTACT6DMS4EP7G6FX1N",
+      "thinking": ""
+    }
+  ],
+  "events": [
+    {
+      "captured_at": "2026-09-08T20:36:40.202359+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BSD4A5MQ0CSBEXRYA9YZC",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "prompt_id": "01M21BSD487G1NC6043TGTPXBJ",
+          "resolved_model": "openrouter:minimax/minimax-m3",
+          "run_id": "01M21BSD49540T1ZVDGXK5PKMV"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:36:40.202327Z",
+        "type": "run.started",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:36:45.053217+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BSHVXCNXR74WC0XGPN5V0",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "input_tokens": 316,
+          "output_tokens": 327,
+          "requests": 1,
+          "run_id": "01M21BSD49540T1ZVDGXK5PKMV"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:36:45.053135Z",
+        "type": "run.usage",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:36:48.229398+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BSMZ5PQRY4211AE397TSD",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "partial": true,
+          "run_id": "01M21BSD49540T1ZVDGXK5PKMV",
+          "stop_reason": "budget_exceeded"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:36:48.229290Z",
+        "type": "run.done",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:37:30.636512+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BTYCC2YHPT8V2MV07XR19",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "prompt_id": "01M21BTYCA00G02KHGBACB4E60",
+          "resolved_model": "openrouter:minimax/minimax-m3",
+          "run_id": "01M21BTYCBCYG7ECX733XXWD44"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:37:30.636459Z",
+        "type": "run.started",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:37:33.838243+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BV1GEBMH9A1PHTKRYG4T0",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "requests": 0,
+          "run_id": "01M21BTYCBCYG7ECX733XXWD44"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:37:33.838155Z",
+        "type": "run.usage",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:37:33.839351+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BV1GFMWFZYNEJN9M0385J",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "actor": "human",
+          "event_id": "01M21BV1GFY1SK38Z6NZ6YFKSG",
+          "event_kind": "parameter_change",
+          "new_value": "openrouter:openai/gpt-4.1-mini",
+          "old_value": "openrouter:minimax/minimax-m3",
+          "parameter_id": "model.slug",
+          "scope": "thread",
+          "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+          "timestamp": "2026-09-08T20:37:33.839213Z"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:37:33.839313Z",
+        "type": "parameter.change",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:37:33.839916+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BV1GF31TH2JV759N56YQS",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "event": {
+            "context_tokens": 1047576,
+            "event_kind": "model_change",
+            "new_model": "openrouter:openai/gpt-4.1-mini",
+            "old_model": "openrouter:minimax/minimax-m3",
+            "reason": "human_command",
+            "sacrificed_cached_prefix_tokens": 0,
+            "stickiness_epoch": 1,
+            "timestamp": "2026-09-08T20:37:33.839213+00:00"
+          },
+          "kind": "event",
+          "resolved_model": "openrouter:openai/gpt-4.1-mini",
+          "run_id": "01M21BTYCBCYG7ECX733XXWD44"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:37:33.839884Z",
+        "type": "run.delta",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:37:33.840290+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BV1GG1F0VQJ5JS2048FF7",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "kind": "text",
+          "run_id": "01M21BTYCBCYG7ECX733XXWD44",
+          "text": "Model changed from openrouter:minimax/minimax-m3 to openrouter:openai/gpt-4.1-mini. Context window: 1047576 tokens."
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:37:33.840276Z",
+        "type": "run.delta",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:37:33.841542+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BV1GH2SSZ4SP1R3XMXN1T",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "partial": false,
+          "run_id": "01M21BTYCBCYG7ECX733XXWD44",
+          "stop_reason": "end_turn"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:37:33.841501Z",
+        "type": "run.done",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:37:54.275116+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BVNF33CCQC7623W513D2W",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "prompt_id": "01M21BVNF1K6CTJGEQJ71EFHTA",
+          "resolved_model": "openrouter:openai/gpt-4.1-mini",
+          "run_id": "01M21BVNF1S294GJ4GTNCEGP17"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:37:54.275070Z",
+        "type": "run.started",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:38:02.317847+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BVXADC13K5P14W6NZHQYN",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "kind": "text",
+          "run_id": "01M21BVNF1S294GJ4GTNCEGP17",
+          "text": "Remembered 'disposable verification lighthouse' (10d6f0ad-9ce4-44e3-b39b-3ef52566f19f)."
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:38:02.317735Z",
+        "type": "run.delta",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:38:02.319448+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BVXAFSK00GY81E76ZCZ5A",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "input_tokens": 162,
+          "output_tokens": 26,
+          "requests": 1,
+          "run_id": "01M21BVNF1S294GJ4GTNCEGP17"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:38:02.319417Z",
+        "type": "run.usage",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:38:02.415552+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BVXDF8VQKSHD71T8AH72H",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "partial": false,
+          "run_id": "01M21BVNF1S294GJ4GTNCEGP17",
+          "stop_reason": "end_turn"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:38:02.415482Z",
+        "type": "run.done",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:39:27.819986+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BYGTBDP1V08YZK0D3BY3Z",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "prompt_id": "01M21BYGTASY1SA4SN7MDF0QWP",
+          "resolved_model": "openrouter:openai/gpt-4.1-mini",
+          "run_id": "01M21BYGTACT6DMS4EP7G6FX1N"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:39:27.819944Z",
+        "type": "run.started",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:39:31.618906+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BYMH2SHJZ4KX0MTCEHJJP",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "injected": [
+            {
+              "body": "The disposable verification lighthouse flashes violet twice at noon.",
+              "features": {
+                "freq": 0.0,
+                "hist": 0.9998976739278145,
+                "kw": 0.3333333333333333,
+                "loc": 1.0,
+                "proj": 1.0,
+                "sem": 0.8010827035876954,
+                "thread": 1.0,
+                "time": 0.9999488356550121,
+                "where": 1.0
+              },
+              "kind": "fact",
+              "label": "disposable verification lighthouse",
+              "memory_id": "10d6f0ad-9ce4-44e3-b39b-3ef52566f19f",
+              "pin": false,
+              "rank": 1,
+              "score": 0.7804304957389832
+            }
+          ],
+          "injection_id": "92df6188-e607-4688-b8b0-67f13df32bed",
+          "kind": "memory_gate",
+          "near_misses": [],
+          "resolution_error": null,
+          "run_id": "01M21BYGTACT6DMS4EP7G6FX1N",
+          "scorer_version": "m3tl-where-v1",
+          "snapshot_ts": "2026-09-08T20:39:31.586738Z",
+          "stage": "review",
+          "wrong_removed": []
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:39:31.618864Z",
+        "type": "gate.open",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:40:01.337974+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BZHHS9XT50NSY2C1YR542",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "run_id": "01M21BYGTACT6DMS4EP7G6FX1N"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:40:01.337881Z",
+        "type": "gate.dismiss",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:40:05.147861+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BZN8V26ZK5T0R2MZB905N",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "kind": "text",
+          "run_id": "01M21BYGTACT6DMS4EP7G6FX1N",
+          "text": "The"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:40:05.147749Z",
+        "type": "run.delta",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:40:05.149200+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BZN8X1NVKPDNQQSYJGQ3J",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "requests": 1,
+          "run_id": "01M21BYGTACT6DMS4EP7G6FX1N"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:40:05.149176Z",
+        "type": "run.usage",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:40:05.149956+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BZN8XX2GT5438F81M96G0",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "event": {
+            "event_kind": "final_result",
+            "tool_call_id": null,
+            "tool_name": null
+          },
+          "kind": "event",
+          "run_id": "01M21BYGTACT6DMS4EP7G6FX1N"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:40:05.149928Z",
+        "type": "run.delta",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:40:05.155116+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BZN93G3A9DB8H66PN4MWY",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "kind": "text",
+          "run_id": "01M21BYGTACT6DMS4EP7G6FX1N",
+          "text": " disposable"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:40:05.155069Z",
+        "type": "run.delta",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:40:05.156545+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BZN94QTPWV5Z370NXBQFW",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "kind": "text",
+          "run_id": "01M21BYGTACT6DMS4EP7G6FX1N",
+          "text": " verification"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:40:05.156515Z",
+        "type": "run.delta",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:40:05.176867+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BZN9RZZE2EQS0WM380503",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "kind": "text",
+          "run_id": "01M21BYGTACT6DMS4EP7G6FX1N",
+          "text": " lighthouse"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:40:05.176816Z",
+        "type": "run.delta",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:40:05.177868+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BZN9SZW5HM8GCQ8DG5BRK",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "kind": "text",
+          "run_id": "01M21BYGTACT6DMS4EP7G6FX1N",
+          "text": " flashes"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:40:05.177852Z",
+        "type": "run.delta",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:40:05.203145+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BZNAK0HFTNCQFEGJSX3VR",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "kind": "text",
+          "run_id": "01M21BYGTACT6DMS4EP7G6FX1N",
+          "text": " violet"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:40:05.203108Z",
+        "type": "run.delta",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:40:05.204042+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BZNAMGYZR1KF0PAG66H8X",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "kind": "text",
+          "run_id": "01M21BYGTACT6DMS4EP7G6FX1N",
+          "text": " twice"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:40:05.204024Z",
+        "type": "run.delta",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:40:05.229798+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BZNBDGAT36PN19TQ2K40X",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "kind": "text",
+          "run_id": "01M21BYGTACT6DMS4EP7G6FX1N",
+          "text": " at"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:40:05.229755Z",
+        "type": "run.delta",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:40:05.230586+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BZNBECDY2ZX87WMC689A0",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "kind": "text",
+          "run_id": "01M21BYGTACT6DMS4EP7G6FX1N",
+          "text": " noon"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:40:05.230568Z",
+        "type": "run.delta",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:40:05.253191+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BZNC5N6HYXQXAJ3W67Z1H",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "kind": "text",
+          "run_id": "01M21BYGTACT6DMS4EP7G6FX1N",
+          "text": ".\n\n"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:40:05.253161Z",
+        "type": "run.delta",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:40:06.238911+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BZPAY0DQG4S772T5CA6DF",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "event": {
+            "event_kind": "part_end",
+            "index": 0,
+            "next_part_kind": null,
+            "part": {
+              "content": "The disposable verification lighthouse flashes violet twice at noon.\n\n<nocturne-proposed-response>\n{\"primary\":\"The disposable verification lighthouse flashes violet twice at noon.\",\"alternatives\":[\"The lighthouse flashes violet twice a day at noon.\",\"At noon, the disposable verification lighthouse flashes violet two times.\"]}\n</nocturne-proposed-response>",
+              "id": null,
+              "part_kind": "text",
+              "provider_details": null,
+              "provider_name": null
+            }
+          },
+          "kind": "event",
+          "run_id": "01M21BYGTACT6DMS4EP7G6FX1N"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:40:06.238771Z",
+        "type": "run.delta",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:40:06.245815+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BZPB5DF3Y6JNAPBZ957WE",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "input_tokens": 1574,
+          "output_tokens": 67,
+          "requests": 1,
+          "run_id": "01M21BYGTACT6DMS4EP7G6FX1N"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:40:06.245552Z",
+        "type": "run.usage",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:40:06.247868+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BZPB7APCJZT2AMH0RMTH1",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "event": {
+            "alternatives": [
+              "The lighthouse flashes violet twice a day at noon.",
+              "At noon, the disposable verification lighthouse flashes violet two times."
+            ],
+            "created_at": "2026-09-08T20:40:06.247673+00:00",
+            "event_kind": "proposed_response",
+            "primary": "The disposable verification lighthouse flashes violet twice at noon.",
+            "proposal_run_id": "01M21BYGTACT6DMS4EP7G6FX1N"
+          },
+          "kind": "event",
+          "run_id": "01M21BYGTACT6DMS4EP7G6FX1N"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:40:06.247824Z",
+        "type": "run.delta",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-08T20:40:06.457059+00:00",
+      "event": {
+        "agent_id": "nocturne",
+        "id": "01M21BZPHRNQD0ZFD0K8QAY4YQ",
+        "machine_id": "nocturne-7652bec0-4480-403e-bde5-233642dcad6e",
+        "payload": {
+          "partial": false,
+          "run_id": "01M21BYGTACT6DMS4EP7G6FX1N",
+          "stop_reason": "end_turn"
+        },
+        "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+        "ts": "2026-09-08T20:40:06.456993Z",
+        "type": "run.done",
+        "v": 1
+      },
+      "record_type": "event",
+      "thread_id": "ef022b59-b2d8-4262-bffc-afa0ca46c22b",
+      "version": 1
+    }
+  ]
+}

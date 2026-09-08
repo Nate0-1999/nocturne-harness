@@ -1,0 +1,82 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+___ test_bound_client_refuses_foreign_queue_decisions_and_retries_own[False] ___
+
+batch = False
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("batch", [False, True])
+    async def test_bound_client_refuses_foreign_queue_decisions_and_retries_own(batch):
+        """PLAN M3VI / F069: a supplied queue ID cannot bypass the daemon's principal boundary."""
+        principal = "nocturne-verification-queue"
+        request = QueueDecisionRequest(
+            decision="approve", approval_mode="explicit", actor_class="human",
+            machine_id="m3vi-verification",
+        )
+        decisions = DecisionSpine()
+        result = (await decisions.decide_queue_batch(BATCH_UID, request) if batch
+                  else await decisions.decide_queue_item(ITEM_UID, request))
+        card = result.cards[0] if batch else result.card
+        card.candidate.principal_id = principal
+        pending = [card.model_copy(update={"state": "pending"}).model_dump(mode="json")]
+        writes = []
+
+        def palace(http_request):
+            if http_request.method == "GET":
+                assert http_request.url.params["principal_id"] == principal
+                return httpx.Response(200, json={"cards": pending})
+            writes.append(http_request.url.path)
+            pending.clear()
+            return httpx.Response(200, json=result.model_dump(mode="json"))
+
+        async with SpineClient(
+            "https://palace.example.test", "test-token", principal_id=principal,
+            transport=httpx.MockTransport(palace),
+        ) as client:
+>           with pytest.raises(SpineClientError, match="does not belong"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE SpineClientError
+
+/tmp/m3vi-vi08-before/tests/test_verification_identity.py:189: Failed
+___ test_bound_client_refuses_foreign_queue_decisions_and_retries_own[True] ____
+
+batch = True
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("batch", [False, True])
+    async def test_bound_client_refuses_foreign_queue_decisions_and_retries_own(batch):
+        """PLAN M3VI / F069: a supplied queue ID cannot bypass the daemon's principal boundary."""
+        principal = "nocturne-verification-queue"
+        request = QueueDecisionRequest(
+            decision="approve", approval_mode="explicit", actor_class="human",
+            machine_id="m3vi-verification",
+        )
+        decisions = DecisionSpine()
+        result = (await decisions.decide_queue_batch(BATCH_UID, request) if batch
+                  else await decisions.decide_queue_item(ITEM_UID, request))
+        card = result.cards[0] if batch else result.card
+        card.candidate.principal_id = principal
+        pending = [card.model_copy(update={"state": "pending"}).model_dump(mode="json")]
+        writes = []
+
+        def palace(http_request):
+            if http_request.method == "GET":
+                assert http_request.url.params["principal_id"] == principal
+                return httpx.Response(200, json={"cards": pending})
+            writes.append(http_request.url.path)
+            pending.clear()
+            return httpx.Response(200, json=result.model_dump(mode="json"))
+
+        async with SpineClient(
+            "https://palace.example.test", "test-token", principal_id=principal,
+            transport=httpx.MockTransport(palace),
+        ) as client:
+>           with pytest.raises(SpineClientError, match="does not belong"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE SpineClientError
+
+/tmp/m3vi-vi08-before/tests/test_verification_identity.py:189: Failed
+=========================== short test summary info ============================
+FAILED ../../../../tmp/m3vi-vi08-before/tests/test_verification_identity.py::test_bound_client_refuses_foreign_queue_decisions_and_retries_own[False]
+FAILED ../../../../tmp/m3vi-vi08-before/tests/test_verification_identity.py::test_bound_client_refuses_foreign_queue_decisions_and_retries_own[True]
+2 failed, 4 deselected in 1.06s

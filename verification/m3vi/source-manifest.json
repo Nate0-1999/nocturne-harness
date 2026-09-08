@@ -1,0 +1,15 @@
+{
+  "base_commit": "04306e0",
+  "continued_commit": "15f7368",
+  "queue_fix_commit": "2d6de23",
+  "tested_tree": "isolated base plus M3VI client and tests",
+  "source_sha256": {
+    "src/harness/config.py": "12d80ec8f03e6d072429b555358899c285e9fe922856a347b242bab50c15ecb5",
+    "src/harness/onboarding.py": "0f6acc16f6fef95eead001b578740a69bce83d87f66dd7ef47c38676db0d6686",
+    "src/harness/daemon.py": "5103d9575faa72aaedcae2e4e4da585ed654c23137fce09c90e985484969910d",
+    "src/harness/spine_client.py": "9b93ffdf4f953c1e29c2345f58462af73677b50ea111828f6fcaf000cb77a60f",
+    "src/harness/transcript.py": "47822d11806d15d646a741a8730d7919987d0231da6d592293d6c006f915827e",
+    "tests/test_verification_identity.py": "6829736e31df3261c7cdd5882a6725da1bb446bd3228e07139e18208ee94a59b",
+    "web/dist/index.html": "87e6efec86db6794bd5103c1363911dc9d79d6a0060f0bc570d077336e89409c"
+  }
+}

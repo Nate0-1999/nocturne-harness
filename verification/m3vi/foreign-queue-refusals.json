@@ -1,0 +1,15 @@
+{
+  "decisions": [
+    {
+      "path": "01M21CB66VC8T62ZHXVZZXZ4WN",
+      "status": 500,
+      "body": "Internal Server Error"
+    },
+    {
+      "path": "batches/a3ec6d94-8ac7-4cb9-ae81-4bde3afcf174",
+      "status": 500,
+      "body": "Internal Server Error"
+    }
+  ],
+  "foreign_queue_still_pending": true
+}

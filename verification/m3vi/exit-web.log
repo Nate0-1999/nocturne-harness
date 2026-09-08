@@ -1,0 +1,167 @@
+
+> harness-web@0.1.0 test:unit
+> node --experimental-strip-types --test tests/*.test.mjs
+
+✔ queue decision payloads never claim a machine identity (1.184625ms)
+✔ two Context Bars instances can attune to two different nearby threads (0.901792ms)
+✔ drag geometry immediately reattunes a consumer (0.174833ms)
+✔ an exact tie is random once and sticky until the layout changes (6.569709ms)
+✔ a sticky tie pick survives reload but rejects malformed stored state (0.132125ms)
+✔ layer distance participates in proximity with one unit per tab step (0.077ms)
+✔ conversation mode switches the same source between one thread and the Deck stack (1.073667ms)
+✔ GLOBAL and zero-source ATTUNED badges state their exact truth (0.20425ms)
+✔ the existing Tools detail exposes the latest browser screenshot (1.767ms)
+✔ app settings own the live theme, transcript backup, and layout controls (11.286667ms)
+✔ module settings expose only bound scope controls and remove dead Palace scope (2.550292ms)
+✔ internal implementation labels do not reach the owner surface (2.672459ms)
+✔ focused Conversation does not reselect its already-authoritative thread before send (0.612625ms)
+✔ formats money, percentages, and quantities for a glanceable instrument (1.295375ms)
+✔ rejects non-decimal money and non-finite measurements (0.183208ms)
+✔ names the owner-facing instrument Spend at the production manifest seam (7.139291ms)
+✔ image preparation validates signature and emits canonical input plus compact view (9.844708ms)
+✔ image preparation rejects every local invalidity with a usable remedy (2.432958ms)
+✔ composer image UX is focus-scoped, accessible, reconnectable, and responsive (6.598875ms)
+✔ lifecycle overlays return in one click while instruments live on the stage (7.448375ms)
+✔ thread-list archive targets the existing extraction action by thread identity (3.945166ms)
+✔ instrument remotes remain scrollable without being fixed host overlays (1.421667ms)
+✔ Injection scope is owned by the shared module settings slot (2.269666ms)
+✔ Run DEEP and Audition share explicit readable secondary-action states (2.777667ms)
+✔ Graph and Injection remotes share a real viewport scroll container (5.063667ms)
+✔ layout audit catches interactive overlap without rejecting shared edges (1.239584ms)
+✔ layout audit reports clipped text independently of box collisions (0.069375ms)
+✔ layout audit reports visual text collisions within each rendered surface (0.103125ms)
+✔ stage source keeps rare controls in settings and lets thread titles wrap in full (10.032792ms)
+✔ presents server-authored learning truth in human numbers (4.797166ms)
+✔ describes the first background retrain honestly before a durable run exists (0.124125ms)
+✔ positions live and generation scores on one timeline without deriving either score (0.936292ms)
+✔ does not invent a proposal score when weighted evidence is not recorded (0.120042ms)
+✔ quiet refresh preserves controls until scope or active generation changes (0.097958ms)
+✔ quiet progress refresh expires only a retrain notice and preserves owner interaction (0.151917ms)
+✔ freezes the owner control copy (0.052166ms)
+✔ extracts one shared telemetry view and refuses a missing learning view (0.072833ms)
+✔ the finished Deck keeps proposed replies same-turn, editable, ordered, and journaled (8.081125ms)
+✔ keeps the highest-signal label when graph labels collide (2.995875ms)
+✔ retains separated labels with non-overlapping boxes inside the graph viewbox (14.956041ms)
+✔ rebinds a selected Graph node to the refreshed snapshot or clears it (0.645584ms)
+✔ Graph node activation publishes memory identity without opening an overlay (5.394417ms)
+✔ only exposes a Graph snapshot matching the pending scope and thread request (1.823ms)
+✔ does not query ATTUNED memory until a thread identity exists (3.621791ms)
+✔ agent-file jump-start offers one explicit route into ordinary seed review (3.694917ms)
+✔ Memory Ingest is a movable panel rather than a header control or lifecycle overlay (1.03625ms)
+✔ judged Symphony batches reuse Palace Queue and retain explicit owner consent (1.23225ms)
+✔ curator proposals expose Palace activity and use only explicit queue decisions (1.63225ms)
+✔ keeps the memory editor mounted for its authoritative save result (6.519916ms)
+✔ nebula creates exactly one deterministic body per active memory (1.53025ms)
+✔ activity and provenance modes produce different named data transforms (0.139625ms)
+✔ memory current emits only real revision events and replays byte-identically (1.713208ms)
+✔ real graph edges alone create filaments and duplicate-family creatures (0.3595ms)
+✔ historical similarity families anchor to their latest real events (0.154917ms)
+✔ provenance binds the released Palace thread_origin compatibility field (0.096875ms)
+✔ production source uses the ruled Three stack and forbids random geometry (4.079042ms)
+✔ the Rack exposes one file press path and projects only the validated record (1.744625ms)
+✔ double press is deterministic and emits only CSS token data (12.516917ms)
+✔ a low-contrast monochrome plate is refused with a named remedy (0.52325ms)
+✔ stored colorways round-trip through the validated local data boundary (1.141917ms)
+✔ renders a project path only after authoritative snapshot acknowledgement (1.135916ms)
+✔ accepts canonical filesystem and legacy project paths and rejects ambiguous shapes (0.30975ms)
+✔ lists known non-null paths without turning legacy null into a silent match (12.617833ms)
+✔ changes project-editor identity when either thread or authoritative project changes (0.076417ms)
+✔ re-renders project control from authoritative context at every reconciliation boundary (0.168584ms)
+✔ chooses the newest existing thread for a project and no thread from another project (7.4825ms)
+✔ the project-conflict message owns a shrinkable anywhere-wrapping flex item (12.627167ms)
+✔ Project input Enter and form submit share one project-open path (0.76775ms)
+✔ Project input commits an edited path when focus leaves the field (4.628166ms)
+✔ Project control derives its visible draft from snapshot reconciliation (1.607375ms)
+✔ Rack exposes only snapshot-acknowledged project bindings (1.677083ms)
+✔ provider refusal wire detail and terminal voice stay distinct (7.419792ms)
+✔ reports an asynchronous rack action failure before rethrowing it (1.36225ms)
+✔ does not report a rack action that reconciles successfully (0.084375ms)
+✔ the module template enumerates the complete mounted stage and refuses a partial affordance (2.487208ms)
+✔ Vitals moves, resizes inside manifest bounds, and restores from persisted layout (0.535708ms)
+✔ panel edge resize trades with the neighbor under that edge (0.133042ms)
+✔ production manifests and frames are wired through the shared template (9.200333ms)
+✔ rack iframe boundary strips private image material without mutating the host outbox (1.40375ms)
+✔ recipe graph validates the visible frontier and lays dependencies left to right (0.956292ms)
+✔ recipe graph refuses edges and frontier marks that invent graph truth (0.21675ms)
+✔ completion grid keeps packet rows distinct and fuses dependency streams rightward (0.904667ms)
+✔ recipe graph refuses a cycle instead of inventing completion order (0.082083ms)
+✔ recipe module declares the annotated-sheet grammar and its complete data key (6.800625ms)
+✔ admits only a same-thread error and snapshot while the barrier remains active (1.261333ms)
+✔ preserves only a project-context conflict through snapshot reconciliation (0.096917ms)
+✔ snap-touching modules form one transitive frame within their layer (0.693167ms)
+✔ a local watcher sees only its frame while GLOBAL escapes position (0.071458ms)
+✔ parses conversation, model, reasoning, cache, and purpose rows without re-accounting (0.909625ms)
+✔ keeps partial pricing explicit and rejects impossible receipt counts (0.252458ms)
+✔ accepts an empty attuned slice and rejects duplicate conversation rows (0.685333ms)
+✔ layer switching preserves independent camera and module layouts through reload (1.891ms)
+✔ module and layer removal round-trip exact retained state through the library (0.289083ms)
+✔ whole-stage fit and off-screen classification use the same camera geometry (0.107167ms)
+✔ off-screen recovery fits Recipe and Conversation stack at native scale inside 390 by 844 (0.323042ms)
+✔ off-screen recovery preserves module size when centered geometry fits (0.123458ms)
+✔ factory layers contain Graph and Injection as stage modules, never fixed tabs (0.084583ms)
+✔ Palace State is mounted beside Spend and survives the shared library lifecycle (0.115458ms)
+✔ Palace Nebula begins in the Graph library and migrates existing layouts once (0.216459ms)
+✔ Memory Ingest is a factory Stage module and joins an existing v3 layout once (0.217125ms)
+✔ Recipe joins the chosen layer from Library and round-trips its placement (0.123791ms)
+✔ Spend can shrink to one cell and grow to the complete Stage grid (0.107541ms)
+✔ Conversation, Context Bars, Spend, and Graph can each add independent Stage instances (0.229ms)
+✔ create layer appends one active empty tab without disturbing existing layers (0.119666ms)
+✔ v4 Chat and Deck layouts migrate cleanly into focused and stack Conversation instances (0.13925ms)
+✔ v2 layouts migrate into the centered fine coordinate space with screen geometry preserved (0.096917ms)
+✔ the centered canvas is four times larger per axis and carries a subordinate fine grid (2.839208ms)
+✔ every module and the stage-owned floating shells carry the shared chamfer language (1.95125ms)
+✔ the Stage exposes a labelled one-click layer creator beside its tabs (0.787167ms)
+✔ split-planning refusal with null optional provider fields is terminal (1.172333ms)
+✔ context-limit remedy with null optional provider codes is terminal (0.066417ms)
+✔ owner connection copy never claims whole-product health from the socket alone (0.624083ms)
+✔ owner surfaces state the situation without daemon, factory, or link jargon (5.579041ms)
+✔ The Deck exposes all three conductor interventions and an owner demand lineage (7.065084ms)
+✔ Symphony deliberation is human-fixed, signed, separately identified, and returned inline (3.230625ms)
+✔ shared settings and descriptive hover tips have no strip-specific chrome escape (4.960916ms)
+✔ archive is icon-compact while Model Device advertises its click action (2.644917ms)
+✔ five theme identities remain closed with NEO-NOIR as the safe default (1.184334ms)
+✔ stored theme and iframe query parsing fail closed to the worn default (0.262292ms)
+✔ thread locality is exact at the wire and visible after project provenance (0.674125ms)
+✔ recognizes and masks the retired fixture title through its migration fingerprint (0.582375ms)
+✔ does not redact an owner thread or alter older cleanup recognition (0.057833ms)
+✔ shortens a long generated title only at a complete-word boundary (0.0395ms)
+✔ parses the exact server-provided vitals shape without re-accounting (1.823291ms)
+✔ accepts the exact current Vitals source and rejects unknown accounting sources (0.207583ms)
+✔ parses honest partial resource measurements without inventing zeroes (0.077125ms)
+✔ preserves exact decimal scale and distinguishes an unpriced point (0.091292ms)
+✔ rejects unavailable gauges masquerading as measured zeroes (0.095167ms)
+✔ finds scrub buckets and uses decimals only for SVG geometry (0.184917ms)
+✔ does not invent a trend line across empty or unpriced minute buckets (0.586333ms)
+✔ collapse reallocates rows instead of overlaying Chat (0.066916ms)
+✔ narrow collapsed Vitals reserves its full row for learning before lower-priority cells (2.404333ms)
+ℹ tests 132
+ℹ suites 0
+ℹ pass 132
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 457.056459
+
+> harness-web@0.1.0 lint
+> eslint .
+
+
+> harness-web@0.1.0 build
+> tsc -b && vite build
+
+vite v8.1.5 building client environment for production...
+[2K
+transforming...✓ 343 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     0.56 kB │ gzip:   0.34 kB
+dist/assets/index-CMQgkL8V.css    231.53 kB │ gzip:  39.27 kB
+dist/assets/index-Dp6rC5Wq.js   2,152.44 kB │ gzip: 595.45 kB
+
+✓ built in 232ms
+[plugin builtin:vite-reporter]
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.

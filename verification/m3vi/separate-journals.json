@@ -1,0 +1,12 @@
+{
+  "home": {
+    "home": "/private/tmp/m3vi-vi08-verification/home",
+    "journal_files": 2,
+    "journal_bytes": 27520
+  },
+  "observer": {
+    "home": "/private/tmp/m3vi-vi08-verification/observer",
+    "journal_files": 1,
+    "journal_bytes": 359
+  }
+}

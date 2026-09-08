@@ -1,0 +1,55 @@
+[
+  {
+    "scope": "own",
+    "batch_uid": "d7fef682-a658-4d16-91f4-11c9b1a7fa88",
+    "pending_cards": 0,
+    "candidate_status": "tombstoned",
+    "candidate_id": "13af527e-45e6-4761-bec1-710e8f683a11"
+  },
+  {
+    "memory_id": "10d6f0ad-9ce4-44e3-b39b-3ef52566f19f",
+    "status": "tombstoned",
+    "revision": 4
+  },
+  {
+    "principal_id": "nocturne-verification-38c5c9a7-6657-43bc-a63f-ba0455aa16c3",
+    "active_memories": 0,
+    "curation": {
+      "principal_id": "nocturne-verification-38c5c9a7-6657-43bc-a63f-ba0455aa16c3",
+      "admitted_writes": 1,
+      "last_run_writes": 0,
+      "pressure_events": 0,
+      "last_run_pressure": 0,
+      "trigger_every": 25,
+      "pressure_trigger_every": 3,
+      "writes_until_run": 24,
+      "pressure_until_run": 3,
+      "latest_run": null,
+      "pending_cards": 0
+    }
+  },
+  {
+    "scope": "foreign",
+    "batch_uid": "a3ec6d94-8ac7-4cb9-ae81-4bde3afcf174",
+    "pending_cards": 0,
+    "candidate_status": "tombstoned",
+    "candidate_id": "4f525a72-3f42-4df3-89f3-2d7a57a1451f"
+  },
+  {
+    "principal_id": "nocturne-verification-queue-fed83bba-1d76-4d50-b9ad-900052581e84",
+    "active_memories": 0,
+    "curation": {
+      "principal_id": "nocturne-verification-queue-fed83bba-1d76-4d50-b9ad-900052581e84",
+      "admitted_writes": 0,
+      "last_run_writes": 0,
+      "pressure_events": 0,
+      "last_run_pressure": 0,
+      "trigger_every": 25,
+      "pressure_trigger_every": 3,
+      "writes_until_run": 25,
+      "pressure_until_run": 3,
+      "latest_run": null,
+      "pending_cards": 0
+    }
+  }
+]

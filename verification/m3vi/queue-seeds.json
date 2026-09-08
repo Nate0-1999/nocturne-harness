@@ -1,0 +1,16 @@
+[
+  {
+    "scope": "own",
+    "principal_id": "nocturne-verification-38c5c9a7-6657-43bc-a63f-ba0455aa16c3",
+    "batch_uid": "d7fef682-a658-4d16-91f4-11c9b1a7fa88",
+    "item_uid": "01M21CB2C4MCS9AVP1EE4Z06DG",
+    "memory_id": "13af527e-45e6-4761-bec1-710e8f683a11"
+  },
+  {
+    "scope": "foreign",
+    "principal_id": "nocturne-verification-queue-fed83bba-1d76-4d50-b9ad-900052581e84",
+    "batch_uid": "a3ec6d94-8ac7-4cb9-ae81-4bde3afcf174",
+    "item_uid": "01M21CB66VC8T62ZHXVZZXZ4WN",
+    "memory_id": "4f525a72-3f42-4df3-89f3-2d7a57a1451f"
+  }
+]

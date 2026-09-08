@@ -1,0 +1,305 @@
+INFO:     Started server process [52582]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8883 (Press CTRL+C to quit)
+INFO:     127.0.0.1:53005 - "WebSocket /ws" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:53006 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53006 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53006 - "GET /assets/index-Dp6rC5Wq.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53018 - "GET /assets/index-CMQgkL8V.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53022 - "GET /?rack_module=conversation&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir&conversation_mode=focused HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53020 - "GET /?rack_module=header&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53006 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53027 - "GET /?rack_module=memory&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53028 - "GET /?rack_module=context_bars&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53030 - "GET /?rack_module=palace_state&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53031 - "WebSocket /ws" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:53029 - "GET /?rack_module=palace_queue&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53020 - "GET /assets/index-CMQgkL8V.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53022 - "GET /?rack_module=threads&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53027 - "GET /assets/index-Dp6rC5Wq.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53018 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53006 - "GET /v1/rack/query?resource=scorer_console&as_of=now&thread_id=ef022b59-b2d8-4262-bffc-afa0ca46c22b HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53018 - "GET /v1/seeds/jump-start HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53006 - "GET /v1/rack/query?resource=context_window&as_of=now&thread_id=ef022b59-b2d8-4262-bffc-afa0ca46c22b HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53035 - "GET /v1/approval-queue HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53034 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53036 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53033 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53179 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53177 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53178 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53174 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53322 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53320 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53319 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53321 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53351 - "POST /v1/approval-queue/01M21CB66VC8T62ZHXVZZXZ4WN/decisions HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/m3vi-vi08-base/src/harness/daemon.py", line 292, in rack_frame_policy
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 1267, in handle
+    await super().handle(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 345, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/m3vi-vi08-base/src/harness/daemon.py", line 1090, in decide_queue_item
+    return await owned_spine.decide_queue_item(item_uid, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/m3vi-vi08-base/src/harness/spine_client.py", line 1610, in decide_queue_item
+    await self._require_owned_queue(item_uid=item_uid)
+  File "/tmp/m3vi-vi08-base/src/harness/spine_client.py", line 1636, in _require_owned_queue
+    raise SpineClientError(
+harness.spine_client.SpineClientError: This queue decision does not belong to this identity. Refresh the queue.
+INFO:     127.0.0.1:53386 - "POST /v1/approval-queue/01M21CB66VC8T62ZHXVZZXZ4WN/decisions HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/m3vi-vi08-base/src/harness/daemon.py", line 292, in rack_frame_policy
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 1267, in handle
+    await super().handle(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 345, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/m3vi-vi08-base/src/harness/daemon.py", line 1090, in decide_queue_item
+    return await owned_spine.decide_queue_item(item_uid, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/m3vi-vi08-base/src/harness/spine_client.py", line 1610, in decide_queue_item
+    await self._require_owned_queue(item_uid=item_uid)
+  File "/tmp/m3vi-vi08-base/src/harness/spine_client.py", line 1636, in _require_owned_queue
+    raise SpineClientError(
+harness.spine_client.SpineClientError: This queue decision does not belong to this identity. Refresh the queue.
+INFO:     127.0.0.1:53393 - "POST /v1/approval-queue/batches/a3ec6d94-8ac7-4cb9-ae81-4bde3afcf174/decisions HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/m3vi-vi08-base/src/harness/daemon.py", line 292, in rack_frame_policy
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 1267, in handle
+    await super().handle(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 345, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/m3vi-vi08-base/src/harness/daemon.py", line 1097, in decide_queue_batch
+    return await owned_spine.decide_queue_batch(batch_uid, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/m3vi-vi08-base/src/harness/spine_client.py", line 1619, in decide_queue_batch
+    await self._require_owned_queue(batch_uid=batch_uid)
+  File "/tmp/m3vi-vi08-base/src/harness/spine_client.py", line 1636, in _require_owned_queue
+    raise SpineClientError(
+harness.spine_client.SpineClientError: This queue decision does not belong to this identity. Refresh the queue.
+INFO:     127.0.0.1:53397 - "GET / HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53397 - "GET /assets/index-Dp6rC5Wq.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53398 - "GET /assets/index-CMQgkL8V.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53400 - "GET /?rack_module=header&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53402 - "GET /?rack_module=conversation&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir&conversation_mode=focused HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53408 - "GET /?rack_module=memory&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53407 - "GET /?rack_module=threads&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53410 - "GET /?rack_module=palace_queue&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53409 - "GET /?rack_module=palace_state&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53400 - "GET /?rack_module=context_bars&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53398 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53400 - "GET /assets/index-CMQgkL8V.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53409 - "GET /assets/index-Dp6rC5Wq.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53411 - "WebSocket /ws" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:53397 - "GET /favicon.svg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53415 - "GET /v1/seeds/jump-start HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53414 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53413 - "GET /v1/approval-queue HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53414 - "GET /v1/rack/query?resource=context_window&as_of=now&thread_id=ef022b59-b2d8-4262-bffc-afa0ca46c22b HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53416 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53398 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53415 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53397 - "GET /v1/rack/query?resource=scorer_console&as_of=now&thread_id=ef022b59-b2d8-4262-bffc-afa0ca46c22b HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53479 - "GET /v1/identity HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53694 - "POST /v1/approval-queue/batches/d7fef682-a658-4d16-91f4-11c9b1a7fa88/decisions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53694 - "GET /v1/approval-queue HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54153 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54157 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54156 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54155 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54249 - "GET /v1/rack/query?resource=memory_graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54285 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54284 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54281 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54283 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54297 - "GET /v1/rack/query?resource=memory_graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54315 - "GET / HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54316 - "GET /assets/index-Dp6rC5Wq.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54315 - "GET /assets/index-CMQgkL8V.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54318 - "GET /?rack_module=header&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54321 - "GET /?rack_module=threads&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54324 - "GET /?rack_module=memory&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54315 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54328 - "GET /?rack_module=palace_state&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54322 - "GET /?rack_module=conversation&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir&conversation_mode=focused HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54327 - "GET /?rack_module=context_bars&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54318 - "GET /?rack_module=palace_queue&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8883&theme=neo-noir HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54327 - "GET /assets/index-Dp6rC5Wq.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54328 - "GET /assets/index-CMQgkL8V.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54329 - "WebSocket /ws" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:54316 - "GET /favicon.svg HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54332 - "GET /v1/seeds/jump-start HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54332 - "GET /v1/rack/query?resource=context_window&as_of=now&thread_id=ef022b59-b2d8-4262-bffc-afa0ca46c22b HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54316 - "GET /v1/rack/query?resource=scorer_console&as_of=now&thread_id=ef022b59-b2d8-4262-bffc-afa0ca46c22b HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54332 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54315 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54331 - "GET /v1/approval-queue HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54333 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54334 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54391 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54390 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54392 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54388 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [52582]
