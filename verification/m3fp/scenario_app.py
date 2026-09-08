@@ -7,6 +7,8 @@ from typing import Any
 from uuid import uuid4
 
 from fastapi import FastAPI
+from pydantic_ai.messages import ModelRequest, ToolReturnPart, UserPromptPart
+from pydantic_ai.models.function import DeltaToolCall, FunctionModel
 
 from harness.agent import HarnessAgent
 from harness.config import HarnessSettings
@@ -24,7 +26,6 @@ from harness.spine_client import (
 )
 from harness.transcript import TranscriptJournal
 from verification.fixture_isolation import install_fixture_isolation
-from verification.m2h.scenario_app import _model
 from verification.m2st3.scenario_app import HonestDisplaySpine
 
 FIXTURE = "M3FP REGRESSION"
@@ -33,6 +34,41 @@ ANSWER = (
     "M2H final post: the relay stays explicit, candidates remain reviewable, "
     "and contradictions never passively resolve."
 )
+TOOL_PROMPT = "Explain, run one bash command, then explain the result."
+TOOL_BEFORE = "I will check the shell.\n\n"
+TOOL_AFTER = "The shell returned M3FZ-HEARTBEAT.\n\n"
+ERROR_PROMPT = "Show the heartbeat failure reason."
+
+
+def _model() -> FunctionModel:
+    async def stream(messages, _info):
+        prompt = next(
+            part.content
+            for message in reversed(messages)
+            if isinstance(message, ModelRequest)
+            for part in message.parts
+            if isinstance(part, UserPromptPart)
+        )
+        if prompt == ERROR_PROMPT:
+            yield "The partial answer is preserved."
+            raise RuntimeError("The heartbeat model stopped unexpectedly.")
+        if prompt != TOOL_PROMPT:
+            yield ANSWER
+        elif any(isinstance(part, ToolReturnPart) for part in messages[-1].parts):
+            yield TOOL_AFTER
+            yield '<nocturne-proposed-response>{"primary":"Check it again.",'
+            yield '"alternatives":[]}</nocturne-proposed-response>'
+        else:
+            yield TOOL_BEFORE
+            yield {
+                0: DeltaToolCall(
+                    name="bash",
+                    json_args='{"command":"printf M3FZ-HEARTBEAT"}',
+                    tool_call_id="m3fz-heartbeat-bash",
+                )
+            }
+
+    return FunctionModel(stream_function=stream)
 
 
 class HeartbeatSpine(HonestDisplaySpine):

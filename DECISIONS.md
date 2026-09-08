@@ -3228,3 +3228,16 @@ from silently moving another.
 **Rejected alternatives.** One process-wide CWD leaks state between threads. Using the
 editable label as scope makes a cosmetic rename rewrite identity. Reusing only the old
 workspace-relative `origin_path` cannot compare memories across different roots.
+
+## 107 — A tool turn finishes the whole answer [P0, P2, M3FZ]
+
+**Decision.** Terminal text is the ordered concatenation of every assistant `TextPart`
+in the framework's `result.new_messages()`. It excludes prior conversation history and
+uses the existing proposal parser, just like the stream. Keep the independent prefix
+comparison: a real stream/final discrepancy still fails. F068 showed that `result.output`
+contains only the last response, which incorrectly rejected text before a tool call.
+
+Log unexpected adapter and loop failures with run/thread identity. Carry a bounded plain
+reason in additive `run.done.error_message` and a durable assistant `run_error` event,
+so the Conversation status explains the failure both live and after reload. Existing
+provider refusal classification and cancellation behavior remain authoritative.

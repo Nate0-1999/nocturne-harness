@@ -63,6 +63,39 @@ try {
     receipt_lines: trace.receipt_lines,
     journal_has_prompt_and_answer: true,
   }
+  const toolPrompt = 'Explain, run one bash command, then explain the result.'
+  const toolAnswer = 'I will check the shell.\n\nThe shell returned M3FZ-HEARTBEAT.\n\n'
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await conversation.getByText(answer, { exact: true }).waitFor({ state: 'visible' })
+  await conversation.getByTestId('composer').fill(toolPrompt)
+  await conversation.getByTestId('composer').press('Enter')
+  await conversation.getByText('The shell returned M3FZ-HEARTBEAT.', { exact: true })
+    .waitFor({ state: 'visible' })
+  await waitUntil(async () => {
+    trace = await fetchJson(`${baseUrl}/__scenario__/heartbeat`)
+    return trace.conversations.some(({ messages }) => {
+      const user = messages.findLast((message) => message.content === toolPrompt)
+      const assistant = messages.findLast((message) => message.run_id === user?.run_id &&
+        message.role === 'assistant')
+      return user?.state === 'end_turn' && assistant?.partial === false &&
+        assistant.content === toolAnswer &&
+        assistant.events.some((event) => event.event_kind === 'proposed_response' &&
+          event.primary === 'Check it again.') &&
+        assistant.events.some((event) => event.event_kind === 'function_tool_result' &&
+          JSON.stringify(event).includes('M3FZ-HEARTBEAT'))
+    })
+  })
+  await page.screenshot({ path: resolve(evidenceDir, '03-talk-tool-talk.png') })
+  result.tool_turn_ends_clean_with_proposal_and_journal = true
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await conversation.getByTestId('composer').fill('Show the heartbeat failure reason.')
+  await conversation.getByTestId('composer').press('Enter')
+  const failure = 'Run error · The heartbeat model stopped unexpectedly. · partial kept'
+  await conversation.getByText(failure, { exact: true }).waitFor({ state: 'visible' })
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await conversation.getByText(failure, { exact: true }).waitFor({ state: 'visible' })
+  await page.screenshot({ path: resolve(evidenceDir, '04-failure-reason-after-reload.png') })
+  result.failure_reason_survives_reload = true
   await writeFile(
     resolve(evidenceDir, 'heartbeat.json'),
     `${JSON.stringify(result, null, 2)}\n`,

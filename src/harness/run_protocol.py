@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Protocol
 from uuid import UUID
 
+from pydantic import ValidationError
 from pydantic_ai.messages import BinaryContent
 
 from harness.envelope import GateCommitPayload, ProviderErrorPayload, StopReason
@@ -47,6 +48,7 @@ class TurnOutcome:
     assistant_text: str | None = None
     model_visible: bool = True
     provider_error: ProviderErrorPayload | None = None
+    error_message: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.stop_reason, StopReason):
@@ -69,6 +71,17 @@ class TurnOutcome:
             raise TypeError("provider_error must be a ProviderErrorPayload or None")
         if self.provider_error is not None and self.stop_reason is not StopReason.ERROR:
             raise ValueError("provider_error requires stop_reason=error")
+
+
+def run_error_message(error: Exception) -> str:
+    """Keep an internal failure readable at the terminal boundary. [PLAN M3FZ]"""
+
+    if isinstance(error, ValidationError):
+        return "The turn received invalid data. See the daemon log for details."
+    message = " ".join(str(error).split())
+    if message == "terminal model text differs from streamed model text":
+        return "The model's final answer did not match the answer it streamed."
+    return message[:1000] or f"The turn could not finish ({type(error).__name__})."
 
 
 class DynamicSystemInstructions(Protocol):

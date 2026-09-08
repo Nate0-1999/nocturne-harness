@@ -1154,6 +1154,7 @@ def test_default_prompt_gets_fresh_correlated_error_lifecycle(tmp_path: Path) ->
         "run_id": run_id,
         "stop_reason": "error",
         "partial": True,
+        "error_message": "The turn could not finish. See the daemon log for details.",
     }
     assert len({started["id"], usage["id"], done["id"]}) == 3
 

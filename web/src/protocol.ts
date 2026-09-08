@@ -393,6 +393,7 @@ export interface RunDonePayload {
   stop_reason: StopReason
   partial: boolean
   provider_error?: ProviderErrorPayload
+  error_message?: string
 }
 
 export interface GateDismissPayload {
@@ -1216,6 +1217,10 @@ function parseRunDone(value: unknown): RunDonePayload | null {
   const providerError = value.provider_error === undefined
     ? undefined
     : parseProviderError(value.provider_error)
+  if (value.error_message !== undefined && (
+    typeof value.error_message !== 'string' || !value.error_message.trim() ||
+    value.error_message.length > 1000 || stopReason !== 'error'
+  )) return null
   if (
     (value.provider_error !== undefined && providerError === null) ||
     (providerError !== undefined && stopReason !== 'error')
@@ -1230,6 +1235,7 @@ function parseRunDone(value: unknown): RunDonePayload | null {
   if (providerError !== undefined && providerError !== null) {
     parsed.provider_error = providerError
   }
+  if (typeof value.error_message === 'string') parsed.error_message = value.error_message
   return parsed
 }
 

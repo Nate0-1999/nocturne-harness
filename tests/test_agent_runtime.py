@@ -31,6 +31,7 @@ from harness.agent import REMEMBER_SPLIT_GUIDANCE, HarnessAgent, RememberResult
 from harness.agent_runtime import (
     PydanticAITurnRunner,
     _cacheable_prefix_tokens,
+    _EventBridge,
     _usage_snapshot,
 )
 from harness.config import HarnessSettings
@@ -255,6 +256,63 @@ async def test_m3dk_same_turn_proposal_is_hidden_from_chat_and_emitted_as_one_ca
         "alternatives": ["Show me the evidence first."],
         "created_at": instant.isoformat(),
     }
+
+
+@pytest.mark.asyncio
+async def test_m3fz_terminal_divergence_still_refuses_completion() -> None:
+    """ADR-014 / M3FZ retains the real stream/final invariant instead of suppressing its error."""
+    bridge = _EventBridge(RecordingEmitter())
+    await bridge._accept_text("The streamed answer.")
+    with pytest.raises(RuntimeError, match="terminal model text differs"):
+        await bridge.finalize("A different answer.", run_id="test", created_at=datetime.now(UTC))
+
+
+@pytest.mark.asyncio
+async def test_m3fz_text_tool_text_keeps_the_whole_answer_and_terminal_proposal() -> None:
+    """PLAN M3FZ / F068: text before a tool and its closing answer form one complete turn."""
+
+    async def stream(messages, _info):
+        if not any(
+            isinstance(part, ToolReturnPart)
+            for message in messages
+            if isinstance(message, ModelRequest)
+            for part in message.parts
+        ):
+            yield "I will write the note.\n\n"
+            yield {
+                0: DeltaToolCall(
+                    name="write",
+                    json_args='{"path":"note.txt","content":"owner text\\n"}',
+                    tool_call_id="m3fz-write",
+                )
+            }
+        else:
+            yield "The note is ready.\n\n<nocturne-proposed-"
+            yield 'response>{"primary":"Read it back.","alternatives":[]}'
+            yield "</nocturne-proposed-response>"
+
+    toolset = RecordingWorkspaceToolset()
+    emitter = RecordingEmitter()
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(toolset=toolset),
+    )
+    outcome = await runner.run(
+        thread_id=str(THREAD_UUID),
+        prompt="Write my note.",
+        message_history=(),
+        emit=emitter,
+    )
+
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert outcome.usage.requests == 2
+    assert toolset.calls == [("write", {"path": "note.txt", "content": "owner text\n"})]
+    assert outcome.assistant_text == "I will write the note.\n\nThe note is ready.\n\n"
+    assert "".join(emitter.texts) == outcome.assistant_text
+    proposals = [e for e in emitter.events if e["event_kind"] == "proposed_response"]
+    assert len(proposals) == 1
+    assert proposals[0]["primary"] == "Read it back."
+    assert any(e["event_kind"] == "function_tool_result" for e in emitter.events)
 
 
 @pytest.mark.asyncio

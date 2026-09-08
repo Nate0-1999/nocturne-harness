@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import re
 from collections.abc import AsyncIterable, Callable, Mapping, Sequence
 from dataclasses import replace
@@ -45,7 +46,13 @@ from harness.proposed_response import (
     proposed_response_event,
 )
 from harness.receipt_queue import SpendReceiptQueue
-from harness.run_protocol import DynamicSystemInstructions, RunEmitter, TurnOutcome, UsageSnapshot
+from harness.run_protocol import (
+    DynamicSystemInstructions,
+    RunEmitter,
+    TurnOutcome,
+    UsageSnapshot,
+    run_error_message,
+)
 from harness.spend import (
     SpendGateway,
     SpendLineage,
@@ -55,6 +62,8 @@ from harness.spend import (
 from harness.tools_memory import MemoryToolContext
 
 type ContextFactory = Callable[[str], MemoryToolContext]
+
+logger = logging.getLogger(__name__)
 
 _INTERRUPTED_TOOL_CONTENT = "Tool execution interrupted by run cancellation."
 _MEMORY_BLOCK_OPEN = "<memory_system>\n"
@@ -200,7 +209,13 @@ class PydanticAITurnRunner:
             if not isinstance(result.output, str):
                 raise TypeError("chat agent returned a non-text output")
             visible_output = await bridge.finalize(
-                result.output,
+                "".join(
+                    part.content
+                    for message in result.new_messages()
+                    if isinstance(message, ModelResponse)
+                    for part in message.parts
+                    if isinstance(part, TextPart)
+                ),
                 run_id=emit.run_id,
                 created_at=self._clock(),
             )
@@ -261,10 +276,12 @@ class PydanticAITurnRunner:
                     assistant_text=message,
                     provider_error=provider_error,
                 )
+            logger.exception("Model turn failed: run=%s thread=%s", emit.run_id, thread_id)
             return TurnOutcome(
                 StopReason("error"),
                 _captured_history(prior_history, captured),
                 usage,
+                error_message=run_error_message(exc),
             )
         finally:
             if self._context_windows is not None and not is_remember:
@@ -561,7 +578,11 @@ class _EventBridge:
         await self._emit.text(value)
 
     async def finalize(self, output: str, *, run_id: str, created_at: datetime) -> str:
-        """Reconcile the streamed answer and publish one same-turn proposal event."""
+        """Reconcile all new assistant TextParts, in order, excluding prior history.
+
+        This is the same concatenation streamed by handle, including text before tools.
+        The terminal proposal is hidden from both projections; real divergence still fails.
+        """
 
         visible, proposal = parse_proposed_response_output(output)
         if not visible.startswith(self._visible_text):

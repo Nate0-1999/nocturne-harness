@@ -1,0 +1,45 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_m3fz_text_tool_text_keeps_the_whole_answer_and_terminal_proposal _____
+
+    @pytest.mark.asyncio
+    async def test_m3fz_text_tool_text_keeps_the_whole_answer_and_terminal_proposal() -> None:
+        """PLAN M3FZ / F068: text before a tool and its closing answer form one complete turn."""
+    
+        async def stream(messages, _info):
+            if not any(
+                isinstance(part, ToolReturnPart)
+                for message in messages
+                if isinstance(message, ModelRequest)
+                for part in message.parts
+            ):
+                yield "I will write the note.\n\n"
+                yield {0: DeltaToolCall(
+                    name="write",
+                    json_args='{"path":"note.txt","content":"owner text\\n"}',
+                    tool_call_id="m3fz-write",
+                )}
+            else:
+                yield "The note is ready.\n\n<nocturne-proposed-"
+                yield 'response>{"primary":"Read it back.","alternatives":[]}'
+                yield "</nocturne-proposed-response>"
+    
+        toolset = RecordingWorkspaceToolset()
+        emitter = RecordingEmitter()
+        runner = PydanticAITurnRunner(
+            HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+            lambda _: context(toolset=toolset),
+        )
+        outcome = await runner.run(
+            thread_id=str(THREAD_UUID), prompt="Write my note.", message_history=(), emit=emitter,
+        )
+    
+>       assert outcome.stop_reason is StopReason.END_TURN
+E       AssertionError: assert <StopReason.ERROR: 'error'> is <StopReason.END_TURN: 'end_turn'>
+E        +  where <StopReason.ERROR: 'error'> = TurnOutcome(stop_reason=<StopReason.ERROR: 'error'>, message_history=(ModelRequest(parts=[UserPromptPart(content='Writ...kens=0, cache_write_tokens=0), cacheable_prefix_tokens=0, assistant_text=None, model_visible=True, provider_error=None).stop_reason
+E        +  and   <StopReason.END_TURN: 'end_turn'> = StopReason.END_TURN
+
+tests/test_agent_runtime.py:292: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_agent_runtime.py::test_m3fz_text_tool_text_keeps_the_whole_answer_and_terminal_proposal
+1 failed, 35 deselected in 0.95s

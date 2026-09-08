@@ -417,6 +417,11 @@ class RunDonePayload(_ExtensiblePayload):
     run_id: ULID
     stop_reason: StopReason
     partial: StrictBool
+    error_message: NonBlankString | None = Field(
+        default=None,
+        max_length=1000,
+        exclude_if=lambda value: value is None,
+    )
     provider_error: ProviderErrorPayload | None = Field(
         default=None,
         exclude_if=lambda value: value is None,
@@ -429,6 +434,8 @@ class RunDonePayload(_ExtensiblePayload):
             raise ValueError("partial must be false exactly for end_turn")
         if self.provider_error is not None and self.stop_reason is not StopReason.ERROR:
             raise ValueError("provider_error requires stop_reason=error")
+        if self.error_message is not None and self.stop_reason is not StopReason.ERROR:
+            raise ValueError("error_message requires stop_reason=error")
         return self
 
 

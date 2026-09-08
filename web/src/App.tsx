@@ -222,6 +222,10 @@ function messageStatus(
     if (providerRefusal?.classification === 'provider_refusal') {
       return 'Provider refused'
     }
+    const failure = message.events.find((event) => event.event_kind === 'run_error')
+    if (typeof failure?.message === 'string') {
+      return `Run error · ${failure.message} · partial kept`
+    }
   }
   return state === undefined ? (message.partial ? 'Partial' : null) : terminalCopy(state)
 }

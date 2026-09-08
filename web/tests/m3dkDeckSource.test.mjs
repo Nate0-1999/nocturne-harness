@@ -17,7 +17,7 @@ test('the finished Deck keeps proposed replies same-turn, editable, ordered, and
   ])
 
   assert.match(runtime, /PROPOSED_RESPONSE_INSTRUCTION/u)
-  assert.match(runtime, /await bridge\.finalize\([\s\S]*result\.output/u)
+  assert.match(runtime, /await bridge\.finalize\([\s\S]*result\.new_messages\(\)/u)
   assert.match(provenance, /<nocturne-proposed-response>/u)
   assert.match(provenance, /"provenance": "owner_authored_with_assist"/u)
   assert.match(provenance, /"edit_distance": levenshtein_distance/u)

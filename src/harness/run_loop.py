@@ -71,7 +71,14 @@ from harness.proposed_response import (
     proposal_was_fired,
     proposed_response_fire_record,
 )
-from harness.run_protocol import ImageTurnRunner, RunEmitter, TurnOutcome, TurnRunner, UsageSnapshot
+from harness.run_protocol import (
+    ImageTurnRunner,
+    RunEmitter,
+    TurnOutcome,
+    TurnRunner,
+    UsageSnapshot,
+    run_error_message,
+)
 from harness.symphony_experience import SymphonyExperience
 from harness.transcript import HydratedTranscript, TranscriptJournal
 
@@ -997,8 +1004,15 @@ class RunLoop:
             stop_reason = outcome.stop_reason
         except asyncio.CancelledError:
             stop_reason = StopReason.CANCELLED
-        except Exception:
+        except Exception as exc:
+            logger.exception("Run failed: run=%s thread=%s", active.turn.run_id, thread_id)
             stop_reason = StopReason.ERROR
+            outcome = TurnOutcome(
+                stop_reason,
+                history,
+                active.usage,
+                error_message=run_error_message(exc),
+            )
 
         terminal = asyncio.create_task(
             self._finish(thread_id, active, outcome, stop_reason),
@@ -1161,6 +1175,17 @@ class RunLoop:
                 await self._commit_model_command_locked(thread_id, state, active)
 
             partial = stop_reason is not StopReason.END_TURN
+            error_message = None
+            if stop_reason is StopReason.ERROR:
+                error_message = (
+                    outcome.error_message
+                    or (outcome.provider_error.message if outcome.provider_error else None)
+                    if outcome is not None
+                    else None
+                ) or "The turn could not finish. See the daemon log for details."
+                active.assistant_message["events"].append(
+                    {"event_kind": "run_error", "message": error_message}
+                )
             active.assistant_message["partial"] = partial
             active.turn.user_message["state"] = stop_reason.value
             self._capture_message(
@@ -1199,7 +1224,12 @@ class RunLoop:
                         run_id=active.turn.run_id,
                         stop_reason=stop_reason,
                         partial=partial,
-                        provider_error=(None if outcome is None else outcome.provider_error),
+                        provider_error=(
+                            outcome.provider_error
+                            if outcome is not None and stop_reason is StopReason.ERROR
+                            else None
+                        ),
+                        error_message=error_message,
                     ),
                     thread_id=thread_id,
                 ),

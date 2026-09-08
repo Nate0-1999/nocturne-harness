@@ -423,7 +423,14 @@ function applyDone(thread: ThreadState, payload: RunDonePayload): ThreadState {
     if (message.role === 'user') {
       return { ...message, state: payload.stop_reason }
     }
-    return { ...message, partial: payload.partial }
+    return {
+      ...message,
+      partial: payload.partial,
+      events: payload.error_message === undefined ? message.events : [
+        ...message.events,
+        { event_kind: 'run_error', message: payload.error_message },
+      ],
+    }
   })
   return {
     ...thread,

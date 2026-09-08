@@ -1,0 +1,1 @@
+Standalone checker reports the same 31 uncited test cases on HEAD d9c7696 and M3FZ. New findings: 0; removed: 0. New M3FZ tests have accepted F068/ADR-014 citations. Existing citation debt was not changed.

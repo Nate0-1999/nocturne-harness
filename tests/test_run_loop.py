@@ -1712,6 +1712,7 @@ async def test_invalid_gate_payload_ends_the_run_instead_of_stranding_the_ui() -
         "run_id": run_id,
         "stop_reason": StopReason.ERROR,
         "partial": True,
+        "error_message": "The turn received invalid data. See the daemon log for details.",
     }
     await loop.close()
 
@@ -1775,6 +1776,7 @@ async def test_f034_run_loop_preserves_provider_error_in_terminal_envelope_and_t
         "stop_reason": StopReason.ERROR,
         "partial": True,
         "provider_error": detail.model_dump(),
+        "error_message": detail.message,
     }
     snapshot_sink = Sink()
     await loop.request_snapshot("thread-1", snapshot_sink)
@@ -1783,7 +1785,8 @@ async def test_f034_run_loop_preserves_provider_error_in_terminal_envelope_and_t
     assistant = snapshot.messages[-1]
     assert assistant["content"].endswith("continue in a fresh thread.")
     assert assistant["events"] == [
-        {"event_kind": "provider_refusal", **detail.model_dump(exclude_none=True)}
+        {"event_kind": "provider_refusal", **detail.model_dump(exclude_none=True)},
+        {"event_kind": "run_error", "message": detail.message},
     ]
     await loop.close()
 

@@ -1,0 +1,16 @@
+{
+  "principal_id": "m3fz-sop-verification-fz08",
+  "active_memories_by_disposable_project": {
+    "/private/tmp/nocturne-m3fz-fz08/project": 0,
+    "/private/tmp/nocturne-m3fz-fz08/launch": 0
+  },
+  "pending_queue_items": 0,
+  "pending_curator_cards": 0,
+  "palace_health": {
+    "ok": true,
+    "version": "0.1.10",
+    "api_contract_version": "0.1.10",
+    "schema_version": "0021"
+  },
+  "scope_note": "Server filters memory reads by the two disposable project keys; journals independently verify zero memory write tools. No unscoped memory list was issued."
+}
