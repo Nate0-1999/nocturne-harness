@@ -1,5 +1,7 @@
 """Harness configuration for the C.4 client and C.5 agent limits."""
 
+from pathlib import Path
+
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -33,6 +35,7 @@ class HarnessSettings(BaseSettings):
     remember_split_timeout_seconds: float = Field(default=30.0, gt=0)
     extraction_idle_hours: float | None = Field(default=24.0, gt=0)
     nocturne_transcript_backup: bool = False
+    nocturne_home: Path | None = None
     toolset_fence_reads: bool = False
 
     @field_validator("model_context_tokens", mode="before")

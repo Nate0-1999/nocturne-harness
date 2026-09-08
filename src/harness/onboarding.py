@@ -84,6 +84,7 @@ class NocturneConfig:
     backup_generations: int = _DEFAULT_BACKUP_GENERATIONS
     postgres_volume: str | None = None
     transcript_backup: bool = False
+    principal_id: str = "local"
 
     @property
     def path(self) -> Path:
@@ -111,7 +112,7 @@ class NocturneConfig:
                 "SPINE_TOKEN": self.spine_token,
                 "SPINE_URL": self.spine_url,
                 "NOCTURNE_HOME": str(self.home),
-                "PRINCIPAL_ID": "local",
+                "PRINCIPAL_ID": self.principal_id,
                 "MACHINE_ID": self.machine_id,
                 "AGENT_ID": "nocturne",
                 "NOCTURNE_TRANSCRIPT_BACKUP": "true" if self.transcript_backup else "false",
@@ -152,6 +153,7 @@ def nocturne_home(environ: Mapping[str, str] | None = None) -> Path:
 def init_nocturne(
     *,
     remote: str | None = None,
+    verification: bool = False,
     home: Path | None = None,
     environ: Mapping[str, str] | None = None,
     prompt: Callable[[str], str] = getpass.getpass,
@@ -160,9 +162,15 @@ def init_nocturne(
     """Create one private config for a local or remote Palace."""
 
     values = os.environ if environ is None else environ
-    target_home = home or nocturne_home(values)
+    target_home = (home or nocturne_home(values)).expanduser().resolve()
+    if verification and target_home == (Path.home() / ".nocturne").resolve():
+        raise OnboardingError("Set NOCTURNE_HOME to a disposable folder before verification setup.")
     target = target_home / _CONFIG_FILE
     if target.exists():
+        if verification and not _config_principal(_parse_config(target)).startswith(
+            "nocturne-verification-"
+        ):
+            raise OnboardingError("This home is not a verification identity. Use a fresh folder.")
         load_config(home=target_home)
         _ensure_tool_runtimes(target_home, stdout=stdout)
         print(f"Nocturne is already initialized at {target_home}.", file=stdout)
@@ -206,6 +214,7 @@ def init_nocturne(
         spine_url=spine_url,
         postgres_port=postgres_port,
         transcript_backup=transcript_backup,
+        principal_id=f"nocturne-verification-{uuid.uuid4()}" if verification else "local",
     )
     _write_config(config)
     _ensure_tool_runtimes(target_home, stdout=stdout)
@@ -285,7 +294,15 @@ def load_config(*, home: Path | None = None) -> NocturneConfig:
         backup_generations=backup_generations,
         postgres_volume=postgres_volume,
         transcript_backup=transcript_backup,
+        principal_id=_config_principal(values),
     )
+
+
+def _config_principal(values: Mapping[str, str]) -> str:
+    principal = values.get("PRINCIPAL_ID", "local").strip()
+    if not principal:
+        raise OnboardingError("Nocturne config has an empty PRINCIPAL_ID.")
+    return principal
 
 
 def up_nocturne(
@@ -596,6 +613,7 @@ def doctor_nocturne(*, home: Path | None = None, stdout: TextIO = sys.stdout) ->
 
     config = load_config(home=home)
     preflight = _daemon_preflight(config)
+    print(f"Identity: {config.principal_id}; home: {config.home}", file=stdout)
     print(
         f"Conversation transcript backup: {'on' if config.transcript_backup else 'off'}",
         file=stdout,
@@ -753,6 +771,8 @@ def _write_config(config: NocturneConfig) -> None:
     os.chmod(config.home, 0o700)
     values = {
         "NOCTURNE_CONFIG_VERSION": _CONFIG_VERSION,
+        "NOCTURNE_HOME": str(config.home.resolve()),
+        "PRINCIPAL_ID": config.principal_id,
         "NOCTURNE_PALACE_MODE": config.palace_mode,
         "SPINE_URL": config.spine_url,
         "OPENROUTER_API_KEY": config.openrouter_api_key,
@@ -1059,7 +1079,7 @@ def _restore_transcripts_from_palace(
         return 0
     payload = _palace_json(
         config,
-        "/v1/transcripts?principal_id=local",
+        f"/v1/transcripts?principal_id={quote(config.principal_id, safe='')}",
         stdout=stdout,
     )
     if not isinstance(payload, dict) or not isinstance(payload.get("records"), list):
@@ -1089,7 +1109,7 @@ def _print_transcript_backup_status(config: NocturneConfig, *, stdout: TextIO) -
     try:
         payload = _palace_json(
             config,
-            "/v1/transcripts/status?principal_id=local",
+            f"/v1/transcripts/status?principal_id={quote(config.principal_id, safe='')}",
             stdout=stdout,
         )
         if not isinstance(payload, dict) or not isinstance(payload.get("record_count"), int):
@@ -1118,9 +1138,29 @@ def _daemon_preflight(config: NocturneConfig) -> DaemonPreflight:
     """Inspect every local daemon startup dependency without mutating it."""
 
     if _existing_nocturne():
+        try:
+            with urllib.request.urlopen(f"{LOCAL_URL}/v1/identity", timeout=0.5) as response:
+                identity = json.loads(response.read())
+            matches = (
+                identity.get("principal_id") == config.principal_id
+                and identity.get("home") == str(config.home.resolve())
+            )
+        except (OSError, ValueError, AttributeError):
+            matches = False
+        if not matches:
+            return DaemonPreflight(
+                existing=False,
+                web_assets="served by another Nocturne daemon",
+                port="8765 belongs to a different or unidentified home",
+                toolchain="already running",
+                failures=(
+                    "Another Nocturne identity is running on port 8765. "
+                    "Use that daemon's home or a separate port for verification.",
+                ),
+            )
         return DaemonPreflight(
             existing=True,
-            web_assets="served by the running Nocturne daemon",
+            web_assets=f"served by {config.principal_id} at {config.home}",
             port="8765 is owned by the running Nocturne daemon",
             toolchain="already running",
             failures=(),

@@ -52,7 +52,7 @@ def test_local_commands_dispatch(
     monkeypatch.setattr(
         cli,
         "init_nocturne",
-        lambda *, remote, stdout: calls.append(("init", remote)),
+        lambda *, remote, verification, stdout: calls.append(("init", remote)),
     )
     monkeypatch.setattr(
         cli,

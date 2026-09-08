@@ -1282,6 +1282,7 @@ class SpineClient:
         *,
         transport: httpx.AsyncBaseTransport | None = None,
         timeout: float = 30.0,
+        principal_id: str | None = None,
     ) -> None:
         normalized_url = _normalize_base_url(base_url)
         if not token.strip():
@@ -1289,6 +1290,7 @@ class SpineClient:
         if token != token.strip():
             raise ValueError("token must not contain surrounding whitespace")
         self.base_url = str(normalized_url)
+        self._principal_id = principal_id
         self._client = httpx.AsyncClient(
             base_url=normalized_url,
             headers={
@@ -1410,7 +1412,29 @@ class SpineClient:
         _raise_problem(response)
 
     async def list_memories(self, params: ListMemoriesParams) -> PagedMemoryListResponse:
-        """Mirror GET /v1/memories."""
+        """List heads; daemon-bound clients use the server-scoped graph projection."""
+
+        if self._principal_id is not None:
+            # The legacy list is Palace-wide; the graph filters in SQL and
+            # carries complete heads, so a daemon never downloads peer memories.
+            graph = await self.memory_graph(
+                MemoryGraphQuery(principal_id=self._principal_id, memory_ids=None)
+            )
+            memories = [MemoryUnit.model_validate(node["memory"]) for node in graph.nodes]
+            memories = [
+                memory for memory in memories
+                if memory.principal_id == self._principal_id
+                and (params.status is None or memory.status == params.status)
+                and (params.project_key is None or memory.project_key == params.project_key)
+                and (not params.q or any(params.q.strip().casefold() in value.casefold()
+                                         for value in (memory.label, memory.body)))
+            ]
+            memories.sort(key=lambda memory: str(memory.memory_id))
+            memories.sort(key=lambda memory: memory.updated_at, reverse=True)
+            return PagedMemoryListResponse(
+                items=memories[params.offset:params.offset + params.limit],
+                total=len(memories), limit=params.limit, offset=params.offset,
+            )
 
         response = await self._request(
             "GET",

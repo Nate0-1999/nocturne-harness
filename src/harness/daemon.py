@@ -740,8 +740,13 @@ def create_dev_app(
     """Compose the real H3 agent loop with trusted local M1 run context."""
 
     configured = settings or HarnessSettings()
+    home = (configured.nocturne_home or nocturne_home()).expanduser().resolve()
     discovery_root = Path.cwd() if seed_discovery_root is None else Path(seed_discovery_root)
     principal_id = _required_identity(configured.principal_id, "PRINCIPAL_ID")
+    if principal_id.startswith("nocturne-verification-") and home == (
+        Path.home() / ".nocturne"
+    ).resolve():
+        raise ValueError("Verification requires NOCTURNE_HOME to name a disposable folder.")
     machine_id = _required_identity(configured.machine_id, "MACHINE_ID")
     agent_id = _required_identity(configured.agent_id, "AGENT_ID")
     owned_spine = spine
@@ -749,7 +754,9 @@ def create_dev_app(
         token = configured.spine_token
         if token is None or not token.get_secret_value().strip():
             raise ValueError("SPINE_TOKEN is required for `harness dev`")
-        owned_spine = SpineClient(configured.spine_url, token.get_secret_value())
+        owned_spine = SpineClient(
+            configured.spine_url, token.get_secret_value(), principal_id=principal_id
+        )
     completion_router = CompletionRouter(configured)
     owned_agent = agent or HarnessAgent(
         configured,
@@ -764,7 +771,7 @@ def create_dev_app(
         static_context_tokens=configured.model_context_tokens,
         catalog=completion_router.catalog,
     )
-    journal = transcript_journal or TranscriptJournal(nocturne_home() / "transcripts")
+    journal = transcript_journal or TranscriptJournal(home / "transcripts")
     workspace_toolsets: dict[str, LazyStandardToolset] = {}
 
     def workspace_toolset_for(thread_id: str) -> LazyStandardToolset:
@@ -814,8 +821,8 @@ def create_dev_app(
 
     memory_contexts = ThreadMemoryContextRegistry()
     context_windows = ContextWindowTracker()
-    receipt_queue = SpendReceiptQueue(nocturne_home() / "receipt-queue")
-    resource_watch = ResourceWatch(nocturne_home())
+    receipt_queue = SpendReceiptQueue(home / "receipt-queue")
+    resource_watch = ResourceWatch(home)
     panel = MemoryPanelController(
         owned_spine,
         memory_contexts,
@@ -972,6 +979,10 @@ def create_dev_app(
     )
 
     def configure_extraction_routes(app: FastAPI) -> None:
+        @app.get("/v1/identity")
+        async def identity():
+            return {"principal_id": principal_id, "machine_id": machine_id, "home": str(home)}
+
         @app.get("/v1/symphonies/{symphony_id}")
         async def read_symphony(symphony_id: str):
             stack = await owned_symphony_experience.read(symphony_id)
@@ -989,7 +1000,7 @@ def create_dev_app(
         @app.put("/v1/transcripts/settings")
         async def update_transcript_settings(body: TranscriptBackupUpdate):
             try:
-                config = load_config(home=nocturne_home())
+                config = load_config(home=home)
                 set_transcript_backup(config, body.enabled)
             except Exception as exc:
                 raise HTTPException(

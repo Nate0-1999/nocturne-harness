@@ -3255,3 +3255,22 @@ connection live, run complete, but the remote received a second handshake instea
 of its action reply. Repair that lifecycle in `rackBridge.tsx`; leave the composer,
 snapshot barrier and Pydantic AI path untouched. The standing heartbeat now requires
 two consecutive sends and empty, enabled composers without reloading.
+
+## 109 — Verification owns its memory scope and home [P1, P4, M3VI]
+
+**Decision.** `init --verification` requires a separate home and persists a fresh
+`nocturne-verification-...` principal. Ordinary configs retain `local`. The Palace
+authenticates one static token; it does not derive the principal from that token
+(ADR-003, C.4). Bind the daemon's existing client to its configured principal.
+Its memory listings use the existing SQL-scoped graph projection, whose nodes
+carry complete memory heads; the legacy list downloads every principal before
+filtering. No server/authentication change or release is needed. The token still
+has Palace-wide authority; this is isolation of configured daemons, not new users.
+
+F069's launch sourced the disposable env but omitted `NOCTURNE_HOME`; the old
+writer did not persist it. Store the canonical home in that env and resolve the
+daemon's journal, receipts, resources and settings from the same settings value.
+The sourced-env replay fails on old code and passes now using only temporary
+homes. Verification refuses the default home; `up` refuses to adopt an unrelated
+daemon on its port. `/v1/identity` and doctor name the running principal/home.
+Transcript restore/status also use that principal instead of literal `local`.

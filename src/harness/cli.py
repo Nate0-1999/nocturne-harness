@@ -37,6 +37,9 @@ def build_parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="command", required=True)
     init = commands.add_parser("init", help="initialize a local or remote Palace")
     init.add_argument(
+        "--verification", action="store_true", help="create a disposable verification identity"
+    )
+    init.add_argument(
         "--remote",
         metavar="SPINE_URL",
         help="connect this daemon to an existing remote Palace",
@@ -128,7 +131,7 @@ def main(
     args = build_parser().parse_args(argv)
     try:
         if args.command == "init":
-            init_nocturne(remote=args.remote, stdout=stdout)
+            init_nocturne(remote=args.remote, verification=args.verification, stdout=stdout)
         elif args.command == "up":
             up_nocturne(open_browser=not args.no_open, stdout=stdout)
         elif args.command == "open":
