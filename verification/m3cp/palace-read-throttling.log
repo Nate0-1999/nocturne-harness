@@ -1,0 +1,7 @@
+INFO:     127.0.0.1:64188 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:64186 - "GET /v1/approval-queue HTTP/1.1" 500 Internal Server Error
+harness.spine_client.SpineResponseError: Spine returned an unexpected media type (HTTP 429)
+INFO:     127.0.0.1:64182 - "GET /v1/curation HTTP/1.1" 500 Internal Server Error
+harness.spine_client.SpineResponseError: Spine returned an unexpected media type (HTTP 429)
+INFO:     127.0.0.1:64152 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:64187 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 503 Service Unavailable

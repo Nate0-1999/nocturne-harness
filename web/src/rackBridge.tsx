@@ -87,6 +87,7 @@ export function RackPluginIframe({
   isRegressionFixture?: boolean
 }) {
   const frameRef = useRef<HTMLIFrameElement>(null)
+  const channelRef = useRef<MessageChannel | null>(null)
   const spatialLayerId = spatialContext?.layer_id ?? null
   const spatialFrameId = spatialContext?.frame_id ?? null
   const spatialScope = spatialContext?.scope ?? null
@@ -111,6 +112,11 @@ export function RackPluginIframe({
     }
   }, [theme])
 
+  useEffect(() => () => {
+    channelRef.current?.port1.close()
+    channelRef.current = null
+  }, [])
+
   useEffect(() => {
     let port: MessagePort | null = null
     let unsubscribe: (() => void)[] = []
@@ -120,8 +126,6 @@ export function RackPluginIframe({
         stop()
       }
       unsubscribe = []
-      port?.close()
-      port = null
     }
 
     const connect = () => {
@@ -130,7 +134,11 @@ export function RackPluginIframe({
         return
       }
       closeBridge()
-      const channel = new MessageChannel()
+      // Context changes update the existing connection. Replacing it would
+      // strand the remote's pending requests, including the prompt just sent.
+      const connecting = channelRef.current === null
+      const channel = channelRef.current ?? new MessageChannel()
+      channelRef.current = channel
       port = channel.port1
       port.onmessage = (event: MessageEvent<RemoteMessage>) => {
         const message = event.data
@@ -189,7 +197,12 @@ export function RackPluginIframe({
         theme,
         colorway,
       }
-      target.postMessage(message, frameOrigin, [channel.port2])
+      if (connecting) {
+        target.postMessage(message, frameOrigin, [channel.port2])
+      } else {
+        send({ type: 'snapshot', snapshot: message.snapshot })
+        send({ type: 'selection', selection: message.selection })
+      }
     }
 
     const send = (message: HostMessage) => {
@@ -218,13 +231,14 @@ export function RackPluginIframe({
         event.data.version === BRIDGE_VERSION &&
         event.data.module_id === manifest.id
       ) {
+        channelRef.current?.port1.close()
+        channelRef.current = null
         connect()
       }
     }
 
     globalThis.addEventListener('message', onWindowMessage)
-    // Rebind an already-loaded remote immediately when this instance's
-    // attunement changes. The READY message is only guaranteed on frame load.
+    // Refresh context immediately; only a newly loaded frame needs a handshake.
     connect()
     return () => {
       globalThis.removeEventListener('message', onWindowMessage)

@@ -1,0 +1,23 @@
+{
+  "principal": "m3cp-sop-verification-cp08",
+  "project_key": "/private/tmp/nocturne-m3cp-cp08/project",
+  "active_memories": 0,
+  "queue": {
+    "cards": []
+  },
+  "curator_activity": {
+    "principal_id": "m3cp-sop-verification-cp08",
+    "admitted_writes": 0,
+    "last_run_writes": 0,
+    "pressure_events": 0,
+    "last_run_pressure": 0,
+    "trigger_every": 25,
+    "pressure_trigger_every": 3,
+    "writes_until_run": 25,
+    "pressure_until_run": 3,
+    "latest_run": null,
+    "pending_cards": 0
+  },
+  "receipt_queue_files": 0,
+  "project_files": []
+}

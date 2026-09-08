@@ -3241,3 +3241,17 @@ Log unexpected adapter and loop failures with run/thread identity. Carry a bound
 reason in additive `run.done.error_message` and a durable assistant `run_error` event,
 so the Conversation status explains the failure both live and after reload. Existing
 provider refusal classification and cancellation behavior remain authoritative.
+
+## 108 — A context update keeps the module connected [P0, P2, M3CP]
+
+**Decision.** Keep the Rack MessageChannel for the iframe's lifetime; refresh its
+subscriptions, snapshot and selection when attunement changes. Only a new frame
+handshake or unmount closes the channel. M3AT (`9984d80`) tied channel teardown to
+the changing attunement object: submitting a prompt updates the catalog, replaces
+the channel, and loses the reply that clears the composer's pending send.
+
+The F072 trace disproves the charge's snapshot suspicion: `awaitingSnapshot=false`,
+connection live, run complete, but the remote received a second handshake instead
+of its action reply. Repair that lifecycle in `rackBridge.tsx`; leave the composer,
+snapshot barrier and Pydantic AI path untouched. The standing heartbeat now requires
+two consecutive sends and empty, enabled composers without reloading.

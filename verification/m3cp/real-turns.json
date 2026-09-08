@@ -1,0 +1,112 @@
+[
+  {
+    "thread_id": "eff27f70-ab42-4d2c-b884-fff9ad113574",
+    "messages": [
+      {
+        "message_id": "01M219GBQKKP72H8ATGD66S2FS",
+        "run_id": "01M219GHHM3NQ5V2135MEZ2TN2",
+        "role": "user",
+        "content": "For this disposable composer check, reply with exactly: First send received. Do not use tools or save memories.",
+        "state": "end_turn"
+      },
+      {
+        "message_id": "01M219GHHM3NQ5V2135MEZ2TN2",
+        "run_id": "01M219GHHM3NQ5V2135MEZ2TN2",
+        "role": "assistant",
+        "content": "First send received.\n\n",
+        "partial": false,
+        "events": [],
+        "event_kinds": [
+          "part_end",
+          "final_result",
+          "part_end",
+          "proposed_response"
+        ]
+      },
+      {
+        "message_id": "01M219HJWNW0KY6GRQHAAJE1H7",
+        "run_id": "01M219HJWPXH4V13DJQP5JXHEW",
+        "role": "user",
+        "content": "Second send: use bash to run printf COMPOSER-OK, then briefly report the result. Do not write files or save memories.",
+        "state": "end_turn"
+      },
+      {
+        "message_id": "01M219HJWPXH4V13DJQP5JXHEW",
+        "run_id": "01M219HJWPXH4V13DJQP5JXHEW",
+        "role": "assistant",
+        "content": "Result: `COMPOSER-OK` printed to stdout.",
+        "partial": false,
+        "events": [
+          {
+            "args_valid": true,
+            "event_kind": "function_tool_call",
+            "part": {
+              "args": "{\"command\": \"printf COMPOSER-OK\"}",
+              "id": null,
+              "part_kind": "tool-call",
+              "provider_details": null,
+              "provider_name": null,
+              "tool_call_id": "call_aBShpve1wgfZ1iL82xBPMAWs",
+              "tool_kind": null,
+              "tool_name": "bash"
+            }
+          },
+          {
+            "content": null,
+            "event_kind": "function_tool_result",
+            "part": {
+              "content": "[stdout]\nCOMPOSER-OK",
+              "metadata": null,
+              "outcome": "success",
+              "part_kind": "tool-return",
+              "timestamp": "2026-09-08T19:57:34.323158Z",
+              "tool_call_id": "call_aBShpve1wgfZ1iL82xBPMAWs",
+              "tool_kind": null,
+              "tool_name": "bash"
+            }
+          }
+        ],
+        "event_kinds": [
+          "part_end",
+          "part_start",
+          "part_delta",
+          "part_delta",
+          "part_delta",
+          "part_delta",
+          "part_delta",
+          "part_delta",
+          "part_delta",
+          "part_delta",
+          "part_delta",
+          "part_delta",
+          "part_end",
+          "function_tool_call",
+          "function_tool_result",
+          "part_end",
+          "final_result",
+          "part_end"
+        ]
+      },
+      {
+        "message_id": "01M219J9S405ZAA7PM6D4EM02Y",
+        "run_id": "01M219J9S5P4JRZFPJ436TBMWY",
+        "role": "user",
+        "content": "Third consecutive send: what exact word did the shell just print? Answer in one short sentence; no tools or memories.",
+        "state": "end_turn"
+      },
+      {
+        "message_id": "01M219J9S5P4JRZFPJ436TBMWY",
+        "run_id": "01M219J9S5P4JRZFPJ436TBMWY",
+        "role": "assistant",
+        "content": "The shell printed the exact word `COMPOSER-OK`.",
+        "partial": false,
+        "events": [],
+        "event_kinds": [
+          "part_end",
+          "final_result",
+          "part_end"
+        ]
+      }
+    ]
+  }
+]

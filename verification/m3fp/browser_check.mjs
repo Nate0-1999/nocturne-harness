@@ -65,8 +65,10 @@ try {
   }
   const toolPrompt = 'Explain, run one bash command, then explain the result.'
   const toolAnswer = 'I will check the shell.\n\nThe shell returned M3FZ-HEARTBEAT.\n\n'
-  await page.reload({ waitUntil: 'domcontentloaded' })
-  await conversation.getByText(answer, { exact: true }).waitFor({ state: 'visible' })
+  // F072 / PLAN M3CP: a completed send must clear and release the same composer.
+  await waitUntil(async () =>
+    await conversation.getByTestId('composer').isEnabled() &&
+    await conversation.getByTestId('composer').inputValue() === '')
   await conversation.getByTestId('composer').fill(toolPrompt)
   await conversation.getByTestId('composer').press('Enter')
   await conversation.getByText('The shell returned M3FZ-HEARTBEAT.', { exact: true })
@@ -87,7 +89,10 @@ try {
   })
   await page.screenshot({ path: resolve(evidenceDir, '03-talk-tool-talk.png') })
   result.tool_turn_ends_clean_with_proposal_and_journal = true
-  await page.reload({ waitUntil: 'domcontentloaded' })
+  await waitUntil(async () =>
+    await conversation.getByTestId('composer').isEnabled() &&
+    await conversation.getByTestId('composer').inputValue() === '')
+  result.consecutive_sends_without_reload = true
   await conversation.getByTestId('composer').fill('Show the heartbeat failure reason.')
   await conversation.getByTestId('composer').press('Enter')
   const failure = 'Run error · The heartbeat model stopped unexpectedly. · partial kept'

@@ -1,0 +1,67 @@
+file:///Users/nateoswalt/Developer/N8_Harness/harness/verification/m3fp/browser_check.mjs:137
+  throw lastError ?? new Error('heartbeat condition did not settle')
+                     ^
+
+Error: heartbeat condition did not settle
+    at waitUntil (file:///Users/nateoswalt/Developer/N8_Harness/harness/verification/m3fp/browser_check.mjs:137:22)
+    at async file:///Users/nateoswalt/Developer/N8_Harness/harness/verification/m3fp/browser_check.mjs:69:3
+
+Node.js v25.8.0
+INFO:     Started server process [37034]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:63909 (Press CTRL+C to quit)
+INFO:     127.0.0.1:63921 - "GET /__scenario__/identity?fixture=M3FP%20REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63925 - "GET /?fixture=M3FP%20REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63925 - "GET /assets/index-BaO_olSq.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63926 - "GET /assets/index-CMQgkL8V.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63931 - "GET /__scenario__/identity HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63932 - "GET /favicon.svg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63934 - "GET /?rack_module=header&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:63934 - "GET /?rack_module=threads&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:63936 - "GET /?rack_module=conversation&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir&conversation_mode=focused HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:63936 - "GET /?rack_module=memory&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:63940 - "GET /?rack_module=vitals&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:63934 - "GET /?rack_module=header&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir&fixture=M3FP+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63940 - "GET /?rack_module=context_bars&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:63940 - "GET /?rack_module=palace_state&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:63938 - "GET /?rack_module=threads&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir&fixture=M3FP+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63934 - "GET /?rack_module=palace_queue&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:63936 - "GET /?rack_module=conversation&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir&conversation_mode=focused&fixture=M3FP+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63942 - "GET /?rack_module=memory&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir&fixture=M3FP+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63940 - "GET /?rack_module=context_bars&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir&fixture=M3FP+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63944 - "GET /?rack_module=vitals&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir&fixture=M3FP+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63934 - "GET /?rack_module=palace_state&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir&fixture=M3FP+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63942 - "GET /assets/index-CMQgkL8V.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63936 - "GET /assets/index-BaO_olSq.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63938 - "GET /?rack_module=palace_queue&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir&fixture=M3FP+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63932 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63942 - "GET /?rack_module=threads&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:63936 - "GET /?rack_module=conversation&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir&conversation_mode=focused HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:63936 - "GET /?rack_module=memory&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:63936 - "GET /?rack_module=context_bars&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:63945 - "WebSocket /ws" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:63932 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63931 - "GET /v1/approval-queue HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63946 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63947 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63948 - "GET /v1/seeds/jump-start HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63932 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63949 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63949 - "GET /v1/rack/query?resource=scorer_console&as_of=now&thread_id=18d96032-6432-4324-b7e6-7e8795509f1a HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63949 - "GET /v1/rack/query?resource=context_window&as_of=now&thread_id=18d96032-6432-4324-b7e6-7e8795509f1a HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63936 - "GET /?rack_module=gate&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:63949 - "GET /v1/rack/query?resource=scorer_console&as_of=now&thread_id=18d96032-6432-4324-b7e6-7e8795509f1a HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63932 - "GET /v1/rack/query?resource=context_window&as_of=now&thread_id=18d96032-6432-4324-b7e6-7e8795509f1a HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63936 - "GET /?rack_module=gate&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A63909&theme=neo-noir&fixture=M3FP+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63949 - "GET /v1/rack/query?resource=context_window&as_of=now&thread_id=18d96032-6432-4324-b7e6-7e8795509f1a HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63952 - "GET /__scenario__/heartbeat HTTP/1.1" 200 OK
+
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/Users/nateoswalt/Developer/N8_Harness/harness/scripts/run_ui_canon.py", line 108, in _run_canon
+    subprocess.run(
+  File "/Users/nateoswalt/.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py", line 573, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['node', 'verification/m3fp/browser_check.mjs', '--base-url', 'http://127.0.0.1:63909', '--fixture', 'M3FP REGRESSION', '--evidence-dir', '/tmp/m3cp-reproduction/packaged-heartbeat']' returned non-zero exit status 1.

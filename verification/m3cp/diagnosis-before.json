@@ -1,0 +1,175 @@
+{
+  "trace": [
+    {
+      "type": "connect",
+      "selected": "74248c4a-2f5b-49b5-bede-74e04156024d"
+    },
+    {
+      "type": "dispatch",
+      "action": {
+        "type": "prompt.submit",
+        "prompt": "Open the memory gate, then answer the heartbeat check."
+      },
+      "request_id": "conversation:1"
+    },
+    {
+      "type": "connect",
+      "selected": "74248c4a-2f5b-49b5-bede-74e04156024d"
+    }
+  ],
+  "connection": "connected",
+  "thread": {
+    "messages": [
+      {
+        "message_id": "01M219D6G247RCN0T6HKYDFZ3G",
+        "run_id": "01M219D6G36PR4MHAGW16S59Y9",
+        "role": "user",
+        "content": "Open the memory gate, then answer the heartbeat check.",
+        "state": "end_turn"
+      },
+      {
+        "message_id": "01M219D6G36PR4MHAGW16S59Y9",
+        "run_id": "01M219D6G36PR4MHAGW16S59Y9",
+        "role": "assistant",
+        "content": "M2H final post: the relay stays explicit, candidates remain reviewable, and contradictions never passively resolve.",
+        "thinking": "",
+        "events": [
+          {
+            "tool_name": null,
+            "tool_call_id": null,
+            "event_kind": "final_result"
+          },
+          {
+            "index": 0,
+            "part": {
+              "content": "M2H final post: the relay stays explicit, candidates remain reviewable, and contradictions never passively resolve.",
+              "id": null,
+              "provider_name": null,
+              "provider_details": null,
+              "part_kind": "text"
+            },
+            "next_part_kind": null,
+            "event_kind": "part_end"
+          }
+        ],
+        "partial": false
+      }
+    ],
+    "outboundPrompts": [],
+    "resolvedModel": "local:m3fp-heartbeat",
+    "openGate": null,
+    "activeRun": null,
+    "usage": {
+      "requests": 1,
+      "input_tokens": 50,
+      "output_tokens": 16,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+    },
+    "queuedPrompts": [],
+    "lastError": null,
+    "projectConflictAwaitingSnapshot": false,
+    "awaitingSnapshot": false,
+    "memoryPanel": {
+      "items": [],
+      "total": 0,
+      "status": "ready",
+      "pending": null,
+      "lastResponse": {
+        "action": "state",
+        "request_id": "01M219D6PJ4S6CP8WTYAEBNQDP",
+        "result": "refreshed",
+        "items": [],
+        "total": 0
+      },
+      "completedEditRequestId": null
+    }
+  },
+  "composer": {
+    "disabled": true,
+    "value": "Open the memory gate, then answer the heartbeat check."
+  },
+  "ws": [
+    {
+      "type": "open"
+    },
+    {
+      "direction": "sent",
+      "type": "thread.snapshot",
+      "id": "01M219D6ARGFCFZXXW59YDGGFV",
+      "payload": {
+        "request": true,
+        "project_key": "/Users/nateoswalt/Developer/N8_Harness/harness",
+        "project_label": "harness",
+        "workspace_root": "/Users/nateoswalt/Developer/N8_Harness/harness"
+      }
+    },
+    {
+      "direction": "received",
+      "type": "thread.snapshot",
+      "payload": {
+        "messages": [],
+        "open_gate": null,
+        "active_run": null,
+        "project_key": "/Users/nateoswalt/Developer/N8_Harness/harness",
+        "project_label": "harness",
+        "workspace_root": "/Users/nateoswalt/Developer/N8_Harness/harness",
+        "current_location": "/Users/nateoswalt/Developer/N8_Harness/harness",
+        "request_id": "01M219D6ARGFCFZXXW59YDGGFV"
+      }
+    },
+    {
+      "direction": "sent",
+      "type": "memory.panel.update",
+      "id": "01M219D6AS9SSMCY193ECA97NK",
+      "payload": {
+        "action": "refresh"
+      }
+    },
+    {
+      "direction": "sent",
+      "type": "prompt.submit",
+      "id": "01M219D6G247RCN0T6HKYDFZ3G",
+      "payload": {
+        "prompt": "Open the memory gate, then answer the heartbeat check."
+      }
+    },
+    {
+      "direction": "received",
+      "type": "run.started",
+      "payload": {
+        "run_id": "01M219D6G36PR4MHAGW16S59Y9",
+        "prompt_id": "01M219D6G247RCN0T6HKYDFZ3G",
+        "resolved_model": "local:m3fp-heartbeat"
+      }
+    },
+    {
+      "direction": "sent",
+      "type": "gate.commit",
+      "id": "01M219D6MJ3JCGNFDNMCA0ASJD",
+      "payload": {
+        "run_id": "01M219D6G36PR4MHAGW16S59Y9",
+        "injection_id": "0f1a721b-0775-4037-b4f2-d29fc2758b1f",
+        "removed": [],
+        "added_back": []
+      }
+    },
+    {
+      "direction": "received",
+      "type": "run.done",
+      "payload": {
+        "run_id": "01M219D6G36PR4MHAGW16S59Y9",
+        "stop_reason": "end_turn",
+        "partial": false
+      }
+    },
+    {
+      "direction": "sent",
+      "type": "memory.panel.update",
+      "id": "01M219D6PJ4S6CP8WTYAEBNQDP",
+      "payload": {
+        "action": "refresh"
+      }
+    }
+  ]
+}
