@@ -1,0 +1,268 @@
+[
+  {
+    "principal_id": "nocturne-verification-159e3bbc-ab7b-464f-a33b-3e8392049d1c",
+    "thread_id": "fbbf45ed-d270-4bed-8a8b-2d715d5f8e9e",
+    "stored_memory": {
+      "memory_id": "02e15373-27c0-4ef5-a1af-63e7a088813e",
+      "principal_id": "nocturne-verification-159e3bbc-ab7b-464f-a33b-3e8392049d1c",
+      "label": "M3GD verification notebook with copper covers",
+      "body": "The M3GD verification notebook has copper covers.",
+      "kind": "fact",
+      "keywords": [
+        "m3gd",
+        "verification",
+        "notebook",
+        "copper",
+        "covers"
+      ],
+      "project_key": "/private/tmp/m3gd-verification/workspace",
+      "thread_origin": "fbbf45ed-d270-4bed-8a8b-2d715d5f8e9e",
+      "origin_thread_id": "fbbf45ed-d270-4bed-8a8b-2d715d5f8e9e",
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3gd-verification/workspace",
+      "pin": false,
+      "status": "active",
+      "revision": 2,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 1,
+        "never_kills": 0,
+        "last_injected_at": "2026-09-09T19:39:49.437216+00:00"
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-09T19:38:33.889216Z",
+      "updated_at": "2026-09-09T19:39:49.432799Z"
+    },
+    "cleanup": {
+      "memory_id": "02e15373-27c0-4ef5-a1af-63e7a088813e",
+      "principal_id": "nocturne-verification-159e3bbc-ab7b-464f-a33b-3e8392049d1c",
+      "label": "M3GD verification notebook with copper covers",
+      "body": "The M3GD verification notebook has copper covers.",
+      "kind": "fact",
+      "keywords": [
+        "m3gd",
+        "verification",
+        "notebook",
+        "copper",
+        "covers"
+      ],
+      "project_key": "/private/tmp/m3gd-verification/workspace",
+      "thread_origin": "fbbf45ed-d270-4bed-8a8b-2d715d5f8e9e",
+      "origin_thread_id": "fbbf45ed-d270-4bed-8a8b-2d715d5f8e9e",
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3gd-verification/workspace",
+      "pin": false,
+      "status": "tombstoned",
+      "revision": 3,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 1,
+        "never_kills": 0,
+        "last_injected_at": "2026-09-09T19:39:49.437216+00:00"
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-09T19:38:33.889216Z",
+      "updated_at": "2026-09-09T20:01:48.918507Z"
+    },
+    "active_memories_after": 0,
+    "queue_cards_after": 0,
+    "curator_activity": {
+      "principal_id": "nocturne-verification-159e3bbc-ab7b-464f-a33b-3e8392049d1c",
+      "admitted_writes": 1,
+      "last_run_writes": 0,
+      "pressure_events": 0,
+      "last_run_pressure": 0,
+      "trigger_every": 25,
+      "pressure_trigger_every": 3,
+      "writes_until_run": 24,
+      "pressure_until_run": 3,
+      "latest_run": null,
+      "pending_cards": 0
+    },
+    "scoped_spend": {
+      "as_of": "2026-09-09T20:01:49.256434Z",
+      "window_minutes": 60,
+      "threads": [
+        {
+          "input_tokens": "7418.000000000",
+          "kv_cache_tokens": "8625.000000000",
+          "reasoning_tokens": "479.000000000",
+          "output_tokens": "525.000000000",
+          "total_usd": "0.003905700000",
+          "total_receipt_lines": 37,
+          "total_unpriced_lines": 0,
+          "spend_per_hour_usd": "0.003905700000",
+          "hourly_receipt_lines": 37,
+          "hourly_unpriced_lines": 0,
+          "thread_id": "fbbf45ed-d270-4bed-8a8b-2d715d5f8e9e",
+          "models": [
+            {
+              "input_tokens": "7268.000000000",
+              "kv_cache_tokens": "8625.000000000",
+              "reasoning_tokens": "479.000000000",
+              "output_tokens": "525.000000000",
+              "total_usd": "0.003902700000",
+              "total_receipt_lines": 32,
+              "total_unpriced_lines": 0,
+              "spend_per_hour_usd": "0.003902700000",
+              "hourly_receipt_lines": 32,
+              "hourly_unpriced_lines": 0,
+              "model": "minimax/minimax-m3"
+            },
+            {
+              "input_tokens": "150.000000000",
+              "kv_cache_tokens": "0",
+              "reasoning_tokens": "0",
+              "output_tokens": "0",
+              "total_usd": "0.000003000000",
+              "total_receipt_lines": 5,
+              "total_unpriced_lines": 0,
+              "spend_per_hour_usd": "0.000003000000",
+              "hourly_receipt_lines": 5,
+              "hourly_unpriced_lines": 0,
+              "model": "text-embedding-3-small"
+            }
+          ]
+        }
+      ],
+      "purposes": []
+    }
+  },
+  {
+    "principal_id": "nocturne-verification-9e5937a0-7cc7-449d-a886-e8cafa5f20af",
+    "thread_id": "36f5e86d-40a4-4800-bd67-ecbed55128d5",
+    "stored_memory": {
+      "memory_id": "2779a040-7091-4c7c-8a0e-c6e793a66b05",
+      "principal_id": "nocturne-verification-9e5937a0-7cc7-449d-a886-e8cafa5f20af",
+      "label": "M3GD verification notebook on silver shelf",
+      "body": "The M3GD verification notebook rests on a silver shelf.",
+      "kind": "fact",
+      "keywords": [
+        "notebook",
+        "m3gd",
+        "verification",
+        "silver",
+        "shelf"
+      ],
+      "project_key": "/private/tmp/m3gd-verification/workspace",
+      "thread_origin": "36f5e86d-40a4-4800-bd67-ecbed55128d5",
+      "origin_thread_id": "36f5e86d-40a4-4800-bd67-ecbed55128d5",
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3gd-verification/workspace",
+      "pin": false,
+      "status": "active",
+      "revision": 3,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 2,
+        "never_kills": 0,
+        "last_injected_at": "2026-09-09T20:00:23.178335+00:00"
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-09T19:58:18.158205Z",
+      "updated_at": "2026-09-09T20:00:23.168820Z"
+    },
+    "cleanup": {
+      "memory_id": "2779a040-7091-4c7c-8a0e-c6e793a66b05",
+      "principal_id": "nocturne-verification-9e5937a0-7cc7-449d-a886-e8cafa5f20af",
+      "label": "M3GD verification notebook on silver shelf",
+      "body": "The M3GD verification notebook rests on a silver shelf.",
+      "kind": "fact",
+      "keywords": [
+        "notebook",
+        "m3gd",
+        "verification",
+        "silver",
+        "shelf"
+      ],
+      "project_key": "/private/tmp/m3gd-verification/workspace",
+      "thread_origin": "36f5e86d-40a4-4800-bd67-ecbed55128d5",
+      "origin_thread_id": "36f5e86d-40a4-4800-bd67-ecbed55128d5",
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3gd-verification/workspace",
+      "pin": false,
+      "status": "tombstoned",
+      "revision": 4,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 2,
+        "never_kills": 0,
+        "last_injected_at": "2026-09-09T20:00:23.178335+00:00"
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-09T19:58:18.158205Z",
+      "updated_at": "2026-09-09T20:01:52.553887Z"
+    },
+    "active_memories_after": 0,
+    "queue_cards_after": 0,
+    "curator_activity": {
+      "principal_id": "nocturne-verification-9e5937a0-7cc7-449d-a886-e8cafa5f20af",
+      "admitted_writes": 1,
+      "last_run_writes": 0,
+      "pressure_events": 0,
+      "last_run_pressure": 0,
+      "trigger_every": 25,
+      "pressure_trigger_every": 3,
+      "writes_until_run": 24,
+      "pressure_until_run": 3,
+      "latest_run": null,
+      "pending_cards": 0
+    },
+    "scoped_spend": {
+      "as_of": "2026-09-09T20:01:52.899020Z",
+      "window_minutes": 60,
+      "threads": [
+        {
+          "input_tokens": "7598.000000000",
+          "kv_cache_tokens": "11983.000000000",
+          "reasoning_tokens": "568.000000000",
+          "output_tokens": "519.000000000",
+          "total_usd": "0.004250980000",
+          "total_receipt_lines": 36,
+          "total_unpriced_lines": 0,
+          "spend_per_hour_usd": "0.004250980000",
+          "hourly_receipt_lines": 36,
+          "hourly_unpriced_lines": 0,
+          "thread_id": "36f5e86d-40a4-4800-bd67-ecbed55128d5",
+          "models": [
+            {
+              "input_tokens": "7413.000000000",
+              "kv_cache_tokens": "11983.000000000",
+              "reasoning_tokens": "568.000000000",
+              "output_tokens": "519.000000000",
+              "total_usd": "0.004247280000",
+              "total_receipt_lines": 32,
+              "total_unpriced_lines": 0,
+              "spend_per_hour_usd": "0.004247280000",
+              "hourly_receipt_lines": 32,
+              "hourly_unpriced_lines": 0,
+              "model": "minimax/minimax-m3"
+            },
+            {
+              "input_tokens": "185.000000000",
+              "kv_cache_tokens": "0",
+              "reasoning_tokens": "0",
+              "output_tokens": "0",
+              "total_usd": "0.000003700000",
+              "total_receipt_lines": 4,
+              "total_unpriced_lines": 0,
+              "spend_per_hour_usd": "0.000003700000",
+              "hourly_receipt_lines": 4,
+              "hourly_unpriced_lines": 0,
+              "model": "text-embedding-3-small"
+            }
+          ]
+        }
+      ],
+      "purposes": []
+    }
+  }
+]
