@@ -12,6 +12,8 @@ from harness.envelope import (
     Envelope,
     EnvelopeFactory,
     MessageType,
+    PromptSubmitPayload,
+    ProposedResponseFirePayload,
     StopReason,
     SymphonyCancelAttemptPayload,
     SymphonyCharterForkPayload,
@@ -85,6 +87,23 @@ def ids():
         return f"{number:026d}"
 
     return next_id
+
+
+def test_specialized_prompt_refusals_preserve_one_owner_intent() -> None:
+    """A-052/M3DK quote 'image, Symphony launch, and Symphony steering are mutually exclusive'
+    and 'a proposed response must be an ordinary text prompt'.
+    """
+    value = launch("draft")
+    with pytest.raises(ValidationError, match="mutually exclusive"):
+        PromptSubmitPayload(prompt="go", symphony=value, symphony_intervention={
+            "kind": "clarification", "symphony_id": "stack", "attempt_id": "attempt",
+            "instruction": "clarify",
+        })
+    with pytest.raises(
+        ValidationError, match="a proposed response must be an ordinary text prompt"
+    ):
+        PromptSubmitPayload(prompt="go", symphony=value,
+                            proposed_response=ProposedResponseFirePayload(proposal_run_id="run"))
 
 
 def launch(draft_id: str, **changes: object) -> SymphonyLaunchPayload:
@@ -374,7 +393,9 @@ async def test_live_toy_stack_exercises_all_three_steering_classes_without_rewri
 
 
 def test_launch_requires_core_charter_order_performance_metrics_and_signature() -> None:
-    """ADR-012 / D.2 102 / T2: auto mode cannot omit judgment or authority acceptance."""
+    """ADR-012 / D.2 102 / T2: auto mode cannot omit judgment or authority acceptance. M3GD /
+    SPEC B.6 r14: exercised refusal: "the performance charter requires precalculated metrics".
+    """
 
     valid = launch("00000000000000000000000001").model_dump(mode="json")
     valid["judge_charters"][2]["metrics"] = []
@@ -385,6 +406,28 @@ def test_launch_requires_core_charter_order_performance_metrics_and_signature() 
     valid["authority"]["signed"] = False
     with pytest.raises(ValidationError, match="literal_error"):
         SymphonyLaunchPayload.model_validate(valid)
+
+
+@pytest.mark.parametrize("damage,message", [
+    ("metric-seat", "precalculated metrics belong only to performance"),
+    ("recipe", "recipe step ids must be unique"),
+    ("judges", "judge charters must fix motivation, implementation, performance"),
+])
+def test_signed_launch_cannot_mix_judge_authority_or_step_identity(damage, message) -> None:
+    """T2 / D.2 102: a paid launch preserves distinct judge authority and workspace steps.
+    [ADR-012] M3GD / SPEC B.6 r14: exercised refusals: "judge charters must fix motivation,
+    implementation, performance"; "precalculated metrics belong only to performance"; "recipe
+    step ids must be unique".
+    """
+    raw = launch("00000000000000000000000001").model_dump(mode="json")
+    if damage == "metric-seat":
+        raw["judge_charters"][0]["metrics"] = ["misplaced"]
+    elif damage == "recipe":
+        raw["recipe"].append(raw["recipe"][0])
+    else:
+        raw["judge_charters"][1]["seat"] = "motivation"
+    with pytest.raises(ValidationError, match=message):
+        SymphonyLaunchPayload.model_validate(raw)
 
 
 @pytest.mark.asyncio
