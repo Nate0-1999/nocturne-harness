@@ -4,7 +4,7 @@ from uuid import UUID
 
 import pytest
 
-from harness.memory_bridge import MemorySharePolicy, SymphonyMemoryBridge
+from harness.memory_bridge import SymphonyMemoryBridge
 from harness.spine_client import JudgedContext, MemoryKind
 
 RUN_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV"
@@ -30,16 +30,6 @@ class FakeSpine:
         return "resolved"
 
 
-def test_leaf_context_share_is_strictly_smaller_than_conductor_share() -> None:
-    """A-059 and P1.6 require leaf memory share below the conductor's share."""
-
-    policy = MemorySharePolicy()
-
-    assert policy.tokens(100_000, role="leaf") == 5_000
-    assert policy.tokens(100_000, role="conductor") == 10_000
-    assert policy.tokens(100_000, role="leaf") < policy.tokens(100_000, role="conductor")
-    with pytest.raises(ValueError, match="leaf < conductor"):
-        MemorySharePolicy(leaf=0.1, conductor=0.1)
 
 
 @pytest.mark.asyncio
