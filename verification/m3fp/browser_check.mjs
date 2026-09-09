@@ -39,6 +39,12 @@ try {
   await waitUntil(async () => await conversation.getByTestId('composer').inputValue() === prompt)
   await conversation.getByTestId('composer').press('Enter')
   await frame('gate').getByTestId('memory-gate').waitFor({ state: 'visible' })
+  // SPEC B.6 r14 / M3GD: reviewing memory holds the send, not the owner's draft.
+  await conversation.getByTestId('composer').fill('Draft while reviewing memory')
+  if (await conversation.getByTestId('send').isEnabled()) {
+    throw new Error('Memory review must finish before sending another prompt')
+  }
+  await conversation.getByTestId('composer').fill('')
   await page.screenshot({ path: resolve(evidenceDir, '01-first-prompt-gate.png') })
 
   await frame('gate').getByTestId('memory-gate-continue').click()
@@ -108,6 +114,15 @@ try {
   await conversation.getByText(failure, { exact: true }).waitFor({ state: 'visible' })
   await page.screenshot({ path: resolve(evidenceDir, '04-failure-reason-after-reload.png') })
   result.failure_reason_survives_reload = true
+  // ADR-018: a module must not transfer its capability to an external host.
+  const refusedFrame = await context.newPage()
+  const refusal = refusedFrame.waitForEvent('pageerror')
+  await refusedFrame.goto(`${baseUrl}/?rack_module=conversation&rack_host=https://outside.invalid`)
+  if ((await refusal).message !== 'rack frame did not receive a valid local host origin') {
+    throw new Error('Expected the local host credential wall')
+  }
+  await refusedFrame.close()
+  result.external_rack_host_refused = true
   await writeFile(
     resolve(evidenceDir, 'heartbeat.json'),
     `${JSON.stringify(result, null, 2)}\n`,
