@@ -1,0 +1,175 @@
+{
+  "fixture": false,
+  "factory": "harness.packaged:create_app",
+  "home": "fresh production-initialized disposable home",
+  "origin": "http://localhost:51950",
+  "turns": [
+    {
+      "events_file": "real-walk-events.json",
+      "thread_id": "36f5e86d-40a4-4800-bd67-ecbed55128d5",
+      "run_id": "01M23VZ99HBXZFGTJBH92695EF",
+      "model": "openrouter:minimax/minimax-m3",
+      "terminal": {
+        "run_id": "01M23VZ99HBXZFGTJBH92695EF",
+        "stop_reason": "end_turn",
+        "partial": false
+      },
+      "usage": {
+        "requests": 2,
+        "input_tokens": 4618,
+        "output_tokens": 253,
+        "cache_read_tokens": 2382,
+        "run_id": "01M23VZ99HBXZFGTJBH92695EF"
+      },
+      "public_text": "Shell check: ran exactly `printf M3GD-FINAL-TALK-TOOL-TALK` and the process printed `M3GD-FINAL-TALK-TOOL-TALK` to stdout, exiting 0. The token is unmodified \u2014 no shell expansion, no trailing newline (printf vs echo), and no memory write occurred.\n\n",
+      "tool_calls": [
+        [
+          68,
+          {
+            "tool_name": "bash",
+            "args": "{\"command\": \"printf M3GD-FINAL-TALK-TOOL-TALK\"}",
+            "tool_call_id": "call_ccKVcbjIK7X0F1eZtPwWU7Aq",
+            "tool_kind": null,
+            "id": null,
+            "provider_name": null,
+            "provider_details": null,
+            "part_kind": "tool-call"
+          }
+        ]
+      ],
+      "tool_results": [
+        [
+          70,
+          "bash"
+        ]
+      ],
+      "public_text_before_tool": false,
+      "public_text_after_tool": true
+    },
+    {
+      "events_file": "real-walk-events.json",
+      "thread_id": "36f5e86d-40a4-4800-bd67-ecbed55128d5",
+      "run_id": "01M23VZQ9PPYFXK4TP0N7C8XJQ",
+      "model": "openrouter:minimax/minimax-m3",
+      "terminal": {
+        "run_id": "01M23VZQ9PPYFXK4TP0N7C8XJQ",
+        "stop_reason": "end_turn",
+        "partial": false
+      },
+      "usage": {
+        "requests": 1,
+        "input_tokens": 266,
+        "output_tokens": 63,
+        "cache_read_tokens": 107,
+        "run_id": "01M23VZQ9PPYFXK4TP0N7C8XJQ"
+      },
+      "public_text": "Remembered 'M3GD verification notebook on silver shelf' (2779a040-7091-4c7c-8a0e-c6e793a66b05).",
+      "tool_calls": [],
+      "tool_results": [],
+      "public_text_before_tool": false,
+      "public_text_after_tool": false
+    },
+    {
+      "events_file": "real-walk-events.json",
+      "thread_id": "36f5e86d-40a4-4800-bd67-ecbed55128d5",
+      "run_id": "01M23VZWA01KHGCV78056VF8GS",
+      "model": "openrouter:minimax/minimax-m3",
+      "terminal": {
+        "run_id": "01M23VZWA01KHGCV78056VF8GS",
+        "stop_reason": "end_turn",
+        "partial": false
+      },
+      "usage": {
+        "requests": 3,
+        "input_tokens": 8113,
+        "output_tokens": 414,
+        "cache_read_tokens": 5706,
+        "run_id": "01M23VZWA01KHGCV78056VF8GS"
+      },
+      "public_text": "Browser check: navigated to `file:///private/tmp/m3gd-verification/workspace/browser-proof.html` (returned 200), captured the screenshot, and the heading rendered in the page is:\n\n**M3GD real browser tool**\n\nWith the body text below it reading \"Disposable verification workspace. Palace and OpenRouter are real.\" No memory write was made.",
+      "tool_calls": [
+        [
+          392,
+          {
+            "tool_name": "navigate",
+            "args": "{\"url\": \"file:///private/tmp/m3gd-verification/workspace/browser-proof.html\"}",
+            "tool_call_id": "call_q25IoJLT5IwJD6mQ1xPe6bhD",
+            "tool_kind": null,
+            "id": null,
+            "provider_name": null,
+            "provider_details": null,
+            "part_kind": "tool-call"
+          }
+        ],
+        [
+          445,
+          {
+            "tool_name": "screenshot",
+            "args": "{}",
+            "tool_call_id": "call_GRC1sMDDqMniA9U3Y8qoNg4G",
+            "tool_kind": null,
+            "id": null,
+            "provider_name": null,
+            "provider_details": null,
+            "part_kind": "tool-call"
+          }
+        ]
+      ],
+      "tool_results": [
+        [
+          394,
+          "navigate"
+        ],
+        [
+          447,
+          "screenshot"
+        ]
+      ],
+      "public_text_before_tool": false,
+      "public_text_after_tool": true
+    },
+    {
+      "events_file": "real-talk-tool-talk-events.json",
+      "thread_id": "36f5e86d-40a4-4800-bd67-ecbed55128d5",
+      "run_id": "01M23W3NCVNYVXAXN441RF8M4R",
+      "model": "openrouter:minimax/minimax-m3",
+      "terminal": {
+        "run_id": "01M23W3NCVNYVXAXN441RF8M4R",
+        "stop_reason": "end_turn",
+        "partial": false
+      },
+      "usage": {
+        "requests": 2,
+        "input_tokens": 6399,
+        "output_tokens": 357,
+        "cache_read_tokens": 3788,
+        "run_id": "01M23W3NCVNYVXAXN441RF8M4R"
+      },
+      "public_text": "I will check the shell now.Shell check: ran `printf M3GD-SEQUENCE-PROOF` followed by an exit-status probe.\n\n- **Actual stdout:** `M3GD-SEQUENCE-PROOFEXIT=0` (printf emitted no trailing newline, so `echo \"EXIT=$?\"` ran back-to-back, concatenating as one line).\n- **Exit code:** `0` \u2014 `printf` returned 0, which is what `$?` reflected.\n\nNo memory was saved.\n\n",
+      "tool_calls": [
+        [
+          76,
+          {
+            "tool_name": "bash",
+            "args": "{\"command\": \"printf M3GD-SEQUENCE-PROOF; echo \\\"EXIT=$?\\\"\"}",
+            "tool_call_id": "call_t9hP2TF2I7JnnosrgHSWcyzy",
+            "tool_kind": null,
+            "id": null,
+            "provider_name": null,
+            "provider_details": null,
+            "part_kind": "tool-call"
+          }
+        ]
+      ],
+      "tool_results": [
+        [
+          78,
+          "bash"
+        ]
+      ],
+      "public_text_before_tool": true,
+      "public_text_after_tool": true
+    }
+  ],
+  "earlier_attempts": "Initial remember metadata was refused; an old-home prepare failed without a determined cause. First final shell turn had no public preamble; the explicit fourth turn proves public talk-tool-talk. No failures were hidden or reclassified."
+}
