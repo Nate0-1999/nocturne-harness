@@ -26,14 +26,8 @@ class MemorySharePolicy:
     leaf: float = 0.05
     conductor: float = 0.10
 
-    def __post_init__(self) -> None:
-        if not 0 < self.leaf < self.conductor <= 1:
-            raise ValueError("memory shares must satisfy 0 < leaf < conductor <= 1")
-
     def tokens(self, model_context_tokens: int, *, role: Literal["leaf", "conductor"]) -> int:
-        if model_context_tokens <= 0:
-            raise ValueError("model_context_tokens must be positive")
-        return max(1, int(model_context_tokens * getattr(self, role)))
+        return int(model_context_tokens * getattr(self, role))
 
 
 class SymphonyMemoryBridge:
