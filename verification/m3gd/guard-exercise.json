@@ -1,0 +1,1078 @@
+{
+  "src/harness/pydantic_harness_adapter.py:293": {
+    "tests": [
+      "tests/golden/test_workspace_tool_outputs.py::test_seven_coding_tool_outputs_are_explicit",
+      "tests/test_pydantic_harness_toolset.py::test_location_fence_precedes_act_and_move_precedes_next_act"
+    ],
+    "messages": [
+      "Modification requires presence in the file's directory. Move to /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-394/test_seven_coding_tool_outputs0/sub first.",
+      "Modification requires presence in the file's directory. Move to /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-394/test_location_fence_precedes_a0/sibling first.",
+      "Modification requires presence in the file's directory. Move to /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-394/test_location_fence_precedes_a0/current/deep first."
+    ],
+    "function": "_preflight",
+    "source": "raise ToolsetError("
+  },
+  "src/harness/agent.py:695": {
+    "tests": [
+      "tests/test_agent.py::test_extraction_cannot_invent_write_targets[merge-targets0-extraction verdict targeted a memory outside its fetched neighbors]"
+    ],
+    "messages": [
+      "extraction verdict targeted a memory outside its fetched neighbors"
+    ],
+    "function": "propose_extraction_verdict",
+    "source": "raise ValueError(\"extraction verdict targeted a memory outside its fetched neighbors\")"
+  },
+  "src/harness/agent.py:698": {
+    "tests": [
+      "tests/test_agent.py::test_extraction_cannot_invent_write_targets[new-targets1-new extraction verdict cannot have targets]"
+    ],
+    "messages": [
+      "new extraction verdict cannot have targets"
+    ],
+    "function": "propose_extraction_verdict",
+    "source": "raise ValueError(\"new extraction verdict cannot have targets\")"
+  },
+  "src/harness/agent.py:701": {
+    "tests": [
+      "tests/test_agent.py::test_extraction_cannot_invent_write_targets[merge-targets2-non-new extraction verdict requires a target]"
+    ],
+    "messages": [
+      "non-new extraction verdict requires a target"
+    ],
+    "function": "propose_extraction_verdict",
+    "source": "raise ValueError(\"non-new extraction verdict requires a target\")"
+  },
+  "src/harness/agent.py:725": {
+    "tests": [
+      "tests/test_agent.py::test_seed_draft_walls_fail_before_returning_a_write_batch[update0-seed splitter produced an invalid label]"
+    ],
+    "messages": [
+      "seed splitter produced an invalid label"
+    ],
+    "function": "split_seed",
+    "source": "raise ValueError(\"seed splitter produced an invalid label\")"
+  },
+  "src/harness/agent.py:728": {
+    "tests": [
+      "tests/test_agent.py::test_seed_draft_walls_fail_before_returning_a_write_batch[update1-seed splitter produced a child above the 128-token limit]"
+    ],
+    "messages": [
+      "seed splitter produced a child above the 128-token limit"
+    ],
+    "function": "split_seed",
+    "source": "raise ValueError(\"seed splitter produced a child above the 128-token limit\")"
+  },
+  "src/harness/agent.py:731": {
+    "tests": [
+      "tests/test_agent.py::test_seed_draft_walls_fail_before_returning_a_write_batch[update2-seed splitter produced invalid keywords]"
+    ],
+    "messages": [
+      "seed splitter produced invalid keywords"
+    ],
+    "function": "split_seed",
+    "source": "raise ValueError(\"seed splitter produced invalid keywords\")"
+  },
+  "src/harness/agent_runtime.py:350": {
+    "tests": [
+      "tests/test_agent_runtime.py::test_dead_ledger_queues_estimate_and_never_retracts_answer[spend1]"
+    ],
+    "messages": [
+      "Spine accepted an incomplete spend receipt batch"
+    ],
+    "function": "_record_spend",
+    "source": "raise RuntimeError(\"Spine accepted an incomplete spend receipt batch\")"
+  },
+  "src/harness/run_loop.py:1885": {
+    "tests": [
+      "tests/test_daemon.py::test_project_rebind_conflict_returns_error_then_authoritative_snapshot",
+      "tests/test_run_loop.py::test_project_binding_is_journaled_once_and_becomes_authoritative",
+      "tests/test_run_loop.py::test_legacy_nonempty_thread_cannot_be_silently_reprojected"
+    ],
+    "messages": [
+      "thread project context is already fixed"
+    ],
+    "function": "_bind_project_locked",
+    "source": "raise ProjectBindingConflict(project_key, state.project_key)"
+  },
+  "src/harness/envelope.py:92": {
+    "tests": [
+      "tests/test_envelope.py::test_prompt_submit_rejects_noncanonical_mismatched_extra_or_oversize_image[image2]"
+    ],
+    "messages": [
+      "image media_type does not match its file signature"
+    ],
+    "function": "validate_signature",
+    "source": "raise ValueError(\"image media_type does not match its file signature\")"
+  },
+  "src/harness/envelope.py:48": {
+    "tests": [
+      "tests/test_envelope.py::test_prompt_submit_rejects_noncanonical_mismatched_extra_or_oversize_image[image4]"
+    ],
+    "messages": [
+      "image exceeds the 5 MiB decoded limit"
+    ],
+    "function": "_decode_canonical_image",
+    "source": "raise ValueError(\"image exceeds the 5 MiB decoded limit\")"
+  },
+  "src/harness/envelope.py:44": {
+    "tests": [
+      "tests/test_envelope.py::test_prompt_submit_rejects_noncanonical_mismatched_extra_or_oversize_image[image5]"
+    ],
+    "messages": [
+      "image exceeds the 5 MiB decoded limit"
+    ],
+    "function": "_decode_canonical_image",
+    "source": "raise ValueError(\"image exceeds the 5 MiB decoded limit\")"
+  },
+  "src/harness/envelope.py:659": {
+    "tests": [
+      "tests/test_envelope.py::test_memory_panel_requires_outer_thread_in_both_directions",
+      "tests/test_envelope.py::test_prompt_submit_requires_outer_thread",
+      "tests/test_envelope.py::test_gate_commit_requires_outer_thread",
+      "tests/test_envelope.py::test_thread_snapshot_request_requires_outer_thread"
+    ],
+    "messages": [
+      "memory.panel.update requires a non-blank outer thread_id",
+      "prompt.submit requires a non-blank outer thread_id",
+      "gate.commit requires a non-blank outer thread_id",
+      "thread.snapshot requires a non-blank outer thread_id"
+    ],
+    "function": "validate_type_payload_contract",
+    "source": "raise ValueError(f\"{self.type} requires a non-blank outer thread_id\")"
+  },
+  "src/harness/envelope.py:439": {
+    "tests": [
+      "tests/test_envelope.py::test_wrong_resolution_rejects_inconsistent_stage_shapes[payload0]"
+    ],
+    "messages": [
+      "edit resolution requires a nonblank body"
+    ],
+    "function": "require_action_body",
+    "source": "raise ValueError(\"edit resolution requires a nonblank body\")"
+  },
+  "src/harness/envelope.py:442": {
+    "tests": [
+      "tests/test_envelope.py::test_wrong_resolution_rejects_inconsistent_stage_shapes[payload1]"
+    ],
+    "messages": [
+      "expire resolution must not carry a body"
+    ],
+    "function": "require_action_body",
+    "source": "raise ValueError(\"expire resolution must not carry a body\")"
+  },
+  "src/harness/memory_gate.py:380": {
+    "tests": [
+      "tests/test_memory_gate.py::test_wrong_resolution_cannot_patch_a_different_revision"
+    ],
+    "messages": [
+      "wrong-resolution decision does not match the current gate"
+    ],
+    "function": "_resolve_wrong_memory",
+    "source": "raise ValueError(\"wrong-resolution decision does not match the current gate\")"
+  },
+  "src/harness/transcript.py:1132": {
+    "tests": [
+      "tests/test_onboarding.py::test_up_refuses_a_read_only_journal_before_starting_services",
+      "tests/test_transcript.py::test_startup_preflight_refuses_a_read_only_journal_with_plain_remedy"
+    ],
+    "messages": [
+      "transcript root is not owner-writable"
+    ],
+    "function": "_open_root_descriptor",
+    "source": "raise PermissionError(\"transcript root is not owner-writable\")"
+  },
+  "src/harness/transcript.py:664": {
+    "tests": [
+      "tests/test_onboarding.py::test_up_refuses_a_read_only_journal_before_starting_services",
+      "tests/test_transcript.py::test_preflight_refuses_a_preexisting_symlinked_root",
+      "tests/test_transcript.py::test_startup_preflight_refuses_a_read_only_journal_with_plain_remedy"
+    ],
+    "messages": [
+      "Conversation journal is not writable at /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-394/test_up_refuses_a_read_only_jo0/transcripts. Fix that directory's permissions, then run `nocturne up` again.",
+      "Conversation journal is not writable at /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-394/test_preflight_refuses_a_preex0/transcripts. Fix that directory's permissions, then run `nocturne up` again.",
+      "Conversation journal is not writable at /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-394/test_startup_preflight_refuses0/transcripts. Fix that directory's permissions, then run `nocturne up` again."
+    ],
+    "function": "_preflight",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/pydantic_harness_adapter.py:360": {
+    "tests": [
+      "tests/test_pydantic_harness_toolset.py::test_atomic_multi_edit_refuses_before_any_write"
+    ],
+    "messages": [
+      "oldText found 2 times; each replacement must be unique in the original file"
+    ],
+    "function": "_edit",
+    "source": "raise ToolsetError("
+  },
+  "src/harness/pydantic_harness_adapter.py:303": {
+    "tests": [
+      "tests/test_pydantic_harness_toolset.py::test_strict_reads_and_credentials_remain_walled"
+    ],
+    "messages": [
+      "That path is outside this agent's location. Move to /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-394/test_strict_reads_and_credenti0/sibling/note.txt first."
+    ],
+    "function": "_preflight",
+    "source": "raise ToolsetError("
+  },
+  "src/harness/pydantic_harness_adapter.py:288": {
+    "tests": [
+      "tests/test_pydantic_harness_toolset.py::test_strict_reads_and_credentials_remain_walled"
+    ],
+    "messages": [
+      "That path may contain credentials. Ask the owner before reading it."
+    ],
+    "function": "_preflight",
+    "source": "raise ToolsetError("
+  },
+  "src/harness/pydantic_harness_adapter.py:444": {
+    "tests": [
+      "tests/test_pydantic_harness_toolset.py::test_shell_is_one_shot_os_fenced_and_remote_state_walled"
+    ],
+    "messages": [
+      "That command may leave this project or change remote state. Ask the owner to run it explicitly outside Nocturne."
+    ],
+    "function": "_bash",
+    "source": "raise ToolsetError("
+  },
+  "src/harness/pydantic_harness_adapter.py:193": {
+    "tests": [
+      "tests/test_pydantic_harness_toolset.py::test_presence_grant_cannot_be_widened_or_reused_after_close"
+    ],
+    "messages": [
+      "cwd must be inside workspace_root"
+    ],
+    "function": "open",
+    "source": "raise ValueError(\"cwd must be inside workspace_root\")"
+  },
+  "src/harness/pydantic_harness_adapter.py:218": {
+    "tests": [
+      "tests/test_pydantic_harness_toolset.py::test_presence_grant_cannot_be_widened_or_reused_after_close"
+    ],
+    "messages": [
+      "Cannot move outside the workspace /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-394/test_presence_grant_cannot_be_0/workspace."
+    ],
+    "function": "move",
+    "source": "raise ValueError(f\"Cannot move outside the workspace {self._location.workspace_root}.\")"
+  },
+  "src/harness/pydantic_harness_adapter.py:263": {
+    "tests": [
+      "tests/test_pydantic_harness_toolset.py::test_presence_grant_cannot_be_widened_or_reused_after_close"
+    ],
+    "messages": [
+      "The workspace toolset is closed."
+    ],
+    "function": "_require_open",
+    "source": "raise ToolsetError(\"The workspace toolset is closed.\")"
+  },
+  "src/harness/pydantic_harness_adapter.py:356": {
+    "tests": [
+      "tests/test_pydantic_harness_toolset.py::test_ambiguous_edits_preserve_original_bytes[edits0-each edit requires nonblank oldText and string newText]"
+    ],
+    "messages": [
+      "each edit requires nonblank oldText and string newText"
+    ],
+    "function": "_edit",
+    "source": "raise ValueError(\"each edit requires nonblank oldText and string newText\")"
+  },
+  "src/harness/pydantic_harness_adapter.py:369": {
+    "tests": [
+      "tests/test_pydantic_harness_toolset.py::test_ambiguous_edits_preserve_original_bytes[edits1-edit replacements overlap in the original file]"
+    ],
+    "messages": [
+      "edit replacements overlap in the original file"
+    ],
+    "function": "_edit",
+    "source": "raise ToolsetError(\"edit replacements overlap in the original file\")"
+  },
+  "src/harness/pydantic_harness_adapter.py:450": {
+    "tests": [
+      "tests/test_pydantic_harness_toolset.py::test_shell_does_not_fall_through_a_wall[cat .env-That command may expose credentials. Ask the owner before reading them.]"
+    ],
+    "messages": [
+      "That command may expose credentials. Ask the owner before reading them."
+    ],
+    "function": "_bash",
+    "source": "raise ToolsetError("
+  },
+  "src/harness/pydantic_harness_adapter.py:456": {
+    "tests": [
+      "tests/test_pydantic_harness_toolset.py::test_shell_does_not_fall_through_a_wall[printf safe-Secure shell is unavailable on this host; use read, edit, and write instead.]"
+    ],
+    "messages": [
+      "Secure shell is unavailable on this host; use read, edit, and write instead."
+    ],
+    "function": "_bash",
+    "source": "raise ToolsetError("
+  },
+  "src/harness/run_loop.py:574": {
+    "tests": [
+      "tests/test_run_loop.py::test_m3dk_fire_derives_exact_delta_and_preserves_source_provenance"
+    ],
+    "messages": [
+      "proposed response is not available in this thread"
+    ],
+    "function": "submit",
+    "source": "raise ValueError(\"proposed response is not available in this thread\")"
+  },
+  "src/harness/run_loop.py:580": {
+    "tests": [
+      "tests/test_run_loop.py::test_m3dk_fire_derives_exact_delta_and_preserves_source_provenance"
+    ],
+    "messages": [
+      "proposed response was already fired"
+    ],
+    "function": "submit",
+    "source": "raise ValueError(\"proposed response was already fired\")"
+  },
+  "src/harness/run_loop.py:530": {
+    "tests": [
+      "tests/test_run_loop.py::test_input_needing_durable_capture_cannot_start_without_journal[image]"
+    ],
+    "messages": [
+      "image input requires the mandatory transcript journal"
+    ],
+    "function": "submit",
+    "source": "raise RuntimeError(\"image input requires the mandatory transcript journal\")"
+  },
+  "src/harness/run_loop.py:533": {
+    "tests": [
+      "tests/test_run_loop.py::test_input_needing_durable_capture_cannot_start_without_journal[proposal]"
+    ],
+    "messages": [
+      "a proposed response requires the mandatory transcript journal"
+    ],
+    "function": "submit",
+    "source": "raise RuntimeError(\"a proposed response requires the mandatory transcript journal\")"
+  },
+  "src/harness/run_loop.py:469": {
+    "tests": [
+      "tests/test_run_loop.py::test_workspace_refusals_preserve_the_original_binding"
+    ],
+    "messages": [
+      "thread has no bound workspace"
+    ],
+    "function": "record_thread_location",
+    "source": "raise ValueError(\"thread has no bound workspace\")"
+  },
+  "src/harness/run_loop.py:474": {
+    "tests": [
+      "tests/test_run_loop.py::test_workspace_refusals_preserve_the_original_binding"
+    ],
+    "messages": [
+      "thread location must remain inside its workspace"
+    ],
+    "function": "record_thread_location",
+    "source": "raise ValueError(\"thread location must remain inside its workspace\")"
+  },
+  "src/harness/run_loop.py:1907": {
+    "tests": [
+      "tests/test_run_loop.py::test_workspace_refusals_preserve_the_original_binding"
+    ],
+    "messages": [
+      "thread project context is already fixed"
+    ],
+    "function": "_bind_workspace_locked",
+    "source": "raise ProjectBindingConflict(canonical, state.project_key)"
+  },
+  "src/harness/run_loop.py:1901": {
+    "tests": [
+      "tests/test_run_loop.py::test_workspace_refusals_preserve_the_original_binding"
+    ],
+    "messages": [
+      "thread workspace must be an existing directory"
+    ],
+    "function": "_bind_workspace_locked",
+    "source": "raise ValueError(\"thread workspace must be an existing directory\")"
+  },
+  "src/harness/run_loop.py:1815": {
+    "tests": [
+      "tests/test_run_loop.py::test_unavailable_capture_cannot_accept_another_prompt[False]"
+    ],
+    "messages": [
+      "run loop is closed"
+    ],
+    "function": "_require_open",
+    "source": "raise RuntimeError(\"run loop is closed\")"
+  },
+  "src/harness/run_loop.py:1810": {
+    "tests": [
+      "tests/test_run_loop.py::test_unavailable_capture_cannot_accept_another_prompt[True]",
+      "tests/test_transcript.py::test_capture_failure_poison_stops_unjournaled_work",
+      "tests/test_transcript.py::test_in_run_capture_poison_cannot_be_caught_to_start_queued_work"
+    ],
+    "messages": [
+      "run loop is unavailable after transcript capture failure"
+    ],
+    "function": "_require_open",
+    "source": "raise RuntimeError(\"run loop is unavailable after transcript capture failure\") from ("
+  },
+  "src/harness/run_loop.py:243": {
+    "tests": [
+      "tests/test_run_loop.py::test_missing_model_resolution_cannot_apply_a_paid_parameter"
+    ],
+    "messages": [
+      "invalid"
+    ],
+    "function": "parameter_snapshot",
+    "source": "raise ParameterWriteViolation(\"invalid\")"
+  },
+  "src/harness/run_loop.py:301": {
+    "tests": [
+      "tests/test_run_loop.py::test_missing_model_resolution_cannot_apply_a_paid_parameter"
+    ],
+    "messages": [
+      "invalid"
+    ],
+    "function": "write_parameter",
+    "source": "raise ParameterWriteViolation(\"invalid\")"
+  },
+  "src/harness/run_loop.py:315": {
+    "tests": [
+      "tests/test_run_loop.py::test_refused_named_model_and_legacy_root_preserve_prior_authority"
+    ],
+    "messages": [
+      "invalid"
+    ],
+    "function": "write_parameter",
+    "source": "raise ParameterWriteViolation(\"invalid\") from exc"
+  },
+  "src/harness/run_loop.py:1921": {
+    "tests": [
+      "tests/test_run_loop.py::test_refused_named_model_and_legacy_root_preserve_prior_authority"
+    ],
+    "messages": [
+      "thread project context is already fixed"
+    ],
+    "function": "_bind_workspace_locked",
+    "source": "raise ProjectBindingConflict(canonical, state.project_key)"
+  },
+  "src/harness/run_loop.py:290": {
+    "tests": [
+      "tests/test_run_loop.py::test_busy_parameter_write_keeps_running_model_unchanged"
+    ],
+    "messages": [
+      "busy"
+    ],
+    "function": "write_parameter",
+    "source": "raise ParameterWriteViolation(\"busy\")"
+  },
+  "src/harness/run_loop.py:1549": {
+    "tests": [
+      "tests/test_run_loop.py::test_gate_waiter_and_disconnected_stream_cannot_steal_owner_attention"
+    ],
+    "messages": [
+      "run already has an unresolved gate"
+    ],
+    "function": "_emit_gate",
+    "source": "raise RuntimeError(\"run already has an unresolved gate\")"
+  },
+  "src/harness/run_loop.py:1727": {
+    "tests": [
+      "tests/test_run_loop.py::test_gate_waiter_and_disconnected_stream_cannot_steal_owner_attention"
+    ],
+    "messages": [
+      "envelope subscription is unavailable"
+    ],
+    "function": "_enqueue_locked",
+    "source": "raise ConnectionError(\"envelope subscription is unavailable\")"
+  },
+  "src/harness/run_loop.py:1748": {
+    "tests": [
+      "tests/test_run_loop.py::test_gate_waiter_and_disconnected_stream_cannot_steal_owner_attention"
+    ],
+    "messages": [
+      "envelope subscription exceeded its buffer"
+    ],
+    "function": "_enqueue_locked",
+    "source": "raise ConnectionError(\"envelope subscription exceeded its buffer\") from None"
+  },
+  "src/harness/run_loop.py:1569": {
+    "tests": [
+      "tests/test_run_loop.py::test_gate_waiter_and_disconnected_stream_cannot_steal_owner_attention"
+    ],
+    "messages": [
+      "cannot dismiss a gate for an inactive run"
+    ],
+    "function": "_dismiss_gate",
+    "source": "raise RuntimeError(\"cannot dismiss a gate for an inactive run\")"
+  },
+  "src/harness/spine_client.py:1434": {
+    "tests": [
+      "tests/test_spine_transport.py::test_curator_activity_contains_only_an_older_palace_404",
+      "tests/test_spine_transport.py::test_rfc7807_errors_remain_typed_problems[search-503]",
+      "tests/test_spine_transport.py::test_rfc7807_errors_remain_typed_problems[create-409]",
+      "tests/test_spine_transport.py::test_rfc7807_errors_remain_typed_problems[patch-409]",
+      "tests/test_spine_transport.py::test_response_contract_violations_are_not_silently_accepted[wrong-success-status]",
+      "tests/test_spine_transport.py::test_response_contract_violations_are_not_silently_accepted[problem-status-mismatch]",
+      "tests/test_spine_transport.py::test_response_contract_violations_are_not_silently_accepted[wrong-problem-media-type]",
+      "tests/test_spine_transport.py::test_rfc7807_optional_members_preserve_the_server_refusal"
+    ],
+    "messages": [
+      "Spine returned an RFC 7807 problem (HTTP 503)",
+      "Spine returned an RFC 7807 problem (HTTP 409)",
+      "Spine returned an RFC 7807 problem (HTTP 201)"
+    ],
+    "function": "_raise_problem",
+    "source": "raise SpineProblemError(response, problem)"
+  },
+  "src/harness/spine_client.py:1428": {
+    "tests": [
+      "tests/test_spine_transport.py::test_vitals_rejects_a_numeric_cost_that_would_lose_decimal_wire_truth",
+      "tests/test_spine_transport.py::test_response_contract_violations_are_not_silently_accepted[invalid-json]",
+      "tests/test_spine_transport.py::test_response_contract_violations_are_not_silently_accepted[wrong-shape]",
+      "tests/test_spine_transport.py::test_response_contract_violations_are_not_silently_accepted[coerced-success-scalar]",
+      "tests/test_spine_transport.py::test_response_contract_violations_are_not_silently_accepted[coerced-problem-scalar]",
+      "tests/test_spine_transport.py::test_response_contract_violations_are_not_silently_accepted[non-standard-json-constant]",
+      "tests/test_spine_transport.py::test_create_status_and_body_cannot_be_swapped",
+      "tests/test_spine_transport.py::test_redirects_are_not_followed"
+    ],
+    "messages": [
+      "Spine returned a body outside C.4 (HTTP 200)",
+      "Spine returned a body outside C.4 (HTTP 503)",
+      "Spine returned a body outside C.4 (HTTP 307)"
+    ],
+    "function": "_decode_json",
+    "source": "raise SpineResponseError(response, \"Spine returned a body outside C.4\") from exc"
+  },
+  "src/harness/spine_client.py:1104": {
+    "tests": [
+      "tests/test_spine_transport.py::test_a049_split_preserves_existing_similar_and_conflict_status_bodies"
+    ],
+    "messages": [
+      "Spine rejected memory creation with a domain conflict (HTTP 409)"
+    ],
+    "function": "create_memory_split",
+    "source": "raise CreateMemoryConflictError(response, conflict)"
+  },
+  "src/harness/spine_client.py:1086": {
+    "tests": [
+      "tests/test_spine_transport.py::test_create_409_is_a_typed_domain_conflict[payload0-LabelConflict]",
+      "tests/test_spine_transport.py::test_create_409_is_a_typed_domain_conflict[payload1-DuplicateMemoryConflict]"
+    ],
+    "messages": [
+      "Spine rejected memory creation with a domain conflict (HTTP 409)"
+    ],
+    "function": "create_memory",
+    "source": "raise CreateMemoryConflictError(response, conflict)"
+  },
+  "src/harness/spine_client.py:1122": {
+    "tests": [
+      "tests/test_spine_transport.py::test_patch_409_is_a_typed_domain_conflict[payload0-LabelConflict]",
+      "tests/test_spine_transport.py::test_patch_409_is_a_typed_domain_conflict[payload1-RevisionConflict]"
+    ],
+    "messages": [
+      "Spine rejected memory patch with a domain conflict (HTTP 409)"
+    ],
+    "function": "patch_memory",
+    "source": "raise PatchMemoryConflictError(response, conflict)"
+  },
+  "src/harness/spine_client.py:1383": {
+    "tests": [
+      "tests/test_spine_transport.py::test_transport_failure_is_wrapped_without_request_secrets",
+      "tests/test_spine_transport.py::test_response_decoding_failure_is_wrapped_as_transport_failure"
+    ],
+    "messages": [
+      "Spine request failed before receiving a response"
+    ],
+    "function": "_request",
+    "source": "raise SpineTransportError from exc"
+  },
+  "src/harness/spine_client.py:1403": {
+    "tests": [
+      "tests/test_spine_transport.py::test_constructor_rejects_missing_endpoint",
+      "tests/test_spine_transport.py::test_constructor_rejects_unsafe_base_urls[spine.invalid/prefix]",
+      "tests/test_spine_transport.py::test_constructor_rejects_unsafe_base_urls[/prefix]",
+      "tests/test_spine_transport.py::test_constructor_rejects_unsafe_base_urls[://bad]",
+      "tests/test_spine_transport.py::test_constructor_rejects_unsafe_base_urls[ftp://spine.invalid/prefix]",
+      "tests/test_spine_transport.py::test_constructor_rejects_unsafe_base_urls[http://]",
+      "tests/test_spine_transport.py::test_constructor_rejects_unsafe_base_urls[https://user:pass@spine.invalid/prefix]",
+      "tests/test_spine_transport.py::test_constructor_rejects_unsafe_base_urls[https://spine.invalid/prefix?mode=test]",
+      "tests/test_spine_transport.py::test_constructor_rejects_unsafe_base_urls[https://spine.invalid/prefix?]",
+      "tests/test_spine_transport.py::test_constructor_rejects_unsafe_base_urls[https://spine.invalid/prefix#fragment]",
+      "tests/test_spine_transport.py::test_constructor_rejects_unsafe_base_urls[https://spine.invalid/prefix#]"
+    ],
+    "messages": [
+      "base_url must be absolute HTTP(S) without credentials, query, or fragment"
+    ],
+    "function": "_normalize_base_url",
+    "source": "raise ValueError("
+  },
+  "src/harness/envelope.py:313": {
+    "tests": [
+      "tests/test_symphony_experience.py::test_specialized_prompt_refusals_preserve_one_owner_intent"
+    ],
+    "messages": [
+      "image, Symphony launch, and Symphony steering are mutually exclusive"
+    ],
+    "function": "require_one_specialized_input",
+    "source": "raise ValueError(\"image, Symphony launch, and Symphony steering are mutually exclusive\")"
+  },
+  "src/harness/envelope.py:316": {
+    "tests": [
+      "tests/test_symphony_experience.py::test_specialized_prompt_refusals_preserve_one_owner_intent"
+    ],
+    "messages": [
+      "a proposed response must be an ordinary text prompt"
+    ],
+    "function": "require_one_specialized_input",
+    "source": "raise ValueError(\"a proposed response must be an ordinary text prompt\")"
+  },
+  "src/harness/envelope.py:183": {
+    "tests": [
+      "tests/test_symphony_experience.py::test_launch_requires_core_charter_order_performance_metrics_and_signature"
+    ],
+    "messages": [
+      "the performance charter requires precalculated metrics"
+    ],
+    "function": "require_performance_metrics_only",
+    "source": "raise ValueError(\"the performance charter requires precalculated metrics\")"
+  },
+  "src/harness/envelope.py:186": {
+    "tests": [
+      "tests/test_symphony_experience.py::test_signed_launch_cannot_mix_judge_authority_or_step_identity[metric-seat-precalculated metrics belong only to performance]"
+    ],
+    "messages": [
+      "precalculated metrics belong only to performance"
+    ],
+    "function": "require_performance_metrics_only",
+    "source": "raise ValueError(\"precalculated metrics belong only to performance\")"
+  },
+  "src/harness/envelope.py:224": {
+    "tests": [
+      "tests/test_symphony_experience.py::test_signed_launch_cannot_mix_judge_authority_or_step_identity[recipe-recipe step ids must be unique]"
+    ],
+    "messages": [
+      "recipe step ids must be unique"
+    ],
+    "function": "require_fixed_deliberation_shape",
+    "source": "raise ValueError(\"recipe step ids must be unique\")"
+  },
+  "src/harness/envelope.py:228": {
+    "tests": [
+      "tests/test_symphony_experience.py::test_signed_launch_cannot_mix_judge_authority_or_step_identity[judges-judge charters must fix motivation, implementation, performance]"
+    ],
+    "messages": [
+      "judge charters must fix motivation, implementation, performance"
+    ],
+    "function": "require_fixed_deliberation_shape",
+    "source": "raise ValueError(\"judge charters must fix motivation, implementation, performance\")"
+  },
+  "src/harness/transcript.py:153": {
+    "tests": [
+      "tests/test_transcript.py::test_image_attachment_is_exact_once_while_every_message_revision_stays_compact",
+      "tests/test_transcript.py::test_two_journals_atomically_keep_one_attachment_per_prompt[True]"
+    ],
+    "messages": [
+      "Conversation journal for thread thread-image changes image attachment 00000000000000000000000001. Restore the journal from a verified backup before starting Nocturne.",
+      "Conversation journal for thread thread-image-race changes image attachment 00000000000000000000000001. Restore the journal from a verified backup before starting Nocturne."
+    ],
+    "function": "append_image_attachment",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:838": {
+    "tests": [
+      "tests/test_transcript.py::test_image_hydration_fails_closed_on_missing_or_digest_mismatched_attachment[missing]"
+    ],
+    "messages": [
+      "Conversation journal for thread thread-image cannot match image attachment 00000000000000000000000001 to its compact view. Restore the journal from a verified backup before starting Nocturne."
+    ],
+    "function": "_hydrate_rows",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:964": {
+    "tests": [
+      "tests/test_transcript.py::test_image_hydration_fails_closed_on_missing_or_digest_mismatched_attachment[digest]"
+    ],
+    "messages": [
+      "Conversation journal for thread thread-image has a digest-mismatched image attachment 00000000000000000000000001. Restore the journal from a verified backup before starting Nocturne."
+    ],
+    "function": "_attachment_from_row",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:1195": {
+    "tests": [
+      "tests/test_transcript.py::test_journal_refuses_a_git_worktree_root"
+    ],
+    "messages": [
+      "transcript root must not live inside a git worktree"
+    ],
+    "function": "_reject_git_ancestor",
+    "source": "raise ValueError(\"transcript root must not live inside a git worktree\")"
+  },
+  "src/harness/transcript.py:1065": {
+    "tests": [
+      "tests/test_transcript.py::test_journal_refuses_a_symlinked_thread_file"
+    ],
+    "messages": [
+      "transcript path must be a regular file"
+    ],
+    "function": "_read_last_tail_id",
+    "source": "raise ValueError(\"transcript path must be a regular file\") from exc"
+  },
+  "src/harness/transcript.py:1127": {
+    "tests": [
+      "tests/test_transcript.py::test_journal_refuses_root_replaced_by_a_directory_symlink",
+      "tests/test_transcript.py::test_preflight_refuses_a_preexisting_symlinked_root"
+    ],
+    "messages": [
+      "transcript root must be a real directory"
+    ],
+    "function": "_open_root_descriptor",
+    "source": "raise ValueError(\"transcript root must be a real directory\") from exc"
+  },
+  "src/harness/transcript.py:773": {
+    "tests": [
+      "tests/test_transcript.py::test_journal_refuses_a_thread_that_changes_project_context"
+    ],
+    "messages": [
+      "Conversation journal for thread thread-project changes project context. Restore the journal from a verified backup before starting Nocturne."
+    ],
+    "function": "_hydrate_rows",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:890": {
+    "tests": [
+      "tests/test_transcript.py::test_startup_refuses_unrecoverable_parent_history"
+    ],
+    "messages": [
+      "Conversation journal for thread thread-1 is missing a parent message. Restore the journal from a verified backup before starting Nocturne."
+    ],
+    "function": "_hydrate_rows",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/run_loop.py:2073": {
+    "tests": [
+      "tests/test_transcript.py::test_capture_failure_poison_stops_unjournaled_work",
+      "tests/test_transcript.py::test_in_run_capture_poison_cannot_be_caught_to_start_queued_work"
+    ],
+    "messages": [
+      "transcript capture failed; run loop is now unavailable"
+    ],
+    "function": "_fail_capture",
+    "source": "raise RuntimeError(\"transcript capture failed; run loop is now unavailable\") from exc"
+  },
+  "src/harness/transcript.py:352": {
+    "tests": [
+      "tests/test_transcript.py::test_cloud_restore_walls_write_nothing[newline-Palace transcript row contains a newline.]"
+    ],
+    "messages": [
+      "Palace transcript row contains a newline."
+    ],
+    "function": "restore_cloud_records",
+    "source": "raise TranscriptJournalUnavailable(\"Palace transcript row contains a newline.\")"
+  },
+  "src/harness/transcript.py:355": {
+    "tests": [
+      "tests/test_transcript.py::test_cloud_restore_walls_write_nothing[digest-Palace transcript row has a changed digest.]"
+    ],
+    "messages": [
+      "Palace transcript row has a changed digest."
+    ],
+    "function": "restore_cloud_records",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:362": {
+    "tests": [
+      "tests/test_transcript.py::test_cloud_restore_walls_write_nothing[json-Palace transcript row is not JSON.]"
+    ],
+    "messages": [
+      "Palace transcript row is not JSON."
+    ],
+    "function": "restore_cloud_records",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:367": {
+    "tests": [
+      "tests/test_transcript.py::test_cloud_restore_walls_write_nothing[identity-Palace transcript row changes thread identity.]"
+    ],
+    "messages": [
+      "Palace transcript row changes thread identity."
+    ],
+    "function": "restore_cloud_records",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:374": {
+    "tests": [
+      "tests/test_transcript.py::test_cloud_restore_walls_write_nothing[sequence-has a sequence gap.]"
+    ],
+    "messages": [
+      "Palace transcript for thread thread-1 has a sequence gap."
+    ],
+    "function": "restore_cloud_records",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:343": {
+    "tests": [
+      "tests/test_transcript.py::test_cloud_restore_walls_write_nothing[existing-Conversation resurrection refuses to overwrite existing local transcripts.]"
+    ],
+    "messages": [
+      "Conversation resurrection refuses to overwrite existing local transcripts."
+    ],
+    "function": "restore_cloud_records",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:848": {
+    "tests": [
+      "tests/test_transcript.py::test_damaged_history_does_not_resume_or_rewrite[json-contains an unreadable transcript]"
+    ],
+    "messages": [
+      "Conversation journal contains an unreadable transcript. Restore the journal from a verified backup before starting Nocturne."
+    ],
+    "function": "_hydrate_rows",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:865": {
+    "tests": [
+      "tests/test_transcript.py::test_damaged_history_does_not_resume_or_rewrite[empty-message-contains an unreadable transcript]"
+    ],
+    "messages": [
+      "Conversation journal contains an unreadable transcript. Restore the journal from a verified backup before starting Nocturne."
+    ],
+    "function": "_hydrate_rows",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:871": {
+    "tests": [
+      "tests/test_transcript.py::test_damaged_history_does_not_resume_or_rewrite[tail-has no durable tail]"
+    ],
+    "messages": [
+      "Conversation journal for thread thread-1 has no durable tail. Restore the journal from a verified backup before starting Nocturne."
+    ],
+    "function": "_hydrate_rows",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:882": {
+    "tests": [
+      "tests/test_transcript.py::test_damaged_history_does_not_resume_or_rewrite[cycle-contains a history cycle]"
+    ],
+    "messages": [
+      "Conversation journal for thread thread-1 contains a history cycle. Restore the journal from a verified backup before starting Nocturne."
+    ],
+    "function": "_hydrate_rows",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:752": {
+    "tests": [
+      "tests/test_transcript.py::test_damaged_history_does_not_resume_or_rewrite[project-has an invalid project context]"
+    ],
+    "messages": [
+      "Conversation journal for thread thread-1 has an invalid project context. Restore the journal from a verified backup before starting Nocturne."
+    ],
+    "function": "_hydrate_rows",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:783": {
+    "tests": [
+      "tests/test_transcript.py::test_damaged_history_does_not_resume_or_rewrite[feet-missing-has incomplete thread feet]"
+    ],
+    "messages": [
+      "Conversation journal has incomplete thread feet"
+    ],
+    "function": "_hydrate_rows",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:794": {
+    "tests": [
+      "tests/test_transcript.py::test_damaged_history_does_not_resume_or_rewrite[feet-relative-has invalid thread feet]"
+    ],
+    "messages": [
+      "Conversation journal has invalid thread feet"
+    ],
+    "function": "_hydrate_rows",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:803": {
+    "tests": [
+      "tests/test_transcript.py::test_damaged_history_does_not_resume_or_rewrite[move-unbound-moves an unbound thread]"
+    ],
+    "messages": [
+      "Conversation journal moves an unbound thread"
+    ],
+    "function": "_hydrate_rows",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:808": {
+    "tests": [
+      "tests/test_transcript.py::test_damaged_history_does_not_resume_or_rewrite[move-outside-moves outside thread workspace]"
+    ],
+    "messages": [
+      "Conversation journal moves outside thread workspace"
+    ],
+    "function": "_hydrate_rows",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:735": {
+    "tests": [
+      "tests/test_transcript.py::test_attachment_walls_preserve_the_damaged_evidence[duplicate-duplicates image attachment]"
+    ],
+    "messages": [
+      "Conversation journal for thread thread-1 duplicates image attachment first. Restore the journal from a verified backup before starting Nocturne."
+    ],
+    "function": "_hydrate_rows",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:821": {
+    "tests": [
+      "tests/test_transcript.py::test_attachment_walls_preserve_the_damaged_evidence[missing-view-drops image view]"
+    ],
+    "messages": [
+      "Conversation journal for thread thread-1 drops image view first. Restore the journal from a verified backup before starting Nocturne."
+    ],
+    "function": "_hydrate_rows",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:830": {
+    "tests": [
+      "tests/test_transcript.py::test_attachment_walls_preserve_the_damaged_evidence[invalid-view-has an invalid image view]"
+    ],
+    "messages": [
+      "Conversation journal for thread thread-1 has an invalid image view for first. Restore the journal from a verified backup before starting Nocturne."
+    ],
+    "function": "_hydrate_rows",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:936": {
+    "tests": [
+      "tests/test_transcript.py::test_attachment_walls_preserve_the_damaged_evidence[attachment-keys-has an invalid image attachment]"
+    ],
+    "messages": [
+      "Conversation journal for thread thread-1 has an invalid image attachment. Restore the journal from a verified backup before starting Nocturne."
+    ],
+    "function": "_attachment_from_row",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:958": {
+    "tests": [
+      "tests/test_transcript.py::test_attachment_walls_preserve_the_damaged_evidence[attachment-bytes-has an invalid image attachment]"
+    ],
+    "messages": [
+      "Conversation journal for thread thread-1 has an invalid image attachment first. Restore the journal from a verified backup before starting Nocturne."
+    ],
+    "function": "_attachment_from_row",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:1147": {
+    "tests": [
+      "tests/test_transcript.py::test_zero_byte_append_rolls_back"
+    ],
+    "messages": [
+      "incomplete transcript append"
+    ],
+    "function": "_write_all",
+    "source": "raise OSError(\"incomplete transcript append\")"
+  },
+  "src/harness/transcript.py:1201": {
+    "tests": [
+      "tests/test_transcript.py::test_attachment_identity_is_required_before_write[-first-thread_id must not be blank]"
+    ],
+    "messages": [
+      "thread_id must not be blank"
+    ],
+    "function": "_require_thread_id",
+    "source": "raise ValueError(\"thread_id must not be blank\")"
+  },
+  "src/harness/transcript.py:1207": {
+    "tests": [
+      "tests/test_transcript.py::test_attachment_identity_is_required_before_write[thread-1--prompt_id must not be blank]"
+    ],
+    "messages": [
+      "prompt_id must not be blank"
+    ],
+    "function": "_require_prompt_id",
+    "source": "raise ValueError(\"prompt_id must not be blank\")"
+  },
+  "src/harness/transcript.py:321": {
+    "tests": [
+      "tests/test_transcript.py::test_cloud_export_does_not_claim_corrupt_utf8_is_restorable"
+    ],
+    "messages": [
+      "Conversation journal for thread thread-1 is not UTF-8."
+    ],
+    "function": "cloud_records",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:294": {
+    "tests": [
+      "tests/test_transcript.py::test_unreadable_journal_reports_the_unavailable_capture_boundary[root-Conversation journal cannot be read at]"
+    ],
+    "messages": [
+      "Conversation journal cannot be read at /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-394/test_unreadable_journal_report0/journal. Fix that directory, then run `nocturne up` again."
+    ],
+    "function": "hydrate_threads",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:988": {
+    "tests": [
+      "tests/test_transcript.py::test_unreadable_journal_reports_the_unavailable_capture_boundary[file-Conversation journal cannot read]"
+    ],
+    "messages": [
+      "Conversation journal cannot read 4b0a5fefc328e6b9257bc535e3c5d26fec36b52f92e277618bf5b30fc3885e58.jsonl. Fix that file, then run `nocturne up` again."
+    ],
+    "function": "_read_file_rows",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:997": {
+    "tests": [
+      "tests/test_transcript.py::test_non_file_transcript_is_never_read_or_modified[hydrate]"
+    ],
+    "messages": [
+      "Conversation journal contains a non-file transcript. Replace it with a verified journal file, then run `nocturne up` again."
+    ],
+    "function": "_read_file_rows",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:1074": {
+    "tests": [
+      "tests/test_transcript.py::test_non_file_transcript_is_never_read_or_modified[tail]"
+    ],
+    "messages": [
+      "transcript path must be a regular file"
+    ],
+    "function": "_read_last_tail_id",
+    "source": "raise ValueError(\"transcript path must be a regular file\")"
+  },
+  "src/harness/transcript.py:983": {
+    "tests": [
+      "tests/test_transcript.py::test_descriptor_open_cannot_follow_a_replaced_journal[read-symlink]"
+    ],
+    "messages": [
+      "Conversation journal contains a non-file transcript. Replace it with a verified journal file, then run `nocturne up` again."
+    ],
+    "function": "_read_file_rows",
+    "source": "raise TranscriptJournalUnavailable("
+  },
+  "src/harness/transcript.py:1020": {
+    "tests": [
+      "tests/test_transcript.py::test_descriptor_open_cannot_follow_a_replaced_journal[append-symlink]"
+    ],
+    "messages": [
+      "transcript path must be a regular file"
+    ],
+    "function": "_open_append_descriptor",
+    "source": "raise ValueError(\"transcript path must be a regular file\") from exc"
+  },
+  "src/harness/transcript.py:1034": {
+    "tests": [
+      "tests/test_transcript.py::test_descriptor_open_cannot_follow_a_replaced_journal[append-fifo]"
+    ],
+    "messages": [
+      "transcript path must be a regular file"
+    ],
+    "function": "_open_append_descriptor",
+    "source": "raise ValueError(\"transcript path must be a regular file\")"
+  },
+  "src/harness/spine_client.py:1346": {
+    "tests": [
+      "tests/test_verification_identity.py::test_bound_client_refuses_foreign_queue_decisions_and_retries_own[False]",
+      "tests/test_verification_identity.py::test_bound_client_refuses_foreign_queue_decisions_and_retries_own[True]",
+      "tests/test_verification_identity.py::test_foreign_queue_http_decision_is_plain_ownership_refusal[False]",
+      "tests/test_verification_identity.py::test_foreign_queue_http_decision_is_plain_ownership_refusal[True]"
+    ],
+    "messages": [
+      "This queue decision does not belong to this identity. Refresh the queue."
+    ],
+    "function": "_require_owned_queue",
+    "source": "raise SpineOwnershipError("
+  }
+}
