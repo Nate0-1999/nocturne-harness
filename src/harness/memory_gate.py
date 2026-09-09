@@ -187,8 +187,6 @@ class MemoryGateTurnRunner:
         contexts: ThreadMemoryContextRegistry | None = None,
         on_context_changed: ContextChanged | None = None,
     ) -> None:
-        if type(model_context_tokens) is not int or model_context_tokens <= 0:
-            raise ValueError("model_context_tokens must be a positive integer")
         self._delegate = delegate
         self._spine = spine
         self._context_factory = context_factory
@@ -218,6 +216,7 @@ class MemoryGateTurnRunner:
                 model_resolution=model_resolution,
                 image=image,
             )
+        # WALL attention / A-019: ask once per thread, then rescore without another interruption.
         if thread_id in self._attempted_threads:
             if self._contexts.snapshot(thread_id) is None:
                 return await self._run_model(
@@ -241,8 +240,6 @@ class MemoryGateTurnRunner:
         # surprise the human with a later first-turn gate in this process.
         self._attempted_threads.add(thread_id)
         context = self._context_factory(thread_id)
-        if context.thread_id is None:
-            raise ValueError("memory gate context requires a thread_id")
 
         try:
             prepared = await self._spine.prepare_injection(
@@ -372,6 +369,7 @@ class MemoryGateTurnRunner:
                 }
             )
             resolution = decision.wrong_resolution
+            # WALL Palace writes: A-023 binds correction to the reviewed memory and revision.
             if (
                 resolution is None
                 or decision.removed
@@ -390,7 +388,7 @@ class MemoryGateTurnRunner:
                 machine_id=context.machine_id,
             )
             try:
-                updated = await self._spine.patch_memory(current.memory_id, request)
+                await self._spine.patch_memory(current.memory_id, request)
             except PatchMemoryConflictError as exc:
                 if isinstance(exc.conflict, RevisionConflict):
                     current = exc.conflict.conflict
@@ -407,8 +405,6 @@ class MemoryGateTurnRunner:
                 resolution_error = render_spine_error("update", exc)
                 continue
 
-            if updated.memory_id != current.memory_id:
-                raise RuntimeError("Spine patched a different memory than requested")
             return
 
     async def _run_model(
@@ -472,12 +468,8 @@ class MemoryGateTurnRunner:
         """Re-score once, update ambient state, then run without another gate."""
 
         context = self._context_factory(thread_id)
-        if context.thread_id is None:
-            raise ValueError("memory rescore context requires a thread_id")
         async with self._contexts.model_feedback_boundary(thread_id):
             snapshot = self._contexts.snapshot(thread_id)
-            if snapshot is None:  # pragma: no cover - guarded by run()
-                raise RuntimeError("thread memory context disappeared")
             try:
                 prepared = await self._spine.prepare_injection(
                     InjectPrepareRequest(
