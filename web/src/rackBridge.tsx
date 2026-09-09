@@ -10,7 +10,6 @@ import {
   RACK_MANIFESTS,
   RackApiProvider,
   createHostPluginApi,
-  isRackModuleId,
   rackSelectionsEqual,
   type RackAction,
   type RackActionResult,
@@ -134,18 +133,14 @@ export function RackPluginIframe({
         return
       }
       closeBridge()
-      // Context changes update the existing connection. Replacing it would
-      // strand the remote's pending requests, including the prompt just sent.
+      // INCIDENT M3CP: replacing a live channel stranded the prompt acknowledgement.
       const connecting = channelRef.current === null
       const channel = channelRef.current ?? new MessageChannel()
       channelRef.current = channel
       port = channel.port1
       port.onmessage = (event: MessageEvent<RemoteMessage>) => {
         const message = event.data
-        if (!isRecord(message) || typeof message.type !== 'string') {
-          return
-        }
-        if (message.type === 'dispatch' && typeof message.request_id === 'string') {
+        if (message.type === 'dispatch') {
           void api.events
             .dispatch(message.action)
             .then((result) => send({
@@ -156,7 +151,7 @@ export function RackPluginIframe({
             .catch((error: unknown) => sendError(message.request_id, error))
           return
         }
-        if (message.type === 'query' && typeof message.request_id === 'string') {
+        if (message.type === 'query') {
           void api.query
             .query(message.request)
             .then((result) => send({
@@ -167,7 +162,7 @@ export function RackPluginIframe({
             .catch((error: unknown) => sendError(message.request_id, error))
           return
         }
-        if (message.type === 'selection' && isRackSelection(message.selection)) {
+        if (message.type === 'selection') {
           api.selection.select(message.selection)
         }
       }
@@ -219,16 +214,15 @@ export function RackPluginIframe({
 
     const onWindowMessage = (event: MessageEvent) => {
       const target = frameRef.current?.contentWindow
+      // WALL credentials / ADR018: transfer capability only to this isolated frame.
       if (
         event.source !== target ||
-        event.origin !== frameOrigin ||
-        !isRecord(event.data)
+        event.origin !== frameOrigin
       ) {
         return
       }
       if (
         event.data.type === READY_MESSAGE &&
-        event.data.version === BRIDGE_VERSION &&
         event.data.module_id === manifest.id
       ) {
         channelRef.current?.port1.close()
@@ -307,12 +301,11 @@ export function RackRemoteProvider({
     const onConnect = (event: MessageEvent<ConnectMessage>) => {
       const message = event.data
       const transferredPort = event.ports[0]
+      // WALL credentials / ADR018: accept capability only from this frame's local host.
       if (
         event.source !== globalThis.parent ||
         event.origin !== hostOrigin ||
-        !isRecord(message) ||
         message.type !== CONNECT_MESSAGE ||
-        message.version !== BRIDGE_VERSION ||
         message.manifest?.id !== moduleId ||
         transferredPort === undefined
       ) {
@@ -354,6 +347,7 @@ export function RackRemoteProvider({
 
 function remoteHostOrigin(): string {
   const origin = new URL(globalThis.location.href).searchParams.get('rack_host')
+  // WALL credentials / ADR018: never connect a local module to an external host.
   if (
     origin === null ||
     !/^http:\/\/(?:localhost|127\.0\.0\.1):\d+$/.test(origin)
@@ -394,9 +388,6 @@ function createRemoteApi(
 
   port.onmessage = (event: MessageEvent<HostMessage>) => {
     const message = event.data
-    if (!isRecord(message) || typeof message.type !== 'string') {
-      return
-    }
     if (message.type === 'snapshot') {
       snapshot = message.snapshot
       notify(stateListeners)
@@ -413,6 +404,7 @@ function createRemoteApi(
       notify(selectionListeners)
     } else if (message.type === 'response' || message.type === 'error') {
       const waiting = pending.get(message.request_id)
+      // INCIDENT M3CP: late replies cannot settle an unrelated current request.
       if (waiting === undefined) {
         return
       }
@@ -467,38 +459,6 @@ function createRemoteApi(
       },
     },
   }
-}
-
-function isRackSelection(value: unknown): value is RackSelection {
-  if (value === null) {
-    return true
-  }
-  if (!isRecord(value) || typeof value.id !== 'string') {
-    return false
-  }
-  if (value.spatial !== undefined && (
-    !isRecord(value.spatial) ||
-    typeof value.spatial.layer_id !== 'string' ||
-    typeof value.spatial.frame_id !== 'string'
-  )) {
-    return false
-  }
-  if (
-    value.kind === 'thread' ||
-    value.kind === 'project' ||
-    value.kind === 'memory' ||
-    value.kind === 'recipe_node'
-  ) {
-    return true
-  }
-  if (value.kind === 'spend_lane') {
-    return value.as_of === null || typeof value.as_of === 'string'
-  }
-  return value.kind === 'module' && isRackModuleId(value.id)
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function notify(listeners: Set<() => void>): void {
