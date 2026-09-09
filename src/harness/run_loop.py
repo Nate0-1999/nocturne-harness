@@ -42,10 +42,6 @@ from harness.envelope import (
     RunStartedPayload,
     RunUsagePayload,
     StopReason,
-    SymphonyCancelAttemptPayload,
-    SymphonyCharterForkPayload,
-    SymphonyClarificationPayload,
-    SymphonyCompletePayload,
     SymphonyInterventionPayload,
     SymphonyLaunchPayload,
     ThreadSnapshotResponsePayload,
@@ -53,7 +49,6 @@ from harness.envelope import (
 )
 from harness.model_policy import (
     ModelCatalogUnavailable,
-    ModelRequestParameters,
     NamedModelResolutionError,
     ThreadModelResolution,
     ThreadModelResolver,
@@ -84,6 +79,7 @@ from harness.transcript import HydratedTranscript, TranscriptJournal
 
 type EnvelopeSink = Callable[[Envelope], Awaitable[None]]
 
+# WALL attention / H7: a stalled subscriber reconnects to a snapshot instead of losing events.
 _SUBSCRIPTION_BUFFER_SIZE = 256
 type _Delivery = tuple[Envelope, asyncio.Future[None] | None]
 
@@ -214,14 +210,6 @@ class RunLoop:
         parameter_registry: ParameterRegistry | None = None,
         symphony_experience: SymphonyExperience | None = None,
     ) -> None:
-        if resolved_model is not None and model_resolver is not None:
-            raise ValueError("use either resolved_model or model_resolver, not both")
-        if resolved_model is not None and (
-            not isinstance(resolved_model, str)
-            or not resolved_model
-            or resolved_model != resolved_model.strip()
-        ):
-            raise ValueError("resolved_model must be nonblank without surrounding whitespace")
         self._runner = runner
         self._factory = factory
         self._run_id_factory = run_id_factory or factory.new_id
@@ -249,13 +237,11 @@ class RunLoop:
     ) -> ParameterSnapshot:
         """Read one CURRENT thread through the typed public registry seam."""
 
-        self._require_thread_id(thread_id)
         resolution = await self._resolution_for_thread(thread_id)
         if resolution is None:
+            # WALL money / ADR-023: resolve controls and preserve the running model.
             raise ParameterWriteViolation("invalid")
         instant = as_of or self._clock()
-        if instant.tzinfo is None or instant.utcoffset() is None:
-            raise ValueError("parameter as_of must be timezone-aware")
         async with self._lock:
             state = self._state_for_locked(thread_id)
             if state.model_resolution is None:
@@ -274,7 +260,6 @@ class RunLoop:
     ) -> ParameterSnapshot:
         """Validate, apply, journal, and publish one bound control write."""
 
-        self._require_thread_id(thread_id)
         try:
             normalized = self._parameter_registry.validate_bound_write(
                 module_id=module_id,
@@ -301,6 +286,7 @@ class RunLoop:
                         parameter_id=parameter_id,
                         reason="busy",
                     )
+                    # WALL money / ADR-023: resolve controls and preserve the running model.
                     raise ParameterWriteViolation("busy")
 
             resolution = await self._resolution_for_thread(thread_id)
@@ -311,19 +297,11 @@ class RunLoop:
                     parameter_id=parameter_id,
                     reason="invalid",
                 )
+                # WALL money / ADR-023: resolve controls and preserve the running model.
                 raise ParameterWriteViolation("invalid")
 
             candidate: ThreadModelResolution | None = None
             if parameter_id == "model.slug":
-                assert isinstance(normalized, str)
-                if self._model_resolver is None:
-                    await self._publish_parameter_refusal(
-                        thread_id=thread_id,
-                        module_id=module_id,
-                        parameter_id=parameter_id,
-                        reason="invalid",
-                    )
-                    raise ParameterWriteViolation("invalid")
                 try:
                     candidate = await self._model_resolver.resolve_named(thread_id, normalized)
                 except (NamedModelResolutionError, ModelCatalogUnavailable) as exc:
@@ -333,18 +311,11 @@ class RunLoop:
                         parameter_id=parameter_id,
                         reason="invalid",
                     )
+                    # WALL money / ADR-023: resolve controls and preserve the running model.
                     raise ParameterWriteViolation("invalid") from exc
 
             async with self._lock:
                 state = self._state_for_locked(thread_id)
-                if state.active is not None:
-                    await self._publish_parameter_refusal_locked(
-                        thread_id=thread_id,
-                        module_id=module_id,
-                        parameter_id=parameter_id,
-                        reason="busy",
-                    )
-                    raise ParameterWriteViolation("busy")
                 if state.model_resolution is None:
                     state.model_resolution = resolution
                     state.resolved_model = resolution.model
@@ -424,7 +395,6 @@ class RunLoop:
     async def select(self, thread_id: str, sink: EnvelopeSink) -> None:
         """Select and subscribe to a prompt's thread without sending a snapshot."""
 
-        self._require_thread_id(thread_id)
         async with self._lock:
             self._require_open()
             self._state_for_locked(thread_id)
@@ -442,7 +412,6 @@ class RunLoop:
     ) -> None:
         """Select a thread and acknowledge its durable binding in one snapshot."""
 
-        self._require_thread_id(thread_id)
         canonical_project = (
             None if project_key is None else validate_artificial_project_path(project_key)
         )
@@ -474,21 +443,18 @@ class RunLoop:
                 self._snapshot_envelope(thread_id, state, request_id=request_id),
                 confirm=True,
             )
-            assert pending is not None
             receipt = pending
         await receipt
 
     def project_key(self, thread_id: str) -> str | None:
         """Read the daemon-owned project identity for trusted run composition."""
 
-        self._require_thread_id(thread_id)
         state = self._threads.get(thread_id)
         return None if state is None else state.project_key
 
     def thread_workspace(self, thread_id: str) -> tuple[str, str] | None:
         """Return this thread's durable workspace root and current location."""
 
-        self._require_thread_id(thread_id)
         state = self._threads.get(thread_id)
         if state is None or state.workspace_root is None or state.current_location is None:
             return None
@@ -497,13 +463,14 @@ class RunLoop:
     def record_thread_location(self, thread_id: str, current_location: str) -> None:
         """Persist movement for one thread without touching any sibling."""
 
-        self._require_thread_id(thread_id)
         state = self._threads.get(thread_id)
         if state is None or state.workspace_root is None:
+            # WALL owner files / M3TL: movement needs an existing workspace boundary.
             raise ValueError("thread has no bound workspace")
         location = Path(current_location).resolve(strict=True)
         root = Path(state.workspace_root)
         if not location.is_dir() or not location.is_relative_to(root):
+            # WALL owner files / M3TL: movement cannot enlarge the granted workspace.
             raise ValueError("thread location must remain inside its workspace")
         canonical = str(location)
         if state.current_location == canonical:
@@ -515,7 +482,6 @@ class RunLoop:
     async def publish_thread_snapshot(self, thread_id: str) -> None:
         """Publish current durable thread context after an out-of-band tool move."""
 
-        self._require_thread_id(thread_id)
         async with self._lock:
             state = self._threads.get(thread_id)
             if state is None:
@@ -535,16 +501,12 @@ class RunLoop:
         async with self._lock:
             self._require_open()
             pending = await self._send_direct_locked(sink, envelope, confirm=True)
-            assert pending is not None
             receipt = pending
         await receipt
 
     async def publish(self, thread_id: str, envelope: Envelope) -> None:
         """Publish one daemon-authored ambient event to a thread's subscribers."""
 
-        self._require_thread_id(thread_id)
-        if envelope.thread_id != thread_id:
-            raise ValueError("ambient envelope thread does not match its publish target")
         async with self._lock:
             self._require_open()
             await self._publish_locked(thread_id, envelope)
@@ -563,45 +525,14 @@ class RunLoop:
     ) -> str:
         """Accept a prompt, starting it now or reserving one FIFO run ID."""
 
-        self._require_thread_id(thread_id)
-        if not prompt.strip():
-            raise ValueError("prompt must not be blank")
-        if image is not None and not isinstance(image, ImageInput):
-            raise TypeError("image must be an ImageInput or None")
-        if symphony is not None and not isinstance(symphony, SymphonyLaunchPayload):
-            raise TypeError("symphony must be a SymphonyLaunchPayload or None")
-        if symphony_intervention is not None and not isinstance(
-            symphony_intervention,
-            (
-                SymphonyClarificationPayload,
-                SymphonyCancelAttemptPayload,
-                SymphonyCharterForkPayload,
-                SymphonyCompletePayload,
-            ),
-        ):
-            raise TypeError("symphony_intervention must be a typed intervention or None")
-        if proposed_response is not None and not isinstance(
-            proposed_response, ProposedResponseFirePayload
-        ):
-            raise TypeError("proposed_response must be a typed proposal reference or None")
-        if sum(value is not None for value in (image, symphony, symphony_intervention)) > 1:
-            raise ValueError("image, Symphony launch, and Symphony steering are mutually exclusive")
-        if proposed_response is not None and any(
-            value is not None for value in (image, symphony, symphony_intervention)
-        ):
-            raise ValueError("a proposed response must be an ordinary text prompt")
-        if (symphony is not None or symphony_intervention is not None) and (
-            self._symphony_experience is None
-        ):
-            raise RuntimeError("Symphony is unavailable in this runtime")
         if image is not None and self._transcript_journal is None:
+            # WALL owner files / D.2 082: capture accepted input before running it.
             raise RuntimeError("image input requires the mandatory transcript journal")
         if proposed_response is not None and self._transcript_journal is None:
+            # WALL owner files / D.2 082: capture accepted input before running it.
             raise RuntimeError("a proposed response requires the mandatory transcript journal")
 
         run_id = self._run_id_factory()
-        # Validate both correlation IDs before mutating process state.
-        RunStartedPayload(run_id=run_id, prompt_id=prompt_id)
         model_target = model_command_text(prompt)
         image_view = image.view() if image is not None else None
         binary_image = (
@@ -639,11 +570,13 @@ class RunLoop:
                     proposed_response.proposal_run_id,
                 )
                 if source is None or source[0].get("partial") is not False:
+                    # WALL attention / M3DK, G19: fire only the proposal the owner actually saw.
                     raise ValueError("proposed response is not available in this thread")
                 if proposal_was_fired(
                     messages,
                     proposed_response.proposal_run_id,
                 ):
+                    # WALL money / M3DK, G19: one owner click must not purchase the same run twice.
                     raise ValueError("proposed response was already fired")
                 user_message["proposed_response"] = proposed_response_fire_record(
                     source_message=source[0],
@@ -654,9 +587,7 @@ class RunLoop:
                 )
             if self._transcript_journal is not None:
                 if image is not None:
-                    stored_view = self._capture_image_attachment(thread_id, prompt_id, image)
-                    if stored_view != image_view:  # pragma: no cover - both derive exact bytes
-                        raise RuntimeError("journal image view differs from validated input")
+                    self._capture_image_attachment(thread_id, prompt_id, image)
                 turn.parent_id = self._captured_parent_id(thread_id)
                 self._capture_message(thread_id, user_message, parent_id=turn.parent_id)
                 self._pending_captured.setdefault(thread_id, deque()).append(turn)
@@ -737,7 +668,6 @@ class RunLoop:
                     thread_id = self._selected_thread_id
                     state = self._threads.get(thread_id) if thread_id is not None else None
             else:
-                self._require_thread_id(thread_id)
                 state = self._threads.get(thread_id)
             if thread_id is None:
                 error = self._factory.create(
@@ -776,7 +706,6 @@ class RunLoop:
     ) -> None:
         """Resolve one matching open gate, or return a scoped non-mutating error."""
 
-        self._require_thread_id(thread_id)
         async with self._lock:
             self._require_open()
             state = self._threads.get(thread_id)
@@ -999,8 +928,6 @@ class RunLoop:
                     emit=_Emitter(self, thread_id, active),
                     model_resolution=model_resolution,
                 )
-            if not isinstance(outcome, TurnOutcome):
-                raise TypeError("turn runner must return TurnOutcome")
             stop_reason = outcome.stop_reason
         except asyncio.CancelledError:
             stop_reason = StopReason.CANCELLED
@@ -1050,12 +977,6 @@ class RunLoop:
                 return checked, "unknown"
             try:
                 candidate = await resolve_image(thread_id, checked)
-                if (
-                    not isinstance(candidate, ThreadModelResolution)
-                    or candidate.model != checked.model
-                    or candidate.stickiness_epoch != checked.stickiness_epoch
-                ):
-                    raise ValueError("image capability lookup changed model identity")
                 checked = candidate
             except Exception as exc:
                 logger.warning(
@@ -1153,10 +1074,7 @@ class RunLoop:
                 state.message_history = outcome.message_history
                 if not outcome.model_visible:
                     active.turn.user_message["model_visible"] = outcome.model_visible
-                if not self._usage_monotonic(active.usage, outcome.usage):
-                    if stop_reason is not StopReason.CANCELLED:
-                        stop_reason = StopReason.ERROR
-                elif not active.usage_emitted or outcome.usage != active.usage:
+                if not active.usage_emitted or outcome.usage != active.usage:
                     active.usage = outcome.usage
                     await self._publish_usage_locked(thread_id, active)
                 if (
@@ -1249,7 +1167,6 @@ class RunLoop:
         """Resolve one direct command after its FIFO position is acknowledged."""
 
         target = active.turn.model_target
-        assert target is not None
         if not target:
             active.model_error = "Model unchanged: add an OpenRouter model string after /model."
         elif self._model_resolver is None:
@@ -1282,8 +1199,6 @@ class RunLoop:
             message = "Model unchanged: broker model switching is unavailable."
         elif message is None and candidate is not None and previous is not None:
             changed_at = self._clock()
-            if changed_at.tzinfo is None:
-                raise ValueError("model-change clock must return an aware datetime")
             resolution = replace(
                 candidate,
                 stickiness_epoch=previous.stickiness_epoch + 1,
@@ -1334,7 +1249,6 @@ class RunLoop:
                     f"Context window: {resolution.context_tokens} tokens."
                 )
 
-        assert message is not None
         if event is not None:
             active.assistant_message["events"].append(deepcopy(event))
             await self._publish_locked(
@@ -1366,8 +1280,6 @@ class RunLoop:
 
     def _aware_clock(self) -> datetime:
         instant = self._clock()
-        if instant.tzinfo is None or instant.utcoffset() is None:
-            raise ValueError("parameter clock must return an aware datetime")
         return instant
 
     def _ensure_parameter_thread_locked(
@@ -1407,13 +1319,10 @@ class RunLoop:
         value: ParameterValue,
     ) -> ThreadModelResolution:
         attribute = parameter_id.removeprefix("model.")
-        if attribute == "slug":
-            raise ValueError("model.slug must use resolve_named")
         parameters = replace(
             resolution.request_parameters,
             **{attribute: value},
         )
-        assert isinstance(parameters, ModelRequestParameters)
         return replace(resolution, request_parameters=parameters)
 
     async def _record_parameter_change_locked(
@@ -1527,8 +1436,6 @@ class RunLoop:
         active: _ActiveRun,
         value: str,
     ) -> None:
-        if not isinstance(value, str):
-            raise TypeError("text delta must be a string")
         async with self._lock:
             state = self._live_state_locked(thread_id, active)
             if state is None:
@@ -1549,8 +1456,6 @@ class RunLoop:
         active: _ActiveRun,
         value: str,
     ) -> None:
-        if not isinstance(value, str):
-            raise TypeError("thinking delta must be a string")
         async with self._lock:
             state = self._live_state_locked(thread_id, active)
             if state is None:
@@ -1601,14 +1506,10 @@ class RunLoop:
         active: _ActiveRun,
         value: UsageSnapshot,
     ) -> None:
-        if not isinstance(value, UsageSnapshot):
-            raise TypeError("usage update must be a UsageSnapshot")
         async with self._lock:
             state = self._live_state_locked(thread_id, active)
             if state is None:
                 return
-            if not self._usage_monotonic(active.usage, value):
-                raise ValueError("cumulative usage must not decrease")
             active.usage = value
             await self._publish_usage_locked(thread_id, active)
 
@@ -1634,8 +1535,6 @@ class RunLoop:
         decision = asyncio.get_running_loop().create_future()
         async with self._lock:
             state = self._live_state_locked(thread_id, active)
-            if state is None:
-                raise RuntimeError("cannot open a gate for an inactive run")
             replacing_resolved_stage = (
                 state.open_gate is not None
                 and active.gate_decision is not None
@@ -1646,6 +1545,7 @@ class RunLoop:
             )
             if state.open_gate is not None or active.gate_decision is not None:
                 if not replacing_resolved_stage:
+                    # WALL attention / A-019: preserve the pending owner decision and its waiter.
                     raise RuntimeError("run already has an unresolved gate")
             active.state = "waiting_gate"
             active.gate_decision = decision
@@ -1665,9 +1565,8 @@ class RunLoop:
         async with self._lock:
             state = self._live_state_locked(thread_id, active)
             if state is None:
+                # WALL attention / A-019: a stale run cannot dismiss the current decision.
                 raise RuntimeError("cannot dismiss a gate for an inactive run")
-            if state.open_gate is None or active.gate_decision is None:
-                raise RuntimeError("run has no open gate")
             await self._publish_locked(
                 thread_id,
                 self._factory.create(
@@ -1706,6 +1605,7 @@ class RunLoop:
         gate: GateOpenPayload,
         decision: GateCommitPayload,
     ) -> bool:
+        # WALL Palace writes / A-023: commit only cards/revisions presented in this owner gate.
         if gate.stage == "wrong_resolution":
             if decision.removed or decision.added_back or decision.wrong_resolution is None:
                 return False
@@ -1739,6 +1639,7 @@ class RunLoop:
         thread_id: str,
         active: _ActiveRun,
     ) -> _ThreadState | None:
+        # WALL attention / H7: stale or cancelled runs cannot publish into the active answer.
         state = self._threads.get(thread_id)
         if state is None or state.active is not active or active.state == "cancelling":
             return None
@@ -1822,6 +1723,7 @@ class RunLoop:
     ) -> asyncio.Future[None] | None:
         if subscription.failed:
             if confirm:
+                # WALL attention / H7: disconnect a lost stream so snapshot recovery can run.
                 raise ConnectionError("envelope subscription is unavailable")
             return None
         receipt = asyncio.get_running_loop().create_future() if confirm else None
@@ -1842,6 +1744,7 @@ class RunLoop:
                     # a faulty observer must not interrupt the authoritative run.
                     pass
             if confirm:
+                # WALL attention / H7: disconnect a lost stream so snapshot recovery can run.
                 raise ConnectionError("envelope subscription exceeded its buffer") from None
             return None
         if subscription.worker is None:
@@ -1903,10 +1806,12 @@ class RunLoop:
 
     def _require_open(self) -> None:
         if self._capture_failure is not None:
+            # WALL owner files / D.2 082: never continue after durable capture failed.
             raise RuntimeError("run loop is unavailable after transcript capture failure") from (
                 self._capture_failure
             )
         if self._closing:
+            # WALL owner files / D.2 082: shutdown has released the capture resources.
             raise RuntimeError("run loop is closed")
 
     def _state_for_locked(self, thread_id: str) -> _ThreadState:
@@ -1976,6 +1881,7 @@ class RunLoop:
             or state.queued
             or self._pending_captured.get(thread_id)
         ):
+            # WALL owner files / M3TL: an existing thread cannot switch workspace roots.
             raise ProjectBindingConflict(project_key, state.project_key)
         if self._transcript_journal is not None:
             self._transcript_journal.append_thread_context(thread_id, project_key)
@@ -1991,13 +1897,13 @@ class RunLoop:
     ) -> None:
         root = Path(workspace_root).expanduser().resolve(strict=True)
         if not root.is_dir():
+            # WALL owner files / M3TL: bind an actual directory before granting tool writes.
             raise ValueError("thread workspace must be an existing directory")
         canonical = str(root)
         label = (project_label or root.name).strip()
-        if not label:
-            raise ValueError("project label must not be blank")
         if state.workspace_root is not None:
             if state.workspace_root != canonical:
+                # WALL owner files / M3TL: an existing thread cannot switch workspace roots.
                 raise ProjectBindingConflict(canonical, state.project_key)
             if project_label is not None and label != state.project_label:
                 if self._transcript_journal is not None:
@@ -2011,6 +1917,7 @@ class RunLoop:
                 state.project_label = label
             return
         if state.project_key is not None and state.project_key.startswith("/"):
+            # WALL owner files / M3TL: an existing thread cannot switch workspace roots.
             raise ProjectBindingConflict(canonical, state.project_key)
         if self._transcript_journal is not None:
             self._transcript_journal.append_thread_context(
@@ -2107,13 +2014,9 @@ class RunLoop:
             return state.active.turn.run_id
         if not state.messages:
             return None
-        parent_id = state.messages[-1].get("message_id")
-        if not isinstance(parent_id, str) or not parent_id:
-            raise RuntimeError("thread transcript message is missing its message_id")
-        return parent_id
+        return state.messages[-1]["message_id"]
 
     def _captured_parent_id(self, thread_id: str) -> str | None:
-        assert self._transcript_journal is not None
         try:
             return self._transcript_journal.next_parent_id(thread_id)
         except Exception as exc:
@@ -2146,7 +2049,6 @@ class RunLoop:
         prompt_id: str,
         image: ImageInput,
     ) -> ImageView:
-        assert self._transcript_journal is not None
         if self._capture_failure is not None:
             self._fail_capture(self._capture_failure)
         try:
@@ -2167,6 +2069,7 @@ class RunLoop:
         if self._capture_failure is None:
             self._capture_failure = exc
             logger.critical("transcript capture failed; run loop is now unavailable", exc_info=exc)
+        # WALL owner files / D.2 082: stop acceptance when the journal cannot persist.
         raise RuntimeError("transcript capture failed; run loop is now unavailable") from exc
 
     async def _resolution_for_thread(
@@ -2197,21 +2100,6 @@ class RunLoop:
                     request_parameters=fallback.request_parameters,
                 )
         return await self._model_resolver.resolve(thread_id)
-
-    @staticmethod
-    def _require_thread_id(thread_id: str) -> None:
-        if not isinstance(thread_id, str) or not thread_id.strip():
-            raise ValueError("thread_id must not be blank")
-
-    @staticmethod
-    def _usage_monotonic(previous: UsageSnapshot, current: UsageSnapshot) -> bool:
-        return (
-            current.requests >= previous.requests
-            and current.input_tokens >= previous.input_tokens
-            and current.output_tokens >= previous.output_tokens
-            and current.cache_read_tokens >= previous.cache_read_tokens
-            and current.cache_write_tokens >= previous.cache_write_tokens
-        )
 
     @staticmethod
     def _usage_dict(value: UsageSnapshot) -> dict[str, int]:
