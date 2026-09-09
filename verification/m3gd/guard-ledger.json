@@ -1,0 +1,3918 @@
+{
+  "baseline": "8e6c63e",
+  "units": "Raise/assert sites exclude 15 bare rethrows and one rethrow of a captured BaseException. Field bounds are counted separately, including multiple bounds on one field. Web throws are separate. Semantic gates/limits are inventoried in guard-semantics.json. Ordinary dispatch branches and native library internals are not invented refusals.",
+  "summary": [
+    {
+      "file": "src/harness/agent.py",
+      "kept": 6,
+      "deleted": 5
+    },
+    {
+      "file": "src/harness/agent_runtime.py",
+      "kept": 1,
+      "deleted": 9
+    },
+    {
+      "file": "src/harness/envelope.py",
+      "kept": 12,
+      "deleted": 14
+    },
+    {
+      "file": "src/harness/memory_bridge.py",
+      "kept": 0,
+      "deleted": 2
+    },
+    {
+      "file": "src/harness/memory_gate.py",
+      "kept": 1,
+      "deleted": 5
+    },
+    {
+      "file": "src/harness/progressive_prompt.py",
+      "kept": 0,
+      "deleted": 1
+    },
+    {
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "kept": 12,
+      "deleted": 21
+    },
+    {
+      "file": "src/harness/run_loop.py",
+      "kept": 21,
+      "deleted": 37
+    },
+    {
+      "file": "src/harness/spine_client.py",
+      "kept": 8,
+      "deleted": 50
+    },
+    {
+      "file": "src/harness/toolset_runtime.py",
+      "kept": 0,
+      "deleted": 1
+    },
+    {
+      "file": "src/harness/transcript.py",
+      "kept": 41,
+      "deleted": 11
+    }
+  ],
+  "python_totals": {
+    "NONE": 156,
+    "WALL": 99,
+    "INCIDENT": 3
+  },
+  "field_bound_totals": {
+    "WALL": 41,
+    "NONE": 77,
+    "INCIDENT": 7
+  },
+  "web_throw_totals": {
+    "NONE": 21,
+    "WALL": 3
+  },
+  "python_guards": [
+    {
+      "symbol": "HarnessAgent.chat",
+      "code": "raise TypeError('chat agent returned a non-text output')",
+      "file": "src/harness/agent.py",
+      "before_line": 337,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "HarnessAgent._create_single_remember",
+      "code": "assert isinstance(exc.conflict, LabelConflict)",
+      "file": "src/harness/agent.py",
+      "before_line": 541,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "HarnessAgent.extract_thread",
+      "code": "raise TypeError('extraction agent returned no structured result')",
+      "file": "src/harness/agent.py",
+      "before_line": 683,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "HarnessAgent.propose_extraction_verdict",
+      "code": "raise TypeError('extraction verdict agent returned no structured result')",
+      "file": "src/harness/agent.py",
+      "before_line": 701,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "HarnessAgent.propose_extraction_verdict",
+      "code": "raise ValueError('extraction verdict targeted a memory outside its fetched neighbors')",
+      "file": "src/harness/agent.py",
+      "before_line": 704,
+      "classification": "WALL",
+      "after_line": 695,
+      "citation": "WALL Palace writes / ADR-022: affect only fetched candidates.",
+      "test": "tests/test_agent.py::test_extraction_cannot_invent_write_targets[merge-targets0-extraction verdict targeted a memory outside its fetched neighbors]",
+      "executed": true,
+      "message": "extraction verdict targeted a memory outside its fetched neighbors"
+    },
+    {
+      "symbol": "HarnessAgent.propose_extraction_verdict",
+      "code": "raise ValueError('new extraction verdict cannot have targets')",
+      "file": "src/harness/agent.py",
+      "before_line": 706,
+      "classification": "WALL",
+      "after_line": 698,
+      "citation": "WALL Palace writes / ADR-022: affect only fetched candidates.",
+      "test": "tests/test_agent.py::test_extraction_cannot_invent_write_targets[new-targets1-new extraction verdict cannot have targets]",
+      "executed": true,
+      "message": "new extraction verdict cannot have targets"
+    },
+    {
+      "symbol": "HarnessAgent.propose_extraction_verdict",
+      "code": "raise ValueError('non-new extraction verdict requires a target')",
+      "file": "src/harness/agent.py",
+      "before_line": 708,
+      "classification": "WALL",
+      "after_line": 701,
+      "citation": "WALL Palace writes / ADR-022: affect only fetched candidates.",
+      "test": "tests/test_agent.py::test_extraction_cannot_invent_write_targets[merge-targets2-non-new extraction verdict requires a target]",
+      "executed": true,
+      "message": "non-new extraction verdict requires a target"
+    },
+    {
+      "symbol": "HarnessAgent.split_seed",
+      "code": "raise TypeError('seed splitter returned no structured result')",
+      "file": "src/harness/agent.py",
+      "before_line": 726,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "HarnessAgent.split_seed",
+      "code": "raise ValueError('seed splitter produced an invalid label')",
+      "file": "src/harness/agent.py",
+      "before_line": 733,
+      "classification": "WALL",
+      "after_line": 725,
+      "citation": "WALL Palace writes / A-033: validate a whole seed batch before creating any child.",
+      "test": "tests/test_agent.py::test_seed_draft_walls_fail_before_returning_a_write_batch[update0-seed splitter produced an invalid label]",
+      "executed": true,
+      "message": "seed splitter produced an invalid label"
+    },
+    {
+      "symbol": "HarnessAgent.split_seed",
+      "code": "raise ValueError('seed splitter produced a child above the 128-token limit')",
+      "file": "src/harness/agent.py",
+      "before_line": 735,
+      "classification": "WALL",
+      "after_line": 728,
+      "citation": "WALL Palace writes / A-033: validate a whole seed batch before creating any child.",
+      "test": "tests/test_agent.py::test_seed_draft_walls_fail_before_returning_a_write_batch[update1-seed splitter produced a child above the 128-token limit]",
+      "executed": true,
+      "message": "seed splitter produced a child above the 128-token limit"
+    },
+    {
+      "symbol": "HarnessAgent.split_seed",
+      "code": "raise ValueError('seed splitter produced invalid keywords')",
+      "file": "src/harness/agent.py",
+      "before_line": 737,
+      "classification": "WALL",
+      "after_line": 731,
+      "citation": "WALL Palace writes / A-033: validate a whole seed batch before creating any child.",
+      "test": "tests/test_agent.py::test_seed_draft_walls_fail_before_returning_a_write_batch[update2-seed splitter produced invalid keywords]",
+      "executed": true,
+      "message": "seed splitter produced invalid keywords"
+    },
+    {
+      "symbol": "PydanticAITurnRunner.run",
+      "code": "raise RuntimeError('this owner session has no browser consent boundary')",
+      "file": "src/harness/agent_runtime.py",
+      "before_line": 153,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticAITurnRunner.run",
+      "code": "raise TypeError('/remember dispatch returned ordinary chat')",
+      "file": "src/harness/agent_runtime.py",
+      "before_line": 175,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticAITurnRunner.run",
+      "code": "raise TypeError('chat agent returned a non-text output')",
+      "file": "src/harness/agent_runtime.py",
+      "before_line": 210,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticAITurnRunner._record_spend",
+      "code": "raise RuntimeError('spend-enabled emitter must expose run_id and prompt_id')",
+      "file": "src/harness/agent_runtime.py",
+      "before_line": 339,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticAITurnRunner._record_spend",
+      "code": "raise RuntimeError('spend-enabled model call requires a thread_id')",
+      "file": "src/harness/agent_runtime.py",
+      "before_line": 341,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticAITurnRunner._record_spend",
+      "code": "raise RuntimeError('Spine accepted an incomplete spend receipt batch')",
+      "file": "src/harness/agent_runtime.py",
+      "before_line": 362,
+      "classification": "WALL",
+      "after_line": 350,
+      "citation": "WALL money: B.6 r11 keeps unacknowledged receipts queued for reconciliation.",
+      "test": "tests/test_agent_runtime.py::test_dead_ledger_queues_estimate_and_never_retracts_answer[spend1]",
+      "executed": true,
+      "message": "Spine accepted an incomplete spend receipt batch"
+    },
+    {
+      "symbol": "_EventBridge.finalize",
+      "code": "raise RuntimeError('terminal model text differs from streamed model text')",
+      "file": "src/harness/agent_runtime.py",
+      "before_line": 634,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_EventBridge.publish_usage",
+      "code": "raise ValueError('pydantic-ai usage decreased during a run')",
+      "file": "src/harness/agent_runtime.py",
+      "before_line": 653,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_json_event",
+      "code": "raise TypeError('pydantic-ai emitted a non-object event')",
+      "file": "src/harness/agent_runtime.py",
+      "before_line": 661,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_strip_request_memory_block",
+      "code": "assert instructions is not None",
+      "file": "src/harness/agent_runtime.py",
+      "before_line": 834,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_require_ulid",
+      "code": "raise ValueError('value must be a ULID')",
+      "file": "src/harness/envelope.py",
+      "before_line": 41,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_require_non_blank",
+      "code": "raise ValueError('value must not be blank')",
+      "file": "src/harness/envelope.py",
+      "before_line": 47,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_decode_canonical_image",
+      "code": "raise ValueError('image exceeds the 5 MiB decoded limit')",
+      "file": "src/harness/envelope.py",
+      "before_line": 62,
+      "classification": "WALL",
+      "after_line": 44,
+      "citation": "WALL money / A-052: reject oversize billed images before capturing or sending bytes.",
+      "test": "tests/test_envelope.py::test_prompt_submit_rejects_noncanonical_mismatched_extra_or_oversize_image[image5]",
+      "executed": true,
+      "message": "image exceeds the 5 MiB decoded limit"
+    },
+    {
+      "symbol": "_decode_canonical_image",
+      "code": "raise ValueError('image data must be canonical padded RFC 4648 base64') from exc",
+      "file": "src/harness/envelope.py",
+      "before_line": 66,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_decode_canonical_image",
+      "code": "raise ValueError('image data must not be empty')",
+      "file": "src/harness/envelope.py",
+      "before_line": 68,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_decode_canonical_image",
+      "code": "raise ValueError('image exceeds the 5 MiB decoded limit')",
+      "file": "src/harness/envelope.py",
+      "before_line": 70,
+      "classification": "WALL",
+      "after_line": 48,
+      "citation": "WALL money / A-052: reject oversize billed images before capturing or sending bytes.",
+      "test": "tests/test_envelope.py::test_prompt_submit_rejects_noncanonical_mismatched_extra_or_oversize_image[image4]",
+      "executed": true,
+      "message": "image exceeds the 5 MiB decoded limit"
+    },
+    {
+      "symbol": "_decode_canonical_image",
+      "code": "raise ValueError('image data must be canonical padded RFC 4648 base64')",
+      "file": "src/harness/envelope.py",
+      "before_line": 72,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "ImageInput.validate_signature",
+      "code": "raise ValueError('image media_type does not match its file signature')",
+      "file": "src/harness/envelope.py",
+      "before_line": 115,
+      "classification": "WALL",
+      "after_line": 92,
+      "citation": "WALL owner files / A-052: capture bytes only under their actual image type.",
+      "test": "tests/test_envelope.py::test_prompt_submit_rejects_noncanonical_mismatched_extra_or_oversize_image[image2]",
+      "executed": true,
+      "message": "image media_type does not match its file signature"
+    },
+    {
+      "symbol": "SymphonyJudgeCharterPayload.require_performance_metrics_only",
+      "code": "raise ValueError('the performance charter requires precalculated metrics')",
+      "file": "src/harness/envelope.py",
+      "before_line": 205,
+      "classification": "WALL",
+      "after_line": 183,
+      "citation": "WALL money / T2: a paid performance judge needs the owner-approved metric charter.",
+      "test": "tests/test_symphony_experience.py::test_launch_requires_core_charter_order_performance_metrics_and_signature",
+      "executed": true,
+      "message": "the performance charter requires precalculated metrics"
+    },
+    {
+      "symbol": "SymphonyJudgeCharterPayload.require_performance_metrics_only",
+      "code": "raise ValueError('precalculated metrics belong only to performance')",
+      "file": "src/harness/envelope.py",
+      "before_line": 207,
+      "classification": "WALL",
+      "after_line": 186,
+      "citation": "WALL attention / T2: preserve the distinct authority of each judge charter.",
+      "test": "tests/test_symphony_experience.py::test_signed_launch_cannot_mix_judge_authority_or_step_identity[metric-seat-precalculated metrics belong only to performance]",
+      "executed": true,
+      "message": "precalculated metrics belong only to performance"
+    },
+    {
+      "symbol": "SymphonyLaunchPayload.require_fixed_deliberation_shape",
+      "code": "raise ValueError('recipe step ids must be unique')",
+      "file": "src/harness/envelope.py",
+      "before_line": 242,
+      "classification": "WALL",
+      "after_line": 224,
+      "citation": "WALL owner files / T2: duplicate step identities would share a worktree target.",
+      "test": "tests/test_symphony_experience.py::test_signed_launch_cannot_mix_judge_authority_or_step_identity[recipe-recipe step ids must be unique]",
+      "executed": true,
+      "message": "recipe step ids must be unique"
+    },
+    {
+      "symbol": "SymphonyLaunchPayload.require_fixed_deliberation_shape",
+      "code": "raise ValueError('judge charters must fix motivation, implementation, performance')",
+      "file": "src/harness/envelope.py",
+      "before_line": 245,
+      "classification": "WALL",
+      "after_line": 228,
+      "citation": "WALL money / T2: do not purchase judges outside the signed three-seat charter.",
+      "test": "tests/test_symphony_experience.py::test_signed_launch_cannot_mix_judge_authority_or_step_identity[judges-judge charters must fix motivation, implementation, performance]",
+      "executed": true,
+      "message": "judge charters must fix motivation, implementation, performance"
+    },
+    {
+      "symbol": "PromptSubmitPayload.require_one_specialized_input",
+      "code": "raise ValueError('image, Symphony launch, and Symphony steering are mutually exclusive')",
+      "file": "src/harness/envelope.py",
+      "before_line": 329,
+      "classification": "WALL",
+      "after_line": 313,
+      "citation": "WALL attention / A-052: never silently discard part of the submitted owner input.",
+      "test": "tests/test_symphony_experience.py::test_specialized_prompt_refusals_preserve_one_owner_intent",
+      "executed": true,
+      "message": "image, Symphony launch, and Symphony steering are mutually exclusive"
+    },
+    {
+      "symbol": "PromptSubmitPayload.require_one_specialized_input",
+      "code": "raise ValueError('a proposed response must be an ordinary text prompt')",
+      "file": "src/harness/envelope.py",
+      "before_line": 331,
+      "classification": "WALL",
+      "after_line": 316,
+      "citation": "WALL attention / M3DK, G19: a proposal click authorizes only its displayed text.",
+      "test": "tests/test_symphony_experience.py::test_specialized_prompt_refusals_preserve_one_owner_intent",
+      "executed": true,
+      "message": "a proposed response must be an ordinary text prompt"
+    },
+    {
+      "symbol": "RunDonePayload.require_consistent_partial_marker",
+      "code": "raise ValueError('partial must be false exactly for end_turn')",
+      "file": "src/harness/envelope.py",
+      "before_line": 434,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunDonePayload.require_consistent_partial_marker",
+      "code": "raise ValueError('provider_error requires stop_reason=error')",
+      "file": "src/harness/envelope.py",
+      "before_line": 436,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunDonePayload.require_consistent_partial_marker",
+      "code": "raise ValueError('error_message requires stop_reason=error')",
+      "file": "src/harness/envelope.py",
+      "before_line": 438,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "GateOpenPayload.require_stage_membership",
+      "code": "raise ValueError('gate cards must have unique memory_id values')",
+      "file": "src/harness/envelope.py",
+      "before_line": 458,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "GateOpenPayload.require_stage_membership",
+      "code": "raise ValueError('review gate must not carry wrong_removed')",
+      "file": "src/harness/envelope.py",
+      "before_line": 461,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "GateOpenPayload.require_stage_membership",
+      "code": "raise ValueError('wrong_resolution gate requires one wrong_removed and no scored cards')",
+      "file": "src/harness/envelope.py",
+      "before_line": 463,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "WrongResolution.require_action_body",
+      "code": "raise ValueError('edit resolution requires a nonblank body')",
+      "file": "src/harness/envelope.py",
+      "before_line": 477,
+      "classification": "WALL",
+      "after_line": 439,
+      "citation": "WALL Palace writes / A-023: an edit decision must contain the replacement body.",
+      "test": "tests/test_envelope.py::test_wrong_resolution_rejects_inconsistent_stage_shapes[payload0]",
+      "executed": true,
+      "message": "edit resolution requires a nonblank body"
+    },
+    {
+      "symbol": "WrongResolution.require_action_body",
+      "code": "raise ValueError('expire resolution must not carry a body')",
+      "file": "src/harness/envelope.py",
+      "before_line": 479,
+      "classification": "WALL",
+      "after_line": 442,
+      "citation": "WALL Palace writes / A-023: expiration cannot silently carry an ignored edit.",
+      "test": "tests/test_envelope.py::test_wrong_resolution_rejects_inconsistent_stage_shapes[payload1]",
+      "executed": true,
+      "message": "expire resolution must not carry a body"
+    },
+    {
+      "symbol": "Envelope.reject_boolean_version",
+      "code": "raise ValueError('v must be the numeric literal 1')",
+      "file": "src/harness/envelope.py",
+      "before_line": 670,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "Envelope.require_string_type",
+      "code": "raise ValueError('type must be a non-blank string')",
+      "file": "src/harness/envelope.py",
+      "before_line": 677,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "Envelope.validate_type_payload_contract",
+      "code": "raise ValueError(f'{self.type} requires a non-blank outer thread_id')",
+      "file": "src/harness/envelope.py",
+      "before_line": 709,
+      "classification": "WALL",
+      "after_line": 659,
+      "citation": "WALL Palace writes / H7: owner input and decisions must identify their target thread.",
+      "test": "tests/test_envelope.py::test_gate_commit_requires_outer_thread",
+      "executed": true,
+      "message": "{self.type} requires a non-blank outer thread_id"
+    },
+    {
+      "symbol": "generate_ulid",
+      "code": "raise ValueError('ULID timestamp is outside the 48-bit range')",
+      "file": "src/harness/envelope.py",
+      "before_line": 719,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "MemorySharePolicy.__post_init__",
+      "code": "raise ValueError('memory shares must satisfy 0 < leaf < conductor <= 1')",
+      "file": "src/harness/memory_bridge.py",
+      "before_line": 31,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "MemorySharePolicy.tokens",
+      "code": "raise ValueError('model_context_tokens must be positive')",
+      "file": "src/harness/memory_bridge.py",
+      "before_line": 35,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "MemoryGateTurnRunner.__init__",
+      "code": "raise ValueError('model_context_tokens must be a positive integer')",
+      "file": "src/harness/memory_gate.py",
+      "before_line": 191,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "MemoryGateTurnRunner.run",
+      "code": "raise ValueError('memory gate context requires a thread_id')",
+      "file": "src/harness/memory_gate.py",
+      "before_line": 245,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "MemoryGateTurnRunner._resolve_wrong_memory",
+      "code": "raise ValueError('wrong-resolution decision does not match the current gate')",
+      "file": "src/harness/memory_gate.py",
+      "before_line": 382,
+      "classification": "WALL",
+      "after_line": 380,
+      "citation": "WALL files / D.2 082: preserve verified durable capture",
+      "test": "tests/test_memory_gate.py::test_wrong_resolution_cannot_patch_a_different_revision",
+      "executed": true,
+      "message": "wrong-resolution decision does not match the current gate"
+    },
+    {
+      "symbol": "MemoryGateTurnRunner._resolve_wrong_memory",
+      "code": "raise RuntimeError('Spine patched a different memory than requested')",
+      "file": "src/harness/memory_gate.py",
+      "before_line": 411,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "MemoryGateTurnRunner._run_autonomous",
+      "code": "raise ValueError('memory rescore context requires a thread_id')",
+      "file": "src/harness/memory_gate.py",
+      "before_line": 476,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "MemoryGateTurnRunner._run_autonomous",
+      "code": "raise RuntimeError('thread memory context disappeared')",
+      "file": "src/harness/memory_gate.py",
+      "before_line": 480,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "workspace_location_path",
+      "code": "raise ValueError('agent location escaped its workspace')",
+      "file": "src/harness/progressive_prompt.py",
+      "before_line": 26,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_clean_path",
+      "code": "raise ValueError('path must be a nonblank string')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 69,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset.open",
+      "code": "raise ValueError(f'{name} must be nonblank and single-line')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 197,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset.open",
+      "code": "raise ValueError('cwd and workspace_root must be existing directories')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 201,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset.open",
+      "code": "raise ValueError('cwd must be inside workspace_root')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 203,
+      "classification": "WALL",
+      "after_line": 193,
+      "citation": "WALL owner files / ADR015: initial presence cannot exceed the granted workspace.",
+      "test": "tests/test_pydantic_harness_toolset.py::test_presence_grant_cannot_be_widened_or_reused_after_close",
+      "executed": true,
+      "message": "cwd must be inside workspace_root"
+    },
+    {
+      "symbol": "PydanticHarnessToolset.move",
+      "code": "raise ValueError(f'Cannot move to {target}: not a directory.')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 227,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset.move",
+      "code": "raise ValueError(f'Cannot move outside the workspace {self._location.workspace_root}.')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 229,
+      "classification": "WALL",
+      "after_line": 218,
+      "citation": "WALL owner files / ADR015: movement cannot enlarge the write grant.",
+      "test": "tests/test_pydantic_harness_toolset.py::test_presence_grant_cannot_be_widened_or_reused_after_close",
+      "executed": true,
+      "message": "Cannot move outside the workspace {self._location.workspace_root}."
+    },
+    {
+      "symbol": "PydanticHarnessToolset.execute",
+      "code": "raise ValueError(f'unsupported standard tool: {tool_name}')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 266,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._require_open",
+      "code": "raise ToolsetError('The workspace toolset is closed.')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 279,
+      "classification": "WALL",
+      "after_line": 263,
+      "citation": "WALL owner files / ADR015: writes require a live presence session.",
+      "test": "tests/test_pydantic_harness_toolset.py::test_presence_grant_cannot_be_widened_or_reused_after_close",
+      "executed": true,
+      "message": "The workspace toolset is closed."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._preflight",
+      "code": "raise ToolsetError('That path may contain credentials. Ask the owner before reading it.')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 303,
+      "classification": "WALL",
+      "after_line": 288,
+      "citation": "WALL credentials / ADR015: do not expose credential files through reads.",
+      "test": "tests/test_pydantic_harness_toolset.py::test_strict_reads_and_credentials_remain_walled",
+      "executed": true,
+      "message": "That path may contain credentials. Ask the owner before reading it."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._preflight",
+      "code": "raise ToolsetError(f\"Modification requires presence in the file's directory. Move to {target.parent} first.\")",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 307,
+      "classification": "WALL",
+      "after_line": 293,
+      "citation": "WALL owner files / ADR015: require presence in the exact directory being written.",
+      "test": "tests/test_pydantic_harness_toolset.py::test_location_fence_precedes_act_and_move_precedes_next_act",
+      "executed": true,
+      "message": "Modification requires presence in the file's directory. Move to {target.parent} first."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._preflight",
+      "code": "raise ToolsetError(f\"That path is outside this agent's location. Move to {target} first.\")",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 316,
+      "classification": "WALL",
+      "after_line": 303,
+      "citation": "WALL owner files / ADR015: honor the delegated read boundary.",
+      "test": "tests/test_pydantic_harness_toolset.py::test_strict_reads_and_credentials_remain_walled",
+      "executed": true,
+      "message": "That path is outside this agent's location. Move to {target} first."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._read",
+      "code": "raise ValueError('offset must be a positive one-indexed line number')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 345,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._read",
+      "code": "raise ValueError('limit must be positive')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 347,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._write",
+      "code": "raise ValueError('content must be a string')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 358,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._edit",
+      "code": "raise ValueError('edits must be a nonempty list')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 368,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._edit",
+      "code": "raise ValueError('each edit must be a mapping')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 373,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._edit",
+      "code": "raise ValueError('each edit requires nonblank oldText and string newText')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 377,
+      "classification": "WALL",
+      "after_line": 356,
+      "citation": "WALL owner files / ADR015: an empty search would replace unspecified file bytes.",
+      "test": "tests/test_pydantic_harness_toolset.py::test_ambiguous_edits_preserve_original_bytes[edits0-each edit requires nonblank oldText and string newText]",
+      "executed": true,
+      "message": "each edit requires nonblank oldText and string newText"
+    },
+    {
+      "symbol": "PydanticHarnessToolset._edit",
+      "code": "raise ToolsetError(f'oldText found {count} times; each replacement must be unique in the original file')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 380,
+      "classification": "WALL",
+      "after_line": 360,
+      "citation": "WALL owner files / ADR015: do not guess which occurrence the model meant to edit.",
+      "test": "tests/test_pydantic_harness_toolset.py::test_atomic_multi_edit_refuses_before_any_write",
+      "executed": true,
+      "message": "oldText found {count} times; each replacement must be unique in the original file"
+    },
+    {
+      "symbol": "PydanticHarnessToolset._edit",
+      "code": "raise ToolsetError('edit replacements overlap in the original file')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 388,
+      "classification": "WALL",
+      "after_line": 369,
+      "citation": "WALL owner files / ADR015: overlapping replacements would corrupt file bytes.",
+      "test": "tests/test_pydantic_harness_toolset.py::test_ambiguous_edits_preserve_original_bytes[edits1-edit replacements overlap in the original file]",
+      "executed": true,
+      "message": "edit replacements overlap in the original file"
+    },
+    {
+      "symbol": "PydanticHarnessToolset._grep",
+      "code": "raise ValueError('grep path must be a directory')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 403,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._grep",
+      "code": "raise ValueError('pattern must be a string')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 406,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._grep",
+      "code": "raise ValueError('glob must be a string')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 413,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._grep",
+      "code": "raise ValueError('context must be a nonnegative integer')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 417,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._grep",
+      "code": "raise ValueError('limit must be positive')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 419,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._find",
+      "code": "raise ValueError('find path must be a directory')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 456,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._find",
+      "code": "raise ValueError('find requires a string pattern and positive limit')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 460,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._ls",
+      "code": "raise ValueError('ls path must be a directory')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 468,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._ls",
+      "code": "raise ValueError('limit must be positive')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 471,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._bash",
+      "code": "raise ValueError('command must be a nonblank string')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 480,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._bash",
+      "code": "raise ValueError('timeout must be numeric')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 482,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._bash",
+      "code": "raise ToolsetError('That command may leave this project or change remote state. Ask the owner to run it explicitly outside Nocturne.')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 484,
+      "classification": "WALL",
+      "after_line": 444,
+      "citation": "WALL owner files / ADR015: shell tools cannot publish or escape the project grant.",
+      "test": "tests/test_pydantic_harness_toolset.py::test_shell_is_one_shot_os_fenced_and_remote_state_walled",
+      "executed": true,
+      "message": "That command may leave this project or change remote state. Ask the owner to run it explicitly outside Nocturne."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._bash",
+      "code": "raise ToolsetError('That command may expose credentials. Ask the owner before reading them.')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 489,
+      "classification": "WALL",
+      "after_line": 450,
+      "citation": "WALL credentials / ADR015: shell output must not read credential stores.",
+      "test": "tests/test_pydantic_harness_toolset.py::test_shell_does_not_fall_through_a_wall[cat .env-That command may expose credentials. Ask the owner before reading them.]",
+      "executed": true,
+      "message": "That command may expose credentials. Ask the owner before reading them."
+    },
+    {
+      "symbol": "PydanticHarnessToolset._bash",
+      "code": "raise ToolsetError('Secure shell is unavailable on this host; use read, edit, and write instead.')",
+      "file": "src/harness/pydantic_harness_adapter.py",
+      "before_line": 494,
+      "classification": "WALL",
+      "after_line": 456,
+      "citation": "WALL owner files / ADR015: never run an unfenced shell when sandboxing is absent.",
+      "test": "tests/test_pydantic_harness_toolset.py::test_shell_does_not_fall_through_a_wall[printf safe-Secure shell is unavailable on this host; use read, edit, and write instead.]",
+      "executed": true,
+      "message": "Secure shell is unavailable on this host; use read, edit, and write instead."
+    },
+    {
+      "symbol": "RunLoop.__init__",
+      "code": "raise ValueError('use either resolved_model or model_resolver, not both')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 218,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop.__init__",
+      "code": "raise ValueError('resolved_model must be nonblank without surrounding whitespace')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 224,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop.parameter_snapshot",
+      "code": "raise ParameterWriteViolation('invalid')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 255,
+      "classification": "WALL",
+      "after_line": 243,
+      "citation": "WALL money / ADR-023: resolve controls and preserve the running model.",
+      "test": "tests/test_run_loop.py::test_missing_model_resolution_cannot_apply_a_paid_parameter",
+      "executed": true,
+      "message": "invalid"
+    },
+    {
+      "symbol": "RunLoop.parameter_snapshot",
+      "code": "raise ValueError('parameter as_of must be timezone-aware')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 258,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop.write_parameter",
+      "code": "raise ParameterWriteViolation('busy')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 304,
+      "classification": "WALL",
+      "after_line": 290,
+      "citation": "WALL money / ADR-023: resolve controls and preserve the running model.",
+      "test": "tests/test_run_loop.py::test_busy_parameter_write_keeps_running_model_unchanged",
+      "executed": true,
+      "message": "busy"
+    },
+    {
+      "symbol": "RunLoop.write_parameter",
+      "code": "raise ParameterWriteViolation('invalid')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 314,
+      "classification": "WALL",
+      "after_line": 301,
+      "citation": "WALL money / ADR-023: resolve controls and preserve the running model.",
+      "test": "tests/test_run_loop.py::test_missing_model_resolution_cannot_apply_a_paid_parameter",
+      "executed": true,
+      "message": "invalid"
+    },
+    {
+      "symbol": "RunLoop.write_parameter",
+      "code": "assert isinstance(normalized, str)",
+      "file": "src/harness/run_loop.py",
+      "before_line": 318,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop.write_parameter",
+      "code": "raise ParameterWriteViolation('invalid')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 326,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop.write_parameter",
+      "code": "raise ParameterWriteViolation('invalid') from exc",
+      "file": "src/harness/run_loop.py",
+      "before_line": 336,
+      "classification": "WALL",
+      "after_line": 315,
+      "citation": "WALL money / ADR-023: resolve controls and preserve the running model.",
+      "test": "tests/test_run_loop.py::test_refused_named_model_and_legacy_root_preserve_prior_authority",
+      "executed": true,
+      "message": "invalid"
+    },
+    {
+      "symbol": "RunLoop.write_parameter",
+      "code": "raise ParameterWriteViolation('busy')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 347,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop.request_snapshot",
+      "code": "assert pending is not None",
+      "file": "src/harness/run_loop.py",
+      "before_line": 477,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop.record_thread_location",
+      "code": "raise ValueError('thread has no bound workspace')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 503,
+      "classification": "WALL",
+      "after_line": 469,
+      "citation": "WALL owner files / M3TL: movement needs an existing workspace boundary.",
+      "test": "tests/test_run_loop.py::test_workspace_refusals_preserve_the_original_binding",
+      "executed": true,
+      "message": "thread has no bound workspace"
+    },
+    {
+      "symbol": "RunLoop.record_thread_location",
+      "code": "raise ValueError('thread location must remain inside its workspace')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 507,
+      "classification": "WALL",
+      "after_line": 474,
+      "citation": "WALL owner files / M3TL: movement cannot enlarge the granted workspace.",
+      "test": "tests/test_run_loop.py::test_workspace_refusals_preserve_the_original_binding",
+      "executed": true,
+      "message": "thread location must remain inside its workspace"
+    },
+    {
+      "symbol": "RunLoop.send_direct",
+      "code": "assert pending is not None",
+      "file": "src/harness/run_loop.py",
+      "before_line": 538,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop.publish",
+      "code": "raise ValueError('ambient envelope thread does not match its publish target')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 547,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop.submit",
+      "code": "raise ValueError('prompt must not be blank')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 568,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop.submit",
+      "code": "raise TypeError('image must be an ImageInput or None')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 570,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop.submit",
+      "code": "raise TypeError('symphony must be a SymphonyLaunchPayload or None')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 572,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop.submit",
+      "code": "raise TypeError('symphony_intervention must be a typed intervention or None')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 582,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop.submit",
+      "code": "raise TypeError('proposed_response must be a typed proposal reference or None')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 586,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop.submit",
+      "code": "raise ValueError('image, Symphony launch, and Symphony steering are mutually exclusive')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 588,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop.submit",
+      "code": "raise ValueError('a proposed response must be an ordinary text prompt')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 592,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop.submit",
+      "code": "raise RuntimeError('Symphony is unavailable in this runtime')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 596,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop.submit",
+      "code": "raise RuntimeError('image input requires the mandatory transcript journal')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 598,
+      "classification": "WALL",
+      "after_line": 530,
+      "citation": "WALL owner files / D.2 082: capture accepted input before running it.",
+      "test": "tests/test_run_loop.py::test_input_needing_durable_capture_cannot_start_without_journal[image]",
+      "executed": true,
+      "message": "image input requires the mandatory transcript journal"
+    },
+    {
+      "symbol": "RunLoop.submit",
+      "code": "raise RuntimeError('a proposed response requires the mandatory transcript journal')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 600,
+      "classification": "WALL",
+      "after_line": 533,
+      "citation": "WALL owner files / D.2 082: capture accepted input before running it.",
+      "test": "tests/test_run_loop.py::test_input_needing_durable_capture_cannot_start_without_journal[proposal]",
+      "executed": true,
+      "message": "a proposed response requires the mandatory transcript journal"
+    },
+    {
+      "symbol": "RunLoop.submit",
+      "code": "raise ValueError('proposed response is not available in this thread')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 642,
+      "classification": "WALL",
+      "after_line": 574,
+      "citation": "WALL attention / M3DK, G19: fire only the proposal the owner actually saw.",
+      "test": "tests/test_run_loop.py::test_m3dk_fire_derives_exact_delta_and_preserves_source_provenance",
+      "executed": true,
+      "message": "proposed response is not available in this thread"
+    },
+    {
+      "symbol": "RunLoop.submit",
+      "code": "raise ValueError('proposed response was already fired')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 647,
+      "classification": "WALL",
+      "after_line": 580,
+      "citation": "WALL money / M3DK, G19: one owner click must not purchase the same run twice.",
+      "test": "tests/test_run_loop.py::test_m3dk_fire_derives_exact_delta_and_preserves_source_provenance",
+      "executed": true,
+      "message": "proposed response was already fired"
+    },
+    {
+      "symbol": "RunLoop.submit",
+      "code": "raise RuntimeError('journal image view differs from validated input')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 659,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop._drive",
+      "code": "raise TypeError('turn runner must return TurnOutcome')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1003,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop._image_capability_for_run",
+      "code": "raise ValueError('image capability lookup changed model identity')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1058,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop._resolve_model_command",
+      "code": "assert target is not None",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1252,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop._commit_model_command_locked",
+      "code": "raise ValueError('model-change clock must return an aware datetime')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1286,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop._commit_model_command_locked",
+      "code": "assert message is not None",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1337,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop._aware_clock",
+      "code": "raise ValueError('parameter clock must return an aware datetime')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1370,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop._with_parameter",
+      "code": "raise ValueError('model.slug must use resolve_named')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1411,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop._with_parameter",
+      "code": "assert isinstance(parameters, ModelRequestParameters)",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1416,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop._emit_text",
+      "code": "raise TypeError('text delta must be a string')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1531,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop._emit_thinking",
+      "code": "raise TypeError('thinking delta must be a string')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1553,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop._emit_usage",
+      "code": "raise TypeError('usage update must be a UsageSnapshot')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1605,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop._emit_usage",
+      "code": "raise ValueError('cumulative usage must not decrease')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1611,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop._emit_gate",
+      "code": "raise RuntimeError('cannot open a gate for an inactive run')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1638,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop._emit_gate",
+      "code": "raise RuntimeError('run already has an unresolved gate')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1649,
+      "classification": "WALL",
+      "after_line": 1549,
+      "citation": "WALL attention / A-019: preserve the pending owner decision and its waiter.",
+      "test": "tests/test_run_loop.py::test_gate_waiter_and_disconnected_stream_cannot_steal_owner_attention",
+      "executed": true,
+      "message": "run already has an unresolved gate"
+    },
+    {
+      "symbol": "RunLoop._dismiss_gate",
+      "code": "raise RuntimeError('cannot dismiss a gate for an inactive run')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1668,
+      "classification": "WALL",
+      "after_line": 1569,
+      "citation": "WALL attention / A-019: a stale run cannot dismiss the current decision.",
+      "test": "tests/test_run_loop.py::test_gate_waiter_and_disconnected_stream_cannot_steal_owner_attention",
+      "executed": true,
+      "message": "cannot dismiss a gate for an inactive run"
+    },
+    {
+      "symbol": "RunLoop._dismiss_gate",
+      "code": "raise RuntimeError('run has no open gate')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1670,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop._enqueue_locked",
+      "code": "raise ConnectionError('envelope subscription is unavailable')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1825,
+      "classification": "WALL",
+      "after_line": 1727,
+      "citation": "WALL attention / H7: disconnect a lost stream so snapshot recovery can run.",
+      "test": "tests/test_run_loop.py::test_gate_waiter_and_disconnected_stream_cannot_steal_owner_attention",
+      "executed": true,
+      "message": "envelope subscription is unavailable"
+    },
+    {
+      "symbol": "RunLoop._enqueue_locked",
+      "code": "raise ConnectionError('envelope subscription exceeded its buffer') from None",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1845,
+      "classification": "WALL",
+      "after_line": 1748,
+      "citation": "WALL attention / H7: disconnect a lost stream so snapshot recovery can run.",
+      "test": "tests/test_run_loop.py::test_gate_waiter_and_disconnected_stream_cannot_steal_owner_attention",
+      "executed": true,
+      "message": "envelope subscription exceeded its buffer"
+    },
+    {
+      "symbol": "RunLoop._require_open",
+      "code": "raise RuntimeError('run loop is unavailable after transcript capture failure') from self._capture_failure",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1906,
+      "classification": "WALL",
+      "after_line": 1810,
+      "citation": "WALL owner files / D.2 082: never continue after durable capture failed.",
+      "test": "tests/test_transcript.py::test_capture_failure_poison_stops_unjournaled_work",
+      "executed": true,
+      "message": "run loop is unavailable after transcript capture failure"
+    },
+    {
+      "symbol": "RunLoop._require_open",
+      "code": "raise RuntimeError('run loop is closed')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1910,
+      "classification": "WALL",
+      "after_line": 1815,
+      "citation": "WALL owner files / D.2 082: shutdown has released the capture resources.",
+      "test": "tests/test_run_loop.py::test_unavailable_capture_cannot_accept_another_prompt[False]",
+      "executed": true,
+      "message": "run loop is closed"
+    },
+    {
+      "symbol": "RunLoop._bind_project_locked",
+      "code": "raise ProjectBindingConflict(project_key, state.project_key)",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1979,
+      "classification": "WALL",
+      "after_line": 1885,
+      "citation": "WALL owner files / M3TL: an existing thread cannot switch workspace roots.",
+      "test": "tests/test_run_loop.py::test_legacy_nonempty_thread_cannot_be_silently_reprojected",
+      "executed": true,
+      "message": "thread project context is already fixed"
+    },
+    {
+      "symbol": "RunLoop._bind_workspace_locked",
+      "code": "raise ValueError('thread workspace must be an existing directory')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1994,
+      "classification": "WALL",
+      "after_line": 1901,
+      "citation": "WALL owner files / M3TL: bind an actual directory before granting tool writes.",
+      "test": "tests/test_run_loop.py::test_workspace_refusals_preserve_the_original_binding",
+      "executed": true,
+      "message": "thread workspace must be an existing directory"
+    },
+    {
+      "symbol": "RunLoop._bind_workspace_locked",
+      "code": "raise ValueError('project label must not be blank')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 1998,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop._bind_workspace_locked",
+      "code": "raise ProjectBindingConflict(canonical, state.project_key)",
+      "file": "src/harness/run_loop.py",
+      "before_line": 2001,
+      "classification": "WALL",
+      "after_line": 1907,
+      "citation": "WALL owner files / M3TL: an existing thread cannot switch workspace roots.",
+      "test": "tests/test_run_loop.py::test_workspace_refusals_preserve_the_original_binding",
+      "executed": true,
+      "message": "thread project context is already fixed"
+    },
+    {
+      "symbol": "RunLoop._bind_workspace_locked",
+      "code": "raise ProjectBindingConflict(canonical, state.project_key)",
+      "file": "src/harness/run_loop.py",
+      "before_line": 2014,
+      "classification": "WALL",
+      "after_line": 1921,
+      "citation": "WALL owner files / M3TL: an existing thread cannot switch workspace roots.",
+      "test": "tests/test_run_loop.py::test_refused_named_model_and_legacy_root_preserve_prior_authority",
+      "executed": true,
+      "message": "thread project context is already fixed"
+    },
+    {
+      "symbol": "RunLoop._parent_for_new_turn_locked",
+      "code": "raise RuntimeError('thread transcript message is missing its message_id')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 2112,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop._captured_parent_id",
+      "code": "assert self._transcript_journal is not None",
+      "file": "src/harness/run_loop.py",
+      "before_line": 2116,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop._capture_image_attachment",
+      "code": "assert self._transcript_journal is not None",
+      "file": "src/harness/run_loop.py",
+      "before_line": 2149,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "RunLoop._fail_capture",
+      "code": "raise RuntimeError('transcript capture failed; run loop is now unavailable') from exc",
+      "file": "src/harness/run_loop.py",
+      "before_line": 2170,
+      "classification": "WALL",
+      "after_line": 2073,
+      "citation": "WALL owner files / D.2 082: stop acceptance when the journal cannot persist.",
+      "test": "tests/test_transcript.py::test_capture_failure_poison_stops_unjournaled_work",
+      "executed": true,
+      "message": "transcript capture failed; run loop is now unavailable"
+    },
+    {
+      "symbol": "RunLoop._require_thread_id",
+      "code": "raise ValueError('thread_id must not be blank')",
+      "file": "src/harness/run_loop.py",
+      "before_line": 2204,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_require_ulid",
+      "code": "raise ValueError('value must be a ULID')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 34,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_require_nonblank",
+      "code": "raise ValueError('value must be nonblank without surrounding whitespace')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 40,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_require_nonnegative_decimal_string",
+      "code": "raise ValueError('value must be a non-negative decimal string')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 46,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_require_signed_decimal_string",
+      "code": "raise ValueError('value must be a signed decimal string')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 52,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "InjectionEventAnnotationsRequest.require_unique_targets",
+      "code": "raise ValueError('annotations must have unique target_event_uid values')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 292,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "JudgedContext.require_independent_judges",
+      "code": "raise ValueError('judge_ids must be unique')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 579,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_require_symphony_origin",
+      "code": "raise ValueError('origin_agent must be <run_id>/root[.<positive integer>...]')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 601,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "SpendEvent.require_aware_timestamp",
+      "code": "raise ValueError('ts must include a UTC offset')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 670,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "SpendEventsRequest.unique_event_ids",
+      "code": "raise ValueError('events must have unique event_uid values')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 681,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "ThreadSpendRow.require_unique_models",
+      "code": "raise ValueError('thread model rows must be unique')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 729,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "SpendTableSnapshot.require_unique_groups",
+      "code": "raise ValueError('spend table thread rows must be unique')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 762,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "SpendTableSnapshot.require_unique_groups",
+      "code": "raise ValueError('spend table purpose rows must be unique')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 764,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsSpendPoint.require_honest_price_state",
+      "code": "raise ValueError('Vitals unpriced_lines cannot exceed receipt_lines')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 782,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsSpendPoint.require_honest_price_state",
+      "code": "raise ValueError('an all-unpriced Vitals point must have a null cost')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 785,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsSpendPoint.require_honest_price_state",
+      "code": "raise ValueError('a Vitals point with priced lines must carry known cost')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 787,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsSpendLane.require_dimension_key",
+      "code": "raise ValueError('the total Vitals lane must have a null key')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 800,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsSpendLane.require_dimension_key",
+      "code": "raise ValueError('purpose and model Vitals lanes require a key')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 802,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsSpendLane.require_dimension_key",
+      "code": "raise ValueError('the unreported model lane requires its stable human label')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 808,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsSpendLane.require_dimension_key",
+      "code": "raise ValueError('a Vitals model lane used a noncanonical key escape')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 815,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsSpendLane.require_dimension_key",
+      "code": "raise ValueError('a Vitals model lane key does not match its A-029 label')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 817,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsSpendLane.require_dimension_key",
+      "code": "raise ValueError('Vitals lane points must be uniquely ordered by minute')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 820,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsSpend.require_canonical_lanes",
+      "code": "raise ValueError('Vitals spend lanes must be unique')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 838,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsSpend.require_canonical_lanes",
+      "code": "raise ValueError('Vitals spend requires exactly one total lane')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 840,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsSpend.require_canonical_lanes",
+      "code": "raise ValueError('Vitals spend lanes are outside canonical order')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 842,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsSpend.require_canonical_lanes",
+      "code": "raise ValueError('a dimensioned Vitals lane must contain at least one point')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 844,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsSpend.require_canonical_lanes",
+      "code": "raise ValueError('Vitals latest_minute does not match the lane points')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 849,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsSpend.require_canonical_lanes",
+      "code": "raise ValueError(f'Vitals {dimension} lanes do not conserve the total lane')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 857,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsAccounting.require_honest_queue_state",
+      "code": "raise ValueError('clear accounting cannot contain pending receipts')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 959,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsAccounting.require_honest_queue_state",
+      "code": "raise ValueError('pending accounting requires lines and an oldest timestamp')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 961,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsResources.require_honest_availability",
+      "code": "raise ValueError('measured resources require every local observation')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 989,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsResources.require_honest_availability",
+      "code": "raise ValueError('a resource warning requires disk observations')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 993,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsSnapshot.require_exact_snapshot",
+      "code": "raise ValueError('Vitals lifecycle gauges are outside the A-028 contract')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1016,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsSnapshot.require_exact_snapshot",
+      "code": "raise ValueError('Vitals palace gauges are outside the A-028 contract')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1019,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "VitalsSnapshot.require_exact_snapshot",
+      "code": "raise ValueError('Vitals point is outside the live trailing-hour window')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1025,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "ProblemDetail.reject_explicit_null_standard_member",
+      "code": "raise ValueError('an RFC 7807 member cannot be null when present')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1189,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "SpineClient.__init__",
+      "code": "raise ValueError('token must not be blank')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1293,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "SpineClient.__init__",
+      "code": "raise ValueError('token must not contain surrounding whitespace')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1295,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "SpineClient.create_memory",
+      "code": "raise CreateMemoryConflictError(response, conflict)",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1383,
+      "classification": "WALL",
+      "after_line": 1086,
+      "citation": "WALL Palace writes / C.4: propagate a refused create without claiming a save.",
+      "test": "tests/test_spine_transport.py::test_create_409_is_a_typed_domain_conflict[payload0-LabelConflict]",
+      "executed": true,
+      "message": "Spine rejected memory creation with a domain conflict"
+    },
+    {
+      "symbol": "SpineClient.create_memory_split",
+      "code": "raise CreateMemoryConflictError(response, conflict)",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1400,
+      "classification": "WALL",
+      "after_line": 1104,
+      "citation": "WALL Palace writes / C.4: propagate a refused create without claiming a save.",
+      "test": "tests/test_spine_transport.py::test_a049_split_preserves_existing_similar_and_conflict_status_bodies",
+      "executed": true,
+      "message": "Spine rejected memory creation with a domain conflict"
+    },
+    {
+      "symbol": "SpineClient.patch_memory",
+      "code": "raise PatchMemoryConflictError(response, conflict)",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1417,
+      "classification": "WALL",
+      "after_line": 1122,
+      "citation": "WALL Palace writes / C.4: propagate CAS refusal without claiming an edit.",
+      "test": "tests/test_spine_transport.py::test_patch_409_is_a_typed_domain_conflict[payload0-LabelConflict]",
+      "executed": true,
+      "message": "Spine rejected memory patch with a domain conflict"
+    },
+    {
+      "symbol": "SpineClient._require_owned_queue",
+      "code": "raise SpineOwnershipError('This queue decision does not belong to this identity. Refresh the queue.')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1640,
+      "classification": "WALL",
+      "after_line": 1346,
+      "citation": "WALL Palace writes / F069, F076: a queue refusal must never be reported as success.",
+      "test": "tests/test_verification_identity.py::test_foreign_queue_http_decision_is_plain_ownership_refusal[True]",
+      "executed": true,
+      "message": "This queue decision does not belong to this identity. Refresh the queue."
+    },
+    {
+      "symbol": "SpineClient._request",
+      "code": "raise SpineTransportError from exc",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1676,
+      "classification": "INCIDENT",
+      "after_line": 1383,
+      "citation": "INCIDENT F062: typed transport failure lets optional Palace reads fail locally.",
+      "test": "tests/test_spine_transport.py::test_transport_failure_is_wrapped_without_request_secrets",
+      "executed": true,
+      "message": "Spine request failed before receiving a response"
+    },
+    {
+      "symbol": "_require_aware_timestamp",
+      "code": "raise ValueError('timestamp must include a UTC offset')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1685,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_require_honest_spend_table_cost",
+      "code": "raise ValueError('spend table unpriced lines cannot exceed receipt lines')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1695,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_require_honest_spend_table_cost",
+      "code": "raise ValueError('an all-unpriced spend table row must have null cost')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1698,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_require_honest_spend_table_cost",
+      "code": "raise ValueError('a spend table row with priced lines must carry known cost')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1700,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_require_gauge_value",
+      "code": "raise ValueError('a measured Vitals gauge requires a value and source')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1710,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_require_gauge_value",
+      "code": "raise ValueError('a non-measured Vitals gauge must have a null value and source')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1713,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_normalize_base_url",
+      "code": "raise ValueError('base_url must not be blank')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1749,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_normalize_base_url",
+      "code": "raise ValueError('base_url must be an absolute HTTP(S) URL') from exc",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1753,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_normalize_base_url",
+      "code": "raise ValueError('base_url must be absolute HTTP(S) without credentials, query, or fragment')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1763,
+      "classification": "WALL",
+      "after_line": 1403,
+      "citation": "WALL credentials / ADR015: send the token only to an unambiguous HTTP endpoint.",
+      "test": "tests/test_spine_transport.py::test_constructor_rejects_missing_endpoint",
+      "executed": true,
+      "message": "base_url must be absolute HTTP(S) without credentials, query, or fragment"
+    },
+    {
+      "symbol": "_decode_json",
+      "code": "raise SpineResponseError(response, 'Spine returned an unexpected media type')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1786,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_decode_json",
+      "code": "raise SpineResponseError(response, 'Spine returned a body outside C.4') from exc",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1795,
+      "classification": "INCIDENT",
+      "after_line": 1428,
+      "citation": "INCIDENT F073: retain the HTTP response so busy Palace retries stay distinct from absence.",
+      "test": "tests/test_spine_transport.py::test_redirects_are_not_followed",
+      "executed": true,
+      "message": "Spine returned a body outside C.4"
+    },
+    {
+      "symbol": "_raise_problem",
+      "code": "raise SpineResponseError(response, 'Spine returned an unexpected non-error status')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1800,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_raise_problem",
+      "code": "raise SpineResponseError(response, 'Spine problem status disagrees with HTTP status')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1803,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_raise_problem",
+      "code": "raise SpineProblemError(response, problem)",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1804,
+      "classification": "INCIDENT",
+      "after_line": 1434,
+      "citation": "INCIDENT F076: carry the actual Palace refusal to the deciding surface.",
+      "test": "tests/test_spine_transport.py::test_rfc7807_errors_remain_typed_problems[patch-409]",
+      "executed": true,
+      "message": "Spine returned an RFC 7807 problem"
+    },
+    {
+      "symbol": "_reject_non_finite_json",
+      "code": "raise ValueError(f'non-standard JSON constant {value}')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1812,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "_parse_finite_json_float",
+      "code": "raise ValueError('JSON number is outside the finite float range')",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1818,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "LazyStandardToolset.__init__",
+      "code": "raise ValueError('toolset cwd must be inside workspace_root')",
+      "file": "src/harness/toolset_runtime.py",
+      "before_line": 36,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "TranscriptJournal.append_image_attachment",
+      "code": "raise TranscriptJournalUnavailable(f'Conversation journal for thread {thread_id} changes image attachment {prompt_id}. Restore the journal from a verified backup before starting Nocturne.')",
+      "file": "src/harness/transcript.py",
+      "before_line": 152,
+      "classification": "WALL",
+      "after_line": 153,
+      "citation": "WALL files / A-052: preserve exact image bytes and their message link.",
+      "test": "tests/test_transcript.py::test_two_journals_atomically_keep_one_attachment_per_prompt[True]",
+      "executed": true,
+      "message": "Conversation journal for thread {thread_id} changes image attachment {prompt_id}. Restore the journal from a verified backup before starting Nocturne."
+    },
+    {
+      "symbol": "TranscriptJournal.hydrate_threads",
+      "code": "raise TranscriptJournalUnavailable(f'Conversation journal cannot be read at {self._root}. Fix that directory, then run `nocturne up` again.') from exc",
+      "file": "src/harness/transcript.py",
+      "before_line": 292,
+      "classification": "WALL",
+      "after_line": 294,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_unreadable_journal_reports_the_unavailable_capture_boundary[root-Conversation journal cannot be read at]",
+      "executed": true,
+      "message": "Conversation journal cannot be read at {self._root}. Fix that directory, then run `nocturne up` again."
+    },
+    {
+      "symbol": "TranscriptJournal.cloud_records",
+      "code": "raise TranscriptJournalUnavailable(f'Conversation journal for thread {transcript.thread_id} is not UTF-8.') from exc",
+      "file": "src/harness/transcript.py",
+      "before_line": 318,
+      "classification": "WALL",
+      "after_line": 321,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_cloud_export_does_not_claim_corrupt_utf8_is_restorable",
+      "executed": true,
+      "message": "Conversation journal for thread {transcript.thread_id} is not UTF-8."
+    },
+    {
+      "symbol": "TranscriptJournal.restore_cloud_records",
+      "code": "raise TranscriptJournalUnavailable('Conversation resurrection refuses to overwrite existing local transcripts.')",
+      "file": "src/harness/transcript.py",
+      "before_line": 339,
+      "classification": "WALL",
+      "after_line": 343,
+      "citation": "WALL files / D.2 082: restore verified rows into an empty journal.",
+      "test": "tests/test_transcript.py::test_cloud_restore_walls_write_nothing[existing-Conversation resurrection refuses to overwrite existing local transcripts.]",
+      "executed": true,
+      "message": "Conversation resurrection refuses to overwrite existing local transcripts."
+    },
+    {
+      "symbol": "TranscriptJournal.restore_cloud_records",
+      "code": "raise TranscriptJournalUnavailable('Palace transcript row contains a newline.')",
+      "file": "src/harness/transcript.py",
+      "before_line": 347,
+      "classification": "WALL",
+      "after_line": 352,
+      "citation": "WALL files / D.2 082: restore verified rows into an empty journal.",
+      "test": "tests/test_transcript.py::test_cloud_restore_walls_write_nothing[newline-Palace transcript row contains a newline.]",
+      "executed": true,
+      "message": "Palace transcript row contains a newline."
+    },
+    {
+      "symbol": "TranscriptJournal.restore_cloud_records",
+      "code": "raise TranscriptJournalUnavailable('Palace transcript row has a changed digest.')",
+      "file": "src/harness/transcript.py",
+      "before_line": 349,
+      "classification": "WALL",
+      "after_line": 355,
+      "citation": "WALL files / D.2 082: restore verified rows into an empty journal.",
+      "test": "tests/test_transcript.py::test_cloud_restore_walls_write_nothing[digest-Palace transcript row has a changed digest.]",
+      "executed": true,
+      "message": "Palace transcript row has a changed digest."
+    },
+    {
+      "symbol": "TranscriptJournal.restore_cloud_records",
+      "code": "raise TranscriptJournalUnavailable('Palace transcript row is not JSON.') from exc",
+      "file": "src/harness/transcript.py",
+      "before_line": 355,
+      "classification": "WALL",
+      "after_line": 362,
+      "citation": "WALL files / D.2 082: restore verified rows into an empty journal.",
+      "test": "tests/test_transcript.py::test_cloud_restore_walls_write_nothing[json-Palace transcript row is not JSON.]",
+      "executed": true,
+      "message": "Palace transcript row is not JSON."
+    },
+    {
+      "symbol": "TranscriptJournal.restore_cloud_records",
+      "code": "raise TranscriptJournalUnavailable('Palace transcript row changes thread identity.')",
+      "file": "src/harness/transcript.py",
+      "before_line": 359,
+      "classification": "WALL",
+      "after_line": 367,
+      "citation": "WALL files / D.2 082: restore verified rows into an empty journal.",
+      "test": "tests/test_transcript.py::test_cloud_restore_walls_write_nothing[identity-Palace transcript row changes thread identity.]",
+      "executed": true,
+      "message": "Palace transcript row changes thread identity."
+    },
+    {
+      "symbol": "TranscriptJournal.restore_cloud_records",
+      "code": "raise TranscriptJournalUnavailable(f'Palace transcript for thread {thread_id} has a sequence gap.')",
+      "file": "src/harness/transcript.py",
+      "before_line": 365,
+      "classification": "WALL",
+      "after_line": 374,
+      "citation": "WALL files / D.2 082: restore verified rows into an empty journal.",
+      "test": "tests/test_transcript.py::test_cloud_restore_walls_write_nothing[sequence-has a sequence gap.]",
+      "executed": true,
+      "message": "Palace transcript for thread {thread_id} has a sequence gap."
+    },
+    {
+      "symbol": "TranscriptJournal.catalog",
+      "code": "raise TranscriptJournalUnavailable('Conversation journal has no capture timestamp.')",
+      "file": "src/harness/transcript.py",
+      "before_line": 405,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "TranscriptJournal._browser_timestamp",
+      "code": "raise TranscriptJournalUnavailable('Conversation journal has an invalid capture timestamp.') from exc",
+      "file": "src/harness/transcript.py",
+      "before_line": 472,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "TranscriptJournal._browser_timestamp",
+      "code": "raise TranscriptJournalUnavailable('Conversation journal has an invalid capture timestamp.')",
+      "file": "src/harness/transcript.py",
+      "before_line": 476,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "TranscriptJournal.idle_thread_ids",
+      "code": "raise ValueError('idle cutoff must be timezone-aware')",
+      "file": "src/harness/transcript.py",
+      "before_line": 532,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "TranscriptJournal._encode_record",
+      "code": "raise ValueError('transcript clock must return an aware datetime')",
+      "file": "src/harness/transcript.py",
+      "before_line": 585,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "TranscriptJournal._preflight",
+      "code": "raise TranscriptJournalUnavailable(f\"Conversation journal is not writable at {self._root}. Fix that directory's permissions, then run `nocturne up` again.\") from failure",
+      "file": "src/harness/transcript.py",
+      "before_line": 668,
+      "classification": "WALL",
+      "after_line": 664,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_preflight_refuses_a_preexisting_symlinked_root",
+      "executed": true,
+      "message": "Conversation journal is not writable at {self._root}. Fix that directory's permissions, then run `nocturne up` again."
+    },
+    {
+      "symbol": "TranscriptJournal._hydrate_rows",
+      "code": "raise TranscriptJournalUnavailable(f'Conversation journal for thread {candidate} duplicates image attachment {attachment.prompt_id}. Restore the journal from a verified backup before starting Nocturne.')",
+      "file": "src/harness/transcript.py",
+      "before_line": 738,
+      "classification": "WALL",
+      "after_line": 735,
+      "citation": "WALL files / A-052: preserve exact image bytes and their message link.",
+      "test": "tests/test_transcript.py::test_attachment_walls_preserve_the_damaged_evidence[duplicate-duplicates image attachment]",
+      "executed": true,
+      "message": "Conversation journal for thread {candidate} duplicates image attachment {attachment.prompt_id}. Restore the journal from a verified backup before starting Nocturne."
+    },
+    {
+      "symbol": "TranscriptJournal._hydrate_rows",
+      "code": "raise ValueError('project context must be a string')",
+      "file": "src/harness/transcript.py",
+      "before_line": 753,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "TranscriptJournal._hydrate_rows",
+      "code": "raise TranscriptJournalUnavailable(f'Conversation journal for thread {candidate} has an invalid project context. Restore the journal from a verified backup before starting Nocturne.') from exc",
+      "file": "src/harness/transcript.py",
+      "before_line": 756,
+      "classification": "WALL",
+      "after_line": 752,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_damaged_history_does_not_resume_or_rewrite[project-has an invalid project context]",
+      "executed": true,
+      "message": "Conversation journal for thread {candidate} has an invalid project context. Restore the journal from a verified backup before starting Nocturne."
+    },
+    {
+      "symbol": "TranscriptJournal._hydrate_rows",
+      "code": "raise TranscriptJournalUnavailable(f'Conversation journal for thread {candidate} changes project context. Restore the journal from a verified backup before starting Nocturne.')",
+      "file": "src/harness/transcript.py",
+      "before_line": 776,
+      "classification": "WALL",
+      "after_line": 773,
+      "citation": "WALL files / M3TL: restore the recorded workspace grant.",
+      "test": "tests/test_transcript.py::test_journal_refuses_a_thread_that_changes_project_context",
+      "executed": true,
+      "message": "Conversation journal for thread {candidate} changes project context. Restore the journal from a verified backup before starting Nocturne."
+    },
+    {
+      "symbol": "TranscriptJournal._hydrate_rows",
+      "code": "raise TranscriptJournalUnavailable('Conversation journal has invalid project label')",
+      "file": "src/harness/transcript.py",
+      "before_line": 783,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "TranscriptJournal._hydrate_rows",
+      "code": "raise TranscriptJournalUnavailable('Conversation journal has incomplete thread feet')",
+      "file": "src/harness/transcript.py",
+      "before_line": 789,
+      "classification": "WALL",
+      "after_line": 783,
+      "citation": "WALL files / M3TL: restore the recorded workspace grant.",
+      "test": "tests/test_transcript.py::test_damaged_history_does_not_resume_or_rewrite[feet-missing-has incomplete thread feet]",
+      "executed": true,
+      "message": "Conversation journal has incomplete thread feet"
+    },
+    {
+      "symbol": "TranscriptJournal._hydrate_rows",
+      "code": "raise TranscriptJournalUnavailable('Conversation journal has invalid thread feet')",
+      "file": "src/harness/transcript.py",
+      "before_line": 799,
+      "classification": "WALL",
+      "after_line": 794,
+      "citation": "WALL files / M3TL: restore the recorded workspace grant.",
+      "test": "tests/test_transcript.py::test_damaged_history_does_not_resume_or_rewrite[feet-relative-has invalid thread feet]",
+      "executed": true,
+      "message": "Conversation journal has invalid thread feet"
+    },
+    {
+      "symbol": "TranscriptJournal._hydrate_rows",
+      "code": "raise TranscriptJournalUnavailable('Conversation journal moves an unbound thread')",
+      "file": "src/harness/transcript.py",
+      "before_line": 807,
+      "classification": "WALL",
+      "after_line": 803,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_damaged_history_does_not_resume_or_rewrite[move-unbound-moves an unbound thread]",
+      "executed": true,
+      "message": "Conversation journal moves an unbound thread"
+    },
+    {
+      "symbol": "TranscriptJournal._hydrate_rows",
+      "code": "raise TranscriptJournalUnavailable('Conversation journal moves outside thread workspace')",
+      "file": "src/harness/transcript.py",
+      "before_line": 811,
+      "classification": "WALL",
+      "after_line": 808,
+      "citation": "WALL files / M3TL: restore the recorded workspace grant.",
+      "test": "tests/test_transcript.py::test_damaged_history_does_not_resume_or_rewrite[move-outside-moves outside thread workspace]",
+      "executed": true,
+      "message": "Conversation journal moves outside thread workspace"
+    },
+    {
+      "symbol": "TranscriptJournal._hydrate_rows",
+      "code": "raise TranscriptJournalUnavailable(f\"Conversation journal for thread {thread_id or 'unknown'} drops image view {message_id}. Restore the journal from a verified backup before starting Nocturne.\")",
+      "file": "src/harness/transcript.py",
+      "before_line": 823,
+      "classification": "WALL",
+      "after_line": 821,
+      "citation": "WALL files / A-052: preserve exact image bytes and their message link.",
+      "test": "tests/test_transcript.py::test_attachment_walls_preserve_the_damaged_evidence[missing-view-drops image view]",
+      "executed": true,
+      "message": "Conversation journal for thread {thread_id or 'unknown'} drops image view {message_id}. Restore the journal from a verified backup before starting Nocturne."
+    },
+    {
+      "symbol": "TranscriptJournal._hydrate_rows",
+      "code": "raise TranscriptJournalUnavailable(f\"Conversation journal for thread {thread_id or 'unknown'} has an invalid image view for {message_id}. Restore the journal from a verified backup before starting Nocturne.\") from exc",
+      "file": "src/harness/transcript.py",
+      "before_line": 831,
+      "classification": "WALL",
+      "after_line": 830,
+      "citation": "WALL files / A-052: preserve exact image bytes and their message link.",
+      "test": "tests/test_transcript.py::test_attachment_walls_preserve_the_damaged_evidence[invalid-view-has an invalid image view]",
+      "executed": true,
+      "message": "Conversation journal for thread {thread_id or 'unknown'} has an invalid image view for {message_id}. Restore the journal from a verified backup before starting Nocturne."
+    },
+    {
+      "symbol": "TranscriptJournal._hydrate_rows",
+      "code": "raise TranscriptJournalUnavailable(f\"Conversation journal for thread {thread_id or 'unknown'} cannot match image attachment {message_id} to its compact view. Restore the journal from a verified backup before starting Nocturne.\")",
+      "file": "src/harness/transcript.py",
+      "before_line": 838,
+      "classification": "WALL",
+      "after_line": 838,
+      "citation": "WALL files / A-052: preserve exact image bytes and their message link.",
+      "test": "tests/test_transcript.py::test_image_hydration_fails_closed_on_missing_or_digest_mismatched_attachment[missing]",
+      "executed": true,
+      "message": "Conversation journal for thread {thread_id or 'unknown'} cannot match image attachment {message_id} to its compact view. Restore the journal from a verified backup before starting Nocturne."
+    },
+    {
+      "symbol": "TranscriptJournal._hydrate_rows",
+      "code": "raise TranscriptJournalUnavailable('Conversation journal contains an unreadable transcript. Restore the journal from a verified backup before starting Nocturne.')",
+      "file": "src/harness/transcript.py",
+      "before_line": 847,
+      "classification": "WALL",
+      "after_line": 848,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_damaged_history_does_not_resume_or_rewrite[json-contains an unreadable transcript]",
+      "executed": true,
+      "message": "Conversation journal contains an unreadable transcript. Restore the journal from a verified backup before starting Nocturne."
+    },
+    {
+      "symbol": "TranscriptJournal._hydrate_rows",
+      "code": "raise TranscriptJournalUnavailable('Conversation journal contains an unreadable transcript. Restore the journal from a verified backup before starting Nocturne.')",
+      "file": "src/harness/transcript.py",
+      "before_line": 863,
+      "classification": "WALL",
+      "after_line": 865,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_damaged_history_does_not_resume_or_rewrite[empty-message-contains an unreadable transcript]",
+      "executed": true,
+      "message": "Conversation journal contains an unreadable transcript. Restore the journal from a verified backup before starting Nocturne."
+    },
+    {
+      "symbol": "TranscriptJournal._hydrate_rows",
+      "code": "raise TranscriptJournalUnavailable(f'Conversation journal for thread {thread_id} has no durable tail. Restore the journal from a verified backup before starting Nocturne.')",
+      "file": "src/harness/transcript.py",
+      "before_line": 868,
+      "classification": "WALL",
+      "after_line": 871,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_damaged_history_does_not_resume_or_rewrite[tail-has no durable tail]",
+      "executed": true,
+      "message": "Conversation journal for thread {thread_id} has no durable tail. Restore the journal from a verified backup before starting Nocturne."
+    },
+    {
+      "symbol": "TranscriptJournal._hydrate_rows",
+      "code": "raise TranscriptJournalUnavailable(f'Conversation journal for thread {thread_id} contains a history cycle. Restore the journal from a verified backup before starting Nocturne.')",
+      "file": "src/harness/transcript.py",
+      "before_line": 878,
+      "classification": "WALL",
+      "after_line": 882,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_damaged_history_does_not_resume_or_rewrite[cycle-contains a history cycle]",
+      "executed": true,
+      "message": "Conversation journal for thread {thread_id} contains a history cycle. Restore the journal from a verified backup before starting Nocturne."
+    },
+    {
+      "symbol": "TranscriptJournal._hydrate_rows",
+      "code": "raise TranscriptJournalUnavailable(f'Conversation journal for thread {thread_id} is missing a parent message. Restore the journal from a verified backup before starting Nocturne.')",
+      "file": "src/harness/transcript.py",
+      "before_line": 885,
+      "classification": "WALL",
+      "after_line": 890,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_startup_refuses_unrecoverable_parent_history",
+      "executed": true,
+      "message": "Conversation journal for thread {thread_id} is missing a parent message. Restore the journal from a verified backup before starting Nocturne."
+    },
+    {
+      "symbol": "TranscriptJournal._existing_attachments",
+      "code": "raise TranscriptJournalUnavailable('Conversation journal attachment thread mismatch')",
+      "file": "src/harness/transcript.py",
+      "before_line": 912,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "TranscriptJournal._attachment_from_row",
+      "code": "raise TranscriptJournalUnavailable(f'Conversation journal for thread {thread_id} has an invalid image attachment. Restore the journal from a verified backup before starting Nocturne.')",
+      "file": "src/harness/transcript.py",
+      "before_line": 932,
+      "classification": "WALL",
+      "after_line": 936,
+      "citation": "WALL files / A-052: preserve exact image bytes and their message link.",
+      "test": "tests/test_transcript.py::test_attachment_walls_preserve_the_damaged_evidence[attachment-keys-has an invalid image attachment]",
+      "executed": true,
+      "message": "Conversation journal for thread {thread_id} has an invalid image attachment. Restore the journal from a verified backup before starting Nocturne."
+    },
+    {
+      "symbol": "TranscriptJournal._attachment_from_row",
+      "code": "raise TranscriptJournalUnavailable(f'Conversation journal for thread {thread_id} has an invalid image attachment {prompt_id}. Restore the journal from a verified backup before starting Nocturne.') from exc",
+      "file": "src/harness/transcript.py",
+      "before_line": 953,
+      "classification": "WALL",
+      "after_line": 958,
+      "citation": "WALL files / A-052: preserve exact image bytes and their message link.",
+      "test": "tests/test_transcript.py::test_attachment_walls_preserve_the_damaged_evidence[attachment-bytes-has an invalid image attachment]",
+      "executed": true,
+      "message": "Conversation journal for thread {thread_id} has an invalid image attachment {prompt_id}. Restore the journal from a verified backup before starting Nocturne."
+    },
+    {
+      "symbol": "TranscriptJournal._attachment_from_row",
+      "code": "raise TranscriptJournalUnavailable(f'Conversation journal for thread {thread_id} has a digest-mismatched image attachment {prompt_id}. Restore the journal from a verified backup before starting Nocturne.')",
+      "file": "src/harness/transcript.py",
+      "before_line": 958,
+      "classification": "WALL",
+      "after_line": 964,
+      "citation": "WALL files / A-052: preserve exact image bytes and their message link.",
+      "test": "tests/test_transcript.py::test_image_hydration_fails_closed_on_missing_or_digest_mismatched_attachment[digest]",
+      "executed": true,
+      "message": "Conversation journal for thread {thread_id} has a digest-mismatched image attachment {prompt_id}. Restore the journal from a verified backup before starting Nocturne."
+    },
+    {
+      "symbol": "TranscriptJournal._read_file_rows",
+      "code": "raise TranscriptJournalUnavailable('Conversation journal contains a non-file transcript. Replace it with a verified journal file, then run `nocturne up` again.') from exc",
+      "file": "src/harness/transcript.py",
+      "before_line": 976,
+      "classification": "WALL",
+      "after_line": 983,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_descriptor_open_cannot_follow_a_replaced_journal[read-symlink]",
+      "executed": true,
+      "message": "Conversation journal contains a non-file transcript. Replace it with a verified journal file, then run `nocturne up` again."
+    },
+    {
+      "symbol": "TranscriptJournal._read_file_rows",
+      "code": "raise TranscriptJournalUnavailable(f'Conversation journal cannot read {filename}. Fix that file, then run `nocturne up` again.') from exc",
+      "file": "src/harness/transcript.py",
+      "before_line": 980,
+      "classification": "WALL",
+      "after_line": 988,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_unreadable_journal_reports_the_unavailable_capture_boundary[file-Conversation journal cannot read]",
+      "executed": true,
+      "message": "Conversation journal cannot read {filename}. Fix that file, then run `nocturne up` again."
+    },
+    {
+      "symbol": "TranscriptJournal._read_file_rows",
+      "code": "raise TranscriptJournalUnavailable('Conversation journal contains a non-file transcript. Replace it with a verified journal file, then run `nocturne up` again.')",
+      "file": "src/harness/transcript.py",
+      "before_line": 988,
+      "classification": "WALL",
+      "after_line": 997,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_non_file_transcript_is_never_read_or_modified[hydrate]",
+      "executed": true,
+      "message": "Conversation journal contains a non-file transcript. Replace it with a verified journal file, then run `nocturne up` again."
+    },
+    {
+      "symbol": "TranscriptJournal._open_append_descriptor",
+      "code": "raise ValueError('transcript path must be a regular file') from exc",
+      "file": "src/harness/transcript.py",
+      "before_line": 1010,
+      "classification": "WALL",
+      "after_line": 1020,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_descriptor_open_cannot_follow_a_replaced_journal[append-symlink]",
+      "executed": true,
+      "message": "transcript path must be a regular file"
+    },
+    {
+      "symbol": "TranscriptJournal._open_append_descriptor",
+      "code": "raise OSError(ENOENT, 'transcript path could not be created')",
+      "file": "src/harness/transcript.py",
+      "before_line": 1021,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "TranscriptJournal._open_append_descriptor",
+      "code": "raise ValueError('transcript path must be a regular file')",
+      "file": "src/harness/transcript.py",
+      "before_line": 1025,
+      "classification": "WALL",
+      "after_line": 1034,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_descriptor_open_cannot_follow_a_replaced_journal[append-fifo]",
+      "executed": true,
+      "message": "transcript path must be a regular file"
+    },
+    {
+      "symbol": "TranscriptJournal._read_last_tail_id",
+      "code": "raise ValueError('transcript path must be a regular file') from exc",
+      "file": "src/harness/transcript.py",
+      "before_line": 1055,
+      "classification": "WALL",
+      "after_line": 1065,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_journal_refuses_a_symlinked_thread_file",
+      "executed": true,
+      "message": "transcript path must be a regular file"
+    },
+    {
+      "symbol": "TranscriptJournal._read_last_tail_id",
+      "code": "raise ValueError('transcript path must be a regular file')",
+      "file": "src/harness/transcript.py",
+      "before_line": 1063,
+      "classification": "WALL",
+      "after_line": 1074,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_non_file_transcript_is_never_read_or_modified[tail]",
+      "executed": true,
+      "message": "transcript path must be a regular file"
+    },
+    {
+      "symbol": "TranscriptJournal._open_root_descriptor",
+      "code": "raise ValueError('transcript root must be a real directory') from exc",
+      "file": "src/harness/transcript.py",
+      "before_line": 1115,
+      "classification": "WALL",
+      "after_line": 1127,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_preflight_refuses_a_preexisting_symlinked_root",
+      "executed": true,
+      "message": "transcript root must be a real directory"
+    },
+    {
+      "symbol": "TranscriptJournal._open_root_descriptor",
+      "code": "raise ValueError('transcript root must be a real directory')",
+      "file": "src/harness/transcript.py",
+      "before_line": 1119,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "TranscriptJournal._open_root_descriptor",
+      "code": "raise PermissionError('transcript root is not owner-writable')",
+      "file": "src/harness/transcript.py",
+      "before_line": 1122,
+      "classification": "WALL",
+      "after_line": 1132,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_startup_preflight_refuses_a_read_only_journal_with_plain_remedy",
+      "executed": true,
+      "message": "transcript root is not owner-writable"
+    },
+    {
+      "symbol": "TranscriptJournal._write_all",
+      "code": "raise OSError('incomplete transcript append')",
+      "file": "src/harness/transcript.py",
+      "before_line": 1136,
+      "classification": "WALL",
+      "after_line": 1147,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_zero_byte_append_rolls_back",
+      "executed": true,
+      "message": "incomplete transcript append"
+    },
+    {
+      "symbol": "TranscriptJournal._message_id",
+      "code": "raise ValueError('captured message must have a nonblank message_id')",
+      "file": "src/harness/transcript.py",
+      "before_line": 1180,
+      "classification": "NONE",
+      "reason": "Duplicate local validation/reconciliation or unsupported refusal; preserve framework errors and the downstream authority boundary."
+    },
+    {
+      "symbol": "TranscriptJournal._reject_git_ancestor",
+      "code": "raise ValueError('transcript root must not live inside a git worktree')",
+      "file": "src/harness/transcript.py",
+      "before_line": 1186,
+      "classification": "WALL",
+      "after_line": 1195,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_journal_refuses_a_git_worktree_root",
+      "executed": true,
+      "message": "transcript root must not live inside a git worktree"
+    },
+    {
+      "symbol": "TranscriptJournal._require_thread_id",
+      "code": "raise ValueError('thread_id must not be blank')",
+      "file": "src/harness/transcript.py",
+      "before_line": 1191,
+      "classification": "WALL",
+      "after_line": 1201,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_attachment_identity_is_required_before_write[-first-thread_id must not be blank]",
+      "executed": true,
+      "message": "thread_id must not be blank"
+    },
+    {
+      "symbol": "TranscriptJournal._require_prompt_id",
+      "code": "raise ValueError('prompt_id must not be blank')",
+      "file": "src/harness/transcript.py",
+      "before_line": 1196,
+      "classification": "WALL",
+      "after_line": 1207,
+      "citation": "WALL files / D.2 082: reject an unsafe journal before appending.",
+      "test": "tests/test_transcript.py::test_attachment_identity_is_required_before_write[thread-1--prompt_id must not be blank]",
+      "executed": true,
+      "message": "prompt_id must not be blank"
+    }
+  ],
+  "field_bounds": [
+    {
+      "symbol": "RememberSplitCandidate.label",
+      "constraint": "min_length",
+      "value": "1",
+      "file": "src/harness/agent.py",
+      "before_line": 130,
+      "classification": "WALL",
+      "after_line": 129,
+      "citation": "A-049/A-050; ADR-022; A-033: atomic saves, exact source coverage, and bounded owner queues"
+    },
+    {
+      "symbol": "RememberSplitCandidate.label",
+      "constraint": "max_length",
+      "value": "64",
+      "file": "src/harness/agent.py",
+      "before_line": 130,
+      "classification": "WALL",
+      "after_line": 129,
+      "citation": "A-049/A-050; ADR-022; A-033: atomic saves, exact source coverage, and bounded owner queues"
+    },
+    {
+      "symbol": "RememberSplitCandidate.keywords",
+      "constraint": "min_length",
+      "value": "2",
+      "file": "src/harness/agent.py",
+      "before_line": 139,
+      "classification": "WALL",
+      "after_line": 138,
+      "citation": "A-049/A-050; ADR-022; A-033: atomic saves, exact source coverage, and bounded owner queues"
+    },
+    {
+      "symbol": "RememberSplitCandidate.keywords",
+      "constraint": "max_length",
+      "value": "5",
+      "file": "src/harness/agent.py",
+      "before_line": 139,
+      "classification": "WALL",
+      "after_line": 138,
+      "citation": "A-049/A-050; ADR-022; A-033: atomic saves, exact source coverage, and bounded owner queues"
+    },
+    {
+      "symbol": "RememberCoverageSegment.text",
+      "constraint": "min_length",
+      "value": "1",
+      "file": "src/harness/agent.py",
+      "before_line": 147,
+      "classification": "WALL",
+      "after_line": 146,
+      "citation": "A-049/A-050; ADR-022; A-033: atomic saves, exact source coverage, and bounded owner queues"
+    },
+    {
+      "symbol": "RememberSplitDraft.candidates",
+      "constraint": "min_length",
+      "value": "1",
+      "file": "src/harness/agent.py",
+      "before_line": 165,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "RememberSplitDraft.candidates",
+      "constraint": "max_length",
+      "value": "64",
+      "file": "src/harness/agent.py",
+      "before_line": 165,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "RememberSplitDraft.coverage",
+      "constraint": "min_length",
+      "value": "1",
+      "file": "src/harness/agent.py",
+      "before_line": 166,
+      "classification": "WALL",
+      "after_line": 165,
+      "citation": "A-049/A-050; ADR-022; A-033: atomic saves, exact source coverage, and bounded owner queues"
+    },
+    {
+      "symbol": "ExtractionCandidateDraft.keywords",
+      "constraint": "min_length",
+      "value": "2",
+      "file": "src/harness/agent.py",
+      "before_line": 175,
+      "classification": "WALL",
+      "after_line": 174,
+      "citation": "A-049/A-050; ADR-022; A-033: atomic saves, exact source coverage, and bounded owner queues"
+    },
+    {
+      "symbol": "ExtractionCandidateDraft.keywords",
+      "constraint": "max_length",
+      "value": "5",
+      "file": "src/harness/agent.py",
+      "before_line": 175,
+      "classification": "WALL",
+      "after_line": 174,
+      "citation": "A-049/A-050; ADR-022; A-033: atomic saves, exact source coverage, and bounded owner queues"
+    },
+    {
+      "symbol": "ExtractionDraft.candidates",
+      "constraint": "max_length",
+      "value": "5",
+      "file": "src/harness/agent.py",
+      "before_line": 182,
+      "classification": "WALL",
+      "after_line": 182,
+      "citation": "A-049/A-050; ADR-022; A-033: atomic saves, exact source coverage, and bounded owner queues"
+    },
+    {
+      "symbol": "SeedSplitDraft.candidates",
+      "constraint": "min_length",
+      "value": "1",
+      "file": "src/harness/agent.py",
+      "before_line": 187,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "SeedSplitDraft.candidates",
+      "constraint": "max_length",
+      "value": "64",
+      "file": "src/harness/agent.py",
+      "before_line": 187,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "ExtractionVerdictDraft.target_ids",
+      "constraint": "max_length",
+      "value": "5",
+      "file": "src/harness/agent.py",
+      "before_line": 193,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/envelope.py",
+      "before_line": 53,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "ImageView.byte_count",
+      "constraint": "gt",
+      "value": "0",
+      "file": "src/harness/envelope.py",
+      "before_line": 93,
+      "classification": "WALL",
+      "after_line": 69,
+      "citation": "A-052 images; T2 signed judge and purchase authority; A-023 revisions; F034 public refusal evidence"
+    },
+    {
+      "symbol": "ImageView.byte_count",
+      "constraint": "le",
+      "value": "_MAX_IMAGE_BYTES",
+      "file": "src/harness/envelope.py",
+      "before_line": 93,
+      "classification": "WALL",
+      "after_line": 69,
+      "citation": "A-052 images; T2 signed judge and purchase authority; A-023 revisions; F034 public refusal evidence"
+    },
+    {
+      "symbol": "ImageView.sha256",
+      "constraint": "pattern",
+      "value": "'^[0-9a-f]{64}$'",
+      "file": "src/harness/envelope.py",
+      "before_line": 94,
+      "classification": "WALL",
+      "after_line": 70,
+      "citation": "A-052 images; T2 signed judge and purchase authority; A-023 revisions; F034 public refusal evidence"
+    },
+    {
+      "symbol": "SymphonyJudgeCharterPayload.rubric",
+      "constraint": "min_length",
+      "value": "1",
+      "file": "src/harness/envelope.py",
+      "before_line": 198,
+      "classification": "WALL",
+      "after_line": 175,
+      "citation": "A-052 images; T2 signed judge and purchase authority; A-023 revisions; F034 public refusal evidence"
+    },
+    {
+      "symbol": "SymphonyJudgeCharterPayload.evidence_requirements",
+      "constraint": "min_length",
+      "value": "1",
+      "file": "src/harness/envelope.py",
+      "before_line": 199,
+      "classification": "WALL",
+      "after_line": 176,
+      "citation": "A-052 images; T2 signed judge and purchase authority; A-023 revisions; F034 public refusal evidence"
+    },
+    {
+      "symbol": "SymphonyAuthorityPayload.attempts",
+      "constraint": "ge",
+      "value": "1",
+      "file": "src/harness/envelope.py",
+      "before_line": 216,
+      "classification": "WALL",
+      "after_line": 196,
+      "citation": "A-052 images; T2 signed judge and purchase authority; A-023 revisions; F034 public refusal evidence"
+    },
+    {
+      "symbol": "SymphonyAuthorityPayload.spend_wall_usd",
+      "constraint": "gt",
+      "value": "0",
+      "file": "src/harness/envelope.py",
+      "before_line": 217,
+      "classification": "WALL",
+      "after_line": 197,
+      "citation": "A-052 images; T2 signed judge and purchase authority; A-023 revisions; F034 public refusal evidence"
+    },
+    {
+      "symbol": "SymphonyAuthorityPayload.max_rounds",
+      "constraint": "ge",
+      "value": "1",
+      "file": "src/harness/envelope.py",
+      "before_line": 218,
+      "classification": "WALL",
+      "after_line": 198,
+      "citation": "A-052 images; T2 signed judge and purchase authority; A-023 revisions; F034 public refusal evidence"
+    },
+    {
+      "symbol": "SymphonyAuthorityPayload.depth_cap",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/envelope.py",
+      "before_line": 219,
+      "classification": "WALL",
+      "after_line": 199,
+      "citation": "A-052 images; T2 signed judge and purchase authority; A-023 revisions; F034 public refusal evidence"
+    },
+    {
+      "symbol": "SymphonyAuthorityPayload.children_per_attempt",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/envelope.py",
+      "before_line": 220,
+      "classification": "WALL",
+      "after_line": 200,
+      "citation": "A-052 images; T2 signed judge and purchase authority; A-023 revisions; F034 public refusal evidence"
+    },
+    {
+      "symbol": "SymphonyAuthorityPayload.duration_minutes",
+      "constraint": "gt",
+      "value": "0",
+      "file": "src/harness/envelope.py",
+      "before_line": 221,
+      "classification": "WALL",
+      "after_line": 201,
+      "citation": "A-052 images; T2 signed judge and purchase authority; A-023 revisions; F034 public refusal evidence"
+    },
+    {
+      "symbol": "SymphonyLaunchPayload.recipe",
+      "constraint": "min_length",
+      "value": "1",
+      "file": "src/harness/envelope.py",
+      "before_line": 233,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "SymphonyLaunchPayload.recipe",
+      "constraint": "max_length",
+      "value": "12",
+      "file": "src/harness/envelope.py",
+      "before_line": 233,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "SymphonyLaunchPayload.judge_charters",
+      "constraint": "min_length",
+      "value": "3",
+      "file": "src/harness/envelope.py",
+      "before_line": 234,
+      "classification": "WALL",
+      "after_line": 215,
+      "citation": "A-052 images; T2 signed judge and purchase authority; A-023 revisions; F034 public refusal evidence"
+    },
+    {
+      "symbol": "SymphonyLaunchPayload.judge_charters",
+      "constraint": "max_length",
+      "value": "3",
+      "file": "src/harness/envelope.py",
+      "before_line": 234,
+      "classification": "WALL",
+      "after_line": 215,
+      "citation": "A-052 images; T2 signed judge and purchase authority; A-023 revisions; F034 public refusal evidence"
+    },
+    {
+      "symbol": "ProviderErrorPayload.message",
+      "constraint": "max_length",
+      "value": "1000",
+      "file": "src/harness/envelope.py",
+      "before_line": 409,
+      "classification": "INCIDENT",
+      "after_line": 395,
+      "citation": "F034: bounded public provider refusal"
+    },
+    {
+      "symbol": "ProviderErrorPayload.model",
+      "constraint": "max_length",
+      "value": "256",
+      "file": "src/harness/envelope.py",
+      "before_line": 410,
+      "classification": "INCIDENT",
+      "after_line": 396,
+      "citation": "F034: bounded public provider refusal"
+    },
+    {
+      "symbol": "ProviderErrorPayload.status_code",
+      "constraint": "ge",
+      "value": "100",
+      "file": "src/harness/envelope.py",
+      "before_line": 411,
+      "classification": "INCIDENT",
+      "after_line": 397,
+      "citation": "F034: bounded public provider refusal"
+    },
+    {
+      "symbol": "ProviderErrorPayload.status_code",
+      "constraint": "le",
+      "value": "599",
+      "file": "src/harness/envelope.py",
+      "before_line": 411,
+      "classification": "INCIDENT",
+      "after_line": 397,
+      "citation": "F034: bounded public provider refusal"
+    },
+    {
+      "symbol": "ProviderErrorPayload.code",
+      "constraint": "max_length",
+      "value": "128",
+      "file": "src/harness/envelope.py",
+      "before_line": 412,
+      "classification": "INCIDENT",
+      "after_line": 398,
+      "citation": "F034: bounded public provider refusal"
+    },
+    {
+      "symbol": "ProviderErrorPayload.provider_code",
+      "constraint": "max_length",
+      "value": "128",
+      "file": "src/harness/envelope.py",
+      "before_line": 413,
+      "classification": "INCIDENT",
+      "after_line": 399,
+      "citation": "F034: bounded public provider refusal"
+    },
+    {
+      "symbol": "RunDonePayload.error_message",
+      "constraint": "max_length",
+      "value": "1000",
+      "file": "src/harness/envelope.py",
+      "before_line": 420,
+      "classification": "INCIDENT",
+      "after_line": 406,
+      "citation": "F034: bounded public provider refusal"
+    },
+    {
+      "symbol": "WrongResolution.expected_revision",
+      "constraint": "ge",
+      "value": "1",
+      "file": "src/harness/envelope.py",
+      "before_line": 469,
+      "classification": "WALL",
+      "after_line": 430,
+      "citation": "A-052 images; T2 signed judge and purchase authority; A-023 revisions; F034 public refusal evidence"
+    },
+    {
+      "symbol": "MemoryPanelEditPayload.expected_revision",
+      "constraint": "ge",
+      "value": "1",
+      "file": "src/harness/envelope.py",
+      "before_line": 561,
+      "classification": "WALL",
+      "after_line": 524,
+      "citation": "A-052 images; T2 signed judge and purchase authority; A-023 revisions; F034 public refusal evidence"
+    },
+    {
+      "symbol": "MemoryPanelPinPayload.expected_revision",
+      "constraint": "ge",
+      "value": "1",
+      "file": "src/harness/envelope.py",
+      "before_line": 568,
+      "classification": "WALL",
+      "after_line": 531,
+      "citation": "A-052 images; T2 signed judge and purchase authority; A-023 revisions; F034 public refusal evidence"
+    },
+    {
+      "symbol": "",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 100,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "",
+      "constraint": "le",
+      "value": "1",
+      "file": "src/harness/spine_client.py",
+      "before_line": 100,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "",
+      "constraint": "ge",
+      "value": "1",
+      "file": "src/harness/spine_client.py",
+      "before_line": 101,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "InjectPrepareRequest.model_context_tokens",
+      "constraint": "gt",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 175,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "MemoryAllocation.memory_context_share",
+      "constraint": "ge",
+      "value": "0.01",
+      "file": "src/harness/spine_client.py",
+      "before_line": 183,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "MemoryAllocation.memory_context_share",
+      "constraint": "le",
+      "value": "0.5",
+      "file": "src/harness/spine_client.py",
+      "before_line": 183,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "MemoryAllocation.share_tokens",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 184,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "MemoryAllocation.regular_tokens",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 185,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "MemoryAllocation.pinned_tokens",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 186,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "MemoryAllocation.total_tokens",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 187,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "MemoryAllocation.pinned_overflow_tokens",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 188,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "TranscriptRecordInput.sequence",
+      "constraint": "gt",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 241,
+      "classification": "WALL",
+      "after_line": 206,
+      "citation": "ADR-024 receipt ledger; D.2 082 durable restoration; A-034/A-047 owner writes"
+    },
+    {
+      "symbol": "TranscriptRecordInput.sha256",
+      "constraint": "pattern",
+      "value": "'^[0-9a-f]{64}$'",
+      "file": "src/harness/spine_client.py",
+      "before_line": 243,
+      "classification": "WALL",
+      "after_line": 208,
+      "citation": "ADR-024 receipt ledger; D.2 082 durable restoration; A-034/A-047 owner writes"
+    },
+    {
+      "symbol": "AppendTranscriptsRequest.records",
+      "constraint": "min_length",
+      "value": "1",
+      "file": "src/harness/spine_client.py",
+      "before_line": 248,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "AppendTranscriptsRequest.records",
+      "constraint": "max_length",
+      "value": "100",
+      "file": "src/harness/spine_client.py",
+      "before_line": 248,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "TranscriptStatus.thread_count",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 262,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "TranscriptStatus.record_count",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 263,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "TranscriptAppendResult.accepted",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 273,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "TranscriptAppendResult.replayed",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 274,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "InjectionEventAnnotationsRequest.annotations",
+      "constraint": "min_length",
+      "value": "1",
+      "file": "src/harness/spine_client.py",
+      "before_line": 286,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "InjectionEventAnnotationsRequest.annotations",
+      "constraint": "max_length",
+      "value": "100",
+      "file": "src/harness/spine_client.py",
+      "before_line": 286,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "InjectionEventAnnotationsResponse.accepted",
+      "constraint": "ge",
+      "value": "1",
+      "file": "src/harness/spine_client.py",
+      "before_line": 299,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "MemorySplitChild.keywords",
+      "constraint": "min_length",
+      "value": "2",
+      "file": "src/harness/spine_client.py",
+      "before_line": 333,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "MemorySplitChild.keywords",
+      "constraint": "max_length",
+      "value": "5",
+      "file": "src/harness/spine_client.py",
+      "before_line": 333,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "MemorySplitRequest.children",
+      "constraint": "min_length",
+      "value": "2",
+      "file": "src/harness/spine_client.py",
+      "before_line": 339,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "MemorySplitRequest.children",
+      "constraint": "max_length",
+      "value": "64",
+      "file": "src/harness/spine_client.py",
+      "before_line": 339,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "MemorySplitResponse.created",
+      "constraint": "min_length",
+      "value": "2",
+      "file": "src/harness/spine_client.py",
+      "before_line": 350,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "MemorySplitResponse.created",
+      "constraint": "max_length",
+      "value": "64",
+      "file": "src/harness/spine_client.py",
+      "before_line": 350,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "ListMemoriesParams.limit",
+      "constraint": "ge",
+      "value": "1",
+      "file": "src/harness/spine_client.py",
+      "before_line": 400,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "ListMemoriesParams.limit",
+      "constraint": "le",
+      "value": "200",
+      "file": "src/harness/spine_client.py",
+      "before_line": 400,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "ListMemoriesParams.offset",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 401,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "SearchRequest.k",
+      "constraint": "ge",
+      "value": "1",
+      "file": "src/harness/spine_client.py",
+      "before_line": 414,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "SearchRequest.k",
+      "constraint": "le",
+      "value": "50",
+      "file": "src/harness/spine_client.py",
+      "before_line": 414,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "CuratorActivity.admitted_writes",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 497,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "CuratorActivity.last_run_writes",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 498,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "CuratorActivity.pressure_events",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 499,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "CuratorActivity.last_run_pressure",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 500,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "CuratorActivity.trigger_every",
+      "constraint": "gt",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 501,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "CuratorActivity.pressure_trigger_every",
+      "constraint": "gt",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 502,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "CuratorActivity.writes_until_run",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 503,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "CuratorActivity.pressure_until_run",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 504,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "CuratorActivity.pending_cards",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 506,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "JudgedContext.judge_ids",
+      "constraint": "min_length",
+      "value": "3",
+      "file": "src/harness/spine_client.py",
+      "before_line": 573,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "JudgedContext.evidence_refs",
+      "constraint": "min_length",
+      "value": "1",
+      "file": "src/harness/spine_client.py",
+      "before_line": 574,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "SpendEvent.quantity",
+      "constraint": "gt",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 640,
+      "classification": "WALL",
+      "after_line": 565,
+      "citation": "ADR-024 receipt ledger; D.2 082 durable restoration; A-034/A-047 owner writes"
+    },
+    {
+      "symbol": "SpendEvent.cost_usd",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 641,
+      "classification": "WALL",
+      "after_line": 566,
+      "citation": "ADR-024 receipt ledger; D.2 082 durable restoration; A-034/A-047 owner writes"
+    },
+    {
+      "symbol": "SpendEventsRequest.events",
+      "constraint": "min_length",
+      "value": "1",
+      "file": "src/harness/spine_client.py",
+      "before_line": 675,
+      "classification": "WALL",
+      "after_line": 593,
+      "citation": "ADR-024 receipt ledger; D.2 082 durable restoration; A-034/A-047 owner writes"
+    },
+    {
+      "symbol": "SpendEventsRequest.events",
+      "constraint": "max_length",
+      "value": "1000",
+      "file": "src/harness/spine_client.py",
+      "before_line": 675,
+      "classification": "WALL",
+      "after_line": 593,
+      "citation": "ADR-024 receipt ledger; D.2 082 durable restoration; A-034/A-047 owner writes"
+    },
+    {
+      "symbol": "SpendEventsResponse.accepted",
+      "constraint": "ge",
+      "value": "1",
+      "file": "src/harness/spine_client.py",
+      "before_line": 686,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "SpendTableMetrics.total_receipt_lines",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 697,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "SpendTableMetrics.total_unpriced_lines",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 698,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "SpendTableMetrics.hourly_receipt_lines",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 700,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "SpendTableMetrics.hourly_unpriced_lines",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 701,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "VitalsSpendPoint.receipt_lines",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 771,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "VitalsSpendPoint.unpriced_lines",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 772,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "VitalsLifecycleRate.per_hour",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 902,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "VitalsPalaceCount.count",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 914,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "VitalsReconciliation.unpriced_lines",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 932,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "VitalsAccounting.pending_lines",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 946,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "VitalsResources.daemon_rss_bytes",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 969,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "VitalsResources.daemon_uptime_seconds",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 970,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "VitalsResources.disk_free_bytes",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 971,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "VitalsResources.disk_total_bytes",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 972,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "VitalsResources.database_bytes",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 973,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "VitalsResources.journal_bytes",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 974,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "VitalsResources.backup_bytes",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 975,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "ScorerValues.tau",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1049,
+      "classification": "WALL",
+      "after_line": 755,
+      "citation": "ADR-024 receipt ledger; D.2 082 durable restoration; A-034/A-047 owner writes"
+    },
+    {
+      "symbol": "ScorerValues.tau",
+      "constraint": "le",
+      "value": "1",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1049,
+      "classification": "WALL",
+      "after_line": 755,
+      "citation": "ADR-024 receipt ledger; D.2 082 durable restoration; A-034/A-047 owner writes"
+    },
+    {
+      "symbol": "ScorerValues.top_k",
+      "constraint": "ge",
+      "value": "1",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1050,
+      "classification": "WALL",
+      "after_line": 756,
+      "citation": "ADR-024 receipt ledger; D.2 082 durable restoration; A-034/A-047 owner writes"
+    },
+    {
+      "symbol": "ScorerValues.top_k",
+      "constraint": "le",
+      "value": "8",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1050,
+      "classification": "WALL",
+      "after_line": 756,
+      "citation": "ADR-024 receipt ledger; D.2 082 durable restoration; A-034/A-047 owner writes"
+    },
+    {
+      "symbol": "ScorerValues.memory_context_share",
+      "constraint": "ge",
+      "value": "0.01",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1051,
+      "classification": "WALL",
+      "after_line": 757,
+      "citation": "ADR-024 receipt ledger; D.2 082 durable restoration; A-034/A-047 owner writes"
+    },
+    {
+      "symbol": "ScorerValues.memory_context_share",
+      "constraint": "le",
+      "value": "0.5",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1051,
+      "classification": "WALL",
+      "after_line": 757,
+      "citation": "ADR-024 receipt ledger; D.2 082 durable restoration; A-034/A-047 owner writes"
+    },
+    {
+      "symbol": "ScorerValues.half_life_time_days",
+      "constraint": "gt",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1052,
+      "classification": "WALL",
+      "after_line": 758,
+      "citation": "ADR-024 receipt ledger; D.2 082 durable restoration; A-034/A-047 owner writes"
+    },
+    {
+      "symbol": "ScorerValues.half_life_hist_days",
+      "constraint": "gt",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1053,
+      "classification": "WALL",
+      "after_line": 759,
+      "citation": "ADR-024 receipt ledger; D.2 082 durable restoration; A-034/A-047 owner writes"
+    },
+    {
+      "symbol": "ReplayScoreView.disagreements",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1072,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "ReplayScoreView.injected_tokens",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1074,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "ReplayScoreView.share_disagreements",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1075,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "RetrainResponse.eligible_dispositions",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1083,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "RetrainResponse.training_dispositions",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1084,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "RetrainResponse.holdout_dispositions",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1085,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "RetrainResponse.training_pairs",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1086,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "CreateScorerConfigRequest.simulation_digest",
+      "constraint": "pattern",
+      "value": "'^[0-9a-f]{64}$'",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1104,
+      "classification": "WALL",
+      "after_line": 810,
+      "citation": "ADR-024 receipt ledger; D.2 082 durable restoration; A-034/A-047 owner writes"
+    },
+    {
+      "symbol": "ScorerSimulationResponse.simulation_digest",
+      "constraint": "pattern",
+      "value": "'^[0-9a-f]{64}$'",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1125,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "ScorerSimulationResponse.holdout_dispositions",
+      "constraint": "ge",
+      "value": "0",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1129,
+      "classification": "NONE",
+      "reason": "Framework types or Palace admission already own this rule; remove the second local bound."
+    },
+    {
+      "symbol": "RackScorerForceRequest.simulation_digest",
+      "constraint": "pattern",
+      "value": "'^[0-9a-f]{64}$'",
+      "file": "src/harness/spine_client.py",
+      "before_line": 1153,
+      "classification": "WALL",
+      "after_line": 861,
+      "citation": "ADR-024 receipt ledger; D.2 082 durable restoration; A-034/A-047 owner writes"
+    }
+  ],
+  "web_throws": [
+    {
+      "file": "web/src/store.ts",
+      "before_line": 777,
+      "code": "throw new RangeError('thread is not in the local catalog')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/store.ts",
+      "before_line": 795,
+      "code": "throw new TypeError('prompt must not be blank')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 125,
+      "code": "throw new RangeError('thread is not in the local catalog')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 155,
+      "code": "throw new Error('thread has no bound workspace')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 165,
+      "code": "throw new Error('only an unbound legacy thread can bind a workspace')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 178,
+      "code": "throw new TypeError('prompt must not be blank')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 183,
+      "code": "throw new Error('create or select a thread before submitting a prompt')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 186,
+      "code": "throw new Error('wait for the authoritative thread snapshot before submitting')",
+      "classification": "WALL",
+      "citation": "H7 authoritative snapshot; C.7 connected delivery",
+      "reason": null
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 189,
+      "code": "throw new TypeError('image, Symphony launch, and Symphony steering are mutually exclusive')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 194,
+      "code": "throw new TypeError('a proposed response must be an ordinary text prompt')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 220,
+      "code": "throw new Error('there is no active run to cancel')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 236,
+      "code": "throw new Error('there is no open memory gate to continue')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 242,
+      "code": "throw new Error('the memory decision does not match the open gate')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 253,
+      "code": "throw new TypeError('memory id must be a UUID')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 263,
+      "code": "throw new TypeError('memory id must be a UUID')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 277,
+      "code": "throw new TypeError('memory id must be a UUID')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 280,
+      "code": "throw new TypeError('expected revision must be a positive integer')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 283,
+      "code": "throw new TypeError('memory body must not be blank')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 299,
+      "code": "throw new TypeError('memory id must be a UUID')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 302,
+      "code": "throw new TypeError('expected revision must be a positive integer')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 451,
+      "code": "throw new Error('create or select a thread before opening memories')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 454,
+      "code": "throw new Error('wait for the authoritative thread snapshot before opening memories')",
+      "classification": "NONE",
+      "citation": null,
+      "reason": "Typed caller or server already validates this; no independent incident."
+    },
+    {
+      "file": "web/src/socket.ts",
+      "before_line": 491,
+      "code": "throw new Error('Harness is not connected')",
+      "classification": "WALL",
+      "citation": "H7 authoritative snapshot; C.7 connected delivery",
+      "reason": null
+    },
+    {
+      "file": "web/src/rackBridge.tsx",
+      "before_line": 361,
+      "code": "throw new Error('rack frame did not receive a valid local host origin')",
+      "classification": "WALL",
+      "citation": "ADR-018: local host capability origin",
+      "reason": null
+    }
+  ]
+}
