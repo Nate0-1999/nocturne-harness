@@ -32,8 +32,6 @@ class LazyStandardToolset:
     ) -> None:
         self._cwd = cwd.resolve(strict=True)
         self._workspace_root = workspace_root.resolve(strict=True)
-        if not self._cwd.is_relative_to(self._workspace_root):
-            raise ValueError("toolset cwd must be inside workspace_root")
         self._agent_id = agent_id
         self._machine_id = machine_id
         self._fence_reads = fence_reads
