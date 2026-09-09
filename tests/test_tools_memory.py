@@ -590,17 +590,18 @@ async def test_search_renders_empty_results_truthfully() -> None:
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("invalid_k", [0, 51])
-async def test_search_rejects_invalid_k_without_spine_call(invalid_k: int) -> None:
-    """ADR-005 is defended by verifying that search rejects invalid k without spine call; this
-    prevents drift in the owner memory-tool safety contract.
+@pytest.mark.parametrize("requested_k", [0, 51])
+async def test_search_leaves_result_count_admission_to_palace(requested_k: int) -> None:
+    """M3GD / C.4: Palace owns request admission; the client must preserve the requested count.
+    [SPEC C.6]
     """
     spine = FakeSpineGateway()
+    spine.search_outcomes.append(SearchResponse(results=[]))
 
-    rendered = await search_memory(context(spine), "query", k=invalid_k)
+    rendered = await search_memory(context(spine), "query", k=requested_k)
 
-    assert rendered == "memory search failed: k must be an integer from 1 through 50"
-    assert spine.search_requests == []
+    assert rendered == "no matching memories"
+    assert spine.search_requests[0].k == requested_k
 
 
 @pytest.mark.asyncio
