@@ -8,7 +8,7 @@ import stat
 import threading
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -33,7 +33,7 @@ from harness.envelope import (
 from harness.model_policy import ThreadModelResolution
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
-from harness.transcript import TranscriptJournal, TranscriptJournalUnavailable
+from harness.transcript import JournalCloudRecord, TranscriptJournal, TranscriptJournalUnavailable
 
 
 def ulid(number: int) -> str:
@@ -328,8 +328,11 @@ def test_two_journals_atomically_keep_one_attachment_per_prompt(
     tmp_path: Path,
     conflicting: bool,
 ) -> None:
-    """A-052 is defended by holding the file lock across attachment compare and append;
-    this prevents two daemon instances from duplicating or racing one prompt attachment.
+    """A-052 is defended by holding the file lock across attachment compare and append; this
+    prevents two daemon instances from duplicating or racing one prompt attachment. M3GD /
+    SPEC B.6 r14: exercised refusal: "Conversation journal for thread {thread_id} changes
+    image attachment {prompt_id}. Restore the journal from a verified backup before starting
+    Nocturne.".
     """
     first_locked = threading.Event()
     release_first = threading.Event()
@@ -393,8 +396,13 @@ def test_image_hydration_fails_closed_on_missing_or_digest_mismatched_attachment
     tmp_path: Path,
     damage: str,
 ) -> None:
-    """A-052 is defended by failing image hydration on missing bytes or a mismatched digest;
-    this prevents compact metadata from standing in for unverified provider history.
+    """A-052 is defended by failing image hydration on missing bytes or a mismatched digest; this
+    prevents compact metadata from standing in for unverified provider history. M3GD / SPEC
+    B.6 r14: exercised refusals: "Conversation journal for thread {thread_id or 'unknown'}
+    cannot match image attachment {message_id} to its compact view. Restore the journal from a
+    verified backup before starting Nocturne."; "Conversation journal for thread {thread_id}
+    has a digest-mismatched image attachment {prompt_id}. Restore the journal from a verified
+    backup before starting Nocturne.".
     """
     journal = TranscriptJournal(tmp_path / "transcripts")
     thread_id = "thread-image"
@@ -429,7 +437,8 @@ def test_image_hydration_fails_closed_on_missing_or_digest_mismatched_attachment
 
 def test_journal_refuses_a_git_worktree_root(tmp_path: Path) -> None:
     """ADR-016 is defended by verifying that journal refuses a git worktree root; this prevents
-    drift in the private append-only journal contract.
+    drift in the private append-only journal contract. M3GD / SPEC B.6 r14: exercised refusal:
+    "transcript root must not live inside a git worktree".
     """
     (tmp_path / ".git").mkdir()
 
@@ -439,7 +448,8 @@ def test_journal_refuses_a_git_worktree_root(tmp_path: Path) -> None:
 
 def test_journal_refuses_a_symlinked_thread_file(tmp_path: Path) -> None:
     """ADR-016 is defended by verifying that journal refuses a symlinked thread file; this
-    prevents drift in the private append-only journal contract.
+    prevents drift in the private append-only journal contract. M3GD / SPEC B.6 r14: exercised
+    refusal: "transcript path must be a regular file".
     """
     journal = TranscriptJournal(tmp_path / "transcripts")
     target = tmp_path / "target.txt"
@@ -480,6 +490,9 @@ def test_journal_refuses_root_replaced_by_a_directory_symlink(tmp_path: Path) ->
 def test_preflight_refuses_a_preexisting_symlinked_root(tmp_path: Path) -> None:
     """ADR-016 requires the journal root itself to remain private and path safe; this prevents
     the startup preflight from changing permissions or writing through a directory symlink.
+    M3GD / SPEC B.6 r14: exercised refusals: "Conversation journal is not writable at
+    {self._root}. Fix that directory's permissions, then run `nocturne up` again.";
+    "transcript root must be a real directory".
     """
     root = tmp_path / "transcripts"
     target = tmp_path / "outside"
@@ -553,8 +566,9 @@ def test_startup_preflight_fsyncs_and_removes_its_probe(
 def test_startup_preflight_refuses_a_read_only_journal_with_plain_remedy(
     tmp_path: Path,
 ) -> None:
-    """F030, v2.39, and B.6 rule 12 require startup to fail before serving when the journal
-    is read only; this prevents accepting a conversation whose history cannot be written.
+    """F030, v2.39, and B.6 rule 12 require startup to fail before serving when the journal is
+    read only; this prevents accepting a conversation whose history cannot be written. M3GD /
+    SPEC B.6 r14: exercised refusal: "transcript root is not owner-writable".
     """
     root = tmp_path / "transcripts"
     root.mkdir(mode=0o500)
@@ -685,7 +699,9 @@ async def test_startup_hydrates_every_journal_thread(tmp_path: Path) -> None:
 
 
 def test_catalog_projects_one_unresolved_proposal_for_the_global_deck(tmp_path: Path) -> None:
-    """M3DK keeps the Deck global after restart without inventing a second proposal store."""
+    """M3DK keeps the Deck global after restart without inventing a second proposal store. [SPEC
+    D.2 082]
+    """
 
     journal = TranscriptJournal(tmp_path / "transcripts")
     prompt_id = ulid(1)
@@ -836,7 +852,9 @@ async def test_successful_image_turn_rehydrates_binary_content_in_text_then_imag
 
 def test_journal_refuses_a_thread_that_changes_project_context(tmp_path: Path) -> None:
     """F028 and SPEC C.4 require project to remain part of immutable thread identity; this
-    prevents contradictory journal rows from choosing a project by append order.
+    prevents contradictory journal rows from choosing a project by append order. M3GD / SPEC
+    B.6 r14: exercised refusal: "Conversation journal for thread {candidate} changes project
+    context. Restore the journal from a verified backup before starting Nocturne.".
     """
 
     journal = TranscriptJournal(tmp_path / "transcripts")
@@ -850,6 +868,9 @@ def test_journal_refuses_a_thread_that_changes_project_context(tmp_path: Path) -
 def test_startup_refuses_unrecoverable_parent_history(tmp_path: Path) -> None:
     """ADR-016 and v2.39 make history mandatory and fail closed on unrecoverable gaps; this
     prevents a damaged transcript from silently becoming an apparently empty conversation.
+    M3GD / SPEC B.6 r14: exercised refusal: "Conversation journal for thread {thread_id} is
+    missing a parent message. Restore the journal from a verified backup before starting
+    Nocturne.".
     """
     journal = TranscriptJournal(tmp_path / "transcripts")
     journal.append_message(
@@ -916,8 +937,10 @@ async def test_capture_failure_poison_stops_unjournaled_work(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    """ADR-016 is defended by verifying that capture failure poison stops unjournaled work;
-    this prevents drift in the private append-only journal contract.
+    """ADR-016 is defended by verifying that capture failure poison stops unjournaled work; this
+    prevents drift in the private append-only journal contract. M3GD / SPEC B.6 r14: exercised
+    refusals: "run loop is unavailable after transcript capture failure"; "transcript capture
+    failed; run loop is now unavailable".
     """
     journal = TranscriptJournal(tmp_path / "transcripts")
 
@@ -1293,3 +1316,263 @@ async def wait_for_type(sink: Sink, message_type: MessageType, count: int) -> No
             return
         await asyncio.sleep(0)
     raise AssertionError(f"expected {count} {message_type} messages")
+
+
+@pytest.mark.parametrize("damage,message", [
+    ("newline", "Palace transcript row contains a newline."),
+    ("digest", "Palace transcript row has a changed digest."),
+    ("json", "Palace transcript row is not JSON."),
+    ("identity", "Palace transcript row changes thread identity."),
+    ("sequence", "has a sequence gap."),
+    ("existing", "Conversation resurrection refuses to overwrite existing local transcripts."),
+])
+def test_cloud_restore_walls_write_nothing(tmp_path: Path, damage: str, message: str) -> None:
+    """SPEC D.2 082: reject damaged restore input before overwriting any owner history. M3GD /
+    SPEC B.6 r14: exercised refusals: "Conversation resurrection refuses to overwrite existing
+    local transcripts."; "Palace transcript for thread {thread_id} has a sequence gap.";
+    "Palace transcript row changes thread identity."; "Palace transcript row contains a
+    newline."; "Palace transcript row has a changed digest."; "Palace transcript row is not
+    JSON.".
+    """
+    import hashlib
+
+    journal = TranscriptJournal(tmp_path / "journal")
+    raw = '{"thread_id":"thread-1"}'
+    if damage == "newline":
+        raw += "\n"
+    elif damage == "json":
+        raw = "{"
+    elif damage == "identity":
+        raw = '{"thread_id":"other-thread"}'
+    record = JournalCloudRecord("thread-1", 1, raw, hashlib.sha256(raw.encode()).hexdigest())
+    if damage == "digest":
+        record = replace(record, sha256="0" * 64)
+    elif damage == "sequence":
+        record = replace(record, sequence=2)
+    elif damage == "existing":
+        journal.append_message("thread-1", {"message_id": "first"}, parent_id=None)
+    before = {p.name: p.read_bytes() for p in journal.root.iterdir()}
+    with pytest.raises(TranscriptJournalUnavailable, match=message):
+        journal.restore_cloud_records((record,))
+    assert {p.name: p.read_bytes() for p in journal.root.iterdir()} == before
+
+
+@pytest.mark.parametrize("damage,message", [
+    ("json", "contains an unreadable transcript"),
+    ("empty-message", "contains an unreadable transcript"),
+    ("tail", "has no durable tail"),
+    ("cycle", "contains a history cycle"),
+    ("project", "has an invalid project context"),
+    ("feet-missing", "has incomplete thread feet"),
+    ("feet-relative", "has invalid thread feet"),
+    ("move-unbound", "moves an unbound thread"),
+    ("move-outside", "moves outside thread workspace"),
+])
+def test_damaged_history_does_not_resume_or_rewrite(
+    tmp_path: Path, damage: str, message: str,
+) -> None:
+    """SPEC D.2 082 / M3TL: damaged history cannot grant a different workspace on restart. M3GD /
+    SPEC B.6 r14: exercised refusals: "Conversation journal contains an unreadable transcript.
+    Restore the journal from a verified backup before starting Nocturne."; "Conversation
+    journal for thread {candidate} has an invalid project context. Restore the journal from a
+    verified backup before starting Nocturne."; "Conversation journal for thread {thread_id}
+    contains a history cycle. Restore the journal from a verified backup before starting
+    Nocturne."; "Conversation journal for thread {thread_id} has no durable tail. Restore the
+    journal from a verified backup before starting Nocturne."; "Conversation journal has
+    incomplete thread feet"; "Conversation journal has invalid thread feet"; "Conversation
+    journal moves an unbound thread"; "Conversation journal moves outside thread workspace".
+    """
+    journal = TranscriptJournal(tmp_path / "journal")
+    journal.append_message("thread-1", {"message_id": "first", "role": "user"}, parent_id=None)
+    rows = records(journal, "thread-1")
+    if damage == "empty-message":
+        rows[0]["message"] = None
+    elif damage == "tail":
+        rows[0].pop("tail_message_id")
+    elif damage == "cycle":
+        rows[0]["message"]["parentId"] = "first"
+    elif damage.startswith("move"):
+        if damage == "move-outside":
+            rows.append({"thread_id": "thread-1", "record_type": "thread_context",
+                         "project_key": "/workspace", "workspace_root": "/workspace",
+                         "current_location": "/workspace"})
+        rows.append({"thread_id": "thread-1", "record_type": "thread_location",
+                     "current_location": "/elsewhere"})
+    elif damage != "json":
+        context = {"thread_id": "thread-1", "record_type": "thread_context",
+                   "project_key": "/workspace"}
+        if damage == "project":
+            context["project_key"] = None
+        elif damage == "feet-missing":
+            context["workspace_root"] = "/workspace"
+        else:
+            context.update(workspace_root="relative", current_location="relative")
+        rows.append(context)
+    path = journal.path_for_thread("thread-1")
+    path.write_text("{" if damage == "json" else "\n".join(map(json.dumps, rows)) + "\n")
+    before = path.read_bytes()
+    with pytest.raises(TranscriptJournalUnavailable, match=message):
+        journal.hydrate_threads()
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize("damage,message", [
+    ("duplicate", "duplicates image attachment"),
+    ("missing-view", "drops image view"),
+    ("invalid-view", "has an invalid image view"),
+    ("attachment-keys", "has an invalid image attachment"),
+    ("attachment-bytes", "has an invalid image attachment"),
+])
+def test_attachment_walls_preserve_the_damaged_evidence(
+    tmp_path: Path, damage: str, message: str,
+) -> None:
+    """A-052: never silently replace an attachment or detach its immutable message view. M3GD /
+    SPEC B.6 r14: exercised refusals: "Conversation journal for thread {candidate} duplicates
+    image attachment {attachment.prompt_id}. Restore the journal from a verified backup before
+    starting Nocturne."; "Conversation journal for thread {thread_id or 'unknown'} drops image
+    view {message_id}. Restore the journal from a verified backup before starting Nocturne.";
+    "Conversation journal for thread {thread_id or 'unknown'} has an invalid image view for
+    {message_id}. Restore the journal from a verified backup before starting Nocturne.";
+    "Conversation journal for thread {thread_id} has an invalid image attachment {prompt_id}.
+    Restore the journal from a verified backup before starting Nocturne."; "Conversation
+    journal for thread {thread_id} has an invalid image attachment. Restore the journal from a
+    verified backup before starting Nocturne.".
+    """
+    journal = TranscriptJournal(tmp_path / "journal")
+    view = journal.append_image_attachment("thread-1", "first", png_input())
+    journal.append_message("thread-1", {"message_id": "first", "role": "user",
+                           "image": view.model_dump(mode="json")}, parent_id=None)
+    rows = records(journal, "thread-1")
+    if damage == "duplicate":
+        rows.insert(1, rows[0])
+    elif damage == "missing-view":
+        rows[1]["message"].pop("image")
+    elif damage == "invalid-view":
+        rows[1]["message"]["image"]["byte_count"] = "wrong type"
+    elif damage == "attachment-keys":
+        rows[0]["image"].pop("sha256")
+    else:
+        rows[0]["image"]["data_base64"] = "not base64"
+    path = journal.path_for_thread("thread-1")
+    path.write_text("\n".join(map(json.dumps, rows)) + "\n")
+    before = path.read_bytes()
+    with pytest.raises(TranscriptJournalUnavailable, match=message):
+        journal.hydrate_threads()
+    assert path.read_bytes() == before
+
+
+def test_zero_byte_append_rolls_back(tmp_path: Path, monkeypatch) -> None:
+    """SPEC D.2 082: 'incomplete transcript append' cannot acknowledge unpersisted history.
+    """
+    journal = TranscriptJournal(tmp_path / "journal")
+    journal.append_message("thread-1", {"message_id": "first"}, parent_id=None)
+    path = journal.path_for_thread("thread-1")
+    before = path.read_bytes()
+    monkeypatch.setattr(transcript_module.os, "write", lambda *_: 0)
+    with pytest.raises(OSError, match="incomplete transcript append"):
+        journal.append_message("thread-1", {"message_id": "second"}, parent_id="first")
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize("thread_id,prompt_id,message", [
+    ("", "first", "thread_id must not be blank"),
+    ("thread-1", "", "prompt_id must not be blank"),
+])
+def test_attachment_identity_is_required_before_write(
+    tmp_path: Path, thread_id: str, prompt_id: str, message: str,
+) -> None:
+    """A-052: every persisted attachment has a restorable thread and message identity. M3GD /
+    SPEC B.6 r14: exercised refusals: "prompt_id must not be blank"; "thread_id must not be
+    blank".
+    """
+    journal = TranscriptJournal(tmp_path / "journal")
+    with pytest.raises(ValueError, match=message):
+        journal.append_image_attachment(thread_id, prompt_id, png_input())
+    assert list(journal.root.iterdir()) == []
+
+
+def test_cloud_export_does_not_claim_corrupt_utf8_is_restorable(tmp_path: Path) -> None:
+    """SPEC D.2 082: 'is not UTF-8' blocks publishing an unrestorable cloud journal. M3GD / SPEC
+    B.6 r14: exercised refusal: "Conversation journal for thread {transcript.thread_id} is not
+    UTF-8.".
+    """
+    journal = TranscriptJournal(tmp_path / "journal")
+    journal.append_message("thread-1", {"message_id": "first"}, parent_id=None)
+    with journal.path_for_thread("thread-1").open("ab") as stream:
+        stream.write(b"\xff\n")
+    with pytest.raises(TranscriptJournalUnavailable, match="is not UTF-8"):
+        journal.cloud_records()
+
+
+@pytest.mark.parametrize("operation,message", [
+    ("root", "Conversation journal cannot be read at"),
+    ("file", "Conversation journal cannot read"),
+])
+def test_unreadable_journal_reports_the_unavailable_capture_boundary(
+    tmp_path: Path, monkeypatch, operation: str, message: str,
+) -> None:
+    """SPEC D.2 082: report permission failure before accepting new journal history. M3GD / SPEC
+    B.6 r14: exercised refusals: "Conversation journal cannot be read at {self._root}. Fix
+    that directory, then run `nocturne up` again."; "Conversation journal cannot read
+    {filename}. Fix that file, then run `nocturne up` again.".
+    """
+    journal = TranscriptJournal(tmp_path / "journal")
+    journal.append_message("thread-1", {"message_id": "first"}, parent_id=None)
+    def denied(*_, **__):
+        raise PermissionError("denied")
+    if operation == "root":
+        monkeypatch.setattr(transcript_module.os, "listdir", denied)
+    else:
+        original = transcript_module.os.open
+        def open_file(path, *args, **kwargs):
+            if str(path).endswith(".jsonl"):
+                return denied()
+            return original(path, *args, **kwargs)
+        monkeypatch.setattr(transcript_module.os, "open", open_file)
+    with pytest.raises(TranscriptJournalUnavailable, match=message):
+        journal.hydrate_threads()
+
+
+@pytest.mark.parametrize("operation", ["hydrate", "tail", "append"])
+def test_non_file_transcript_is_never_read_or_modified(tmp_path: Path, operation: str) -> None:
+    """SPEC D.2 082: 'non-file transcript' / 'regular file' protects special file targets. M3GD /
+    SPEC B.6 r14: exercised refusals: "Conversation journal contains a non-file transcript.
+    Replace it with a verified journal file, then run `nocturne up` again."; "transcript path
+    must be a regular file".
+    """
+    journal = TranscriptJournal(tmp_path / "journal")
+    path = journal.path_for_thread("thread-1")
+    path.mkdir()
+    with pytest.raises((ValueError, OSError, TranscriptJournalUnavailable)) as caught:
+        if operation == "hydrate":
+            journal.hydrate_threads()
+        elif operation == "tail":
+            journal.next_parent_id("thread-1")
+        else:
+            journal._open_append_descriptor("thread-1")
+    assert any(text in str(caught.value)
+               for text in ("non-file transcript", "regular file", "directory"))
+    assert path.is_dir() and list(path.iterdir()) == []
+
+
+@pytest.mark.parametrize("operation", ["read-symlink", "append-symlink", "append-fifo"])
+def test_descriptor_open_cannot_follow_a_replaced_journal(tmp_path: Path, operation: str) -> None:
+    """SPEC D.2 082 quotes 'transcript path must be a regular file' and 'Conversation journal
+    contains a non-file transcript. Replace it with a verified journal file, then run
+    `nocturne up` again.': descriptor checks protect a swapped leaf.
+    """
+    journal = TranscriptJournal(tmp_path / "journals")
+    path = journal.path_for_thread("thread")
+    outside = tmp_path / "outside"
+    outside.write_text("keep")
+    if operation.endswith("symlink"):
+        path.symlink_to(outside)
+    else:
+        os.mkfifo(path)
+    with pytest.raises((ValueError, TranscriptJournalUnavailable)) as caught:
+        if operation.startswith("read"):
+            journal._read_file_rows(path.name)
+        else:
+            journal._open_append_descriptor("thread")
+    assert "regular file" in str(caught.value) or "non-file transcript" in str(caught.value)
+    assert outside.read_text() == "keep"
