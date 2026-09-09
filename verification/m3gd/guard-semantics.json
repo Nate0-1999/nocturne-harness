@@ -1,0 +1,187 @@
+{
+  "counting": "Semantic families supplement the lexical raise/Field/throw census and overlap it; do not add these family counts to site totals. Normal dispatch branches, exception propagation and library internals are not custom refusals.",
+  "families": [
+    {
+      "file": "agent_runtime.py",
+      "guard": "visible model text excludes tagged reasoning",
+      "classification": "WALL",
+      "citation": "C.5: private model process does not enter the public answer",
+      "test": "tests/test_agent_runtime.py; packaged heartbeat reasoning-leak assertion"
+    },
+    {
+      "file": "agent_runtime.py",
+      "guard": "incremental text suffix and tool-hop accumulation",
+      "classification": "INCIDENT",
+      "citation": "F068 / M3FZ: talk-tool-talk must retain both public text parts",
+      "test": "tests/test_agent_runtime.py; real-talk-tool-talk-events.json"
+    },
+    {
+      "file": "agent_runtime.py",
+      "guard": "bounded provider text and context-refusal classification",
+      "classification": "INCIDENT",
+      "citation": "F034 / A-054: show the actual structured provider refusal",
+      "test": "tests/test_agent_runtime.py::test_f034_unknown_provider_http_failure_keeps_its_words_without_guessing"
+    },
+    {
+      "file": "agent_runtime.py",
+      "guard": "request/token budget and receipt retry queue",
+      "classification": "WALL",
+      "citation": "C.5; B.6 r11: owner spend limits and unacknowledged money receipts",
+      "test": "tests/test_agent_runtime.py; tests/test_receipt_queue.py"
+    },
+    {
+      "file": "run_loop.py",
+      "guard": "subscriber buffer 256 and snapshot recovery",
+      "classification": "WALL",
+      "citation": "H7: a lost stream must reconnect instead of silently losing delivery",
+      "test": "tests/test_run_loop.py::test_gate_waiter_and_disconnected_stream_cannot_steal_owner_attention"
+    },
+    {
+      "file": "run_loop.py",
+      "guard": "gate membership/revision and current-run identity checks",
+      "classification": "WALL",
+      "citation": "A-019/A-023/H7: stale events and decisions cannot affect current owner intent",
+      "test": "tests/test_run_loop.py::test_gate_blocks_reconnects_validates_once_and_resumes_only_after_dismiss"
+    },
+    {
+      "file": "run_loop.py",
+      "guard": "image route capability and command exclusions",
+      "classification": "WALL",
+      "citation": "A-052: do not send billed image bytes to an incapable or unrelated handler",
+      "test": "tests/test_run_loop.py::test_image_refusal_is_local_plain_zero_usage_and_never_calls_runner"
+    },
+    {
+      "file": "run_loop.py",
+      "guard": "one active run, queued cancellation and terminal acknowledgement",
+      "classification": "WALL",
+      "citation": "C.7/H7: preserve accepted input and run-scoped owner cancellation",
+      "test": "tests/test_run_loop.py; packaged heartbeat three consecutive sends"
+    },
+    {
+      "file": "pydantic_harness_adapter.py",
+      "guard": "credential paths, shell write patterns, environment allowlist and OS fence",
+      "classification": "WALL",
+      "citation": "ADR-015: file/tool presence does not grant credentials or remote mutation",
+      "test": "tests/test_pydantic_harness_toolset.py::test_shell_does_not_fall_through_a_wall"
+    },
+    {
+      "file": "pydantic_harness_adapter.py",
+      "guard": "framework-required paging/output/lifetime configuration; explicit caller timeout",
+      "classification": "WALL",
+      "citation": "ADR-015/F034: bound launched tool resources and paid context; preserve paging and explicit timeout",
+      "test": "tests/test_pydantic_harness_toolset.py::test_six_file_tools_delegate_core_semantics_upstream; test_shell_is_one_shot_os_fenced_and_remote_state_walled"
+    },
+    {
+      "file": "agent.py",
+      "guard": "ordinary request/token budgets; split-only two-request budget and timeout",
+      "classification": "WALL",
+      "citation": "C.5; A-049/A-050; F047: bound paid split planning and terminate a stuck planner",
+      "test": "tests/test_agent_runtime.py::test_f047_split_planner_timeout_ends_once_with_guidance_and_zero_writes"
+    },
+    {
+      "file": "agent.py",
+      "guard": "label/keyword normalization and exact split coverage, candidate ordering, overlap and source-body checks",
+      "classification": "WALL",
+      "citation": "A-049/A-050/C.6: never save a lossy reconstruction or unindexable child as the owner source",
+      "test": "tests/test_agent.py::test_a049_invalid_split_draft_uses_safe_guidance_and_zero_writes"
+    },
+    {
+      "file": "agent.py",
+      "guard": "empty remember no-op and token threshold into splitter",
+      "classification": "WALL",
+      "citation": "C.6/A-049: only purchase/save the submitted durable body",
+      "test": "tests/test_agent.py; tests/test_agent.py::test_a049_oversized_multi_claim_uses_one_atomic_split_with_exact_source"
+    },
+    {
+      "file": "memory_gate.py",
+      "guard": "one first-turn gate; autonomous rescore and exclusions thereafter",
+      "classification": "WALL",
+      "citation": "A-019/A-023: keep owner attention bounded and wrong removals authoritative",
+      "test": "tests/test_memory_gate.py"
+    },
+    {
+      "file": "progressive_prompt.py",
+      "guard": "resolved instruction symlink stays inside workspace",
+      "classification": "WALL",
+      "citation": "ADR-015: a repository symlink does not grant an outside credential file",
+      "test": "tests/test_pydantic_harness_toolset.py::test_progressive_instructions_are_complete_but_cannot_read_outside_credentials"
+    },
+    {
+      "file": "progressive_prompt.py",
+      "guard": "80-entry cap and 12000-character instruction truncation",
+      "classification": "NONE",
+      "citation": "No incident or authority boundary; incomplete owner instructions are not justified",
+      "test": "tests/test_pydantic_harness_toolset.py::test_progressive_instructions_are_complete_but_cannot_read_outside_credentials"
+    },
+    {
+      "file": "spine_client.py",
+      "guard": "principal filtering and owned queue IDs; browser provenance fields forbidden",
+      "classification": "WALL",
+      "citation": "F069/F076; A-047: read/decide only this identity and retain host-owned provenance",
+      "test": "tests/test_spine_transport.py; tests/test_daemon.py; tests/test_verification_identity.py"
+    },
+    {
+      "file": "spine_client.py",
+      "guard": "404 optional capability fallback, RFC problem/domain conflict distinction",
+      "classification": "INCIDENT",
+      "citation": "F062/F073/F076: legacy Palace absence, rate limits, and actual refusals stay distinct",
+      "test": "tests/test_spine_transport.py; tests/test_daemon.py"
+    },
+    {
+      "file": "web/src/store.ts",
+      "guard": "stale run/snapshot/correlated acknowledgement filtering",
+      "classification": "WALL",
+      "citation": "H7/F077: protect the active thread and its unsent draft",
+      "test": "web/tests/snapshotBarrier.test.mjs; verification/m3fp/browser_check.mjs"
+    },
+    {
+      "file": "web/src/socket.ts",
+      "guard": "generation/reconnect, authoritative snapshot barrier, pending-write refresh scheduling",
+      "classification": "WALL",
+      "citation": "H7/C.6: recover the stream and reconcile accepted owner writes",
+      "test": "web/tests/snapshotBarrier.test.mjs; packaged heartbeat"
+    },
+    {
+      "file": "web/src/rackBridge.tsx",
+      "guard": "frame source/origin/module identity and transferred-port checks",
+      "classification": "WALL",
+      "citation": "ADR-018: capability channels belong only to the named local module",
+      "test": "verification/m3fp/browser_check.mjs; packaged heartbeat external_rack_host_refused"
+    },
+    {
+      "file": "web/src/rackBridge.tsx",
+      "guard": "stable channel connection and late response correlation",
+      "classification": "INCIDENT",
+      "citation": "M3CP/F070-F072: query refreshes cannot reconnect and erase Conversation state",
+      "test": "verification/m3fp/browser_check.mjs; verification/m3fp/browser_check.mjs; packaged heartbeat"
+    },
+    {
+      "file": "web/src/rackBridge.tsx",
+      "guard": "duplicate typed port-body, selection and protocol-version checks",
+      "classification": "NONE",
+      "citation": "The typed channel and source/origin boundary already own admission",
+      "test": "verification/m3fp/browser_check.mjs; packaged heartbeat"
+    },
+    {
+      "file": "web/src/App.tsx (Conversation only)",
+      "guard": "canSend: connected, authoritative snapshot, resolved gate, nonempty input, no pending send/image",
+      "classification": "WALL",
+      "citation": "C.6/H7/F077: send one accepted intent and clear its draft only on acknowledgement",
+      "test": "packaged heartbeat: draft stays editable during gate, send stays held"
+    },
+    {
+      "file": "web/src/App.tsx (Conversation only)",
+      "guard": "attachment replacement/late-read identity, archive extraction busy/gate",
+      "classification": "WALL",
+      "citation": "A-052/ADR-022: preserve the selected image and one owner extraction action",
+      "test": "web/tests/imageInput.test.mjs; web/tests/rackAction.test.mjs; packaged heartbeat"
+    },
+    {
+      "file": "web/src/App.tsx (Conversation only)",
+      "guard": "disable typing/image selection for connection, snapshot or memory-review state; disable rename while awaiting snapshot; disable repeated stop click",
+      "classification": "NONE",
+      "citation": "No separate authority boundary: keep send/dispatch walls and permit drafting, local selection and run-scoped cancellation",
+      "test": "packaged heartbeat; verification/m3fp/browser_check.mjs"
+    }
+  ]
+}
