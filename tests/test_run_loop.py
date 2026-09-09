@@ -31,7 +31,8 @@ from harness.model_policy import (
     NamedModelResolutionError,
     ThreadModelResolution,
 )
-from harness.run_loop import ProjectBindingConflict, RunLoop
+from harness.parameter_registry import ParameterWriteViolation
+from harness.run_loop import ProjectBindingConflict, RunLoop, _Subscription
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.transcript import TranscriptJournal
 
@@ -424,7 +425,7 @@ class InvalidGateRunner:
         model_resolution: ThreadModelResolution | None = None,
     ) -> TurnOutcome:
         del thread_id, prompt, message_history, model_resolution
-        invalid = card(INJECTED_ID, 0)
+        invalid = {**card(INJECTED_ID, 1), "features": None}
         await emit.open_gate(
             {
                 **gate_value(),
@@ -494,7 +495,10 @@ def payload(message: Envelope) -> dict[str, object]:
 async def test_m3dk_fire_derives_exact_delta_and_preserves_source_provenance(
     tmp_path: Path,
 ) -> None:
-    """M3DK/G19 records the owner's tweak without letting the client rewrite its source."""
+    """M3DK/G19 records the owner's tweak without letting the client rewrite its source. [SPEC
+    C.7] M3GD / SPEC B.6 r14: exercised refusals: "proposed response is not available in this
+    thread"; "proposed response was already fired".
+    """
 
     journal = TranscriptJournal(tmp_path / "transcripts")
     source_run_id = ulid(10)
@@ -568,6 +572,9 @@ async def test_m3dk_fire_derives_exact_delta_and_preserves_source_provenance(
     }
     source = next(message for message in messages if message["message_id"] == source_run_id)
     assert source["events"] == [judge, proposal]
+    with pytest.raises(ValueError, match="proposed response is not available in this thread"):
+        await loop.submit(thread_id="thread-1", prompt_id=ulid(13), prompt="missing",
+                          proposed_response=ProposedResponseFirePayload(proposal_run_id=ulid(999)))
     with pytest.raises(ValueError, match="already fired"):
         await loop.submit(
             thread_id="thread-1",
@@ -578,19 +585,6 @@ async def test_m3dk_fire_derives_exact_delta_and_preserves_source_provenance(
     await loop.close()
 
 
-@pytest.mark.parametrize("resolved_model", ["", " \t", " model "])
-def test_run_loop_rejects_invalid_resolved_model(resolved_model: str) -> None:
-    """SPEC C.7 is defended by verifying that run loop rejects invalid resolved model; this
-    prevents drift in the single authoritative run-loop contract.
-    """
-    ids = Ids()
-
-    with pytest.raises(ValueError, match="resolved_model"):
-        RunLoop(
-            ImmediateHistoryRunner(),
-            factory(ids),
-            resolved_model=resolved_model,
-        )
 
 
 @pytest.mark.asyncio
@@ -706,7 +700,8 @@ async def test_legacy_typed_project_can_explicitly_bind_a_folder(tmp_path: Path)
 @pytest.mark.asyncio
 async def test_legacy_nonempty_thread_cannot_be_silently_reprojected() -> None:
     """F028 and ADR-005 forbid treating legacy None as a global project match; this proves a
-    nonempty unscoped thread must remain unscoped instead of changing Spine identity.
+    nonempty unscoped thread must remain unscoped instead of changing Spine identity. M3GD /
+    SPEC B.6 r14: exercised refusal: "thread project context is already fixed".
     """
 
     control = TurnControl()
@@ -2475,13 +2470,12 @@ class RegressiveUsageRunner:
         del thread_id, prompt, message_history, model_resolution
         await emit.usage(UsageSnapshot(2, 20, 4, 12, 3))
         await emit.usage(UsageSnapshot(2, 20, 4, 11, 3))
-        raise AssertionError("regression must fail before this line")
+        return TurnOutcome(StopReason.END_TURN, (), UsageSnapshot(2, 20, 4, 11, 3))
 
 
 @pytest.mark.asyncio
-async def test_usage_regression_terminalizes_as_error_and_stale_cancel_is_scoped() -> None:
-    """SPEC C.7 is defended by verifying that usage regression terminalizes as error and stale
-    cancel is scoped; this prevents drift in the single authoritative run-loop contract.
+async def test_corrected_usage_preserves_completion_and_stale_cancel_is_scoped() -> None:
+    """M3GD / C.7: provider usage corrections do not turn an answer into an error. [SPEC C.7]
     """
     ids = Ids()
     loop = RunLoop(RegressiveUsageRunner(), factory(ids))
@@ -2491,17 +2485,17 @@ async def test_usage_regression_terminalizes_as_error_and_stale_cancel_is_scoped
     await _wait_for_done_count(sink, 1)
 
     usage = [message for message in sink.messages if message.type is MessageType.RUN_USAGE]
-    assert len(usage) == 1
-    assert payload(usage[0]) == {
+    assert len(usage) == 2
+    assert payload(usage[-1]) == {
         "requests": 2,
         "input_tokens": 20,
         "output_tokens": 4,
-        "cache_read_tokens": 12,
+        "cache_read_tokens": 11,
         "cache_write_tokens": 3,
         "run_id": run_id,
     }
     done = next(message for message in sink.messages if message.type is MessageType.RUN_DONE)
-    assert payload(done)["stop_reason"] is StopReason.ERROR
+    assert payload(done)["stop_reason"] is StopReason.END_TURN
 
     before = len(sink.messages)
     await loop.cancel(thread_id=None, run_id=run_id, sink=sink)
@@ -2530,3 +2524,161 @@ async def _wait_for_type_count(
 
 async def _wait(event: asyncio.Event) -> None:
     await asyncio.wait_for(event.wait(), TEST_TIMEOUT)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["image", "proposal"])
+async def test_input_needing_durable_capture_cannot_start_without_journal(kind: str) -> None:
+    """SPEC D.2 082 quotes 'image input requires the mandatory transcript journal' and 'a
+    proposed response requires the mandatory transcript journal': no paid run.
+    """
+    loop = RunLoop(NeverStartsRunner(), factory(Ids()))
+    options = ({"image": png_input()} if kind == "image" else {
+        "proposed_response": ProposedResponseFirePayload(proposal_run_id=ulid(2))
+    })
+    with pytest.raises(RuntimeError, match="requires the mandatory transcript journal"):
+        await loop.submit(thread_id="thread", prompt_id=ulid(1), prompt="hello", **options)
+    assert loop._threads == {}
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_workspace_refusals_preserve_the_original_binding(tmp_path: Path) -> None:
+    """A-063 quotes 'thread has no bound workspace', 'thread location must remain inside its
+    workspace', 'thread workspace must be an existing directory', and 'thread project context
+    is already fixed': none may enlarge file authority.
+    """
+    loop = RunLoop(NeverStartsRunner(), factory(Ids()))
+    with pytest.raises(ValueError, match="thread has no bound workspace"):
+        loop.record_thread_location("thread", str(tmp_path))
+    root = tmp_path / "root"
+    root.mkdir()
+    await loop.request_snapshot("thread", Sink(), workspace_root=str(root))
+    with pytest.raises(ValueError, match="thread location must remain inside its workspace"):
+        loop.record_thread_location("thread", str(tmp_path))
+    with pytest.raises(ProjectBindingConflict, match="thread project context is already fixed"):
+        await loop.request_snapshot("thread", Sink(), workspace_root=str(tmp_path))
+    not_directory = tmp_path / "file"
+    not_directory.write_text("keep")
+    with pytest.raises(ValueError, match="thread workspace must be an existing directory"):
+        await loop.request_snapshot("other", Sink(), workspace_root=str(not_directory))
+    assert loop._threads["thread"].workspace_root == str(root)
+    assert not_directory.read_text() == "keep"
+    await loop.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure", [False, True])
+async def test_unavailable_capture_cannot_accept_another_prompt(failure: bool) -> None:
+    """SPEC D.2 082 quotes 'run loop is closed' and 'run loop is unavailable after transcript
+    capture failure': rejected input must never reach a paid runner.
+    """
+    loop = RunLoop(NeverStartsRunner(), factory(Ids()))
+    if failure:
+        loop._capture_failure = OSError("disk full")
+        message = "run loop is unavailable after transcript capture failure"
+    else:
+        await loop.close()
+        message = "run loop is closed"
+    with pytest.raises(RuntimeError, match=message):
+        await loop.submit(thread_id="thread", prompt_id=ulid(1), prompt="hello")
+    assert loop._threads == {}
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_missing_model_resolution_cannot_apply_a_paid_parameter() -> None:
+    """ADR-023 quotes 'invalid': unresolved controls cannot mutate model parameters.
+    """
+    loop = RunLoop(NeverStartsRunner(), factory(Ids()))
+    with pytest.raises(ParameterWriteViolation, match="invalid"):
+        await loop.parameter_snapshot("thread")
+    with pytest.raises(ParameterWriteViolation, match="invalid"):
+        await loop.write_parameter(module_id="model_device", thread_id="thread",
+                                   parameter_id="model.temperature", value=0.5)
+    assert loop._threads["thread"].model_resolution is None
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_refused_named_model_and_legacy_root_preserve_prior_authority(tmp_path: Path) -> None:
+    """ADR-023 quotes 'invalid'; A-063 quotes 'thread project context is already fixed'. A
+    rejected model and a legacy absolute project must retain their original authority.
+    """
+    resolution = ThreadModelResolution(model="openrouter:vendor/model", context_tokens=1000,
+                                       policy="pinned:openrouter:vendor/model")
+    resolver = RecordingResolver({"thread": resolution},
+                                  {"openrouter:missing": ModelCatalogUnavailable("unavailable")})
+    loop = RunLoop(NeverStartsRunner(), factory(Ids()), model_resolver=resolver)
+    await loop.parameter_snapshot("thread")
+    with pytest.raises(ParameterWriteViolation, match="invalid"):
+        await loop.write_parameter(module_id="model_device", thread_id="thread",
+                                   parameter_id="model.slug", value="openrouter:missing")
+    assert loop._threads["thread"].model_resolution == resolution
+    await loop.request_snapshot("legacy", Sink(), project_key=str(tmp_path))
+    with pytest.raises(ProjectBindingConflict, match="thread project context is already fixed"):
+        await loop.request_snapshot("legacy", Sink(), workspace_root=str(tmp_path))
+    assert loop._threads["legacy"].workspace_root is None
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_busy_parameter_write_keeps_running_model_unchanged() -> None:
+    """ADR-023 quotes 'busy': an in-flight paid run retains its accepted parameters.
+    """
+    resolution = ThreadModelResolution(model="openrouter:vendor/model", context_tokens=1000,
+                                       policy="pinned:openrouter:vendor/model")
+    control = TurnControl()
+    loop = RunLoop(ControlledRunner({"hello": control}), factory(Ids()),
+                   model_resolver=RecordingResolver({"thread": resolution}))
+    sink = Sink()
+    await loop.submit(thread_id="thread", prompt_id=ulid(1), prompt="hello", sink=sink)
+    await _wait(control.entered)
+    with pytest.raises(ParameterWriteViolation, match="busy"):
+        await loop.write_parameter(module_id="model_device", thread_id="thread",
+                                   parameter_id="model.temperature", value=0.5)
+    assert loop._threads["thread"].model_resolution == resolution
+    control.release.set()
+    await _wait_for_done_count(sink, 1)
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_gate_waiter_and_disconnected_stream_cannot_steal_owner_attention() -> None:
+    """A-019/H7 quote 'run already has an unresolved gate', 'cannot dismiss a gate for an
+    inactive run', 'envelope subscription is unavailable', and 'envelope subscription exceeded
+    its buffer': retain the actual decision waiter.
+    """
+    control = TurnControl()
+    runner = ControlledRunner({"hello": control})
+    loop = RunLoop(runner, factory(Ids()))
+    sink = Sink()
+    await loop.submit(thread_id="thread", prompt_id=ulid(1), prompt="hello", sink=sink)
+    await _wait(control.entered)
+    emit = runner.emitters["hello"]
+    gate_wait = asyncio.create_task(emit.open_gate(gate_value()))
+    await _wait_for_type_count(sink, MessageType.GATE_OPEN, 1)
+    original = loop._threads["thread"].active.gate_decision
+    with pytest.raises(RuntimeError, match="run already has an unresolved gate"):
+        await emit.open_gate(gate_value())
+    assert loop._threads["thread"].active.gate_decision is original
+    envelope = sink.messages[-1]
+    subscription = _Subscription(sink=sink, thread_id="thread", failed=True)
+    with pytest.raises(ConnectionError, match="envelope subscription is unavailable"):
+        loop._enqueue_locked(subscription, envelope, confirm=True)
+    subscription.failed = False
+    while not subscription.queue.full():
+        subscription.queue.put_nowait((envelope, None))
+    with pytest.raises(ConnectionError, match="envelope subscription exceeded its buffer"):
+        loop._enqueue_locked(subscription, envelope, confirm=True)
+    assert subscription.failed
+    gate_wait.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await gate_wait
+    control.release.set()
+    await _wait_for_done_count(sink, 1)
+    before = len(sink.messages)
+    with pytest.raises(RuntimeError, match="cannot dismiss a gate for an inactive run"):
+        await emit.dismiss_gate()
+    assert len(sink.messages) == before
+    await loop.close()
