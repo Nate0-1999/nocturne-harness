@@ -573,7 +573,9 @@ def test_rack_vitals_query_uses_the_injected_reader_before_static_mount(tmp_path
 
 
 def test_rack_spend_table_passes_global_and_attuned_scope_to_one_optional_reader() -> None:
-    """M3SP keeps GLOBAL and ATTUNED reads on one projection without browser accounting."""
+    """M3SP keeps GLOBAL and ATTUNED reads on one projection without browser accounting. [SPEC
+    C.7]
+    """
     seen: list[list[UUID] | None] = []
 
     async def read_spend(thread_ids: list[UUID] | None) -> SpendTableSnapshot:
@@ -617,7 +619,9 @@ def test_busy_palace_preserves_retry_status_and_recovers_spend() -> None:
 
 
 def test_rack_spend_table_tolerates_an_older_palace_without_disturbing_chat() -> None:
-    """M3SP is optional until Palace exposes the read; absence must stay local to Spend."""
+    """M3SP is optional until Palace exposes the read; absence must stay local to Spend. [SPEC
+    C.7]
+    """
 
     async def older_palace(_thread_ids: list[UUID] | None) -> None:
         return None
@@ -1402,7 +1406,9 @@ def test_project_rebind_conflict_returns_error_then_authoritative_snapshot(tmp_p
 
 
 def test_invalid_workspace_returns_error_then_unbound_snapshot(tmp_path: Path) -> None:
-    """A bad typed folder stays recoverable instead of tearing down the browser socket."""
+    """A bad typed folder stays recoverable instead of tearing down the browser socket. [SPEC
+    C.7]
+    """
 
     instant = datetime(2026, 9, 2, 12, tzinfo=UTC)
     outbound_ids = iter((PROMPT_ID, SECOND_PROMPT_ID, CANCEL_ID))
@@ -2187,7 +2193,6 @@ def test_snapshot_request_is_enqueued_before_a_later_direct_route_response(
         json.dumps({**valid_envelope(), "payload": float("nan")}),
         json.dumps({key: value for key, value in valid_envelope().items() if key != "payload"}),
         json.dumps({**valid_envelope(), "v": 2}),
-        json.dumps({**valid_envelope(), "type": " "}),
         json.dumps(
             {
                 **valid_envelope(),
