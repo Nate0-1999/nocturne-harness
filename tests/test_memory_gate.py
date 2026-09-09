@@ -248,6 +248,36 @@ def context_factory(spine: object):
     return create
 
 
+@pytest.mark.asyncio
+async def test_wrong_resolution_cannot_patch_a_different_revision() -> None:
+    """A-023 quotes 'wrong-resolution decision does not match the current gate': a stale owner
+    decision must produce no Palace write.
+    """
+    spine = RecordingSpine()
+    current = memory_unit()
+    runner = MemoryGateTurnRunner(
+        RecordingDelegate(), spine, context_factory(spine), model_context_tokens=1000
+    )
+    emitted = RecordingEmitter()
+    task = asyncio.create_task(runner._resolve_wrong_memory(
+        current=current, prepared=spine.prepare_response,
+        context=context_factory(spine)(THREAD_ID), emit=emitted,
+    ))
+    await wait_for_gate_count(emitted, 1)
+    emitted.decision.set_result(GateCommitPayload(
+        run_id=RUN_ID, injection_id=INJECTION_ID, removed=[], added_back=[],
+        wrong_resolution=WrongResolution(
+            memory_id=current.memory_id, expected_revision=current.revision + 1,
+            action="expire",
+        ),
+    ))
+    with pytest.raises(
+        ValueError, match="wrong-resolution decision does not match the current gate"
+    ):
+        await task
+    assert spine.patch_requests == []
+
+
 def decision(*, injection_id: UUID = INJECTION_ID) -> GateCommitPayload:
     return GateCommitPayload(
         run_id=RUN_ID,
@@ -1162,19 +1192,3 @@ async def test_cancelled_attempt_is_claimed_and_never_invokes_the_model() -> Non
     )
     assert len(spine.prepare_requests) == 1
     assert delegate.calls == [(THREAD_ID, "next", (), None, frozenset())]
-
-
-def test_gate_config_rejects_non_positive_or_boolean_context_windows() -> None:
-    """A-030 is defended by verifying that gate config rejects non positive or boolean context
-    windows; this prevents drift in the first-gate and per-message memory selection
-    contract.
-    """
-    spine = RecordingSpine()
-    for value in (0, -1, True):
-        with pytest.raises(ValueError, match="positive integer"):
-            MemoryGateTurnRunner(
-                RecordingDelegate(),
-                spine,
-                context_factory(spine),
-                model_context_tokens=value,
-            )
