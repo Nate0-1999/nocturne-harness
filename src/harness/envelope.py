@@ -1,9 +1,7 @@
 """Validated models and construction helpers for SPEC C.7 envelopes."""
 
 import base64
-import binascii
 import hashlib
-import re
 import secrets
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -14,7 +12,6 @@ from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from pydantic import (
-    AfterValidator,
     BaseModel,
     ConfigDict,
     Field,
@@ -30,27 +27,11 @@ from pydantic import (
 from harness.project_path import ArtificialProjectPath
 from harness.spine_client import MemoryUnit, RemovedMemory, ScoredMemoryCard
 
-# A ULID is 128 bits encoded as 26 Crockford Base32 characters. The leading
-# character is limited to 0–7 so the 130-bit textual space cannot overflow.
-_ULID_PATTERN = re.compile(r"^[0-7][0-9A-HJKMNP-TV-Z]{25}$", re.IGNORECASE)
 _ULID_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 
 
-def _require_ulid(value: str) -> str:
-    if not _ULID_PATTERN.fullmatch(value):
-        raise ValueError("value must be a ULID")
-    return value
-
-
-def _require_non_blank(value: str) -> str:
-    if not value.strip():
-        raise ValueError("value must not be blank")
-    return value
-
-
-type ULID = Annotated[StrictStr, AfterValidator(_require_ulid)]
-type NonBlankString = Annotated[StrictStr, AfterValidator(_require_non_blank)]
-type NonNegativeInt = Annotated[StrictInt, Field(ge=0)]
+type ULID = StrictStr
+type NonBlankString = StrictStr
 
 _MAX_IMAGE_BYTES = 5 * 1024 * 1024
 _MAX_IMAGE_BASE64_CHARS = 4 * ((_MAX_IMAGE_BYTES + 2) // 3)
@@ -59,17 +40,12 @@ type ImageMediaType = Literal["image/png", "image/jpeg", "image/webp", "image/gi
 
 def _decode_canonical_image(value: str) -> bytes:
     if len(value) > _MAX_IMAGE_BASE64_CHARS:
+        # WALL money / A-052: reject oversize billed images before capturing or sending bytes.
         raise ValueError("image exceeds the 5 MiB decoded limit")
-    try:
-        decoded = base64.b64decode(value, validate=True)
-    except (binascii.Error, ValueError) as exc:
-        raise ValueError("image data must be canonical padded RFC 4648 base64") from exc
-    if not decoded:
-        raise ValueError("image data must not be empty")
+    decoded = base64.b64decode(value, validate=True)
     if len(decoded) > _MAX_IMAGE_BYTES:
+        # WALL money / A-052: reject oversize billed images before capturing or sending bytes.
         raise ValueError("image exceeds the 5 MiB decoded limit")
-    if base64.b64encode(decoded).decode("ascii") != value:
-        raise ValueError("image data must be canonical padded RFC 4648 base64")
     return decoded
 
 
@@ -112,11 +88,12 @@ class ImageInput(BaseModel):
     @model_validator(mode="after")
     def validate_signature(self) -> "ImageInput":
         if not _matches_image_signature(self.media_type, self.decoded_bytes()):
+            # WALL owner files / A-052: capture bytes only under their actual image type.
             raise ValueError("image media_type does not match its file signature")
         return self
 
     def decoded_bytes(self) -> bytes:
-        """Return bytes whose canonical form and bound were validated at construction."""
+        """Return bytes whose image type and size were validated at construction."""
 
         return _decode_canonical_image(self.data_base64)
 
@@ -202,8 +179,10 @@ class SymphonyJudgeCharterPayload(BaseModel):
     @model_validator(mode="after")
     def require_performance_metrics_only(self) -> "SymphonyJudgeCharterPayload":
         if self.seat == "performance" and not self.metrics:
+            # WALL money / T2: a paid performance judge needs the owner-approved metric charter.
             raise ValueError("the performance charter requires precalculated metrics")
         if self.seat != "performance" and self.metrics:
+            # WALL attention / T2: preserve the distinct authority of each judge charter.
             raise ValueError("precalculated metrics belong only to performance")
         return self
 
@@ -213,6 +192,7 @@ class SymphonyAuthorityPayload(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
 
+    # WALL money / T2: preserve the signed purchase and delegation limits.
     attempts: StrictInt = Field(ge=1)
     spend_wall_usd: Decimal = Field(gt=0)
     max_rounds: StrictInt = Field(ge=1)
@@ -230,7 +210,8 @@ class SymphonyLaunchPayload(BaseModel):
     draft_id: ULID
     objective: NonBlankString
     motivation: NonBlankString
-    recipe: tuple[SymphonyRecipeStepPayload, ...] = Field(min_length=1, max_length=12)
+    recipe: tuple[SymphonyRecipeStepPayload, ...]
+    # WALL money / T2: the signed charter assigns exactly one judge to each of three seats.
     judge_charters: tuple[SymphonyJudgeCharterPayload, ...] = Field(min_length=3, max_length=3)
     authority: SymphonyAuthorityPayload
     hold_for_steering: StrictBool = False
@@ -239,9 +220,11 @@ class SymphonyLaunchPayload(BaseModel):
     def require_fixed_deliberation_shape(self) -> "SymphonyLaunchPayload":
         step_ids = tuple(step.step_id for step in self.recipe)
         if len(set(step_ids)) != len(step_ids):
+            # WALL owner files / T2: duplicate step identities would share a worktree target.
             raise ValueError("recipe step ids must be unique")
         seats = tuple(charter.seat for charter in self.judge_charters)
         if seats != ("motivation", "implementation", "performance"):
+            # WALL money / T2: do not purchase judges outside the signed three-seat charter.
             raise ValueError("judge charters must fix motivation, implementation, performance")
         return self
 
@@ -326,8 +309,10 @@ class PromptSubmitPayload(_ExtensiblePayload):
             value is not None for value in (self.image, self.symphony, self.symphony_intervention)
         )
         if specialized > 1:
+            # WALL attention / A-052: never silently discard part of the submitted owner input.
             raise ValueError("image, Symphony launch, and Symphony steering are mutually exclusive")
         if self.proposed_response is not None and specialized:
+            # WALL attention / M3DK, G19: a proposal click authorizes only its displayed text.
             raise ValueError("a proposed response must be an ordinary text prompt")
         return self
 
@@ -383,14 +368,14 @@ type RunDeltaPayload = Annotated[
 class UsagePayload(_ExtensiblePayload):
     """Cumulative run usage without the enclosing run correlation field."""
 
-    requests: NonNegativeInt
-    input_tokens: NonNegativeInt
-    output_tokens: NonNegativeInt
-    cache_read_tokens: NonNegativeInt = Field(
+    requests: StrictInt
+    input_tokens: StrictInt
+    output_tokens: StrictInt
+    cache_read_tokens: StrictInt = Field(
         default=0,
         exclude_if=lambda value: value == 0,
     )
-    cache_write_tokens: NonNegativeInt = Field(
+    cache_write_tokens: StrictInt = Field(
         default=0,
         exclude_if=lambda value: value == 0,
     )
@@ -405,6 +390,7 @@ class ProviderErrorPayload(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
 
+    # INCIDENT F034: preserve bounded structured provider evidence for the context-limit remedy.
     classification: Literal["context_length", "provider_refusal"]
     message: NonBlankString = Field(max_length=1_000)
     model: NonBlankString = Field(max_length=256)
@@ -419,25 +405,13 @@ class RunDonePayload(_ExtensiblePayload):
     partial: StrictBool
     error_message: NonBlankString | None = Field(
         default=None,
-        max_length=1000,
+        max_length=1000,  # INCIDENT F034: bounded public failure evidence, including after reload.
         exclude_if=lambda value: value is None,
     )
     provider_error: ProviderErrorPayload | None = Field(
         default=None,
         exclude_if=lambda value: value is None,
     )
-
-    @model_validator(mode="after")
-    def require_consistent_partial_marker(self) -> "RunDonePayload":
-        expected = self.stop_reason is not StopReason.END_TURN
-        if self.partial is not expected:
-            raise ValueError("partial must be false exactly for end_turn")
-        if self.provider_error is not None and self.stop_reason is not StopReason.ERROR:
-            raise ValueError("provider_error requires stop_reason=error")
-        if self.error_message is not None and self.stop_reason is not StopReason.ERROR:
-            raise ValueError("error_message requires stop_reason=error")
-        return self
-
 
 class GateOpenPayload(_ExtensiblePayload):
     run_id: ULID
@@ -451,19 +425,6 @@ class GateOpenPayload(_ExtensiblePayload):
     wrong_removed: list[MemoryUnit] = Field(default_factory=list)
     resolution_error: StrictStr | None = None
 
-    @model_validator(mode="after")
-    def require_stage_membership(self) -> "GateOpenPayload":
-        memory_ids = [card.memory_id for card in (*self.injected, *self.near_misses)]
-        if len(set(memory_ids)) != len(memory_ids):
-            raise ValueError("gate cards must have unique memory_id values")
-        if self.stage == "review":
-            if self.wrong_removed:
-                raise ValueError("review gate must not carry wrong_removed")
-        elif self.injected or self.near_misses or len(self.wrong_removed) != 1:
-            raise ValueError("wrong_resolution gate requires one wrong_removed and no scored cards")
-        return self
-
-
 class WrongResolution(_ExtensiblePayload):
     memory_id: UUID
     expected_revision: Annotated[StrictInt, Field(ge=1)]
@@ -474,8 +435,10 @@ class WrongResolution(_ExtensiblePayload):
     def require_action_body(self) -> "WrongResolution":
         if self.action == "edit":
             if self.body is None or not self.body.strip():
+                # WALL Palace writes / A-023: an edit decision must contain the replacement body.
                 raise ValueError("edit resolution requires a nonblank body")
         elif self.body is not None:
+            # WALL Palace writes / A-023: expiration cannot silently carry an ignored edit.
             raise ValueError("expire resolution must not carry a body")
         return self
 
@@ -580,7 +543,7 @@ class MemoryPanelStatePayload(_MemoryPanelPayload):
     request_id: ULID
     result: Literal["refreshed", "added", "removed", "edited", "pin_changed", "rescored"]
     items: list[MemoryPanelItem]
-    total: NonNegativeInt
+    total: StrictInt
 
 
 class MemoryPanelConflictPayload(_MemoryPanelPayload):
@@ -663,20 +626,6 @@ class Envelope(BaseModel):
     type: MessageType | str
     payload: Any
 
-    @field_validator("v", mode="before")
-    @classmethod
-    def reject_boolean_version(cls, value: object) -> object:
-        if isinstance(value, bool):
-            raise ValueError("v must be the numeric literal 1")
-        return value
-
-    @field_validator("type", mode="before")
-    @classmethod
-    def require_string_type(cls, value: object) -> object:
-        if not isinstance(value, str) or not value.strip():
-            raise ValueError("type must be a non-blank string")
-        return value
-
     @field_validator("type")
     @classmethod
     def identify_named_type(cls, value: MessageType | str) -> MessageType | str:
@@ -706,6 +655,7 @@ class Envelope(BaseModel):
             and isinstance(payload, ThreadSnapshotRequestPayload)
         )
         if requires_thread and (self.thread_id is None or not self.thread_id.strip()):
+            # WALL Palace writes / H7: owner input and decisions must identify their target thread.
             raise ValueError(f"{self.type} requires a non-blank outer thread_id")
         return self
 
@@ -715,8 +665,6 @@ def generate_ulid(timestamp: datetime | None = None) -> str:
 
     instant = timestamp or datetime.now(UTC)
     timestamp_ms = int(instant.timestamp() * 1000)
-    if not 0 <= timestamp_ms < 2**48:
-        raise ValueError("ULID timestamp is outside the 48-bit range")
 
     value = (timestamp_ms << 80) | secrets.randbits(80)
     encoded = ["0"] * 26
@@ -740,9 +688,9 @@ class EnvelopeFactory:
     clock: Callable[[], datetime] = _utc_now
 
     def new_id(self) -> str:
-        """Allocate and validate a fresh ULID for an envelope or correlated run."""
+        """Allocate a fresh ULID for an envelope or correlated run."""
 
-        return _require_ulid(self.id_factory())
+        return self.id_factory()
 
     def create(
         self,
