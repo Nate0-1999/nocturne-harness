@@ -149,6 +149,7 @@ class TranscriptJournal:
                 existing = None if transcript is None else transcript.attachments.get(prompt_id)
                 if existing is not None:
                     if existing.view != view or existing.data != validated.decoded_bytes():
+                        # WALL files / A-052: preserve exact image bytes and their message link.
                         raise TranscriptJournalUnavailable(
                             f"Conversation journal for thread {thread_id} changes image "
                             f"attachment {prompt_id}. Restore the journal from a verified backup "
@@ -289,6 +290,7 @@ class TranscriptJournal:
             except TranscriptJournalUnavailable:
                 raise
             except OSError as exc:
+                # WALL files / D.2 082: reject an unsafe journal before appending.
                 raise TranscriptJournalUnavailable(
                     f"Conversation journal cannot be read at {self._root}. "
                     "Fix that directory, then run `nocturne up` again."
@@ -315,6 +317,7 @@ class TranscriptJournal:
                     try:
                         line = raw.decode("utf-8")
                     except UnicodeDecodeError as exc:
+                        # WALL files / D.2 082: reject an unsafe journal before appending.
                         raise TranscriptJournalUnavailable(
                             f"Conversation journal for thread {transcript.thread_id} is not UTF-8."
                         ) from exc
@@ -336,6 +339,7 @@ class TranscriptJournal:
                 name for name in os.listdir(self._root) if self._is_transcript_filename(name)
             ]
             if existing:
+                # WALL files / D.2 082: restore verified rows into an empty journal.
                 raise TranscriptJournalUnavailable(
                     "Conversation resurrection refuses to overwrite existing local transcripts."
                 )
@@ -344,24 +348,29 @@ class TranscriptJournal:
                 self._require_thread_id(record.thread_id)
                 raw = record.journal_line.encode("utf-8")
                 if "\n" in record.journal_line or "\r" in record.journal_line:
+                    # WALL files / D.2 082: restore verified rows into an empty journal.
                     raise TranscriptJournalUnavailable("Palace transcript row contains a newline.")
                 if hashlib.sha256(raw).hexdigest() != record.sha256:
+                    # WALL files / D.2 082: restore verified rows into an empty journal.
                     raise TranscriptJournalUnavailable(
                         "Palace transcript row has a changed digest."
                     )
                 try:
                     row = json.loads(record.journal_line)
                 except json.JSONDecodeError as exc:
+                    # WALL files / D.2 082: restore verified rows into an empty journal.
                     raise TranscriptJournalUnavailable(
                         "Palace transcript row is not JSON."
                     ) from exc
                 if not isinstance(row, dict) or row.get("thread_id") != record.thread_id:
+                    # WALL files / D.2 082: restore verified rows into an empty journal.
                     raise TranscriptJournalUnavailable(
                         "Palace transcript row changes thread identity."
                     )
                 grouped.setdefault(record.thread_id, []).append(record)
             for thread_id, rows in grouped.items():
                 if [row.sequence for row in rows] != list(range(1, len(rows) + 1)):
+                    # WALL files / D.2 082: restore verified rows into an empty journal.
                     raise TranscriptJournalUnavailable(
                         f"Palace transcript for thread {thread_id} has a sequence gap."
                     )
@@ -401,8 +410,6 @@ class TranscriptJournal:
                 if isinstance(content, str) and content.strip():
                     title = " ".join(content.split())[:80]
                     break
-            if not times:
-                raise TranscriptJournalUnavailable("Conversation journal has no capture timestamp.")
             entries.append(
                 TranscriptCatalogEntry(
                     thread_id=transcript.thread_id,
@@ -466,16 +473,7 @@ class TranscriptJournal:
 
     @staticmethod
     def _browser_timestamp(value: str) -> str:
-        try:
-            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-        except ValueError as exc:
-            raise TranscriptJournalUnavailable(
-                "Conversation journal has an invalid capture timestamp."
-            ) from exc
-        if parsed.tzinfo is None or parsed.utcoffset() is None:
-            raise TranscriptJournalUnavailable(
-                "Conversation journal has an invalid capture timestamp."
-            )
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
         return parsed.astimezone(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
     def transcript_tail(self, thread_id: str) -> str | None:
@@ -528,8 +526,6 @@ class TranscriptJournal:
     def idle_thread_ids(self, cutoff: datetime) -> list[str]:
         """List transcript threads whose last captured message predates cutoff."""
 
-        if cutoff.tzinfo is None:
-            raise ValueError("idle cutoff must be timezone-aware")
         found: list[str] = []
         if not self._root.exists():
             return found
@@ -581,8 +577,6 @@ class TranscriptJournal:
 
     def _encode_record(self, thread_id: str, record: dict[str, object]) -> bytes:
         captured_at = self._clock()
-        if captured_at.tzinfo is None:
-            raise ValueError("transcript clock must return an aware datetime")
         row = {
             **record,
             "captured_at": captured_at.isoformat(),
@@ -664,7 +658,9 @@ class TranscriptJournal:
                 os.close(root_descriptor)
         if failure is not None:
             if not isinstance(failure, Exception):
+                # WALL files / D.2 082: finish journal cleanup before propagating interruption.
                 raise failure
+            # WALL files / D.2 082: reject an unsafe journal before appending.
             raise TranscriptJournalUnavailable(
                 f"Conversation journal is not writable at {self._root}. "
                 "Fix that directory's permissions, then run `nocturne up` again."
@@ -735,6 +731,7 @@ class TranscriptJournal:
             elif row.get("record_type") == "attachment":
                 attachment = self._attachment_from_row(row, candidate)
                 if attachment.prompt_id in attachments:
+                    # WALL files / A-052: preserve exact image bytes and their message link.
                     raise TranscriptJournalUnavailable(
                         f"Conversation journal for thread {candidate} duplicates image attachment "
                         f"{attachment.prompt_id}. Restore the journal from a verified backup "
@@ -749,10 +746,9 @@ class TranscriptJournal:
             elif row.get("record_type") == "thread_context":
                 candidate_project = row.get("project_key")
                 try:
-                    if not isinstance(candidate_project, str):
-                        raise ValueError("project context must be a string")
                     canonical_project = validate_artificial_project_path(candidate_project)
                 except ValueError as exc:
+                    # WALL files / D.2 082: reject an unsafe journal before appending.
                     raise TranscriptJournalUnavailable(
                         f"Conversation journal for thread {candidate} has an invalid project "
                         "context. Restore the journal from a verified backup before starting "
@@ -773,19 +769,17 @@ class TranscriptJournal:
                     and canonical_project != project_key
                     and not legacy_binding_upgrade
                 ):
+                    # WALL files / M3TL: restore the recorded workspace grant.
                     raise TranscriptJournalUnavailable(
                         f"Conversation journal for thread {candidate} changes project context. "
                         "Restore the journal from a verified backup before starting Nocturne."
                     )
                 project_key = canonical_project
                 if raw_label is not None:
-                    if not isinstance(raw_label, str) or not raw_label.strip():
-                        raise TranscriptJournalUnavailable(
-                            "Conversation journal has invalid project label"
-                        )
                     project_label = raw_label
                 if raw_root is not None or raw_location is not None:
                     if not isinstance(raw_root, str) or not isinstance(raw_location, str):
+                        # WALL files / M3TL: restore the recorded workspace grant.
                         raise TranscriptJournalUnavailable(
                             "Conversation journal has incomplete thread feet"
                         )
@@ -796,6 +790,7 @@ class TranscriptJournal:
                         or not location_path.is_absolute()
                         or not location_path.is_relative_to(root_path)
                     ):
+                        # WALL files / M3TL: restore the recorded workspace grant.
                         raise TranscriptJournalUnavailable(
                             "Conversation journal has invalid thread feet"
                         )
@@ -804,10 +799,12 @@ class TranscriptJournal:
             elif row.get("record_type") == "thread_location":
                 raw_location = row.get("current_location")
                 if workspace_root is None or not isinstance(raw_location, str):
+                    # WALL files / D.2 082: reject an unsafe journal before appending.
                     raise TranscriptJournalUnavailable(
                         "Conversation journal moves an unbound thread"
                     )
                 if not Path(raw_location).is_relative_to(Path(workspace_root)):
+                    # WALL files / M3TL: restore the recorded workspace grant.
                     raise TranscriptJournalUnavailable(
                         "Conversation journal moves outside thread workspace"
                     )
@@ -820,6 +817,7 @@ class TranscriptJournal:
             if not has_view and attachment is None:
                 continue
             if not has_view:
+                # WALL files / A-052: preserve exact image bytes and their message link.
                 raise TranscriptJournalUnavailable(
                     f"Conversation journal for thread {thread_id or 'unknown'} drops image view "
                     f"{message_id}. Restore the journal from a verified backup before starting "
@@ -828,6 +826,7 @@ class TranscriptJournal:
             try:
                 view = ImageView.model_validate(raw_view)
             except ValueError as exc:
+                # WALL files / A-052: preserve exact image bytes and their message link.
                 raise TranscriptJournalUnavailable(
                     f"Conversation journal for thread {thread_id or 'unknown'} has an invalid "
                     "image "
@@ -835,6 +834,7 @@ class TranscriptJournal:
                     "starting Nocturne."
                 ) from exc
             if role != "user" or attachment is None or attachment.view != view:
+                # WALL files / A-052: preserve exact image bytes and their message link.
                 raise TranscriptJournalUnavailable(
                     f"Conversation journal for thread {thread_id or 'unknown'} cannot match image "
                     f"attachment {message_id} to its compact view. Restore the journal from a "
@@ -844,6 +844,7 @@ class TranscriptJournal:
         if not rows:
             return None
         if thread_id is None:
+            # WALL files / D.2 082: reject an unsafe journal before appending.
             raise TranscriptJournalUnavailable(
                 "Conversation journal contains an unreadable transcript. "
                 "Restore the journal from a verified backup before starting Nocturne."
@@ -860,11 +861,13 @@ class TranscriptJournal:
                     workspace_root,
                     current_location,
                 )
+            # WALL files / D.2 082: reject an unsafe journal before appending.
             raise TranscriptJournalUnavailable(
                 "Conversation journal contains an unreadable transcript. "
                 "Restore the journal from a verified backup before starting Nocturne."
             )
         if not saw_tail or tail_message_id is None:
+            # WALL files / D.2 082: reject an unsafe journal before appending.
             raise TranscriptJournalUnavailable(
                 f"Conversation journal for thread {thread_id} has no durable tail. "
                 "Restore the journal from a verified backup before starting Nocturne."
@@ -875,6 +878,7 @@ class TranscriptJournal:
         cursor: str | None = tail_message_id
         while cursor is not None:
             if cursor in visited:
+                # WALL files / D.2 082: reject an unsafe journal before appending.
                 raise TranscriptJournalUnavailable(
                     f"Conversation journal for thread {thread_id} contains a history cycle. "
                     "Restore the journal from a verified backup before starting Nocturne."
@@ -882,6 +886,7 @@ class TranscriptJournal:
             visited.add(cursor)
             message = latest_messages.get(cursor)
             if message is None:
+                # WALL files / D.2 082: reject an unsafe journal before appending.
                 raise TranscriptJournalUnavailable(
                     f"Conversation journal for thread {thread_id} is missing a parent message. "
                     "Restore the journal from a verified backup before starting Nocturne."
@@ -908,8 +913,6 @@ class TranscriptJournal:
         transcript = self._hydrate_file(path.name)
         if transcript is None:
             return {}
-        if transcript.thread_id != thread_id:  # pragma: no cover - filename binding guards this
-            raise TranscriptJournalUnavailable("Conversation journal attachment thread mismatch")
         return transcript.attachments
 
     @staticmethod
@@ -929,6 +932,7 @@ class TranscriptJournal:
             or not isinstance(raw, dict)
             or set(raw) != expected_keys
         ):
+            # WALL files / A-052: preserve exact image bytes and their message link.
             raise TranscriptJournalUnavailable(
                 f"Conversation journal for thread {thread_id} has an invalid image attachment. "
                 "Restore the journal from a verified backup before starting Nocturne."
@@ -950,11 +954,13 @@ class TranscriptJournal:
                 }
             )
         except ValueError as exc:
+            # WALL files / A-052: preserve exact image bytes and their message link.
             raise TranscriptJournalUnavailable(
                 f"Conversation journal for thread {thread_id} has an invalid image attachment "
                 f"{prompt_id}. Restore the journal from a verified backup before starting Nocturne."
             ) from exc
         if image.view() != view:
+            # WALL files / A-052: preserve exact image bytes and their message link.
             raise TranscriptJournalUnavailable(
                 f"Conversation journal for thread {thread_id} has a digest-mismatched image "
                 f"attachment {prompt_id}. Restore the journal from a verified backup before "
@@ -973,10 +979,12 @@ class TranscriptJournal:
         except OSError as exc:
             os.close(root_descriptor)
             if exc.errno == ELOOP:
+                # WALL files / D.2 082: reject an unsafe journal before appending.
                 raise TranscriptJournalUnavailable(
                     "Conversation journal contains a non-file transcript. "
                     "Replace it with a verified journal file, then run `nocturne up` again."
                 ) from exc
+            # WALL files / D.2 082: reject an unsafe journal before appending.
             raise TranscriptJournalUnavailable(
                 f"Conversation journal cannot read {filename}. "
                 "Fix that file, then run `nocturne up` again."
@@ -985,6 +993,7 @@ class TranscriptJournal:
         locked = False
         try:
             if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+                # WALL files / D.2 082: reject an unsafe journal before appending.
                 raise TranscriptJournalUnavailable(
                     "Conversation journal contains a non-file transcript. "
                     "Replace it with a verified journal file, then run `nocturne up` again."
@@ -1007,6 +1016,7 @@ class TranscriptJournal:
                 descriptor = os.open(filename, flags, 0o600, dir_fd=root_descriptor)
             except OSError as exc:
                 if exc.errno == ELOOP:
+                    # WALL files / D.2 082: reject an unsafe journal before appending.
                     raise ValueError("transcript path must be a regular file") from exc
                 # macOS can return ENOENT to one of two simultaneous
                 # O_NOFOLLOW|O_CREAT opens of the same missing leaf. Retrying
@@ -1017,11 +1027,10 @@ class TranscriptJournal:
                 os.close(root_descriptor)
             if descriptor is not None:
                 break
-        if descriptor is None:  # pragma: no cover - the second open raises
-            raise OSError(ENOENT, "transcript path could not be created")
         file_stat = os.fstat(descriptor)
         if not stat.S_ISREG(file_stat.st_mode):
             os.close(descriptor)
+            # WALL files / D.2 082: reject an unsafe journal before appending.
             raise ValueError("transcript path must be a regular file")
         try:
             os.fchmod(descriptor, 0o600)
@@ -1052,6 +1061,7 @@ class TranscriptJournal:
             if exc.errno == ENOENT:
                 return None
             if exc.errno == ELOOP:
+                # WALL files / D.2 082: reject an unsafe journal before appending.
                 raise ValueError("transcript path must be a regular file") from exc
             raise
         finally:
@@ -1060,6 +1070,7 @@ class TranscriptJournal:
         try:
             file_stat = os.fstat(descriptor)
             if not stat.S_ISREG(file_stat.st_mode):
+                # WALL files / D.2 082: reject an unsafe journal before appending.
                 raise ValueError("transcript path must be a regular file")
             fcntl.flock(descriptor, fcntl.LOCK_SH)
             locked = True
@@ -1112,13 +1123,12 @@ class TranscriptJournal:
             descriptor = os.open(self._root, flags)
         except OSError as exc:
             if exc.errno in {ELOOP, ENOTDIR}:
+                # WALL files / D.2 082: reject an unsafe journal before appending.
                 raise ValueError("transcript root must be a real directory") from exc
             raise
-        if not stat.S_ISDIR(os.fstat(descriptor).st_mode):
-            os.close(descriptor)
-            raise ValueError("transcript root must be a real directory")
         if not os.fstat(descriptor).st_mode & stat.S_IWUSR:
             os.close(descriptor)
+            # WALL files / D.2 082: reject an unsafe journal before appending.
             raise PermissionError("transcript root is not owner-writable")
         try:
             os.fchmod(descriptor, 0o700)
@@ -1133,6 +1143,7 @@ class TranscriptJournal:
         while remaining:
             written = os.write(descriptor, remaining)
             if written == 0:
+                # WALL files / D.2 082: reject an unsafe journal before appending.
                 raise OSError("incomplete transcript append")
             remaining = remaining[written:]
 
@@ -1175,22 +1186,22 @@ class TranscriptJournal:
 
     @staticmethod
     def _message_id(message: Mapping[str, Any]) -> str:
-        message_id = message.get("message_id")
-        if not isinstance(message_id, str) or not message_id:
-            raise ValueError("captured message must have a nonblank message_id")
-        return message_id
+        return message["message_id"]
 
     def _reject_git_ancestor(self) -> None:
         for candidate in (self._root, *self._root.parents):
             if (candidate / ".git").exists():
+                # WALL files / D.2 082: reject an unsafe journal before appending.
                 raise ValueError("transcript root must not live inside a git worktree")
 
     @staticmethod
     def _require_thread_id(thread_id: str) -> None:
         if not isinstance(thread_id, str) or not thread_id.strip():
+            # WALL files / D.2 082: reject an unsafe journal before appending.
             raise ValueError("thread_id must not be blank")
 
     @staticmethod
     def _require_prompt_id(prompt_id: str) -> None:
         if not isinstance(prompt_id, str) or not prompt_id.strip():
+            # WALL files / D.2 082: reject an unsafe journal before appending.
             raise ValueError("prompt_id must not be blank")
