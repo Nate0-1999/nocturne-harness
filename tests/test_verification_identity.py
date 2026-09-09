@@ -211,7 +211,10 @@ async def test_bound_client_refuses_foreign_queue_decisions_and_retries_own(batc
 
 @pytest.mark.parametrize("batch", [False, True])
 def test_foreign_queue_http_decision_is_plain_ownership_refusal(tmp_path, monkeypatch, batch):
-    """F076: the principal wall refuses item and batch writes with useful copy, never a 500."""
+    """F076: the principal wall refuses item and batch writes with useful copy, never a 500. M3GD
+    / SPEC B.6 r14: exercised refusal: "This queue decision does not belong to this identity.
+    Refresh the queue.".
+    """
     def palace(request):
         assert request.method == "GET", "foreign queue decision reached the Palace write"
         return httpx.Response(200, json={"cards": []})
