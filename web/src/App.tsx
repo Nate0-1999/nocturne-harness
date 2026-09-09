@@ -2113,9 +2113,11 @@ function ChatModule() {
   const queuedPrompts = selectedThread?.queuedPrompts ?? []
   const awaitingSnapshot = selectedThread?.awaitingSnapshot ?? true
   const projectSwitching = awaitingSnapshot && rackSelection?.kind === 'project'
+  // WALL attention: C.6 / H7 holds sends at the reviewed gate and snapshot boundary.
   const composerDisabled =
     snapshot.connection !== 'connected' || awaitingSnapshot || openGate !== null
   const canSend =
+    // WALL money / C.6; INCIDENT F077: one nonempty send, and keep its draft until acknowledgement.
     !composerDisabled &&
     !imageBusy &&
     !promptBusy &&
@@ -2156,6 +2158,7 @@ function ChatModule() {
   }, [selectedThreadId])
 
   function archiveThread() {
+    // WALL Palace writes / ADR022: one archive extraction per owner action.
     if (selectedThreadId === null || archiveBusy) {
       return
     }
@@ -2224,6 +2227,7 @@ function ChatModule() {
 
   async function attachImageFiles(files: readonly File[]) {
     if (files.length === 0) return
+    // WALL attention / A-052: never silently discard a second selected attachment.
     if (files.length !== 1) {
       setImageStatus('Attach one image at a time.')
       return
@@ -2237,6 +2241,7 @@ function ChatModule() {
     setImageStatus('Preparing image…')
     try {
       const prepared = await prepareImage(files[0]!)
+      // WALL attention / A-052: a removed image cannot reappear after a late file read.
       if (imageReadGeneration.current !== generation) {
         return
       }
@@ -2335,7 +2340,7 @@ function ChatModule() {
             <ThreadWorkspaceContext
               key={`${selectedMeta.thread_id}:${selectedMeta.project_label ?? ''}`}
               entry={selectedMeta}
-              disabled={awaitingSnapshot}
+              disabled={false}
               onRename={(projectLabel) => events.dispatch({
                 type: 'thread.rename_project',
                 thread_id: selectedMeta.thread_id,
@@ -2470,7 +2475,7 @@ function ChatModule() {
             value={draft}
             rows={1}
             placeholder={snapshot.connection === 'connected' ? 'Transmit to Nocturne' : 'Waiting for Nocturne'}
-            disabled={composerDisabled || promptBusy}
+            disabled={promptBusy}
             onChange={(event) => {
               const value = event.target.value
               setDraft(value)
@@ -2491,7 +2496,7 @@ function ChatModule() {
               accept={IMAGE_ACCEPT}
               tabIndex={-1}
               aria-hidden="true"
-              disabled={composerDisabled || imageBusy || promptBusy || pendingImage !== null}
+              disabled={imageBusy || promptBusy || pendingImage !== null}
               onChange={(event) => {
                 const files = Array.from(event.currentTarget.files ?? [])
                 event.currentTarget.value = ''
@@ -2503,7 +2508,7 @@ function ChatModule() {
               type="button"
               data-testid="attach-image"
               aria-describedby="composer-image-status"
-              disabled={composerDisabled || imageBusy || promptBusy || pendingImage !== null}
+              disabled={imageBusy || promptBusy || pendingImage !== null}
               onClick={() => imageInputRef.current?.click()}
             >
               {imageBusy ? 'Preparing…' : 'Attach image'}
@@ -2546,7 +2551,6 @@ function ChatModule() {
               className="stop-button"
               type="button"
               data-testid="stop"
-              disabled={activeRun.state === 'cancelling'}
               onClick={() => {
                 void events
                   .dispatch({ type: 'run.cancel', run_id: activeRun.run_id })
