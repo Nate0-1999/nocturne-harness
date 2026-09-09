@@ -26,6 +26,7 @@ from harness.agent import (
     REMEMBER_SPLIT_GUIDANCE,
     REMEMBER_SPLIT_INSTRUCTION,
     ChatResult,
+    ExtractionCandidateDraft,
     HarnessAgent,
     ModelConfigurationError,
     RememberDraft,
@@ -1425,3 +1426,46 @@ async def test_near_miss_remember_commands_are_ordinary_chat(ordinary_text: str)
         "screenshot",
     ]
     assert spine.create_requests == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("verdict,targets,message", [
+    ("merge", [str(SPLIT_SOURCE_ID)],
+     "extraction verdict targeted a memory outside its fetched neighbors"),
+    ("new", [str(MEMORY_ID)], "new extraction verdict cannot have targets"),
+    ("merge", [], "non-new extraction verdict requires a target"),
+])
+async def test_extraction_cannot_invent_write_targets(verdict, targets, message: str) -> None:
+    """ADR-022: model-generated extraction decisions cannot write outside reviewed neighbors.
+    M3GD / SPEC B.6 r14: exercised refusals: "extraction verdict targeted a memory outside its
+    fetched neighbors"; "new extraction verdict cannot have targets"; "non-new extraction
+    verdict requires a target".
+    """
+    agent = HarnessAgent(settings(), model=TestModel(
+        call_tools=[], custom_output_text=json.dumps({"verdict": verdict, "target_ids": targets}),
+    ))
+    candidate = ExtractionCandidateDraft(
+        label="Fact", body="A fact", kind="fact", keywords=["fact", "test"],
+    )
+    with pytest.raises(ValueError, match=message):
+        await agent.propose_extraction_verdict(candidate, [{"memory_id": str(MEMORY_ID)}])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("update,message", [
+    ({"label": " "}, "seed splitter produced an invalid label"),
+    ({"body": "word " * 200}, "seed splitter produced a child above the 128-token limit"),
+    ({"keywords": ["same", "SAME"]}, "seed splitter produced invalid keywords"),
+])
+async def test_seed_draft_walls_fail_before_returning_a_write_batch(update, message: str) -> None:
+    """A-033 / ADR-022: an invalid generated seed must not become an approved write batch. M3GD /
+    SPEC B.6 r14: exercised refusals: "seed splitter produced a child above the 128-token
+    limit"; "seed splitter produced an invalid label"; "seed splitter produced invalid
+    keywords".
+    """
+    candidate = {"label": "Fact", "body": "A fact", "kind": "fact", "keywords": ["fact", "test"]}
+    agent = HarnessAgent(settings(), model=TestModel(
+        call_tools=[], custom_output_text=json.dumps({"candidates": [{**candidate, **update}]}),
+    ))
+    with pytest.raises(ValueError, match=message):
+        await agent.split_seed("test.md", "A fact")
