@@ -1,0 +1,11 @@
+{
+  "verification_ports_closed": {
+    "51948": true,
+    "51949": true,
+    "51950": true
+  },
+  "temporary_credential_files_removed": true,
+  "disposable_browser_page_removed": true,
+  "journals_retained_in_temporary_evidence": true,
+  "source_manifest_matches": true
+}
