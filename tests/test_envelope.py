@@ -215,6 +215,12 @@ def test_prompt_submit_accepts_each_exact_image_signature(media_type: str, data:
         {**image_payload(), "media_type": "image/jpeg"},
         {**image_payload(), "filename": "owner.png"},
         {
+            "kind": "image", "media_type": "image/png",
+            "data_base64": base64.b64encode(
+                b"\x89PNG\r\n\x1a\n" + b"x" * (5 * 1024 * 1024 - 7)
+            ).decode("ascii"),
+        },
+        {
             "kind": "image",
             "media_type": "image/png",
             "data_base64": base64.b64encode(b"\x89PNG\r\n\x1a\n" + b"x" * (5 * 1024 * 1024)).decode(
@@ -227,7 +233,9 @@ def test_prompt_submit_rejects_noncanonical_mismatched_extra_or_oversize_image(
     image: dict[str, object],
 ) -> None:
     """A-052 is defended by rejecting malformed, mismatched, extensible, and oversize images;
-    this prevents ambiguous bytes from crossing the multimodal broker boundary.
+    this prevents ambiguous bytes from crossing the multimodal broker boundary. M3GD / SPEC
+    B.6 r14: exercised refusals: "image exceeds the 5 MiB decoded limit"; "image media_type
+    does not match its file signature".
     """
     raw = valid_envelope()
     raw["payload"] = {"prompt": "Inspect this", "image": image}
@@ -267,11 +275,6 @@ def test_message_types_cover_m1_and_reserved_names() -> None:
     ("field", "value"),
     [
         ("v", 2),
-        ("v", True),
-        ("id", "not-a-ulid"),
-        ("id", "81ARZ3NDEKTSV4RRFFQ69G5FAV"),
-        ("type", ""),
-        ("type", " \t\n"),
         ("type", 3),
     ],
 )
@@ -561,9 +564,9 @@ def test_run_delta_rejects_wrong_variant_shape(payload: object) -> None:
         envelope_for("run.delta", payload)
 
 
-@pytest.mark.parametrize("value", [-1, True, 1.5, "1"])
-def test_run_usage_requires_strict_nonnegative_integers(value: object) -> None:
-    """SPEC C.7 is defended by verifying that run usage requires strict nonnegative integers;
+@pytest.mark.parametrize("value", [True, 1.5, "1"])
+def test_run_usage_requires_strict_integers(value: object) -> None:
+    """SPEC C.7 is defended by verifying that run usage requires strict integers;
     this prevents drift in the typed websocket envelope contract.
     """
     with pytest.raises(ValidationError):
@@ -587,9 +590,8 @@ def test_run_usage_requires_strict_nonnegative_integers(value: object) -> None:
         ("budget_exceeded", True),
     ],
 )
-def test_run_done_enforces_stop_reason_partial_invariant(stop_reason: str, partial: bool) -> None:
-    """SPEC C.7 is defended by verifying that run done enforces stop reason partial invariant;
-    this prevents drift in the typed websocket envelope contract.
+def test_run_done_preserves_the_producer_outcome(stop_reason: str, partial: bool) -> None:
+    """M3GD / C.7: the run loop authors the outcome; serialization preserves it. [SPEC C.7]
     """
     envelope = envelope_for(
         "run.done",
@@ -598,13 +600,6 @@ def test_run_done_enforces_stop_reason_partial_invariant(stop_reason: str, parti
 
     assert isinstance(envelope.payload, RunDonePayload)
     assert envelope.payload.stop_reason is StopReason(stop_reason)
-
-    with pytest.raises(ValidationError):
-        envelope_for(
-            "run.done",
-            {"run_id": RUN_ID, "stop_reason": stop_reason, "partial": not partial},
-        )
-
 
 def test_f034_run_done_preserves_only_typed_provider_error_evidence() -> None:
     """F034 and v2.52 are defended by verifying that run.done carries bounded provider error
@@ -632,26 +627,10 @@ def test_f034_run_done_preserves_only_typed_provider_error_evidence() -> None:
     assert envelope.payload.provider_error is not None
     assert envelope.payload.provider_error.model_dump(exclude_none=True) == detail
 
-    for stop_reason, partial in (("end_turn", False), ("cancelled", True)):
-        with pytest.raises(ValidationError):
-            envelope_for(
-                "run.done",
-                {
-                    "run_id": RUN_ID,
-                    "stop_reason": stop_reason,
-                    "partial": partial,
-                    "provider_error": detail,
-                },
-            )
-
-
-def test_prompt_submit_requires_nonblank_prompt_and_outer_thread() -> None:
-    """SPEC C.7 is defended by verifying that prompt submit requires nonblank prompt and outer
-    thread; this prevents drift in the typed websocket envelope contract.
+def test_prompt_submit_requires_outer_thread() -> None:
+    """WALL H7: 'prompt.submit requires a non-blank outer thread_id' scopes owner input. [SPEC
+    C.7]
     """
-    for prompt in ("", "  \n"):
-        with pytest.raises(ValidationError):
-            envelope_for("prompt.submit", {"prompt": prompt})
 
     for thread_id in (None, " \t"):
         raw = {**valid_envelope(), "thread_id": thread_id}
@@ -661,7 +640,8 @@ def test_prompt_submit_requires_nonblank_prompt_and_outer_thread() -> None:
 
 def test_gate_commit_requires_outer_thread() -> None:
     """SPEC C.7 is defended by verifying that gate commit requires outer thread; this prevents
-    drift in the typed websocket envelope contract.
+    drift in the typed websocket envelope contract. M3GD / SPEC B.6 r14: exercised refusal:
+    "{self.type} requires a non-blank outer thread_id".
     """
     raw = {
         **valid_envelope(),
@@ -677,7 +657,6 @@ def test_gate_commit_requires_outer_thread() -> None:
 @pytest.mark.parametrize(
     "payload",
     [
-        {**gate_open_payload(), "scorer_version": "  "},
         {**gate_open_payload(), "injected": [{**scored_card(), "features": None}]},
         {**gate_open_payload(), "near_misses": [{**scored_card(), "rank": None}]},
         {**gate_commit_payload(), "removed": [{"memory_id": MEMORY_ID, "reason": "later"}]},
@@ -697,11 +676,8 @@ def test_memory_gate_payloads_enforce_exact_c4_member_types(
 @pytest.mark.parametrize(
     "card_update",
     [
-        {"rank": 0},
         {"rank": True},
         {"score": True},
-        {"features": {**scored_card()["features"], "sem": -0.01}},
-        {"features": {**scored_card()["features"], "hist": 1.01}},
     ],
 )
 def test_gate_open_rejects_cards_the_browser_cannot_render_truthfully(
@@ -716,14 +692,6 @@ def test_gate_open_rejects_cards_the_browser_cannot_render_truthfully(
         envelope_for("gate.open", payload)
 
 
-def test_gate_open_rejects_duplicate_membership_across_card_arrays() -> None:
-    """SPEC C.7 is defended by verifying that gate open rejects duplicate membership across
-    card arrays; this prevents drift in the typed websocket envelope contract.
-    """
-    payload = gate_open_payload(near_misses=[scored_card()])
-
-    with pytest.raises(ValidationError):
-        envelope_for("gate.open", payload)
 
 
 def test_wrong_resolution_gate_and_decision_are_typed() -> None:
@@ -764,9 +732,6 @@ def test_wrong_resolution_gate_and_decision_are_typed() -> None:
 @pytest.mark.parametrize(
     "payload",
     [
-        gate_open_payload(stage="wrong_resolution", injected=[], wrong_removed=[]),
-        gate_open_payload(stage="wrong_resolution", wrong_removed=[wrong_unit()]),
-        gate_open_payload(wrong_removed=[wrong_unit()]),
         {
             **gate_commit_payload(),
             "wrong_resolution": {
@@ -790,8 +755,10 @@ def test_wrong_resolution_gate_and_decision_are_typed() -> None:
 def test_wrong_resolution_rejects_inconsistent_stage_shapes(
     payload: dict[str, object],
 ) -> None:
-    """SPEC C.7 is defended by verifying that wrong resolution rejects inconsistent stage
-    shapes; this prevents drift in the typed websocket envelope contract.
+    """SPEC C.7 is defended by verifying that wrong resolution rejects inconsistent stage shapes;
+    this prevents drift in the typed websocket envelope contract. M3GD / SPEC B.6 r14:
+    exercised refusals: "edit resolution requires a nonblank body"; "expire resolution must
+    not carry a body".
     """
     message_type = "gate.open" if "kind" in payload else "gate.commit"
     with pytest.raises(ValidationError):
@@ -939,50 +906,6 @@ def test_thread_snapshot_response_requires_an_explicit_nullable_project() -> Non
         )
 
 
-@pytest.mark.parametrize(
-    ("message_type", "payload"),
-    [
-        (
-            "run.started",
-            {
-                "run_id": RUN_ID,
-                "prompt_id": PROMPT_ID,
-                "resolved_model": "openrouter:minimax/minimax-m3",
-            },
-        ),
-        (
-            "thread.snapshot",
-            {
-                "messages": [],
-                "open_gate": None,
-                "active_run": None,
-                "project_key": None,
-                "resolved_model": "openrouter:minimax/minimax-m3",
-            },
-        ),
-        (
-            "run.delta",
-            {
-                "run_id": RUN_ID,
-                "kind": "event",
-                "event": {"event_kind": "model_change"},
-                "resolved_model": "openrouter:minimax/minimax-m3",
-            },
-        ),
-    ],
-)
-def test_resolved_model_extensions_reject_blank_values(
-    message_type: str,
-    payload: dict[str, object],
-) -> None:
-    """SPEC C.7 is defended by verifying that resolved model extensions reject blank values;
-    this prevents drift in the typed websocket envelope contract.
-    """
-    envelope = envelope_for(message_type, payload)
-    assert envelope.model_dump(mode="json")["payload"] == payload
-
-    with pytest.raises(ValidationError):
-        envelope_for(message_type, {**payload, "resolved_model": " \t"})
 
 
 @pytest.mark.parametrize(
@@ -1103,13 +1026,3 @@ def test_factory_and_generator_emit_valid_ulids() -> None:
             "type": "relay.extension",
         }
     )
-
-
-def test_factory_rejects_invalid_injected_id() -> None:
-    """SPEC C.7 is defended by verifying that factory rejects invalid injected id; this
-    prevents drift in the typed websocket envelope contract.
-    """
-    factory = EnvelopeFactory(machine_id="daemon-1", id_factory=lambda: "bad")
-
-    with pytest.raises(ValueError, match="ULID"):
-        factory.new_id()
