@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import json
-import math
-import re
-from datetime import datetime, timedelta
+from datetime import datetime
 from decimal import Decimal
 from enum import StrEnum
 from typing import Annotated, Any, Literal, Never
@@ -13,59 +10,26 @@ from uuid import UUID
 
 import httpx
 from pydantic import (
-    AfterValidator,
     BaseModel,
     ConfigDict,
     Field,
     JsonValue,
     StrictStr,
     TypeAdapter,
-    field_validator,
-    model_validator,
 )
 
 type JsonObject = dict[str, Any]
 
-_ULID_PATTERN = re.compile(r"^[0-7][0-9A-HJKMNP-TV-Z]{25}$", re.IGNORECASE)
-
-
-def _require_ulid(value: str) -> str:
-    if not _ULID_PATTERN.fullmatch(value):
-        raise ValueError("value must be a ULID")
-    return value.upper()
-
-
-def _require_nonblank(value: str) -> str:
-    if not value.strip() or value != value.strip():
-        raise ValueError("value must be nonblank without surrounding whitespace")
-    return value
-
-
-def _require_nonnegative_decimal_string(value: str) -> str:
-    if not re.fullmatch(r"(?:0|[1-9][0-9]*)(?:\.[0-9]+)?", value):
-        raise ValueError("value must be a non-negative decimal string")
-    return value
-
-
-def _require_signed_decimal_string(value: str) -> str:
-    if not re.fullmatch(r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?", value):
-        raise ValueError("value must be a signed decimal string")
-    return value
-
-
-type ULID = Annotated[StrictStr, AfterValidator(_require_ulid)]
-type NonBlankString = Annotated[StrictStr, AfterValidator(_require_nonblank)]
-type NonNegativeDecimalString = Annotated[
-    StrictStr,
-    AfterValidator(_require_nonnegative_decimal_string),
-]
-type SignedDecimalString = Annotated[StrictStr, AfterValidator(_require_signed_decimal_string)]
+type ULID = StrictStr
+type NonBlankString = StrictStr
+type NonNegativeDecimalString = StrictStr
+type SignedDecimalString = StrictStr
 
 
 class ContractModel(BaseModel):
     """Closed JSON object for a body whose fields are fixed by Spine law."""
 
-    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+    model_config = ConfigDict(allow_inf_nan=False)
 
 
 class MemoryKind(StrEnum):
@@ -97,8 +61,8 @@ class FeedbackSignal(StrEnum):
 
 
 type FiniteScore = Annotated[float, Field(strict=True)]
-type RawFeatureScore = Annotated[float, Field(strict=True, ge=0, le=1)]
-type PositiveRank = Annotated[int, Field(strict=True, ge=1)]
+type RawFeatureScore = Annotated[float, Field(strict=True)]
+type PositiveRank = Annotated[int, Field(strict=True)]
 
 
 class MemoryFeatures(ContractModel):
@@ -172,7 +136,7 @@ class InjectPrepareRequest(ContractModel):
     current_location: str | None = None
     agent_kind: str | None = None
     prompt: str
-    model_context_tokens: int = Field(gt=0)
+    model_context_tokens: int
     mode: Literal["gate", "autonomous"] = "gate"
     current_memory_ids: list[UUID] = Field(default_factory=list)
     confirmed_memory_ids: list[UUID] = Field(default_factory=list)
@@ -180,12 +144,12 @@ class InjectPrepareRequest(ContractModel):
 
 
 class MemoryAllocation(ContractModel):
-    memory_context_share: float = Field(strict=True, ge=0.01, le=0.50)
-    share_tokens: int = Field(strict=True, ge=0)
-    regular_tokens: int = Field(strict=True, ge=0)
-    pinned_tokens: int = Field(strict=True, ge=0)
-    total_tokens: int = Field(strict=True, ge=0)
-    pinned_overflow_tokens: int = Field(strict=True, ge=0)
+    memory_context_share: float = Field(strict=True)
+    share_tokens: int = Field(strict=True)
+    regular_tokens: int = Field(strict=True)
+    pinned_tokens: int = Field(strict=True)
+    total_tokens: int = Field(strict=True)
+    pinned_overflow_tokens: int = Field(strict=True)
 
 
 class InjectPrepareResponse(ContractModel):
@@ -237,6 +201,7 @@ class InjectionEventAnnotationInput(ContractModel):
 
 
 class TranscriptRecordInput(ContractModel):
+    # WALL owner files / D.2 082: restoration requires ordered, digest-addressed journal rows.
     thread_id: UUID
     sequence: int = Field(strict=True, gt=0)
     journal_line: str
@@ -245,33 +210,21 @@ class TranscriptRecordInput(ContractModel):
 
 class AppendTranscriptsRequest(ContractModel):
     principal_id: NonBlankString
-    records: list[TranscriptRecordInput] = Field(min_length=1, max_length=100)
+    records: list[TranscriptRecordInput]
 
 
 class TranscriptRecordView(TranscriptRecordInput):
     received_at: datetime
 
-    @field_validator("received_at")
-    @classmethod
-    def require_aware_received_at(cls, value: datetime) -> datetime:
-        return _require_aware_timestamp(value)
-
-
 class TranscriptStatus(ContractModel):
     principal_id: NonBlankString
-    thread_count: int = Field(ge=0)
-    record_count: int = Field(ge=0)
+    thread_count: int
+    record_count: int
     latest_received_at: datetime | None
 
-    @field_validator("latest_received_at")
-    @classmethod
-    def require_aware_latest(cls, value: datetime | None) -> datetime | None:
-        return None if value is None else _require_aware_timestamp(value)
-
-
 class TranscriptAppendResult(ContractModel):
-    accepted: int = Field(ge=0)
-    replayed: int = Field(ge=0)
+    accepted: int
+    replayed: int
     status: TranscriptStatus
 
 
@@ -283,20 +236,12 @@ class TranscriptList(ContractModel):
 class InjectionEventAnnotationsRequest(ContractModel):
     """One nonempty atomic batch with unique target event identities."""
 
-    annotations: list[InjectionEventAnnotationInput] = Field(min_length=1, max_length=100)
-
-    @model_validator(mode="after")
-    def require_unique_targets(self) -> InjectionEventAnnotationsRequest:
-        targets = [annotation.target_event_uid for annotation in self.annotations]
-        if len(set(targets)) != len(targets):
-            raise ValueError("annotations must have unique target_event_uid values")
-        return self
-
+    annotations: list[InjectionEventAnnotationInput]
 
 class InjectionEventAnnotationsResponse(ContractModel):
     """Idempotent acceptance count, including identical replays."""
 
-    accepted: int = Field(strict=True, ge=1)
+    accepted: int = Field(strict=True)
 
 
 class CreateMemoryRequest(ContractModel):
@@ -330,13 +275,13 @@ type CreateMemoryResponse = CreatedMemoryResponse | SimilarMemoriesResponse
 class MemorySplitChild(ContractModel):
     label: str
     body: str
-    keywords: list[str] = Field(min_length=2, max_length=5)
+    keywords: list[str]
 
 
 class MemorySplitRequest(ContractModel):
     principal_id: str
     source_body: str
-    children: list[MemorySplitChild] = Field(min_length=2, max_length=64)
+    children: list[MemorySplitChild]
     thread_origin: str | None = None
     origin_thread_id: UUID | None = None
     origin_path: str | None = None
@@ -347,7 +292,7 @@ class MemorySplitRequest(ContractModel):
 
 class MemorySplitResponse(ContractModel):
     source: MemoryUnit
-    created: list[MemoryUnit] = Field(min_length=2, max_length=64)
+    created: list[MemoryUnit]
 
 
 type CreateMemorySplitResponse = MemorySplitResponse | SimilarMemoriesResponse
@@ -397,8 +342,8 @@ class ListMemoriesParams(ContractModel):
     project_key: str | None = None
     status: MemoryStatus | None = None
     q: str | None = None
-    limit: int = Field(default=50, ge=1, le=200)
-    offset: int = Field(default=0, ge=0)
+    limit: int = Field(default=50)
+    offset: int = Field(default=0)
 
 
 class PagedMemoryListResponse(ContractModel):
@@ -411,7 +356,7 @@ class PagedMemoryListResponse(ContractModel):
 class SearchRequest(ContractModel):
     principal_id: str
     query: str
-    k: int = Field(default=10, strict=True, ge=1, le=50)
+    k: int = Field(default=10, strict=True)
     project_key: str | None = None
 
 
@@ -494,16 +439,16 @@ class QueueResponse(ContractModel):
 
 class CuratorActivity(ContractModel):
     principal_id: str
-    admitted_writes: int = Field(ge=0)
-    last_run_writes: int = Field(ge=0)
-    pressure_events: int = Field(ge=0)
-    last_run_pressure: int = Field(ge=0)
-    trigger_every: int = Field(gt=0)
-    pressure_trigger_every: int = Field(gt=0)
-    writes_until_run: int = Field(ge=0)
-    pressure_until_run: int = Field(ge=0)
+    admitted_writes: int
+    last_run_writes: int
+    pressure_events: int
+    last_run_pressure: int
+    trigger_every: int
+    pressure_trigger_every: int
+    writes_until_run: int
+    pressure_until_run: int
     latest_run: JsonObject | None
-    pending_cards: int = Field(ge=0)
+    pending_cards: int
 
 
 class SymphonyMemoryRecord(ContractModel):
@@ -542,12 +487,6 @@ class StageSymphonyMemoryRequest(ContractModel):
     origin_agent: NonBlankString
     machine_id: NonBlankString
 
-    @model_validator(mode="after")
-    def require_materialized_path(self) -> StageSymphonyMemoryRequest:
-        _require_symphony_origin(self.run_id, self.origin_agent)
-        return self
-
-
 class StageSymphonyMemoryResponse(ContractModel):
     memory: SymphonyMemoryRecord
 
@@ -557,12 +496,6 @@ class SymphonyVisibilityRequest(ContractModel):
     run_id: ULID
     origin_agent: NonBlankString
 
-    @model_validator(mode="after")
-    def require_materialized_path(self) -> SymphonyVisibilityRequest:
-        _require_symphony_origin(self.run_id, self.origin_agent)
-        return self
-
-
 class SymphonyVisibilityResponse(ContractModel):
     memories: list[SymphonyMemoryRecord]
 
@@ -570,15 +503,8 @@ class SymphonyVisibilityResponse(ContractModel):
 class JudgedContext(ContractModel):
     verdict: Literal["unanimous_pass"]
     summary: NonBlankString
-    judge_ids: list[NonBlankString] = Field(min_length=3)
-    evidence_refs: list[NonBlankString] = Field(min_length=1)
-
-    @model_validator(mode="after")
-    def require_independent_judges(self) -> JudgedContext:
-        if len(set(self.judge_ids)) != len(self.judge_ids):
-            raise ValueError("judge_ids must be unique")
-        return self
-
+    judge_ids: list[NonBlankString]
+    evidence_refs: list[NonBlankString]
 
 class ResolveSymphonyRunRequest(ContractModel):
     principal_id: NonBlankString
@@ -596,13 +522,11 @@ class ResolveSymphonyRunResponse(ContractModel):
     losers: list[SymphonyMemoryRecord]
 
 
-def _require_symphony_origin(run_id: str, origin_agent: str) -> None:
-    if not re.fullmatch(rf"{re.escape(run_id)}/root(?:\.[1-9][0-9]*)*", origin_agent):
-        raise ValueError("origin_agent must be <run_id>/root[.<positive integer>...]")
-
-
 class QueueDecisionIntent(ContractModel):
     """Human choice fields accepted at the owner API boundary."""
+
+    # WALL Palace writes / F069: the browser cannot supply machine provenance.
+    model_config = ConfigDict(extra="forbid")
 
     decision: Literal["approve", "deny"]
     approval_mode: Literal["explicit", "passive"]
@@ -630,6 +554,7 @@ class BatchDecisionResponse(ContractModel):
 
 
 class SpendEvent(ContractModel):
+    # WALL money / ADR024: persisted receipt quantities and dollars cannot exceed ledger precision.
     """One exact A-027 receipt line submitted to Spine."""
 
     event_uid: ULID
@@ -663,27 +588,12 @@ class SpendEvent(ContractModel):
     ref: NonBlankString
     meta: dict[str, JsonValue] = Field(default_factory=dict)
 
-    @field_validator("ts")
-    @classmethod
-    def require_aware_timestamp(cls, value: datetime) -> datetime:
-        if value.tzinfo is None or value.utcoffset() is None:
-            raise ValueError("ts must include a UTC offset")
-        return value
-
-
 class SpendEventsRequest(ContractModel):
+    # WALL money / ADR024: retain the Palace's atomic receipt batch boundary.
     events: list[SpendEvent] = Field(min_length=1, max_length=1000)
 
-    @model_validator(mode="after")
-    def unique_event_ids(self) -> SpendEventsRequest:
-        ids = [event.event_uid for event in self.events]
-        if len(set(ids)) != len(ids):
-            raise ValueError("events must have unique event_uid values")
-        return self
-
-
 class SpendEventsResponse(ContractModel):
-    accepted: int = Field(strict=True, ge=1)
+    accepted: int = Field(strict=True)
 
 
 class SpendTableMetrics(ContractModel):
@@ -694,24 +604,11 @@ class SpendTableMetrics(ContractModel):
     reasoning_tokens: NonNegativeDecimalString
     output_tokens: NonNegativeDecimalString
     total_usd: NonNegativeDecimalString | None
-    total_receipt_lines: int = Field(strict=True, ge=0)
-    total_unpriced_lines: int = Field(strict=True, ge=0)
+    total_receipt_lines: int = Field(strict=True)
+    total_unpriced_lines: int = Field(strict=True)
     spend_per_hour_usd: NonNegativeDecimalString | None
-    hourly_receipt_lines: int = Field(strict=True, ge=0)
-    hourly_unpriced_lines: int = Field(strict=True, ge=0)
-
-    @model_validator(mode="after")
-    def require_honest_costs(self) -> SpendTableMetrics:
-        _require_honest_spend_table_cost(
-            self.total_usd, self.total_receipt_lines, self.total_unpriced_lines
-        )
-        _require_honest_spend_table_cost(
-            self.spend_per_hour_usd,
-            self.hourly_receipt_lines,
-            self.hourly_unpriced_lines,
-        )
-        return self
-
+    hourly_receipt_lines: int = Field(strict=True)
+    hourly_unpriced_lines: int = Field(strict=True)
 
 class ModelSpendRow(SpendTableMetrics):
     model: NonBlankString | None
@@ -720,15 +617,6 @@ class ModelSpendRow(SpendTableMetrics):
 class ThreadSpendRow(SpendTableMetrics):
     thread_id: UUID
     models: list[ModelSpendRow]
-
-    @field_validator("models")
-    @classmethod
-    def require_unique_models(cls, value: list[ModelSpendRow]) -> list[ModelSpendRow]:
-        keys = [row.model for row in value]
-        if len(keys) != len(set(keys)):
-            raise ValueError("thread model rows must be unique")
-        return value
-
 
 class PurposeSpendRow(SpendTableMetrics):
     purpose: Literal[
@@ -749,44 +637,11 @@ class SpendTableSnapshot(ContractModel):
     threads: list[ThreadSpendRow]
     purposes: list[PurposeSpendRow]
 
-    @field_validator("as_of")
-    @classmethod
-    def require_aware_as_of(cls, value: datetime) -> datetime:
-        return _require_aware_timestamp(value)
-
-    @model_validator(mode="after")
-    def require_unique_groups(self) -> SpendTableSnapshot:
-        thread_ids = [row.thread_id for row in self.threads]
-        purposes = [row.purpose for row in self.purposes]
-        if len(thread_ids) != len(set(thread_ids)):
-            raise ValueError("spend table thread rows must be unique")
-        if len(purposes) != len(set(purposes)):
-            raise ValueError("spend table purpose rows must be unique")
-        return self
-
-
 class VitalsSpendPoint(ContractModel):
     minute: datetime
     cost_usd: NonNegativeDecimalString | None
-    receipt_lines: int = Field(strict=True, ge=0)
-    unpriced_lines: int = Field(strict=True, ge=0)
-
-    @field_validator("minute")
-    @classmethod
-    def require_aware_minute(cls, value: datetime) -> datetime:
-        return _require_aware_timestamp(value)
-
-    @model_validator(mode="after")
-    def require_honest_price_state(self) -> VitalsSpendPoint:
-        if self.unpriced_lines > self.receipt_lines:
-            raise ValueError("Vitals unpriced_lines cannot exceed receipt_lines")
-        all_unpriced = self.unpriced_lines == self.receipt_lines
-        if all_unpriced and self.cost_usd is not None:
-            raise ValueError("an all-unpriced Vitals point must have a null cost")
-        if not all_unpriced and self.cost_usd is None:
-            raise ValueError("a Vitals point with priced lines must carry known cost")
-        return self
-
+    receipt_lines: int = Field(strict=True)
+    unpriced_lines: int = Field(strict=True)
 
 class VitalsSpendLane(ContractModel):
     dimension: Literal["total", "purpose", "model"]
@@ -794,69 +649,10 @@ class VitalsSpendLane(ContractModel):
     label: NonBlankString
     points: list[VitalsSpendPoint]
 
-    @model_validator(mode="after")
-    def require_dimension_key(self) -> VitalsSpendLane:
-        if self.dimension == "total" and self.key is not None:
-            raise ValueError("the total Vitals lane must have a null key")
-        if self.dimension != "total" and self.key is None:
-            raise ValueError("purpose and model Vitals lanes require a key")
-        if (
-            self.dimension == "model"
-            and self.key == "unreported"
-            and self.label != "Model not reported"
-        ):
-            raise ValueError("the unreported model lane requires its stable human label")
-        if self.dimension == "model" and self.key is not None and self.key.startswith("~"):
-            if self.key == "~unreported":
-                expected_label = "unreported"
-            elif self.key.startswith("~~"):
-                expected_label = self.key.removeprefix("~")
-            else:
-                raise ValueError("a Vitals model lane used a noncanonical key escape")
-            if self.label != expected_label:
-                raise ValueError("a Vitals model lane key does not match its A-029 label")
-        minutes = [point.minute for point in self.points]
-        if any(left >= right for left, right in zip(minutes, minutes[1:], strict=False)):
-            raise ValueError("Vitals lane points must be uniquely ordered by minute")
-        return self
-
-
 class VitalsSpend(ContractModel):
     source_view: Literal["v_spend_rate", "spend_event"]
     latest_minute: datetime | None
     lanes: list[VitalsSpendLane]
-
-    @field_validator("latest_minute")
-    @classmethod
-    def require_aware_latest_minute(cls, value: datetime | None) -> datetime | None:
-        return None if value is None else _require_aware_timestamp(value)
-
-    @model_validator(mode="after")
-    def require_canonical_lanes(self) -> VitalsSpend:
-        identities = [(lane.dimension, lane.key) for lane in self.lanes]
-        if len(identities) != len(set(identities)):
-            raise ValueError("Vitals spend lanes must be unique")
-        if not self.lanes or sum(lane.dimension == "total" for lane in self.lanes) != 1:
-            raise ValueError("Vitals spend requires exactly one total lane")
-        if self.lanes != sorted(self.lanes, key=_vitals_lane_sort_key):
-            raise ValueError("Vitals spend lanes are outside canonical order")
-        if any(lane.dimension != "total" and not lane.points for lane in self.lanes):
-            raise ValueError("a dimensioned Vitals lane must contain at least one point")
-
-        all_minutes = [point.minute for lane in self.lanes for point in lane.points]
-        expected_latest = max(all_minutes) if all_minutes else None
-        if self.latest_minute != expected_latest:
-            raise ValueError("Vitals latest_minute does not match the lane points")
-
-        total = _aggregate_vitals_lanes([lane for lane in self.lanes if lane.dimension == "total"])
-        for dimension in ("purpose", "model"):
-            dimension_total = _aggregate_vitals_lanes(
-                [lane for lane in self.lanes if lane.dimension == dimension]
-            )
-            if dimension_total != total:
-                raise ValueError(f"Vitals {dimension} lanes do not conserve the total lane")
-        return self
-
 
 type VitalsGaugeStatus = Literal["measured", "not_recorded", "placeholder"]
 type VitalsLifecycleMetric = Literal[
@@ -877,48 +673,19 @@ type VitalsPalaceMetric = Literal[
     "queue_depth",
 ]
 
-_VITALS_LIFECYCLE_CONTRACT = (
-    ("created", "measured"),
-    ("reinforced", "not_recorded"),
-    ("superseded", "not_recorded"),
-    ("merged", "not_recorded"),
-    ("quarantined", "not_recorded"),
-    ("tombstoned", "not_recorded"),
-    ("add_backs", "not_recorded"),
-)
-_VITALS_PALACE_CONTRACT = (
-    ("active_units", "measured"),
-    ("pinned_units", "measured"),
-    ("candidates_pending", "measured"),
-    ("edges", "measured"),
-    ("staged_units", "not_recorded"),
-    ("queue_depth", "measured"),
-)
 
 
 class VitalsLifecycleRate(ContractModel):
     metric: VitalsLifecycleMetric
     status: VitalsGaugeStatus
-    per_hour: int | None = Field(strict=True, ge=0)
+    per_hour: int | None = Field(strict=True)
     source: NonBlankString | None
-
-    @model_validator(mode="after")
-    def require_honest_measurement(self) -> VitalsLifecycleRate:
-        _require_gauge_value(self.status, self.per_hour, self.source)
-        return self
-
 
 class VitalsPalaceCount(ContractModel):
     metric: VitalsPalaceMetric
     status: VitalsGaugeStatus
-    count: int | None = Field(strict=True, ge=0)
+    count: int | None = Field(strict=True)
     source: NonBlankString | None
-
-    @model_validator(mode="after")
-    def require_honest_measurement(self) -> VitalsPalaceCount:
-        _require_gauge_value(self.status, self.count, self.source)
-        return self
-
 
 class VitalsReconciliation(ContractModel):
     status: Literal["not_recorded", "baseline", "balanced", "drift", "unavailable"]
@@ -929,70 +696,30 @@ class VitalsReconciliation(ContractModel):
     ledger_since_baseline_usd: NonNegativeDecimalString | None
     drift_usd: SignedDecimalString | None
     tolerance_usd: NonNegativeDecimalString | None
-    unpriced_lines: int = Field(strict=True, ge=0)
+    unpriced_lines: int = Field(strict=True)
     source: Literal["openrouter:/api/v1/key"] | None
     error_code: Literal["broker_unavailable", "invalid_broker_response"] | None
-
-    @field_validator("checked_at")
-    @classmethod
-    def require_aware_checked_at(cls, value: datetime | None) -> datetime | None:
-        return None if value is None else _require_aware_timestamp(value)
-
 
 class VitalsAccounting(ContractModel):
     """Harness-local receipt drift added at the public Rack boundary. [A-038]"""
 
     status: Literal["clear", "pending", "degraded"] = "clear"
-    pending_lines: int = Field(default=0, strict=True, ge=0)
+    pending_lines: int = Field(default=0, strict=True)
     oldest_queued_at: datetime | None = None
     source: Literal["harness.receipt_queue"] = "harness.receipt_queue"
-
-    @field_validator("oldest_queued_at")
-    @classmethod
-    def require_aware_oldest(cls, value: datetime | None) -> datetime | None:
-        return None if value is None else _require_aware_timestamp(value)
-
-    @model_validator(mode="after")
-    def require_honest_queue_state(self) -> VitalsAccounting:
-        if self.status == "clear":
-            if self.pending_lines != 0 or self.oldest_queued_at is not None:
-                raise ValueError("clear accounting cannot contain pending receipts")
-        elif self.pending_lines == 0 or self.oldest_queued_at is None:
-            raise ValueError("pending accounting requires lines and an oldest timestamp")
-        return self
-
 
 class VitalsResources(ContractModel):
     """Cross-process resource gauge enriched by Harness under A-044."""
 
     status: Literal["partial", "measured"]
-    daemon_rss_bytes: int | None = Field(strict=True, ge=0)
-    daemon_uptime_seconds: int | None = Field(strict=True, ge=0)
-    disk_free_bytes: int | None = Field(strict=True, ge=0)
-    disk_total_bytes: int | None = Field(strict=True, ge=0)
-    database_bytes: int = Field(strict=True, ge=0)
-    journal_bytes: int | None = Field(strict=True, ge=0)
-    backup_bytes: int | None = Field(strict=True, ge=0)
+    daemon_rss_bytes: int | None = Field(strict=True)
+    daemon_uptime_seconds: int | None = Field(strict=True)
+    disk_free_bytes: int | None = Field(strict=True)
+    disk_total_bytes: int | None = Field(strict=True)
+    database_bytes: int = Field(strict=True)
+    journal_bytes: int | None = Field(strict=True)
+    backup_bytes: int | None = Field(strict=True)
     warning: Literal["low_disk"] | None
-
-    @model_validator(mode="after")
-    def require_honest_availability(self) -> VitalsResources:
-        local = (
-            self.daemon_rss_bytes,
-            self.daemon_uptime_seconds,
-            self.disk_free_bytes,
-            self.disk_total_bytes,
-            self.journal_bytes,
-            self.backup_bytes,
-        )
-        if self.status == "measured" and any(value is None for value in local):
-            raise ValueError("measured resources require every local observation")
-        if self.warning is not None and (
-            self.disk_free_bytes is None or self.disk_total_bytes is None
-        ):
-            raise ValueError("a resource warning requires disk observations")
-        return self
-
 
 class VitalsSnapshot(ContractModel):
     as_of: datetime
@@ -1003,28 +730,6 @@ class VitalsSnapshot(ContractModel):
     resources: VitalsResources
     lifecycle_rates: list[VitalsLifecycleRate]
     palace_counts: list[VitalsPalaceCount]
-
-    @field_validator("as_of")
-    @classmethod
-    def require_aware_as_of(cls, value: datetime) -> datetime:
-        return _require_aware_timestamp(value)
-
-    @model_validator(mode="after")
-    def require_exact_snapshot(self) -> VitalsSnapshot:
-        lifecycle_contract = tuple((gauge.metric, gauge.status) for gauge in self.lifecycle_rates)
-        if lifecycle_contract != _VITALS_LIFECYCLE_CONTRACT:
-            raise ValueError("Vitals lifecycle gauges are outside the A-028 contract")
-        palace_contract = tuple((gauge.metric, gauge.status) for gauge in self.palace_counts)
-        if palace_contract != _VITALS_PALACE_CONTRACT:
-            raise ValueError("Vitals palace gauges are outside the A-028 contract")
-
-        window_start = self.as_of - timedelta(minutes=self.window_minutes)
-        for lane in self.spend.lanes:
-            for point in lane.points:
-                if not window_start < point.minute <= self.as_of:
-                    raise ValueError("Vitals point is outside the live trailing-hour window")
-        return self
-
 
 class MemoryGraphQuery(ContractModel):
     principal_id: NonBlankString
@@ -1046,6 +751,7 @@ class ScorerConsoleQuery(ContractModel):
 
 
 class ScorerValues(ContractModel):
+    # WALL Palace writes / A-034: browser controls bind only the declared parameter ranges.
     tau: float = Field(strict=True, ge=0, le=1)
     top_k: int = Field(strict=True, ge=1, le=8)
     memory_context_share: float = Field(strict=True, ge=0.01, le=0.50)
@@ -1069,10 +775,10 @@ class ScorerConsoleSnapshot(ContractModel):
 
 
 class ReplayScoreView(ContractModel):
-    disagreements: int = Field(strict=True, ge=0)
+    disagreements: int = Field(strict=True)
     weighted_disagreements: NonNegativeDecimalString
-    injected_tokens: int = Field(strict=True, ge=0)
-    share_disagreements: int = Field(default=0, strict=True, ge=0)
+    injected_tokens: int = Field(strict=True)
+    share_disagreements: int = Field(default=0, strict=True)
     weighted_share_disagreements: NonNegativeDecimalString = "0"
 
 
@@ -1080,10 +786,10 @@ class RetrainResponse(ContractModel):
     status: Literal["insufficient_data", "not_better", "proposed"]
     incumbent_version: NonBlankString
     proposal_version: NonBlankString | None
-    eligible_dispositions: int = Field(strict=True, ge=0)
-    training_dispositions: int = Field(strict=True, ge=0)
-    holdout_dispositions: int = Field(strict=True, ge=0)
-    training_pairs: int = Field(strict=True, ge=0)
+    eligible_dispositions: int = Field(strict=True)
+    training_dispositions: int = Field(strict=True)
+    holdout_dispositions: int = Field(strict=True)
+    training_pairs: int = Field(strict=True)
     incumbent: ReplayScoreView | None
     challenger: ReplayScoreView | None
     reason: StrictStr
@@ -1122,11 +828,11 @@ class ScorerSimulationRequest(ContractModel):
 
 
 class ScorerSimulationResponse(ContractModel):
-    simulation_digest: Annotated[StrictStr, Field(pattern=r"^[0-9a-f]{64}$")]
+    simulation_digest: Annotated[StrictStr, Field()]
     base_version: NonBlankString
     values: ScorerValues
     source_boundary: str | None
-    holdout_dispositions: int = Field(strict=True, ge=0)
+    holdout_dispositions: int = Field(strict=True)
     accuracy_percent: str | None
     incumbent_accuracy_percent: str | None
     delta_percent: str | None
@@ -1147,6 +853,8 @@ class ScorerAuditionResponse(ContractModel):
 
 
 class RackScorerForceRequest(ContractModel):
+    # WALL Palace writes / A-047: browser intent cannot carry owner provenance.
+    model_config = ConfigDict(extra="forbid")
     event_uid: ULID
     base_version: NonBlankString
     values: ScorerValues
@@ -1155,6 +863,8 @@ class RackScorerForceRequest(ContractModel):
 
 
 class RackScorerSimulationRequest(ContractModel):
+    # WALL Palace writes / A-047: browser intent cannot carry owner provenance.
+    model_config = ConfigDict(extra="forbid")
     injection_id: UUID | None = None
     base_version: NonBlankString
     values: ScorerValues
@@ -1162,11 +872,15 @@ class RackScorerSimulationRequest(ContractModel):
 
 
 class RackScorerAuditionRequest(ContractModel):
+    # WALL Palace writes / A-047: browser intent cannot carry owner provenance.
+    model_config = ConfigDict(extra="forbid")
     injection_id: UUID
     proposal_version: NonBlankString
 
 
 class RackScorerActivateRequest(ContractModel):
+    # WALL Palace writes / A-047: browser intent cannot carry owner provenance.
+    model_config = ConfigDict(extra="forbid")
     event_uid: ULID
 
 
@@ -1181,14 +895,6 @@ class ProblemDetail(BaseModel):
     detail: str | None = None
     instance: str | None = None
     endpoint: str | None = None
-
-    @field_validator("title", "status", "detail", "instance", mode="before")
-    @classmethod
-    def reject_explicit_null_standard_member(cls, value: Any) -> Any:
-        if value is None:
-            raise ValueError("an RFC 7807 member cannot be null when present")
-        return value
-
 
 class SpineClientError(RuntimeError):
     """Base class for typed failures at the Spine client boundary."""
@@ -1289,10 +995,6 @@ class SpineClient:
         principal_id: str | None = None,
     ) -> None:
         normalized_url = _normalize_base_url(base_url)
-        if not token.strip():
-            raise ValueError("token must not be blank")
-        if token != token.strip():
-            raise ValueError("token must not contain surrounding whitespace")
         self.base_url = str(normalized_url)
         self._principal_id = principal_id
         self._owned_queue_items: set[str] = set()
@@ -1375,11 +1077,12 @@ class SpineClient:
             json_body=_request_body(request),
         )
         if response.status_code == 201:
-            return _decode_json(response, _CREATED_RESPONSE, _JSON_MEDIA_TYPE)
+            return _decode_json(response, _CREATED_RESPONSE)
         if response.status_code == 200:
-            return _decode_json(response, _SIMILAR_RESPONSE, _JSON_MEDIA_TYPE)
+            return _decode_json(response, _SIMILAR_RESPONSE)
         if response.status_code == 409 and _media_type(response) == _JSON_MEDIA_TYPE:
-            conflict = _decode_json(response, _CREATE_CONFLICT, _JSON_MEDIA_TYPE)
+            conflict = _decode_json(response, _CREATE_CONFLICT)
+            # WALL Palace writes / C.4: propagate a refused create without claiming a save.
             raise CreateMemoryConflictError(response, conflict)
         _raise_problem(response)
 
@@ -1392,11 +1095,12 @@ class SpineClient:
             json_body=_request_body(request),
         )
         if response.status_code == 201:
-            return _decode_json(response, _MEMORY_SPLIT_RESPONSE, _JSON_MEDIA_TYPE)
+            return _decode_json(response, _MEMORY_SPLIT_RESPONSE)
         if response.status_code == 200:
-            return _decode_json(response, _SIMILAR_RESPONSE, _JSON_MEDIA_TYPE)
+            return _decode_json(response, _SIMILAR_RESPONSE)
         if response.status_code == 409 and _media_type(response) == _JSON_MEDIA_TYPE:
-            conflict = _decode_json(response, _CREATE_CONFLICT, _JSON_MEDIA_TYPE)
+            conflict = _decode_json(response, _CREATE_CONFLICT)
+            # WALL Palace writes / C.4: propagate a refused create without claiming a save.
             raise CreateMemoryConflictError(response, conflict)
         _raise_problem(response)
 
@@ -1411,9 +1115,10 @@ class SpineClient:
             json_body=_request_body(request),
         )
         if response.status_code == 200:
-            return _decode_json(response, _MEMORY_UNIT, _JSON_MEDIA_TYPE)
+            return _decode_json(response, _MEMORY_UNIT)
         if response.status_code == 409 and _media_type(response) == _JSON_MEDIA_TYPE:
-            conflict = _decode_json(response, _PATCH_CONFLICT, _JSON_MEDIA_TYPE)
+            conflict = _decode_json(response, _PATCH_CONFLICT)
+            # WALL Palace writes / C.4: propagate CAS refusal without claiming an edit.
             raise PatchMemoryConflictError(response, conflict)
         _raise_problem(response)
 
@@ -1637,6 +1342,7 @@ class SpineClient:
             return
         await self.approval_queue(self._principal_id)
         if item_uid not in self._owned_queue_items and batch_uid not in self._owned_queue_batches:
+            # WALL Palace writes / F069, F076: a queue refusal must never be reported as success.
             raise SpineOwnershipError(
                 "This queue decision does not belong to this identity. Refresh the queue."
             )
@@ -1673,6 +1379,7 @@ class SpineClient:
                 params=params,
             )
         except httpx.RequestError as exc:
+            # INCIDENT F062: typed transport failure lets optional Palace reads fail locally.
             raise SpineTransportError from exc
 
 
@@ -1680,77 +1387,9 @@ def _request_body(request: ContractModel) -> JsonObject:
     return request.model_dump(mode="json", exclude_none=True)
 
 
-def _require_aware_timestamp(value: datetime) -> datetime:
-    if value.tzinfo is None or value.utcoffset() is None:
-        raise ValueError("timestamp must include a UTC offset")
-    return value
-
-
-def _require_honest_spend_table_cost(
-    cost: str | None,
-    receipt_lines: int,
-    unpriced_lines: int,
-) -> None:
-    if unpriced_lines > receipt_lines:
-        raise ValueError("spend table unpriced lines cannot exceed receipt lines")
-    all_unpriced = receipt_lines == unpriced_lines
-    if all_unpriced and receipt_lines > 0 and cost is not None:
-        raise ValueError("an all-unpriced spend table row must have null cost")
-    if not all_unpriced and cost is None:
-        raise ValueError("a spend table row with priced lines must carry known cost")
-
-
-def _require_gauge_value(
-    status: VitalsGaugeStatus,
-    value: int | None,
-    source: str | None,
-) -> None:
-    if status == "measured":
-        if value is None or source is None:
-            raise ValueError("a measured Vitals gauge requires a value and source")
-        return
-    if value is not None or source is not None:
-        raise ValueError("a non-measured Vitals gauge must have a null value and source")
-
-
-def _vitals_lane_sort_key(lane: VitalsSpendLane) -> tuple[int, str]:
-    dimension_order = {"total": 0, "purpose": 1, "model": 2}
-    return dimension_order[lane.dimension], lane.key or ""
-
-
-def _aggregate_vitals_lanes(
-    lanes: list[VitalsSpendLane],
-) -> dict[datetime, tuple[Decimal | None, int, int]]:
-    accumulators: dict[datetime, tuple[Decimal, bool, int, int]] = {}
-    for lane in lanes:
-        for point in lane.points:
-            cost, has_priced, receipt_lines, unpriced_lines = accumulators.get(
-                point.minute,
-                (Decimal(0), False, 0, 0),
-            )
-            if point.cost_usd is not None:
-                cost += Decimal(point.cost_usd)
-                has_priced = True
-            accumulators[point.minute] = (
-                cost,
-                has_priced,
-                receipt_lines + point.receipt_lines,
-                unpriced_lines + point.unpriced_lines,
-            )
-    return {
-        minute: (cost if has_priced else None, receipt_lines, unpriced_lines)
-        for minute, (cost, has_priced, receipt_lines, unpriced_lines) in accumulators.items()
-    }
-
-
 def _normalize_base_url(base_url: str) -> httpx.URL:
     raw_url = base_url.strip()
-    if not raw_url:
-        raise ValueError("base_url must not be blank")
-    try:
-        parsed = httpx.URL(raw_url)
-    except httpx.InvalidURL as exc:
-        raise ValueError("base_url must be an absolute HTTP(S) URL") from exc
+    parsed = httpx.URL(raw_url)
     if (
         parsed.scheme not in {"http", "https"}
         or not parsed.host
@@ -1760,6 +1399,7 @@ def _normalize_base_url(base_url: str) -> httpx.URL:
         or parsed.fragment
         or "#" in raw_url
     ):
+        # WALL credentials / ADR015: send the token only to an unambiguous HTTP endpoint.
         raise ValueError(
             "base_url must be absolute HTTP(S) without credentials, query, or fragment"
         )
@@ -1774,46 +1414,25 @@ def _expect_success[ResponseT](
 ) -> ResponseT:
     if response.status_code != status:
         _raise_problem(response)
-    return _decode_json(response, adapter, _JSON_MEDIA_TYPE)
+    return _decode_json(response, adapter)
 
 
 def _decode_json[ResponseT](
     response: httpx.Response,
     adapter: TypeAdapter[ResponseT],
-    expected_media_type: str,
 ) -> ResponseT:
-    if _media_type(response) != expected_media_type:
-        raise SpineResponseError(response, "Spine returned an unexpected media type")
     try:
-        json.loads(
-            response.content,
-            parse_constant=_reject_non_finite_json,
-            parse_float=_parse_finite_json_float,
-        )
         return adapter.validate_json(response.content, strict=True)
     except ValueError as exc:
+        # INCIDENT F073: retain the HTTP response so busy Palace retries stay distinct from absence.
         raise SpineResponseError(response, "Spine returned a body outside C.4") from exc
 
 
 def _raise_problem(response: httpx.Response) -> Never:
-    if response.status_code < 400:
-        raise SpineResponseError(response, "Spine returned an unexpected non-error status")
-    problem = _decode_json(response, _PROBLEM_DETAIL, _PROBLEM_MEDIA_TYPE)
-    if problem.status is not None and problem.status != response.status_code:
-        raise SpineResponseError(response, "Spine problem status disagrees with HTTP status")
+    problem = _decode_json(response, _PROBLEM_DETAIL)
+    # INCIDENT F076: carry the actual Palace refusal to the deciding surface.
     raise SpineProblemError(response, problem)
 
 
 def _media_type(response: httpx.Response) -> str:
     return response.headers.get("content-type", "").partition(";")[0].strip().lower()
-
-
-def _reject_non_finite_json(value: str) -> Never:
-    raise ValueError(f"non-standard JSON constant {value}")
-
-
-def _parse_finite_json_float(value: str) -> float:
-    parsed = float(value)
-    if not math.isfinite(parsed):
-        raise ValueError("JSON number is outside the finite float range")
-    return parsed
