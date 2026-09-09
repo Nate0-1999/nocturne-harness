@@ -4,11 +4,34 @@ from pathlib import Path
 
 import pytest
 
+from harness.progressive_prompt import render_workspace_context
 from harness.pydantic_ai_adapter import adopted_skill_capabilities
 from harness.pydantic_harness_adapter import discover_skill_libraries
-from harness.toolset import open_standard_toolset
+from harness.toolset import AgentLocation, ToolsetError, open_standard_toolset
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_progressive_instructions_are_complete_but_cannot_read_outside_credentials(
+    tmp_path: Path,
+) -> None:
+    """SPEC R16 removes silent 80-entry/12000-character cuts; ADR-015's instruction
+    symlink fence still keeps an outside credential file out of paid model context.
+    """
+    root = tmp_path / "workspace"
+    root.mkdir()
+    content = "owner instruction\n" * 1000
+    (root / "AGENTS.md").write_text(content)
+    for number in range(90):
+        (root / f"entry-{number:03}").touch()
+    location = AgentLocation(workspace_root=root, cwd=root, agent_id="agent", machine_id="machine",
+                             session_id="session", fence_reads=True)
+    rendered = render_workspace_context(location)
+    assert content in rendered and "entry-089" in rendered
+    outside = tmp_path / "credential"
+    outside.write_text("outside-secret")
+    (root / "AGENTS.override.md").symlink_to(outside)
+    assert "outside-secret" not in render_workspace_context(location)
 
 
 @pytest.mark.asyncio
@@ -40,7 +63,8 @@ async def test_in_process_toolset_owns_location_and_presence(tmp_path: Path) -> 
 
 @pytest.mark.asyncio
 async def test_six_file_tools_delegate_core_semantics_upstream(tmp_path: Path) -> None:
-    """D.2 136 adopts the official filesystem battery for all six file tools."""
+    """D.2 136 adopts the official filesystem battery for all six file tools. [ADR-013, ADR-015]
+    """
 
     toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
     try:
@@ -86,7 +110,10 @@ async def test_six_file_tools_delegate_core_semantics_upstream(tmp_path: Path) -
 
 @pytest.mark.asyncio
 async def test_atomic_multi_edit_refuses_before_any_write(tmp_path: Path) -> None:
-    """The owned shim preserves PI's multi-edit all-or-none uniqueness contract."""
+    """The owned shim preserves PI's multi-edit all-or-none uniqueness contract. [ADR-013,
+    ADR-015] M3GD / SPEC B.6 r14: exercised refusal: "oldText found {count} times; each
+    replacement must be unique in the original file".
+    """
 
     path = tmp_path / "duplicate.txt"
     path.write_text("same\nsame\n")
@@ -109,7 +136,10 @@ async def test_atomic_multi_edit_refuses_before_any_write(tmp_path: Path) -> Non
 
 @pytest.mark.asyncio
 async def test_location_fence_precedes_act_and_move_precedes_next_act(tmp_path: Path) -> None:
-    """P1 and D.2 141 require exact-directory presence while reads remain free."""
+    """P1 and D.2 141 require exact-directory presence while reads remain free. [ADR-013,
+    ADR-015] M3GD / SPEC B.6 r14: exercised refusal: "Modification requires presence in the
+    file's directory. Move to {target.parent} first.".
+    """
 
     current = tmp_path / "current"
     deep = current / "deep"
@@ -171,6 +201,10 @@ async def test_location_fence_precedes_act_and_move_precedes_next_act(tmp_path: 
 
 @pytest.mark.asyncio
 async def test_strict_reads_and_credentials_remain_walled(tmp_path: Path) -> None:
+    """ADR-013, ADR-015: strict reads and credentials remain walled. M3GD / SPEC B.6 r14:
+    exercised refusals: "That path is outside this agent's location. Move to {target} first.";
+    "That path may contain credentials. Ask the owner before reading it.".
+    """
     current = tmp_path / "current"
     sibling = tmp_path / "sibling"
     current.mkdir()
@@ -190,6 +224,10 @@ async def test_strict_reads_and_credentials_remain_walled(tmp_path: Path) -> Non
 
 @pytest.mark.asyncio
 async def test_shell_is_one_shot_os_fenced_and_remote_state_walled(tmp_path: Path) -> None:
+    """ADR-013, ADR-015: shell is one shot os fenced and remote state walled. M3GD / SPEC B.6
+    r14: exercised refusal: "That command may leave this project or change remote state. Ask
+    the owner to run it explicitly outside Nocturne.".
+    """
     if not Path("/usr/bin/sandbox-exec").is_file():
         pytest.skip("the standing hard shell fence is macOS sandbox-exec")
     current = tmp_path / "current"
@@ -218,7 +256,8 @@ async def test_shell_is_one_shot_os_fenced_and_remote_state_walled(tmp_path: Pat
 
 
 def test_upstream_skills_gain_model_visible_bundled_resources(tmp_path: Path) -> None:
-    """D.2 136 closes M3PV's resource gap without patching the dependency."""
+    """D.2 136 closes M3PV's resource gap without patching the dependency. [ADR-013, ADR-015]
+    """
 
     library = tmp_path / ".agents" / "skills"
     skill = library / "review"
@@ -245,6 +284,8 @@ def test_upstream_skills_gain_model_visible_bundled_resources(tmp_path: Path) ->
 
 
 def test_skill_discovery_keeps_project_and_legacy_pi_libraries(tmp_path: Path) -> None:
+    """ADR-013, ADR-015: skill discovery keeps project and legacy pi libraries.
+    """
     for relative in (Path(".agents/skills"), Path(".pi/skills")):
         (tmp_path / relative).mkdir(parents=True)
 
@@ -268,3 +309,71 @@ def test_pydantic_harness_has_one_import_fence_and_exact_pin() -> None:
     assert offenders == []
     assert '"pydantic-ai==2.28.0"' in pyproject
     assert '"pydantic-ai-harness[skills]==0.24.0"' in pyproject
+
+
+@pytest.mark.asyncio
+async def test_presence_grant_cannot_be_widened_or_reused_after_close(tmp_path: Path) -> None:
+    """ADR-015: 'cwd must be inside workspace_root', 'Cannot move outside', and 'The workspace
+    toolset is closed.' prevent writes beyond an active presence grant. M3GD / SPEC B.6 r14:
+    exercised refusal: "Cannot move outside the workspace {self._location.workspace_root}.".
+    """
+    root = tmp_path / "workspace"
+    root.mkdir()
+    with pytest.raises(ValueError, match="cwd must be inside workspace_root"):
+        await open_standard_toolset(cwd=tmp_path, workspace_root=root)
+    toolset = await open_standard_toolset(cwd=root, workspace_root=root)
+    with pytest.raises(ValueError, match="Cannot move outside the workspace"):
+        await toolset.move(tmp_path)
+    assert toolset.location().cwd == root.resolve()
+    await toolset.close()
+    with pytest.raises(ToolsetError, match="The workspace toolset is closed."):
+        await toolset.execute("write", {"path": "after-close", "content": "bad"})
+    assert not (root / "after-close").exists()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("edits,message", [
+    ([{"oldText": "", "newText": "bad"}],
+     "each edit requires nonblank oldText and string newText"),
+    ([{"oldText": "abc", "newText": "x"}, {"oldText": "bcd", "newText": "y"}],
+     "edit replacements overlap in the original file"),
+])
+async def test_ambiguous_edits_preserve_original_bytes(tmp_path: Path, edits, message: str) -> None:
+    """ADR-015: refuse edits whose requested spans cannot identify one unchanged source. M3GD /
+    SPEC B.6 r14: exercised refusals: "each edit requires nonblank oldText and string
+    newText"; "edit replacements overlap in the original file".
+    """
+    path = tmp_path / "note"
+    path.write_text("abcdef")
+    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    try:
+        result = await toolset.execute("edit", {"path": "note", "edits": edits})
+        assert not result.success and message in result.content
+        assert path.read_text() == "abcdef"
+    finally:
+        await toolset.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("command,message", [
+    ("cat .env", "That command may expose credentials. Ask the owner before reading them."),
+    ("printf safe", "Secure shell is unavailable on this host; use read, edit, and write instead."),
+])
+async def test_shell_does_not_fall_through_a_wall(
+    tmp_path: Path, monkeypatch, command: str, message: str,
+) -> None:
+    """ADR-015: credentials stay private, and a missing sandbox never starts a raw shell. M3GD /
+    SPEC B.6 r14: exercised refusals: "Secure shell is unavailable on this host; use read,
+    edit, and write instead."; "That command may expose credentials. Ask the owner before
+    reading them.".
+    """
+    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    original = Path.is_file
+    monkeypatch.setattr(Path, "is_file", lambda p: False if str(p) == "/usr/bin/sandbox-exec"
+                        else original(p))
+    try:
+        result = await toolset.execute("bash", {"command": command})
+        assert not result.success and message in result.content
+        assert list(tmp_path.iterdir()) == []
+    finally:
+        await toolset.close()
