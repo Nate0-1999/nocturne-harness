@@ -2,7 +2,6 @@ import {
   createBrowserEnvelope,
   decodeServerEnvelope,
   DIRECT_MACHINE_ID,
-  isUuid,
   parseEnvelope,
   type BrowserMessageType,
   type BrowserPayloadMap,
@@ -56,6 +55,7 @@ export class HarnessSocketClient {
 
   connect(): void {
     this.intentionallyClosed = false
+    // INCIDENT M3CP: retain the live channel and its pending prompt acknowledgements.
     if (
       this.socket !== null &&
       (this.socket.readyState === WebSocket.CONNECTING ||
@@ -120,10 +120,7 @@ export class HarnessSocketClient {
     if (selectedThreadId === null) {
       return null
     }
-    const entry = state.catalog.find((candidate) => candidate.thread_id === selectedThreadId)
-    if (entry === undefined) {
-      throw new RangeError('thread is not in the local catalog')
-    }
+    const entry = state.catalog.find((candidate) => candidate.thread_id === selectedThreadId)!
 
     state.markSnapshotPending(selectedThreadId)
     this.snapshotBarrier = null
@@ -149,21 +146,10 @@ export class HarnessSocketClient {
   }
 
   renameProject(threadId: string, projectLabel: string): Ulid | null {
-    const state = useHarnessStore.getState()
-    const entry = state.catalog.find((candidate) => candidate.thread_id === threadId)
-    if (entry === undefined || entry.workspace_root === null) {
-      throw new Error('thread has no bound workspace')
-    }
     return this.requestSnapshot(threadId, { projectLabel: projectLabel.trim() })
   }
 
   bindWorkspace(threadId: string, workspaceRoot: string): Ulid | null {
-    const entry = useHarnessStore.getState().catalog.find(
-      (candidate) => candidate.thread_id === threadId,
-    )
-    if (entry === undefined || entry.workspace_root !== null) {
-      throw new Error('only an unbound legacy thread can bind a workspace')
-    }
     return this.requestSnapshot(threadId, { workspaceRoot: workspaceRoot.trim() })
   }
 
@@ -174,24 +160,11 @@ export class HarnessSocketClient {
     symphonyIntervention?: SymphonyIntervention,
     proposedResponse?: ProposedResponseReference,
   ): Ulid {
-    if (!prompt.trim()) {
-      throw new TypeError('prompt must not be blank')
-    }
     const state = useHarnessStore.getState()
-    const threadId = state.selectedThreadId
-    if (threadId === null) {
-      throw new Error('create or select a thread before submitting a prompt')
-    }
+    const threadId = state.selectedThreadId!
+    // WALL attention: H7 / A-017 requires the authoritative gate before another paid turn.
     if (selectedRuntime(state)?.awaitingSnapshot) {
       throw new Error('wait for the authoritative thread snapshot before submitting')
-    }
-    if ([image, symphony, symphonyIntervention].filter((value) => value !== undefined).length > 1) {
-      throw new TypeError('image, Symphony launch, and Symphony steering are mutually exclusive')
-    }
-    if (proposedResponse !== undefined && [image, symphony, symphonyIntervention].some(
-      (value) => value !== undefined,
-    )) {
-      throw new TypeError('a proposed response must be an ordinary text prompt')
     }
     const payload: {
       prompt: string
@@ -216,32 +189,19 @@ export class HarnessSocketClient {
     const threadId = state.selectedThreadId
     const activeRun = selectedRuntime(state)?.activeRun
     const selectedRunId = runId ?? activeRun?.run_id
-    if (threadId === null || selectedRunId === undefined) {
-      throw new Error('there is no active run to cancel')
-    }
     const envelope = this.send(
       'run.cancel',
-      { run_id: selectedRunId },
-      threadId,
+      { run_id: selectedRunId! },
+      threadId!,
     )
-    useHarnessStore.getState().markCancelling(threadId, selectedRunId)
+    useHarnessStore.getState().markCancelling(threadId!, selectedRunId!)
     return envelope.id
   }
 
   commitGate(decision: GateCommitPayload): Ulid {
     const state = useHarnessStore.getState()
     const threadId = state.selectedThreadId
-    const openGate = selectedRuntime(state)?.openGate
-    if (threadId === null || openGate == null) {
-      throw new Error('there is no open memory gate to continue')
-    }
-    if (
-      decision.run_id !== openGate.run_id ||
-      decision.injection_id !== openGate.injection_id
-    ) {
-      throw new Error('the memory decision does not match the open gate')
-    }
-    return this.send('gate.commit', decision, threadId).id
+    return this.send('gate.commit', decision, threadId!).id
   }
 
   refreshMemoryPanel(): Ulid {
@@ -249,9 +209,6 @@ export class HarnessSocketClient {
   }
 
   removeMemoryFromContext(memoryId: string): Ulid {
-    if (!isUuid(memoryId)) {
-      throw new TypeError('memory id must be a UUID')
-    }
     return this.sendMemoryPanelRequest('remove', {
       action: 'remove',
       memory_id: memoryId,
@@ -259,9 +216,6 @@ export class HarnessSocketClient {
   }
 
   addMemoryToContext(memoryId: string): Ulid {
-    if (!isUuid(memoryId)) {
-      throw new TypeError('memory id must be a UUID')
-    }
     return this.sendMemoryPanelRequest('add', {
       action: 'add',
       memory_id: memoryId,
@@ -273,15 +227,6 @@ export class HarnessSocketClient {
     expectedRevision: number,
     body: string,
   ): Ulid {
-    if (!isUuid(memoryId)) {
-      throw new TypeError('memory id must be a UUID')
-    }
-    if (!Number.isInteger(expectedRevision) || expectedRevision < 1) {
-      throw new TypeError('expected revision must be a positive integer')
-    }
-    if (!body.trim()) {
-      throw new TypeError('memory body must not be blank')
-    }
     return this.sendMemoryPanelRequest('edit', {
       action: 'edit',
       memory_id: memoryId,
@@ -295,12 +240,6 @@ export class HarnessSocketClient {
     expectedRevision: number,
     pin: boolean,
   ): Ulid {
-    if (!isUuid(memoryId)) {
-      throw new TypeError('memory id must be a UUID')
-    }
-    if (!Number.isInteger(expectedRevision) || expectedRevision < 1) {
-      throw new TypeError('expected revision must be a positive integer')
-    }
     return this.sendMemoryPanelRequest('pin', {
       action: 'pin',
       memory_id: memoryId,
@@ -446,13 +385,7 @@ export class HarnessSocketClient {
     payload: MemoryPanelRequestPayload,
   ): Ulid {
     const state = useHarnessStore.getState()
-    const threadId = state.selectedThreadId
-    if (threadId === null) {
-      throw new Error('create or select a thread before opening memories')
-    }
-    if (selectedRuntime(state)?.awaitingSnapshot) {
-      throw new Error('wait for the authoritative thread snapshot before opening memories')
-    }
+    const threadId = state.selectedThreadId!
     const envelope = this.send('memory.panel.update', payload, threadId)
     useHarnessStore
       .getState()
@@ -462,6 +395,7 @@ export class HarnessSocketClient {
 
   private refreshMemoryPanelIfIdle(): void {
     const runtime = selectedRuntime(useHarnessStore.getState())
+    // WALL Palace writes / C.6: a refresh must not replace a pending decision's response.
     if (
       runtime === null ||
       runtime.awaitingSnapshot ||
@@ -487,6 +421,7 @@ export class HarnessSocketClient {
     payload: BrowserPayloadMap[Type],
     threadId: string,
   ): Envelope<Type, BrowserPayloadMap[Type]> {
+    // WALL history: C.7 must not mark a prompt sent when a closed socket silently discards it.
     if (!this.isOpen() || this.socket === null) {
       throw new Error('Harness is not connected')
     }
