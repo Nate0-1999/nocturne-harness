@@ -32,10 +32,8 @@ from harness.pydantic_ai_adapter import (
     adopted_skill_capabilities,
 )
 from harness.spine_client import (
-    CreatedMemoryResponse,
     CreateMemoryConflictError,
     DuplicateMemoryConflict,
-    LabelConflict,
     ListMemoriesParams,
     MemorySplitChild,
     MemorySplitResponse,
@@ -127,6 +125,7 @@ class RememberSplitCandidate(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
+    # WALL Palace writes / A-049: every split child must fit the atomic save contract.
     label: StrictStr = Field(
         min_length=1,
         max_length=64,
@@ -162,7 +161,7 @@ class RememberSplitDraft(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    candidates: list[RememberSplitCandidate] = Field(min_length=1, max_length=64)
+    candidates: list[RememberSplitCandidate]
     coverage: list[RememberCoverageSegment] = Field(min_length=1)
     safe_to_save: StrictBool
 
@@ -179,18 +178,19 @@ class ExtractionDraft(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     working_summary: StrictStr
     open_loops: list[StrictStr]
+    # WALL attention / ADR-022: one thread may place at most five decisions in the owner queue.
     candidates: list[ExtractionCandidateDraft] = Field(max_length=5)
 
 
 class SeedSplitDraft(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
-    candidates: list[ExtractionCandidateDraft] = Field(min_length=1, max_length=64)
+    candidates: list[ExtractionCandidateDraft]
 
 
 class ExtractionVerdictDraft(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     verdict: Literal["new", "merge", "supersede", "contradict"]
-    target_ids: list[UUID] = Field(max_length=5)
+    target_ids: list[UUID]
 
 
 @dataclass(frozen=True, slots=True)
@@ -231,10 +231,12 @@ class HarnessAgent:
         self._models_by_name: dict[str, Model] = (
             {settings.chat_model: model} if model is not None else {}
         )
+        # WALL money / C.5: enforce the owner's configured request and token budgets.
         self._usage_limits = UsageLimits(
             request_limit=settings.run_request_limit,
             total_tokens_limit=settings.run_total_tokens_limit,
         )
+        # WALL money / A-049: oversized remember is explicitly limited to two requests.
         self._remember_split_usage_limits = UsageLimits(
             request_limit=2,
             total_tokens_limit=settings.run_total_tokens_limit,
@@ -261,6 +263,7 @@ class HarnessAgent:
             output_type=PromptedOutput(RememberSplitDraft),
             instructions=REMEMBER_SPLIT_INSTRUCTION,
             name="harness-remember-splitter",
+            # INCIDENT F047 / A-050: an invalid losslessness witness returns guidance, no write.
             retries=0,
         )
         self._extraction_agent = Agent(
@@ -333,8 +336,6 @@ class HarnessAgent:
             model_settings=model_settings,
             usage_limits=self._usage_limits,
         )
-        if not isinstance(result.output, str):
-            raise TypeError("chat agent returned a non-text output")
         return ChatResult(
             output=result.output,
             message_history=tuple(result.all_messages()),
@@ -354,6 +355,7 @@ class HarnessAgent:
         """Generate one valid draft, save it in the thread project, and confirm honestly."""
 
         body = text.strip()
+        # WALL money / C.6: an empty /remember must not purchase a metadata request.
         if not body:
             return RememberResult(False, "Nothing to remember; add text after /remember.")
 
@@ -385,12 +387,8 @@ class HarnessAgent:
             return RememberResult(False, "Could not remember: metadata generation failed.")
 
         draft = draft_result.output
-        if not isinstance(draft, RememberDraft):  # pragma: no cover - pydantic-ai type guard
-            return RememberResult(
-                False,
-                "Could not remember: metadata generation returned no data.",
-            )
         label = draft.label.strip()
+        # WALL Palace writes / A-049: do not save generated metadata that loses the source handle.
         if not label:
             return RememberResult(False, "Could not remember: the generated label was blank.")
         if "\n" in label or "\r" in label:
@@ -436,6 +434,7 @@ class HarnessAgent:
         """Plan one semantic family, then write all children or guide without a write."""
 
         try:
+            # INCIDENT F047: bound the splitter that previously stranded oversized /remember.
             async with asyncio.timeout(self._settings.remember_split_timeout_seconds):
                 draft_result = await _run_structured_agent(
                     self._remember_splitter_agent,
@@ -462,8 +461,6 @@ class HarnessAgent:
         if draft_result.response.state != "complete":
             return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
         draft = draft_result.output
-        if not isinstance(draft, RememberSplitDraft):  # pragma: no cover - type guard
-            return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
         children = _validated_remember_split(
             draft,
             source_body=body,
@@ -538,7 +535,6 @@ class HarnessAgent:
                     context,
                     exc.conflict.duplicate_of.memory_id,
                 )
-            assert isinstance(exc.conflict, LabelConflict)
             conflict = exc.conflict.label_conflict
             return RememberResult(
                 False,
@@ -559,8 +555,6 @@ class HarnessAgent:
                 f"{existing.label!r}. Open Memory and edit that memory if this changes it; "
                 "otherwise rephrase this as a distinct fact and try /remember again.",
             )
-        if not isinstance(response, CreatedMemoryResponse):  # pragma: no cover - closed union
-            return RememberResult(False, "Not saved: Memory returned an invalid response.")
         created = response.created
         return RememberResult(
             True,
@@ -679,8 +673,6 @@ class HarnessAgent:
             model=self._select_model(model),
             usage_limits=self._usage_limits,
         )
-        if not isinstance(result.output, ExtractionDraft):
-            raise TypeError("extraction agent returned no structured result")
         return result.output
 
     async def propose_extraction_verdict(
@@ -697,14 +689,15 @@ class HarnessAgent:
             model=self._select_model(model),
             usage_limits=self._usage_limits,
         )
-        if not isinstance(result.output, ExtractionVerdictDraft):
-            raise TypeError("extraction verdict agent returned no structured result")
         allowed = {UUID(item["memory_id"]) for item in neighbors}
         if any(target not in allowed for target in result.output.target_ids):
+            # WALL Palace writes / ADR-022: affect only fetched candidates.
             raise ValueError("extraction verdict targeted a memory outside its fetched neighbors")
         if result.output.verdict == "new" and result.output.target_ids:
+            # WALL Palace writes / ADR-022: affect only fetched candidates.
             raise ValueError("new extraction verdict cannot have targets")
         if result.output.verdict != "new" and not result.output.target_ids:
+            # WALL Palace writes / ADR-022: affect only fetched candidates.
             raise ValueError("non-new extraction verdict requires a target")
         return result.output
 
@@ -722,18 +715,19 @@ class HarnessAgent:
             model=self._select_model(model),
             usage_limits=self._usage_limits,
         )
-        if not isinstance(result.output, SeedSplitDraft):
-            raise TypeError("seed splitter returned no structured result")
         for candidate in result.output.candidates:
             invalid_label = (
                 not candidate.label.strip()
                 or len(candidate.label.strip()) > self._settings.label_max
             )
             if invalid_label:
+                # WALL Palace writes / A-033: validate a whole seed batch before creating any child.
                 raise ValueError("seed splitter produced an invalid label")
             if cl100k_token_count(candidate.body.strip()) > 128:
+                # WALL Palace writes / A-033: validate a whole seed batch before creating any child.
                 raise ValueError("seed splitter produced a child above the 128-token limit")
             if _normalize_keywords(candidate.keywords) is None:
+                # WALL Palace writes / A-033: validate a whole seed batch before creating any child.
                 raise ValueError("seed splitter produced invalid keywords")
         return result.output
 
@@ -833,6 +827,7 @@ def _validated_remember_split(
     labels: set[str] = set()
     bodies: set[str] = set()
     is_split = len(draft.candidates) >= 2
+    # WALL Palace writes / A-050: account for every exact source span before any child is saved.
     if not draft.safe_to_save:
         return None
     if "".join(segment.text for segment in draft.coverage) != source_body:
@@ -883,6 +878,7 @@ def _validated_remember_split(
 
 
 def _normalize_keywords(values: Sequence[str]) -> list[str] | None:
+    # WALL Palace writes / A-049: require the indexed terms promised by an atomic remember.
     keywords: list[str] = []
     seen: set[str] = set()
     for value in values:
