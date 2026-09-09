@@ -65,8 +65,6 @@ def _credential_path(target: Path) -> bool:
 def _clean_path(raw_path: object, *, default: str | None = None) -> str:
     if raw_path is None and default is not None:
         return default
-    if not isinstance(raw_path, str) or not raw_path.strip():
-        raise ValueError("path must be a nonblank string")
     cleaned = raw_path.strip()
     return cleaned[1:] if cleaned.startswith("@") else cleaned
 
@@ -188,18 +186,10 @@ class PydanticHarnessToolset:
         fence_reads: bool = False,
         presence_sink: PresenceSink | None = None,
     ) -> Self:
-        for name, value in (
-            ("agent_id", agent_id),
-            ("machine_id", machine_id),
-            ("session_id", session_id),
-        ):
-            if not value.strip() or "\n" in value or "\r" in value:
-                raise ValueError(f"{name} must be nonblank and single-line")
         initial_location = (cwd or Path.cwd()).resolve(strict=True)
         root = (workspace_root or initial_location).resolve(strict=True)
-        if not initial_location.is_dir() or not root.is_dir():
-            raise ValueError("cwd and workspace_root must be existing directories")
         if not _inside(root, initial_location):
+            # WALL owner files / ADR015: initial presence cannot exceed the granted workspace.
             raise ValueError("cwd must be inside workspace_root")
         return cls(
             location=AgentLocation(
@@ -223,9 +213,8 @@ class PydanticHarnessToolset:
         self._require_open()
         target = path if path.is_absolute() else self._location.cwd / path
         target = target.resolve(strict=True)
-        if not target.is_dir():
-            raise ValueError(f"Cannot move to {target}: not a directory.")
         if not _inside(self._location.workspace_root, target):
+            # WALL owner files / ADR015: movement cannot enlarge the write grant.
             raise ValueError(f"Cannot move outside the workspace {self._location.workspace_root}.")
         self._location = AgentLocation(
             agent_id=self._location.agent_id,
@@ -248,22 +237,16 @@ class PydanticHarnessToolset:
             if tool_name == "move":
                 location = await self.move(Path(_clean_path(arguments.get("path"))))
                 content = f"Moved to {location.cwd}."
-            elif tool_name == "bash":
-                content = await self._bash(arguments)
-            elif tool_name == "read":
-                content = await self._read(arguments)
-            elif tool_name == "write":
-                content = await self._write(arguments)
-            elif tool_name == "edit":
-                content = await self._edit(arguments)
-            elif tool_name == "grep":
-                content = await self._grep(arguments)
-            elif tool_name == "find":
-                content = await self._find(arguments)
-            elif tool_name == "ls":
-                content = await self._ls(arguments)
             else:
-                raise ValueError(f"unsupported standard tool: {tool_name}")
+                content = await {
+                    "bash": self._bash,
+                    "read": self._read,
+                    "write": self._write,
+                    "edit": self._edit,
+                    "grep": self._grep,
+                    "find": self._find,
+                    "ls": self._ls,
+                }[tool_name](arguments)
         except (ToolsetError, ModelRetry, OSError, ValueError) as exc:
             return ToolExecutionResult(tool_name=tool_name, content=str(exc), success=False)
         return ToolExecutionResult(tool_name=tool_name, content=content, success=True)
@@ -276,6 +259,7 @@ class PydanticHarnessToolset:
 
     def _require_open(self) -> None:
         if self._closed:
+            # WALL owner files / ADR015: writes require a live presence session.
             raise ToolsetError("The workspace toolset is closed.")
 
     def _emit(self, event: str, path: Path) -> None:
@@ -300,10 +284,12 @@ class PydanticHarnessToolset:
     def _preflight(self, tool_name: str, raw_path: object, *, default: str | None = None) -> Path:
         target = self._target(raw_path, default=default)
         if tool_name in _READ_TOOLS and _credential_path(target):
+            # WALL credentials / ADR015: do not expose credential files through reads.
             raise ToolsetError(
                 "That path may contain credentials. Ask the owner before reading it."
             )
         if tool_name in _WRITE_TOOLS and target.parent != self._location.cwd:
+            # WALL owner files / ADR015: require presence in the exact directory being written.
             raise ToolsetError(
                 "Modification requires presence in the file's directory. "
                 f"Move to {target.parent} first."
@@ -313,6 +299,7 @@ class PydanticHarnessToolset:
             and tool_name in _READ_TOOLS
             and not _inside(self._location.cwd, target)
         ):
+            # WALL owner files / ADR015: honor the delegated read boundary.
             raise ToolsetError(
                 f"That path is outside this agent's location. Move to {target} first."
             )
@@ -326,6 +313,7 @@ class PydanticHarnessToolset:
         search_limit: int = 1000,
         find_limit: int = 1000,
     ) -> FileSystemToolset[Any]:
+        # WALL money / ADR015: page tool output before it becomes paid model context.
         return FileSystemToolset(
             root_dir=root,
             allowed_patterns=[],
@@ -341,10 +329,6 @@ class PydanticHarnessToolset:
         target = self._preflight("read", arguments.get("path"))
         offset = arguments.get("offset", 1)
         limit = arguments.get("limit", 2000)
-        if not isinstance(offset, int) or offset < 1:
-            raise ValueError("offset must be a positive one-indexed line number")
-        if not isinstance(limit, int) or limit < 1:
-            raise ValueError("limit must be positive")
         result = await self._filesystem(target.parent).read_file(
             target.name, offset=offset - 1, limit=limit
         )
@@ -354,8 +338,6 @@ class PydanticHarnessToolset:
     async def _write(self, arguments: Mapping[str, object]) -> str:
         target = self._preflight("write", arguments.get("path"))
         content = arguments.get("content")
-        if not isinstance(content, str):
-            raise ValueError("content must be a string")
         relative = target.relative_to(self._location.cwd)
         result = await self._filesystem(self._location.cwd).write_file(str(relative), content)
         self._emit("write", target)
@@ -364,19 +346,17 @@ class PydanticHarnessToolset:
     async def _edit(self, arguments: Mapping[str, object]) -> str:
         target = self._preflight("edit", arguments.get("path"))
         edits = arguments.get("edits")
-        if not isinstance(edits, list) or not edits:
-            raise ValueError("edits must be a nonempty list")
         original = target.read_text(encoding="utf-8")
         spans: list[tuple[int, int, str]] = []
         for item in edits:
-            if not isinstance(item, Mapping):
-                raise ValueError("each edit must be a mapping")
             old_text = item.get("oldText")
             new_text = item.get("newText")
             if not isinstance(old_text, str) or not old_text or not isinstance(new_text, str):
+                # WALL owner files / ADR015: an empty search would replace unspecified file bytes.
                 raise ValueError("each edit requires nonblank oldText and string newText")
             count = original.count(old_text)
             if count != 1:
+                # WALL owner files / ADR015: do not guess which occurrence the model meant to edit.
                 raise ToolsetError(
                     f"oldText found {count} times; each replacement must be unique "
                     "in the original file"
@@ -385,6 +365,7 @@ class PydanticHarnessToolset:
             spans.append((start, start + len(old_text), new_text))
         ordered = sorted(spans)
         if any(left[1] > right[0] for left, right in zip(ordered, ordered[1:], strict=False)):
+            # WALL owner files / ADR015: overlapping replacements would corrupt file bytes.
             raise ToolsetError("edit replacements overlap in the original file")
         revised = original
         for start, end, replacement in reversed(ordered):
@@ -399,24 +380,14 @@ class PydanticHarnessToolset:
 
     async def _grep(self, arguments: Mapping[str, object]) -> str:
         target = self._preflight("grep", arguments.get("path"), default=".")
-        if not target.is_dir():
-            raise ValueError("grep path must be a directory")
         pattern = arguments.get("pattern")
-        if not isinstance(pattern, str):
-            raise ValueError("pattern must be a string")
         if arguments.get("literal", False):
             pattern = re.escape(pattern)
         if arguments.get("ignoreCase", False):
             pattern = f"(?i:{pattern})"
         glob = arguments.get("glob")
-        if glob is not None and not isinstance(glob, str):
-            raise ValueError("glob must be a string")
         context = arguments.get("context", 0)
         limit = arguments.get("limit", 100)
-        if not isinstance(context, int) or context < 0:
-            raise ValueError("context must be a nonnegative integer")
-        if not isinstance(limit, int) or limit < 1:
-            raise ValueError("limit must be positive")
         filesystem = self._filesystem(target, search_limit=limit)
         matches = await filesystem.search_files(pattern, path=".", include_glob=glob)
         self._emit("read", target)
@@ -452,23 +423,15 @@ class PydanticHarnessToolset:
 
     async def _find(self, arguments: Mapping[str, object]) -> str:
         target = self._preflight("find", arguments.get("path"), default=".")
-        if not target.is_dir():
-            raise ValueError("find path must be a directory")
         pattern = arguments.get("pattern")
         limit = arguments.get("limit", 1000)
-        if not isinstance(pattern, str) or not isinstance(limit, int) or limit < 1:
-            raise ValueError("find requires a string pattern and positive limit")
         result = await self._filesystem(target, find_limit=limit).find_files(pattern, path=".")
         self._emit("read", target)
         return result
 
     async def _ls(self, arguments: Mapping[str, object]) -> str:
         target = self._preflight("ls", arguments.get("path"), default=".")
-        if not target.is_dir():
-            raise ValueError("ls path must be a directory")
         limit = arguments.get("limit", 500)
-        if not isinstance(limit, int) or limit < 1:
-            raise ValueError("limit must be positive")
         result = await self._filesystem(target, list_limit=limit).list_directory(".")
         self._emit("read", target)
         return result
@@ -476,21 +439,20 @@ class PydanticHarnessToolset:
     async def _bash(self, arguments: Mapping[str, object]) -> str:
         command = arguments.get("command")
         timeout = arguments.get("timeout")
-        if not isinstance(command, str) or not command.strip():
-            raise ValueError("command must be a nonblank string")
-        if timeout is not None and not isinstance(timeout, (int, float)):
-            raise ValueError("timeout must be numeric")
         if _BOUNDARY_COMMAND.search(command):
+            # WALL owner files / ADR015: shell tools cannot publish or escape the project grant.
             raise ToolsetError(
                 "That command may leave this project or change remote state. "
                 "Ask the owner to run it explicitly outside Nocturne."
             )
         if _CREDENTIAL_COMMAND.search(command):
+            # WALL credentials / ADR015: shell output must not read credential stores.
             raise ToolsetError(
                 "That command may expose credentials. Ask the owner before reading them."
             )
         sandbox = Path("/usr/bin/sandbox-exec")
         if not sandbox.is_file():
+            # WALL owner files / ADR015: never run an unfenced shell when sandboxing is absent.
             raise ToolsetError(
                 "Secure shell is unavailable on this host; use read, edit, and write instead."
             )
@@ -516,8 +478,8 @@ class PydanticHarnessToolset:
             allowed_commands=[],
             denied_commands=[],
             denied_operators=[],
-            default_timeout=2_147_483.0,
-            max_output_chars=200_000,
+            default_timeout=2_147_483.0,  # WALL money / ADR-015: launched process lifetime.
+            max_output_chars=200_000,  # WALL money / F034: tool output enters paid context.
             persist_cwd=False,
             allow_interactive=False,
             env=environment,
