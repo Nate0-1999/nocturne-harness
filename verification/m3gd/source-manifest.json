@@ -1,0 +1,34 @@
+{
+  "baseline": "8e6c63e",
+  "sha256": {
+    "src/harness/memory_gate.py": "729839e9f2def3f3ae24f34203c52aee1075789277f66696e25a0f3adbe27f20",
+    "src/harness/spine_client.py": "15eb945146118d578f7f3813993046b86c678ef0ae592508ea353ac709a48b4c",
+    "src/harness/transcript.py": "879170dfd9908423bf75fa1179aa011bf6700fc7e47562458c9a44d7b3f575e7",
+    "src/harness/agent_runtime.py": "869c6871fbf498bfb203cbfc951c6de998dc5c753d64aef2126b17105e7f30c4",
+    "src/harness/memory_bridge.py": "4cc1fb052516aee24e2490318a81039b2eef23a3d7b482d555b47f345f725f67",
+    "src/harness/toolset_runtime.py": "b0c6dd2c3d917dc0ad8a0978230572196171c1d4c34457b16e49c2dfce6b0cf1",
+    "src/harness/run_loop.py": "fec55a0706211bfe05835b7e23db51adb2416cab2c4c57f82aa60b610c5db5aa",
+    "src/harness/pydantic_harness_adapter.py": "04d2a342ca37f3221171269f59c99212b2c3491605169a24b29c470478b51df0",
+    "src/harness/progressive_prompt.py": "b2d1c2f3a830a80fb1b00ccca561b81c80b4675504773035a34585535efcc9cb",
+    "src/harness/agent.py": "88242680b80cf4b7cd9493df55d3bb90e1b28d243800f281cbad51ecdde3c7e4",
+    "src/harness/envelope.py": "c66232a3224f2442233bf4157346cc8d420b9804bf1da37b248290845e5cda37",
+    "web/src/App.tsx": "f7c0db649dfb921f946773b0f1f5c8356984cb336c22abd12a2a79e4f9493a24",
+    "web/src/socket.ts": "98c7e55cf59cda9425e1b6835233380a6f2d15114e66cb3588c26fb6299c370d",
+    "web/src/rackBridge.tsx": "b9978f2e571d29af6a5eb125b3efe8211e07d6214b79f02099c80b99aff3c5eb",
+    "web/src/store.ts": "a90e7b46e5ffbe7e006540c35403a0507d093d77d4552e9d0475e2fdd7453440",
+    "web/dist/index.html": "888bffca603f41717df66216f6b6c0f02801ff41826e5ab052c58dc6ef91587b",
+    "web/dist/assets/index-DEIbfrl1.js": "0243ea16f7a3b53158b17da08723e72c344e6fd52bdfb71104616a9a51fd1133"
+  },
+  "inherited_motivation_failures": 18,
+  "unchanged_files_with_inherited_failures": [
+    "tests/test_browser_consent.py",
+    "tests/test_browser_runtime.py",
+    "tests/test_browser_toolset.py",
+    "tests/test_m2ux6_grimoire_themes.py",
+    "tests/test_toolset_runtime.py",
+    "web/tests/memoryIngest.test.mjs",
+    "web/tests/spendTable.test.mjs",
+    "web/tests/stageLayout.test.mjs",
+    "web/tests/threadIndexSource.test.mjs"
+  ]
+}
