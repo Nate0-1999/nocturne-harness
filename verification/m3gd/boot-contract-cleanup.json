@@ -1,0 +1,32 @@
+[
+  {
+    "memory_id": "c37ff43d-c0de-4331-84e3-bb46dd830bed",
+    "principal_id": "hard-c999f91b169340c5a2b2b6d98c69a3ce",
+    "status": "tombstoned",
+    "revision": 2
+  },
+  {
+    "memory_id": "206b616b-1253-4dfd-9aab-4ee8cb3274ce",
+    "principal_id": "similar-c999f91b169340c5a2b2b6d98c69a3ce",
+    "status": "tombstoned",
+    "revision": 2
+  },
+  {
+    "memory_id": "9cbf52f5-9ad2-49a5-8e8a-a77318667ca8",
+    "principal_id": "similar-c999f91b169340c5a2b2b6d98c69a3ce",
+    "status": "tombstoned",
+    "revision": 2
+  },
+  {
+    "memory_id": "f3da8976-1290-4bce-8dfd-5707a916980c",
+    "principal_id": "cas-d5ca441601454d0ba82924214be0bf50",
+    "status": "tombstoned",
+    "revision": 3
+  },
+  {
+    "memory_id": "228e3fad-e2c3-4f79-91d4-074811d566b9",
+    "principal_id": "cas-d5ca441601454d0ba82924214be0bf50",
+    "status": "tombstoned",
+    "revision": 2
+  }
+]
