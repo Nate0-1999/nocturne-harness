@@ -381,6 +381,7 @@ function applyQueued(thread: ThreadState, payload: PromptQueuedPayload): ThreadS
 }
 
 function applyDelta(thread: ThreadState, payload: RunDeltaPayload): ThreadState {
+  // WALL attention / H7: late output cannot be appended to a different active answer.
   if (thread.activeRun?.run_id !== payload.run_id) {
     return thread
   }
@@ -773,9 +774,6 @@ export const useHarnessStore = create<HarnessStoreState>()(
       },
 
       selectThread: (threadId) => {
-        if (!get().catalog.some((entry) => entry.thread_id === threadId)) {
-          throw new RangeError('thread is not in the local catalog')
-        }
         set((state) => ({
           selectedThreadId: threadId,
           threads: replaceThread(state.threads, threadId, (thread) => ({
@@ -791,9 +789,6 @@ export const useHarnessStore = create<HarnessStoreState>()(
 
       beginPrompt: (threadId, promptId, prompt, image) => {
         const title = normalizedThreadTitle(prompt)
-        if (!title) {
-          throw new TypeError('prompt must not be blank')
-        }
         set((state) => ({
           drafts: { ...state.drafts, [threadId]: '' },
           catalog: state.catalog.map((entry) => {
@@ -921,6 +916,7 @@ export const useHarnessStore = create<HarnessStoreState>()(
           set({ globalError: errorFromPayload(event.payload) })
           return false
         }
+        // WALL attention / H7: never project another thread's traffic into the selected one.
         if (
           selectedThreadId === null ||
           envelope.thread_id !== selectedThreadId
