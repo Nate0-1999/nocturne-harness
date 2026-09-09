@@ -3317,3 +3317,18 @@ Conversation drafts live per thread in the existing host store and cross the
 existing rack bridge. The composer mirrors text locally while typing and restores
 it on remount; successful send clears the host draft. This covers mode and thread
 switches, without adding durable draft storage or changing the snapshot barrier.
+
+## 112 — Unsupported core refusals become framework behavior [P1.5, P2, M3GD]
+
+Apply SPEC B.6 rule 14 to the fifteen charged core-loop files. Remove duplicate
+type, identifier, response-shape, usage-order and text-reconciliation refusals;
+remove unsupported instruction truncation and proposal-size limits. Keep cited
+file, credential, spend, Palace-write and owner-decision boundaries. Every retained
+explicit Python refusal is exercised by a test quoting its message.
+
+Palace owns response admission; browser write intents still exclude host provenance.
+The journal still captures before execution, tool writes still require presence,
+and stale runs cannot decide the current memory gate. Conversation permits drafting
+during review while its send remains held. Existing owner budgets and the separate
+split budget remain. The site ledger and real-provider evidence are in
+`verification/m3gd/`; report 199 records the counts and verification limits.
