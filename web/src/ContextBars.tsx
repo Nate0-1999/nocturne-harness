@@ -115,7 +115,7 @@ export function ContextBars() {
                 : ` · ${formatHumanCount(visibleObservation.memory_allocation.unused_share_tokens)} unused returns to chat`}
             </p>
           )}
-          <p className="context-bars__note">Tools include measured traffic · other lanes estimated · 80% line · Compaction is not active</p>
+          <p className="context-bars__note">Tools include measured traffic · other lanes estimated · Compaction at 80% of the main conversation</p>
         </>
       )}
       {failed && <button className="context-bars__retry" onClick={() => setRefresh((value) => value + 1)}>Context usage unavailable · retry</button>}

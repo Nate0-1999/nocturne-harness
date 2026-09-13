@@ -43,7 +43,7 @@ def test_tracker_keeps_measured_total_and_exact_limit_with_estimated_split() -> 
     assert observation.threshold_tokens == 12_800
     assert sum(observation.categories.model_dump().values()) == 1_250
     assert observation.breakdown_basis == "estimated"
-    assert observation.compaction_active is False
+    assert observation.compaction_active is True
     assert observation.memory_allocation is not None
     assert observation.memory_allocation.share_tokens == 1_600
     assert observation.memory_allocation.pinned_overflow_tokens == 220
