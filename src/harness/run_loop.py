@@ -1983,11 +1983,17 @@ class RunLoop:
 
     @staticmethod
     def _rehydrate_model_history(transcript: HydratedTranscript) -> tuple[object, ...]:
+        from pydantic_ai.messages import ModelMessagesTypeAdapter
+
         history: list[object] = []
         messages = transcript.messages
         for index in range(0, len(messages) - 1, 2):
             user = messages[index]
             assistant = messages[index + 1]
+            checkpoint = transcript.compaction_histories.get(assistant.get("run_id"))
+            if checkpoint is not None:
+                history = list(ModelMessagesTypeAdapter.validate_python(checkpoint))
+                continue
             prompt = user.get("content")
             answer = assistant.get("content")
             if (

@@ -3366,6 +3366,11 @@ function MessageRow({
         <span>Nocturne</span>
         {status !== null && <span className="message__status">{status}</span>}
       </header>
+      {message.events.some((event) => event.event_kind === 'compaction_completed') && (
+        <p className="message__content message__content--quiet" data-testid="compaction-completed">
+          Conversation compacted · full history kept in the journal
+        </p>
+      )}
       {message.content ? (
         <AssistantMarkdown content={message.content} />
       ) : (
