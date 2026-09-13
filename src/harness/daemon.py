@@ -856,6 +856,13 @@ def create_dev_app(
             lambda envelope: loop.publish(thread_id, envelope),
         )
 
+    extraction = ExtractionService(
+        journal=journal,
+        agent=owned_agent,
+        spine=owned_spine,
+        principal_id=principal_id,
+        machine_id=machine_id,
+    )
     runner = MemoryGateTurnRunner(
         PydanticAITurnRunner(
             owned_agent,
@@ -863,6 +870,7 @@ def create_dev_app(
             owned_spine,
             receipt_queue=receipt_queue,
             context_windows=context_windows,
+            extraction=extraction,
         ),
         owned_spine,
         context_factory,
@@ -975,13 +983,6 @@ def create_dev_app(
         model_resolver=model_resolver,
         transcript_journal=journal,
         symphony_experience=owned_symphony_experience,
-    )
-    extraction = ExtractionService(
-        journal=journal,
-        agent=owned_agent,
-        spine=owned_spine,
-        principal_id=principal_id,
-        machine_id=machine_id,
     )
     seed_ingestion = SeedIngestionService(
         agent=owned_agent,

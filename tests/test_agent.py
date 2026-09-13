@@ -439,7 +439,6 @@ async def test_chat_returns_output_and_reusable_full_history_with_exact_limits()
     assert all(
         [tool.name for tool in info.function_tools]
         == [
-            "save_memory",
             "search_memory",
             "edit_memory",
             "read",
@@ -1408,7 +1407,6 @@ async def test_near_miss_remember_commands_are_ordinary_chat(ordinary_text: str)
     assert result.message_history
     assert len(calls) == 1
     assert [tool.name for tool in calls[0][1].function_tools] == [
-        "save_memory",
         "search_memory",
         "edit_memory",
         "read",

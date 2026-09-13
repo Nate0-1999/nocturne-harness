@@ -27,6 +27,7 @@ from harness.model_router import (
     ModelConfigurationError as ModelConfigurationError,
 )
 from harness.pydantic_ai_adapter import (
+    COMPACTION_SUMMARY_PROMPT,
     MemoryCapability,
     WorkspaceCapability,
     adopted_skill_capabilities,
@@ -97,10 +98,13 @@ REMEMBER_SPLIT_GUIDANCE = (
     "save it. Please break it into separate facts and try /remember again."
 )
 EXTRACTION_INSTRUCTION = (
-    "Read the complete thread transcript. Return a concise working summary, open loops, and at "
-    "most five durable memory candidates. Each candidate must be atomic, stand alone, preserve "
-    "uncertainty, and include 2-5 distinct lowercase searchable keywords. Do not extract transient "
-    "chat or facts that are not useful beyond this thread."
+    "Triage the supplied conversation in ONE pass: still-live context goes in working_summary "
+    "and open_loops; important information no longer needed for the current work goes in "
+    "candidates; transient or unimportant details remain only in the original journal. "
+    "Follow the supplied summary strategy. Propose at most five durable memories, each one "
+    "standalone fact of at most 128 cl100k_base tokens, a label of at most 64 characters, "
+    "and 2-5 distinct lowercase keywords. Preserve uncertainty. Never extract secrets or "
+    "credentials. Do not treat sub-agent bulk or verification instructions as durable facts."
 )
 SEED_SPLIT_INSTRUCTION = (
     "Semantically split the complete Markdown document into durable atomic memories. Preserve "
@@ -251,6 +255,17 @@ class HarnessAgent:
             deps_type=MemoryToolContext,
             capabilities=chat_capabilities,
             name="harness-chat",
+        )
+        self.worker_agent = Agent(
+            self._default_model,
+            deps_type=MemoryToolContext,
+            capabilities=[WorkspaceCapability()],
+            instructions=(
+                "Complete only the delegated task. Return a concise distillate: findings, "
+                "evidence paths, and unresolved questions. Keep bulk output in files. "
+                "You have no memory tools and may not make memories or address the owner."
+            ),
+            name="harness-worker",
         )
         self._label_agent = Agent(
             self._default_model,
@@ -665,14 +680,21 @@ class HarnessAgent:
         transcript: str,
         *,
         model: Model | str | None = None,
+        usage: RunUsage | None = None,
+        model_settings: ModelSettings | None = None,
+        on_result=None,
     ) -> ExtractionDraft:
         """Run the tools-free cheap-model extraction pass over one durable transcript."""
 
         result = await self._extraction_agent.run(
-            transcript,
+            COMPACTION_SUMMARY_PROMPT.format(messages=transcript),
             model=self._select_model(model),
             usage_limits=self._usage_limits,
+            usage=usage,
+            model_settings={**(model_settings or {}), "temperature": 0},
         )
+        if on_result is not None:
+            await on_result(result.all_messages())
         return result.output
 
     async def propose_extraction_verdict(
@@ -681,6 +703,8 @@ class HarnessAgent:
         neighbors: list[dict[str, str]],
         *,
         model: Model | str | None = None,
+        usage: RunUsage | None = None,
+        on_result=None,
     ) -> ExtractionVerdictDraft:
         """Give the thread-aware extractor the corpus neighborhood before queue birth."""
 
@@ -688,7 +712,10 @@ class HarnessAgent:
             f"Candidate: {candidate.model_dump_json()}\nNeighbors: {neighbors!r}",
             model=self._select_model(model),
             usage_limits=self._usage_limits,
+            usage=usage,
         )
+        if on_result is not None:
+            await on_result(result.all_messages())
         allowed = {UUID(item["memory_id"]) for item in neighbors}
         if any(target not in allowed for target in result.output.target_ids):
             # WALL Palace writes / ADR-022: affect only fetched candidates.

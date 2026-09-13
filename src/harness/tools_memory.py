@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Protocol
 from uuid import UUID
@@ -81,6 +82,7 @@ class MemoryToolContext:
     origin_path: str | None = None
     toolset: StandardToolset | None = None
     excluded_memory_ids: frozenset[UUID] = frozenset()
+    delegate: Callable[[str], Awaitable[str]] | None = None
     _run_state: _MemoryToolRunState = field(
         default_factory=_MemoryToolRunState,
         repr=False,

@@ -35,8 +35,10 @@ from pydantic_core import to_jsonable_python
 
 from harness.agent import HarnessAgent
 from harness.commands import browser_open_web_command, remember_command_text
+from harness.conductor import _MAX_DISTILLATE_BYTES
 from harness.context_window import ContextWindowTracker
-from harness.envelope import ProviderErrorPayload, StopReason
+from harness.envelope import ProviderErrorPayload, StopReason, generate_ulid
+from harness.extraction import ExtractionService
 from harness.model_policy import ThreadModelResolution
 from harness.model_router import model_settings_for
 from harness.proposed_response import (
@@ -45,6 +47,7 @@ from harness.proposed_response import (
     parse_proposed_response_output,
     proposed_response_event,
 )
+from harness.pydantic_ai_adapter import DelegateCapability, MemoryCompaction
 from harness.receipt_queue import SpendReceiptQueue
 from harness.run_protocol import (
     DynamicSystemInstructions,
@@ -60,6 +63,7 @@ from harness.spend import (
     model_response_receipts,
 )
 from harness.tools_memory import MemoryToolContext
+from harness.toolset_runtime import LazyStandardToolset
 
 type ContextFactory = Callable[[str], MemoryToolContext]
 
@@ -102,6 +106,7 @@ class PydanticAITurnRunner:
         receipt_queue: SpendReceiptQueue | None = None,
         context_windows: ContextWindowTracker | None = None,
         clock: Callable[[], datetime] | None = None,
+        extraction: ExtractionService | None = None,
     ) -> None:
         self._agent = agent
         self._context_factory = context_factory
@@ -109,6 +114,7 @@ class PydanticAITurnRunner:
         self._receipt_queue = receipt_queue
         self._context_windows = context_windows
         self._clock = clock or (lambda: datetime.now(UTC))
+        self._extraction = extraction
 
     async def run(
         self,
@@ -138,11 +144,67 @@ class PydanticAITurnRunner:
         )
         model_settings = _model_settings(model_resolution, thread_id)
 
+        async def record_extraction(messages):
+            await self._record_spend(
+                messages, prior_history=(), context=context, emit=emit,
+                purpose="extraction", memory_id=None,
+            )
+
+        compaction = (
+            MemoryCompaction(
+                self._extraction, emit, model_resolution.context_tokens, record_extraction
+            )
+            if self._extraction is not None and model_resolution is not None else None
+        )
+
         try:
             context = replace(
                 self._context_factory(thread_id),
                 excluded_memory_ids=frozenset(excluded_memory_ids),
             )
+            async def delegate(task: str) -> str:
+                worker_id = generate_ulid()
+                location = context.toolset.location() if context.toolset is not None else None
+                toolset = None if location is None else LazyStandardToolset(
+                    cwd=location.cwd, workspace_root=location.workspace_root,
+                    agent_id=f"{context.agent_id}/{worker_id}", machine_id=context.machine_id,
+                    fence_reads=location.fence_reads,
+                )
+                worker_context = replace(context, toolset=toolset, delegate=None)
+                try:
+                    result = await self._agent.worker_agent.run(
+                        task, deps=worker_context, model=selected_model,
+                        model_settings=model_settings, usage=run_usage,
+                        usage_limits=self._agent.usage_limits,
+                    )
+                    full = result.output
+                    self._extraction._journal.append_worker_return(
+                        thread_id, worker_id, full, to_jsonable_python(result.all_messages()),
+                    )
+                    await self._record_spend(
+                        result.all_messages(), prior_history=(), context=worker_context,
+                        emit=emit, purpose="building", memory_id=None,
+                    )
+                    encoded = full.encode("utf-8")
+                    marker = "\n[Return capped; full result is in the conversation journal.]"
+                    # WALL main context / D.2 153: worker bulk must not force compaction.
+                    distilled = full if len(encoded) <= _MAX_DISTILLATE_BYTES else (
+                        encoded[:_MAX_DISTILLATE_BYTES - len(marker.encode())].decode(
+                            "utf-8", errors="ignore"
+                        ) + marker
+                    )
+                    await emit.event({
+                        "event_kind": "worker_return", "worker_id": worker_id,
+                        "full_bytes": len(encoded), "returned_bytes": len(distilled.encode()),
+                        "capped": len(encoded) > _MAX_DISTILLATE_BYTES,
+                    })
+                    return distilled
+                finally:
+                    if toolset is not None:
+                        await toolset.close()
+
+            if self._extraction is not None:
+                context = replace(context, delegate=delegate)
             if is_browser_consent:
                 message = "Open-web browser access is allowed for this thread."
                 if image is not None:
@@ -200,6 +262,10 @@ class PydanticAITurnRunner:
                     usage_limits=self._agent.usage_limits,
                     usage=run_usage,
                     event_stream_handler=bridge.handle,
+                    capabilities=(
+                        [DelegateCapability(), *([compaction] if compaction is not None else [])]
+                        if self._extraction is not None else None
+                    ),
                 )
             visible_output = await bridge.finalize(
                 "".join(
@@ -215,6 +281,10 @@ class PydanticAITurnRunner:
             usage = _usage_snapshot(result.usage)
             await bridge.publish_usage(usage)
             history = tuple(result.all_messages())
+            if compaction is not None and compaction.completed:
+                self._extraction._journal.append_compaction_history(
+                    thread_id, emit.run_id, to_jsonable_python(history),
+                )
             return TurnOutcome(
                 StopReason("end_turn"),
                 history,

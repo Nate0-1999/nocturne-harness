@@ -1220,6 +1220,14 @@ class SpineClient:
         response = await self._request("POST", "retrain")
         return _expect_success(response, status=200, adapter=_RETRAIN_RESPONSE)
 
+    async def notify_compaction(self, event_uid: str, thread_id: UUID) -> None:
+        response = await self._request(
+            "POST", "v1/compactions",
+            json_body={"event_uid": event_uid, "thread_id": str(thread_id)},
+        )
+        if response.status_code != 202:
+            _raise_problem(response)
+
     async def create_scorer_config(
         self, request: CreateScorerConfigRequest
     ) -> ScorerConfigurationView:
