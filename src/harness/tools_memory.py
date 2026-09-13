@@ -85,6 +85,7 @@ class MemoryToolContext:
     skill_directories: tuple[Path, ...] = ()
     boundary_review: Callable[[str, str], Awaitable[str]] | None = None
     excluded_memory_ids: frozenset[UUID] = frozenset()
+    delegate: Callable[[str], Awaitable[str]] | None = None
     _run_state: _MemoryToolRunState = field(
         default_factory=_MemoryToolRunState,
         repr=False,

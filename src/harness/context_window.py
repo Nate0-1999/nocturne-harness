@@ -44,7 +44,7 @@ class ContextObservation(BaseModel):
     threshold_tokens: int = Field(gt=0)
     categories: ContextCategories
     breakdown_basis: Literal["estimated"] = "estimated"
-    compaction_active: Literal[False] = False
+    compaction_active: bool = True
     memory_allocation: ContextMemoryAllocation | None = None
 
 
