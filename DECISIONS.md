@@ -3369,3 +3369,14 @@ parameters; the bridge retains ADR-018 transport and ADR-023 control dispatch.
 The ledger's four-kind sketch omits those shipped capabilities, so the test checks
 the actual closed protocol and visualizer authority rather than removing controls.
 Unbuilt or owner-unruled checks are named skips that fail if enabled before proof.
+
+## 115 — The impact bell shares one ledger calculation [P2, P4, M3IB]
+
+PRECEDENT: PLAN M3IB; Decision 113; F079/F090; ancestors M3LM, M3RC, SYM13.
+Mint paths, versioned push hooks and CI use Garden's existing ledger command.
+Hooks always return success; CI independently checks pushed surfaces and requires
+fresh evidence for every commit marked DONE. Evidence has one authoritative
+folder across the three sibling repositories. Product CI requires a read-only
+Garden credential; this extends Decision 113's CI boundary only when that
+credential is provisioned, without publishing the private ledger.
+SYM13 supplies an empty spend snapshot because its recipe fixture incurs no spend.
