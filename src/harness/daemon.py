@@ -96,6 +96,7 @@ from harness.spine_client import (
     VitalsSnapshot,
 )
 from harness.symphony_experience import SymphonyExperience
+from harness.symphony_runtime import SymphonyExecution
 from harness.tools_memory import MemoryToolContext
 from harness.toolset_runtime import LazyStandardToolset
 from harness.transcript import TranscriptJournal, TranscriptJournalUnavailable
@@ -976,6 +977,10 @@ def create_dev_app(
         transcript_journal=journal,
         symphony_experience=owned_symphony_experience,
     )
+    owned_symphony_experience.bind(
+        SymphonyExecution(settings=configured, home=home, context_factory=context_factory),
+        loop.publish_symphony_state,
+    )
     extraction = ExtractionService(
         journal=journal,
         agent=owned_agent,
@@ -1172,6 +1177,7 @@ def create_dev_app(
 
     app.router.add_event_handler("startup", transcript_sync.start)
     app.router.add_event_handler("shutdown", transcript_sync.stop)
+    app.router.add_event_handler("shutdown", owned_symphony_experience.close)
     async def close_workspace_toolsets() -> None:
         for toolset in tuple(workspace_toolsets.values()):
             await toolset.close()

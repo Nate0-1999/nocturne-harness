@@ -117,6 +117,27 @@ class JudgeVerdict(BaseModel):
         return hashlib.sha256(self.model_dump_json().encode("utf-8")).hexdigest()
 
 
+def validate_judge_verdict(verdict, *, session, charter, candidate_ids) -> None:
+    """Use the same sealed-return contract during model retries and final acceptance."""
+    if any(
+        getattr(verdict, field) != session[field]
+        for field in ("seat", "judge_session_id", "charter_sha256", "evidence_sha256")
+    ):
+        raise JudgePanelError("judge verdict does not match its sealed fresh session")
+    if verdict.selected_attempt_id is not None and verdict.selected_attempt_id not in candidate_ids:
+        raise JudgePanelError("judge selected a non-candidate attempt")
+    metric_names = tuple(metric.metric for metric in verdict.metrics)
+    if session["seat"] == JudgeSeat.PERFORMANCE:
+        if metric_names != charter.metrics:
+            raise JudgePanelError("performance verdict must assess every fixed metric in order")
+        if verdict.outcome == JudgeOutcome.PASS and any(
+            not metric.passed for metric in verdict.metrics
+        ):
+            raise JudgePanelError("performance cannot PASS a failed fixed metric")
+    elif verdict.metrics:
+        raise JudgePanelError("only the performance seat may return metric assessments")
+
+
 class JudgeEvidence(BaseModel):
     """The complete why plus artifacts, never builder reasoning or ambient context."""
 
@@ -449,30 +470,12 @@ class JudgePanel:
         )
 
     def _validate_verdict(self, session: JudgeSession, verdict: JudgeVerdict) -> None:
-        if (
-            verdict.seat != session.seat
-            or verdict.judge_session_id != session.judge_session_id
-            or verdict.charter_sha256 != session.charter_sha256
-            or verdict.evidence_sha256 != session.evidence_sha256
-        ):
-            raise JudgePanelError("judge verdict does not match its sealed fresh session")
-        candidate_ids = {candidate.attempt_id for candidate in self._candidates}
-        if (
-            verdict.selected_attempt_id is not None
-            and verdict.selected_attempt_id not in candidate_ids
-        ):
-            raise JudgePanelError("judge selected a non-candidate attempt")
-        charter = self._charters[session.seat]
-        metric_names = tuple(metric.metric for metric in verdict.metrics)
-        if session.seat == JudgeSeat.PERFORMANCE:
-            if metric_names != charter.metrics:
-                raise JudgePanelError("performance verdict must assess every fixed metric in order")
-            if verdict.outcome == JudgeOutcome.PASS and any(
-                not metric.passed for metric in verdict.metrics
-            ):
-                raise JudgePanelError("performance cannot PASS a failed fixed metric")
-        elif verdict.metrics:
-            raise JudgePanelError("only the performance seat may return metric assessments")
+        validate_judge_verdict(
+            verdict,
+            session=session.model_dump(),
+            charter=self._charters[session.seat],
+            candidate_ids={candidate.attempt_id for candidate in self._candidates},
+        )
 
     def _feedback_drafts(self, verdicts: Sequence[JudgeVerdict]) -> tuple[FeedbackPacketDraft, ...]:
         failed = [verdict for verdict in verdicts if verdict.outcome == JudgeOutcome.FAIL]

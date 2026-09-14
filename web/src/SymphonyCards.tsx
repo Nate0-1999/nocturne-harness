@@ -25,7 +25,7 @@ interface SymphonyDraft {
 interface SymphonyResult {
   symphony_id: string
   state: 'completed'
-  execution_kind: 'toy'
+  execution_kind: 'supervised'
   result: string
   search_step_ids: string[]
   timeline: string[]
@@ -140,7 +140,7 @@ export function parseSymphonyResult(value: JsonObject): SymphonyResult | null {
   const launch = record(value.launch)
   if (
     symphonyId === null || result === null || searchSteps === null || timeline === null ||
-    value.state !== 'completed' || value.execution_kind !== 'toy' || launch === null
+    value.state !== 'completed' || value.execution_kind !== 'supervised' || launch === null
   ) return null
   return {
     symphony_id: symphonyId,
@@ -148,7 +148,7 @@ export function parseSymphonyResult(value: JsonObject): SymphonyResult | null {
     search_step_ids: searchSteps,
     timeline,
     state: 'completed',
-    execution_kind: 'toy',
+    execution_kind: 'supervised',
     launch: launch as SymphonyLaunch,
   }
 }
@@ -167,7 +167,6 @@ export function SymphonyDeliberationCard({ event }: { event: JsonObject }) {
   const [authority, setAuthority] = useState<DraftAuthority | null>(draft?.authority ?? null)
   const [status, setStatus] = useState('Nothing launches until you sign.')
   const [busy, setBusy] = useState(false)
-  const [holdForSteering, setHoldForSteering] = useState(false)
 
   if (draft === null || authority === null) return null
   const draftId = draft.draft_id
@@ -211,7 +210,7 @@ export function SymphonyDeliberationCard({ event }: { event: JsonObject }) {
         metrics: charter.metrics.map((item) => item.trim()),
       })),
       authority: { ...currentAuthority, signed: true },
-      hold_for_steering: holdForSteering,
+      hold_for_steering: false,
     }
     try {
       await events.dispatch({
@@ -261,9 +260,8 @@ export function SymphonyDeliberationCard({ event }: { event: JsonObject }) {
           <label>Minutes<input type="number" min="1" value={authority.duration_minutes} onChange={(event) => setAuthority({ ...authority, duration_minutes: event.target.valueAsNumber })} /></label>
         </div>
         <label className="symphony-check symphony-sign"><input type="checkbox" checked={authority.signed} onChange={(event) => setAuthority({ ...authority, signed: event.target.checked })} /> I authorize up to {authority.attempts} attempts, ${authority.spend_wall_usd}, {authority.max_rounds} rounds, depth {authority.depth_cap}, {authority.children_per_attempt} children per attempt, and {authority.duration_minutes} minutes.</label>
-        <label className="symphony-check"><input type="checkbox" checked={holdForSteering} onChange={(event) => setHoldForSteering(event.target.checked)} /> Hold the toy run live on the Deck so I can exercise steering.</label>
       </fieldset>
-      <footer className="symphony-card__footer"><span role="status">{status}</span><button type="button" disabled={!complete || busy} onClick={() => void launch()}>{busy ? 'Launching…' : 'Sign & run toy Symphony'}</button></footer>
+      <footer className="symphony-card__footer"><span role="status">{status}</span><button type="button" disabled={!complete || busy} onClick={() => void launch()}>{busy ? 'Launching…' : 'Sign & run Symphony'}</button></footer>
     </section>
   )
 }
@@ -273,7 +271,7 @@ export function SymphonyResultCard({ event }: { event: JsonObject }) {
   if (result === null) return null
   return (
     <section className="symphony-card symphony-result" aria-label="Completed Symphony result" data-testid="symphony-result">
-      <header className="symphony-card__header"><div><span className="symphony-card__eyebrow">Returned to chat</span><h3>Toy Symphony complete</h3></div><span>{result.symphony_id.slice(-8)}</span></header>
+      <header className="symphony-card__header"><div><span className="symphony-card__eyebrow">Returned to chat</span><h3>Symphony complete</h3></div><span>{result.symphony_id.slice(-8)}</span></header>
       <p>{result.result}</p>
       <dl><div><dt>Own stack</dt><dd>{result.symphony_id}</dd></div><div><dt>Outcome</dt><dd>{result.launch.objective}</dd></div><div><dt>Signed wall</dt><dd>${result.launch.authority.spend_wall_usd} · {result.launch.authority.duration_minutes} min · {result.launch.authority.attempts} attempts</dd></div><div><dt>Search nodes</dt><dd>{result.search_step_ids.length}</dd></div></dl>
       <p className="symphony-result__back">You are already back in the live conversation.</p>

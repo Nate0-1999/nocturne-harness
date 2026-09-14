@@ -17,7 +17,7 @@ test('Symphony deliberation is human-fixed, signed, separately identified, and r
   assert.match(cards, /T2 AUTHORITY — real walls/u)
   assert.match(cards, /seat !== 'performance' \|\| charter\.metrics/u)
   assert.match(cards, /I authorize up to \{authority\.attempts\} attempts/u)
-  assert.match(cards, /Sign & run toy Symphony/u)
+  assert.match(cards, /Sign & run Symphony/u)
   assert.match(cards, /You are already back in the live conversation/u)
   assert.match(app, /event\.event_kind === 'symphony_deliberation'/u)
   assert.match(app, /event\.event_kind === 'symphony_result'/u)

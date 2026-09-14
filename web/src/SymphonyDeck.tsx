@@ -15,23 +15,25 @@ import './assets/symphonyDeck.css'
 
 interface DeckAttempt {
   attempt_id: string
-  state: 'running' | 'cancelled' | 'completed'
+  state: 'running' | 'cancelled' | 'completed' | 'stopped'
   cancellation: 'none' | 'requested' | 'draining' | 'cancelled'
   follow_ups: string[]
   partial_evidence: string[]
-  memories_admitted: false
+  memories_admitted: boolean
 }
 
 export interface DeckStack {
   symphony_id: string
   state: 'running' | 'blocked' | 'completed'
-  execution_kind: 'toy'
+  execution_kind: 'supervised'
   launch: SymphonyLaunch
   attempts: DeckAttempt[]
   timeline: string[]
   forked_from: string | null
   forked_to: string | null
   blocked_reason: string | null
+  evidence: Record<string, unknown>[]
+  spend_usd: string
 }
 
 export interface ProposedResponseCard {
@@ -60,9 +62,9 @@ function parseAttempt(value: unknown): DeckAttempt | null {
   const item = record(value)
   if (
     item === null || typeof item.attempt_id !== 'string' ||
-    !['running', 'cancelled', 'completed'].includes(String(item.state)) ||
+    !['running', 'cancelled', 'completed', 'stopped'].includes(String(item.state)) ||
     !['none', 'requested', 'draining', 'cancelled'].includes(String(item.cancellation)) ||
-    item.memories_admitted !== false
+    typeof item.memories_admitted !== 'boolean'
   ) return null
   const followUps = stringList(item.follow_ups)
   const partialEvidence = stringList(item.partial_evidence)
@@ -73,7 +75,7 @@ function parseAttempt(value: unknown): DeckAttempt | null {
     cancellation: item.cancellation as DeckAttempt['cancellation'],
     follow_ups: followUps,
     partial_evidence: partialEvidence,
-    memories_admitted: false,
+    memories_admitted: item.memories_admitted,
   }
 }
 
@@ -84,19 +86,24 @@ export function parseDeckStack(value: JsonObject): DeckStack | null {
   if (
     typeof value.symphony_id !== 'string' ||
     !['running', 'blocked', 'completed'].includes(String(value.state)) ||
-    value.execution_kind !== 'toy' || record(value.launch) === null ||
+    value.execution_kind !== 'supervised' || record(value.launch) === null ||
     attempts.length === 0 || attempts.some((attempt) => attempt === null) || timeline === null
   ) return null
   return {
     symphony_id: value.symphony_id,
     state: value.state as DeckStack['state'],
-    execution_kind: 'toy',
+    execution_kind: 'supervised',
     launch: value.launch as SymphonyLaunch,
     attempts: attempts as DeckAttempt[],
     timeline,
     forked_from: typeof value.forked_from === 'string' ? value.forked_from : null,
     forked_to: typeof value.forked_to === 'string' ? value.forked_to : null,
     blocked_reason: typeof value.blocked_reason === 'string' ? value.blocked_reason : null,
+    evidence: Array.isArray(value.evidence) ? value.evidence.flatMap((item) => {
+      const parsed = record(item)
+      return parsed === null ? [] : [parsed]
+    }) : [],
+    spend_usd: typeof value.spend_usd === 'string' ? value.spend_usd : '0',
   }
 }
 
@@ -349,6 +356,8 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
   const { events } = useRackPlugin()
   const running = stack.attempts.filter((attempt) => attempt.state === 'running')
   const [attemptId, setAttemptId] = useState(running[0]?.attempt_id ?? '')
+  const selectedAttemptId = running.some((attempt) => attempt.attempt_id === attemptId)
+    ? attemptId : running[0]?.attempt_id ?? ''
   const [instruction, setInstruction] = useState('')
   const [seat, setSeat] = useState<SymphonyJudgeCharter['seat']>('motivation')
   const currentCharter = stack.launch.judge_charters.find((charter) => charter.seat === seat)
@@ -399,14 +408,14 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
         <aside className="deck-demand" role="alert">
           <strong>Owner demand</strong>
           <p>{stack.blocked_reason}</p>
-          <p>The signed parent is append-only. Continue in {stack.forked_to}.</p>
+          {stack.forked_to !== null && <p>The signed parent is append-only. Continue in {stack.forked_to}.</p>}
         </aside>
       )}
       <div className="deck-attempts">
         {stack.attempts.map((attempt) => (
           <div className="deck-attempt" key={attempt.attempt_id} data-state={attempt.state}>
             <div><strong>{attempt.attempt_id}</strong><span>{attempt.state}</span></div>
-            <small>{attempt.partial_evidence.length} evidence mark(s) · memories not admitted</small>
+            <small>{attempt.partial_evidence.length} evidence mark(s) · {attempt.memories_admitted ? 'memories queued for review' : 'memories not admitted'}</small>
             {attempt.follow_ups.map((followUp, index) => <p key={index}>Follow-up: {followUp}</p>)}
             {stack.state === 'running' && attempt.state === 'running' && (
               <button type="button" disabled={busy} onClick={() => void intervene({
@@ -417,17 +426,30 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
           </div>
         ))}
       </div>
+      <p>Measured spend: ${stack.spend_usd} / ${String(stack.launch.authority.spend_wall_usd)}</p>
+      {stack.evidence.map((entry, index) => (
+        <details key={index}>
+          <summary>{Array.isArray(entry.verdicts) ? 'Judge verdicts' : 'Worker evidence'}</summary>
+          {Array.isArray(entry.verdicts) ? entry.verdicts.map((value, seatIndex) => {
+            const verdict = record(value)
+            return verdict === null ? null : <p key={seatIndex}>
+              <strong>{String(verdict.seat)} · {String(verdict.outcome)}</strong><br />
+              {String(verdict.rationale)}
+            </p>
+          }) : <pre>{JSON.stringify(entry, null, 2)}</pre>}
+        </details>
+      ))}
       {stack.state === 'running' && (
         <div className="deck-controls">
           <fieldset>
             <legend>Clarify inside the signed charge</legend>
-            <label>Attempt<select value={attemptId} onChange={(event) => setAttemptId(event.target.value)}>
+            <label>Attempt<select value={selectedAttemptId} onChange={(event) => setAttemptId(event.target.value)}>
               {running.map((attempt) => <option key={attempt.attempt_id}>{attempt.attempt_id}</option>)}
             </select></label>
             <label>Follow-up<textarea value={instruction} onChange={(event) => setInstruction(event.target.value)} /></label>
-            <button type="button" disabled={busy || attemptId === '' || instruction.trim() === ''} onClick={() => void intervene({
+            <button type="button" disabled={busy || selectedAttemptId === '' || instruction.trim() === ''} onClick={() => void intervene({
               kind: 'clarification', symphony_id: stack.symphony_id,
-              attempt_id: attemptId, instruction: instruction.trim(),
+              attempt_id: selectedAttemptId, instruction: instruction.trim(),
             }, 'Clarification logged without changing the charge.')}>Log clarification</button>
           </fieldset>
           <fieldset>
@@ -447,9 +469,7 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
               },
             }, 'Fork created. Follow the new lineage card.')}>Sign & fork</button>
           </fieldset>
-          <button className="deck-complete" type="button" disabled={busy} onClick={() => void intervene({
-            kind: 'complete', symphony_id: stack.symphony_id,
-          }, 'Stack completed and returned to chat.')}>Finish surviving attempts</button>
+          <p>The judges release completion after inspecting the work.</p>
         </div>
       )}
       <p className="deck-status" role="status">{status}</p>

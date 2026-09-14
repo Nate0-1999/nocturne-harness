@@ -1,4 +1,4 @@
-"""In-conversation Symphony deliberation and a truthful toy-stack proof path."""
+"""In-conversation Symphony deliberation and supervised execution records."""
 
 from __future__ import annotations
 
@@ -29,16 +29,16 @@ _TRIGGER = re.compile(r"^take this to a symphony[.!]?\s*$", re.IGNORECASE)
 
 
 class SymphonyAttemptRecord(BaseModel):
-    """One toy attempt, including cooperative cancellation evidence. [G20]"""
+    """One supervised attempt, including cooperative cancellation evidence. [G20]"""
 
     model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
 
     attempt_id: str
-    state: Literal["running", "cancelled", "completed"]
+    state: Literal["running", "cancelled", "completed", "stopped"]
     cancellation: Literal["none", "requested", "draining", "cancelled"] = "none"
     follow_ups: tuple[str, ...] = ()
-    partial_evidence: tuple[str, ...] = ("bounded toy attempt admitted",)
-    memories_admitted: Literal[False] = False
+    partial_evidence: tuple[str, ...] = ()
+    memories_admitted: bool = False
 
 
 class SymphonyInterventionRecord(BaseModel):
@@ -62,7 +62,7 @@ class SymphonyStackRecord(BaseModel):
     symphony_id: str
     thread_id: str
     state: Literal["running", "blocked", "completed"]
-    execution_kind: Literal["toy"]
+    execution_kind: Literal["supervised"]
     launch: SymphonyLaunchPayload
     search_step_ids: tuple[str, ...]
     charter_digests: tuple[str, ...]
@@ -74,6 +74,8 @@ class SymphonyStackRecord(BaseModel):
     blocked_reason: str | None = None
     result: str | None = None
     completed_at: datetime | None = None
+    evidence: tuple[dict, ...] = ()
+    spend_usd: str = "0"
 
 
 class SymphonyExperience:
@@ -91,6 +93,9 @@ class SymphonyExperience:
         self._stacks: dict[str, SymphonyStackRecord] = {}
         self._lock = asyncio.Lock()
         self._recipe_revision = 0
+        self._execution = None
+        self._publisher = None
+        self._tasks: dict[str, asyncio.Task] = {}
         self._recipe_source_digest: str | None = None
         self._recipe_snapshot = RecipeGraphSnapshot(
             revision=0,
@@ -101,6 +106,80 @@ class SymphonyExperience:
             edges=(),
             ready_node_ids=(),
         )
+
+    def bind(self, execution, publisher) -> None:
+        """Use the daemon's workspace authority and journal for independent stacks."""
+        self._execution = execution
+        self._publisher = publisher
+
+    async def close(self) -> None:
+        for task in self._tasks.values():
+            task.cancel()
+        await asyncio.gather(*self._tasks.values(), return_exceptions=True)
+
+    def _start(self, stack) -> None:
+        self._tasks[stack.symphony_id] = asyncio.create_task(self._execute(stack))
+
+    async def _execute(self, stack) -> None:
+        async def update(state, changes):
+            async with self._lock:
+                current = self._stacks[stack.symphony_id]
+                evidence = tuple(changes.pop("evidence", ()))
+                timeline = tuple(changes.pop("timeline", ()))
+                admitted = changes.pop("admitted_attempt_id", None)
+                if state == "blocked":
+                    changes["attempts"] = tuple(
+                        attempt.model_copy(update={"state": "stopped"})
+                        if attempt.state == "running"
+                        else attempt
+                        for attempt in current.attempts
+                    )
+                if admitted is not None:
+                    changes["attempts"] = tuple(
+                        attempt.model_copy(update={"memories_admitted": True})
+                        if attempt.attempt_id == admitted
+                        else attempt
+                        for attempt in current.attempts
+                    )
+                updated = current.model_copy(
+                    update={
+                        **changes,
+                        "state": state,
+                        "evidence": (*current.evidence, *evidence),
+                        "timeline": (*current.timeline, *timeline),
+                        **(
+                            {
+                                "completed_at": self._clock(),
+                                "attempts": tuple(
+                                    attempt
+                                    if attempt.state == "cancelled"
+                                    else attempt.model_copy(update={"state": "completed"})
+                                    for attempt in current.attempts
+                                ),
+                            }
+                            if state == "completed"
+                            else {}
+                        ),
+                    }
+                )
+                self._stacks[stack.symphony_id] = updated
+                self._publish_recipe(updated)
+            await self._publisher(stack.thread_id, self._state_event(updated))
+            if state == "completed":
+                await self._publisher(stack.thread_id, self._result_event(updated))
+
+        try:
+            await self._execution.run(stack, update)
+        except asyncio.CancelledError:
+            await update(
+                "blocked",
+                {
+                    "blocked_reason": "Execution stopped; worktrees and evidence remain.",
+                },
+            )
+            raise
+        except Exception as exc:
+            await update("blocked", {"blocked_reason": str(exc), "timeline": ("blocked",)})
 
     @staticmethod
     def is_trigger(prompt: str) -> bool:
@@ -153,8 +232,8 @@ class SymphonyExperience:
             if live_thread != thread_id and launch.draft_id not in accepted_draft_ids:
                 raise ValueError("Symphony launch does not belong to this thread's open draft")
             stack = self._new_stack(thread_id, launch)
-            if not launch.hold_for_steering:
-                stack = self._complete(stack)
+            if self._execution is None:
+                raise ValueError("Symphony execution is not connected to this daemon.")
             self._stacks[stack.symphony_id] = stack
             self._draft_threads.pop(launch.draft_id, None)
             self._publish_recipe(stack)
@@ -167,19 +246,13 @@ class SymphonyExperience:
                 "authority": launch.authority.model_dump(mode="json"),
             }
         )
-        if stack.state == "completed":
-            await emit.event(self._result_event(stack))
-            text = (
-                f"Toy Symphony {stack.symphony_id} completed in its own stack. "
-                "Its result is attached here; this conversation never moved."
-            )
-        else:
-            await emit.event(self._state_event(stack))
-            text = (
-                f"Toy Symphony {stack.symphony_id} is live on the Deck. "
-                "Steering stays in this conversation and goes only to the conductor."
-            )
+        await emit.event(self._state_event(stack))
+        text = (
+            f"Symphony {stack.symphony_id} is running in its own worktrees. "
+            "Steering stays on the Deck; the judges release the result."
+        )
         await emit.text(text)
+        self._start(stack)
         return self._local_outcome(message_history, text)
 
     async def read(self, symphony_id: str) -> SymphonyStackRecord | None:
@@ -225,7 +298,7 @@ class SymphonyExperience:
             symphony_id=self._id_factory(),
             thread_id=thread_id,
             state="running",
-            execution_kind="toy",
+            execution_kind="supervised",
             launch=launch,
             search_step_ids=search_steps,
             charter_digests=tuple(charter.digest for charter in charters),
@@ -233,7 +306,7 @@ class SymphonyExperience:
                 "deliberation_ratified",
                 "authority_signed",
                 *((f"forked_from:{forked_from}",) if forked_from is not None else ()),
-                "toy_attempts_running",
+                "execution_requested",
             ),
             attempts=tuple(
                 SymphonyAttemptRecord(attempt_id=f"attempt-{number}", state="running")
@@ -259,12 +332,18 @@ class SymphonyExperience:
             recipe_stack: SymphonyStackRecord | None = None
 
             if isinstance(intervention, SymphonyClarificationPayload):
+                self._execution.clarify(
+                    stack.symphony_id,
+                    intervention.attempt_id,
+                    intervention.instruction,
+                )
                 stack = self._clarify(stack, intervention)
                 events = [self._state_event(stack)]
                 text = (
                     f"Clarification logged for {intervention.attempt_id} inside the signed charge."
                 )
             elif isinstance(intervention, SymphonyCancelAttemptPayload):
+                await self._execution.cancel_attempt(stack.symphony_id, intervention.attempt_id)
                 stack = self._cancel_attempt(stack, intervention)
                 events = [
                     {
@@ -282,6 +361,8 @@ class SymphonyExperience:
             elif isinstance(intervention, SymphonyCharterForkPayload):
                 stack, child = self._fork(stack, intervention)
                 self._stacks[child.symphony_id] = child
+                self._tasks[stack.symphony_id].cancel()
+                self._start(child)
                 events = [self._state_event(stack), self._state_event(child)]
                 recipe_stack = child
                 text = (
@@ -289,9 +370,8 @@ class SymphonyExperience:
                     "the signed parent was not rewritten."
                 )
             elif isinstance(intervention, SymphonyCompletePayload):
-                stack = self._complete(stack)
-                events = [self._state_event(stack), self._result_event(stack)]
-                text = f"Toy Symphony {stack.symphony_id} completed and returned to this chat."
+                events = [self._state_event(stack)]
+                text = "The workers are running. Only the judges can release completion."
             else:  # pragma: no cover - discriminated union is closed
                 raise TypeError("unsupported Symphony intervention")
 
@@ -393,38 +473,6 @@ class SymphonyExperience:
         )
         return parent, child
 
-    def _complete(self, stack: SymphonyStackRecord) -> SymphonyStackRecord:
-        attempts = tuple(
-            attempt
-            if attempt.state == "cancelled"
-            else attempt.model_copy(
-                update={
-                    "state": "completed",
-                    "partial_evidence": (*attempt.partial_evidence, "toy proof completed"),
-                }
-            )
-            for attempt in stack.attempts
-        )
-        result = (
-            f"Proved {len(stack.launch.recipe)} recipe step(s), "
-            f"{len(stack.search_step_ids)} marked search node(s), and all three fixed "
-            "judge charters under the signed authority."
-        )
-        return stack.model_copy(
-            update={
-                "state": "completed",
-                "attempts": attempts,
-                "timeline": (
-                    *stack.timeline,
-                    "toy_recipe_executed",
-                    "judge_panel_unanimous",
-                    "completed",
-                ),
-                "result": result,
-                "completed_at": self._clock(),
-            }
-        )
-
     @staticmethod
     def _replace_attempt(
         stack: SymphonyStackRecord,
@@ -445,6 +493,7 @@ class SymphonyExperience:
         return tuple(attempts)
 
     def _hydrate(self, events: Sequence[Mapping[str, object]]) -> None:
+        live_ids = set(self._tasks)
         for event in events:
             if event.get("event_kind") != "symphony_state":
                 continue
@@ -453,6 +502,8 @@ class SymphonyExperience:
                     {key: value for key, value in event.items() if key != "event_kind"}
                 )
             except ValueError:
+                continue
+            if stack.symphony_id in live_ids:
                 continue
             self._stacks[stack.symphony_id] = stack
             self._publish_recipe(stack)

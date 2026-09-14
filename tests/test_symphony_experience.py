@@ -54,6 +54,36 @@ class RecordingEmitter:
         raise AssertionError(value)
 
 
+class ControlledExecution:
+    """Regression-only execution seam; tests decide when real-work evidence arrives."""
+
+    def __init__(self):
+        self.release = asyncio.Event()
+
+    async def run(self, stack, update):
+        await self.release.wait()
+        await update("completed", {
+            "result": "Fixture judges accepted the inspected artifact.",
+            "timeline": ("judge_panel_unanimous", "completed"),
+        })
+
+    def clarify(self, *_args):
+        pass
+
+    async def cancel_attempt(self, *_args):
+        pass
+
+
+def bind_execution(experience, emitter):
+    execution = ControlledExecution()
+
+    async def publish(_thread_id, event):
+        await emitter.event(event)
+
+    experience.bind(execution, publish)
+    return execution
+
+
 class ForbiddenRunner:
     async def run(
         self,
@@ -179,8 +209,8 @@ async def test_explicit_phrase_opens_uninvented_deliberation_in_the_thread() -> 
 
 
 @pytest.mark.asyncio
-async def test_signed_deliberation_completes_a_distinct_toy_stack_and_returns_result() -> None:
-    """ADR-012 / T2 / R22: signed authority governs a separately identified proof stack."""
+async def test_signed_deliberation_waits_for_execution_before_releasing_result() -> None:
+    """F085 / ADR-012: signing cannot manufacture completed work or unanimous judges."""
 
     experience = SymphonyExperience(
         id_factory=ids(),
@@ -198,6 +228,7 @@ async def test_signed_deliberation_completes_a_distinct_toy_stack_and_returns_re
     assert isinstance(draft_id, str)
     signed = launch(draft_id)
     completed = RecordingEmitter()
+    execution = bind_execution(experience, completed)
 
     outcome = await experience.run(
         thread_id="thread-a",
@@ -211,11 +242,14 @@ async def test_signed_deliberation_completes_a_distinct_toy_stack_and_returns_re
     assert outcome.message_history == ("provider history stays put",)
     assert [event["event_kind"] for event in completed.events] == [
         "symphony_started",
-        "symphony_result",
+        "symphony_state",
     ]
-    result = completed.events[1]
+    assert completed.events[-1]["state"] == "running"
+    execution.release.set()
+    await asyncio.gather(*experience._tasks.values())
+    result = completed.events[-1]
     assert result["state"] == "completed"
-    assert result["execution_kind"] == "toy"
+    assert result["execution_kind"] == "supervised"
     assert result["thread_id"] == "thread-a"
     assert result["search_step_ids"] == ["proof"]
     assert len(result["charter_digests"]) == 3  # type: ignore[arg-type]
@@ -256,6 +290,7 @@ async def test_durable_thread_event_reopens_launch_after_daemon_restart() -> Non
     draft_id = "00000000000000000000000044"
     restarted = SymphonyExperience(id_factory=ids())
     emitter = RecordingEmitter()
+    bind_execution(restarted, emitter)
 
     await restarted.run(
         thread_id="thread-a",
@@ -266,11 +301,13 @@ async def test_durable_thread_event_reopens_launch_after_daemon_restart() -> Non
         emit=emitter,
     )
 
-    assert emitter.events[-1]["event_kind"] == "symphony_result"
+    assert emitter.events[-1]["event_kind"] == "symphony_state"
+    assert emitter.events[-1]["state"] == "running"
+    await restarted.close()
 
 
 @pytest.mark.asyncio
-async def test_live_toy_stack_exercises_all_three_steering_classes_without_rewriting() -> None:
+async def test_live_stack_exercises_steering_without_manufacturing_completion() -> None:
     """ADR-014 and G19-G20 require typed, append-only steering classes."""
 
     next_id = ids()
@@ -288,6 +325,7 @@ async def test_live_toy_stack_exercises_all_three_steering_classes_without_rewri
     )
     original = launch(str(opening.events[0]["draft_id"]), hold_for_steering=True)
     launched = RecordingEmitter()
+    bind_execution(experience, launched)
     await experience.run(
         thread_id="thread-a",
         prompt="Launch this symphony.",
@@ -317,8 +355,8 @@ async def test_live_toy_stack_exercises_all_three_steering_classes_without_rewri
         "Show the owner-visible lineage mark."
     ]
 
-    # Rehydrate from the durable state snapshot before the next intervention.
-    restarted = SymphonyExperience(id_factory=next_id)
+    # Durable steering snapshots may be replayed without replacing the live execution.
+    restarted = experience
     cancelled = RecordingEmitter()
     await restarted.run(
         thread_id="thread-a",
@@ -389,7 +427,9 @@ async def test_live_toy_stack_exercises_all_three_steering_classes_without_rewri
         message_history=(),
         emit=completed,
     )
-    assert completed.events[-1]["event_kind"] == "symphony_result"
+    assert completed.events[-1]["event_kind"] == "symphony_state"
+    assert completed.events[-1]["state"] == "running"
+    await experience.close()
 
 
 def test_launch_requires_core_charter_order_performance_metrics_and_signature() -> None:
@@ -447,6 +487,8 @@ async def test_run_loop_routes_both_symphony_turns_locally_and_keeps_fifo_events
         run_id_factory=next_id,
         symphony_experience=experience,
     )
+    execution = ControlledExecution()
+    experience.bind(execution, loop.publish_symphony_state)
     sink = EnvelopeSink()
     thread_id = "12345678-1234-5678-1234-567812345678"
     await loop.attach(sink)
@@ -479,10 +521,31 @@ async def test_run_loop_routes_both_symphony_turns_locally_and_keeps_fifo_events
         for message in sink.messages
         if message.type is MessageType.RUN_DELTA
         and getattr(message.payload, "kind", None) == "event"
-        and message.payload.event.get("event_kind") == "symphony_result"
+        and message.payload.event.get("event_kind") == "symphony_state"
     )
 
     assert result_event["thread_id"] == thread_id
-    assert result_event["state"] == "completed"
+    assert result_event["state"] == "running"
     assert sum(message.type is MessageType.RUN_DONE for message in sink.messages) == 2
+    sink.done.clear()
+    await loop.submit(
+        thread_id=thread_id, prompt_id="00000000000000000000000092",
+        prompt="Keep the same scope.", sink=sink,
+        symphony_intervention=SymphonyClarificationPayload(
+            kind="clarification", symphony_id=result_event["symphony_id"],
+            attempt_id="attempt-1", instruction="Keep the same scope.",
+        ),
+    )
+    await asyncio.wait_for(sink.done.wait(), 1)
+    execution.release.set()
+    await asyncio.gather(*experience._tasks.values())
+    assert (await experience.read(result_event["symphony_id"])).state == "completed"
+    snapshots = [m for m in sink.messages if m.type is MessageType.THREAD_SNAPSHOT]
+    states = [
+        event for message in snapshots[-1].payload.messages
+        if message["role"] == "assistant" for event in message["events"]
+        if event.get("event_kind") == "symphony_state"
+    ]
+    assert states[-1]["state"] == "completed"
+    await experience.close()
     await loop.close()

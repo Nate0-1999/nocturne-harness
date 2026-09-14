@@ -488,6 +488,26 @@ class RunLoop:
                 return
             await self._publish_locked(thread_id, self._snapshot_envelope(thread_id, state))
 
+    async def publish_symphony_state(self, thread_id: str, event: Mapping[str, object]) -> None:
+        """Journal a supervised stack after its launch turn has returned. [ADR-012]"""
+        async with self._lock:
+            state = self._threads[thread_id]
+            for index in range(len(state.messages) - 1, -1, -1):
+                message = state.messages[index]
+                if message.get("role") != "assistant" or not any(
+                    item.get("symphony_id") == event["symphony_id"]
+                    for item in message.get("events", ())
+                ):
+                    continue
+                message["events"].append(deepcopy(dict(event)))
+                self._capture_message(
+                    thread_id, message,
+                    parent_id=state.messages[index - 1]["message_id"] if index else None,
+                    advance_tail=False,
+                )
+                await self._publish_locked(thread_id, self._snapshot_envelope(thread_id, state))
+                return
+
     async def detach(self, sink: EnvelopeSink) -> None:
         """Detach a connection without changing daemon-lifetime thread state."""
 

@@ -930,6 +930,11 @@ def test_dev_app_serves_the_real_symphony_recipe_through_the_live_rack_endpoint(
     async def stream(_messages, _info):
         yield "unused"
 
+    async def pending_execution(self, stack, update):
+        await asyncio.Event().wait()
+
+    monkeypatch.setattr("harness.symphony_runtime.SymphonyExecution.run", pending_execution)
+
     settings = HarnessSettings(
         _env_file=None,
         spine_token="test-token",
