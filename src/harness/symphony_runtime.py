@@ -376,6 +376,14 @@ class SymphonyExecution:
                             SmokeGateResult.model_validate_json(path.read_text()),
                         )
                     selected = conductor.narrow_search_beam(child_id)
+                    await update(
+                        "running",
+                        {
+                            "stopped_attempt_ids": [
+                                b.attempt_id for b in briefs if b not in selected
+                            ],
+                        },
+                    )
                     handles = []
                     for number, brief in enumerate(selected, 1):
                         origin = f"{round_run}/root.{briefs.index(brief) + 1}"

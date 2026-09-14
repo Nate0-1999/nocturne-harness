@@ -59,9 +59,12 @@ class ControlledExecution:
 
     def __init__(self):
         self.release = asyncio.Event()
+        self.stopped_attempt_ids = ()
 
     async def run(self, stack, update):
         await self.release.wait()
+        if self.stopped_attempt_ids:
+            await update("running", {"stopped_attempt_ids": self.stopped_attempt_ids})
         await update("completed", {
             "result": "Fixture judges accepted the inspected artifact.",
             "timeline": ("judge_panel_unanimous", "completed"),
@@ -229,6 +232,7 @@ async def test_signed_deliberation_waits_for_execution_before_releasing_result()
     signed = launch(draft_id)
     completed = RecordingEmitter()
     execution = bind_execution(experience, completed)
+    execution.stopped_attempt_ids = ("attempt-2",)
 
     outcome = await experience.run(
         thread_id="thread-a",
@@ -257,6 +261,7 @@ async def test_signed_deliberation_waits_for_execution_before_releasing_result()
     assert stack is not None
     assert stack.launch.authority.spend_wall_usd == 10
     assert stack.timeline[-1] == "completed"
+    assert stack.attempts[1].state == "stopped"
     # A later steering message can retain an older snapshot in durable history.
     restored = SymphonyExperience(id_factory=ids())
     restored._hydrate((completed.events[-2], completed.events[1]))

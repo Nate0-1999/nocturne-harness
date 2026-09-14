@@ -127,6 +127,14 @@ class SymphonyExperience:
                 evidence = tuple(changes.pop("evidence", ()))
                 timeline = tuple(changes.pop("timeline", ()))
                 admitted = changes.pop("admitted_attempt_id", None)
+                stopped = changes.pop("stopped_attempt_ids", ())
+                if stopped:
+                    changes["attempts"] = tuple(
+                        attempt.model_copy(update={"state": "stopped"})
+                        if attempt.attempt_id in stopped and attempt.state == "running"
+                        else attempt
+                        for attempt in current.attempts
+                    )
                 if state == "blocked":
                     changes["attempts"] = tuple(
                         attempt.model_copy(update={"state": "stopped"})
@@ -152,7 +160,7 @@ class SymphonyExperience:
                                 "completed_at": self._clock(),
                                 "attempts": tuple(
                                     attempt
-                                    if attempt.state == "cancelled"
+                                    if attempt.state in {"cancelled", "stopped"}
                                     else attempt.model_copy(update={"state": "completed"})
                                     for attempt in current.attempts
                                 ),
