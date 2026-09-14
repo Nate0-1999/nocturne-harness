@@ -13,14 +13,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_public_distribution_and_lockstep_dependency_metadata() -> None:
-    """M3R and SPEC D.2 099 keep the public 0.1.5 package in Spine lockstep."""
+    """M3FD / SPEC D.2 099 keep the public package in Spine release lockstep."""
     metadata = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     project = metadata["project"]
 
     assert project["name"] == "nocturne-ai"
     assert project["dynamic"] == ["version"]
-    assert __version__ == "0.1.5"
-    assert "nocturne-spine==0.1.5" in project["dependencies"]
+    from spine import __version__ as spine_version
+
+    assert __version__ == spine_version
+    assert f"nocturne-spine=={__version__}" in project["dependencies"]
     assert project["scripts"]["nocturne"] == "harness.cli:main"
     assert metadata["tool"]["hatch"]["build"]["targets"]["wheel"]["force-include"] == {
         "web/dist": "harness/_web"
