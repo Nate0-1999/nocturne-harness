@@ -3380,3 +3380,5 @@ folder across the three sibling repositories. Product CI requires a read-only
 Garden credential; this extends Decision 113's CI boundary only when that
 credential is provisioned, without publishing the private ledger.
 SYM13 supplies an empty spend snapshot because its recipe fixture incurs no spend.
+Generated `impacted.json` stays local and CI uploads it; retained walk receipts
+use separate filenames so a later push cannot overwrite the proof.

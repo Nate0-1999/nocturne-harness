@@ -8,3 +8,4 @@ __pycache__/
 web/node_modules/
 verification/h5/trace.jsonl
 src/harness/_web/
+/verification/*/impacted.json
