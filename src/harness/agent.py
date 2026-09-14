@@ -65,8 +65,10 @@ REMEMBER_SPLIT_INSTRUCTION = (
     "order. Split only when there is more than one distinct fact, never to satisfy a length "
     "limit. Preserve every claim and qualifier. Shorten an over-cap fact into one concise "
     "memory without changing its meaning; never mechanically chop it. Use whole_source=true "
-    "and coverage=[] when the complete source is ONE over-cap fact "
-    "with no operation-only text: the application retains that exact source for you. "
+    "and coverage=[] when the source exceeds the cap and conveys only ONE fact "
+    "with no operation-only text, including repeated versions of the same fact. The shortened "
+    "candidate fitting the cap does not change this choice: whole_source refers to the input. "
+    "The application retains that exact source for you. "
     "Otherwise use whole_source=false and supply the exact coverage below. Every candidate must "
     "stand alone, contain one claim, "
     "and have its own short retrieval label: prefer 2-5 words and under 40 characters, with "
@@ -454,6 +456,7 @@ class HarnessAgent:
                     (
                         f"Label limit: {self._settings.label_max} Unicode code points\n"
                         f"Body limit: {self._settings.memory_max_tokens} cl100k_base tokens\n"
+                        f"Source length: {cl100k_token_count(body)} cl100k_base tokens\n"
                         f"Memory source:\n{body}"
                     ),
                     model=model,
@@ -843,7 +846,7 @@ def _validated_remember_split(
         return None
     coverage = draft.coverage
     if draft.whole_source:
-        if len(draft.candidates) != 1 or coverage or (
+        if len(draft.candidates) != 1 or (
             cl100k_token_count(source_body) <= memory_max_tokens
         ):
             return None

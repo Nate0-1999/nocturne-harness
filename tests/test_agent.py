@@ -692,8 +692,12 @@ async def test_remember_uses_selected_model_once_without_tools_and_maps_project_
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("whole_source", [False, True])
-async def test_m3fd_long_single_fact_shortens_without_splitting(whole_source: bool) -> None:
+@pytest.mark.parametrize(
+    "whole_source,redundant_coverage", [(False, False), (True, False), (True, True)],
+)
+async def test_m3fd_long_single_fact_shortens_without_splitting(
+    whole_source: bool, redundant_coverage: bool,
+) -> None:
     """SPEC B.6 / SD-062: length alone never turns one fact into a split family."""
     source = ("The verification release color is amber. " * 30).strip()
     body = "The verification release color is amber."
@@ -701,8 +705,9 @@ async def test_m3fd_long_single_fact_shortens_without_splitting(whole_source: bo
         {"safe_to_save": True, "whole_source": whole_source,
          "candidates": [{"label": "Release color", "body": body,
                          "keywords": ["release", "amber"]}],
-         "coverage": [] if whole_source else [
-             {"text": source, "classification": "durable", "candidate_index": 0}]}
+         "coverage": ([{"text": body, "classification": "durable", "candidate_index": 0}]
+                      if redundant_coverage else [] if whole_source else [
+                          {"text": source, "classification": "durable", "candidate_index": 0}])}
     ], [])
     spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
 
