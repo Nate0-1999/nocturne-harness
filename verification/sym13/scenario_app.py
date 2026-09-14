@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from uuid import UUID
 
 from fastapi import FastAPI
 
 from harness.daemon import create_app
 from harness.recipe_graph import RecipeGraphProjection
-from harness.spine_client import MemoryGraphSnapshot, VitalsSnapshot
+from harness.spine_client import MemoryGraphSnapshot, SpendTableSnapshot, VitalsSnapshot
 from verification.fixture_isolation import install_fixture_isolation
 from verification.m2c.scenario_app import EMPTY_SNAPSHOT
 
@@ -149,6 +150,14 @@ def create_scenario_app() -> FastAPI:
     async def read_vitals() -> VitalsSnapshot:
         return EMPTY_SNAPSHOT
 
+    async def read_spend_table(_thread_ids: list[UUID] | None) -> SpendTableSnapshot:
+        return SpendTableSnapshot(
+            as_of=datetime(2026, 8, 18, tzinfo=UTC),
+            window_minutes=60,
+            threads=[],
+            purposes=[],
+        )
+
     async def read_memory_graph(_thread_id: str | None) -> MemoryGraphSnapshot:
         return MemoryGraphSnapshot(
             as_of=datetime(2026, 8, 18, tzinfo=UTC),
@@ -167,6 +176,7 @@ def create_scenario_app() -> FastAPI:
         "/",
         create_app(
             vitals_snapshot_reader=read_vitals,
+            spend_table_snapshot_reader=read_spend_table,
             memory_graph_reader=read_memory_graph,
             recipe_graph_reader=projection.snapshot,
             before_static_mount=configure_fixture_routes,
