@@ -3332,3 +3332,12 @@ and stale runs cannot decide the current memory gate. Conversation permits draft
 during review while its send remains held. Existing owner budgets and the separate
 split budget remain. The site ledger and real-provider evidence are in
 `verification/m3gd/`; report 199 records the counts and verification limits.
+
+## 113 — The exit canon verifies the packet's feature evidence [P2, P4, M3LM]
+
+PRECEDENT: SPEC B.6 / D.2 154, PLAN M3LM, M3FP's standing heartbeat.
+The canon always validates Garden's feature ledger and generated view; CI checks
+out Garden explicitly. `--packet-dir` additionally runs its verifier before the
+rendered checks. Without that argument the result explicitly says ground only.
+PLAN's DONE command repeats evidence verification after the handoff report exists.
+Tooling only: the packaged app and ordinary runtime are unchanged.

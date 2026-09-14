@@ -5,6 +5,7 @@ PLAN M2ST4 and SPEC B.6 require the owner findings to run locally and in clean-r
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import socket
@@ -49,7 +50,22 @@ CANONS = (
 )
 
 
+def check_ledger(packet_dir: Path | None) -> None:
+    """SPEC B.6 / PLAN M3LM: ground validates; a handoff verifies its walk."""
+    garden = Path(os.environ.get("GARDEN_ROOT", str(ROOT.parent / "garden")))
+    command = [sys.executable, str(garden / "bin" / "ledger")]
+    subprocess.run([*command, "validate"], check=True)
+    if packet_dir is not None:
+        subprocess.run([*command, "verify", str(packet_dir.resolve())], check=True)
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--packet-dir", type=Path, help="required for handoff: verify this packet's ledger evidence"
+    )
+    args = parser.parse_args()
+    check_ledger(args.packet_dir)
     environment = os.environ.copy()
     environment["PYTHONPATH"] = os.pathsep.join(
         part for part in ("src", ".", environment.get("PYTHONPATH", "")) if part
@@ -70,6 +86,8 @@ def main() -> None:
         "UI canon PASS: packaged heartbeat, fixture curtain, sweep v2, "
         "live controls, human numbers, Stage, and SYM13 recipe"
     )
+    if args.packet_dir is None:
+        print("Ground check only; handoff requires --packet-dir and ledger done.")
 
 
 def _run_canon(

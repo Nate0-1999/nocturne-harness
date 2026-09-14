@@ -78,6 +78,12 @@ jobs:
           persist-credentials: false
       - name: Install web dependencies
         run: npm ci
+      - name: Checkout feature ledger
+        uses: actions/checkout@v4
+        with:
+          repository: Nate0-1999/nocturne-garden
+          path: _canon/garden
+          persist-credentials: false
       - name: Install the UI canon fixture
         working-directory: ${{ github.workspace }}
         run: |
@@ -91,6 +97,8 @@ jobs:
       - name: Unit tests
         run: npm run test:unit
       - name: Standing rendered UI canon
+        env:
+          GARDEN_ROOT: ${{ github.workspace }}/_canon/garden
         run: npm run test:canon
       - name: Verify committed release bundle
         working-directory: .
