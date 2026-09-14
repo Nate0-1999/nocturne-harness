@@ -563,6 +563,49 @@ async def test_r16_dynamic_instructions_are_reevaluated_after_move_tool_result()
 
 
 @pytest.mark.asyncio
+async def test_main_thread_instructions_carry_the_exact_location_rule(tmp_path: Path) -> None:
+    """ADR-010 / rules-ledger r5-4: the main model hears the same fence its tools enforce."""
+    from harness.progressive_prompt import render_workspace_context
+    from harness.toolset import AgentLocation
+
+    observed = []
+
+    async def stream(messages, _info):
+        observed.extend(
+            message.instructions for message in messages if isinstance(message, ModelRequest)
+        )
+        yield "Ready."
+
+    location = AgentLocation(
+        agent_id="main",
+        machine_id="test",
+        session_id="test",
+        workspace_root=tmp_path,
+        cwd=tmp_path,
+        fence_reads=False,
+    )
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(),
+    )
+    result = await runner.run(
+        thread_id=str(THREAD_UUID),
+        prompt="Where do you work?",
+        message_history=(),
+        emit=RecordingEmitter(),
+        system_instructions=render_workspace_context(location),
+    )
+    assert result.stop_reason is StopReason.END_TURN
+    assert any(
+        "To edit or write a file, first move to its exact directory." in (value or "")
+        for value in observed
+    )
+    brief = Path(__file__).parents[1] / "src/harness/WORKER_BRIEF.md"
+    assert "Move before acting" in brief.read_text()
+    assert "refuse every write outside that location" in brief.read_text()
+
+
+@pytest.mark.asyncio
 async def test_image_turn_sends_text_then_exact_binary_content_to_pydantic_ai() -> None:
     """A-052 is defended by verifying the runtime sends one text part before exact image bytes;
     this prevents adapter coercion, URL substitution, or silent attachment loss.

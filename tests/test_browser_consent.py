@@ -57,6 +57,7 @@ class Emitter:
 
 @pytest.mark.asyncio
 async def test_open_web_command_bypasses_model_and_first_turn_memory_gate() -> None:
+    """SPEC C.7 makes consent a local owner action without a paid model turn."""
     async def model_must_not_run(
         messages: list[ModelMessage], info: AgentInfo
     ) -> ModelResponse:

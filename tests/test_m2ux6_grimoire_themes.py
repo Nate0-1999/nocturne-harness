@@ -36,7 +36,7 @@ def load_forge() -> ModuleType:
 
 
 def test_frozen_forge_and_generated_css_are_byte_reproducible() -> None:
-    """PLAN M2UX6 and D.2 118 freeze both hands; regeneration must not improvise glyphs."""
+    """SPEC D.2 118 freezes both hands; regeneration must not improvise glyphs."""
     forge = load_forge()
     strips = [
         forge.elvish_strip(16, "#d9a45c", "wiz-head"),
@@ -61,7 +61,7 @@ def test_frozen_forge_and_generated_css_are_byte_reproducible() -> None:
 
 
 def test_both_palettes_pass_all_six_checks_with_one_danger_family() -> None:
-    """PLAN M2UX6, B.6 r12, and D.2 115 require six checks and one danger per theme."""
+    """SPEC B.6 r12 and D.2 115 require six checks and one danger per theme."""
     result = json.loads(run_script("validate_theme_palettes.py").stdout)
     for theme in ("wizard-mode", "technomancer"):
         checks = result["themes"][theme]["checks"]
@@ -71,7 +71,7 @@ def test_both_palettes_pass_all_six_checks_with_one_danger_family() -> None:
 
 
 def test_conjurations_are_state_bound_and_data_surfaces_remain_still() -> None:
-    """PLAN M2UX6, B.6 r7, and D.2 116-117 reserve loops for empty/background air."""
+    """SPEC B.6 r7 and D.2 116-117 reserve loops for empty/background air."""
     css = CSS_PATH.read_text()
     assert '.message__content' not in css
     assert '.memory-card' not in css
@@ -86,7 +86,7 @@ def test_conjurations_are_state_bound_and_data_surfaces_remain_still() -> None:
 
 
 def test_reduced_motion_stops_every_grimoire_loop_and_conjuration() -> None:
-    """PLAN M2UX6 and B.6 r7 require a legible static rest under reduced motion."""
+    """SPEC B.6 r7 requires a legible static rest under reduced motion."""
     css = CSS_PATH.read_text()
     reduced = css.split("@media (prefers-reduced-motion: reduce)", maxsplit=1)[1]
     assert "animation: none !important" in reduced

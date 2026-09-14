@@ -40,7 +40,7 @@ test('judged Symphony batches reuse Palace Queue and retain explicit owner conse
   assert.match(app, /type: 'queue\.batch\.decide'/u)
 })
 
-/** M3CU keeps model judgment visible while all corpus changes require an owner tap. */
+/** ADR-021 keeps model judgment visible while all corpus changes require an owner tap. */
 test('curator proposals expose Palace activity and use only explicit queue decisions', async () => {
   const [app, rack, palaceState] = await Promise.all([
     source('App.tsx'), source('rack.tsx'), source('PalaceStateModule.tsx'),

@@ -411,7 +411,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     slot: 'panel', streams: ['scorer.change'],
     actions: ['scorer.simulate', 'scorer.force', 'scorer.retrain', 'scorer.audition', 'scorer.activate', 'rack.scope.get', 'rack.scope.set'],
     bindings: [
-      'scorer.tau', 'scorer.top_k', 'scorer.memory_context_share',
+      'scorer.tau', 'scorer.memory_context_share',
       'scorer.half_life_time_days', 'scorer.half_life_hist_days',
       'scorer.weight.sem', 'scorer.weight.kw', 'scorer.weight.time',
       'scorer.weight.proj', 'scorer.weight.freq', 'scorer.weight.hist',

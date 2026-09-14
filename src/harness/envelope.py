@@ -66,7 +66,9 @@ class ImageView(BaseModel):
 
     kind: Literal["image"]
     media_type: ImageMediaType
+    # WALL money / A-052: capture only a nonempty image within the billed byte limit.
     byte_count: Annotated[StrictInt, Field(gt=0, le=_MAX_IMAGE_BYTES)]
+    # WALL owner files / A-052: compact views identify exact durable attachment bytes.
     sha256: Annotated[StrictStr, Field(pattern=r"^[0-9a-f]{64}$")]
 
 
@@ -172,7 +174,9 @@ class SymphonyJudgeCharterPayload(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
 
     seat: Literal["motivation", "implementation", "performance"]
+    # WALL attention / D.2 102: a judge needs the owner's fixed acceptance rubric.
     rubric: tuple[NonBlankString, ...] = Field(min_length=1)
+    # WALL attention / D.2 102: judge release requires named evidence.
     evidence_requirements: tuple[NonBlankString, ...] = Field(min_length=1)
     metrics: tuple[NonBlankString, ...] = ()
 
@@ -194,10 +198,15 @@ class SymphonyAuthorityPayload(BaseModel):
 
     # WALL money / T2: preserve the signed purchase and delegation limits.
     attempts: StrictInt = Field(ge=1)
+    # WALL money / T2: preserve the signed spend ceiling.
     spend_wall_usd: Decimal = Field(gt=0)
+    # WALL money / T2: preserve the signed round limit.
     max_rounds: StrictInt = Field(ge=1)
+    # WALL money / T2: preserve the signed depth limit.
     depth_cap: StrictInt = Field(ge=0)
+    # WALL money / T2: preserve the signed delegation limit.
     children_per_attempt: StrictInt = Field(ge=0)
+    # WALL money / T2: preserve the signed time limit.
     duration_minutes: StrictInt = Field(gt=0)
     signed: Literal[True]
 
@@ -392,10 +401,15 @@ class ProviderErrorPayload(BaseModel):
 
     # INCIDENT F034: preserve bounded structured provider evidence for the context-limit remedy.
     classification: Literal["context_length", "provider_refusal"]
+    # INCIDENT F034: public refusal evidence stays bounded.
     message: NonBlankString = Field(max_length=1_000)
+    # INCIDENT F034: publish the attempted model, not the full provider payload.
     model: NonBlankString = Field(max_length=256)
+    # INCIDENT F034: retain a valid HTTP status for the remedy.
     status_code: StrictInt | None = Field(default=None, ge=100, le=599)
+    # INCIDENT F034: bound the canonical provider error code.
     code: NonBlankString | None = Field(default=None, max_length=128)
+    # INCIDENT F034: bound the native provider error code.
     provider_code: NonBlankString | None = Field(default=None, max_length=128)
 
 
@@ -427,6 +441,7 @@ class GateOpenPayload(_ExtensiblePayload):
 
 class WrongResolution(_ExtensiblePayload):
     memory_id: UUID
+    # WALL Palace writes / A-023: correction must name the reviewed revision.
     expected_revision: Annotated[StrictInt, Field(ge=1)]
     action: Literal["edit", "expire"]
     body: StrictStr | None = None
@@ -521,6 +536,7 @@ class MemoryPanelRemovePayload(_MemoryPanelPayload):
 class MemoryPanelEditPayload(_MemoryPanelPayload):
     action: Literal["edit"]
     memory_id: UUID
+    # WALL Palace writes / C.4: edits use compare-and-set revisions.
     expected_revision: Annotated[StrictInt, Field(ge=1)]
     body: StrictStr
 
@@ -528,6 +544,7 @@ class MemoryPanelEditPayload(_MemoryPanelPayload):
 class MemoryPanelPinPayload(_MemoryPanelPayload):
     action: Literal["pin"]
     memory_id: UUID
+    # WALL Palace writes / C.4: pin changes use compare-and-set revisions.
     expected_revision: Annotated[StrictInt, Field(ge=1)]
     pin: StrictBool
 

@@ -11,6 +11,7 @@ from harness import browser_runtime
 def test_browser_runtime_installs_once_at_explicit_home(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """SPEC C.7 installs adopted browser hands once in the selected product home."""
     calls: list[tuple[list[str], Path]] = []
 
     def run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
@@ -37,6 +38,7 @@ def test_browser_runtime_installs_once_at_explicit_home(
 def test_browser_runtime_failure_is_plain_and_leaves_no_ready_receipt(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """P3 keeps an unsuccessful browser installation visibly incomplete and retryable."""
     monkeypatch.setattr(
         browser_runtime.subprocess,
         "run",

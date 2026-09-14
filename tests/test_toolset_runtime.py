@@ -7,6 +7,7 @@ from harness.toolset_runtime import LazyStandardToolset
 
 @pytest.mark.asyncio
 async def test_model_move_execution_notifies_thread_location(tmp_path: Path) -> None:
+    """A-063 publishes a successful model move as the thread's current location."""
     nested = tmp_path / "nested"
     nested.mkdir()
     moved: list[Path] = []

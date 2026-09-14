@@ -38,6 +38,8 @@ def render_workspace_context(location: AgentLocation) -> str:
         f"Current location: {cwd}",
         f"Workspace-relative location: {relative}",
         "Treat the workspace root as the hard file-operation boundary for this thread.",
+        "To edit or write a file, first move to its exact directory. "
+        "Shell commands stay within the current location's subtree; reads are free.",
         "Directory entries:",
         *(f"- {entry}" for entry in entries),
     ]

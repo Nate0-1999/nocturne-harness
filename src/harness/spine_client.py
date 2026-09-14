@@ -203,8 +203,10 @@ class InjectionEventAnnotationInput(ContractModel):
 class TranscriptRecordInput(ContractModel):
     # WALL owner files / D.2 082: restoration requires ordered, digest-addressed journal rows.
     thread_id: UUID
+    # WALL owner files / D.2 082: restoration follows positive journal sequence numbers.
     sequence: int = Field(strict=True, gt=0)
     journal_line: str
+    # WALL owner files / D.2 082: verify the exact journal record digest.
     sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
@@ -562,7 +564,9 @@ class SpendEvent(ContractModel):
     product_type: Literal["llm.request", "llm.embedding"]
     quantity_type: NonBlankString
     unit_of_measure: NonBlankString
+    # WALL money / A-027: quantities obey the receipt's positive decimal precision.
     quantity: Decimal = Field(gt=0, max_digits=30, decimal_places=9)
+    # WALL money / A-027: measured costs cannot become negative receipts.
     cost_usd: Decimal | None = Field(default=None, ge=0, max_digits=20, decimal_places=12)
     basis: Literal["measured", "allocated", "estimated"]
     behavior: Literal["variable", "fixed", "step"]
@@ -753,9 +757,13 @@ class ScorerConsoleQuery(ContractModel):
 class ScorerValues(ContractModel):
     # WALL Palace writes / A-034: browser controls bind only the declared parameter ranges.
     tau: float = Field(strict=True, ge=0, le=1)
+    # WALL Palace writes / A-034: retain the legacy transport shape for older Palaces.
     top_k: int = Field(strict=True, ge=1, le=8)
+    # WALL Palace writes / A-061: the memory room is the declared fractional share.
     memory_context_share: float = Field(strict=True, ge=0.01, le=0.50)
+    # WALL Palace writes / A-034: the declared decay has a positive half-life.
     half_life_time_days: float = Field(strict=True, gt=0)
+    # WALL Palace writes / A-034: the declared edit decay has a positive half-life.
     half_life_hist_days: float = Field(strict=True, gt=0)
     weights: dict[Literal["sem", "kw", "time", "proj", "freq", "hist"], float]
 
@@ -807,6 +815,7 @@ class CreateScorerConfigRequest(ContractModel):
     event_uid: ULID
     base_version: NonBlankString
     values: ScorerValues
+    # WALL Palace writes / A-047: informed force identifies the exact simulation.
     simulation_digest: Annotated[StrictStr, Field(pattern=r"^[0-9a-f]{64}$")]
     force: Literal[True]
     actor_class: Literal["human"] = "human"
@@ -858,6 +867,7 @@ class RackScorerForceRequest(ContractModel):
     event_uid: ULID
     base_version: NonBlankString
     values: ScorerValues
+    # WALL Palace writes / A-047: the owner can force only the displayed simulation.
     simulation_digest: Annotated[StrictStr, Field(pattern=r"^[0-9a-f]{64}$")]
     force: Literal[True]
 

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
+import { violations } from '../../scripts/check_product_terms.mjs'
 
 const source = (path) => readFile(new URL(`../src/${path}`, import.meta.url), 'utf8')
 
@@ -51,6 +52,8 @@ test('internal implementation labels do not reach the owner surface', async () =
     source('ModelDevice.tsx'),
   ])
   const joined = files.join('\n')
+
+  assert.deepEqual(violations(joined, 'owner-surfaces.tsx'), [])
 
   for (const internalLabel of [
     'Current principal',

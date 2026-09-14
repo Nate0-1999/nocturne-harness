@@ -144,7 +144,7 @@ test('factory layers contain Graph and Injection as stage modules, never fixed t
   assert.deepEqual(injection?.modules.map((module) => module.module_id), ['injection_console'])
 })
 
-/** PLAN M3SP makes Palace State a small ordinary Stage module, including removal and restore. */
+/** P2.4 makes Palace State a small ordinary Stage module, including removal and restore. */
 test('Palace State is mounted beside Spend and survives the shared library lifecycle', () => {
   const factory = FACTORY_STAGE_LAYOUT.layers.find((layer) => layer.layer_id === 'work')
   assert.deepEqual(

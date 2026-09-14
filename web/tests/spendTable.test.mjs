@@ -31,7 +31,7 @@ const snapshot = () => ({
   purposes: [{ purpose: 'embedding', label: 'Embeddings', ...metrics() }],
 })
 
-/** PLAN M3SP keeps exact server-authored token buckets and nested model rows at the browser seam. */
+/** ADR-024 keeps exact server-authored token buckets and nested model rows at the browser seam. */
 test('parses conversation, model, reasoning, cache, and purpose rows without re-accounting', () => {
   const parsed = parseSpendTableSnapshot(snapshot())
 
@@ -62,7 +62,7 @@ test('keeps partial pricing explicit and rejects impossible receipt counts', () 
   assert.throws(() => parseSpendTableSnapshot(payload), /impossible unpriced receipt counts/u)
 })
 
-/** M3SP ATTUNED projections may truthfully contain no rows, but never duplicate a grouping. */
+/** ADR-024 ATTUNED projections may truthfully contain no rows, but never duplicate a grouping. */
 test('accepts an empty attuned slice and rejects duplicate conversation rows', () => {
   assert.deepEqual(
     parseSpendTableSnapshot({ ...snapshot(), threads: [], purposes: [] }).threads,

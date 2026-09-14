@@ -90,7 +90,6 @@ const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
 const POLL_INTERVAL_MS = 5_000
 const CONTROL_LABELS: Record<string, string> = {
   tau: 'Minimum match',
-  top_k: 'Memories considered',
   memory_context_share: 'Memory share',
   half_life_time_days: 'Recent-use fade (days)',
   half_life_hist_days: 'Past-choice fade (days)',
@@ -433,7 +432,7 @@ export function InjectionConsole() {
           })}
           {draft && (
             <div className="control-bank">
-              {(['tau', 'top_k', 'memory_context_share', 'half_life_time_days', 'half_life_hist_days'] as const)
+              {(['tau', 'memory_context_share', 'half_life_time_days', 'half_life_hist_days'] as const)
                 .map((key) => (
                   <label key={key}>
                     <span>{CONTROL_LABELS[key]}</span>
@@ -474,7 +473,6 @@ export function InjectionConsole() {
                 >
                   {[
                     'tau',
-                    'top_k',
                     'memory_context_share',
                     'half_life_time_days',
                     'half_life_hist_days',

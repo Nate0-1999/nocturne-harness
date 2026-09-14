@@ -1490,7 +1490,7 @@ Graph CURRENT to mean current project would silently replace A-035's injected-
 membership contract. A separate project screen or permanent sidebar would add
 navigation before owner use has earned it.
 
-## 053 — Give one learning truth two cockpit scales [ADR-005, ADR-009, A-051; PROVISIONAL-TASTE]
+## 053 — Give one learning truth two cockpit scales [P1.2.3, P2.2, ADR-005, ADR-009, A-051; PROVISIONAL-TASTE]
 
 **Decision.** Consume the scorer console's one server-authored learning view in
 two densities. Vitals gets an always-legible authentic-signal and right/wrong
@@ -2375,7 +2375,7 @@ Hard-fencing reads by default would narrow useful inspection beyond the owner's
 ruling. Building the Spine presence table/API here would widen M3E into a second
 repository and pre-empt ADR-006's later transport packet.
 
-## 079 — The owner loop borrows PI's hands without yielding turn authority [ADR-015, ADR-024, M3H]
+## 079 — The owner loop borrows PI's hands without yielding turn authority [P3, P4, ADR-015, ADR-024, M3H]
 
 **Decision.** Keep the existing Pydantic AI turn runner as the sole owner-model
 loop because it already owns memory gating, transcript events, cancellation,
@@ -3341,3 +3341,25 @@ out Garden explicitly. `--packet-dir` additionally runs its verifier before the
 rendered checks. Without that argument the result explicitly says ground only.
 PLAN's DONE command repeats evidence verification after the handoff report exists.
 Tooling only: the packaged app and ordinary runtime are unchanged.
+
+## 114 — A missing rule citation fails the build [P1.2, P2, P3, P4, M3RC]
+
+PRECEDENT: SPEC B.6 r12/r14, PLAN M3RC, notes/rules-ledger.md; ancestors M3GD/M3LM.
+Python AST and TypeScript parsing check the core-loop refusal sites, bounded fields
+and composer gates. A retained local error message must also appear in tests.
+Raised variables and bare rethrows forward another boundary's error; they introduce
+no new local refusal. The previous guard-diet file scope remains the lint scope.
+
+Garden owns the standard-library citation/voice checker and exports identical copies
+plus law fingerprints into both public repositories. Each product CI checks its
+frozen law locally; Garden checks those fingerprints and copies against the master
+byte-for-byte. This avoids a private-repository credential in public CI. Freeze
+refresh is explicit via `garden/bin/check_rules --export`, after an approved freeze.
+
+The main model's rendered instructions now state the exact-location fence. Remove
+the retired count control from the console and registry; the historical wire field
+remains readable for older clients. Visualization manifests cannot write scorer
+parameters; the bridge retains ADR-018 transport and ADR-023 control dispatch.
+The ledger's four-kind sketch omits those shipped capabilities, so the test checks
+the actual closed protocol and visualizer authority rather than removing controls.
+Unbuilt or owner-unruled checks are named skips that fail if enabled before proof.

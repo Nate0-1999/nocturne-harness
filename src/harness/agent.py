@@ -135,6 +135,7 @@ class RememberSplitCandidate(BaseModel):
         ),
     )
     body: StrictStr
+    # WALL Palace writes / A-049: each split child keeps the required retrieval keywords.
     keywords: list[StrictStr] = Field(min_length=2, max_length=5)
 
 
@@ -143,6 +144,7 @@ class RememberCoverageSegment(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
+    # WALL Palace writes / A-050: empty witness spans cannot account for source content.
     text: StrictStr = Field(
         min_length=1,
         description=(
@@ -162,6 +164,7 @@ class RememberSplitDraft(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     candidates: list[RememberSplitCandidate]
+    # WALL Palace writes / A-050: saving requires an exact source witness.
     coverage: list[RememberCoverageSegment] = Field(min_length=1)
     safe_to_save: StrictBool
 
@@ -171,6 +174,7 @@ class ExtractionCandidateDraft(BaseModel):
     label: StrictStr
     body: StrictStr
     kind: Literal["fact", "preference", "procedure", "project_note", "persona"]
+    # WALL Palace writes / ADR-022: extracted candidates retain the memory keyword contract.
     keywords: list[StrictStr] = Field(min_length=2, max_length=5)
 
 

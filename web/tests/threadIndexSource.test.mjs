@@ -9,6 +9,7 @@ const contributions = readFileSync(
   'utf8',
 )
 
+/** A-060 carries exact thread locality through the wire and its contribution display. */
 test('thread locality is exact at the wire and visible after project provenance', () => {
   assert.match(protocol, /origin_thread_id: string \| null/)
   assert.match(protocol, /thread: number \| null/)

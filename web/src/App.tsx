@@ -2458,7 +2458,7 @@ function ChatModule() {
                 className="composer-attachment__remove"
                 type="button"
                 aria-label={`Remove ${pendingImage.local_filename}`}
-                disabled={promptBusy}
+                disabled={promptBusy /* WALL money / C.6: one accepted send at a time. */}
                 onClick={removePendingImage}
               >
                 Remove
@@ -2475,7 +2475,7 @@ function ChatModule() {
             value={draft}
             rows={1}
             placeholder={snapshot.connection === 'connected' ? 'Transmit to Nocturne' : 'Waiting for Nocturne'}
-            disabled={promptBusy}
+            disabled={promptBusy /* WALL money / C.6: preserve the accepted turn while sending. */}
             onChange={(event) => {
               const value = event.target.value
               setDraft(value)
@@ -2496,7 +2496,7 @@ function ChatModule() {
               accept={IMAGE_ACCEPT}
               tabIndex={-1}
               aria-hidden="true"
-              disabled={imageBusy || promptBusy || pendingImage !== null}
+              disabled={imageBusy || promptBusy || pendingImage !== null /* WALL attention / A-052: one complete attachment. */}
               onChange={(event) => {
                 const files = Array.from(event.currentTarget.files ?? [])
                 event.currentTarget.value = ''
@@ -2508,7 +2508,7 @@ function ChatModule() {
               type="button"
               data-testid="attach-image"
               aria-describedby="composer-image-status"
-              disabled={imageBusy || promptBusy || pendingImage !== null}
+              disabled={imageBusy || promptBusy || pendingImage !== null /* WALL attention / A-052: one complete attachment. */}
               onClick={() => imageInputRef.current?.click()}
             >
               {imageBusy ? 'Preparing…' : 'Attach image'}
@@ -2540,7 +2540,7 @@ function ChatModule() {
               aria-label="Archive this thread"
               data-tooltip="Archive this thread"
               data-tooltip-detail="Extract its memories for review, then close the thread."
-              disabled={archiveBusy || openGate !== null}
+              disabled={archiveBusy || openGate !== null /* WALL Palace writes / ADR-022: finish the reviewed gate before extraction. */}
               onClick={archiveThread}
             >
               <span aria-hidden="true">{archiveBusy ? '…' : '⤓'}</span>
@@ -2564,7 +2564,7 @@ function ChatModule() {
             className="send-button"
             type="button"
             data-testid="send"
-            disabled={!canSend}
+            disabled={!canSend /* WALL attention / C.6, H7: respect the current gate and snapshot. */}
             onClick={transmitPrompt}
           >
             {activeRun === null ? 'Transmit' : 'Queue'}
