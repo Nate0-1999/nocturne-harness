@@ -68,6 +68,15 @@ async def run(assignment_path: Path) -> None:
         capabilities=[WorkspaceCapability(), *adopted_skill_capabilities(())],
         output_type=PromptedOutput(output_type),
         name=f"symphony-{stage}",
+        instructions=(
+            "You are checking whether proposed work can START. Missing output files are "
+            "expected before implementation and are not a readiness failure. Check only "
+            "prerequisites such as the workspace and required input files. The signed "
+            "acceptance criteria will be checked by independent judges AFTER implementation. "
+            "Do not implement anything during this readiness check."
+            if stage == "smoke"
+            else None
+        ),
     )
     toolset = LazyStandardToolset(
         cwd=root,

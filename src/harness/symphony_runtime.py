@@ -251,7 +251,7 @@ class SymphonyExecution:
                                 estimated_completion_cost_usd=authority.spend_wall_usd
                                 / (count * 2),
                                 estimated_completion_seconds=float(
-                                    authority.duration_minutes * 60 / count
+                                    authority.duration_minutes * 60 / (count * 2)
                                 ),
                             )
                         )
