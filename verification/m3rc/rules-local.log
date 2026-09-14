@@ -1,0 +1,24 @@
+$ python3 harness/scripts/check_rules.py
+Product rules: PASS
+$ python3 spine/scripts/check_rules.py
+Product rules: PASS
+$ python3 harness/scripts/check_guard_citations.py
+Guard citations: PASS
+$ python3 harness/scripts/check_test_motivations.py
+test motivation check passed: 756 tests, 0 grandfathered
+$ python3 spine/scripts/check_test_motivations.py
+test motivation check passed: 226 tests, 0 grandfathered
+$ python3 -m unittest discover -s garden/tests -p test_rules.py -v
+test_adr_citation_must_precede_its_decision (test_rules.RulesTests.test_adr_citation_must_precede_its_decision) ... ok
+test_each_decision_needs_its_own_problem_node (test_rules.RulesTests.test_each_decision_needs_its_own_problem_node) ... ok
+test_freeze_rejects_one_changed_axiom_or_spec_byte (test_rules.RulesTests.test_freeze_rejects_one_changed_axiom_or_spec_byte) ... ok
+test_precedent_cannot_be_borrowed_from_another_packet (test_rules.RulesTests.test_precedent_cannot_be_borrowed_from_another_packet) ... ok
+test_product_terms_and_governance_dependencies_fail (test_rules.RulesTests.test_product_terms_and_governance_dependencies_fail) ... ok
+test_python_guard_needs_citation_and_a_quoted_message (test_rules.RulesTests.test_python_guard_needs_citation_and_a_quoted_message) ... ok
+test_seed_gap_duplicate_and_missing_or_ambiguous_state_fail (test_rules.RulesTests.test_seed_gap_duplicate_and_missing_or_ambiguous_state_fail) ... ok
+test_web_throw_and_disabled_gate_need_citations (test_rules.RulesTests.test_web_throw_and_disabled_gate_need_citations) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.459s
+
+OK

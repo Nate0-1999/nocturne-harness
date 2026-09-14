@@ -1,0 +1,19 @@
+{
+  "checked_at_utc": "2026-09-14T01:19:24.006078+00:00",
+  "harness_test_commit": "fe7d9e9",
+  "spine_test_commit": "fee40eb",
+  "temporary_worktrees_removed": [
+    "/tmp/m3rc-final/harness",
+    "/tmp/m3rc-final/spine",
+    "/tmp/m3rc-final/garden",
+    "/tmp/m3rc-probes/guard",
+    "/tmp/m3rc-probes/freeze"
+  ],
+  "provider_calls": 0,
+  "owner_home_access": false,
+  "docker_running_containers": [],
+  "fixture_processes": [],
+  "text_viewer_stopped": true,
+  "remote_proof_branches": "all three deleted; git ls-remote returned no matching heads",
+  "peer_worktrees": "untouched"
+}

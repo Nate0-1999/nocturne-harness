@@ -1,0 +1,99 @@
+{
+  "packet": "M3RC",
+  "rows": {
+    "r1-5": {
+      "result": "PASS",
+      "check": "scripts/check_rules.py: decisions"
+    },
+    "r2-10": {
+      "result": "SKIPPED",
+      "check": "harness/tests/test_unbuilt_rules.py: compaction policy"
+    },
+    "r2-15": {
+      "result": "PASS",
+      "check": "scripts/check_rules.py: governance dependency scan"
+    },
+    "r4-9": {
+      "result": "PASS",
+      "check": "spine/tests/test_learner_worker.py: test_training_calls_have_only_the_worker_and_manual_router_entrypoints"
+    },
+    "r5-4": {
+      "result": "PASS",
+      "check": "harness/tests/test_agent_runtime.py: test_main_thread_instructions_carry_the_exact_location_rule"
+    },
+    "r6-4": {
+      "result": "PARTIAL",
+      "check": "source term ban passes; retired SPEC mode awaits owner pen"
+    },
+    "r7-4": {
+      "result": "PASS",
+      "check": "web/tests/rackBridge.test.mjs: closed actual protocol and visualizer scorer authority; ADR-018/023 transport retained"
+    },
+    "r7-16": {
+      "result": "SKIPPED",
+      "check": "harness/tests/test_unbuilt_rules.py: edge-on Conversation"
+    },
+    "r8-3": {
+      "result": "SKIPPED",
+      "check": "harness/tests/test_unbuilt_rules.py: camera ruling; R10 conflict"
+    },
+    "r8-7": {
+      "result": "SKIPPED",
+      "check": "harness/tests/test_unbuilt_rules.py: numeric hue bands await owner ruling"
+    },
+    "r8-11": {
+      "result": "SKIPPED",
+      "check": "harness/tests/test_unbuilt_rules.py: hardware primitive budgets"
+    },
+    "r9-6": {
+      "result": "SKIPPED",
+      "check": "both product tests/test_unbuilt_rules.py: role policies"
+    },
+    "r9-9": {
+      "result": "SKIPPED",
+      "check": "spine/tests/test_unbuilt_rules.py: single cost store"
+    },
+    "r11-2": {
+      "result": "SKIPPED",
+      "check": "spine/tests/test_unbuilt_rules.py: shared Palace revocation"
+    },
+    "r11-4": {
+      "result": "PASS",
+      "check": "harness/scripts/check_guard_citations.py and .mjs; real CI failure 34793889854"
+    },
+    "r14-1": {
+      "result": "FAIL",
+      "check": "garden/bin/check_rules adrs: 22 missing pre-decision citations; proposed patch awaits owner"
+    },
+    "r14-2": {
+      "result": "PASS",
+      "check": "scripts/check_rules.py: each decision has a Problem Tree node"
+    },
+    "r14-6": {
+      "result": "PASS",
+      "check": "garden/bin/check_rules freeze; both product CI fingerprints; real failure 34793890102"
+    },
+    "r14-10": {
+      "result": "PASS",
+      "check": "garden/bin/check_rules seeds: 65 unique contiguous IDs, explicit states, next SD-066"
+    },
+    "r14-11": {
+      "result": "PASS",
+      "check": "garden/bin/check_rules precedents: every current charge carries its line"
+    },
+    "r14-14": {
+      "result": "PASS",
+      "check": "garden/bin/check_rules freeze: all four ground-rules files match master"
+    }
+  },
+  "additional_proofs": {
+    "no_top_n": "15 unit selections; 10 live Postgres and preview selections with legacy top_k=1",
+    "corrected_rules_ci": "https://github.com/Nate0-1999/nocturne-harness/actions/runs/34794016917"
+  },
+  "not_claimed": [
+    "new mode law",
+    "numeric hue limits",
+    "Cube camera ruling",
+    "49 feature-ledger walks"
+  ]
+}

@@ -1,0 +1,14 @@
+rules	Guard citations and quoted refusal messages	﻿2026-09-14T00:49:37.3535207Z ##[group]Run python scripts/check_guard_citations.py
+rules	Guard citations and quoted refusal messages	2026-09-14T00:49:37.3535714Z [36;1mpython scripts/check_guard_citations.py[0m
+rules	Guard citations and quoted refusal messages	2026-09-14T00:49:37.3567361Z shell: /usr/bin/bash -e {0}
+rules	Guard citations and quoted refusal messages	2026-09-14T00:49:37.3567582Z env:
+rules	Guard citations and quoted refusal messages	2026-09-14T00:49:37.3567816Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+rules	Guard citations and quoted refusal messages	2026-09-14T00:49:37.3568168Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+rules	Guard citations and quoted refusal messages	2026-09-14T00:49:37.3568505Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+rules	Guard citations and quoted refusal messages	2026-09-14T00:49:37.3568972Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+rules	Guard citations and quoted refusal messages	2026-09-14T00:49:37.3569272Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+rules	Guard citations and quoted refusal messages	2026-09-14T00:49:37.3569571Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+rules	Guard citations and quoted refusal messages	2026-09-14T00:49:37.3569832Z ##[endgroup]
+rules	Guard citations and quoted refusal messages	2026-09-14T00:49:41.5553652Z src/harness/agent.py:138: guard lacks adjacent WALL/incident citation
+rules	Guard citations and quoted refusal messages	2026-09-14T00:49:41.5554242Z Guard citations: FAIL
+rules	Guard citations and quoted refusal messages	2026-09-14T00:49:41.5627552Z ##[error]Process completed with exit code 1.

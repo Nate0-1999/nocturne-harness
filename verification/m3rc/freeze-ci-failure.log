@@ -1,0 +1,14 @@
+rules	Frozen axioms and SPEC	﻿2026-09-14T00:49:36.4536442Z ##[group]Run python scripts/check_rules.py --freeze-only
+rules	Frozen axioms and SPEC	2026-09-14T00:49:36.4536947Z [36;1mpython scripts/check_rules.py --freeze-only[0m
+rules	Frozen axioms and SPEC	2026-09-14T00:49:36.4575351Z shell: /usr/bin/bash -e {0}
+rules	Frozen axioms and SPEC	2026-09-14T00:49:36.4575669Z env:
+rules	Frozen axioms and SPEC	2026-09-14T00:49:36.4575950Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+rules	Frozen axioms and SPEC	2026-09-14T00:49:36.4576407Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+rules	Frozen axioms and SPEC	2026-09-14T00:49:36.4576896Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+rules	Frozen axioms and SPEC	2026-09-14T00:49:36.4577298Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+rules	Frozen axioms and SPEC	2026-09-14T00:49:36.4577689Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+rules	Frozen axioms and SPEC	2026-09-14T00:49:36.4578399Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+rules	Frozen axioms and SPEC	2026-09-14T00:49:36.4578763Z ##[endgroup]
+rules	Frozen axioms and SPEC	2026-09-14T00:49:36.5442868Z CLAUDE.md: frozen axioms differ from the master fingerprint
+rules	Frozen axioms and SPEC	2026-09-14T00:49:36.5522407Z Product rules: FAIL
+rules	Frozen axioms and SPEC	2026-09-14T00:49:36.5534298Z ##[error]Process completed with exit code 1.
