@@ -116,7 +116,8 @@ def test_expansion_refuses_scope_growth_and_worker_brief_carries_the_fence(
         conductor.expand((child,))
         brief = conductor.render_worker_brief(child, policy="max", retry_number=0)
 
-    assert "not the conductor and not a Garden relay\nsession" in brief
+    assert "You are one bounded Symphony worker." in brief
+    assert "Move before acting" in brief
     assert '"allowed_surfaces": [\n    "component/allowed"' in brief
     assert '"accepted_commit": "commit-parent"' in brief
     assert '"model_policy": "max"' in brief
