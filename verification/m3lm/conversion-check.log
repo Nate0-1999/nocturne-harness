@@ -1,0 +1,1 @@
+PASS: all 194 original rows preserve exact era, label, status, walk and owner citation, including embedded newlines and spaces.

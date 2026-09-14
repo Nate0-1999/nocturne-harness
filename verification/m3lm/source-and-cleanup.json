@@ -1,0 +1,14 @@
+{
+  "garden_code": "b57afc3",
+  "harness_code": "d36d586",
+  "spine_code": "d3daa9c",
+  "suite_source": "/tmp/m3lm-final-snapshot (committed archives; imports pointed to snapshot src)",
+  "harness": "1720 passed, 3 live contracts deselected",
+  "spine": "298 passed",
+  "ledger": "11 tests passed",
+  "canon": "ledger verify, packaged heartbeat and full UI canon PASS",
+  "owner_nocturne_home_used": false,
+  "palace_or_provider_calls": false,
+  "verification_credentials_created": false,
+  "native_evidence_viewer": "TextEdit; three read-only log windows closed"
+}

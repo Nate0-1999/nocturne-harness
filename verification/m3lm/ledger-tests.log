@@ -1,0 +1,31 @@
+test_changed_image_missing_hash_and_old_image_refuse (test_ledger.LedgerTests.test_changed_image_missing_hash_and_old_image_refuse)
+M3LM / SPEC B.6: a renamed old screenshot cannot impersonate a fresh walk. ... ok
+test_complete_builder_passes_and_fail_requires_real_flag (test_ledger.LedgerTests.test_complete_builder_passes_and_fail_requires_real_flag)
+SPEC B.6: a documented FAIL is coverage, but an invented flag is not. ... ok
+test_deleted_required_row_and_empty_unmapped_reason_refuse (test_ledger.LedgerTests.test_deleted_required_row_and_empty_unmapped_reason_refuse)
+M3LM / P2: editing the report cannot reduce requirements computed from Git. ... ok
+test_diff_includes_rename_old_path_and_unmapped_files (test_ledger.LedgerTests.test_diff_includes_rename_old_path_and_unmapped_files)
+SPEC B.6 / M3LM: a rename still impacts the old module's consumers. ... ok
+test_done_cannot_change_board_until_evidence_passes (test_ledger.LedgerTests.test_done_cannot_change_board_until_evidence_passes)
+M3LM / PLAN step 7: missing evidence leaves the claimed board row untouched. ... FL-001: missing screenshot FL-001.png
+Handoff REFUSED: 2 required rows checked
+ok
+test_old_scout_folder_reports_every_missing_row_and_screenshot (test_ledger.LedgerTests.test_old_scout_folder_reports_every_missing_row_and_screenshot)
+D.2 154 / M3LM walk: old non-ledger evidence must not pass as coverage. ... ok
+test_scout_skeleton_covers_partial_and_lists_unbuilt_without_verdict (test_ledger.LedgerTests.test_scout_skeleton_covers_partial_and_lists_unbuilt_without_verdict)
+D.2 154: scouts cover every built/partial row; unbuilt rows are not run. ... ok
+test_source_drift_and_ledger_drift_refuse (test_ledger.LedgerTests.test_source_drift_and_ledger_drift_refuse)
+SPEC B.6: changing code after proof must require a new report head and walk. ... ok
+test_traversal_symlink_and_non_image_refuse (test_ledger.LedgerTests.test_traversal_symlink_and_non_image_refuse)
+SPEC B.6: evidence belongs inside this packet, not another folder's image. ... ok
+test_unrelated_peer_surface_does_not_invalidate_this_build (test_ledger.LedgerTests.test_unrelated_peer_surface_does_not_invalidate_this_build)
+PLAN M3LM: fresh evidence is required for exactly the impacted rows. ... ok
+test_validation_refuses_missing_walk_surfaces_duplicate_and_stale_view (test_ledger.LedgerTests.test_validation_refuses_missing_walk_surfaces_duplicate_and_stale_view)
+SPEC B.6 / M3LM: required features cannot silently disappear from coverage. ... generated markdown is stale: run bin/ledger render
+ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 2.383s
+
+OK
+Ledger coverage PASS: 2 required rows; verdicts, screenshots and hashes verified
