@@ -951,7 +951,7 @@ async def test_a049_single_atomic_oversized_claim_guides_without_any_write() -> 
 @pytest.mark.asyncio
 async def test_a050_single_fitting_candidate_never_persists_excluded_operation_text() -> None:
     """F027, A-050, ADR-022, and SPEC B.6 rule 12 are defended here.
-    M3FD: the single durable fact is saved while operation text stays only in the source witness.
+    Exact-source fallback may create only when the sole durable extract equals the whole source.
     """
     source = "Remember this: The observatory ledger has a silver cover."
     model = structured_sequence_model(
@@ -987,10 +987,8 @@ async def test_a050_single_fitting_candidate_never_persists_excluded_operation_t
 
     result = await agent.remember(source, context=context(spine))
 
-    assert result.ok
-    assert [request.body for request in spine.create_requests] == [
-        "The observatory ledger has a silver cover."
-    ]
+    assert result == RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
+    assert spine.create_requests == []
     assert spine.split_requests == []
 
 

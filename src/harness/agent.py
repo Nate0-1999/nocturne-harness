@@ -488,6 +488,8 @@ class HarnessAgent:
 
         if len(children) == 1:
             child = children[0]
+            if cl100k_token_count(body) <= self._settings.memory_max_tokens and child.body != body:
+                return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
             return await self._create_single_remember(
                 child.body,
                 label=child.label,
