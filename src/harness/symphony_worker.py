@@ -144,6 +144,8 @@ async def run(assignment_path: Path) -> None:
             return verdict
 
         prompt += (
+            f"\nYour current directory is {root}. Candidate artifact_root values are absolute "
+            "paths; use them exactly as given. "
             "\nInspect the actual candidate files and run the charter's checks. "
             "Do not edit candidate work. Return your own verdict, using the exact session "
             "and digest fields above. A failed metric or missing evidence is FAIL."

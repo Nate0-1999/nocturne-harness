@@ -257,6 +257,12 @@ async def test_signed_deliberation_waits_for_execution_before_releasing_result()
     assert stack is not None
     assert stack.launch.authority.spend_wall_usd == 10
     assert stack.timeline[-1] == "completed"
+    # A later steering message can retain an older snapshot in durable history.
+    restored = SymphonyExperience(id_factory=ids())
+    restored._hydrate((completed.events[-2], completed.events[1]))
+    replayed = await restored.read(str(result["symphony_id"]))
+    assert replayed is not None
+    assert replayed.state == "completed"
 
 
 @pytest.mark.asyncio

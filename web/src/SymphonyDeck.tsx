@@ -112,7 +112,11 @@ export function latestDeckStacks(messages: AssistantTranscriptMessage[]): DeckSt
   for (const message of messages) {
     for (const event of message.events) {
       const stack = parseDeckStack(event)
-      if (stack !== null) latest.set(stack.symphony_id, stack)
+      if (stack !== null) {
+        const prior = latest.get(stack.symphony_id)
+        if (prior !== undefined && prior.state !== 'running' && stack.state === 'running') continue
+        latest.set(stack.symphony_id, stack)
+      }
     }
   }
   return [...latest.values()].reverse()

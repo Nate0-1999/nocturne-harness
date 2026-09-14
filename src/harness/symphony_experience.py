@@ -505,6 +505,9 @@ class SymphonyExperience:
                 continue
             if stack.symphony_id in live_ids:
                 continue
+            current = self._stacks.get(stack.symphony_id)
+            if current is not None and current.state != "running" and stack.state == "running":
+                continue
             self._stacks[stack.symphony_id] = stack
             self._publish_recipe(stack)
 
