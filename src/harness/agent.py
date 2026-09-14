@@ -55,13 +55,20 @@ from harness.tools_memory import (
 
 REMEMBER_DRAFT_INSTRUCTION = (
     "Generate one short label and 2-5 lowercase searchable keywords for the "
-    "supplied memory. Keywords must be distinct nouns or terms. Return only "
+    "supplied memory. Identify whether it contains multiple distinct durable facts; set "
+    "multiple_facts true only for independent facts, never merely because the text is long. "
+    "Keywords must be distinct nouns or terms. Return only "
     "the requested structured result with no commentary."
 )
 REMEMBER_SPLIT_INSTRUCTION = (
     "Semantically divide the complete /remember source into durable atomic facts in source "
-    "order. Preserve every claim and qualifier without summarizing, omitting, truncating, or "
-    "mechanically chopping the source. Every candidate must stand alone, contain one claim, "
+    "order. Split only when there is more than one distinct fact, never to satisfy a length "
+    "limit. Preserve every claim and qualifier. Shorten an over-cap fact into one concise "
+    "memory without changing its meaning; never mechanically chop it. Use whole_source=true "
+    "and coverage=[] when the complete source is ONE over-cap fact "
+    "with no operation-only text: the application retains that exact source for you. "
+    "Otherwise use whole_source=false and supply the exact coverage below. Every candidate must "
+    "stand alone, contain one claim, "
     "and have its own short retrieval label: prefer 2-5 words and under 40 characters, with "
     "64 Unicode code points as the hard maximum. Also return 2-5 "
     "distinct lowercase searchable keywords. Every split candidate body must be at most 128 "
@@ -70,8 +77,9 @@ REMEMBER_SPLIT_INSTRUCTION = (
     "resolved and the candidate can still stand alone (for example, 'the ledger ... its cover' "
     "or 'the eastern shelf ... returned there'). Source-order words such as First, Second, and "
     "Third do not by themselves make otherwise independent facts unsafe; when they are part "
-    "of a durable coverage segment, retain them byte-for-byte in that candidate body. "
-    "source includes directions or commentary about remembering, saving, or splitting, treat "
+    "of a durable coverage segment that fits the cap, retain them byte-for-byte in that "
+    "candidate body. If the source includes directions or commentary about remembering, "
+    "saving, or splitting, treat "
     "them as instructions for this operation, never as durable facts or candidates. Keep every "
     "actual claim and qualifier. Also return source-ordered coverage segments whose exact text "
     "concatenates byte-for-byte to the complete source. Classify each segment as durable with "
@@ -85,16 +93,15 @@ REMEMBER_SPLIT_INSTRUCTION = (
     "or whitespace-only segment. Durable candidate "
     "indices must be nondecreasing, every candidate must own durable text, and each candidate "
     "body must equal its assigned durable text concatenated in source order with outer "
-    "whitespace trimmed only. Never add or rewrite body text. Set safe_to_save true only when "
-    "every extractive candidate stands alone and every semantic, coverage, and body rule is "
-    "satisfied; set it false whenever an extractive unit cannot stand alone or any requirement "
-    "cannot be met. If the source is one indivisible claim that cannot fit the supplied body "
-    "limit, return exactly one candidate containing that complete claim even though it exceeds "
-    "the limit; never shorten it to fit. Return one to 64 candidates and structured data only."
+    "whitespace trimmed only, except that assigned text over the body limit must be rewritten "
+    "concisely to fit that limit as one fact. The coverage always retains the exact original "
+    "source, including text that was shortened. Set safe_to_save true only when every "
+    "candidate stands alone, preserves its fact and qualifiers, and fits the body limit. "
+    "Return one to 64 candidates and structured data only."
 )
 REMEMBER_SPLIT_GUIDANCE = (
-    "I couldn't split this into standalone memories without changing its meaning, so I didn't "
-    "save it. Please break it into separate facts and try /remember again."
+    "I couldn't preserve every fact within the memory limit, so I didn't save it. "
+    "Please clarify the facts and try /remember again."
 )
 EXTRACTION_INSTRUCTION = (
     "Read the complete thread transcript. Return a concise working summary, open loops, and at "
@@ -118,10 +125,11 @@ class RememberDraft(BaseModel):
 
     label: StrictStr
     keywords: list[StrictStr]
+    multiple_facts: StrictBool = False
 
 
 class RememberSplitCandidate(BaseModel):
-    """One semantic child proposed only for an oversized `/remember`."""
+    """One atomic fact proposed for a multi-fact or oversized `/remember`."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -164,8 +172,9 @@ class RememberSplitDraft(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     candidates: list[RememberSplitCandidate]
+    whole_source: StrictBool = False
     # WALL Palace writes / A-050: saving requires an exact source witness.
-    coverage: list[RememberCoverageSegment] = Field(min_length=1)
+    coverage: list[RememberCoverageSegment] = Field(default_factory=list)
     safe_to_save: StrictBool
 
 
@@ -400,7 +409,7 @@ class HarnessAgent:
                 False,
                 "Could not remember: the generated label was not one line.",
             )
-        if len(label) > self._settings.label_max:
+        if draft.multiple_facts or len(label) > self._settings.label_max:
             return await self._split_or_guide_remember(
                 body,
                 context=context,
@@ -476,10 +485,8 @@ class HarnessAgent:
 
         if len(children) == 1:
             child = children[0]
-            if cl100k_token_count(body) > self._settings.memory_max_tokens or child.body != body:
-                return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
             return await self._create_single_remember(
-                body,
+                child.body,
                 label=child.label,
                 keywords=child.keywords,
                 context=context,
@@ -834,12 +841,21 @@ def _validated_remember_split(
     # WALL Palace writes / A-050: account for every exact source span before any child is saved.
     if not draft.safe_to_save:
         return None
-    if "".join(segment.text for segment in draft.coverage) != source_body:
+    coverage = draft.coverage
+    if draft.whole_source:
+        if len(draft.candidates) != 1 or coverage or (
+            cl100k_token_count(source_body) <= memory_max_tokens
+        ):
+            return None
+        coverage = [RememberCoverageSegment(
+            text=source_body, classification="durable", candidate_index=0,
+        )]
+    if "".join(segment.text for segment in coverage) != source_body:
         return None
 
     assigned_text: list[list[str]] = [[] for _ in draft.candidates]
     last_durable_index = -1
-    for segment in draft.coverage:
+    for segment in coverage:
         if not segment.text.strip():
             return None
         if segment.classification == "operation":
@@ -866,10 +882,13 @@ def _validated_remember_split(
             or len(label) > label_max
             or not body
             or not expected_body
-            or body != expected_body
+            or (
+                body != expected_body
+                and cl100k_token_count(expected_body) <= memory_max_tokens
+            )
             or keywords is None
             or len(keywords) != len(candidate.keywords)
-            or (is_split and cl100k_token_count(body) > memory_max_tokens)
+            or cl100k_token_count(body) > memory_max_tokens
         )
         if invalid:
             return None

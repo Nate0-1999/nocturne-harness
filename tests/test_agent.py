@@ -567,7 +567,8 @@ async def test_a049_remember_splitter_is_tools_free_and_lossless_by_instruction(
     assert calls[0][1].output_tools == []
     assert calls[0][1].instructions is not None
     assert calls[0][1].instructions.startswith(REMEMBER_SPLIT_INSTRUCTION)
-    assert "without summarizing" in calls[0][1].instructions
+    assert "Shorten an over-cap fact into one concise" in calls[0][1].instructions
+    assert "Split only when there is more than one distinct fact" in calls[0][1].instructions
     assert "prefer 2-5 words and under 40 characters" in calls[0][1].instructions
     assert "at most 128 cl100k_base tokens" in calls[0][1].instructions
     assert "never as durable facts or candidates" in calls[0][1].instructions
@@ -576,7 +577,7 @@ async def test_a049_remember_splitter_is_tools_free_and_lossless_by_instruction(
     assert "internal reference is resolved" in calls[0][1].instructions
     assert "First, Second, and Third" in calls[0][1].instructions
     assert "MUST still appear byte-for-byte in coverage" in calls[0][1].instructions
-    assert "retain them byte-for-byte in that candidate body" in calls[0][1].instructions
+    assert "coverage segment that fits the cap" in calls[0][1].instructions
     assert "JSON strings must never trim it" in calls[0][1].instructions
     assert "safe_to_save true only" in calls[0][1].instructions
     schema = RememberSplitDraft.model_json_schema()
@@ -688,6 +689,57 @@ async def test_remember_uses_selected_model_once_without_tools_and_maps_project_
     assert request.machine_id == "machine-1"
     assert request.force is False
     assert spine.split_requests == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("whole_source", [False, True])
+async def test_m3fd_long_single_fact_shortens_without_splitting(whole_source: bool) -> None:
+    """SPEC B.6 / SD-062: length alone never turns one fact into a split family."""
+    source = ("The verification release color is amber. " * 30).strip()
+    body = "The verification release color is amber."
+    model = structured_sequence_model([
+        {"safe_to_save": True, "whole_source": whole_source,
+         "candidates": [{"label": "Release color", "body": body,
+                         "keywords": ["release", "amber"]}],
+         "coverage": [] if whole_source else [
+             {"text": source, "classification": "durable", "candidate_index": 0}]}
+    ], [])
+    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
+
+    result = await HarnessAgent(settings(), model=model).remember(source, context=context(spine))
+
+    assert result.ok
+    assert [request.body for request in spine.create_requests] == [body]
+    assert spine.split_requests == []
+
+
+@pytest.mark.asyncio
+async def test_m3fd_two_short_facts_split_even_below_body_cap() -> None:
+    """SPEC B.6 / SD-062: fact count, not paragraph length, determines a split."""
+    source = "Release color is amber. Review day is Tuesday."
+    model = structured_sequence_model([
+        {"label": "Release facts", "keywords": ["release", "review"], "multiple_facts": True},
+        {"safe_to_save": True,
+         "candidates": [
+             {"label": "Release color", "body": "Release color is amber.",
+              "keywords": ["release", "amber"]},
+             {"label": "Review day", "body": "Review day is Tuesday.",
+              "keywords": ["review", "tuesday"]}],
+         "coverage": [
+             {"text": "Release color is amber. ", "classification": "durable",
+              "candidate_index": 0},
+             {"text": "Review day is Tuesday.", "classification": "durable", "candidate_index": 1}]}
+    ], [])
+    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()),
+                      split_outcome=split_response(source))
+
+    result = await HarnessAgent(settings(), model=model).remember(source, context=context(spine))
+
+    assert result.ok
+    assert spine.create_requests == []
+    assert len(spine.split_requests) == 1
+    assert spine.split_requests[0].source_body == source
+    assert len(spine.split_requests[0].children) == 2
 
 
 @pytest.mark.asyncio
@@ -894,7 +946,7 @@ async def test_a049_single_atomic_oversized_claim_guides_without_any_write() -> 
 @pytest.mark.asyncio
 async def test_a050_single_fitting_candidate_never_persists_excluded_operation_text() -> None:
     """F027, A-050, ADR-022, and SPEC B.6 rule 12 are defended here.
-    Exact-source fallback may create only when the sole durable extract equals the whole source.
+    M3FD: the single durable fact is saved while operation text stays only in the source witness.
     """
     source = "Remember this: The observatory ledger has a silver cover."
     model = structured_sequence_model(
@@ -930,8 +982,10 @@ async def test_a050_single_fitting_candidate_never_persists_excluded_operation_t
 
     result = await agent.remember(source, context=context(spine))
 
-    assert result == RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
-    assert spine.create_requests == []
+    assert result.ok
+    assert [request.body for request in spine.create_requests] == [
+        "The observatory ledger has a silver cover."
+    ]
     assert spine.split_requests == []
 
 
@@ -1117,6 +1171,7 @@ async def test_a049_invalid_split_draft_uses_safe_guidance_and_zero_writes(
         "uncovered",
         "body-mismatch",
         "non-exact",
+        "whole-source-multi-fact",
     ],
 )
 async def test_a050_invalid_coverage_witness_guides_before_any_write(case: str) -> None:
@@ -1149,6 +1204,8 @@ async def test_a050_invalid_coverage_witness_guides_before_any_write(case: str) 
     assert isinstance(candidates, list)
     if case == "missing":
         draft.pop("coverage")
+    elif case == "whole-source-multi-fact":
+        draft.update(whole_source=True, coverage=[])
     elif case == "reordered":
         draft["coverage"] = list(reversed(coverage))
     elif case == "duplicated":
