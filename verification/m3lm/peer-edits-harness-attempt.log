@@ -1,0 +1,54 @@
+........................................................................ [  4%]
+........................................................................ [  8%]
+......F................................................................. [ 12%]
+........................................................................ [ 16%]
+........................................................................ [ 20%]
+........................................................................ [ 25%]
+........................................................................ [ 29%]
+........................................................................ [ 33%]
+........................................................................ [ 37%]
+........................................................................ [ 41%]
+........................................................................ [ 45%]
+........................................................................ [ 50%]
+........................................................................ [ 54%]
+........................................................................ [ 58%]
+........................................................................ [ 62%]
+........................................................................ [ 66%]
+........................................................................ [ 70%]
+........................................................................ [ 75%]
+...
+=================================== FAILURES ===================================
+____ test_expansion_refuses_scope_growth_and_worker_brief_carries_the_fence ____
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-419/test_expansion_refuses_scope_g0')
+
+    def test_expansion_refuses_scope_growth_and_worker_brief_carries_the_fence(
+        tmp_path: Path,
+    ) -> None:
+        """SPEC D.2 114 and P3 require G4 scope subdivision plus the G5 mini-boot."""
+    
+        allowed = tmp_path / "allowed"
+        outside = tmp_path / "outside"
+        allowed.mkdir()
+        outside.mkdir()
+        events: list[dict[str, object]] = []
+        with WorkerSupervisor(tmp_path / "supervisor") as supervisor:
+            conductor = Conductor(supervisor=supervisor, event_sink=events.append)
+            conductor.claim(_claim(("component/allowed",)))
+            with pytest.raises(ScopeExpansionError, match="adds surfaces"):
+                conductor.expand((_child("outside", "component/outside", outside),))
+    
+            child = _child("allowed", "component/allowed", allowed, blast="compounding")
+            conductor.expand((child,))
+            brief = conductor.render_worker_brief(child, policy="max", retry_number=0)
+    
+>       assert "not the conductor and not a Garden relay\nsession" in brief
+E       assert 'not the conductor and not a Garden relay\nsession' in '# THE WORKER BRIEF\n\nYou are one bounded Symphony worker. The assignment appended below is your\nwhole charge. Prese...teoswalt/pytest-419/test_expansion_refuses_scope_g0/allowed",\n  "model_policy": "max",\n  "retry_number": 0\n}\n```\n'
+
+tests/test_conductor.py:119: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_conductor.py::test_expansion_refuses_scope_growth_and_worker_brief_carries_the_fence
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! KeyboardInterrupt !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/Users/nateoswalt/.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/selectors.py:415: KeyboardInterrupt
+(to show a full traceback on KeyboardInterrupt use --full-trace)
+1 failed, 1298 passed, 3 deselected in 22.96s

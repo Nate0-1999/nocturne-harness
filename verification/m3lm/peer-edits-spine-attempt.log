@@ -1,0 +1,204 @@
+........................................................................ [ 24%]
+........................................................................ [ 48%]
+.............F...........................................FF............. [ 72%]
+........................................................................ [ 96%]
+..........                                                               [100%]
+=================================== FAILURES ===================================
+____ test_golden_selection_preserves_pin_score_order_ranks_and_greedy_skips ____
+
+    def test_golden_selection_preserves_pin_score_order_ranks_and_greedy_skips() -> None:
+        # With only stopwords in the prompt, every regular has the same .61 base:
+        # .42*1 sem + .11*1 time + .16*.5 global project = .61.
+        # Biases therefore make regular scores .90, .80, .70, .60, .50.
+        """A-007 and D.2 101(3) require deterministic greedy skips and an exact budget-cut band;
+        this prevents replay instrumentation from changing scorer behavior.
+        """
+        pins = (
+            _candidate(2, pin=True, body="one two"),
+            _candidate(1, pin=True, body="pin"),
+        )
+        regular = (
+            _candidate(14, bias=-0.11),
+            _candidate(13, bias=-0.01),
+            _candidate(12, body="one two", bias=0.09),
+            _candidate(11, body="one two three", kind="pinned", bias=0.19),
+            _candidate(10, body="one two three", bias=0.29),
+        )
+    
+        result = score_and_select(
+            prompt="the and from",
+            query_embedding=(1.0, 0.0),
+            snapshot_ts=SNAPSHOT,
+            thread_project_key="atlas",
+            pinned_candidates=pins,
+            regular_candidates=regular,
+            model_context_tokens=160,
+            config=_config(budget_tokens=8, candidate_pool=5),
+        )
+    
+        # floor(.05*160)=8 remains wholly available to regular memories. Pins are
+        # forced beside that ceiling, so ranks 3 and 4 both fit and consume top-k.
+        assert result.pin_token_cost == 3
+        assert result.regular_budget == 8
+>       assert result.regular_token_cost == 6
+E       AssertionError: assert 8 == 6
+E        +  where 8 = ScoringSelection(injected=(ScoredCandidate(candidate=ScoringCandidate(memory_id=UUID('00000000-0000-0000-0000-00000000...oken_cost=1)), regular_budget=8, pin_token_cost=3, regular_token_cost=8, total_token_cost=11, pinned_overflow_tokens=3).regular_token_cost
+
+tests/test_inject_scorer.py:277: AssertionError
+_____ test_console_contributions_sum_exactly_and_control_inserts_a_version _____
+
+memory_client = <httpx.AsyncClient object at 0x120698a10>
+memory_session_factory = async_sessionmaker(class_='AsyncSession', bind=<sqlalchemy.ext.asyncio.engine.AsyncEngine object at 0x120631890>, autoflush=True, expire_on_commit=False)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1224298b0>
+
+    @pytest.mark.asyncio
+    async def test_console_contributions_sum_exactly_and_control_inserts_a_version(
+        memory_client: AsyncClient,
+        memory_session_factory: async_sessionmaker[AsyncSession],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """A-035/A-047 are defended by proving that contribution math, replay previews,
+        content-addressed force, and the immutable activation journal share one authority.
+        """
+        original_deep_receipt = M2KService._deep_receipt
+        observed_isolation: list[str] = []
+    
+        async def observe_deep_receipt(
+            service: M2KService,
+            session: AsyncSession,
+            base: ScorerConfigRow,
+            values: ScorerValues,
+        ) -> ScorerSimulationResponse:
+            isolation = await session.scalar(text("SHOW transaction_isolation"))
+            assert isinstance(isolation, str)
+            observed_isolation.append(isolation)
+            return await original_deep_receipt(service, session, base, values)
+    
+        monkeypatch.setattr(M2KService, "_deep_receipt", observe_deep_receipt)
+        thread_id = UUID(int=9201)
+        memory_id = UUID(int=9202)
+        async with memory_session_factory() as session, session.begin():
+            session.add(
+                InjectionEvent(
+                    event_uid="01KZ4R10000000000000000001",
+                    injection_id=UUID(int=9203),
+                    thread_id=thread_id,
+                    agent_id="general",
+                    machine_id="studio",
+                    principal_id="owner",
+                    project_key=None,
+                    agent_kind="general",
+                    prompt_text="console fixture",
+                    scorer_version=ACTIVE_SCORER_VERSION,
+                    memory_id=memory_id,
+                    memory_kind="fact",
+                    features={
+                        "sem": 0.5,
+                        "kw": 0.25,
+                        "time": 1.0,
+                        "proj": 0.5,
+                        "freq": 0.0,
+                        "hist": 0.5,
+                        "_memory": {"label": "Console memory", "body": "Console body"},
+                        "_prepare": {"model_context_tokens": 8192},
+                    },
+                    score=0.4,
+                    rank=1,
+                    shown_as="injected",
+                    actor_class="human",
+                    outcome="kept",
+                    ts=datetime(2026, 8, 3, 14, tzinfo=UTC),
+                )
+            )
+    
+        console = await memory_client.post(
+            "/v1/scorer-console/query",
+            json={
+                "principal_id": "owner",
+                "thread_id": str(thread_id),
+                "as_of": "now",
+            },
+        )
+        assert console.status_code == 200
+        payload = console.json()
+        assert payload["scope"] == "CURRENT"
+        point = payload["candidates"][0]["points"][0]
+        total = sum(Decimal(value) for value in point["contributions"].values() if value is not None)
+        assert total == Decimal(point["score"])
+>       assert len(payload["descriptors"]) == 11
+E       AssertionError: assert 10 == 11
+E        +  where 10 = len([{'authority': 'law-bound', 'default': 0.55, 'id': 'scorer.tau', 'label': 'Injection threshold', ...}, {'authority': '...M weight', ...}, {'authority': 'law-bound', 'default': 0.16, 'id': 'scorer.weight.kw', 'label': 'KW weight', ...}, ...])
+
+tests/test_m2k_api.py:312: AssertionError
+___ test_competing_force_values_take_a_fresh_snapshot_after_the_control_lock ___
+
+memory_client = <httpx.AsyncClient object at 0x1149e8e60>
+memory_session_factory = async_sessionmaker(class_='AsyncSession', bind=<sqlalchemy.ext.asyncio.engine.AsyncEngine object at 0x12241ca90>, autoflush=True, expire_on_commit=False)
+
+    @pytest.mark.asyncio
+    async def test_competing_force_values_take_a_fresh_snapshot_after_the_control_lock(
+        memory_client: AsyncClient,
+        memory_session_factory: async_sessionmaker[AsyncSession],
+    ) -> None:
+        """A-047/A-053 serialize FORCE before its repeatable-read evidence snapshot."""
+    
+        console = await memory_client.post(
+            "/v1/scorer-console/query",
+            json={"principal_id": "owner", "thread_id": None, "as_of": "now"},
+        )
+        assert console.status_code == 200
+        values = console.json()["configurations"][0]["values"]
+        values["tau"] = 0.6
+        simulation = await memory_client.post(
+            "/v1/scorer-simulations",
+            json={
+                "principal_id": "owner",
+                "injection_id": None,
+                "base_version": ACTIVE_SCORER_VERSION,
+                "values": values,
+                "slice_parameter_id": "scorer.top_k",
+            },
+        )
+        assert simulation.status_code == 200
+        base_request = {
+            "base_version": ACTIVE_SCORER_VERSION,
+            "values": values,
+            "simulation_digest": simulation.json()["simulation_digest"],
+            "force": True,
+            "actor_class": "human",
+            "machine_id": "studio",
+        }
+        async with _held_control_lock(memory_session_factory):
+            requests = [
+                asyncio.create_task(
+                    memory_client.post(
+                        "/v1/scorer-configs",
+                        json={
+                            **base_request,
+                            "event_uid": f"01KZ4R1000000000000000001{index}",
+                        },
+                    )
+                )
+                for index in range(2)
+            ]
+            await _wait_for_control_lock_waiters(memory_session_factory, 2)
+    
+        responses = await asyncio.gather(*requests)
+    
+        assert sorted(response.status_code for response in responses) == [200, 409]
+        stale = next(response for response in responses if response.status_code == 409)
+        created = next(response for response in responses if response.status_code == 200)
+>       assert stale.json()["detail"] == "M2K operation refused: stale_base."
+E       AssertionError: assert 'Scorer opera...: stale_base.' == 'M2K operatio...: stale_base.'
+E         
+E         - M2K operation refused: stale_base.
+E         ? ^^^
+E         + Scorer operation refused: stale_base.
+E         ? ^^^^^^
+
+tests/test_m2k_api.py:438: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_inject_scorer.py::test_golden_selection_preserves_pin_score_order_ranks_and_greedy_skips
+FAILED tests/test_m2k_api.py::test_console_contributions_sum_exactly_and_control_inserts_a_version
+FAILED tests/test_m2k_api.py::test_competing_force_values_take_a_fresh_snapshot_after_the_control_lock
+3 failed, 295 passed in 21.37s

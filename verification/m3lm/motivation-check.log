@@ -1,0 +1,19 @@
+test motivation check failed:
+  tests/test_browser_consent.py::test_open_web_command_bypasses_model_and_first_turn_memory_gate: add a motivation docstring with a citation
+  tests/test_browser_runtime.py::test_browser_runtime_installs_once_at_explicit_home: add a motivation docstring with a citation
+  tests/test_browser_runtime.py::test_browser_runtime_failure_is_plain_and_leaves_no_ready_receipt: add a motivation docstring with a citation
+  tests/test_browser_toolset.py::test_browser_fence_defaults_to_loopback_and_current_location: add a motivation docstring with a citation
+  tests/test_browser_toolset.py::test_open_web_consent_is_thread_scoped_and_restorable: add a motivation docstring with a citation
+  tests/test_browser_toolset.py::test_browser_tool_surface_stays_small: add a motivation docstring with a citation
+  tests/test_browser_toolset.py::test_screenshot_becomes_native_model_image_content: add a motivation docstring with a citation
+  tests/test_browser_toolset.py::test_browser_consent_command_is_exact: add a motivation docstring with a citation
+  tests/test_m2ux6_grimoire_themes.py::test_frozen_forge_and_generated_css_are_byte_reproducible: add a motivation docstring with a citation
+  tests/test_m2ux6_grimoire_themes.py::test_both_palettes_pass_all_six_checks_with_one_danger_family: add a motivation docstring with a citation
+  tests/test_m2ux6_grimoire_themes.py::test_conjurations_are_state_bound_and_data_surfaces_remain_still: add a motivation docstring with a citation
+  tests/test_m2ux6_grimoire_themes.py::test_reduced_motion_stops_every_grimoire_loop_and_conjuration: add a motivation docstring with a citation
+  tests/test_toolset_runtime.py::test_model_move_execution_notifies_thread_location: add a motivation docstring with a citation
+  web/tests/memoryIngest.test.mjs::line-44: add a motivation docstring with a citation
+  web/tests/spendTable.test.mjs::line-35: add a motivation docstring with a citation
+  web/tests/spendTable.test.mjs::line-66: add a motivation docstring with a citation
+  web/tests/stageLayout.test.mjs::line-148: add a motivation docstring with a citation
+  web/tests/threadIndexSource.test.mjs::line-12: add a motivation docstring with a citation

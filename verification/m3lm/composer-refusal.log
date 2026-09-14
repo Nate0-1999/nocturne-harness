@@ -1,0 +1,70 @@
+$ /Users/nateoswalt/Developer/N8_Harness/garden/bin/ledger verify /tmp/m3lm-walk/verification/m3cp
+harness/DECISIONS.md: add a row or declare no feature impact
+harness/verification/m3cp/01-first-send-composer-clear.png: add a row or declare no feature impact
+harness/verification/m3cp/02-second-send-tool-complete.png: add a row or declare no feature impact
+harness/verification/m3cp/03-three-consecutive-sends.png: add a row or declare no feature impact
+harness/verification/m3cp/04-unsent-draft-and-rename-refusal.png: add a row or declare no feature impact
+harness/verification/m3cp/SHA256SUMS: add a row or declare no feature impact
+harness/verification/m3cp/SOP.md: add a row or declare no feature impact
+harness/verification/m3cp/cleanup-local.json: add a row or declare no feature impact
+harness/verification/m3cp/cleanup-palace.json: add a row or declare no feature impact
+harness/verification/m3cp/composer-stuck-before.png: add a row or declare no feature impact
+harness/verification/m3cp/diagnosis-before.json: add a row or declare no feature impact
+harness/verification/m3cp/harness-boot.log: add a row or declare no feature impact
+harness/verification/m3cp/harness-final.log: add a row or declare no feature impact
+harness/verification/m3cp/heartbeat-after.log: add a row or declare no feature impact
+harness/verification/m3cp/heartbeat-before.log: add a row or declare no feature impact
+harness/verification/m3cp/heartbeat-passed/01-first-prompt-gate.png: add a row or declare no feature impact
+harness/verification/m3cp/heartbeat-passed/02-first-answer.png: add a row or declare no feature impact
+harness/verification/m3cp/heartbeat-passed/03-talk-tool-talk.png: add a row or declare no feature impact
+harness/verification/m3cp/heartbeat-passed/04-failure-reason-after-reload.png: add a row or declare no feature impact
+harness/verification/m3cp/heartbeat-passed/heartbeat.json: add a row or declare no feature impact
+harness/verification/m3cp/motivation-check.log: add a row or declare no feature impact
+harness/verification/m3cp/palace-read-throttling.log: add a row or declare no feature impact
+harness/verification/m3cp/real-turns.json: add a row or declare no feature impact
+harness/verification/m3cp/spine-boot.log: add a row or declare no feature impact
+harness/verification/m3cp/spine-final.log: add a row or declare no feature impact
+harness/verification/m3cp/ui-canon-final.log: add a row or declare no feature impact
+harness/verification/m3cp/web-build.log: add a row or declare no feature impact
+harness/verification/m3cp/web-lint.log: add a row or declare no feature impact
+harness/verification/m3cp/web-unit.log: add a row or declare no feature impact
+harness/verification/m3fp/browser_check.mjs: add a row or declare no feature impact
+harness/web/dist/assets/index-BaO_olSq.js: add a row or declare no feature impact
+harness/web/dist/assets/index-Dp6rC5Wq.js: add a row or declare no feature impact
+harness/web/dist/index.html: add a row or declare no feature impact
+missing or malformed SHA256SUMS
+ledger-report.json: missing or mismatched SHA256SUMS entry
+harness: mapped surfaces changed after report head: .github/workflows/ci.yml
+scripts/run_ui_canon.py
+src/harness/agent.py
+src/harness/agent_runtime.py
+src/harness/cli.py
+src/harness/config.py
+src/harness/daemon.py
+src/harness/memory_bridge.py
+src/harness/memory_gate.py
+src/harness/onboarding.py
+src/harness/progressive_prompt.py
+src/harness/pydantic_harness_adapter.py
+src/harness/run_loop.py
+src/harness/spine_client.py
+src/harness/toolset_runtime.py
+src/harness/transcript.py
+tests/test_ledger_canon.py
+web/src/App.tsx
+web/src/VitalsModule.tsx
+web/src/rack.tsx
+web/src/rackBridge.tsx
+web/src/socket.ts
+web/src/store.ts
+FL-104: needs PASS or FAIL; missing screenshot FL-104.png
+FL-105: needs PASS or FAIL; missing screenshot FL-105.png
+FL-108: needs PASS or FAIL; missing screenshot FL-108.png
+FL-110: needs PASS or FAIL; missing screenshot FL-110.png
+FL-115: needs PASS or FAIL; missing screenshot FL-115.png
+FL-116: needs PASS or FAIL; missing screenshot FL-116.png
+FL-117: needs PASS or FAIL; missing screenshot FL-117.png
+FL-120: needs PASS or FAIL; missing screenshot FL-120.png
+Handoff REFUSED: 8 required rows checked
+
+Exit code: 1

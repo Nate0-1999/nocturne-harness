@@ -1,0 +1,91 @@
+{
+  "diffs": [
+    {
+      "repo": "harness",
+      "base": "d39c3c31725767a0f84466c597ebe5fbd1ae8ef5",
+      "head": "8dd702c5fac632ee2e0d67605b0a560c1c9b8a14"
+    }
+  ],
+  "affected": {
+    "FL-104": [
+      "harness/web/src/rackBridge.tsx"
+    ],
+    "FL-105": [
+      "harness/web/src/rackBridge.tsx"
+    ],
+    "FL-108": [
+      "harness/web/src/rackBridge.tsx"
+    ],
+    "FL-110": [
+      "harness/web/src/rackBridge.tsx"
+    ],
+    "FL-115": [
+      "harness/web/src/rackBridge.tsx"
+    ],
+    "FL-116": [
+      "harness/web/src/rackBridge.tsx"
+    ],
+    "FL-117": [
+      "harness/web/src/rackBridge.tsx"
+    ],
+    "FL-120": [
+      "harness/web/src/rackBridge.tsx"
+    ]
+  },
+  "required": [
+    "FL-104",
+    "FL-105",
+    "FL-108",
+    "FL-110",
+    "FL-115",
+    "FL-116",
+    "FL-117",
+    "FL-120"
+  ],
+  "unmapped": [
+    "harness/DECISIONS.md",
+    "harness/verification/m3cp/01-first-send-composer-clear.png",
+    "harness/verification/m3cp/02-second-send-tool-complete.png",
+    "harness/verification/m3cp/03-three-consecutive-sends.png",
+    "harness/verification/m3cp/04-unsent-draft-and-rename-refusal.png",
+    "harness/verification/m3cp/SHA256SUMS",
+    "harness/verification/m3cp/SOP.md",
+    "harness/verification/m3cp/cleanup-local.json",
+    "harness/verification/m3cp/cleanup-palace.json",
+    "harness/verification/m3cp/composer-stuck-before.png",
+    "harness/verification/m3cp/diagnosis-before.json",
+    "harness/verification/m3cp/harness-boot.log",
+    "harness/verification/m3cp/harness-final.log",
+    "harness/verification/m3cp/heartbeat-after.log",
+    "harness/verification/m3cp/heartbeat-before.log",
+    "harness/verification/m3cp/heartbeat-passed/01-first-prompt-gate.png",
+    "harness/verification/m3cp/heartbeat-passed/02-first-answer.png",
+    "harness/verification/m3cp/heartbeat-passed/03-talk-tool-talk.png",
+    "harness/verification/m3cp/heartbeat-passed/04-failure-reason-after-reload.png",
+    "harness/verification/m3cp/heartbeat-passed/heartbeat.json",
+    "harness/verification/m3cp/motivation-check.log",
+    "harness/verification/m3cp/palace-read-throttling.log",
+    "harness/verification/m3cp/real-turns.json",
+    "harness/verification/m3cp/spine-boot.log",
+    "harness/verification/m3cp/spine-final.log",
+    "harness/verification/m3cp/ui-canon-final.log",
+    "harness/verification/m3cp/web-build.log",
+    "harness/verification/m3cp/web-lint.log",
+    "harness/verification/m3cp/web-unit.log",
+    "harness/verification/m3fp/browser_check.mjs",
+    "harness/web/dist/assets/index-BaO_olSq.js",
+    "harness/web/dist/assets/index-Dp6rC5Wq.js",
+    "harness/web/dist/index.html"
+  ],
+  "labels": {
+    "FL-104": "A draft response to the final synthesis that you tweak and fire, after which the stack switches to the agent that has waited longest for your attention.",
+    "FL-105": "An Ableton-like rack: the shipped layout is only version one of the default opinion, and people can easily roll and add their own plugins and visualizers to the views from the ground up.",
+    "FL-108": "Resizable modules and a plugin-contributor skill shipped with the repo.",
+    "FL-110": "Global or current on every module; current modules switch together with the work.",
+    "FL-115": "Attunement to a specific stack beyond global and current.",
+    "FL-116": "A module not set to global attunes by proximity, measured across tabs (a tab counting one unit) and grid position, ties picked at random, and it shows which thread or stack it is attuned to.",
+    "FL-117": "A proposed reply prefilled and editable; queued prompts advance on Enter with a scrollable queue.",
+    "FL-120": "One conversation module with stack and focused modes."
+  },
+  "warning": "add a row or declare no feature impact"
+}

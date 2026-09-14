@@ -1,0 +1,2326 @@
+EEE.....F............................................................... [  4%]
+........................................................................ [  8%]
+.........FFF.FF......................................................... [ 12%]
+........................................................................ [ 16%]
+........................................................................ [ 20%]
+........................................................................ [ 25%]
+........................................................................ [ 29%]
+....FF.................................................................. [ 33%]
+........................................................................ [ 37%]
+........................................................................ [ 41%]
+........................................................................ [ 45%]
+........................................................................ [ 50%]
+........................................................................ [ 54%]
+........................................................................ [ 58%]
+........................................................................ [ 62%]
+........................................................................ [ 66%]
+........................................................................ [ 71%]
+........................................................................ [ 75%]
+.....
+==================================== ERRORS ====================================
+_________ ERROR at setup of test_live_create_conflicts_and_dedup_bands _________
+
+    @pytest.fixture(scope="session")
+    def expected_embedding_model() -> str:
+        """Return the model identity the selected live environment must report."""
+    
+>       return _required_environment("SPINE_EXPECTED_EMBEDDING_MODEL")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/contract/test_spine_contract.py:64: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'SPINE_EXPECTED_EMBEDDING_MODEL'
+
+    def _required_environment(name: str) -> str:
+        value = os.environ.get(name)
+        if value is None or not value.strip():
+>           raise RuntimeError(f"{name} is required for live Spine contract tests")
+E           RuntimeError: SPINE_EXPECTED_EMBEDDING_MODEL is required for live Spine contract tests
+
+tests/contract/test_spine_contract.py:47: RuntimeError
+___________ ERROR at setup of test_live_patch_cas_tombstone_and_list ___________
+
+    @pytest.fixture(scope="session")
+    def expected_embedding_model() -> str:
+        """Return the model identity the selected live environment must report."""
+    
+>       return _required_environment("SPINE_EXPECTED_EMBEDDING_MODEL")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/contract/test_spine_contract.py:64: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'SPINE_EXPECTED_EMBEDDING_MODEL'
+
+    def _required_environment(name: str) -> str:
+        value = os.environ.get(name)
+        if value is None or not value.strip():
+>           raise RuntimeError(f"{name} is required for live Spine contract tests")
+E           RuntimeError: SPINE_EXPECTED_EMBEDDING_MODEL is required for live Spine contract tests
+
+tests/contract/test_spine_contract.py:47: RuntimeError
+______ ERROR at setup of test_live_spend_receipt_is_atomic_and_idempotent ______
+
+    @pytest_asyncio.fixture
+    async def spine_client():
+        async with SpineClient(
+>           _required_environment("SPINE_URL"),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            _required_environment("SPINE_TOKEN"),
+        ) as client:
+
+tests/contract/test_spine_contract.py:54: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'SPINE_URL'
+
+    def _required_environment(name: str) -> str:
+        value = os.environ.get(name)
+        if value is None or not value.strip():
+>           raise RuntimeError(f"{name} is required for live Spine contract tests")
+E           RuntimeError: SPINE_URL is required for live Spine contract tests
+
+tests/contract/test_spine_contract.py:47: RuntimeError
+=================================== FAILURES ===================================
+_________________ test_seven_coding_tool_outputs_are_explicit __________________
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-416/test_seven_coding_tool_outputs0')
+
+    @pytest.mark.asyncio
+    async def test_seven_coding_tool_outputs_are_explicit(tmp_path: Path) -> None:
+        """P1 and D.2 136/141 pin intentional model-visible tool output deltas."""
+    
+        sub = tmp_path / "sub"
+        sub.mkdir()
+        (sub / "deep.txt").write_text("before\n")
+        (tmp_path / "note.txt").write_text("zero\nmatch one\nnext\nmatch two\nend\n")
+        toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+        try:
+            read = await toolset.execute("read", {"path": "note.txt", "offset": 2, "limit": 2})
+            grep = await toolset.execute(
+                "grep", {"pattern": "match", "path": ".", "context": 1, "limit": 10}
+            )
+            found = await toolset.execute("find", {"pattern": "*.txt", "path": ".", "limit": 10})
+            listed = await toolset.execute("ls", {"path": ".", "limit": 10})
+            written = await toolset.execute("write", {"path": "new.txt", "content": "hello\n"})
+            edited = await toolset.execute(
+                "edit",
+                {
+                    "path": "new.txt",
+                    "edits": [{"oldText": "hello", "newText": "world"}],
+                },
+            )
+            refused_write = await toolset.execute(
+                "write", {"path": "sub/new.txt", "content": "blocked\n"}
+            )
+            refused_edit = await toolset.execute(
+                "edit",
+                {
+                    "path": "sub/deep.txt",
+                    "edits": [{"oldText": "before", "newText": "after"}],
+                },
+            )
+            shell = await toolset.execute("bash", {"command": "printf shell-output"})
+        finally:
+            await toolset.close()
+    
+        assert read.content == (
+            "[note.txt | 5 lines | hash:b81908ceac96]\n"
+            "     2\tmatch one\n"
+            "     3\tnext\n"
+            "... (2 more lines. Use offset=3 to continue reading.)\n"
+        )
+        assert grep.content == (
+            "[note.txt | 5 lines | hash:b81908ceac96]\n"
+            "     1\tzero\n"
+            "     2\tmatch one\n"
+            "     3\tnext\n"
+            "     4\tmatch two\n"
+            "     5\tend\n"
+        )
+        assert found.content == "note.txt"
+        assert listed.content == "note.txt  (34 bytes)\nsub/"
+        assert written.content == "Wrote 6 chars (1 lines) to new.txt. [hash:5891b5b522d5]"
+        assert edited.content == "Edited new.txt. [hash:e258d248fda9]"
+        exact_refusal = (
+            f"Modification requires presence in the file's directory. Move to {sub.resolve()} first."
+        )
+        assert not refused_write.success and refused_write.content == exact_refusal
+        assert not refused_edit.success and refused_edit.content == exact_refusal
+        assert not (sub / "new.txt").exists()
+        assert (sub / "deep.txt").read_text() == "before\n"
+        if Path("/usr/bin/sandbox-exec").is_file():
+            assert shell.success
+>           assert shell.content == "[stdout]\nshell-output"
+E           AssertionError: assert '[stderr]\nsa...xit code: 71]' == '[stdout]\nshell-output'
+E             
+E             - [stdout]
+E             - shell-output
+E             + [stderr]
+E             + sandbox-exec: sandbox_apply: Operation not permitted
+E             + 
+E             + [exit code: 71]
+
+tests/golden/test_workspace_tool_outputs.py:78: AssertionError
+_ test_three_child_headless_run_recovers_cancels_and_accepts_distillates_only __
+
+pid = 27148
+
+    def _process_identity(pid: int) -> str | None:
+        """Return an OS birth fingerprint, not merely a reusable PID."""
+    
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return None
+        except PermissionError as exc:
+            raise SupervisorError("process evidence is permission-denied, not proof of death") from exc
+        if sys.platform.startswith("linux"):
+            try:
+                raw = Path(f"/proc/{pid}/stat").read_text(encoding="ascii")
+                fields_after_name = raw[raw.rfind(")") + 2 :].split()
+                if fields_after_name[0] == "Z":
+                    return None
+                start_ticks = fields_after_name[19]
+                process_group = fields_after_name[2]
+            except FileNotFoundError:
+                return None
+            except (IndexError, OSError, UnicodeError) as exc:
+                raise SupervisorError("process evidence cannot be read safely") from exc
+            return f"linux:{pid}:{process_group}:{start_ticks}"
+        try:
+>           completed = subprocess.run(
+                ["ps", "-o", "stat=", "-o", "lstart=", "-o", "pgid=", "-p", str(pid)],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+            )
+
+src/harness/supervisor.py:153: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:550: in run
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:1028: in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Popen: returncode: 255 args: ['ps', '-o', 'stat=', '-o', 'lstart=', '-o', '...>
+args = ['ps', '-o', 'stat=', '-o', 'lstart=', '-o', ...], executable = b'ps'
+preexec_fn = None, close_fds = True, pass_fds = (), cwd = None, env = None
+startupinfo = None, creationflags = 0, shell = False, p2cread = -1
+p2cwrite = -1, c2pread = 12, c2pwrite = 14, errread = 15, errwrite = 16
+restore_signals = True, gid = None, gids = None, uid = None, umask = -1
+start_new_session = False, process_group = -1
+
+    def _execute_child(self, args, executable, preexec_fn, close_fds,
+                       pass_fds, cwd, env,
+                       startupinfo, creationflags, shell,
+                       p2cread, p2cwrite,
+                       c2pread, c2pwrite,
+                       errread, errwrite,
+                       restore_signals,
+                       gid, gids, uid, umask,
+                       start_new_session, process_group):
+        """Execute program (POSIX version)"""
+    
+        if isinstance(args, (str, bytes)):
+            args = [args]
+        elif isinstance(args, os.PathLike):
+            if shell:
+                raise TypeError('path-like args is not allowed when '
+                                'shell is true')
+            args = [args]
+        else:
+            args = list(args)
+    
+        if shell:
+            # On Android the default shell is at '/system/bin/sh'.
+            unix_shell = ('/system/bin/sh' if
+                      hasattr(sys, 'getandroidapilevel') else '/bin/sh')
+            args = [unix_shell, "-c"] + args
+            if executable:
+                args[0] = executable
+    
+        if executable is None:
+            executable = args[0]
+    
+        sys.audit("subprocess.Popen", executable, args, cwd, env)
+    
+        if (_USE_POSIX_SPAWN
+                and os.path.dirname(executable)
+                and preexec_fn is None
+                and not close_fds
+                and not pass_fds
+                and cwd is None
+                and (p2cread == -1 or p2cread > 2)
+                and (c2pwrite == -1 or c2pwrite > 2)
+                and (errwrite == -1 or errwrite > 2)
+                and not start_new_session
+                and process_group == -1
+                and gid is None
+                and gids is None
+                and uid is None
+                and umask < 0):
+            self._posix_spawn(args, executable, env, restore_signals,
+                              p2cread, p2cwrite,
+                              c2pread, c2pwrite,
+                              errread, errwrite)
+            return
+    
+        orig_executable = executable
+    
+        # For transferring possible exec failure from child to parent.
+        # Data format: "exception name:hex errno:description"
+        # Pickle is not used; it is complex and involves memory allocation.
+        errpipe_read, errpipe_write = os.pipe()
+        # errpipe_write must not be in the standard io 0, 1, or 2 fd range.
+        low_fds_to_close = []
+        while errpipe_write < 3:
+            low_fds_to_close.append(errpipe_write)
+            errpipe_write = os.dup(errpipe_write)
+        for low_fd in low_fds_to_close:
+            os.close(low_fd)
+        try:
+            try:
+                # We must avoid complex work that could involve
+                # malloc or free in the child process to avoid
+                # potential deadlocks, thus we do all this here.
+                # and pass it to fork_exec()
+    
+                if env is not None:
+                    env_list = []
+                    for k, v in env.items():
+                        k = os.fsencode(k)
+                        if b'=' in k:
+                            raise ValueError("illegal environment variable name")
+                        env_list.append(k + b'=' + os.fsencode(v))
+                else:
+                    env_list = None  # Use execv instead of execve.
+                executable = os.fsencode(executable)
+                if os.path.dirname(executable):
+                    executable_list = (executable,)
+                else:
+                    # This matches the behavior of os._execvpe().
+                    executable_list = tuple(
+                        os.path.join(os.fsencode(dir), executable)
+                        for dir in os.get_exec_path(env))
+                fds_to_keep = set(pass_fds)
+                fds_to_keep.add(errpipe_write)
+                self.pid = _fork_exec(
+                        args, executable_list,
+                        close_fds, tuple(sorted(map(int, fds_to_keep))),
+                        cwd, env_list,
+                        p2cread, p2cwrite, c2pread, c2pwrite,
+                        errread, errwrite,
+                        errpipe_read, errpipe_write,
+                        restore_signals, start_new_session,
+                        process_group, gid, gids, uid, umask,
+                        preexec_fn, _USE_VFORK)
+                self._child_created = True
+            finally:
+                # be sure the FD is closed no matter what
+                os.close(errpipe_write)
+    
+            self._close_pipe_fds(p2cread, p2cwrite,
+                                 c2pread, c2pwrite,
+                                 errread, errwrite)
+    
+            # Wait for exec to fail or succeed; possibly raising an
+            # exception (limited in size)
+            errpipe_data = bytearray()
+            while True:
+                part = os.read(errpipe_read, 50000)
+                errpipe_data += part
+                if not part or len(errpipe_data) > 50000:
+                    break
+        finally:
+            # be sure the FD is closed no matter what
+            os.close(errpipe_read)
+    
+        if errpipe_data:
+            try:
+                pid, sts = os.waitpid(self.pid, 0)
+                if pid == self.pid:
+                    self._handle_exitstatus(sts)
+                else:
+                    self.returncode = sys.maxsize
+            except ChildProcessError:
+                pass
+    
+            try:
+                exception_name, hex_errno, err_msg = (
+                        errpipe_data.split(b':', 2))
+                # The encoding here should match the encoding
+                # written in by the subprocess implementations
+                # like _posixsubprocess
+                err_msg = err_msg.decode()
+            except ValueError:
+                exception_name = b'SubprocessError'
+                hex_errno = b'0'
+                err_msg = 'Bad exception data from child: {!r}'.format(
+                              bytes(errpipe_data))
+            child_exception_type = getattr(
+                    builtins, exception_name.decode('ascii'),
+                    SubprocessError)
+            if issubclass(child_exception_type, OSError) and hex_errno:
+                errno_num = int(hex_errno, 16)
+                if err_msg == "noexec:chdir":
+                    err_msg = ""
+                    # The error must be from chdir(cwd).
+                    err_filename = cwd
+                elif err_msg == "noexec":
+                    err_msg = ""
+                    err_filename = None
+                else:
+                    err_filename = orig_executable
+                if errno_num != 0:
+                    err_msg = os.strerror(errno_num)
+                if err_filename is not None:
+>                   raise child_exception_type(errno_num, err_msg, err_filename)
+E                   PermissionError: [Errno 1] Operation not permitted: 'ps'
+
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:1963: PermissionError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-416/test_three_child_headless_run_0')
+
+    def test_three_child_headless_run_recovers_cancels_and_accepts_distillates_only(
+        tmp_path: Path,
+    ) -> None:
+        """SPEC D.2 114 and P3 require SYM5 killed/cancelled/completed headless acceptance."""
+    
+        killed_one = tmp_path / "killed-one"
+        killed_two = tmp_path / "killed-two"
+        cancelled = tmp_path / "cancelled"
+        completed = tmp_path / "completed"
+        for location in (killed_one, killed_two, cancelled, completed):
+            location.mkdir()
+    
+        events: list[dict[str, object]] = []
+        inherited_environment = {
+            "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+            "LANG": "C.UTF-8",
+            "OPENROUTER_API_KEY": "must-not-reach-worker",
+            "GOOGLE_APPLICATION_CREDENTIALS": "/secret/provider.json",
+        }
+        with WorkerSupervisor(tmp_path / "supervisor") as supervisor:
+            conductor = Conductor(
+                supervisor=supervisor,
+                event_sink=events.append,
+                environment=inherited_environment,
+            )
+            conductor.claim(_claim(("component/killed", "component/cancelled", "component/completed")))
+            conductor.expand(
+                (
+                    _child("killed", "component/killed", killed_one),
+                    _child("cancelled", "component/cancelled", cancelled, blast="compounding"),
+                    _child("completed", "component/completed", completed),
+                )
+            )
+    
+>           killed = conductor.dispatch(
+                "killed",
+                (
+                    sys.executable,
+                    "-c",
+                    "from pathlib import Path; import time; "
+                    "Path('uncertain.txt').write_text('attempt-one'); time.sleep(30)",
+                ),
+            )
+
+tests/test_conductor.py:160: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/harness/conductor.py:1035: in dispatch
+    attempt = self._supervisor.spawn(
+src/harness/supervisor.py:252: in spawn
+    return self._spawn(
+src/harness/supervisor.py:436: in _spawn
+    identity = self._identity_reader(process.pid)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+pid = 27148
+
+    def _process_identity(pid: int) -> str | None:
+        """Return an OS birth fingerprint, not merely a reusable PID."""
+    
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return None
+        except PermissionError as exc:
+            raise SupervisorError("process evidence is permission-denied, not proof of death") from exc
+        if sys.platform.startswith("linux"):
+            try:
+                raw = Path(f"/proc/{pid}/stat").read_text(encoding="ascii")
+                fields_after_name = raw[raw.rfind(")") + 2 :].split()
+                if fields_after_name[0] == "Z":
+                    return None
+                start_ticks = fields_after_name[19]
+                process_group = fields_after_name[2]
+            except FileNotFoundError:
+                return None
+            except (IndexError, OSError, UnicodeError) as exc:
+                raise SupervisorError("process evidence cannot be read safely") from exc
+            return f"linux:{pid}:{process_group}:{start_ticks}"
+        try:
+            completed = subprocess.run(
+                ["ps", "-o", "stat=", "-o", "lstart=", "-o", "pgid=", "-p", str(pid)],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+>           raise SupervisorError("process evidence cannot be read safely") from exc
+E           harness.supervisor.SupervisorError: process evidence cannot be read safely
+
+src/harness/supervisor.py:161: SupervisorError
+_ test_uncertain_irreversible_boundary_cannot_pretend_cancellation_is_terminal _
+
+pid = 27150
+
+    def _process_identity(pid: int) -> str | None:
+        """Return an OS birth fingerprint, not merely a reusable PID."""
+    
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return None
+        except PermissionError as exc:
+            raise SupervisorError("process evidence is permission-denied, not proof of death") from exc
+        if sys.platform.startswith("linux"):
+            try:
+                raw = Path(f"/proc/{pid}/stat").read_text(encoding="ascii")
+                fields_after_name = raw[raw.rfind(")") + 2 :].split()
+                if fields_after_name[0] == "Z":
+                    return None
+                start_ticks = fields_after_name[19]
+                process_group = fields_after_name[2]
+            except FileNotFoundError:
+                return None
+            except (IndexError, OSError, UnicodeError) as exc:
+                raise SupervisorError("process evidence cannot be read safely") from exc
+            return f"linux:{pid}:{process_group}:{start_ticks}"
+        try:
+>           completed = subprocess.run(
+                ["ps", "-o", "stat=", "-o", "lstart=", "-o", "pgid=", "-p", str(pid)],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+            )
+
+src/harness/supervisor.py:153: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:550: in run
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:1028: in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Popen: returncode: 255 args: ['ps', '-o', 'stat=', '-o', 'lstart=', '-o', '...>
+args = ['ps', '-o', 'stat=', '-o', 'lstart=', '-o', ...], executable = b'ps'
+preexec_fn = None, close_fds = True, pass_fds = (), cwd = None, env = None
+startupinfo = None, creationflags = 0, shell = False, p2cread = -1
+p2cwrite = -1, c2pread = 12, c2pwrite = 14, errread = 15, errwrite = 16
+restore_signals = True, gid = None, gids = None, uid = None, umask = -1
+start_new_session = False, process_group = -1
+
+    def _execute_child(self, args, executable, preexec_fn, close_fds,
+                       pass_fds, cwd, env,
+                       startupinfo, creationflags, shell,
+                       p2cread, p2cwrite,
+                       c2pread, c2pwrite,
+                       errread, errwrite,
+                       restore_signals,
+                       gid, gids, uid, umask,
+                       start_new_session, process_group):
+        """Execute program (POSIX version)"""
+    
+        if isinstance(args, (str, bytes)):
+            args = [args]
+        elif isinstance(args, os.PathLike):
+            if shell:
+                raise TypeError('path-like args is not allowed when '
+                                'shell is true')
+            args = [args]
+        else:
+            args = list(args)
+    
+        if shell:
+            # On Android the default shell is at '/system/bin/sh'.
+            unix_shell = ('/system/bin/sh' if
+                      hasattr(sys, 'getandroidapilevel') else '/bin/sh')
+            args = [unix_shell, "-c"] + args
+            if executable:
+                args[0] = executable
+    
+        if executable is None:
+            executable = args[0]
+    
+        sys.audit("subprocess.Popen", executable, args, cwd, env)
+    
+        if (_USE_POSIX_SPAWN
+                and os.path.dirname(executable)
+                and preexec_fn is None
+                and not close_fds
+                and not pass_fds
+                and cwd is None
+                and (p2cread == -1 or p2cread > 2)
+                and (c2pwrite == -1 or c2pwrite > 2)
+                and (errwrite == -1 or errwrite > 2)
+                and not start_new_session
+                and process_group == -1
+                and gid is None
+                and gids is None
+                and uid is None
+                and umask < 0):
+            self._posix_spawn(args, executable, env, restore_signals,
+                              p2cread, p2cwrite,
+                              c2pread, c2pwrite,
+                              errread, errwrite)
+            return
+    
+        orig_executable = executable
+    
+        # For transferring possible exec failure from child to parent.
+        # Data format: "exception name:hex errno:description"
+        # Pickle is not used; it is complex and involves memory allocation.
+        errpipe_read, errpipe_write = os.pipe()
+        # errpipe_write must not be in the standard io 0, 1, or 2 fd range.
+        low_fds_to_close = []
+        while errpipe_write < 3:
+            low_fds_to_close.append(errpipe_write)
+            errpipe_write = os.dup(errpipe_write)
+        for low_fd in low_fds_to_close:
+            os.close(low_fd)
+        try:
+            try:
+                # We must avoid complex work that could involve
+                # malloc or free in the child process to avoid
+                # potential deadlocks, thus we do all this here.
+                # and pass it to fork_exec()
+    
+                if env is not None:
+                    env_list = []
+                    for k, v in env.items():
+                        k = os.fsencode(k)
+                        if b'=' in k:
+                            raise ValueError("illegal environment variable name")
+                        env_list.append(k + b'=' + os.fsencode(v))
+                else:
+                    env_list = None  # Use execv instead of execve.
+                executable = os.fsencode(executable)
+                if os.path.dirname(executable):
+                    executable_list = (executable,)
+                else:
+                    # This matches the behavior of os._execvpe().
+                    executable_list = tuple(
+                        os.path.join(os.fsencode(dir), executable)
+                        for dir in os.get_exec_path(env))
+                fds_to_keep = set(pass_fds)
+                fds_to_keep.add(errpipe_write)
+                self.pid = _fork_exec(
+                        args, executable_list,
+                        close_fds, tuple(sorted(map(int, fds_to_keep))),
+                        cwd, env_list,
+                        p2cread, p2cwrite, c2pread, c2pwrite,
+                        errread, errwrite,
+                        errpipe_read, errpipe_write,
+                        restore_signals, start_new_session,
+                        process_group, gid, gids, uid, umask,
+                        preexec_fn, _USE_VFORK)
+                self._child_created = True
+            finally:
+                # be sure the FD is closed no matter what
+                os.close(errpipe_write)
+    
+            self._close_pipe_fds(p2cread, p2cwrite,
+                                 c2pread, c2pwrite,
+                                 errread, errwrite)
+    
+            # Wait for exec to fail or succeed; possibly raising an
+            # exception (limited in size)
+            errpipe_data = bytearray()
+            while True:
+                part = os.read(errpipe_read, 50000)
+                errpipe_data += part
+                if not part or len(errpipe_data) > 50000:
+                    break
+        finally:
+            # be sure the FD is closed no matter what
+            os.close(errpipe_read)
+    
+        if errpipe_data:
+            try:
+                pid, sts = os.waitpid(self.pid, 0)
+                if pid == self.pid:
+                    self._handle_exitstatus(sts)
+                else:
+                    self.returncode = sys.maxsize
+            except ChildProcessError:
+                pass
+    
+            try:
+                exception_name, hex_errno, err_msg = (
+                        errpipe_data.split(b':', 2))
+                # The encoding here should match the encoding
+                # written in by the subprocess implementations
+                # like _posixsubprocess
+                err_msg = err_msg.decode()
+            except ValueError:
+                exception_name = b'SubprocessError'
+                hex_errno = b'0'
+                err_msg = 'Bad exception data from child: {!r}'.format(
+                              bytes(errpipe_data))
+            child_exception_type = getattr(
+                    builtins, exception_name.decode('ascii'),
+                    SubprocessError)
+            if issubclass(child_exception_type, OSError) and hex_errno:
+                errno_num = int(hex_errno, 16)
+                if err_msg == "noexec:chdir":
+                    err_msg = ""
+                    # The error must be from chdir(cwd).
+                    err_filename = cwd
+                elif err_msg == "noexec":
+                    err_msg = ""
+                    err_filename = None
+                else:
+                    err_filename = orig_executable
+                if errno_num != 0:
+                    err_msg = os.strerror(errno_num)
+                if err_filename is not None:
+>                   raise child_exception_type(errno_num, err_msg, err_filename)
+E                   PermissionError: [Errno 1] Operation not permitted: 'ps'
+
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:1963: PermissionError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-416/test_uncertain_irreversible_bo0')
+
+    def test_uncertain_irreversible_boundary_cannot_pretend_cancellation_is_terminal(
+        tmp_path: Path,
+    ) -> None:
+        """SPEC D.2 114 and P3 require G20 to reconcile irreversible work before cancel."""
+    
+        location = tmp_path / "worker"
+        location.mkdir()
+        payload = _result(
+            status="cancelled",
+            claim="",
+            evidence="partial evidence preserved after reconciliation",
+        )
+        with WorkerSupervisor(tmp_path / "supervisor") as supervisor:
+            conductor = Conductor(supervisor=supervisor, event_sink=lambda _event: None)
+            conductor.claim(_claim(("component/cancel",)))
+            conductor.expand((_child("cancel", "component/cancel", location),))
+>           conductor.dispatch(
+                "cancel",
+                (
+                    sys.executable,
+                    "-c",
+                    "import signal,sys,time\nfrom pathlib import Path\n"
+                    f"payload={payload!r}\n"
+                    "def stop(*_):\n"
+                    " Path('distillate.json').write_text(payload)\n"
+                    " sys.exit(0)\n"
+                    "signal.signal(signal.SIGTERM, stop)\n"
+                    "Path('ready').write_text('ready')\n"
+                    "time.sleep(30)",
+                ),
+            )
+
+tests/test_conductor.py:285: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/harness/conductor.py:1035: in dispatch
+    attempt = self._supervisor.spawn(
+src/harness/supervisor.py:252: in spawn
+    return self._spawn(
+src/harness/supervisor.py:436: in _spawn
+    identity = self._identity_reader(process.pid)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+pid = 27150
+
+    def _process_identity(pid: int) -> str | None:
+        """Return an OS birth fingerprint, not merely a reusable PID."""
+    
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return None
+        except PermissionError as exc:
+            raise SupervisorError("process evidence is permission-denied, not proof of death") from exc
+        if sys.platform.startswith("linux"):
+            try:
+                raw = Path(f"/proc/{pid}/stat").read_text(encoding="ascii")
+                fields_after_name = raw[raw.rfind(")") + 2 :].split()
+                if fields_after_name[0] == "Z":
+                    return None
+                start_ticks = fields_after_name[19]
+                process_group = fields_after_name[2]
+            except FileNotFoundError:
+                return None
+            except (IndexError, OSError, UnicodeError) as exc:
+                raise SupervisorError("process evidence cannot be read safely") from exc
+            return f"linux:{pid}:{process_group}:{start_ticks}"
+        try:
+            completed = subprocess.run(
+                ["ps", "-o", "stat=", "-o", "lstart=", "-o", "pgid=", "-p", str(pid)],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+>           raise SupervisorError("process evidence cannot be read safely") from exc
+E           harness.supervisor.SupervisorError: process evidence cannot be read safely
+
+src/harness/supervisor.py:161: SupervisorError
+____________ test_two_failed_retries_flag_without_a_fourth_attempt _____________
+
+pid = 27152
+
+    def _process_identity(pid: int) -> str | None:
+        """Return an OS birth fingerprint, not merely a reusable PID."""
+    
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return None
+        except PermissionError as exc:
+            raise SupervisorError("process evidence is permission-denied, not proof of death") from exc
+        if sys.platform.startswith("linux"):
+            try:
+                raw = Path(f"/proc/{pid}/stat").read_text(encoding="ascii")
+                fields_after_name = raw[raw.rfind(")") + 2 :].split()
+                if fields_after_name[0] == "Z":
+                    return None
+                start_ticks = fields_after_name[19]
+                process_group = fields_after_name[2]
+            except FileNotFoundError:
+                return None
+            except (IndexError, OSError, UnicodeError) as exc:
+                raise SupervisorError("process evidence cannot be read safely") from exc
+            return f"linux:{pid}:{process_group}:{start_ticks}"
+        try:
+>           completed = subprocess.run(
+                ["ps", "-o", "stat=", "-o", "lstart=", "-o", "pgid=", "-p", str(pid)],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+            )
+
+src/harness/supervisor.py:153: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:550: in run
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:1028: in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Popen: returncode: 255 args: ['ps', '-o', 'stat=', '-o', 'lstart=', '-o', '...>
+args = ['ps', '-o', 'stat=', '-o', 'lstart=', '-o', ...], executable = b'ps'
+preexec_fn = None, close_fds = True, pass_fds = (), cwd = None, env = None
+startupinfo = None, creationflags = 0, shell = False, p2cread = -1
+p2cwrite = -1, c2pread = 12, c2pwrite = 14, errread = 15, errwrite = 16
+restore_signals = True, gid = None, gids = None, uid = None, umask = -1
+start_new_session = False, process_group = -1
+
+    def _execute_child(self, args, executable, preexec_fn, close_fds,
+                       pass_fds, cwd, env,
+                       startupinfo, creationflags, shell,
+                       p2cread, p2cwrite,
+                       c2pread, c2pwrite,
+                       errread, errwrite,
+                       restore_signals,
+                       gid, gids, uid, umask,
+                       start_new_session, process_group):
+        """Execute program (POSIX version)"""
+    
+        if isinstance(args, (str, bytes)):
+            args = [args]
+        elif isinstance(args, os.PathLike):
+            if shell:
+                raise TypeError('path-like args is not allowed when '
+                                'shell is true')
+            args = [args]
+        else:
+            args = list(args)
+    
+        if shell:
+            # On Android the default shell is at '/system/bin/sh'.
+            unix_shell = ('/system/bin/sh' if
+                      hasattr(sys, 'getandroidapilevel') else '/bin/sh')
+            args = [unix_shell, "-c"] + args
+            if executable:
+                args[0] = executable
+    
+        if executable is None:
+            executable = args[0]
+    
+        sys.audit("subprocess.Popen", executable, args, cwd, env)
+    
+        if (_USE_POSIX_SPAWN
+                and os.path.dirname(executable)
+                and preexec_fn is None
+                and not close_fds
+                and not pass_fds
+                and cwd is None
+                and (p2cread == -1 or p2cread > 2)
+                and (c2pwrite == -1 or c2pwrite > 2)
+                and (errwrite == -1 or errwrite > 2)
+                and not start_new_session
+                and process_group == -1
+                and gid is None
+                and gids is None
+                and uid is None
+                and umask < 0):
+            self._posix_spawn(args, executable, env, restore_signals,
+                              p2cread, p2cwrite,
+                              c2pread, c2pwrite,
+                              errread, errwrite)
+            return
+    
+        orig_executable = executable
+    
+        # For transferring possible exec failure from child to parent.
+        # Data format: "exception name:hex errno:description"
+        # Pickle is not used; it is complex and involves memory allocation.
+        errpipe_read, errpipe_write = os.pipe()
+        # errpipe_write must not be in the standard io 0, 1, or 2 fd range.
+        low_fds_to_close = []
+        while errpipe_write < 3:
+            low_fds_to_close.append(errpipe_write)
+            errpipe_write = os.dup(errpipe_write)
+        for low_fd in low_fds_to_close:
+            os.close(low_fd)
+        try:
+            try:
+                # We must avoid complex work that could involve
+                # malloc or free in the child process to avoid
+                # potential deadlocks, thus we do all this here.
+                # and pass it to fork_exec()
+    
+                if env is not None:
+                    env_list = []
+                    for k, v in env.items():
+                        k = os.fsencode(k)
+                        if b'=' in k:
+                            raise ValueError("illegal environment variable name")
+                        env_list.append(k + b'=' + os.fsencode(v))
+                else:
+                    env_list = None  # Use execv instead of execve.
+                executable = os.fsencode(executable)
+                if os.path.dirname(executable):
+                    executable_list = (executable,)
+                else:
+                    # This matches the behavior of os._execvpe().
+                    executable_list = tuple(
+                        os.path.join(os.fsencode(dir), executable)
+                        for dir in os.get_exec_path(env))
+                fds_to_keep = set(pass_fds)
+                fds_to_keep.add(errpipe_write)
+                self.pid = _fork_exec(
+                        args, executable_list,
+                        close_fds, tuple(sorted(map(int, fds_to_keep))),
+                        cwd, env_list,
+                        p2cread, p2cwrite, c2pread, c2pwrite,
+                        errread, errwrite,
+                        errpipe_read, errpipe_write,
+                        restore_signals, start_new_session,
+                        process_group, gid, gids, uid, umask,
+                        preexec_fn, _USE_VFORK)
+                self._child_created = True
+            finally:
+                # be sure the FD is closed no matter what
+                os.close(errpipe_write)
+    
+            self._close_pipe_fds(p2cread, p2cwrite,
+                                 c2pread, c2pwrite,
+                                 errread, errwrite)
+    
+            # Wait for exec to fail or succeed; possibly raising an
+            # exception (limited in size)
+            errpipe_data = bytearray()
+            while True:
+                part = os.read(errpipe_read, 50000)
+                errpipe_data += part
+                if not part or len(errpipe_data) > 50000:
+                    break
+        finally:
+            # be sure the FD is closed no matter what
+            os.close(errpipe_read)
+    
+        if errpipe_data:
+            try:
+                pid, sts = os.waitpid(self.pid, 0)
+                if pid == self.pid:
+                    self._handle_exitstatus(sts)
+                else:
+                    self.returncode = sys.maxsize
+            except ChildProcessError:
+                pass
+    
+            try:
+                exception_name, hex_errno, err_msg = (
+                        errpipe_data.split(b':', 2))
+                # The encoding here should match the encoding
+                # written in by the subprocess implementations
+                # like _posixsubprocess
+                err_msg = err_msg.decode()
+            except ValueError:
+                exception_name = b'SubprocessError'
+                hex_errno = b'0'
+                err_msg = 'Bad exception data from child: {!r}'.format(
+                              bytes(errpipe_data))
+            child_exception_type = getattr(
+                    builtins, exception_name.decode('ascii'),
+                    SubprocessError)
+            if issubclass(child_exception_type, OSError) and hex_errno:
+                errno_num = int(hex_errno, 16)
+                if err_msg == "noexec:chdir":
+                    err_msg = ""
+                    # The error must be from chdir(cwd).
+                    err_filename = cwd
+                elif err_msg == "noexec":
+                    err_msg = ""
+                    err_filename = None
+                else:
+                    err_filename = orig_executable
+                if errno_num != 0:
+                    err_msg = os.strerror(errno_num)
+                if err_filename is not None:
+>                   raise child_exception_type(errno_num, err_msg, err_filename)
+E                   PermissionError: [Errno 1] Operation not permitted: 'ps'
+
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:1963: PermissionError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-416/test_two_failed_retries_flag_w0')
+
+    def test_two_failed_retries_flag_without_a_fourth_attempt(tmp_path: Path) -> None:
+        """SPEC D.2 114 and P3 require G7 retry two then flag, never unbounded respawn."""
+    
+        locations = [tmp_path / f"attempt-{number}" for number in range(3)]
+        for location in locations:
+            location.mkdir()
+        with WorkerSupervisor(tmp_path / "supervisor") as supervisor:
+            conductor = Conductor(supervisor=supervisor, event_sink=lambda _event: None)
+            conductor.claim(_claim(("component/retry",)))
+            conductor.expand((_child("retry", "component/retry", locations[0]),))
+            failed_payload = _result(
+                status="failed",
+                claim="the first attempt could not complete",
+                evidence="typed failure evidence",
+            )
+>           conductor.dispatch(
+                "retry",
+                (
+                    sys.executable,
+                    "-c",
+                    f"from pathlib import Path; Path('distillate.json').write_text({failed_payload!r})",
+                ),
+            )
+
+tests/test_conductor.py:332: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/harness/conductor.py:1035: in dispatch
+    attempt = self._supervisor.spawn(
+src/harness/supervisor.py:252: in spawn
+    return self._spawn(
+src/harness/supervisor.py:436: in _spawn
+    identity = self._identity_reader(process.pid)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+pid = 27152
+
+    def _process_identity(pid: int) -> str | None:
+        """Return an OS birth fingerprint, not merely a reusable PID."""
+    
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return None
+        except PermissionError as exc:
+            raise SupervisorError("process evidence is permission-denied, not proof of death") from exc
+        if sys.platform.startswith("linux"):
+            try:
+                raw = Path(f"/proc/{pid}/stat").read_text(encoding="ascii")
+                fields_after_name = raw[raw.rfind(")") + 2 :].split()
+                if fields_after_name[0] == "Z":
+                    return None
+                start_ticks = fields_after_name[19]
+                process_group = fields_after_name[2]
+            except FileNotFoundError:
+                return None
+            except (IndexError, OSError, UnicodeError) as exc:
+                raise SupervisorError("process evidence cannot be read safely") from exc
+            return f"linux:{pid}:{process_group}:{start_ticks}"
+        try:
+            completed = subprocess.run(
+                ["ps", "-o", "stat=", "-o", "lstart=", "-o", "pgid=", "-p", str(pid)],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+>           raise SupervisorError("process evidence cannot be read safely") from exc
+E           harness.supervisor.SupervisorError: process evidence cannot be read safely
+
+src/harness/supervisor.py:161: SupervisorError
+_____ test_marked_search_explodes_three_attempts_smoke_prunes_then_narrows _____
+
+pid = 27154
+
+    def _process_identity(pid: int) -> str | None:
+        """Return an OS birth fingerprint, not merely a reusable PID."""
+    
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return None
+        except PermissionError as exc:
+            raise SupervisorError("process evidence is permission-denied, not proof of death") from exc
+        if sys.platform.startswith("linux"):
+            try:
+                raw = Path(f"/proc/{pid}/stat").read_text(encoding="ascii")
+                fields_after_name = raw[raw.rfind(")") + 2 :].split()
+                if fields_after_name[0] == "Z":
+                    return None
+                start_ticks = fields_after_name[19]
+                process_group = fields_after_name[2]
+            except FileNotFoundError:
+                return None
+            except (IndexError, OSError, UnicodeError) as exc:
+                raise SupervisorError("process evidence cannot be read safely") from exc
+            return f"linux:{pid}:{process_group}:{start_ticks}"
+        try:
+>           completed = subprocess.run(
+                ["ps", "-o", "stat=", "-o", "lstart=", "-o", "pgid=", "-p", str(pid)],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+            )
+
+src/harness/supervisor.py:153: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:550: in run
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:1028: in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Popen: returncode: 255 args: ['ps', '-o', 'stat=', '-o', 'lstart=', '-o', '...>
+args = ['ps', '-o', 'stat=', '-o', 'lstart=', '-o', ...], executable = b'ps'
+preexec_fn = None, close_fds = True, pass_fds = (), cwd = None, env = None
+startupinfo = None, creationflags = 0, shell = False, p2cread = -1
+p2cwrite = -1, c2pread = 12, c2pwrite = 14, errread = 15, errwrite = 16
+restore_signals = True, gid = None, gids = None, uid = None, umask = -1
+start_new_session = False, process_group = -1
+
+    def _execute_child(self, args, executable, preexec_fn, close_fds,
+                       pass_fds, cwd, env,
+                       startupinfo, creationflags, shell,
+                       p2cread, p2cwrite,
+                       c2pread, c2pwrite,
+                       errread, errwrite,
+                       restore_signals,
+                       gid, gids, uid, umask,
+                       start_new_session, process_group):
+        """Execute program (POSIX version)"""
+    
+        if isinstance(args, (str, bytes)):
+            args = [args]
+        elif isinstance(args, os.PathLike):
+            if shell:
+                raise TypeError('path-like args is not allowed when '
+                                'shell is true')
+            args = [args]
+        else:
+            args = list(args)
+    
+        if shell:
+            # On Android the default shell is at '/system/bin/sh'.
+            unix_shell = ('/system/bin/sh' if
+                      hasattr(sys, 'getandroidapilevel') else '/bin/sh')
+            args = [unix_shell, "-c"] + args
+            if executable:
+                args[0] = executable
+    
+        if executable is None:
+            executable = args[0]
+    
+        sys.audit("subprocess.Popen", executable, args, cwd, env)
+    
+        if (_USE_POSIX_SPAWN
+                and os.path.dirname(executable)
+                and preexec_fn is None
+                and not close_fds
+                and not pass_fds
+                and cwd is None
+                and (p2cread == -1 or p2cread > 2)
+                and (c2pwrite == -1 or c2pwrite > 2)
+                and (errwrite == -1 or errwrite > 2)
+                and not start_new_session
+                and process_group == -1
+                and gid is None
+                and gids is None
+                and uid is None
+                and umask < 0):
+            self._posix_spawn(args, executable, env, restore_signals,
+                              p2cread, p2cwrite,
+                              c2pread, c2pwrite,
+                              errread, errwrite)
+            return
+    
+        orig_executable = executable
+    
+        # For transferring possible exec failure from child to parent.
+        # Data format: "exception name:hex errno:description"
+        # Pickle is not used; it is complex and involves memory allocation.
+        errpipe_read, errpipe_write = os.pipe()
+        # errpipe_write must not be in the standard io 0, 1, or 2 fd range.
+        low_fds_to_close = []
+        while errpipe_write < 3:
+            low_fds_to_close.append(errpipe_write)
+            errpipe_write = os.dup(errpipe_write)
+        for low_fd in low_fds_to_close:
+            os.close(low_fd)
+        try:
+            try:
+                # We must avoid complex work that could involve
+                # malloc or free in the child process to avoid
+                # potential deadlocks, thus we do all this here.
+                # and pass it to fork_exec()
+    
+                if env is not None:
+                    env_list = []
+                    for k, v in env.items():
+                        k = os.fsencode(k)
+                        if b'=' in k:
+                            raise ValueError("illegal environment variable name")
+                        env_list.append(k + b'=' + os.fsencode(v))
+                else:
+                    env_list = None  # Use execv instead of execve.
+                executable = os.fsencode(executable)
+                if os.path.dirname(executable):
+                    executable_list = (executable,)
+                else:
+                    # This matches the behavior of os._execvpe().
+                    executable_list = tuple(
+                        os.path.join(os.fsencode(dir), executable)
+                        for dir in os.get_exec_path(env))
+                fds_to_keep = set(pass_fds)
+                fds_to_keep.add(errpipe_write)
+                self.pid = _fork_exec(
+                        args, executable_list,
+                        close_fds, tuple(sorted(map(int, fds_to_keep))),
+                        cwd, env_list,
+                        p2cread, p2cwrite, c2pread, c2pwrite,
+                        errread, errwrite,
+                        errpipe_read, errpipe_write,
+                        restore_signals, start_new_session,
+                        process_group, gid, gids, uid, umask,
+                        preexec_fn, _USE_VFORK)
+                self._child_created = True
+            finally:
+                # be sure the FD is closed no matter what
+                os.close(errpipe_write)
+    
+            self._close_pipe_fds(p2cread, p2cwrite,
+                                 c2pread, c2pwrite,
+                                 errread, errwrite)
+    
+            # Wait for exec to fail or succeed; possibly raising an
+            # exception (limited in size)
+            errpipe_data = bytearray()
+            while True:
+                part = os.read(errpipe_read, 50000)
+                errpipe_data += part
+                if not part or len(errpipe_data) > 50000:
+                    break
+        finally:
+            # be sure the FD is closed no matter what
+            os.close(errpipe_read)
+    
+        if errpipe_data:
+            try:
+                pid, sts = os.waitpid(self.pid, 0)
+                if pid == self.pid:
+                    self._handle_exitstatus(sts)
+                else:
+                    self.returncode = sys.maxsize
+            except ChildProcessError:
+                pass
+    
+            try:
+                exception_name, hex_errno, err_msg = (
+                        errpipe_data.split(b':', 2))
+                # The encoding here should match the encoding
+                # written in by the subprocess implementations
+                # like _posixsubprocess
+                err_msg = err_msg.decode()
+            except ValueError:
+                exception_name = b'SubprocessError'
+                hex_errno = b'0'
+                err_msg = 'Bad exception data from child: {!r}'.format(
+                              bytes(errpipe_data))
+            child_exception_type = getattr(
+                    builtins, exception_name.decode('ascii'),
+                    SubprocessError)
+            if issubclass(child_exception_type, OSError) and hex_errno:
+                errno_num = int(hex_errno, 16)
+                if err_msg == "noexec:chdir":
+                    err_msg = ""
+                    # The error must be from chdir(cwd).
+                    err_filename = cwd
+                elif err_msg == "noexec":
+                    err_msg = ""
+                    err_filename = None
+                else:
+                    err_filename = orig_executable
+                if errno_num != 0:
+                    err_msg = os.strerror(errno_num)
+                if err_filename is not None:
+>                   raise child_exception_type(errno_num, err_msg, err_filename)
+E                   PermissionError: [Errno 1] Operation not permitted: 'ps'
+
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:1963: PermissionError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-416/test_marked_search_explodes_th0')
+
+    def test_marked_search_explodes_three_attempts_smoke_prunes_then_narrows(
+        tmp_path: Path,
+    ) -> None:
+        """SPEC D.2 114, ADR-017, and P3 require SYM7 staged search under R22 brakes."""
+    
+        parent = tmp_path / "parent"
+        locations = [tmp_path / name for name in ("risk", "simple", "novel")]
+        parent.mkdir()
+        for location in locations:
+            location.mkdir()
+        attempts = (
+            _search_attempt("risk", "risk-first", locations[0]),
+            _search_attempt("simple", "minimal-first", locations[1]),
+            _search_attempt("novel", "independent alternative", locations[2]),
+        )
+        smoke_payloads = {
+            "risk": json.dumps(
+                {
+                    "schema_version": 1,
+                    "status": "pass",
+                    "score": 0.90,
+                    "checks": ["compiles", "coherent"],
+                    "evidence_refs": ["smoke.json"],
+                }
+            ),
+            "simple": json.dumps(
+                {
+                    "schema_version": 1,
+                    "status": "pass",
+                    "score": 0.70,
+                    "checks": ["compiles", "coherent"],
+                    "evidence_refs": ["smoke.json"],
+                }
+            ),
+            "novel": json.dumps(
+                {
+                    "schema_version": 1,
+                    "status": "fail",
+                    "score": 0.20,
+                    "checks": ["compiles", "coherent"],
+                    "evidence_refs": ["smoke.json"],
+                }
+            ),
+        }
+        spend = {"value": Decimal("0")}
+        now = {"value": 100.0}
+        events: list[dict[str, object]] = []
+        with WorkerSupervisor(tmp_path / "supervisor") as supervisor:
+            conductor = Conductor(
+                supervisor=supervisor,
+                event_sink=events.append,
+                search_spend_reader=lambda _packet, _child: spend["value"],
+                search_clock=lambda: now["value"],
+            )
+            conductor.claim(_claim(("component/hard-step",)))
+            conductor.expand((_search_child(parent, attempts),))
+>           handles = conductor.explode_search(
+                "hard-step",
+                {
+                    attempt_id: (
+                        sys.executable,
+                        "-c",
+                        f"from pathlib import Path; Path('smoke.json').write_text({payload!r})",
+                    )
+                    for attempt_id, payload in smoke_payloads.items()
+                },
+            )
+
+tests/test_conductor.py:485: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/harness/conductor.py:643: in explode_search
+    handle = self._launch_search_stage(
+src/harness/conductor.py:1289: in _launch_search_stage
+    process_attempt = self._supervisor.spawn(
+src/harness/supervisor.py:252: in spawn
+    return self._spawn(
+src/harness/supervisor.py:436: in _spawn
+    identity = self._identity_reader(process.pid)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+pid = 27154
+
+    def _process_identity(pid: int) -> str | None:
+        """Return an OS birth fingerprint, not merely a reusable PID."""
+    
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return None
+        except PermissionError as exc:
+            raise SupervisorError("process evidence is permission-denied, not proof of death") from exc
+        if sys.platform.startswith("linux"):
+            try:
+                raw = Path(f"/proc/{pid}/stat").read_text(encoding="ascii")
+                fields_after_name = raw[raw.rfind(")") + 2 :].split()
+                if fields_after_name[0] == "Z":
+                    return None
+                start_ticks = fields_after_name[19]
+                process_group = fields_after_name[2]
+            except FileNotFoundError:
+                return None
+            except (IndexError, OSError, UnicodeError) as exc:
+                raise SupervisorError("process evidence cannot be read safely") from exc
+            return f"linux:{pid}:{process_group}:{start_ticks}"
+        try:
+            completed = subprocess.run(
+                ["ps", "-o", "stat=", "-o", "lstart=", "-o", "pgid=", "-p", str(pid)],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+>           raise SupervisorError("process evidence cannot be read safely") from exc
+E           harness.supervisor.SupervisorError: process evidence cannot be read safely
+
+src/harness/supervisor.py:161: SupervisorError
+_______________ test_search_dual_brakes_stop_live_smoke_workers ________________
+
+pid = 27156
+
+    def _process_identity(pid: int) -> str | None:
+        """Return an OS birth fingerprint, not merely a reusable PID."""
+    
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return None
+        except PermissionError as exc:
+            raise SupervisorError("process evidence is permission-denied, not proof of death") from exc
+        if sys.platform.startswith("linux"):
+            try:
+                raw = Path(f"/proc/{pid}/stat").read_text(encoding="ascii")
+                fields_after_name = raw[raw.rfind(")") + 2 :].split()
+                if fields_after_name[0] == "Z":
+                    return None
+                start_ticks = fields_after_name[19]
+                process_group = fields_after_name[2]
+            except FileNotFoundError:
+                return None
+            except (IndexError, OSError, UnicodeError) as exc:
+                raise SupervisorError("process evidence cannot be read safely") from exc
+            return f"linux:{pid}:{process_group}:{start_ticks}"
+        try:
+>           completed = subprocess.run(
+                ["ps", "-o", "stat=", "-o", "lstart=", "-o", "pgid=", "-p", str(pid)],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+            )
+
+src/harness/supervisor.py:153: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:550: in run
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:1028: in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Popen: returncode: 255 args: ['ps', '-o', 'stat=', '-o', 'lstart=', '-o', '...>
+args = ['ps', '-o', 'stat=', '-o', 'lstart=', '-o', ...], executable = b'ps'
+preexec_fn = None, close_fds = True, pass_fds = (), cwd = None, env = None
+startupinfo = None, creationflags = 0, shell = False, p2cread = -1
+p2cwrite = -1, c2pread = 12, c2pwrite = 14, errread = 15, errwrite = 16
+restore_signals = True, gid = None, gids = None, uid = None, umask = -1
+start_new_session = False, process_group = -1
+
+    def _execute_child(self, args, executable, preexec_fn, close_fds,
+                       pass_fds, cwd, env,
+                       startupinfo, creationflags, shell,
+                       p2cread, p2cwrite,
+                       c2pread, c2pwrite,
+                       errread, errwrite,
+                       restore_signals,
+                       gid, gids, uid, umask,
+                       start_new_session, process_group):
+        """Execute program (POSIX version)"""
+    
+        if isinstance(args, (str, bytes)):
+            args = [args]
+        elif isinstance(args, os.PathLike):
+            if shell:
+                raise TypeError('path-like args is not allowed when '
+                                'shell is true')
+            args = [args]
+        else:
+            args = list(args)
+    
+        if shell:
+            # On Android the default shell is at '/system/bin/sh'.
+            unix_shell = ('/system/bin/sh' if
+                      hasattr(sys, 'getandroidapilevel') else '/bin/sh')
+            args = [unix_shell, "-c"] + args
+            if executable:
+                args[0] = executable
+    
+        if executable is None:
+            executable = args[0]
+    
+        sys.audit("subprocess.Popen", executable, args, cwd, env)
+    
+        if (_USE_POSIX_SPAWN
+                and os.path.dirname(executable)
+                and preexec_fn is None
+                and not close_fds
+                and not pass_fds
+                and cwd is None
+                and (p2cread == -1 or p2cread > 2)
+                and (c2pwrite == -1 or c2pwrite > 2)
+                and (errwrite == -1 or errwrite > 2)
+                and not start_new_session
+                and process_group == -1
+                and gid is None
+                and gids is None
+                and uid is None
+                and umask < 0):
+            self._posix_spawn(args, executable, env, restore_signals,
+                              p2cread, p2cwrite,
+                              c2pread, c2pwrite,
+                              errread, errwrite)
+            return
+    
+        orig_executable = executable
+    
+        # For transferring possible exec failure from child to parent.
+        # Data format: "exception name:hex errno:description"
+        # Pickle is not used; it is complex and involves memory allocation.
+        errpipe_read, errpipe_write = os.pipe()
+        # errpipe_write must not be in the standard io 0, 1, or 2 fd range.
+        low_fds_to_close = []
+        while errpipe_write < 3:
+            low_fds_to_close.append(errpipe_write)
+            errpipe_write = os.dup(errpipe_write)
+        for low_fd in low_fds_to_close:
+            os.close(low_fd)
+        try:
+            try:
+                # We must avoid complex work that could involve
+                # malloc or free in the child process to avoid
+                # potential deadlocks, thus we do all this here.
+                # and pass it to fork_exec()
+    
+                if env is not None:
+                    env_list = []
+                    for k, v in env.items():
+                        k = os.fsencode(k)
+                        if b'=' in k:
+                            raise ValueError("illegal environment variable name")
+                        env_list.append(k + b'=' + os.fsencode(v))
+                else:
+                    env_list = None  # Use execv instead of execve.
+                executable = os.fsencode(executable)
+                if os.path.dirname(executable):
+                    executable_list = (executable,)
+                else:
+                    # This matches the behavior of os._execvpe().
+                    executable_list = tuple(
+                        os.path.join(os.fsencode(dir), executable)
+                        for dir in os.get_exec_path(env))
+                fds_to_keep = set(pass_fds)
+                fds_to_keep.add(errpipe_write)
+                self.pid = _fork_exec(
+                        args, executable_list,
+                        close_fds, tuple(sorted(map(int, fds_to_keep))),
+                        cwd, env_list,
+                        p2cread, p2cwrite, c2pread, c2pwrite,
+                        errread, errwrite,
+                        errpipe_read, errpipe_write,
+                        restore_signals, start_new_session,
+                        process_group, gid, gids, uid, umask,
+                        preexec_fn, _USE_VFORK)
+                self._child_created = True
+            finally:
+                # be sure the FD is closed no matter what
+                os.close(errpipe_write)
+    
+            self._close_pipe_fds(p2cread, p2cwrite,
+                                 c2pread, c2pwrite,
+                                 errread, errwrite)
+    
+            # Wait for exec to fail or succeed; possibly raising an
+            # exception (limited in size)
+            errpipe_data = bytearray()
+            while True:
+                part = os.read(errpipe_read, 50000)
+                errpipe_data += part
+                if not part or len(errpipe_data) > 50000:
+                    break
+        finally:
+            # be sure the FD is closed no matter what
+            os.close(errpipe_read)
+    
+        if errpipe_data:
+            try:
+                pid, sts = os.waitpid(self.pid, 0)
+                if pid == self.pid:
+                    self._handle_exitstatus(sts)
+                else:
+                    self.returncode = sys.maxsize
+            except ChildProcessError:
+                pass
+    
+            try:
+                exception_name, hex_errno, err_msg = (
+                        errpipe_data.split(b':', 2))
+                # The encoding here should match the encoding
+                # written in by the subprocess implementations
+                # like _posixsubprocess
+                err_msg = err_msg.decode()
+            except ValueError:
+                exception_name = b'SubprocessError'
+                hex_errno = b'0'
+                err_msg = 'Bad exception data from child: {!r}'.format(
+                              bytes(errpipe_data))
+            child_exception_type = getattr(
+                    builtins, exception_name.decode('ascii'),
+                    SubprocessError)
+            if issubclass(child_exception_type, OSError) and hex_errno:
+                errno_num = int(hex_errno, 16)
+                if err_msg == "noexec:chdir":
+                    err_msg = ""
+                    # The error must be from chdir(cwd).
+                    err_filename = cwd
+                elif err_msg == "noexec":
+                    err_msg = ""
+                    err_filename = None
+                else:
+                    err_filename = orig_executable
+                if errno_num != 0:
+                    err_msg = os.strerror(errno_num)
+                if err_filename is not None:
+>                   raise child_exception_type(errno_num, err_msg, err_filename)
+E                   PermissionError: [Errno 1] Operation not permitted: 'ps'
+
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:1963: PermissionError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-416/test_search_dual_brakes_stop_l0')
+
+    def test_search_dual_brakes_stop_live_smoke_workers(tmp_path: Path) -> None:
+        """SPEC D.2 114 and P3 require R22's spend and clock walls to stop search."""
+    
+        parent = tmp_path / "parent"
+        locations = [tmp_path / f"attempt-{index}" for index in range(3)]
+        parent.mkdir()
+        for location in locations:
+            location.mkdir()
+        attempts = tuple(
+            _search_attempt(f"a{index}", f"approach {index}", location)
+            for index, location in enumerate(locations)
+        )
+        spend = {"value": Decimal("0")}
+        now = {"value": 0.0}
+        events: list[dict[str, object]] = []
+        with WorkerSupervisor(tmp_path / "supervisor") as supervisor:
+            conductor = Conductor(
+                supervisor=supervisor,
+                event_sink=events.append,
+                search_spend_reader=lambda _packet, _child: spend["value"],
+                search_clock=lambda: now["value"],
+            )
+            conductor.claim(_claim(("component/hard-step",)))
+            conductor.expand((_search_child(parent, attempts),))
+>           handles = conductor.explode_search(
+                "hard-step",
+                {
+                    attempt.attempt_id: (sys.executable, "-c", "import time; time.sleep(30)")
+                    for attempt in attempts
+                },
+            )
+
+tests/test_conductor.py:583: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/harness/conductor.py:643: in explode_search
+    handle = self._launch_search_stage(
+src/harness/conductor.py:1289: in _launch_search_stage
+    process_attempt = self._supervisor.spawn(
+src/harness/supervisor.py:252: in spawn
+    return self._spawn(
+src/harness/supervisor.py:436: in _spawn
+    identity = self._identity_reader(process.pid)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+pid = 27156
+
+    def _process_identity(pid: int) -> str | None:
+        """Return an OS birth fingerprint, not merely a reusable PID."""
+    
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return None
+        except PermissionError as exc:
+            raise SupervisorError("process evidence is permission-denied, not proof of death") from exc
+        if sys.platform.startswith("linux"):
+            try:
+                raw = Path(f"/proc/{pid}/stat").read_text(encoding="ascii")
+                fields_after_name = raw[raw.rfind(")") + 2 :].split()
+                if fields_after_name[0] == "Z":
+                    return None
+                start_ticks = fields_after_name[19]
+                process_group = fields_after_name[2]
+            except FileNotFoundError:
+                return None
+            except (IndexError, OSError, UnicodeError) as exc:
+                raise SupervisorError("process evidence cannot be read safely") from exc
+            return f"linux:{pid}:{process_group}:{start_ticks}"
+        try:
+            completed = subprocess.run(
+                ["ps", "-o", "stat=", "-o", "lstart=", "-o", "pgid=", "-p", str(pid)],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+>           raise SupervisorError("process evidence cannot be read safely") from exc
+E           harness.supervisor.SupervisorError: process evidence cannot be read safely
+
+src/harness/supervisor.py:161: SupervisorError
+__ test_three_fresh_chartered_judges_unanimously_release_exactly_one_attempt ___
+
+pid = 27159
+
+    def _process_identity(pid: int) -> str | None:
+        """Return an OS birth fingerprint, not merely a reusable PID."""
+    
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return None
+        except PermissionError as exc:
+            raise SupervisorError("process evidence is permission-denied, not proof of death") from exc
+        if sys.platform.startswith("linux"):
+            try:
+                raw = Path(f"/proc/{pid}/stat").read_text(encoding="ascii")
+                fields_after_name = raw[raw.rfind(")") + 2 :].split()
+                if fields_after_name[0] == "Z":
+                    return None
+                start_ticks = fields_after_name[19]
+                process_group = fields_after_name[2]
+            except FileNotFoundError:
+                return None
+            except (IndexError, OSError, UnicodeError) as exc:
+                raise SupervisorError("process evidence cannot be read safely") from exc
+            return f"linux:{pid}:{process_group}:{start_ticks}"
+        try:
+>           completed = subprocess.run(
+                ["ps", "-o", "stat=", "-o", "lstart=", "-o", "pgid=", "-p", str(pid)],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+            )
+
+src/harness/supervisor.py:153: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:550: in run
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:1028: in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Popen: returncode: 255 args: ['ps', '-o', 'stat=', '-o', 'lstart=', '-o', '...>
+args = ['ps', '-o', 'stat=', '-o', 'lstart=', '-o', ...], executable = b'ps'
+preexec_fn = None, close_fds = True, pass_fds = (), cwd = None, env = None
+startupinfo = None, creationflags = 0, shell = False, p2cread = -1
+p2cwrite = -1, c2pread = 12, c2pwrite = 14, errread = 15, errwrite = 16
+restore_signals = True, gid = None, gids = None, uid = None, umask = -1
+start_new_session = False, process_group = -1
+
+    def _execute_child(self, args, executable, preexec_fn, close_fds,
+                       pass_fds, cwd, env,
+                       startupinfo, creationflags, shell,
+                       p2cread, p2cwrite,
+                       c2pread, c2pwrite,
+                       errread, errwrite,
+                       restore_signals,
+                       gid, gids, uid, umask,
+                       start_new_session, process_group):
+        """Execute program (POSIX version)"""
+    
+        if isinstance(args, (str, bytes)):
+            args = [args]
+        elif isinstance(args, os.PathLike):
+            if shell:
+                raise TypeError('path-like args is not allowed when '
+                                'shell is true')
+            args = [args]
+        else:
+            args = list(args)
+    
+        if shell:
+            # On Android the default shell is at '/system/bin/sh'.
+            unix_shell = ('/system/bin/sh' if
+                      hasattr(sys, 'getandroidapilevel') else '/bin/sh')
+            args = [unix_shell, "-c"] + args
+            if executable:
+                args[0] = executable
+    
+        if executable is None:
+            executable = args[0]
+    
+        sys.audit("subprocess.Popen", executable, args, cwd, env)
+    
+        if (_USE_POSIX_SPAWN
+                and os.path.dirname(executable)
+                and preexec_fn is None
+                and not close_fds
+                and not pass_fds
+                and cwd is None
+                and (p2cread == -1 or p2cread > 2)
+                and (c2pwrite == -1 or c2pwrite > 2)
+                and (errwrite == -1 or errwrite > 2)
+                and not start_new_session
+                and process_group == -1
+                and gid is None
+                and gids is None
+                and uid is None
+                and umask < 0):
+            self._posix_spawn(args, executable, env, restore_signals,
+                              p2cread, p2cwrite,
+                              c2pread, c2pwrite,
+                              errread, errwrite)
+            return
+    
+        orig_executable = executable
+    
+        # For transferring possible exec failure from child to parent.
+        # Data format: "exception name:hex errno:description"
+        # Pickle is not used; it is complex and involves memory allocation.
+        errpipe_read, errpipe_write = os.pipe()
+        # errpipe_write must not be in the standard io 0, 1, or 2 fd range.
+        low_fds_to_close = []
+        while errpipe_write < 3:
+            low_fds_to_close.append(errpipe_write)
+            errpipe_write = os.dup(errpipe_write)
+        for low_fd in low_fds_to_close:
+            os.close(low_fd)
+        try:
+            try:
+                # We must avoid complex work that could involve
+                # malloc or free in the child process to avoid
+                # potential deadlocks, thus we do all this here.
+                # and pass it to fork_exec()
+    
+                if env is not None:
+                    env_list = []
+                    for k, v in env.items():
+                        k = os.fsencode(k)
+                        if b'=' in k:
+                            raise ValueError("illegal environment variable name")
+                        env_list.append(k + b'=' + os.fsencode(v))
+                else:
+                    env_list = None  # Use execv instead of execve.
+                executable = os.fsencode(executable)
+                if os.path.dirname(executable):
+                    executable_list = (executable,)
+                else:
+                    # This matches the behavior of os._execvpe().
+                    executable_list = tuple(
+                        os.path.join(os.fsencode(dir), executable)
+                        for dir in os.get_exec_path(env))
+                fds_to_keep = set(pass_fds)
+                fds_to_keep.add(errpipe_write)
+                self.pid = _fork_exec(
+                        args, executable_list,
+                        close_fds, tuple(sorted(map(int, fds_to_keep))),
+                        cwd, env_list,
+                        p2cread, p2cwrite, c2pread, c2pwrite,
+                        errread, errwrite,
+                        errpipe_read, errpipe_write,
+                        restore_signals, start_new_session,
+                        process_group, gid, gids, uid, umask,
+                        preexec_fn, _USE_VFORK)
+                self._child_created = True
+            finally:
+                # be sure the FD is closed no matter what
+                os.close(errpipe_write)
+    
+            self._close_pipe_fds(p2cread, p2cwrite,
+                                 c2pread, c2pwrite,
+                                 errread, errwrite)
+    
+            # Wait for exec to fail or succeed; possibly raising an
+            # exception (limited in size)
+            errpipe_data = bytearray()
+            while True:
+                part = os.read(errpipe_read, 50000)
+                errpipe_data += part
+                if not part or len(errpipe_data) > 50000:
+                    break
+        finally:
+            # be sure the FD is closed no matter what
+            os.close(errpipe_read)
+    
+        if errpipe_data:
+            try:
+                pid, sts = os.waitpid(self.pid, 0)
+                if pid == self.pid:
+                    self._handle_exitstatus(sts)
+                else:
+                    self.returncode = sys.maxsize
+            except ChildProcessError:
+                pass
+    
+            try:
+                exception_name, hex_errno, err_msg = (
+                        errpipe_data.split(b':', 2))
+                # The encoding here should match the encoding
+                # written in by the subprocess implementations
+                # like _posixsubprocess
+                err_msg = err_msg.decode()
+            except ValueError:
+                exception_name = b'SubprocessError'
+                hex_errno = b'0'
+                err_msg = 'Bad exception data from child: {!r}'.format(
+                              bytes(errpipe_data))
+            child_exception_type = getattr(
+                    builtins, exception_name.decode('ascii'),
+                    SubprocessError)
+            if issubclass(child_exception_type, OSError) and hex_errno:
+                errno_num = int(hex_errno, 16)
+                if err_msg == "noexec:chdir":
+                    err_msg = ""
+                    # The error must be from chdir(cwd).
+                    err_filename = cwd
+                elif err_msg == "noexec":
+                    err_msg = ""
+                    err_filename = None
+                else:
+                    err_filename = orig_executable
+                if errno_num != 0:
+                    err_msg = os.strerror(errno_num)
+                if err_filename is not None:
+>                   raise child_exception_type(errno_num, err_msg, err_filename)
+E                   PermissionError: [Errno 1] Operation not permitted: 'ps'
+
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:1963: PermissionError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-416/test_three_fresh_chartered_jud0')
+
+    def test_three_fresh_chartered_judges_unanimously_release_exactly_one_attempt(
+        tmp_path: Path,
+    ) -> None:
+        """SPEC B.6, ADR-012, ADR-017, and D.2 114 require fresh 3-of-3 judgment."""
+    
+        events: list[dict[str, object]] = []
+        minted: list[FeedbackPacketDraft] = []
+        with WorkerSupervisor(tmp_path / "supervisor") as supervisor:
+>           conductor = _settled_search(tmp_path, supervisor, events)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_judge_panel.py:279: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_judge_panel.py:149: in _settled_search
+    conductor.explode_search(
+src/harness/conductor.py:643: in explode_search
+    handle = self._launch_search_stage(
+src/harness/conductor.py:1289: in _launch_search_stage
+    process_attempt = self._supervisor.spawn(
+src/harness/supervisor.py:252: in spawn
+    return self._spawn(
+src/harness/supervisor.py:436: in _spawn
+    identity = self._identity_reader(process.pid)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+pid = 27159
+
+    def _process_identity(pid: int) -> str | None:
+        """Return an OS birth fingerprint, not merely a reusable PID."""
+    
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return None
+        except PermissionError as exc:
+            raise SupervisorError("process evidence is permission-denied, not proof of death") from exc
+        if sys.platform.startswith("linux"):
+            try:
+                raw = Path(f"/proc/{pid}/stat").read_text(encoding="ascii")
+                fields_after_name = raw[raw.rfind(")") + 2 :].split()
+                if fields_after_name[0] == "Z":
+                    return None
+                start_ticks = fields_after_name[19]
+                process_group = fields_after_name[2]
+            except FileNotFoundError:
+                return None
+            except (IndexError, OSError, UnicodeError) as exc:
+                raise SupervisorError("process evidence cannot be read safely") from exc
+            return f"linux:{pid}:{process_group}:{start_ticks}"
+        try:
+            completed = subprocess.run(
+                ["ps", "-o", "stat=", "-o", "lstart=", "-o", "pgid=", "-p", str(pid)],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+>           raise SupervisorError("process evidence cannot be read safely") from exc
+E           harness.supervisor.SupervisorError: process evidence cannot be read safely
+
+src/harness/supervisor.py:161: SupervisorError
+_ test_two_of_three_never_passes_and_dissent_mints_scoped_feedback_with_lineage _
+
+pid = 27161
+
+    def _process_identity(pid: int) -> str | None:
+        """Return an OS birth fingerprint, not merely a reusable PID."""
+    
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return None
+        except PermissionError as exc:
+            raise SupervisorError("process evidence is permission-denied, not proof of death") from exc
+        if sys.platform.startswith("linux"):
+            try:
+                raw = Path(f"/proc/{pid}/stat").read_text(encoding="ascii")
+                fields_after_name = raw[raw.rfind(")") + 2 :].split()
+                if fields_after_name[0] == "Z":
+                    return None
+                start_ticks = fields_after_name[19]
+                process_group = fields_after_name[2]
+            except FileNotFoundError:
+                return None
+            except (IndexError, OSError, UnicodeError) as exc:
+                raise SupervisorError("process evidence cannot be read safely") from exc
+            return f"linux:{pid}:{process_group}:{start_ticks}"
+        try:
+>           completed = subprocess.run(
+                ["ps", "-o", "stat=", "-o", "lstart=", "-o", "pgid=", "-p", str(pid)],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+            )
+
+src/harness/supervisor.py:153: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:550: in run
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:1028: in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Popen: returncode: 255 args: ['ps', '-o', 'stat=', '-o', 'lstart=', '-o', '...>
+args = ['ps', '-o', 'stat=', '-o', 'lstart=', '-o', ...], executable = b'ps'
+preexec_fn = None, close_fds = True, pass_fds = (), cwd = None, env = None
+startupinfo = None, creationflags = 0, shell = False, p2cread = -1
+p2cwrite = -1, c2pread = 12, c2pwrite = 14, errread = 15, errwrite = 16
+restore_signals = True, gid = None, gids = None, uid = None, umask = -1
+start_new_session = False, process_group = -1
+
+    def _execute_child(self, args, executable, preexec_fn, close_fds,
+                       pass_fds, cwd, env,
+                       startupinfo, creationflags, shell,
+                       p2cread, p2cwrite,
+                       c2pread, c2pwrite,
+                       errread, errwrite,
+                       restore_signals,
+                       gid, gids, uid, umask,
+                       start_new_session, process_group):
+        """Execute program (POSIX version)"""
+    
+        if isinstance(args, (str, bytes)):
+            args = [args]
+        elif isinstance(args, os.PathLike):
+            if shell:
+                raise TypeError('path-like args is not allowed when '
+                                'shell is true')
+            args = [args]
+        else:
+            args = list(args)
+    
+        if shell:
+            # On Android the default shell is at '/system/bin/sh'.
+            unix_shell = ('/system/bin/sh' if
+                      hasattr(sys, 'getandroidapilevel') else '/bin/sh')
+            args = [unix_shell, "-c"] + args
+            if executable:
+                args[0] = executable
+    
+        if executable is None:
+            executable = args[0]
+    
+        sys.audit("subprocess.Popen", executable, args, cwd, env)
+    
+        if (_USE_POSIX_SPAWN
+                and os.path.dirname(executable)
+                and preexec_fn is None
+                and not close_fds
+                and not pass_fds
+                and cwd is None
+                and (p2cread == -1 or p2cread > 2)
+                and (c2pwrite == -1 or c2pwrite > 2)
+                and (errwrite == -1 or errwrite > 2)
+                and not start_new_session
+                and process_group == -1
+                and gid is None
+                and gids is None
+                and uid is None
+                and umask < 0):
+            self._posix_spawn(args, executable, env, restore_signals,
+                              p2cread, p2cwrite,
+                              c2pread, c2pwrite,
+                              errread, errwrite)
+            return
+    
+        orig_executable = executable
+    
+        # For transferring possible exec failure from child to parent.
+        # Data format: "exception name:hex errno:description"
+        # Pickle is not used; it is complex and involves memory allocation.
+        errpipe_read, errpipe_write = os.pipe()
+        # errpipe_write must not be in the standard io 0, 1, or 2 fd range.
+        low_fds_to_close = []
+        while errpipe_write < 3:
+            low_fds_to_close.append(errpipe_write)
+            errpipe_write = os.dup(errpipe_write)
+        for low_fd in low_fds_to_close:
+            os.close(low_fd)
+        try:
+            try:
+                # We must avoid complex work that could involve
+                # malloc or free in the child process to avoid
+                # potential deadlocks, thus we do all this here.
+                # and pass it to fork_exec()
+    
+                if env is not None:
+                    env_list = []
+                    for k, v in env.items():
+                        k = os.fsencode(k)
+                        if b'=' in k:
+                            raise ValueError("illegal environment variable name")
+                        env_list.append(k + b'=' + os.fsencode(v))
+                else:
+                    env_list = None  # Use execv instead of execve.
+                executable = os.fsencode(executable)
+                if os.path.dirname(executable):
+                    executable_list = (executable,)
+                else:
+                    # This matches the behavior of os._execvpe().
+                    executable_list = tuple(
+                        os.path.join(os.fsencode(dir), executable)
+                        for dir in os.get_exec_path(env))
+                fds_to_keep = set(pass_fds)
+                fds_to_keep.add(errpipe_write)
+                self.pid = _fork_exec(
+                        args, executable_list,
+                        close_fds, tuple(sorted(map(int, fds_to_keep))),
+                        cwd, env_list,
+                        p2cread, p2cwrite, c2pread, c2pwrite,
+                        errread, errwrite,
+                        errpipe_read, errpipe_write,
+                        restore_signals, start_new_session,
+                        process_group, gid, gids, uid, umask,
+                        preexec_fn, _USE_VFORK)
+                self._child_created = True
+            finally:
+                # be sure the FD is closed no matter what
+                os.close(errpipe_write)
+    
+            self._close_pipe_fds(p2cread, p2cwrite,
+                                 c2pread, c2pwrite,
+                                 errread, errwrite)
+    
+            # Wait for exec to fail or succeed; possibly raising an
+            # exception (limited in size)
+            errpipe_data = bytearray()
+            while True:
+                part = os.read(errpipe_read, 50000)
+                errpipe_data += part
+                if not part or len(errpipe_data) > 50000:
+                    break
+        finally:
+            # be sure the FD is closed no matter what
+            os.close(errpipe_read)
+    
+        if errpipe_data:
+            try:
+                pid, sts = os.waitpid(self.pid, 0)
+                if pid == self.pid:
+                    self._handle_exitstatus(sts)
+                else:
+                    self.returncode = sys.maxsize
+            except ChildProcessError:
+                pass
+    
+            try:
+                exception_name, hex_errno, err_msg = (
+                        errpipe_data.split(b':', 2))
+                # The encoding here should match the encoding
+                # written in by the subprocess implementations
+                # like _posixsubprocess
+                err_msg = err_msg.decode()
+            except ValueError:
+                exception_name = b'SubprocessError'
+                hex_errno = b'0'
+                err_msg = 'Bad exception data from child: {!r}'.format(
+                              bytes(errpipe_data))
+            child_exception_type = getattr(
+                    builtins, exception_name.decode('ascii'),
+                    SubprocessError)
+            if issubclass(child_exception_type, OSError) and hex_errno:
+                errno_num = int(hex_errno, 16)
+                if err_msg == "noexec:chdir":
+                    err_msg = ""
+                    # The error must be from chdir(cwd).
+                    err_filename = cwd
+                elif err_msg == "noexec":
+                    err_msg = ""
+                    err_filename = None
+                else:
+                    err_filename = orig_executable
+                if errno_num != 0:
+                    err_msg = os.strerror(errno_num)
+                if err_filename is not None:
+>                   raise child_exception_type(errno_num, err_msg, err_filename)
+E                   PermissionError: [Errno 1] Operation not permitted: 'ps'
+
+../../../.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py:1963: PermissionError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-416/test_two_of_three_never_passes0')
+
+    def test_two_of_three_never_passes_and_dissent_mints_scoped_feedback_with_lineage(
+        tmp_path: Path,
+    ) -> None:
+        """SPEC D.2 102/114 and P3 require dissent to become feedback plus FAILED_JUDGMENT."""
+    
+        events: list[dict[str, object]] = []
+        minted: list[FeedbackPacketDraft] = []
+        with WorkerSupervisor(tmp_path / "supervisor") as supervisor:
+>           conductor = _settled_search(tmp_path, supervisor, events)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_judge_panel.py:341: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_judge_panel.py:149: in _settled_search
+    conductor.explode_search(
+src/harness/conductor.py:643: in explode_search
+    handle = self._launch_search_stage(
+src/harness/conductor.py:1289: in _launch_search_stage
+    process_attempt = self._supervisor.spawn(
+src/harness/supervisor.py:252: in spawn
+    return self._spawn(
+src/harness/supervisor.py:436: in _spawn
+    identity = self._identity_reader(process.pid)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+pid = 27161
+
+    def _process_identity(pid: int) -> str | None:
+        """Return an OS birth fingerprint, not merely a reusable PID."""
+    
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return None
+        except PermissionError as exc:
+            raise SupervisorError("process evidence is permission-denied, not proof of death") from exc
+        if sys.platform.startswith("linux"):
+            try:
+                raw = Path(f"/proc/{pid}/stat").read_text(encoding="ascii")
+                fields_after_name = raw[raw.rfind(")") + 2 :].split()
+                if fields_after_name[0] == "Z":
+                    return None
+                start_ticks = fields_after_name[19]
+                process_group = fields_after_name[2]
+            except FileNotFoundError:
+                return None
+            except (IndexError, OSError, UnicodeError) as exc:
+                raise SupervisorError("process evidence cannot be read safely") from exc
+            return f"linux:{pid}:{process_group}:{start_ticks}"
+        try:
+            completed = subprocess.run(
+                ["ps", "-o", "stat=", "-o", "lstart=", "-o", "pgid=", "-p", str(pid)],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+>           raise SupervisorError("process evidence cannot be read safely") from exc
+E           harness.supervisor.SupervisorError: process evidence cannot be read safely
+
+src/harness/supervisor.py:161: SupervisorError
+=========================== short test summary info ============================
+ERROR tests/contract/test_spine_contract.py::test_live_create_conflicts_and_dedup_bands
+ERROR tests/contract/test_spine_contract.py::test_live_patch_cas_tombstone_and_list
+ERROR tests/contract/test_spine_contract.py::test_live_spend_receipt_is_atomic_and_idempotent
+FAILED tests/golden/test_workspace_tool_outputs.py::test_seven_coding_tool_outputs_are_explicit
+FAILED tests/test_conductor.py::test_three_child_headless_run_recovers_cancels_and_accepts_distillates_only
+FAILED tests/test_conductor.py::test_uncertain_irreversible_boundary_cannot_pretend_cancellation_is_terminal
+FAILED tests/test_conductor.py::test_two_failed_retries_flag_without_a_fourth_attempt
+FAILED tests/test_conductor.py::test_marked_search_explodes_three_attempts_smoke_prunes_then_narrows
+FAILED tests/test_conductor.py::test_search_dual_brakes_stop_live_smoke_workers
+FAILED tests/test_judge_panel.py::test_three_fresh_chartered_judges_unanimously_release_exactly_one_attempt
+FAILED tests/test_judge_panel.py::test_two_of_three_never_passes_and_dissent_mints_scoped_feedback_with_lineage
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! KeyboardInterrupt !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/Users/nateoswalt/.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/selectors.py:415: KeyboardInterrupt
+(to show a full traceback on KeyboardInterrupt use --full-trace)
+8 failed, 1290 passed, 3 errors in 25.31s
