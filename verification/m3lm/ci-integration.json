@@ -1,0 +1,16 @@
+{
+  "garden_ci": "https://github.com/Nate0-1999/nocturne-garden/actions/runs/34794068558",
+  "garden_ci_result": "success",
+  "initial_harness_run": 34794067061,
+  "web_failure": "Not Found checking out private Garden; removed cross-repository dependency and made browser-only CI mode explicit",
+  "python_failure": "six I001 import-order errors in unchanged historical verification files",
+  "unchanged_files": [
+    "verification/m3b2/acceptance.py",
+    "verification/m3b3/acceptance.py",
+    "verification/m3b3/restore_continuity.py",
+    "verification/m3bt1/round1_acceptance.py",
+    "verification/m3bt1/round2_acceptance.py",
+    "verification/m3sl/check_emulation.py"
+  ],
+  "base_comparison": "git diff --exit-code 2ba38e8..64d6f83 -- <six files>: exit 0"
+}

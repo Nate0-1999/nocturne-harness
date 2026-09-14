@@ -61,11 +61,18 @@ def check_ledger(packet_dir: Path | None) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
         "--packet-dir", type=Path, help="required for handoff: verify this packet's ledger evidence"
     )
+    mode.add_argument(
+        "--ui-only",
+        action="store_true",
+        help="browser regression CI only; private Garden runs ledger CI separately",
+    )
     args = parser.parse_args()
-    check_ledger(args.packet_dir)
+    if not args.ui_only:
+        check_ledger(args.packet_dir)
     environment = os.environ.copy()
     environment["PYTHONPATH"] = os.pathsep.join(
         part for part in ("src", ".", environment.get("PYTHONPATH", "")) if part
@@ -87,7 +94,7 @@ def main() -> None:
         "live controls, human numbers, Stage, and SYM13 recipe"
     )
     if args.packet_dir is None:
-        print("Ground check only; handoff requires --packet-dir and ledger done.")
+        print("Regression check only; handoff requires --packet-dir and ledger done.")
 
 
 def _run_canon(

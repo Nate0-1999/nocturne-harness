@@ -3342,6 +3342,12 @@ rendered checks. Without that argument the result explicitly says ground only.
 PLAN's DONE command repeats evidence verification after the handoff report exists.
 Tooling only: the packaged app and ordinary runtime are unchanged.
 
+CI correction: Garden is private and the Harness workflow token cannot read it.
+Its source stays private; no new credential or duplicate ledger is introduced.
+Garden CI validates the canonical ledger on every push. Harness CI explicitly
+runs `--ui-only` browser regressions; that mode cannot combine with `--packet-dir`
+and never claims a handoff. Local ground/exit checks retain ledger validation.
+
 ## 114 — A missing rule citation fails the build [P1.2, P2, P3, P4, M3RC]
 
 PRECEDENT: SPEC B.6 r12/r14, PLAN M3RC, notes/rules-ledger.md; ancestors M3GD/M3LM.
