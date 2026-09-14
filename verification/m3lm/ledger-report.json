@@ -12,17 +12,42 @@
     {
       "repo": "harness",
       "base": "2ba38e895e6a6ba3aee70ef166a4ee3fd1d357fa",
-      "head": "d36d5868302307193a3d0ceb970b392dcc8afa5b"
+      "head": "64d6f8372b50a80c9696c70b9fabc0d9b8f7a1b8"
     }
   ],
   "unmapped": {
-    "garden/BOARD.md": "Governance or generated documentation only; no product behavior changes. The executable ledger and exit-canon changes are covered by FL-195.",
-    "garden/DECISIONS.md": "Governance or generated documentation only; no product behavior changes. The executable ledger and exit-canon changes are covered by FL-195.",
-    "garden/GATE.md": "Governance or generated documentation only; no product behavior changes. The executable ledger and exit-canon changes are covered by FL-195.",
-    "garden/PLAN.md": "Governance or generated documentation only; no product behavior changes. The executable ledger and exit-canon changes are covered by FL-195.",
-    "garden/notes/INDEX.md": "Governance or generated documentation only; no product behavior changes. The executable ledger and exit-canon changes are covered by FL-195.",
-    "garden/notes/feature-ledger.md": "Governance or generated documentation only; no product behavior changes. The executable ledger and exit-canon changes are covered by FL-195.",
-    "harness/DECISIONS.md": "Governance or generated documentation only; no product behavior changes. The executable ledger and exit-canon changes are covered by FL-195."
+    "garden/BOARD.md": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "garden/DECISIONS.md": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "garden/GATE.md": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "garden/PLAN.md": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "garden/notes/INDEX.md": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "garden/notes/feature-ledger.md": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/DECISIONS.md": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/01-old-scout-refusal.png": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/FL-195.png": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/SHA256SUMS": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/SOP.md": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/canon-boot.log": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/canon-final.log": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/composer-impact.json": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/composer-impact.log": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/composer-refusal-final.log": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/composer-refusal.log": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/conversion-check.log": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/harness-boot.log": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/harness-final.log": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/invalid-harness-invocation.log": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/ledger-report.json": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/ledger-tests.log": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/lint.log": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/motivation-check.log": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/old-scout-refusal.log": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/peer-edits-harness-attempt.log": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/peer-edits-spine-attempt.log": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/source-and-cleanup.json": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/spine-boot.log": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/spine-final.log": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration.",
+    "harness/verification/m3lm/walk-commands.json": "Evidence or governance documentation only; no product behavior change. FL-195 covers the executable ledger, its tests, exit canon and CI integration."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -32,7 +57,7 @@
       "verdict": "PASS",
       "screenshot": "FL-195.png",
       "flag": "",
-      "observed": "The old scout evidence was refused for 149 required rows. The composer diff computed eight affected rows, including conversation rows FL-104, FL-117 and FL-120, and its empty builder evidence was refused. Actual outputs viewed and screenshotted in TextEdit; 01-old-scout-refusal.png is the companion capture."
+      "observed": "Old scout refused for 149 missing row captures; composer impact names its three conversation rows and five shared consumers, and missing builder evidence refuses. The two screenshots show actual CLI logs. The CI correction separates private Garden validation from browser-only regression; browser-only mode cannot combine with handoff."
     }
   },
   "not_run": {

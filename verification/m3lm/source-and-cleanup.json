@@ -1,9 +1,9 @@
 {
   "garden_code": "b57afc3",
-  "harness_code": "d36d586",
+  "harness_code": "64d6f83",
   "spine_code": "d3daa9c",
-  "suite_source": "/tmp/m3lm-final-snapshot (committed archives; imports pointed to snapshot src)",
-  "harness": "1720 passed, 3 live contracts deselected",
+  "suite_source": "/tmp/m3lm-ci (isolated committed worktree and snapshot Spine imports)",
+  "harness": "1721 passed, 3 live contracts deselected",
   "spine": "298 passed",
   "ledger": "11 tests passed",
   "canon": "ledger verify, packaged heartbeat and full UI canon PASS",

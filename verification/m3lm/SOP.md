@@ -47,3 +47,12 @@ of working features. The separate motivation checker reports 18 inherited
 omissions in the unchanged snapshot tests; M3LM's added test is cited.
 Screenshots demonstrate execution; their claims and the completeness of the
 source map remain human review, explicitly stated in `ledger-report.json`.
+
+Post-push CI correction: Garden's ledger job passed, but Harness's workflow token
+could not read the private Garden repository. Canonical validation stays in
+Garden CI; Harness CI now requests browser-only regression explicitly with
+`--ui-only`. That option and `--packet-dir` are mutually exclusive, tested.
+The corrected code is 64d6f83; `harness-ci-correction.log` and
+`canon-ci-correction.log` carry its repeated full suite and handoff canon.
+The original CI also found six import-order failures in old verification files,
+all byte-identical to pre-M3LM code; those are not ledger integration failures.
