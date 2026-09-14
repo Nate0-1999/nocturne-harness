@@ -1357,8 +1357,27 @@ def test_cloud_restore_walls_write_nothing(tmp_path: Path, damage: str, message:
     assert {p.name: p.read_bytes() for p in journal.root.iterdir()} == before
 
 
+def test_m3fd_reinstall_restores_threads_beside_empty_and_unscoped_journals(tmp_path: Path) -> None:
+    """M3FD / F088: empty leftovers cannot block preserved, identifiable thread history."""
+    root = tmp_path / "transcripts"
+    journal = TranscriptJournal(root)
+    for thread in ("first", "second"):
+        journal.append_message(thread, {"message_id": thread, "role": "user", "content": thread},
+                               parent_id=None)
+    for thread, raw in (("empty", ""), ("unscoped", '{}\n[]\n{\n'),
+                        ("scoped-empty", '{"thread_id":"scoped-empty","record_type":"event"}\n')):
+        journal.path_for_thread(thread).write_text(raw)
+    before = {path.name: path.read_bytes() for path in root.iterdir()}
+
+    restored = {thread.thread_id: thread for thread in TranscriptJournal(root).hydrate_threads()}
+
+    assert set(restored) == {"first", "second", "scoped-empty"}
+    assert restored["scoped-empty"].messages == ()
+    assert all(restored[thread].messages[0]["content"] == thread for thread in ("first", "second"))
+    assert {path.name: path.read_bytes() for path in root.iterdir()} == before
+
+
 @pytest.mark.parametrize("damage,message", [
-    ("json", "contains an unreadable transcript"),
     ("empty-message", "contains an unreadable transcript"),
     ("tail", "has no durable tail"),
     ("cycle", "contains a history cycle"),
@@ -1398,7 +1417,7 @@ def test_damaged_history_does_not_resume_or_rewrite(
                          "current_location": "/workspace"})
         rows.append({"thread_id": "thread-1", "record_type": "thread_location",
                      "current_location": "/elsewhere"})
-    elif damage != "json":
+    else:
         context = {"thread_id": "thread-1", "record_type": "thread_context",
                    "project_key": "/workspace"}
         if damage == "project":
@@ -1409,7 +1428,7 @@ def test_damaged_history_does_not_resume_or_rewrite(
             context.update(workspace_root="relative", current_location="relative")
         rows.append(context)
     path = journal.path_for_thread("thread-1")
-    path.write_text("{" if damage == "json" else "\n".join(map(json.dumps, rows)) + "\n")
+    path.write_text("\n".join(map(json.dumps, rows)) + "\n")
     before = path.read_bytes()
     with pytest.raises(TranscriptJournalUnavailable, match=message):
         journal.hydrate_threads()

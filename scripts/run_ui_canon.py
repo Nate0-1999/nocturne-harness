@@ -103,6 +103,8 @@ def _run_canon(
     fixture_identity: str,
     suites: tuple[tuple[str, str], ...],
     base_environment: dict[str, str],
+    *,
+    restore: bool = False,
 ) -> None:
     port = _free_port()
     base_url = f"http://127.0.0.1:{port}"
@@ -140,6 +142,7 @@ def _run_canon(
                         fixture_identity,
                         "--evidence-dir",
                         str(evidence_dir),
+                        *(["--restore"] if restore else []),
                     ],
                     cwd=ROOT,
                     env=environment,
@@ -156,6 +159,10 @@ def _run_canon(
             except subprocess.TimeoutExpired:
                 fixture.kill()
                 fixture.wait(timeout=5)
+    if fixture_identity == "M3FP REGRESSION" and not restore:
+        # New process, same home: restore the durable heartbeat after a reinstall/restart.
+        _run_canon(output_root, fixture_path, fixture_identity, suites, base_environment,
+                   restore=True)
 
 
 def _free_port() -> int:

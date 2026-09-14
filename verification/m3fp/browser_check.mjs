@@ -1,7 +1,7 @@
 /** SPEC D.2 148: the packaged Rack heartbeat reaches gate, answer, receipt, and journal. */
 
 import { createRequire } from 'node:module'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
 const requireFromWeb = createRequire(new URL('../../web/package.json', import.meta.url))
@@ -31,6 +31,26 @@ try {
   await threads.locator('.thread-item--selected').waitFor({ state: 'visible' })
   await conversation.getByTestId('composer').waitFor({ state: 'visible' })
   await waitUntil(async () => conversation.getByTestId('composer').isEnabled())
+
+  if (args.includes('--restore')) {
+    const trace = await fetchJson(`${baseUrl}/__scenario__/heartbeat`)
+    if (!journalContains(trace, prompt, answer) || trace.prepare_calls !== 0) {
+      throw new Error('A fresh daemon did not restore the preserved heartbeat journal')
+    }
+    await conversation.getByText(answer, { exact: true }).waitFor({ state: 'visible' })
+    await conversation.getByText(
+      'Run error · The heartbeat model stopped unexpectedly. · partial kept', { exact: true },
+    ).waitFor({ state: 'visible' })
+    await page.screenshot({ path: resolve(evidenceDir, '05-reinstall-restored.png') })
+    const resultPath = resolve(evidenceDir, 'heartbeat.json')
+    const result = JSON.parse(await readFile(resultPath, 'utf8'))
+    result.reinstall_restores_journal_and_failure = true
+    await writeFile(resultPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8')
+    console.log(`M3FP reinstall heartbeat PASS: ${JSON.stringify(result)}`)
+    await context.close()
+    await browser.close()
+    process.exit(0)
+  }
 
   await conversation.getByTestId('composer').fill(prompt)
   // F077: changing the iframe's Conversation mode must preserve its unsent draft.

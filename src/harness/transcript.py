@@ -263,7 +263,9 @@ class TranscriptJournal:
                 row = json.loads(raw)
             except (UnicodeDecodeError, json.JSONDecodeError):
                 continue
-            if row.get("thread_id") != thread_id or row.get("record_type") != "message":
+            if not isinstance(row, dict) or row.get("thread_id") != thread_id or (
+                row.get("record_type") != "message"
+            ):
                 continue
             message = row.get("message")
             if isinstance(message, dict):
@@ -844,13 +846,10 @@ class TranscriptJournal:
         if not rows:
             return None
         if thread_id is None:
-            # WALL files / D.2 082: reject an unsafe journal before appending.
-            raise TranscriptJournalUnavailable(
-                "Conversation journal contains an unreadable transcript. "
-                "Restore the journal from a verified backup before starting Nocturne."
-            )
+            # M3FD / v2.101: empty or unscoped rows carry no restorable thread authority.
+            return None
         if not latest_messages:
-            if not saw_message_row and (project_key is not None or attachments):
+            if not saw_message_row:
                 return HydratedTranscript(
                     thread_id,
                     (),
