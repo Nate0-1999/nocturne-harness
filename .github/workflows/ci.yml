@@ -78,12 +78,6 @@ jobs:
           persist-credentials: false
       - name: Install web dependencies
         run: npm ci
-      - name: Checkout feature ledger
-        uses: actions/checkout@v4
-        with:
-          repository: Nate0-1999/nocturne-garden
-          path: _canon/garden
-          persist-credentials: false
       - name: Install the UI canon fixture
         working-directory: ${{ github.workspace }}
         run: |
@@ -97,9 +91,9 @@ jobs:
       - name: Unit tests
         run: npm run test:unit
       - name: Standing rendered UI canon
-        env:
-          GARDEN_ROOT: ${{ github.workspace }}/_canon/garden
-        run: npm run test:canon
+        # Garden is private; its own CI validates the ledger on every push.
+        # This job is browser regression coverage, never a packet handoff.
+        run: npm run test:canon -- --ui-only
       - name: Verify committed release bundle
         working-directory: .
         run: git diff --exit-code -- web/dist

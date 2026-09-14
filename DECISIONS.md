@@ -3341,3 +3341,9 @@ out Garden explicitly. `--packet-dir` additionally runs its verifier before the
 rendered checks. Without that argument the result explicitly says ground only.
 PLAN's DONE command repeats evidence verification after the handoff report exists.
 Tooling only: the packaged app and ordinary runtime are unchanged.
+
+CI correction: Garden is private and the Harness workflow token cannot read it.
+Its source stays private; no new credential or duplicate ledger is introduced.
+Garden CI validates the canonical ledger on every push. Harness CI explicitly
+runs `--ui-only` browser regressions; that mode cannot combine with `--packet-dir`
+and never claims a handoff. Local ground/exit checks retain ledger validation.
