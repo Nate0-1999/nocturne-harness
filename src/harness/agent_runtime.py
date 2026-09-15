@@ -60,6 +60,7 @@ from harness.spend import (
     model_response_receipts,
 )
 from harness.tools_memory import MemoryToolContext
+from harness.toolset import PermissionJudge
 
 type ContextFactory = Callable[[str], MemoryToolContext]
 
@@ -69,6 +70,12 @@ _INTERRUPTED_TOOL_CONTENT = "Tool execution interrupted by run cancellation."
 _MEMORY_BLOCK_OPEN = "<memory_system>\n"
 _MEMORY_BLOCK_CLOSE = "\n</memory_system>"
 _MAX_PROVIDER_MESSAGE = 1_000
+
+
+class _BoundaryCardReleased(Exception):
+    """End a boundary turn after the judge releases its durable Deck card."""
+
+
 _CONTEXT_CODES = frozenset(
     {
         "context_length_exceeded",
@@ -138,10 +145,28 @@ class PydanticAITurnRunner:
         )
         model_settings = _model_settings(model_resolution, thread_id)
 
+        async def review_boundary(wall: str, reason: str) -> str:
+            if not PermissionJudge.needs_owner(wall):
+                return reason + " The PermissionJudge says to move within the existing workspace."
+            await emit.event({
+                "event_kind": "boundary_card",
+                "judge": "PermissionJudge",
+                "policy": "ADR-015 boundary list",
+                "decision": "owner_action",
+                "wall": wall,
+                "reason": reason,
+                "run_id": emit.run_id,
+                "created_at": self._clock().isoformat(),
+                "action": "Use a separate thread rooted at the required folder."
+                if wall == "workspace" else "Perform this action explicitly outside Nocturne.",
+            })
+            raise _BoundaryCardReleased()
+
         try:
             context = replace(
                 self._context_factory(thread_id),
                 excluded_memory_ids=frozenset(excluded_memory_ids),
+                boundary_review=review_boundary,
             )
             if is_browser_consent:
                 message = "Open-web browser access is allowed for this thread."
@@ -222,6 +247,19 @@ class PydanticAITurnRunner:
                 usage,
                 cacheable_prefix_tokens=_cacheable_prefix_tokens(history),
                 assistant_text=visible_output,
+            )
+        except _BoundaryCardReleased:
+            usage = _failure_usage(run_usage, captured, prior_history)
+            await bridge.publish_usage(usage)
+            message = "Boundary review is on the Deck. No action was taken across the wall."
+            await emit.text(message)
+            return TurnOutcome(
+                StopReason("end_turn"),
+                _repair_cancelled_tool_calls(
+                    _captured_history(prior_history, captured), content=message
+                ),
+                usage,
+                assistant_text=message,
             )
         except asyncio.CancelledError:
             usage = _failure_usage(run_usage, captured, prior_history)
@@ -730,7 +768,9 @@ def _captured_history(
     return (*prior_history, *captured)
 
 
-def _repair_cancelled_tool_calls(history: Sequence[object]) -> tuple[object, ...]:
+def _repair_cancelled_tool_calls(
+    history: Sequence[object], *, content: str = _INTERRUPTED_TOOL_CONTENT,
+) -> tuple[object, ...]:
     """Append interrupted returns for every regular call left unanswered."""
 
     open_calls: dict[str, tuple[ToolCallPart, ModelResponse]] = {}
@@ -756,7 +796,7 @@ def _repair_cancelled_tool_calls(history: Sequence[object]) -> tuple[object, ...
     returns = [
         ToolReturnPart(
             tool_name=call.tool_name,
-            content=_INTERRUPTED_TOOL_CONTENT,
+            content=content,
             tool_call_id=call.tool_call_id,
             metadata={"harness_state": "cancelled"},
             timestamp=response.timestamp,

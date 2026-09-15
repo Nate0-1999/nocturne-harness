@@ -52,7 +52,7 @@ from harness.spine_client import (
     SpendEventsResponse,
 )
 from harness.tools_memory import MemoryToolContext
-from harness.toolset import ToolExecutionResult, ToolName
+from harness.toolset import ToolExecutionResult, ToolName, open_standard_toolset
 
 THREAD_UUID = UUID("22345678-1234-5678-1234-567812345678")
 REMOVED_MEMORY_UUID = UUID("32345678-1234-5678-1234-567812345678")
@@ -115,6 +115,48 @@ async def test_thread_location_skill_loads_after_agent_construction(tmp_path: Pa
                                message_history=(), emit=emitter)
     assert outcome.assistant_text == 'SKILL VERIFIED: heron.'
     assert outcome.usage.requests == 2
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('tool_name', ['write', 'request_boundary_review'])
+async def test_workspace_crossing_is_judge_released_to_deck(
+    tmp_path: Path, tool_name: str,
+) -> None:
+    """PLAN M3SK / F083: an outside write or explicit boundary request cards, never asks in chat."""
+    workspace = tmp_path / 'workspace'
+    workspace.mkdir()
+    target = tmp_path / 'outside.txt'
+    target.write_text('untouched')
+    arguments = {'path': str(target)}
+    arguments.update({'content': 'changed'} if tool_name == 'write' else {'action': 'Edit file'})
+
+    async def stream(_messages, _info):
+        yield {0: DeltaToolCall(name=tool_name, json_args=json.dumps(arguments),
+                               tool_call_id='boundary-request')}
+
+    toolset = await open_standard_toolset(cwd=workspace, workspace_root=workspace)
+    emitter = RecordingEmitter()
+    try:
+        runner = PydanticAITurnRunner(
+            HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+            lambda _: context(toolset=toolset),
+        )
+        outcome = await runner.run(thread_id=str(THREAD_UUID), prompt='Edit outside.txt.',
+                                   message_history=(), emit=emitter)
+    finally:
+        await toolset.close()
+    assert target.read_text() == 'untouched'
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert outcome.usage.requests == 1
+    assert outcome.assistant_text == (
+        'Boundary review is on the Deck. No action was taken across the wall.'
+    )
+    cards = [event for event in emitter.events if event['event_kind'] == 'boundary_card']
+    assert len(cards) == 1
+    assert cards[0]['judge'] == 'PermissionJudge'
+    assert cards[0]['wall'] == 'workspace'
+    assert cards[0]['decision'] == 'owner_action'
+    assert '?' not in ''.join(emitter.texts)
 
 
 def context(spine: object | None = None, *, toolset: object | None = None) -> MemoryToolContext:

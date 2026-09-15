@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
@@ -82,6 +83,7 @@ class MemoryToolContext:
     origin_path: str | None = None
     toolset: StandardToolset | None = None
     skill_directories: tuple[Path, ...] = ()
+    boundary_review: Callable[[str, str], Awaitable[str]] | None = None
     excluded_memory_ids: frozenset[UUID] = frozenset()
     _run_state: _MemoryToolRunState = field(
         default_factory=_MemoryToolRunState,

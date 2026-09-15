@@ -26,6 +26,7 @@ from harness.toolset import (
     ToolExecutionResult,
     ToolName,
     ToolsetError,
+    WorkspaceBoundaryError,
 )
 
 _READ_TOOLS = frozenset({"read", "grep", "find", "ls"})
@@ -220,7 +221,9 @@ class PydanticHarnessToolset:
         target = target.resolve(strict=True)
         if not _inside(self._location.workspace_root, target):
             # WALL owner files / ADR015: movement cannot enlarge the write grant.
-            raise ValueError(f"Cannot move outside the workspace {self._location.workspace_root}.")
+            raise WorkspaceBoundaryError(
+                f"Cannot move outside the workspace {self._location.workspace_root}.", "workspace"
+            )
         self._location = AgentLocation(
             agent_id=self._location.agent_id,
             machine_id=self._location.machine_id,
@@ -252,6 +255,10 @@ class PydanticHarnessToolset:
                     "find": self._find,
                     "ls": self._ls,
                 }[tool_name](arguments)
+        except WorkspaceBoundaryError as exc:
+            return ToolExecutionResult(
+                tool_name=tool_name, content=str(exc), success=False, boundary=exc.wall
+            )
         except (ToolsetError, ModelRetry, OSError, ValueError) as exc:
             return ToolExecutionResult(tool_name=tool_name, content=str(exc), success=False)
         return ToolExecutionResult(tool_name=tool_name, content=content, success=True)
@@ -290,8 +297,12 @@ class PydanticHarnessToolset:
         target = self._target(raw_path, default=default)
         if tool_name in _READ_TOOLS and _credential_path(target):
             # WALL credentials / ADR015: do not expose credential files through reads.
-            raise ToolsetError(
-                "That path may contain credentials. Ask the owner before reading it."
+            raise WorkspaceBoundaryError(
+                "That path may contain credentials. Ask the owner before reading it.", "credentials"
+            )
+        if tool_name in _WRITE_TOOLS and not _inside(self._location.workspace_root, target):
+            raise WorkspaceBoundaryError(
+                f"That path is outside this workspace: {target}.", "workspace"
             )
         if tool_name in _WRITE_TOOLS and target.parent != self._location.cwd:
             # WALL owner files / ADR015: require presence in the exact directory being written.
@@ -305,8 +316,8 @@ class PydanticHarnessToolset:
             and not _inside(self._location.cwd, target)
         ):
             # WALL owner files / ADR015: honor the delegated read boundary.
-            raise ToolsetError(
-                f"That path is outside this agent's location. Move to {target} first."
+            raise WorkspaceBoundaryError(
+                f"That path is outside this agent's location. Move to {target} first.", "location"
             )
         return target
 
@@ -446,14 +457,15 @@ class PydanticHarnessToolset:
         timeout = arguments.get("timeout")
         if _BOUNDARY_COMMAND.search(command):
             # WALL owner files / ADR015: shell tools cannot publish or escape the project grant.
-            raise ToolsetError(
+            raise WorkspaceBoundaryError(
                 "That command may leave this project or change remote state. "
-                "Ask the owner to run it explicitly outside Nocturne."
+                "Ask the owner to run it explicitly outside Nocturne.", "remote"
             )
         if _CREDENTIAL_COMMAND.search(command):
             # WALL credentials / ADR015: shell output must not read credential stores.
-            raise ToolsetError(
-                "That command may expose credentials. Ask the owner before reading them."
+            raise WorkspaceBoundaryError(
+                "That command may expose credentials. Ask the owner before reading them.",
+                "credentials"
             )
         sandbox = Path("/usr/bin/sandbox-exec")
         if not sandbox.is_file():
