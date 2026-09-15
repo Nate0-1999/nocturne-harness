@@ -22,9 +22,8 @@ WORKSPACE_INSTRUCTIONS = (
     "subtree. "
     "When the user names a discoverable skill, call load_capability with that skill's id "
     "before following its instructions or reading its bundled resources. "
-    "For a request to modify a path outside the workspace, call request_boundary_review "
-    "before answering; never ask a permission question in chat. The PermissionJudge routes "
-    "owner decisions to the Deck. Never retry around a refused wall."
+    "Never ask a permission question in chat. The PermissionJudge handles outside-file requests. "
+    "Reserved owner decisions go to the Deck. Never retry around a refused wall."
     " Browser tools are headless and default to localhost or files beneath the current location."
     " Never ask the owner for consent inside a tool call; a refused open-web request must wait"
     " for the owner's exact `/browser allow-web` command."
@@ -169,19 +168,6 @@ async def _execute_workspace_tool(
     return prefix + result.content
 
 
-async def request_boundary_review(
-    ctx: RunContext[MemoryToolContext], path: str, action: str,
-) -> str:
-    """Route an outside-workspace request to the PermissionJudge, never to chat consent."""
-    if ctx.deps.toolset is None or ctx.deps.boundary_review is None:
-        return "Boundary review is unavailable; no action was taken."
-    location = ctx.deps.toolset.location()
-    target = (location.cwd / path).resolve()
-    if target.is_relative_to(location.workspace_root):
-        return f"The boundary list permits this workspace. Move to {target.parent} before editing."
-    return await ctx.deps.boundary_review("workspace", f"{action}: {target}")
-
-
 async def read(
     ctx: RunContext[MemoryToolContext], path: str, offset: int = 1, limit: int = 2000
 ) -> str:
@@ -316,7 +302,6 @@ async def screenshot(ctx: RunContext[MemoryToolContext]) -> str | ToolReturn:
 
 
 WORKSPACE_TOOLS = (
-    request_boundary_review,
     read,
     edit,
     write,

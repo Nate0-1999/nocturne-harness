@@ -118,20 +118,19 @@ async def test_thread_location_skill_loads_after_agent_construction(tmp_path: Pa
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('tool_name', ['write', 'request_boundary_review'])
 async def test_workspace_crossing_is_judge_released_to_deck(
-    tmp_path: Path, tool_name: str,
+    tmp_path: Path,
 ) -> None:
-    """PLAN M3SK / F083: an outside write or explicit boundary request cards, never asks in chat."""
+    """PLAN M3SK / F083: an outside write cards instead of asking a question in chat."""
     workspace = tmp_path / 'workspace'
     workspace.mkdir()
     target = tmp_path / 'outside.txt'
     target.write_text('untouched')
     arguments = {'path': str(target)}
-    arguments.update({'content': 'changed'} if tool_name == 'write' else {'action': 'Edit file'})
+    arguments['content'] = 'changed'
 
     async def stream(_messages, _info):
-        yield {0: DeltaToolCall(name=tool_name, json_args=json.dumps(arguments),
+        yield {0: DeltaToolCall(name='write', json_args=json.dumps(arguments),
                                tool_call_id='boundary-request')}
 
     toolset = await open_standard_toolset(cwd=workspace, workspace_root=workspace)
