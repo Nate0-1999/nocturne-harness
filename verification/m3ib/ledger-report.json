@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "ef26db4d7bba0a654261d012d4a8022b0608d177",
-      "head": "215f80b4024967cc366db12269e697179c406f0d"
+      "head": "957d95a5326fdef316bb2dc2b04aa8b2ac0fe569"
     }
   ],
   "unmapped": {
@@ -36,16 +36,16 @@
     "harness/verification/m3bt1/round2_acceptance.py": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
     "harness/verification/m3fp/browser_check.mjs": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
     "harness/verification/m3fp/scenario_app.py": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
+    "harness/verification/m3ib/FL-195.png": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
+    "harness/verification/m3ib/FL-196.png": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
+    "harness/verification/m3ib/SHA256SUMS": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
+    "harness/verification/m3ib/ledger-report.json": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
+    "harness/verification/m3ib/resume-ledger-tests.log": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
+    "harness/verification/m3ib/resume-standalone-harness.log": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
     "harness/verification/m3sl/SHA256SUMS": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
     "harness/verification/m3sl/check_emulation.py": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
     "harness/.gitignore": "Packet operational record, generated ledger view, ignore rule, or decision; tooling behavior covered by FL-195/196.",
-    "harness/verification/sym13/scenario_app.py": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
-    "harness/verification/m3ib/ledger-report.json": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
-    "harness/verification/m3ib/SHA256SUMS": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
-    "harness/verification/m3ib/resume-ledger-tests.log": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
-    "harness/verification/m3ib/FL-196.png": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
-    "harness/verification/m3ib/FL-195.png": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
-    "harness/verification/m3ib/resume-standalone-harness.log": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change."
+    "harness/verification/sym13/scenario_app.py": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -56,7 +56,7 @@
       "verdict": "",
       "screenshot": "FL-008.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-014": {
       "label": "Every memory records the folder the agent stood in when it was made.",
@@ -65,7 +65,7 @@
       "verdict": "",
       "screenshot": "FL-014.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-016": {
       "label": "All conversation history is kept the way Codex and Claude Code keep it; a conversation without history is not supported.",
@@ -74,7 +74,7 @@
       "verdict": "",
       "screenshot": "FL-016.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-017": {
       "label": "Every prompt is intercepted and relevant memories are added to the context before the model runs.",
@@ -83,7 +83,7 @@
       "verdict": "",
       "screenshot": "FL-017.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-018": {
       "label": "A hard pause on a thread's first prompt where the user scans and removes injected memories before the model starts; afterwards removal is ad hoc with no pause.",
@@ -92,7 +92,7 @@
       "verdict": "",
       "screenshot": "FL-018.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-038": {
       "label": "A cheap 80/20 duplicate check at memory creation, keeping the agent's memory work under 10% of build run time.",
@@ -101,7 +101,7 @@
       "verdict": "",
       "screenshot": "FL-038.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-039": {
       "label": "Agents make no memories until compaction; the explicit /remember command is the other way.",
@@ -110,7 +110,7 @@
       "verdict": "",
       "screenshot": "FL-039.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-042": {
       "label": "Constitution: 'Already known — reinforced' on re-saves; rejected candidates remembered and never re-proposed without material change (gate-day).",
@@ -119,7 +119,7 @@
       "verdict": "",
       "screenshot": "FL-042.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-067": {
       "label": "Agents move through the file structure of the machine they live in, and the interface shows where every agent is.",
@@ -128,7 +128,7 @@
       "verdict": "",
       "screenshot": "FL-067.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-070": {
       "label": "Image input: paste an image and the agent reviews it.",
@@ -137,7 +137,7 @@
       "verdict": "",
       "screenshot": "FL-070.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-071": {
       "label": "The location fence: an agent can edit only files in the exact directory it stands in, and its shell is kept to that subtree, enforced deterministically.",
@@ -146,7 +146,7 @@
       "verdict": "",
       "screenshot": "FL-071.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-074": {
       "label": "A new thread starts in a project folder with the location rule in effect; how a thread's project is specified was his open question (maybe configuration).",
@@ -155,7 +155,7 @@
       "verdict": "",
       "screenshot": "FL-074.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-079": {
       "label": "Full conversation history kept, the way Codex and Claude Code do.",
@@ -164,7 +164,7 @@
       "verdict": "",
       "screenshot": "FL-079.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-104": {
       "label": "A draft response to the final synthesis that you tweak and fire, after which the stack switches to the agent that has waited longest for your attention.",
@@ -173,7 +173,7 @@
       "verdict": "",
       "screenshot": "FL-104.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-117": {
       "label": "A proposed reply prefilled and editable; queued prompts advance on Enter with a scrollable queue.",
@@ -182,7 +182,7 @@
       "verdict": "",
       "screenshot": "FL-117.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-119": {
       "label": "A Palace State module holding the general state stats.",
@@ -191,7 +191,7 @@
       "verdict": "",
       "screenshot": "FL-119.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-157": {
       "label": "Constitution: spend walls, soft budgets per run or day that pause the work at the wall for the judge (symphony budget law).",
@@ -200,7 +200,7 @@
       "verdict": "",
       "screenshot": "FL-157.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-169": {
       "label": "Client and cloud versions stay sync-locked or backward compatible, following industry practice, so version differences feel seamless.",
@@ -209,7 +209,7 @@
       "verdict": "",
       "screenshot": "FL-169.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-171": {
       "label": "A startup and settings option: \"Back up conversation transcripts to cloud?\"",
@@ -218,7 +218,7 @@
       "verdict": "",
       "screenshot": "FL-171.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-173": {
       "label": "Constitution: a warming retry when the Palace is asleep, a \"busy, retrying\" banner on rate limits, and the banner clears on recovery (gate-day).",
@@ -227,7 +227,7 @@
       "verdict": "",
       "screenshot": "FL-173.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-174": {
       "label": "Constitution: a doctor readout naming which identity the running daemon is (gate verification-identity work).",
@@ -236,7 +236,7 @@
       "verdict": "",
       "screenshot": "FL-174.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-175": {
       "label": "Constitution: a sandbox whose boundary crossings are surfaced as cards on the Deck (Invariant 14).",
@@ -245,7 +245,7 @@
       "verdict": "",
       "screenshot": "FL-175.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-178": {
       "label": "Constitution: a verification identity with its own account and home for tests and scouts (gate verification-identity work).",
@@ -254,7 +254,7 @@
       "verdict": "",
       "screenshot": "FL-178.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-179": {
       "label": "Constitution: a plain ownership refusal when one identity tries to decide another identity's approval queue item (gate verification-identity work).",
@@ -263,7 +263,7 @@
       "verdict": "",
       "screenshot": "FL-179.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-191": {
       "label": "The tools and skills Claude Code and Codex use on this machine, pinned to versioned open-source sources.",
@@ -272,7 +272,7 @@
       "verdict": "",
       "screenshot": "FL-191.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-194": {
       "label": "The Pydantic toolset and skills as the tool layer.",
@@ -281,7 +281,7 @@
       "verdict": "",
       "screenshot": "FL-194.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-195": {
       "label": "The feature ledger generates coverage reports and requires evidence for the rows affected by a build.",
@@ -308,7 +308,7 @@
       "verdict": "",
       "screenshot": "FL-002.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-006": {
       "label": "Every memory carries a location column and a project column.",
@@ -317,7 +317,7 @@
       "verdict": "",
       "screenshot": "FL-006.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-007": {
       "label": "Every memory links to the full conversation it came from, so an agent can reach more than just the memory when needed.",
@@ -326,7 +326,7 @@
       "verdict": "",
       "screenshot": "FL-007.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-009": {
       "label": "Record files (history, transcripts) live apart from code so code can be deleted and re-downloaded without losing history.",
@@ -335,7 +335,7 @@
       "verdict": "",
       "screenshot": "FL-009.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-010": {
       "label": "Every thread has a thread id, and every memory records the thread it was born in.",
@@ -344,7 +344,7 @@
       "verdict": "",
       "screenshot": "FL-010.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-069": {
       "label": "The core tools every modern harness has: files, terminal, Chrome, skills, changing models, compaction (our own take), and interactions with common apps, taken from the most modular standard source.",
@@ -353,7 +353,7 @@
       "verdict": "",
       "screenshot": "FL-069.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-072": {
       "label": "The progressive prompting protocol is dynamic to the agent's moves: a move re-prompts the agent for its new location.",
@@ -362,7 +362,7 @@
       "verdict": "",
       "screenshot": "FL-072.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-073": {
       "label": "The location rule written into Nocturne's own system prompt.",
@@ -371,7 +371,7 @@
       "verdict": "",
       "screenshot": "FL-073.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-075": {
       "label": "Queuing prompts and interjecting or steering a running agent, like the modern harnesses do.",
@@ -380,7 +380,7 @@
       "verdict": "",
       "screenshot": "FL-075.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-085": {
       "label": "The work loop: spec alignment with the user, then the agent loop (optionally several agents in worktrees attempting the same thing), then the judge checks the work against the spec and either calls it done or sends another agent to continue or fix, and the human is only brought back in when the judge says done.",
@@ -389,7 +389,7 @@
       "verdict": "",
       "screenshot": "FL-085.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-162": {
       "label": "Easy onboarding from a single splash repo, needing only two secrets: a GCP credential and an OpenRouter key.",
@@ -398,7 +398,7 @@
       "verdict": "",
       "screenshot": "FL-162.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-166": {
       "label": "A prompt when the app's memory use passes a threshold of the local system's memory, memory-leak guards, and no proceeding without write access at startup.",
@@ -407,7 +407,7 @@
       "verdict": "",
       "screenshot": "FL-166.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-168": {
       "label": "A restore popup that asks whether to roll back these memories and lists them.",
@@ -416,7 +416,7 @@
       "verdict": "",
       "screenshot": "FL-168.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-170": {
       "label": "A fresh reinstall that reconnects to existing files and auto-finds the cloud palace.",
@@ -425,7 +425,7 @@
       "verdict": "",
       "screenshot": "FL-170.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-186": {
       "label": "Build on Pydantic AI in a way that lets us modify and extend without waiting on them, passing features back and forth with their library.",
@@ -434,7 +434,7 @@
       "verdict": "",
       "screenshot": "FL-186.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-190": {
       "label": "The Harness can use skills and has the best and most common tools available, compiled from a list.",
@@ -443,7 +443,7 @@
       "verdict": "",
       "screenshot": "FL-190.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-192": {
       "label": "Swappable seams: router, model policy with an off-switch, toolset as a unit, memory system.",
@@ -452,7 +452,7 @@
       "verdict": "",
       "screenshot": "FL-192.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     },
     "FL-193": {
       "label": "The common core of terminal-agent tools (skills, progressive prompting, model switching, compaction, app interactions) in one piece that pulls upstream updates.",
@@ -461,7 +461,7 @@
       "verdict": "",
       "screenshot": "FL-193.png",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F098)."
+      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
     }
   },
   "not_run": {
