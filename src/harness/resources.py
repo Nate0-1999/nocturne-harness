@@ -63,7 +63,7 @@ class ResourceWatch:
         self._home = home
         self._started_at = time.monotonic()
 
-    def snapshot(self, database_bytes: int) -> VitalsResources:
+    def snapshot(self, database_bytes: int | None) -> VitalsResources:
         storage = local_storage_snapshot(self._home)
         rss = current_rss_bytes()
         return VitalsResources(

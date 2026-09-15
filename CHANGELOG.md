@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.1.13 - 2026-09-15
+
+- Spend and Palace State use the daemon's principal. Only the configured owner
+  can request the whole Palace; principal views omit shared database and broker
+  totals. Update the app with this Palace release: older metrics requests without
+  a principal are refused.
+
 ## 0.1.12 - 2026-09-15
 
 - Publish as `nocturne-harness` with the matching `nocturne-memory==0.1.12`

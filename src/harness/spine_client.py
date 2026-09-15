@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from enum import StrEnum
 from typing import Annotated, Any, Literal, Never
@@ -30,6 +30,11 @@ class ContractModel(BaseModel):
     """Closed JSON object for a body whose fields are fixed by Spine law."""
 
     model_config = ConfigDict(allow_inf_nan=False)
+
+
+class PalaceIdentity(ContractModel):
+    principal_id: StrictStr
+    is_owner: bool
 
 
 class MemoryKind(StrEnum):
@@ -737,7 +742,7 @@ class VitalsResources(ContractModel):
     daemon_uptime_seconds: int | None = Field(strict=True)
     disk_free_bytes: int | None = Field(strict=True)
     disk_total_bytes: int | None = Field(strict=True)
-    database_bytes: int = Field(strict=True)
+    database_bytes: int | None = Field(strict=True)
     journal_bytes: int | None = Field(strict=True)
     backup_bytes: int | None = Field(strict=True)
     warning: Literal["low_disk"] | None
@@ -990,6 +995,7 @@ _MEMORY_LIST_RESPONSE = TypeAdapter(PagedMemoryListResponse)
 _SEARCH_RESPONSE = TypeAdapter(SearchResponse)
 _SPEND_EVENTS_RESPONSE = TypeAdapter(SpendEventsResponse)
 _SPEND_TABLE_SNAPSHOT = TypeAdapter(SpendTableSnapshot)
+_PALACE_IDENTITY = TypeAdapter(PalaceIdentity)
 _VITALS_SNAPSHOT = TypeAdapter(VitalsSnapshot)
 _MEMORY_GRAPH_SNAPSHOT = TypeAdapter(MemoryGraphSnapshot)
 _SCORER_CONSOLE_SNAPSHOT = TypeAdapter(ScorerConsoleSnapshot)
@@ -1027,6 +1033,7 @@ class SpineClient:
         normalized_url = _normalize_base_url(base_url)
         self.base_url = str(normalized_url)
         self._principal_id = principal_id
+        self._metrics_scope: str | None = None
         self._owned_queue_items: set[str] = set()
         self._owned_queue_batches: set[UUID] = set()
         self._client = httpx.AsyncClient(
@@ -1215,26 +1222,42 @@ class SpineClient:
     async def vitals_snapshot(self) -> VitalsSnapshot:
         """Read A-028's live trailing-hour Palace Vitals snapshot."""
 
-        response = await self._request("GET", "v1/vitals")
+        response = await self._request("GET", "v1/vitals", params=await self._metrics_params())
         return _expect_success(response, status=200, adapter=_VITALS_SNAPSHOT)
 
     async def thread_vitals_snapshot(self, thread_id: UUID) -> VitalsSnapshot:
-        response = await self._request("GET", f"v1/vitals/threads/{thread_id}")
+        response = await self._request(
+            "GET", f"v1/vitals/threads/{thread_id}", params=await self._metrics_params()
+        )
         return _expect_success(response, status=200, adapter=_VITALS_SNAPSHOT)
 
     async def spend_table(self, thread_ids: list[UUID] | None = None) -> SpendTableSnapshot | None:
         """Read M3SP's table projection; a 404 is an older Palace, not broken chat."""
 
-        params: JsonObject | None = None
+        params = await self._metrics_params()
         if thread_ids is not None:
-            params = {
-                "scope": "threads",
-                "thread_id": [str(thread_id) for thread_id in thread_ids],
-            }
+            if not thread_ids:
+                return SpendTableSnapshot(
+                    as_of=datetime.now(UTC), window_minutes=60, threads=[], purposes=[]
+                )
+            params["thread_id"] = [str(thread_id) for thread_id in thread_ids]
         response = await self._request("GET", "v1/spend/table", params=params)
         if response.status_code == 404:
             return None
         return _expect_success(response, status=200, adapter=_SPEND_TABLE_SNAPSHOT)
+
+    async def _metrics_params(self) -> JsonObject:
+        principal_id = self._principal_id or "local"
+        if self._metrics_scope is None:
+            response = await self._request(
+                "GET", "v1/identity", params={"principal_id": principal_id}
+            )
+            if response.status_code == 404:
+                # F094: an older Palace cannot safely serve verification metrics.
+                raise SpineClientError("Update the Palace to read principal-scoped metrics.")
+            identity = _expect_success(response, status=200, adapter=_PALACE_IDENTITY)
+            self._metrics_scope = "palace" if identity.is_owner else "principal"
+        return {"principal_id": principal_id, "scope": self._metrics_scope}
 
     async def memory_graph(self, request: MemoryGraphQuery) -> MemoryGraphSnapshot:
         response = await self._request(

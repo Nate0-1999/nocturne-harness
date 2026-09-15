@@ -1,7 +1,7 @@
 # M3WF walk fixture
 
-This is disposable regression data, never owner history. Use ports 8900 (model),
-8902 (Spine), 8903 (first identity), 8904 (second identity), and 55436 (Postgres).
+This is disposable regression data, never owner history. Use ports 8902 (Spine),
+8903 (first identity), 8904 (second identity), and 55436 (Postgres).
 The launcher refuses the product port and displays the fixture curtain.
 
 From `harness/`, with the sibling Spine source and the normal development
@@ -12,19 +12,18 @@ docker compose -f verification/m3wf/compose.yaml up -d --wait
 NOCTURNE_HOME=/private/tmp/m3fx-step6-home PYTHONPATH=src:../spine/src .venv/bin/python -c 'from verification.m3wf.scenario_app import fixture_config; from spine.db.migrate import upgrade_head; upgrade_head(fixture_config().database_url)'
 ```
 
-Install `mlx-lm==0.31.3` in a disposable environment and download
-`mlx-community/Qwen3-1.7B-4bit` before going offline. The walked model revision was
-`3b1b1768f8f8cf8351c712464f906e86c2b8269e`. Keep its Hugging Face cache under
-`/private/tmp/m3fx-huggingface`. Start each command in a separate foreground shell:
+Export `M3WF_OPENROUTER_API_KEY` from an authorized disposable credential source
+in each Harness shell. M3SC uses `openrouter:minimax/minimax-m3`; the local Qwen
+fixture did not reliably call tools. The database and lexical embeddings stay
+local. Start each command in a separate foreground shell:
 
 ```sh
-HF_HOME=/private/tmp/m3fx-huggingface HF_HUB_OFFLINE=1 /usr/bin/sandbox-exec -f verification/m3wf/local-only.sb /private/tmp/m3fx-local-model/bin/python -m mlx_lm.server --model mlx-community/Qwen3-1.7B-4bit --host 127.0.0.1 --port 8900 --chat-template-args '{"enable_thinking":false}' --max-tokens 512
 NOCTURNE_HOME=/private/tmp/m3fx-step6-home PYTHONPATH=src:../spine/src /usr/bin/sandbox-exec -f verification/m3wf/local-only.sb .venv/bin/python -m verification.run_fixture verification.m3wf.scenario_app:create_spine_app --port 8902
-NOCTURNE_HOME=/private/tmp/m3fx-step6-home PYTHONPATH=src:../spine/src /usr/bin/sandbox-exec -f verification/m3wf/local-only.sb .venv/bin/python -m verification.run_fixture verification.m3wf.scenario_app:create_harness_app --port 8903
-NOCTURNE_HOME=/private/tmp/m3fx-step6-second-home PYTHONPATH=src:../spine/src /usr/bin/sandbox-exec -f verification/m3wf/local-only.sb .venv/bin/python -m verification.run_fixture verification.m3wf.scenario_app:create_second_harness_app --port 8904
+NOCTURNE_HOME=/private/tmp/m3fx-step6-home PYTHONPATH=src:../spine/src .venv/bin/python -m verification.run_fixture verification.m3wf.scenario_app:create_harness_app --port 8903
+NOCTURNE_HOME=/private/tmp/m3fx-step6-second-home PYTHONPATH=src:../spine/src .venv/bin/python -m verification.run_fixture verification.m3wf.scenario_app:create_second_harness_app --port 8904
 ```
 
-The macOS policy allows only loopback traffic. Spine uses deterministic lexical
+The Spine process's macOS policy allows only loopback traffic. Spine uses deterministic lexical
 fixture vectors, not learned semantic embeddings. Only the first fixture
 principal **and** machine qualify for learning in this fixture process; production
 exclusion is unchanged. Curators have no cloud key.
@@ -52,9 +51,10 @@ For Audition, place the Injection Console nearest a Focused Conversation and
 choose Nearest source; a whole-stack target has no single frozen gate.
 
 For ingestion, focus the existing “Drop, paste, or choose Markdown” control and
-paste fictional Markdown. This avoids a native file chooser. Local model quality
-is still judged: this walk saved simple memories but merged a two-fact seed and
-failed the three build attempts. The second identity is a same-host stand-in;
+paste fictional Markdown. This avoids a native file chooser. Before walking agent
+behavior, ask it to read a disposable file and confirm a successful tool result
+in the journal. Fixture limits mean unproven rows, not product regressions.
+The second identity is a same-host stand-in;
 FL-001's real second machine and FL-101's phone still need hardware.
 
 After saving evidence, stop these foreground processes, remove only their named

@@ -3407,3 +3407,12 @@ logic changes. Only the six repaired scripts' manifest hashes are refreshed;
 historical screenshots and verdicts remain unchanged.
 CI installs use the committed lock as pip constraints: unconstrained Anthropic
 upgrades switched HTTP libraries underneath the pinned Pydantic AI provider.
+
+## 118 — Metrics follow the daemon identity [P2, M3SC]
+
+PRECEDENT: PLAN M3SC, F094, Spine Decision 048; ancestors M3VI, M3SP, M3WF.
+The client asks Spine whether its configured principal is the owner, then sends
+that principal and explicit scope on every metrics read. Missing server scope
+support never falls back to an unscoped read. The M3WF fixture uses its explicit
+disposable OpenRouter key for tool-capable turns, retaining local data and lexical
+embeddings; the first fixture identity is its configured owner for comparison.

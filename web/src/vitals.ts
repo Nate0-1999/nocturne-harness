@@ -60,7 +60,7 @@ export interface ResourceSnapshot {
   daemon_uptime_seconds: number | null
   disk_free_bytes: number | null
   disk_total_bytes: number | null
-  database_bytes: number
+  database_bytes: number | null
   journal_bytes: number | null
   backup_bytes: number | null
   warning: 'low_disk' | null
@@ -341,7 +341,7 @@ function parseResources(value: unknown): ResourceSnapshot {
     daemon_uptime_seconds: nullableNonnegativeInteger(item.daemon_uptime_seconds, 'resources.daemon_uptime_seconds'),
     disk_free_bytes: nullableNonnegativeInteger(item.disk_free_bytes, 'resources.disk_free_bytes'),
     disk_total_bytes: nullableNonnegativeInteger(item.disk_total_bytes, 'resources.disk_total_bytes'),
-    database_bytes: nonnegativeInteger(item.database_bytes, 'resources.database_bytes'),
+    database_bytes: nullableNonnegativeInteger(item.database_bytes, 'resources.database_bytes'),
     journal_bytes: nullableNonnegativeInteger(item.journal_bytes, 'resources.journal_bytes'),
     backup_bytes: nullableNonnegativeInteger(item.backup_bytes, 'resources.backup_bytes'),
     warning: item.warning,

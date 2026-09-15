@@ -1,4 +1,4 @@
-"""M3WF local-only learning fixture; real gates, explicit fixture eligibility."""
+"""M3WF local-data learning fixture with tool-capable OpenRouter turns."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ HOME = Path("/private/tmp/m3fx-step6-home")
 SECOND_HOME = Path("/private/tmp/m3fx-step6-second-home")
 PRINCIPAL = "nocturne-verification-fixture-m3wf"
 MACHINE = "nocturne-fixture-m3wf-machine-a"
-MODEL = "openai-chat:mlx-community/Qwen3-1.7B-4bit"
+MODEL = "openrouter:minimax/minimax-m3"
 
 
 def fixture_config():
@@ -64,6 +64,7 @@ def create_spine_app():
             _env_file=None,
             database_url=config.database_url,
             token=config.spine_token,
+            owner_principal_id=PRINCIPAL,
             openai_api_key=None,
         ),
         embedding_provider=LexicalFixtureEmbedding(),
@@ -86,7 +87,6 @@ def _harness_app(home, principal, machine):
     workspace = home / "workspace"
     workspace.mkdir(parents=True, exist_ok=True)
     os.chdir(workspace)
-    os.environ["OPENAI_BASE_URL"] = "http://127.0.0.1:8900/v1"
     app = create_dev_app(
         web_dist=Path(__file__).resolve().parents[2] / "web/dist",
         settings=HarnessSettings(
@@ -96,8 +96,8 @@ def _harness_app(home, principal, machine):
             machine_id=machine,
             spine_url="http://127.0.0.1:8902",
             spine_token=config.spine_token,
-            openai_api_key="fixture-local-no-secret",
-            openrouter_api_key=None,
+            openai_api_key=None,
+            openrouter_api_key=os.environ["M3WF_OPENROUTER_API_KEY"],
             anthropic_api_key=None,
             chat_model=MODEL,
             model_policy_chat="pinned:" + MODEL,
