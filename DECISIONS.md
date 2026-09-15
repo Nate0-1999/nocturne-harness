@@ -3405,3 +3405,5 @@ The hosted heartbeat uses the real read tool: Ubuntu lacks the shell's required
 macOS sandbox. Existing formatter failures are repaired mechanically; no runtime
 logic changes. Only the six repaired scripts' manifest hashes are refreshed;
 historical screenshots and verdicts remain unchanged.
+CI installs use the committed lock as pip constraints: unconstrained Anthropic
+upgrades switched HTTP libraries underneath the pinned Pydantic AI provider.
