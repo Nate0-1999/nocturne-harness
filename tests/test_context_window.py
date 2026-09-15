@@ -170,3 +170,14 @@ def test_f034_zero_usage_error_response_cannot_erase_last_successful_measurement
     )
 
     assert tracker.snapshot("thread-a").aggregate == measured
+
+    tracker.record(
+        thread_id="thread-a",
+        captured=[],
+        resolution=resolution,
+        memory_block=None,
+        compaction_fraction=0.45,
+    )
+    changed = tracker.snapshot("thread-a").aggregate
+    assert changed.used_tokens == measured.used_tokens
+    assert changed.threshold_tokens == int(resolution.context_tokens * 0.45)
