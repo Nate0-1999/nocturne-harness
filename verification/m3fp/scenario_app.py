@@ -34,9 +34,9 @@ ANSWER = (
     "M2H final post: the relay stays explicit, candidates remain reviewable, "
     "and contradictions never passively resolve."
 )
-TOOL_PROMPT = "Explain, run one bash command, then explain the result."
-TOOL_BEFORE = "I will check the shell.\n\n"
-TOOL_AFTER = "The shell returned M3FZ-HEARTBEAT.\n\n"
+TOOL_PROMPT = "Explain, read the heartbeat fixture, then explain the result."
+TOOL_BEFORE = "I will read the fixture.\n\n"
+TOOL_AFTER = "The file contains M3FZ-HEARTBEAT.\n\n"
 ERROR_PROMPT = "Show the heartbeat failure reason."
 
 
@@ -64,9 +64,9 @@ def _model() -> FunctionModel:
             yield TOOL_BEFORE
             yield {
                 0: DeltaToolCall(
-                    name="bash",
-                    json_args='{"command":"printf M3FZ-HEARTBEAT"}',
-                    tool_call_id="m3fz-heartbeat-bash",
+                    name="read",
+                    json_args='{"path":"verification/m3fp/scenario_app.py"}',
+                    tool_call_id="m3fz-heartbeat-read",
                 )
             }
 

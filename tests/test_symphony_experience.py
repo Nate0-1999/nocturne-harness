@@ -65,10 +65,13 @@ class ControlledExecution:
         await self.release.wait()
         if self.stopped_attempt_ids:
             await update("running", {"stopped_attempt_ids": self.stopped_attempt_ids})
-        await update("completed", {
-            "result": "Fixture judges accepted the inspected artifact.",
-            "timeline": ("judge_panel_unanimous", "completed"),
-        })
+        await update(
+            "completed",
+            {
+                "result": "Fixture judges accepted the inspected artifact.",
+                "timeline": ("judge_panel_unanimous", "completed"),
+            },
+        )
 
     def clarify(self, *_args):
         pass
@@ -128,15 +131,24 @@ def test_specialized_prompt_refusals_preserve_one_owner_intent() -> None:
     """
     value = launch("draft")
     with pytest.raises(ValidationError, match="mutually exclusive"):
-        PromptSubmitPayload(prompt="go", symphony=value, symphony_intervention={
-            "kind": "clarification", "symphony_id": "stack", "attempt_id": "attempt",
-            "instruction": "clarify",
-        })
+        PromptSubmitPayload(
+            prompt="go",
+            symphony=value,
+            symphony_intervention={
+                "kind": "clarification",
+                "symphony_id": "stack",
+                "attempt_id": "attempt",
+                "instruction": "clarify",
+            },
+        )
     with pytest.raises(
         ValidationError, match="a proposed response must be an ordinary text prompt"
     ):
-        PromptSubmitPayload(prompt="go", symphony=value,
-                            proposed_response=ProposedResponseFirePayload(proposal_run_id="run"))
+        PromptSubmitPayload(
+            prompt="go",
+            symphony=value,
+            proposed_response=ProposedResponseFirePayload(proposal_run_id="run"),
+        )
 
 
 def launch(draft_id: str, **changes: object) -> SymphonyLaunchPayload:
@@ -459,11 +471,14 @@ def test_launch_requires_core_charter_order_performance_metrics_and_signature() 
         SymphonyLaunchPayload.model_validate(valid)
 
 
-@pytest.mark.parametrize("damage,message", [
-    ("metric-seat", "precalculated metrics belong only to performance"),
-    ("recipe", "recipe step ids must be unique"),
-    ("judges", "judge charters must fix motivation, implementation, performance"),
-])
+@pytest.mark.parametrize(
+    "damage,message",
+    [
+        ("metric-seat", "precalculated metrics belong only to performance"),
+        ("recipe", "recipe step ids must be unique"),
+        ("judges", "judge charters must fix motivation, implementation, performance"),
+    ],
+)
 def test_signed_launch_cannot_mix_judge_authority_or_step_identity(damage, message) -> None:
     """T2 / D.2 102: a paid launch preserves distinct judge authority and workspace steps.
     [ADR-012] M3GD / SPEC B.6 r14: exercised refusals: "judge charters must fix motivation,
@@ -540,11 +555,15 @@ async def test_run_loop_routes_both_symphony_turns_locally_and_keeps_fifo_events
     assert sum(message.type is MessageType.RUN_DONE for message in sink.messages) == 2
     sink.done.clear()
     await loop.submit(
-        thread_id=thread_id, prompt_id="00000000000000000000000092",
-        prompt="Keep the same scope.", sink=sink,
+        thread_id=thread_id,
+        prompt_id="00000000000000000000000092",
+        prompt="Keep the same scope.",
+        sink=sink,
         symphony_intervention=SymphonyClarificationPayload(
-            kind="clarification", symphony_id=result_event["symphony_id"],
-            attempt_id="attempt-1", instruction="Keep the same scope.",
+            kind="clarification",
+            symphony_id=result_event["symphony_id"],
+            attempt_id="attempt-1",
+            instruction="Keep the same scope.",
         ),
     )
     await asyncio.wait_for(sink.done.wait(), 1)
@@ -553,8 +572,10 @@ async def test_run_loop_routes_both_symphony_turns_locally_and_keeps_fifo_events
     assert (await experience.read(result_event["symphony_id"])).state == "completed"
     snapshots = [m for m in sink.messages if m.type is MessageType.THREAD_SNAPSHOT]
     states = [
-        event for message in snapshots[-1].payload.messages
-        if message["role"] == "assistant" for event in message["events"]
+        event
+        for message in snapshots[-1].payload.messages
+        if message["role"] == "assistant"
+        for event in message["events"]
         if event.get("event_kind") == "symphony_state"
     ]
     assert states[-1]["state"] == "completed"

@@ -701,12 +701,6 @@ async def test_vitals_accepts_the_a029_reserved_model_key_escape() -> None:
     assert snapshot.spend.lanes[-1].label == "unreported"
 
 
-
-
-
-
-
-
 @pytest.mark.asyncio
 async def test_create_similar_response_is_distinct_from_created_status() -> None:
     """SPEC C.4 is defended by verifying that create similar response is distinct from created

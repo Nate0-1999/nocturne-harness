@@ -297,10 +297,14 @@ def create_app(
         busy = isinstance(exc, SpineResponseError) and exc.status_code == 429
         return JSONResponse(
             status_code=429 if busy else 503,
-            content={"detail": "The Palace is busy, retrying." if busy
-                     else "The Palace is unavailable. Try again."},
+            content={
+                "detail": "The Palace is busy, retrying."
+                if busy
+                else "The Palace is unavailable. Try again."
+            },
             headers={"Retry-After": exc.response.headers.get("Retry-After", "1")} if busy else None,
         )
+
     factory = envelope_factory or EnvelopeFactory(machine_id="harness-daemon")
     loop = run_loop or RunLoop(_UnavailableTurnRunner(), factory)
     app.router.add_event_handler("shutdown", loop.close)
@@ -452,7 +456,8 @@ def create_app(
             if isinstance(exc, SpineResponseError) and exc.status_code == 429:
                 raise
             raise HTTPException(
-                status_code=503, detail="Palace Vitals are unavailable.",
+                status_code=503,
+                detail="Palace Vitals are unavailable.",
             ) from None
         return RackQueryResult(status="live", as_of=None, data=snapshot)
 
@@ -786,9 +791,10 @@ def create_dev_app(
         setattr(configured, f"model_policy_{role}", policy)
     discovery_root = Path.cwd() if seed_discovery_root is None else Path(seed_discovery_root)
     principal_id = _required_identity(configured.principal_id, "PRINCIPAL_ID")
-    if principal_id.startswith("nocturne-verification-") and home == (
-        Path.home() / ".nocturne"
-    ).resolve():
+    if (
+        principal_id.startswith("nocturne-verification-")
+        and home == (Path.home() / ".nocturne").resolve()
+    ):
         raise ValueError("Verification requires NOCTURNE_HOME to name a disposable folder.")
     machine_id = _required_identity(configured.machine_id, "MACHINE_ID")
     agent_id = _required_identity(configured.agent_id, "AGENT_ID")
@@ -826,6 +832,7 @@ def create_dev_app(
             if workspace is None
             else (Path(workspace[0]), Path(workspace[1]))
         )
+
         def record_move(location: Path) -> None:
             if loop.thread_workspace(thread_id) is not None:
                 loop.record_thread_location(thread_id, str(location))
@@ -869,7 +876,8 @@ def create_dev_app(
     resource_watch = ResourceWatch(home)
 
     async def enrich_memory_panel(
-        thread_id: str, items: list[MemoryPanelItem],
+        thread_id: str,
+        items: list[MemoryPanelItem],
     ) -> list[MemoryPanelItem]:
         context = context_factory(thread_id)
         ids = [item.memory.memory_id for item in items]
@@ -879,27 +887,37 @@ def create_dev_app(
             graph = await owned_spine.memory_graph(
                 MemoryGraphQuery(principal_id=principal_id, memory_ids=ids)
             )
-            revisions = {str(node["memory"]["memory_id"]): node["revisions"]
-                         for node in graph.nodes}
+            revisions = {
+                str(node["memory"]["memory_id"]): node["revisions"] for node in graph.nodes
+            }
         except SpineClientError:
             pass  # The card keeps its authoritative body when history is unavailable.
         try:
             scores = await owned_spine.memory_scores(
                 InjectPrepareRequest(
-                    thread_id=UUID(thread_id), agent_id=agent_id, machine_id=machine_id,
-                    principal_id=principal_id, project_key=context.project_key,
+                    thread_id=UUID(thread_id),
+                    agent_id=agent_id,
+                    machine_id=machine_id,
+                    principal_id=principal_id,
+                    project_key=context.project_key,
                     location_path=context.origin_path,
                     current_location=str(context.toolset.location().cwd),
                     prompt=loop.latest_prompt(thread_id) or context.project_key or "",
                     model_context_tokens=configured.model_context_tokens,
-                ), ids,
+                ),
+                ids,
             )
         except SpineClientError:
             pass  # Display an unavailable score rather than inventing one.
-        return [item.model_copy(update={
-            "score": scores.get(str(item.memory.memory_id)),
-            "revisions": revisions.get(str(item.memory.memory_id), []),
-        }) for item in items]
+        return [
+            item.model_copy(
+                update={
+                    "score": scores.get(str(item.memory.memory_id)),
+                    "revisions": revisions.get(str(item.memory.memory_id), []),
+                }
+            )
+            for item in items
+        ]
 
     panel = MemoryPanelController(
         owned_spine,
@@ -930,6 +948,7 @@ def create_dev_app(
         contexts=memory_contexts,
         on_context_changed=publish_ambient_memory_panel,
     )
+
     def browser_consent_was_journaled(thread_id: str) -> bool:
         try:
             return any(
@@ -1278,6 +1297,7 @@ def create_dev_app(
     app.router.add_event_handler("startup", transcript_sync.start)
     app.router.add_event_handler("shutdown", transcript_sync.stop)
     app.router.add_event_handler("shutdown", owned_symphony_experience.close)
+
     async def close_workspace_toolsets() -> None:
         for toolset in tuple(workspace_toolsets.values()):
             await toolset.close()

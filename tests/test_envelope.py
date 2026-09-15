@@ -215,7 +215,8 @@ def test_prompt_submit_accepts_each_exact_image_signature(media_type: str, data:
         {**image_payload(), "media_type": "image/jpeg"},
         {**image_payload(), "filename": "owner.png"},
         {
-            "kind": "image", "media_type": "image/png",
+            "kind": "image",
+            "media_type": "image/png",
             "data_base64": base64.b64encode(
                 b"\x89PNG\r\n\x1a\n" + b"x" * (5 * 1024 * 1024 - 7)
             ).decode("ascii"),
@@ -593,8 +594,7 @@ def test_run_usage_requires_strict_integers(value: object) -> None:
     ],
 )
 def test_run_done_preserves_the_producer_outcome(stop_reason: str, partial: bool) -> None:
-    """M3GD / C.7: the run loop authors the outcome; serialization preserves it. [SPEC C.7]
-    """
+    """M3GD / C.7: the run loop authors the outcome; serialization preserves it. [SPEC C.7]"""
     envelope = envelope_for(
         "run.done",
         {"run_id": RUN_ID, "stop_reason": stop_reason, "partial": partial},
@@ -602,6 +602,7 @@ def test_run_done_preserves_the_producer_outcome(stop_reason: str, partial: bool
 
     assert isinstance(envelope.payload, RunDonePayload)
     assert envelope.payload.stop_reason is StopReason(stop_reason)
+
 
 def test_f034_run_done_preserves_only_typed_provider_error_evidence() -> None:
     """F034 and v2.52 are defended by verifying that run.done carries bounded provider error
@@ -628,6 +629,7 @@ def test_f034_run_done_preserves_only_typed_provider_error_evidence() -> None:
     assert isinstance(envelope.payload, RunDonePayload)
     assert envelope.payload.provider_error is not None
     assert envelope.payload.provider_error.model_dump(exclude_none=True) == detail
+
 
 def test_prompt_submit_requires_outer_thread() -> None:
     """WALL H7: 'prompt.submit requires a non-blank outer thread_id' scopes owner input. [SPEC
@@ -692,8 +694,6 @@ def test_gate_open_rejects_cards_the_browser_cannot_render_truthfully(
 
     with pytest.raises(ValidationError):
         envelope_for("gate.open", payload)
-
-
 
 
 def test_wrong_resolution_gate_and_decision_are_typed() -> None:
@@ -906,8 +906,6 @@ def test_thread_snapshot_response_requires_an_explicit_nullable_project() -> Non
             "thread.snapshot",
             {key: value for key, value in payload.items() if key != "project_key"},
         )
-
-
 
 
 @pytest.mark.parametrize(

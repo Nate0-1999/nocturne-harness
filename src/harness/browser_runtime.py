@@ -31,8 +31,7 @@ def browser_runtime_is_ready(home: Path) -> bool:
     except (OSError, json.JSONDecodeError):
         return False
     return record == {"playwright_version": PLAYWRIGHT_VERSION} and any(
-        entry.is_dir() and entry.name.startswith("chromium_headless_shell-")
-        for entry in entries
+        entry.is_dir() and entry.name.startswith("chromium_headless_shell-") for entry in entries
     )
 
 

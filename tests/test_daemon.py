@@ -355,10 +355,18 @@ class PanelGateSpine:
 
     async def memory_graph(self, request: MemoryGraphQuery) -> MemoryGraphSnapshot:
         return MemoryGraphSnapshot(
-            as_of=datetime.now(UTC), graph_edge_sim=0.8, edges=[], omitted_memory_ids=[],
-            nodes=[{"memory": memory.model_dump(mode="json"),
-                    "revisions": [{"revision": 1, "reason": "created"}]}
-                   for memory in self.memories if memory.memory_id in request.memory_ids],
+            as_of=datetime.now(UTC),
+            graph_edge_sim=0.8,
+            edges=[],
+            omitted_memory_ids=[],
+            nodes=[
+                {
+                    "memory": memory.model_dump(mode="json"),
+                    "revisions": [{"revision": 1, "reason": "created"}],
+                }
+                for memory in self.memories
+                if memory.memory_id in request.memory_ids
+            ],
         )
 
     async def memory_scores(self, request: InjectPrepareRequest, memory_ids) -> dict[str, float]:
@@ -620,9 +628,14 @@ def test_busy_palace_preserves_retry_status_and_recovers_spend() -> None:
         nonlocal calls
         calls += 1
         if calls == 1:
-            raise SpineResponseError(httpx.Response(
-                429, text="Too Many Requests", headers={"Retry-After": "2"},
-            ), "Spine returned an unexpected media type")
+            raise SpineResponseError(
+                httpx.Response(
+                    429,
+                    text="Too Many Requests",
+                    headers={"Retry-After": "2"},
+                ),
+                "Spine returned an unexpected media type",
+            )
         return spend_table_snapshot()
 
     with TestClient(create_app(spend_table_snapshot_reader=read_spend)) as client:
@@ -1253,7 +1266,6 @@ def test_restore_preview_discards_candidate_and_refuses_cloud(
         assert discarded == [prepared]
 
 
-
 def test_dev_app_wires_the_real_streaming_agent_adapter(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -1794,8 +1806,9 @@ def test_dev_panel_remove_updates_shared_context_for_the_next_model_call(
         assert panel["payload"]["request_id"] == SECOND_PROMPT_ID
         assert panel["payload"]["result"] == "removed"
         assert all(item["score"] == 0.75 for item in panel["payload"]["items"])
-        assert all(item["revisions"][0]["reason"] == "created"
-                   for item in panel["payload"]["items"])
+        assert all(
+            item["revisions"][0]["reason"] == "created" for item in panel["payload"]["items"]
+        )
         assert spine.score_requests[-1].prompt == "first"
         assert spine.score_requests[-1].principal_id == "principal-test"
         assert [
@@ -2221,8 +2234,8 @@ def test_unknown_type_without_forwarder_is_ignored_without_closing(tmp_path: Pat
         "messages": [],
         "open_gate": None,
         "active_run": None,
-            "project_key": None,
-            "request_id": SNAPSHOT_ID,
+        "project_key": None,
+        "request_id": SNAPSHOT_ID,
     }
 
 

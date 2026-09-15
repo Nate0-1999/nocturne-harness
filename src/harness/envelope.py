@@ -427,6 +427,7 @@ class RunDonePayload(_ExtensiblePayload):
         exclude_if=lambda value: value is None,
     )
 
+
 class GateOpenPayload(_ExtensiblePayload):
     run_id: ULID
     kind: Literal["memory_gate"]
@@ -438,6 +439,7 @@ class GateOpenPayload(_ExtensiblePayload):
     near_misses: list[ScoredMemoryCard]
     wrong_removed: list[MemoryUnit] = Field(default_factory=list)
     resolution_error: StrictStr | None = None
+
 
 class WrongResolution(_ExtensiblePayload):
     memory_id: UUID

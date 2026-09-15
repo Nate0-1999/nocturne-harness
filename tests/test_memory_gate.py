@@ -259,18 +259,28 @@ async def test_wrong_resolution_cannot_patch_a_different_revision() -> None:
         RecordingDelegate(), spine, context_factory(spine), model_context_tokens=1000
     )
     emitted = RecordingEmitter()
-    task = asyncio.create_task(runner._resolve_wrong_memory(
-        current=current, prepared=spine.prepare_response,
-        context=context_factory(spine)(THREAD_ID), emit=emitted,
-    ))
+    task = asyncio.create_task(
+        runner._resolve_wrong_memory(
+            current=current,
+            prepared=spine.prepare_response,
+            context=context_factory(spine)(THREAD_ID),
+            emit=emitted,
+        )
+    )
     await wait_for_gate_count(emitted, 1)
-    emitted.decision.set_result(GateCommitPayload(
-        run_id=RUN_ID, injection_id=INJECTION_ID, removed=[], added_back=[],
-        wrong_resolution=WrongResolution(
-            memory_id=current.memory_id, expected_revision=current.revision + 1,
-            action="expire",
-        ),
-    ))
+    emitted.decision.set_result(
+        GateCommitPayload(
+            run_id=RUN_ID,
+            injection_id=INJECTION_ID,
+            removed=[],
+            added_back=[],
+            wrong_resolution=WrongResolution(
+                memory_id=current.memory_id,
+                expected_revision=current.revision + 1,
+                action="expire",
+            ),
+        )
+    )
     with pytest.raises(
         ValueError, match="wrong-resolution decision does not match the current gate"
     ):

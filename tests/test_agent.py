@@ -615,16 +615,22 @@ async def test_empty_remember_command_is_visible_and_does_not_call_model_or_spin
 async def test_remember_allows_framework_metadata_retry_within_run_limits() -> None:
     """F075: a structured-output retry must not hit a bespoke one-request budget."""
     calls = []
-    model = structured_sequence_model([
-        {"label": "Retry needs keywords"},
-        {"label": "Editor preference", "keywords": ["editor", "tabs"]},
-    ], calls)
+    model = structured_sequence_model(
+        [
+            {"label": "Retry needs keywords"},
+            {"label": "Editor preference", "keywords": ["editor", "tabs"]},
+        ],
+        calls,
+    )
     spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
     usage = RunUsage()
     agent = HarnessAgent(settings(), model=model)
 
     result = await agent.remember(
-        "Use tabs.", context=context(spine), usage=usage, raise_model_errors=True,
+        "Use tabs.",
+        context=context(spine),
+        usage=usage,
+        raise_model_errors=True,
     )
 
     assert result.ok
@@ -693,22 +699,35 @@ async def test_remember_uses_selected_model_once_without_tools_and_maps_project_
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "whole_source,redundant_coverage", [(False, False), (True, False), (True, True)],
+    "whole_source,redundant_coverage",
+    [(False, False), (True, False), (True, True)],
 )
 async def test_m3fd_long_single_fact_shortens_without_splitting(
-    whole_source: bool, redundant_coverage: bool,
+    whole_source: bool,
+    redundant_coverage: bool,
 ) -> None:
     """SPEC B.6 / SD-062: length alone never turns one fact into a split family."""
     source = ("The verification release color is amber. " * 30).strip()
     body = "The verification release color is amber."
-    model = structured_sequence_model([
-        {"safe_to_save": True, "whole_source": whole_source,
-         "candidates": [{"label": "Release color", "body": body,
-                         "keywords": ["release", "amber"]}],
-         "coverage": ([{"text": body, "classification": "durable", "candidate_index": 0}]
-                      if redundant_coverage else [] if whole_source else [
-                          {"text": source, "classification": "durable", "candidate_index": 0}])}
-    ], [])
+    model = structured_sequence_model(
+        [
+            {
+                "safe_to_save": True,
+                "whole_source": whole_source,
+                "candidates": [
+                    {"label": "Release color", "body": body, "keywords": ["release", "amber"]}
+                ],
+                "coverage": (
+                    [{"text": body, "classification": "durable", "candidate_index": 0}]
+                    if redundant_coverage
+                    else []
+                    if whole_source
+                    else [{"text": source, "classification": "durable", "candidate_index": 0}]
+                ),
+            }
+        ],
+        [],
+    )
     spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
 
     result = await HarnessAgent(settings(), model=model).remember(source, context=context(spine))
@@ -722,21 +741,42 @@ async def test_m3fd_long_single_fact_shortens_without_splitting(
 async def test_m3fd_two_short_facts_split_even_below_body_cap() -> None:
     """SPEC B.6 / SD-062: fact count, not paragraph length, determines a split."""
     source = "Release color is amber. Review day is Tuesday."
-    model = structured_sequence_model([
-        {"label": "Release facts", "keywords": ["release", "review"], "multiple_facts": True},
-        {"safe_to_save": True,
-         "candidates": [
-             {"label": "Release color", "body": "Release color is amber.",
-              "keywords": ["release", "amber"]},
-             {"label": "Review day", "body": "Review day is Tuesday.",
-              "keywords": ["review", "tuesday"]}],
-         "coverage": [
-             {"text": "Release color is amber. ", "classification": "durable",
-              "candidate_index": 0},
-             {"text": "Review day is Tuesday.", "classification": "durable", "candidate_index": 1}]}
-    ], [])
-    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()),
-                      split_outcome=split_response(source))
+    model = structured_sequence_model(
+        [
+            {"label": "Release facts", "keywords": ["release", "review"], "multiple_facts": True},
+            {
+                "safe_to_save": True,
+                "candidates": [
+                    {
+                        "label": "Release color",
+                        "body": "Release color is amber.",
+                        "keywords": ["release", "amber"],
+                    },
+                    {
+                        "label": "Review day",
+                        "body": "Review day is Tuesday.",
+                        "keywords": ["review", "tuesday"],
+                    },
+                ],
+                "coverage": [
+                    {
+                        "text": "Release color is amber. ",
+                        "classification": "durable",
+                        "candidate_index": 0,
+                    },
+                    {
+                        "text": "Review day is Tuesday.",
+                        "classification": "durable",
+                        "candidate_index": 1,
+                    },
+                ],
+            },
+        ],
+        [],
+    )
+    spine = FakeSpine(
+        CreatedMemoryResponse(created=memory_unit()), split_outcome=split_response(source)
+    )
 
     result = await HarnessAgent(settings(), model=model).remember(source, context=context(spine))
 
@@ -1489,34 +1529,50 @@ async def test_near_miss_remember_commands_are_ordinary_chat(ordinary_text: str)
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("verdict,targets,message", [
-    ("merge", [str(SPLIT_SOURCE_ID)],
-     "extraction verdict targeted a memory outside its fetched neighbors"),
-    ("new", [str(MEMORY_ID)], "new extraction verdict cannot have targets"),
-    ("merge", [], "non-new extraction verdict requires a target"),
-])
+@pytest.mark.parametrize(
+    "verdict,targets,message",
+    [
+        (
+            "merge",
+            [str(SPLIT_SOURCE_ID)],
+            "extraction verdict targeted a memory outside its fetched neighbors",
+        ),
+        ("new", [str(MEMORY_ID)], "new extraction verdict cannot have targets"),
+        ("merge", [], "non-new extraction verdict requires a target"),
+    ],
+)
 async def test_extraction_cannot_invent_write_targets(verdict, targets, message: str) -> None:
     """ADR-022: model-generated extraction decisions cannot write outside reviewed neighbors.
     M3GD / SPEC B.6 r14: exercised refusals: "extraction verdict targeted a memory outside its
     fetched neighbors"; "new extraction verdict cannot have targets"; "non-new extraction
     verdict requires a target".
     """
-    agent = HarnessAgent(settings(), model=TestModel(
-        call_tools=[], custom_output_text=json.dumps({"verdict": verdict, "target_ids": targets}),
-    ))
+    agent = HarnessAgent(
+        settings(),
+        model=TestModel(
+            call_tools=[],
+            custom_output_text=json.dumps({"verdict": verdict, "target_ids": targets}),
+        ),
+    )
     candidate = ExtractionCandidateDraft(
-        label="Fact", body="A fact", kind="fact", keywords=["fact", "test"],
+        label="Fact",
+        body="A fact",
+        kind="fact",
+        keywords=["fact", "test"],
     )
     with pytest.raises(ValueError, match=message):
         await agent.propose_extraction_verdict(candidate, [{"memory_id": str(MEMORY_ID)}])
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("update,message", [
-    ({"label": " "}, "seed splitter produced an invalid label"),
-    ({"body": "word " * 200}, "seed splitter produced a child above the 128-token limit"),
-    ({"keywords": ["same", "SAME"]}, "seed splitter produced invalid keywords"),
-])
+@pytest.mark.parametrize(
+    "update,message",
+    [
+        ({"label": " "}, "seed splitter produced an invalid label"),
+        ({"body": "word " * 200}, "seed splitter produced a child above the 128-token limit"),
+        ({"keywords": ["same", "SAME"]}, "seed splitter produced invalid keywords"),
+    ],
+)
 async def test_seed_draft_walls_fail_before_returning_a_write_batch(update, message: str) -> None:
     """A-033 / ADR-022: an invalid generated seed must not become an approved write batch. M3GD /
     SPEC B.6 r14: exercised refusals: "seed splitter produced a child above the 128-token
@@ -1524,8 +1580,12 @@ async def test_seed_draft_walls_fail_before_returning_a_write_batch(update, mess
     keywords".
     """
     candidate = {"label": "Fact", "body": "A fact", "kind": "fact", "keywords": ["fact", "test"]}
-    agent = HarnessAgent(settings(), model=TestModel(
-        call_tools=[], custom_output_text=json.dumps({"candidates": [{**candidate, **update}]}),
-    ))
+    agent = HarnessAgent(
+        settings(),
+        model=TestModel(
+            call_tools=[],
+            custom_output_text=json.dumps({"candidates": [{**candidate, **update}]}),
+        ),
+    )
     with pytest.raises(ValueError, match=message):
         await agent.split_seed("test.md", "A fact")

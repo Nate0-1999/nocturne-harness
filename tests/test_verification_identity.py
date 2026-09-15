@@ -25,8 +25,11 @@ def initialize(home, monkeypatch, *, verification=True):
     monkeypatch.setattr(onboarding, "ensure_browser_runtime", lambda home: home / "tools")
     monkeypatch.setattr(onboarding, "browser_runtime_is_ready", lambda home: True)
     onboarding.init_nocturne(
-        home=home, verification=verification, environ={"OPENROUTER_API_KEY": "test-key"},
-        remote="https://palace.example.test", prompt=lambda _: "test-token",
+        home=home,
+        verification=verification,
+        environ={"OPENROUTER_API_KEY": "test-key"},
+        remote="https://palace.example.test",
+        prompt=lambda _: "test-token",
         stdout=io.StringIO(),
     )
     return onboarding.load_config(home=home)
@@ -46,27 +49,43 @@ def test_verification_daemon_cannot_list_owner_memories(tmp_path, monkeypatch):
     thread_id = str(uuid4())
 
     def palace(request):
-        assert request.url.path in {
-            "/v1/memory-graph/query", "/v1/memories/scores"
-        }, "unscoped Palace read"
+        assert request.url.path in {"/v1/memory-graph/query", "/v1/memories/scores"}, (
+            "unscoped Palace read"
+        )
         query = json.loads(request.content)
         requested.append(query["principal_id"])
         if request.url.path == "/v1/memories/scores":
             assert str(owner_memory.memory_id) not in query["memory_ids"]
-            return httpx.Response(200, json={str(memory.memory_id): 0.75 for memory in corpus
-                                           if memory.principal_id == query["principal_id"]})
-        return httpx.Response(200, json={
-            "as_of": datetime.now(UTC).isoformat(), "graph_edge_sim": 0.8,
-            "nodes": [{"memory": memory.model_dump(mode="json"), "revisions": []}
-                      for memory in corpus
-                      if memory.principal_id == query["principal_id"]],
-            "edges": [], "omitted_memory_ids": [],
-        })
+            return httpx.Response(
+                200,
+                json={
+                    str(memory.memory_id): 0.75
+                    for memory in corpus
+                    if memory.principal_id == query["principal_id"]
+                },
+            )
+        return httpx.Response(
+            200,
+            json={
+                "as_of": datetime.now(UTC).isoformat(),
+                "graph_edge_sim": 0.8,
+                "nodes": [
+                    {"memory": memory.model_dump(mode="json"), "revisions": []}
+                    for memory in corpus
+                    if memory.principal_id == query["principal_id"]
+                ],
+                "edges": [],
+                "omitted_memory_ids": [],
+            },
+        )
 
     monkeypatch.setattr(
         "harness.daemon.SpineClient",
         lambda url, token, **kwargs: SpineClient(
-            url, token, transport=httpx.MockTransport(palace), **kwargs,
+            url,
+            token,
+            transport=httpx.MockTransport(palace),
+            **kwargs,
         ),
     )
 
@@ -74,7 +93,8 @@ def test_verification_daemon_cannot_list_owner_memories(tmp_path, monkeypatch):
         yield "unused"
 
     app = create_dev_app(
-        tmp_path, settings=settings,
+        tmp_path,
+        settings=settings,
         agent=HarnessAgent(settings, model=FunctionModel(stream_function=unused)),
     )
     with TestClient(app) as client, client.websocket_connect("/ws") as socket:
@@ -93,10 +113,18 @@ def test_verification_daemon_cannot_list_owner_memories(tmp_path, monkeypatch):
             str(own_memory.memory_id),
         ]
         assert panel["payload"]["items"][0]["score"] == 0.75
-        socket.send_json(frame("memory.panel.update", {
-            "action": "pin", "memory_id": str(owner_memory.memory_id),
-            "expected_revision": 1, "pin": True,
-        }, thread_id=thread_id))
+        socket.send_json(
+            frame(
+                "memory.panel.update",
+                {
+                    "action": "pin",
+                    "memory_id": str(owner_memory.memory_id),
+                    "expected_revision": 1,
+                    "pin": True,
+                },
+                thread_id=thread_id,
+            )
+        )
         refusal, _ = receive_until(socket, "memory.panel.update")
         assert refusal["payload"]["action"] == "error"
     assert requested and set(requested) == {config.principal_id}
@@ -118,7 +146,9 @@ def test_nondefault_home_env_keeps_all_daemon_files_out_of_owner_home(tmp_path, 
         yield "unused"
 
     app = create_dev_app(
-        tmp_path, settings=settings, spine=GateSpine(),
+        tmp_path,
+        settings=settings,
+        spine=GateSpine(),
         agent=HarnessAgent(settings, model=FunctionModel(stream_function=unused)),
     )
     with TestClient(app) as client:
@@ -143,7 +173,8 @@ def test_verification_init_refuses_default_or_existing_owner_home(tmp_path, monk
         initialize(owner.home, monkeypatch)
     assert owner.path.read_bytes() == before
     settings = HarnessSettings(
-        _env_file=None, principal_id="nocturne-verification-test",
+        _env_file=None,
+        principal_id="nocturne-verification-test",
         nocturne_home=tmp_path / ".nocturne",
     )
     with pytest.raises(ValueError, match="disposable folder"):
@@ -156,10 +187,16 @@ def test_up_and_doctor_refuse_to_adopt_a_different_running_identity(tmp_path, mo
     config = initialize(tmp_path / "verification", monkeypatch)
     monkeypatch.setattr(onboarding, "_existing_nocturne", lambda: True)
     monkeypatch.setattr(
-        onboarding.urllib.request, "urlopen",
-        lambda *args, **kwargs: io.BytesIO(json.dumps({
-            "principal_id": "local", "home": str(tmp_path / "owner"),
-        }).encode()),
+        onboarding.urllib.request,
+        "urlopen",
+        lambda *args, **kwargs: io.BytesIO(
+            json.dumps(
+                {
+                    "principal_id": "local",
+                    "home": str(tmp_path / "owner"),
+                }
+            ).encode()
+        ),
     )
     assert onboarding._daemon_preflight(config).failures
     with pytest.raises(onboarding.OnboardingError, match="Another Nocturne identity"):
@@ -172,12 +209,17 @@ async def test_bound_client_refuses_foreign_queue_decisions_and_retries_own(batc
     """PLAN M3VI / F069: a supplied queue ID cannot bypass the daemon's principal boundary."""
     principal = "nocturne-verification-queue"
     request = QueueDecisionRequest(
-        decision="approve", approval_mode="explicit", actor_class="human",
+        decision="approve",
+        approval_mode="explicit",
+        actor_class="human",
         machine_id="m3vi-verification",
     )
     decisions = DecisionSpine()
-    result = (await decisions.decide_queue_batch(BATCH_UID, request) if batch
-              else await decisions.decide_queue_item(ITEM_UID, request))
+    result = (
+        await decisions.decide_queue_batch(BATCH_UID, request)
+        if batch
+        else await decisions.decide_queue_item(ITEM_UID, request)
+    )
     card = result.cards[0] if batch else result.card
     card.candidate.principal_id = principal
     pending = [card.model_copy(update={"state": "pending"}).model_dump(mode="json")]
@@ -192,7 +234,9 @@ async def test_bound_client_refuses_foreign_queue_decisions_and_retries_own(batc
         return httpx.Response(200, json=result.model_dump(mode="json"))
 
     async with SpineClient(
-        "https://palace.example.test", "test-token", principal_id=principal,
+        "https://palace.example.test",
+        "test-token",
+        principal_id=principal,
         transport=httpx.MockTransport(palace),
     ) as client:
         with pytest.raises(SpineClientError, match="does not belong"):
@@ -202,12 +246,17 @@ async def test_bound_client_refuses_foreign_queue_decisions_and_retries_own(batc
                 await client.decide_queue_item("01ARZ3NDEKTSV4RRFFQ69G5FA0", request)
         assert writes == []
         for _ in range(2):
-            received = (await client.decide_queue_batch(BATCH_UID, request) if batch
-                        else await client.decide_queue_item(ITEM_UID, request))
+            received = (
+                await client.decide_queue_batch(BATCH_UID, request)
+                if batch
+                else await client.decide_queue_item(ITEM_UID, request)
+            )
             assert received == result
         assert len(writes) == 2
     async with SpineClient(
-        "https://palace.example.test", "test-token", principal_id=principal,
+        "https://palace.example.test",
+        "test-token",
+        principal_id=principal,
         transport=httpx.MockTransport(palace),
     ) as restarted:
         with pytest.raises(SpineClientError, match="does not belong"):
@@ -224,6 +273,7 @@ def test_foreign_queue_http_decision_is_plain_ownership_refusal(tmp_path, monkey
     / SPEC B.6 r14: exercised refusal: "This queue decision does not belong to this identity.
     Refresh the queue.".
     """
+
     def palace(request):
         assert request.method == "GET", "foreign queue decision reached the Palace write"
         return httpx.Response(200, json={"cards": []})
@@ -231,19 +281,30 @@ def test_foreign_queue_http_decision_is_plain_ownership_refusal(tmp_path, monkey
     monkeypatch.setattr(
         "harness.daemon.SpineClient",
         lambda url, token, **kwargs: SpineClient(
-            url, token, transport=httpx.MockTransport(palace), **kwargs,
+            url,
+            token,
+            transport=httpx.MockTransport(palace),
+            **kwargs,
         ),
     )
     settings = HarnessSettings(
-        _env_file=None, principal_id="nocturne-verification-m3st",
-        nocturne_home=tmp_path, spine_url="https://palace.example.test", spine_token="test-token",
+        _env_file=None,
+        principal_id="nocturne-verification-m3st",
+        nocturne_home=tmp_path,
+        spine_url="https://palace.example.test",
+        spine_token="test-token",
     )
     app = create_dev_app(tmp_path, settings=settings)
     path = f"batches/{BATCH_UID}" if batch else ITEM_UID
     with TestClient(app) as client:
-        response = client.post(f"/v1/approval-queue/{path}/decisions", json={
-            "decision": "approve", "approval_mode": "explicit", "actor_class": "human",
-        })
+        response = client.post(
+            f"/v1/approval-queue/{path}/decisions",
+            json={
+                "decision": "approve",
+                "approval_mode": "explicit",
+                "actor_class": "human",
+            },
+        )
     assert response.status_code == 403
     assert response.json() == {
         "detail": "This queue decision does not belong to this identity. Refresh the queue.",

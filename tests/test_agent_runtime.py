@@ -88,32 +88,41 @@ class UnusedSpine:
 @pytest.mark.asyncio
 async def test_thread_location_skill_loads_after_agent_construction(tmp_path: Path) -> None:
     """PLAN M3SK / F082: a late-created thread skill loads through the adopted capability."""
+
     async def stream(messages, info):
-        loaded = [part for message in messages if isinstance(message, ModelRequest)
-                  for part in message.parts if isinstance(part, ToolReturnPart)
-                  and part.tool_name == 'load_capability']
+        loaded = [
+            part
+            for message in messages
+            if isinstance(message, ModelRequest)
+            for part in message.parts
+            if isinstance(part, ToolReturnPart) and part.tool_name == "load_capability"
+        ]
         if not loaded:
-            assert any(tool.name == 'load_capability' for tool in info.function_tools)
-            yield {0: DeltaToolCall(name='load_capability', json_args='{"id":"proof"}',
-                                   tool_call_id='load-proof')}
+            assert any(tool.name == "load_capability" for tool in info.function_tools)
+            yield {
+                0: DeltaToolCall(
+                    name="load_capability", json_args='{"id":"proof"}', tool_call_id="load-proof"
+                )
+            }
         else:
-            assert 'Answer with SKILL VERIFIED: heron.' in str(messages)
-            yield 'SKILL VERIFIED: heron.'
+            assert "Answer with SKILL VERIFIED: heron." in str(messages)
+            yield "SKILL VERIFIED: heron."
 
     agent = HarnessAgent(settings(), model=FunctionModel(stream_function=stream))
-    location = tmp_path / 'project' / 'nested'
-    skill = location / '.agents' / 'skills' / 'proof'
+    location = tmp_path / "project" / "nested"
+    skill = location / ".agents" / "skills" / "proof"
     skill.mkdir(parents=True)
-    (skill / 'SKILL.md').write_text(
-        '---\nname: proof\ndescription: Verify the location skill.\n---\n'
-        'Answer with SKILL VERIFIED: heron.\n'
+    (skill / "SKILL.md").write_text(
+        "---\nname: proof\ndescription: Verify the location skill.\n---\n"
+        "Answer with SKILL VERIFIED: heron.\n"
     )
-    libraries = discover_skill_libraries(tmp_path / 'project', location)
+    libraries = discover_skill_libraries(tmp_path / "project", location)
     emitter = RecordingEmitter()
     runner = PydanticAITurnRunner(agent, lambda _: replace(context(), skill_directories=libraries))
-    outcome = await runner.run(thread_id=str(THREAD_UUID), prompt='Use proof.',
-                               message_history=(), emit=emitter)
-    assert outcome.assistant_text == 'SKILL VERIFIED: heron.'
+    outcome = await runner.run(
+        thread_id=str(THREAD_UUID), prompt="Use proof.", message_history=(), emit=emitter
+    )
+    assert outcome.assistant_text == "SKILL VERIFIED: heron."
     assert outcome.usage.requests == 2
 
 
@@ -122,16 +131,19 @@ async def test_workspace_crossing_is_judge_released_to_deck(
     tmp_path: Path,
 ) -> None:
     """PLAN M3SK / F083: an outside write cards instead of asking a question in chat."""
-    workspace = tmp_path / 'workspace'
+    workspace = tmp_path / "workspace"
     workspace.mkdir()
-    target = tmp_path / 'outside.txt'
-    target.write_text('untouched')
-    arguments = {'path': str(target)}
-    arguments['content'] = 'changed'
+    target = tmp_path / "outside.txt"
+    target.write_text("untouched")
+    arguments = {"path": str(target)}
+    arguments["content"] = "changed"
 
     async def stream(_messages, _info):
-        yield {0: DeltaToolCall(name='write', json_args=json.dumps(arguments),
-                               tool_call_id='boundary-request')}
+        yield {
+            0: DeltaToolCall(
+                name="write", json_args=json.dumps(arguments), tool_call_id="boundary-request"
+            )
+        }
 
     toolset = await open_standard_toolset(cwd=workspace, workspace_root=workspace)
     emitter = RecordingEmitter()
@@ -140,46 +152,58 @@ async def test_workspace_crossing_is_judge_released_to_deck(
             HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
             lambda _: context(toolset=toolset),
         )
-        outcome = await runner.run(thread_id=str(THREAD_UUID), prompt='Edit outside.txt.',
-                                   message_history=(), emit=emitter)
+        outcome = await runner.run(
+            thread_id=str(THREAD_UUID), prompt="Edit outside.txt.", message_history=(), emit=emitter
+        )
     finally:
         await toolset.close()
-    assert target.read_text() == 'untouched'
+    assert target.read_text() == "untouched"
     assert outcome.stop_reason is StopReason.END_TURN
     assert outcome.usage.requests == 1
     assert outcome.assistant_text == (
-        'Boundary review is on the Deck. No action was taken across the wall.'
+        "Boundary review is on the Deck. No action was taken across the wall."
     )
-    cards = [event for event in emitter.events if event['event_kind'] == 'boundary_card']
+    cards = [event for event in emitter.events if event["event_kind"] == "boundary_card"]
     assert len(cards) == 1
-    assert cards[0]['judge'] == 'PermissionJudge'
-    assert cards[0]['wall'] == 'workspace'
-    assert cards[0]['reason'] == f'That path is outside this workspace: {target}.'
-    assert cards[0]['decision'] == 'owner_action'
-    assert '?' not in ''.join(emitter.texts)
+    assert cards[0]["judge"] == "PermissionJudge"
+    assert cards[0]["wall"] == "workspace"
+    assert cards[0]["reason"] == f"That path is outside this workspace: {target}."
+    assert cards[0]["decision"] == "owner_action"
+    assert "?" not in "".join(emitter.texts)
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('needs_owner', [True, False])
+@pytest.mark.parametrize("needs_owner", [True, False])
 async def test_explicit_outside_path_gets_fresh_judge_before_chat(
-    tmp_path: Path, needs_owner: bool,
+    tmp_path: Path,
+    needs_owner: bool,
 ) -> None:
     """PLAN M3SK / F083: explicit outside writes card before chat; outside reads stay autonomous."""
-    workspace = tmp_path / 'workspace'
+    workspace = tmp_path / "workspace"
     workspace.mkdir()
     calls = []
 
     async def respond(messages, info):
         calls.append(messages)
         assert not info.function_tools
-        return ModelResponse(parts=[TextPart(json.dumps({
-            'needs_owner': needs_owner,
-            'reason': 'Outside write' if needs_owner else 'Read-only inspection is already allowed',
-        }))])
+        return ModelResponse(
+            parts=[
+                TextPart(
+                    json.dumps(
+                        {
+                            "needs_owner": needs_owner,
+                            "reason": "Outside write"
+                            if needs_owner
+                            else "Read-only inspection is already allowed",
+                        }
+                    )
+                )
+            ]
+        )
 
     async def stream(messages, _info):
         calls.append(messages)
-        yield 'Read-only work can continue.'
+        yield "Read-only work can continue."
 
     toolset = await open_standard_toolset(cwd=workspace, workspace_root=workspace)
     emitter = RecordingEmitter()
@@ -190,15 +214,16 @@ async def test_explicit_outside_path_gets_fresh_judge_before_chat(
         )
         outcome = await runner.run(
             thread_id=str(THREAD_UUID),
-            prompt=f'{"Write" if needs_owner else "Read"} {tmp_path}/a.txt',
-            message_history=(), emit=emitter,
+            prompt=f"{'Write' if needs_owner else 'Read'} {tmp_path}/a.txt",
+            message_history=(),
+            emit=emitter,
         )
     finally:
         await toolset.close()
     assert outcome.stop_reason is StopReason.END_TURN
     assert len(calls) == (1 if needs_owner else 2)
-    assert any(e['event_kind'] == 'boundary_card' for e in emitter.events) is needs_owner
-    assert '?' not in ''.join(emitter.texts)
+    assert any(e["event_kind"] == "boundary_card" for e in emitter.events) is needs_owner
+    assert "?" not in "".join(emitter.texts)
 
 
 def context(spine: object | None = None, *, toolset: object | None = None) -> MemoryToolContext:
@@ -381,10 +406,14 @@ async def test_m3dk_same_turn_proposal_is_hidden_from_chat_and_emitted_as_one_ca
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("opening,closing", [
-    ("<mm:think>", "</mm:think>"), ("<think>", "</think>"),
-    ("<thinking>", "</thinking>"),
-])
+@pytest.mark.parametrize(
+    "opening,closing",
+    [
+        ("<mm:think>", "</mm:think>"),
+        ("<think>", "</think>"),
+        ("<thinking>", "</thinking>"),
+    ],
+)
 async def test_m3rl_private_tags_never_enter_stream_or_final_answer(opening, closing) -> None:
     """F070 / SPEC C.7: every chunk boundary keeps tagged reasoning out of visible text."""
     raw = f"Before.{opening}private scratch work{closing}After."
@@ -402,9 +431,12 @@ async def test_m3rl_private_tags_never_enter_stream_or_final_answer(opening, clo
     bridge = _EventBridge(emitter)
     await bridge._accept_text(f"Answer.{opening}unfinished private work")
     assert "".join(emitter.texts) == "Answer."
-    assert await bridge.finalize(
-        f"Answer.{opening}unfinished private work", run_id="test", created_at=datetime.now(UTC)
-    ) == "Answer."
+    assert (
+        await bridge.finalize(
+            f"Answer.{opening}unfinished private work", run_id="test", created_at=datetime.now(UTC)
+        )
+        == "Answer."
+    )
 
 
 @pytest.mark.asyncio

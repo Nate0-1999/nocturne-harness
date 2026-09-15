@@ -524,7 +524,7 @@ def test_doctor_breaker_observation_establishes_owner_and_reuses_d2(
             (("gcloud", "run", "services", "list"), "run_services"),
             (("gcloud", "projects", "get-iam-policy"), "project_policy"),
         ):
-            if command[:len(prefix)] == prefix:
+            if command[: len(prefix)] == prefix:
                 return fixture[key]
         return read(argv)
 

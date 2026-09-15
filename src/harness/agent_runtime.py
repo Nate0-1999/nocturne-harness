@@ -150,18 +150,21 @@ class PydanticAITurnRunner:
         async def review_boundary(wall: str, reason: str) -> str:
             if not PermissionJudge.needs_owner(wall):
                 return reason + " The PermissionJudge says to move within the existing workspace."
-            await emit.event({
-                "event_kind": "boundary_card",
-                "judge": "PermissionJudge",
-                "policy": "ADR-015 boundary list",
-                "decision": "owner_action",
-                "wall": wall,
-                "reason": reason,
-                "run_id": emit.run_id,
-                "created_at": self._clock().isoformat(),
-                "action": "Use a separate thread rooted at the required folder."
-                if wall == "workspace" else "Perform this action explicitly outside Nocturne.",
-            })
+            await emit.event(
+                {
+                    "event_kind": "boundary_card",
+                    "judge": "PermissionJudge",
+                    "policy": "ADR-015 boundary list",
+                    "decision": "owner_action",
+                    "wall": wall,
+                    "reason": reason,
+                    "run_id": emit.run_id,
+                    "created_at": self._clock().isoformat(),
+                    "action": "Use a separate thread rooted at the required folder."
+                    if wall == "workspace"
+                    else "Perform this action explicitly outside Nocturne.",
+                }
+            )
             # WALL workspace / F083: stop the turn after releasing its boundary card.
             raise _BoundaryCardReleased()
 
@@ -208,12 +211,18 @@ class PydanticAITurnRunner:
                     judged = await self._agent.judge_boundary(
                         f"Workspace root: {location.workspace_root}\n"
                         f"Current location: {location.cwd}\nUser request:\n{prompt}",
-                        model=selected_model, usage=run_usage, model_settings=model_settings,
+                        model=selected_model,
+                        usage=run_usage,
+                        model_settings=model_settings,
                     )
-                await emit.event({
-                    "event_kind": "boundary_judgment", "judge": "PermissionJudge",
-                    "model": selected_model.model_name, **judged.output.model_dump(),
-                })
+                await emit.event(
+                    {
+                        "event_kind": "boundary_judgment",
+                        "judge": "PermissionJudge",
+                        "model": selected_model.model_name,
+                        **judged.output.model_dump(),
+                    }
+                )
                 if judged.output.needs_owner:
                     await review_boundary("workspace", judged.output.reason)
 
@@ -364,8 +373,12 @@ class PydanticAITurnRunner:
                 memory_id=remembered_memory_id,
             )
             await self._record_spend(
-                boundary_messages, prior_history=(), context=context, emit=emit,
-                purpose="judge", memory_id=None,
+                boundary_messages,
+                prior_history=(),
+                context=context,
+                emit=emit,
+                purpose="judge",
+                memory_id=None,
             )
 
     async def _record_spend(
@@ -614,7 +627,7 @@ class _VisibleModelText:
                     self.closing = _THINKING_DELIMITERS[marker]
                 else:
                     self.closing = None
-                self.pending = self.pending[index + len(marker):]
+                self.pending = self.pending[index + len(marker) :]
                 continue
             retained = max(_marker_prefix_suffix_length(self.pending, marker) for marker in markers)
             safe = len(self.pending) - retained
@@ -805,7 +818,9 @@ def _captured_history(
 
 
 def _repair_cancelled_tool_calls(
-    history: Sequence[object], *, content: str = _INTERRUPTED_TOOL_CONTENT,
+    history: Sequence[object],
+    *,
+    content: str = _INTERRUPTED_TOOL_CONTENT,
 ) -> tuple[object, ...]:
     """Append interrupted returns for every regular call left unanswered."""
 

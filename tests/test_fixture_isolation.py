@@ -132,8 +132,7 @@ def test_every_fixture_server_installs_the_shared_curtain() -> None:
             *(
                 path
                 for path in root.rglob("*.py")
-                if "FastAPI(" in path.read_text("utf-8")
-                and path.name != "fixture_isolation.py"
+                if "FastAPI(" in path.read_text("utf-8") and path.name != "fixture_isolation.py"
             ),
         }
     )
@@ -203,10 +202,7 @@ def test_verification_sops_never_start_or_open_the_product_browser() -> None:
                 command_text
                 and not quoted_history
                 and not negative_instruction
-                and (
-                    "nocturne open" in line
-                    or ("nocturne up" in line and "--no-open" not in line)
-                )
+                and ("nocturne open" in line or ("nocturne up" in line and "--no-open" not in line))
             ):
                 violations.append(f"{path.relative_to(root)}:{line_number}")
     assert violations == []

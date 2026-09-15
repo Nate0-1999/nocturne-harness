@@ -30,8 +30,6 @@ class FakeSpine:
         return "resolved"
 
 
-
-
 @pytest.mark.asyncio
 async def test_bridge_preserves_run_scoped_visibility_and_judged_winner_routing() -> None:
     """A-059 and P1.6 require own-run staging plus judged winner queue routing."""

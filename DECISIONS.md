@@ -3391,3 +3391,17 @@ repository already has an immutable v0.1.11 release. Python imports, the
 `nocturne` command, and API contract 0.1.11 stay unchanged. Active install
 instructions and repository links use the new names; historical findings and
 hashed evidence retain the names actually observed.
+
+## 117 — Hosted impact and coverage use the frozen ledger [P2, P4, M3IB]
+
+PRECEDENT: PLAN M3IB resume; F091/F092; owner 2026-09-15; Decision 115.
+The owner ruling supersedes Decision 115's private checkout: export the ledger
+and its existing command with the frozen-law checks. Each product verifies its
+own evidence without Garden; Garden retains the combined handoff. Re-frozen
+flag IDs let FAIL verdicts retain their existing-flag check without publishing
+private flag text. CI includes all packet-tagged commits and the pushed diff,
+without attributing intervening packets to a resumed packet.
+The hosted heartbeat uses the real read tool: Ubuntu lacks the shell's required
+macOS sandbox. Existing formatter failures are repaired mechanically; no runtime
+logic changes. The six historical import fixes supersede those scripts' old
+hashes; their original evidence remains verifiable at its original commit.

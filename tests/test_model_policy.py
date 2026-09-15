@@ -480,8 +480,10 @@ async def test_pinned_resolution_bypasses_catalog_and_is_stable_per_thread() -> 
 async def test_role_policy_change_preserves_existing_thread_choice() -> None:
     """A-021 / FL-154: a role default change affects new work, not a running thread."""
     resolver = ModelPolicyResolver(
-        policy="pinned:openrouter:vendor/first", static_model="openrouter:vendor/first",
-        static_context_tokens=8192, catalog=None,
+        policy="pinned:openrouter:vendor/first",
+        static_model="openrouter:vendor/first",
+        static_context_tokens=8192,
+        catalog=None,
     )
     first = await resolver.resolve("existing")
     resolver.set_policy("pinned:openrouter:vendor/second")

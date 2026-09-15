@@ -573,8 +573,12 @@ async def test_m3dk_fire_derives_exact_delta_and_preserves_source_provenance(
     source = next(message for message in messages if message["message_id"] == source_run_id)
     assert source["events"] == [judge, proposal]
     with pytest.raises(ValueError, match="proposed response is not available in this thread"):
-        await loop.submit(thread_id="thread-1", prompt_id=ulid(13), prompt="missing",
-                          proposed_response=ProposedResponseFirePayload(proposal_run_id=ulid(999)))
+        await loop.submit(
+            thread_id="thread-1",
+            prompt_id=ulid(13),
+            prompt="missing",
+            proposed_response=ProposedResponseFirePayload(proposal_run_id=ulid(999)),
+        )
     with pytest.raises(ValueError, match="already fired"):
         await loop.submit(
             thread_id="thread-1",
@@ -583,8 +587,6 @@ async def test_m3dk_fire_derives_exact_delta_and_preserves_source_provenance(
             proposed_response=ProposedResponseFirePayload(proposal_run_id=source_run_id),
         )
     await loop.close()
-
-
 
 
 @pytest.mark.asyncio
@@ -664,9 +666,7 @@ async def test_thread_workspaces_move_independently_and_survive_restart(tmp_path
     )
     assert restarted.thread_workspace("thread-a") == (str(first_root), str(nested))
     assert restarted.thread_workspace("thread-b") == (str(second_root), str(second_root))
-    catalog = {
-        entry.thread_id: entry for entry in TranscriptJournal(journal.root).catalog()
-    }
+    catalog = {entry.thread_id: entry for entry in TranscriptJournal(journal.root).catalog()}
     assert catalog["thread-a"].project_label == "Alpha"
     assert catalog["thread-b"].project_label == "Beta"
     await restarted.close()
@@ -2475,8 +2475,7 @@ class RegressiveUsageRunner:
 
 @pytest.mark.asyncio
 async def test_corrected_usage_preserves_completion_and_stale_cancel_is_scoped() -> None:
-    """M3GD / C.7: provider usage corrections do not turn an answer into an error. [SPEC C.7]
-    """
+    """M3GD / C.7: provider usage corrections do not turn an answer into an error. [SPEC C.7]"""
     ids = Ids()
     loop = RunLoop(RegressiveUsageRunner(), factory(ids))
     sink = Sink()
@@ -2533,9 +2532,11 @@ async def test_input_needing_durable_capture_cannot_start_without_journal(kind: 
     proposed response requires the mandatory transcript journal': no paid run.
     """
     loop = RunLoop(NeverStartsRunner(), factory(Ids()))
-    options = ({"image": png_input()} if kind == "image" else {
-        "proposed_response": ProposedResponseFirePayload(proposal_run_id=ulid(2))
-    })
+    options = (
+        {"image": png_input()}
+        if kind == "image"
+        else {"proposed_response": ProposedResponseFirePayload(proposal_run_id=ulid(2))}
+    )
     with pytest.raises(RuntimeError, match="requires the mandatory transcript journal"):
         await loop.submit(thread_id="thread", prompt_id=ulid(1), prompt="hello", **options)
     assert loop._threads == {}
@@ -2588,14 +2589,17 @@ async def test_unavailable_capture_cannot_accept_another_prompt(failure: bool) -
 
 @pytest.mark.asyncio
 async def test_missing_model_resolution_cannot_apply_a_paid_parameter() -> None:
-    """ADR-023 quotes 'invalid': unresolved controls cannot mutate model parameters.
-    """
+    """ADR-023 quotes 'invalid': unresolved controls cannot mutate model parameters."""
     loop = RunLoop(NeverStartsRunner(), factory(Ids()))
     with pytest.raises(ParameterWriteViolation, match="invalid"):
         await loop.parameter_snapshot("thread")
     with pytest.raises(ParameterWriteViolation, match="invalid"):
-        await loop.write_parameter(module_id="model_device", thread_id="thread",
-                                   parameter_id="model.temperature", value=0.5)
+        await loop.write_parameter(
+            module_id="model_device",
+            thread_id="thread",
+            parameter_id="model.temperature",
+            value=0.5,
+        )
     assert loop._threads["thread"].model_resolution is None
     await loop.close()
 
@@ -2605,15 +2609,23 @@ async def test_refused_named_model_and_legacy_root_preserve_prior_authority(tmp_
     """ADR-023 quotes 'invalid'; A-063 quotes 'thread project context is already fixed'. A
     rejected model and a legacy absolute project must retain their original authority.
     """
-    resolution = ThreadModelResolution(model="openrouter:vendor/model", context_tokens=1000,
-                                       policy="pinned:openrouter:vendor/model")
-    resolver = RecordingResolver({"thread": resolution},
-                                  {"openrouter:missing": ModelCatalogUnavailable("unavailable")})
+    resolution = ThreadModelResolution(
+        model="openrouter:vendor/model",
+        context_tokens=1000,
+        policy="pinned:openrouter:vendor/model",
+    )
+    resolver = RecordingResolver(
+        {"thread": resolution}, {"openrouter:missing": ModelCatalogUnavailable("unavailable")}
+    )
     loop = RunLoop(NeverStartsRunner(), factory(Ids()), model_resolver=resolver)
     await loop.parameter_snapshot("thread")
     with pytest.raises(ParameterWriteViolation, match="invalid"):
-        await loop.write_parameter(module_id="model_device", thread_id="thread",
-                                   parameter_id="model.slug", value="openrouter:missing")
+        await loop.write_parameter(
+            module_id="model_device",
+            thread_id="thread",
+            parameter_id="model.slug",
+            value="openrouter:missing",
+        )
     assert loop._threads["thread"].model_resolution == resolution
     await loop.request_snapshot("legacy", Sink(), project_key=str(tmp_path))
     with pytest.raises(ProjectBindingConflict, match="thread project context is already fixed"):
@@ -2624,19 +2636,28 @@ async def test_refused_named_model_and_legacy_root_preserve_prior_authority(tmp_
 
 @pytest.mark.asyncio
 async def test_busy_parameter_write_keeps_running_model_unchanged() -> None:
-    """ADR-023 quotes 'busy': an in-flight paid run retains its accepted parameters.
-    """
-    resolution = ThreadModelResolution(model="openrouter:vendor/model", context_tokens=1000,
-                                       policy="pinned:openrouter:vendor/model")
+    """ADR-023 quotes 'busy': an in-flight paid run retains its accepted parameters."""
+    resolution = ThreadModelResolution(
+        model="openrouter:vendor/model",
+        context_tokens=1000,
+        policy="pinned:openrouter:vendor/model",
+    )
     control = TurnControl()
-    loop = RunLoop(ControlledRunner({"hello": control}), factory(Ids()),
-                   model_resolver=RecordingResolver({"thread": resolution}))
+    loop = RunLoop(
+        ControlledRunner({"hello": control}),
+        factory(Ids()),
+        model_resolver=RecordingResolver({"thread": resolution}),
+    )
     sink = Sink()
     await loop.submit(thread_id="thread", prompt_id=ulid(1), prompt="hello", sink=sink)
     await _wait(control.entered)
     with pytest.raises(ParameterWriteViolation, match="busy"):
-        await loop.write_parameter(module_id="model_device", thread_id="thread",
-                                   parameter_id="model.temperature", value=0.5)
+        await loop.write_parameter(
+            module_id="model_device",
+            thread_id="thread",
+            parameter_id="model.temperature",
+            value=0.5,
+        )
     assert loop._threads["thread"].model_resolution == resolution
     control.release.set()
     await _wait_for_done_count(sink, 1)

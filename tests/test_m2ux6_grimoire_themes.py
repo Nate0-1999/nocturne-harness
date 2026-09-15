@@ -73,9 +73,9 @@ def test_both_palettes_pass_all_six_checks_with_one_danger_family() -> None:
 def test_conjurations_are_state_bound_and_data_surfaces_remain_still() -> None:
     """SPEC B.6 r7 and D.2 116-117 reserve loops for empty/background air."""
     css = CSS_PATH.read_text()
-    assert '.message__content' not in css
-    assert '.memory-card' not in css
-    assert '.thread-row' not in css
+    assert ".message__content" not in css
+    assert ".memory-card" not in css
+    assert ".thread-row" not in css
     assert css.count(" infinite;") == 5
     assert css.count(":has(.thread-empty)") >= 8
     assert "rack-ambient::after" in css

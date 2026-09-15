@@ -218,11 +218,13 @@ class AppendTranscriptsRequest(ContractModel):
 class TranscriptRecordView(TranscriptRecordInput):
     received_at: datetime
 
+
 class TranscriptStatus(ContractModel):
     principal_id: NonBlankString
     thread_count: int
     record_count: int
     latest_received_at: datetime | None
+
 
 class TranscriptAppendResult(ContractModel):
     accepted: int
@@ -239,6 +241,7 @@ class InjectionEventAnnotationsRequest(ContractModel):
     """One nonempty atomic batch with unique target event identities."""
 
     annotations: list[InjectionEventAnnotationInput]
+
 
 class InjectionEventAnnotationsResponse(ContractModel):
     """Idempotent acceptance count, including identical replays."""
@@ -489,6 +492,7 @@ class StageSymphonyMemoryRequest(ContractModel):
     origin_agent: NonBlankString
     machine_id: NonBlankString
 
+
 class StageSymphonyMemoryResponse(ContractModel):
     memory: SymphonyMemoryRecord
 
@@ -497,6 +501,7 @@ class SymphonyVisibilityRequest(ContractModel):
     principal_id: NonBlankString
     run_id: ULID
     origin_agent: NonBlankString
+
 
 class SymphonyVisibilityResponse(ContractModel):
     memories: list[SymphonyMemoryRecord]
@@ -507,6 +512,7 @@ class JudgedContext(ContractModel):
     summary: NonBlankString
     judge_ids: list[NonBlankString]
     evidence_refs: list[NonBlankString]
+
 
 class ResolveSymphonyRunRequest(ContractModel):
     principal_id: NonBlankString
@@ -592,9 +598,11 @@ class SpendEvent(ContractModel):
     ref: NonBlankString
     meta: dict[str, JsonValue] = Field(default_factory=dict)
 
+
 class SpendEventsRequest(ContractModel):
     # WALL money / ADR024: retain the Palace's atomic receipt batch boundary.
     events: list[SpendEvent] = Field(min_length=1, max_length=1000)
+
 
 class SpendEventsResponse(ContractModel):
     accepted: int = Field(strict=True)
@@ -614,6 +622,7 @@ class SpendTableMetrics(ContractModel):
     hourly_receipt_lines: int = Field(strict=True)
     hourly_unpriced_lines: int = Field(strict=True)
 
+
 class ModelSpendRow(SpendTableMetrics):
     model: NonBlankString | None
 
@@ -621,6 +630,7 @@ class ModelSpendRow(SpendTableMetrics):
 class ThreadSpendRow(SpendTableMetrics):
     thread_id: UUID
     models: list[ModelSpendRow]
+
 
 class PurposeSpendRow(SpendTableMetrics):
     purpose: Literal[
@@ -641,11 +651,13 @@ class SpendTableSnapshot(ContractModel):
     threads: list[ThreadSpendRow]
     purposes: list[PurposeSpendRow]
 
+
 class VitalsSpendPoint(ContractModel):
     minute: datetime
     cost_usd: NonNegativeDecimalString | None
     receipt_lines: int = Field(strict=True)
     unpriced_lines: int = Field(strict=True)
+
 
 class VitalsSpendLane(ContractModel):
     dimension: Literal["total", "purpose", "model"]
@@ -653,10 +665,12 @@ class VitalsSpendLane(ContractModel):
     label: NonBlankString
     points: list[VitalsSpendPoint]
 
+
 class VitalsSpend(ContractModel):
     source_view: Literal["v_spend_rate", "spend_event"]
     latest_minute: datetime | None
     lanes: list[VitalsSpendLane]
+
 
 type VitalsGaugeStatus = Literal["measured", "not_recorded", "placeholder"]
 type VitalsLifecycleMetric = Literal[
@@ -678,18 +692,19 @@ type VitalsPalaceMetric = Literal[
 ]
 
 
-
 class VitalsLifecycleRate(ContractModel):
     metric: VitalsLifecycleMetric
     status: VitalsGaugeStatus
     per_hour: int | None = Field(strict=True)
     source: NonBlankString | None
 
+
 class VitalsPalaceCount(ContractModel):
     metric: VitalsPalaceMetric
     status: VitalsGaugeStatus
     count: int | None = Field(strict=True)
     source: NonBlankString | None
+
 
 class VitalsReconciliation(ContractModel):
     status: Literal["not_recorded", "baseline", "balanced", "drift", "unavailable"]
@@ -704,6 +719,7 @@ class VitalsReconciliation(ContractModel):
     source: Literal["openrouter:/api/v1/key"] | None
     error_code: Literal["broker_unavailable", "invalid_broker_response"] | None
 
+
 class VitalsAccounting(ContractModel):
     """Harness-local receipt drift added at the public Rack boundary. [A-038]"""
 
@@ -711,6 +727,7 @@ class VitalsAccounting(ContractModel):
     pending_lines: int = Field(default=0, strict=True)
     oldest_queued_at: datetime | None = None
     source: Literal["harness.receipt_queue"] = "harness.receipt_queue"
+
 
 class VitalsResources(ContractModel):
     """Cross-process resource gauge enriched by Harness under A-044."""
@@ -725,6 +742,7 @@ class VitalsResources(ContractModel):
     backup_bytes: int | None = Field(strict=True)
     warning: Literal["low_disk"] | None
 
+
 class VitalsSnapshot(ContractModel):
     as_of: datetime
     window_minutes: Literal[60]
@@ -734,6 +752,7 @@ class VitalsSnapshot(ContractModel):
     resources: VitalsResources
     lifecycle_rates: list[VitalsLifecycleRate]
     palace_counts: list[VitalsPalaceCount]
+
 
 class MemoryGraphQuery(ContractModel):
     principal_id: NonBlankString
@@ -905,6 +924,7 @@ class ProblemDetail(BaseModel):
     detail: str | None = None
     instance: str | None = None
     endpoint: str | None = None
+
 
 class SpineClientError(RuntimeError):
     """Base class for typed failures at the Spine client boundary."""
@@ -1143,18 +1163,26 @@ class SpineClient:
             )
             memories = [MemoryUnit.model_validate(node["memory"]) for node in graph.nodes]
             memories = [
-                memory for memory in memories
+                memory
+                for memory in memories
                 if memory.principal_id == self._principal_id
                 and (params.status is None or memory.status == params.status)
                 and (params.project_key is None or memory.project_key == params.project_key)
-                and (not params.q or any(params.q.strip().casefold() in value.casefold()
-                                         for value in (memory.label, memory.body)))
+                and (
+                    not params.q
+                    or any(
+                        params.q.strip().casefold() in value.casefold()
+                        for value in (memory.label, memory.body)
+                    )
+                )
             ]
             memories.sort(key=lambda memory: str(memory.memory_id))
             memories.sort(key=lambda memory: memory.updated_at, reverse=True)
             return PagedMemoryListResponse(
-                items=memories[params.offset:params.offset + params.limit],
-                total=len(memories), limit=params.limit, offset=params.offset,
+                items=memories[params.offset : params.offset + params.limit],
+                total=len(memories),
+                limit=params.limit,
+                offset=params.offset,
             )
 
         response = await self._request(
@@ -1221,9 +1249,12 @@ class SpineClient:
     ) -> dict[str, float]:
         """M3MP: score visible memories without recording a gate or injection."""
         response = await self._request(
-            "POST", "v1/memories/scores",
-            json_body={**request.model_dump(mode="json"),
-                       "memory_ids": [str(value) for value in memory_ids]},
+            "POST",
+            "v1/memories/scores",
+            json_body={
+                **request.model_dump(mode="json"),
+                "memory_ids": [str(value) for value in memory_ids],
+            },
         )
         return _expect_success(response, status=200, adapter=TypeAdapter(dict[str, float]))
 

@@ -15,7 +15,6 @@ from harness.spine_client import (
     SpineClient,
 )
 
-
 PRINCIPAL_ID = "m3bt1-verification-20260821-bt21"
 MACHINE_ID = "m3b3-sop-verification"
 MEMORY_IDS = (

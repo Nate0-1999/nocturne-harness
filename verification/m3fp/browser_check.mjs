@@ -111,15 +111,16 @@ try {
     receipt_lines: trace.receipt_lines,
     journal_has_prompt_and_answer: true,
   }
-  const toolPrompt = 'Explain, run one bash command, then explain the result.'
-  const toolAnswer = 'I will check the shell.\n\nThe shell returned M3FZ-HEARTBEAT.\n\n'
+  // ADR-015: the shell requires macOS sandbox-exec; read exercises a real tool on every host.
+  const toolPrompt = 'Explain, read the heartbeat fixture, then explain the result.'
+  const toolAnswer = 'I will read the fixture.\n\nThe file contains M3FZ-HEARTBEAT.\n\n'
   // F072 / PLAN M3CP: a completed send must clear and release the same composer.
   await waitUntil(async () =>
     await conversation.getByTestId('composer').isEnabled() &&
     await conversation.getByTestId('composer').inputValue() === '')
   await conversation.getByTestId('composer').fill(toolPrompt)
   await conversation.getByTestId('composer').press('Enter')
-  await conversation.getByText('The shell returned M3FZ-HEARTBEAT.', { exact: true })
+  await conversation.getByText('The file contains M3FZ-HEARTBEAT.', { exact: true })
     .waitFor({ state: 'visible' })
   await waitUntil(async () => {
     trace = await fetchJson(`${baseUrl}/__scenario__/heartbeat`)

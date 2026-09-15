@@ -141,7 +141,8 @@ def adopted_skills(directories: Sequence[Path]) -> tuple[AdoptedSkill, ...]:
 
 
 def discover_skill_libraries(
-    workspace_root: Path, current_location: Path | None = None,
+    workspace_root: Path,
+    current_location: Path | None = None,
 ) -> tuple[Path, ...]:
     """Discover libraries from the thread root through its current location. [PLAN M3SK]"""
 
@@ -461,13 +462,14 @@ class PydanticHarnessToolset:
             # WALL owner files / ADR015: shell tools cannot publish or escape the project grant.
             raise WorkspaceBoundaryError(
                 "That command may leave this project or change remote state. "
-                "Ask the owner to run it explicitly outside Nocturne.", "remote"
+                "Ask the owner to run it explicitly outside Nocturne.",
+                "remote",
             )
         if _CREDENTIAL_COMMAND.search(command):
             # WALL credentials / ADR015: shell output must not read credential stores.
             raise WorkspaceBoundaryError(
                 "That command may expose credentials. Ask the owner before reading them.",
-                "credentials"
+                "credentials",
             )
         sandbox = Path("/usr/bin/sandbox-exec")
         if not sandbox.is_file():

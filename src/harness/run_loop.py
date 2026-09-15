@@ -510,7 +510,8 @@ class RunLoop:
                     continue
                 message["events"].append(deepcopy(dict(event)))
                 self._capture_message(
-                    thread_id, message,
+                    thread_id,
+                    message,
                     parent_id=state.messages[index - 1]["message_id"] if index else None,
                     advance_tail=False,
                 )

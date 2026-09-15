@@ -264,8 +264,10 @@ class TranscriptJournal:
                 row = json.loads(raw)
             except (UnicodeDecodeError, json.JSONDecodeError):
                 continue
-            if not isinstance(row, dict) or row.get("thread_id") != thread_id or (
-                row.get("record_type") != "message"
+            if (
+                not isinstance(row, dict)
+                or row.get("thread_id") != thread_id
+                or (row.get("record_type") != "message")
             ):
                 continue
             message = row.get("message")

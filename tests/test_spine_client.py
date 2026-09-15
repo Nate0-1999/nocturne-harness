@@ -474,8 +474,6 @@ def test_list_params_and_response_mirror_stable_paging_contract() -> None:
     assert response.items[0].label == "Editor preference"
 
 
-
-
 def test_search_default_is_literal_c4_value() -> None:
     """SPEC C.4 is defended by verifying that search default is literal c4 value; this prevents
     drift in the typed Harness-Spine client contract.

@@ -48,8 +48,9 @@ def test_open_web_consent_is_thread_scoped_and_restorable(tmp_path: Path) -> Non
     restored: list[str] = []
     toolset = BrowserToolset(
         location=lambda: _location(tmp_path),
-        consent_check=lambda thread_id: restored.append(thread_id) is None
-        and thread_id == "restored",
+        consent_check=lambda thread_id: (
+            restored.append(thread_id) is None and thread_id == "restored"
+        ),
     )
 
     toolset.grant_open_web("direct")
@@ -74,6 +75,7 @@ def test_browser_tool_surface_stays_small() -> None:
 @pytest.mark.asyncio
 async def test_screenshot_becomes_native_model_image_content() -> None:
     """SPEC C.7 delivers the browser's actual image through the model's image channel."""
+
     class ScreenshotToolset:
         async def execute(self, tool_name: str, arguments: dict[str, object]):
             assert tool_name == "screenshot"
@@ -94,9 +96,7 @@ async def test_screenshot_becomes_native_model_image_content() -> None:
         thread_id=UUID("22222222-2222-4222-8222-222222222222"),
         toolset=ScreenshotToolset(),  # type: ignore[arg-type]
     )
-    result = await screenshot(
-        RunContext(deps=context, model=TestModel(), usage=RunUsage())
-    )
+    result = await screenshot(RunContext(deps=context, model=TestModel(), usage=RunUsage()))
 
     assert isinstance(result, ToolReturn)
     assert isinstance(result.content, list)

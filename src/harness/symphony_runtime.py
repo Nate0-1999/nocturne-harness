@@ -86,6 +86,7 @@ class SymphonyExecution:
         state = {"supervisor": supervisor, "workers": {}, "followups": {}, "cancelled": set()}
         self.live[stack.symphony_id] = state
         authority = stack.launch.authority
+
         def record(event):
             with (run_home / "events.jsonl").open("a") as stream:
                 stream.write(json.dumps(event, default=str) + "\n")

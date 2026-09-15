@@ -360,7 +360,10 @@ class HarnessAgent:
     async def judge_boundary(self, prompt: str, *, model, usage, model_settings):
         """Triage only explicit outside-path requests in a fresh, tools-free judge session."""
         return await self._boundary_judge.run(
-            prompt, model=model, usage=usage, model_settings=model_settings,
+            prompt,
+            model=model,
+            usage=usage,
+            model_settings=model_settings,
             usage_limits=self._usage_limits,
         )
 
@@ -881,13 +884,15 @@ def _validated_remember_split(
         return None
     coverage = draft.coverage
     if draft.whole_source:
-        if len(draft.candidates) != 1 or (
-            cl100k_token_count(source_body) <= memory_max_tokens
-        ):
+        if len(draft.candidates) != 1 or (cl100k_token_count(source_body) <= memory_max_tokens):
             return None
-        coverage = [RememberCoverageSegment(
-            text=source_body, classification="durable", candidate_index=0,
-        )]
+        coverage = [
+            RememberCoverageSegment(
+                text=source_body,
+                classification="durable",
+                candidate_index=0,
+            )
+        ]
     if "".join(segment.text for segment in coverage) != source_body:
         return None
 
@@ -920,10 +925,7 @@ def _validated_remember_split(
             or len(label) > label_max
             or not body
             or not expected_body
-            or (
-                body != expected_body
-                and cl100k_token_count(expected_body) <= memory_max_tokens
-            )
+            or (body != expected_body and cl100k_token_count(expected_body) <= memory_max_tokens)
             or keywords is None
             or len(keywords) != len(candidate.keywords)
             or cl100k_token_count(body) > memory_max_tokens

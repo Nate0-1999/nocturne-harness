@@ -24,8 +24,14 @@ def test_progressive_instructions_are_complete_but_cannot_read_outside_credentia
     (root / "AGENTS.md").write_text(content)
     for number in range(90):
         (root / f"entry-{number:03}").touch()
-    location = AgentLocation(workspace_root=root, cwd=root, agent_id="agent", machine_id="machine",
-                             session_id="session", fence_reads=True)
+    location = AgentLocation(
+        workspace_root=root,
+        cwd=root,
+        agent_id="agent",
+        machine_id="machine",
+        session_id="session",
+        fence_reads=True,
+    )
     rendered = render_workspace_context(location)
     assert content in rendered and "entry-089" in rendered
     outside = tmp_path / "credential"
@@ -63,8 +69,7 @@ async def test_in_process_toolset_owns_location_and_presence(tmp_path: Path) -> 
 
 @pytest.mark.asyncio
 async def test_six_file_tools_delegate_core_semantics_upstream(tmp_path: Path) -> None:
-    """D.2 136 adopts the official filesystem battery for all six file tools. [ADR-013, ADR-015]
-    """
+    """D.2 136 adopts the official filesystem battery for all six file tools. [ADR-013, ADR-015]"""
 
     toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
     try:
@@ -256,8 +261,7 @@ async def test_shell_is_one_shot_os_fenced_and_remote_state_walled(tmp_path: Pat
 
 
 def test_upstream_skills_gain_model_visible_bundled_resources(tmp_path: Path) -> None:
-    """D.2 136 closes M3PV's resource gap without patching the dependency. [ADR-013, ADR-015]
-    """
+    """D.2 136 closes M3PV's resource gap without patching the dependency. [ADR-013, ADR-015]"""
 
     library = tmp_path / ".agents" / "skills"
     skill = library / "review"
@@ -285,8 +289,7 @@ def test_upstream_skills_gain_model_visible_bundled_resources(tmp_path: Path) ->
 
 
 def test_skill_discovery_keeps_project_and_legacy_pi_libraries(tmp_path: Path) -> None:
-    """ADR-013, ADR-015: skill discovery keeps project and legacy pi libraries.
-    """
+    """ADR-013, ADR-015: skill discovery keeps project and legacy pi libraries."""
     for relative in (Path(".agents/skills"), Path(".pi/skills")):
         (tmp_path / relative).mkdir(parents=True)
 
@@ -333,12 +336,19 @@ async def test_presence_grant_cannot_be_widened_or_reused_after_close(tmp_path: 
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("edits,message", [
-    ([{"oldText": "", "newText": "bad"}],
-     "each edit requires nonblank oldText and string newText"),
-    ([{"oldText": "abc", "newText": "x"}, {"oldText": "bcd", "newText": "y"}],
-     "edit replacements overlap in the original file"),
-])
+@pytest.mark.parametrize(
+    "edits,message",
+    [
+        (
+            [{"oldText": "", "newText": "bad"}],
+            "each edit requires nonblank oldText and string newText",
+        ),
+        (
+            [{"oldText": "abc", "newText": "x"}, {"oldText": "bcd", "newText": "y"}],
+            "edit replacements overlap in the original file",
+        ),
+    ],
+)
 async def test_ambiguous_edits_preserve_original_bytes(tmp_path: Path, edits, message: str) -> None:
     """ADR-015: refuse edits whose requested spans cannot identify one unchanged source. M3GD /
     SPEC B.6 r14: exercised refusals: "each edit requires nonblank oldText and string
@@ -356,12 +366,21 @@ async def test_ambiguous_edits_preserve_original_bytes(tmp_path: Path, edits, me
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("command,message", [
-    ("cat .env", "That command may expose credentials. Ask the owner before reading them."),
-    ("printf safe", "Secure shell is unavailable on this host; use read, edit, and write instead."),
-])
+@pytest.mark.parametrize(
+    "command,message",
+    [
+        ("cat .env", "That command may expose credentials. Ask the owner before reading them."),
+        (
+            "printf safe",
+            "Secure shell is unavailable on this host; use read, edit, and write instead.",
+        ),
+    ],
+)
 async def test_shell_does_not_fall_through_a_wall(
-    tmp_path: Path, monkeypatch, command: str, message: str,
+    tmp_path: Path,
+    monkeypatch,
+    command: str,
+    message: str,
 ) -> None:
     """ADR-015: credentials stay private, and a missing sandbox never starts a raw shell. M3GD /
     SPEC B.6 r14: exercised refusals: "Secure shell is unavailable on this host; use read,
@@ -370,8 +389,9 @@ async def test_shell_does_not_fall_through_a_wall(
     """
     toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
     original = Path.is_file
-    monkeypatch.setattr(Path, "is_file", lambda p: False if str(p) == "/usr/bin/sandbox-exec"
-                        else original(p))
+    monkeypatch.setattr(
+        Path, "is_file", lambda p: False if str(p) == "/usr/bin/sandbox-exec" else original(p)
+    )
     try:
         result = await toolset.execute("bash", {"command": command})
         assert not result.success and message in result.content

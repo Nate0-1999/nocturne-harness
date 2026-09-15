@@ -1162,10 +1162,9 @@ def _daemon_preflight(config: NocturneConfig) -> DaemonPreflight:
         try:
             with urllib.request.urlopen(f"{LOCAL_URL}/v1/identity", timeout=0.5) as response:
                 identity = json.loads(response.read())
-            matches = (
-                identity.get("principal_id") == config.principal_id
-                and identity.get("home") == str(config.home.resolve())
-            )
+            matches = identity.get("principal_id") == config.principal_id and identity.get(
+                "home"
+            ) == str(config.home.resolve())
         except (OSError, ValueError, AttributeError):
             matches = False
         if not matches:

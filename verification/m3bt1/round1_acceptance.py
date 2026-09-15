@@ -9,7 +9,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-
 PROJECT = Path(sys.argv.pop(1)).resolve() if len(sys.argv) > 1 else Path.cwd()
 
 
