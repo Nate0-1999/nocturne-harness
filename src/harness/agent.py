@@ -226,6 +226,14 @@ class RememberResult:
     label: str | None = None
 
 
+class BoundaryIntent(BaseModel):
+    """The PermissionJudge's classification of an explicit outside-path request. [ADR-015]"""
+
+    model_config = ConfigDict(extra="forbid")
+    needs_owner: StrictBool
+    reason: StrictStr
+
+
 type DispatchResult = ChatResult | RememberResult
 
 
@@ -266,6 +274,19 @@ class HarnessAgent:
             deps_type=MemoryToolContext,
             capabilities=chat_capabilities,
             name="harness-chat",
+        )
+        self._boundary_judge = Agent(
+            self._default_model,
+            output_type=PromptedOutput(BoundaryIntent),
+            instructions=(
+                "You are the PermissionJudge applying ADR-015 to an explicit outside-path request. "
+                "Only the supplied workspace root grants write authority. A request to create, "
+                "edit, delete, or execute a modifying command outside that root needs_owner=true. "
+                "Read-only inspection outside the root and movement or edits within it do not. "
+                "Classify the user's actual requested action, not quoted examples. Never grant "
+                "wider authority. Give the concrete reason; do not ask a chat question."
+            ),
+            name="permission-judge",
         )
         self._label_agent = Agent(
             self._default_model,
@@ -335,6 +356,13 @@ class HarnessAgent:
     def skill_capabilities(self, context: MemoryToolContext):
         """Load the adopted catalog at this thread's current location. [PLAN M3SK]"""
         return adopted_skill_capabilities(context.skill_directories or self._skill_directories)
+
+    async def judge_boundary(self, prompt: str, *, model, usage, model_settings):
+        """Triage only explicit outside-path requests in a fresh, tools-free judge session."""
+        return await self._boundary_judge.run(
+            prompt, model=model, usage=usage, model_settings=model_settings,
+            usage_limits=self._usage_limits,
+        )
 
     async def chat(
         self,

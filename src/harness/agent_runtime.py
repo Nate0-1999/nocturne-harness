@@ -9,6 +9,7 @@ import re
 from collections.abc import AsyncIterable, Callable, Mapping, Sequence
 from dataclasses import replace
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any, cast
 from uuid import UUID
 
@@ -134,6 +135,7 @@ class PydanticAITurnRunner:
 
         prior_history = tuple(message_history)
         captured: list[ModelMessage] = []
+        boundary_messages: list[ModelMessage] = []
         run_usage = RunUsage()
         bridge = _EventBridge(emit)
         is_remember = remember_command_text(prompt) is not None
@@ -198,6 +200,21 @@ class PydanticAITurnRunner:
                 usage = _failure_usage(run_usage, captured, ())
                 await bridge.publish_usage(usage)
                 return TurnOutcome(StopReason("end_turn"), prior_history, usage)
+
+            if context.toolset is not None and _explicit_outside_path(prompt, context):
+                location = context.toolset.location()
+                with capture_run_messages() as boundary_messages:
+                    judged = await self._agent.judge_boundary(
+                        f"Workspace root: {location.workspace_root}\n"
+                        f"Current location: {location.cwd}\nUser request:\n{prompt}",
+                        model=selected_model, usage=run_usage, model_settings=model_settings,
+                    )
+                await emit.event({
+                    "event_kind": "boundary_judgment", "judge": "PermissionJudge",
+                    "model": selected_model.model_name, **judged.output.model_dump(),
+                })
+                if judged.output.needs_owner:
+                    await review_boundary("workspace", judged.output.reason)
 
             prior_history = _strip_all_proposed_response_blocks(
                 _strip_all_memory_blocks(prior_history)
@@ -345,6 +362,10 @@ class PydanticAITurnRunner:
                 purpose="remember" if is_remember else "building",
                 memory_id=remembered_memory_id,
             )
+            await self._record_spend(
+                boundary_messages, prior_history=(), context=context, emit=emit,
+                purpose="judge", memory_id=None,
+            )
 
     async def _record_spend(
         self,
@@ -406,6 +427,20 @@ class PydanticAITurnRunner:
                 }
             )
             return
+
+
+def _explicit_outside_path(prompt: str, context: MemoryToolContext) -> bool:
+    """Screen boundary references only; ordinary in-wall work never incurs a judge call."""
+    paths = re.findall(r"(?:^|[\s'\"`])((?:/|\.\./|~/)[^\s'\"`]+)", prompt)
+    outside = re.search(r"\b(?:outside|beyond) (?:the |this |my )?(?:workspace|folder)\b", prompt)
+    if not paths:
+        return bool(outside)
+    location = context.toolset.location()
+    for raw in paths:
+        path = Path(raw.rstrip(".,;:!?")).expanduser()
+        if not (location.cwd / path).resolve().is_relative_to(location.workspace_root):
+            return True
+    return bool(outside)
 
 
 def _provider_error(exc: Exception, fallback_model: str) -> ProviderErrorPayload | None:

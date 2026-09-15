@@ -159,6 +159,48 @@ async def test_workspace_crossing_is_judge_released_to_deck(
     assert '?' not in ''.join(emitter.texts)
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize('needs_owner', [True, False])
+async def test_explicit_outside_path_gets_fresh_judge_before_chat(
+    tmp_path: Path, needs_owner: bool,
+) -> None:
+    """PLAN M3SK / F083: explicit outside writes card before chat; outside reads stay autonomous."""
+    workspace = tmp_path / 'workspace'
+    workspace.mkdir()
+    calls = []
+
+    async def respond(messages, info):
+        calls.append(messages)
+        assert not info.function_tools
+        return ModelResponse(parts=[TextPart(json.dumps({
+            'needs_owner': needs_owner,
+            'reason': 'Outside write' if needs_owner else 'Read-only inspection is already allowed',
+        }))])
+
+    async def stream(messages, _info):
+        calls.append(messages)
+        yield 'Read-only work can continue.'
+
+    toolset = await open_standard_toolset(cwd=workspace, workspace_root=workspace)
+    emitter = RecordingEmitter()
+    try:
+        runner = PydanticAITurnRunner(
+            HarnessAgent(settings(), model=FunctionModel(respond, stream_function=stream)),
+            lambda _: context(toolset=toolset),
+        )
+        outcome = await runner.run(
+            thread_id=str(THREAD_UUID),
+            prompt=f'{"Write" if needs_owner else "Read"} {tmp_path}/a.txt',
+            message_history=(), emit=emitter,
+        )
+    finally:
+        await toolset.close()
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert len(calls) == (1 if needs_owner else 2)
+    assert any(e['event_kind'] == 'boundary_card' for e in emitter.events) is needs_owner
+    assert '?' not in ''.join(emitter.texts)
+
+
 def context(spine: object | None = None, *, toolset: object | None = None) -> MemoryToolContext:
     return MemoryToolContext(
         spine=spine or UnusedSpine(),  # type: ignore[arg-type]
