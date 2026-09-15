@@ -67,13 +67,45 @@ class ExtractionService:
         transcript = json.dumps(messages, ensure_ascii=False, separators=(",", ":"))
         return await self.triage(thread_id, transcript, tail=tail, final_post=final_post)
 
-    async def triage(self, thread_id, transcript, *, tail, final_post="", origin="extraction",
-                     model=None, usage=None, on_result=None):
+    async def triage(
+        self,
+        thread_id,
+        transcript,
+        *,
+        tail,
+        final_post="",
+        origin="extraction",
+        model=None,
+        usage=None,
+        on_result=None,
+        model_settings=None,
+        summary_prompt=None,
+    ):
         """D.2 153: compaction and close run the same summarizer and admission path."""
-        options = {} if model is None else {"model": model, "usage": usage, "on_result": on_result}
+        options = (
+            {}
+            if model is None
+            else {
+                "model": model,
+                "usage": usage,
+                "on_result": on_result,
+                "model_settings": model_settings,
+            }
+        )
+        if summary_prompt is not None:
+            options["summary_prompt"] = summary_prompt
         draft = await self._agent.extract_thread(transcript, **options)
-        return await self.admit(thread_id, draft, tail=tail, final_post=final_post,
-                                origin=origin, model=model, usage=usage, on_result=on_result)
+        return await self.admit(
+            thread_id,
+            draft,
+            tail=tail,
+            final_post=final_post,
+            origin=origin,
+            model=model,
+            usage=usage,
+            on_result=on_result,
+            model_settings=model_settings,
+        )
 
     async def admit(
         self,
@@ -86,6 +118,7 @@ class ExtractionService:
         model=None,
         usage=None,
         on_result=None,
+        model_settings=None,
     ) -> ThreadEndResult:
         """The shared compaction/close queue door; the summarizer already did triage."""
         text_id = str(thread_id)
@@ -107,11 +140,20 @@ class ExtractionService:
                 }
                 for neighbor in neighbors.results
             ]
-            options = {} if model is None else {
-                "model": model, "usage": usage, "on_result": on_result,
-            }
+            options = (
+                {}
+                if model is None
+                else {
+                    "model": model,
+                    "usage": usage,
+                    "on_result": on_result,
+                    "model_settings": model_settings,
+                }
+            )
             verdict = await self._agent.propose_extraction_verdict(
-                item, neighbor_payload, **options,
+                item,
+                neighbor_payload,
+                **options,
             )
             candidates.append(_candidate(item, verdict.verdict, verdict.target_ids))
         request = ExtractionRequest(
@@ -131,7 +173,7 @@ class ExtractionService:
                 birthplace="thread",
             )
             cards = _matching_thread_cards(pending.cards, request)
-            if not cards:
+            if len(cards) != len(request.candidates) or not cards:
                 raise
             response = ExtractionResponse(
                 cards=cards,

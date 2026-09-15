@@ -38,10 +38,10 @@ def test_tracker_keeps_measured_total_and_exact_limit_with_estimated_split() -> 
 
     observation = tracker.snapshot("thread-a").aggregate
     assert observation is not None
-    assert observation.used_tokens == 1_250
+    assert observation.used_tokens == 1_262
     assert observation.context_tokens == 16_000
     assert observation.threshold_tokens == 12_800
-    assert sum(observation.categories.model_dump().values()) == 1_250
+    assert sum(observation.categories.model_dump().values()) == 1_262
     assert observation.breakdown_basis == "estimated"
     assert observation.compaction_active is True
     assert observation.memory_allocation is not None

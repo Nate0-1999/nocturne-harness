@@ -2,12 +2,19 @@
 
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
 from fastapi import FastAPI
-from pydantic_ai.messages import ModelRequest, ToolReturnPart, UserPromptPart
+from pydantic_ai.messages import (
+    ModelRequest,
+    ModelResponse,
+    TextPart,
+    ToolReturnPart,
+    UserPromptPart,
+)
 from pydantic_ai.models.function import DeltaToolCall, FunctionModel
 
 from harness.agent import HarnessAgent
@@ -16,6 +23,7 @@ from harness.daemon import create_dev_app
 from harness.onboarding import nocturne_home
 from harness.packaged import _runtime_web_assets
 from harness.spine_client import (
+    ExtractionResponse,
     InjectCommitRequest,
     InjectCommitResponse,
     InjectPrepareRequest,
@@ -41,6 +49,21 @@ ERROR_PROMPT = "Show the heartbeat failure reason."
 
 
 def _model() -> FunctionModel:
+    def extract(messages, info):
+        return ModelResponse(
+            [
+                TextPart(
+                    json.dumps(
+                        {
+                            "working_summary": "The heartbeat gate and tool round trip succeeded.",
+                            "open_loops": [],
+                            "candidates": [],
+                        }
+                    )
+                )
+            ]
+        )
+
     async def stream(messages, _info):
         prompt = next(
             part.content
@@ -70,7 +93,7 @@ def _model() -> FunctionModel:
                 )
             }
 
-    return FunctionModel(stream_function=stream)
+    return FunctionModel(function=extract, stream_function=stream)
 
 
 class HeartbeatSpine(HonestDisplaySpine):
@@ -81,6 +104,13 @@ class HeartbeatSpine(HonestDisplaySpine):
         self.prepare_calls = 0
         self.commit_calls = 0
         self.receipt_lines = 0
+        self.compactions = 0
+
+    async def create_extraction(self, request) -> ExtractionResponse:
+        return ExtractionResponse(cards=[], duplicate_count=0)
+
+    async def notify_compaction(self, event_uid, thread_id) -> None:
+        self.compactions += 1
 
     async def prepare_injection(self, request: InjectPrepareRequest) -> InjectPrepareResponse:
         self.prepare_calls += 1
@@ -124,7 +154,7 @@ def create_scenario_app() -> FastAPI:
     spine = HeartbeatSpine()
     journal = TranscriptJournal(nocturne_home() / "transcripts")
     # F088: a reinstall must tolerate old empty and unscoped files beside real history.
-    for thread_id, raw in (("empty-leftover", ""), ("unscoped-leftover", '{}\n[]\n{\n')):
+    for thread_id, raw in (("empty-leftover", ""), ("unscoped-leftover", "{}\n[]\n{\n")):
         path = journal.path_for_thread(thread_id)
         if not path.exists():
             path.write_text(raw, encoding="utf-8")
@@ -155,6 +185,10 @@ def create_scenario_app() -> FastAPI:
             "prepare_calls": spine.prepare_calls,
             "commit_calls": spine.commit_calls,
             "receipt_lines": spine.receipt_lines,
+            "compactions": spine.compactions,
+            "compaction_histories": sum(
+                len(thread.compaction_histories) for thread in journal.hydrate_threads()
+            ),
             "conversations": conversations,
         }
 

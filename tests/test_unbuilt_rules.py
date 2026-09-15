@@ -3,12 +3,6 @@
 import pytest
 
 
-@pytest.mark.skip(reason="r2-10: compaction strategy suite and performance/cost policy are unbuilt")
-def test_r2_10_compaction_policy_uses_the_models_own_window() -> None:
-    """SPEC D.2 153 requires a chosen compaction policy relative to the model window."""
-    pytest.fail("Replace this placeholder with compaction-policy acceptance proof when built")
-
-
 @pytest.mark.skip(reason="r7-16: edge-on terminal stack mode is unbuilt")
 def test_r7_16_deck_and_edge_on_stack_are_the_same_conversation_module() -> None:
     """SPEC D.2 154 requires one Conversation module in the edge-on and focused views."""
