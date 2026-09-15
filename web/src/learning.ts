@@ -87,6 +87,7 @@ export interface ScorerConsoleLearning {
 }
 
 export interface ScorerConsoleTelemetry {
+  metrics_scope: 'principal' | 'palace'
   learning: ScorerConsoleLearning
   accuracy: ScorerAccuracyPoint[]
 }
@@ -117,6 +118,7 @@ export function scorerConsoleTelemetry(value: unknown): ScorerConsoleTelemetry |
     return null
   }
   return {
+    metrics_scope: value.metrics_scope === 'principal' ? 'principal' : 'palace',
     learning: value.learning as unknown as ScorerConsoleLearning,
     accuracy: value.accuracy as unknown as ScorerAccuracyPoint[],
   }

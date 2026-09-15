@@ -453,7 +453,9 @@ def create_app(
             else:
                 snapshot = await vitals_snapshot_reader()
         except SpineClientError as exc:
-            if isinstance(exc, SpineResponseError) and exc.status_code == 429:
+            if isinstance(exc, SpineOwnershipError) or (
+                isinstance(exc, SpineResponseError) and exc.status_code == 429
+            ):
                 raise
             raise HTTPException(
                 status_code=503,

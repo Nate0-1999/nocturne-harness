@@ -17,10 +17,21 @@ import {
 export function LearningSummary({
   learning,
   compact = false,
+  scope = 'palace',
 }: {
   learning: ScorerConsoleLearning
   compact?: boolean
+  scope?: 'principal' | 'palace'
 }) {
+  if (scope === 'principal') {
+    return (
+      <section className="learning-summary" aria-label="Your learning signals">
+        <span>Your learning signals</span>
+        <strong>{learning.eligible_dispositions} authentic · {learning.right} right · {learning.wrong} wrong</strong>
+        <small>Palace training history is owner-only.</small>
+      </section>
+    )
+  }
   if (compact) {
     return (
       <div

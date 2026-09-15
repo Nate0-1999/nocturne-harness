@@ -1498,7 +1498,7 @@ function RackModuleFrame({
       )}
       {sheetMode && (
         <p className="rack-sheet-annotation">
-          {scope === 'GLOBAL' ? 'Shows the whole Palace' : `Follows ${attunementBadge(scope, attunement)}`}
+          {scope === 'GLOBAL' ? 'Shows all accessible data' : `Follows ${attunementBadge(scope, attunement)}`}
           {' · '}{manifest.class === 'control' ? 'Controls remain live' : 'Live recorded view'}
         </p>
       )}
@@ -1576,7 +1576,7 @@ function RackSettingsControl({
   const scopeAdjustable = (manifest.actions as readonly string[]).includes('rack.scope.set')
   const spatial = manifest.id === 'recipe'
   const fixedCopy = manifest.default_scope === 'GLOBAL'
-    ? 'This module always shows the whole Palace.'
+    ? 'This module always shows all accessible data.'
     : 'This module follows the nearest thread or stack.'
 
   function toggle() {

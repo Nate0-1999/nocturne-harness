@@ -793,6 +793,7 @@ class ScorerValues(ContractModel):
 
 
 class ScorerConsoleSnapshot(ContractModel):
+    metrics_scope: Literal["principal", "palace"] = "palace"
     as_of: datetime
     scope: Literal["GLOBAL", "CURRENT"]
     thread_id: UUID | None
@@ -1223,13 +1224,13 @@ class SpineClient:
         """Read A-028's live trailing-hour Palace Vitals snapshot."""
 
         response = await self._request("GET", "v1/vitals", params=await self._metrics_params())
-        return _expect_success(response, status=200, adapter=_VITALS_SNAPSHOT)
+        return _expect_metrics_success(response, adapter=_VITALS_SNAPSHOT)
 
     async def thread_vitals_snapshot(self, thread_id: UUID) -> VitalsSnapshot:
         response = await self._request(
             "GET", f"v1/vitals/threads/{thread_id}", params=await self._metrics_params()
         )
-        return _expect_success(response, status=200, adapter=_VITALS_SNAPSHOT)
+        return _expect_metrics_success(response, adapter=_VITALS_SNAPSHOT)
 
     async def spend_table(self, thread_ids: list[UUID] | None = None) -> SpendTableSnapshot | None:
         """Read M3SP's table projection; a 404 is an older Palace, not broken chat."""
@@ -1244,7 +1245,7 @@ class SpineClient:
         response = await self._request("GET", "v1/spend/table", params=params)
         if response.status_code == 404:
             return None
-        return _expect_success(response, status=200, adapter=_SPEND_TABLE_SNAPSHOT)
+        return _expect_metrics_success(response, adapter=_SPEND_TABLE_SNAPSHOT)
 
     async def _metrics_params(self) -> JsonObject:
         principal_id = self._principal_id or "local"
@@ -1282,12 +1283,16 @@ class SpineClient:
         return _expect_success(response, status=200, adapter=TypeAdapter(dict[str, float]))
 
     async def scorer_console(self, request: ScorerConsoleQuery) -> ScorerConsoleSnapshot:
+        params = await self._metrics_params()
+        if request.principal_id != params["principal_id"]:
+            raise SpineOwnershipError("Status reads must use this daemon's principal.")
         response = await self._request(
             "POST",
             "v1/scorer-console/query",
+            params={"scope": params["scope"]},
             json_body=request.model_dump(mode="json"),
         )
-        return _expect_success(response, status=200, adapter=_SCORER_CONSOLE_SNAPSHOT)
+        return _expect_metrics_success(response, adapter=_SCORER_CONSOLE_SNAPSHOT)
 
     async def retrain(self) -> RetrainResponse:
         """Invoke A-051's existing bodyless manual learner trigger."""
@@ -1479,6 +1484,15 @@ def _normalize_base_url(base_url: str) -> httpx.URL:
             "base_url must be absolute HTTP(S) without credentials, query, or fragment"
         )
     return parsed.copy_with(raw_path=parsed.raw_path.rstrip(b"/") + b"/")
+
+
+def _expect_metrics_success[ResponseT](
+    response: httpx.Response, *, adapter: TypeAdapter[ResponseT]
+) -> ResponseT:
+    if response.status_code == 403:
+        problem = _decode_json(response, _PROBLEM_DETAIL)
+        raise SpineOwnershipError(problem.detail or "Palace metrics access was refused.")
+    return _expect_success(response, status=200, adapter=adapter)
 
 
 def _expect_success[ResponseT](

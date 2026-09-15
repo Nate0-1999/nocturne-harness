@@ -36,6 +36,7 @@ from harness.spine_client import (
     SpendEventsRequest,
     SpineClient,
     SpineClientError,
+    SpineOwnershipError,
     SpineProblemError,
     SpineResponseError,
     SpineTransportError,
@@ -230,7 +231,9 @@ async def test_metrics_use_configured_principal_and_server_owner_scope(is_owner:
         return response(200, payload)
 
     async with SpineClient(
-        "https://spine.invalid", "token", principal_id=principal,
+        "https://spine.invalid",
+        "token",
+        principal_id=principal,
         transport=httpx.MockTransport(handler),
     ) as client:
         await client.spend_table([UUID(THREAD_ID)])
@@ -239,7 +242,10 @@ async def test_metrics_use_configured_principal_and_server_owner_scope(is_owner:
         empty = await client.spend_table([])
         assert empty is not None and empty.threads == []
     assert [r.url.path for r in seen] == [
-        "/v1/identity", "/v1/spend/table", "/v1/vitals", f"/v1/vitals/threads/{THREAD_ID}",
+        "/v1/identity",
+        "/v1/spend/table",
+        "/v1/vitals",
+        f"/v1/vitals/threads/{THREAD_ID}",
     ]
 
 
@@ -253,12 +259,49 @@ async def test_older_palace_never_receives_an_unscoped_metrics_read() -> None:
         return response(404, {})
 
     async with SpineClient(
-        "https://spine.invalid", "token", principal_id="nocturne-verification-m3sc",
+        "https://spine.invalid",
+        "token",
+        principal_id="nocturne-verification-m3sc",
         transport=httpx.MockTransport(handler),
     ) as client:
         with pytest.raises(SpineClientError, match="Update the Palace"):
             await client.vitals_snapshot()
     assert seen == ["/v1/identity"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "method", ["spend_table", "vitals_snapshot", "thread_vitals_snapshot", "scorer_console"]
+)
+async def test_metrics_owner_refusal_keeps_the_plain_message(method: str) -> None:
+    """SPEC C.4 / F076 / M3SC: scope refusal reaches the rack as an ownership refusal."""
+    detail = "Only the Palace owner can view the whole Palace."
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v1/identity":
+            return response(200, {"principal_id": "owner", "is_owner": True})
+        assert request.url.params["scope"] == "palace"
+        return response(
+            403,
+            {"type": "about:blank", "title": "Forbidden", "status": 403, "detail": detail},
+            PROBLEM_JSON,
+        )
+
+    async with SpineClient(
+        "https://spine.invalid",
+        "token",
+        principal_id="owner",
+        transport=httpx.MockTransport(handler),
+    ) as client:
+        args = (
+            [ScorerConsoleQuery(principal_id="owner", thread_id=None)]
+            if method == "scorer_console"
+            else [UUID(THREAD_ID)]
+            if method == "thread_vitals_snapshot"
+            else []
+        )
+        with pytest.raises(SpineOwnershipError, match=detail):
+            await getattr(client, method)(*args)
 
 
 @pytest.mark.asyncio
@@ -376,6 +419,8 @@ async def test_global_instrument_requests_preserve_required_null_scope_fields() 
     }
 
     async def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v1/identity":
+            return response(200, {"principal_id": "owner", "is_owner": True})
         seen[request.url.path] = json.loads(request.content)
         return response(200, payloads[request.url.path])
 
@@ -383,6 +428,7 @@ async def test_global_instrument_requests_preserve_required_null_scope_fields() 
         "https://spine.invalid",
         "token",
         transport=httpx.MockTransport(handler),
+        principal_id="owner",
     ) as client:
         await client.memory_graph(MemoryGraphQuery(principal_id="owner", memory_ids=None))
         console = await client.scorer_console(
@@ -485,9 +531,7 @@ async def test_all_routes_send_exact_http_contract() -> None:
     """
     seen: list[httpx.Request] = []
     responses = {
-        ("GET", "/prefix/v1/identity"): response(
-            200, {"principal_id": "local", "is_owner": True}
-        ),
+        ("GET", "/prefix/v1/identity"): response(200, {"principal_id": "local", "is_owner": True}),
         ("POST", "/prefix/v1/inject/prepare"): response(
             200,
             {
@@ -726,7 +770,8 @@ async def test_all_routes_send_exact_http_contract() -> None:
     spend_body = json.loads(requests[("POST", "/prefix/v1/spend/events")].content)
     assert spend_body["events"][0]["cost_usd"] == "0.0001"
     assert dict(requests[("GET", "/prefix/v1/vitals")].url.params) == {
-        "principal_id": "local", "scope": "palace"
+        "principal_id": "local",
+        "scope": "palace",
     }
 
 

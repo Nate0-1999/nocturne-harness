@@ -208,5 +208,7 @@ test('extracts one shared telemetry view and refuses a missing learning view', (
   const telemetry = scorerConsoleTelemetry({ learning: learning(), accuracy })
   assert.equal(telemetry?.learning.weighted_agreement_percent, '87.125')
   assert.equal(telemetry?.accuracy[0].weighted_dispositions, '4.0')
+  assert.equal(telemetry?.metrics_scope, 'palace')
+  assert.equal(scorerConsoleTelemetry({ learning: learning(), accuracy: [], metrics_scope: 'principal' })?.metrics_scope, 'principal')
   assert.equal(scorerConsoleTelemetry({ accuracy }), null)
 })

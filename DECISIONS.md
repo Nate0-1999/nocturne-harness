@@ -3416,3 +3416,5 @@ that principal and explicit scope on every metrics read. Missing server scope
 support never falls back to an unscoped read. The M3WF fixture uses its explicit
 disposable OpenRouter key for tool-capable turns, retaining local data and lexical
 embeddings; the first fixture identity is its configured owner for comparison.
+F100 extends this to console status. Non-owner displays show their own signals,
+without presenting those signals as the whole Palace's training cadence.

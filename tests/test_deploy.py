@@ -132,9 +132,7 @@ async def test_remote_verifier_uses_distinct_label_for_duplicate_probe_and_clean
     cleaned: list[UUID] = []
 
     class FakeSpineClient:
-        def __init__(
-            self, base_url: str, token: str, *, timeout: float, principal_id: str
-        ) -> None:
+        def __init__(self, base_url: str, token: str, *, timeout: float, principal_id: str) -> None:
             assert (base_url, token, timeout) == ("https://spine.invalid", "token", 45.0)
             assert principal_id.startswith("nocturne-deploy-verify-")
 

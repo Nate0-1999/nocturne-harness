@@ -143,8 +143,10 @@ export function PalaceStateModule() {
 
       {telemetry !== null && (
         <div className="palace-state__learning" aria-label="Learning state">
-          <LearningSummary learning={telemetry.learning} compact />
-          <LearningTimeline learning={telemetry.learning} accuracy={telemetry.accuracy} mode="generations" />
+          <LearningSummary learning={telemetry.learning} scope={telemetry.metrics_scope} compact />
+          {telemetry.metrics_scope === 'palace' && (
+            <LearningTimeline learning={telemetry.learning} accuracy={telemetry.accuracy} mode="generations" />
+          )}
         </div>
       )}
 

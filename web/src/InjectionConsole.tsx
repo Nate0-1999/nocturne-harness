@@ -78,6 +78,7 @@ type RetrainResponse = {
   reason: string
 }
 type Snapshot = {
+  metrics_scope?: 'principal' | 'palace'
   active_version: string
   configurations: Config[]
   proposed_versions: Config[]
@@ -369,7 +370,7 @@ export function InjectionConsole() {
       {data?.learning && (
         <div className="console-learning-overview">
           <div className="console-learning-control">
-            <LearningSummary learning={data.learning} />
+            <LearningSummary learning={data.learning} scope={data.metrics_scope} />
             <button
               className="retrain-control"
               type="button"
@@ -382,13 +383,15 @@ export function InjectionConsole() {
               <p className="console-note" role="status">{retrainNotice.copy}</p>
             )}
           </div>
-          <LearningTimeline learning={data.learning} accuracy={data.accuracy} />
+          {data.metrics_scope !== 'principal' && (
+            <LearningTimeline learning={data.learning} accuracy={data.accuracy} />
+          )}
         </div>
       )}
       <div className="console-grid">
         <section>
           <p className="console-active">Current recipe <strong>{data?.active_version}</strong></p>
-          {data?.learning && (
+          {data?.learning && data.metrics_scope !== 'principal' && (
             <p className="console-note">
               Memory share + injection line {data.learning.share_tuning_active
                 ? 'learn with each new generation.'
