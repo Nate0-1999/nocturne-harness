@@ -658,6 +658,7 @@ function restoredState(value: unknown): PersistedHarnessState {
         workspace_root: typeof entry.workspace_root === 'string' ? entry.workspace_root : null,
         current_location: typeof entry.current_location === 'string' ? entry.current_location : null,
         proposed_response: catalogProposedResponse(entry.proposed_response),
+        ...(entry.archived === true ? { archived: true } : {}),
       })
     }
   }
@@ -799,6 +800,7 @@ export const useHarnessStore = create<HarnessStoreState>()(
             return {
               ...entry,
               title: firstPrompt ? title : entry.title,
+              ...(entry.archived ? { archived: false } : {}),
               updated_at: nextIsoTimestamp(entry.updated_at),
             }
           }),

@@ -37,6 +37,7 @@ export interface Envelope<
 
 export interface ThreadCatalogEntry {
   thread_id: string
+  archived?: boolean
   title: string
   created_at: string
   updated_at: string

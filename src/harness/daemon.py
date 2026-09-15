@@ -1096,7 +1096,9 @@ def create_dev_app(
         @app.post("/v1/threads/{thread_id}/archive")
         async def archive_thread(thread_id: UUID) -> ThreadEndResult:
             try:
-                return await extraction.archive(thread_id)
+                result = await extraction.archive(thread_id)
+                journal.append_archive(str(thread_id))
+                return result
             except (ValueError, SpineClientError) as exc:
                 raise HTTPException(
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

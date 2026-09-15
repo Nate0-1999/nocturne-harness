@@ -698,6 +698,38 @@ async def test_startup_hydrates_every_journal_thread(tmp_path: Path) -> None:
     await loop.close()
 
 
+def test_explicit_archive_survives_restart_without_hiding_idle_extractions(tmp_path: Path) -> None:
+    """M3FX / FL-124: archive hides navigation, preserves history, and a new prompt reopens."""
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    message = {
+        "message_id": ulid(1),
+        "run_id": ulid(2),
+        "role": "user",
+        "content": "Keep this conversation",
+        "state": "end_turn",
+    }
+    journal.append_message("thread-1", message, parent_id=None)
+    journal.append_extraction(
+        "thread-1",
+        tail_message_id=ulid(1),
+        working_summary="",
+        open_loops=[],
+        item_uids=[],
+    )
+    assert journal.catalog()[0].archived is False
+    journal.append_archive("thread-1")
+    restored = TranscriptJournal(journal.root)
+    assert restored.catalog()[0].archived is True
+    assert len(restored.read_messages("thread-1")) == 1
+    restored.append_message(
+        "thread-1",
+        {**message, "message_id": ulid(3), "run_id": ulid(4)},
+        parent_id=ulid(1),
+    )
+    assert restored.catalog()[0].archived is False
+    assert len(restored.read_messages("thread-1")) == 2
+
+
 def test_catalog_projects_one_unresolved_proposal_for_the_global_deck(tmp_path: Path) -> None:
     """M3DK keeps the Deck global after restart without inventing a second proposal store. [SPEC
     D.2 082]
@@ -1318,14 +1350,17 @@ async def wait_for_type(sink: Sink, message_type: MessageType, count: int) -> No
     raise AssertionError(f"expected {count} {message_type} messages")
 
 
-@pytest.mark.parametrize("damage,message", [
-    ("newline", "Palace transcript row contains a newline."),
-    ("digest", "Palace transcript row has a changed digest."),
-    ("json", "Palace transcript row is not JSON."),
-    ("identity", "Palace transcript row changes thread identity."),
-    ("sequence", "has a sequence gap."),
-    ("existing", "Conversation resurrection refuses to overwrite existing local transcripts."),
-])
+@pytest.mark.parametrize(
+    "damage,message",
+    [
+        ("newline", "Palace transcript row contains a newline."),
+        ("digest", "Palace transcript row has a changed digest."),
+        ("json", "Palace transcript row is not JSON."),
+        ("identity", "Palace transcript row changes thread identity."),
+        ("sequence", "has a sequence gap."),
+        ("existing", "Conversation resurrection refuses to overwrite existing local transcripts."),
+    ],
+)
 def test_cloud_restore_walls_write_nothing(tmp_path: Path, damage: str, message: str) -> None:
     """SPEC D.2 082: reject damaged restore input before overwriting any owner history. M3GD /
     SPEC B.6 r14: exercised refusals: "Conversation resurrection refuses to overwrite existing
@@ -1362,10 +1397,14 @@ def test_m3fd_reinstall_restores_threads_beside_empty_and_unscoped_journals(tmp_
     root = tmp_path / "transcripts"
     journal = TranscriptJournal(root)
     for thread in ("first", "second"):
-        journal.append_message(thread, {"message_id": thread, "role": "user", "content": thread},
-                               parent_id=None)
-    for thread, raw in (("empty", ""), ("unscoped", '{}\n[]\n{\n'),
-                        ("scoped-empty", '{"thread_id":"scoped-empty","record_type":"event"}\n')):
+        journal.append_message(
+            thread, {"message_id": thread, "role": "user", "content": thread}, parent_id=None
+        )
+    for thread, raw in (
+        ("empty", ""),
+        ("unscoped", "{}\n[]\n{\n"),
+        ("scoped-empty", '{"thread_id":"scoped-empty","record_type":"event"}\n'),
+    ):
         journal.path_for_thread(thread).write_text(raw)
     before = {path.name: path.read_bytes() for path in root.iterdir()}
 
@@ -1377,18 +1416,23 @@ def test_m3fd_reinstall_restores_threads_beside_empty_and_unscoped_journals(tmp_
     assert {path.name: path.read_bytes() for path in root.iterdir()} == before
 
 
-@pytest.mark.parametrize("damage,message", [
-    ("empty-message", "contains an unreadable transcript"),
-    ("tail", "has no durable tail"),
-    ("cycle", "contains a history cycle"),
-    ("project", "has an invalid project context"),
-    ("feet-missing", "has incomplete thread feet"),
-    ("feet-relative", "has invalid thread feet"),
-    ("move-unbound", "moves an unbound thread"),
-    ("move-outside", "moves outside thread workspace"),
-])
+@pytest.mark.parametrize(
+    "damage,message",
+    [
+        ("empty-message", "contains an unreadable transcript"),
+        ("tail", "has no durable tail"),
+        ("cycle", "contains a history cycle"),
+        ("project", "has an invalid project context"),
+        ("feet-missing", "has incomplete thread feet"),
+        ("feet-relative", "has invalid thread feet"),
+        ("move-unbound", "moves an unbound thread"),
+        ("move-outside", "moves outside thread workspace"),
+    ],
+)
 def test_damaged_history_does_not_resume_or_rewrite(
-    tmp_path: Path, damage: str, message: str,
+    tmp_path: Path,
+    damage: str,
+    message: str,
 ) -> None:
     """SPEC D.2 082 / M3TL: damaged history cannot grant a different workspace on restart. M3GD /
     SPEC B.6 r14: exercised refusals: "Conversation journal contains an unreadable transcript.
@@ -1412,14 +1456,28 @@ def test_damaged_history_does_not_resume_or_rewrite(
         rows[0]["message"]["parentId"] = "first"
     elif damage.startswith("move"):
         if damage == "move-outside":
-            rows.append({"thread_id": "thread-1", "record_type": "thread_context",
-                         "project_key": "/workspace", "workspace_root": "/workspace",
-                         "current_location": "/workspace"})
-        rows.append({"thread_id": "thread-1", "record_type": "thread_location",
-                     "current_location": "/elsewhere"})
+            rows.append(
+                {
+                    "thread_id": "thread-1",
+                    "record_type": "thread_context",
+                    "project_key": "/workspace",
+                    "workspace_root": "/workspace",
+                    "current_location": "/workspace",
+                }
+            )
+        rows.append(
+            {
+                "thread_id": "thread-1",
+                "record_type": "thread_location",
+                "current_location": "/elsewhere",
+            }
+        )
     else:
-        context = {"thread_id": "thread-1", "record_type": "thread_context",
-                   "project_key": "/workspace"}
+        context = {
+            "thread_id": "thread-1",
+            "record_type": "thread_context",
+            "project_key": "/workspace",
+        }
         if damage == "project":
             context["project_key"] = None
         elif damage == "feet-missing":
@@ -1435,15 +1493,20 @@ def test_damaged_history_does_not_resume_or_rewrite(
     assert path.read_bytes() == before
 
 
-@pytest.mark.parametrize("damage,message", [
-    ("duplicate", "duplicates image attachment"),
-    ("missing-view", "drops image view"),
-    ("invalid-view", "has an invalid image view"),
-    ("attachment-keys", "has an invalid image attachment"),
-    ("attachment-bytes", "has an invalid image attachment"),
-])
+@pytest.mark.parametrize(
+    "damage,message",
+    [
+        ("duplicate", "duplicates image attachment"),
+        ("missing-view", "drops image view"),
+        ("invalid-view", "has an invalid image view"),
+        ("attachment-keys", "has an invalid image attachment"),
+        ("attachment-bytes", "has an invalid image attachment"),
+    ],
+)
 def test_attachment_walls_preserve_the_damaged_evidence(
-    tmp_path: Path, damage: str, message: str,
+    tmp_path: Path,
+    damage: str,
+    message: str,
 ) -> None:
     """A-052: never silently replace an attachment or detach its immutable message view. M3GD /
     SPEC B.6 r14: exercised refusals: "Conversation journal for thread {candidate} duplicates
@@ -1459,8 +1522,11 @@ def test_attachment_walls_preserve_the_damaged_evidence(
     """
     journal = TranscriptJournal(tmp_path / "journal")
     view = journal.append_image_attachment("thread-1", "first", png_input())
-    journal.append_message("thread-1", {"message_id": "first", "role": "user",
-                           "image": view.model_dump(mode="json")}, parent_id=None)
+    journal.append_message(
+        "thread-1",
+        {"message_id": "first", "role": "user", "image": view.model_dump(mode="json")},
+        parent_id=None,
+    )
     rows = records(journal, "thread-1")
     if damage == "duplicate":
         rows.insert(1, rows[0])
@@ -1481,8 +1547,7 @@ def test_attachment_walls_preserve_the_damaged_evidence(
 
 
 def test_zero_byte_append_rolls_back(tmp_path: Path, monkeypatch) -> None:
-    """SPEC D.2 082: 'incomplete transcript append' cannot acknowledge unpersisted history.
-    """
+    """SPEC D.2 082: 'incomplete transcript append' cannot acknowledge unpersisted history."""
     journal = TranscriptJournal(tmp_path / "journal")
     journal.append_message("thread-1", {"message_id": "first"}, parent_id=None)
     path = journal.path_for_thread("thread-1")
@@ -1493,12 +1558,18 @@ def test_zero_byte_append_rolls_back(tmp_path: Path, monkeypatch) -> None:
     assert path.read_bytes() == before
 
 
-@pytest.mark.parametrize("thread_id,prompt_id,message", [
-    ("", "first", "thread_id must not be blank"),
-    ("thread-1", "", "prompt_id must not be blank"),
-])
+@pytest.mark.parametrize(
+    "thread_id,prompt_id,message",
+    [
+        ("", "first", "thread_id must not be blank"),
+        ("thread-1", "", "prompt_id must not be blank"),
+    ],
+)
 def test_attachment_identity_is_required_before_write(
-    tmp_path: Path, thread_id: str, prompt_id: str, message: str,
+    tmp_path: Path,
+    thread_id: str,
+    prompt_id: str,
+    message: str,
 ) -> None:
     """A-052: every persisted attachment has a restorable thread and message identity. M3GD /
     SPEC B.6 r14: exercised refusals: "prompt_id must not be blank"; "thread_id must not be
@@ -1523,12 +1594,18 @@ def test_cloud_export_does_not_claim_corrupt_utf8_is_restorable(tmp_path: Path) 
         journal.cloud_records()
 
 
-@pytest.mark.parametrize("operation,message", [
-    ("root", "Conversation journal cannot be read at"),
-    ("file", "Conversation journal cannot read"),
-])
+@pytest.mark.parametrize(
+    "operation,message",
+    [
+        ("root", "Conversation journal cannot be read at"),
+        ("file", "Conversation journal cannot read"),
+    ],
+)
 def test_unreadable_journal_reports_the_unavailable_capture_boundary(
-    tmp_path: Path, monkeypatch, operation: str, message: str,
+    tmp_path: Path,
+    monkeypatch,
+    operation: str,
+    message: str,
 ) -> None:
     """SPEC D.2 082: report permission failure before accepting new journal history. M3GD / SPEC
     B.6 r14: exercised refusals: "Conversation journal cannot be read at {self._root}. Fix
@@ -1537,16 +1614,20 @@ def test_unreadable_journal_reports_the_unavailable_capture_boundary(
     """
     journal = TranscriptJournal(tmp_path / "journal")
     journal.append_message("thread-1", {"message_id": "first"}, parent_id=None)
+
     def denied(*_, **__):
         raise PermissionError("denied")
+
     if operation == "root":
         monkeypatch.setattr(transcript_module.os, "listdir", denied)
     else:
         original = transcript_module.os.open
+
         def open_file(path, *args, **kwargs):
             if str(path).endswith(".jsonl"):
                 return denied()
             return original(path, *args, **kwargs)
+
         monkeypatch.setattr(transcript_module.os, "open", open_file)
     with pytest.raises(TranscriptJournalUnavailable, match=message):
         journal.hydrate_threads()
@@ -1569,8 +1650,9 @@ def test_non_file_transcript_is_never_read_or_modified(tmp_path: Path, operation
             journal.next_parent_id("thread-1")
         else:
             journal._open_append_descriptor("thread-1")
-    assert any(text in str(caught.value)
-               for text in ("non-file transcript", "regular file", "directory"))
+    assert any(
+        text in str(caught.value) for text in ("non-file transcript", "regular file", "directory")
+    )
     assert path.is_dir() and list(path.iterdir()) == []
 
 

@@ -1830,7 +1830,7 @@ function ThreadsModule() {
     [snapshot.catalog],
   )
   const sortedCatalog = useMemo(
-    () => [...snapshot.catalog].sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
+    () => snapshot.catalog.filter((entry) => !entry.archived).sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
     [snapshot.catalog],
   )
   const fixtureThreadCount = snapshot.catalog.filter((entry) => isLegacyFixtureTitle(entry.title)).length

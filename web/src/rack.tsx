@@ -526,6 +526,9 @@ function dispatchRackAction<Action extends RackAction>(
         return fetchJson(`/v1/threads/${encodeURIComponent(threadId)}/archive`, {
           method: 'POST',
         }).then((result) => {
+          useHarnessStore.getState().hydrateCatalog(getRackSnapshot().catalog.map((entry) => (
+            entry.thread_id === threadId ? { ...entry, archived: true } : entry
+          )))
           rackSelectionSurface.select({ kind: 'module', id: 'thread_end' })
           return result as RackActionResult<Action>
         })
