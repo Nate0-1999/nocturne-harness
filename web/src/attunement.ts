@@ -38,6 +38,7 @@ export interface AttunementTiePick {
 }
 
 export interface AttunementResolution {
+  sources: AttunementTarget[]
   targets: Map<string, AttunementTarget | null>
   sticky_picks: Record<string, StickyAttunementPick>
   new_tie_picks: AttunementTiePick[]
@@ -116,6 +117,12 @@ export function resolveAttunements(
       targets.set(located.module.instance_id, null)
       continue
     }
+    if (located.module.attunement_source_id) {
+      const explicit = sources.find((source) => source.target.kind === 'stack'
+        && source.module.instance_id === located.module.attunement_source_id)
+      targets.set(located.module.instance_id, explicit?.target ?? null)
+      continue
+    }
     const ownSource = sources.find(
       (source) => source.module.instance_id === located.module.instance_id,
     )
@@ -163,7 +170,7 @@ export function resolveAttunements(
     }
     targets.set(located.module.instance_id, winner.target)
   }
-  return { targets, sticky_picks: nextSticky, new_tie_picks: newTiePicks }
+  return { sources: sources.map((source) => source.target), targets, sticky_picks: nextSticky, new_tie_picks: newTiePicks }
 }
 
 export function attunementBadge(scope: RackScope, target: AttunementTarget | null): string {
@@ -178,6 +185,7 @@ export function attunementLayoutSignature(layout: StageLayoutSet): string {
       instance_id: module.instance_id,
       module_id: module.module_id,
       source_thread_id: module.source_thread_id ?? null,
+      attunement_source_id: module.attunement_source_id ?? null,
       conversation_mode: module.conversation_mode ?? null,
       x: module.x,
       y: module.y,
@@ -209,7 +217,7 @@ function sourceTarget(
     return {
       kind: 'stack',
       id: 'channel-stack',
-      name: 'Channel Stack',
+      name: `Channel Stack${module.instance_id.includes(':') ? ` ${module.instance_id.split(':')[1]}` : ''}`,
       thread_ids: [...threadIds],
       source_instance_id: module.instance_id,
     }
@@ -219,7 +227,7 @@ function sourceTarget(
     return {
       kind: 'stack',
       id: 'the-deck',
-      name: 'The Deck',
+      name: `The Deck${module.instance_id.includes(':') ? ` ${module.instance_id.split(':')[1]}` : ''}`,
       thread_ids: [...threadIds],
       source_instance_id: module.instance_id,
     }

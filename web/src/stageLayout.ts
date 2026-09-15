@@ -60,6 +60,7 @@ export interface StageModuleLayout {
   instance_id: string
   module_id: StageModuleId
   source_thread_id?: string | null
+  attunement_source_id?: string | null
   conversation_mode?: ConversationMode
   x: number
   y: number
@@ -382,6 +383,21 @@ export function setConversationMode(
       ? { ...module, conversation_mode: mode }
       : module
   ))
+}
+
+/** M3FX / F084: an explicit stack binding persists independently of geometry. */
+export function setStageAttunementSource(
+  layout: StageLayoutSet, instanceId: string, sourceId: string | null,
+): StageLayoutSet {
+  return {
+    ...layout,
+    scopes: { ...layout.scopes, [instanceId]: 'ATTUNED' },
+    layers: layout.layers.map((layer) => ({
+      ...layer,
+      modules: layer.modules.map((module) => module.instance_id === instanceId
+        ? { ...module, attunement_source_id: sourceId } : module),
+    })),
+  }
 }
 
 export function removeStageLayer(layout: StageLayoutSet, layerId: string): StageLayoutSet {
@@ -732,6 +748,7 @@ function parseModule(
     value.source_thread_id !== null &&
     typeof value.source_thread_id !== 'string'
   ) return null
+  if (value.attunement_source_id != null && typeof value.attunement_source_id !== 'string') return null
   let instanceId = rawInstanceId
   let moduleId = rawModuleId as StageModuleId
   let conversationMode: ConversationMode | undefined
@@ -754,6 +771,7 @@ function parseModule(
     instance_id: instanceId,
     module_id: moduleId,
     source_thread_id: value.source_thread_id as string | null | undefined,
+    ...(value.attunement_source_id == null ? {} : { attunement_source_id: value.attunement_source_id as string }),
     conversation_mode: conversationMode,
     x: value.x as number,
     y: value.y as number,

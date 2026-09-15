@@ -8,11 +8,43 @@ import {
   persistStickyAttunementPicks,
   resolveAttunements,
 } from '../src/attunement.ts'
+import { loadStageLayout, persistStageLayout, setStageAttunementSource } from '../src/stageLayout.ts'
 
 const threads = [
   { thread_id: 'thread-a', title: 'Alpha Thread' },
   { thread_id: 'thread-b', title: 'Beta Thread' },
 ]
+
+/** PLAN M3FX / M3VG / FL-115: named stacks override distance and survive reload. */
+test('a named stack remains bound across movement and persisted layout reload', () => {
+  let stage = layout([layer('work', [
+    module('conversation', 'conversation', 0, 0, 'thread-a'),
+    module('context_bars', 'context_bars', 1, 0),
+    module('threads', 'threads', 20, 0),
+  ])])
+  stage = setStageAttunementSource(stage, 'context_bars', 'threads')
+  assert.equal(resolveAttunements(stage, threads, 'thread-a').targets.get('context_bars')?.name, 'Channel Stack')
+  stage.layers[0].modules.find((item) => item.instance_id === 'threads').x = 30
+  stage.layers[0].modules.find((item) => item.instance_id === 'context_bars').x = 2
+  const saved = new Map()
+  const storage = { getItem: (key) => saved.get(key) ?? null, setItem: (key, value) => saved.set(key, value) }
+  persistStageLayout(storage, stage)
+  const restored = loadStageLayout(storage)
+  assert.equal(resolveAttunements(restored, threads, 'thread-b').targets.get('context_bars')?.source_instance_id, 'threads')
+  const nearby = setStageAttunementSource(restored, 'context_bars', null)
+  assert.equal(resolveAttunements(nearby, threads, 'thread-b').targets.get('context_bars')?.id, 'thread-a')
+})
+
+/** PLAN M3FX / FL-115: deleting a chosen stack must not silently pick another source. */
+test('an unavailable named stack stays unattuned and Everything still overrides it', () => {
+  const stage = setStageAttunementSource(layout([layer('work', [
+    module('conversation', 'conversation', 0, 0, 'thread-a'),
+    module('context_bars', 'context_bars', 1, 0),
+  ])]), 'context_bars', 'threads')
+  assert.equal(resolveAttunements(stage, threads, 'thread-a').targets.get('context_bars'), null)
+  stage.scopes.context_bars = 'GLOBAL'
+  assert.equal(attunementBadge('GLOBAL', resolveAttunements(stage, threads, 'thread-a').targets.get('context_bars')), 'Global')
+})
 
 function module(instanceId, moduleId, x, y, sourceThreadId, conversationMode = 'focused') {
   return {

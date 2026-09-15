@@ -11,6 +11,7 @@ import {
   type FormEvent,
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from 'react'
 
 import { AssistantMarkdown } from './AssistantMarkdown'
@@ -95,6 +96,7 @@ import {
   saveStageSet,
   selectStageLayer,
   setConversationMode,
+  setStageAttunementSource,
   stageLayoutsEqual,
   updateStageCamera,
   type StageCamera,
@@ -572,10 +574,9 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
       }
       const instanceId = detail.instance_id ?? detail.module_id
       if (instanceId === undefined || !['GLOBAL', 'ATTUNED'].includes(detail.scope ?? '')) return
-      setLayout((current) => ({
-        ...current,
-        scopes: { ...current.scopes, [instanceId]: detail.scope as RackScope },
-      }))
+      setLayout((current) => detail.scope === 'ATTUNED'
+        ? setStageAttunementSource(current, instanceId, null)
+        : { ...current, scopes: { ...current.scopes, [instanceId]: detail.scope as RackScope } })
     }
     globalThis.addEventListener('nocturne:rack-scope', syncScope)
     return () => globalThis.removeEventListener('nocturne:rack-scope', syncScope)
@@ -975,6 +976,27 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               onPointerActivity={setPointerActive}
               scope={scope}
               attunement={attunement}
+              namedStackSelected={scope !== 'GLOBAL' && Boolean(module.attunement_source_id)}
+              attunementControl={!attunements.sources.some((source) => source.source_instance_id === module.instance_id) && (
+                <label className="rack-stack-control"><span>Named stack</span>
+                  <select
+                    aria-label={`${RACK_MANIFESTS[module.module_id].name} named stack`}
+                    value={scope === 'GLOBAL' ? '' : module.attunement_source_id ?? ''}
+                    onChange={(event) => {
+                      const sourceId = event.currentTarget.value || null
+                      setLayout((current) => setStageAttunementSource(current, module.instance_id, sourceId))
+                    }}
+                  >
+                    <option value="">By proximity</option>
+                    {module.attunement_source_id && !attunements.sources.some((source) => source.source_instance_id === module.attunement_source_id) && (
+                      <option value={module.attunement_source_id}>Unavailable stack</option>
+                    )}
+                    {attunements.sources.filter((source) => source.kind === 'stack').map((source) => (
+                      <option key={source.source_instance_id} value={source.source_instance_id}>{source.name}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
               conversationMode={module.conversation_mode}
               onConversationModeChange={changeConversationMode}
               spatialContext={{
@@ -1174,6 +1196,8 @@ interface RackModuleFrameProps {
   onPointerActivity?: (active: boolean) => void
   scope: RackScope
   attunement: AttunementTarget | null
+  attunementControl?: ReactNode
+  namedStackSelected?: boolean
   conversationMode?: ConversationMode
   onConversationModeChange?: (instanceId: string, mode: ConversationMode) => void
   spatialContext: SpatialSelectionContext
@@ -1200,6 +1224,8 @@ function RackModuleFrame({
   onPointerActivity,
   scope,
   attunement,
+  attunementControl,
+  namedStackSelected,
   conversationMode,
   onConversationModeChange,
   spatialContext,
@@ -1426,6 +1452,8 @@ function RackModuleFrame({
             scope={scope}
             onScopeChange={(value) => onScopeChange?.(instanceId, moduleId, value)}
             onOpenChange={setSettingsOpen}
+            attunementControl={attunementControl}
+            namedStackSelected={namedStackSelected}
           />
           {onRemove !== undefined && (
             <button
@@ -1513,11 +1541,15 @@ function RackSettingsControl({
   scope,
   onScopeChange,
   onOpenChange,
+  attunementControl,
+  namedStackSelected = false,
 }: {
   manifest: RackModuleManifest
   scope: RackScope
   onScopeChange?: (scope: RackScope) => void
   onOpenChange?: (open: boolean) => void
+  attunementControl?: ReactNode
+  namedStackSelected?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -1588,13 +1620,14 @@ function RackSettingsControl({
                   <button
                     key={value}
                     type="button"
-                    aria-pressed={scope === value}
+                    aria-pressed={scope === value && !namedStackSelected}
                     onClick={() => onScopeChange?.(value)}
                   >
                     {value === 'GLOBAL' ? 'Everything' : spatial ? 'Nearest frame' : 'Nearest source'}
                   </button>
                 ))}
               </div>
+              {attunementControl}
             </>
           ) : (
             <p>{fixedCopy}</p>

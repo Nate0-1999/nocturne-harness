@@ -2170,7 +2170,14 @@ button.rack-module__resize-handle--nw {
   white-space: nowrap;
 }
 
-.theme-control select {
+.rack-stack-control {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+}
+
+.theme-control select,
+.rack-stack-control select {
   max-width: 9.5rem;
   border: 1px solid var(--line);
   background: var(--surface-deep);
