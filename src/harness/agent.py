@@ -114,6 +114,7 @@ EXTRACTION_INSTRUCTION = (
     "standalone fact of at most 128 cl100k_base tokens, a label of at most 64 characters, "
     "and 2-5 distinct lowercase keywords. Preserve uncertainty. Never extract secrets or "
     "credentials. Do not treat sub-agent bulk or verification instructions as durable facts."
+    " Shorten an over-cap fact to the cap as ONE memory; split only independent facts."
 )
 SEED_SPLIT_INSTRUCTION = (
     "Semantically split the complete Markdown document into durable atomic memories. Preserve "
@@ -735,18 +736,44 @@ class HarnessAgent:
         usage: RunUsage | None = None,
         model_settings: ModelSettings | None = None,
         on_result=None,
+        summary_prompt: str = COMPACTION_SUMMARY_PROMPT,
     ) -> ExtractionDraft:
         """Run the tools-free cheap-model extraction pass over one durable transcript."""
 
         result = await self._extraction_agent.run(
-            COMPACTION_SUMMARY_PROMPT.format(messages=transcript),
+            summary_prompt.replace("{messages}", transcript),
             model=self._select_model(model),
             usage_limits=self._usage_limits,
             usage=usage,
-            model_settings={**(model_settings or {}), "temperature": 0},
+            model_settings={
+                "openrouter_usage": {"include": True},
+                **(model_settings or {}),
+                "temperature": 0,
+            },
         )
         if on_result is not None:
             await on_result(result.all_messages())
+        if any(cl100k_token_count(item.body) > 128 for item in result.output.candidates):
+            result = await self._extraction_agent.run(
+                "Keep the working summary and open loops. Shorten each over-cap fact into "
+                "ONE memory of at most 128 cl100k_base tokens; split only independent facts. "
+                "Preserve all qualifiers and return the complete corrected draft:\n"
+                + result.output.model_dump_json(),
+                model=self._select_model(model),
+                usage=usage,
+                usage_limits=self._usage_limits,
+                model_settings={
+                    "openrouter_usage": {"include": True},
+                    **(model_settings or {}),
+                    "temperature": 0,
+                },
+            )
+            if on_result is not None:
+                await on_result(result.all_messages())
+        if any(cl100k_token_count(item.body) > 128 for item in result.output.candidates):
+            raise ValueError(
+                "Compaction could not preserve a fact within the memory cap; history kept."
+            )
         return result.output
 
     async def propose_extraction_verdict(
@@ -757,6 +784,7 @@ class HarnessAgent:
         model: Model | str | None = None,
         usage: RunUsage | None = None,
         on_result=None,
+        model_settings: ModelSettings | None = None,
     ) -> ExtractionVerdictDraft:
         """Give the thread-aware extractor the corpus neighborhood before queue birth."""
 
@@ -765,6 +793,11 @@ class HarnessAgent:
             model=self._select_model(model),
             usage_limits=self._usage_limits,
             usage=usage,
+            model_settings={
+                "openrouter_usage": {"include": True},
+                **(model_settings or {}),
+                "temperature": 0,
+            },
         )
         if on_result is not None:
             await on_result(result.all_messages())

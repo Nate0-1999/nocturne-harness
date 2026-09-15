@@ -135,6 +135,7 @@ def test_client_exposes_all_spine_routes() -> None:
         "memory_scores",
         "scorer_console",
         "retrain",
+        "notify_compaction",
         "create_scorer_config",
         "simulate_scorer",
         "audition_scorer",

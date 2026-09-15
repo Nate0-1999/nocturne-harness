@@ -547,20 +547,59 @@ class TranscriptJournal:
     def append_compaction_history(self, thread_id: str, run_id: str, history: list[Any]) -> None:
         """Persist the compacted provider history without replacing the readable transcript."""
         with self._lock:
-            self._append(thread_id, {
-                "version": 1, "record_type": "compaction_history",
-                "run_id": run_id, "history": history,
-            })
+            self._append(
+                thread_id,
+                {
+                    "version": 1,
+                    "record_type": "compaction_history",
+                    "run_id": run_id,
+                    "history": history,
+                },
+            )
+
+    def compaction_policy(self, thread_id: str) -> dict[str, Any]:
+        """Restore the owner's latest compaction choices from this thread's journal."""
+        path = self.path_for_thread(thread_id)
+        if not path.exists():
+            return {}
+        with self._lock:
+            for line in reversed(path.read_text(encoding="utf-8").splitlines()):
+                row = json.loads(line)
+                if row.get("record_type") == "compaction_policy":
+                    return row["policy"]
+        return {}
+
+    def append_compaction_policy(self, thread_id: str, policy: dict[str, Any]) -> None:
+        """Version compaction controls without changing or deleting prior choices."""
+        with self._lock:
+            self._append(
+                thread_id,
+                {
+                    "version": 1,
+                    "record_type": "compaction_policy",
+                    "policy": policy,
+                },
+            )
 
     def append_worker_return(
-        self, thread_id: str, worker_id: str, result: str, history: list[Any],
+        self,
+        thread_id: str,
+        worker_id: str,
+        result: str,
+        history: list[Any],
     ) -> None:
         """D.2 153: full worker output stays here, never in the parent's provider history."""
         with self._lock:
-            self._append(thread_id, {
-                "version": 1, "record_type": "worker_return", "worker_id": worker_id,
-                "result": result, "history": history,
-            })
+            self._append(
+                thread_id,
+                {
+                    "version": 1,
+                    "record_type": "worker_return",
+                    "worker_id": worker_id,
+                    "result": result,
+                    "history": history,
+                },
+            )
 
     def idle_thread_ids(self, cutoff: datetime) -> list[str]:
         """List transcript threads whose last captured message predates cutoff."""

@@ -83,6 +83,7 @@ class ContextWindowTracker:
         memory_block: str | None,
         workspace_block: str | None = None,
         memory_allocation: MemoryAllocation | None = None,
+        compaction_fraction: float = _THRESHOLD_RATIO,
     ) -> None:
         if resolution is None:
             return
@@ -96,14 +97,14 @@ class ContextWindowTracker:
         )
         if response is None:
             return
-        used = response.usage.input_tokens
+        used = response.usage.input_tokens + response.usage.output_tokens
         self._observations[thread_id] = ContextObservation(
             thread_id=thread_id,
             model=resolution.model,
             observed_at=datetime.now(UTC),
             used_tokens=used,
             context_tokens=resolution.context_tokens,
-            threshold_tokens=max(1, int(resolution.context_tokens * _THRESHOLD_RATIO)),
+            threshold_tokens=max(1, int(resolution.context_tokens * compaction_fraction)),
             categories=_estimated_categories(used, memory_block, workspace_block, captured),
             memory_allocation=_context_memory_allocation(memory_allocation, memory_block),
         )
