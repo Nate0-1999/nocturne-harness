@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.1.12 - 2026-09-15
+
+- Publish as `nocturne-harness` with the matching `nocturne-memory==0.1.12`
+  dependency; the `nocturne` command and Python imports stay the same.
+
 - Replaced the downloaded PI/Node tool runtime with the in-process official
   `pydantic-ai-harness` filesystem, shell, and Skills capabilities while retaining
   NOCTURNE's location fence, movement refresh, journal, broker, and owner loop.

@@ -1,4 +1,4 @@
-"""Verify an installed nocturne-ai wheel from outside its source checkout."""
+"""Verify an installed nocturne-harness wheel from outside its source checkout."""
 
 from __future__ import annotations
 
@@ -15,9 +15,9 @@ from harness.daemon import create_app
 def main() -> None:
     """Prove metadata, command wiring, bundled assets, and clone-free serving."""
 
-    package = distribution("nocturne-ai")
-    assert version("nocturne-ai") == version("nocturne-spine") == __version__
-    assert f"nocturne-spine=={__version__}" in (package.requires or [])
+    package = distribution("nocturne-harness")
+    assert version("nocturne-harness") == version("nocturne-memory") == __version__
+    assert f"nocturne-memory=={__version__}" in (package.requires or [])
     assert any(
         entry.name == "nocturne" and entry.value == "harness.cli:main"
         for entry in package.entry_points
@@ -42,7 +42,7 @@ def main() -> None:
     assert response.status_code == 200
     assert "NOCTURNE" in response.text
 
-    print("nocturne-ai installed-wheel smoke passed")
+    print("nocturne-harness installed-wheel smoke passed")
 
 
 if __name__ == "__main__":

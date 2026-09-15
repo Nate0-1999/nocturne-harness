@@ -815,12 +815,12 @@ wheels = [
 ]
 
 [[package]]
-name = "nocturne-ai"
+name = "nocturne-harness"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
-    { name = "nocturne-spine" },
+    { name = "nocturne-memory" },
     { name = "playwright" },
     { name = "pydantic" },
     { name = "pydantic-ai" },
@@ -841,7 +841,7 @@ dev = [
 requires-dist = [
     { name = "fastapi", specifier = ">=0.115,<1" },
     { name = "httpx", specifier = ">=0.27,<1" },
-    { name = "nocturne-spine", editable = "../spine" },
+    { name = "nocturne-memory", editable = "../spine" },
     { name = "playwright", specifier = "==1.62.0" },
     { name = "pydantic", specifier = ">=2.10,<3" },
     { name = "pydantic-ai", specifier = "==2.28.0" },
@@ -856,7 +856,7 @@ requires-dist = [
 provides-extras = ["dev"]
 
 [[package]]
-name = "nocturne-spine"
+name = "nocturne-memory"
 source = { editable = "../spine" }
 dependencies = [
     { name = "alembic" },

@@ -1090,7 +1090,7 @@ def _canonical_breaker_checks() -> Mapping[str, Any]:
     checks_path = next((path for path in candidates if path.is_file()), None)
     if checks_path is None:
         raise DeployError(
-            "canonical Spine D2 validators are unavailable; install a built nocturne-spine wheel"
+            "canonical Spine D2 validators are unavailable; install a built nocturne-memory wheel"
         )
     namespace = runpy.run_path(
         str(checks_path),

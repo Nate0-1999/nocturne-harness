@@ -3382,3 +3382,12 @@ credential is provisioned, without publishing the private ledger.
 SYM13 supplies an empty spend snapshot because its recipe fixture incurs no spend.
 Generated `impacted.json` stays local and CI uploads it; retained walk receipts
 use separate filenames so a later push cannot overwrite the proof.
+
+## 116 — First registry release uses the owner-chosen names [P4, M3NM]
+
+PRECEDENT: SPEC v2.117 / D.2 159, D.2 099; PLAN M3NM; F087/F093;
+ancestors M3FD, M3FX. Publish both distributions at 0.1.12 because the Memory
+repository already has an immutable v0.1.11 release. Python imports, the
+`nocturne` command, and API contract 0.1.11 stay unchanged. Active install
+instructions and repository links use the new names; historical findings and
+hashed evidence retain the names actually observed.

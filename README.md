@@ -1,7 +1,7 @@
 # NOCTURNE
 
 NOCTURNE is an agent harness backed by its Memory Palace. The public
-Python distribution is `nocturne-ai`; the product and command remain
+Python distribution is `nocturne-harness`; the product and command remain
 `nocturne`.
 
 ## Local quickstart
@@ -10,7 +10,7 @@ Prerequisites: Python 3.12, [pipx](https://pipx.pypa.io/), and Docker Desktop
 or Colima. You do not need Git, a repository checkout, or Node.
 
 ```sh
-pipx install nocturne-ai
+pipx install nocturne-harness
 nocturne init
 nocturne up
 ```
@@ -20,7 +20,7 @@ database password, Spine bearer token, and local identity, then stores them in
 `~/.nocturne/env` with owner-only permissions. Set `OPENROUTER_API_KEY` before
 running it to use an existing environment secret without a prompt. Init also
 installs the headless browser runtime used by the browser tools. The coding
-tools are Python dependencies in the `nocturne-ai` wheel; init does not download
+tools are Python dependencies in the `nocturne-harness` wheel; init does not download
 Node or a second agent runtime.
 
 `nocturne up` pulls pgvector, applies the packaged database migrations, starts
@@ -140,7 +140,7 @@ resources, grants broad IAM, or invokes Cloud Build.
 
 The dry run performs read-only inspection and labels each operation as a no-op,
 create, monotonic update, human boundary, or blocker. Apply rechecks state,
-packages the installed `nocturne-spine` source, migrates separately, builds and
+packages the installed `nocturne-memory` source, migrates separately, builds and
 pushes locally for `linux/amd64`, and reconciles the single protected Spine
 service. The billing breaker is a final, real-TTY human gate: an exact armed
 topology is a no-op, a completely fresh topology requires the destructive

@@ -19,7 +19,8 @@ _SOURCE_BUILD_FAILED_REMEDY = (
     "`web` directory, then run `nocturne up` again."
 )
 _WHEEL_REINSTALL_REMEDY = (
-    "Nocturne's web app files are missing. Reinstall `nocturne-ai`, then run `nocturne up` again."
+    "Nocturne's web app files are missing. Reinstall `nocturne-harness`, "
+    "then run `nocturne up` again."
 )
 
 

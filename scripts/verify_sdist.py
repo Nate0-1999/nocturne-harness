@@ -1,4 +1,4 @@
-"""Verify that the public nocturne-ai source archive contains product source only."""
+"""Verify that the public nocturne-harness source archive contains product source only."""
 
 from __future__ import annotations
 
@@ -49,7 +49,7 @@ def main() -> None:
         relative = Path(name).parts[1:]
         assert not forbidden_components.intersection(relative), name
 
-    print(f"nocturne-ai sdist scope passed ({len(names)} entries)")
+    print(f"nocturne-harness sdist scope passed ({len(names)} entries)")
 
 
 if __name__ == "__main__":

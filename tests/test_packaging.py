@@ -17,12 +17,12 @@ def test_public_distribution_and_lockstep_dependency_metadata() -> None:
     metadata = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     project = metadata["project"]
 
-    assert project["name"] == "nocturne-ai"
+    assert project["name"] == "nocturne-harness"
     assert project["dynamic"] == ["version"]
     from spine import __version__ as spine_version
 
     assert __version__ == spine_version
-    assert f"nocturne-spine=={__version__}" in project["dependencies"]
+    assert f"nocturne-memory=={__version__}" in project["dependencies"]
     assert project["scripts"]["nocturne"] == "harness.cli:main"
     assert metadata["tool"]["hatch"]["build"]["targets"]["wheel"]["force-include"] == {
         "web/dist": "harness/_web"
