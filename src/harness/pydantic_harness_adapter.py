@@ -92,9 +92,10 @@ def _resource_instructions(package: Path) -> str:
         "",
         f"This skill package is rooted at `{root}`.",
         "Use Nocturne's `read` tool to open only the resources the skill requires.",
+        "Use these absolute paths verbatim; relative paths resolve from the agent's location.",
         "Scripts are resources too: inspect them before running them through the fenced shell.",
         "",
-        *[f"- `{resource.relative_to(root).as_posix()}`" for resource in resources],
+        *[f"- `{resource}`" for resource in resources],
     ]
     return "\n".join(lines)
 

@@ -281,6 +281,7 @@ def test_upstream_skills_gain_model_visible_bundled_resources(tmp_path: Path) ->
     assert str(skill.resolve()) in instructions
     assert "scripts/check.py" in instructions
     assert "references/rules.md" in instructions
+    assert f"- `{(skill / 'references' / 'rules.md').resolve()}`" in instructions
 
 
 def test_skill_discovery_keeps_project_and_legacy_pi_libraries(tmp_path: Path) -> None:
