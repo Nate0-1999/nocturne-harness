@@ -118,8 +118,8 @@ jobs:
       - name: Unit tests
         run: npm run test:unit
       - name: Standing rendered UI canon
-        # Garden is private; its own CI validates the ledger on every push.
-        # This job is browser regression coverage, never a packet handoff.
+        # The impact job checks frozen-ledger coverage independently.
+        # This job supplies browser regressions, never a packet handoff.
         run: npm run test:canon -- --ui-only
       - name: Verify committed release bundle
         working-directory: .

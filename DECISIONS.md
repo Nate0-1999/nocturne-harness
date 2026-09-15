@@ -3403,5 +3403,5 @@ private flag text. CI includes all packet-tagged commits and the pushed diff,
 without attributing intervening packets to a resumed packet.
 The hosted heartbeat uses the real read tool: Ubuntu lacks the shell's required
 macOS sandbox. Existing formatter failures are repaired mechanically; no runtime
-logic changes. The six historical import fixes supersede those scripts' old
-hashes; their original evidence remains verifiable at its original commit.
+logic changes. Only the six repaired scripts' manifest hashes are refreshed;
+historical screenshots and verdicts remain unchanged.
