@@ -1209,7 +1209,7 @@ def test_default_prompt_gets_fresh_correlated_error_lifecycle(tmp_path: Path) ->
 def test_restore_preview_discards_candidate_and_refuses_cloud(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """D.2 092 / FL-168: the popup previews and releases a local candidate, never cloud."""
+    """SPEC D.2 092 / FL-168: the popup previews and releases a local candidate, never cloud."""
     from types import SimpleNamespace
 
     from harness.lifecycle import ManifestMemory, PreparedRestore, RollbackManifest

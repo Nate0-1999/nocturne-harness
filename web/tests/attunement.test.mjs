@@ -15,7 +15,7 @@ const threads = [
   { thread_id: 'thread-b', title: 'Beta Thread' },
 ]
 
-/** PLAN M3FX / M3VG / FL-115: named stacks override distance and survive reload. */
+/** SPEC D.2 / FL-115: named stacks override distance and survive reload. */
 test('a named stack remains bound across movement and persisted layout reload', () => {
   let stage = layout([layer('work', [
     module('conversation', 'conversation', 0, 0, 'thread-a'),
@@ -35,7 +35,7 @@ test('a named stack remains bound across movement and persisted layout reload', 
   assert.equal(resolveAttunements(nearby, threads, 'thread-b').targets.get('context_bars')?.id, 'thread-a')
 })
 
-/** PLAN M3FX / FL-115: deleting a chosen stack must not silently pick another source. */
+/** SPEC D.2 / FL-115: deleting a chosen stack must not silently pick another source. */
 test('an unavailable named stack stays unattuned and Everything still overrides it', () => {
   const stage = setStageAttunementSource(layout([layer('work', [
     module('conversation', 'conversation', 0, 0, 'thread-a'),

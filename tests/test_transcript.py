@@ -699,7 +699,7 @@ async def test_startup_hydrates_every_journal_thread(tmp_path: Path) -> None:
 
 
 def test_explicit_archive_survives_restart_without_hiding_idle_extractions(tmp_path: Path) -> None:
-    """M3FX / FL-124: archive hides navigation, preserves history, and a new prompt reopens."""
+    """SPEC D.2 / FL-124: archive hides navigation, preserves history, and a new prompt reopens."""
     journal = TranscriptJournal(tmp_path / "transcripts")
     message = {
         "message_id": ulid(1),

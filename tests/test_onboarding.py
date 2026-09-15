@@ -634,7 +634,7 @@ def test_doctor_reports_observed_breaker_or_unverified(
     monkeypatch: pytest.MonkeyPatch,
     available: bool,
 ) -> None:
-    """M3FX FL-149 must never claim a configured amount proves an armed breaker."""
+    """SPEC D.2 / FL-149 must never claim a configured amount proves an armed breaker."""
     from harness.deploy import BreakerState, DeployTarget, GcloudDeployBackend
 
     target = DeployTarget(

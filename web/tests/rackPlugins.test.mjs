@@ -3,6 +3,7 @@ import test from 'node:test'
 import { installedRackPlugins, parseRackPlugin, rackPluginDocument } from '../src/rackPlugins.ts'
 import { activeStageLayer, cloneFactoryStageLayout, loadStageLayout, persistStageLayout, registerStagePlugin, restoreStageModule } from '../src/stageLayout.ts'
 
+/** SPEC D.2 / FL-105: imported modules keep the shared binding and isolation boundary. */
 test('custom bundles cannot replace built-in modules and retain the isolated document policy', () => {
   const source = { id: 'plugin:compass', name: 'Compass', html: '<h1>Compass</h1>', streams: [], actions: [] }
   assert.throws(() => parseRackPlugin({ ...source, id: 'conversation' }))
@@ -15,6 +16,7 @@ test('custom bundles cannot replace built-in modules and retain the isolated doc
   assert.ok(document.endsWith(source.html))
 })
 
+/** SPEC D.2 / FL-105: an installed module must survive an ordinary reload. */
 test('an imported plugin keeps its Stage placement across reload', () => {
   const plugin = parseRackPlugin({ id: 'plugin:reload', name: 'Reload', html: '<p>Reload</p>', streams: [], actions: [] })
   installedRackPlugins.push(plugin)

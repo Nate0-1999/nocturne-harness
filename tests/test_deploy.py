@@ -505,7 +505,7 @@ def breaker_state(fixture: dict[str, object]) -> BreakerState:
 def test_doctor_breaker_observation_establishes_owner_and_reuses_d2(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """FL-149 requires real D2 checks with their trusted-account prerequisite."""
+    """SPEC D.2 / FL-149 requires real D2 checks with their trusted-account prerequisite."""
     fixture = exact_breaker_fixture()
     backend = BreakerFixtureBackend(fixture)
     backend._active_account = None
