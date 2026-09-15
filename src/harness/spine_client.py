@@ -1284,6 +1284,7 @@ class SpineClient:
 
     async def scorer_console(self, request: ScorerConsoleQuery) -> ScorerConsoleSnapshot:
         params = await self._metrics_params()
+        # INCIDENT F100: a status request cannot override the daemon's principal.
         if request.principal_id != params["principal_id"]:
             raise SpineOwnershipError("Status reads must use this daemon's principal.")
         response = await self._request(
@@ -1489,6 +1490,7 @@ def _normalize_base_url(base_url: str) -> httpx.URL:
 def _expect_metrics_success[ResponseT](
     response: httpx.Response, *, adapter: TypeAdapter[ResponseT]
 ) -> ResponseT:
+    # INCIDENT F076: preserve the Palace's ownership refusal at the rack boundary.
     if response.status_code == 403:
         problem = _decode_json(response, _PROBLEM_DETAIL)
         raise SpineOwnershipError(problem.detail or "Palace metrics access was refused.")

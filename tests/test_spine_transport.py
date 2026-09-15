@@ -264,7 +264,9 @@ async def test_older_palace_never_receives_an_unscoped_metrics_read() -> None:
         principal_id="nocturne-verification-m3sc",
         transport=httpx.MockTransport(handler),
     ) as client:
-        with pytest.raises(SpineClientError, match="Update the Palace"):
+        with pytest.raises(
+            SpineClientError, match="Update the Palace to read principal-scoped metrics."
+        ):
             await client.vitals_snapshot()
     assert seen == ["/v1/identity"]
 
@@ -302,6 +304,13 @@ async def test_metrics_owner_refusal_keeps_the_plain_message(method: str) -> Non
         )
         with pytest.raises(SpineOwnershipError, match=detail):
             await getattr(client, method)(*args)
+        if method == "scorer_console":
+            with pytest.raises(
+                SpineOwnershipError, match="Status reads must use this daemon's principal."
+            ):
+                await client.scorer_console(
+                    ScorerConsoleQuery(principal_id="foreign", thread_id=None)
+                )
 
 
 @pytest.mark.asyncio
