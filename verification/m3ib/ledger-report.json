@@ -2,12 +2,12 @@
   "packet": "M3IB",
   "mode": "builder",
   "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
-  "ledger_sha256": "eb3680c9959669e519b60823d08f5aee68c0b6fd94d4834f7617fa2dbff79b69",
+  "ledger_sha256": "b1d5c78c6f91b9fa829a9b21dd60d8088d89bf84fa619ae623485b3223219033",
   "diffs": [
     {
       "repo": "harness",
       "base": "ef26db4d7bba0a654261d012d4a8022b0608d177",
-      "head": "e1198ab022fe30bd2c12ed69bf79121b337ae5f6"
+      "head": "b25b4dc5a2f9d027511abdbae89bbe4c5b6d93e8"
     }
   ],
   "unmapped": {
@@ -45,7 +45,9 @@
     "harness/verification/m3sl/SHA256SUMS": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
     "harness/verification/m3sl/check_emulation.py": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
     "harness/.gitignore": "Packet operational record, generated ledger view, ignore rule, or decision; tooling behavior covered by FL-195/196.",
-    "harness/verification/sym13/scenario_app.py": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change."
+    "harness/verification/sym13/scenario_app.py": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
+    "harness/verification/m3ib/resume-unchanged-tests.log": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change.",
+    "harness/verification/m3ib/resume-unchanged-coverage.log": "Regression fixture, historical import formatting/hash repair, or recorded verification evidence; no product behavior change."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -53,235 +55,235 @@
       "label": "Complete logs of every conversation are kept for good, until it becomes too expensive, and every session sits in one table with a session id so anything can be audited.",
       "walk": "Look up an old conversation in the sessions table; its row and its full log are there.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-008.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-014": {
       "label": "Every memory records the folder the agent stood in when it was made.",
       "walk": "`/remember` while the agent stands in a folder; the card shows that folder as WHERE.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-014.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-016": {
       "label": "All conversation history is kept the way Codex and Claude Code keep it; a conversation without history is not supported.",
       "walk": "Send three prompts, quit, `nocturne up`, select the thread; the three exchanges are there.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-016.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-017": {
       "label": "Every prompt is intercepted and relevant memories are added to the context before the model runs.",
       "walk": "Send a prompt in a thread with memories; the Injection Console shows the memories added before the model ran.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-017.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-018": {
       "label": "A hard pause on a thread's first prompt where the user scans and removes injected memories before the model starts; afterwards removal is ad hoc with no pause.",
       "walk": "New thread, first prompt; the gate opens with the memories and waits; the second prompt does not pause.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-018.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-038": {
       "label": "A cheap 80/20 duplicate check at memory creation, keeping the agent's memory work under 10% of build run time.",
       "walk": "Save a fact already in the Palace; the save comes back as a duplicate at once, without the agent reading other memories.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-038.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-039": {
       "label": "Agents make no memories until compaction; the explicit /remember command is the other way.",
       "walk": "Run an agent thread through a turn; no memory is created mid-turn, only at compaction or by /remember.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-039.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-042": {
       "label": "Constitution: 'Already known — reinforced' on re-saves; rejected candidates remembered and never re-proposed without material change (gate-day).",
       "walk": "Re-save a known fact; the reply says 'already known — reinforced'; reject a candidate and re-save it unchanged; it is not proposed again.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-042.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-067": {
       "label": "Agents move through the file structure of the machine they live in, and the interface shows where every agent is.",
       "walk": "Ask the agent to move to another folder; the interface shows its new location.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-067.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-070": {
       "label": "Image input: paste an image and the agent reviews it.",
       "walk": "Paste an image; the agent reviews it.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-070.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-071": {
       "label": "The location fence: an agent can edit only files in the exact directory it stands in, and its shell is kept to that subtree, enforced deterministically.",
       "walk": "Ask for an edit outside the agent's folder without moving; the edit is refused.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-071.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-074": {
       "label": "A new thread starts in a project folder with the location rule in effect; how a thread's project is specified was his open question (maybe configuration).",
       "walk": "Start a new thread in a folder; the thread shows that folder as its project and the location rule applies.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-074.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-079": {
       "label": "Full conversation history kept, the way Codex and Claude Code do.",
       "walk": "Restart the Harness and scroll a long thread; every earlier turn is still there.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-079.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-104": {
       "label": "A draft response to the final synthesis that you tweak and fire, after which the stack switches to the agent that has waited longest for your attention.",
       "walk": "Tweak the draft on the top card and fire it; the stack moves to the agent that has waited longest.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-104.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-117": {
       "label": "A proposed reply prefilled and editable; queued prompts advance on Enter with a scrollable queue.",
       "walk": "Press Enter in the prefilled proposed reply; the next queued prompt comes up and the queue scrolls.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-117.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-119": {
       "label": "A Palace State module holding the general state stats.",
       "walk": "Open the Palace State module; the general state stats are there, not in the Spend table.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-119.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-157": {
       "label": "Constitution: spend walls, soft budgets per run or day that pause the work at the wall for the judge (symphony budget law).",
       "walk": "Start a symphony with a small budget; when spend reaches the wall the run pauses and a boundary card appears on the Deck for the judge.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-157.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-169": {
       "label": "Client and cloud versions stay sync-locked or backward compatible, following industry practice, so version differences feel seamless.",
       "walk": "Start a client whose version differs from the cloud Palace's; it either keeps working or refuses with a plain version message.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-169.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-171": {
       "label": "A startup and settings option: \"Back up conversation transcripts to cloud?\"",
       "walk": "Toggle \"Back up conversation transcripts to cloud?\" in the settings menu; the backup line changes, and the same question is asked at first startup.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-171.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-173": {
       "label": "Constitution: a warming retry when the Palace is asleep, a \"busy, retrying\" banner on rate limits, and the banner clears on recovery (gate-day).",
       "walk": "Start the Harness against a sleeping Palace; a warming line shows, then clears when the Palace answers.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-173.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-174": {
       "label": "Constitution: a doctor readout naming which identity the running daemon is (gate verification-identity work).",
       "walk": "Run doctor; the readout names the daemon's identity and its home.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-174.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-175": {
       "label": "Constitution: a sandbox whose boundary crossings are surfaced as cards on the Deck (Invariant 14).",
       "walk": "Have an agent try to write outside its fence; the work pauses and a boundary card appears on the Deck.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-175.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-178": {
       "label": "Constitution: a verification identity with its own account and home for tests and scouts (gate verification-identity work).",
       "walk": "Start the daemon as the verification identity; its Palace shows none of the owner's memories.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-178.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-179": {
       "label": "Constitution: a plain ownership refusal when one identity tries to decide another identity's approval queue item (gate verification-identity work).",
       "walk": "As the verification identity, decide a card in the owner's approval queue; a plain refusal appears.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-179.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-191": {
       "label": "The tools and skills Claude Code and Codex use on this machine, pinned to versioned open-source sources.",
       "walk": "Open the tool inventory; each tool or skill lists the versioned open-source source it is pinned to.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-191.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-194": {
       "label": "The Pydantic toolset and skills as the tool layer.",
       "walk": "Open the agent's tool list in a thread; the tools come from the Pydantic toolset plus skills, not from pi.",
       "protected": true,
-      "verdict": "",
-      "screenshot": "FL-194.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-195": {
       "label": "The feature ledger generates coverage reports and requires evidence for the rows affected by a build.",
@@ -290,7 +292,7 @@
       "verdict": "PASS",
       "screenshot": "FL-195.png",
       "flag": "",
-      "observed": "PASS: both frozen standalone tools and hooks ran without Garden; absent screenshots refused empty DONE commits. 27 isolated regression tests include complete-evidence acceptance, resumed packet history, independent unmapped paths, and protected ordering. Hosted impact jobs run from the local frozen copies."
+      "observed": "PASS: both frozen standalone tools and hooks ran without Garden; absent screenshots refused empty DONE commits. 30 isolated regression tests include complete-evidence acceptance, resumed packet history, independent unmapped paths, and protected ordering. Hosted impact jobs run from the local frozen copies."
     },
     "FL-196": {
       "label": "The rules machine checks citations, frozen law, product vocabulary, seed states and packet precedents.",
@@ -305,163 +307,172 @@
       "label": "Memory units have a length cap; a memory over the cap is shortened to fit as one memory, and it is split only when it holds more than one distinct fact, with the split logged.",
       "walk": "/remember a 300-token paragraph holding one fact; one memory lands, shortened to the cap; a paragraph holding two facts lands as two.",
       "protected": false,
-      "verdict": "",
-      "screenshot": "FL-002.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-006": {
       "label": "Every memory carries a location column and a project column.",
       "walk": "Open a memory card; project and location are shown.",
       "protected": false,
-      "verdict": "",
-      "screenshot": "FL-006.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-007": {
       "label": "Every memory links to the full conversation it came from, so an agent can reach more than just the memory when needed.",
       "walk": "Open a memory card; it names the conversation it came from, and following that link opens the conversation.",
       "protected": false,
-      "verdict": "",
-      "screenshot": "FL-007.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-009": {
       "label": "Record files (history, transcripts) live apart from code so code can be deleted and re-downloaded without losing history.",
       "walk": "Delete the code folder, reinstall, `nocturne up`; every thread is still there.",
       "protected": false,
-      "verdict": "",
-      "screenshot": "FL-009.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-010": {
       "label": "Every thread has a thread id, and every memory records the thread it was born in.",
       "walk": "Open a memory card; the thread it was born in is named.",
       "protected": false,
-      "verdict": "",
-      "screenshot": "FL-010.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-069": {
       "label": "The core tools every modern harness has: files, terminal, Chrome, skills, changing models, compaction (our own take), and interactions with common apps, taken from the most modular standard source.",
       "walk": "Ask the agent to read a file, run a terminal command, open a page in the browser and use a skill; each works.",
       "protected": false,
-      "verdict": "",
-      "screenshot": "FL-069.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-072": {
       "label": "The progressive prompting protocol is dynamic to the agent's moves: a move re-prompts the agent for its new location.",
       "walk": "Move the agent; the next turn's system prompt shows the new location.",
       "protected": false,
-      "verdict": "",
-      "screenshot": "FL-072.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-073": {
       "label": "The location rule written into Nocturne's own system prompt.",
       "walk": "Read the transcript's system line for Nocturne; the location rule is stated there.",
       "protected": false,
-      "verdict": "",
-      "screenshot": "FL-073.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-075": {
       "label": "Queuing prompts and interjecting or steering a running agent, like the modern harnesses do.",
       "walk": "Queue a prompt during a run and interject once; the queued prompt runs after and the interjection steers the run.",
       "protected": false,
-      "verdict": "",
-      "screenshot": "FL-075.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-085": {
       "label": "The work loop: spec alignment with the user, then the agent loop (optionally several agents in worktrees attempting the same thing), then the judge checks the work against the spec and either calls it done or sends another agent to continue or fix, and the human is only brought back in when the judge says done.",
       "walk": "Run a symphony; attempts run in worktrees, the judge's verdict against the spec appears, and the card returns to the human only after the judge says done.",
       "protected": false,
-      "verdict": "",
-      "screenshot": "FL-085.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
+    },
+    "FL-197": {
+      "label": "Spend and Palace state reads use the calling principal; only the configured owner can request the whole Palace.",
+      "walk": "In a verification daemon, open Spend and Palace State and see only that principal's receipts and counts. In a local fixture, compare the configured owner's whole-Palace view. Request scope=palace as the verification principal and see a plain 403. Keep owner-rack captures out of evidence.",
+      "protected": false,
+      "verdict": "UNCHANGED",
+      "screenshot": "",
+      "flag": "",
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-162": {
       "label": "Easy onboarding from a single splash repo, needing only two secrets: a GCP credential and an OpenRouter key.",
       "walk": "On a fresh machine, follow the splash repo's install steps; you are asked for a GCP credential and an OpenRouter key and nothing else before the app comes up.",
       "protected": false,
-      "verdict": "",
-      "screenshot": "FL-162.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-166": {
       "label": "A prompt when the app's memory use passes a threshold of the local system's memory, memory-leak guards, and no proceeding without write access at startup.",
       "walk": "Start the daemon in a folder with no write access; it refuses to proceed, and doctor shows the app's memory use against its threshold.",
       "protected": false,
-      "verdict": "",
-      "screenshot": "FL-166.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-168": {
       "label": "A restore popup that asks whether to roll back these memories and lists them.",
       "walk": "Press restore; a popup asks whether to roll back and lists the memories that would come back.",
       "protected": false,
-      "verdict": "",
-      "screenshot": "FL-168.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-170": {
       "label": "A fresh reinstall that reconnects to existing files and auto-finds the cloud palace.",
       "walk": "Reinstall on the same machine and run the start command; it finds the existing cloud Palace and the old threads without being told where they are.",
       "protected": false,
-      "verdict": "",
-      "screenshot": "FL-170.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-186": {
       "label": "Build on Pydantic AI in a way that lets us modify and extend without waiting on them, passing features back and forth with their library.",
       "walk": "Upgrade the Pydantic AI dependency; the Harness's own additions keep working and the new upstream features are usable.",
       "protected": false,
-      "verdict": "",
-      "screenshot": "FL-186.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-190": {
       "label": "The Harness can use skills and has the best and most common tools available, compiled from a list.",
       "walk": "Ask the agent to use a skill in a thread; it loads the skill and follows it.",
       "protected": false,
-      "verdict": "",
-      "screenshot": "FL-190.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-192": {
       "label": "Swappable seams: router, model policy with an off-switch, toolset as a unit, memory system.",
       "walk": "Change the toolset in config to a different one as a unit; the next thread's agent has that toolset's tools.",
       "protected": false,
-      "verdict": "",
-      "screenshot": "FL-192.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     },
     "FL-193": {
       "label": "The common core of terminal-agent tools (skills, progressive prompting, model switching, compaction, app interactions) in one piece that pulls upstream updates.",
       "walk": "Update the shared core-tools piece to its newest upstream version; skills, model switching and the rest keep working in the Harness.",
       "protected": false,
-      "verdict": "",
-      "screenshot": "FL-193.png",
+      "verdict": "UNCHANGED",
+      "screenshot": "",
       "flag": "",
-      "observed": "Not rewalked: required only because the hosted formatter touched source/tests. Syntax trees are unchanged after docstring whitespace normalization. This proof is not being labeled a fresh feature walk; owner scope and evidence ruling is pending (F099)."
+      "observed": "F099 resolved: the verifier proves syntax-tree equality on every affected Python path, ignoring docstring whitespace only. The authorized formatting repairs need no screenshot or feature walk."
     }
   },
   "not_run": {
