@@ -413,10 +413,10 @@ export function MemoryPanel({
                   <p>Project · {memory.project_key ?? 'No project'}</p>
                   <p>Thread · {originThread?.title ?? origin ?? 'No origin thread'}</p>
                   <p>Keywords · {memory.keywords.join(', ') || 'None recorded'}</p>
-                  {originThread !== undefined && <button type="button" onClick={() => {
+                  {originThread !== undefined && <div className="principal-memory__actions"><button type="button" onClick={() => {
                     void events.dispatch({ type: 'thread.select', thread_id: originThread.thread_id })
                       .catch((error: unknown) => reportClientError(error, 'Origin conversation could not be opened'))
-                  }}>Open the conversation</button>}
+                  }}>Open the conversation</button></div>}
                   <details><summary>Revision history · r{memory.revision}</summary>
                     {(revisions?.length ?? 0) === 0 ? <p>History unavailable.</p> : <ol>
                       {revisions?.map((revision) => <li key={String(revision.rev_uid)}>
