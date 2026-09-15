@@ -46,7 +46,9 @@ def test_verification_daemon_cannot_list_owner_memories(tmp_path, monkeypatch):
     thread_id = str(uuid4())
 
     def palace(request):
-        assert request.url.path in {"/v1/memory-graph/query", "/v1/memories/scores"}, "unscoped Palace read"
+        assert request.url.path in {
+            "/v1/memory-graph/query", "/v1/memories/scores"
+        }, "unscoped Palace read"
         query = json.loads(request.content)
         requested.append(query["principal_id"])
         if request.url.path == "/v1/memories/scores":
@@ -55,7 +57,8 @@ def test_verification_daemon_cannot_list_owner_memories(tmp_path, monkeypatch):
                                            if memory.principal_id == query["principal_id"]})
         return httpx.Response(200, json={
             "as_of": datetime.now(UTC).isoformat(), "graph_edge_sim": 0.8,
-            "nodes": [{"memory": memory.model_dump(mode="json"), "revisions": []} for memory in corpus
+            "nodes": [{"memory": memory.model_dump(mode="json"), "revisions": []}
+                      for memory in corpus
                       if memory.principal_id == query["principal_id"]],
             "edges": [], "omitted_memory_ids": [],
         })
