@@ -781,7 +781,6 @@ def create_dev_app(
     owned_agent = agent or HarnessAgent(
         configured,
         router=completion_router,
-        skill_directories=discover_skill_libraries(discovery_root),
     )
     factory = EnvelopeFactory(machine_id=machine_id, agent_id=agent_id)
     owned_symphony_experience = symphony_experience or SymphonyExperience(id_factory=factory.new_id)
@@ -828,6 +827,7 @@ def create_dev_app(
             raise ValueError("agent thread_id must be a UUID") from exc
         project_key = loop.project_key(thread_id)
         workspace_toolset = workspace_toolset_for(thread_id)
+        location = workspace_toolset.location()
         return MemoryToolContext(
             spine=owned_spine,
             principal_id=principal_id,
@@ -837,6 +837,7 @@ def create_dev_app(
             project_key=project_key,
             origin_path=workspace_location_path(workspace_toolset.location()),
             toolset=workspace_toolset,
+            skill_directories=discover_skill_libraries(location.workspace_root, location.cwd),
         )
 
     memory_contexts = ThreadMemoryContextRegistry()

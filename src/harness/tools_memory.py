@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 from uuid import UUID
 
@@ -80,6 +81,7 @@ class MemoryToolContext:
     project_key: str | None = None
     origin_path: str | None = None
     toolset: StandardToolset | None = None
+    skill_directories: tuple[Path, ...] = ()
     excluded_memory_ids: frozenset[UUID] = frozenset()
     _run_state: _MemoryToolRunState = field(
         default_factory=_MemoryToolRunState,

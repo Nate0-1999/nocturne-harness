@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -39,6 +39,7 @@ from harness.context_window import ContextWindowTracker
 from harness.envelope import GateCommitPayload, StopReason
 from harness.model_policy import ThreadModelResolution
 from harness.openrouter_runtime import PreservingOpenRouterModel
+from harness.pydantic_harness_adapter import discover_skill_libraries
 from harness.receipt_queue import SpendReceiptQueue
 from harness.run_protocol import DynamicSystemInstructions, UsageSnapshot
 from harness.spine_client import (
@@ -82,6 +83,38 @@ def settings(**overrides: Any) -> HarnessSettings:
 class UnusedSpine:
     def __getattr__(self, name: str) -> Any:
         raise AssertionError(f"unexpected Spine call: {name}")
+
+
+@pytest.mark.asyncio
+async def test_thread_location_skill_loads_after_agent_construction(tmp_path: Path) -> None:
+    """PLAN M3SK / F082: a late-created thread skill loads through the adopted capability."""
+    async def stream(messages, info):
+        loaded = [part for message in messages if isinstance(message, ModelRequest)
+                  for part in message.parts if isinstance(part, ToolReturnPart)
+                  and part.tool_name == 'load_capability']
+        if not loaded:
+            assert any(tool.name == 'load_capability' for tool in info.function_tools)
+            yield {0: DeltaToolCall(name='load_capability', json_args='{"id":"proof"}',
+                                   tool_call_id='load-proof')}
+        else:
+            assert 'Answer with SKILL VERIFIED: heron.' in str(messages)
+            yield 'SKILL VERIFIED: heron.'
+
+    agent = HarnessAgent(settings(), model=FunctionModel(stream_function=stream))
+    location = tmp_path / 'project' / 'nested'
+    skill = location / '.agents' / 'skills' / 'proof'
+    skill.mkdir(parents=True)
+    (skill / 'SKILL.md').write_text(
+        '---\nname: proof\ndescription: Verify the location skill.\n---\n'
+        'Answer with SKILL VERIFIED: heron.\n'
+    )
+    libraries = discover_skill_libraries(tmp_path / 'project', location)
+    emitter = RecordingEmitter()
+    runner = PydanticAITurnRunner(agent, lambda _: replace(context(), skill_directories=libraries))
+    outcome = await runner.run(thread_id=str(THREAD_UUID), prompt='Use proof.',
+                               message_history=(), emit=emitter)
+    assert outcome.assistant_text == 'SKILL VERIFIED: heron.'
+    assert outcome.usage.requests == 2
 
 
 def context(spine: object | None = None, *, toolset: object | None = None) -> MemoryToolContext:

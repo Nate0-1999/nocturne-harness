@@ -138,12 +138,17 @@ def adopted_skills(directories: Sequence[Path]) -> tuple[AdoptedSkill, ...]:
     return tuple(adopted)
 
 
-def discover_skill_libraries(workspace_root: Path) -> tuple[Path, ...]:
-    """Return the explicit project and user libraries inherited from the PI layer."""
+def discover_skill_libraries(
+    workspace_root: Path, current_location: Path | None = None,
+) -> tuple[Path, ...]:
+    """Discover libraries from the thread root through its current location. [PLAN M3SK]"""
 
+    locations = [workspace_root]
+    if current_location is not None:
+        for part in current_location.relative_to(workspace_root).parts:
+            locations.append(locations[-1] / part)
     candidates = (
-        workspace_root / ".agents" / "skills",
-        workspace_root / ".pi" / "skills",
+        *(location / folder / "skills" for location in locations for folder in (".agents", ".pi")),
         Path.home() / ".agents" / "skills",
         Path.home() / ".pi" / "agent" / "skills",
     )

@@ -194,6 +194,7 @@ class PydanticAITurnRunner:
                     user_prompt,
                     deps=context,
                     instructions=instructions,
+                    capabilities=self._agent.skill_capabilities(context),
                     message_history=cast(Sequence[ModelMessage], prior_history),
                     model=selected_model,
                     model_settings=model_settings,

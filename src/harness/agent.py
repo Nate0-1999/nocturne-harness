@@ -243,6 +243,7 @@ class HarnessAgent:
         self._settings = settings
         self._router = router or CompletionRouter(settings)
         self._default_model = model
+        self._skill_directories = tuple(skill_directories)
         self._models_by_name: dict[str, Model] = (
             {settings.chat_model: model} if model is not None else {}
         )
@@ -259,7 +260,6 @@ class HarnessAgent:
         chat_capabilities = [
             MemoryCapability(),
             WorkspaceCapability(),
-            *adopted_skill_capabilities(skill_directories),
         ]
         self._chat_agent = Agent(
             self._default_model,
@@ -332,6 +332,10 @@ class HarnessAgent:
 
         return self._select_model(model)
 
+    def skill_capabilities(self, context: MemoryToolContext):
+        """Load the adopted catalog at this thread's current location. [PLAN M3SK]"""
+        return adopted_skill_capabilities(context.skill_directories or self._skill_directories)
+
     async def chat(
         self,
         prompt: str,
@@ -346,6 +350,7 @@ class HarnessAgent:
         result = await self._chat_agent.run(
             prompt,
             deps=context,
+            capabilities=self.skill_capabilities(context),
             message_history=message_history,
             model=self._select_model(model),
             model_settings=model_settings,
