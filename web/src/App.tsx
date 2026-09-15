@@ -2679,9 +2679,16 @@ function ThreadEndModule() {
     RACK_MANIFESTS.thread_end.default_scope,
   )
   const [cards, setCards] = useState<ThreadEndQueueCard[]>([])
+  const [refresh, setRefresh] = useState(0)
   const selectedThreadId = snapshot.selectedThreadId
   const selectedThread = selectedThreadId === null ? null : snapshot.threads[selectedThreadId]
   const finalPost = finalAssistantPost(selectedThread?.messages ?? [])
+
+  useEffect(() => events.subscribe((event) => {
+    if (event.direction === 'inbound' && event.envelope.type === 'run.done') {
+      setRefresh((value) => value + 1)
+    }
+  }), [events])
 
   useEffect(() => {
     void events.dispatch({ type: 'rack.scope.get', module_id: 'thread_end' }).then(setScope)
@@ -2692,7 +2699,7 @@ function ThreadEndModule() {
     void events.dispatch({ type: 'queue.load', thread_id: threadId, birthplace: 'thread' }).then((value) => {
       setCards(queueCardsFrom(value))
     }).catch(() => setCards([]))
-  }, [events, scope, selectedThreadId])
+  }, [events, scope, selectedThreadId, refresh])
 
   return (
     <div className="thread-end-module">
@@ -3371,6 +3378,11 @@ function MessageRow({
           Conversation compacted · full history kept in the journal
         </p>
       )}
+      {message.events.filter((event) => event.event_kind === 'worker_return').map((event, index) => (
+        <p key={`worker-return-${index}`} className="message__content message__content--quiet" data-testid="worker-return">
+          Worker returned {String(event.returned_bytes)} bytes{event.capped ? ' · capped' : ''} · full result kept in the journal
+        </p>
+      ))}
       {message.content ? (
         <AssistantMarkdown content={message.content} />
       ) : (

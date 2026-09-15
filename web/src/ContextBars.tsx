@@ -99,7 +99,7 @@ export function ContextBars() {
                 style={{ width: `${visibleObservation.categories[category] / visibleObservation.context_tokens * 100}%` }}
               />
             ))}
-            <i style={{ left: `${visibleObservation.threshold_tokens / visibleObservation.context_tokens * 100}%` }} title="80% threshold" />
+            <i style={{ left: `${visibleObservation.threshold_tokens / visibleObservation.context_tokens * 100}%` }} title={`${formatHumanPercent(visibleObservation.threshold_tokens / visibleObservation.context_tokens * 100)} compaction threshold`} />
           </div>
           <table className="context-bars__legend">
             <caption>Token breakdown</caption>
@@ -115,7 +115,7 @@ export function ContextBars() {
                 : ` · ${formatHumanCount(visibleObservation.memory_allocation.unused_share_tokens)} unused returns to chat`}
             </p>
           )}
-          <p className="context-bars__note">Tools include measured traffic · other lanes estimated · Compaction at 80% of the main conversation</p>
+          <p className="context-bars__note">Provider total {formatHumanPercent(usedPercent)} · lanes estimated · Compaction at {formatHumanPercent(visibleObservation.threshold_tokens / visibleObservation.context_tokens * 100)} of the main conversation</p>
         </>
       )}
       {failed && <button className="context-bars__retry" onClick={() => setRefresh((value) => value + 1)}>Context usage unavailable · retry</button>}

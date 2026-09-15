@@ -1303,7 +1303,8 @@ class SpineClient:
 
     async def notify_compaction(self, event_uid: str, thread_id: UUID) -> None:
         response = await self._request(
-            "POST", "v1/compactions",
+            "POST",
+            "v1/compactions",
             json_body={"event_uid": event_uid, "thread_id": str(thread_id)},
         )
         if response.status_code != 202:
