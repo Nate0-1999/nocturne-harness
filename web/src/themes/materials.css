@@ -18,22 +18,25 @@ html[data-theme="seraph-dressed"] {
   );
   --theme-rim: linear-gradient(
     135deg,
-    var(--plate-chrome-peak) 0 7%,
-    var(--plate-chrome-dark) 7% 43%,
-    var(--plate-chrome-blaze) 43% 49%,
-    var(--plate-chrome-seam) 49% 78%,
-    var(--plate-chrome-peak) 78% 83%,
-    var(--plate-chrome-dark) 83% 100%
+    var(--plate-chrome-peak) 0%,
+    var(--plate-chrome-bright) 18%,
+    var(--plate-chrome-seam) 22%,
+    var(--plate-chrome-peak) 25%,
+    var(--plate-chrome-blaze) 54%,
+    var(--plate-chrome-mid) 67%,
+    var(--plate-chrome-peak) 72% 100%
   );
   --theme-rim-hover: linear-gradient(
     135deg,
-    var(--plate-chrome-peak) 0 12%,
-    var(--plate-chrome-seam) 12% 38%,
-    var(--plate-chrome-blaze) 38% 52%,
-    var(--plate-chrome-dark) 52% 72%,
-    var(--plate-chrome-peak) 72% 88%,
-    var(--plate-chrome-seam) 88% 100%
+    var(--plate-chrome-blaze) 0%,
+    var(--plate-chrome-peak) 20% 38%,
+    var(--plate-chrome-mid) 42%,
+    var(--plate-chrome-peak) 46% 70%,
+    var(--plate-chrome-bright) 84%,
+    var(--plate-chrome-peak) 100%
   );
+  --theme-rim-width: 2px;
+  --theme-rim-hover-width: 3px;
   --theme-horizon: var(--plate-horizon);
 }
 
@@ -79,12 +82,20 @@ html[data-pressed-colorway] .rack-module {
   border-color: transparent;
 }
 
+html[data-theme="seraph-dressed"] .rack-module::after {
+  width: auto;
+  height: auto;
+  box-sizing: border-box;
+  clip-path: none;
+  filter: none;
+}
+
 html[data-theme="seraph-dressed"] .rack-module::after,
 html[data-pressed-colorway] .rack-module::after {
   position: absolute;
   z-index: 5;
   inset: 0;
-  padding: 1px;
+  padding: var(--theme-rim-width, 1px);
   pointer-events: none;
   background: var(--theme-rim) fixed;
   content: "";
@@ -97,7 +108,7 @@ html[data-theme="seraph-dressed"] .rack-module[data-dragging="true"]::after,
 html[data-pressed-colorway] .rack-module:hover::after,
 html[data-pressed-colorway] .rack-module:focus-within::after,
 html[data-pressed-colorway] .rack-module[data-dragging="true"]::after {
-  padding: 2px;
+  padding: var(--theme-rim-hover-width, 2px);
   background: var(--theme-rim-hover) fixed;
 }
 
