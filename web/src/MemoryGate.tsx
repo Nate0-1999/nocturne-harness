@@ -171,7 +171,7 @@ export function MemoryGate({
     event: PointerEvent<HTMLButtonElement>,
     memoryId: string,
   ): void {
-    if (event.pointerType !== 'touch' || controlsDisabled) {
+    if (event.button !== 0 || controlsDisabled) {
       return
     }
     clearLongPress()
@@ -499,6 +499,21 @@ export function MemoryGate({
                               >
                                 {never ? 'Never ✓' : 'Never'}
                               </button>
+                              <button type="button" aria-label={`More options for ${card.label}`}
+                                aria-haspopup="dialog" aria-expanded={modifierFor === card.memory_id}
+                                disabled={controlsDisabled}
+                                onPointerDown={(event) => beginLongPress(event, card.memory_id)}
+                                onPointerMove={moveLongPress} onPointerUp={clearLongPress}
+                                onPointerCancel={clearLongPress} onPointerLeave={clearLongPress}
+                                onClick={() => { suppressClickRef.current = null; setModifierFor(card.memory_id) }}>
+                                <span aria-hidden="true">×</span>
+                              </button>
+                              {modifierFor === card.memory_id && <div role="dialog" aria-label={`Exclude ${card.label}`}>
+                                <button type="button" disabled={controlsDisabled} onClick={() => {
+                                  toggleNearMissNever(card.memory_id); setModifierFor(null)
+                                }}>Never show this</button>
+                                <button type="button" onClick={() => setModifierFor(null)}>Cancel</button>
+                              </div>}
                             </div>
                           }
                         />

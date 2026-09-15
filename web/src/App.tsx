@@ -3232,6 +3232,9 @@ function MemoryModule() {
       onRefresh={() => events.dispatch({ type: 'memory.refresh' })}
       onAdd={(memoryId) => events.dispatch({ type: 'memory.add', memory_id: memoryId })}
       onRemove={(memoryId) => events.dispatch({ type: 'memory.remove', memory_id: memoryId })}
+      onDelete={(memoryId, expectedRevision) => events.dispatch({
+        type: 'memory.delete', memory_id: memoryId, expected_revision: expectedRevision,
+      })}
       onEdit={(memoryId, expectedRevision, body) =>
         events.dispatch({
           type: 'memory.edit',

@@ -134,6 +134,7 @@ export type RackAction =
   | { type: 'memory.refresh' }
   | { type: 'memory.add'; memory_id: string }
   | { type: 'memory.remove'; memory_id: string }
+  | { type: 'memory.delete'; memory_id: string; expected_revision: number }
   | {
       type: 'memory.edit'
       memory_id: string
@@ -293,7 +294,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'visualizer',
     slot: 'panel',
     streams: ['thread.snapshot', 'memory.panel.update'],
-    actions: ['memory.refresh', 'memory.add', 'memory.remove', 'memory.edit', 'memory.pin', 'thread.select'],
+    actions: ['memory.refresh', 'memory.add', 'memory.remove', 'memory.edit', 'memory.pin', 'memory.delete', 'thread.select'],
     bounds: stageGridBounds(RACK_BOUNDS.memory.preferred),
     movable: true,
     law_bound: true,
@@ -390,7 +391,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
   memory_graph: {
     id: 'memory_graph', name: 'Memory Graph', version: '1.0.0', class: 'visualizer',
     slot: 'panel', streams: ['memory.panel.update'],
-    actions: ['rack.scope.get', 'rack.scope.set'], bounds: stageGridBounds(instrumentStageBounds.preferred),
+    actions: ['rack.scope.get', 'rack.scope.set', 'memory.refresh', 'memory.add', 'memory.remove', 'memory.edit', 'memory.pin', 'memory.delete', 'thread.select'], bounds: stageGridBounds(instrumentStageBounds.preferred),
     movable: true, law_bound: true, default_scope: 'GLOBAL',
   },
   palace_nebula: {
@@ -658,6 +659,8 @@ function dispatchRackAction<Action extends RackAction>(
         return harnessClient.refreshMemoryPanel() as RackActionResult<Action>
       case 'memory.remove':
         return harnessClient.removeMemoryFromContext(action.memory_id) as RackActionResult<Action>
+      case 'memory.delete':
+        return harnessClient.deleteMemory(action.memory_id, action.expected_revision) as RackActionResult<Action>
       case 'memory.add':
         return harnessClient.addMemoryToContext(action.memory_id) as RackActionResult<Action>
       case 'memory.edit':

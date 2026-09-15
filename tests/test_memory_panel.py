@@ -13,6 +13,7 @@ from harness.envelope import (
     EnvelopeFactory,
     MemoryPanelAddPayload,
     MemoryPanelConflictPayload,
+    MemoryPanelDeletePayload,
     MemoryPanelEditPayload,
     MemoryPanelErrorPayload,
     MemoryPanelPinPayload,
@@ -256,7 +257,8 @@ async def handle(
     | MemoryPanelAddPayload
     | MemoryPanelRemovePayload
     | MemoryPanelEditPayload
-    | MemoryPanelPinPayload,
+    | MemoryPanelPinPayload
+    | MemoryPanelDeletePayload,
 ) -> Envelope:
     sent: list[Envelope] = []
 
@@ -302,9 +304,7 @@ async def test_refresh_pages_global_active_list_before_principal_filtering() -> 
     assert [item.memory.memory_id for item in response.payload.items] == [MEMORY_A, MEMORY_B]
     assert [item.in_context for item in response.payload.items] == [True, False]
     assert [item.offset for item in spine.list_requests] == [0, 2]
-    assert all(
-        item.status is MemoryStatus.ACTIVE and item.limit == 200 for item in spine.list_requests
-    )
+    assert all(item.status is None and item.limit == 200 for item in spine.list_requests)
 
 
 @pytest.mark.asyncio
@@ -625,7 +625,7 @@ async def test_pin_uses_browser_revision_and_daemon_owned_provenance() -> None:
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("operation", ["edit", "pin"])
+@pytest.mark.parametrize("operation", ["edit", "pin", "delete"])
 async def test_patch_cas_conflict_surfaces_current_unit_without_retry(operation: str) -> None:
     """A-030 is defended by verifying that patch cas conflict surfaces current unit without
     retry; this prevents drift in the owner memory control and context-rebinding contract.
@@ -646,13 +646,19 @@ async def test_patch_cas_conflict_surfaces_current_unit_without_retry(operation:
         RevisionConflict(conflict=current),
     )
     spine = FakeSpine([original], patch_outcomes=[conflict])
-    payload: MemoryPanelEditPayload | MemoryPanelPinPayload
+    payload: MemoryPanelEditPayload | MemoryPanelPinPayload | MemoryPanelDeletePayload
     if operation == "edit":
         payload = MemoryPanelEditPayload(
             action="edit",
             memory_id=MEMORY_A,
             expected_revision=2,
             body="Stale edit",
+        )
+    elif operation == "delete":
+        payload = MemoryPanelDeletePayload(
+            action="delete",
+            memory_id=MEMORY_A,
+            expected_revision=2,
         )
     else:
         payload = MemoryPanelPinPayload(
@@ -669,6 +675,77 @@ async def test_patch_cas_conflict_surfaces_current_unit_without_retry(operation:
     assert response.payload.operation == operation
     assert response.payload.memory == current
     assert "try again" in response.payload.message
+
+
+@pytest.mark.asyncio
+async def test_delete_tombstones_owned_memory_and_preserves_frozen_context() -> None:
+    """SPEC C.4: deletion preserves history and cannot erase an in-flight prompt."""
+    original = memory_unit(MEMORY_A, revision=7)
+    tombstone = original.model_copy(update={"status": MemoryStatus.TOMBSTONED, "revision": 8})
+    spine = FakeSpine([original], patch_outcomes=[tombstone])
+    contexts = ThreadMemoryContextRegistry()
+    install_context(
+        contexts, [memory_card(MEMORY_A, label=original.label, body=original.body, rank=1)]
+    )
+    before = contexts.snapshot(THREAD_ID)
+    response = await handle(
+        controller(spine, contexts),
+        MemoryPanelDeletePayload(
+            action="delete",
+            memory_id=MEMORY_A,
+            expected_revision=7,
+        ),
+    )
+    assert spine.patch_requests == [
+        (
+            MEMORY_A,
+            PatchMemoryRequest(
+                expected_revision=7,
+                status=MemoryStatus.TOMBSTONED,
+                editor="user",
+                reason="panel/delete",
+                machine_id="trusted-machine",
+            ),
+        )
+    ]
+    assert response.payload.result == "deleted"
+    assert response.payload.items == []
+    assert contexts.snapshot(THREAD_ID).final_block == before.final_block
+
+
+@pytest.mark.asyncio
+async def test_delete_refuses_another_principals_memory() -> None:
+    """SPEC C.4: a forged browser action never tombstones a peer's memory."""
+    spine = FakeSpine([memory_unit(MEMORY_A, principal_id="peer")])
+    response = await handle(
+        controller(spine),
+        MemoryPanelDeletePayload(
+            action="delete",
+            memory_id=MEMORY_A,
+            expected_revision=1,
+        ),
+    )
+    assert response.payload.code == "memory_not_found"
+    assert spine.patch_requests == []
+
+
+@pytest.mark.asyncio
+async def test_refresh_retains_retired_heads_only_when_already_in_context() -> None:
+    """ADR-005: a superseded injected memory stays visible without reviving retired peers."""
+    contexts = ThreadMemoryContextRegistry()
+    install_context(contexts, [memory_card(MEMORY_A, label="A", body="Original", rank=1)])
+    spine = FakeSpine(
+        [
+            memory_unit(MEMORY_A, status=MemoryStatus.TOMBSTONED),
+            memory_unit(MEMORY_B, status=MemoryStatus.TOMBSTONED),
+        ]
+    )
+    response = await handle(
+        controller(spine, contexts), MemoryPanelRefreshPayload(action="refresh")
+    )
+    assert [item.memory.memory_id for item in response.payload.items] == [MEMORY_A]
+    assert response.payload.items[0].in_context is True
+    assert "Original" in contexts.snapshot(THREAD_ID).final_block
 
 
 @pytest.mark.asyncio

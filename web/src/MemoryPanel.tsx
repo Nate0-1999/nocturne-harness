@@ -24,6 +24,7 @@ interface MemoryPanelProps {
   onRemove: (memoryId: string) => Promise<Ulid>
   onEdit: (memoryId: string, expectedRevision: number, body: string) => Promise<Ulid>
   onPin: (memoryId: string, expectedRevision: number, pin: boolean) => Promise<Ulid>
+  onDelete: (memoryId: string, expectedRevision: number) => Promise<Ulid>
 }
 
 interface EditorState {
@@ -49,6 +50,8 @@ function operationCopy(operation: string): string {
       return 'Saving'
     case 'pin':
       return 'Updating pin'
+    case 'delete':
+      return 'Deleting'
     default:
       return 'Working'
   }
@@ -64,6 +67,8 @@ function resultCopy(result: string): string {
       return 'Memory body saved. This thread refreshes it before the next response.'
     case 'pin_changed':
       return 'Pin state updated for future injections.'
+    case 'deleted':
+      return 'Deleted from the Palace. Its revision history is preserved.'
     default:
       return ''
   }
@@ -85,6 +90,7 @@ export function MemoryPanel({
   onRemove,
   onEdit,
   onPin,
+  onDelete,
 }: MemoryPanelProps) {
   const contributions = useContributionMap()
   const auditions = useScorerAuditionMap()
@@ -92,10 +98,14 @@ export function MemoryPanel({
   const { events } = useRackPlugin()
   const rack = useRackSnapshot()
   const [editor, setEditor] = useState<EditorState | null>(null)
+  const [deleting, setDeleting] = useState<MemoryUnit | null>(null)
+  const deleteDialog = useRef<HTMLDialogElement>(null)
   const [clientError, setClientError] = useState<string | null>(null)
   const panelRef = useRef<HTMLElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
+  const openedSelection = useRef<string | null>(null)
   const busy = panel.pending !== null
+  const activeCount = panel.items.filter((item) => item.memory.status === 'active').length
   const response = panel.lastResponse
   const editorResponse =
     editor?.requestId !== null &&
@@ -205,6 +215,18 @@ export function MemoryPanel({
     }
   }
 
+  async function deleteMemory() {
+    if (deleting === null) return
+    try {
+      setClientError(null)
+      await onDelete(deleting.memory_id, deleting.revision)
+      deleteDialog.current?.close()
+      setDeleting(null)
+    } catch (error) {
+      reportClientError(error, 'Memory could not be deleted')
+    }
+  }
+
   function beginEdit(memory: MemoryUnit) {
     if (memory.status !== 'active') {
       setClientError('This memory is unavailable. Refresh before taking another action.')
@@ -221,9 +243,11 @@ export function MemoryPanel({
   }
 
   useEffect(() => {
-    if (rackSelection?.kind !== 'memory') return
+    if (rackSelection?.kind !== 'memory') { openedSelection.current = null; return }
+    if (openedSelection.current === rackSelection.id) return
     const selected = panel.items.find((item) => item.memory.memory_id === rackSelection.id)?.memory
     if (selected !== undefined && selected.status === 'active') {
+      openedSelection.current = selected.memory_id
       queueMicrotask(() => {
         setClientError(null)
         setEditor({
@@ -298,8 +322,9 @@ export function MemoryPanel({
 
       <div className="memory-panel__toolbar">
         <p>
-          <strong>{panel.total}</strong>
-          <span>{panel.total === 1 ? ' active unit' : ' active units'}</span>
+          <strong>{activeCount}</strong>
+          <span>{activeCount === 1 ? ' active unit' : ' active units'}</span>
+          {panel.items.length > activeCount && <span> · {panel.items.length - activeCount} retained in context</span>}
         </p>
         <button
           type="button"
@@ -329,6 +354,9 @@ export function MemoryPanel({
         )}
         {pinConflict !== null && (
           <PinConflictNotice conflict={pinConflict} />
+        )}
+        {response?.action === 'conflict' && response.operation === 'delete' && (
+          <p role="alert">This memory changed before deletion. Refresh, review its latest version, and delete again.</p>
         )}
         {panelNotice && panel.pending === null && (
           <p className="memory-panel__notice">{panelNotice}</p>
@@ -394,7 +422,9 @@ export function MemoryPanel({
                           className="memory-badge memory-badge--unavailable"
                           data-testid="memory-unavailable"
                         >
-                          Unavailable · {memory.status}
+                          {inContext && revisions?.some((revision) => String(revision.reason).includes('supersede'))
+                            ? 'Superseded after injection · retained in this conversation'
+                            : `Unavailable · ${memory.status}`}
                         </span>
                       )}
                       {memory.pin && (
@@ -520,16 +550,25 @@ export function MemoryPanel({
                           type="button"
                           disabled={!connected || busy || unavailable}
                           onClick={() => beginEdit(memory)}
+                          aria-label="Edit body"
+                          title="Edit body"
                         >
-                          Edit body
+                          ✎
                         </button>
                         <button
                           type="button"
                           aria-pressed={memory.pin}
+                          aria-label={memory.pin ? 'Unpin' : 'Pin'}
+                          title={memory.pin ? 'Unpin' : 'Pin'}
                           disabled={!connected || busy || unavailable}
                           onClick={() => togglePin(memory)}
                         >
-                          {memory.pin ? 'Unpin' : 'Pin'}
+                          <span aria-hidden="true">⚑</span>
+                        </button>
+                        <button type="button" aria-label="Delete memory" title="Delete memory"
+                          disabled={!connected || busy || unavailable}
+                          onClick={() => { setDeleting(memory); deleteDialog.current?.showModal() }}>
+                          <span aria-hidden="true">⌫</span>
                         </button>
                         {inContext && (
                           <button
@@ -560,8 +599,36 @@ export function MemoryPanel({
           </div>
         )}
       </div>
+      <dialog ref={deleteDialog} aria-labelledby="delete-memory-title" className="memory-restore-dialog"
+        onClose={() => setDeleting(null)}>
+        <h2 id="delete-memory-title">Delete this memory from the Palace?</h2>
+        <p><strong>{deleting?.label}</strong></p>
+        <p>{deleting?.body}</p>
+        <p>It will no longer be offered to conversations. Its history is preserved and can be restored; this does not erase past conversations.</p>
+        <button type="button" onClick={() => deleteDialog.current?.close()}>Cancel</button>
+        <button type="button" disabled={!connected || busy || deleting === null} onClick={() => void deleteMemory()}>Delete from Palace</button>
+      </dialog>
     </aside>
   )
+}
+
+export function SelectedMemoryPanel({ memoryId }: { memoryId: string }) {
+  const rack = useRackSnapshot()
+  const { events } = useRackPlugin()
+  const thread = rack.selectedThreadId === null ? null : rack.threads[rack.selectedThreadId]
+  if (thread === null || thread === undefined) return <p>Select a conversation to edit this memory.</p>
+  const items = thread.memoryPanel.items.filter((item) => item.memory.memory_id === memoryId)
+  if (items.length === 0) return <p>This memory is not active in the Palace.</p>
+  return <MemoryPanel panel={{ ...thread.memoryPanel, items, total: items.length }}
+    connected={rack.connection === 'connected' && !thread.awaitingSnapshot}
+    removeEnabled={thread.activeRun === null} mobileOpen={false} inert={false} onClose={() => {}}
+    onRefresh={() => events.dispatch({ type: 'memory.refresh' })}
+    onAdd={(id) => events.dispatch({ type: 'memory.add', memory_id: id })}
+    onRemove={(id) => events.dispatch({ type: 'memory.remove', memory_id: id })}
+    onEdit={(id, revision, body) => events.dispatch({ type: 'memory.edit', memory_id: id, expected_revision: revision, body })}
+    onPin={(id, revision, pin) => events.dispatch({ type: 'memory.pin', memory_id: id, expected_revision: revision, pin })}
+    onDelete={(id, revision) => events.dispatch({ type: 'memory.delete', memory_id: id, expected_revision: revision })}
+  />
 }
 
 function PinConflictNotice({

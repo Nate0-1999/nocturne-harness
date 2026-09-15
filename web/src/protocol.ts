@@ -229,7 +229,7 @@ export type MemoryUnit = JsonObject & {
   updated_at: string
 }
 
-export type MemoryPanelOperation = 'refresh' | 'add' | 'remove' | 'edit' | 'pin'
+export type MemoryPanelOperation = 'refresh' | 'add' | 'remove' | 'edit' | 'pin' | 'delete'
 export type MemoryPanelResult =
   | 'refreshed'
   | 'added'
@@ -237,6 +237,7 @@ export type MemoryPanelResult =
   | 'edited'
   | 'pin_changed'
   | 'rescored'
+  | 'deleted'
 
 export type MemoryPanelItem = JsonObject & {
   memory: MemoryUnit
@@ -247,6 +248,7 @@ export type MemoryPanelItem = JsonObject & {
 }
 
 export type MemoryPanelRequestPayload =
+  | { action: 'delete'; memory_id: string; expected_revision: number }
   | { action: 'refresh' }
   | { action: 'add'; memory_id: string }
   | { action: 'remove'; memory_id: string }
@@ -274,7 +276,7 @@ export type MemoryPanelStatePayload = JsonObject & {
 export type MemoryPanelConflictPayload = JsonObject & {
   action: 'conflict'
   request_id: Ulid
-  operation: 'edit' | 'pin'
+  operation: 'edit' | 'pin' | 'delete'
   memory: MemoryUnit
   message: string
 }
@@ -889,7 +891,7 @@ function parseMemoryPanelUpdate(value: unknown): MemoryPanelServerPayload | null
 
   if (value.action === 'state') {
     if (
-      !['refreshed', 'added', 'removed', 'edited', 'pin_changed', 'rescored'].includes(
+      !['refreshed', 'added', 'removed', 'edited', 'pin_changed', 'rescored', 'deleted'].includes(
         String(value.result),
       ) ||
       !Array.isArray(value.items) ||
@@ -915,7 +917,7 @@ function parseMemoryPanelUpdate(value: unknown): MemoryPanelServerPayload | null
   if (value.action === 'conflict') {
     const memory = parseMemoryUnit(value.memory)
     if (
-      !['edit', 'pin'].includes(String(value.operation)) ||
+      !['edit', 'pin', 'delete'].includes(String(value.operation)) ||
       memory === null ||
       typeof value.message !== 'string' ||
       !value.message.trim()
@@ -926,7 +928,7 @@ function parseMemoryPanelUpdate(value: unknown): MemoryPanelServerPayload | null
       ...value,
       action: 'conflict',
       request_id: value.request_id,
-      operation: value.operation as 'edit' | 'pin',
+      operation: value.operation as 'edit' | 'pin' | 'delete',
       memory,
       message: value.message,
     }
@@ -934,7 +936,7 @@ function parseMemoryPanelUpdate(value: unknown): MemoryPanelServerPayload | null
 
   if (value.action === 'error') {
     if (
-      !['refresh', 'add', 'remove', 'edit', 'pin'].includes(String(value.operation)) ||
+      !['refresh', 'add', 'remove', 'edit', 'pin', 'delete'].includes(String(value.operation)) ||
       typeof value.code !== 'string' ||
       !value.code.trim() ||
       typeof value.message !== 'string' ||

@@ -551,6 +551,12 @@ class MemoryPanelPinPayload(_MemoryPanelPayload):
     pin: StrictBool
 
 
+class MemoryPanelDeletePayload(_MemoryPanelPayload):
+    action: Literal["delete"]
+    memory_id: UUID
+    expected_revision: Annotated[StrictInt, Field(ge=1)]
+
+
 class MemoryPanelItem(_MemoryPanelPayload):
     memory: MemoryUnit
     in_context: StrictBool
@@ -562,7 +568,7 @@ class MemoryPanelItem(_MemoryPanelPayload):
 class MemoryPanelStatePayload(_MemoryPanelPayload):
     action: Literal["state"]
     request_id: ULID
-    result: Literal["refreshed", "added", "removed", "edited", "pin_changed", "rescored"]
+    result: Literal["refreshed", "added", "removed", "edited", "pin_changed", "rescored", "deleted"]
     items: list[MemoryPanelItem]
     total: StrictInt
 
@@ -570,7 +576,7 @@ class MemoryPanelStatePayload(_MemoryPanelPayload):
 class MemoryPanelConflictPayload(_MemoryPanelPayload):
     action: Literal["conflict"]
     request_id: ULID
-    operation: Literal["edit", "pin"]
+    operation: Literal["edit", "pin", "delete"]
     memory: MemoryUnit
     message: NonBlankString
 
@@ -578,7 +584,7 @@ class MemoryPanelConflictPayload(_MemoryPanelPayload):
 class MemoryPanelErrorPayload(_MemoryPanelPayload):
     action: Literal["error"]
     request_id: ULID
-    operation: Literal["refresh", "add", "remove", "edit", "pin"]
+    operation: Literal["refresh", "add", "remove", "edit", "pin", "delete"]
     code: NonBlankString
     message: NonBlankString
 
@@ -589,6 +595,7 @@ type MemoryPanelPayload = Annotated[
     | MemoryPanelRemovePayload
     | MemoryPanelEditPayload
     | MemoryPanelPinPayload
+    | MemoryPanelDeletePayload
     | MemoryPanelStatePayload
     | MemoryPanelConflictPayload
     | MemoryPanelErrorPayload,

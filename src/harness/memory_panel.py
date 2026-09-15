@@ -16,6 +16,7 @@ from harness.envelope import (
     EnvelopeFactory,
     MemoryPanelAddPayload,
     MemoryPanelConflictPayload,
+    MemoryPanelDeletePayload,
     MemoryPanelEditPayload,
     MemoryPanelErrorPayload,
     MemoryPanelItem,
@@ -48,8 +49,10 @@ from harness.spine_client import (
 )
 
 type EnvelopeSender = Callable[[Envelope], Awaitable[None]]
-type PanelOperation = Literal["refresh", "add", "remove", "edit", "pin"]
-type PanelResult = Literal["refreshed", "added", "removed", "edited", "pin_changed", "rescored"]
+type PanelOperation = Literal["refresh", "add", "remove", "edit", "pin", "delete"]
+type PanelResult = Literal[
+    "refreshed", "added", "removed", "edited", "pin_changed", "rescored", "deleted"
+]
 type PanelEnricher = Callable[[str, list[MemoryPanelItem]], Awaitable[list[MemoryPanelItem]]]
 
 _MEMORY_BLOCK_PREFIX = (
@@ -340,6 +343,15 @@ class MemoryPanelController:
                 result="pin_changed",
                 send=send,
             )
+        elif isinstance(payload, MemoryPanelDeletePayload):
+            await self._patch(
+                thread_id=message.thread_id,
+                request_id=message.id,
+                payload=payload,
+                operation="delete",
+                result="deleted",
+                send=send,
+            )
         else:
             await self._send_error(
                 thread_id=message.thread_id,
@@ -489,9 +501,9 @@ class MemoryPanelController:
         *,
         thread_id: str,
         request_id: str,
-        payload: MemoryPanelEditPayload | MemoryPanelPinPayload,
-        operation: Literal["edit", "pin"],
-        result: Literal["edited", "pin_changed"],
+        payload: MemoryPanelEditPayload | MemoryPanelPinPayload | MemoryPanelDeletePayload,
+        operation: Literal["edit", "pin", "delete"],
+        result: Literal["edited", "pin_changed", "deleted"],
         send: EnvelopeSender,
     ) -> None:
         try:
@@ -526,6 +538,9 @@ class MemoryPanelController:
             expected_revision=payload.expected_revision,
             body=payload.body if isinstance(payload, MemoryPanelEditPayload) else None,
             pin=payload.pin if isinstance(payload, MemoryPanelPinPayload) else None,
+            status=MemoryStatus.TOMBSTONED
+            if isinstance(payload, MemoryPanelDeletePayload)
+            else None,
             editor="user",
             reason=f"panel/{operation}",
             machine_id=self._machine_id,
@@ -582,7 +597,8 @@ class MemoryPanelController:
         if (
             updated.memory_id != payload.memory_id
             or updated.principal_id != self._principal_id
-            or updated.status is not MemoryStatus.ACTIVE
+            or updated.status
+            is not (MemoryStatus.TOMBSTONED if operation == "delete" else MemoryStatus.ACTIVE)
             or updated.revision != payload.expected_revision + 1
             or (isinstance(payload, MemoryPanelEditPayload) and updated.body != payload.body)
             or (isinstance(payload, MemoryPanelPinPayload) and updated.pin is not payload.pin)
@@ -597,7 +613,9 @@ class MemoryPanelController:
             )
             return
         authoritative = [
-            updated if memory.memory_id == updated.memory_id else memory for memory in active
+            updated if memory.memory_id == updated.memory_id else memory
+            for memory in active
+            if operation != "delete" or memory.memory_id != updated.memory_id
         ]
         self._contexts.update_memory(thread_id, updated)
         await self._send_state(
@@ -619,14 +637,14 @@ class MemoryPanelController:
         send: EnvelopeSender,
         memories: Sequence[MemoryUnit] | None = None,
     ) -> None:
+        context = self._contexts.snapshot(thread_id)
+        members = context.member_ids if context is not None else frozenset()
         if memories is None:
             try:
-                memories = await self._active_principal_memories()
+                memories = await self._active_principal_memories(include_memory_ids=members)
             except SpineClientError as exc:
                 await self._send_spine_error(thread_id, request_id, operation, exc, send)
                 return
-        context = self._contexts.snapshot(thread_id)
-        members = context.member_ids if context is not None else frozenset()
         items = [
             MemoryPanelItem(
                 memory=memory,
@@ -653,7 +671,9 @@ class MemoryPanelController:
             )
         )
 
-    async def _active_principal_memories(self) -> list[MemoryUnit]:
+    async def _active_principal_memories(
+        self, *, include_memory_ids: frozenset[UUID] = frozenset()
+    ) -> list[MemoryUnit]:
         """Page the global C.4 list completely, then cross the browser boundary."""
 
         memories: list[MemoryUnit] = []
@@ -661,7 +681,7 @@ class MemoryPanelController:
         while True:
             page = await self._spine.list_memories(
                 ListMemoriesParams(
-                    status=MemoryStatus.ACTIVE,
+                    status=None if include_memory_ids else MemoryStatus.ACTIVE,
                     limit=200,
                     offset=offset,
                 )
@@ -669,7 +689,8 @@ class MemoryPanelController:
             memories.extend(
                 item
                 for item in page.items
-                if item.principal_id == self._principal_id and item.status is MemoryStatus.ACTIVE
+                if item.principal_id == self._principal_id
+                and (item.status is MemoryStatus.ACTIVE or item.memory_id in include_memory_ids)
             )
             if not page.items or offset + len(page.items) >= page.total:
                 break

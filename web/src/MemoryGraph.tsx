@@ -8,11 +8,17 @@ import {
   type KeyedMemoryGraphSnapshot,
 } from './memoryGraphSelection'
 import { declutterGraphLabels } from './memoryGraphLabels'
+import { SelectedMemoryPanel } from './MemoryPanel'
 import './assets/honest-display.css'
 
 type Node = { memory: { memory_id: string; label: string; body: string; kind: string; status: string; pin: boolean; revision: number; project_key: string | null; stats: { injections?: number } }; in_current_context: boolean; revisions: unknown[] }
 type Edge = { kind: string; from_memory_id: string; to_memory_id: string; similarity?: string; edge_type?: string }
 type Snapshot = { as_of: string; graph_edge_sim: number; nodes: Node[]; edges: Edge[]; omitted_memory_ids: string[] }
+const PARAMETER_LABELS: Record<string, string> = {
+  tau: 'Minimum match', top_k: 'Display limit', memory_context_share: 'Memory share',
+  half_life_time_days: 'Recent-use fade (days)', half_life_hist_days: 'Past-choice fade (days)',
+  sem: 'Meaning', kw: 'Keywords', time: 'Recency', proj: 'Project', freq: 'Use count', hist: 'Past choices',
+}
 
 export function MemoryGraph() {
   const { query, events, selection } = useRackPlugin()
@@ -20,6 +26,7 @@ export function MemoryGraph() {
   const [scope, setScope] = useState<'GLOBAL' | 'ATTUNED'>('GLOBAL')
   const [loadedSnapshot, setLoadedSnapshot] = useState<KeyedMemoryGraphSnapshot<Snapshot> | null>(null)
   const [selected, setSelected] = useState<Node | null>(null)
+  const [parameters, setParameters] = useState<Record<string, unknown> | null>(null)
   const [failure, setFailure] = useState<{ requestKey: string; message: string } | null>(null)
   const threadId = scope === 'ATTUNED' ? rack.selectedThreadId : null
   const requestKey = memoryGraphRequestKey(scope, threadId)
@@ -29,30 +36,41 @@ export function MemoryGraph() {
 
   useEffect(() => {
     void events.dispatch({ type: 'rack.scope.get', module_id: 'memory_graph' }).then(setScope)
-  }, [events])
+    void query.query({ resource: 'scorer_console', as_of: 'now' }).then((result) => {
+      const data = result.data as { active_version: string; configurations: { version: string; values: Record<string, unknown> }[] }
+      setParameters(data.configurations.find((config) => config.version === data.active_version)?.values ?? null)
+    }).catch(() => setParameters(null))
+  }, [events, query])
   useEffect(() => {
     if (!requestIsQueryable) {
       return
     }
     let active = true
-    void query.query({
-      resource: 'memory_graph',
-      as_of: 'now',
-      thread_id: threadId ?? undefined,
-    })
-      .then((result) => {
-        if (!active) return
-        const next = result.data as unknown as Snapshot
-        setLoadedSnapshot({ requestKey, data: next })
-        setSelected((current) => reconcileMemoryGraphSelection(current, next.nodes))
-        setFailure(null)
+    let pending = false
+    const refresh = () => {
+      if (pending) return
+      pending = true
+      void query.query({
+        resource: 'memory_graph',
+        as_of: 'now',
+        thread_id: threadId ?? undefined,
       })
-      .catch(() => {
-        if (active) {
-          setFailure({ requestKey, message: 'The live memory graph is unavailable.' })
-        }
-    })
-    return () => { active = false }
+        .then((result) => {
+          if (!active) return
+          const next = result.data as unknown as Snapshot
+          setLoadedSnapshot({ requestKey, data: next })
+          setSelected((current) => reconcileMemoryGraphSelection(current, next.nodes))
+          setFailure(null)
+        })
+        .catch(() => {
+          if (active) {
+            setFailure({ requestKey, message: 'The live memory graph is unavailable.' })
+          }
+        }).finally(() => { pending = false })
+    }
+    refresh()
+    const timer = globalThis.setInterval(refresh, 5000)
+    return () => { active = false; globalThis.clearInterval(timer) }
   }, [query, requestIsQueryable, requestKey, threadId])
 
   function inspectNode(node: Node) {
@@ -93,7 +111,21 @@ export function MemoryGraph() {
           <text className="graph-node-label" x={label?.x ?? p.x} y={label?.y ?? p.y} data-priority={label?.priority} visibility={label === undefined ? 'hidden' : undefined}>{label?.text ?? ''}</text>
         </g>})}
       </svg>
-      <aside>{selected === null ? <p>Select a node to inspect its complete memory.</p> : <><small>{selected.memory.kind} · revision {selected.memory.revision}</small><h2>{selected.memory.label}</h2><p>Project · {selected.memory.project_key ?? 'Palace-wide'}</p><p>{selected.memory.body}</p><p>{selected.revisions.length} recorded revisions</p><em>Edit in Memory Palace</em></>}</aside>
+      <aside>{selected === null ? <p>Select a node to inspect its complete memory.</p> : <>
+        <SelectedMemoryPanel memoryId={selected.memory.memory_id} />
+        <h3>Relationships</h3>
+        <ul>{snapshot?.edges.filter((edge) => edge.from_memory_id === selected.memory.memory_id || edge.to_memory_id === selected.memory.memory_id).map((edge, index) => <li key={index}>
+          {edge.edge_type ?? edge.kind} · {nodes.find((node) => node.memory.memory_id === (edge.from_memory_id === selected.memory.memory_id ? edge.to_memory_id : edge.from_memory_id))?.memory.label ?? 'Unavailable memory'}
+        </li>)}</ul>
+      </>}</aside>
     </div>}
+    <details><summary>Scoring parameters</summary>
+      {parameters === null ? <p>Scoring parameters are unavailable.</p> : <dl>
+        {Object.entries(parameters).flatMap<[string, unknown]>(([name, value]) =>
+          typeof value === 'object' && value !== null ? Object.entries(value) : [[name, value]],
+        ).map(([name, value]) => <div key={name}><dt>{PARAMETER_LABELS[name] ?? name.replaceAll('_', ' ')}</dt><dd>{String(value)}</dd></div>)}
+      </dl>}
+      <p>Use the Injection Console to simulate changes and force a new set of values.</p>
+    </details>
   </section>
 }

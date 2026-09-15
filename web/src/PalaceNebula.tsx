@@ -70,22 +70,29 @@ export function PalaceNebula() {
 
   useEffect(() => {
     let active = true
-    const graph = query.query({ resource: 'memory_graph', as_of: 'now', thread_id: threadId })
-    const scorer = query.query({ resource: 'scorer_console', as_of: 'now', thread_id: threadId })
-      .then((result) => result.data as unknown as ScorerSnapshot)
-      .catch(() => null)
-    void Promise.all([graph, scorer]).then(([graphResult, scorerSnapshot]) => {
-      if (!active) return
-      const snapshot = graphResult.data as unknown as PalaceNebulaSnapshot
-      setLoad({
-        kind: 'ready',
-        snapshot,
-        scorer: scorerSnapshot,
-      })
-    }).catch(() => {
-      if (active) setLoad({ kind: 'error' })
-    })
-    return () => { active = false }
+    let pending = false
+    const refresh = () => {
+      if (pending) return
+      pending = true
+      const graph = query.query({ resource: 'memory_graph', as_of: 'now', thread_id: threadId })
+      const scorer = query.query({ resource: 'scorer_console', as_of: 'now', thread_id: threadId })
+        .then((result) => result.data as unknown as ScorerSnapshot)
+        .catch(() => null)
+      void Promise.all([graph, scorer]).then(([graphResult, scorerSnapshot]) => {
+        if (!active) return
+        const snapshot = graphResult.data as unknown as PalaceNebulaSnapshot
+        setLoad({
+          kind: 'ready',
+          snapshot,
+          scorer: scorerSnapshot,
+        })
+      }).catch(() => {
+        if (active) setLoad({ kind: 'error' })
+      }).finally(() => { pending = false })
+    }
+    refresh()
+    const timer = globalThis.setInterval(refresh, 5000)
+    return () => { active = false; globalThis.clearInterval(timer) }
   }, [query, threadId])
 
   const bodies = useMemo(() => load.kind === 'ready' ? buildNebulaBodies(load.snapshot, axis) : [], [load, axis])
