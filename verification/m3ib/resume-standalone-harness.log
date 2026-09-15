@@ -1,0 +1,185 @@
+Standalone worktree: /tmp/m3ib-standalone-harness
+No /tmp/garden checkout exists: True
+PRE-PUSH exit=0
+Impact bell: M3IB -> /private/tmp/m3ib-standalone-harness/verification/m3ib/impacted.json
+  FL-195: The feature ledger generates coverage reports and requires evidence for the rows affected by a build. [PROTECTED: flagged corner only]
+  Unmapped: harness/DECISIONS.md (add a row or declare no feature impact)
+  Unmapped: harness/docs/frozen-law.json (add a row or declare no feature impact)
+
+TAMPER docs/feature-ledger.yaml exit=1
+docs/feature-ledger.yaml: differs from the master fingerprint
+Product rules: FAIL
+
+TAMPER bin/ledger exit=1
+bin/ledger: differs from the master fingerprint
+Product rules: FAIL
+
+RESTORED exit=0
+Product rules: PASS
+
+MISSING EVIDENCE DONE exit=1
+M3IB handoff REFUSED: 46 required rows checked
+Impact bell: M3IB -> /private/tmp/m3ib-standalone-harness/verification/m3ib/impacted.json
+  FL-008: Complete logs of every conversation are kept for good, until it becomes too expensive, and every session sits in one table with a session id so anything can be audited. [PROTECTED: flagged corner only]
+  FL-014: Every memory records the folder the agent stood in when it was made. [PROTECTED: flagged corner only]
+  FL-016: All conversation history is kept the way Codex and Claude Code keep it; a conversation without history is not supported. [PROTECTED: flagged corner only]
+  FL-017: Every prompt is intercepted and relevant memories are added to the context before the model runs. [PROTECTED: flagged corner only]
+  FL-018: A hard pause on a thread's first prompt where the user scans and removes injected memories before the model starts; afterwards removal is ad hoc with no pause. [PROTECTED: flagged corner only]
+  FL-038: A cheap 80/20 duplicate check at memory creation, keeping the agent's memory work under 10% of build run time. [PROTECTED: flagged corner only]
+  FL-039: Agents make no memories until compaction; the explicit /remember command is the other way. [PROTECTED: flagged corner only]
+  FL-042: Constitution: 'Already known — reinforced' on re-saves; rejected candidates remembered and never re-proposed without material change (gate-day). [PROTECTED: flagged corner only]
+  FL-067: Agents move through the file structure of the machine they live in, and the interface shows where every agent is. [PROTECTED: flagged corner only]
+  FL-070: Image input: paste an image and the agent reviews it. [PROTECTED: flagged corner only]
+  FL-071: The location fence: an agent can edit only files in the exact directory it stands in, and its shell is kept to that subtree, enforced deterministically. [PROTECTED: flagged corner only]
+  FL-074: A new thread starts in a project folder with the location rule in effect; how a thread's project is specified was his open question (maybe configuration). [PROTECTED: flagged corner only]
+  FL-079: Full conversation history kept, the way Codex and Claude Code do. [PROTECTED: flagged corner only]
+  FL-104: A draft response to the final synthesis that you tweak and fire, after which the stack switches to the agent that has waited longest for your attention. [PROTECTED: flagged corner only]
+  FL-117: A proposed reply prefilled and editable; queued prompts advance on Enter with a scrollable queue. [PROTECTED: flagged corner only]
+  FL-119: A Palace State module holding the general state stats. [PROTECTED: flagged corner only]
+  FL-157: Constitution: spend walls, soft budgets per run or day that pause the work at the wall for the judge (symphony budget law). [PROTECTED: flagged corner only]
+  FL-169: Client and cloud versions stay sync-locked or backward compatible, following industry practice, so version differences feel seamless. [PROTECTED: flagged corner only]
+  FL-171: A startup and settings option: "Back up conversation transcripts to cloud?" [PROTECTED: flagged corner only]
+  FL-173: Constitution: a warming retry when the Palace is asleep, a "busy, retrying" banner on rate limits, and the banner clears on recovery (gate-day). [PROTECTED: flagged corner only]
+  FL-174: Constitution: a doctor readout naming which identity the running daemon is (gate verification-identity work). [PROTECTED: flagged corner only]
+  FL-175: Constitution: a sandbox whose boundary crossings are surfaced as cards on the Deck (Invariant 14). [PROTECTED: flagged corner only]
+  FL-178: Constitution: a verification identity with its own account and home for tests and scouts (gate verification-identity work). [PROTECTED: flagged corner only]
+  FL-179: Constitution: a plain ownership refusal when one identity tries to decide another identity's approval queue item (gate verification-identity work). [PROTECTED: flagged corner only]
+  FL-191: The tools and skills Claude Code and Codex use on this machine, pinned to versioned open-source sources. [PROTECTED: flagged corner only]
+  FL-194: The Pydantic toolset and skills as the tool layer. [PROTECTED: flagged corner only]
+  FL-195: The feature ledger generates coverage reports and requires evidence for the rows affected by a build. [PROTECTED: flagged corner only]
+  FL-196: The rules machine checks citations, frozen law, product vocabulary, seed states and packet precedents. [PROTECTED: flagged corner only]
+  FL-001: The Palace is a transactional database in the cloud on GCP that agents on many machines reach, behaving the same for every agent and sub-agent wherever it runs.
+  FL-002: Memory units have a length cap; a memory over the cap is shortened to fit as one memory, and it is split only when it holds more than one distinct fact, with the split logged.
+  FL-006: Every memory carries a location column and a project column.
+  FL-007: Every memory links to the full conversation it came from, so an agent can reach more than just the memory when needed.
+  FL-009: Record files (history, transcripts) live apart from code so code can be deleted and re-downloaded without losing history.
+  FL-010: Every thread has a thread id, and every memory records the thread it was born in.
+  FL-044: At compaction the summarizing agent turns anything important but not needed for the next few build steps into a memory through the normal memory creation path, and compaction waits for those memories to land before dropping the rest.
+  FL-066: A repeatable build benchmark: build the same thing in rounds against one accumulating palace and measure time, lines and cost falling.
+  FL-068: Injected memories refreshed on every move.
+  FL-069: The core tools every modern harness has: files, terminal, Chrome, skills, changing models, compaction (our own take), and interactions with common apps, taken from the most modular standard source.
+  FL-072: The progressive prompting protocol is dynamic to the agent's moves: a move re-prompts the agent for its new location.
+  FL-073: The location rule written into Nocturne's own system prompt.
+  FL-075: Queuing prompts and interjecting or steering a running agent, like the modern harnesses do.
+  FL-085: The work loop: spec alignment with the user, then the agent loop (optionally several agents in worktrees attempting the same thing), then the judge checks the work against the spec and either calls it done or sends another agent to continue or fix, and the human is only brought back in when the judge says done.
+  FL-162: Easy onboarding from a single splash repo, needing only two secrets: a GCP credential and an OpenRouter key.
+  FL-164: Local mode with no internet, cloud mode, and a way to mirror our cloud setup into your own provider.
+  FL-166: A prompt when the app's memory use passes a threshold of the local system's memory, memory-leak guards, and no proceeding without write access at startup.
+  FL-167: One obvious start command with an update prompt; update, deploy, launch and doctor as one or two commands.
+  FL-168: A restore popup that asks whether to roll back these memories and lists them.
+  FL-170: A fresh reinstall that reconnects to existing files and auto-finds the cloud palace.
+  FL-186: Build on Pydantic AI in a way that lets us modify and extend without waiting on them, passing features back and forth with their library.
+  FL-190: The Harness can use skills and has the best and most common tools available, compiled from a list.
+  FL-192: Swappable seams: router, model policy with an off-switch, toolset as a unit, memory system.
+  FL-193: The common core of terminal-agent tools (skills, progressive prompting, model switching, compaction, app interactions) in one piece that pulls upstream updates.
+  Unmapped: harness/.gitignore (add a row or declare no feature impact)
+  Unmapped: harness/DECISIONS.md (add a row or declare no feature impact)
+  Unmapped: harness/docs/frozen-law.json (add a row or declare no feature impact)
+  Unmapped: harness/src/harness/envelope.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_agent.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_agent_runtime.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_browser_consent.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_browser_toolset.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_daemon.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_deploy.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_envelope.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_fixture_isolation.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_m2ux6_grimoire_themes.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_memory_bridge.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_memory_gate.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_model_policy.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_pydantic_harness_toolset.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_run_loop.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_spine_client.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_spine_transport.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_symphony_experience.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_verification_identity.py (add a row or declare no feature impact)
+  Unmapped: harness/verification/m3bt1/SHA256SUMS (add a row or declare no feature impact)
+  Unmapped: harness/verification/m3bt1/round1_acceptance.py (add a row or declare no feature impact)
+  Unmapped: harness/verification/m3bt1/round2_acceptance.py (add a row or declare no feature impact)
+  Unmapped: harness/verification/m3fp/browser_check.mjs (add a row or declare no feature impact)
+  Unmapped: harness/verification/m3fp/scenario_app.py (add a row or declare no feature impact)
+  Unmapped: harness/verification/m3sl/SHA256SUMS (add a row or declare no feature impact)
+  Unmapped: harness/verification/m3sl/check_emulation.py (add a row or declare no feature impact)
+  Unmapped: harness/verification/sym13/scenario_app.py (add a row or declare no feature impact)
+missing or invalid ledger-report.json: [Errno 2] No such file or directory: '/private/tmp/m3ib-standalone-harness/verification/m3ib/ledger-report.json'
+report packet must match its evidence folder
+ledger changed: regenerate the report and review required rows
+report header must name the remaining reviewer discretion
+harness/.gitignore: add a row or declare no feature impact
+harness/DECISIONS.md: add a row or declare no feature impact
+harness/docs/frozen-law.json: add a row or declare no feature impact
+harness/src/harness/envelope.py: add a row or declare no feature impact
+harness/tests/test_agent.py: add a row or declare no feature impact
+harness/tests/test_agent_runtime.py: add a row or declare no feature impact
+harness/tests/test_browser_consent.py: add a row or declare no feature impact
+harness/tests/test_browser_toolset.py: add a row or declare no feature impact
+harness/tests/test_daemon.py: add a row or declare no feature impact
+harness/tests/test_deploy.py: add a row or declare no feature impact
+harness/tests/test_envelope.py: add a row or declare no feature impact
+harness/tests/test_fixture_isolation.py: add a row or declare no feature impact
+harness/tests/test_m2ux6_grimoire_themes.py: add a row or declare no feature impact
+harness/tests/test_memory_bridge.py: add a row or declare no feature impact
+harness/tests/test_memory_gate.py: add a row or declare no feature impact
+harness/tests/test_model_policy.py: add a row or declare no feature impact
+harness/tests/test_pydantic_harness_toolset.py: add a row or declare no feature impact
+harness/tests/test_run_loop.py: add a row or declare no feature impact
+harness/tests/test_spine_client.py: add a row or declare no feature impact
+harness/tests/test_spine_transport.py: add a row or declare no feature impact
+harness/tests/test_symphony_experience.py: add a row or declare no feature impact
+harness/tests/test_verification_identity.py: add a row or declare no feature impact
+harness/verification/m3bt1/SHA256SUMS: add a row or declare no feature impact
+harness/verification/m3bt1/round1_acceptance.py: add a row or declare no feature impact
+harness/verification/m3bt1/round2_acceptance.py: add a row or declare no feature impact
+harness/verification/m3fp/browser_check.mjs: add a row or declare no feature impact
+harness/verification/m3fp/scenario_app.py: add a row or declare no feature impact
+harness/verification/m3sl/SHA256SUMS: add a row or declare no feature impact
+harness/verification/m3sl/check_emulation.py: add a row or declare no feature impact
+harness/verification/sym13/scenario_app.py: add a row or declare no feature impact
+missing or malformed SHA256SUMS
+FL-008: needs PASS or FAIL; missing screenshot FL-008.png
+FL-014: needs PASS or FAIL; missing screenshot FL-014.png
+FL-016: needs PASS or FAIL; missing screenshot FL-016.png
+FL-017: needs PASS or FAIL; missing screenshot FL-017.png
+FL-018: needs PASS or FAIL; missing screenshot FL-018.png
+FL-038: needs PASS or FAIL; missing screenshot FL-038.png
+FL-039: needs PASS or FAIL; missing screenshot FL-039.png
+FL-042: needs PASS or FAIL; missing screenshot FL-042.png
+FL-067: needs PASS or FAIL; missing screenshot FL-067.png
+FL-070: needs PASS or FAIL; missing screenshot FL-070.png
+FL-071: needs PASS or FAIL; missing screenshot FL-071.png
+FL-074: needs PASS or FAIL; missing screenshot FL-074.png
+FL-079: needs PASS or FAIL; missing screenshot FL-079.png
+FL-104: needs PASS or FAIL; missing screenshot FL-104.png
+FL-117: needs PASS or FAIL; missing screenshot FL-117.png
+FL-119: needs PASS or FAIL; missing screenshot FL-119.png
+FL-157: needs PASS or FAIL; missing screenshot FL-157.png
+FL-169: needs PASS or FAIL; missing screenshot FL-169.png
+FL-171: needs PASS or FAIL; missing screenshot FL-171.png
+FL-173: needs PASS or FAIL; missing screenshot FL-173.png
+FL-174: needs PASS or FAIL; missing screenshot FL-174.png
+FL-175: needs PASS or FAIL; missing screenshot FL-175.png
+FL-178: needs PASS or FAIL; missing screenshot FL-178.png
+FL-179: needs PASS or FAIL; missing screenshot FL-179.png
+FL-191: needs PASS or FAIL; missing screenshot FL-191.png
+FL-194: needs PASS or FAIL; missing screenshot FL-194.png
+FL-195: needs PASS or FAIL; missing screenshot FL-195.png
+FL-196: needs PASS or FAIL; missing screenshot FL-196.png
+FL-002: needs PASS or FAIL; missing screenshot FL-002.png
+FL-006: needs PASS or FAIL; missing screenshot FL-006.png
+FL-007: needs PASS or FAIL; missing screenshot FL-007.png
+FL-009: needs PASS or FAIL; missing screenshot FL-009.png
+FL-010: needs PASS or FAIL; missing screenshot FL-010.png
+FL-069: needs PASS or FAIL; missing screenshot FL-069.png
+FL-072: needs PASS or FAIL; missing screenshot FL-072.png
+FL-073: needs PASS or FAIL; missing screenshot FL-073.png
+FL-075: needs PASS or FAIL; missing screenshot FL-075.png
+FL-085: needs PASS or FAIL; missing screenshot FL-085.png
+FL-162: needs PASS or FAIL; missing screenshot FL-162.png
+FL-166: needs PASS or FAIL; missing screenshot FL-166.png
+FL-168: needs PASS or FAIL; missing screenshot FL-168.png
+FL-170: needs PASS or FAIL; missing screenshot FL-170.png
+FL-186: needs PASS or FAIL; missing screenshot FL-186.png
+FL-190: needs PASS or FAIL; missing screenshot FL-190.png
+FL-192: needs PASS or FAIL; missing screenshot FL-192.png
+FL-193: needs PASS or FAIL; missing screenshot FL-193.png
