@@ -11,6 +11,7 @@ import {
   type FormEvent,
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from 'react'
 
 import { AssistantMarkdown } from './AssistantMarkdown'
@@ -18,6 +19,9 @@ import { browserScreenshotDataUrl, elideBinaryPayload } from './runEventDisplay'
 import { SymphonyDeliberationCard, SymphonyResultCard } from './SymphonyCards'
 import { MemoryGate } from './MemoryGate'
 import { MemoryPanel } from './MemoryPanel'
+import { MemoryRestore } from './MemoryRestore'
+import { AgentPolicies } from './AgentPolicies'
+import { RackPluginUpload } from './RackPluginUpload'
 import { MemoryGraph } from './MemoryGraph'
 import { PalaceNebula } from './PalaceNebula'
 import { InjectionConsole } from './InjectionConsole'
@@ -95,6 +99,7 @@ import {
   saveStageSet,
   selectStageLayer,
   setConversationMode,
+  setStageAttunementSource,
   stageLayoutsEqual,
   updateStageCamera,
   type StageCamera,
@@ -365,6 +370,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   const [transcriptBackupBusy, setTranscriptBackupBusy] = useState(false)
   const [pointerActive, setPointerActive] = useState(false)
   const [libraryOpen, setLibraryOpen] = useState(false)
+  const [sheetMode, setSheetMode] = useState(false)
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 })
   const viewportRef = useRef<HTMLDivElement>(null)
   const initialAttunementPicks = useMemo(() => initialStickyAttunements(), [])
@@ -572,10 +578,9 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
       }
       const instanceId = detail.instance_id ?? detail.module_id
       if (instanceId === undefined || !['GLOBAL', 'ATTUNED'].includes(detail.scope ?? '')) return
-      setLayout((current) => ({
-        ...current,
-        scopes: { ...current.scopes, [instanceId]: detail.scope as RackScope },
-      }))
+      setLayout((current) => detail.scope === 'ATTUNED'
+        ? setStageAttunementSource(current, instanceId, null)
+        : { ...current, scopes: { ...current.scopes, [instanceId]: detail.scope as RackScope } })
     }
     globalThis.addEventListener('nocturne:rack-scope', syncScope)
     return () => globalThis.removeEventListener('nocturne:rack-scope', syncScope)
@@ -769,6 +774,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           type="button"
           data-testid="app-settings-toggle"
           aria-label="App settings"
+          data-tooltip-detail="Choose the app theme, manage conversation backup, or save and restore your Stage layout."
           aria-expanded={appSettingsOpen}
           onClick={() => setAppSettingsOpen((open) => !open)}
         >
@@ -788,6 +794,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               <select
                 value={theme}
                 data-testid="theme-control"
+                data-tooltip-detail="Apply a color theme across the Stage and every module."
                 onChange={(event) => setTheme(event.currentTarget.value as ThemeId)}
               >
                 {THEMES.map((choice) => (
@@ -812,6 +819,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                 type="button"
                 disabled={platePressBusy}
                 data-testid="plate-press-button"
+                data-tooltip-detail="Extract a colorway from a local image and apply its colors to the app."
                 onClick={() => plateInputRef.current?.click()}
               >
                 {platePressBusy ? 'Pressing…' : 'Press image'}
@@ -866,6 +874,8 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               <button type="button" data-testid="layout-reset" onClick={resetFactorySet}>Reset</button>
             </div>
           </section>
+          <MemoryRestore />
+          <AgentPolicies />
         </aside>
       )}
       <div
@@ -905,13 +915,18 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           <span aria-hidden="true">＋</span>
           Layer
         </button>
-        <div className="stage-camera-controls" aria-label="Stage camera">
-          <button type="button" aria-label="Zoom out" onClick={() => zoomAt(layer.camera.zoom - 0.1)}>−</button>
+        <div className="stage-camera-controls" role="group" aria-label="View layout">
+          <button type="button" aria-pressed={!sheetMode} onClick={() => setSheetMode(false)}>Stage</button>
+          <button type="button" aria-pressed={sheetMode} onClick={() => setSheetMode(true)}>Sheet</button>
+        </div>
+        <div className="stage-camera-controls" aria-label="Stage camera" hidden={sheetMode}>
+          <button type="button" aria-label="Zoom out" data-tooltip-detail="Show more of this layer without changing module sizes or positions." onClick={() => zoomAt(layer.camera.zoom - 0.1)}>−</button>
           <output data-testid="stage-zoom">{Math.round(layer.camera.zoom * 100)}%</output>
-          <button type="button" aria-label="Zoom in" onClick={() => zoomAt(layer.camera.zoom + 0.1)}>+</button>
+          <button type="button" aria-label="Zoom in" data-tooltip-detail="Enlarge this layer on screen without changing its layout." onClick={() => zoomAt(layer.camera.zoom + 0.1)}>+</button>
           <button
             type="button"
             data-testid="stage-fit"
+            data-tooltip-detail="Fit every module on this layer into the visible Stage."
             onClick={() => changeCamera(fitStageCamera(viewportSize.width, viewportSize.height))}
           >
             Whole stage
@@ -921,6 +936,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           className="stage-library-toggle"
           type="button"
           data-testid="stage-library-toggle"
+          data-tooltip-detail="Add a module to this layer or bring back a module you removed."
           aria-expanded={libraryOpen}
           onClick={() => setLibraryOpen((open) => !open)}
         >
@@ -933,11 +949,11 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
 
       <div
         ref={viewportRef}
-        className="stage-viewport"
+        className={`stage-viewport${sheetMode ? ' stage-viewport--sheet' : ''}`}
         data-testid="stage-viewport"
         data-pointer-active={pointerActive ? 'true' : undefined}
         inert={openGate !== null || dismissibleOverlay !== null || undefined}
-        onPointerDown={beginPan}
+        onPointerDown={sheetMode ? undefined : beginPan}
       >
         <div
           className="stage-canvas"
@@ -958,18 +974,40 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               key={module.instance_id}
               instanceId={module.instance_id}
               manifest={RACK_MANIFESTS[module.module_id]}
+              sheetMode={sheetMode}
               x={module.x}
               y={module.y}
               width={module.width}
               height={module.height}
               drawerOpen={isDrawerOpen}
               inert={isInert}
-              onMove={moveModule}
-              onResize={resizeModule}
+              onMove={sheetMode ? undefined : moveModule}
+              onResize={sheetMode ? undefined : resizeModule}
               onRemove={(instanceId) => setLayout((current) => removeStageModule(current, instanceId))}
               onPointerActivity={setPointerActive}
               scope={scope}
               attunement={attunement}
+              namedStackSelected={scope !== 'GLOBAL' && Boolean(module.attunement_source_id)}
+              attunementControl={!attunements.sources.some((source) => source.source_instance_id === module.instance_id) && (
+                <label className="rack-stack-control"><span>Named stack</span>
+                  <select
+                    aria-label={`${RACK_MANIFESTS[module.module_id].name} named stack`}
+                    value={scope === 'GLOBAL' ? '' : module.attunement_source_id ?? ''}
+                    onChange={(event) => {
+                      const sourceId = event.currentTarget.value || null
+                      setLayout((current) => setStageAttunementSource(current, module.instance_id, sourceId))
+                    }}
+                  >
+                    <option value="">By proximity</option>
+                    {module.attunement_source_id && !attunements.sources.some((source) => source.source_instance_id === module.attunement_source_id) && (
+                      <option value={module.attunement_source_id}>Unavailable stack</option>
+                    )}
+                    {attunements.sources.filter((source) => source.kind === 'stack').map((source) => (
+                      <option key={source.source_instance_id} value={source.source_instance_id}>{source.name}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
               conversationMode={module.conversation_mode}
               onConversationModeChange={changeConversationMode}
               spatialContext={{
@@ -984,7 +1022,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             )
           })}
         </div>
-        {offscreenModules.length > 0 && (
+        {!sheetMode && offscreenModules.length > 0 && (
           <nav className="stage-recall" aria-label="Off-screen modules">
             <span>Off-screen</span>
             {offscreenModules.map((module) => (
@@ -1003,6 +1041,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             <button type="button" aria-label="Close stage library" onClick={() => setLibraryOpen(false)}>×</button>
           </header>
           <p>Put any instrument back on this layer.</p>
+          <RackPluginUpload onInstalled={(id) => setLayout((current) => restoreStageModule(current, id))} />
           <ul>
             {STAGE_MODULE_IDS.map((moduleId) => {
               const present = layer.modules.some((module) => module.module_id === moduleId)
@@ -1149,6 +1188,7 @@ function DismissibleRackOverlay({
 }
 
 interface RackModuleFrameProps {
+  sheetMode?: boolean
   instanceId: string
   manifest: RackModuleManifest
   x: number
@@ -1169,6 +1209,8 @@ interface RackModuleFrameProps {
   onPointerActivity?: (active: boolean) => void
   scope: RackScope
   attunement: AttunementTarget | null
+  attunementControl?: ReactNode
+  namedStackSelected?: boolean
   conversationMode?: ConversationMode
   onConversationModeChange?: (instanceId: string, mode: ConversationMode) => void
   spatialContext: SpatialSelectionContext
@@ -1180,6 +1222,7 @@ interface RackModuleFrameProps {
 }
 
 function RackModuleFrame({
+  sheetMode = false,
   instanceId,
   manifest,
   x,
@@ -1195,6 +1238,8 @@ function RackModuleFrame({
   onPointerActivity,
   scope,
   attunement,
+  attunementControl,
+  namedStackSelected,
   conversationMode,
   onConversationModeChange,
   spatialContext,
@@ -1385,9 +1430,9 @@ function RackModuleFrame({
         <div className="rack-module__chrome">
           <div
             className="rack-module__drag"
-            role="button"
-            tabIndex={0}
-            aria-label={`Move ${manifest.name}; Alt plus arrow keys also moves it`}
+            role={sheetMode ? undefined : 'button'}
+            tabIndex={sheetMode ? undefined : 0}
+            aria-label={sheetMode ? undefined : `Move ${manifest.name}; Alt plus arrow keys also moves it`}
             data-tooltip={`Move ${manifest.name}`}
             data-tooltip-detail="Drag the title or hold Alt and use the arrow keys."
             onKeyDown={dockByKeyboard}
@@ -1421,6 +1466,8 @@ function RackModuleFrame({
             scope={scope}
             onScopeChange={(value) => onScopeChange?.(instanceId, moduleId, value)}
             onOpenChange={setSettingsOpen}
+            attunementControl={attunementControl}
+            namedStackSelected={namedStackSelected}
           />
           {onRemove !== undefined && (
             <button
@@ -1449,7 +1496,13 @@ function RackModuleFrame({
           )}
         </div>
       )}
-      {resizeDirections.map((direction) => {
+      {sheetMode && (
+        <p className="rack-sheet-annotation">
+          {scope === 'GLOBAL' ? 'Shows the whole Palace' : `Follows ${attunementBadge(scope, attunement)}`}
+          {' · '}{manifest.class === 'control' ? 'Controls remain live' : 'Live recorded view'}
+        </p>
+      )}
+      {!sheetMode && resizeDirections.map((direction) => {
         return (
           <button
             key={direction}
@@ -1508,11 +1561,15 @@ function RackSettingsControl({
   scope,
   onScopeChange,
   onOpenChange,
+  attunementControl,
+  namedStackSelected = false,
 }: {
   manifest: RackModuleManifest
   scope: RackScope
   onScopeChange?: (scope: RackScope) => void
   onOpenChange?: (open: boolean) => void
+  attunementControl?: ReactNode
+  namedStackSelected?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -1583,13 +1640,14 @@ function RackSettingsControl({
                   <button
                     key={value}
                     type="button"
-                    aria-pressed={scope === value}
+                    aria-pressed={scope === value && !namedStackSelected}
                     onClick={() => onScopeChange?.(value)}
                   >
                     {value === 'GLOBAL' ? 'Everything' : spatial ? 'Nearest frame' : 'Nearest source'}
                   </button>
                 ))}
               </div>
+              {attunementControl}
             </>
           ) : (
             <p>{fixedCopy}</p>
@@ -1722,7 +1780,14 @@ function HeaderModule() {
   return (
     <header className="topbar">
       <div className="brand" aria-label="Nocturne">
-        <span className="brand__mark" aria-hidden="true">N</span>
+        <svg className="brand__mark" viewBox="0 0 64 64" role="img" aria-label="Ouroboros around the moon">
+          <circle cx="32" cy="32" r="13" fill="currentColor" opacity="0.75" />
+          <circle cx="27" cy="28" r="3" fill="var(--ground)" opacity="0.45" />
+          <circle cx="37" cy="36" r="4" fill="var(--ground)" opacity="0.3" />
+          <path d="M54 30a22 22 0 1 1-6-13" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
+          <path d="M47 14q10 0 11 9l-5 8-5-8z" fill="currentColor" />
+          <circle cx="53" cy="20" r="1.4" fill="var(--ground)" />
+        </svg>
         <span className="brand__word">Nocturne</span>
       </div>
       <span className="app-settings-reserve" aria-hidden="true" />
@@ -1785,7 +1850,7 @@ function ThreadsModule() {
     [snapshot.catalog],
   )
   const sortedCatalog = useMemo(
-    () => [...snapshot.catalog].sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
+    () => snapshot.catalog.filter((entry) => !entry.archived).sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
     [snapshot.catalog],
   )
   const fixtureThreadCount = snapshot.catalog.filter((entry) => isLegacyFixtureTitle(entry.title)).length

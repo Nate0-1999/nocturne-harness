@@ -132,6 +132,7 @@ def test_client_exposes_all_spine_routes() -> None:
         "vitals_snapshot",
         "thread_vitals_snapshot",
         "memory_graph",
+        "memory_scores",
         "scorer_console",
         "retrain",
         "create_scorer_config",

@@ -10,7 +10,7 @@ import type { MemoryPanelState } from './store'
 import type { MemoryPanelConflictPayload, MemoryUnit, Ulid } from './protocol'
 import { ContributionBars, useContributionMap, useScorerAuditionMap } from './ContributionBars'
 import { formatHumanScore } from './humanNumbers.ts'
-import { useRackSelection } from './rack'
+import { useRackPlugin, useRackSelection, useRackSnapshot } from './rack'
 
 interface MemoryPanelProps {
   panel: MemoryPanelState
@@ -89,6 +89,8 @@ export function MemoryPanel({
   const contributions = useContributionMap()
   const auditions = useScorerAuditionMap()
   const rackSelection = useRackSelection()
+  const { events } = useRackPlugin()
+  const rack = useRackSnapshot()
   const [editor, setEditor] = useState<EditorState | null>(null)
   const [clientError, setClientError] = useState<string | null>(null)
   const panelRef = useRef<HTMLElement>(null)
@@ -358,7 +360,9 @@ export function MemoryPanel({
           </div>
         ) : (
           <div className="memory-panel__list" data-testid="memory-list">
-            {panel.items.map(({ memory, in_context: inContext, thread_excluded: threadExcluded }) => {
+            {panel.items.map(({ memory, score, revisions, in_context: inContext, thread_excluded: threadExcluded }) => {
+              const origin = memory.origin_thread_id ?? memory.thread_origin
+              const originThread = rack.catalog.find((thread) => thread.thread_id === origin)
               const editing =
                 editor?.memoryId === memory.memory_id
               const unavailable = memory.status !== 'active'
@@ -406,6 +410,21 @@ export function MemoryPanel({
                   <p className="principal-memory__where" data-testid="memory-origin-location">
                     WHERE · {memory.origin_location ?? 'Older memory · location unavailable'}
                   </p>
+                  <p>Project · {memory.project_key ?? 'No project'}</p>
+                  <p>Thread · {originThread?.title ?? origin ?? 'No origin thread'}</p>
+                  <p>Keywords · {memory.keywords.join(', ') || 'None recorded'}</p>
+                  {originThread !== undefined && <div className="principal-memory__actions"><button type="button" onClick={() => {
+                    void events.dispatch({ type: 'thread.select', thread_id: originThread.thread_id })
+                      .catch((error: unknown) => reportClientError(error, 'Origin conversation could not be opened'))
+                  }}>Open the conversation</button></div>}
+                  <details><summary>Revision history · r{memory.revision}</summary>
+                    {(revisions?.length ?? 0) === 0 ? <p>History unavailable.</p> : <ol>
+                      {revisions?.map((revision) => <li key={String(revision.rev_uid)}>
+                        r{String(revision.revision ?? '—')} · {String(revision.reason)} · {String(revision.ts)}
+                      </li>)}
+                    </ol>}
+                  </details>
+                  <p aria-label="Current context score">Score · {score == null ? 'Unavailable' : formatHumanScore(score)}</p>
 
                   {editing && editor !== null ? (
                     <form
@@ -495,7 +514,7 @@ export function MemoryPanel({
                     <>
                       <p className="principal-memory__body">{memory.body}</p>
                       {auditions[memory.memory_id] !== undefined && <p className="scorer-preview-mark">Audition: {formatHumanScore(auditions[memory.memory_id].preview_score)} · #{auditions[memory.memory_id].preview_rank} {auditions[memory.memory_id].disposition.replace('_', ' ')}</p>}
-                      <ContributionBars values={contributions[memory.memory_id]} />
+                      {contributions[memory.memory_id] !== undefined && <ContributionBars values={contributions[memory.memory_id]} />}
                       <div className="principal-memory__actions">
                         <button
                           type="button"

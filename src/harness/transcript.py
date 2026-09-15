@@ -67,6 +67,7 @@ class TranscriptCatalogEntry:
     workspace_root: str | None = None
     current_location: str | None = None
     proposed_response: Mapping[str, Any] | None = None
+    archived: bool = False
 
 
 class TranscriptJournal:
@@ -263,7 +264,9 @@ class TranscriptJournal:
                 row = json.loads(raw)
             except (UnicodeDecodeError, json.JSONDecodeError):
                 continue
-            if row.get("thread_id") != thread_id or row.get("record_type") != "message":
+            if not isinstance(row, dict) or row.get("thread_id") != thread_id or (
+                row.get("record_type") != "message"
+            ):
                 continue
             message = row.get("message")
             if isinstance(message, dict):
@@ -399,6 +402,15 @@ class TranscriptJournal:
         for transcript in self.hydrate_threads():
             filename = self._filename_for_thread(transcript.thread_id)
             rows = [json.loads(raw) for raw in self._read_file_rows(filename)]
+            archived = False
+            for row in rows:
+                if row.get("record_type") == "thread_archive":
+                    archived = True
+                elif (
+                    row.get("record_type") == "message"
+                    and row.get("message", {}).get("role") == "user"
+                ):
+                    archived = False
             times = [
                 row.get("captured_at") for row in rows if isinstance(row.get("captured_at"), str)
             ]
@@ -421,9 +433,15 @@ class TranscriptJournal:
                     workspace_root=transcript.workspace_root,
                     current_location=transcript.current_location,
                     proposed_response=self._outstanding_proposed_response(transcript.messages),
+                    archived=archived,
                 )
             )
         return tuple(sorted(entries, key=lambda item: item.updated_at, reverse=True))
+
+    def append_archive(self, thread_id: str) -> None:
+        """M3FX / FL-124: archive navigation without deleting its source conversation."""
+        with self._lock:
+            self._append(thread_id, {"version": 1, "record_type": "thread_archive"})
 
     @staticmethod
     def _outstanding_proposed_response(
@@ -844,13 +862,10 @@ class TranscriptJournal:
         if not rows:
             return None
         if thread_id is None:
-            # WALL files / D.2 082: reject an unsafe journal before appending.
-            raise TranscriptJournalUnavailable(
-                "Conversation journal contains an unreadable transcript. "
-                "Restore the journal from a verified backup before starting Nocturne."
-            )
+            # M3FD / v2.101: empty or unscoped rows carry no restorable thread authority.
+            return None
         if not latest_messages:
-            if not saw_message_row and (project_key is not None or attachments):
+            if not saw_message_row:
                 return HydratedTranscript(
                     thread_id,
                     (),

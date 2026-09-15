@@ -171,6 +171,14 @@ async function collectNodes(targetPage) {
       width: element.clientWidth,
       height: element.clientHeight,
     }))
+    // F084: an attached iframe can still be between documents during module navigation.
+    const source = await frameElement.getAttribute('src')
+    if (source) {
+      const moduleId = new URL(source).searchParams.get('rack_module')
+      await childFrame.waitForURL((url) => url.searchParams.get('rack_module') === moduleId, {
+        waitUntil: 'domcontentloaded',
+      })
+    }
     const url = new URL(childFrame.url())
     const scope = url.searchParams.get('rack_module') ?? 'unknown-module'
     nodes.push(...await collectDocumentNodes(

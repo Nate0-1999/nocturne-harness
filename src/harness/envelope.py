@@ -553,6 +553,8 @@ class MemoryPanelItem(_MemoryPanelPayload):
     memory: MemoryUnit
     in_context: StrictBool
     thread_excluded: StrictBool
+    score: float | None = None
+    revisions: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class MemoryPanelStatePayload(_MemoryPanelPayload):

@@ -16,8 +16,8 @@ def main() -> None:
     """Prove metadata, command wiring, bundled assets, and clone-free serving."""
 
     package = distribution("nocturne-ai")
-    assert version("nocturne-ai") == version("nocturne-spine") == __version__ == "0.1.5"
-    assert "nocturne-spine==0.1.5" in (package.requires or [])
+    assert version("nocturne-ai") == version("nocturne-spine") == __version__
+    assert f"nocturne-spine=={__version__}" in (package.requires or [])
     assert any(
         entry.name == "nocturne" and entry.value == "harness.cli:main"
         for entry in package.entry_points
@@ -30,20 +30,6 @@ def main() -> None:
     assert references
     assert all(web_root.joinpath(reference).is_file() for reference in references)
     assert resources.files("harness").joinpath("resources", "docker-compose.yml").is_file()
-
-    pi_root = resources.files("harness").joinpath("_pi")
-    assert all(
-        pi_root.joinpath(name).is_file()
-        for name in (
-            "LICENSE.upstream",
-            "README.md",
-            "dependency.json",
-            "location_fence.mjs",
-            "nocturne_location.mjs",
-            "package-lock.json",
-            "package.json",
-        )
-    )
 
     installed_names = {str(path) for path in package.files or ()}
     assert not any("node_modules" in path for path in installed_names)

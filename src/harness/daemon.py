@@ -6,6 +6,7 @@ import json
 import subprocess
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from contextlib import suppress
+from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
@@ -35,6 +36,7 @@ from harness.envelope import (
     Envelope,
     EnvelopeFactory,
     GateCommitPayload,
+    MemoryPanelItem,
     MessageType,
     PromptSubmitPayload,
     RunCancelPayload,
@@ -42,12 +44,14 @@ from harness.envelope import (
     ThreadSnapshotRequestPayload,
 )
 from harness.extraction import ExtractionIdleScheduler, ExtractionService, ThreadEndResult
+from harness.lifecycle import discard_prepared_restore, prepare_local_restore
 from harness.memory_gate import MemoryGateTurnRunner
 from harness.memory_panel import MemoryPanelController, ThreadMemoryContextRegistry
 from harness.model_policy import (
     ModelPolicyResolver,
     ThreadModelResolution,
     ThreadModelResolver,
+    parse_model_policy,
 )
 from harness.model_router import CompletionRouter
 from harness.onboarding import load_config, nocturne_home, set_transcript_backup
@@ -70,6 +74,7 @@ from harness.spine_client import (
     ActivateScorerConfigRequest,
     BatchDecisionResponse,
     CreateScorerConfigRequest,
+    InjectPrepareRequest,
     MemoryGraphQuery,
     MemoryGraphSnapshot,
     QueueDecisionIntent,
@@ -130,6 +135,10 @@ type RecipeGraphReader = Callable[[], RecipeGraphSnapshot]
 
 class TranscriptBackupUpdate(BaseModel):
     enabled: bool
+
+
+class AgentPolicyUpdate(BaseModel):
+    policy: str
 
 
 class AttunementTargetRequest(BaseModel):
@@ -761,6 +770,20 @@ def create_dev_app(
 
     configured = settings or HarnessSettings()
     home = (configured.nocturne_home or nocturne_home()).expanduser().resolve()
+    role_policy_path = home / "model-policies.json"
+    role_policies = {
+        "chat": configured.effective_model_policy_chat,
+        "subagent": configured.model_policy_subagent or configured.effective_model_policy_chat,
+        "judge": configured.model_policy_judge or configured.effective_model_policy_chat,
+    }
+    if role_policy_path.exists():
+        saved_policies = json.loads(role_policy_path.read_text())
+        for role in role_policies:
+            if role in saved_policies:
+                parse_model_policy(saved_policies[role])
+                role_policies[role] = saved_policies[role]
+    for role, policy in role_policies.items():
+        setattr(configured, f"model_policy_{role}", policy)
     discovery_root = Path.cwd() if seed_discovery_root is None else Path(seed_discovery_root)
     principal_id = _required_identity(configured.principal_id, "PRINCIPAL_ID")
     if principal_id.startswith("nocturne-verification-") and home == (
@@ -781,7 +804,6 @@ def create_dev_app(
     owned_agent = agent or HarnessAgent(
         configured,
         router=completion_router,
-        skill_directories=discover_skill_libraries(discovery_root),
     )
     factory = EnvelopeFactory(machine_id=machine_id, agent_id=agent_id)
     owned_symphony_experience = symphony_experience or SymphonyExperience(id_factory=factory.new_id)
@@ -828,6 +850,7 @@ def create_dev_app(
             raise ValueError("agent thread_id must be a UUID") from exc
         project_key = loop.project_key(thread_id)
         workspace_toolset = workspace_toolset_for(thread_id)
+        location = workspace_toolset.location()
         return MemoryToolContext(
             spine=owned_spine,
             principal_id=principal_id,
@@ -837,18 +860,54 @@ def create_dev_app(
             project_key=project_key,
             origin_path=workspace_location_path(workspace_toolset.location()),
             toolset=workspace_toolset,
+            skill_directories=discover_skill_libraries(location.workspace_root, location.cwd),
         )
 
     memory_contexts = ThreadMemoryContextRegistry()
     context_windows = ContextWindowTracker()
     receipt_queue = SpendReceiptQueue(home / "receipt-queue")
     resource_watch = ResourceWatch(home)
+
+    async def enrich_memory_panel(
+        thread_id: str, items: list[MemoryPanelItem],
+    ) -> list[MemoryPanelItem]:
+        context = context_factory(thread_id)
+        ids = [item.memory.memory_id for item in items]
+        revisions = {}
+        scores = {}
+        try:
+            graph = await owned_spine.memory_graph(
+                MemoryGraphQuery(principal_id=principal_id, memory_ids=ids)
+            )
+            revisions = {str(node["memory"]["memory_id"]): node["revisions"]
+                         for node in graph.nodes}
+        except SpineClientError:
+            pass  # The card keeps its authoritative body when history is unavailable.
+        try:
+            scores = await owned_spine.memory_scores(
+                InjectPrepareRequest(
+                    thread_id=UUID(thread_id), agent_id=agent_id, machine_id=machine_id,
+                    principal_id=principal_id, project_key=context.project_key,
+                    location_path=context.origin_path,
+                    current_location=str(context.toolset.location().cwd),
+                    prompt=loop.latest_prompt(thread_id) or context.project_key or "",
+                    model_context_tokens=configured.model_context_tokens,
+                ), ids,
+            )
+        except SpineClientError:
+            pass  # Display an unavailable score rather than inventing one.
+        return [item.model_copy(update={
+            "score": scores.get(str(item.memory.memory_id)),
+            "revisions": revisions.get(str(item.memory.memory_id), []),
+        }) for item in items]
+
     panel = MemoryPanelController(
         owned_spine,
         memory_contexts,
         factory,
         principal_id=principal_id,
         machine_id=machine_id,
+        enrich=enrich_memory_panel,
     )
 
     async def publish_ambient_memory_panel(thread_id: str) -> None:
@@ -1007,6 +1066,29 @@ def create_dev_app(
         async def identity():
             return {"principal_id": principal_id, "machine_id": machine_id, "home": str(home)}
 
+        @app.get("/v1/model-policies")
+        async def agent_model_policies():
+            return {"policies": role_policies}
+
+        @app.put("/v1/model-policies/{role}")
+        async def update_agent_model_policy(
+            role: Literal["chat", "subagent", "judge"], body: AgentPolicyUpdate
+        ):
+            try:
+                parse_model_policy(body.policy)
+            except ValueError as exc:
+                raise HTTPException(422, str(exc)) from exc
+            updated = {**role_policies, role: body.policy}
+            home.mkdir(parents=True, exist_ok=True)
+            temporary = role_policy_path.with_suffix(".tmp")
+            temporary.write_text(json.dumps(updated, indent=2) + "\n")
+            temporary.replace(role_policy_path)
+            role_policies.update(updated)
+            setattr(configured, f"model_policy_{role}", body.policy)
+            if role == "chat" and isinstance(model_resolver, ModelPolicyResolver):
+                model_resolver.set_policy(body.policy)
+            return {"policies": role_policies}
+
         @app.get("/v1/symphonies/{symphony_id}")
         async def read_symphony(symphony_id: str):
             stack = await owned_symphony_experience.read(symphony_id)
@@ -1039,8 +1121,24 @@ def create_dev_app(
             root = discovery_root.resolve(strict=True)
             return {
                 "threads": journal.catalog(),
+                "identity": {"principal_id": principal_id, "home": str(home)},
                 "default_workspace": {"path": str(root), "label": root.name},
             }
+
+        @app.post("/v1/restore/{backup_id}/preview")
+        async def restore_preview(backup_id: str):
+            """FL-168 / D.2 092: inspect a side-by-side candidate, never switch live volumes."""
+            config = load_config(home=home)
+            if config.palace_mode != "local":
+                raise HTTPException(409, "Cloud Palace restore is a human Cloud SQL operation.")
+            try:
+                prepared = await asyncio.to_thread(prepare_local_restore, config, backup_id)
+                try:
+                    return {"backup_id": backup_id, "manifest": asdict(prepared.manifest)}
+                finally:
+                    await asyncio.to_thread(discard_prepared_restore, prepared)
+            except RuntimeError as exc:
+                raise HTTPException(409, str(exc)) from exc
 
         @app.get("/v1/workspace/default")
         async def default_workspace():
@@ -1058,7 +1156,9 @@ def create_dev_app(
         @app.post("/v1/threads/{thread_id}/archive")
         async def archive_thread(thread_id: UUID) -> ThreadEndResult:
             try:
-                return await extraction.archive(thread_id)
+                result = await extraction.archive(thread_id)
+                journal.append_archive(str(thread_id))
+                return result
             except (ValueError, SpineClientError) as exc:
                 raise HTTPException(
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

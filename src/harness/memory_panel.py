@@ -50,6 +50,7 @@ from harness.spine_client import (
 type EnvelopeSender = Callable[[Envelope], Awaitable[None]]
 type PanelOperation = Literal["refresh", "add", "remove", "edit", "pin"]
 type PanelResult = Literal["refreshed", "added", "removed", "edited", "pin_changed", "rescored"]
+type PanelEnricher = Callable[[str, list[MemoryPanelItem]], Awaitable[list[MemoryPanelItem]]]
 
 _MEMORY_BLOCK_PREFIX = (
     "<memory_system>\n"
@@ -292,6 +293,7 @@ class MemoryPanelController:
         *,
         principal_id: str,
         machine_id: str,
+        enrich: PanelEnricher | None = None,
     ) -> None:
         if not principal_id.strip() or not machine_id.strip():
             raise ValueError("panel identities must not be blank")
@@ -300,6 +302,7 @@ class MemoryPanelController:
         self._factory = factory
         self._principal_id = principal_id
         self._machine_id = machine_id
+        self._enrich = enrich
 
     async def handle(self, message: Envelope, send: EnvelopeSender) -> None:
         """Handle one validated C→D request and emit exactly one correlated result."""
@@ -634,6 +637,8 @@ class MemoryPanelController:
             )
             for memory in memories
         ]
+        if self._enrich is not None and items:
+            items = await self._enrich(thread_id, items)
         await send(
             self._factory.create(
                 MessageType.MEMORY_PANEL_UPDATE,

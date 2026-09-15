@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import stat
 import urllib.error
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 
 import pytest
@@ -626,6 +626,50 @@ def test_remote_doctor_checks_spine_journal_and_disk_without_local_database(
     assert "Disk:" in rendered
     assert "Palace API contract: 0.1.7 (app supports >=0.1.0,<0.2.0)" in rendered
     assert "Local database and backup checks are skipped for a remote Palace." in rendered
+
+
+@pytest.mark.parametrize("available", [True, False])
+def test_doctor_reports_observed_breaker_or_unverified(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    available: bool,
+) -> None:
+    """SPEC D.2 / FL-149 must never claim a configured amount proves an armed breaker."""
+    from harness.deploy import BreakerState, DeployTarget, GcloudDeployBackend
+
+    target = DeployTarget(
+        "ABCDEF-123456-789ABC", "billingAccounts/ABCDEF-123456-789ABC/budgets/test"
+    )
+    config = onboarding.NocturneConfig(
+        home=tmp_path,
+        openrouter_api_key="fixture",
+        spine_token="fixture",
+        database_password="fixture",
+        machine_id="fixture",
+        palace_mode="remote",
+        spine_url="https://n8-memory-palace-spine-example.run.app",
+    )
+    monkeypatch.setattr(GcloudDeployBackend, "discover_target", lambda self: target)
+
+    def observe(self: GcloudDeployBackend, observed_target: DeployTarget) -> BreakerState:
+        assert observed_target == target
+        if not available:
+            raise DeployError("fixture cannot read breaker")
+        return BreakerState.PARTIAL_OR_DRIFTED
+
+    monkeypatch.setattr(GcloudDeployBackend, "observe_billing_breaker", observe)
+    output = io.StringIO()
+    onboarding._print_cloud_breaker(config, stdout=output)
+    assert "GCP project: n8-memory-palace" in output.getvalue()
+    assert ("USD 100/month" in output.getvalue()) is available
+    assert ("not verified" in output.getvalue()) is not available
+    if available:
+        assert BreakerState.PARTIAL_OR_DRIFTED.value in output.getvalue()
+    unrelated = io.StringIO()
+    onboarding._print_cloud_breaker(
+        replace(config, spine_url="https://other.example"), stdout=unrelated
+    )
+    assert unrelated.getvalue() == ""
 
 
 def test_remote_up_keeps_running_with_a_visible_notice_when_update_is_declined(

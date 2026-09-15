@@ -477,6 +477,19 @@ async def test_pinned_resolution_bypasses_catalog_and_is_stable_per_thread() -> 
 
 
 @pytest.mark.asyncio
+async def test_role_policy_change_preserves_existing_thread_choice() -> None:
+    """A-021 / FL-154: a role default change affects new work, not a running thread."""
+    resolver = ModelPolicyResolver(
+        policy="pinned:openrouter:vendor/first", static_model="openrouter:vendor/first",
+        static_context_tokens=8192, catalog=None,
+    )
+    first = await resolver.resolve("existing")
+    resolver.set_policy("pinned:openrouter:vendor/second")
+    assert await resolver.resolve("existing") is first
+    assert (await resolver.resolve("new")).model == "openrouter:vendor/second"
+
+
+@pytest.mark.asyncio
 async def test_first_pinned_image_lookup_is_exact_and_retained_for_stickiness_epoch() -> None:
     """A-052 is defended by lazily resolving one exact pinned OpenRouter image capability and
     retaining its proof; this preserves A-021's catalog bypass for every text-only turn.

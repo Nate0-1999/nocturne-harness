@@ -34,15 +34,11 @@
 }
 
 .brand__mark {
-  display: grid;
-  place-items: center;
+  display: block;
+  flex: 0 0 auto;
   width: 1.55rem;
   height: 1.55rem;
-  border: 1px solid var(--ink);
   color: var(--accent);
-  font-family: var(--data-font);
-  font-size: 0.72rem;
-  letter-spacing: 0;
 }
 
 .brand__mode {

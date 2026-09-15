@@ -2170,7 +2170,14 @@ button.rack-module__resize-handle--nw {
   white-space: nowrap;
 }
 
-.theme-control select {
+.rack-stack-control {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+}
+
+.theme-control select,
+.rack-stack-control select {
   max-width: 9.5rem;
   border: 1px solid var(--line);
   background: var(--surface-deep);
@@ -3270,6 +3277,50 @@ button.rack-module__resize-handle--nw {
   display: flex;
 }
 
+.stage-camera-controls[hidden] { display: none; }
+.stage-camera-controls button[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--ink);
+  background: var(--accent-soft);
+}
+
+.stage-viewport--sheet {
+  overflow: auto;
+  cursor: auto;
+  touch-action: auto;
+}
+
+.stage-viewport--sheet .stage-canvas {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 40rem), 1fr));
+  gap: 1.5rem;
+  padding: 1.5rem;
+  width: 100% !important;
+  height: auto !important;
+  transform: none !important;
+  background: none;
+}
+
+.stage-viewport--sheet .stage-canvas > .rack-module {
+  position: relative;
+  inset: auto !important;
+  width: 100% !important;
+  height: 38rem !important;
+  min-width: 0;
+}
+
+.stage-viewport--sheet .rack-module__drag { cursor: auto; }
+
+.rack-sheet-annotation {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: .65rem .9rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--dim);
+  font-size: .8rem;
+}
+
 .rack-module__remove {
   align-self: stretch;
   min-width: 1.8rem;
@@ -3746,3 +3797,32 @@ button.rack-module__resize-handle--nw {
     display: grid;
   }
 }
+.memory-restore-dialog {
+  width: min(42rem, 90vw);
+  max-height: 80vh;
+  overflow: auto;
+  padding: 1.5rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+}
+.memory-restore-dialog::backdrop { background: var(--ground); opacity: .67; }
+.memory-restore-dialog button,
+.memory-restore-dialog input,
+.agent-policy-settings input,
+.rack-plugin-upload textarea,
+.rack-plugin-upload button {
+  color: var(--ink);
+  background: var(--surface-raised);
+  border: 1px solid var(--accent);
+  padding: .45rem .6rem;
+  font: inherit;
+}
+.memory-restore-dialog button { margin: .5rem; cursor: pointer; }
+.memory-restore-dialog button:disabled { opacity: .55; cursor: default; }
+.memory-restore-dialog input { width: 28ch; max-width: 100%; }
+.memory-restore-dialog li { overflow-wrap: anywhere; }
+.agent-policy-settings fieldset { border: 1px solid var(--muted); margin: .75rem 0; padding: .6rem; }
+.agent-policy-settings input { width: 100%; box-sizing: border-box; }
+.rack-plugin-upload label { display: block; margin: .5rem 0; }
+.rack-plugin-upload textarea { display: block; width: 100%; min-height: 5rem; box-sizing: border-box; }

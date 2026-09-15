@@ -1216,6 +1216,17 @@ class SpineClient:
         )
         return _expect_success(response, status=200, adapter=_MEMORY_GRAPH_SNAPSHOT)
 
+    async def memory_scores(
+        self, request: InjectPrepareRequest, memory_ids: list[UUID]
+    ) -> dict[str, float]:
+        """M3MP: score visible memories without recording a gate or injection."""
+        response = await self._request(
+            "POST", "v1/memories/scores",
+            json_body={**request.model_dump(mode="json"),
+                       "memory_ids": [str(value) for value in memory_ids]},
+        )
+        return _expect_success(response, status=200, adapter=TypeAdapter(dict[str, float]))
+
     async def scorer_console(self, request: ScorerConsoleQuery) -> ScorerConsoleSnapshot:
         response = await self._request(
             "POST",

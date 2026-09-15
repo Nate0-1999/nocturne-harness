@@ -123,6 +123,11 @@ def create_scenario_app() -> FastAPI:
     )
     spine = HeartbeatSpine()
     journal = TranscriptJournal(nocturne_home() / "transcripts")
+    # F088: a reinstall must tolerate old empty and unscoped files beside real history.
+    for thread_id, raw in (("empty-leftover", ""), ("unscoped-leftover", '{}\n[]\n{\n')):
+        path = journal.path_for_thread(thread_id)
+        if not path.exists():
+            path.write_text(raw, encoding="utf-8")
     web_dist, refusal = _runtime_web_assets()
     harness_app = create_dev_app(
         web_dist,

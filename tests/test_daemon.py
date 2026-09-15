@@ -37,6 +37,8 @@ from harness.spine_client import (
     ListMemoriesParams,
     MemoryAllocation,
     MemoryFeatures,
+    MemoryGraphQuery,
+    MemoryGraphSnapshot,
     MemoryKind,
     MemoryStatus,
     MemoryUnit,
@@ -349,6 +351,19 @@ class PanelGateSpine:
             self._unit(self.second_id, "Keep", "keep this cobalt body"),
         ]
         self.feedback_requests: list[FeedbackRequest] = []
+        self.score_requests: list[InjectPrepareRequest] = []
+
+    async def memory_graph(self, request: MemoryGraphQuery) -> MemoryGraphSnapshot:
+        return MemoryGraphSnapshot(
+            as_of=datetime.now(UTC), graph_edge_sim=0.8, edges=[], omitted_memory_ids=[],
+            nodes=[{"memory": memory.model_dump(mode="json"),
+                    "revisions": [{"revision": 1, "reason": "created"}]}
+                   for memory in self.memories if memory.memory_id in request.memory_ids],
+        )
+
+    async def memory_scores(self, request: InjectPrepareRequest, memory_ids) -> dict[str, float]:
+        self.score_requests.append(request)
+        return {str(memory_id): 0.75 for memory_id in memory_ids}
 
     @staticmethod
     def _card(memory_id: UUID, label: str, body: str, rank: int) -> ScoredMemoryCard:
@@ -1191,6 +1206,54 @@ def test_default_prompt_gets_fresh_correlated_error_lifecycle(tmp_path: Path) ->
     assert len({started["id"], usage["id"], done["id"]}) == 3
 
 
+def test_restore_preview_discards_candidate_and_refuses_cloud(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SPEC D.2 092 / FL-168: the popup previews and releases a local candidate, never cloud."""
+    from types import SimpleNamespace
+
+    from harness.lifecycle import ManifestMemory, PreparedRestore, RollbackManifest
+
+    async def stream(_messages, _info):
+        yield "unused"
+
+    settings = HarnessSettings(
+        _env_file=None,
+        nocturne_home=tmp_path,
+        spine_token="fixture-token",
+        principal_id="fixture",
+        machine_id="fixture",
+        extraction_idle_hours=None,
+    )
+    prepared = PreparedRestore(
+        "restore-fixture",
+        "backup-fixture",
+        "former-fixture",
+        "candidate-fixture",
+        RollbackManifest((), (ManifestMemory("memory-fixture", "Compass", 2, 1),), (), ()),
+    )
+    discarded = []
+    config = SimpleNamespace(palace_mode="local")
+    monkeypatch.setattr("harness.daemon.load_config", lambda **_: config)
+    monkeypatch.setattr("harness.daemon.prepare_local_restore", lambda *_: prepared)
+    monkeypatch.setattr("harness.daemon.discard_prepared_restore", discarded.append)
+    app = create_dev_app(
+        tmp_path,
+        settings=settings,
+        agent=HarnessAgent(settings, model=FunctionModel(stream_function=stream)),
+        spine=GateSpine(),
+    )
+    with TestClient(app) as client:
+        response = client.post("/v1/restore/backup-fixture/preview")
+        assert response.status_code == 200
+        assert response.json()["manifest"]["edits_reverted"][0]["label"] == "Compass"
+        assert discarded == [prepared]
+        config.palace_mode = "remote"
+        assert client.post("/v1/restore/backup-fixture/preview").status_code == 409
+        assert discarded == [prepared]
+
+
+
 def test_dev_app_wires_the_real_streaming_agent_adapter(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -1730,6 +1793,11 @@ def test_dev_panel_remove_updates_shared_context_for_the_next_model_call(
         assert panel["payload"]["action"] == "state"
         assert panel["payload"]["request_id"] == SECOND_PROMPT_ID
         assert panel["payload"]["result"] == "removed"
+        assert all(item["score"] == 0.75 for item in panel["payload"]["items"])
+        assert all(item["revisions"][0]["reason"] == "created"
+                   for item in panel["payload"]["items"])
+        assert spine.score_requests[-1].prompt == "first"
+        assert spine.score_requests[-1].principal_id == "principal-test"
         assert [
             (item["memory"]["memory_id"], item["in_context"]) for item in panel["payload"]["items"]
         ] == [

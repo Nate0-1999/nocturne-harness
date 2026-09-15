@@ -15,6 +15,26 @@ class ToolsetError(RuntimeError):
     """The adopted toolset could not satisfy the Harness-owned contract."""
 
 
+class WorkspaceBoundaryError(ValueError):
+    """A refusal by an existing owner-file, credential, or remote-state wall. [ADR-015]"""
+
+    def __init__(self, message: str, wall: str) -> None:
+        super().__init__(message)
+        self.wall = wall
+
+
+class PermissionJudge:
+    """Apply the trusted ADR-015 boundary list; never let model text widen a grant."""
+
+    @staticmethod
+    def needs_owner(wall: str) -> bool:
+        if wall == "location":
+            return False  # Moving within the workspace already has authority.
+        if wall in {"workspace", "credentials", "remote"}:
+            return True
+        raise ValueError(f"Unknown workspace wall: {wall}")
+
+
 @dataclass(frozen=True, slots=True)
 class AgentLocation:
     """The one current place from which an agent's file tools may act."""
@@ -68,6 +88,7 @@ class ToolExecutionResult:
     success: bool
     image: bytes | None = None
     media_type: str | None = None
+    boundary: str | None = None
 
 
 class StandardToolset(Protocol):

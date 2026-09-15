@@ -2,6 +2,7 @@ import type { RackBounds } from './rackLayout'
 import { STAGE_COLUMNS, STAGE_ROWS } from './stageLayout.ts'
 
 export type StageRackModuleId =
+  | `plugin:${string}`
   | 'threads'
   | 'conversation'
   | 'memory'

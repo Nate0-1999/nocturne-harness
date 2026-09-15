@@ -192,6 +192,11 @@ export function SymphonyDeck() {
     ),
   ), [selected?.messages])
   const cards = useMemo(() => proposedResponseCards(snapshot), [snapshot])
+  const boundaries = (selected?.messages ?? []).flatMap((message) => (
+    message.role === 'assistant' ? message.events.filter((event) => (
+      event.event_kind === 'boundary_card' && event.decision === 'owner_action'
+    )) : []
+  ))
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [locallyFired, setLocallyFired] = useState<Set<string>>(() => new Set())
   const [undo, setUndo] = useState<{ card: ProposedResponseCard; text: string } | null>(null)
@@ -253,6 +258,14 @@ export function SymphonyDeck() {
         <span>{visibleCards.length} waiting · {stacks.filter((stack) => stack.state === 'running').length} live</span>
       </header>
       <p className="symphony-deck__rule">The longest-waiting reply stays first. Browse freely. You steer the conductor here. Workers are never directly addressable.</p>
+      {boundaries.map((card) => (
+        <article className="deck-proposal-card" data-testid="boundary-card" key={String(card.run_id)}>
+          <h2>Workspace boundary · {String(card.wall)}</h2>
+          <p>{String(card.reason)}</p>
+          <p>{String(card.action)}</p>
+          <small>{String(card.judge)} · {String(card.policy)} · owner action required</small>
+        </article>
+      ))}
       {visibleCards.length === 0 ? (
         <p className="symphony-deck__empty" data-testid="deck-empty">No reply needs you right now.</p>
       ) : (

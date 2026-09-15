@@ -37,6 +37,7 @@ export interface Envelope<
 
 export interface ThreadCatalogEntry {
   thread_id: string
+  archived?: boolean
   title: string
   created_at: string
   updated_at: string
@@ -241,6 +242,8 @@ export type MemoryPanelItem = JsonObject & {
   memory: MemoryUnit
   in_context: boolean
   thread_excluded: boolean
+  score?: number | null
+  revisions?: JsonObject[]
 }
 
 export type MemoryPanelRequestPayload =

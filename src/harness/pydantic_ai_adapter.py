@@ -20,7 +20,10 @@ WORKSPACE_INSTRUCTIONS = (
     "To edit or write a file, you must use move in its own tool step to enter that file's "
     "directory first. Reads are free. Bash may modify files only within the current location's "
     "subtree. "
-    "If a tool refuses a boundary crossing, explain the wall plainly; do not retry around it."
+    "When the user names a discoverable skill, call load_capability with that skill's id "
+    "before following its instructions or reading its bundled resources. "
+    "Never ask a permission question in chat. The PermissionJudge handles outside-file requests. "
+    "Reserved owner decisions go to the Deck. Never retry around a refused wall."
     " Browser tools are headless and default to localhost or files beneath the current location."
     " Never ask the owner for consent inside a tool call; a refused open-web request must wait"
     " for the owner's exact `/browser allow-web` command."
@@ -160,6 +163,8 @@ async def _execute_workspace_tool(
     except (ToolsetError, OSError, ValueError) as exc:
         return f"{tool_name} refused: {str(exc).strip() or type(exc).__name__}"
     prefix = "" if result.success else f"{tool_name} refused: "
+    if result.boundary is not None and ctx.deps.boundary_review is not None:
+        return await ctx.deps.boundary_review(result.boundary, result.content)
     return prefix + result.content
 
 

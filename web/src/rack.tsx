@@ -40,6 +40,7 @@ import {
   type SpatialSelectionContext,
 } from './spatialSelection'
 import type { AttunementTarget } from './attunement'
+import { installedRackPlugins, type CustomRackModuleId, type CustomRackPlugin } from './rackPlugins'
 import { attunedThreadSelection } from './frontDoor'
 import {
   authoritativeProjectPath,
@@ -48,6 +49,7 @@ import {
 } from './projectPath'
 import { harnessClient } from './socket'
 import {
+  THREAD_CATALOG_STORAGE_KEY,
   useHarnessStore,
   type ConnectionStatus,
   type HarnessError,
@@ -56,12 +58,12 @@ import {
   type ThreadState,
 } from './store'
 
-export type RackModuleId = 'header' | 'threads' | 'conversation' | 'memory' | 'vitals' | 'palace_state' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'injection_console' | 'recipe'
+export type RackModuleId = CustomRackModuleId | 'header' | 'threads' | 'conversation' | 'memory' | 'vitals' | 'palace_state' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'injection_console' | 'recipe'
 export type RackModuleSlot = 'header' | 'panel' | 'strip' | 'overlay'
 export type RackMemoryPanelState = MemoryPanelState
 
 export function isRackModuleId(value: unknown): value is RackModuleId {
-  return value === 'header' ||
+  return installedRackPlugins.some((plugin) => plugin.id === value) || value === 'header' ||
     value === 'threads' ||
     value === 'conversation' ||
     value === 'memory' ||
@@ -291,7 +293,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'visualizer',
     slot: 'panel',
     streams: ['thread.snapshot', 'memory.panel.update'],
-    actions: ['memory.refresh', 'memory.add', 'memory.remove', 'memory.edit', 'memory.pin'],
+    actions: ['memory.refresh', 'memory.add', 'memory.remove', 'memory.edit', 'memory.pin', 'thread.select'],
     bounds: stageGridBounds(RACK_BOUNDS.memory.preferred),
     movable: true,
     law_bound: true,
@@ -425,6 +427,15 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
   },
 }
 
+export function registerRackPlugin(plugin: CustomRackPlugin) {
+  RACK_MANIFESTS[plugin.id] = {
+    id: plugin.id, name: plugin.name, version: '1.0.0', class: plugin.actions.length ? 'control' : 'visualizer',
+    slot: 'panel', streams: plugin.streams, actions: plugin.actions, bindings: plugin.bindings,
+    bounds: stageGridBounds({ w: 24, h: 20 }), movable: true, law_bound: false, default_scope: 'GLOBAL',
+  }
+}
+for (const plugin of installedRackPlugins) registerRackPlugin(plugin)
+
 assertRackModuleTemplate(RACK_MANIFESTS)
 
 let lastStoreState = useHarnessStore.getState()
@@ -526,6 +537,9 @@ function dispatchRackAction<Action extends RackAction>(
         return fetchJson(`/v1/threads/${encodeURIComponent(threadId)}/archive`, {
           method: 'POST',
         }).then((result) => {
+          useHarnessStore.getState().hydrateCatalog(getRackSnapshot().catalog.map((entry) => (
+            entry.thread_id === threadId ? { ...entry, archived: true } : entry
+          )))
           rackSelectionSurface.select({ kind: 'module', id: 'thread_end' })
           return result as RackActionResult<Action>
         })
@@ -893,6 +907,11 @@ export function createHostPluginApi(
         if (!(manifest.actions as readonly string[]).includes(action.type)) {
           throw new Error(`${manifest.id} is not permitted to dispatch ${action.type}`)
         }
+        // WALL registry / ADR026: imported controls bind descriptors, never free-hand writes.
+        if (manifest.id.startsWith('plugin:') && action.type === 'parameter.write'
+            && !manifest.bindings?.includes(action.parameter_id)) {
+          throw new Error(`${manifest.id} is not bound to ${action.parameter_id}`)
+        }
         return runRackAction(
           () => dispatchRackAction(contextualRackAction(action, instanceId, attunement)),
           (message) => useHarnessStore.getState().setTransportError(message, `${instanceId}:${action.type}`),
@@ -1036,7 +1055,13 @@ export function RackRuntime({ children }: { children: ReactNode }) {
       if (response.ok) {
         const payload = await response.json() as {
           threads?: ThreadCatalogEntry[]
+          identity?: { principal_id: string; home: string }
           default_workspace?: { path: string; label: string }
+        }
+        if (active && payload.identity?.principal_id && payload.identity.home) {
+          const identityKey = JSON.stringify([payload.identity.principal_id, payload.identity.home])
+          useHarnessStore.persist.setOptions({ name: `${THREAD_CATALOG_STORAGE_KEY}:${identityKey}` })
+          await useHarnessStore.persist.rehydrate()
         }
         if (active && Array.isArray(payload.threads)) {
           useHarnessStore.getState().hydrateCatalog(payload.threads)
