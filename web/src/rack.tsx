@@ -49,6 +49,7 @@ import {
 } from './projectPath'
 import { harnessClient } from './socket'
 import {
+  THREAD_CATALOG_STORAGE_KEY,
   useHarnessStore,
   type ConnectionStatus,
   type HarnessError,
@@ -1054,7 +1055,13 @@ export function RackRuntime({ children }: { children: ReactNode }) {
       if (response.ok) {
         const payload = await response.json() as {
           threads?: ThreadCatalogEntry[]
+          identity?: { principal_id: string; home: string }
           default_workspace?: { path: string; label: string }
+        }
+        if (active && payload.identity?.principal_id && payload.identity.home) {
+          const identityKey = JSON.stringify([payload.identity.principal_id, payload.identity.home])
+          useHarnessStore.persist.setOptions({ name: `${THREAD_CATALOG_STORAGE_KEY}:${identityKey}` })
+          await useHarnessStore.persist.rehydrate()
         }
         if (active && Array.isArray(payload.threads)) {
           useHarnessStore.getState().hydrateCatalog(payload.threads)

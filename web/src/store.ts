@@ -958,7 +958,9 @@ export const useHarnessStore = create<HarnessStoreState>()(
       },
     }),
     {
-      name: THREAD_CATALOG_STORAGE_KEY,
+      // M3FX isolation incident: the same port may now serve a different home.
+      name: `${THREAD_CATALOG_STORAGE_KEY}:unbound`,
+      skipHydration: true,
       partialize: (state) => ({
         catalog: state.catalog.map(({ proposed_response, ...entry }) => {
           void proposed_response

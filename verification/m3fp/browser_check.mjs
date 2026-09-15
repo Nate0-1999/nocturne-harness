@@ -15,6 +15,14 @@ const answer = 'M2H final post: the relay stays explicit, candidates remain revi
 const browser = await chromium.launch({ channel: 'chrome', headless: true })
 const context = await browser.newContext({ viewport: { width: 1280, height: 720 } })
 const page = await context.newPage()
+const priorCatalog = JSON.stringify({ state: {
+  catalog: [{ thread_id: '11111111-1111-4111-8111-111111111111', title: 'Unrelated prior identity',
+    created_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-01T00:00:00.000Z' }],
+  selectedThreadId: '11111111-1111-4111-8111-111111111111',
+}, version: 0 })
+await page.addInitScript((value) => {
+  localStorage.setItem('harness.thread-catalog.v1', value)
+}, priorCatalog)
 
 try {
   await mkdir(evidenceDir, { recursive: true })
@@ -31,6 +39,13 @@ try {
   await threads.locator('.thread-item--selected').waitFor({ state: 'visible' })
   await conversation.getByTestId('composer').waitFor({ state: 'visible' })
   await waitUntil(async () => conversation.getByTestId('composer').isEnabled())
+  // SPEC D.2 / FL-178: a different daemon at the same browser origin cannot inherit this catalog.
+  if (await threads.getByText('Unrelated prior identity', { exact: true }).count() !== 0) {
+    throw new Error('Packaged startup loaded the unscoped catalog of another identity')
+  }
+  if (await page.evaluate(() => localStorage.getItem('harness.thread-catalog.v1')) !== priorCatalog) {
+    throw new Error('Packaged startup changed the prior identity catalog')
+  }
 
   if (args.includes('--restore')) {
     const trace = await fetchJson(`${baseUrl}/__scenario__/heartbeat`)

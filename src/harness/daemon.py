@@ -1121,6 +1121,7 @@ def create_dev_app(
             root = discovery_root.resolve(strict=True)
             return {
                 "threads": journal.catalog(),
+                "identity": {"principal_id": principal_id, "home": str(home)},
                 "default_workspace": {"path": str(root), "label": root.name},
             }
 
