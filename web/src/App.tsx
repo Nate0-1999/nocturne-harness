@@ -769,6 +769,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           type="button"
           data-testid="app-settings-toggle"
           aria-label="App settings"
+          data-tooltip-detail="Choose the app theme, manage conversation backup, or save and restore your Stage layout."
           aria-expanded={appSettingsOpen}
           onClick={() => setAppSettingsOpen((open) => !open)}
         >
@@ -788,6 +789,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               <select
                 value={theme}
                 data-testid="theme-control"
+                data-tooltip-detail="Apply a color theme across the Stage and every module."
                 onChange={(event) => setTheme(event.currentTarget.value as ThemeId)}
               >
                 {THEMES.map((choice) => (
@@ -812,6 +814,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                 type="button"
                 disabled={platePressBusy}
                 data-testid="plate-press-button"
+                data-tooltip-detail="Extract a colorway from a local image and apply its colors to the app."
                 onClick={() => plateInputRef.current?.click()}
               >
                 {platePressBusy ? 'Pressing…' : 'Press image'}
@@ -906,12 +909,13 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           Layer
         </button>
         <div className="stage-camera-controls" aria-label="Stage camera">
-          <button type="button" aria-label="Zoom out" onClick={() => zoomAt(layer.camera.zoom - 0.1)}>−</button>
+          <button type="button" aria-label="Zoom out" data-tooltip-detail="Show more of this layer without changing module sizes or positions." onClick={() => zoomAt(layer.camera.zoom - 0.1)}>−</button>
           <output data-testid="stage-zoom">{Math.round(layer.camera.zoom * 100)}%</output>
-          <button type="button" aria-label="Zoom in" onClick={() => zoomAt(layer.camera.zoom + 0.1)}>+</button>
+          <button type="button" aria-label="Zoom in" data-tooltip-detail="Enlarge this layer on screen without changing its layout." onClick={() => zoomAt(layer.camera.zoom + 0.1)}>+</button>
           <button
             type="button"
             data-testid="stage-fit"
+            data-tooltip-detail="Fit every module on this layer into the visible Stage."
             onClick={() => changeCamera(fitStageCamera(viewportSize.width, viewportSize.height))}
           >
             Whole stage
@@ -921,6 +925,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           className="stage-library-toggle"
           type="button"
           data-testid="stage-library-toggle"
+          data-tooltip-detail="Add a module to this layer or bring back a module you removed."
           aria-expanded={libraryOpen}
           onClick={() => setLibraryOpen((open) => !open)}
         >

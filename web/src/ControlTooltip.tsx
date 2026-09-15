@@ -142,6 +142,13 @@ function controlTitle(control: HTMLElement): string {
 function controlDetail(control: HTMLElement): string {
   const explicit = normalize(control.dataset.tooltipDetail)
   if (explicit !== '') return explicit
+  const described = normalize((control.getAttribute('aria-describedby') ?? '')
+    .split(/\s+/u)
+    .map((id) => document.getElementById(id)?.textContent ?? '')
+    .join(' '))
+  if (described !== '') return described
+  const title = normalize(control.getAttribute('title'))
+  if (title !== '' && title !== controlTitle(control)) return title
   if (control.getAttribute('role') === 'tab') return 'Switch to this stage layer.'
   if (control instanceof HTMLSelectElement) return 'Choose one of the available options.'
   if (control instanceof HTMLTextAreaElement) return 'Enter text for this action.'
