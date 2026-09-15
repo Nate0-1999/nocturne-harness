@@ -2,12 +2,12 @@
   "packet": "M3IB",
   "mode": "builder",
   "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
-  "ledger_sha256": "0d73c7830c3582fdfd6c05906c9b38b0f92a885fd704aae4806009ca2301b741",
+  "ledger_sha256": "eb3680c9959669e519b60823d08f5aee68c0b6fd94d4834f7617fa2dbff79b69",
   "diffs": [
     {
       "repo": "harness",
       "base": "ef26db4d7bba0a654261d012d4a8022b0608d177",
-      "head": "957d95a5326fdef316bb2dc2b04aa8b2ac0fe569"
+      "head": "e1198ab022fe30bd2c12ed69bf79121b337ae5f6"
     }
   ],
   "unmapped": {
