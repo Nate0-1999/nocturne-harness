@@ -291,7 +291,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'visualizer',
     slot: 'panel',
     streams: ['thread.snapshot', 'memory.panel.update'],
-    actions: ['memory.refresh', 'memory.add', 'memory.remove', 'memory.edit', 'memory.pin'],
+    actions: ['memory.refresh', 'memory.add', 'memory.remove', 'memory.edit', 'memory.pin', 'thread.select'],
     bounds: stageGridBounds(RACK_BOUNDS.memory.preferred),
     movable: true,
     law_bound: true,

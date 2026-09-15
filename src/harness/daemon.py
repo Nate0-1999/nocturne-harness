@@ -35,6 +35,7 @@ from harness.envelope import (
     Envelope,
     EnvelopeFactory,
     GateCommitPayload,
+    MemoryPanelItem,
     MessageType,
     PromptSubmitPayload,
     RunCancelPayload,
@@ -70,6 +71,7 @@ from harness.spine_client import (
     ActivateScorerConfigRequest,
     BatchDecisionResponse,
     CreateScorerConfigRequest,
+    InjectPrepareRequest,
     MemoryGraphQuery,
     MemoryGraphSnapshot,
     QueueDecisionIntent,
@@ -844,12 +846,47 @@ def create_dev_app(
     context_windows = ContextWindowTracker()
     receipt_queue = SpendReceiptQueue(home / "receipt-queue")
     resource_watch = ResourceWatch(home)
+
+    async def enrich_memory_panel(
+        thread_id: str, items: list[MemoryPanelItem],
+    ) -> list[MemoryPanelItem]:
+        context = context_factory(thread_id)
+        ids = [item.memory.memory_id for item in items]
+        revisions = {}
+        scores = {}
+        try:
+            graph = await owned_spine.memory_graph(
+                MemoryGraphQuery(principal_id=principal_id, memory_ids=ids)
+            )
+            revisions = {str(node["memory"]["memory_id"]): node["revisions"]
+                         for node in graph.nodes}
+        except SpineClientError:
+            pass  # The card keeps its authoritative body when history is unavailable.
+        try:
+            scores = await owned_spine.memory_scores(
+                InjectPrepareRequest(
+                    thread_id=UUID(thread_id), agent_id=agent_id, machine_id=machine_id,
+                    principal_id=principal_id, project_key=context.project_key,
+                    location_path=context.origin_path,
+                    current_location=str(context.toolset.location().cwd),
+                    prompt=loop.latest_prompt(thread_id) or context.project_key or "",
+                    model_context_tokens=configured.model_context_tokens,
+                ), ids,
+            )
+        except SpineClientError:
+            pass  # Display an unavailable score rather than inventing one.
+        return [item.model_copy(update={
+            "score": scores.get(str(item.memory.memory_id)),
+            "revisions": revisions.get(str(item.memory.memory_id), []),
+        }) for item in items]
+
     panel = MemoryPanelController(
         owned_spine,
         memory_contexts,
         factory,
         principal_id=principal_id,
         machine_id=machine_id,
+        enrich=enrich_memory_panel,
     )
 
     async def publish_ambient_memory_panel(thread_id: str) -> None:

@@ -241,6 +241,8 @@ export type MemoryPanelItem = JsonObject & {
   memory: MemoryUnit
   in_context: boolean
   thread_excluded: boolean
+  score?: number | null
+  revisions?: JsonObject[]
 }
 
 export type MemoryPanelRequestPayload =

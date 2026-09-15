@@ -43,14 +43,19 @@ def test_verification_daemon_cannot_list_owner_memories(tmp_path, monkeypatch):
     owner_memory = memory_unit(uuid4(), principal_id="local", body="Owner-only sentinel")
     corpus = [owner_memory]
     requested = []
+    thread_id = str(uuid4())
 
     def palace(request):
-        assert request.url.path == "/v1/memory-graph/query", "unscoped Palace read"
+        assert request.url.path in {"/v1/memory-graph/query", "/v1/memories/scores"}, "unscoped Palace read"
         query = json.loads(request.content)
         requested.append(query["principal_id"])
+        if request.url.path == "/v1/memories/scores":
+            assert str(owner_memory.memory_id) not in query["memory_ids"]
+            return httpx.Response(200, json={str(memory.memory_id): 0.75 for memory in corpus
+                                           if memory.principal_id == query["principal_id"]})
         return httpx.Response(200, json={
             "as_of": datetime.now(UTC).isoformat(), "graph_edge_sim": 0.8,
-            "nodes": [{"memory": memory.model_dump(mode="json")} for memory in corpus
+            "nodes": [{"memory": memory.model_dump(mode="json"), "revisions": []} for memory in corpus
                       if memory.principal_id == query["principal_id"]],
             "edges": [], "omitted_memory_ids": [],
         })
@@ -70,7 +75,7 @@ def test_verification_daemon_cannot_list_owner_memories(tmp_path, monkeypatch):
         agent=HarnessAgent(settings, model=FunctionModel(stream_function=unused)),
     )
     with TestClient(app) as client, client.websocket_connect("/ws") as socket:
-        socket.send_json(frame("memory.panel.update", {"action": "refresh"}))
+        socket.send_json(frame("memory.panel.update", {"action": "refresh"}, thread_id=thread_id))
         panel, _ = receive_until(socket, "memory.panel.update")
         assert panel["payload"]["items"] == []
         graph = client.get("/v1/rack/query?resource=memory_graph&principal_id=local")
@@ -79,15 +84,16 @@ def test_verification_daemon_cannot_list_owner_memories(tmp_path, monkeypatch):
         assert client.get("/v1/identity").json()["principal_id"] == config.principal_id
         own_memory = memory_unit(uuid4(), principal_id=config.principal_id, body="Disposable fact")
         corpus.append(own_memory)
-        socket.send_json(frame("memory.panel.update", {"action": "refresh"}))
+        socket.send_json(frame("memory.panel.update", {"action": "refresh"}, thread_id=thread_id))
         panel, _ = receive_until(socket, "memory.panel.update")
         assert [item["memory"]["memory_id"] for item in panel["payload"]["items"]] == [
             str(own_memory.memory_id),
         ]
+        assert panel["payload"]["items"][0]["score"] == 0.75
         socket.send_json(frame("memory.panel.update", {
             "action": "pin", "memory_id": str(owner_memory.memory_id),
             "expected_revision": 1, "pin": True,
-        }))
+        }, thread_id=thread_id))
         refusal, _ = receive_until(socket, "memory.panel.update")
         assert refusal["payload"]["action"] == "error"
     assert requested and set(requested) == {config.principal_id}

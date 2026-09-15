@@ -452,6 +452,15 @@ class RunLoop:
         state = self._threads.get(thread_id)
         return None if state is None else state.project_key
 
+    def latest_prompt(self, thread_id: str) -> str:
+        """M3MP: current human context for observational memory scoring."""
+        state = self._threads.get(thread_id)
+        if state is not None:
+            for message in reversed(state.messages):
+                if message.get("role") == "user" and isinstance(message.get("content"), str):
+                    return message["content"]
+        return ""
+
     def thread_workspace(self, thread_id: str) -> tuple[str, str] | None:
         """Return this thread's durable workspace root and current location."""
 
