@@ -2478,22 +2478,22 @@ function ChatModule() {
             <>
               {messages.map((message) => (
                 <Fragment key={message.message_id}>
-                <MessageRow
-                  message={message}
-                  threadId={selectedThreadId ?? ''}
-                  queuePosition={
-                    message.role === 'user'
-                      ? queuedPrompts.findIndex(
-                          (queued) => queued.prompt_id === message.message_id,
-                        ) + 1
-                      : 0
-                  }
-                  runState={message.run_id === null ? undefined : runStates.get(message.run_id)}
-                  activeRunId={activeRun?.run_id}
-                  activeState={activeRun?.state}
-                  completedSymphonyDraftIds={completedSymphonyDraftIds}
-                />
-                {message.message_id === compactionPostId && <ThreadEndModule inline />}
+                  <MessageRow
+                    message={message}
+                    threadId={selectedThreadId ?? ''}
+                    queuePosition={
+                      message.role === 'user'
+                        ? queuedPrompts.findIndex(
+                            (queued) => queued.prompt_id === message.message_id,
+                          ) + 1
+                        : 0
+                    }
+                    runState={message.run_id === null ? undefined : runStates.get(message.run_id)}
+                    activeRunId={activeRun?.run_id}
+                    activeState={activeRun?.state}
+                    completedSymphonyDraftIds={completedSymphonyDraftIds}
+                  />
+                  {message.message_id === compactionPostId && <ThreadEndModule inline />}
                 </Fragment>
               ))}
             </>
