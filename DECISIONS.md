@@ -3418,3 +3418,12 @@ disposable OpenRouter key for tool-capable turns, retaining local data and lexic
 embeddings; the first fixture identity is its configured owner for comparison.
 F100 extends this to console status. Non-owner displays show their own signals,
 without presenting those signals as the whole Palace's training cadence.
+
+## 119 — Reuse memory actions in the graph; refresh recorded curation [P2, M3MU]
+
+PRECEDENT: PLAN M3MU, resolved F097; ancestors M3MI, M3MP, M3MS.
+The graph uses the existing panel controller and compare-and-swap editor. Delete
+uses that same contract to tombstone a head after confirmation, preserving the
+thread's frozen text. Refresh retains inactive context members so supersession
+remains visible. Graph and Nebula reread their recorded snapshots every five
+seconds, with one request in flight; curation animation uses actual revisions.
