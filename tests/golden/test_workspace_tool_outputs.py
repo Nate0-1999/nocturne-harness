@@ -89,8 +89,12 @@ def test_exact_movement_law_is_model_visible() -> None:
     assert WORKSPACE_INSTRUCTIONS == (
         "To edit or write a file, you must use move in its own tool step to enter that file's "
         "directory first. Reads are free. Bash may modify files only within the current "
-        "location's subtree. If a tool refuses a boundary crossing, explain the wall plainly; "
-        "do not retry around it. Browser tools are headless and default to localhost or files "
+        "location's subtree. When the user names a discoverable skill, call load_capability "
+        "with that skill's id before following its instructions or reading its bundled resources. "
+        "For a request to modify a path outside the workspace, call request_boundary_review "
+        "before answering; never ask a permission question in chat. The PermissionJudge routes "
+        "owner decisions to the Deck. Never retry around a refused wall. "
+        "Browser tools are headless and default to localhost or files "
         "beneath the current location. Never ask the owner for consent inside a tool call; a "
         "refused open-web request must wait for the owner's exact `/browser allow-web` command."
     )
