@@ -370,6 +370,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   const [transcriptBackupBusy, setTranscriptBackupBusy] = useState(false)
   const [pointerActive, setPointerActive] = useState(false)
   const [libraryOpen, setLibraryOpen] = useState(false)
+  const [sheetMode, setSheetMode] = useState(false)
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 })
   const viewportRef = useRef<HTMLDivElement>(null)
   const initialAttunementPicks = useMemo(() => initialStickyAttunements(), [])
@@ -914,7 +915,11 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           <span aria-hidden="true">＋</span>
           Layer
         </button>
-        <div className="stage-camera-controls" aria-label="Stage camera">
+        <div className="stage-camera-controls" role="group" aria-label="View layout">
+          <button type="button" aria-pressed={!sheetMode} onClick={() => setSheetMode(false)}>Stage</button>
+          <button type="button" aria-pressed={sheetMode} onClick={() => setSheetMode(true)}>Sheet</button>
+        </div>
+        <div className="stage-camera-controls" aria-label="Stage camera" hidden={sheetMode}>
           <button type="button" aria-label="Zoom out" data-tooltip-detail="Show more of this layer without changing module sizes or positions." onClick={() => zoomAt(layer.camera.zoom - 0.1)}>−</button>
           <output data-testid="stage-zoom">{Math.round(layer.camera.zoom * 100)}%</output>
           <button type="button" aria-label="Zoom in" data-tooltip-detail="Enlarge this layer on screen without changing its layout." onClick={() => zoomAt(layer.camera.zoom + 0.1)}>+</button>
@@ -944,11 +949,11 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
 
       <div
         ref={viewportRef}
-        className="stage-viewport"
+        className={`stage-viewport${sheetMode ? ' stage-viewport--sheet' : ''}`}
         data-testid="stage-viewport"
         data-pointer-active={pointerActive ? 'true' : undefined}
         inert={openGate !== null || dismissibleOverlay !== null || undefined}
-        onPointerDown={beginPan}
+        onPointerDown={sheetMode ? undefined : beginPan}
       >
         <div
           className="stage-canvas"
@@ -969,14 +974,15 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               key={module.instance_id}
               instanceId={module.instance_id}
               manifest={RACK_MANIFESTS[module.module_id]}
+              sheetMode={sheetMode}
               x={module.x}
               y={module.y}
               width={module.width}
               height={module.height}
               drawerOpen={isDrawerOpen}
               inert={isInert}
-              onMove={moveModule}
-              onResize={resizeModule}
+              onMove={sheetMode ? undefined : moveModule}
+              onResize={sheetMode ? undefined : resizeModule}
               onRemove={(instanceId) => setLayout((current) => removeStageModule(current, instanceId))}
               onPointerActivity={setPointerActive}
               scope={scope}
@@ -1016,7 +1022,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             )
           })}
         </div>
-        {offscreenModules.length > 0 && (
+        {!sheetMode && offscreenModules.length > 0 && (
           <nav className="stage-recall" aria-label="Off-screen modules">
             <span>Off-screen</span>
             {offscreenModules.map((module) => (
@@ -1182,6 +1188,7 @@ function DismissibleRackOverlay({
 }
 
 interface RackModuleFrameProps {
+  sheetMode?: boolean
   instanceId: string
   manifest: RackModuleManifest
   x: number
@@ -1215,6 +1222,7 @@ interface RackModuleFrameProps {
 }
 
 function RackModuleFrame({
+  sheetMode = false,
   instanceId,
   manifest,
   x,
@@ -1422,9 +1430,9 @@ function RackModuleFrame({
         <div className="rack-module__chrome">
           <div
             className="rack-module__drag"
-            role="button"
-            tabIndex={0}
-            aria-label={`Move ${manifest.name}; Alt plus arrow keys also moves it`}
+            role={sheetMode ? undefined : 'button'}
+            tabIndex={sheetMode ? undefined : 0}
+            aria-label={sheetMode ? undefined : `Move ${manifest.name}; Alt plus arrow keys also moves it`}
             data-tooltip={`Move ${manifest.name}`}
             data-tooltip-detail="Drag the title or hold Alt and use the arrow keys."
             onKeyDown={dockByKeyboard}
@@ -1488,7 +1496,13 @@ function RackModuleFrame({
           )}
         </div>
       )}
-      {resizeDirections.map((direction) => {
+      {sheetMode && (
+        <p className="rack-sheet-annotation">
+          {scope === 'GLOBAL' ? 'Shows the whole Palace' : `Follows ${attunementBadge(scope, attunement)}`}
+          {' · '}{manifest.class === 'control' ? 'Controls remain live' : 'Live recorded view'}
+        </p>
+      )}
+      {!sheetMode && resizeDirections.map((direction) => {
         return (
           <button
             key={direction}
