@@ -621,10 +621,31 @@ def doctor_nocturne(*, home: Path | None = None, stdout: TextIO = sys.stdout) ->
     if config.transcript_backup:
         _print_transcript_backup_status(config, stdout=stdout)
     if config.palace_mode == "remote":
+        _print_cloud_breaker(config, stdout=stdout)
         return _doctor_remote(config, preflight=preflight, stdout=stdout)
     report = inspect_local_palace(config)
     _print_doctor_report(report, preflight=preflight, stdout=stdout)
     return 2 if preflight.failures else report.exit_code
+
+
+def _print_cloud_breaker(config: NocturneConfig, *, stdout: TextIO) -> None:
+    """FL-149: report the managed project's observed budget and D2 breaker."""
+
+    from harness.deploy import CLOUD_RUN_SERVICE, PROJECT_ID, DeployError, GcloudDeployBackend
+
+    hostname = urlsplit(config.spine_url).hostname or ""
+    if not (hostname.startswith(f"{CLOUD_RUN_SERVICE}-") and hostname.endswith(".run.app")):
+        return
+    print(f"GCP project: {PROJECT_ID}", file=stdout)
+    try:
+        backend = GcloudDeployBackend(image_tag="doctor", openrouter_key=config.openrouter_api_key)
+        target = backend.discover_target()
+        state = backend.observe_billing_breaker(target)
+    except (DeployError, OSError) as exc:
+        print(f"Monthly cost circuit breaker: not verified ({exc})", file=stdout)
+        return
+    print(f"Monthly cost circuit breaker: USD 100/month; {state.value}", file=stdout)
+    print(f"Billing budget: {target.budget_resource}", file=stdout)
 
 
 def _doctor_remote(

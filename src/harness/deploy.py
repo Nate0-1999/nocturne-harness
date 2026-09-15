@@ -2426,6 +2426,50 @@ class GcloudDeployBackend:
 
         return BreakerState.ARMED
 
+    def observe_billing_breaker(self, target: DeployTarget) -> BreakerState:
+        """Reuse D2 topology checks for doctor without reading database or secrets."""
+
+        self.verify_owner_credentials()
+        project = self._json_object(("gcloud", "projects", "describe", PROJECT_ID, "--format=json"))
+        accounts = self._json_list(
+            (
+                "gcloud",
+                "iam",
+                "service-accounts",
+                "list",
+                f"--project={PROJECT_ID}",
+                "--format=json",
+            )
+        )
+        services = self._json_list(
+            (
+                "gcloud",
+                "run",
+                "services",
+                "list",
+                f"--region={REGION}",
+                f"--project={PROJECT_ID}",
+                "--format=json",
+            )
+        )
+        policy = self._json_object(
+            (
+                "gcloud",
+                "projects",
+                "get-iam-policy",
+                PROJECT_ID,
+                f"--project={PROJECT_ID}",
+                "--format=json",
+            )
+        )
+        return self._breaker_state(
+            target=target,
+            project_number=str(project.get("projectNumber", "")),
+            service_accounts=accounts,
+            run_services=services,
+            project_policy=policy,
+        )
+
     def observe(self, target: DeployTarget) -> ObservedDeployment:
         """Read and classify every fixed D1 resource and aggregate D2 topology."""
 

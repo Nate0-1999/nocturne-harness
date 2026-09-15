@@ -502,6 +502,37 @@ def breaker_state(fixture: dict[str, object]) -> BreakerState:
     )
 
 
+def test_doctor_breaker_observation_establishes_owner_and_reuses_d2(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """FL-149 requires real D2 checks with their trusted-account prerequisite."""
+    fixture = exact_breaker_fixture()
+    backend = BreakerFixtureBackend(fixture)
+    backend._active_account = None
+    read = backend._json_document
+
+    def credentials() -> None:
+        backend._active_account = "owner@example.com"
+
+    def document(argv: Sequence[str]) -> object:
+        assert backend._active_account == "owner@example.com"
+        command = tuple(argv)
+        if command[:3] == ("gcloud", "projects", "describe"):
+            return {"projectNumber": "123456789"}
+        for prefix, key in (
+            (("gcloud", "iam", "service-accounts", "list"), "service_accounts"),
+            (("gcloud", "run", "services", "list"), "run_services"),
+            (("gcloud", "projects", "get-iam-policy"), "project_policy"),
+        ):
+            if command[:len(prefix)] == prefix:
+                return fixture[key]
+        return read(argv)
+
+    monkeypatch.setattr(backend, "verify_owner_credentials", credentials)
+    monkeypatch.setattr(backend, "_json_document", document)
+    assert backend.observe_billing_breaker(TARGET) is BreakerState.ARMED
+
+
 def mutate_fixture(path: tuple[str | int, ...], value: object) -> dict[str, object]:
     fixture = exact_breaker_fixture()
     current: object = fixture
