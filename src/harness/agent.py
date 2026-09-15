@@ -740,16 +740,21 @@ class HarnessAgent:
     ) -> ExtractionDraft:
         """Run the tools-free cheap-model extraction pass over one durable transcript."""
 
+        extraction_settings = {
+            **(model_settings or {}),
+            "openrouter_usage": {"include": True},
+            "temperature": 0,
+            "openrouter_provider": {
+                **((model_settings or {}).get("openrouter_provider") or {}),
+                "quantizations": ["fp16", "bf16", "fp32"],
+            },
+        }
         result = await self._extraction_agent.run(
             summary_prompt.replace("{messages}", transcript),
             model=self._select_model(model),
             usage_limits=self._usage_limits,
             usage=usage,
-            model_settings={
-                "openrouter_usage": {"include": True},
-                **(model_settings or {}),
-                "temperature": 0,
-            },
+            model_settings=extraction_settings,
         )
         if on_result is not None:
             await on_result(result.all_messages())
@@ -762,11 +767,7 @@ class HarnessAgent:
                 model=self._select_model(model),
                 usage=usage,
                 usage_limits=self._usage_limits,
-                model_settings={
-                    "openrouter_usage": {"include": True},
-                    **(model_settings or {}),
-                    "temperature": 0,
-                },
+                model_settings=extraction_settings,
             )
             if on_result is not None:
                 await on_result(result.all_messages())

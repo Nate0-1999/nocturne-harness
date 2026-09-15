@@ -26,7 +26,7 @@ from tests.test_agent_runtime import RecordingEmitter, context, settings
 @pytest.mark.asyncio
 @pytest.mark.parametrize("corrected", [True, False])
 async def test_over_cap_fact_is_shortened_once_or_refused(corrected):
-    """SD-062: an over-cap single fact stays atomic; failed shortening prevents admission."""
+    """SPEC D.2 / SD-062: shorten one fact atomically; failed shortening prevents admission."""
     calls = []
     receipts = []
 
@@ -34,6 +34,11 @@ async def test_over_cap_fact_is_shortened_once_or_refused(corrected):
         calls.append(messages)
         assert info.model_settings["temperature"] == 0
         assert info.model_settings["openrouter_usage"] == {"include": True}
+        assert info.model_settings["openrouter_provider"]["quantizations"] == [
+            "fp16",
+            "bf16",
+            "fp32",
+        ]
         body = "The notebook is copper." if corrected and len(calls) == 2 else "copper " * 200
         return ModelResponse(
             [
@@ -75,7 +80,7 @@ async def test_over_cap_fact_is_shortened_once_or_refused(corrected):
     "strategy", ["truncate", "summarize", "memories-then-drop", "human-and-final-only"]
 )
 async def test_real_runner_compacts_once_and_keeps_resumable_history(tmp_path, strategy):
-    """D.2 153: old content exits once through triage, without losing the next response."""
+    """SPEC D.2 153: triage removes old content without losing the next response."""
     summaries = []
     requests = []
 
@@ -160,7 +165,7 @@ async def test_real_runner_compacts_once_and_keeps_resumable_history(tmp_path, s
 
 @pytest.mark.asyncio
 async def test_large_worker_return_is_journaled_capped_and_cannot_trigger_compaction(tmp_path):
-    """D.2 153: the actual delegated run has no memory tools and bulk never forces compaction."""
+    """SPEC D.2 153: workers have no memory tools and bulk never forces compaction."""
     full_return = "worker evidence " * 6000
     parent_returns = []
 
@@ -231,7 +236,7 @@ async def test_large_worker_return_is_journaled_capped_and_cannot_trigger_compac
 async def test_failure_keeps_the_correct_history_before_or_after_admission(
     tmp_path, fail_admission
 ):
-    """D.2 101: queue failure keeps history; provider failure retains admitted compaction."""
+    """SPEC D.2 101: queue failure keeps history; later failure retains admitted compaction."""
 
     def extract(messages, info):
         return ModelResponse(

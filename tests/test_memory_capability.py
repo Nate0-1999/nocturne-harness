@@ -93,7 +93,7 @@ def test_owned_save_handler_keeps_project_scope_required_and_force_optional() ->
 
 @pytest.mark.asyncio
 async def test_vanilla_agent_discovers_search_and_edit_only() -> None:
-    """D.2 153 is defended by verifying that vanilla agent discovers search and edit tools and
+    """SPEC D.2 153 verifies that vanilla agents discover search and edit tools and
     instruction; this prevents drift in the owned memory capability seam.
     """
     assert pydantic_ai.__version__ == "2.28.0"  # D.2 136 lockstep core upgrade

@@ -261,9 +261,10 @@ class PydanticAITurnRunner:
                             thread_id,
                             policy.model_dump(),
                         )
+                        compaction.policy = policy
                         message = (
                             f"Compaction: {policy.strategy}; {policy.policy} policy at "
-                            f"{policy.fraction:.0%} of the model window."
+                            f"{policy.fraction:.1%} of the model window."
                         )
                     except ValueError:
                         message = (
