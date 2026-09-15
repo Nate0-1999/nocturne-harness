@@ -406,7 +406,7 @@ class _HumanFinalCompaction(SlidingWindowCompaction):
                         message if parts == message.parts else replace(message, parts=parts)
                     )
         retained = reinject_pinned(messages, retained)
-        if retained == messages:
+        if self._without_receipts(retained) == self._without_receipts(messages):
             return messages
         retained = self._without_receipts(retained)
         return [self._receipt_message(self._dropped_messages(messages, retained), ctx), *retained]
@@ -449,6 +449,7 @@ class _MemoryStrategy:
             if proposed == messages:
                 return messages
         before = estimate_context_tokens(messages, cl100k_token_count)
+        owner.original_history = list(messages)
         await owner.emit.event(
             {"event_kind": "compaction_started", "before_tokens": before, "strategy": strategy}
         )
@@ -517,6 +518,7 @@ class MemoryCompaction(TieredCompaction):
         self.model_settings = model_settings
         self.completed = False
         self.history = []
+        self.original_history = []
         super().__init__(
             tiers=[_MemoryStrategy(self)],
             target_fraction=self.policy.fraction,

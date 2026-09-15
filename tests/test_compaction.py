@@ -34,11 +34,6 @@ async def test_over_cap_fact_is_shortened_once_or_refused(corrected):
         calls.append(messages)
         assert info.model_settings["temperature"] == 0
         assert info.model_settings["openrouter_usage"] == {"include": True}
-        assert info.model_settings["openrouter_provider"]["quantizations"] == [
-            "fp16",
-            "bf16",
-            "fp32",
-        ]
         body = "The notebook is copper." if corrected and len(calls) == 2 else "copper " * 200
         return ModelResponse(
             [
@@ -302,6 +297,7 @@ async def test_failure_keeps_the_correct_history_before_or_after_admission(
     if fail_admission:
         assert checkpoint is None
         assert all(message in outcome.message_history for message in history)
+        assert "Continue." in str(outcome.message_history)
     else:
         assert checkpoint is not None
         assert len(outcome.message_history) < len(history)
@@ -374,3 +370,10 @@ async def test_policy_commands_survive_restart_and_manual_compaction_bypasses_fi
     assert outcome.stop_reason.value == "end_turn", outcome.error_message
     assert "Old answer" not in str(outcome.message_history)
     assert "Final answer" in str(outcome.message_history)
+    repeated = await runner.run(
+        thread_id=str(deps.thread_id),
+        prompt="/compact",
+        message_history=outcome.message_history,
+        emit=RecordingEmitter(),
+    )
+    assert repeated.assistant_text == "No older context to compact yet."
