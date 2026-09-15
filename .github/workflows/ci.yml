@@ -150,4 +150,5 @@ jobs:
       - name: Run live S1-S2 contract
         env:
           SPINE_SOURCE_DIR: ${{ github.workspace }}/_contract/spine
+          PYTHON: python
         run: sh tests/contract/run.sh
