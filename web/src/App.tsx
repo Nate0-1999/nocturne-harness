@@ -21,6 +21,7 @@ import { MemoryGate } from './MemoryGate'
 import { MemoryPanel } from './MemoryPanel'
 import { MemoryRestore } from './MemoryRestore'
 import { AgentPolicies } from './AgentPolicies'
+import { RackPluginUpload } from './RackPluginUpload'
 import { MemoryGraph } from './MemoryGraph'
 import { PalaceNebula } from './PalaceNebula'
 import { InjectionConsole } from './InjectionConsole'
@@ -1034,6 +1035,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             <button type="button" aria-label="Close stage library" onClick={() => setLibraryOpen(false)}>×</button>
           </header>
           <p>Put any instrument back on this layer.</p>
+          <RackPluginUpload onInstalled={(id) => setLayout((current) => restoreStageModule(current, id))} />
           <ul>
             {STAGE_MODULE_IDS.map((moduleId) => {
               const present = layer.modules.some((module) => module.module_id === moduleId)

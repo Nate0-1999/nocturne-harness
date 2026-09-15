@@ -1,4 +1,5 @@
 import type { RackScope } from './rackLayout'
+import { installedRackPlugins, type CustomRackModuleId } from './rackPlugins.ts'
 
 export const STAGE_LAYOUT_STORAGE_KEY = 'nocturne.stage.layout.v5'
 export const STAGE_SAVED_SET_STORAGE_KEY = 'nocturne.stage.saved-set.v5'
@@ -26,6 +27,7 @@ const STAGE_ORIGIN_X = (STAGE_COLUMNS - LEGACY_STAGE_COLUMNS * STAGE_COORDINATE_
 const STAGE_ORIGIN_Y = (STAGE_ROWS - LEGACY_STAGE_ROWS * STAGE_COORDINATE_SCALE) / 2
 
 export type StageModuleId =
+  | CustomRackModuleId
   | 'threads'
   | 'conversation'
   | 'memory'
@@ -40,7 +42,7 @@ export type StageModuleId =
 
 export type ConversationMode = 'focused' | 'stack'
 
-export const STAGE_MODULE_IDS: readonly StageModuleId[] = [
+export const STAGE_MODULE_IDS: StageModuleId[] = [
   'threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state',
   'memory_graph', 'palace_nebula', 'injection_console', 'palace_queue',
   'recipe',
@@ -117,6 +119,13 @@ const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
   }),
   recipe: expandLegacyModule({ instance_id: 'recipe', module_id: 'recipe', x: 14, y: 2, width: 12, height: 10 }),
 }
+
+export function registerStagePlugin(id: CustomRackModuleId) {
+  if (!STAGE_MODULE_IDS.includes(id)) STAGE_MODULE_IDS.push(id)
+  DEFAULT_SCOPES[id] = 'GLOBAL'
+  DEFAULT_MODULES[id] = { ...DEFAULT_MODULES.recipe, instance_id: id, module_id: id }
+}
+for (const plugin of installedRackPlugins) registerStagePlugin(plugin.id)
 
 export const FACTORY_STAGE_LAYOUT: StageLayoutSet = {
   version: 5,
@@ -740,7 +749,10 @@ function parseModule(
     (value.y as number) + (value.height as number) > rows
   ) return null
   const rawInstanceId = context.version >= 4 ? value.instance_id : rawModuleId
-  if (typeof rawInstanceId !== 'string' || !/^[a-z_]+(?::[1-9][0-9]*)?$/.test(rawInstanceId)) {
+  if (typeof rawInstanceId !== 'string' || (
+    !/^[a-z_]+(?::[1-9][0-9]*)?$/.test(rawInstanceId)
+    && !installedRackPlugins.some((plugin) => plugin.id === rawInstanceId && plugin.id === rawModuleId)
+  )) {
     return null
   }
   if (
@@ -947,7 +959,7 @@ function parseScopes(
 }
 
 function isStageModuleId(value: unknown): value is StageModuleId {
-  return value === 'threads' || value === 'conversation' || value === 'memory' ||
+  return installedRackPlugins.some((plugin) => plugin.id === value) || value === 'threads' || value === 'conversation' || value === 'memory' ||
     value === 'vitals' || value === 'palace_state' || value === 'context_bars' || value === 'memory_graph' || value === 'palace_nebula' ||
     value === 'injection_console' || value === 'palace_queue' || value === 'recipe'
 }

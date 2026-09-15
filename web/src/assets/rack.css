@@ -3765,7 +3765,9 @@ button.rack-module__resize-handle--nw {
 .memory-restore-dialog::backdrop { background: #000a; }
 .memory-restore-dialog button,
 .memory-restore-dialog input,
-.agent-policy-settings input {
+.agent-policy-settings input,
+.rack-plugin-upload textarea,
+.rack-plugin-upload button {
   color: var(--ink);
   background: var(--surface-raised);
   border: 1px solid var(--accent);
@@ -3778,3 +3780,5 @@ button.rack-module__resize-handle--nw {
 .memory-restore-dialog li { overflow-wrap: anywhere; }
 .agent-policy-settings fieldset { border: 1px solid var(--muted); margin: .75rem 0; padding: .6rem; }
 .agent-policy-settings input { width: 100%; box-sizing: border-box; }
+.rack-plugin-upload label { display: block; margin: .5rem 0; }
+.rack-plugin-upload textarea { display: block; width: 100%; min-height: 5rem; box-sizing: border-box; }

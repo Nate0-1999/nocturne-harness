@@ -40,6 +40,7 @@ import {
   type SpatialSelectionContext,
 } from './spatialSelection'
 import type { AttunementTarget } from './attunement'
+import { installedRackPlugins, type CustomRackModuleId, type CustomRackPlugin } from './rackPlugins'
 import { attunedThreadSelection } from './frontDoor'
 import {
   authoritativeProjectPath,
@@ -56,12 +57,12 @@ import {
   type ThreadState,
 } from './store'
 
-export type RackModuleId = 'header' | 'threads' | 'conversation' | 'memory' | 'vitals' | 'palace_state' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'injection_console' | 'recipe'
+export type RackModuleId = CustomRackModuleId | 'header' | 'threads' | 'conversation' | 'memory' | 'vitals' | 'palace_state' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'injection_console' | 'recipe'
 export type RackModuleSlot = 'header' | 'panel' | 'strip' | 'overlay'
 export type RackMemoryPanelState = MemoryPanelState
 
 export function isRackModuleId(value: unknown): value is RackModuleId {
-  return value === 'header' ||
+  return installedRackPlugins.some((plugin) => plugin.id === value) || value === 'header' ||
     value === 'threads' ||
     value === 'conversation' ||
     value === 'memory' ||
@@ -424,6 +425,15 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     law_bound: true, default_scope: 'ATTUNED',
   },
 }
+
+export function registerRackPlugin(plugin: CustomRackPlugin) {
+  RACK_MANIFESTS[plugin.id] = {
+    id: plugin.id, name: plugin.name, version: '1.0.0', class: plugin.actions.length ? 'control' : 'visualizer',
+    slot: 'panel', streams: plugin.streams, actions: plugin.actions, bindings: plugin.bindings,
+    bounds: stageGridBounds({ w: 24, h: 20 }), movable: true, law_bound: false, default_scope: 'GLOBAL',
+  }
+}
+for (const plugin of installedRackPlugins) registerRackPlugin(plugin)
 
 assertRackModuleTemplate(RACK_MANIFESTS)
 
@@ -895,6 +905,11 @@ export function createHostPluginApi(
       async dispatch<Action extends RackAction>(action: Action) {
         if (!(manifest.actions as readonly string[]).includes(action.type)) {
           throw new Error(`${manifest.id} is not permitted to dispatch ${action.type}`)
+        }
+        // WALL registry / ADR026: imported controls bind descriptors, never free-hand writes.
+        if (manifest.id.startsWith('plugin:') && action.type === 'parameter.write'
+            && !manifest.bindings?.includes(action.parameter_id)) {
+          throw new Error(`${manifest.id} is not bound to ${action.parameter_id}`)
         }
         return runRackAction(
           () => dispatchRackAction(contextualRackAction(action, instanceId, attunement)),

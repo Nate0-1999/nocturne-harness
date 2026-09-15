@@ -35,6 +35,7 @@ import type { RackEnvelopeEvent, RackResizeEvent } from './rackEvents'
 import type { SpatialSelectionContext } from './spatialSelection'
 import type { AttunementTarget } from './attunement'
 import type { ConversationMode } from './stageLayout'
+import { installedRackPlugins, rackPluginDocument } from './rackPlugins'
 
 const BRIDGE_VERSION = 1
 const READY_MESSAGE = 'nocturne.rack.ready'
@@ -101,7 +102,8 @@ export function RackPluginIframe({
     ),
     [attunement, instanceId, manifest, spatialFrameId, spatialLayerId, spatialScope],
   )
-  const frameOrigin = useMemo(() => rackFrameOrigin(), [])
+  const customPlugin = installedRackPlugins.find((plugin) => plugin.id === manifest.id)
+  const frameOrigin = customPlugin ? 'null' : rackFrameOrigin()
   const colorway = useMemo(() => {
     if (!theme.startsWith('pressed-')) return null
     try {
@@ -193,7 +195,7 @@ export function RackPluginIframe({
         colorway,
       }
       if (connecting) {
-        target.postMessage(message, frameOrigin, [channel.port2])
+        target.postMessage(message, frameOrigin === 'null' ? '*' : frameOrigin, [channel.port2])
       } else {
         send({ type: 'snapshot', snapshot: message.snapshot })
         send({ type: 'selection', selection: message.selection })
@@ -246,8 +248,9 @@ export function RackPluginIframe({
       className="rack-plugin-frame"
       data-testid={`rack-plugin-frame-${manifest.id}`}
       title={manifest.name}
-      sandbox="allow-scripts allow-same-origin"
-      src={rackFrameUrl(manifest.id, theme, conversationMode)}
+      sandbox={customPlugin ? 'allow-scripts' : 'allow-scripts allow-same-origin'}
+      src={customPlugin ? undefined : rackFrameUrl(manifest.id, theme, conversationMode)}
+      srcDoc={customPlugin ? rackPluginDocument(customPlugin) : undefined}
     />
   )
 }
