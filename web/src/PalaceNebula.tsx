@@ -46,10 +46,6 @@ type LoadState =
   | {
       kind: 'ready'
       snapshot: PalaceNebulaSnapshot
-      bodies: NebulaBody[]
-      memoryEvents: NebulaMemoryEvent[]
-      filaments: NebulaFilament[]
-      families: NebulaCreatureFamily[]
       scorer: ScorerSnapshot | null
     }
 
@@ -81,30 +77,24 @@ export function PalaceNebula() {
     void Promise.all([graph, scorer]).then(([graphResult, scorerSnapshot]) => {
       if (!active) return
       const snapshot = graphResult.data as unknown as PalaceNebulaSnapshot
-      const bodies = buildNebulaBodies(snapshot, axis)
-      const memoryEvents = buildNebulaEvents(snapshot)
       setLoad({
         kind: 'ready',
         snapshot,
-        bodies,
-        memoryEvents,
-        filaments: buildNebulaFilaments(snapshot, bodies),
-        families: buildNebulaCreatureFamilies(snapshot, bodies, memoryEvents),
         scorer: scorerSnapshot,
       })
     }).catch(() => {
       if (active) setLoad({ kind: 'error' })
     })
     return () => { active = false }
-  }, [axis, query, threadId])
+  }, [query, threadId])
 
-  const bodies = load.kind === 'ready' ? load.bodies : []
-  const memoryEvents = load.kind === 'ready' ? load.memoryEvents : []
-  const filaments = load.kind === 'ready' ? load.filaments : []
-  const families = load.kind === 'ready' ? load.families : []
+  const bodies = useMemo(() => load.kind === 'ready' ? buildNebulaBodies(load.snapshot, axis) : [], [load, axis])
+  const memoryEvents = useMemo(() => load.kind === 'ready' ? buildNebulaEvents(load.snapshot) : [], [load])
+  const filaments = useMemo(() => load.kind === 'ready' ? buildNebulaFilaments(load.snapshot, bodies) : [], [load, bodies])
+  const families = useMemo(() => load.kind === 'ready' ? buildNebulaCreatureFamilies(load.snapshot, bodies, memoryEvents) : [], [load, bodies, memoryEvents])
   const kinds = useMemo(() => (
-    load.kind === 'ready' ? [...new Set(load.bodies.map((body) => body.kind))].sort() : []
-  ), [load])
+    [...new Set(bodies.map((body) => body.kind))].sort()
+  ), [bodies])
   const latestEvent = memoryEvents.at(-1)
   const splitCount = memoryEvents.filter((event) => event.event_class === 'split').length
   const mergeCount = memoryEvents.filter((event) => event.event_class === 'merge').length
@@ -119,7 +109,7 @@ export function PalaceNebula() {
         <p>Every point is a recorded memory event. The graph is the instrument.</p>
       </div>
       <div className="palace-nebula__controls">
-        <label>Posture<select aria-label="Nebula axes" value={axis} onChange={(event) => { setLoad({ kind: 'loading' }); setAxis(event.target.value as NebulaAxisMode) }}>
+        <label>Posture<select aria-label="Nebula axes" value={axis} onChange={(event) => setAxis(event.target.value as NebulaAxisMode)}>
           <option value="activity">Activity</option><option value="provenance">Provenance</option>
         </select></label>
         <label>Render<select aria-label="Nebula hardware tier" value={tier} onChange={(event) => { setFps(0); setBackend('starting'); setTier(event.target.value as NebulaHardwareTier) }}>
@@ -161,7 +151,7 @@ export function PalaceNebula() {
       <section><h2>{axis === 'activity' ? 'Activity posture' : 'Provenance posture'}</h2>{NEBULA_BINDINGS[axis].map((binding) => <p key={binding}>{binding}</p>)}</section>
       <section><h2>Memory current</h2>{NEBULA_BINDINGS.current.map((binding) => <p key={binding}>{binding}</p>)}</section>
       <section><h2>Creature + constellation</h2>{NEBULA_BINDINGS.shared.map((binding) => <p key={binding}>{binding}</p>)}</section>
-      <section><h2>Kinds in view</h2><p>{kinds.length === 0 ? 'None' : kinds.join(' · ')}</p><p>Camera alone is interactive; data marks remain still until reality changes.</p></section>
+      <section><h2>Kinds in view</h2><p>{kinds.length === 0 ? 'None' : kinds.join(' · ')}</p><p>Camera moves freely; posture rebinds this same recorded snapshot.</p></section>
     </aside>
   </section>
 }

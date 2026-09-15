@@ -38,12 +38,16 @@ test('activity and provenance modes produce different named data transforms', ()
   const activity = buildNebulaBodies(snapshot, 'activity', Date.parse('2026-08-21T20:00:00Z'))
   const provenance = buildNebulaBodies(snapshot, 'provenance', Date.parse('2026-08-21T20:00:00Z'))
   assert.notDeepEqual(activity.map((body) => body.position), provenance.map((body) => body.position))
+  assert.notDeepEqual(activity.map((body) => body.color), provenance.map((body) => body.color))
+  assert.notDeepEqual(activity.map((body) => body.scale), provenance.map((body) => body.scale))
   assert.deepEqual(NEBULA_BINDINGS.activity, [
     'X · memory.created_at (chronological rank)',
     'Y · memory.stats.injections (log scale)',
     'Z · memory.revision (linear scale)',
+    'Color · memory.kind (deterministic palette)',
+    'Shape · memory.revision (vertical stretch)',
   ])
-  assert.equal(NEBULA_BINDINGS.shared.length, 7)
+  assert.equal(NEBULA_BINDINGS.shared.length, 5)
 })
 
 /** SPEC D.2 146 and PLAN M3SL make the torrent a pure one-mark-per-revision projection. */
