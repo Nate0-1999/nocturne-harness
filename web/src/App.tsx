@@ -20,6 +20,7 @@ import { SymphonyDeliberationCard, SymphonyResultCard } from './SymphonyCards'
 import { MemoryGate } from './MemoryGate'
 import { MemoryPanel } from './MemoryPanel'
 import { MemoryRestore } from './MemoryRestore'
+import { AgentPolicies } from './AgentPolicies'
 import { MemoryGraph } from './MemoryGraph'
 import { PalaceNebula } from './PalaceNebula'
 import { InjectionConsole } from './InjectionConsole'
@@ -872,6 +873,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             </div>
           </section>
           <MemoryRestore />
+          <AgentPolicies />
         </aside>
       )}
       <div

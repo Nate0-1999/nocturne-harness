@@ -51,6 +51,7 @@ from harness.model_policy import (
     ModelPolicyResolver,
     ThreadModelResolution,
     ThreadModelResolver,
+    parse_model_policy,
 )
 from harness.model_router import CompletionRouter
 from harness.onboarding import load_config, nocturne_home, set_transcript_backup
@@ -134,6 +135,10 @@ type RecipeGraphReader = Callable[[], RecipeGraphSnapshot]
 
 class TranscriptBackupUpdate(BaseModel):
     enabled: bool
+
+
+class AgentPolicyUpdate(BaseModel):
+    policy: str
 
 
 class AttunementTargetRequest(BaseModel):
@@ -765,6 +770,20 @@ def create_dev_app(
 
     configured = settings or HarnessSettings()
     home = (configured.nocturne_home or nocturne_home()).expanduser().resolve()
+    role_policy_path = home / "model-policies.json"
+    role_policies = {
+        "chat": configured.effective_model_policy_chat,
+        "subagent": configured.model_policy_subagent or configured.effective_model_policy_chat,
+        "judge": configured.model_policy_judge or configured.effective_model_policy_chat,
+    }
+    if role_policy_path.exists():
+        saved_policies = json.loads(role_policy_path.read_text())
+        for role in role_policies:
+            if role in saved_policies:
+                parse_model_policy(saved_policies[role])
+                role_policies[role] = saved_policies[role]
+    for role, policy in role_policies.items():
+        setattr(configured, f"model_policy_{role}", policy)
     discovery_root = Path.cwd() if seed_discovery_root is None else Path(seed_discovery_root)
     principal_id = _required_identity(configured.principal_id, "PRINCIPAL_ID")
     if principal_id.startswith("nocturne-verification-") and home == (
@@ -1046,6 +1065,29 @@ def create_dev_app(
         @app.get("/v1/identity")
         async def identity():
             return {"principal_id": principal_id, "machine_id": machine_id, "home": str(home)}
+
+        @app.get("/v1/model-policies")
+        async def agent_model_policies():
+            return {"policies": role_policies}
+
+        @app.put("/v1/model-policies/{role}")
+        async def update_agent_model_policy(
+            role: Literal["chat", "subagent", "judge"], body: AgentPolicyUpdate
+        ):
+            try:
+                parse_model_policy(body.policy)
+            except ValueError as exc:
+                raise HTTPException(422, str(exc)) from exc
+            updated = {**role_policies, role: body.policy}
+            home.mkdir(parents=True, exist_ok=True)
+            temporary = role_policy_path.with_suffix(".tmp")
+            temporary.write_text(json.dumps(updated, indent=2) + "\n")
+            temporary.replace(role_policy_path)
+            role_policies.update(updated)
+            setattr(configured, f"model_policy_{role}", body.policy)
+            if role == "chat" and isinstance(model_resolver, ModelPolicyResolver):
+                model_resolver.set_policy(body.policy)
+            return {"policies": role_policies}
 
         @app.get("/v1/symphonies/{symphony_id}")
         async def read_symphony(symphony_id: str):

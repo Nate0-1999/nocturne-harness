@@ -386,6 +386,11 @@ class ModelPolicyResolver:
         self._image_resolutions: dict[tuple[str, str, int], ThreadModelResolution] = {}
         self._lock = asyncio.Lock()
 
+    def set_policy(self, policy: str) -> None:
+        """A-021 / FL-154: new threads adopt role policy; existing choices remain sticky."""
+        parsed = parse_model_policy(policy)
+        self._policy_text, self._policy = policy, parsed
+
     async def resolve(self, thread_id: str) -> ThreadModelResolution:
         if not isinstance(thread_id, str) or not thread_id.strip():
             raise ValueError("thread_id must not be blank")

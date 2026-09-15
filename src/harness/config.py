@@ -27,6 +27,8 @@ class HarnessSettings(BaseSettings):
     openrouter_api_key: SecretStr | None = None
     chat_model: str = "openrouter:minimax/minimax-m3"
     model_policy_chat: str | None = None
+    model_policy_subagent: str | None = None
+    model_policy_judge: str | None = None
     model_context_tokens: int = Field(default=1_000_000, ge=1)
     run_request_limit: int = Field(default=40, ge=1)
     run_total_tokens_limit: int = Field(default=500_000, ge=1)
@@ -45,7 +47,7 @@ class HarnessSettings(BaseSettings):
             raise ValueError("model_context_tokens must be an integer")
         return value
 
-    @field_validator("model_policy_chat")
+    @field_validator("model_policy_chat", "model_policy_subagent", "model_policy_judge")
     @classmethod
     def reject_blank_model_policy(cls, value: str | None) -> str | None:
         if value is not None:

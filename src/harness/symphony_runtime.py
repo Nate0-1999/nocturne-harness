@@ -276,7 +276,8 @@ class SymphonyExecution:
                     charters = tuple(
                         JudgeCharter(
                             **charter.model_dump(),
-                            model_policy=self.settings.effective_model_policy_chat,
+                            model_policy=self.settings.model_policy_judge
+                            or self.settings.effective_model_policy_chat,
                         )
                         for charter in stack.launch.judge_charters
                     )
@@ -284,8 +285,10 @@ class SymphonyExecution:
                         supervisor=supervisor,
                         event_sink=record,
                         policies=ModelPolicyByBlastRadius(
-                            leaf=self.settings.effective_model_policy_chat,
-                            compounding=self.settings.effective_model_policy_chat,
+                            leaf=self.settings.model_policy_subagent
+                            or self.settings.effective_model_policy_chat,
+                            compounding=self.settings.model_policy_subagent
+                            or self.settings.effective_model_policy_chat,
                         ),
                         search_spend_reader=lambda *_: cost(),
                     )
