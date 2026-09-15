@@ -115,6 +115,11 @@ EXTRACTION_INSTRUCTION = (
     "and 2-5 distinct lowercase keywords. Preserve uncertainty. Never extract secrets or "
     "credentials. Do not treat sub-agent bulk or verification instructions as durable facts."
     " Shorten an over-cap fact to the cap as ONE memory; split only independent facts."
+    " Prefer zero candidates over weak ones. Never memorize arithmetic, common knowledge, "
+    "scratch data, generated narratives, task progress, completion, or the existence of an "
+    "answer. Only user-established facts useful beyond this task belong in candidates. "
+    "Separate independent specifications into separate memories, even when they fit together "
+    "under the size cap. Active tasks and their answers belong only in working_summary."
 )
 SEED_SPLIT_INSTRUCTION = (
     "Semantically split the complete Markdown document into durable atomic memories. Preserve "
@@ -188,7 +193,10 @@ class RememberSplitDraft(BaseModel):
 class ExtractionCandidateDraft(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     label: StrictStr
-    body: StrictStr
+    body: StrictStr = Field(
+        description="Exactly one independently editable fact. Two properties of the same "
+        "subject are separate candidates: changing one must not require editing the other."
+    )
     kind: Literal["fact", "preference", "procedure", "project_note", "persona"]
     # WALL Palace writes / ADR-022: extracted candidates retain the memory keyword contract.
     keywords: list[StrictStr] = Field(min_length=2, max_length=5)
@@ -744,10 +752,6 @@ class HarnessAgent:
             **(model_settings or {}),
             "openrouter_usage": {"include": True},
             "temperature": 0,
-            "openrouter_provider": {
-                **((model_settings or {}).get("openrouter_provider") or {}),
-                "quantizations": ["fp16", "bf16", "fp32"],
-            },
         }
         result = await self._extraction_agent.run(
             summary_prompt.replace("{messages}", transcript),

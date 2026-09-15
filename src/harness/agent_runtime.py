@@ -227,6 +227,8 @@ class PydanticAITurnRunner:
                     to_jsonable_python(history),
                 )
                 return history
+            if compaction is not None and compaction.original_history:
+                return tuple(compaction.original_history)
             return _captured_history(prior_history, captured)
 
         try:
