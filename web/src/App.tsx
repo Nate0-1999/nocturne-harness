@@ -1722,7 +1722,14 @@ function HeaderModule() {
   return (
     <header className="topbar">
       <div className="brand" aria-label="Nocturne">
-        <span className="brand__mark" aria-hidden="true">N</span>
+        <svg className="brand__mark" viewBox="0 0 64 64" role="img" aria-label="Ouroboros around the moon">
+          <circle cx="32" cy="32" r="13" fill="currentColor" opacity="0.75" />
+          <circle cx="27" cy="28" r="3" fill="var(--ground)" opacity="0.45" />
+          <circle cx="37" cy="36" r="4" fill="var(--ground)" opacity="0.3" />
+          <path d="M54 30a22 22 0 1 1-6-13" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
+          <path d="M47 14q10 0 11 9l-5 8-5-8z" fill="currentColor" />
+          <circle cx="53" cy="20" r="1.4" fill="var(--ground)" />
+        </svg>
         <span className="brand__word">Nocturne</span>
       </div>
       <span className="app-settings-reserve" aria-hidden="true" />
