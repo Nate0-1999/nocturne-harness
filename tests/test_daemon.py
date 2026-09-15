@@ -1206,6 +1206,54 @@ def test_default_prompt_gets_fresh_correlated_error_lifecycle(tmp_path: Path) ->
     assert len({started["id"], usage["id"], done["id"]}) == 3
 
 
+def test_restore_preview_discards_candidate_and_refuses_cloud(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """D.2 092 / FL-168: the popup previews and releases a local candidate, never cloud."""
+    from types import SimpleNamespace
+
+    from harness.lifecycle import ManifestMemory, PreparedRestore, RollbackManifest
+
+    async def stream(_messages, _info):
+        yield "unused"
+
+    settings = HarnessSettings(
+        _env_file=None,
+        nocturne_home=tmp_path,
+        spine_token="fixture-token",
+        principal_id="fixture",
+        machine_id="fixture",
+        extraction_idle_hours=None,
+    )
+    prepared = PreparedRestore(
+        "restore-fixture",
+        "backup-fixture",
+        "former-fixture",
+        "candidate-fixture",
+        RollbackManifest((), (ManifestMemory("memory-fixture", "Compass", 2, 1),), (), ()),
+    )
+    discarded = []
+    config = SimpleNamespace(palace_mode="local")
+    monkeypatch.setattr("harness.daemon.load_config", lambda **_: config)
+    monkeypatch.setattr("harness.daemon.prepare_local_restore", lambda *_: prepared)
+    monkeypatch.setattr("harness.daemon.discard_prepared_restore", discarded.append)
+    app = create_dev_app(
+        tmp_path,
+        settings=settings,
+        agent=HarnessAgent(settings, model=FunctionModel(stream_function=stream)),
+        spine=GateSpine(),
+    )
+    with TestClient(app) as client:
+        response = client.post("/v1/restore/backup-fixture/preview")
+        assert response.status_code == 200
+        assert response.json()["manifest"]["edits_reverted"][0]["label"] == "Compass"
+        assert discarded == [prepared]
+        config.palace_mode = "remote"
+        assert client.post("/v1/restore/backup-fixture/preview").status_code == 409
+        assert discarded == [prepared]
+
+
+
 def test_dev_app_wires_the_real_streaming_agent_adapter(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

@@ -6,6 +6,7 @@ import json
 import subprocess
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from contextlib import suppress
+from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
@@ -43,6 +44,7 @@ from harness.envelope import (
     ThreadSnapshotRequestPayload,
 )
 from harness.extraction import ExtractionIdleScheduler, ExtractionService, ThreadEndResult
+from harness.lifecycle import discard_prepared_restore, prepare_local_restore
 from harness.memory_gate import MemoryGateTurnRunner
 from harness.memory_panel import MemoryPanelController, ThreadMemoryContextRegistry
 from harness.model_policy import (
@@ -1079,6 +1081,21 @@ def create_dev_app(
                 "threads": journal.catalog(),
                 "default_workspace": {"path": str(root), "label": root.name},
             }
+
+        @app.post("/v1/restore/{backup_id}/preview")
+        async def restore_preview(backup_id: str):
+            """FL-168 / D.2 092: inspect a side-by-side candidate, never switch live volumes."""
+            config = load_config(home=home)
+            if config.palace_mode != "local":
+                raise HTTPException(409, "Cloud Palace restore is a human Cloud SQL operation.")
+            try:
+                prepared = await asyncio.to_thread(prepare_local_restore, config, backup_id)
+                try:
+                    return {"backup_id": backup_id, "manifest": asdict(prepared.manifest)}
+                finally:
+                    await asyncio.to_thread(discard_prepared_restore, prepared)
+            except RuntimeError as exc:
+                raise HTTPException(409, str(exc)) from exc
 
         @app.get("/v1/workspace/default")
         async def default_workspace():

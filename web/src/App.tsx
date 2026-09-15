@@ -19,6 +19,7 @@ import { browserScreenshotDataUrl, elideBinaryPayload } from './runEventDisplay'
 import { SymphonyDeliberationCard, SymphonyResultCard } from './SymphonyCards'
 import { MemoryGate } from './MemoryGate'
 import { MemoryPanel } from './MemoryPanel'
+import { MemoryRestore } from './MemoryRestore'
 import { MemoryGraph } from './MemoryGraph'
 import { PalaceNebula } from './PalaceNebula'
 import { InjectionConsole } from './InjectionConsole'
@@ -870,6 +871,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               <button type="button" data-testid="layout-reset" onClick={resetFactorySet}>Reset</button>
             </div>
           </section>
+          <MemoryRestore />
         </aside>
       )}
       <div
