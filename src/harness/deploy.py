@@ -1191,7 +1191,7 @@ async def _verify_remote_spine_async(service_url: str, token: str) -> None:
         machine_id=_DEPLOY_VERIFIER_MACHINE_ID,
     )
     memory_id = None
-    async with SpineClient(service_url, token, timeout=45.0) as client:
+    async with SpineClient(service_url, token, timeout=45.0, principal_id=principal) as client:
         try:
             created_response = await client.create_memory(request)
             created = getattr(created_response, "created", None)
@@ -1262,6 +1262,7 @@ async def _verify_remote_spine_async(service_url: str, token: str) -> None:
         vitals = await client.get(
             f"{service_url.rstrip('/')}/v1/vitals",
             headers={"Authorization": f"Bearer {token}"},
+            params={"principal_id": principal},
         )
     if vitals.status_code != 200:
         raise DeployError(f"remote Vitals verification returned HTTP {vitals.status_code}")

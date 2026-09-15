@@ -35,6 +35,7 @@ from harness.spine_client import (
     SpendEvent,
     SpendEventsRequest,
     SpineClient,
+    SpineClientError,
     SpineProblemError,
     SpineResponseError,
     SpineTransportError,
@@ -119,7 +120,9 @@ def raw_json_response(status: int, payload: object, media_type: str = JSON) -> h
 
 
 async def _assert_vitals_payload_rejected(payload: dict[str, Any]) -> None:
-    async def handler(_: httpx.Request) -> httpx.Response:
+    async def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/v1/identity"):
+            return response(200, {"principal_id": "local", "is_owner": True})
         return response(200, payload)
 
     async with SpineClient(
@@ -183,6 +186,8 @@ async def test_spend_table_uses_repeated_thread_filters_and_tolerates_older_pala
     responses = [response(200, spend_table_payload()), response(404, {})]
 
     async def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/v1/identity"):
+            return response(200, {"principal_id": "local", "is_owner": True})
         seen.append(request)
         return responses.pop(0)
 
@@ -198,9 +203,62 @@ async def test_spend_table_uses_repeated_thread_filters_and_tolerates_older_pala
     assert snapshot is not None
     assert snapshot.threads[0].models[0].reasoning_tokens == "72"
     assert seen[0].url.path == "/prefix/v1/spend/table"
-    assert seen[0].url.params["scope"] == "threads"
+    assert seen[0].url.params["scope"] == "palace"
+    assert seen[0].url.params["principal_id"] == "local"
     assert seen[0].url.params.get_list("thread_id") == [THREAD_ID, second]
     assert missing is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("is_owner", [False, True])
+async def test_metrics_use_configured_principal_and_server_owner_scope(is_owner: bool) -> None:
+    """SPEC C.4 / PLAN M3SC: every rack metrics read carries its daemon's identity."""
+    principal = "configured-principal"
+    seen = []
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        assert request.url.params["principal_id"] == principal
+        if request.url.path == "/v1/identity":
+            return response(200, {"principal_id": principal, "is_owner": is_owner})
+        assert request.url.params["scope"] == ("palace" if is_owner else "principal")
+        payload = (
+            spend_table_payload() if request.url.path == "/v1/spend/table" else vitals_payload()
+        )
+        if not is_owner and request.url.path != "/v1/spend/table":
+            payload["resources"]["database_bytes"] = None
+        return response(200, payload)
+
+    async with SpineClient(
+        "https://spine.invalid", "token", principal_id=principal,
+        transport=httpx.MockTransport(handler),
+    ) as client:
+        await client.spend_table([UUID(THREAD_ID)])
+        await client.vitals_snapshot()
+        await client.thread_vitals_snapshot(UUID(THREAD_ID))
+        empty = await client.spend_table([])
+        assert empty is not None and empty.threads == []
+    assert [r.url.path for r in seen] == [
+        "/v1/identity", "/v1/spend/table", "/v1/vitals", f"/v1/vitals/threads/{THREAD_ID}",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_older_palace_never_receives_an_unscoped_metrics_read() -> None:
+    """SPEC C.4 / F094: missing scope support must not fall back to global data."""
+    seen = []
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request.url.path)
+        return response(404, {})
+
+    async with SpineClient(
+        "https://spine.invalid", "token", principal_id="nocturne-verification-m3sc",
+        transport=httpx.MockTransport(handler),
+    ) as client:
+        with pytest.raises(SpineClientError, match="Update the Palace"):
+            await client.vitals_snapshot()
+    assert seen == ["/v1/identity"]
 
 
 @pytest.mark.asyncio
@@ -427,6 +485,9 @@ async def test_all_routes_send_exact_http_contract() -> None:
     """
     seen: list[httpx.Request] = []
     responses = {
+        ("GET", "/prefix/v1/identity"): response(
+            200, {"principal_id": "local", "is_owner": True}
+        ),
         ("POST", "/prefix/v1/inject/prepare"): response(
             200,
             {
@@ -664,7 +725,9 @@ async def test_all_routes_send_exact_http_contract() -> None:
     assert dict(list_query) == {"status": "active", "limit": "25", "offset": "5"}
     spend_body = json.loads(requests[("POST", "/prefix/v1/spend/events")].content)
     assert spend_body["events"][0]["cost_usd"] == "0.0001"
-    assert requests[("GET", "/prefix/v1/vitals")].url.query == b""
+    assert dict(requests[("GET", "/prefix/v1/vitals")].url.params) == {
+        "principal_id": "local", "scope": "palace"
+    }
 
 
 @pytest.mark.asyncio
@@ -687,7 +750,9 @@ async def test_vitals_accepts_the_a029_reserved_model_key_escape() -> None:
     model_lane = payload["spend"]["lanes"][-1]
     model_lane.update(key="~unreported", label="unreported")
 
-    async def handler(_: httpx.Request) -> httpx.Response:
+    async def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/v1/identity"):
+            return response(200, {"principal_id": "local", "is_owner": True})
         return response(200, payload)
 
     async with SpineClient(

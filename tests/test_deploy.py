@@ -132,8 +132,11 @@ async def test_remote_verifier_uses_distinct_label_for_duplicate_probe_and_clean
     cleaned: list[UUID] = []
 
     class FakeSpineClient:
-        def __init__(self, base_url: str, token: str, *, timeout: float) -> None:
+        def __init__(
+            self, base_url: str, token: str, *, timeout: float, principal_id: str
+        ) -> None:
             assert (base_url, token, timeout) == ("https://spine.invalid", "token", 45.0)
+            assert principal_id.startswith("nocturne-deploy-verify-")
 
         async def __aenter__(self) -> FakeSpineClient:
             return self
@@ -211,9 +214,12 @@ async def test_remote_verifier_uses_distinct_label_for_duplicate_probe_and_clean
         async def __aexit__(self, *_: object) -> None:
             return None
 
-        async def get(self, url: str, *, headers: dict[str, str]) -> httpx.Response:
+        async def get(
+            self, url: str, *, headers: dict[str, str], params: dict[str, str]
+        ) -> httpx.Response:
             assert url == "https://spine.invalid/v1/vitals"
             assert headers == {"Authorization": "Bearer token"}
+            assert params == {"principal_id": prepare_requests[0].principal_id}
             return httpx.Response(200, json={"ok": True})
 
     monkeypatch.setattr(spine_client_module, "SpineClient", FakeSpineClient)
