@@ -302,6 +302,7 @@ class PydanticHarnessToolset:
                 "That path may contain credentials. Ask the owner before reading it.", "credentials"
             )
         if tool_name in _WRITE_TOOLS and not _inside(self._location.workspace_root, target):
+            # WALL owner files / F083: route outside-workspace writes to the Deck.
             raise WorkspaceBoundaryError(
                 f"That path is outside this workspace: {target}.", "workspace"
             )

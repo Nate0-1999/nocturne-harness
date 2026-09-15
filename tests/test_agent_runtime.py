@@ -154,6 +154,7 @@ async def test_workspace_crossing_is_judge_released_to_deck(
     assert len(cards) == 1
     assert cards[0]['judge'] == 'PermissionJudge'
     assert cards[0]['wall'] == 'workspace'
+    assert cards[0]['reason'] == f'That path is outside this workspace: {target}.'
     assert cards[0]['decision'] == 'owner_action'
     assert '?' not in ''.join(emitter.texts)
 

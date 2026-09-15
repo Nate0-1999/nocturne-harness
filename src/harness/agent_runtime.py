@@ -162,6 +162,7 @@ class PydanticAITurnRunner:
                 "action": "Use a separate thread rooted at the required folder."
                 if wall == "workspace" else "Perform this action explicitly outside Nocturne.",
             })
+            # WALL workspace / F083: stop the turn after releasing its boundary card.
             raise _BoundaryCardReleased()
 
         try:
