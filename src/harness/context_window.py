@@ -96,6 +96,15 @@ class ContextWindowTracker:
             None,
         )
         if response is None:
+            previous = self._observations.get(thread_id)
+            if previous is not None:
+                self._observations[thread_id] = previous.model_copy(
+                    update={
+                        "threshold_tokens": max(
+                            1, int(previous.context_tokens * compaction_fraction)
+                        )
+                    }
+                )
             return
         used = response.usage.input_tokens + response.usage.output_tokens
         self._observations[thread_id] = ContextObservation(
