@@ -6,7 +6,7 @@ export function Roots({ data, agents, selectedId, tier, pick, newest }: {
   tier: DetailTier; pick: (agent: WorkAgent) => void; newest: boolean
 }) {
   const begin = Date.parse(data.recorded_since), end = Date.parse(data.as_of)
-  const ordered = [...agents].sort((a, b) => a.id.localeCompare(b.id))
+  const ordered = [...agents].sort((a, b) => a.root.localeCompare(b.root) || a.id.localeCompare(b.id))
   const curves = ordered.map((agent, i) => rootCurve(agent, data.trails[agent.id] ?? [], (i - (ordered.length - 1) / 2) * 1.7, begin, end))
   const latest = [...agents].sort((a, b) => b.started_at.localeCompare(a.started_at))[0]?.id
   return <group>

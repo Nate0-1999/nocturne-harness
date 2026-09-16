@@ -15,6 +15,7 @@ export function Farm({ project, agents, selectedId, selectedPath, tier, pick, pi
       chamber.position[1] + Math.sin(angle) * r, chamber.position[2] + 0.12] as [number, number, number] }
   })), [chambers])
   const mesh = useRef<InstancedMesh>(null)
+  const extent = Math.ceil(Math.max(8, ...chambers.flatMap((c) => [Math.abs(c.position[0]) * 2 + 4, Math.abs(c.position[1]) * 2 + 4])))
   useLayoutEffect(() => {
     if (!mesh.current) return
     cells.forEach((cell, index) => {
@@ -25,6 +26,7 @@ export function Farm({ project, agents, selectedId, selectedPath, tier, pick, pi
     if (mesh.current.instanceColor) mesh.current.instanceColor.needsUpdate = true
   }, [cells, selectedPath, project.root])
   return <group>
+    <gridHelper args={[extent, Math.ceil(extent / 2), '#25303a', '#151d26']} rotation={[Math.PI / 2, 0, 0]} position={[0, 0, -2]} />
     {chambers.map((chamber) => {
       const parent = chambers.find((c) => c.path === chamber.parent)
       const selected = selectedPath === `${project.root}${chamber.path === '.' ? '' : '/' + chamber.path}`
@@ -62,6 +64,9 @@ export function Farm({ project, agents, selectedId, selectedPath, tier, pick, pi
           <sphereGeometry args={[index === 2 ? 0.12 : 0.09, tier === 'full' ? 16 : 6, 8]} />
           <meshStandardMaterial color={color} metalness={0.4} roughness={0.2} emissive={color} emissiveIntensity={0.7} />
         </mesh>)}
+        {[-1, 1].flatMap((side) => [-0.1, 0, 0.1].map((x) => <Tube key={`${side}:${x}`}
+          points={[[x, 0, 0], [x - 0.04, side * 0.14, 0.02], [x + 0.07, side * 0.24, -0.05]]}
+          radius={0.014} color={color} tier={tier} />))}
       </group>
     })}
   </group>
