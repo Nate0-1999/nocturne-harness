@@ -85,6 +85,7 @@ def _configure_compaction(policy: CompactionPolicy, argument: str) -> Compaction
     elif command == "instructions" and "{messages}" in value:
         values["instructions"] = value
     else:
+        # D.2 153: reject unsupported controls without changing the saved policy.
         raise ValueError("Unknown compaction control")
     return CompactionPolicy.model_validate(values)
 
