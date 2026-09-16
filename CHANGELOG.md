@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.1.15 - 2026-09-15
+
+- Keep the Palace memory trace readable and scrollable when the scene and
+  selected memory fill the module.
+
 ## 0.1.14 - 2026-09-15
 
 - Show old memory bodies and confirmed near-miss add/pop-off controls in the
