@@ -50,7 +50,7 @@ class LexicalFixtureEmbedding:
 
 def create_spine_app():
     from spine.config import Settings
-    from spine.learner import evidence
+    from spine.learner import creation, evidence
     from spine.main import create_app
 
     config = fixture_config()
@@ -59,6 +59,7 @@ def create_spine_app():
     evidence.identity_is_excluded = lambda *, principal_id, machine_id: (
         principal_id != PRINCIPAL or machine_id != MACHINE
     )
+    creation.identity_is_excluded = evidence.identity_is_excluded
     app = create_app(
         Settings(
             _env_file=None,
