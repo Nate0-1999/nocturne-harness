@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.16 - 2026-09-16
+
+- Explain retained model-policy choices. Show scoped spend rates, daily costs,
+  broker reconciliation and cache reuse per message. Optional per-run and UTC-day
+  spend walls pause ordinary runs when reported costs reach their limits.
+
 ## 0.1.15 - 2026-09-15
 
 - Keep the Palace memory trace readable and scrollable when the scene and
