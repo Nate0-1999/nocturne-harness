@@ -559,7 +559,11 @@ class MemoryPanelController:
             if isinstance(payload, MemoryPanelDeletePayload)
             else None,
             editor="user",
-            reason=f"panel/{operation}",
+            reason=(
+                f"panel/delete/{payload.reason}"
+                if isinstance(payload, MemoryPanelDeletePayload)
+                else f"panel/{operation}"
+            ),
             machine_id=self._machine_id,
         )
         try:

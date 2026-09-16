@@ -136,7 +136,7 @@ export type RackAction =
   | { type: 'memory.refresh' }
   | { type: 'memory.add'; memory_id: string }
   | { type: 'memory.remove'; memory_id: string }
-  | { type: 'memory.delete'; memory_id: string; expected_revision: number }
+  | { type: 'memory.delete'; memory_id: string; expected_revision: number; reason?: 'no_longer_needed' | 'should_never_have_been_saved' }
   | {
       type: 'memory.edit'
       memory_id: string
@@ -673,7 +673,7 @@ function dispatchRackAction<Action extends RackAction>(
       case 'memory.remove':
         return harnessClient.removeMemoryFromContext(action.memory_id) as RackActionResult<Action>
       case 'memory.delete':
-        return harnessClient.deleteMemory(action.memory_id, action.expected_revision) as RackActionResult<Action>
+        return harnessClient.deleteMemory(action.memory_id, action.expected_revision, action.reason) as RackActionResult<Action>
       case 'memory.add':
         return harnessClient.addMemoryToContext(action.memory_id) as RackActionResult<Action>
       case 'memory.edit':

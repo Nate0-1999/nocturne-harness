@@ -714,7 +714,8 @@ async def test_patch_cas_conflict_surfaces_current_unit_without_retry(operation:
 
 
 @pytest.mark.asyncio
-async def test_delete_tombstones_owned_memory_and_preserves_frozen_context() -> None:
+@pytest.mark.parametrize("reason", ["no_longer_needed", "should_never_have_been_saved"])
+async def test_delete_tombstones_owned_memory_and_preserves_frozen_context(reason) -> None:
     """SPEC C.4: deletion preserves history and cannot erase an in-flight prompt."""
     original = memory_unit(MEMORY_A, revision=7)
     tombstone = original.model_copy(update={"status": MemoryStatus.TOMBSTONED, "revision": 8})
@@ -730,6 +731,7 @@ async def test_delete_tombstones_owned_memory_and_preserves_frozen_context() -> 
             action="delete",
             memory_id=MEMORY_A,
             expected_revision=7,
+            reason=reason,
         ),
     )
     assert spine.patch_requests == [
@@ -739,7 +741,7 @@ async def test_delete_tombstones_owned_memory_and_preserves_frozen_context() -> 
                 expected_revision=7,
                 status=MemoryStatus.TOMBSTONED,
                 editor="user",
-                reason="panel/delete",
+                reason=f"panel/delete/{reason}",
                 machine_id="trusted-machine",
             ),
         )

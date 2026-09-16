@@ -560,6 +560,7 @@ class MemoryPanelDeletePayload(_MemoryPanelPayload):
     memory_id: UUID
     # WALL Palace writes / C.4: deletes use compare-and-set revisions.
     expected_revision: Annotated[StrictInt, Field(ge=1)]
+    reason: Literal["no_longer_needed", "should_never_have_been_saved"] = "no_longer_needed"
 
 
 class MemoryPanelItem(_MemoryPanelPayload):

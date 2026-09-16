@@ -250,7 +250,7 @@ export type MemoryPanelItem = JsonObject & {
 }
 
 export type MemoryPanelRequestPayload =
-  | { action: 'delete'; memory_id: string; expected_revision: number }
+  | { action: 'delete'; memory_id: string; expected_revision: number; reason?: 'no_longer_needed' | 'should_never_have_been_saved' }
   | { action: 'refresh' }
   | { action: 'add'; memory_id: string }
   | { action: 'remove'; memory_id: string }
@@ -297,6 +297,7 @@ export type MemoryPanelServerPayload =
   | MemoryPanelErrorPayload
 
 export type MemoryFeatures = JsonObject & {
+  axes?: Record<string, number>
   sem: number
   kw: number
   time: number
@@ -753,9 +754,12 @@ function hasExactKeys(
 }
 
 function parseMemoryFeatures(value: unknown): MemoryFeatures | null {
-  if (!isRecord(value) || !hasExactKeys(value, FEATURE_KEYS)) {
+  if (!isRecord(value) || !hasExactKeys(value, 'axes' in value ? [...FEATURE_KEYS, 'axes'] : FEATURE_KEYS)) {
     return null
   }
+  if ('axes' in value && (!isRecord(value.axes) || Object.values(value.axes).some(
+    (item) => typeof item !== 'number' || !Number.isFinite(item) || item < 0 || item > 1,
+  ))) return null
   for (const key of FEATURE_KEYS) {
     const feature = value[key]
     if ((key === 'loc' || key === 'thread' || key === 'where') && feature === null) {
@@ -780,6 +784,7 @@ function parseMemoryFeatures(value: unknown): MemoryFeatures | null {
     loc: value.loc as number | null,
     thread: value.thread as number | null,
     where: value.where as number | null,
+    ...('axes' in value ? { axes: value.axes as Record<string, number> } : {}),
   }
 }
 

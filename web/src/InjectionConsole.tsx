@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ContributionBars } from './ContributionBars'
 import { formatHumanPercent, formatHumanScore } from './humanNumbers.ts'
-import { LearningSummary, LearningTimeline } from './LearningTelemetry'
+import { CreationScoreboard, ScoreTerrain, LearningSummary, LearningTimeline, type CreationSummary, type TerrainPoint } from './LearningTelemetry'
 import {
   ACTIVATE_LABEL,
   AUDITION_LABEL,
@@ -26,6 +26,8 @@ type Values = {
   weights: Record<string, number>
 }
 type Config = {
+  axes?: Record<string, { label: string; inputs: string[]; weight: number; action: string; rationale: string; provenance: Record<string, unknown> }>
+  project_offsets?: Record<string, Record<string, number>>
   version: string
   created_at: string
   status: string
@@ -33,6 +35,7 @@ type Config = {
   replay: Record<string, unknown> | null
 }
 type Point = {
+  axis_contributions?: Record<string, string>
   injection_id: string
   ts: string
   score: string
@@ -56,6 +59,7 @@ type Slice = {
   points: { value: number; accuracy_percent: string | null }[]
 }
 type Simulation = {
+  terrain?: TerrainPoint[]
   simulation_digest: string
   base_version: string
   values: Values
@@ -78,6 +82,8 @@ type RetrainResponse = {
   reason: string
 }
 type Snapshot = {
+  trainables?: { parameter: string; loop: string; floor: number | null; status: string }[]
+  creation?: CreationSummary
   metrics_scope?: 'principal' | 'palace'
   active_version: string
   configurations: Config[]
@@ -128,8 +134,13 @@ function latestInjection(candidates: Candidate[]): string | undefined {
 export function InjectionConsole() {
   const { query, events } = useRackPlugin()
   const rack = useRackSnapshot()
+  const [contextThread, setContextThread] = useState<string | null>(null)
+  const contextIds = rack.attunement?.thread_ids ?? []
+  const consoleThreadId = rack.selectedThreadId ??
+    (contextThread !== null && contextIds.includes(contextThread) ? contextThread :
+      contextIds.length === 1 ? contextIds[0] : null)
   const selectedLocation = rack.catalog.find(
-    (entry) => entry.thread_id === rack.selectedThreadId,
+    (entry) => entry.thread_id === consoleThreadId,
   )?.current_location ?? null
   const [scope, setScope] = useState<'GLOBAL' | 'ATTUNED'>('GLOBAL')
   const [data, setData] = useState<Snapshot | null>(null)
@@ -152,7 +163,7 @@ export function InjectionConsole() {
     )
     dataRef.current = next
     setData(next)
-    setRetrainNotice((current) => learningNoticeAfterSnapshot(
+    setRetrainNotice((current) => next.metrics_scope === 'principal' ? current : learningNoticeAfterSnapshot(
       current,
       next.learning.eligible_dispositions,
     ))
@@ -172,11 +183,15 @@ export function InjectionConsole() {
   }, [])
 
   const load = useCallback(async (explicitReset = false, generation?: number) => {
+    if (scope === 'ATTUNED' && consoleThreadId === null) {
+      setData(null)
+      return
+    }
     try {
       const result = await query.query({
         resource: 'scorer_console',
         as_of: 'now',
-        thread_id: scope === 'ATTUNED' ? rack.selectedThreadId ?? undefined : undefined,
+        thread_id: scope === 'ATTUNED' ? consoleThreadId ?? undefined : undefined,
       })
       if (generation !== undefined && generation !== loadGeneration.current) {
         return
@@ -187,7 +202,7 @@ export function InjectionConsole() {
         setFailure('Memory tuning is temporarily unavailable.')
       }
     }
-  }, [applySnapshot, query, rack.selectedThreadId, scope])
+  }, [applySnapshot, query, consoleThreadId, scope])
 
   useEffect(() => {
     void events.dispatch({ type: 'rack.scope.get', module_id: 'injection_console' }).then(setScope)
@@ -362,6 +377,16 @@ export function InjectionConsole() {
     <section className="instrument instrument--console">
       <header>
         <h1>Injection Console</h1>
+        {scope === 'ATTUNED' && rack.attunement?.kind === 'stack' && (
+          <label>Conversation for preview
+            <select value={consoleThreadId ?? ''} onChange={(event) => setContextThread(event.target.value || null)}>
+              <option value="">Choose a conversation</option>
+              {rack.catalog.filter((entry) => contextIds.includes(entry.thread_id)).map((entry) => (
+                <option key={entry.thread_id} value={entry.thread_id}>{entry.title || entry.thread_id}</option>
+              ))}
+            </select>
+          </label>
+        )}
         <p data-testid="injection-current-location">
           WHERE · {selectedLocation ?? 'No attuned thread location'}
         </p>
@@ -391,6 +416,20 @@ export function InjectionConsole() {
       <div className="console-grid">
         <section>
           <p className="console-active">Current recipe <strong>{data?.active_version}</strong></p>
+          <details><summary>Trainable parameter registry</summary>
+            <table><thead><tr><th>Parameter</th><th>Loop</th><th>Authentic floor</th><th>Status</th></tr></thead><tbody>
+              {(data?.trainables ?? []).map((item) => <tr key={item.parameter}><td>{item.parameter}</td><td>{item.loop}</td><td>{item.floor ?? '—'}</td><td>{item.status.replaceAll('_', ' ')}</td></tr>)}
+            </tbody></table>
+          </details>
+          <details><summary>Axes and project offsets</summary>
+            {(data?.configurations ?? []).filter((config) => config.status !== 'inactive').map((config) => <article key={config.version}>
+              <h3>{config.version} · {config.status}</h3>
+              {Object.values(config.axes ?? {}).length === 0 && <p>No curator-grown axes in this generation.</p>}
+              {Object.entries(config.axes ?? {}).map(([name, axis]) => <div key={name}><strong>{axis.label}</strong><p>{axis.inputs.join(' × ')} · weight {axis.weight.toFixed(4)} · {axis.action.replaceAll('_', ' ')}</p><p>{axis.rationale}</p><details><summary>Provenance</summary><pre>{JSON.stringify(axis.provenance, null, 2)}</pre></details></div>)}
+              <p>Unseen projects start with zero offsets from global weights.</p>
+              <pre>{JSON.stringify(config.project_offsets ?? {}, null, 2)}</pre>
+            </article>)}
+          </details>
           {data?.learning && data.metrics_scope !== 'principal' && (
             <p className="console-note">
               Memory share + injection line {data.learning.share_tuning_active
@@ -515,6 +554,7 @@ export function InjectionConsole() {
                     {receipt.holdout_dispositions} held-out dispositions · {receipt.simulation_digest.slice(0, 12)}
                   </small>
                   <AccuracyCurve slice={receipt.slice} />
+                  <ScoreTerrain points={receipt.terrain ?? []} />
                 </div>
               )}
               {scope === 'GLOBAL' && (
@@ -543,13 +583,14 @@ export function InjectionConsole() {
                         : 'Not measured yet'}
                   </span>
                 </header>
-                <ContributionBars values={point?.contributions} />
+                <ContributionBars values={point ? { ...point.contributions, ...point.axis_contributions } : undefined} />
               </article>
             )
           })}
           {data?.candidates.length === 0 && <p>Nothing measured yet.</p>}
         </section>
       </div>
+      <CreationScoreboard data={data?.creation?.sources ? data.creation : undefined} />
     </section>
   )
 }

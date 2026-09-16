@@ -25,7 +25,7 @@ interface MemoryPanelProps {
   onRemove: (memoryId: string) => Promise<Ulid>
   onEdit: (memoryId: string, expectedRevision: number, body: string) => Promise<Ulid>
   onPin: (memoryId: string, expectedRevision: number, pin: boolean) => Promise<Ulid>
-  onDelete: (memoryId: string, expectedRevision: number) => Promise<Ulid>
+  onDelete: (memoryId: string, expectedRevision: number, reason: 'no_longer_needed' | 'should_never_have_been_saved') => Promise<Ulid>
 }
 
 interface EditorState {
@@ -100,6 +100,7 @@ export function MemoryPanel({
   const rack = useRackSnapshot()
   const [editor, setEditor] = useState<EditorState | null>(null)
   const [deleting, setDeleting] = useState<MemoryUnit | null>(null)
+  const [deletionReason, setDeletionReason] = useState<'no_longer_needed' | 'should_never_have_been_saved'>('no_longer_needed')
   const deleteDialog = useRef<HTMLDialogElement>(null)
   const [clientError, setClientError] = useState<string | null>(null)
   const panelRef = useRef<HTMLElement>(null)
@@ -220,7 +221,7 @@ export function MemoryPanel({
     if (deleting === null) return
     try {
       setClientError(null)
-      await onDelete(deleting.memory_id, deleting.revision)
+      await onDelete(deleting.memory_id, deleting.revision, deletionReason)
       deleteDialog.current?.close()
       setDeleting(null)
     } catch (error) {
@@ -569,7 +570,7 @@ export function MemoryPanel({
                         </button>
                         <button type="button" aria-label="Delete memory" title="Delete memory"
                           disabled={!connected || busy || unavailable}
-                          onClick={() => { setDeleting(memory); deleteDialog.current?.showModal() }}>
+                          onClick={() => { setDeletionReason('no_longer_needed'); setDeleting(memory); deleteDialog.current?.showModal() }}>
                           <span aria-hidden="true">⌫</span>
                         </button>
                         {inContext && (
@@ -607,6 +608,12 @@ export function MemoryPanel({
         <p><strong>{deleting?.label}</strong></p>
         <p>{deleting?.body}</p>
         <p>It will no longer be offered to conversations. Its history is preserved and can be restored; this does not erase past conversations.</p>
+        <label>Why delete?
+          <select value={deletionReason} onChange={(event) => setDeletionReason(event.target.value as typeof deletionReason)}>
+            <option value="no_longer_needed">No longer needed</option>
+            <option value="should_never_have_been_saved">Should never have been saved</option>
+          </select>
+        </label>
         <button type="button" onClick={() => deleteDialog.current?.close()}>Cancel</button>
         <button type="button" disabled={!connected || busy || deleting === null} onClick={() => void deleteMemory()}>Delete from Palace</button>
       </dialog>
@@ -661,7 +668,7 @@ export function SelectedMemoryPanel({ memoryId }: { memoryId: string }) {
     onRemove={(id) => events.dispatch({ type: 'memory.remove', memory_id: id })}
     onEdit={(id, revision, body) => events.dispatch({ type: 'memory.edit', memory_id: id, expected_revision: revision, body })}
     onPin={(id, revision, pin) => events.dispatch({ type: 'memory.pin', memory_id: id, expected_revision: revision, pin })}
-    onDelete={(id, revision) => events.dispatch({ type: 'memory.delete', memory_id: id, expected_revision: revision })}
+    onDelete={(id, revision, reason) => events.dispatch({ type: 'memory.delete', memory_id: id, expected_revision: revision, reason })}
   />
 }
 

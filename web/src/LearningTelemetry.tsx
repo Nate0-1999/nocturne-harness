@@ -13,6 +13,74 @@ import {
   formatHumanPercent,
   formatHumanQuantity,
 } from './humanNumbers'
+import { Canvas } from '@react-three/fiber'
+import { useMemo, useState } from 'react'
+
+export type TerrainPoint = { tau: number; share: number; agreement: number }
+export type CreationSummary = {
+  sources: { source: string; created: number; surviving: number; used: number; survival_rate: number | null }[]
+  hygiene_excluded_events: number
+  events: { event_key: string; source: string; outcome: string; reason: string; ts: string }[]
+}
+
+export function CreationScoreboard({ data }: { data?: CreationSummary }) {
+  return <section aria-label="Memory creation outcomes" className="learning-summary">
+    <h2>Memory creation</h2>
+    <p>Logged outcomes; creation instructions are not being trained yet.</p>
+    {!data ? <p>Creation history needs the current Palace release.</p> : <>
+      <p>{data.hygiene_excluded_events} verification or fixture events excluded.</p>
+      {data.sources.length === 0 ? <p>No authentic creation outcomes yet.</p> :
+        <table><thead><tr><th>Source</th><th>Created</th><th>Surviving</th><th>Used</th><th>Survival</th></tr></thead>
+          <tbody>{data.sources.map((row) => <tr key={row.source}><th>{row.source}</th><td>{row.created}</td><td>{row.surviving}</td><td>{row.used}</td><td>{row.survival_rate === null ? '—' : `${(100 * row.survival_rate).toFixed(1)}%`}</td></tr>)}</tbody>
+        </table>}
+      <details><summary>Replayable outcomes</summary><table><thead><tr><th>Time</th><th>Source</th><th>Outcome</th><th>Reason</th></tr></thead>
+        <tbody>{data.events.map((event) => <tr key={event.event_key}><td>{event.ts}</td><td>{event.source}</td><td>{event.outcome}</td><td>{event.reason}</td></tr>)}</tbody>
+      </table></details>
+    </>}
+  </section>
+}
+
+export function ScoreTerrain({ points }: { points: TerrainPoint[] }) {
+  const [angle, setAngle] = useState(25)
+  const mesh = useMemo(() => {
+    const vertices: number[] = [], colors: number[] = []
+    const steps = Math.round(Math.sqrt(points.length))
+    for (let x = 0; x < steps - 1; x++) for (let y = 0; y < steps - 1; y++) {
+      const indices = [x * steps + y, (x + 1) * steps + y, x * steps + y + 1,
+        x * steps + y + 1, (x + 1) * steps + y, (x + 1) * steps + y + 1]
+      for (const index of indices) {
+        const point = points[index]
+        vertices.push(point.tau - 0.5, point.agreement / 100, (point.share - 0.01) / 0.49 - 0.5)
+        colors.push(0.15 + 0.7 * point.agreement / 100, 0.65, 0.95)
+      }
+    }
+    return { vertices: new Float32Array(vertices), colors: new Float32Array(colors) }
+  }, [points])
+  return <section aria-label="Replay score terrain">
+    <h3>Score terrain</h3>
+    <p>Held-out decision agreement across minimum match × memory share. Height is agreement; the surface interpolates measured grid points.</p>
+    {points.length === 0 ? <p>No replayable held-out gates yet.</p> : <>
+      <div style={{ height: 280, background: '#08121b' }}>
+        <Canvas camera={{ position: [1.8, 1.5, 1.8], fov: 42 }} frameloop="demand">
+          <group rotation={[0, angle * Math.PI / 180, 0]} position={[0, -0.4, 0]}>
+            <gridHelper args={[1, 8, '#60cfea', '#264455']} />
+            <axesHelper args={[1]} />
+            <mesh><bufferGeometry>
+              <bufferAttribute attach="attributes-position" args={[mesh.vertices, 3]} />
+              <bufferAttribute attach="attributes-color" args={[mesh.colors, 3]} />
+            </bufferGeometry><meshBasicMaterial vertexColors side={2} transparent opacity={0.72} /></mesh>
+            <mesh><bufferGeometry><bufferAttribute attach="attributes-position" args={[mesh.vertices, 3]} /></bufferGeometry><meshBasicMaterial color="#8ed8ef" wireframe /></mesh>
+          </group>
+        </Canvas>
+      </div>
+      <label>Rotate terrain<input type="range" min="0" max="360" value={angle} onChange={(event) => setAngle(Number(event.target.value))} /></label>
+      <p>X: minimum match 0–1 · depth: memory share 1–50% · height: agreement 0–100%</p>
+      <details><summary>Measured grid values</summary><table><thead><tr><th>Minimum match</th><th>Memory share</th><th>Agreement</th></tr></thead><tbody>
+        {points.map((point) => <tr key={`${point.tau}-${point.share}`}><td>{point.tau.toFixed(3)}</td><td>{(point.share * 100).toFixed(2)}%</td><td>{point.agreement.toFixed(1)}%</td></tr>)}
+      </tbody></table></details>
+    </>}
+  </section>
+}
 
 export function LearningSummary({
   learning,

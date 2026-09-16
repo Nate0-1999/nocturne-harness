@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.20 - 2026-09-16
+
+- Preserve deletion reasons and stack-selected scorer previews. Show the live
+  learning registry, creation survival, curator axis provenance, project offsets
+  and measured replay terrain; keep retrain results visible after polling.
+
 ## 0.1.19 - 2026-09-16
 
 - Inspect versioned tools and skills from a thread, or turn workspace tools off

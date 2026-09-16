@@ -248,9 +248,9 @@ export class HarnessSocketClient {
     })
   }
 
-  deleteMemory(memoryId: string, expectedRevision: number): Ulid {
+  deleteMemory(memoryId: string, expectedRevision: number, reason: 'no_longer_needed' | 'should_never_have_been_saved' = 'no_longer_needed'): Ulid {
     return this.sendMemoryPanelRequest('delete', {
-      action: 'delete', memory_id: memoryId, expected_revision: expectedRevision,
+      action: 'delete', memory_id: memoryId, expected_revision: expectedRevision, reason,
     })
   }
 
