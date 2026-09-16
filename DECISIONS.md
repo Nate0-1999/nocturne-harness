@@ -3437,3 +3437,24 @@ unoffered memories and vetoed gate cards cannot use that action. The Nebula's
 selection and compact trace use the same panel actions and context readout,
 without scorer writes. Historical bodies travel through the existing graph
 projection and are displayed inline in the revision list.
+
+## 121 — Explain retained choices and pause purchases at spend walls [P2.4, M3SR]
+
+PRECEDENT: PLAN M3SR; A-021, ADR-024; ancestors M3SP, M3SC.
+Policy readouts use the thread's retained catalog decision; restored choices without
+that evidence say so. Token-cost policies do not imply an hourly dollar allowance.
+Spend charts, daily totals and per-message cache reuse read the scoped ledger;
+broker reconciliation keeps its existing owner-only daily cumulative baseline.
+Ordinary runs bind spend authority around the existing model adapter. Native costs
+pause the next request, or the terminal boundary after receipts are recorded.
+One underway request may exceed the limit. Pending receipts count once alongside
+acknowledged daily spend; unpriced receipts cannot certify a configured wall.
+Raising a wall resumes the retained run; cancellation uses the existing run path.
+
+## M3SR — Manual invoice entry through the existing Rack [P4.1]
+
+PRECEDENT: owner F103 ruling, PLAN M3SR, A-066, ADR-024.
+The global spend panel shows the form only when the Palace reports owner authority.
+The Rack action forwards exact dollars and invoice identity through the typed
+client; the Palace enforces authority and replay semantics. The button validates
+fields before dispatch because sandboxed panels prohibit native form submission.

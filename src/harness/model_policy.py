@@ -391,6 +391,36 @@ class ModelPolicyResolver:
         parsed = parse_model_policy(policy)
         self._policy_text, self._policy = policy, parsed
 
+    def explain(self, thread_id: str, model: str, *, explicitly_selected: bool = False) -> str:
+        """FL-152/153: explain the retained choice, never today's replacement policy."""
+        if explicitly_selected:
+            return "Explicit model choice for this conversation."
+        resolution = self._resolutions.get(thread_id)
+        if resolution is None or resolution.model != model:
+            return "Retained conversation model; its original policy evidence is unavailable."
+        policy = parse_model_policy(resolution.policy)
+        if policy.kind == "pinned":
+            return "Pinned model selected for this conversation."
+        benchmark = resolution.benchmark
+        if benchmark is None:
+            return (
+                f"{policy.kind.title()} could not resolve the catalog; "
+                "using the configured fallback."
+            )
+        reason = {
+            "max": "Highest intelligence score in the catalog",
+            "floor": f"Cheapest model meeting intelligence floor {policy.value}",
+            "elbow": "Elbow of the intelligence versus log-price frontier",
+            "slope": (
+                f"Frontier choice allowing ${policy.value}/M input tokens per intelligence point"
+            ),
+        }[policy.kind]
+        return (
+            f"{reason}. Score {benchmark.intelligence_index}; "
+            f"input ${benchmark.prompt_price}/M, output ${benchmark.completion_price}/M tokens. "
+            "This token-cost policy does not impose an hourly dollar limit."
+        )
+
     async def resolve(self, thread_id: str) -> ThreadModelResolution:
         if not isinstance(thread_id, str) or not thread_id.strip():
             raise ValueError("thread_id must not be blank")

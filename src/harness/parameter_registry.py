@@ -95,6 +95,7 @@ class ParameterSnapshot(BaseModel):
     thread_id: str
     as_of: datetime
     resolved_model: str
+    policy_explanation: str | None = None
     descriptors: tuple[ParameterDescriptor, ...]
     values: dict[str, ParameterValue]
     changes: tuple[ParameterChange, ...]

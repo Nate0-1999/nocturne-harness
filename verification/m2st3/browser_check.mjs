@@ -54,7 +54,7 @@ try {
 
   const vitals = frame(page, 'vitals')
   await vitals.getByRole('columnheader', { name: 'Reasoning' }).waitFor()
-  await vitals.getByText('Memory curation', { exact: true }).waitFor()
+  await vitals.getByRole('rowheader').getByText('Memory curation', { exact: true }).waitFor()
   await vitals.getByText('Owner app', { exact: true }).waitFor()
   const vitalsText = await vitals.locator('body').innerText()
   for (const forbidden of ['0.084555772000', '11.1111111111111111%', 'Not recorded yet']) {

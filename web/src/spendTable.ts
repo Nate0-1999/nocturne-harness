@@ -26,10 +26,38 @@ export interface PurposeSpendRow extends SpendMetrics {
 }
 
 export interface SpendTableSnapshot {
+  can_record_invoice?: boolean
   as_of: string
   window_minutes: 60
   threads: ThreadSpendRow[]
   purposes: PurposeSpendRow[]
+  rates: SpendRateLane[]
+  messages: MessageCache[]
+  days: DailySpend[]
+}
+
+export interface SpendRateLane {
+  dimension: 'total' | 'agent' | 'subagent' | 'model' | 'curation'
+  key: string | null
+  label: string
+  points: SpendPoint[]
+}
+
+export interface MessageCache {
+  thread_id: string
+  prompt_id: string | null
+  first_request_at: string
+  fresh_tokens: string
+  cached_tokens: string
+  cache_write_tokens: string
+}
+
+export interface DailySpend {
+  day: string
+  model_usd: string | null
+  infrastructure_usd: string | null
+  total_usd: string | null
+  unpriced_lines: number
 }
 
 const DECIMAL = /^(?:0|[1-9]\d*)(?:\.\d+)?$/
@@ -50,10 +78,54 @@ export function parseSpendTableSnapshot(value: unknown): SpendTableSnapshot {
   unique(purposes.map((row) => row.purpose), 'purpose')
   return {
     as_of: timestamp(root.as_of, 'as_of'),
+    can_record_invoice: root.can_record_invoice === true,
     window_minutes: 60,
     threads,
     purposes,
+    rates: array(root.rates ?? [], 'rates').map((value, index) => {
+      const lane = record(value, 'rate')
+      if (!['total', 'agent', 'subagent', 'model', 'curation'].includes(String(lane.dimension))) {
+        throw new TypeError('Unknown spend dimension')
+      }
+      return {
+        dimension: lane.dimension as SpendRateLane['dimension'],
+        key: lane.key === null ? null : nonblank(lane.key, 'rate key'),
+        label: nonblank(lane.label, 'rate label'),
+        points: array(lane.points, 'rate points').map((point, i) => parseSpendPoint(point, index, i)),
+      }
+    }),
+    messages: array(root.messages ?? [], 'messages').map((value) => {
+      const message = record(value, 'cache message')
+      return {
+        thread_id: nonblank(message.thread_id, 'thread_id'),
+        prompt_id: message.prompt_id === null ? null : nonblank(message.prompt_id, 'prompt_id'),
+        first_request_at: timestamp(message.first_request_at, 'first_request_at'),
+        fresh_tokens: decimal(message.fresh_tokens, 'fresh_tokens'),
+        cached_tokens: decimal(message.cached_tokens, 'cached_tokens'),
+        cache_write_tokens: decimal(message.cache_write_tokens, 'cache_write_tokens'),
+      }
+    }),
+    days: array(root.days ?? [], 'days').map((value) => {
+      const day = record(value, 'daily spend')
+      return {
+        day: timestamp(day.day, 'day'),
+        model_usd: day.model_usd === null ? null : decimal(day.model_usd, 'model_usd'),
+        infrastructure_usd: day.infrastructure_usd === null ? null : decimal(day.infrastructure_usd, 'infrastructure_usd'),
+        total_usd: day.total_usd === null ? null : decimal(day.total_usd, 'total_usd'),
+        unpriced_lines: integer(day.unpriced_lines, 'unpriced_lines'),
+      }
+    }),
   }
+}
+
+function array(value: unknown, path: string): unknown[] {
+  if (!Array.isArray(value)) throw new TypeError(`${path} must be an array`)
+  return value
+}
+
+function nonblank(value: unknown, path: string): string {
+  if (typeof value !== 'string' || !value.trim()) throw new TypeError(`${path} must be nonblank`)
+  return value
 }
 
 export function partialSpendCopy(row: SpendMetrics): string | null {
@@ -176,3 +248,4 @@ function unique(values: string[], label: string): void {
     throw new TypeError(`Spend table ${label} rows must be unique`)
   }
 }
+import { parseSpendPoint, type SpendPoint } from './vitals.ts'

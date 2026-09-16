@@ -558,6 +558,16 @@ async def test_nonpinned_resolution_joins_context_and_remains_stable_per_thread(
     assert first.benchmark == row("vendor/model-v1", "52", "1", "2")
     assert table.calls == 1
 
+    resolver.set_policy("floor:10")
+    explanation = resolver.explain("thread-1", first.model)
+    assert "Highest intelligence" in explanation
+    assert "Score 52" in explanation
+    assert "$1/M" in explanation
+    assert "original policy evidence is unavailable" in resolver.explain("restored", first.model)
+    assert "Explicit model choice" in resolver.explain(
+        "thread-1", first.model, explicitly_selected=True
+    )
+
 
 @pytest.mark.asyncio
 async def test_named_resolution_validates_exact_openrouter_route_without_mutating_thread() -> None:

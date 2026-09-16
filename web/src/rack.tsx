@@ -93,6 +93,7 @@ export interface RackSnapshot {
 }
 
 export type RackAction =
+  | { type: 'spend.invoice'; amount_usd: string; invoice_date: string; invoice_id: string }
   | { type: 'draft.update'; thread_id: string; draft: string }
   | { type: 'thread.create'; workspace_root: string; project_label?: string }
   | { type: 'thread.select'; thread_id: string }
@@ -221,7 +222,7 @@ export type RackActionResult<Action extends RackAction> =
       ? number
     : Action['type'] extends 'thread.select' | 'thread.rename_project' | 'thread.bind_workspace' | 'draft.update'
       ? void
-      : Action['type'] extends 'thread.archive' | 'queue.load' | 'curation.load' | 'queue.decide' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
+      : Action['type'] extends 'spend.invoice' | 'thread.archive' | 'queue.load' | 'curation.load' | 'queue.decide' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
         ? JsonValue
         : Action['type'] extends 'rack.scope.get' | 'rack.scope.set'
           ? RackScope
@@ -307,7 +308,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'visualizer',
     slot: 'strip',
     streams: [],
-    actions: ['rack.scope.get', 'rack.scope.set'],
+    actions: ['spend.invoice', 'rack.scope.get', 'rack.scope.set'],
     bounds: stageGridBounds(VITALS_RACK_BOUNDS.preferred),
     movable: true,
     law_bound: false,
@@ -613,6 +614,11 @@ function dispatchRackAction<Action extends RackAction>(
             parameter_id: action.parameter_id,
             value: action.value,
           }),
+        }) as Promise<RackActionResult<Action>>
+      case 'spend.invoice':
+        return fetchJson('/v1/spend/invoices', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount_usd: action.amount_usd, invoice_date: action.invoice_date, invoice_id: action.invoice_id }),
         }) as Promise<RackActionResult<Action>>
       case 'scorer.simulate':
         return fetchJson('/v1/rack/scorers/simulate', {

@@ -22,6 +22,7 @@ import { MemoryGate } from './MemoryGate'
 import { MemoryPanel } from './MemoryPanel'
 import { MemoryRestore } from './MemoryRestore'
 import { AgentPolicies } from './AgentPolicies'
+import { SpendWallSettings } from './SpendWallSettings'
 import { RackPluginUpload } from './RackPluginUpload'
 import { MemoryGraph } from './MemoryGraph'
 import { PalaceNebula } from './PalaceNebula'
@@ -218,7 +219,12 @@ function messageStatus(
     if (activeState === 'cancelling') {
       return 'Stopping'
     }
-    return activeState === 'waiting_gate' ? 'Waiting for memory review' : 'Streaming'
+    if (activeState === 'waiting_gate') {
+      return message.events.some((event) => event.event_kind === 'boundary_card' && event.wall === 'spend')
+        ? 'Paused at spend wall'
+        : 'Waiting for memory review'
+    }
+    return 'Streaming'
   }
   if (state === 'error') {
     const providerRefusal = message.events.find((event) => event.event_kind === 'provider_refusal')
@@ -877,6 +883,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           </section>
           <MemoryRestore />
           <AgentPolicies />
+          <SpendWallSettings />
         </aside>
       )}
       <div
@@ -2010,7 +2017,7 @@ function ThreadsModule() {
             : liveState === 'cancelling'
               ? 'Stopping'
               : liveState === 'waiting_gate'
-                ? 'Review memory'
+                ? runtime?.openGate ? 'Review memory' : 'Spend paused'
                 : liveState !== undefined
                   ? 'Live'
                   : outboundCount > 0
@@ -2392,7 +2399,7 @@ function ChatModule() {
               {activeRun.state === 'cancelling'
                 ? 'Stopping'
                 : activeRun.state === 'waiting_gate'
-                  ? 'Memory review'
+                  ? openGate ? 'Memory review' : 'Spend paused'
                   : 'Run active'}
             </span>
           )}
@@ -3380,6 +3387,9 @@ function MessageRow({
   }
 
   const status = messageStatus(message, runState, activeRunId, activeState)
+  const spendBoundary = activeRunId === message.run_id && activeState === 'waiting_gate'
+    ? message.events.filter((event) => event.event_kind === 'boundary_card' && event.wall === 'spend').at(-1)
+    : undefined
   const tone = runState === 'error'
     ? 'danger'
     : runState === 'budget_exceeded'
@@ -3417,6 +3427,12 @@ function MessageRow({
           Worker returned {String(event.returned_bytes)} bytes{event.capped ? ' · capped' : ''} · full result kept in the journal
         </p>
       ))}
+      {spendBoundary?.decision === 'owner_action' && (
+        <section aria-label="Spend boundary · paused">
+          <p>{String(spendBoundary.reason)}</p>
+          <p>{String(spendBoundary.action)}</p>
+        </section>
+      )}
       {message.content ? (
         <AssistantMarkdown content={message.content} />
       ) : (

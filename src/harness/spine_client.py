@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from enum import StrEnum
 from typing import Annotated, Any, Literal, Never
@@ -613,6 +613,13 @@ class SpendEventsResponse(ContractModel):
     accepted: int = Field(strict=True)
 
 
+class InfrastructureInvoice(ContractModel):
+    # WALL money / A-066: preserve the owner's positive, exact invoice amount.
+    amount_usd: Decimal = Field(gt=0, max_digits=20, decimal_places=12)
+    invoice_date: date
+    invoice_id: NonBlankString
+
+
 class SpendTableMetrics(ContractModel):
     """Exact quantities and honest known-cost state for one ledger grouping."""
 
@@ -651,10 +658,40 @@ class PurposeSpendRow(SpendTableMetrics):
 
 
 class SpendTableSnapshot(ContractModel):
+    can_record_invoice: bool = False
     as_of: datetime
     window_minutes: Literal[60]
     threads: list[ThreadSpendRow]
     purposes: list[PurposeSpendRow]
+    rates: list[SpendRateLane] = Field(default_factory=list)
+    rate_source: Literal["v_spend_rate+spend_event", "spend_event"] = "spend_event"
+    messages: list[MessageCache] = Field(default_factory=list)
+    days: list[DailySpend] = Field(default_factory=list)
+
+
+class SpendRateLane(ContractModel):
+    dimension: Literal["total", "agent", "subagent", "model", "curation"]
+    key: str | None
+    label: NonBlankString
+    points: list[VitalsSpendPoint]
+
+
+class MessageCache(ContractModel):
+    thread_id: UUID
+    prompt_id: str | None
+    first_request_at: datetime
+    fresh_tokens: NonNegativeDecimalString
+    cached_tokens: NonNegativeDecimalString
+    cache_write_tokens: NonNegativeDecimalString
+
+
+class DailySpend(ContractModel):
+    day: datetime
+    model_usd: NonNegativeDecimalString | None
+    infrastructure_usd: NonNegativeDecimalString | None
+    total_usd: NonNegativeDecimalString | None
+    # WALL money / ADR-024: receipt counts cannot be negative.
+    unpriced_lines: int = Field(ge=0)
 
 
 class VitalsSpendPoint(ContractModel):
@@ -1259,6 +1296,18 @@ class SpineClient:
             identity = _expect_success(response, status=200, adapter=_PALACE_IDENTITY)
             self._metrics_scope = "palace" if identity.is_owner else "principal"
         return {"principal_id": principal_id, "scope": self._metrics_scope}
+
+    async def record_invoice(self, invoice: InfrastructureInvoice) -> SpendEventsResponse:
+        response = await self._request(
+            "POST",
+            "v1/spend/invoices",
+            params={"principal_id": self._principal_id or "local"},
+            json_body=invoice.model_dump(mode="json"),
+        )
+        # WALL owner authority / A-066: an invoice refusal must reach the owner form.
+        if response.status_code == 403:
+            raise SpineOwnershipError(response.json().get("detail", "Invoice was refused."))
+        return _expect_success(response, status=200, adapter=_SPEND_EVENTS_RESPONSE)
 
     async def memory_graph(self, request: MemoryGraphQuery) -> MemoryGraphSnapshot:
         response = await self._request(

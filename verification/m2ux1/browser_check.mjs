@@ -319,7 +319,7 @@ async function collectCanvasTextNodes(targetPage) {
 async function assertDataBearingState(targetPage) {
   const spend = frame(targetPage, 'vitals')
   await spend.getByRole('columnheader', { name: 'Reasoning' }).waitFor()
-  await spend.getByText('Memory curation', { exact: true }).waitFor()
+  await spend.getByRole('rowheader').getByText('Memory curation', { exact: true }).waitFor()
   await targetPage.getByRole('tab', { name: 'Graph' }).click()
   await frame(targetPage, 'memory_graph').locator('.graph-node').first().waitFor()
   const graphNodes = await frame(targetPage, 'memory_graph').locator('.graph-node').count()

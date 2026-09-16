@@ -25,6 +25,7 @@ from harness.model_policy import (
     ThreadModelResolution,
 )
 from harness.openrouter_runtime import PreservingOpenRouterModel
+from harness.spend_walls import SpendWallModel
 
 
 class ModelConfigurationError(ValueError):
@@ -179,7 +180,7 @@ class CompletionRouter:
             )
         adapter = self._adapter_for(model)
         try:
-            return adapter.build_model(model)
+            return SpendWallModel(adapter.build_model(model))
         except ModelConfigurationError:
             raise
         except (UserError, ValueError) as exc:

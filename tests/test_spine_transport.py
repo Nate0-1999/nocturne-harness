@@ -13,6 +13,7 @@ from harness.spine_client import (
     CreateMemoryRequest,
     DuplicateMemoryConflict,
     FeedbackRequest,
+    InfrastructureInvoice,
     InjectCommitRequest,
     InjectionEventAnnotationInput,
     InjectionEventAnnotationsRequest,
@@ -48,6 +49,36 @@ MEMORY_ID = "12345678-1234-5678-1234-567812345678"
 THREAD_ID = "22345678-1234-5678-1234-567812345678"
 INJECTION_ID = "32345678-1234-5678-1234-567812345678"
 type VitalsMutation = Callable[[dict[str, Any]], object]
+
+
+@pytest.mark.asyncio
+async def test_invoice_preserves_exact_amount_and_declared_principal() -> None:
+    """ADR-024 / M3SR keeps invoice identity and dollars intact across the client seam."""
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/v1/spend/invoices"
+        assert request.url.params["principal_id"] == "invoice-owner"
+        assert json.loads(request.content) == {
+            "invoice_id": "bill-1",
+            "invoice_date": "2026-09-01",
+            "amount_usd": "25.15",
+        }
+        return response(200, {"accepted": 1})
+
+    async with SpineClient(
+        "https://spine.invalid",
+        "token",
+        principal_id="invoice-owner",
+        transport=httpx.MockTransport(handler),
+    ) as client:
+        result = await client.record_invoice(
+            InfrastructureInvoice(
+                invoice_id="bill-1",
+                invoice_date="2026-09-01",
+                amount_usd="25.15",
+            )
+        )
+    assert result.accepted == 1
 
 
 def memory_unit_payload() -> dict[str, Any]:

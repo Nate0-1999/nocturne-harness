@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 0.1.18 - 2026-09-16
+
+- Record cloud invoices from the owner's spend panel, with replay-safe billing
+  and daily totals separate from broker reconciliation. Includes the 0.1.17
+  compaction changes alongside the spend controls introduced in 0.1.16.
+
+## 0.1.16 - 2026-09-16
+
+- Explain retained model-policy choices. Show scoped spend rates, daily costs,
+  broker reconciliation and cache reuse per message. Optional per-run and UTC-day
+  spend walls pause ordinary runs when reported costs reach their limits.
+
 ## 0.1.15 - 2026-09-15
 
 - Keep the Palace memory trace readable and scrollable when the scene and
