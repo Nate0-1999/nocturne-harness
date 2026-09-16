@@ -14,7 +14,7 @@ from pydantic_ai.models.function import DeltaToolCall, FunctionModel
 from pydantic_ai_harness.compaction import pin
 
 from harness.agent import HarnessAgent
-from harness.agent_runtime import PydanticAITurnRunner
+from harness.agent_runtime import PydanticAITurnRunner, _configure_compaction
 from harness.extraction import ExtractionService
 from harness.model_policy import ThreadModelResolution
 from harness.pydantic_harness_adapter import CompactionPolicy
@@ -65,7 +65,10 @@ async def test_over_cap_fact_is_shortened_once_or_refused(corrected):
         assert len(draft.candidates) == 1
         assert draft.candidates[0].body == "The notebook is copper."
     else:
-        with pytest.raises(ValueError, match="history kept"):
+        with pytest.raises(
+            ValueError,
+            match="Compaction could not preserve a fact within the memory cap; history kept.",
+        ):
             await agent.extract_thread("One notebook fact.", on_result=receipt)
     assert len(calls) == len(receipts) == 2
 
@@ -307,6 +310,9 @@ async def test_failure_keeps_the_correct_history_before_or_after_admission(
 @pytest.mark.asyncio
 async def test_policy_commands_survive_restart_and_manual_compaction_bypasses_fill(tmp_path):
     """SPEC D.2 153: manual controls are per-thread durable and work below the automatic line."""
+
+    with pytest.raises(ValueError, match="Unknown compaction control"):
+        _configure_compaction(CompactionPolicy(), "unsupported setting")
 
     def extract(messages, info):
         return ModelResponse(

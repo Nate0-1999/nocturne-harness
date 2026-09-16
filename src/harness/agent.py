@@ -780,6 +780,7 @@ class HarnessAgent:
             if on_result is not None:
                 await on_result(result.all_messages())
         if any(cl100k_token_count(item.body) > 128 for item in result.output.candidates):
+            # D.2 153 / SD-062: failed shortening must retain the uncompacted history.
             raise ValueError(
                 "Compaction could not preserve a fact within the memory cap; history kept."
             )
