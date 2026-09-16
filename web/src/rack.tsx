@@ -58,7 +58,7 @@ import {
   type ThreadState,
 } from './store'
 
-export type RackModuleId = CustomRackModuleId | 'header' | 'threads' | 'conversation' | 'memory' | 'vitals' | 'palace_state' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'injection_console' | 'recipe'
+export type RackModuleId = CustomRackModuleId | 'header' | 'threads' | 'conversation' | 'memory' | 'vitals' | 'palace_state' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'farm' | 'roots' | 'injection_console' | 'recipe'
 export type RackModuleSlot = 'header' | 'panel' | 'strip' | 'overlay'
 export type RackMemoryPanelState = MemoryPanelState
 
@@ -76,6 +76,7 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
     value === 'model_device' ||
     value === 'memory_graph' ||
     value === 'palace_nebula' ||
+    value === 'farm' || value === 'roots' ||
     value === 'injection_console' ||
     value === 'recipe'
 }
@@ -168,7 +169,7 @@ export interface RackModuleManifest {
 }
 
 export interface RackQueryRequest {
-  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'spend_table' | 'context_window' | 'parameters' | 'memory_graph' | 'scorer_console' | 'recipe_graph' | 'tools'
+  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'spend_table' | 'context_window' | 'parameters' | 'memory_graph' | 'scorer_console' | 'recipe_graph' | 'tools' | 'visualization'
   as_of?: string | null
   thread_id?: string
   thread_ids?: string[]
@@ -181,6 +182,8 @@ export interface RackQueryResult {
 }
 
 type RackSelectionValue = (
+  | { kind: 'agent'; id: string; thread_id: string }
+  | { kind: 'path'; id: string }
   | { kind: 'thread'; id: string }
   | { kind: 'project'; id: string }
   | { kind: 'memory'; id: string }
@@ -189,7 +192,7 @@ type RackSelectionValue = (
   | { kind: 'recipe_node'; id: string }
 )
 
-export type RackSelection = (RackSelectionValue & { spatial?: SpatialAddress }) | null
+export type RackSelection = (RackSelectionValue & { spatial?: SpatialAddress; as_of?: string | null; time_order?: boolean }) | null
 
 export interface RackEventSurface {
   getSnapshot: () => RackSnapshot
@@ -398,7 +401,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     movable: true, law_bound: true, default_scope: 'GLOBAL',
   },
   palace_nebula: {
-    id: 'palace_nebula', name: 'Palace Nebula', version: '1.0.0', class: 'visualizer',
+    id: 'palace_nebula', name: 'Palace', version: '1.0.0', class: 'visualizer',
     slot: 'panel', streams: ['memory.panel.update'],
     actions: ['rack.scope.get', 'rack.scope.set', 'memory.refresh', 'memory.add', 'memory.remove', 'memory.edit', 'memory.pin', 'memory.delete', 'thread.select'],
     bindings: [
@@ -411,6 +414,18 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     ],
     bounds: stageGridBounds(instrumentStageBounds.preferred), movable: true,
     law_bound: true, default_scope: 'GLOBAL',
+  },
+  farm: {
+    id: 'farm', name: 'Farm', version: '1.0.0', class: 'visualizer', slot: 'panel',
+    streams: ['thread.snapshot', 'run.*'], actions: ['rack.scope.get', 'rack.scope.set', 'thread.select'],
+    bounds: stageGridBounds(instrumentStageBounds.preferred), movable: true, law_bound: true,
+    default_scope: 'GLOBAL', bindings: ['visualization.projects', 'visualization.agents.location'],
+  },
+  roots: {
+    id: 'roots', name: 'Roots', version: '1.0.0', class: 'visualizer', slot: 'panel',
+    streams: ['thread.snapshot', 'run.*'], actions: ['rack.scope.get', 'rack.scope.set', 'thread.select'],
+    bounds: stageGridBounds(instrumentStageBounds.preferred), movable: true, law_bound: true,
+    default_scope: 'GLOBAL', bindings: ['visualization.agents.cost_usd', 'visualization.trails'],
   },
   injection_console: {
     id: 'injection_console', name: 'Injection Console', version: '1.0.0', class: 'control',
@@ -734,6 +749,13 @@ async function fetchRackResponse(path: string | URL, init?: RequestInit): Promis
 export const rackQuerySurface: RackQuerySurface = {
   async query(request) {
     const asOf = request.as_of ?? null
+    if (request.resource === 'visualization') {
+      const url = new URL('/v1/visualization', globalThis.location.origin)
+      if (asOf !== null) url.searchParams.set('as_of', asOf)
+      const response = await fetchRackResponse(url, { cache: 'no-store' })
+      if (!response.ok) throw await rackResponseError(response)
+      return { status: 'live', as_of: asOf, data: await response.json() as JsonValue }
+    }
     if (request.resource === 'vitals' || request.resource === 'spend_table' || request.resource === 'context_window' || request.resource === 'memory_graph' || request.resource === 'scorer_console' || request.resource === 'recipe_graph' || request.resource === 'tools') {
       if (asOf !== null && asOf !== 'now') {
         return { status: 'historical_unavailable', as_of: asOf, data: null }
@@ -812,7 +834,7 @@ export function rackSelectionsEqual(left: RackSelection, right: RackSelection): 
   if (left === null || right === null) {
     return left === right
   }
-  if (left.kind !== right.kind || left.id !== right.id) {
+  if (left.kind !== right.kind || left.id !== right.id || left.as_of !== right.as_of || left.time_order !== right.time_order) {
     return false
   }
   const sameValue = left.kind !== 'spend_lane' || (

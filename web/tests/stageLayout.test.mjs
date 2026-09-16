@@ -140,8 +140,21 @@ test('factory layers contain Graph and Injection as stage modules, never fixed t
   const injection = FACTORY_STAGE_LAYOUT.layers.find((layer) => layer.layer_id === 'injection')
 
   assert.deepEqual(graph?.modules.map((module) => module.module_id), ['memory_graph'])
-  assert.deepEqual(graph?.removed_modules.map((module) => module.module_id), ['palace_nebula'])
+  assert.deepEqual(graph?.removed_modules.map((module) => module.module_id), ['palace_nebula', 'farm', 'roots'])
   assert.deepEqual(injection?.modules.map((module) => module.module_id), ['injection_console'])
+})
+
+/** M3VZ / FL-123: adding an opt-in 3D module on another layer must survive reload. */
+test('three visualization modules move from the library without duplicate stored identities', () => {
+  let layout = createStageLayer(cloneFactoryStageLayout())
+  for (const id of ['farm', 'roots', 'palace_nebula']) layout = restoreStageModule(layout, id)
+  const storage = memoryStorage()
+  persistStageLayout(storage, layout)
+  const restored = loadStageLayout(storage)
+  assert.equal(restored.active_layer_id, layout.active_layer_id)
+  assert.deepEqual(activeStageLayer(restored).modules.map(m => m.module_id), ['palace_nebula', 'farm', 'roots'])
+  const instances = restored.layers.flatMap(l => [...l.modules, ...l.removed_modules]).map(m => m.instance_id)
+  assert.equal(new Set(instances).size, instances.length)
 })
 
 /** P2.4 makes Palace State a small ordinary Stage module, including removal and restore. */
@@ -164,7 +177,7 @@ test('Palace State is mounted beside Spend and survives the shared library lifec
 /** PLAN M3GE / P2 keeps the opt-in engine spike recoverable with one migration. */
 test('Palace Nebula begins in the Graph library and migrates existing layouts once', () => {
   const factoryGraph = FACTORY_STAGE_LAYOUT.layers.find((layer) => layer.layer_id === 'graph')
-  assert.deepEqual(factoryGraph?.removed_modules.map((module) => module.module_id), ['palace_nebula'])
+  assert.deepEqual(factoryGraph?.removed_modules.map((module) => module.module_id), ['palace_nebula', 'farm', 'roots'])
 
   const storage = memoryStorage()
   const legacyV3 = cloneFactoryStageLayout()

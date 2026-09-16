@@ -36,6 +36,8 @@ export type StageModuleId =
   | 'context_bars'
   | 'memory_graph'
   | 'palace_nebula'
+  | 'farm'
+  | 'roots'
   | 'injection_console'
   | 'palace_queue'
   | 'recipe'
@@ -44,7 +46,7 @@ export type ConversationMode = 'focused' | 'stack'
 
 export const STAGE_MODULE_IDS: StageModuleId[] = [
   'threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state',
-  'memory_graph', 'palace_nebula', 'injection_console', 'palace_queue',
+  'memory_graph', 'palace_nebula', 'farm', 'roots', 'injection_console', 'palace_queue',
   'recipe',
 ]
 export const MULTI_INSTANCE_MODULE_IDS: readonly StageModuleId[] = [
@@ -94,6 +96,7 @@ const DEFAULT_SCOPES: Record<string, RackScope> = {
   header: 'GLOBAL', threads: 'ATTUNED', conversation: 'ATTUNED', memory: 'ATTUNED',
   vitals: 'GLOBAL', context_bars: 'ATTUNED', gate: 'ATTUNED', thread_end: 'ATTUNED',
   palace_state: 'GLOBAL',
+  farm: 'GLOBAL', roots: 'GLOBAL',
   palace_queue: 'GLOBAL', model_device: 'ATTUNED', memory_graph: 'GLOBAL', palace_nebula: 'GLOBAL',
   injection_console: 'GLOBAL',
   recipe: 'ATTUNED',
@@ -111,6 +114,8 @@ const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
   context_bars: expandLegacyModule({ instance_id: 'context_bars', module_id: 'context_bars', x: 13, y: 12, width: 6, height: 4 }),
   memory_graph: expandLegacyModule({ instance_id: 'memory_graph', module_id: 'memory_graph', x: 2, y: 2, width: 12, height: 10 }),
   palace_nebula: expandLegacyModule({ instance_id: 'palace_nebula', module_id: 'palace_nebula', x: 14, y: 2, width: 12, height: 10 }),
+  farm: expandLegacyModule({ instance_id: 'farm', module_id: 'farm', x: 2, y: 2, width: 12, height: 10 }),
+  roots: expandLegacyModule({ instance_id: 'roots', module_id: 'roots', x: 14, y: 2, width: 12, height: 10 }),
   injection_console: expandLegacyModule({
     instance_id: 'injection_console', module_id: 'injection_console', x: 2, y: 2, width: 12, height: 10,
   }),
@@ -145,7 +150,7 @@ export const FACTORY_STAGE_LAYOUT: StageLayoutSet = {
       name: 'Graph',
       camera: expandLegacyCamera({ x: 50, y: 36, zoom: 0.86 }),
       modules: [{ ...DEFAULT_MODULES.memory_graph }],
-      removed_modules: [{ ...DEFAULT_MODULES.palace_nebula }],
+      removed_modules: [{ ...DEFAULT_MODULES.palace_nebula }, { ...DEFAULT_MODULES.farm }, { ...DEFAULT_MODULES.roots }],
     },
     {
       layer_id: 'injection',
@@ -336,9 +341,18 @@ export function restoreStageModule(
   layout: StageLayoutSet,
   instanceId: string,
 ): StageLayoutSet {
-  return updateActiveLayer(layout, (layer) => {
+  const existing = [...layout.layers, ...layout.removed_layers]
+    .flatMap((layer) => [...layer.modules, ...layer.removed_modules])
+    .find((module) => module.instance_id === instanceId)
+  const withoutDuplicate = (layer: StageLayer) => layer.layer_id === layout.active_layer_id ? layer : {
+    ...layer,
+    modules: layer.modules.filter((module) => module.instance_id !== instanceId),
+    removed_modules: layer.removed_modules.filter((module) => module.instance_id !== instanceId),
+  }
+  return updateActiveLayer({ ...layout, layers: layout.layers.map(withoutDuplicate),
+    removed_layers: layout.removed_layers.map(withoutDuplicate) }, (layer) => {
     if (layer.modules.some((item) => item.instance_id === instanceId)) return layer
-    const removed = layer.removed_modules.find((item) => item.instance_id === instanceId)
+    const removed = existing
     const fallback = isStageModuleId(instanceId) ? DEFAULT_MODULES[instanceId] : undefined
     if (removed === undefined && fallback === undefined) return layer
     return {
@@ -822,6 +836,7 @@ function expandLegacyStageLayout(layout: ParsedStageLayout): StageLayoutSet {
 }
 
 function addMemoryIngestToExistingLayout(layout: StageLayoutSet): StageLayoutSet {
+  layout = addFactoryRemovedModuleToExistingLayout(addFactoryRemovedModuleToExistingLayout(layout, 'farm', 'graph'), 'roots', 'graph')
   return addFactoryRemovedModuleToExistingLayout(
     addFactoryModuleToExistingLayout(
       addFactoryModuleToExistingLayout(layout, 'palace_queue', 'work'),
@@ -960,7 +975,7 @@ function parseScopes(
 
 function isStageModuleId(value: unknown): value is StageModuleId {
   return installedRackPlugins.some((plugin) => plugin.id === value) || value === 'threads' || value === 'conversation' || value === 'memory' ||
-    value === 'vitals' || value === 'palace_state' || value === 'context_bars' || value === 'memory_graph' || value === 'palace_nebula' ||
+    value === 'vitals' || value === 'palace_state' || value === 'context_bars' || value === 'memory_graph' || value === 'palace_nebula' || value === 'farm' || value === 'roots' ||
     value === 'injection_console' || value === 'palace_queue' || value === 'recipe'
 }
 
