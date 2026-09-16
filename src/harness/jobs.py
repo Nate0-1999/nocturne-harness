@@ -107,7 +107,7 @@ class JobScheduler:
             return max((card.item_uid for card in queue.cards), default="")
         if definition.trigger == "palace":
             graph = await self.spine.memory_graph(
-                MemoryGraphQuery(principal_id=self.settings.principal_id)
+                MemoryGraphQuery(principal_id=self.settings.principal_id, memory_ids=None)
             )
             revisions = sorted(
                 (str(node["memory"]["memory_id"]), node["memory"]["revision"])

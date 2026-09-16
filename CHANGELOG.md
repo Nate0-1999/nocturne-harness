@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.26 - 2026-09-16
+
+- Correct Palace change triggers to query the principal's full memory graph.
+  File, queue and Palace triggers now have real-provider acceptance evidence.
+  Pair with Memory 0.1.26; the API contract remains 0.1.25.
+
 ## 0.1.25 - 2026-09-16
 
 - Save and rerun named workflows, schedule them with cron or change triggers,
