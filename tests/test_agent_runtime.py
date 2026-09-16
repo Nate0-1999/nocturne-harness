@@ -1671,6 +1671,47 @@ async def test_remember_label_provider_failure_maps_to_error() -> None:
 
 
 @pytest.mark.asyncio
+async def test_normalized_history_is_not_duplicated_or_receipted_again() -> None:
+    """M3LL / ADR-013: retrying normalized history preserves one copy and charges new work."""
+    spend = RecordingSpend()
+    runner = PydanticAITurnRunner(
+        HarnessAgent(
+            settings(run_total_tokens_limit=1),
+            model=TestModel(call_tools=[], custom_output_text="new answer"),
+        ),
+        lambda _: context(),
+        spend,
+    )
+    old_response = ModelResponse(
+        parts=[TextPart("old answer")],
+        provider_response_id="old-response",
+        usage=RequestUsage(input_tokens=500_000, output_tokens=500_000),
+    )
+    history = (
+        ModelRequest(parts=[UserPromptPart("old question")]),
+        old_response,
+        ModelRequest(parts=[UserPromptPart("interrupted request")]),
+        ModelRequest(parts=[UserPromptPart("repair request")]),
+    )
+    for _ in range(3):
+        outcome = await runner.run(
+            thread_id=str(THREAD_UUID),
+            prompt="retry",
+            message_history=history,
+            emit=RecordingEmitter(),
+        )
+        assert outcome.stop_reason is StopReason.BUDGET_EXCEEDED
+        assert outcome.usage.requests == 1
+        assert outcome.usage.input_tokens < 500_000
+        assert sum(message is old_response for message in outcome.message_history) == 1
+        history = outcome.message_history
+    assert len(spend.requests) == 3
+    assert all(
+        event.ref != "old-response" for request in spend.requests for event in request.events
+    )
+
+
+@pytest.mark.asyncio
 async def test_usage_limit_maps_to_budget_exceeded_with_partial_history() -> None:
     """ADR-013 is defended by verifying that usage limit maps to budget exceeded with partial
     history; this prevents drift in the streaming model runtime and history boundary.

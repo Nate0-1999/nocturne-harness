@@ -1023,23 +1023,34 @@ def _model_settings(
 def _new_captured_messages(
     captured: Sequence[ModelMessage], prior_history: Sequence[object]
 ) -> Sequence[ModelMessage]:
-    if len(captured) >= len(prior_history) and all(
-        captured[index] is old or captured[index] == old for index, old in enumerate(prior_history)
-    ):
-        return captured[len(prior_history) :]
-    return captured
+    # SDK normalization can merge requests or repair tool pairs in the old prefix.
+    # Response/run identities survive that normalization; positions do not.
+    prior_runs = {message.run_id for message in prior_history if getattr(message, "run_id", None)}
+    prior_responses = {
+        (message.provider_name, message.provider_response_id)
+        for message in prior_history
+        if isinstance(message, ModelResponse) and message.provider_response_id
+    }
+    return [
+        message
+        for message in captured
+        if message.run_id not in prior_runs
+        and not (
+            isinstance(message, ModelResponse)
+            and (message.provider_name, message.provider_response_id) in prior_responses
+        )
+        and (
+            message.run_id is not None
+            or not any(message is old or message == old for old in prior_history)
+        )
+    ]
 
 
 def _captured_history(
     prior_history: Sequence[object], captured: Sequence[ModelMessage]
 ) -> tuple[object, ...]:
-    if not captured:
-        return tuple(prior_history)
-    if len(captured) >= len(prior_history) and all(
-        captured[index] is old or captured[index] == old for index, old in enumerate(prior_history)
-    ):
-        return tuple(captured)
-    return (*prior_history, *captured)
+    # capture_run_messages contains the complete, normalized history, even on failure.
+    return tuple(captured or prior_history)
 
 
 def _repair_cancelled_tool_calls(
