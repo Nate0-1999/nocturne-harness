@@ -147,6 +147,8 @@ async def run(args):
                     break
                 if payload["run_id"] in boundary_runs:
                     raise RuntimeError("Boundary review requires attention; progress is preserved.")
+                if payload["stop_reason"] == "error":
+                    raise RuntimeError("Runtime failure; progress is preserved for diagnosis.")
                 failure = "\n".join(
                     line
                     for line in result.splitlines()
