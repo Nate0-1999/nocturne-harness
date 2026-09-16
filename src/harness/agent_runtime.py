@@ -221,6 +221,8 @@ class PydanticAITurnRunner:
         )
 
         def failed_history():
+            if is_remember:
+                return prior_history
             if compaction is not None and compaction.completed:
                 history = _repair_cancelled_tool_calls(tuple(captured or compaction.history))
                 self._extraction._journal.append_compaction_history(
