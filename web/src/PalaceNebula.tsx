@@ -32,7 +32,7 @@ import {
 } from './nebulaBindings'
 import './assets/palace-nebula.css'
 import { useVisualization, VisualizationToolbar } from './WorkVisualization'
-import { CameraControls } from './VisualizationScene'
+import { CameraControls, SceneStatistics } from './VisualizationScene'
 
 type ScorerSnapshot = {
   active_version?: string
@@ -66,6 +66,7 @@ export function PalaceNebula() {
   const [scope, setScope] = useState<'GLOBAL' | 'ATTUNED'>('GLOBAL')
   const [load, setLoad] = useState<LoadState>({ kind: 'loading' })
   const [fps, setFps] = useState(0)
+  const [triangles, setTriangles] = useState(0)
   const [backend, setBackend] = useState<ThreeBackend>('starting')
   const threadId = scope === 'ATTUNED' ? rack.selectedThreadId ?? undefined : undefined
 
@@ -102,13 +103,13 @@ export function PalaceNebula() {
 
   const sceneSnapshot = useMemo(() => {
     const recorded = visualization.data
-    if (recorded?.palace && (!selected?.as_of || recorded.as_of === selected.as_of)) {
+    if (!visualization.loading && recorded?.palace && (!selected?.as_of || recorded.as_of === selected.as_of)) {
       const palace = { ...recorded.palace, as_of: recorded.as_of }
       if (scope === 'ATTUNED') palace.nodes = palace.nodes.filter((node) => node.memory.origin_thread_id === threadId)
       return palace
     }
     return selected?.as_of ? null : load.kind === 'ready' ? load.snapshot : null
-  }, [visualization.data, selected?.as_of, scope, threadId, load])
+  }, [visualization.data, visualization.loading, selected?.as_of, scope, threadId, load])
   const bodies = useMemo(() => sceneSnapshot ? buildNebulaBodies(sceneSnapshot, axis).map((body) => {
     const memory = sceneSnapshot.nodes.find((node) => node.memory.memory_id === body.id)?.memory
     const focused = selected?.kind === 'memory' ? selected.id === body.id
@@ -160,6 +161,7 @@ export function PalaceNebula() {
         tier={tier}
         reportBackend={setBackend}
         reportFps={setFps}
+        reportTriangles={setTriangles}
         onSelect={(id) => selection.select({ kind: 'memory', id, as_of: selected?.as_of ?? null })}
       />}
       <div className="palace-nebula__readouts" aria-label="Attuned Palace readouts">
@@ -176,6 +178,7 @@ export function PalaceNebula() {
       </div>
       <div className="palace-nebula__telemetry" aria-live="polite">
         <strong>{fps || '—'} fps</strong>
+        <output aria-label="Rendered triangles">{triangles.toLocaleString()} triangles · {tier}</output>
         <span>Three r{REVISION} · R3F + TSL · {backend} · {tier}</span>
         <span>{sceneSnapshot?.as_of ?? 'Reading current reality'}</span>
       </div>
@@ -207,6 +210,7 @@ function ThreeNebula({
   tier,
   reportBackend,
   reportFps,
+  reportTriangles,
   onSelect,
 }: {
   bodies: readonly NebulaBody[]
@@ -217,6 +221,7 @@ function ThreeNebula({
   tier: NebulaHardwareTier
   reportBackend: (backend: ThreeBackend) => void
   reportFps: (fps: number) => void
+  reportTriangles: (triangles: number) => void
   onSelect: (id: string) => void
 }) {
   const createRenderer = useMemo(() => async (defaults: RendererDefaults) => {
@@ -253,6 +258,7 @@ function ThreeNebula({
     </group>)}
     <CameraControls distance={22} />
     <FpsMeter reportFps={reportFps} />
+    <SceneStatistics report={reportTriangles} />
   </Canvas>
 }
 
