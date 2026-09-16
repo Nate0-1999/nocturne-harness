@@ -276,6 +276,17 @@ class TranscriptJournal:
                 messages.append(deepcopy(message))
         return messages
 
+    def rewind(self, thread_id: str, parent_id: str | None) -> HydratedTranscript:
+        """Move the durable branch cursor; every abandoned message remains in the journal."""
+        with self._lock:
+            self._append(thread_id, {
+                "version": 1, "record_type": "rewind", "tail_message_id": parent_id,
+            })
+            self._next_parent_ids[thread_id] = parent_id
+            transcript = self._hydrate_file(self._filename_for_thread(thread_id))
+            assert transcript is not None
+            return transcript
+
     def thread_location(self, thread_id: str) -> str | None:
         """Read the latest durable location for compaction provenance."""
 
@@ -758,6 +769,7 @@ class TranscriptJournal:
         message_image_rows: list[tuple[str, object, bool, object]] = []
         tail_message_id: str | None = None
         saw_tail = False
+        saw_rewind = False
         saw_message_row = False
         resolved_model: str | None = None
         project_key: str | None = None
@@ -807,6 +819,10 @@ class TranscriptJournal:
                     if candidate_tail is None or isinstance(candidate_tail, str) and candidate_tail:
                         tail_message_id = candidate_tail
                         saw_tail = True
+            elif row.get("record_type") == "rewind":
+                tail_message_id = row["tail_message_id"]
+                saw_tail = True
+                saw_rewind = True
             elif row.get("record_type") == "compaction_history":
                 compaction_histories[row["run_id"]] = row["history"]
             elif row.get("record_type") == "attachment":
@@ -945,7 +961,7 @@ class TranscriptJournal:
                 "Conversation journal contains an unreadable transcript. "
                 "Restore the journal from a verified backup before starting Nocturne."
             )
-        if not saw_tail or tail_message_id is None:
+        if not saw_tail or (tail_message_id is None and not saw_rewind):
             # WALL files / D.2 082: reject an unsafe journal before appending.
             raise TranscriptJournalUnavailable(
                 f"Conversation journal for thread {thread_id} has no durable tail. "
@@ -1181,7 +1197,7 @@ class TranscriptJournal:
             row = json.loads(line)
         except (UnicodeDecodeError, json.JSONDecodeError):
             return False, None
-        if not isinstance(row, dict) or row.get("record_type") != "message":
+        if not isinstance(row, dict) or row.get("record_type") not in {"message", "rewind"}:
             return False, None
         if "tail_message_id" in row:
             tail_id = row["tail_message_id"]

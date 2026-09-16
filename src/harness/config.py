@@ -1,6 +1,7 @@
 """Harness configuration for the C.4 client and C.5 agent limits."""
 
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -39,6 +40,7 @@ class HarnessSettings(BaseSettings):
     nocturne_transcript_backup: bool = False
     nocturne_home: Path | None = None
     toolset_fence_reads: bool = False
+    toolset: Literal["pydantic", "none"] = "pydantic"
 
     @field_validator("model_context_tokens", mode="before")
     @classmethod

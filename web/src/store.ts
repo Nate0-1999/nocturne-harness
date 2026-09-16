@@ -270,6 +270,7 @@ function applyStarted(thread: ThreadState, payload: RunStartedPayload): ThreadSt
         run_id: payload.run_id,
         state: 'running',
         image: payload.image ?? message.image,
+        checkpoint: payload.checkpoint,
       }
     }
     if (message.role === 'assistant' && message.run_id === payload.run_id) {
@@ -285,6 +286,7 @@ function applyStarted(thread: ThreadState, payload: RunStartedPayload): ThreadSt
       content: outbound.prompt,
       state: 'running',
       image: payload.image ?? outbound.image_view,
+      checkpoint: payload.checkpoint,
     }
     const assistantIndex = messages.findIndex(
       (message) => message.role === 'assistant' && message.run_id === payload.run_id,

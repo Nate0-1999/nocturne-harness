@@ -280,7 +280,6 @@ class HarnessAgent:
         )
         chat_capabilities = [
             MemoryCapability(),
-            WorkspaceCapability(),
         ]
         self._chat_agent = Agent(
             self._default_model,
@@ -381,9 +380,14 @@ class HarnessAgent:
 
         return self._select_model(model)
 
-    def skill_capabilities(self, context: MemoryToolContext):
-        """Load the adopted catalog at this thread's current location. [PLAN M3SK]"""
-        return adopted_skill_capabilities(context.skill_directories or self._skill_directories)
+    def tool_capabilities(self, context: MemoryToolContext):
+        """Select coding, browser and skills as one unit. [PLAN M3TH]"""
+        if not context.toolset_enabled:
+            return []
+        return [
+            WorkspaceCapability(),
+            *adopted_skill_capabilities(context.skill_directories or self._skill_directories),
+        ]
 
     async def judge_boundary(self, prompt: str, *, model, usage, model_settings):
         """Triage only explicit outside-path requests in a fresh, tools-free judge session."""
@@ -409,7 +413,7 @@ class HarnessAgent:
         result = await self._chat_agent.run(
             prompt,
             deps=context,
-            capabilities=self.skill_capabilities(context),
+            capabilities=self.tool_capabilities(context),
             message_history=message_history,
             model=self._select_model(model),
             model_settings=model_settings,

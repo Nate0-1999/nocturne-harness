@@ -137,6 +137,8 @@ class AdoptedSkill:
     id: str
     description: str | None
     instructions: tuple[str, ...]
+    source: str
+    version: str
 
 
 def adopted_skills(directories: Sequence[Path]) -> tuple[AdoptedSkill, ...]:
@@ -160,11 +162,18 @@ def adopted_skills(directories: Sequence[Path]) -> tuple[AdoptedSkill, ...]:
         resources = _resource_instructions(package)
         if resources:
             instructions.append(resources)
+        digest = hashlib.sha256((package / "SKILL.md").read_bytes())
+        for resource in _skill_resources(package):
+            digest.update(str(resource.relative_to(package.resolve())).encode())
+            digest.update(b"\0")
+            digest.update(resource.read_bytes())
         adopted.append(
             AdoptedSkill(
                 id=leaf.id,
                 description=leaf.description,
                 instructions=tuple(instructions),
+                source=str(package.resolve()),
+                version="sha256:" + digest.hexdigest(),
             )
         )
     return tuple(adopted)

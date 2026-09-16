@@ -29,6 +29,7 @@ from pydantic import BaseModel, Field
 from harness import __version__
 from harness.agent import HarnessAgent
 from harness.agent_runtime import PydanticAITurnRunner
+from harness.checkpoints import WorkspaceCheckpoints
 from harness.commands import browser_open_web_command
 from harness.config import HarnessSettings
 from harness.context_window import ContextWindowSnapshot, ContextWindowTracker
@@ -104,6 +105,7 @@ from harness.spine_client import (
 )
 from harness.symphony_experience import SymphonyExperience
 from harness.symphony_runtime import SymphonyExecution
+from harness.tool_inventory import ToolInventory, ToolsetSelection, inventory
 from harness.tools_memory import MemoryToolContext
 from harness.toolset_runtime import LazyStandardToolset
 from harness.transcript import TranscriptJournal, TranscriptJournalUnavailable
@@ -133,6 +135,12 @@ type ScorerProposalActivator = Callable[
 ]
 type ContextWindowReader = Callable[[str | None], ContextWindowSnapshot]
 type RecipeGraphReader = Callable[[], RecipeGraphSnapshot]
+type ToolInventoryReader = Callable[[str], ToolInventory]
+
+
+class RewindRequest(BaseModel):
+    prompt_id: str
+    scope: Literal["conversation", "files", "both"] = "both"
 
 
 class TranscriptBackupUpdate(BaseModel):
@@ -288,6 +296,7 @@ def create_app(
     scorer_proposal_activator: ScorerProposalActivator | None = None,
     context_window_reader: ContextWindowReader | None = None,
     recipe_graph_reader: RecipeGraphReader | None = None,
+    tool_inventory_reader: ToolInventoryReader | None = None,
     before_static_mount: Callable[[FastAPI], None] | None = None,
 ) -> FastAPI:
     """Create the daemon with process-scoped H7 state and extensible routing."""
@@ -345,12 +354,20 @@ def create_app(
             "scorer_console",
             "context_window",
             "recipe_graph",
+            "tools",
         ],
         as_of: str | None = None,
         thread_id: str | None = None,
         thread_ids: str | None = None,
     ) -> RackQueryResult:
         """Keep Spine credentials behind the public rack query surface."""
+
+        if resource == "tools":
+            if as_of not in {None, "now"}:
+                return RackQueryResult(status="historical_unavailable", as_of=as_of, data=None)
+            if thread_id is None or tool_inventory_reader is None:
+                raise HTTPException(422, "Choose a thread to see its tools.")
+            return RackQueryResult(status="live", as_of=None, data=tool_inventory_reader(thread_id))
 
         if resource == "spend_table":
             if as_of not in {None, "now"}:
@@ -785,6 +802,12 @@ def create_dev_app(
     configured = settings or HarnessSettings()
     home = (configured.nocturne_home or nocturne_home()).expanduser().resolve()
     role_policy_path = home / "model-policies.json"
+    toolset_path = home / "toolset.json"
+    toolset_selection = (
+        ToolsetSelection.model_validate_json(toolset_path.read_text())
+        if toolset_path.exists()
+        else ToolsetSelection(toolset=configured.toolset)
+    )
     role_policies = {
         "chat": configured.effective_model_policy_chat,
         "subagent": configured.model_policy_subagent or configured.effective_model_policy_chat,
@@ -888,6 +911,7 @@ def create_dev_app(
             project_key=project_key,
             origin_path=workspace_location_path(workspace_toolset.location()),
             toolset=workspace_toolset,
+            toolset_enabled=toolset_selection.toolset != "none",
             skill_directories=discover_skill_libraries(location.workspace_root, location.cwd),
         )
 
@@ -1087,6 +1111,7 @@ def create_dev_app(
         transcript_journal=journal,
         symphony_experience=owned_symphony_experience,
         spend_walls=spend_walls,
+        checkpoints=WorkspaceCheckpoints(home / "checkpoints"),
     )
     owned_symphony_experience.bind(
         SymphonyExecution(settings=configured, home=home, context_factory=context_factory),
@@ -1107,6 +1132,32 @@ def create_dev_app(
     )
 
     def configure_extraction_routes(app: FastAPI) -> None:
+        @app.post("/v1/threads/{thread_id}/rewind")
+        async def rewind_thread(thread_id: UUID, request: RewindRequest):
+            try:
+                result = await loop.rewind(str(thread_id), request.prompt_id, request.scope)
+                if request.scope in {"conversation", "both"}:
+                    toolset = workspace_toolsets.pop(str(thread_id), None)
+                    if toolset is not None:
+                        await toolset.close()
+                return result
+            except ValueError as exc:
+                raise HTTPException(409, str(exc)) from exc
+
+        @app.get("/v1/toolset", response_model=ToolsetSelection)
+        async def read_toolset():
+            return toolset_selection
+
+        @app.put("/v1/toolset", response_model=ToolsetSelection)
+        async def select_toolset(selection: ToolsetSelection):
+            nonlocal toolset_selection
+            home.mkdir(parents=True, exist_ok=True)
+            temporary = toolset_path.with_suffix(".tmp")
+            temporary.write_text(selection.model_dump_json() + "\n")
+            temporary.replace(toolset_path)
+            toolset_selection = selection
+            return selection
+
         @app.get("/v1/spend-walls", response_model=SpendLimits)
         async def read_spend_walls():
             return spend_walls.limits
@@ -1338,6 +1389,7 @@ def create_dev_app(
         scorer_proposal_activator=activate_scorer,
         context_window_reader=context_windows.snapshot,
         recipe_graph_reader=owned_symphony_experience.recipe_snapshot,
+        tool_inventory_reader=lambda thread_id: inventory(context_factory(thread_id)),
         before_static_mount=configure_extraction_routes,
     )
 

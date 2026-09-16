@@ -148,6 +148,7 @@ export interface UserTranscriptMessage {
   state: UserMessageState
   image?: ImageAttachmentView
   proposed_response?: ProposedResponseFireView
+  checkpoint?: { commit: string; parent_id: string | null }
 }
 
 export interface AssistantTranscriptMessage {
@@ -372,6 +373,7 @@ export interface RunStartedPayload {
   prompt_id: Ulid
   resolved_model: string | null
   image?: ImageAttachmentView
+  checkpoint?: UserTranscriptMessage['checkpoint']
 }
 
 export interface PromptQueuedPayload {
@@ -1049,6 +1051,10 @@ function parseTranscriptMessage(value: unknown): TranscriptMessage | null {
       state: value.state as UserMessageState,
       ...(image === undefined ? {} : { image }),
       ...(proposedResponse === undefined ? {} : { proposed_response: proposedResponse }),
+      ...(isRecord(value.checkpoint) && typeof value.checkpoint.commit === 'string'
+        ? { checkpoint: { commit: value.checkpoint.commit, parent_id:
+          typeof value.checkpoint.parent_id === 'string' ? value.checkpoint.parent_id : null } }
+        : {}),
     }
   }
   if (
@@ -1166,6 +1172,10 @@ function parseRunStarted(value: unknown): RunStartedPayload | null {
     ...runIds,
     resolved_model:
       typeof value.resolved_model === 'string' ? value.resolved_model : null,
+    ...(isRecord(value.checkpoint) && typeof value.checkpoint.commit === 'string'
+      ? { checkpoint: { commit: value.checkpoint.commit, parent_id:
+        typeof value.checkpoint.parent_id === 'string' ? value.checkpoint.parent_id : null } }
+      : {}),
   }
 }
 

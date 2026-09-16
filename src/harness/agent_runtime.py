@@ -461,8 +461,12 @@ class PydanticAITurnRunner:
                     deps=context,
                     instructions=instructions,
                     capabilities=[
-                        *self._agent.skill_capabilities(context),
-                        *([DelegateCapability(), compaction] if compaction is not None else []),
+                        *self._agent.tool_capabilities(context),
+                        *(
+                            [DelegateCapability()]
+                            if compaction is not None and context.toolset_enabled else []
+                        ),
+                        *([compaction] if compaction is not None else []),
                     ],
                     message_history=cast(Sequence[ModelMessage], prior_history),
                     model=selected_model,
@@ -1076,6 +1080,8 @@ def _repair_cancelled_tool_calls(
         for call, response in unanswered
     ]
     last_response = unanswered[-1][1]
+    if isinstance(history[-1], ModelRequest) and not history[-1].parts:
+        return (*history[:-1], replace(history[-1], parts=returns))
     return (
         *history,
         ModelRequest(
