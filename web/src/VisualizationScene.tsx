@@ -12,8 +12,18 @@ export function CameraControls({ distance, width = 0 }: { distance: number; widt
     const controls = new OrbitControls(camera, gl.domElement)
     controls.enableDamping = false
     controls.addEventListener('change', () => invalidate())
+    gl.domElement.setAttribute('tabindex', '0')
+    controls.listenToKeyEvents(gl.domElement)
+    const zoom = (event: KeyboardEvent) => {
+      if (!['+', '=', '-', '_'].includes(event.key)) return
+      event.preventDefault()
+      camera.position.sub(controls.target).multiplyScalar(event.key === '+' || event.key === '=' ? 0.85 : 1 / 0.85).add(controls.target)
+      controls.update()
+      invalidate()
+    }
+    gl.domElement.addEventListener('keydown', zoom)
     controls.update()
-    return () => controls.dispose()
+    return () => { gl.domElement.removeEventListener('keydown', zoom); controls.dispose() }
   }, [camera, gl, fit, invalidate])
   return null
 }

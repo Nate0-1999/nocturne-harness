@@ -104,7 +104,7 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
       </VisualizationScene>}
       <aside className="work-viz__readout"><strong>{view === 'farm' ? `${chambers.length} chambers` : `${agents.length} roots`}</strong>
         <span>{project?.nodes.filter((node) => node.kind !== 'directory').length ?? 0} file cells · {agents.length} agents</span>
-        <span>{view === 'farm' ? 'Drag to orbit · scroll to zoom · pick an ant' : 'Width = dollars · depth = time · junction = fork · dry = stopped'}</span>
+        <span>{view === 'farm' ? 'Drag or Ctrl+arrows to orbit · scroll or +/− to zoom · pick an ant' : 'Width = dollars · depth = time · junction = fork · dry = stopped'}</span>
         {focused && <span style={{ color: agentColor(focused.id) }}>{focused.label} · {focused.location}</span>}
       </aside>
       {(!data || error) && <p className="work-viz__notice" role="status">{error ?? 'Recording the first real state…'}</p>}
