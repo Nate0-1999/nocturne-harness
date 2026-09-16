@@ -397,7 +397,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
   palace_nebula: {
     id: 'palace_nebula', name: 'Palace Nebula', version: '1.0.0', class: 'visualizer',
     slot: 'panel', streams: ['memory.panel.update'],
-    actions: ['rack.scope.get', 'rack.scope.set'],
+    actions: ['rack.scope.get', 'rack.scope.set', 'memory.refresh', 'memory.add', 'memory.remove', 'memory.edit', 'memory.pin', 'memory.delete', 'thread.select'],
     bindings: [
       'memory.created_at', 'memory.updated_at', 'memory.stats.injections',
       'memory.revision', 'memory.kind', 'memory.project_key',

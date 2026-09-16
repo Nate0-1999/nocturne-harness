@@ -11,7 +11,7 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
   "fastapi>=0.115,<1",
   "httpx>=0.27,<1",
-  "nocturne-memory==0.1.13",
+  "nocturne-memory==0.1.14",
   "playwright==1.62.0",
   "pydantic>=2.10,<3",
   "pydantic-ai==2.28.0",

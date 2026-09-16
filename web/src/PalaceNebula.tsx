@@ -13,7 +13,8 @@ import {
 } from 'three'
 import { color as tslColor } from 'three/tsl'
 import { MeshStandardNodeMaterial, WebGPURenderer } from 'three/webgpu'
-import { useRackPlugin, useRackSnapshot } from './rack'
+import { useRackPlugin, useRackSelection, useRackSnapshot } from './rack'
+import { MemoryTrace, SelectedMemoryPanel } from './MemoryPanel'
 import {
   buildNebulaBodies,
   buildNebulaCreatureFamilies,
@@ -54,7 +55,8 @@ type FirstArgument<T> = T extends (argument: infer Argument) => unknown ? Argume
 type RendererDefaults = FirstArgument<GLProps>
 
 export function PalaceNebula() {
-  const { query, events } = useRackPlugin()
+  const { query, events, selection } = useRackPlugin()
+  const selected = useRackSelection()
   const rack = useRackSnapshot()
   const [axis, setAxis] = useState<NebulaAxisMode>('activity')
   const [tier, setTier] = useState<NebulaHardwareTier>('full')
@@ -133,6 +135,7 @@ export function PalaceNebula() {
         tier={tier}
         reportBackend={setBackend}
         reportFps={setFps}
+        onSelect={(id) => selection.select({ kind: 'memory', id })}
       />}
       <div className="palace-nebula__readouts" aria-label="Attuned Palace readouts">
         <article><span>Constellation</span><strong>{bodies.length} bodies</strong><small>{filaments.length} real filaments</small></article>
@@ -160,6 +163,11 @@ export function PalaceNebula() {
       <section><h2>Creature + constellation</h2>{NEBULA_BINDINGS.shared.map((binding) => <p key={binding}>{binding}</p>)}</section>
       <section><h2>Kinds in view</h2><p>{kinds.length === 0 ? 'None' : kinds.join(' · ')}</p><p>Camera moves freely; posture rebinds this same recorded snapshot.</p></section>
     </aside>
+    <details><summary>Memories in view</summary>
+      {bodies.map((body) => <button key={body.id} type="button" onClick={() => selection.select({ kind: 'memory', id: body.id })}>{body.label}</button>)}
+    </details>
+    {selected?.kind === 'memory' && <SelectedMemoryPanel memoryId={selected.id} />}
+    <MemoryTrace />
   </section>
 }
 
@@ -171,6 +179,7 @@ function ThreeNebula({
   tier,
   reportBackend,
   reportFps,
+  onSelect,
 }: {
   bodies: readonly NebulaBody[]
   events: readonly NebulaMemoryEvent[]
@@ -179,6 +188,7 @@ function ThreeNebula({
   tier: NebulaHardwareTier
   reportBackend: (backend: ThreeBackend) => void
   reportFps: (fps: number) => void
+  onSelect: (id: string) => void
 }) {
   const createRenderer = useMemo(() => async (defaults: RendererDefaults) => {
     if (!(defaults.canvas instanceof HTMLCanvasElement)) {
@@ -207,12 +217,12 @@ function ThreeNebula({
     <NebulaEventTorrent events={events} tier={tier} />
     <NebulaFilaments filaments={filaments} />
     {families.map((family) => <NebulaCreatureCluster key={family.id} family={family} tier={tier} />)}
-    {bodies.map((body) => <NebulaMemoryBody key={body.id} body={body} tier={tier} />)}
+    {bodies.map((body) => <NebulaMemoryBody key={body.id} body={body} tier={tier} onSelect={onSelect} />)}
     <FpsMeter reportFps={reportFps} />
   </Canvas>
 }
 
-function NebulaMemoryBody({ body, tier }: { body: NebulaBody; tier: NebulaHardwareTier }) {
+function NebulaMemoryBody({ body, tier, onSelect }: { body: NebulaBody; tier: NebulaHardwareTier; onSelect: (id: string) => void }) {
   const meshRef = useRef<Mesh>(null)
   const material = useMemo(() => {
     const base = new Color(...body.color)
@@ -227,7 +237,8 @@ function NebulaMemoryBody({ body, tier }: { body: NebulaBody; tier: NebulaHardwa
   }, [body.color, body.in_current_context, body.pinned, body.recency_glow, tier])
 
   useEffect(() => () => material.dispose(), [material])
-  return <mesh ref={meshRef} name={body.label} position={body.position} scale={body.scale} material={material}>
+  return <mesh ref={meshRef} name={body.label} position={body.position} scale={body.scale} material={material}
+    onClick={(event) => { event.stopPropagation(); onSelect(body.id) }}>
     <sphereGeometry args={[1, tier === 'full' ? 32 : 14, tier === 'full' ? 22 : 9]} />
   </mesh>
 }

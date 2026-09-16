@@ -3427,3 +3427,13 @@ uses that same contract to tombstone a head after confirmation, preserving the
 thread's frozen text. Refresh retains inactive context members so supersession
 remains visible. Graph and Nebula reread their recorded snapshots every five
 seconds, with one request in flight; curation animation uses actual revisions.
+
+## 120 — Trace controls reuse the thread's recorded suggestions [P1.2, P2, M3MU]
+
+PRECEDENT: PLAN M3MU WIDENED AGAIN, F101; Decision 119; ADR-005/018.
+The existing context registry retains unused near-miss IDs and their injection
+sources. Successful feedback adds the live body as a confirmed thread lock;
+unoffered memories and vetoed gate cards cannot use that action. The Nebula's
+selection and compact trace use the same panel actions and context readout,
+without scorer writes. Historical bodies travel through the existing graph
+projection and are displayed inline in the revision list.

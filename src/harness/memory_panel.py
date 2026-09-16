@@ -85,6 +85,7 @@ class ThreadMemorySnapshot:
     member_ids: frozenset[UUID]
     excluded_memory_ids: frozenset[UUID]
     confirmed_memory_ids: frozenset[UUID]
+    near_miss_ids: frozenset[UUID]
     event_sources: Mapping[UUID, UUID]
     memory_bodies: Mapping[UUID, str]
     memory_allocation: MemoryAllocation
@@ -96,6 +97,7 @@ class _ThreadMemoryState:
     fragments: dict[UUID, str]
     excluded_memory_ids: set[UUID]
     confirmed_memory_ids: set[UUID]
+    near_miss_ids: set[UUID]
     event_sources: dict[UUID, UUID]
     memory_bodies: dict[UUID, str]
     pinned_memory_ids: set[UUID]
@@ -109,6 +111,7 @@ class _ThreadMemoryState:
             member_ids=frozenset(self.fragments),
             excluded_memory_ids=frozenset(self.excluded_memory_ids),
             confirmed_memory_ids=frozenset(self.confirmed_memory_ids),
+            near_miss_ids=frozenset(self.near_miss_ids),
             event_sources=dict(self.event_sources),
             memory_bodies=dict(self.memory_bodies),
             memory_allocation=self._allocation(),
@@ -192,7 +195,10 @@ class ThreadMemoryContextRegistry:
             fragments=dict(zip((card.memory_id for card in selected), fragments, strict=True)),
             excluded_memory_ids=set(removed_memory_ids),
             confirmed_memory_ids={card.memory_id for card in selected},
-            event_sources={memory_id: prepared.injection_id for memory_id in prepared_ids},
+            near_miss_ids=set(near_misses) - removed_memory_ids - set(added_back),
+            event_sources={
+                memory_id: prepared.injection_id for memory_id in prepared_ids - removed_memory_ids
+            },
             memory_bodies={card.memory_id: card.body for card in selected},
             pinned_memory_ids={card.memory_id for card in selected if card.pin},
             memory_context_share=prepared.memory_allocation.memory_context_share,
@@ -219,16 +225,21 @@ class ThreadMemoryContextRegistry:
         return True
 
     def add(self, thread_id: str, memory: MemoryUnit) -> bool:
-        """Re-add one human-excluded active unit as a confirmed thread lock."""
+        """Confirm one removed member or unused near miss as a thread lock."""
 
         state = self._threads.get(thread_id)
-        if state is None or memory.memory_id not in state.excluded_memory_ids:
+        if (
+            state is None
+            or memory.memory_id not in state.event_sources
+            or memory.memory_id not in (state.excluded_memory_ids | state.near_miss_ids)
+        ):
             return False
         state.fragments[memory.memory_id] = _memory_unit_fragment(memory)
         state.memory_bodies[memory.memory_id] = memory.body
         if memory.pin:
             state.pinned_memory_ids.add(memory.memory_id)
-        state.excluded_memory_ids.remove(memory.memory_id)
+        state.excluded_memory_ids.discard(memory.memory_id)
+        state.near_miss_ids.discard(memory.memory_id)
         state.confirmed_memory_ids.add(memory.memory_id)
         return True
 
@@ -261,6 +272,9 @@ class ThreadMemoryContextRegistry:
         state.memory_context_share = prepared.memory_allocation.memory_context_share
         state.share_tokens = prepared.memory_allocation.share_tokens
         state.injection_id = prepared.injection_id
+        state.near_miss_ids = {
+            card.memory_id for card in prepared.near_misses
+        } - state.excluded_memory_ids
         for card in (*prepared.injected, *prepared.near_misses):
             state.event_sources[card.memory_id] = prepared.injection_id
         return state.snapshot(), changed
@@ -386,10 +400,13 @@ class MemoryPanelController:
             source = None if context is None else context.event_sources.get(payload.memory_id)
             if (
                 context is None
-                or payload.memory_id not in context.excluded_memory_ids
+                or payload.memory_id not in (context.excluded_memory_ids | context.near_miss_ids)
                 or source is None
             ):
-                error = ("not_thread_excluded", "This memory is not excluded from the thread.")
+                error = (
+                    "not_thread_suggestion",
+                    "This memory is not a removed member or near-miss suggestion for this thread.",
+                )
             else:
                 try:
                     active = await self._active_principal_memories()
@@ -650,8 +667,11 @@ class MemoryPanelController:
                 memory=memory,
                 in_context=memory.memory_id in members,
                 thread_excluded=(
-                    context is not None and memory.memory_id in context.excluded_memory_ids
+                    context is not None
+                    and memory.memory_id in context.excluded_memory_ids
+                    and memory.memory_id in context.event_sources
                 ),
+                near_miss=(context is not None and memory.memory_id in context.near_miss_ids),
             )
             for memory in memories
         ]

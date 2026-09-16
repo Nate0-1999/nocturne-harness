@@ -271,6 +271,42 @@ async def handle(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("vetoed", [False, True])
+async def test_trace_adds_only_unused_near_misses_and_locks_the_next_context(vetoed: bool) -> None:
+    """ADR-018 / F101: trace suggestions come from this thread, and vetoes stay out."""
+    near = memory_card(MEMORY_A, label="Suggestion", body="Suggested body", rank=1)
+    contexts = ThreadMemoryContextRegistry()
+    contexts.install(
+        THREAD_ID,
+        prepared=prepared([]).model_copy(update={"near_misses": [near]}),
+        removed_memory_ids=frozenset({MEMORY_A}) if vetoed else frozenset(),
+        added_back=[],
+        final_block=EMPTY_MEMORY_BLOCK,
+    )
+    spine = FakeSpine([memory_unit(MEMORY_A, label=near.label, body=near.body)])
+    panel = controller(spine, contexts)
+    refreshed = await handle(panel, MemoryPanelRefreshPayload(action="refresh"))
+    assert refreshed.payload.items[0].near_miss is (not vetoed)
+    if vetoed:
+        assert MEMORY_A not in contexts.snapshot(THREAD_ID).near_miss_ids
+        assert refreshed.payload.items[0].thread_excluded is False
+        refused = await handle(panel, MemoryPanelAddPayload(action="add", memory_id=MEMORY_A))
+        assert refused.payload.action == "error"
+        assert spine.feedback_requests == []
+        return
+    added = await handle(panel, MemoryPanelAddPayload(action="add", memory_id=MEMORY_A))
+    assert added.payload.result == "added"
+    assert spine.feedback_requests[0].signal == FeedbackSignal.MID_THREAD_ADDED
+    snapshot = contexts.snapshot(THREAD_ID)
+    assert snapshot.confirmed_memory_ids == frozenset({MEMORY_A})
+    assert snapshot.near_miss_ids == frozenset()
+    assert near.body in snapshot.final_block
+    refused = await handle(panel, MemoryPanelAddPayload(action="add", memory_id=MEMORY_B))
+    assert refused.payload.action == "error"
+    assert len(spine.feedback_requests) == 1
+
+
+@pytest.mark.asyncio
 async def test_refresh_pages_global_active_list_before_principal_filtering() -> None:
     """A-030 is defended by verifying that refresh pages global active list before principal
     filtering; this prevents drift in the owner memory control and context-rebinding

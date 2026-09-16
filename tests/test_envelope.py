@@ -404,6 +404,7 @@ def test_known_minimum_payloads_are_typed(
                         "memory": wrong_unit(),
                         "in_context": True,
                         "thread_excluded": False,
+                        "near_miss": False,
                         "score": None,
                         "revisions": [],
                     }

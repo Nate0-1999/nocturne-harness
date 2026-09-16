@@ -11,6 +11,7 @@ import type { MemoryPanelConflictPayload, MemoryUnit, Ulid } from './protocol'
 import { ContributionBars, useContributionMap, useScorerAuditionMap } from './ContributionBars'
 import { formatHumanScore } from './humanNumbers.ts'
 import { useRackPlugin, useRackSelection, useRackSnapshot } from './rack'
+import { ContextBars } from './ContextBars'
 
 interface MemoryPanelProps {
   panel: MemoryPanelState
@@ -45,7 +46,7 @@ function operationCopy(operation: string): string {
     case 'remove':
       return 'Removing'
     case 'add':
-      return 'Re-adding'
+      return 'Adding'
     case 'edit':
       return 'Saving'
     case 'pin':
@@ -62,7 +63,7 @@ function resultCopy(result: string): string {
     case 'removed':
       return 'Removed from this thread’s next model context.'
     case 'added':
-      return 'Re-added and locked into this thread’s next model context.'
+      return 'Added and locked into this thread’s next model context.'
     case 'edited':
       return 'Memory body saved. This thread refreshes it before the next response.'
     case 'pin_changed':
@@ -388,7 +389,7 @@ export function MemoryPanel({
           </div>
         ) : (
           <div className="memory-panel__list" data-testid="memory-list">
-            {panel.items.map(({ memory, score, revisions, in_context: inContext, thread_excluded: threadExcluded }) => {
+            {panel.items.map(({ memory, score, revisions, near_miss: nearMiss, in_context: inContext, thread_excluded: threadExcluded }) => {
               const origin = memory.origin_thread_id ?? memory.thread_origin
               const originThread = rack.catalog.find((thread) => thread.thread_id === origin)
               const editing =
@@ -415,7 +416,7 @@ export function MemoryPanel({
                         </span>
                       )}
                       {!inContext && !unavailable && (
-                        <span className="memory-badge">Stored</span>
+                        <span className="memory-badge">{nearMiss ? 'Near miss · suggestion' : 'Stored'}</span>
                       )}
                       {unavailable && (
                         <span
@@ -451,6 +452,7 @@ export function MemoryPanel({
                     {(revisions?.length ?? 0) === 0 ? <p>History unavailable.</p> : <ol>
                       {revisions?.map((revision) => <li key={String(revision.rev_uid)}>
                         r{String(revision.revision ?? '—')} · {String(revision.reason)} · {String(revision.ts)}
+                        {typeof revision.body === 'string' && <blockquote>{revision.body}</blockquote>}
                       </li>)}
                     </ol>}
                   </details>
@@ -580,14 +582,14 @@ export function MemoryPanel({
                             Remove
                           </button>
                         )}
-                        {threadExcluded && (
+                        {(threadExcluded || nearMiss) && (
                           <button
                             className="principal-memory__primary"
                             type="button"
                             disabled={!connected || !removeEnabled || busy || unavailable}
                             onClick={() => add(memory.memory_id)}
                           >
-                            Re-add
+                            {nearMiss ? 'Add to context' : 'Re-add'}
                           </button>
                         )}
                       </div>
@@ -612,11 +614,41 @@ export function MemoryPanel({
   )
 }
 
+export function MemoryTrace() {
+  const rack = useRackSnapshot()
+  const { events } = useRackPlugin()
+  const [error, setError] = useState<string | null>(null)
+  const thread = rack.selectedThreadId === null ? null : rack.threads[rack.selectedThreadId]
+  if (thread === null || thread === undefined) return <p>Select a conversation to inspect its memory trace.</p>
+  const panel = thread.memoryPanel
+  const items = panel.items.filter((item) => item.in_context || item.near_miss || item.thread_excluded)
+  const disabled = rack.connection !== 'connected' || thread.awaitingSnapshot || thread.activeRun !== null || panel.pending !== null
+  function change(type: 'memory.add' | 'memory.remove', memoryId: string) {
+    setError(null)
+    void events.dispatch({ type, memory_id: memoryId }).catch(() => setError('The memory change could not be sent. Try again.'))
+  }
+  return <section aria-label="Selected conversation memory trace">
+    <h2>Memory trace</h2>
+    <ContextBars />
+    {error && <p role="alert">{error}</p>}
+    {panel.lastResponse?.action === 'error' && <p role="alert">{panel.lastResponse.message}</p>}
+    {items.length === 0 && <p>This conversation has no injected memories or near-miss suggestions.</p>}
+    {items.map((item) => <article key={item.memory.memory_id}>
+      <h3>{item.memory.label} · {item.in_context ? 'In context' : item.near_miss ? 'Near miss' : 'Removed'}</h3>
+      <p>{item.memory.body}</p>
+      <button type="button" disabled={disabled || (!item.in_context && item.memory.status !== 'active')}
+        onClick={() => change(item.in_context ? 'memory.remove' : 'memory.add', item.memory.memory_id)}>
+        {item.in_context ? 'Pop off' : item.near_miss ? 'Add to context' : 'Re-add'}
+      </button>
+    </article>)}
+  </section>
+}
+
 export function SelectedMemoryPanel({ memoryId }: { memoryId: string }) {
   const rack = useRackSnapshot()
   const { events } = useRackPlugin()
   const thread = rack.selectedThreadId === null ? null : rack.threads[rack.selectedThreadId]
-  if (thread === null || thread === undefined) return <p>Select a conversation to edit this memory.</p>
+  if (thread === null || thread === undefined) return <p>Select a conversation to inspect its memories.</p>
   const items = thread.memoryPanel.items.filter((item) => item.memory.memory_id === memoryId)
   if (items.length === 0) return <p>This memory is not active in the Palace.</p>
   return <MemoryPanel panel={{ ...thread.memoryPanel, items, total: items.length }}
