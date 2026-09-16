@@ -58,7 +58,7 @@ import {
   type ThreadState,
 } from './store'
 
-export type RackModuleId = CustomRackModuleId | 'header' | 'threads' | 'conversation' | 'memory' | 'vitals' | 'palace_state' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'farm' | 'roots' | 'injection_console' | 'recipe'
+export type RackModuleId = CustomRackModuleId | 'header' | 'threads' | 'conversation' | 'memory' | 'vitals' | 'palace_state' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'farm' | 'roots' | 'injection_console' | 'recipe' | 'jobs'
 export type RackModuleSlot = 'header' | 'panel' | 'strip' | 'overlay'
 export type RackMemoryPanelState = MemoryPanelState
 
@@ -78,7 +78,7 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
     value === 'palace_nebula' ||
     value === 'farm' || value === 'roots' ||
     value === 'injection_console' ||
-    value === 'recipe'
+    value === 'recipe' || value === 'jobs'
 }
 
 export interface RackSnapshot {
@@ -94,6 +94,9 @@ export interface RackSnapshot {
 }
 
 export type RackAction =
+  | { type: 'jobs.save'; job_id?: string; definition: JsonValue; expected_revision: number; enabled: boolean }
+  | { type: 'jobs.run'; job_id: string }
+  | { type: 'jobs.stop'; run_id: string }
   | { type: 'spend.invoice'; amount_usd: string; invoice_date: string; invoice_id: string }
   | { type: 'draft.update'; thread_id: string; draft: string }
   | { type: 'thread.create'; workspace_root: string; project_label?: string }
@@ -169,7 +172,7 @@ export interface RackModuleManifest {
 }
 
 export interface RackQueryRequest {
-  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'spend_table' | 'context_window' | 'parameters' | 'memory_graph' | 'scorer_console' | 'recipe_graph' | 'tools' | 'visualization'
+  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'spend_table' | 'context_window' | 'parameters' | 'memory_graph' | 'scorer_console' | 'recipe_graph' | 'tools' | 'visualization' | 'jobs'
   as_of?: string | null
   thread_id?: string
   thread_ids?: string[]
@@ -220,7 +223,9 @@ export interface RackPluginApi {
 }
 
 export type RackActionResult<Action extends RackAction> =
-  Action['type'] extends 'thread.create' | 'project.select'
+  Action['type'] extends 'jobs.save' | 'jobs.run' | 'jobs.stop'
+    ? JsonValue
+    : Action['type'] extends 'thread.create' | 'project.select'
     ? string
     : Action['type'] extends 'catalog.cleanup-fixtures'
       ? number
@@ -444,6 +449,12 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     bounds: stageGridBounds(instrumentStageBounds.preferred), movable: true,
     law_bound: true, default_scope: 'ATTUNED',
   },
+  jobs: {
+    id: 'jobs', name: 'Jobs', version: '1.0.0', class: 'control', slot: 'panel',
+    streams: [], actions: ['jobs.save', 'jobs.run', 'jobs.stop', 'thread.select', 'rack.scope.get'],
+    bounds: stageGridBounds(instrumentStageBounds.preferred), movable: true,
+    law_bound: true, default_scope: 'GLOBAL',
+  },
 }
 
 export function registerRackPlugin(plugin: CustomRackPlugin) {
@@ -499,6 +510,15 @@ function dispatchRackAction<Action extends RackAction>(
   action: Action,
 ): RackActionResult<Action> | Promise<RackActionResult<Action>> {
   switch (action.type) {
+      case 'jobs.save':
+        return fetchJson(action.job_id ? `/v1/jobs/${encodeURIComponent(action.job_id)}` : '/v1/jobs', {
+          method: action.job_id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ definition: action.definition, expected_revision: action.expected_revision, enabled: action.enabled }),
+        }) as Promise<RackActionResult<Action>>
+      case 'jobs.run':
+        return fetchJson(`/v1/jobs/${encodeURIComponent(action.job_id)}/run`, { method: 'POST' }) as Promise<RackActionResult<Action>>
+      case 'jobs.stop':
+        return fetchJson(`/v1/job-runs/${encodeURIComponent(action.run_id)}/stop`, { method: 'POST' }) as Promise<RackActionResult<Action>>
       case 'draft.update':
         useHarnessStore.getState().setDraft(action.thread_id, action.draft)
         return undefined as RackActionResult<Action>
@@ -749,6 +769,10 @@ async function fetchRackResponse(path: string | URL, init?: RequestInit): Promis
 export const rackQuerySurface: RackQuerySurface = {
   async query(request) {
     const asOf = request.as_of ?? null
+    if (request.resource === 'jobs') {
+      if (asOf !== null && asOf !== 'now') return { status: 'historical_unavailable', as_of: asOf, data: null }
+      return { status: 'live', as_of: null, data: await fetchJson('/v1/jobs', { cache: 'no-store' }) }
+    }
     if (request.resource === 'visualization') {
       const url = new URL('/v1/visualization', globalThis.location.origin)
       if (asOf !== null) url.searchParams.set('as_of', asOf)

@@ -35,6 +35,17 @@ class _RunSpend:
 
 
 _current: ContextVar[_RunSpend | None] = ContextVar("spend_wall_run", default=None)
+_workflow_budget: ContextVar[Decimal | None] = ContextVar("workflow_budget", default=None)
+
+
+@contextmanager
+def workflow_budget(amount: Decimal):
+    """SD-059: a saved recipe may tighten, never loosen, the existing run wall."""
+    token = _workflow_budget.set(amount)
+    try:
+        yield
+    finally:
+        _workflow_budget.reset(token)
 
 
 class SpendWalls:
@@ -114,6 +125,11 @@ class SpendWalls:
 
     async def _reason(self, run: _RunSpend) -> str | None:
         limits = self.limits
+        budget = _workflow_budget.get()
+        if budget is not None:
+            limits = limits.model_copy(
+                update={"run_usd": min(budget, limits.run_usd) if limits.run_usd else budget}
+            )
         if limits.run_usd is not None:
             if any(cost is None for cost in run.costs):
                 return "A request has no reported price; the run wall cannot be verified."

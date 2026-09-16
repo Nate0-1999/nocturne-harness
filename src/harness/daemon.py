@@ -45,6 +45,7 @@ from harness.envelope import (
     ThreadSnapshotRequestPayload,
 )
 from harness.extraction import ExtractionIdleScheduler, ExtractionService, ThreadEndResult
+from harness.jobs import JobScheduler, WorkflowModelResolver, WorkflowTurnRunner
 from harness.lifecycle import discard_prepared_restore, prepare_local_restore
 from harness.memory_gate import MemoryGateTurnRunner
 from harness.memory_panel import MemoryPanelController, ThreadMemoryContextRegistry
@@ -190,6 +191,7 @@ _RACK_MODULE_IDS = frozenset(
         "roots",
         "injection_console",
         "recipe",
+        "jobs",
     }
 )
 _RACK_FRAME_CSP = "; ".join(
@@ -866,6 +868,7 @@ def create_dev_app(
         )
 
     journal = transcript_journal or TranscriptJournal(home / "transcripts")
+    workflow_definitions = {}
     workspace_toolsets: dict[str, LazyStandardToolset] = {}
 
     def workspace_toolset_for(thread_id: str) -> LazyStandardToolset:
@@ -904,6 +907,7 @@ def create_dev_app(
         project_key = loop.project_key(thread_id)
         workspace_toolset = workspace_toolset_for(thread_id)
         location = workspace_toolset.location()
+        workflow = workflow_definitions.get(thread_id)
         return MemoryToolContext(
             spine=owned_spine,
             principal_id=principal_id,
@@ -913,7 +917,10 @@ def create_dev_app(
             project_key=project_key,
             origin_path=workspace_location_path(workspace_toolset.location()),
             toolset=workspace_toolset,
-            toolset_enabled=toolset_selection.toolset != "none",
+            toolset_enabled=(
+                workflow.tools != "none" if workflow else toolset_selection.toolset != "none"
+            ),
+            memory_enabled=workflow.memory_scope != "none" if workflow else True,
             skill_directories=discover_skill_libraries(location.workspace_root, location.cwd),
         )
 
@@ -1107,9 +1114,14 @@ def create_dev_app(
         )
 
     loop = RunLoop(
-        runner,
+        WorkflowTurnRunner(runner, workflow_definitions),
         factory,
-        model_resolver=model_resolver,
+        model_resolver=WorkflowModelResolver(
+            model_resolver,
+            workflow_definitions,
+            configured,
+            completion_router.catalog,
+        ),
         transcript_journal=journal,
         symphony_experience=owned_symphony_experience,
         spend_walls=spend_walls,
@@ -1133,7 +1145,17 @@ def create_dev_app(
         )
     )
 
+    job_scheduler = JobScheduler(
+        spine=owned_spine,
+        settings=configured,
+        loop=loop,
+        definitions=workflow_definitions,
+        toolset_for=workspace_toolset_for,
+    )
+
     def configure_extraction_routes(app: FastAPI) -> None:
+        job_scheduler.mount(app)
+
         @app.post("/v1/threads/{thread_id}/rewind")
         async def rewind_thread(thread_id: UUID, request: RewindRequest):
             try:

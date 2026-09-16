@@ -201,6 +201,49 @@ class MemoryGateTurnRunner:
         self._on_context_changed = on_context_changed
         self._attempted_threads: set[str] = set()
 
+    async def run_workflow(self, *, memory_scope: str, **kwargs) -> TurnOutcome:
+        """SD-059: the saved recipe authorizes autonomous memory within its named scope."""
+        kwargs.setdefault("model_resolution", None)
+        thread_id = kwargs["thread_id"]
+        if memory_scope == "none":
+            return await self._run_model(**kwargs)
+        if self._contexts.snapshot(thread_id) is not None:
+            return await self._run_autonomous(**kwargs)
+        context = self._context_factory(thread_id)
+        resolution = kwargs.get("model_resolution")
+        prepared = await self._spine.prepare_injection(
+            InjectPrepareRequest(
+                thread_id=context.thread_id,
+                agent_id=context.agent_id,
+                machine_id=context.machine_id,
+                principal_id=context.principal_id,
+                project_key=context.project_key,
+                location_path=_live_location_path(context),
+                current_location=_live_current_location(context),
+                prompt=kwargs["prompt"],
+                model_context_tokens=(
+                    resolution.context_tokens if resolution else self._model_context_tokens
+                ),
+                mode="autonomous",
+                current_memory_ids=[],
+                confirmed_memory_ids=[],
+                excluded_memory_ids=[],
+            )
+        )
+        if prepared.final_block is None:
+            # A-069: an autonomous recipe cannot invent a missing Palace context.
+            raise ValueError("The Palace did not return an autonomous memory block.")
+        self._contexts.install(
+            thread_id,
+            prepared=prepared,
+            removed_memory_ids=frozenset(),
+            added_back=[],
+            final_block=prepared.final_block,
+        )
+        if self._on_context_changed is not None:
+            await self._on_context_changed(thread_id)
+        return await self._run_model(**kwargs)
+
     async def run(
         self,
         *,

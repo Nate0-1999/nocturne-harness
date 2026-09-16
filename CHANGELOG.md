@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.25 - 2026-09-16
+
+- Save and rerun named workflows, schedule them with cron or change triggers,
+  and monitor their state, spend and exit checks in Jobs. Background shells
+  persist across turns with explicit read and stop tools. Pair with Memory 0.1.25.
+
 ## 0.1.24 - 2026-09-16
 
 - Keep normalized conversation history once after a failed turn and exclude

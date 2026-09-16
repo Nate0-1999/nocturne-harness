@@ -41,13 +41,14 @@ export type StageModuleId =
   | 'injection_console'
   | 'palace_queue'
   | 'recipe'
+  | 'jobs'
 
 export type ConversationMode = 'focused' | 'stack'
 
 export const STAGE_MODULE_IDS: StageModuleId[] = [
   'threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state',
   'memory_graph', 'palace_nebula', 'farm', 'roots', 'injection_console', 'palace_queue',
-  'recipe',
+  'recipe', 'jobs',
 ]
 export const MULTI_INSTANCE_MODULE_IDS: readonly StageModuleId[] = [
   'conversation', 'vitals', 'context_bars', 'memory_graph',
@@ -100,6 +101,7 @@ const DEFAULT_SCOPES: Record<string, RackScope> = {
   palace_queue: 'GLOBAL', model_device: 'ATTUNED', memory_graph: 'GLOBAL', palace_nebula: 'GLOBAL',
   injection_console: 'GLOBAL',
   recipe: 'ATTUNED',
+  jobs: 'GLOBAL',
 }
 
 const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
@@ -123,6 +125,7 @@ const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
     instance_id: 'palace_queue', module_id: 'palace_queue', x: 20, y: 1, width: 5, height: 10,
   }),
   recipe: expandLegacyModule({ instance_id: 'recipe', module_id: 'recipe', x: 14, y: 2, width: 12, height: 10 }),
+  jobs: expandLegacyModule({ instance_id: 'jobs', module_id: 'jobs', x: 2, y: 2, width: 16, height: 12 }),
 }
 
 export function registerStagePlugin(id: CustomRackModuleId) {
@@ -143,7 +146,7 @@ export const FACTORY_STAGE_LAYOUT: StageLayoutSet = {
       camera: expandLegacyCamera({ x: 36, y: 30, zoom: 0.64 }),
       modules: ['threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state', 'palace_queue']
         .map((moduleId) => ({ ...DEFAULT_MODULES[moduleId as StageModuleId] })),
-      removed_modules: [],
+      removed_modules: [{ ...DEFAULT_MODULES.jobs }],
     },
     {
       layer_id: 'graph',
@@ -836,6 +839,7 @@ function expandLegacyStageLayout(layout: ParsedStageLayout): StageLayoutSet {
 }
 
 function addMemoryIngestToExistingLayout(layout: StageLayoutSet): StageLayoutSet {
+  layout = addFactoryRemovedModuleToExistingLayout(layout, 'jobs', 'work')
   layout = addFactoryRemovedModuleToExistingLayout(addFactoryRemovedModuleToExistingLayout(layout, 'farm', 'graph'), 'roots', 'graph')
   return addFactoryRemovedModuleToExistingLayout(
     addFactoryModuleToExistingLayout(
@@ -976,7 +980,7 @@ function parseScopes(
 function isStageModuleId(value: unknown): value is StageModuleId {
   return installedRackPlugins.some((plugin) => plugin.id === value) || value === 'threads' || value === 'conversation' || value === 'memory' ||
     value === 'vitals' || value === 'palace_state' || value === 'context_bars' || value === 'memory_graph' || value === 'palace_nebula' || value === 'farm' || value === 'roots' ||
-    value === 'injection_console' || value === 'palace_queue' || value === 'recipe'
+    value === 'injection_console' || value === 'palace_queue' || value === 'recipe' || value === 'jobs'
 }
 
 function isLegacyRackModuleId(value: unknown): value is 'threads' | 'chat' | 'memory' {

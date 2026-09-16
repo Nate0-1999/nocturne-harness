@@ -31,6 +31,7 @@ import { PalaceNebula } from './PalaceNebula'
 import { WorkVisualization } from './WorkVisualization'
 import { InjectionConsole } from './InjectionConsole'
 import { RecipeModule } from './RecipeModule'
+import { JobsModule } from './JobsModule'
 import { SymphonyDeck } from './SymphonyDeck'
 import { ModelDevice } from './ModelDevice'
 import { VitalsModule } from './VitalsModule'
@@ -1737,6 +1738,8 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
         <WorkVisualization initialView={moduleId} />
       ) : moduleId === 'injection_console' ? (
         <InjectionConsole />
+      ) : moduleId === 'jobs' ? (
+        <JobsModule />
       ) : moduleId === 'recipe' ? (
         <RecipeModule />
       ) : (

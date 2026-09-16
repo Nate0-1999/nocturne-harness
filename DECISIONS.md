@@ -3480,3 +3480,20 @@ dollars and depth to time. Ghosts move only when committed curator targets chang
 Both geometry tiers report rendered triangle counts. Reference plates preceded
 pixels. Restoring a singleton library module moves its existing placement so a
 reload cannot discard duplicate IDs.
+
+## M3SJ — Saved work uses the existing thread loop [P2, P4.1]
+
+PRECEDENT: PLAN M3SJ, SD-059, M3TH/ADR-015 tools, M3SR/ADR-024 spend.
+The candidate stores a recipe before starting a fresh ordinary thread. Its saved
+policy resolves at thread creation; workspace memory prepares autonomously,
+while `none` disables injection and memory tools. The recipe budget tightens the
+existing run wall. An owner-authored fenced shell command checks the exit result.
+Five-field cron uses UTC and coalesces missed occurrences; interrupted executions
+are recorded rather than replayed. File contents, queue high-water IDs and Palace
+memory revisions supply trigger cursors. Background shells retain the upstream
+process handle across turns and close on explicit stop or daemon shutdown.
+The owner ruling permits additive Jobs registration beside the preserved M3VZ
+modules. The reference comparison of eight actual runs selects timeline rows:
+next/last time, state, cost and verdict remain readable without invented edges.
+Recipes import from a file; the module runs, pauses and inspects them through
+the public rack adapter. A-069 enacts the durable Jobs contract.

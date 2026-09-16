@@ -7,7 +7,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict
 from pydantic_ai import BinaryContent, RunContext, ToolReturn
 from pydantic_ai.capabilities import Capability
-from pydantic_ai.tools import Tool
+from pydantic_ai.tools import Tool, ToolDefinition
 
 from harness.capability import CapabilityHandler, CapabilityTool, HarnessCapability
 from harness.memory_capability import DEFAULT_MEMORY_FEATURE
@@ -63,6 +63,13 @@ _CONTEXTUAL_ADAPTERS = {
 }
 
 
+async def _prepare_memory_tool(
+    ctx: RunContext[MemoryToolContext],
+    definition: ToolDefinition,
+) -> ToolDefinition | None:
+    return definition if getattr(ctx.deps, "memory_enabled", True) else None
+
+
 def _adapt_tool(spec: CapabilityTool) -> Tool[MemoryToolContext]:
     """Pair an owned tool spec with its explicit contextual schema."""
     try:
@@ -72,6 +79,7 @@ def _adapt_tool(spec: CapabilityTool) -> Tool[MemoryToolContext]:
     tool = adapter(spec.handler)
     tool.name = spec.name
     tool.description = spec.description
+    tool.prepare = _prepare_memory_tool
     return tool
 
 
@@ -224,6 +232,21 @@ async def move(ctx: RunContext[MemoryToolContext], path: str) -> str:
     return await _execute_workspace_tool(ctx, "move", {"path": path})
 
 
+async def start_shell(ctx: RunContext[MemoryToolContext], command: str) -> str:
+    """Start a fenced shell that keeps running across turns until stopped or daemon exit."""
+    return await _execute_workspace_tool(ctx, "start_shell", {"command": command})
+
+
+async def read_shell(ctx: RunContext[MemoryToolContext], command_id: str) -> str:
+    """Read the state and output of a background shell belonging to this thread."""
+    return await _execute_workspace_tool(ctx, "read_shell", {"command_id": command_id})
+
+
+async def stop_shell(ctx: RunContext[MemoryToolContext], command_id: str) -> str:
+    """Explicitly stop a background shell and return its final output."""
+    return await _execute_workspace_tool(ctx, "stop_shell", {"command_id": command_id})
+
+
 async def _execute_browser_tool(
     ctx: RunContext[MemoryToolContext],
     tool_name: ToolName,
@@ -283,6 +306,9 @@ WORKSPACE_TOOLS = (
     find,
     ls,
     bash,
+    start_shell,
+    read_shell,
+    stop_shell,
     move,
     navigate,
     click,
