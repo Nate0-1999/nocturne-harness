@@ -59,16 +59,21 @@ html[data-theme="technomancer"] .rack-module__chrome {{
 
 html[data-theme="wizard-mode"] .rack-module__chrome::before,
 html[data-theme="technomancer"] .rack-module__chrome::before {{
-  position: absolute;
+  position: relative;
   z-index: 0;
-  top: 50%;
-  right: 6rem;
+  order: 1;
+  flex: 0 1000 7.5rem;
+  min-width: 0;
   width: 7.5rem;
-  max-width: calc(100% - 14rem);
+  margin-right: 0.6rem;
   height: 1.15rem;
   content: "";
   pointer-events: none;
-  transform: translateY(-50%);
+}}
+
+html[data-theme="wizard-mode"] .rack-module__chrome > :not(.rack-module__drag),
+html[data-theme="technomancer"] .rack-module__chrome > :not(.rack-module__drag) {{
+  order: 2;
 }}
 
 html[data-theme="wizard-mode"] .rack-module__chrome::before {{
