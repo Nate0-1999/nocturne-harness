@@ -71,6 +71,7 @@ type PositiveRank = Annotated[int, Field(strict=True)]
 
 
 class MemoryFeatures(ContractModel):
+    axes: dict[str, float] = Field(default_factory=dict, exclude_if=lambda value: not value)
     sem: RawFeatureScore
     kw: RawFeatureScore
     time: RawFeatureScore
@@ -830,6 +831,8 @@ class ScorerValues(ContractModel):
 
 
 class ScorerConsoleSnapshot(ContractModel):
+    trainables: list[JsonObject] = Field(default_factory=list)
+    creation: JsonObject = Field(default_factory=dict)
     metrics_scope: Literal["principal", "palace"] = "palace"
     as_of: datetime
     scope: Literal["GLOBAL", "CURRENT"]
@@ -866,6 +869,8 @@ class RetrainResponse(ContractModel):
 
 
 class ScorerConfigurationView(ContractModel):
+    axes: JsonObject = Field(default_factory=dict)
+    project_offsets: JsonObject = Field(default_factory=dict)
     version: NonBlankString
     created_at: datetime
     status: Literal["active", "proposed", "inactive"]
@@ -899,6 +904,7 @@ class ScorerSimulationRequest(ContractModel):
 
 
 class ScorerSimulationResponse(ContractModel):
+    terrain: list[dict[str, float]] = Field(default_factory=list)
     simulation_digest: Annotated[StrictStr, Field()]
     base_version: NonBlankString
     values: ScorerValues
