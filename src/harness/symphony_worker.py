@@ -8,6 +8,7 @@ import json
 import signal
 import subprocess
 from pathlib import Path
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -18,13 +19,21 @@ from pydantic_ai.usage import UsageLimits
 from harness.agent import ExtractionCandidateDraft
 from harness.conductor import ProductBaton, SmokeGateResult, TypedDistillate
 from harness.config import HarnessSettings
-from harness.judge_panel import JudgeEvidence, JudgePanelError, JudgeVerdict, validate_judge_verdict
+from harness.judge_panel import (
+    JudgeEvidence,
+    JudgeFeedback,
+    JudgePanelError,
+    JudgeVerdict,
+    MetricAssessment,
+    validate_judge_verdict,
+)
 from harness.model_policy import ModelPolicyResolver
 from harness.model_router import CompletionRouter, model_settings_for
 from harness.pydantic_ai_adapter import WorkspaceCapability, adopted_skill_capabilities
 from harness.receipt_queue import SpendReceiptQueue
 from harness.spend import SpendLineage, model_response_receipts
 from harness.spine_client import SpineClient
+from harness.symphony_context import WorkerContext
 from harness.tools_memory import MemoryToolContext
 from harness.toolset_runtime import LazyStandardToolset
 from harness.visualization import observe_worker
@@ -38,6 +47,48 @@ class WorkResult(BaseModel):
     evidence_refs: list[str]
     uncertainties: list[str]
     memories: list[ExtractionCandidateDraft]
+
+
+class MetricObservation(BaseModel):
+    """The judge supplies evidence; the sealed charter owns metric names. [D.2 102]"""
+
+    observed: str
+    passed: bool
+    evidence_ref: str
+
+
+class JudgeAssessment(BaseModel):
+    """Model-authored judgment, without asking a model to copy provenance. [ADR-012]"""
+
+    outcome: Literal["pass", "fail"]
+    selected_attempt_id: str | None
+    rationale: str
+    evidence_refs: tuple[str, ...]
+    feedback: tuple[JudgeFeedback, ...]
+    metrics: tuple[MetricObservation, ...] = ()
+
+    def bind(self, session: dict, sealed: JudgeEvidence) -> JudgeVerdict:
+        names = sealed.charter.metrics if session["seat"] == "performance" else ()
+        if len(names) != len(self.metrics):
+            raise ValueError("Assess every fixed charter metric in order, exactly once.")
+        verdict = JudgeVerdict(
+            schema_version=1,
+            **{key: session[key] for key in (
+                "seat", "judge_session_id", "charter_sha256", "evidence_sha256"
+            )},
+            **self.model_dump(exclude={"metrics", "feedback", "evidence_refs"}),
+            evidence_refs=self.evidence_refs,
+            feedback=self.feedback,
+            metrics=tuple(
+                MetricAssessment(metric=name, **observation.model_dump())
+                for name, observation in zip(names, self.metrics, strict=True)
+            ),
+        )
+        validate_judge_verdict(
+            verdict, session=session, charter=sealed.charter,
+            candidate_ids={candidate.attempt_id for candidate in sealed.candidates},
+        )
+        return verdict
 
 
 def _write(path: Path, value: str) -> None:
@@ -63,7 +114,9 @@ async def run(assignment_path: Path) -> None:
         catalog=router.catalog,
     )
     resolution = await resolver.resolve(assignment["thread_id"])
-    output_type = {"smoke": SmokeGateResult, "completion": WorkResult, "judge": JudgeVerdict}[stage]
+    output_type = {
+        "smoke": SmokeGateResult, "completion": WorkResult, "judge": JudgeAssessment,
+    }[stage]
     agent = Agent(
         deps_type=MemoryToolContext,
         capabilities=[WorkspaceCapability(), *adopted_skill_capabilities(())],
@@ -73,6 +126,8 @@ async def run(assignment_path: Path) -> None:
             "You are checking whether proposed work can START. Missing output files are "
             "expected before implementation and are not a readiness failure. Check only "
             "prerequisites such as the workspace and required input files. The signed "
+            "stratagem may name a prerequisite: execute its check and fail readiness if "
+            "it is absent. The absence of code using a dependency does not prove it exists. "
             "acceptance criteria will be checked by independent judges AFTER implementation. "
             "Do not implement anything during this readiness check."
             if stage == "smoke"
@@ -108,6 +163,12 @@ async def run(assignment_path: Path) -> None:
         prompt_id=assignment["prompt_id"],
     )
     captured = []
+    worker_context = WorkerContext(
+        assignment=assignment, output=output, context=context, resolution=resolution,
+    )
+
+    async def instructions(_ctx):
+        return await worker_context.render(captured)
 
     def receipt():
         return model_response_receipts(
@@ -119,6 +180,7 @@ async def run(assignment_path: Path) -> None:
     async def observe(_context, events):
         async for _event in events:
             observe_worker(output, assignment, toolset.location(), "running")
+            worker_context.publish(captured)
             request = receipt()
             if request is not None:
                 _write(
@@ -145,23 +207,17 @@ async def run(assignment_path: Path) -> None:
         @agent.output_validator
         def validate_return(_ctx, verdict):
             try:
-                validate_judge_verdict(
-                    verdict,
-                    session=session,
-                    charter=sealed.charter,
-                    candidate_ids={candidate.attempt_id for candidate in sealed.candidates},
-                )
-            except JudgePanelError as exc:
+                return verdict.bind(session, sealed)
+            except (JudgePanelError, ValueError) as exc:
                 raise ModelRetry(str(exc)) from exc
-            return verdict
 
         prompt += (
             f"\nYour current directory is {root}. Candidate artifact_root values are absolute "
             "paths; use them exactly as given. "
             "\nInspect the actual candidate files and run the charter's checks. "
-            "Do not edit candidate work. Return your own verdict, using the exact session "
-            "and digest fields above. A failed metric or missing evidence is FAIL."
-            " The performance seat must return one metrics entry per exact charter metric, "
+            "Do not edit candidate work. Return your own assessment. "
+            "A failed metric or missing evidence is FAIL."
+            " The performance seat must return one observation per charter metric, "
             "in the given order; the other seats return an empty metrics list."
         )
     elif stage == "smoke":
@@ -193,17 +249,9 @@ async def run(assignment_path: Path) -> None:
                     total_tokens_limit=settings.run_total_tokens_limit,
                 ),
                 event_stream_handler=observe,
-                instructions=lambda _ctx: (
-                    "Conductor clarifications:\n"
-                    + json.dumps(
-                        json.loads(Path(assignment["followups"]).read_text()).get(
-                            assignment["attempt_id"], []
-                        )
-                    )
-                    if Path(assignment["followups"]).exists()
-                    else ""
-                ),
+                instructions=instructions,
             )
+        worker_context.publish(captured)
         if stage == "completion":
             subprocess.run(["git", "add", "-A"], check=True)
             subprocess.run(

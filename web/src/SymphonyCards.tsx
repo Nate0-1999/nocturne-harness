@@ -61,7 +61,8 @@ function parseStep(value: unknown): SymphonyRecipeStep | null {
   if (stepId === null || title === null || doneWhen === null || typeof item.search !== 'boolean') {
     return null
   }
-  return { step_id: stepId, title, done_when: doneWhen, search: item.search }
+  return { step_id: stepId, title, done_when: doneWhen, search: item.search,
+    ...(Array.isArray(item.stratagems) ? { stratagems: strings(item.stratagems) ?? [] } : {}) }
 }
 
 function parseCharter(value: unknown): SymphonyJudgeCharter | null {
@@ -202,6 +203,7 @@ export function SymphonyDeliberationCard({ event }: { event: JsonObject }) {
         ...step,
         title: step.title.trim(),
         done_when: step.done_when.trim(),
+        stratagems: (step.stratagems ?? []).map((item) => item.trim()).filter(Boolean),
       })),
       judge_charters: charters.map((charter) => ({
         ...charter,
@@ -231,7 +233,7 @@ export function SymphonyDeliberationCard({ event }: { event: JsonObject }) {
         <div><span className="symphony-card__eyebrow">Deliberation</span><h3>Compose the work here</h3></div>
         <span>Draft {draft.draft_id.slice(-6)}</span>
       </header>
-      <p className="symphony-card__intro">No mode switch. You fix what good means before the conductor can fire.</p>
+      <p className="symphony-card__intro">Fix what good means before the conductor can fire.</p>
       <label>Desired outcome<textarea value={objective} onChange={(event) => setObjective(event.target.value)} placeholder="What result should return to this conversation?" /></label>
       <label>Why this deserves a Symphony<textarea value={motivation} onChange={(event) => setMotivation(event.target.value)} placeholder="What is difficult or valuable enough to justify parallel work?" /></label>
       <fieldset><legend>Recipe</legend>
@@ -239,6 +241,11 @@ export function SymphonyDeliberationCard({ event }: { event: JsonObject }) {
           <label>Step {index + 1}<input value={step.title} onChange={(event) => updateStep(index, { title: event.target.value })} placeholder="What should happen?" /></label>
           <label>Done when<input value={step.done_when} onChange={(event) => updateStep(index, { done_when: event.target.value })} placeholder="Observable acceptance evidence" /></label>
           <label className="symphony-check"><input type="checkbox" checked={step.search} onChange={(event) => updateStep(index, { search: event.target.checked })} /> Search node — spend may occur here</label>
+          {step.search && <label>Stratagems · one named approach per line<textarea
+            value={(step.stratagems ?? []).join('\n')}
+            placeholder={'Direct: simplest implementation\nTest first: acceptance tests before code'}
+            onChange={(event) => updateStep(index, { stratagems: event.target.value.split('\n') })}
+          /></label>}
         </div>)}
         <button type="button" className="symphony-card__minor" disabled={recipe.length >= 12} onClick={() => setRecipe((current) => [...current, { step_id: `step-${current.length + 1}`, title: '', done_when: '', search: false }])}>Add recipe step</button>
       </fieldset>

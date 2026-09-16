@@ -55,7 +55,7 @@ class ExtractionService:
         messages = self._journal.read_messages(text_id)
         tail = self._journal.transcript_tail(text_id)
         if not messages or tail is None:
-            raise ValueError("thread has no durable transcript to archive")
+            return ThreadEndResult(thread_id, "", "", [], [], 0, False)
         final_post = _final_assistant_post(messages)
         if self._journal.extracted_tail(text_id) == tail:
             pending = await self._spine.approval_queue(

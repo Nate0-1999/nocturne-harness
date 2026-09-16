@@ -13,7 +13,7 @@ test('Symphony deliberation is human-fixed, signed, separately identified, and r
     readFile(new URL('../src/assets/shell.css', import.meta.url), 'utf8'),
   ])
 
-  assert.match(cards, /No mode switch\. You fix what good means/u)
+  assert.match(cards, /Fix what good means before the conductor can fire/u)
   assert.match(cards, /T2 AUTHORITY — real walls/u)
   assert.match(cards, /seat !== 'performance' \|\| charter\.metrics/u)
   assert.match(cards, /I authorize up to \{authority\.attempts\} attempts/u)

@@ -79,6 +79,7 @@ export type SymphonyRecipeStep = {
   title: string
   done_when: string
   search: boolean
+  stratagems?: string[]
 }
 
 export type SymphonyJudgeCharter = {

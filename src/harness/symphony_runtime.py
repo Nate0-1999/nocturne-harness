@@ -236,6 +236,12 @@ class SymphonyExecution:
                             checkpoint = next_checkpoint
                     briefs = []
                     for number in range(1, count + 1):
+                        strategies = step.stratagems or (
+                            "Direct: implement the simplest solution from the acceptance criteria.",
+                            "Test first: encode the acceptance criteria before implementing.",
+                            "Boundary first: check edge cases, then build the smallest solution.",
+                        )
+                        approach = strategies[(number - 1) % len(strategies)]
                         attempt_id = f"round-{round_number}-attempt-{number}"
                         location = worktrees / child_id / attempt_id
                         location.parent.mkdir(parents=True, exist_ok=True)
@@ -243,10 +249,11 @@ class SymphonyExecution:
                         briefs.append(
                             SearchAttemptBrief(
                                 attempt_id=attempt_id,
-                                approach=f"Independent approach {number}",
+                                approach=approach,
                                 charge=(
                                     f"{stack.launch.objective}\n{step.title}\n"
-                                    f"Done when: {step.done_when}\n{feedback}"
+                                    f"Done when: {step.done_when}\n"
+                                    f"Stratagem: {approach}\n{feedback}"
                                 ),
                                 location=location,
                                 estimated_completion_cost_usd=authority.spend_wall_usd
@@ -333,7 +340,8 @@ class SymphonyExecution:
                             brief.location,
                             "smoke",
                             brief.charge,
-                            self.settings.effective_model_policy_chat,
+                            self.settings.model_policy_subagent
+                            or self.settings.effective_model_policy_chat,
                             origin,
                             f"{child_id}/{brief.attempt_id}/smoke",
                         )
@@ -363,14 +371,14 @@ class SymphonyExecution:
                     await wait(handles)
                     for brief in briefs:
                         path = outputs[brief.attempt_id] / "result.json"
-                        if brief.attempt_id in state["cancelled"]:
+                        if brief.attempt_id in state["cancelled"] or not path.exists():
                             _json(
                                 path,
                                 {
                                     "schema_version": 1,
                                     "status": "fail",
                                     "score": "0",
-                                    "checks": ["Cancelled by the conductor after process exit."],
+                                    "checks": ["Worker exited without a readiness result."],
                                     "evidence_refs": [str(brief.location)],
                                 },
                             )
@@ -395,7 +403,8 @@ class SymphonyExecution:
                             brief.location,
                             "completion",
                             brief.charge,
-                            self.settings.effective_model_policy_chat,
+                            self.settings.model_policy_subagent
+                            or self.settings.effective_model_policy_chat,
                             origin,
                             f"{child_id}/{brief.attempt_id}/completion",
                         )
@@ -408,16 +417,18 @@ class SymphonyExecution:
                     await wait(handles)
                     for brief in selected:
                         path = outputs[brief.attempt_id] / "result.json"
-                        if brief.attempt_id in state["cancelled"]:
+                        cancelled = brief.attempt_id in state["cancelled"]
+                        if cancelled or not path.exists():
                             _json(
                                 path,
                                 {
                                     "schema_version": 1,
-                                    "status": "cancelled",
+                                    "status": "cancelled" if cancelled else "failed",
                                     "claims": [],
                                     "evidence_refs": [str(brief.location)],
                                     "uncertainties": [
-                                        "Cancelled; partial files have not passed judges."
+                                        "Worker stopped without a completed result; "
+                                        "partial files have not passed judges."
                                     ],
                                     "metrics_refs": [],
                                     "artifacts": [],
@@ -425,6 +436,7 @@ class SymphonyExecution:
                                     "product": {"kind": "commit", "commit": checkpoint},
                                 },
                             )
+                            _json(outputs[brief.attempt_id] / "memories.json", [])
                         conductor.accept_search_distillate(
                             child_id,
                             brief.attempt_id,

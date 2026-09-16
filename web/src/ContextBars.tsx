@@ -31,7 +31,7 @@ const CATEGORY_LABELS: Record<Category, string> = {
   system: 'System', history: 'History', memory: 'Memory', tools: 'Tools',
 }
 const CATEGORIES: Category[] = ['system', 'history', 'memory', 'tools']
-export function ContextBars() {
+export function ContextBars({ workerSnapshot }: { workerSnapshot?: JsonValue } = {}) {
   const { events, query } = useRackPlugin()
   const rack = useRackSnapshot()
   const [scope, setScope] = useState<Scope>('ATTUNED')
@@ -41,10 +41,12 @@ export function ContextBars() {
   const [collapsed, setCollapsed] = useState(() => globalThis.innerHeight < 120)
 
   useEffect(() => {
+    if (workerSnapshot !== undefined) return
     void events.dispatch({ type: 'rack.scope.get', module_id: 'context_bars' }).then(setScope)
-  }, [events])
+  }, [events, workerSnapshot])
 
   useEffect(() => {
+    if (workerSnapshot !== undefined) return
     let active = true
     if (scope === 'ATTUNED' && rack.selectedThreadId === null) {
       return () => { active = false }
@@ -61,7 +63,7 @@ export function ContextBars() {
         setFailed(true)
       })
     return () => { active = false }
-  }, [query, rack.selectedThreadId, refresh, scope])
+  }, [query, rack.selectedThreadId, refresh, scope, workerSnapshot])
 
   useEffect(() => events.subscribe((event) => {
     if (event.direction === 'inbound' && event.envelope.type === 'run.done') {
@@ -73,7 +75,8 @@ export function ContextBars() {
     setCollapsed(event.grid_height === 1)
   }), [events])
 
-  const visibleObservation = scope === 'ATTUNED' && rack.selectedThreadId === null
+  const visibleObservation = workerSnapshot !== undefined ? parseObservation(workerSnapshot)
+    : scope === 'ATTUNED' && rack.selectedThreadId === null
     ? null
     : observation
   const usedPercent = visibleObservation === null
@@ -99,7 +102,7 @@ export function ContextBars() {
                 style={{ width: `${visibleObservation.categories[category] / visibleObservation.context_tokens * 100}%` }}
               />
             ))}
-            <i style={{ left: `${visibleObservation.threshold_tokens / visibleObservation.context_tokens * 100}%` }} title={`${formatHumanPercent(visibleObservation.threshold_tokens / visibleObservation.context_tokens * 100)} compaction threshold`} />
+            {workerSnapshot === undefined && <i style={{ left: `${visibleObservation.threshold_tokens / visibleObservation.context_tokens * 100}%` }} title={`${formatHumanPercent(visibleObservation.threshold_tokens / visibleObservation.context_tokens * 100)} compaction threshold`} />}
           </div>
           <table className="context-bars__legend">
             <caption>Token breakdown</caption>
@@ -115,7 +118,7 @@ export function ContextBars() {
                 : ` · ${formatHumanCount(visibleObservation.memory_allocation.unused_share_tokens)} unused returns to chat`}
             </p>
           )}
-          <p className="context-bars__note">Provider total {formatHumanPercent(usedPercent)} · lanes estimated · Compaction at {formatHumanPercent(visibleObservation.threshold_tokens / visibleObservation.context_tokens * 100)} of the main conversation</p>
+          <p className="context-bars__note">Provider total {formatHumanPercent(usedPercent)} · lanes estimated{workerSnapshot === undefined ? ` · Compaction at ${formatHumanPercent(visibleObservation.threshold_tokens / visibleObservation.context_tokens * 100)} of the main conversation` : ' · Latest completed worker request'}</p>
         </>
       )}
       {failed && <button className="context-bars__retry" onClick={() => setRefresh((value) => value + 1)}>Context usage unavailable · retry</button>}

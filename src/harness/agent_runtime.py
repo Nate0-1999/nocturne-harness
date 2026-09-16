@@ -13,7 +13,8 @@ from pathlib import Path
 from typing import Any, cast
 from uuid import UUID
 
-from pydantic_ai import ModelHTTPError, UsageLimitExceeded, capture_run_messages
+from pydantic_ai import ModelHTTPError, ModelRetry, UsageLimitExceeded, capture_run_messages
+from pydantic_ai.capabilities import Capability
 from pydantic_ai.messages import (
     AgentStreamEvent,
     BinaryContent,
@@ -29,6 +30,7 @@ from pydantic_ai.messages import (
     ThinkingPartDelta,
     ToolCallPart,
     ToolReturnPart,
+    UserPromptPart,
 )
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.usage import RunUsage
@@ -447,22 +449,42 @@ class PydanticAITurnRunner:
             )
             user_prompt = prompt if image is None else [prompt, image]
 
-            async def current_instructions(_context: object) -> str | None:
-                if dynamic_instructions is None:  # pragma: no cover - only passed dynamically
-                    return None
-                return await dynamic_instructions.render()
+            applied_steering = ""
+
+            class PendingSteering(Capability[MemoryToolContext]):
+                async def after_model_request(self, ctx, *, request_context, response):
+                    # A correction arriving during a final response still gets a request.
+                    pending = getattr(emit, "steering_instructions", lambda: "")()
+                    if not response.tool_calls and pending != applied_steering:
+                        raise ModelRetry("Apply the new human instruction before finishing.")
+                    return response
+
+            async def current_instructions(run_context) -> str | None:
+                nonlocal applied_steering
+                blocks = []
+                if dynamic_instructions is not None:
+                    blocks.append(await dynamic_instructions.render())
+                steering = getattr(emit, "steering_instructions", lambda: "")()
+                if steering and steering != applied_steering:
+                    run_context.messages[-1].parts.append(UserPromptPart(
+                        "New human instruction for this current run:\n"
+                        + steering[len(applied_steering):].strip()
+                    ))
+                    applied_steering = steering
+                    await emit.event({"event_kind": "human_interjection_applied"})
+                return "\n\n".join(block for block in blocks if block) or None
 
             instructions: list[object] = [PROPOSED_RESPONSE_INSTRUCTION]
             if system_instructions is not None:
                 instructions.append(system_instructions)
-            if dynamic_instructions is not None:
-                instructions.append(current_instructions)
+            instructions.append(current_instructions)
             with capture_run_messages() as captured:
                 result = await self._agent.chat_agent.run(
                     user_prompt,
                     deps=context,
                     instructions=instructions,
                     capabilities=[
+                        PendingSteering(),
                         *self._agent.tool_capabilities(context),
                         *(
                             [DelegateCapability()]

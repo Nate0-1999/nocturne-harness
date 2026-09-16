@@ -97,6 +97,11 @@ export type RackAction =
   | { type: 'jobs.save'; job_id?: string; definition: JsonValue; expected_revision: number; enabled: boolean }
   | { type: 'jobs.run'; job_id: string }
   | { type: 'jobs.stop'; run_id: string }
+  | { type: 'policies.load' }
+  | { type: 'policies.save'; role: string; policy: string }
+  | { type: 'prompt.interject'; run_id: string; prompt: string }
+  | { type: 'symphony.context'; symphony_id: string }
+  | { type: 'symphony.memory'; symphony_id: string; worker_id: string; memory_id: string; added: boolean }
   | { type: 'spend.invoice'; amount_usd: string; invoice_date: string; invoice_id: string }
   | { type: 'draft.update'; thread_id: string; draft: string }
   | { type: 'thread.create'; workspace_root: string; project_label?: string }
@@ -231,7 +236,7 @@ export type RackActionResult<Action extends RackAction> =
       ? number
     : Action['type'] extends 'thread.select' | 'thread.rename_project' | 'thread.bind_workspace' | 'draft.update'
       ? void
-      : Action['type'] extends 'spend.invoice' | 'thread.archive' | 'thread.rewind' | 'queue.load' | 'curation.load' | 'queue.decide' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
+      : Action['type'] extends 'policies.load' | 'policies.save' | 'prompt.interject' | 'symphony.context' | 'symphony.memory' | 'spend.invoice' | 'thread.archive' | 'thread.rewind' | 'queue.load' | 'curation.load' | 'queue.decide' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
         ? JsonValue
         : Action['type'] extends 'rack.scope.get' | 'rack.scope.set'
           ? RackScope
@@ -289,9 +294,11 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     slot: 'panel',
     streams: ['thread.snapshot', 'run.*', 'error'],
     actions: [
-      'project.select', 'prompt.submit', 'draft.update', 'run.cancel', 'thread.archive',
+      'project.select', 'prompt.submit', 'prompt.interject', 'draft.update', 'run.cancel', 'thread.archive',
       'queue.load', 'queue.decide', 'thread.select', 'symphony.intervene', 'thread.rename_project',
       'thread.rewind',
+      'symphony.context', 'symphony.memory',
+      'policies.load', 'policies.save',
     ],
     bounds: stageGridBounds({ w: 20, h: 20 }),
     movable: true,
@@ -556,6 +563,28 @@ function dispatchRackAction<Action extends RackAction>(
           undefined,
           action.proposed_response,
         ) as RackActionResult<Action>
+      case 'prompt.interject': {
+        const threadId = getRackSnapshot().selectedThreadId
+        if (threadId === null) throw new Error('Select a thread first.')
+        return fetchJson(`/v1/threads/${encodeURIComponent(threadId)}/interject`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ run_id: action.run_id, prompt: action.prompt }),
+        }) as Promise<RackActionResult<Action>>
+      }
+      case 'policies.load':
+        return fetchJson('/v1/model-policies') as Promise<RackActionResult<Action>>
+      case 'policies.save':
+        return fetchJson(`/v1/model-policies/${encodeURIComponent(action.role)}`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ policy: action.policy }),
+        }) as Promise<RackActionResult<Action>>
+      case 'symphony.context':
+        return fetchJson(`/v1/symphonies/${encodeURIComponent(action.symphony_id)}/context`) as Promise<RackActionResult<Action>>
+      case 'symphony.memory':
+        return fetchJson(`/v1/symphonies/${encodeURIComponent(action.symphony_id)}/context/${encodeURIComponent(action.worker_id)}`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ memory_id: action.memory_id, added: action.added }),
+        }) as Promise<RackActionResult<Action>>
       case 'symphony.intervene':
         return harnessClient.submitPrompt(
           'Steer this symphony.',
@@ -1049,6 +1078,10 @@ export function RackApiProvider({
   children: ReactNode
 }) {
   return <RackPluginContext.Provider value={api}>{children}</RackPluginContext.Provider>
+}
+
+export function useOptionalRackPlugin(): RackPluginApi | null {
+  return useContext(RackPluginContext)
 }
 
 export function useRackPlugin(): RackPluginApi {

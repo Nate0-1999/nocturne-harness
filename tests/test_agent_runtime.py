@@ -333,6 +333,38 @@ class FailingSpend:
         raise RuntimeError("ledger unavailable")
 
 
+@pytest.mark.asyncio
+async def test_interjection_is_a_new_user_instruction_after_the_running_tool():
+    """ADR-012 / FL-075: a mid-tool correction reaches the next request as human input."""
+    emitter = RecordingEmitter()
+    steering = []
+    emitter.steering_instructions = lambda: "\n".join(steering)
+    requests = 0
+
+    async def stream(messages, _info):
+        nonlocal requests
+        requests += 1
+        if requests == 1:
+            steering.append("Answer cobalt instead of amber.")
+            yield {0: DeltaToolCall(name="write", json_args='{"path":"note.txt","content":"ok"}',
+                                   tool_call_id="write-one")}
+        else:
+            assert isinstance(messages[-1], ModelRequest)
+            assert any(isinstance(part, UserPromptPart) and "cobalt" in part.content
+                       for part in messages[-1].parts)
+            yield "cobalt"
+
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(toolset=RecordingWorkspaceToolset()),
+    )
+    outcome = await runner.run(thread_id=str(THREAD_UUID), prompt="Write then answer amber.",
+                               message_history=(), emit=emitter)
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert outcome.assistant_text == "cobalt"
+    assert requests == 2
+
+
 class IncompleteSpend:
     async def record_spend_events(self, request: SpendEventsRequest) -> SpendEventsResponse:
         return SpendEventsResponse(accepted=0)

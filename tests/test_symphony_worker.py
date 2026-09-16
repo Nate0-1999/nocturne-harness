@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -8,6 +9,9 @@ import pytest
 from pydantic_ai.models.function import FunctionModel
 
 from harness import symphony_worker
+from harness.spine_client import InjectPrepareResponse, MemoryAllocation
+from harness.symphony_context import COMPONENT_REGISTRY, WorkerContext, write_json
+from harness.toolset import AgentLocation
 
 
 @pytest.mark.asyncio
@@ -25,7 +29,7 @@ async def test_judge_retries_missing_metrics_and_writes_the_panel_return(tmp_pat
         "seat": "performance",
         "rubric": ["Exact result"],
         "evidence_requirements": ["result.txt"],
-        "metrics": ["14 bytes"],
+        "metrics": ["café checksum = 150"],
     }
     brief = {
         "schema_version": 1,
@@ -73,7 +77,6 @@ async def test_judge_retries_missing_metrics_and_writes_the_panel_return(tmp_pat
     async def respond(messages, info):
         calls.append(messages)
         verdict = {
-            **{k: v for k, v in session.items() if k != "model_policy"},
             "outcome": "pass",
             "selected_attempt_id": "attempt-1",
             "rationale": "Read and checked the exact file",
@@ -83,8 +86,7 @@ async def test_judge_retries_missing_metrics_and_writes_the_panel_return(tmp_pat
             if len(calls) == 1
             else [
                 {
-                    "metric": "14 bytes",
-                    "observed": "14 bytes",
+                    "observed": "checksum returned 150",
                     "passed": True,
                     "evidence_ref": "result.txt",
                 }
@@ -115,5 +117,44 @@ async def test_judge_retries_missing_metrics_and_writes_the_panel_return(tmp_pat
     result = json.loads((tmp_path / "judge-verdict.json").read_text())
     assert len(calls) == 2
     assert result["outcome"] == "pass"
-    assert result["metrics"][0]["metric"] == "14 bytes"
+    assert result["metrics"][0]["metric"] == "café checksum = 150"
+    assert result["charter_sha256"] == session["charter_sha256"]
     assert json.loads((tmp_path / "result.json").read_text()) == result
+
+
+@pytest.mark.asyncio
+async def test_worker_context_injects_without_a_gate_and_reacts_to_selection(tmp_path):
+    """A-059 / FL-096/097: leaf startup carries real memory selection and tree context."""
+    prepared = InjectPrepareResponse(
+        injection_id="12345678-1234-5678-1234-567812345678",
+        snapshot_ts=datetime.now(UTC), scorer_version="test", injected=[], near_misses=[],
+        final_block="<memories>UTF-8 checksum</memories>",
+        memory_allocation=MemoryAllocation(
+            memory_context_share=0.05, share_tokens=500, regular_tokens=4,
+            pinned_tokens=0, total_tokens=4, pinned_overflow_tokens=0,
+        ),
+    )
+    spine = SimpleNamespace(prepare_injection=AsyncMock(return_value=prepared))
+    location = AgentLocation("worker", "machine", "session", tmp_path, tmp_path, False)
+    context = SimpleNamespace(
+        spine=spine, agent_id="worker", machine_id="machine", principal_id="verification",
+        project_key=str(tmp_path), toolset=SimpleNamespace(location=lambda: location),
+    )
+    assignment = dict(stage="completion", brief="Implement checksum", prompt_id="worker-id",
+                      attempt_id="attempt", followups=str(tmp_path / "followups.json"))
+    worker = WorkerContext(assignment=assignment, output=tmp_path, context=context,
+                           resolution=SimpleNamespace(context_tokens=10000, model="test"))
+    rendered = await worker.render([])
+    assert COMPONENT_REGISTRY in rendered and "UTF-8 checksum" in rendered
+    assert spine.prepare_injection.call_args.args[0].mode == "gate"
+    await worker.render([])
+    assert spine.prepare_injection.call_count == 1
+    removed = "22345678-1234-5678-1234-567812345678"
+    write_json(tmp_path / "memory-selection.json", {"removed": [removed], "added": []})
+    await worker.render([])
+    assert str(spine.prepare_injection.call_args.args[0].excluded_memory_ids[0]) == removed
+    assignment["stage"] = "judge"
+    judge = WorkerContext(assignment=assignment, output=tmp_path, context=context,
+                          resolution=worker.resolution)
+    assert "UTF-8 checksum" not in await judge.render([])
+    assert spine.prepare_injection.call_count == 2
