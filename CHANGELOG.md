@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.1.21 - 2026-09-16
+
+- Pair with the Memory correction that logs reviewed injection decisions in the
+  creation stream. Add the repeatable three-round build measurement runner.
+
 ## 0.1.20 - 2026-09-16
 
 - Preserve deletion reasons and stack-selected scorer previews. Show the live

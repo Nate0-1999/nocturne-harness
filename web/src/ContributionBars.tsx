@@ -4,10 +4,11 @@ const FEATURES = [
 
 export function ContributionBars({ values }: { values?: Record<string, string | null> | null }) {
   if (values == null) return <p className="contribution-empty">Not scored yet.</p>
-  const maximum = Math.max(...FEATURES.map((key) => Math.abs(Number(values[key] ?? 0))), 0.001)
+  const features = [...new Set([...FEATURES, ...Object.keys(values)])]
+  const maximum = Math.max(...features.map((key) => Math.abs(Number(values[key] ?? 0))), 0.001)
   return (
     <div className="contribution-bars" aria-label="Weighted score contributions">
-      {FEATURES.map((key) => {
+      {features.map((key) => {
         const value = Number(values[key] ?? 0)
         return <div className="contribution-row" key={key}>
           <span>{key}</span>
@@ -30,9 +31,9 @@ export function useContributionMap(): Record<string, Record<string, string | nul
     }
     void query.query({ resource: 'scorer_console', as_of: 'now', thread_id: rack.selectedThreadId })
       .then((result) => {
-        const data = result.data as unknown as { candidates?: { memory_id: string; points: { contributions: Record<string, string | null> }[] }[] }
+        const data = result.data as unknown as { candidates?: { memory_id: string; points: { contributions: Record<string, string | null>; axis_contributions?: Record<string, string> }[] }[] }
         setValues(Object.fromEntries((data.candidates ?? []).flatMap((candidate) => {
-          const point = candidate.points.at(-1); return point === undefined ? [] : [[candidate.memory_id, point.contributions]]
+          const point = candidate.points.at(-1); return point === undefined ? [] : [[candidate.memory_id, { ...point.contributions, ...point.axis_contributions }]]
         })))
       }).catch(() => setValues({}))
   }, [query, rack.selectedThreadId])
