@@ -30,10 +30,11 @@ export function SpendRates({ snapshot, compact = false }: { snapshot: SpendTable
         minute: new Date(start + i * 60_000).toISOString(), cost_usd: '0', receipt_lines: 0, unpriced_lines: 0,
       })
       const chart = laneChartPoints({ points }, snapshot.as_of)
-      const maximum = Math.max(...points.map((point) => Number(point.cost_usd ?? 0)))
+      const maximum = points.reduce((peak, point) =>
+        Number(point.cost_usd ?? 0) > Number(peak) ? point.cost_usd! : peak, '0')
       const unpriced = points.reduce((total, point) => total + point.unpriced_lines, 0)
       return <figure key={`${lane.dimension}:${lane.key}`}>
-        <figcaption>{lane.label} <small>Peak {formatHumanUsd(String(maximum))} / min{unpriced > 0 ? ` · ${unpriced} lines awaiting price` : ''}</small></figcaption>
+        <figcaption>{lane.label} <small>Peak {formatHumanUsd(maximum)} / min{unpriced > 0 ? ` · ${unpriced} lines awaiting price` : ''}</small></figcaption>
         <svg viewBox="0 0 100 24" preserveAspectRatio="none" role="img" aria-label={`${lane.label}, recorded dollars per minute over the last hour`}>
           <line x1="0" y1="21" x2="100" y2="21" className="spend-history__axis" />
           {contiguousPolylineSegments(chart).map((segment, i) => <polyline key={i} points={segment} fill="none" vectorEffect="non-scaling-stroke" />)}
