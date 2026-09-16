@@ -3450,3 +3450,11 @@ pause the next request, or the terminal boundary after receipts are recorded.
 One underway request may exceed the limit. Pending receipts count once alongside
 acknowledged daily spend; unpriced receipts cannot certify a configured wall.
 Raising a wall resumes the retained run; cancellation uses the existing run path.
+
+## M3SR — Manual invoice entry through the existing Rack [P4.1]
+
+PRECEDENT: owner F103 ruling, PLAN M3SR, A-066, ADR-024.
+The global spend panel shows the form only when the Palace reports owner authority.
+The Rack action forwards exact dollars and invoice identity through the typed
+client; the Palace enforces authority and replay semantics. The button validates
+fields before dispatch because sandboxed panels prohibit native form submission.

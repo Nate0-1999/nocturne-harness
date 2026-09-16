@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 
 import { formatHumanQuantity, formatHumanUsd } from './humanNumbers'
 import { useRackPlugin, useRackSnapshot } from './rack'
-import { CacheHistory, SpendDaily, SpendRates, SpendReconciliation } from './SpendHistory'
+import { CacheHistory, InfrastructureInvoiceForm, SpendDaily, SpendRates, SpendReconciliation } from './SpendHistory'
 import { parseVitalsSnapshot, type ReconciliationSnapshot } from './vitals'
 import {
   parseSpendTableSnapshot,
@@ -111,6 +111,7 @@ export function VitalsModule() {
       </div>
       <SpendRates snapshot={snapshot} />
       <SpendReconciliation value={reconciliation} />
+      {scope === 'GLOBAL' && snapshot.can_record_invoice && <InfrastructureInvoiceForm onSaved={refresh} />}
       {rowCount === 0 ? (
         <p className="spend-table__empty">
           {scope === 'ATTUNED' ? `No spend for ${rack.attunement?.name ?? 'this view'}.` : 'No spend recorded.'}

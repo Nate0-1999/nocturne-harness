@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import { formatHumanQuantity, formatHumanUsd } from './humanNumbers'
 import type { SpendRateLane, SpendTableSnapshot } from './spendTable'
+import { useRackPlugin } from './rack'
 import {
   contiguousPolylineSegments, formatSignedUsd, laneChartPoints,
   reconciliationCopy, type ReconciliationSnapshot,
@@ -10,6 +11,37 @@ import './assets/spend-history.css'
 
 const DIMENSIONS = ['total', 'agent', 'subagent', 'model', 'curation'] as const
 const LABELS = { total: 'Total', agent: 'Agents', subagent: 'Sub-agents', model: 'Models', curation: 'Memory curation' }
+
+export function InfrastructureInvoiceForm({ onSaved }: { onSaved: () => void }) {
+  const { events } = useRackPlugin()
+  const [amount, setAmount] = useState('')
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [invoice, setInvoice] = useState('')
+  const [pending, setPending] = useState(false)
+  const [status, setStatus] = useState('Enter the cloud bill when it arrives. Recorded invoices cannot be edited.')
+  async function save() {
+    setPending(true)
+    try {
+      await events.dispatch({ type: 'spend.invoice', amount_usd: amount, invoice_date: date, invoice_id: invoice.trim() })
+      setStatus(`Invoice ${invoice.trim()} recorded. Repeating the same invoice does not add another charge.`)
+      onSaved()
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Invoice could not be recorded.')
+    } finally { setPending(false) }
+  }
+  return <details className="spend-history">
+    <summary>Record a cloud invoice · owner only</summary>
+    <form onSubmit={(event) => { event.preventDefault(); void save() }}>
+      <label>Amount · USD<input aria-label="Invoice amount USD" required type="number" min="0.000000000001" step="any" value={amount} onChange={(event) => setAmount(event.target.value)} /></label>
+      <label>Invoice date · UTC<input aria-label="Invoice date" required type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
+      <label>Invoice ID<input aria-label="Invoice ID" required value={invoice} onChange={(event) => setInvoice(event.target.value)} /></label>
+      <button type="button" disabled={pending} onClick={(event) => {
+        if (event.currentTarget.form?.reportValidity()) void save()
+      }}>{pending ? 'Recording…' : 'Record invoice'}</button>
+    </form>
+    <p role="status">{status}</p>
+  </details>
+}
 
 /** ADR-024 / M3SR: recorded money and tokens; unknown prices never plot as zero. */
 export function SpendRates({ snapshot, compact = false }: { snapshot: SpendTableSnapshot; compact?: boolean }) {

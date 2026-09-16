@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.18 - 2026-09-16
+
+- Record cloud invoices from the owner's spend panel, with replay-safe billing
+  and daily totals separate from broker reconciliation. Includes the 0.1.17
+  compaction changes alongside the spend controls introduced in 0.1.16.
+
 ## 0.1.16 - 2026-09-16
 
 - Explain retained model-policy choices. Show scoped spend rates, daily costs,

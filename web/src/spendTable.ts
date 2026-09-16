@@ -26,6 +26,7 @@ export interface PurposeSpendRow extends SpendMetrics {
 }
 
 export interface SpendTableSnapshot {
+  can_record_invoice?: boolean
   as_of: string
   window_minutes: 60
   threads: ThreadSpendRow[]
@@ -77,6 +78,7 @@ export function parseSpendTableSnapshot(value: unknown): SpendTableSnapshot {
   unique(purposes.map((row) => row.purpose), 'purpose')
   return {
     as_of: timestamp(root.as_of, 'as_of'),
+    can_record_invoice: root.can_record_invoice === true,
     window_minutes: 60,
     threads,
     purposes,

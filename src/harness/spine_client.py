@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from enum import StrEnum
 from typing import Annotated, Any, Literal, Never
@@ -613,6 +613,12 @@ class SpendEventsResponse(ContractModel):
     accepted: int = Field(strict=True)
 
 
+class InfrastructureInvoice(ContractModel):
+    amount_usd: Decimal = Field(gt=0, max_digits=20, decimal_places=12)
+    invoice_date: date
+    invoice_id: NonBlankString
+
+
 class SpendTableMetrics(ContractModel):
     """Exact quantities and honest known-cost state for one ledger grouping."""
 
@@ -651,6 +657,7 @@ class PurposeSpendRow(SpendTableMetrics):
 
 
 class SpendTableSnapshot(ContractModel):
+    can_record_invoice: bool = False
     as_of: datetime
     window_minutes: Literal[60]
     threads: list[ThreadSpendRow]
@@ -1288,6 +1295,17 @@ class SpineClient:
             identity = _expect_success(response, status=200, adapter=_PALACE_IDENTITY)
             self._metrics_scope = "palace" if identity.is_owner else "principal"
         return {"principal_id": principal_id, "scope": self._metrics_scope}
+
+    async def record_invoice(self, invoice: InfrastructureInvoice) -> SpendEventsResponse:
+        response = await self._request(
+            "POST",
+            "v1/spend/invoices",
+            params={"principal_id": self._principal_id or "local"},
+            json_body=invoice.model_dump(mode="json"),
+        )
+        if response.status_code == 403:
+            raise SpineOwnershipError(response.json().get("detail", "Invoice was refused."))
+        return _expect_success(response, status=200, adapter=_SPEND_EVENTS_RESPONSE)
 
     async def memory_graph(self, request: MemoryGraphQuery) -> MemoryGraphSnapshot:
         response = await self._request(

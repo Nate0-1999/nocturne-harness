@@ -75,6 +75,7 @@ from harness.spine_client import (
     ActivateScorerConfigRequest,
     BatchDecisionResponse,
     CreateScorerConfigRequest,
+    InfrastructureInvoice,
     InjectPrepareRequest,
     MemoryGraphQuery,
     MemoryGraphSnapshot,
@@ -1109,6 +1110,17 @@ def create_dev_app(
         @app.get("/v1/spend-walls", response_model=SpendLimits)
         async def read_spend_walls():
             return spend_walls.limits
+
+        @app.post("/v1/spend/invoices")
+        async def record_invoice(invoice: InfrastructureInvoice):
+            try:
+                return await owned_spine.record_invoice(invoice)
+            except SpineResponseError as error:
+                if error.status_code == 409:
+                    raise HTTPException(
+                        409, "This invoice ID already has a different amount or date."
+                    ) from error
+                raise
 
         @app.put("/v1/spend-walls", response_model=SpendLimits)
         async def update_spend_walls(limits: SpendLimits):
