@@ -279,11 +279,17 @@ class TranscriptJournal:
     def rewind(self, thread_id: str, parent_id: str | None) -> HydratedTranscript:
         """Move the durable branch cursor; every abandoned message remains in the journal."""
         with self._lock:
-            self._append(thread_id, {
-                "version": 1, "record_type": "rewind", "tail_message_id": parent_id,
-            })
+            self._append(
+                thread_id,
+                {
+                    "version": 1,
+                    "record_type": "rewind",
+                    "tail_message_id": parent_id,
+                },
+            )
             self._next_parent_ids[thread_id] = parent_id
             transcript = self._hydrate_file(self._filename_for_thread(thread_id))
+            # WALL ADR-016: an appended branch cursor must rehydrate its durable journal.
             assert transcript is not None
             return transcript
 

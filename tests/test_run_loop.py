@@ -2523,20 +2523,38 @@ async def test_rewind_restores_files_and_chat_retaining_branches_and_real_git(
     (workspace / ".gitignore").write_text("ignored.txt\n")
     ignored = workspace / "ignored.txt"
     ignored.write_text("private")
+
     def git(*args: str) -> str:
         return subprocess.check_output(["git", "-C", str(workspace), *args], text=True).strip()
+
     git("init", "--quiet")
     git("add", ".")
-    git("-c", "user.name=Test", "-c", "user.email=test@localhost", "-c",
-        "commit.gpgsign=false", "commit", "--quiet", "-m", "Original")
+    git(
+        "-c",
+        "user.name=Test",
+        "-c",
+        "user.email=test@localhost",
+        "-c",
+        "commit.gpgsign=false",
+        "commit",
+        "--quiet",
+        "-m",
+        "Original",
+    )
     real_head = git("rev-parse", "HEAD")
     real_index = (workspace / ".git" / "index").read_bytes()
     journal = TranscriptJournal(tmp_path / "journal")
     checkpoints = WorkspaceCheckpoints(tmp_path / "checkpoints")
     sink = Sink()
-    loop = RunLoop(ImmediateHistoryRunner(), factory(Ids()), transcript_journal=journal,
-                   checkpoints=checkpoints)
+    loop = RunLoop(
+        ImmediateHistoryRunner(),
+        factory(Ids()),
+        transcript_journal=journal,
+        checkpoints=checkpoints,
+    )
     await loop.request_snapshot("thread-1", sink, workspace_root=str(workspace))
+    with pytest.raises(ValueError, match="This turn has no workspace checkpoint."):
+        await loop.rewind("thread-1", ulid(1), "both")
     await loop.submit(thread_id="thread-1", prompt_id=ulid(1), prompt="first", sink=sink)
     await _wait_for_done_count(sink, 1)
     file.write_text("first change")
@@ -2550,14 +2568,23 @@ async def test_rewind_restores_files_and_chat_retaining_branches_and_real_git(
     assert ignored.read_text() == "private"
     assert len(journal.hydrate_threads()[0].messages) == 2
     assert any(item["content"] == "second" for item in journal.read_messages("thread-1"))
-    assert checkpoints._git(
-        str(workspace), "show", f"{result['abandoned_checkpoint']}:new.txt"
-    ) == "abandoned"
+    assert (
+        checkpoints._git(str(workspace), "show", f"{result['abandoned_checkpoint']}:new.txt")
+        == "abandoned"
+    )
     assert git("rev-parse", "HEAD") == real_head
     assert (workspace / ".git" / "index").read_bytes() == real_index
+    loop._checkpoints = None
+    with pytest.raises(ValueError, match="Checkpoints are unavailable."):
+        await loop.rewind("thread-1", ulid(1), "both")
+    loop._checkpoints = checkpoints
     await loop.close()
-    restarted = RunLoop(ImmediateHistoryRunner(), factory(Ids(200)),
-                        transcript_journal=TranscriptJournal(journal.root), checkpoints=checkpoints)
+    restarted = RunLoop(
+        ImmediateHistoryRunner(),
+        factory(Ids(200)),
+        transcript_journal=TranscriptJournal(journal.root),
+        checkpoints=checkpoints,
+    )
     await restarted.submit(thread_id="thread-1", prompt_id=ulid(3), prompt="sibling", sink=Sink())
     await asyncio.sleep(0)
     await restarted.close()
@@ -2565,12 +2592,46 @@ async def test_rewind_restores_files_and_chat_retaining_branches_and_real_git(
     assert messages[2]["parentId"] == messages[1]["message_id"]
     assert messages[2]["content"] == "sibling"
     # The first turn can rewind to an empty conversation, durably.
-    reopened = RunLoop(ImmediateHistoryRunner(), factory(Ids(300)),
-                      transcript_journal=TranscriptJournal(journal.root), checkpoints=checkpoints)
+    reopened = RunLoop(
+        ImmediateHistoryRunner(),
+        factory(Ids(300)),
+        transcript_journal=TranscriptJournal(journal.root),
+        checkpoints=checkpoints,
+    )
     await reopened.rewind("thread-1", ulid(1), "both")
     assert file.read_text() == "original"
     assert TranscriptJournal(journal.root).hydrate_threads()[0].messages == ()
     await reopened.close()
+
+
+@pytest.mark.asyncio
+async def test_rewind_refuses_to_restore_under_live_writers(tmp_path: Path) -> None:
+    """ADR-016 preserves the live continuation when another turn still writes the workspace."""
+    control = TurnControl()
+    sink = Sink()
+    loop = RunLoop(
+        ControlledRunner({"working": control}),
+        factory(Ids()),
+        transcript_journal=TranscriptJournal(tmp_path / "journal"),
+        checkpoints=WorkspaceCheckpoints(tmp_path / "checkpoints"),
+    )
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    await loop.request_snapshot("thread-1", sink, workspace_root=str(workspace))
+    await loop.submit(thread_id="thread-1", prompt_id=ulid(1), prompt="working", sink=sink)
+    await control.entered.wait()
+    with pytest.raises(
+        ValueError, match="Stop the active run and clear queued prompts before rewinding."
+    ):
+        await loop.rewind("thread-1", ulid(1), "both")
+    await loop.request_snapshot("thread-2", Sink(), workspace_root=str(workspace))
+    loop._threads["thread-2"].messages = list(loop._threads["thread-1"].messages)
+    with pytest.raises(
+        ValueError, match="Stop other runs in this workspace before restoring files."
+    ):
+        await loop.rewind("thread-2", ulid(1), "files")
+    control.cleanup_release.set()
+    await loop.close()
 
 
 async def _wait_for_type_count(

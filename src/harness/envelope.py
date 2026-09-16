@@ -335,7 +335,8 @@ class RunStartedPayload(_ExtensiblePayload):
     )
     image: ImageView | None = Field(default=None, exclude_if=lambda value: value is None)
     checkpoint: dict[str, str | None] | None = Field(
-        default=None, exclude_if=lambda value: value is None,
+        default=None,
+        exclude_if=lambda value: value is None,
     )
 
 

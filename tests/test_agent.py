@@ -483,7 +483,8 @@ async def test_disabled_toolset_removes_workspace_and_skills_from_model_request(
 
     assert result.output == "No workspace tools."
     assert [tool.name for tool in calls[0][1].function_tools] == [
-        "search_memory", "edit_memory",
+        "search_memory",
+        "edit_memory",
     ]
 
 

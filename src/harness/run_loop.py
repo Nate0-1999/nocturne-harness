@@ -505,22 +505,36 @@ class RunLoop:
             await self._publish_locked(thread_id, self._snapshot_envelope(thread_id, state))
 
     async def rewind(
-        self, thread_id: str, prompt_id: str, scope: Literal["conversation", "files", "both"],
+        self,
+        thread_id: str,
+        prompt_id: str,
+        scope: Literal["conversation", "files", "both"],
     ) -> dict[str, str | None]:
         """ADR-016: return to a human turn without destroying its abandoned continuation."""
         async with self._lock:
             state = self._state_for_locked(thread_id)
+            # WALL ADR-016: a restore point cannot race writes from its active continuation.
             if state.active or state.queued or self._pending_captured.get(thread_id):
                 raise ValueError("Stop the active run and clear queued prompts before rewinding.")
-            message = next((item for item in state.messages
-                            if item["message_id"] == prompt_id and item["role"] == "user"), None)
+            message = next(
+                (
+                    item
+                    for item in state.messages
+                    if item["message_id"] == prompt_id and item["role"] == "user"
+                ),
+                None,
+            )
+            # WALL ADR-016: legacy turns without a shadow restore point cannot restore files.
             if message is None or "checkpoint" not in message:
                 raise ValueError("This turn has no workspace checkpoint.")
+            # WALL ADR-016: both durable ledgers are required for rewind.
             if self._transcript_journal is None or self._checkpoints is None:
                 raise ValueError("Checkpoints are unavailable.")
             checkpoint = message["checkpoint"]
             workspace = state.workspace_root
+            # WALL ADR-016: a captured checkpoint belongs to a bound workspace.
             assert workspace is not None
+            # WALL ADR-016: shared files cannot be restored under another live writer.
             if scope in {"files", "both"} and any(
                 other.active and other.workspace_root == workspace
                 for other in self._threads.values()

@@ -464,7 +464,8 @@ class PydanticAITurnRunner:
                         *self._agent.tool_capabilities(context),
                         *(
                             [DelegateCapability()]
-                            if compaction is not None and context.toolset_enabled else []
+                            if compaction is not None and context.toolset_enabled
+                            else []
                         ),
                         *([compaction] if compaction is not None else []),
                     ],

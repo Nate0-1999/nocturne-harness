@@ -14,12 +14,23 @@ class WorkspaceCheckpoints:
         git_dir = self.root / identity
         result = subprocess.run(
             [
-                "git", f"--git-dir={git_dir}", f"--work-tree={workspace}",
-                "-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false",
-                "-c", "user.name=Nocturne checkpoints", "-c", "user.email=checkpoint@localhost",
+                "git",
+                f"--git-dir={git_dir}",
+                f"--work-tree={workspace}",
+                "-c",
+                "core.hooksPath=/dev/null",
+                "-c",
+                "commit.gpgsign=false",
+                "-c",
+                "user.name=Nocturne checkpoints",
+                "-c",
+                "user.email=checkpoint@localhost",
                 *arguments,
             ],
-            cwd=workspace, capture_output=True, text=True, check=True,
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            check=True,
         )
         return result.stdout.strip()
 
