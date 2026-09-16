@@ -614,6 +614,7 @@ class SpendEventsResponse(ContractModel):
 
 
 class InfrastructureInvoice(ContractModel):
+    # WALL money / A-066: preserve the owner's positive, exact invoice amount.
     amount_usd: Decimal = Field(gt=0, max_digits=20, decimal_places=12)
     invoice_date: date
     invoice_id: NonBlankString
@@ -1303,6 +1304,7 @@ class SpineClient:
             params={"principal_id": self._principal_id or "local"},
             json_body=invoice.model_dump(mode="json"),
         )
+        # WALL owner authority / A-066: an invoice refusal must reach the owner form.
         if response.status_code == 403:
             raise SpineOwnershipError(response.json().get("detail", "Invoice was refused."))
         return _expect_success(response, status=200, adapter=_SPEND_EVENTS_RESPONSE)
