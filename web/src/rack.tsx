@@ -1138,10 +1138,11 @@ export function RackRuntime({ children }: { children: ReactNode }) {
     if (selectedThreadId !== null) {
       const selection = rackSelectionSurface.getSnapshot()
       if (
-        selection?.kind !== 'project' ||
-        selection.id !== currentProjectKey
+        !(selection?.kind === 'agent' && selection.thread_id === selectedThreadId) &&
+        (selection?.kind !== 'project' || selection.id !== currentProjectKey)
       ) {
-        rackSelectionSurface.select({ kind: 'thread', id: selectedThreadId })
+        rackSelectionSurface.select({ kind: 'thread', id: selectedThreadId,
+          as_of: selection?.as_of, time_order: selection?.time_order })
       }
     }
   }, [currentProjectKey, selectedThreadId])

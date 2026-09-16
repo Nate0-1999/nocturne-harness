@@ -29,7 +29,7 @@ export function useVisualization() {
     const timer = globalThis.setInterval(() => { void refresh() }, 2500)
     return () => { active = false; globalThis.clearInterval(timer) }
   }, [query, asOf])
-  return { data: response?.asOf === asOf ? response.data : null, error }
+  return { data: response?.data ?? null, loading: response?.asOf !== asOf, error }
 }
 
 export function VisualizationToolbar({ data, moduleId, tier, setTier }: {
@@ -48,7 +48,7 @@ export function VisualizationToolbar({ data, moduleId, tier, setTier }: {
         as_of: selected?.as_of ?? null })
     })
   }, [events, selection, oldest, selected?.id, selected?.as_of, timeOrdered])
-  const index = selected?.as_of ? Math.max(0, timeline.indexOf(data?.as_of ?? '')) : Math.max(0, timeline.length - 1)
+  const index = selected?.as_of ? Math.max(0, timeline.indexOf(selected.as_of)) : Math.max(0, timeline.length - 1)
   const scrub = (as_of: string | null) => selection.select({ ...(selected ?? { kind: 'module', id: moduleId }), as_of })
   return <div className="work-viz__toolbar">
     <label>Detail<select aria-label="Visualization detail" value={tier} onChange={(event) => setTier(event.target.value as DetailTier)}>
@@ -63,7 +63,8 @@ export function VisualizationToolbar({ data, moduleId, tier, setTier }: {
 }
 
 export function WorkVisualization({ initialView }: { initialView: 'farm' | 'roots' }) {
-  const { data, error } = useVisualization()
+  const { data: observation, loading, error } = useVisualization()
+  const data = loading ? null : observation
   const { selection, events } = useRackPlugin()
   const rack = useRackSnapshot()
   const selected = useRackSelection()
@@ -91,7 +92,7 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
       <h1>{view === 'farm' ? 'The Farm' : 'The Roots'}</h1></div>
       <nav aria-label="Work visualization"><button aria-pressed={view === 'farm'} onClick={() => setView('farm')}>Farm</button><button aria-pressed={view === 'roots'} onClick={() => setView('roots')}>Roots</button></nav>
     </header>
-    <VisualizationToolbar data={data} moduleId={initialView} tier={tier} setTier={setTier} />
+    <VisualizationToolbar data={observation} moduleId={initialView} tier={tier} setTier={setTier} />
     {project && <label className="work-viz__project">Project<select aria-label="Visualized project" value={project.root} onChange={(event) => setProjectRoot(event.target.value)}>
       {data!.projects.map((p) => <option key={p.root}>{p.root}</option>)}
     </select></label>}
