@@ -45,7 +45,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nate0-1999/nocturne-memory
-          ref: ba71a9fd2f92b68f700b9cc1a93ba42c7ac1d685
+          ref: 427d0f4c2ce86ec12e10204b3a008bf37e5ed4cc
           path: _d3/spine
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -100,7 +100,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nate0-1999/nocturne-memory
-          ref: ba71a9fd2f92b68f700b9cc1a93ba42c7ac1d685
+          ref: 427d0f4c2ce86ec12e10204b3a008bf37e5ed4cc
           path: _canon/spine
           persist-credentials: false
       - name: Install web dependencies
@@ -135,7 +135,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nate0-1999/nocturne-memory
-          ref: ba71a9fd2f92b68f700b9cc1a93ba42c7ac1d685
+          ref: 427d0f4c2ce86ec12e10204b3a008bf37e5ed4cc
           path: _contract/spine
           persist-credentials: false
       - uses: actions/setup-python@v5

@@ -334,6 +334,10 @@ class RunStartedPayload(_ExtensiblePayload):
         exclude_if=lambda value: value is None,
     )
     image: ImageView | None = Field(default=None, exclude_if=lambda value: value is None)
+    checkpoint: dict[str, str | None] | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
 
 
 class RunCancelPayload(_ExtensiblePayload):

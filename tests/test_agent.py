@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import json
 from copy import deepcopy
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 from uuid import UUID
 
@@ -458,6 +459,33 @@ async def test_chat_returns_output_and_reusable_full_history_with_exact_limits()
         for _, info in calls
     )
     assert spine.create_requests == []
+
+
+@pytest.mark.asyncio
+async def test_disabled_toolset_removes_workspace_and_skills_from_model_request(
+    tmp_path: Path,
+) -> None:
+    """ADR-013 / PLAN M3TH removes the adopted tool unit at the provider boundary."""
+    skill = tmp_path / "verification"
+    skill.mkdir()
+    (skill / "SKILL.md").write_text(
+        "---\nname: verification\ndescription: A verification skill.\n---\nRead marker.txt.\n"
+    )
+    calls: list[tuple[list[ModelMessage], AgentInfo]] = []
+    agent = HarnessAgent(settings(), model=response_model("No workspace tools.", calls))
+    owner_context = replace(
+        context(FakeSpine(CreatedMemoryResponse(created=memory_unit()))),
+        toolset_enabled=False,
+        skill_directories=(tmp_path,),
+    )
+
+    result = await agent.chat("List the tools you can use.", context=owner_context)
+
+    assert result.output == "No workspace tools."
+    assert [tool.name for tool in calls[0][1].function_tools] == [
+        "search_memory",
+        "edit_memory",
+    ]
 
 
 @pytest.mark.asyncio

@@ -22,6 +22,7 @@ from pydantic_ai.messages import (
     UserPromptPart,
 )
 
+from harness.checkpoints import WorkspaceCheckpoints
 from harness.commands import model_command_text, remember_command_text
 from harness.envelope import (
     ActiveRunSnapshot,
@@ -212,6 +213,7 @@ class RunLoop:
         parameter_registry: ParameterRegistry | None = None,
         symphony_experience: SymphonyExperience | None = None,
         spend_walls: SpendWalls | None = None,
+        checkpoints: WorkspaceCheckpoints | None = None,
     ) -> None:
         self._runner = runner
         self._factory = factory
@@ -223,6 +225,7 @@ class RunLoop:
         self._parameter_registry = parameter_registry or ParameterRegistry()
         self._symphony_experience = symphony_experience
         self._spend_walls = spend_walls
+        self._checkpoints = checkpoints
         self._lock = asyncio.Lock()
         self._submission_locks: dict[str, asyncio.Lock] = {}
         self._pending_captured: dict[str, deque[_Turn]] = {}
@@ -500,6 +503,59 @@ class RunLoop:
             if state is None:
                 return
             await self._publish_locked(thread_id, self._snapshot_envelope(thread_id, state))
+
+    async def rewind(
+        self,
+        thread_id: str,
+        prompt_id: str,
+        scope: Literal["conversation", "files", "both"],
+    ) -> dict[str, str | None]:
+        """ADR-016: return to a human turn without destroying its abandoned continuation."""
+        async with self._lock:
+            state = self._state_for_locked(thread_id)
+            # WALL ADR-016: a restore point cannot race writes from its active continuation.
+            if state.active or state.queued or self._pending_captured.get(thread_id):
+                raise ValueError("Stop the active run and clear queued prompts before rewinding.")
+            message = next(
+                (
+                    item
+                    for item in state.messages
+                    if item["message_id"] == prompt_id and item["role"] == "user"
+                ),
+                None,
+            )
+            # WALL ADR-016: legacy turns without a shadow restore point cannot restore files.
+            if message is None or "checkpoint" not in message:
+                raise ValueError("This turn has no workspace checkpoint.")
+            # WALL ADR-016: both durable ledgers are required for rewind.
+            if self._transcript_journal is None or self._checkpoints is None:
+                raise ValueError("Checkpoints are unavailable.")
+            checkpoint = message["checkpoint"]
+            workspace = state.workspace_root
+            # WALL ADR-016: a captured checkpoint belongs to a bound workspace.
+            assert workspace is not None
+            # WALL ADR-016: shared files cannot be restored under another live writer.
+            if scope in {"files", "both"} and any(
+                other.active and other.workspace_root == workspace
+                for other in self._threads.values()
+            ):
+                raise ValueError("Stop other runs in this workspace before restoring files.")
+            abandoned = None
+            if scope in {"files", "both"}:
+                abandoned = self._checkpoints.restore(workspace, checkpoint["commit"])
+            if scope in {"conversation", "both"}:
+                try:
+                    transcript = self._transcript_journal.rewind(thread_id, checkpoint["parent_id"])
+                except Exception:
+                    if abandoned is not None:
+                        self._checkpoints.restore(workspace, abandoned)
+                    raise
+                state.messages = [deepcopy(item) for item in transcript.messages]
+                state.message_history = self._rehydrate_model_history(transcript)
+                state.cached_prefix_tokens = 0
+                self.record_thread_location(thread_id, checkpoint["location"])
+                await self._publish_locked(thread_id, self._snapshot_envelope(thread_id, state))
+            return {"checkpoint": checkpoint["commit"], "abandoned_checkpoint": abandoned}
 
     async def publish_symphony_state(self, thread_id: str, event: Mapping[str, object]) -> None:
         """Journal a supervised stack after its launch turn has returned. [ADR-012]"""
@@ -808,6 +864,14 @@ class RunLoop:
         state: _ThreadState,
         turn: _Turn,
     ) -> None:
+        if self._checkpoints is not None and state.workspace_root is not None:
+            turn.user_message["checkpoint"] = {
+                "commit": self._checkpoints.capture(
+                    state.workspace_root, f"Before {turn.prompt_id}"
+                ),
+                "parent_id": turn.parent_id,
+                "location": state.current_location,
+            }
         turn.user_message["state"] = "running"
         self._capture_message(
             thread_id,
@@ -857,6 +921,7 @@ class RunLoop:
                     prompt_id=turn.prompt_id,
                     resolved_model=state.resolved_model,
                     image=turn.image_view,
+                    checkpoint=turn.user_message.get("checkpoint"),
                 ),
                 thread_id=thread_id,
             ),

@@ -23,6 +23,8 @@ import { MemoryPanel } from './MemoryPanel'
 import { MemoryRestore } from './MemoryRestore'
 import { AgentPolicies } from './AgentPolicies'
 import { SpendWallSettings } from './SpendWallSettings'
+import { ToolInventory, ToolsetSettings } from './ToolControls'
+import { RewindControl } from './RewindControl'
 import { RackPluginUpload } from './RackPluginUpload'
 import { MemoryGraph } from './MemoryGraph'
 import { PalaceNebula } from './PalaceNebula'
@@ -865,6 +867,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                 )}
             </p>
           </section>
+          <ToolsetSettings />
           <section>
             <h2>Stage layout</h2>
             <p data-testid="layout-status">{layoutStatus}</p>
@@ -2452,6 +2455,7 @@ function ChatModule() {
             </span>
             <span className="chat-header__model-action" aria-hidden="true">Open ↗</span>
           </button>
+          <ToolInventory key={selectedThreadId} threadId={selectedThreadId} />
         </div>
       </header>
 
@@ -2499,6 +2503,7 @@ function ChatModule() {
                     activeRunId={activeRun?.run_id}
                     activeState={activeRun?.state}
                     completedSymphonyDraftIds={completedSymphonyDraftIds}
+                    rewindDisabled={activeRun !== null || queuedPrompts.length > 0}
                   />
                   {message.message_id === compactionPostId && <ThreadEndModule inline />}
                 </Fragment>
@@ -3342,6 +3347,7 @@ interface MessageRowProps {
   activeRunId: string | undefined
   activeState: string | undefined
   completedSymphonyDraftIds: ReadonlySet<string>
+  rewindDisabled: boolean
 }
 
 function MessageRow({
@@ -3352,6 +3358,7 @@ function MessageRow({
   activeRunId,
   activeState,
   completedSymphonyDraftIds,
+  rewindDisabled,
 }: MessageRowProps) {
   if (message.role === 'user') {
     const status = message.state === 'submitting'
@@ -3364,6 +3371,9 @@ function MessageRow({
         <header className="message__label">
           <span>You</span>
           {status !== null && <span>{status}</span>}
+          {'checkpoint' in message && message.checkpoint !== undefined && <RewindControl
+            threadId={threadId} promptId={message.message_id} disabled={rewindDisabled}
+          />}
         </header>
         <div className="message__user-body">
           <p className="message__content">{message.content}</p>

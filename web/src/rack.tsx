@@ -111,6 +111,7 @@ export type RackAction =
   | { type: 'symphony.intervene'; intervention: SymphonyIntervention }
   | { type: 'run.cancel'; run_id?: Ulid }
   | { type: 'thread.archive'; thread_id?: string }
+  | { type: 'thread.rewind'; thread_id: string; prompt_id: string; scope: 'conversation' | 'files' | 'both' }
   | { type: 'queue.load'; thread_id?: string; birthplace?: 'thread' | 'seed' | 'symphony' | 'curator' }
   | { type: 'curation.load' }
   | { type: 'seed.jump-start.load' }
@@ -167,7 +168,7 @@ export interface RackModuleManifest {
 }
 
 export interface RackQueryRequest {
-  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'spend_table' | 'context_window' | 'parameters' | 'memory_graph' | 'scorer_console' | 'recipe_graph'
+  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'spend_table' | 'context_window' | 'parameters' | 'memory_graph' | 'scorer_console' | 'recipe_graph' | 'tools'
   as_of?: string | null
   thread_id?: string
   thread_ids?: string[]
@@ -222,7 +223,7 @@ export type RackActionResult<Action extends RackAction> =
       ? number
     : Action['type'] extends 'thread.select' | 'thread.rename_project' | 'thread.bind_workspace' | 'draft.update'
       ? void
-      : Action['type'] extends 'spend.invoice' | 'thread.archive' | 'queue.load' | 'curation.load' | 'queue.decide' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
+      : Action['type'] extends 'spend.invoice' | 'thread.archive' | 'thread.rewind' | 'queue.load' | 'curation.load' | 'queue.decide' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
         ? JsonValue
         : Action['type'] extends 'rack.scope.get' | 'rack.scope.set'
           ? RackScope
@@ -282,6 +283,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     actions: [
       'project.select', 'prompt.submit', 'draft.update', 'run.cancel', 'thread.archive',
       'queue.load', 'queue.decide', 'thread.select', 'symphony.intervene', 'thread.rename_project',
+      'thread.rewind',
     ],
     bounds: stageGridBounds({ w: 20, h: 20 }),
     movable: true,
@@ -615,6 +617,11 @@ function dispatchRackAction<Action extends RackAction>(
             value: action.value,
           }),
         }) as Promise<RackActionResult<Action>>
+      case 'thread.rewind':
+        return fetchJson(`/v1/threads/${encodeURIComponent(action.thread_id)}/rewind`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt_id: action.prompt_id, scope: action.scope }),
+        }) as Promise<RackActionResult<Action>>
       case 'spend.invoice':
         return fetchJson('/v1/spend/invoices', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -727,7 +734,7 @@ async function fetchRackResponse(path: string | URL, init?: RequestInit): Promis
 export const rackQuerySurface: RackQuerySurface = {
   async query(request) {
     const asOf = request.as_of ?? null
-    if (request.resource === 'vitals' || request.resource === 'spend_table' || request.resource === 'context_window' || request.resource === 'memory_graph' || request.resource === 'scorer_console' || request.resource === 'recipe_graph') {
+    if (request.resource === 'vitals' || request.resource === 'spend_table' || request.resource === 'context_window' || request.resource === 'memory_graph' || request.resource === 'scorer_console' || request.resource === 'recipe_graph' || request.resource === 'tools') {
       if (asOf !== null && asOf !== 'now') {
         return { status: 'historical_unavailable', as_of: asOf, data: null }
       }

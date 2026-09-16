@@ -105,6 +105,12 @@ class _ProgressiveInstructions(DynamicSystemInstructions):
         self._workspace_block = (
             render_workspace_context(toolset.location()) if toolset is not None else None
         )
+        if self._workspace_block is not None and not self._context.toolset_enabled:
+            self._workspace_block += (
+                "\nThe workspace toolset is disabled in settings. File, shell, browser, "
+                "movement, skills, and delegation tools are unavailable. "
+                "Do not claim to read or change files."
+            )
         snapshot = self._contexts.snapshot(self._thread_id)
         self._memory_block = snapshot.final_block if snapshot is not None else None
         blocks = [

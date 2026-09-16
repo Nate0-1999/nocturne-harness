@@ -82,6 +82,7 @@ class MemoryToolContext:
     project_key: str | None = None
     origin_path: str | None = None
     toolset: StandardToolset | None = None
+    toolset_enabled: bool = True
     skill_directories: tuple[Path, ...] = ()
     boundary_review: Callable[[str, str], Awaitable[str]] | None = None
     excluded_memory_ids: frozenset[UUID] = frozenset()

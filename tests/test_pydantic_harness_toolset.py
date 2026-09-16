@@ -311,8 +311,8 @@ def test_pydantic_harness_has_one_import_fence_and_exact_pin() -> None:
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
 
     assert offenders == []
-    assert '"pydantic-ai==2.28.0"' in pyproject
-    assert '"pydantic-ai-harness[skills]==0.24.0"' in pyproject
+    assert '"pydantic-ai==2.43.0"' in pyproject
+    assert '"pydantic-ai-harness[skills]==0.31.0"' in pyproject
 
 
 @pytest.mark.asyncio

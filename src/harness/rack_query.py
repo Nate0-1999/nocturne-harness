@@ -15,6 +15,7 @@ from harness.spine_client import (
     SpendTableSnapshot,
     VitalsSnapshot,
 )
+from harness.tool_inventory import ToolInventory
 
 
 class RackQueryResult(BaseModel):
@@ -32,6 +33,7 @@ class RackQueryResult(BaseModel):
         | ScorerConsoleSnapshot
         | ContextWindowSnapshot
         | RecipeGraphSnapshot
+        | ToolInventory
         | None
     )
 

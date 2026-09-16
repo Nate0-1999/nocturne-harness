@@ -9,6 +9,26 @@
   color: var(--ink);
 }
 
+.tool-inventory { position: relative; }
+.tool-inventory__panel {
+  position: absolute;
+  z-index: 40;
+  right: 0;
+  width: min(36rem, 85vw);
+  max-height: 55vh;
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid var(--line-strong);
+  background: var(--ground);
+  box-shadow: 0 1rem 3rem var(--ground);
+  overflow-wrap: anywhere;
+}
+.tool-inventory__panel ul { list-style: none; padding: 0; margin: 0; }
+.tool-inventory__panel li { padding: .75rem 0; border-bottom: 1px solid var(--line-strong); }
+.tool-inventory__panel p { margin: .4rem 0; }
+.rewind-control { display: inline-flex; flex-wrap: wrap; gap: .3rem; align-items: center; }
+.rewind-control select, .rewind-control button { font-size: .7rem; }
+
 .topbar {
   position: relative;
   z-index: 30;

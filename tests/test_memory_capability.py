@@ -96,7 +96,7 @@ async def test_vanilla_agent_discovers_search_and_edit_only() -> None:
     """SPEC D.2 153 verifies that vanilla agents discover search and edit tools and
     instruction; this prevents drift in the owned memory capability seam.
     """
-    assert pydantic_ai.__version__ == "2.28.0"  # D.2 136 lockstep core upgrade
+    assert pydantic_ai.__version__ == "2.43.0"  # PLAN M3TH current upstream
     model = TestModel(call_tools=[], custom_output_text="ok")
     capability = MemoryCapability()
     agent = Agent(

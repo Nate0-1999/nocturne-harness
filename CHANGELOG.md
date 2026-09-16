@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.1.19 - 2026-09-16
+
+- Inspect versioned tools and skills from a thread, or turn workspace tools off
+  in settings. Rewind chat and files from per-turn shadow checkpoints while
+  retaining abandoned work. Update Pydantic AI to 2.43.0 and its harness to
+  0.31.0, with cancellation-history repair in the Nocturne adapter.
+
 ## 0.1.18 - 2026-09-16
 
 - Record cloud invoices from the owner's spend panel, with replay-safe billing
