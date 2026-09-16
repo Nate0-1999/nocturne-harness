@@ -281,6 +281,10 @@ class JobScheduler:
             except (ValueError, OSError, SpineClientError) as exc:
                 raise HTTPException(409, str(exc)) from exc
 
+        @app.post("/v1/jobs")
+        async def create_job(body: WorkflowSave):
+            return await save_job(generate_ulid(), body)
+
         @app.post("/v1/jobs/{job_id}/run")
         async def run_job(job_id: str):
             try:

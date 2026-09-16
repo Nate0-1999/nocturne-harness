@@ -1,0 +1,23 @@
+.jobs-instrument { box-sizing: border-box; min-height: 100%; padding: 1.2rem; background: var(--surface-deep); color: var(--ink); }
+.jobs-instrument header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.jobs-instrument h1 { font: 500 2rem var(--display-font); margin: .2rem 0 1rem; }
+.jobs-instrument h2 { font: 500 1.3rem var(--display-font); }
+.jobs-instrument small, .jobs-instrument dt { display: block; color: var(--muted); font: .75rem var(--data-font); }
+.jobs-instrument button { color: var(--ink); background: transparent; border: 1px solid var(--line); padding: .45rem .7rem; cursor: pointer; }
+.jobs-instrument button:hover, .jobs-instrument button:focus-visible { border-color: var(--accent); }
+.jobs-instrument button:disabled { opacity: .5; cursor: default; }
+.jobs-scroll { overflow: auto; }
+.jobs-instrument table { width: 100%; border-collapse: collapse; text-align: left; font: .8rem var(--data-font); }
+.jobs-instrument th { color: var(--muted); font-weight: normal; }
+.jobs-instrument td, .jobs-instrument th { padding: .8rem .5rem; border-bottom: 1px solid var(--line); min-width: 5rem; }
+.jobs-instrument td:first-child { min-width: 10rem; }
+.jobs-instrument td small { margin-top: .5rem; }
+.jobs-instrument [data-selected] { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.jobs-instrument [role=alert], .jobs-instrument [data-state=failed] { color: var(--warning, var(--accent)); }
+.jobs-instrument aside { margin-top: 1rem; border-top: 1px solid var(--line); }
+.jobs-instrument dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .8rem; }
+.jobs-instrument dd { margin: .2rem 0; overflow-wrap: anywhere; font: .8rem var(--data-font); }
+.jobs-timeline { list-style: none; padding: 0 0 0 1rem; border-left: 1px solid var(--accent); }
+.jobs-timeline li { border-bottom: 1px solid var(--line); padding: .8rem 0; }
+.jobs-timeline time, .jobs-timeline strong, .jobs-timeline span { margin-right: 1rem; font: .8rem var(--data-font); }
+.jobs-timeline p { margin: .5rem 0; }

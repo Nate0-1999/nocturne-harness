@@ -57,7 +57,7 @@ test('layer switching preserves independent camera and module layouts through re
 test('module and layer removal round-trip exact retained state through the library', () => {
   let layout = removeStageModule(cloneFactoryStageLayout(), 'memory')
   assert.equal(activeStageLayer(layout).modules.some((module) => module.module_id === 'memory'), false)
-  assert.equal(activeStageLayer(layout).removed_modules[0]?.module_id, 'memory')
+  assert.ok(activeStageLayer(layout).removed_modules.some((module) => module.module_id === 'memory'))
 
   layout = restoreStageModule(layout, 'memory')
   assert.deepEqual(
