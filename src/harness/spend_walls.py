@@ -41,7 +41,9 @@ class SpendWalls:
     """Serialize ledger acknowledgement with pending spend to avoid double counting."""
 
     def __init__(
-        self, path: Path, gateway: SpendGateway,
+        self,
+        path: Path,
+        gateway: SpendGateway,
         reader: Callable[[], Awaitable[SpendTableSnapshot]],
     ) -> None:
         self.path, self.gateway, self.reader = path, gateway, reader
@@ -99,9 +101,7 @@ class SpendWalls:
                     announced = True
                 # A UTC day reset releases a daily wall without owner attention.
                 now = datetime.now(UTC)
-                tomorrow = datetime.fromtimestamp(
-                    (int(now.timestamp()) // 86400 + 1) * 86400, UTC
-                )
+                tomorrow = datetime.fromtimestamp((int(now.timestamp()) // 86400 + 1) * 86400, UTC)
                 try:
                     await asyncio.wait_for(self._condition.wait(), (tomorrow - now).total_seconds())
                 except TimeoutError:
@@ -134,8 +134,7 @@ class SpendWalls:
             ]
             if (day is not None and day.unpriced_lines) or any(cost is None for cost in pending):
                 return (
-                    "Today's receipts include an unreported price; "
-                    "the day wall cannot be verified."
+                    "Today's receipts include an unreported price; the day wall cannot be verified."
                 )
             cost = Decimal(day.total_usd or "0") if day is not None else Decimal(0)
             cost += sum((cost for cost in pending if cost is not None), Decimal(0))
@@ -145,15 +144,21 @@ class SpendWalls:
 
     @staticmethod
     async def _card(run: _RunSpend, decision: str, reason: str) -> None:
-        await run.emitter.event({
-            "event_kind": "boundary_card", "wall": "spend", "decision": decision,
-            "judge": "Spend ledger", "policy": "Per-run and UTC-day spend walls",
-            "run_id": run.run_id, "created_at": datetime.now(UTC).isoformat(),
-            "reason": reason,
-            "action": (
-                "Paused. Raise the relevant wall in App settings to resume, or cancel the run."
-            ),
-        })
+        await run.emitter.event(
+            {
+                "event_kind": "boundary_card",
+                "wall": "spend",
+                "decision": decision,
+                "judge": "Spend ledger",
+                "policy": "Per-run and UTC-day spend walls",
+                "run_id": run.run_id,
+                "created_at": datetime.now(UTC).isoformat(),
+                "reason": reason,
+                "action": (
+                    "Paused. Raise the relevant wall in App settings to resume, or cancel the run."
+                ),
+            }
+        )
 
 
 class SpendWallModel(WrapperModel):

@@ -894,7 +894,8 @@ class RunLoop:
         stop_reason = StopReason.ERROR
         spend_scope = (
             self._spend_walls.bind(active.turn.run_id, _Emitter(self, thread_id, active))
-            if self._spend_walls is not None else nullcontext()
+            if self._spend_walls is not None
+            else nullcontext()
         )
         spend_scope.__enter__()
         try:

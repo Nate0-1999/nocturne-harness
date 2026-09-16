@@ -26,12 +26,19 @@ class Gateway:
     async def read(self):
         now = datetime.now(UTC)
         return SpendTableSnapshot(
-            as_of=now, window_minutes=60, threads=[], purposes=[],
-            days=[DailySpend(
-                day=now.replace(hour=0, minute=0, second=0, microsecond=0),
-                model_usd=str(self.total), infrastructure_usd=None,
-                total_usd=str(self.total), unpriced_lines=0,
-            )],
+            as_of=now,
+            window_minutes=60,
+            threads=[],
+            purposes=[],
+            days=[
+                DailySpend(
+                    day=now.replace(hour=0, minute=0, second=0, microsecond=0),
+                    model_usd=str(self.total),
+                    infrastructure_usd=None,
+                    total_usd=str(self.total),
+                    unpriced_lines=0,
+                )
+            ],
         )
 
 
@@ -57,8 +64,10 @@ async def test_run_wall_stops_next_model_request_and_resumes_after_explicit_rais
     def respond(messages, info):
         calls.append(True)
         return ModelResponse(
-            parts=[TextPart("done")], usage=RequestUsage(input_tokens=1, output_tokens=1),
-            provider_response_id=f"request-{len(calls)}", provider_details={"cost": "0.02"},
+            parts=[TextPart("done")],
+            usage=RequestUsage(input_tokens=1, output_tokens=1),
+            provider_response_id=f"request-{len(calls)}",
+            provider_details={"cost": "0.02"},
         )
 
     model = SpendWallModel(FunctionModel(respond))
@@ -89,19 +98,28 @@ async def test_daily_wall_counts_pending_once_and_cancellation_releases_wait(tmp
     walls = SpendWalls(tmp_path / "walls.json", gateway, gateway.read)
     await walls.configure(SpendLimits(day_usd=Decimal("0.03")))
     response = ModelResponse(
-        parts=[TextPart("done")], usage=RequestUsage(input_tokens=1, output_tokens=1),
-        provider_response_id="request-one", provider_details={"cost": "0.02"},
+        parts=[TextPart("done")],
+        usage=RequestUsage(input_tokens=1, output_tokens=1),
+        provider_response_id="request-one",
+        provider_details={"cost": "0.02"},
     )
     model = SpendWallModel(FunctionModel(lambda messages, info: response))
     run_id = "01K1M2A0000000000000000003"
     with walls.bind(run_id, emitter):
         await model.request([], None, ModelRequestParameters())
         await walls.check_current()  # $0.02 pending is below $0.03.
-        receipts = model_response_receipts([response], lineage=SpendLineage(
-            principal_id="test", machine_id="test", origin_agent="test",
-            thread_id=UUID("11111111-1111-4111-8111-111111111111"),
-            run_id=run_id, prompt_id="01K1M2A0000000000000000004",
-        ), purpose="building")
+        receipts = model_response_receipts(
+            [response],
+            lineage=SpendLineage(
+                principal_id="test",
+                machine_id="test",
+                origin_agent="test",
+                thread_id=UUID("11111111-1111-4111-8111-111111111111"),
+                run_id=run_id,
+                prompt_id="01K1M2A0000000000000000004",
+            ),
+            purpose="building",
+        )
         await walls.record_spend_events(receipts)
         await asyncio.wait_for(walls.check_current(), 1)  # Still $0.02, not $0.04.
         await walls.configure(SpendLimits(day_usd=Decimal("0.01")))
@@ -123,10 +141,16 @@ async def test_completed_response_pauses_with_a_snapshot_card_before_terminal(tm
     gateway = Gateway()
     walls = SpendWalls(tmp_path / "walls.json", gateway, gateway.read)
     await walls.configure(SpendLimits(run_usd=Decimal("0.01")))
-    model = SpendWallModel(FunctionModel(lambda messages, info: ModelResponse(
-        parts=[TextPart("answer")], usage=RequestUsage(input_tokens=1, output_tokens=1),
-        provider_response_id="final", provider_details={"cost": "0.02"},
-    )))
+    model = SpendWallModel(
+        FunctionModel(
+            lambda messages, info: ModelResponse(
+                parts=[TextPart("answer")],
+                usage=RequestUsage(input_tokens=1, output_tokens=1),
+                provider_response_id="final",
+                provider_details={"cost": "0.02"},
+            )
+        )
+    )
 
     class Runner:
         async def run(self, *, emit, message_history, **kwargs):
@@ -151,7 +175,9 @@ async def test_completed_response_pauses_with_a_snapshot_card_before_terminal(tm
     try:
         await loop.submit(
             thread_id="11111111-1111-4111-8111-111111111111",
-            prompt_id="01K1M2A0000000000000000004", prompt="hello", sink=sink,
+            prompt_id="01K1M2A0000000000000000004",
+            prompt="hello",
+            sink=sink,
         )
         await asyncio.wait_for(paused.wait(), 1)
         assert not done.is_set()

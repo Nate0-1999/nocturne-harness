@@ -682,6 +682,7 @@ class DailySpend(ContractModel):
     model_usd: NonNegativeDecimalString | None
     infrastructure_usd: NonNegativeDecimalString | None
     total_usd: NonNegativeDecimalString | None
+    # WALL money / ADR-024: receipt counts cannot be negative.
     unpriced_lines: int = Field(ge=0)
 
 
