@@ -57,6 +57,11 @@ def build_parser() -> argparse.ArgumentParser:
     seed = commands.add_parser("seed", help="add Markdown documents to the Palace review queue")
     seed.add_argument("paths", nargs="+", help="Markdown files or glob patterns")
     commands.add_parser("doctor", help="inspect Palace health and startup readiness")
+    jobs = commands.add_parser("jobs", help="save, monitor and run workflow recipes")
+    jobs.add_argument("action", choices=["list", "save", "run", "stop"])
+    jobs.add_argument("target", nargs="?", help="recipe JSON file, job ID or run ID")
+    jobs.add_argument("--job-id", help="update this saved recipe when using save")
+    jobs.add_argument("--daemon-url", default="http://127.0.0.1:8765")
     deploy = commands.add_parser("deploy", help="reconcile the fixed D1 cloud foundation")
     deploy.add_argument(
         "--dry-run",
@@ -144,6 +149,10 @@ def main(
             return seed_nocturne(args.paths, stdout=stdout)
         elif args.command == "doctor":
             return doctor_nocturne(stdout=stdout)
+        elif args.command == "jobs":
+            from harness.jobs_cli import jobs_nocturne
+
+            return jobs_nocturne(args, stdout=stdout)
         elif args.command == "deploy":
             config = load_config()
             _run_cloud_deploy(

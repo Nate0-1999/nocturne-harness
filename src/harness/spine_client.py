@@ -1533,6 +1533,18 @@ class SpineClient:
         )
         return _expect_success(response, status=200, adapter=_TRANSCRIPT_STATUS_RESPONSE)
 
+    async def jobs(self, machine_id: str) -> JsonObject:
+        response = await self._request(
+            "GET", "v1/jobs", params={"principal_id": self._principal_id, "machine_id": machine_id}
+        )
+        return _expect_success(response, status=200, adapter=TypeAdapter(dict[str, Any]))
+
+    async def job_write(self, method: str, path: str, body: JsonObject) -> JsonObject:
+        response = await self._request(
+            method, path, json_body={**body, "principal_id": self._principal_id}
+        )
+        return _expect_success(response, status=200, adapter=TypeAdapter(dict[str, Any]))
+
     async def _request(
         self,
         method: str,

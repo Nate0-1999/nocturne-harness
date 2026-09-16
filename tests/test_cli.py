@@ -25,6 +25,7 @@ def test_parser_exposes_onboarding_and_lifecycle_commands() -> None:
         "restore",
         "seed",
         "doctor",
+        "jobs",
     }
 
 
