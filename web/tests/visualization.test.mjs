@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { buildChambers, rootCurve } from '../src/visualization.ts'
 
-// ADR-018 / FL-126: a frozen tree has repeatable geometry, including empty chambers.
+/** ADR-018 / FL-126: a frozen tree has repeatable geometry, including empty chambers. */
 test('directory layout preserves every chamber and cell and replays identically', () => {
   const project = { root: '/work', nodes: [
     { path: '.', kind: 'directory', bytes: 0 },
@@ -22,7 +22,7 @@ test('directory layout preserves every chamber and cell and replays identically'
   assert.equal(after.find(c => c.path === '.').radius, before.find(c => c.path === '.').radius)
 })
 
-// FL-129/134: replay uses observed time; an elapsed run grows in temporal depth.
+/** ADR-018 / FL-129/134: replay uses observed time; an elapsed run grows in temporal depth. */
 test('roots grow only to their recorded end and preserve identity on replay', () => {
   const agent = { id: 'worker', started_at: '2026-09-16T00:00:00Z', updated_at: '2026-09-16T00:01:00Z' }
   const begin = Date.parse(agent.started_at), end = begin + 120000

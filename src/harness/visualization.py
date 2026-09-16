@@ -163,7 +163,7 @@ class VisualizationHistory:
 
 
 def mount_visualization_routes(app: FastAPI, *, home, journal, root, graph_reader,
-                               curator_reader, spend_reader) -> None:
+                               curator_reader, spend_reader, progress_reader) -> None:
     """New M3VZ route family; existing rack/rewind/tool functions stay independent."""
     history = VisualizationHistory(home / "visualization.sqlite3")
     task = None
@@ -174,7 +174,7 @@ def mount_visualization_routes(app: FastAPI, *, home, journal, root, graph_reade
         observation = await asyncio.to_thread(work_observation, journal, home, root)
         observation.update(palace=None, curation=None, errors=[])
         for field, reader in (("palace", graph_reader), ("curation", curator_reader),
-                              ("spend", spend_reader)):
+                              ("spend", spend_reader), ("progress", progress_reader)):
             try:
                 result = await reader()
                 result = None if result is None else result.model_dump(mode="json")

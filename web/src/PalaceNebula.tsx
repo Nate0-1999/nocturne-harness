@@ -4,12 +4,14 @@ import {
   BufferGeometry,
   Color,
   Float32BufferAttribute,
+  Group,
   InstancedMesh,
   LineBasicMaterial,
   Matrix4,
   Mesh,
   PointsMaterial,
   REVISION,
+  Vector3,
 } from 'three'
 import { color as tslColor } from 'three/tsl'
 import { MeshStandardNodeMaterial, WebGPURenderer } from 'three/webgpu'
@@ -121,9 +123,8 @@ export function PalaceNebula() {
   const memoryEvents = useMemo(() => sceneSnapshot ? buildNebulaEvents(sceneSnapshot) : [], [sceneSnapshot])
   const filaments = useMemo(() => sceneSnapshot ? buildNebulaFilaments(sceneSnapshot, bodies) : [], [sceneSnapshot, bodies])
   const families = useMemo(() => sceneSnapshot ? buildNebulaCreatureFamilies(sceneSnapshot, bodies, memoryEvents) : [], [sceneSnapshot, bodies, memoryEvents])
-  const curatorRun = visualization.data?.curation?.latest_run
-  const curatorReport = curatorRun?.report as { findings?: { memory_ids?: string[] }[] } | undefined
-  const curatorTargets = new Set(curatorReport?.findings?.flatMap((finding) => finding.memory_ids ?? []) ?? [])
+  const curatorProgress = visualization.loading ? undefined : visualization.data?.progress?.events.at(-1)
+  const curatorTargets = new Set(curatorProgress?.memory_ids ?? [])
   const ghosts = bodies.filter((body) => curatorTargets.has(body.id))
   const kinds = useMemo(() => (
     [...new Set(bodies.map((body) => body.kind))].sort()
@@ -168,7 +169,7 @@ export function PalaceNebula() {
         <article><span>Constellation</span><strong>{bodies.length} bodies</strong><small>{filaments.length} real filaments</small></article>
         <article><span>Memory current</span><strong>{memoryEvents.length} events</strong><small>{latestEvent === undefined ? 'No recorded current' : `${latestEvent.event_class} · ${latestEvent.memory_label}`}</small></article>
         <article><span>Creature</span><strong>{families.length} families</strong><small>{splitCount} splits · {mergeCount} merges</small></article>
-        <article><span>Curator trace</span><strong>{ghosts.length} targets</strong><small>{curatorRun ? `Recorded pass · ${String(curatorRun.completed_at)}` : 'No recorded curator pass'}</small></article>
+        <article aria-label="Curator progress"><span>Curator progress</span><strong>{ghosts.length} targets</strong><small>{curatorProgress ? `${curatorProgress.phase} · ${new Date(curatorProgress.ts).toLocaleTimeString()}` : 'No recorded curator progress'}</small></article>
         {!selected?.as_of && <article><span>Optimization</span><strong>{load.kind === 'ready' ? load.scorer?.active_version ?? 'Unavailable' : 'Waiting'}</strong><small>{learning === undefined ? 'Learning surface unavailable' : `${learning.eligible_dispositions ?? 0} signals · ${(learning.retrain_runs ?? []).length} runs`}</small></article>}
       </div>
       <div className="palace-nebula__event-key" aria-label="Memory event hues">
@@ -252,14 +253,34 @@ function ThreeNebula({
     <NebulaFilaments filaments={filaments} />
     {families.map((family) => <NebulaCreatureCluster key={family.id} family={family} tier={tier} />)}
     {bodies.map((body) => <NebulaMemoryBody key={body.id} body={body} tier={tier} onSelect={onSelect} />)}
-    {ghosts.map((body) => <group key={body.id} position={[body.position[0], body.position[1] + 0.65, body.position[2]]}>
-      <mesh scale={[0.2, 0.45, 0.2]}><sphereGeometry args={[1, tier === 'full' ? 24 : 8, 12]} /><meshStandardMaterial color="#eff8fa" emissive="#89dbef" emissiveIntensity={0.8} transparent opacity={0.4} /></mesh>
-      <mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.35, 0.012, 6, tier === 'full' ? 40 : 12]} /><meshBasicMaterial color="#bcc2cd" transparent opacity={0.8} /></mesh>
-    </group>)}
+    <CuratorGhost targets={ghosts} tier={tier} />
     <CameraControls distance={22} />
     <FpsMeter reportFps={reportFps} />
     <SceneStatistics report={reportTriangles} />
   </Canvas>
+}
+
+function CuratorGhost({ targets, tier }: { targets: readonly NebulaBody[]; tier: NebulaHardwareTier }) {
+  const group = useRef<Group>(null)
+  const destination = useMemo(() => {
+    const point = new Vector3()
+    for (const body of targets) point.add(new Vector3(...body.position))
+    if (targets.length) point.divideScalar(targets.length).add(new Vector3(0, 0.9, 0))
+    return point
+  }, [targets])
+  const placed = useRef(false)
+  useFrame((_, delta) => {
+    if (!group.current || !targets.length) return
+    if (!placed.current) { group.current.position.copy(destination); placed.current = true }
+    // Ease only a change in the recorded target. At rest, no clock-driven wandering.
+    if (group.current.position.distanceToSquared(destination) > 0.000001) {
+      group.current.position.lerp(destination, 1 - Math.exp(-delta * 8))
+    }
+  })
+  return <group ref={group} visible={targets.length > 0}>
+    <mesh scale={[0.28, 0.65, 0.28]}><sphereGeometry args={[1, tier === 'full' ? 24 : 8, 12]} /><meshStandardMaterial color="#eff8fa" emissive="#89dbef" emissiveIntensity={1.4} transparent opacity={0.55} /></mesh>
+    <mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.5, 0.018, 6, tier === 'full' ? 40 : 12]} /><meshBasicMaterial color="#bcc2cd" transparent opacity={0.8} /></mesh>
+  </group>
 }
 
 function NebulaMemoryBody({ body, tier, onSelect }: { body: NebulaBody; tier: NebulaHardwareTier; onSelect: (id: string) => void }) {

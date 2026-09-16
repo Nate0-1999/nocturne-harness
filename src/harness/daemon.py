@@ -1380,6 +1380,7 @@ def create_dev_app(
             app, home=home, journal=journal, root=discovery_root,
             graph_reader=lambda: read_memory_graph(None),
             curator_reader=lambda: owned_spine.curator_activity(principal_id),
+            progress_reader=lambda: owned_spine.curator_progress(principal_id),
             spend_reader=lambda: read_spend_table_snapshot(None),
         )
 

@@ -144,7 +144,7 @@ test('factory layers contain Graph and Injection as stage modules, never fixed t
   assert.deepEqual(injection?.modules.map((module) => module.module_id), ['injection_console'])
 })
 
-/** M3VZ / FL-123: adding an opt-in 3D module on another layer must survive reload. */
+/** ADR-018 / FL-123: adding an opt-in 3D module on another layer must survive reload. */
 test('three visualization modules move from the library without duplicate stored identities', () => {
   let layout = createStageLayer(cloneFactoryStageLayout())
   for (const id of ['farm', 'roots', 'palace_nebula']) layout = restoreStageModule(layout, id)

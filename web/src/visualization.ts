@@ -10,11 +10,16 @@ export interface WorkAgent {
 export interface DirectoryEntry { path: string; kind: 'directory' | 'file' | 'link'; bytes: number }
 export interface WorkProject { root: string; nodes: DirectoryEntry[]; errors: { path: string; error: string }[] }
 export interface RootPoint { ts: string; location: string; cost_usd: number | string | null; state: string }
+export interface CuratorProgressEvent {
+  event_id: number; run_uid: string; phase: string; memory_ids: string[]
+  finding_uid: string | null; action: string | null; ts: string
+}
 export interface VisualizationSnapshot {
   as_of: string; live: boolean; recorded_since: string; timeline: string[]
   projects: WorkProject[]; agents: WorkAgent[]; trails: Record<string, RootPoint[]>
   palace: PalaceNebulaSnapshot | null
   curation: { latest_run: Record<string, unknown> | null } | null
+  progress?: { events: CuratorProgressEvent[]; cursor: number } | null
   errors: { feed: string; error: string }[]
 }
 

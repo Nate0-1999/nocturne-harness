@@ -20,7 +20,7 @@ def test_tree_preserves_empty_hidden_and_untracked_entries_without_following_lin
 
 
 def test_recorded_history_survives_restart_and_replays_deletion_exactly(tmp_path):
-    """FL-134: past observations are immutable, never reconstructed from today's tree."""
+    """ADR-018 / FL-134: past observations are immutable, never reconstructed from today's tree."""
     root = tmp_path / "work"
     root.mkdir()
     file = root / "one.txt"
@@ -44,7 +44,7 @@ def test_recorded_history_survives_restart_and_replays_deletion_exactly(tmp_path
 
 
 def test_worker_observation_uses_actual_location_without_assignment_secrets(tmp_path):
-    """FL-126/129: ants follow real worker feet; feeds never serialize private assignments."""
+    """ADR-018 / FL-126/129: ants follow real feet; feeds never serialize private assignments."""
     from types import SimpleNamespace
 
     assignment = {"origin_agent": "run/root.1", "thread_id": "thread", "project_key": "/work",
@@ -57,7 +57,7 @@ def test_worker_observation_uses_actual_location_without_assignment_secrets(tmp_
 
 
 def test_worker_observation_preserves_start_and_does_not_block_work_on_io_failure(tmp_path):
-    """FL-129: a moving ant keeps its birth time; read-only telemetry is not authority."""
+    """ADR-018 / FL-129: a moving ant keeps its birth time; telemetry is not authority."""
     import json
     from types import SimpleNamespace
 
