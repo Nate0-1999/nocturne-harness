@@ -27,11 +27,11 @@ from harness.model_router import (
     ModelConfigurationError as ModelConfigurationError,
 )
 from harness.pydantic_ai_adapter import (
-    COMPACTION_SUMMARY_PROMPT,
     MemoryCapability,
     WorkspaceCapability,
     adopted_skill_capabilities,
 )
+from harness.pydantic_harness_adapter import COMPACTION_SUMMARY_PROMPT
 from harness.spine_client import (
     CreateMemoryConflictError,
     DuplicateMemoryConflict,
