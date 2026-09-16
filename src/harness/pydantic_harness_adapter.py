@@ -219,6 +219,7 @@ class PydanticHarnessToolset:
         self._presence_sink = presence_sink
         self._presence_events: list[PresenceEvent] = []
         self._closed = False
+        self._background_shells: dict[str, ShellToolset] = {}
         self._emit("spawn", location.cwd)
 
     @classmethod
@@ -289,6 +290,9 @@ class PydanticHarnessToolset:
             else:
                 content = await {
                     "bash": self._bash,
+                    "start_shell": self._start_shell,
+                    "read_shell": self._read_shell,
+                    "stop_shell": self._stop_shell,
                     "read": self._read,
                     "write": self._write,
                     "edit": self._edit,
@@ -307,6 +311,9 @@ class PydanticHarnessToolset:
     async def close(self) -> None:
         if self._closed:
             return
+        for shell in self._background_shells.values():
+            await shell.__aexit__()
+        self._background_shells.clear()
         self._emit("exit", self._location.cwd)
         self._closed = True
 
@@ -495,8 +502,50 @@ class PydanticHarnessToolset:
         return result
 
     async def _bash(self, arguments: Mapping[str, object]) -> str:
-        command = arguments.get("command")
+        shell, wrapped = self._shell_command(arguments)
         timeout = arguments.get("timeout")
+        try:
+            result = await shell.run_command(
+                wrapped, timeout_seconds=float(timeout) if timeout is not None else None
+            )
+        finally:
+            await shell.__aexit__()
+        self._emit("write", self._location.cwd)
+        return result
+
+    async def _start_shell(self, arguments: Mapping[str, object]) -> str:
+        shell, wrapped = self._shell_command(arguments)
+        try:
+            result = await shell.start_command(wrapped)
+        except BaseException:
+            await shell.__aexit__()
+            raise
+        if "\nID: " not in result:
+            await shell.__aexit__()
+            raise ToolsetError(result)
+        command_id = result.rsplit("ID: ", 1)[1].strip()
+        self._background_shells[command_id] = shell
+        self._emit("write", self._location.cwd)
+        return f"Started background shell. ID: {command_id}. Use read_shell or stop_shell."
+
+    async def _read_shell(self, arguments: Mapping[str, object]) -> str:
+        command_id = str(arguments.get("command_id", ""))
+        shell = self._background_shells.get(command_id)
+        if shell is None:
+            raise ToolsetError("No background shell with that ID in this thread.")
+        return await shell.check_command(command_id)
+
+    async def _stop_shell(self, arguments: Mapping[str, object]) -> str:
+        command_id = str(arguments.get("command_id", ""))
+        shell = self._background_shells.get(command_id)
+        if shell is None:
+            raise ToolsetError("No background shell with that ID in this thread.")
+        return await shell.stop_command(command_id)
+
+    def _shell_command(self, arguments: Mapping[str, object]) -> tuple[ShellToolset, str]:
+        command = arguments.get("command")
+        if not isinstance(command, str) or not command.strip():
+            raise ToolsetError("A shell command is required.")
         if _BOUNDARY_COMMAND.search(command):
             # WALL owner files / ADR015: shell tools cannot publish or escape the project grant.
             raise WorkspaceBoundaryError(
@@ -544,14 +593,7 @@ class PydanticHarnessToolset:
             allow_interactive=False,
             env=environment,
         )
-        try:
-            result = await shell.run_command(
-                wrapped, timeout_seconds=float(timeout) if timeout is not None else None
-            )
-        finally:
-            await shell.__aexit__()
-        self._emit("write", self._location.cwd)
-        return result
+        return shell, wrapped
 
 
 def own_history(messages):

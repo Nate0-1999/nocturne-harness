@@ -3467,3 +3467,17 @@ A stack-attuned console selects its sole conversation or asks for an explicit
 preview conversation in a multi-thread stack; other modules retain stack scope.
 The terrain renders server replay measurements, with grid values available as a
 table. Principal polling cannot erase a result measured on the Palace corpus.
+
+## M3SJ candidate — Saved work uses the existing thread loop [P2, P4.1]
+
+PRECEDENT: PLAN M3SJ, SD-059, M3TH/ADR-015 tools, M3SR/ADR-024 spend.
+The candidate stores a recipe before starting a fresh ordinary thread. Its saved
+policy resolves at thread creation; workspace memory prepares autonomously,
+while `none` disables injection and memory tools. The recipe budget tightens the
+existing run wall. An owner-authored fenced shell command checks the exit result.
+Five-field cron uses UTC and coalesces missed occurrences; interrupted executions
+are recorded rather than replayed. File contents, queue high-water IDs and Palace
+memory revisions supply trigger cursors. Background shells retain the upstream
+process handle across turns and close on explicit stop or daemon shutdown.
+Daemon integration remains an unapplied patch in Garden verification/m3sj while
+F114's shared-function ruling is pending. This checkpoint is not a shipped feature.

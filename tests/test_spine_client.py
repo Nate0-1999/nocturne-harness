@@ -118,6 +118,8 @@ def test_client_exposes_all_spine_routes() -> None:
 
     assert methods == {
         "aclose",
+        "jobs",
+        "job_write",
         "prepare_injection",
         "commit_injection",
         "submit_feedback",
