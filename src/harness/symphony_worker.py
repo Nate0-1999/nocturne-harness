@@ -70,7 +70,11 @@ class JudgeAssessment(BaseModel):
     def bind(self, session: dict, sealed: JudgeEvidence) -> JudgeVerdict:
         names = sealed.charter.metrics if session["seat"] == "performance" else ()
         if len(names) != len(self.metrics):
-            raise ValueError("Assess every fixed charter metric in order, exactly once.")
+            raise ValueError(
+                f"Return exactly {len(names)} metric observations, not {len(self.metrics)}. "
+                f"One observation for each complete charter entry: {json.dumps(names)}. "
+                "Do not split an entry into separate observations for its subchecks."
+            )
         verdict = JudgeVerdict(
             schema_version=1,
             **{key: session[key] for key in (
@@ -219,6 +223,7 @@ async def run(assignment_path: Path) -> None:
             "A failed metric or missing evidence is FAIL."
             " The performance seat must return one observation per charter metric, "
             "in the given order; the other seats return an empty metrics list."
+            f" This seat requires exactly {len(sealed.charter.metrics) if session['seat'] == 'performance' else 0} observations."
         )
     elif stage == "smoke":
         prompt = (

@@ -172,7 +172,12 @@ class SymphonyExecution:
             for step_index, step in enumerate(stack.launch.recipe):
                 feedback = ""
                 prior_decision = None
-                count = authority.attempts if step.search else 1
+                strategies = step.stratagems or (
+                    "Direct: implement the simplest solution from the acceptance criteria.",
+                    "Test first: encode the acceptance criteria before implementing.",
+                    "Boundary first: check edge cases, then build the smallest solution.",
+                )
+                count = min(authority.attempts, len(strategies)) if step.search else 1
                 budget = SearchBudget(
                     attempts=count,
                     spend_wall_usd=authority.spend_wall_usd,
@@ -236,12 +241,7 @@ class SymphonyExecution:
                             checkpoint = next_checkpoint
                     briefs = []
                     for number in range(1, count + 1):
-                        strategies = step.stratagems or (
-                            "Direct: implement the simplest solution from the acceptance criteria.",
-                            "Test first: encode the acceptance criteria before implementing.",
-                            "Boundary first: check edge cases, then build the smallest solution.",
-                        )
-                        approach = strategies[(number - 1) % len(strategies)]
+                        approach = strategies[number - 1]
                         attempt_id = f"round-{round_number}-attempt-{number}"
                         location = worktrees / child_id / attempt_id
                         location.parent.mkdir(parents=True, exist_ok=True)
