@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.14 - 2026-09-15
+
+- Show old memory bodies and confirmed near-miss add/pop-off controls in the
+  Palace trace. Remember rejected candidate bodies, preserve thread locks,
+  and confirm Palace deletion while retaining revision history.
+
 ## 0.1.13 - 2026-09-15
 
 - Spend and Palace State use the daemon's principal. Only the configured owner
