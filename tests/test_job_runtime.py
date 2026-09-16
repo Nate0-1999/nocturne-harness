@@ -18,6 +18,25 @@ from harness.toolset_runtime import LazyStandardToolset
 
 
 @pytest.mark.asyncio
+async def test_palace_trigger_reads_principal_graph_without_id_filter():
+    """A-069: Palace events need the real graph query's explicit nullable selector."""
+
+    class Palace:
+        async def memory_graph(self, request):
+            assert request.principal_id == "verification" and request.memory_ids is None
+            return SimpleNamespace(nodes=[])
+
+    scheduler = JobScheduler(
+        spine=Palace(),
+        settings=SimpleNamespace(principal_id="verification"),
+        loop=None,
+        definitions={},
+        toolset_for=None,
+    )
+    assert await scheduler.cursor(SimpleNamespace(trigger="palace"))
+
+
+@pytest.mark.asyncio
 async def test_workflow_receives_typed_events_and_finishes_exit_check(tmp_path):
     """SPEC C.7 / M3SJ: typed deltas must not silently disconnect the completion observer."""
 
