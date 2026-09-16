@@ -1916,6 +1916,7 @@
 }
 
 .memory-card__near-actions {
+  position: relative;
   display: grid;
   flex: 0 0 auto;
   gap: 0.35rem;
