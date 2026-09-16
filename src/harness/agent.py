@@ -339,7 +339,11 @@ class HarnessAgent:
                 "Compare one extracted candidate with machine-fetched corpus neighbors. "
                 "Propose exactly one verdict: new, merge, supersede, or contradict. Target IDs "
                 "must be selected only from the supplied neighbors. Use new with no targets when "
-                "the candidate stands alone. Return structured data only."
+                "the candidate stands alone. Shared subject words do not make two facts the "
+                "same: different attributes of one object remain independent new memories. "
+                "Merge only statements of the same fact; supersede or contradict only when "
+                "both statements give incompatible values for the same attribute. "
+                "Return structured data only."
             ),
             name="harness-extraction-verdict",
         )
