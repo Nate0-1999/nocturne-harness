@@ -122,7 +122,7 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
       </tbody></table>
     </details>
     {project && <details className="work-viz__data"><summary>Complete directory tree · {project.nodes.length} entries</summary>
-      <ul>{project.nodes.map((node) => <li key={node.path}><button onClick={() => selection.select({ kind: 'path', id: `${project.root}/${node.path}`, as_of: selected?.as_of ?? null })}>{node.path}</button> · {node.kind}</li>)}</ul>
+      <ul>{project.nodes.map((node) => <li key={node.path}><button onClick={() => selection.select({ kind: 'path', id: `${project.root}${node.path === '.' ? '' : '/' + node.path}`, as_of: selected?.as_of ?? null })}>{node.path}</button> · {node.kind}</li>)}</ul>
     </details>}
   </section>
 }
