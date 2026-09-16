@@ -14,3 +14,4 @@
 .spend-history--compact svg { height: 36px; }
 .spend-history--compact figcaption { font-size: 0.65rem; }
 .spend-history meter { width: 4rem; }
+.spend-table__name { overflow: hidden; text-overflow: ellipsis; }

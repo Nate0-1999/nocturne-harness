@@ -196,7 +196,7 @@ function SpendRow({
         {disclosure === undefined ? <span>{name}</span> : (
           <button type="button" aria-expanded={disclosure.expanded} onClick={disclosure.toggle}>
             <span aria-hidden="true">{disclosure.expanded ? '−' : '+'}</span>
-            {name}
+            <span className="spend-table__name" title={name}>{name}</span>
             <small>{disclosure.count} {disclosure.count === 1 ? 'model' : 'models'}</small>
           </button>
         )}
