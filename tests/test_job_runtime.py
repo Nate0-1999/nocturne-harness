@@ -1,6 +1,7 @@
 """SPEC C.7 / M3SJ: workflow completion crosses the real typed envelope boundary."""
 
 import asyncio
+from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -70,11 +71,17 @@ async def test_workflow_receives_typed_events_and_finishes_exit_check(tmp_path):
             ),
             timeout=10,
         )
+        has_fence = Path("/usr/bin/sandbox-exec").is_file()
         assert palace.finished == [
             {
                 "machine_id": "test",
-                "state": "completed",
-                "verdict": "Exit check passed.",
+                "state": "completed" if has_fence else "failed",
+                "verdict": "Exit check passed."
+                if has_fence
+                else (
+                    "Exit check failed: Secure shell is unavailable on this host; "
+                    "use read, edit, and write instead."
+                ),
             }
         ]
     finally:

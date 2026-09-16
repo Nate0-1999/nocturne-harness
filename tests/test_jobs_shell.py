@@ -1,6 +1,7 @@
 """SD-059 / PLAN M3SJ background shell lifetime and inherited fences."""
 
 import asyncio
+from pathlib import Path
 
 import pytest
 
@@ -15,6 +16,12 @@ async def test_background_shell_survives_other_calls_and_stops(tmp_path):
     )
     try:
         started = await tools.execute("start_shell", {"command": "echo ready; sleep 30"})
+        if not Path("/usr/bin/sandbox-exec").is_file():
+            assert not started.success
+            assert started.content == (
+                "Secure shell is unavailable on this host; use read, edit, and write instead."
+            )
+            return
         assert started.success, started.content
         command_id = started.content.split("ID: ", 1)[1].split(".", 1)[0]
         await asyncio.sleep(0.1)

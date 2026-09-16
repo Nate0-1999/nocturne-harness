@@ -451,7 +451,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
   },
   jobs: {
     id: 'jobs', name: 'Jobs', version: '1.0.0', class: 'control', slot: 'panel',
-    streams: [], actions: ['jobs.save', 'jobs.run', 'jobs.stop', 'thread.select', 'rack.scope.get', 'rack.scope.set'],
+    streams: [], actions: ['jobs.save', 'jobs.run', 'jobs.stop', 'thread.select', 'rack.scope.get'],
     bounds: stageGridBounds(instrumentStageBounds.preferred), movable: true,
     law_bound: true, default_scope: 'GLOBAL',
   },

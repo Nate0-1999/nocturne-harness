@@ -14,6 +14,7 @@ export function JobsModule() {
   const { query, events } = useRackPlugin()
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null)
   const [failure, setFailure] = useState<string | null>(null)
+  const [loadFailure, setLoadFailure] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [selected, setSelected] = useState<string | null>(null)
   const file = useRef<HTMLInputElement>(null)
@@ -22,7 +23,8 @@ export function JobsModule() {
       const result = await query.query({ resource: 'jobs', as_of: 'now' })
       if (!result.data || typeof result.data !== 'object' || !('jobs' in result.data) || !('runs' in result.data)) throw new Error('Jobs are unavailable.')
       setSnapshot(result.data as unknown as Snapshot)
-    } catch (error) { setFailure(error instanceof Error ? error.message : 'Jobs are unavailable.') }
+      setLoadFailure(null)
+    } catch (error) { setLoadFailure(error instanceof Error ? error.message : 'Jobs are unavailable.') }
   }, [query])
   useEffect(() => {
     const initial = setTimeout(() => void load(), 0)
@@ -48,7 +50,7 @@ export function JobsModule() {
         catch (error) { setFailure(error instanceof Error ? error.message : 'Cannot read this recipe.') }
       }} />
     </header>
-    {(failure || snapshot?.scheduler_error) && <p role="alert">{failure || snapshot?.scheduler_error}</p>}
+    {(failure || loadFailure || snapshot?.scheduler_error) && <p role="alert">{failure || loadFailure || snapshot?.scheduler_error}</p>}
     {!snapshot ? <p role="status">Loading jobs…</p> : snapshot.jobs.length === 0 ? <p>Import a recipe JSON file, or save one with <code>nocturne jobs save recipe.json</code>. A recipe names its prompt, folder, model policy, tools, memory scope, budget and exit check.</p> : <div className="jobs-scroll"><table>
       <thead><tr><th>Workflow</th><th>Next run</th><th>Last run</th><th>State</th><th>Spend</th><th>Exit verdict</th><th>Run</th></tr></thead>
       <tbody>{snapshot.jobs.map(job => {
