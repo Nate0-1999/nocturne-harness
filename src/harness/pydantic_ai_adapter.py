@@ -12,7 +12,6 @@ from pydantic_ai.tools import Tool
 from harness.capability import CapabilityHandler, CapabilityTool, HarnessCapability
 from harness.memory_capability import DEFAULT_MEMORY_FEATURE
 from harness.pydantic_harness_adapter import adopted_skills
-from harness.spine_client import MemoryKind
 from harness.tools_memory import MemoryToolContext
 from harness.toolset import ToolName, ToolsetError
 
@@ -28,30 +27,6 @@ WORKSPACE_INSTRUCTIONS = (
     " Never ask the owner for consent inside a tool call; a refused open-web request must wait"
     " for the owner's exact `/browser allow-web` command."
 )
-
-
-def _adapt_save(handler: CapabilityHandler) -> Tool[MemoryToolContext]:
-    async def adapted_save(
-        ctx: RunContext[MemoryToolContext],
-        label: str,
-        body: str,
-        kind: MemoryKind,
-        *,
-        keywords: list[str] | None = None,
-        project_scoped: bool,
-        force: bool = False,
-    ) -> str:
-        return await handler(
-            ctx.deps,
-            label=label,
-            body=body,
-            kind=kind,
-            keywords=keywords,
-            project_scoped=project_scoped,
-            force=force,
-        )
-
-    return Tool(adapted_save)
 
 
 def _adapt_search(handler: CapabilityHandler) -> Tool[MemoryToolContext]:
@@ -83,7 +58,6 @@ def _adapt_edit(handler: CapabilityHandler) -> Tool[MemoryToolContext]:
 
 
 _CONTEXTUAL_ADAPTERS = {
-    "save_memory": _adapt_save,
     "search_memory": _adapt_search,
     "edit_memory": _adapt_edit,
 }
@@ -109,7 +83,7 @@ class MemoryCapability(Capability[MemoryToolContext]):
         if definition.id != "memory":
             raise ValueError("MemoryCapability requires the memory feature")
         if tuple(tool.name for tool in definition.tools) != tuple(_CONTEXTUAL_ADAPTERS):
-            raise ValueError("MemoryCapability requires exactly the three C.6 memory tools")
+            raise ValueError("MemoryCapability requires search and edit memory tools")
         if (
             definition.lifecycle_hooks
             or definition.history_transforms
@@ -328,3 +302,14 @@ class WorkspaceCapability(Capability[MemoryToolContext]):
             instructions=[WORKSPACE_INSTRUCTIONS],
             tools=[Tool(function) for function in WORKSPACE_TOOLS],
         )
+
+
+class DelegateCapability(Capability[MemoryToolContext]):
+    """One bounded worker return through the ordinary Pydantic AI tool seam."""
+
+    def __init__(self) -> None:
+        async def delegate_task(ctx: RunContext[MemoryToolContext], task: str) -> str:
+            """Delegate a self-contained task; receive a concise result with full work journaled."""
+            return await ctx.deps.delegate(task)
+
+        super().__init__(id="delegate", tools=[Tool(delegate_task)], defer_loading=False)

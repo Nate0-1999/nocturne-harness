@@ -1,4 +1,5 @@
 import {
+  Fragment,
   useCallback,
   useEffect,
   useMemo,
@@ -2174,6 +2175,10 @@ function ChatModule() {
       : [...selectedThread.messages, ...optimistic]
   }, [selectedThread])
   const activeRun = selectedThread?.activeRun ?? null
+  const compactionPostId = [...messages].reverse().find((message) =>
+    message.role === 'assistant' &&
+    message.events.some((event) => event.event_kind === 'compaction_completed')
+  )?.message_id
   const openGate = selectedThread?.openGate ?? null
   const queuedPrompts = selectedThread?.queuedPrompts ?? []
   const awaitingSnapshot = selectedThread?.awaitingSnapshot ?? true
@@ -2472,22 +2477,24 @@ function ChatModule() {
           ) : (
             <>
               {messages.map((message) => (
-                <MessageRow
-                  key={message.message_id}
-                  message={message}
-                  threadId={selectedThreadId ?? ''}
-                  queuePosition={
-                    message.role === 'user'
-                      ? queuedPrompts.findIndex(
-                          (queued) => queued.prompt_id === message.message_id,
-                        ) + 1
-                      : 0
-                  }
-                  runState={message.run_id === null ? undefined : runStates.get(message.run_id)}
-                  activeRunId={activeRun?.run_id}
-                  activeState={activeRun?.state}
-                  completedSymphonyDraftIds={completedSymphonyDraftIds}
-                />
+                <Fragment key={message.message_id}>
+                  <MessageRow
+                    message={message}
+                    threadId={selectedThreadId ?? ''}
+                    queuePosition={
+                      message.role === 'user'
+                        ? queuedPrompts.findIndex(
+                            (queued) => queued.prompt_id === message.message_id,
+                          ) + 1
+                        : 0
+                    }
+                    runState={message.run_id === null ? undefined : runStates.get(message.run_id)}
+                    activeRunId={activeRun?.run_id}
+                    activeState={activeRun?.state}
+                    completedSymphonyDraftIds={completedSymphonyDraftIds}
+                  />
+                  {message.message_id === compactionPostId && <ThreadEndModule inline />}
+                </Fragment>
               ))}
             </>
           )}
@@ -2672,38 +2679,47 @@ interface AgentFileOffer {
   byte_count: number
 }
 
-function ThreadEndModule() {
+function ThreadEndModule({ inline = false }: { inline?: boolean }) {
   const snapshot = useRackSnapshot()
   const { events } = useRackPlugin()
   const [scope, setScope] = useState<RackScope>(
     RACK_MANIFESTS.thread_end.default_scope,
   )
   const [cards, setCards] = useState<ThreadEndQueueCard[]>([])
+  const [refresh, setRefresh] = useState(0)
   const selectedThreadId = snapshot.selectedThreadId
   const selectedThread = selectedThreadId === null ? null : snapshot.threads[selectedThreadId]
   const finalPost = finalAssistantPost(selectedThread?.messages ?? [])
 
+  useEffect(() => events.subscribe((event) => {
+    if (event.direction === 'inbound' && event.envelope.type === 'run.done') {
+      setRefresh((value) => value + 1)
+    }
+  }), [events])
+
   useEffect(() => {
+    if (inline) return
     void events.dispatch({ type: 'rack.scope.get', module_id: 'thread_end' }).then(setScope)
-  }, [events])
+  }, [events, inline])
 
   useEffect(() => {
     const threadId = scope === 'ATTUNED' ? selectedThreadId ?? undefined : undefined
     void events.dispatch({ type: 'queue.load', thread_id: threadId, birthplace: 'thread' }).then((value) => {
       setCards(queueCardsFrom(value))
     }).catch(() => setCards([]))
-  }, [events, scope, selectedThreadId])
+  }, [events, scope, selectedThreadId, refresh])
 
   return (
     <div className="thread-end-module">
-      {cards.length === 0 ? (
+      {cards.length === 0 ? (inline ? null : (
         <section className="thread-end-card thread-end-card--empty">
           <h2>Nothing pending</h2>
           <p>Duplicate lessons were folded out, or this thread produced no durable candidates.</p>
         </section>
-      ) : (
+      )) : (
         <ThreadEndCard
           view={{ final_post: finalPost, cards }}
+          showFinalPost={!inline}
           onDecide={(itemUid, decision, mode) => events.dispatch({
             type: 'queue.decide', item_uid: itemUid, decision,
             approval_mode: mode,
@@ -2725,10 +2741,12 @@ interface ThreadEndView {
 
 function ThreadEndCard({
   view,
+  showFinalPost = true,
   onDecide,
   onChanged,
 }: {
   view: ThreadEndView
+  showFinalPost?: boolean
   onDecide: (
     itemUid: string,
     decision: 'approve' | 'deny',
@@ -2739,6 +2757,7 @@ function ThreadEndCard({
   const [collapsed, setCollapsed] = useState(false)
   const [decisionError, setDecisionError] = useState<string | null>(null)
   const seen = useRef(new Set<string>())
+  const scrolled = useRef(false)
   const [busy, setBusy] = useState(new Set<string>())
 
   function decide(
@@ -2769,17 +2788,21 @@ function ThreadEndCard({
   }
 
   return (
-    <section className="thread-end-card" data-testid="thread-end-card" aria-label="Thread memory review">
+    <section className="thread-end-card" data-testid="thread-end-card" aria-label="Thread memory review"
+      onWheelCapture={() => { scrolled.current = true }}
+      onKeyDownCapture={(event) => {
+        if (['ArrowDown', 'PageDown', 'End'].includes(event.key)) scrolled.current = true
+      }}>
       {decisionError && <p role="alert">{decisionError}</p>}
       <header className="thread-end-card__header">
         <div>
           <h2>What should survive?</h2>
         </div>
       </header>
-      <div className="thread-end-card__final">
+      {showFinalPost && <div className="thread-end-card__final">
         <span>Final post</span>
         <p>{view.final_post || 'No final assistant post was captured.'}</p>
-      </div>
+      </div>}
       <button
         className="thread-end-card__collapse"
         type="button"
@@ -2796,6 +2819,12 @@ function ThreadEndCard({
               card={card}
               disabled={busy.has(card.item_uid)}
               onSeen={() => seen.current.add(card.item_uid)}
+              onPassed={() => {
+                if (scrolled.current && seen.current.has(card.item_uid) &&
+                    card.verdict !== 'contradict' && !busy.has(card.item_uid)) {
+                  decide(card.item_uid, 'approve', 'passive')
+                }
+              }}
               onApprove={() => decide(card.item_uid, 'approve', 'explicit')}
               onDeny={() => decide(card.item_uid, 'deny', 'explicit')}
             />
@@ -2816,12 +2845,14 @@ function VisibleQueueRow({
   card,
   disabled,
   onSeen,
+  onPassed,
   onApprove,
   onDeny,
 }: {
   card: ThreadEndQueueCard
   disabled: boolean
   onSeen: () => void
+  onPassed: () => void
   onApprove: () => void
   onDeny: () => void
 }) {
@@ -2831,10 +2862,19 @@ function VisibleQueueRow({
     if (row === null || typeof IntersectionObserver === 'undefined') return
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting && entry.intersectionRatio === 1) onSeen()
-    }, { threshold: 1 })
+      let visibleTop = entry.rootBounds?.top ?? 0
+      for (let parent = row.parentElement; parent; parent = parent.parentElement) {
+        if (['auto', 'scroll', 'hidden', 'clip'].includes(getComputedStyle(parent).overflowY)) {
+          visibleTop = Math.max(visibleTop, parent.getBoundingClientRect().top)
+        }
+      }
+      if (!entry.isIntersecting && entry.boundingClientRect.bottom <= visibleTop) {
+        onPassed()
+      }
+    }, { threshold: [0, 1] })
     observer.observe(row)
     return () => observer.disconnect()
-  }, [onSeen])
+  }, [onSeen, onPassed])
   return (
     <article ref={rowRef} className="thread-end-row" data-verdict={card.verdict}>
       <div className="thread-end-row__meta">
@@ -3366,11 +3406,23 @@ function MessageRow({
         <span>Nocturne</span>
         {status !== null && <span className="message__status">{status}</span>}
       </header>
+      <div className="message__content">
+      {message.events.some((event) => event.event_kind === 'compaction_completed') && (
+        <p className="message__content message__content--quiet" data-testid="compaction-completed">
+          Conversation compacted · full history kept in the journal
+        </p>
+      )}
+      {message.events.filter((event) => event.event_kind === 'worker_return').map((event, index) => (
+        <p key={`worker-return-${index}`} className="message__content message__content--quiet" data-testid="worker-return">
+          Worker returned {String(event.returned_bytes)} bytes{event.capped ? ' · capped' : ''} · full result kept in the journal
+        </p>
+      ))}
       {message.content ? (
         <AssistantMarkdown content={message.content} />
       ) : (
         <p className="message__content message__content--quiet">Working…</p>
       )}
+      </div>
       {message.thinking && (
         <details className="run-detail">
           <summary>Process signal</summary>

@@ -22,17 +22,10 @@ from harness.pydantic_ai_adapter import MemoryCapability
 from harness.tools_memory import MemoryToolContext, edit_memory, save_memory, search_memory
 
 EXPECTED_MEMORY_INSTRUCTION = (
-    "Save a memory when you learn a durable user preference, a correction to "
-    "something you got wrong, a stable project fact, or a procedure the user "
-    "wants repeated. Keep every memory ATOMIC: one fact per unit, at most a "
-    "few sentences (hard cap 128 tokens); split larger content into multiple "
-    "units. ALWAYS include 2-5 lowercase keywords (searchable nouns/terms — "
-    "a memory without keywords is handicapped in retrieval). Prefer editing "
-    "an existing memory over creating a near-duplicate. "
-    "When a project-scoped save reports that no current project exists, surface "
-    "that result and do not retry the save globally in the same turn. A global "
-    "fallback requires explicit user confirmation in a later user turn. Never "
-    "save secrets or credentials."
+    "Search existing memories when useful and edit them to correct an established fact. "
+    "New memories are proposed only when this conversation is compacted or closed. "
+    "The owner can explicitly save with /remember. Do not claim a new memory was saved "
+    "during a chat turn. Never store secrets or credentials."
 )
 
 
@@ -58,13 +51,11 @@ def test_capability_contract_is_owned_typed_and_frozen() -> None:
         EXPECTED_MEMORY_INSTRUCTION
     ]
     assert [tool.name for tool in definition.tools] == [
-        "save_memory",
         "search_memory",
         "edit_memory",
     ]
-    assert [tool.handler for tool in definition.tools] == [save_memory, search_memory, edit_memory]
+    assert [tool.handler for tool in definition.tools] == [search_memory, edit_memory]
     assert [tool.description for tool in definition.tools] == [
-        save_memory.__doc__.strip(),
         search_memory.__doc__.strip(),
         edit_memory.__doc__.strip(),
     ]
@@ -101,8 +92,8 @@ def test_owned_save_handler_keeps_project_scope_required_and_force_optional() ->
 
 
 @pytest.mark.asyncio
-async def test_vanilla_agent_discovers_three_memory_tools_and_instruction() -> None:
-    """ADR-005 is defended by verifying that vanilla agent discovers three memory tools and
+async def test_vanilla_agent_discovers_search_and_edit_only() -> None:
+    """SPEC D.2 153 verifies that vanilla agents discover search and edit tools and
     instruction; this prevents drift in the owned memory capability seam.
     """
     assert pydantic_ai.__version__ == "2.28.0"  # D.2 136 lockstep core upgrade
@@ -120,7 +111,6 @@ async def test_vanilla_agent_discovers_three_memory_tools_and_instruction() -> N
     parameters = model.last_model_request_parameters
     assert parameters is not None
     assert [tool.name for tool in parameters.function_tools] == [
-        "save_memory",
         "search_memory",
         "edit_memory",
     ]
@@ -144,27 +134,7 @@ async def test_adapted_tool_schemas_defaults_descriptions_and_capability_id() ->
     assert parameters is not None
     tools = {tool.name: tool for tool in parameters.function_tools}
 
-    save_schema = tools["save_memory"].parameters_json_schema
-    assert set(save_schema["properties"]) == {
-        "label",
-        "body",
-        "kind",
-        "keywords",
-        "project_scoped",
-        "force",
-    }
-    assert set(save_schema["required"]) == {"label", "body", "kind", "project_scoped"}
-    assert save_schema["properties"]["keywords"]["default"] is None
-    assert save_schema["properties"]["force"]["default"] is False
-    assert save_schema["properties"]["kind"] == {"$ref": "#/$defs/MemoryKind"}
-    assert save_schema["$defs"]["MemoryKind"]["enum"] == [
-        "fact",
-        "preference",
-        "procedure",
-        "project_note",
-        "persona",
-        "pinned",
-    ]
+    assert "save_memory" not in tools
 
     search_schema = tools["search_memory"].parameters_json_schema
     assert set(search_schema["properties"]) == {"query", "k"}
@@ -176,7 +146,6 @@ async def test_adapted_tool_schemas_defaults_descriptions_and_capability_id() ->
     assert set(edit_schema["required"]) == {"label_or_id", "new_body", "reason"}
 
     expected_descriptions = {
-        "save_memory": save_memory.__doc__.strip(),
         "search_memory": search_memory.__doc__.strip(),
         "edit_memory": edit_memory.__doc__.strip(),
     }

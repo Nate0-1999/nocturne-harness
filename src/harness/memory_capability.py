@@ -1,20 +1,13 @@
 """Framework-free definition of the C.6 memory capability."""
 
 from harness.capability import CapabilityDefinition, CapabilityInstruction, CapabilityTool
-from harness.tools_memory import edit_memory, save_memory, search_memory
+from harness.tools_memory import edit_memory, search_memory
 
 MEMORY_INSTRUCTION = (
-    "Save a memory when you learn a durable user preference, a correction to "
-    "something you got wrong, a stable project fact, or a procedure the user "
-    "wants repeated. Keep every memory ATOMIC: one fact per unit, at most a "
-    "few sentences (hard cap 128 tokens); split larger content into multiple "
-    "units. ALWAYS include 2-5 lowercase keywords (searchable nouns/terms — "
-    "a memory without keywords is handicapped in retrieval). Prefer editing "
-    "an existing memory over creating a near-duplicate. "
-    "When a project-scoped save reports that no current project exists, surface "
-    "that result and do not retry the save globally in the same turn. A global "
-    "fallback requires explicit user confirmation in a later user turn. Never "
-    "save secrets or credentials."
+    "Search existing memories when useful and edit them to correct an established fact. "
+    "New memories are proposed only when this conversation is compacted or closed. "
+    "The owner can explicitly save with /remember. Do not claim a new memory was saved "
+    "during a chat turn. Never store secrets or credentials."
 )
 
 
@@ -33,7 +26,7 @@ class MemoryFeature:
     definition = CapabilityDefinition(
         id="memory",
         instructions=(CapabilityInstruction(text=MEMORY_INSTRUCTION),),
-        tools=tuple(_tool(handler) for handler in (save_memory, search_memory, edit_memory)),
+        tools=tuple(_tool(handler) for handler in (search_memory, edit_memory)),
     )
 
 

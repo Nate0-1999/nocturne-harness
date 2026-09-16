@@ -38,12 +38,12 @@ def test_tracker_keeps_measured_total_and_exact_limit_with_estimated_split() -> 
 
     observation = tracker.snapshot("thread-a").aggregate
     assert observation is not None
-    assert observation.used_tokens == 1_250
+    assert observation.used_tokens == 1_262
     assert observation.context_tokens == 16_000
     assert observation.threshold_tokens == 12_800
-    assert sum(observation.categories.model_dump().values()) == 1_250
+    assert sum(observation.categories.model_dump().values()) == 1_262
     assert observation.breakdown_basis == "estimated"
-    assert observation.compaction_active is False
+    assert observation.compaction_active is True
     assert observation.memory_allocation is not None
     assert observation.memory_allocation.share_tokens == 1_600
     assert observation.memory_allocation.pinned_overflow_tokens == 220
@@ -170,3 +170,14 @@ def test_f034_zero_usage_error_response_cannot_erase_last_successful_measurement
     )
 
     assert tracker.snapshot("thread-a").aggregate == measured
+
+    tracker.record(
+        thread_id="thread-a",
+        captured=[],
+        resolution=resolution,
+        memory_block=None,
+        compaction_fraction=0.45,
+    )
+    changed = tracker.snapshot("thread-a").aggregate
+    assert changed.used_tokens == measured.used_tokens
+    assert changed.threshold_tokens == int(resolution.context_tokens * 0.45)

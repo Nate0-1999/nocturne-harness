@@ -8,7 +8,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Literal
 from uuid import UUID
 
-from harness.agent import ExtractionCandidateDraft, HarnessAgent
+from harness.agent import ExtractionCandidateDraft, ExtractionDraft, HarnessAgent
 from harness.spine_client import (
     ExtractionCandidate,
     ExtractionRequest,
@@ -65,7 +65,63 @@ class ExtractionService:
             )
             return ThreadEndResult(thread_id, final_post, "", [], pending.cards, 0, True)
         transcript = json.dumps(messages, ensure_ascii=False, separators=(",", ":"))
-        draft = await self._agent.extract_thread(transcript)
+        return await self.triage(thread_id, transcript, tail=tail, final_post=final_post)
+
+    async def triage(
+        self,
+        thread_id,
+        transcript,
+        *,
+        tail,
+        final_post="",
+        origin="extraction",
+        model=None,
+        usage=None,
+        on_result=None,
+        model_settings=None,
+        summary_prompt=None,
+    ):
+        """D.2 153: compaction and close run the same summarizer and admission path."""
+        options = (
+            {}
+            if model is None
+            else {
+                "model": model,
+                "usage": usage,
+                "on_result": on_result,
+                "model_settings": model_settings,
+            }
+        )
+        if summary_prompt is not None:
+            options["summary_prompt"] = summary_prompt
+        draft = await self._agent.extract_thread(transcript, **options)
+        return await self.admit(
+            thread_id,
+            draft,
+            tail=tail,
+            final_post=final_post,
+            origin=origin,
+            model=model,
+            usage=usage,
+            on_result=on_result,
+            model_settings=model_settings,
+        )
+
+    async def admit(
+        self,
+        thread_id: UUID,
+        draft: ExtractionDraft,
+        *,
+        tail: str,
+        final_post: str = "",
+        origin: str = "extraction",
+        model=None,
+        usage=None,
+        on_result=None,
+        model_settings=None,
+    ) -> ThreadEndResult:
+        """The shared compaction/close queue door; the summarizer already did triage."""
+        text_id = str(thread_id)
         candidates = []
         for item in draft.candidates:
             neighbors = await self._spine.search(
@@ -84,13 +140,27 @@ class ExtractionService:
                 }
                 for neighbor in neighbors.results
             ]
-            verdict = await self._agent.propose_extraction_verdict(item, neighbor_payload)
+            options = (
+                {}
+                if model is None
+                else {
+                    "model": model,
+                    "usage": usage,
+                    "on_result": on_result,
+                    "model_settings": model_settings,
+                }
+            )
+            verdict = await self._agent.propose_extraction_verdict(
+                item,
+                neighbor_payload,
+                **options,
+            )
             candidates.append(_candidate(item, verdict.verdict, verdict.target_ids))
         request = ExtractionRequest(
             principal_id=self._principal_id,
             thread_id=thread_id,
             machine_id=self._machine_id,
-            editor="extraction",
+            editor=origin,
             origin_location=self._journal.thread_location(text_id),
             candidates=candidates,
         )
@@ -103,7 +173,7 @@ class ExtractionService:
                 birthplace="thread",
             )
             cards = _matching_thread_cards(pending.cards, request)
-            if not cards:
+            if len(cards) != len(request.candidates) or not cards:
                 raise
             response = ExtractionResponse(
                 cards=cards,

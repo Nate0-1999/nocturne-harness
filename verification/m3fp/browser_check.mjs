@@ -52,6 +52,9 @@ try {
     if (!journalContains(trace, prompt, answer) || trace.prepare_calls !== 0) {
       throw new Error('A fresh daemon did not restore the preserved heartbeat journal')
     }
+    if (trace.compaction_histories < 1) {
+      throw new Error('Reinstall lost the compacted provider history')
+    }
     await conversation.getByText(answer, { exact: true }).waitFor({ state: 'visible' })
     await conversation.getByText(
       'Run error · The heartbeat model stopped unexpectedly. · partial kept', { exact: true },
@@ -142,6 +145,18 @@ try {
     await conversation.getByTestId('composer').isEnabled() &&
     await conversation.getByTestId('composer').inputValue() === '')
   result.consecutive_sends_without_reload = true
+  await conversation.getByTestId('composer').fill('/compact')
+  await conversation.getByTestId('composer').press('Enter')
+  await conversation.getByText('Context compacted with memories-then-drop.', { exact: true })
+    .waitFor({ state: 'visible' })
+  await waitUntil(async () => {
+    trace = await fetchJson(`${baseUrl}/__scenario__/heartbeat`)
+    return trace.compactions >= 1 && trace.compaction_histories >= 1
+  })
+  await conversation.getByTestId('compaction-completed').first().waitFor({ state: 'visible' })
+  await page.screenshot({ path: resolve(evidenceDir, '06-compaction.png') })
+  result.compaction_and_durable_history = true
+  await waitUntil(async () => conversation.getByTestId('composer').isEnabled())
   await conversation.getByTestId('composer').fill('Show the heartbeat failure reason.')
   await conversation.getByTestId('composer').press('Enter')
   const failure = 'Run error · The heartbeat model stopped unexpectedly. · partial kept'

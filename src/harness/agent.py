@@ -31,6 +31,7 @@ from harness.pydantic_ai_adapter import (
     WorkspaceCapability,
     adopted_skill_capabilities,
 )
+from harness.pydantic_harness_adapter import COMPACTION_SUMMARY_PROMPT
 from harness.spine_client import (
     CreateMemoryConflictError,
     DuplicateMemoryConflict,
@@ -106,10 +107,19 @@ REMEMBER_SPLIT_GUIDANCE = (
     "Please clarify the facts and try /remember again."
 )
 EXTRACTION_INSTRUCTION = (
-    "Read the complete thread transcript. Return a concise working summary, open loops, and at "
-    "most five durable memory candidates. Each candidate must be atomic, stand alone, preserve "
-    "uncertainty, and include 2-5 distinct lowercase searchable keywords. Do not extract transient "
-    "chat or facts that are not useful beyond this thread."
+    "Triage the supplied conversation in ONE pass: still-live context goes in working_summary "
+    "and open_loops; important information no longer needed for the current work goes in "
+    "candidates; transient or unimportant details remain only in the original journal. "
+    "Follow the supplied summary strategy. Propose at most five durable memories, each one "
+    "standalone fact of at most 128 cl100k_base tokens, a label of at most 64 characters, "
+    "and 2-5 distinct lowercase keywords. Preserve uncertainty. Never extract secrets or "
+    "credentials. Do not treat sub-agent bulk or verification instructions as durable facts."
+    " Shorten an over-cap fact to the cap as ONE memory; split only independent facts."
+    " Prefer zero candidates over weak ones. Never memorize arithmetic, common knowledge, "
+    "scratch data, generated narratives, task progress, completion, or the existence of an "
+    "answer. Only user-established facts useful beyond this task belong in candidates. "
+    "Separate independent specifications into separate memories, even when they fit together "
+    "under the size cap. Active tasks and their answers belong only in working_summary."
 )
 SEED_SPLIT_INSTRUCTION = (
     "Semantically split the complete Markdown document into durable atomic memories. Preserve "
@@ -183,7 +193,10 @@ class RememberSplitDraft(BaseModel):
 class ExtractionCandidateDraft(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     label: StrictStr
-    body: StrictStr
+    body: StrictStr = Field(
+        description="Exactly one independently editable fact. Two properties of the same "
+        "subject are separate candidates: changing one must not require editing the other."
+    )
     kind: Literal["fact", "preference", "procedure", "project_note", "persona"]
     # WALL Palace writes / ADR-022: extracted candidates retain the memory keyword contract.
     keywords: list[StrictStr] = Field(min_length=2, max_length=5)
@@ -288,6 +301,17 @@ class HarnessAgent:
             ),
             name="permission-judge",
         )
+        self.worker_agent = Agent(
+            self._default_model,
+            deps_type=MemoryToolContext,
+            capabilities=[WorkspaceCapability()],
+            instructions=(
+                "Complete only the delegated task. Return a concise distillate: findings, "
+                "evidence paths, and unresolved questions. Keep bulk output in files. "
+                "You have no memory tools and may not make memories or address the owner."
+            ),
+            name="harness-worker",
+        )
         self._label_agent = Agent(
             self._default_model,
             output_type=PromptedOutput(RememberDraft),
@@ -315,7 +339,11 @@ class HarnessAgent:
                 "Compare one extracted candidate with machine-fetched corpus neighbors. "
                 "Propose exactly one verdict: new, merge, supersede, or contradict. Target IDs "
                 "must be selected only from the supplied neighbors. Use new with no targets when "
-                "the candidate stands alone. Return structured data only."
+                "the candidate stands alone. Shared subject words do not make two facts the "
+                "same: different attributes of one object remain independent new memories. "
+                "Merge only statements of the same fact; supersede or contradict only when "
+                "both statements give incompatible values for the same attribute. "
+                "Return structured data only."
             ),
             name="harness-extraction-verdict",
         )
@@ -717,14 +745,45 @@ class HarnessAgent:
         transcript: str,
         *,
         model: Model | str | None = None,
+        usage: RunUsage | None = None,
+        model_settings: ModelSettings | None = None,
+        on_result=None,
+        summary_prompt: str = COMPACTION_SUMMARY_PROMPT,
     ) -> ExtractionDraft:
         """Run the tools-free cheap-model extraction pass over one durable transcript."""
 
+        extraction_settings = {
+            **(model_settings or {}),
+            "openrouter_usage": {"include": True},
+            "temperature": 0,
+        }
         result = await self._extraction_agent.run(
-            transcript,
+            summary_prompt.replace("{messages}", transcript),
             model=self._select_model(model),
             usage_limits=self._usage_limits,
+            usage=usage,
+            model_settings=extraction_settings,
         )
+        if on_result is not None:
+            await on_result(result.all_messages())
+        if any(cl100k_token_count(item.body) > 128 for item in result.output.candidates):
+            result = await self._extraction_agent.run(
+                "Keep the working summary and open loops. Shorten each over-cap fact into "
+                "ONE memory of at most 128 cl100k_base tokens; split only independent facts. "
+                "Preserve all qualifiers and return the complete corrected draft:\n"
+                + result.output.model_dump_json(),
+                model=self._select_model(model),
+                usage=usage,
+                usage_limits=self._usage_limits,
+                model_settings=extraction_settings,
+            )
+            if on_result is not None:
+                await on_result(result.all_messages())
+        if any(cl100k_token_count(item.body) > 128 for item in result.output.candidates):
+            # D.2 153 / SD-062: failed shortening must retain the uncompacted history.
+            raise ValueError(
+                "Compaction could not preserve a fact within the memory cap; history kept."
+            )
         return result.output
 
     async def propose_extraction_verdict(
@@ -733,6 +792,9 @@ class HarnessAgent:
         neighbors: list[dict[str, str]],
         *,
         model: Model | str | None = None,
+        usage: RunUsage | None = None,
+        on_result=None,
+        model_settings: ModelSettings | None = None,
     ) -> ExtractionVerdictDraft:
         """Give the thread-aware extractor the corpus neighborhood before queue birth."""
 
@@ -740,7 +802,15 @@ class HarnessAgent:
             f"Candidate: {candidate.model_dump_json()}\nNeighbors: {neighbors!r}",
             model=self._select_model(model),
             usage_limits=self._usage_limits,
+            usage=usage,
+            model_settings={
+                "openrouter_usage": {"include": True},
+                **(model_settings or {}),
+                "temperature": 0,
+            },
         )
+        if on_result is not None:
+            await on_result(result.all_messages())
         allowed = {UUID(item["memory_id"]) for item in neighbors}
         if any(target not in allowed for target in result.output.target_ids):
             # WALL Palace writes / ADR-022: affect only fetched candidates.

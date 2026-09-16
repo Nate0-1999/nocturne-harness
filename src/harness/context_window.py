@@ -44,7 +44,7 @@ class ContextObservation(BaseModel):
     threshold_tokens: int = Field(gt=0)
     categories: ContextCategories
     breakdown_basis: Literal["estimated"] = "estimated"
-    compaction_active: Literal[False] = False
+    compaction_active: bool = True
     memory_allocation: ContextMemoryAllocation | None = None
 
 
@@ -83,6 +83,7 @@ class ContextWindowTracker:
         memory_block: str | None,
         workspace_block: str | None = None,
         memory_allocation: MemoryAllocation | None = None,
+        compaction_fraction: float = _THRESHOLD_RATIO,
     ) -> None:
         if resolution is None:
             return
@@ -95,15 +96,24 @@ class ContextWindowTracker:
             None,
         )
         if response is None:
+            previous = self._observations.get(thread_id)
+            if previous is not None:
+                self._observations[thread_id] = previous.model_copy(
+                    update={
+                        "threshold_tokens": max(
+                            1, int(previous.context_tokens * compaction_fraction)
+                        )
+                    }
+                )
             return
-        used = response.usage.input_tokens
+        used = response.usage.input_tokens + response.usage.output_tokens
         self._observations[thread_id] = ContextObservation(
             thread_id=thread_id,
             model=resolution.model,
             observed_at=datetime.now(UTC),
             used_tokens=used,
             context_tokens=resolution.context_tokens,
-            threshold_tokens=max(1, int(resolution.context_tokens * _THRESHOLD_RATIO)),
+            threshold_tokens=max(1, int(resolution.context_tokens * compaction_fraction)),
             categories=_estimated_categories(used, memory_block, workspace_block, captured),
             memory_allocation=_context_memory_allocation(memory_allocation, memory_block),
         )

@@ -11,7 +11,7 @@ import threading
 import uuid
 from collections.abc import Callable, Mapping
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from errno import ELOOP, ENOENT, ENOTDIR
 from pathlib import Path
@@ -46,6 +46,7 @@ class HydratedTranscript:
     project_label: str | None = None
     workspace_root: str | None = None
     current_location: str | None = None
+    compaction_histories: Mapping[str, list[Any]] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)
@@ -543,6 +544,63 @@ class TranscriptJournal:
                 return tail if isinstance(tail, str) and tail else None
         return None
 
+    def append_compaction_history(self, thread_id: str, run_id: str, history: list[Any]) -> None:
+        """Persist the compacted provider history without replacing the readable transcript."""
+        with self._lock:
+            self._append(
+                thread_id,
+                {
+                    "version": 1,
+                    "record_type": "compaction_history",
+                    "run_id": run_id,
+                    "history": history,
+                },
+            )
+
+    def compaction_policy(self, thread_id: str) -> dict[str, Any]:
+        """Restore the owner's latest compaction choices from this thread's journal."""
+        path = self.path_for_thread(thread_id)
+        if not path.exists():
+            return {}
+        with self._lock:
+            for line in reversed(path.read_text(encoding="utf-8").splitlines()):
+                row = json.loads(line)
+                if row.get("record_type") == "compaction_policy":
+                    return row["policy"]
+        return {}
+
+    def append_compaction_policy(self, thread_id: str, policy: dict[str, Any]) -> None:
+        """Version compaction controls without changing or deleting prior choices."""
+        with self._lock:
+            self._append(
+                thread_id,
+                {
+                    "version": 1,
+                    "record_type": "compaction_policy",
+                    "policy": policy,
+                },
+            )
+
+    def append_worker_return(
+        self,
+        thread_id: str,
+        worker_id: str,
+        result: str,
+        history: list[Any],
+    ) -> None:
+        """D.2 153: full worker output stays here, never in the parent's provider history."""
+        with self._lock:
+            self._append(
+                thread_id,
+                {
+                    "version": 1,
+                    "record_type": "worker_return",
+                    "worker_id": worker_id,
+                    "result": result,
+                    "history": history,
+                },
+            )
+
     def idle_thread_ids(self, cutoff: datetime) -> list[str]:
         """List transcript threads whose last captured message predates cutoff."""
 
@@ -706,6 +764,7 @@ class TranscriptJournal:
         project_label: str | None = None
         workspace_root: str | None = None
         current_location: str | None = None
+        compaction_histories: dict[str, list[Any]] = {}
 
         for raw in rows:
             try:
@@ -748,6 +807,8 @@ class TranscriptJournal:
                     if candidate_tail is None or isinstance(candidate_tail, str) and candidate_tail:
                         tail_message_id = candidate_tail
                         saw_tail = True
+            elif row.get("record_type") == "compaction_history":
+                compaction_histories[row["run_id"]] = row["history"]
             elif row.get("record_type") == "attachment":
                 attachment = self._attachment_from_row(row, candidate)
                 if attachment.prompt_id in attachments:
@@ -877,6 +938,7 @@ class TranscriptJournal:
                     project_label,
                     workspace_root,
                     current_location,
+                    compaction_histories,
                 )
             # WALL files / D.2 082: reject an unsafe journal before appending.
             raise TranscriptJournalUnavailable(
@@ -921,6 +983,7 @@ class TranscriptJournal:
             project_label,
             workspace_root,
             current_location,
+            compaction_histories,
         )
 
     def _existing_attachments(self, thread_id: str) -> Mapping[str, ImageAttachment]:

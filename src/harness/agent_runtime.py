@@ -36,8 +36,10 @@ from pydantic_core import to_jsonable_python
 
 from harness.agent import HarnessAgent
 from harness.commands import browser_open_web_command, remember_command_text
+from harness.conductor import _MAX_DISTILLATE_BYTES
 from harness.context_window import ContextWindowTracker
-from harness.envelope import ProviderErrorPayload, StopReason
+from harness.envelope import ProviderErrorPayload, StopReason, generate_ulid
+from harness.extraction import ExtractionService
 from harness.model_policy import ThreadModelResolution
 from harness.model_router import model_settings_for
 from harness.proposed_response import (
@@ -46,6 +48,8 @@ from harness.proposed_response import (
     parse_proposed_response_output,
     proposed_response_event,
 )
+from harness.pydantic_ai_adapter import DelegateCapability
+from harness.pydantic_harness_adapter import CompactionPolicy, MemoryCompaction
 from harness.receipt_queue import SpendReceiptQueue
 from harness.run_protocol import (
     DynamicSystemInstructions,
@@ -62,8 +66,29 @@ from harness.spend import (
 )
 from harness.tools_memory import MemoryToolContext
 from harness.toolset import PermissionJudge
+from harness.toolset_runtime import LazyStandardToolset
 
 type ContextFactory = Callable[[str], MemoryToolContext]
+
+
+def _configure_compaction(policy: CompactionPolicy, argument: str) -> CompactionPolicy:
+    """The owner's per-thread controls are journaled, including instruction generations."""
+    command, _, value = argument.partition(" ")
+    values = policy.model_dump()
+    if command == "strategy":
+        values["strategy"] = value
+    elif command == "policy":
+        name, _, fraction = value.partition(" ")
+        values.update(
+            policy=name, fraction=float(fraction) if fraction else 0.5 if name == "cost" else 0.8
+        )
+    elif command == "instructions" and "{messages}" in value:
+        values["instructions"] = value
+    else:
+        # D.2 153: reject unsupported controls without changing the saved policy.
+        raise ValueError("Unknown compaction control")
+    return CompactionPolicy.model_validate(values)
+
 
 logger = logging.getLogger(__name__)
 
@@ -110,6 +135,7 @@ class PydanticAITurnRunner:
         receipt_queue: SpendReceiptQueue | None = None,
         context_windows: ContextWindowTracker | None = None,
         clock: Callable[[], datetime] | None = None,
+        extraction: ExtractionService | None = None,
     ) -> None:
         self._agent = agent
         self._context_factory = context_factory
@@ -117,6 +143,7 @@ class PydanticAITurnRunner:
         self._receipt_queue = receipt_queue
         self._context_windows = context_windows
         self._clock = clock or (lambda: datetime.now(UTC))
+        self._extraction = extraction
 
     async def run(
         self,
@@ -168,12 +195,199 @@ class PydanticAITurnRunner:
             # WALL workspace / F083: stop the turn after releasing its boundary card.
             raise _BoundaryCardReleased()
 
+        async def record_extraction(messages):
+            await self._record_spend(
+                messages,
+                prior_history=(),
+                context=context,
+                emit=emit,
+                purpose="extraction",
+                memory_id=None,
+            )
+
+        compaction = (
+            MemoryCompaction(
+                self._extraction,
+                emit,
+                model_resolution.context_tokens if model_resolution else None,
+                record_extraction,
+                policy=CompactionPolicy.model_validate(
+                    self._extraction._journal.compaction_policy(thread_id)
+                ),
+                model_settings=model_settings,
+            )
+            if self._extraction is not None
+            else None
+        )
+
+        def failed_history():
+            if compaction is not None and compaction.completed:
+                history = _repair_cancelled_tool_calls(tuple(captured or compaction.history))
+                self._extraction._journal.append_compaction_history(
+                    thread_id,
+                    emit.run_id,
+                    to_jsonable_python(history),
+                )
+                return history
+            if compaction is not None and compaction.original_history:
+                return tuple(compaction.original_history)
+            return _captured_history(prior_history, captured)
+
         try:
             context = replace(
                 self._context_factory(thread_id),
                 excluded_memory_ids=frozenset(excluded_memory_ids),
                 boundary_review=review_boundary,
             )
+            if prompt == "/compact" or prompt.startswith("/compact "):
+                if compaction is None:
+                    message = "Compaction is unavailable without the conversation journal."
+                    history = prior_history
+                elif prompt == "/compact":
+                    history = tuple(
+                        await compaction.manual(
+                            prior_history,
+                            model=selected_model,
+                            deps=context,
+                            usage=run_usage,
+                        )
+                    )
+                    message = (
+                        "Context compacted with " + compaction.policy.strategy + "."
+                        if compaction.completed
+                        else "No older context to compact yet."
+                    )
+                else:
+                    history = prior_history
+                    try:
+                        policy = _configure_compaction(compaction.policy, prompt[9:].strip())
+                        self._extraction._journal.append_compaction_policy(
+                            thread_id,
+                            policy.model_dump(),
+                        )
+                        compaction.policy = policy
+                        message = (
+                            f"Compaction: {policy.strategy}; {policy.policy} policy at "
+                            f"{policy.fraction:.1%} of the model window."
+                        )
+                    except ValueError:
+                        message = (
+                            "Use /compact, /compact strategy truncate|summarize|memories-then-drop|"
+                            "human-and-final-only, /compact policy performance|cost [fraction], "
+                            "or /compact instructions <summary prompt containing {messages}>."
+                        )
+                await emit.text(message)
+                usage = _usage_snapshot(run_usage)
+                await bridge.publish_usage(usage)
+                return TurnOutcome(
+                    StopReason("end_turn"),
+                    history,
+                    usage,
+                    assistant_text=message,
+                    model_visible=False,
+                )
+
+            from spine.tokens import cl100k_token_count
+
+            worker_budget = min(
+                _MAX_DISTILLATE_BYTES // 4,
+                (model_resolution.context_tokens if model_resolution else 200_000) // 10,
+            )
+            worker_budget -= sum(
+                cl100k_token_count(str(part.content))
+                for message in prior_history
+                if isinstance(message, ModelRequest)
+                for part in message.parts
+                if isinstance(part, ToolReturnPart) and part.tool_name == "delegate_task"
+            )
+
+            async def delegate(task: str) -> str:
+                nonlocal worker_budget
+                worker_id = generate_ulid()
+                location = context.toolset.location() if context.toolset is not None else None
+                toolset = (
+                    None
+                    if location is None
+                    else LazyStandardToolset(
+                        cwd=location.cwd,
+                        workspace_root=location.workspace_root,
+                        agent_id=f"{context.agent_id}/{worker_id}",
+                        machine_id=context.machine_id,
+                        fence_reads=location.fence_reads,
+                    )
+                )
+                worker_context = replace(
+                    context,
+                    toolset=toolset,
+                    delegate=None,
+                    boundary_review=None,
+                    agent_id=f"{context.agent_id}/{worker_id}",
+                )
+                try:
+                    result = await self._agent.worker_agent.run(
+                        task,
+                        deps=worker_context,
+                        model=selected_model,
+                        model_settings=model_settings,
+                        usage=run_usage,
+                        usage_limits=self._agent.usage_limits,
+                    )
+                    full = result.output
+                    self._extraction._journal.append_worker_return(
+                        thread_id,
+                        worker_id,
+                        full,
+                        to_jsonable_python(result.all_messages()),
+                    )
+                    await self._record_spend(
+                        result.all_messages(),
+                        prior_history=(),
+                        context=worker_context,
+                        emit=emit,
+                        purpose="building",
+                        memory_id=None,
+                    )
+                    encoded = full.encode("utf-8")
+                    marker = "\n[Return capped; full result is in the conversation journal.]"
+                    # WALL main context / D.2 153: worker bulk must not force compaction.
+                    distilled = (
+                        full
+                        if len(encoded) <= _MAX_DISTILLATE_BYTES
+                        else (
+                            encoded[: _MAX_DISTILLATE_BYTES - len(marker.encode())].decode(
+                                "utf-8", errors="ignore"
+                            )
+                            + marker
+                        )
+                    )
+                    # One shared allowance covers all worker returns already in this history.
+                    limit = max(0, worker_budget)
+                    if cl100k_token_count(distilled) > limit:
+                        low, high = 0, len(distilled)
+                        while low < high:
+                            middle = (low + high + 1) // 2
+                            if cl100k_token_count(distilled[:middle] + marker) <= limit:
+                                low = middle
+                            else:
+                                high = middle - 1
+                        distilled = distilled[:low] + marker if low else ""
+                    worker_budget -= cl100k_token_count(distilled)
+                    await emit.event(
+                        {
+                            "event_kind": "worker_return",
+                            "worker_id": worker_id,
+                            "full_bytes": len(encoded),
+                            "returned_bytes": len(distilled.encode()),
+                            "capped": distilled != full,
+                        }
+                    )
+                    return distilled
+                finally:
+                    if toolset is not None:
+                        await toolset.close()
+
+            if self._extraction is not None:
+                context = replace(context, delegate=delegate)
             if is_browser_consent:
                 message = "Open-web browser access is allowed for this thread."
                 if image is not None:
@@ -246,7 +460,10 @@ class PydanticAITurnRunner:
                     user_prompt,
                     deps=context,
                     instructions=instructions,
-                    capabilities=self._agent.skill_capabilities(context),
+                    capabilities=[
+                        *self._agent.skill_capabilities(context),
+                        *([DelegateCapability(), compaction] if compaction is not None else []),
+                    ],
                     message_history=cast(Sequence[ModelMessage], prior_history),
                     model=selected_model,
                     model_settings=model_settings,
@@ -268,6 +485,12 @@ class PydanticAITurnRunner:
             usage = _usage_snapshot(result.usage)
             await bridge.publish_usage(usage)
             history = tuple(result.all_messages())
+            if compaction is not None and compaction.completed:
+                self._extraction._journal.append_compaction_history(
+                    thread_id,
+                    emit.run_id,
+                    to_jsonable_python(history),
+                )
             return TurnOutcome(
                 StopReason("end_turn"),
                 history,
@@ -282,16 +505,14 @@ class PydanticAITurnRunner:
             await emit.text(message)
             return TurnOutcome(
                 StopReason("end_turn"),
-                _repair_cancelled_tool_calls(
-                    _captured_history(prior_history, captured), content=message
-                ),
+                _repair_cancelled_tool_calls(failed_history(), content=message),
                 usage,
                 assistant_text=message,
             )
         except asyncio.CancelledError:
             usage = _failure_usage(run_usage, captured, prior_history)
             await bridge.publish_usage(usage)
-            history = prior_history if is_remember else _captured_history(prior_history, captured)
+            history = prior_history if is_remember else failed_history()
             return TurnOutcome(
                 StopReason("cancelled"),
                 _repair_cancelled_tool_calls(history),
@@ -302,7 +523,7 @@ class PydanticAITurnRunner:
             await bridge.publish_usage(usage)
             return TurnOutcome(
                 StopReason("budget_exceeded"),
-                _captured_history(prior_history, captured),
+                failed_history(),
                 usage,
             )
         except Exception as exc:
@@ -310,9 +531,7 @@ class PydanticAITurnRunner:
             await bridge.publish_usage(usage)
             task = asyncio.current_task()
             if task is not None and task.cancelling():
-                history = (
-                    prior_history if is_remember else _captured_history(prior_history, captured)
-                )
+                history = prior_history if is_remember else failed_history()
                 return TurnOutcome(
                     StopReason("cancelled"),
                     _repair_cancelled_tool_calls(history),
@@ -330,7 +549,7 @@ class PydanticAITurnRunner:
                 await emit.text(f"\n\n{message}")
                 return TurnOutcome(
                     StopReason("error"),
-                    _captured_history(prior_history, captured),
+                    failed_history(),
                     usage,
                     assistant_text=message,
                     provider_error=provider_error,
@@ -338,7 +557,7 @@ class PydanticAITurnRunner:
             logger.exception("Model turn failed: run=%s thread=%s", emit.run_id, thread_id)
             return TurnOutcome(
                 StopReason("error"),
-                _captured_history(prior_history, captured),
+                failed_history(),
                 usage,
                 error_message=run_error_message(exc),
             )
@@ -346,6 +565,7 @@ class PydanticAITurnRunner:
             if self._context_windows is not None and not is_remember:
                 self._context_windows.record(
                     thread_id=thread_id,
+                    compaction_fraction=compaction.policy.fraction if compaction else 0.8,
                     captured=captured,
                     resolution=model_resolution,
                     memory_block=(
