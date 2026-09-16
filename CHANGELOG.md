@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.1.22 - 2026-09-16
+
+- Show when retraining is running while the current scorer keeps serving.
+
 ## 0.1.21 - 2026-09-16
 
 - Pair with the Memory correction that logs reviewed injection decisions in the
