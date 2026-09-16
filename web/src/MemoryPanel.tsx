@@ -627,19 +627,21 @@ export function MemoryTrace() {
     setError(null)
     void events.dispatch({ type, memory_id: memoryId }).catch(() => setError('The memory change could not be sent. Try again.'))
   }
-  return <section aria-label="Selected conversation memory trace">
+  return <section className="memory-panel__content" aria-label="Selected conversation memory trace">
     <h2>Memory trace</h2>
     <ContextBars />
     {error && <p role="alert">{error}</p>}
     {panel.lastResponse?.action === 'error' && <p role="alert">{panel.lastResponse.message}</p>}
     {items.length === 0 && <p>This conversation has no injected memories or near-miss suggestions.</p>}
-    {items.map((item) => <article key={item.memory.memory_id}>
-      <h3>{item.memory.label} · {item.in_context ? 'In context' : item.near_miss ? 'Near miss' : 'Removed'}</h3>
-      <p>{item.memory.body}</p>
+    {items.map((item) => <article className="principal-memory" key={item.memory.memory_id}>
+      <header className="principal-memory__header"><h3>{item.memory.label} · {item.in_context ? 'In context' : item.near_miss ? 'Near miss' : 'Removed'}</h3></header>
+      <p className="principal-memory__body">{item.memory.body}</p>
+      <div className="principal-memory__actions">
       <button type="button" disabled={disabled || (!item.in_context && item.memory.status !== 'active')}
         onClick={() => change(item.in_context ? 'memory.remove' : 'memory.add', item.memory.memory_id)}>
         {item.in_context ? 'Pop off' : item.near_miss ? 'Add to context' : 'Re-add'}
       </button>
+      </div>
     </article>)}
   </section>
 }
