@@ -2789,7 +2789,10 @@ function ThreadEndCard({
 
   return (
     <section className="thread-end-card" data-testid="thread-end-card" aria-label="Thread memory review"
-      onWheelCapture={() => { scrolled.current = true }}>
+      onWheelCapture={() => { scrolled.current = true }}
+      onKeyDownCapture={(event) => {
+        if (['ArrowDown', 'PageDown', 'End'].includes(event.key)) scrolled.current = true
+      }}>
       {decisionError && <p role="alert">{decisionError}</p>}
       <header className="thread-end-card__header">
         <div>
@@ -2859,10 +2862,16 @@ function VisibleQueueRow({
     if (row === null || typeof IntersectionObserver === 'undefined') return
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting && entry.intersectionRatio === 1) onSeen()
-      if (!entry.isIntersecting && entry.boundingClientRect.bottom <= (entry.rootBounds?.top ?? 0)) {
+      let visibleTop = entry.rootBounds?.top ?? 0
+      for (let parent = row.parentElement; parent; parent = parent.parentElement) {
+        if (['auto', 'scroll', 'hidden', 'clip'].includes(getComputedStyle(parent).overflowY)) {
+          visibleTop = Math.max(visibleTop, parent.getBoundingClientRect().top)
+        }
+      }
+      if (!entry.isIntersecting && entry.boundingClientRect.bottom <= visibleTop) {
         onPassed()
       }
-    }, { threshold: 1 })
+    }, { threshold: [0, 1] })
     observer.observe(row)
     return () => observer.disconnect()
   }, [onSeen, onPassed])
@@ -3397,6 +3406,7 @@ function MessageRow({
         <span>Nocturne</span>
         {status !== null && <span className="message__status">{status}</span>}
       </header>
+      <div className="message__content">
       {message.events.some((event) => event.event_kind === 'compaction_completed') && (
         <p className="message__content message__content--quiet" data-testid="compaction-completed">
           Conversation compacted · full history kept in the journal
@@ -3412,6 +3422,7 @@ function MessageRow({
       ) : (
         <p className="message__content message__content--quiet">Working…</p>
       )}
+      </div>
       {message.thinking && (
         <details className="run-detail">
           <summary>Process signal</summary>
