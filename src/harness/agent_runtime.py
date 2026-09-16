@@ -48,7 +48,8 @@ from harness.proposed_response import (
     parse_proposed_response_output,
     proposed_response_event,
 )
-from harness.pydantic_ai_adapter import CompactionPolicy, DelegateCapability, MemoryCompaction
+from harness.pydantic_ai_adapter import DelegateCapability
+from harness.pydantic_harness_adapter import CompactionPolicy, MemoryCompaction
 from harness.receipt_queue import SpendReceiptQueue
 from harness.run_protocol import (
     DynamicSystemInstructions,

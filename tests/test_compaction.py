@@ -17,7 +17,7 @@ from harness.agent import HarnessAgent
 from harness.agent_runtime import PydanticAITurnRunner
 from harness.extraction import ExtractionService
 from harness.model_policy import ThreadModelResolution
-from harness.pydantic_ai_adapter import CompactionPolicy
+from harness.pydantic_harness_adapter import CompactionPolicy
 from harness.spine_client import ExtractionResponse
 from harness.transcript import TranscriptJournal
 from tests.test_agent_runtime import RecordingEmitter, context, settings
