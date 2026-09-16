@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.1.24 - 2026-09-16
+
+- Keep normalized conversation history once after a failed turn and exclude
+  earlier responses from new spend receipts. Pair with Memory 0.1.24.
+
 ## 0.1.22 - 2026-09-16
 
 - Show when retraining is running while the current scorer keeps serving.
