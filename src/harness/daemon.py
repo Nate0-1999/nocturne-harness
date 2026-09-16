@@ -186,6 +186,8 @@ _RACK_MODULE_IDS = frozenset(
         "model_device",
         "memory_graph",
         "palace_nebula",
+        "farm",
+        "roots",
         "injection_console",
         "recipe",
     }
@@ -1370,6 +1372,17 @@ def create_dev_app(
                     detail=f"Seed ingestion failed: {exc}",
                 ) from exc
 
+    def configure_visualization_routes(app: FastAPI) -> None:
+        from harness.visualization import mount_visualization_routes
+
+        configure_extraction_routes(app)
+        mount_visualization_routes(
+            app, home=home, journal=journal, root=discovery_root,
+            graph_reader=lambda: read_memory_graph(None),
+            curator_reader=lambda: owned_spine.curator_activity(principal_id),
+            spend_reader=lambda: read_spend_table_snapshot(None),
+        )
+
     app = create_app(
         web_dist,
         missing_web_message=missing_web_message,
@@ -1390,7 +1403,7 @@ def create_dev_app(
         context_window_reader=context_windows.snapshot,
         recipe_graph_reader=owned_symphony_experience.recipe_snapshot,
         tool_inventory_reader=lambda thread_id: inventory(context_factory(thread_id)),
-        before_static_mount=configure_extraction_routes,
+        before_static_mount=configure_visualization_routes,
     )
 
     app.router.add_event_handler("startup", transcript_sync.start)

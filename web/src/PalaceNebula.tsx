@@ -31,6 +31,8 @@ import {
   type PalaceNebulaSnapshot,
 } from './nebulaBindings'
 import './assets/palace-nebula.css'
+import { useVisualization, VisualizationToolbar } from './WorkVisualization'
+import { CameraControls } from './VisualizationScene'
 
 type ScorerSnapshot = {
   active_version?: string
@@ -58,6 +60,7 @@ export function PalaceNebula() {
   const { query, events, selection } = useRackPlugin()
   const selected = useRackSelection()
   const rack = useRackSnapshot()
+  const visualization = useVisualization()
   const [axis, setAxis] = useState<NebulaAxisMode>('activity')
   const [tier, setTier] = useState<NebulaHardwareTier>('full')
   const [scope, setScope] = useState<'GLOBAL' | 'ATTUNED'>('GLOBAL')
@@ -97,10 +100,30 @@ export function PalaceNebula() {
     return () => { active = false; globalThis.clearInterval(timer) }
   }, [query, threadId])
 
-  const bodies = useMemo(() => load.kind === 'ready' ? buildNebulaBodies(load.snapshot, axis) : [], [load, axis])
-  const memoryEvents = useMemo(() => load.kind === 'ready' ? buildNebulaEvents(load.snapshot) : [], [load])
-  const filaments = useMemo(() => load.kind === 'ready' ? buildNebulaFilaments(load.snapshot, bodies) : [], [load, bodies])
-  const families = useMemo(() => load.kind === 'ready' ? buildNebulaCreatureFamilies(load.snapshot, bodies, memoryEvents) : [], [load, bodies, memoryEvents])
+  const sceneSnapshot = useMemo(() => {
+    const recorded = visualization.data
+    if (recorded?.palace && (!selected?.as_of || recorded.as_of === selected.as_of)) {
+      const palace = { ...recorded.palace, as_of: recorded.as_of }
+      if (scope === 'ATTUNED') palace.nodes = palace.nodes.filter((node) => node.memory.origin_thread_id === threadId)
+      return palace
+    }
+    return selected?.as_of ? null : load.kind === 'ready' ? load.snapshot : null
+  }, [visualization.data, selected?.as_of, scope, threadId, load])
+  const bodies = useMemo(() => sceneSnapshot ? buildNebulaBodies(sceneSnapshot, axis).map((body) => {
+    const memory = sceneSnapshot.nodes.find((node) => node.memory.memory_id === body.id)?.memory
+    const focused = selected?.kind === 'memory' ? selected.id === body.id
+      : selected?.kind === 'agent' ? memory?.origin_thread_id === selected.thread_id
+        : selected?.kind === 'thread' ? memory?.origin_thread_id === selected.id
+          : selected?.kind === 'path' ? (memory?.origin_location ?? memory?.origin_path) === selected.id : body.in_current_context
+    return { ...body, in_current_context: focused }
+  }) : [], [sceneSnapshot, axis, selected])
+  const memoryEvents = useMemo(() => sceneSnapshot ? buildNebulaEvents(sceneSnapshot) : [], [sceneSnapshot])
+  const filaments = useMemo(() => sceneSnapshot ? buildNebulaFilaments(sceneSnapshot, bodies) : [], [sceneSnapshot, bodies])
+  const families = useMemo(() => sceneSnapshot ? buildNebulaCreatureFamilies(sceneSnapshot, bodies, memoryEvents) : [], [sceneSnapshot, bodies, memoryEvents])
+  const curatorRun = visualization.data?.curation?.latest_run
+  const curatorReport = curatorRun?.report as { findings?: { memory_ids?: string[] }[] } | undefined
+  const curatorTargets = new Set(curatorReport?.findings?.flatMap((finding) => finding.memory_ids ?? []) ?? [])
+  const ghosts = bodies.filter((body) => curatorTargets.has(body.id))
   const kinds = useMemo(() => (
     [...new Set(bodies.map((body) => body.kind))].sort()
   ), [bodies])
@@ -126,22 +149,25 @@ export function PalaceNebula() {
         </select></label>
       </div>
     </header>
+    <VisualizationToolbar data={visualization.data} moduleId="palace_nebula" tier={tier} setTier={setTier} />
     <div className="palace-nebula__viewport">
       {(bodies.length > 0 || memoryEvents.length > 0) && <ThreeNebula
         bodies={bodies}
         events={memoryEvents}
         families={families}
         filaments={filaments}
+        ghosts={ghosts}
         tier={tier}
         reportBackend={setBackend}
         reportFps={setFps}
-        onSelect={(id) => selection.select({ kind: 'memory', id })}
+        onSelect={(id) => selection.select({ kind: 'memory', id, as_of: selected?.as_of ?? null })}
       />}
       <div className="palace-nebula__readouts" aria-label="Attuned Palace readouts">
         <article><span>Constellation</span><strong>{bodies.length} bodies</strong><small>{filaments.length} real filaments</small></article>
         <article><span>Memory current</span><strong>{memoryEvents.length} events</strong><small>{latestEvent === undefined ? 'No recorded current' : `${latestEvent.event_class} · ${latestEvent.memory_label}`}</small></article>
         <article><span>Creature</span><strong>{families.length} families</strong><small>{splitCount} splits · {mergeCount} merges</small></article>
-        <article><span>Optimization</span><strong>{load.kind === 'ready' ? load.scorer?.active_version ?? 'Unavailable' : 'Waiting'}</strong><small>{learning === undefined ? 'Existing learning surface unavailable' : `${learning.eligible_dispositions ?? 0} signals · ${(learning.retrain_runs ?? []).length} runs`}</small></article>
+        <article><span>Curator trace</span><strong>{ghosts.length} targets</strong><small>{curatorRun ? `Recorded pass · ${String(curatorRun.completed_at)}` : 'No recorded curator pass'}</small></article>
+        {!selected?.as_of && <article><span>Optimization</span><strong>{load.kind === 'ready' ? load.scorer?.active_version ?? 'Unavailable' : 'Waiting'}</strong><small>{learning === undefined ? 'Learning surface unavailable' : `${learning.eligible_dispositions ?? 0} signals · ${(learning.retrain_runs ?? []).length} runs`}</small></article>}
       </div>
       <div className="palace-nebula__event-key" aria-label="Memory event hues">
         {(Object.keys(NEBULA_EVENT_COLORS) as (keyof typeof NEBULA_EVENT_COLORS)[]).map((eventClass) => (
@@ -151,10 +177,11 @@ export function PalaceNebula() {
       <div className="palace-nebula__telemetry" aria-live="polite">
         <strong>{fps || '—'} fps</strong>
         <span>Three r{REVISION} · R3F + TSL · {backend} · {tier}</span>
-        <span>{load.kind === 'ready' ? load.snapshot.as_of : 'Reading current reality'}</span>
+        <span>{sceneSnapshot?.as_of ?? 'Reading current reality'}</span>
       </div>
       {load.kind === 'loading' && <p role="status" className="palace-nebula__notice">Reading Palace reality…</p>}
       {load.kind === 'error' && <p role="alert" className="palace-nebula__notice">The live Palace current is unavailable.</p>}
+      {selected?.as_of && !sceneSnapshot && <p role="status" className="palace-nebula__notice">Loading the recorded Palace state…</p>}
       {load.kind === 'ready' && bodies.length === 0 && memoryEvents.length === 0 && <p role="status" className="palace-nebula__notice">No memories or memory events exist in this Palace snapshot.</p>}
     </div>
     <aside className="palace-nebula__legend" aria-label="Living Memory data bindings">
@@ -164,10 +191,10 @@ export function PalaceNebula() {
       <section><h2>Kinds in view</h2><p>{kinds.length === 0 ? 'None' : kinds.join(' · ')}</p><p>Camera moves freely; posture rebinds this same recorded snapshot.</p></section>
     </aside>
     <details><summary>Memories in view</summary>
-      {bodies.map((body) => <button key={body.id} type="button" onClick={() => selection.select({ kind: 'memory', id: body.id })}>{body.label}</button>)}
+      {bodies.map((body) => <button key={body.id} type="button" aria-pressed={body.in_current_context} onClick={() => selection.select({ kind: 'memory', id: body.id, as_of: selected?.as_of ?? null })}>{body.label}</button>)}
     </details>
-    {selected?.kind === 'memory' && <SelectedMemoryPanel memoryId={selected.id} />}
-    <MemoryTrace />
+    {selected?.kind === 'memory' && !selected.as_of && <SelectedMemoryPanel memoryId={selected.id} />}
+    {!selected?.as_of && <MemoryTrace />}
   </section>
 }
 
@@ -176,6 +203,7 @@ function ThreeNebula({
   events,
   families,
   filaments,
+  ghosts,
   tier,
   reportBackend,
   reportFps,
@@ -185,6 +213,7 @@ function ThreeNebula({
   events: readonly NebulaMemoryEvent[]
   families: readonly NebulaCreatureFamily[]
   filaments: readonly NebulaFilament[]
+  ghosts: readonly NebulaBody[]
   tier: NebulaHardwareTier
   reportBackend: (backend: ThreeBackend) => void
   reportFps: (fps: number) => void
@@ -218,6 +247,11 @@ function ThreeNebula({
     <NebulaFilaments filaments={filaments} />
     {families.map((family) => <NebulaCreatureCluster key={family.id} family={family} tier={tier} />)}
     {bodies.map((body) => <NebulaMemoryBody key={body.id} body={body} tier={tier} onSelect={onSelect} />)}
+    {ghosts.map((body) => <group key={body.id} position={[body.position[0], body.position[1] + 0.65, body.position[2]]}>
+      <mesh scale={[0.2, 0.45, 0.2]}><sphereGeometry args={[1, tier === 'full' ? 24 : 8, 12]} /><meshStandardMaterial color="#eff8fa" emissive="#89dbef" emissiveIntensity={0.8} transparent opacity={0.4} /></mesh>
+      <mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.35, 0.012, 6, tier === 'full' ? 40 : 12]} /><meshBasicMaterial color="#bcc2cd" transparent opacity={0.8} /></mesh>
+    </group>)}
+    <CameraControls distance={22} />
     <FpsMeter reportFps={reportFps} />
   </Canvas>
 }

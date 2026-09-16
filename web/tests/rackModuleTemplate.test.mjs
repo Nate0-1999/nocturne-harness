@@ -34,6 +34,8 @@ test('the module template enumerates the complete mounted stage and refuses a pa
     'palace_state',
     'memory_graph',
     'palace_nebula',
+    'farm',
+    'roots',
     'injection_console',
     'palace_queue',
     'recipe',
