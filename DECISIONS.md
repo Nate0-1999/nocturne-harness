@@ -3458,3 +3458,12 @@ The global spend panel shows the form only when the Palace reports owner authori
 The Rack action forwards exact dollars and invoice identity through the typed
 client; the Palace enforces authority and replay semantics. The button validates
 fields before dispatch because sandboxed panels prohibit native form submission.
+
+## M3LL — Make learning evidence inspectable [P1.2, P2.2]
+
+PRECEDENT: PLAN M3LL/M3CT/M3TR/M3CX, A-067, reports/219-M3LL.md.
+Deletion defaults to no longer needed and records the optional stronger reason.
+A stack-attuned console selects its sole conversation or asks for an explicit
+preview conversation in a multi-thread stack; other modules retain stack scope.
+The terrain renders server replay measurements, with grid values available as a
+table. Principal polling cannot erase a result measured on the Palace corpus.
