@@ -307,6 +307,7 @@ export function InjectionConsole() {
 
   async function forceRetrain() {
     setBusy(true)
+    setRetrainNotice({ copy: 'Retraining in the background. The current recipe keeps serving.', eligibleDispositions: null })
     try {
       const result = await events.dispatch({ type: 'scorer.retrain' }) as unknown as RetrainResponse
       setFailure(null)
