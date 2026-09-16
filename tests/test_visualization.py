@@ -13,7 +13,10 @@ def test_tree_preserves_empty_hidden_and_untracked_entries_without_following_lin
     (tmp_path / "link").symlink_to(tmp_path, target_is_directory=True)
     tree = directory_tree(tmp_path)
     assert {row["path"]: row["kind"] for row in tree["nodes"]} == {
-        ".": "directory", ".hidden": "file", "empty": "directory", "link": "link",
+        ".": "directory",
+        ".hidden": "file",
+        "empty": "directory",
+        "link": "link",
     }
     assert "private content" not in str(tree)
     assert not tree["errors"]
@@ -31,8 +34,7 @@ def test_recorded_history_survives_restart_and_replays_deletion_exactly(tmp_path
     history.append(first, "2026-09-16T01:00:00+00:00")
     history.append(first, "2026-09-16T01:00:01+00:00")
     file.unlink()
-    history.append({"agents": [], "projects": [directory_tree(root)]},
-                   "2026-09-16T01:00:02+00:00")
+    history.append({"agents": [], "projects": [directory_tree(root)]}, "2026-09-16T01:00:02+00:00")
     history = VisualizationHistory(path)
     past = history.read("2026-09-16T01:00:00+00:00")
     assert past["projects"] == first["projects"]
@@ -47,10 +49,20 @@ def test_worker_observation_uses_actual_location_without_assignment_secrets(tmp_
     """ADR-018 / FL-126/129: ants follow real feet; feeds never serialize private assignments."""
     from types import SimpleNamespace
 
-    assignment = {"origin_agent": "run/root.1", "thread_id": "thread", "project_key": "/work",
-                  "stage": "completion", "env_file": "secret", "brief": "private prompt"}
-    observe_worker(tmp_path, assignment,
-                   SimpleNamespace(cwd=Path("/work/src"), workspace_root=Path("/work")), "running")
+    assignment = {
+        "origin_agent": "run/root.1",
+        "thread_id": "thread",
+        "project_key": "/work",
+        "stage": "completion",
+        "env_file": "secret",
+        "brief": "private prompt",
+    }
+    observe_worker(
+        tmp_path,
+        assignment,
+        SimpleNamespace(cwd=Path("/work/src"), workspace_root=Path("/work")),
+        "running",
+    )
     value = (tmp_path / "visualization.json").read_text()
     assert "/work/src" in value
     assert "private prompt" not in value and "secret" not in value
@@ -61,8 +73,12 @@ def test_worker_observation_preserves_start_and_does_not_block_work_on_io_failur
     import json
     from types import SimpleNamespace
 
-    assignment = {"origin_agent": "worker", "thread_id": "thread", "project_key": "/work",
-                  "stage": "completion"}
+    assignment = {
+        "origin_agent": "worker",
+        "thread_id": "thread",
+        "project_key": "/work",
+        "stage": "completion",
+    }
     location = SimpleNamespace(cwd=Path("/work"), workspace_root=Path("/work"))
     observe_worker(tmp_path, assignment, location, "running")
     path = tmp_path / "visualization.json"

@@ -9,12 +9,6 @@ def test_r7_16_deck_and_edge_on_stack_are_the_same_conversation_module() -> None
     pytest.fail("Replace this placeholder with edge-on Conversation acceptance proof when built")
 
 
-@pytest.mark.skip(reason="r8-11: hardware tiers with different primitive budgets are unbuilt")
-def test_r8_11_efficient_scene_emits_fewer_primitives_than_full_scene() -> None:
-    """SPEC R10 / P2 requires the hardware tier to change actual scene cost."""
-    pytest.fail("Replace this placeholder with measured primitive counts when built")
-
-
 @pytest.mark.skip(reason="r9-6: per-role strongest/leaf model policies await SD-018")
 def test_r9_6_compounding_workers_use_max_and_leaf_workers_use_elbow() -> None:
     """SPEC C.5 / P4.2 requires model policy to follow the error's scope."""

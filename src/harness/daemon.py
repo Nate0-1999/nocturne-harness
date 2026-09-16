@@ -1377,7 +1377,10 @@ def create_dev_app(
 
         configure_extraction_routes(app)
         mount_visualization_routes(
-            app, home=home, journal=journal, root=discovery_root,
+            app,
+            home=home,
+            journal=journal,
+            root=discovery_root,
             graph_reader=lambda: read_memory_graph(None),
             curator_reader=lambda: owned_spine.curator_activity(principal_id),
             progress_reader=lambda: owned_spine.curator_progress(principal_id),

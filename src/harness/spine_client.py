@@ -1454,8 +1454,9 @@ class SpineClient:
 
     async def curator_progress(self, principal_id: str, after: int = 0) -> CuratorProgress:
         """M3VZ / A-068: read real, principal-scoped transitions before a pass completes."""
-        response = await self._request("GET", "v1/curation/progress",
-                                       params={"principal_id": principal_id, "after": after})
+        response = await self._request(
+            "GET", "v1/curation/progress", params={"principal_id": principal_id, "after": after}
+        )
         return _expect_success(response, status=200, adapter=_CURATOR_PROGRESS)
 
     async def stage_symphony_memory(
