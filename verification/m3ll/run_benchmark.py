@@ -67,7 +67,6 @@ async def run(args):
                 {
                     "request": True,
                     "workspace_root": str(root),
-                    "project_key": "m3ll-build",
                     "project_label": "Learning benchmark",
                 },
             )
@@ -75,7 +74,11 @@ async def run(args):
                 event = json.loads(await socket.recv())
                 if event["type"] == "error":
                     raise RuntimeError(event["payload"])
-                if event["type"] == "thread.snapshot":
+                if event["type"] == "thread.snapshot" and event["thread_id"] == thread:
+                    summary["project_binding"] = {
+                        key: event["payload"].get(key)
+                        for key in ("project_key", "workspace_root", "current_location")
+                    }
                     break
             await send("prompt.submit", {"prompt": prompt})
             while True:
@@ -170,6 +173,9 @@ async def run(args):
         seconds=time.monotonic() - start,
         completed_at=datetime.now(UTC).isoformat(),
         acceptance_pass=True,
+        final_python_lines=sum(
+            len(lines) for path, lines in files(root).items() if path.endswith(".py")
+        ),
     )
     client = SpineClient(
         config.spine_url, token=config.spine_token, principal_id=config.principal_id
