@@ -1401,7 +1401,14 @@
         "harness/src/harness/toolset_runtime.py",
         "harness/src/harness/pydantic_harness_adapter.py",
         "harness/src/harness/progressive_prompt.py"
-      ]
+      ],
+      "last_walk": {
+        "packet": "M3TH",
+        "date": "2026-09-16",
+        "verdict": "PASS",
+        "flag": "",
+        "screenshot": "FL-068.png"
+      }
     },
     {
       "id": "FL-069",
@@ -1421,8 +1428,8 @@
         "harness/src/harness/browser_runtime.py"
       ],
       "last_walk": {
-        "packet": "M3NM",
-        "date": "2026-09-15",
+        "packet": "M3TH",
+        "date": "2026-09-16",
         "verdict": "PASS",
         "flag": "",
         "screenshot": "FL-069.png"
@@ -1489,11 +1496,11 @@
         "harness/src/harness/progressive_prompt.py"
       ],
       "last_walk": {
-        "packet": "M3RW",
-        "date": "2026-09-13",
-        "verdict": "FAIL",
-        "flag": "F081",
-        "screenshot": "FL-072.jpg"
+        "packet": "M3TH",
+        "date": "2026-09-16",
+        "verdict": "PASS",
+        "flag": "",
+        "screenshot": "FL-072.png"
       }
     },
     {
@@ -1510,11 +1517,11 @@
         "harness/src/harness/progressive_prompt.py"
       ],
       "last_walk": {
-        "packet": "M3RW",
-        "date": "2026-09-13",
-        "verdict": "FAIL",
-        "flag": "F081",
-        "screenshot": "FL-073.jpg"
+        "packet": "M3TH",
+        "date": "2026-09-16",
+        "verdict": "PASS",
+        "flag": "",
+        "screenshot": "FL-073.png"
       }
     },
     {
@@ -1577,7 +1584,14 @@
         "harness/src/harness/run_loop.py",
         "harness/src/harness/transcript.py",
         "harness/web/src/RewindControl.tsx"
-      ]
+      ],
+      "last_walk": {
+        "packet": "M3TH",
+        "date": "2026-09-16",
+        "verdict": "PASS",
+        "flag": "",
+        "screenshot": "FL-076.png"
+      }
     },
     {
       "id": "FL-077",
@@ -2202,7 +2216,14 @@
         "harness/web/src/ModelDevice.tsx",
         "harness/web/src/rack.tsx",
         "harness/src/harness/parameter_registry.py"
-      ]
+      ],
+      "last_walk": {
+        "packet": "M3TH",
+        "date": "2026-09-16",
+        "verdict": "PASS",
+        "flag": "",
+        "screenshot": "FL-107.png"
+      }
     },
     {
       "id": "FL-108",
@@ -3709,10 +3730,10 @@
         "harness/pyproject.toml"
       ],
       "last_walk": {
-        "packet": "M3NM",
-        "date": "2026-09-15",
-        "verdict": "FAIL",
-        "flag": "F095",
+        "packet": "M3TH",
+        "date": "2026-09-16",
+        "verdict": "PASS",
+        "flag": "",
         "screenshot": "FL-186.png"
       }
     },
@@ -3786,8 +3807,8 @@
         "harness/uv.lock"
       ],
       "last_walk": {
-        "packet": "M3NM",
-        "date": "2026-09-15",
+        "packet": "M3TH",
+        "date": "2026-09-16",
         "verdict": "PASS",
         "flag": "",
         "screenshot": "FL-190.png"
@@ -3813,10 +3834,10 @@
         "harness/src/harness/browser_runtime.py"
       ],
       "last_walk": {
-        "packet": "M3NM",
-        "date": "2026-09-15",
-        "verdict": "FAIL",
-        "flag": "F086",
+        "packet": "M3TH",
+        "date": "2026-09-16",
+        "verdict": "PASS",
+        "flag": "",
         "screenshot": "FL-191.png"
       },
       "protected": true,
@@ -3844,10 +3865,10 @@
         "harness/pyproject.toml"
       ],
       "last_walk": {
-        "packet": "M3NM",
-        "date": "2026-09-15",
-        "verdict": "FAIL",
-        "flag": "F086",
+        "packet": "M3TH",
+        "date": "2026-09-16",
+        "verdict": "PASS",
+        "flag": "",
         "screenshot": "FL-192.png"
       }
     },
@@ -3867,10 +3888,10 @@
         "harness/uv.lock"
       ],
       "last_walk": {
-        "packet": "M3NM",
-        "date": "2026-09-15",
-        "verdict": "FAIL",
-        "flag": "F095",
+        "packet": "M3TH",
+        "date": "2026-09-16",
+        "verdict": "PASS",
+        "flag": "",
         "screenshot": "FL-193.png"
       }
     },
@@ -3892,8 +3913,8 @@
         "harness/uv.lock"
       ],
       "last_walk": {
-        "packet": "M3NM",
-        "date": "2026-09-15",
+        "packet": "M3TH",
+        "date": "2026-09-16",
         "verdict": "PASS",
         "flag": "",
         "screenshot": "FL-194.png"
