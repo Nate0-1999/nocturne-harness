@@ -3437,3 +3437,16 @@ unoffered memories and vetoed gate cards cannot use that action. The Nebula's
 selection and compact trace use the same panel actions and context readout,
 without scorer writes. Historical bodies travel through the existing graph
 projection and are displayed inline in the revision list.
+
+## 121 — Explain retained choices and pause purchases at spend walls [P2.4, M3SR]
+
+PRECEDENT: PLAN M3SR; A-021, ADR-024; ancestors M3SP, M3SC.
+Policy readouts use the thread's retained catalog decision; restored choices without
+that evidence say so. Token-cost policies do not imply an hourly dollar allowance.
+Spend charts, daily totals and per-message cache reuse read the scoped ledger;
+broker reconciliation keeps its existing owner-only daily cumulative baseline.
+Ordinary runs bind spend authority around the existing model adapter. Native costs
+pause the next request, or the terminal boundary after receipts are recorded.
+One underway request may exceed the limit. Pending receipts count once alongside
+acknowledged daily spend; unpriced receipts cannot certify a configured wall.
+Raising a wall resumes the retained run; cancellation uses the existing run path.

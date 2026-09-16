@@ -1,0 +1,17 @@
+.spend-history { padding: 0.75rem; border-top: 1px solid var(--border, #394048); }
+.spend-history h3, .spend-history p { margin: 0.25rem 0 0.6rem; }
+.spend-history__controls, .spend-history__totals { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+.spend-history__totals dd { margin: 0.3rem 0; font-variant-numeric: tabular-nums; }
+.spend-history select { max-width: 100%; }
+.spend-history figure { margin: 0.7rem 0; }
+.spend-history figcaption { display: flex; justify-content: space-between; gap: 1rem; }
+.spend-history svg { display: block; width: 100%; height: 80px; color: var(--accent, #83c5bd); }
+.spend-history polyline { stroke: currentColor; stroke-width: 1.5px; }
+.spend-history circle { fill: currentColor; }
+.spend-history__axis { stroke: currentColor; opacity: 0.2; stroke-width: 0.2; }
+.spend-history--compact { display: flex; align-items: center; gap: 1rem; padding: 0.25rem; width: 100%; }
+.spend-history--compact figure { flex: 1; min-width: 100px; margin: 0; }
+.spend-history--compact svg { height: 36px; }
+.spend-history--compact figcaption { font-size: 0.65rem; }
+.spend-history meter { width: 4rem; }
+.spend-table__name { overflow: hidden; text-overflow: ellipsis; }

@@ -28,6 +28,7 @@ interface ParameterSnapshot {
   thread_id: string
   as_of: string
   resolved_model: string
+  policy_explanation?: string | null
   descriptors: Descriptor[]
   values: Record<string, ParameterValue>
   changes: Change[]
@@ -141,6 +142,7 @@ export function ModelDevice() {
       <div className="model-device__truth">
         <span>Model in use</span>
         <strong data-testid="model-device-resolved">{view?.resolved_model ?? 'Waiting for thread'}</strong>
+        {view?.policy_explanation && <p>{view.policy_explanation}</p>}
         <small>{scope === 'GLOBAL' ? 'Provider defaults · read only' : status}</small>
       </div>
 

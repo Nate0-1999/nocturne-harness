@@ -220,7 +220,7 @@ export function nearestSpendPoint(
 }
 
 export function laneChartPoints(
-  lane: SpendLane,
+  lane: { points: SpendPoint[] },
   asOf: string,
   windowMinutes = 60,
 ): LaneChartPoint[] {
@@ -438,7 +438,7 @@ function parseReconciliation(value: unknown): ReconciliationSnapshot {
   return result
 }
 
-function parseSpendPoint(value: unknown, laneIndex: number, pointIndex: number): SpendPoint {
+export function parseSpendPoint(value: unknown, laneIndex: number, pointIndex: number): SpendPoint {
   const prefix = `spend.lanes[${laneIndex}].points[${pointIndex}]`
   const point = record(value, prefix)
   const cost = point.cost_usd

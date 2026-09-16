@@ -70,6 +70,7 @@ from harness.run_loop import ProjectBindingConflict, RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.seed import SeedIngestionService, SeedUploadRequest
 from harness.seed_jump_start import AgentFileOffers, discover_agent_files
+from harness.spend_walls import SpendLimits, SpendWalls
 from harness.spine_client import (
     ActivateScorerConfigRequest,
     BatchDecisionResponse,
@@ -276,6 +277,7 @@ def create_app(
     vitals_snapshot_reader: VitalsSnapshotReader | None = None,
     thread_vitals_snapshot_reader: ThreadVitalsSnapshotReader | None = None,
     spend_table_snapshot_reader: SpendTableSnapshotReader | None = None,
+    model_policy_reader: Callable[[ParameterSnapshot], str] | None = None,
     memory_graph_reader: MemoryGraphReader | None = None,
     scorer_console_reader: ScorerConsoleReader | None = None,
     scorer_config_writer: ScorerConfigWriter | None = None,
@@ -416,6 +418,10 @@ def create_app(
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                     detail="The parameter registry is unavailable.",
                 ) from None
+            if model_policy_reader is not None:
+                snapshot = snapshot.model_copy(
+                    update={"policy_explanation": model_policy_reader(snapshot)}
+                )
             return RackQueryResult(
                 status="live",
                 as_of=None,
@@ -821,6 +827,18 @@ def create_dev_app(
         static_context_tokens=configured.model_context_tokens,
         catalog=completion_router.catalog,
     )
+
+    def explain_model_policy(snapshot: ParameterSnapshot) -> str:
+        if not isinstance(model_resolver, ModelPolicyResolver):
+            return "Model selected by the configured resolver."
+        return model_resolver.explain(
+            snapshot.thread_id,
+            snapshot.resolved_model,
+            explicitly_selected=any(
+                change.parameter_id == "model.slug" for change in snapshot.changes
+            ),
+        )
+
     journal = transcript_journal or TranscriptJournal(home / "transcripts")
     workspace_toolsets: dict[str, LazyStandardToolset] = {}
 
@@ -875,6 +893,9 @@ def create_dev_app(
     memory_contexts = ThreadMemoryContextRegistry()
     context_windows = ContextWindowTracker()
     receipt_queue = SpendReceiptQueue(home / "receipt-queue")
+    spend_walls = SpendWalls(
+        home / "spend-walls.json", owned_spine, lambda: owned_spine.spend_table()
+    )
     resource_watch = ResourceWatch(home)
 
     async def enrich_memory_panel(
@@ -947,7 +968,7 @@ def create_dev_app(
         PydanticAITurnRunner(
             owned_agent,
             context_factory,
-            owned_spine,
+            spend_walls,
             receipt_queue=receipt_queue,
             context_windows=context_windows,
             extraction=extraction,
@@ -1064,6 +1085,7 @@ def create_dev_app(
         model_resolver=model_resolver,
         transcript_journal=journal,
         symphony_experience=owned_symphony_experience,
+        spend_walls=spend_walls,
     )
     owned_symphony_experience.bind(
         SymphonyExecution(settings=configured, home=home, context_factory=context_factory),
@@ -1084,6 +1106,15 @@ def create_dev_app(
     )
 
     def configure_extraction_routes(app: FastAPI) -> None:
+        @app.get("/v1/spend-walls", response_model=SpendLimits)
+        async def read_spend_walls():
+            return spend_walls.limits
+
+        @app.put("/v1/spend-walls", response_model=SpendLimits)
+        async def update_spend_walls(limits: SpendLimits):
+            await spend_walls.configure(limits)
+            return spend_walls.limits
+
         @app.get("/v1/identity")
         async def identity():
             return {"principal_id": principal_id, "machine_id": machine_id, "home": str(home)}
@@ -1285,6 +1316,7 @@ def create_dev_app(
         vitals_snapshot_reader=read_vitals_snapshot,
         thread_vitals_snapshot_reader=read_thread_vitals_snapshot,
         spend_table_snapshot_reader=read_spend_table_snapshot,
+        model_policy_reader=explain_model_policy,
         memory_graph_reader=read_memory_graph,
         scorer_console_reader=read_scorer_console,
         scorer_config_writer=force_scorer,

@@ -907,6 +907,7 @@ button.rack-module__resize-handle--nw {
 }
 
 .rack-remote--vitals {
+  overflow: auto;
   background:
     linear-gradient(90deg, var(--seam-25a8333a4598), transparent 42%, var(--seam-92d165cee6fb)),
     var(--seam-d07e4b81f716);
