@@ -28,6 +28,7 @@ import { RewindControl } from './RewindControl'
 import { RackPluginUpload } from './RackPluginUpload'
 import { MemoryGraph } from './MemoryGraph'
 import { PalaceNebula } from './PalaceNebula'
+import { WorkVisualization } from './WorkVisualization'
 import { InjectionConsole } from './InjectionConsole'
 import { RecipeModule } from './RecipeModule'
 import { SymphonyDeck } from './SymphonyDeck'
@@ -1732,6 +1733,8 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
         <MemoryGraph />
       ) : moduleId === 'palace_nebula' ? (
         <PalaceNebula />
+      ) : moduleId === 'farm' || moduleId === 'roots' ? (
+        <WorkVisualization initialView={moduleId} />
       ) : moduleId === 'injection_console' ? (
         <InjectionConsole />
       ) : moduleId === 'recipe' ? (

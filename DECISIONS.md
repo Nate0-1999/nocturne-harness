@@ -3467,3 +3467,16 @@ A stack-attuned console selects its sole conversation or asks for an explicit
 preview conversation in a multi-thread stack; other modules retain stack scope.
 The terrain renders server replay measurements, with grid values available as a
 table. Principal polling cannot erase a result measured on the Palace corpus.
+
+## M3VZ — Replay observed work without inventing its past [P2.5]
+
+PRECEDENT: PLAN M3VZ GRANTS, ADR-018, R10, A-068; ancestors M3SL/M3ES/M3AT.
+The three modules share selection and an observation cursor. Complete directory
+metadata includes hidden and empty folders, without contents or followed links.
+Workers report their actual feet; judge seats retain distinct identities.
+Compressed local observations retain trees, agents, Palace revisions and curator
+progress. History starts at first observation. Roots bind width to measured
+dollars and depth to time. Ghosts move only when committed curator targets change.
+Both geometry tiers report rendered triangle counts. Reference plates preceded
+pixels. Restoring a singleton library module moves its existing placement so a
+reload cannot discard duplicate IDs.

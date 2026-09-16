@@ -22,6 +22,7 @@ export interface PalaceMemoryNode {
     origin_thread_id?: string | null
     thread_origin?: string | null
     origin_path?: string | null
+    origin_location?: string | null
     created_at?: string | null
     updated_at?: string | null
     stats: { injections?: number }

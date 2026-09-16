@@ -462,6 +462,23 @@ class CuratorActivity(ContractModel):
     pending_cards: int
 
 
+class CuratorProgressEvent(ContractModel):
+    event_id: int
+    run_uid: str
+    phase: Literal[
+        "run.started", "finding.started", "finding.completed", "run.completed", "run.failed"
+    ]
+    memory_ids: list[UUID]
+    finding_uid: str | None
+    action: str | None
+    ts: datetime
+
+
+class CuratorProgress(ContractModel):
+    events: list[CuratorProgressEvent]
+    cursor: int
+
+
 class SymphonyMemoryRecord(ContractModel):
     memory_id: UUID
     principal_id: str
@@ -1051,6 +1068,7 @@ _EXTRACTION_RESPONSE = TypeAdapter(ExtractionResponse)
 _SEED_RESPONSE = TypeAdapter(SeedResponse)
 _QUEUE_RESPONSE = TypeAdapter(QueueResponse)
 _CURATOR_ACTIVITY = TypeAdapter(CuratorActivity)
+_CURATOR_PROGRESS = TypeAdapter(CuratorProgress)
 _STAGE_SYMPHONY_MEMORY_RESPONSE = TypeAdapter(StageSymphonyMemoryResponse)
 _SYMPHONY_VISIBILITY_RESPONSE = TypeAdapter(SymphonyVisibilityResponse)
 _RESOLVE_SYMPHONY_RUN_RESPONSE = TypeAdapter(ResolveSymphonyRunResponse)
@@ -1433,6 +1451,13 @@ class SpineClient:
         if response.status_code == 404:
             return None
         return _expect_success(response, status=200, adapter=_CURATOR_ACTIVITY)
+
+    async def curator_progress(self, principal_id: str, after: int = 0) -> CuratorProgress:
+        """M3VZ / A-068: read real, principal-scoped transitions before a pass completes."""
+        response = await self._request(
+            "GET", "v1/curation/progress", params={"principal_id": principal_id, "after": after}
+        )
+        return _expect_success(response, status=200, adapter=_CURATOR_PROGRESS)
 
     async def stage_symphony_memory(
         self, request: StageSymphonyMemoryRequest

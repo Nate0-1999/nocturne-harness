@@ -99,7 +99,7 @@ export const FACTORY_RACK_LAYOUT: RackLayoutSet = {
     header: 'GLOBAL', threads: 'ATTUNED', chat: 'ATTUNED', memory: 'ATTUNED',
     vitals: 'GLOBAL', context_bars: 'ATTUNED', gate: 'ATTUNED', thread_end: 'ATTUNED', palace_queue: 'GLOBAL',
     model_device: 'ATTUNED',
-    memory_graph: 'GLOBAL', palace_nebula: 'GLOBAL', injection_console: 'GLOBAL',
+    memory_graph: 'GLOBAL', palace_nebula: 'GLOBAL', farm: 'GLOBAL', roots: 'GLOBAL', injection_console: 'GLOBAL',
   },
   modules: [
     { module_id: 'threads', order: 0, width: 2 },
