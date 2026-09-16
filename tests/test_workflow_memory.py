@@ -57,3 +57,21 @@ async def test_no_memory_scope_omits_memory_tools():
     await agent.chat(
         "Check", context=replace(context(FakeSpine(outcome=None)), memory_enabled=False)
     )
+
+
+@pytest.mark.asyncio
+async def test_workflow_refuses_missing_autonomous_context():
+    """A-069 / P4.1: missing Palace preparation must not run an uninformed job."""
+    spine, delegate, emitter = RecordingSpine(), RecordingDelegate(), RecordingEmitter()
+    runner = MemoryGateTurnRunner(
+        delegate, spine, context_factory(spine), model_context_tokens=1000
+    )
+    with pytest.raises(ValueError, match="The Palace did not return an autonomous memory block."):
+        await runner.run_workflow(
+            memory_scope="workspace",
+            thread_id=THREAD_ID,
+            prompt="check",
+            message_history=(),
+            emit=emitter,
+        )
+    assert not delegate.calls

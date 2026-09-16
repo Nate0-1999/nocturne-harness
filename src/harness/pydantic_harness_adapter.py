@@ -522,6 +522,7 @@ class PydanticHarnessToolset:
             raise
         if "\nID: " not in result:
             await shell.__aexit__()
+            # A-069: retain only a successfully launched upstream process handle.
             raise ToolsetError(result)
         command_id = result.rsplit("ID: ", 1)[1].strip()
         self._background_shells[command_id] = shell
@@ -532,6 +533,7 @@ class PydanticHarnessToolset:
         command_id = str(arguments.get("command_id", ""))
         shell = self._background_shells.get(command_id)
         if shell is None:
+            # A-069: a shell handle belongs to its originating thread.
             raise ToolsetError("No background shell with that ID in this thread.")
         return await shell.check_command(command_id)
 
@@ -539,12 +541,14 @@ class PydanticHarnessToolset:
         command_id = str(arguments.get("command_id", ""))
         shell = self._background_shells.get(command_id)
         if shell is None:
+            # A-069: stopping a shell requires this thread's retained handle.
             raise ToolsetError("No background shell with that ID in this thread.")
         return await shell.stop_command(command_id)
 
     def _shell_command(self, arguments: Mapping[str, object]) -> tuple[ShellToolset, str]:
         command = arguments.get("command")
         if not isinstance(command, str) or not command.strip():
+            # A-069: the saved or interactive shell must name actual work.
             raise ToolsetError("A shell command is required.")
         if _BOUNDARY_COMMAND.search(command):
             # WALL owner files / ADR015: shell tools cannot publish or escape the project grant.

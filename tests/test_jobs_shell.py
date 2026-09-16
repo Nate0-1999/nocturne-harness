@@ -26,5 +26,11 @@ async def test_background_shell_survives_other_calls_and_stops(tmp_path):
         assert stopped.success and "ready" in stopped.content
         refused = await tools.execute("start_shell", {"command": "git push"})
         assert not refused.success and refused.boundary == "remote"
+        for name in ("read_shell", "stop_shell"):
+            missing = await tools.execute(name, {"command_id": "other-thread"})
+            assert not missing.success
+            assert "No background shell with that ID in this thread." in missing.content
+        empty = await tools.execute("start_shell", {"command": ""})
+        assert not empty.success and "A shell command is required." in empty.content
     finally:
         await tools.close()

@@ -231,6 +231,7 @@ class MemoryGateTurnRunner:
             )
         )
         if prepared.final_block is None:
+            # A-069: an autonomous recipe cannot invent a missing Palace context.
             raise ValueError("The Palace did not return an autonomous memory block.")
         self._contexts.install(
             thread_id,
