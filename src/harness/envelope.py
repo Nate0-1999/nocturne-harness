@@ -554,6 +554,7 @@ class MemoryPanelPinPayload(_MemoryPanelPayload):
 class MemoryPanelDeletePayload(_MemoryPanelPayload):
     action: Literal["delete"]
     memory_id: UUID
+    # WALL Palace writes / C.4: deletes use compare-and-set revisions.
     expected_revision: Annotated[StrictInt, Field(ge=1)]
 
 
