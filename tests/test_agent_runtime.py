@@ -1631,14 +1631,16 @@ async def test_remember_label_budget_maps_to_budget_exceeded_with_usage() -> Non
     )
     emitted = RecordingEmitter()
 
+    history = (ModelRequest(parts=[UserPromptPart("existing conversation")]),)
     outcome = await runner.run(
         thread_id="thread-1",
         prompt="/remember a durable fact",
-        message_history=(),
+        message_history=history,
         emit=emitted,
     )
 
     assert outcome.stop_reason is StopReason.BUDGET_EXCEEDED
+    assert outcome.message_history == history
     assert outcome.usage.requests == 1
     assert outcome.usage.input_tokens > 0
     assert outcome.usage.output_tokens > 0
