@@ -135,7 +135,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nate0-1999/nocturne-memory
-          ref: 427d0f4c2ce86ec12e10204b3a008bf37e5ed4cc
+          ref: 24b7a35b9777e325c645d902001881aedf2e5c5e
           path: _contract/spine
           persist-credentials: false
       - uses: actions/setup-python@v5
