@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 
 import { formatHumanQuantity, formatHumanUsd } from './humanNumbers'
 import { useRackPlugin, useRackSnapshot } from './rack'
+import { CacheHistory, SpendDaily, SpendRates, SpendReconciliation } from './SpendHistory'
+import { parseVitalsSnapshot, type ReconciliationSnapshot } from './vitals'
 import {
   parseSpendTableSnapshot,
   partialSpendCopy,
@@ -21,6 +23,7 @@ export function VitalsModule() {
   const [phase, setPhase] = useState<LoadPhase>('loading')
   const [failure, setFailure] = useState('')
   const [snapshot, setSnapshot] = useState<SpendTableSnapshot | null>(null)
+  const [reconciliation, setReconciliation] = useState<ReconciliationSnapshot | null>(null)
   const [expandedThreads, setExpandedThreads] = useState<ReadonlySet<string>>(new Set())
   const [collapsed, setCollapsed] = useState(() => globalThis.innerHeight < 120)
   const attunedWithoutTarget = scope === 'ATTUNED' && rack.attunement === null
@@ -34,14 +37,17 @@ export function VitalsModule() {
   useEffect(() => {
     if (attunedWithoutTarget) return
     let active = true
-    void query.query({ resource: 'spend_table', as_of: 'now' })
-      .then((result) => {
+    void Promise.all([
+      query.query({ resource: 'spend_table', as_of: 'now' }),
+      query.query({ resource: 'vitals', as_of: 'now' }).catch(() => null),
+    ]).then(([result, vitals]) => {
         if (result.status !== 'live' || result.data === null) {
           throw new TypeError('Live spend rows were not returned')
         }
         const next = parseSpendTableSnapshot(result.data)
         if (active) {
           setSnapshot(next)
+          setReconciliation(vitals?.data ? parseVitalsSnapshot(vitals.data).reconciliation : null)
           setPhase('live')
         }
       })
@@ -53,6 +59,11 @@ export function VitalsModule() {
       })
     return () => { active = false }
   }, [attunedWithoutTarget, query, rack.attunement, sequence])
+
+  useEffect(() => {
+    const timer = globalThis.setInterval(() => setSequence((value) => value + 1), 60_000)
+    return () => globalThis.clearInterval(timer)
+  }, [])
 
   const threadNames = useMemo(
     () => new Map(rack.catalog.map((entry) => [entry.thread_id, entry.title])),
@@ -82,9 +93,7 @@ export function VitalsModule() {
   if (collapsed) {
     return (
       <section className="spend-table spend-table--collapsed" aria-label="Spend">
-        <strong>Spend</strong>
-        <span>{rowCount} {rowCount === 1 ? 'group' : 'groups'}</span>
-        <small>Through {formatTime(snapshot.as_of)}</small>
+        <SpendRates snapshot={snapshot} compact />
         {phase === 'failed' && <em role="alert">Couldn’t refresh</em>}
       </section>
     )
@@ -100,6 +109,8 @@ export function VitalsModule() {
           <button type="button" onClick={refresh}>Refresh</button>
         </div>
       </div>
+      <SpendRates snapshot={snapshot} />
+      <SpendReconciliation value={reconciliation} />
       {rowCount === 0 ? (
         <p className="spend-table__empty">
           {scope === 'ATTUNED' ? `No spend for ${rack.attunement?.name ?? 'this view'}.` : 'No spend recorded.'}
@@ -155,6 +166,8 @@ export function VitalsModule() {
           </table>
         </div>
       )}
+      <SpendDaily snapshot={snapshot} />
+      <CacheHistory snapshot={snapshot} threadNames={threadNames} />
     </section>
   )
 }

@@ -21,6 +21,7 @@ import { MemoryGate } from './MemoryGate'
 import { MemoryPanel } from './MemoryPanel'
 import { MemoryRestore } from './MemoryRestore'
 import { AgentPolicies } from './AgentPolicies'
+import { SpendWallSettings } from './SpendWallSettings'
 import { RackPluginUpload } from './RackPluginUpload'
 import { MemoryGraph } from './MemoryGraph'
 import { PalaceNebula } from './PalaceNebula'
@@ -876,6 +877,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           </section>
           <MemoryRestore />
           <AgentPolicies />
+          <SpendWallSettings />
         </aside>
       )}
       <div

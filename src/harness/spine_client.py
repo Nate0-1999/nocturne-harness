@@ -655,6 +655,34 @@ class SpendTableSnapshot(ContractModel):
     window_minutes: Literal[60]
     threads: list[ThreadSpendRow]
     purposes: list[PurposeSpendRow]
+    rates: list[SpendRateLane] = Field(default_factory=list)
+    rate_source: Literal["v_spend_rate+spend_event", "spend_event"] = "spend_event"
+    messages: list[MessageCache] = Field(default_factory=list)
+    days: list[DailySpend] = Field(default_factory=list)
+
+
+class SpendRateLane(ContractModel):
+    dimension: Literal["total", "agent", "subagent", "model", "curation"]
+    key: str | None
+    label: NonBlankString
+    points: list[VitalsSpendPoint]
+
+
+class MessageCache(ContractModel):
+    thread_id: UUID
+    prompt_id: str | None
+    first_request_at: datetime
+    fresh_tokens: NonNegativeDecimalString
+    cached_tokens: NonNegativeDecimalString
+    cache_write_tokens: NonNegativeDecimalString
+
+
+class DailySpend(ContractModel):
+    day: datetime
+    model_usd: NonNegativeDecimalString | None
+    infrastructure_usd: NonNegativeDecimalString | None
+    total_usd: NonNegativeDecimalString | None
+    unpriced_lines: int = Field(ge=0)
 
 
 class VitalsSpendPoint(ContractModel):

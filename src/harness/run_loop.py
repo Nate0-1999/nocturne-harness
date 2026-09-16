@@ -6,6 +6,7 @@ import asyncio
 import logging
 from collections import deque
 from collections.abc import Awaitable, Callable, Mapping, Sequence
+from contextlib import nullcontext
 from copy import deepcopy
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
@@ -74,6 +75,7 @@ from harness.run_protocol import (
     UsageSnapshot,
     run_error_message,
 )
+from harness.spend_walls import SpendWalls
 from harness.symphony_experience import SymphonyExperience
 from harness.transcript import HydratedTranscript, TranscriptJournal
 
@@ -209,6 +211,7 @@ class RunLoop:
         transcript_journal: TranscriptJournal | None = None,
         parameter_registry: ParameterRegistry | None = None,
         symphony_experience: SymphonyExperience | None = None,
+        spend_walls: SpendWalls | None = None,
     ) -> None:
         self._runner = runner
         self._factory = factory
@@ -219,6 +222,7 @@ class RunLoop:
         self._transcript_journal = transcript_journal
         self._parameter_registry = parameter_registry or ParameterRegistry()
         self._symphony_experience = symphony_experience
+        self._spend_walls = spend_walls
         self._lock = asyncio.Lock()
         self._submission_locks: dict[str, asyncio.Lock] = {}
         self._pending_captured: dict[str, deque[_Turn]] = {}
@@ -888,6 +892,11 @@ class RunLoop:
     ) -> None:
         outcome: TurnOutcome | None = None
         stop_reason = StopReason.ERROR
+        spend_scope = (
+            self._spend_walls.bind(active.turn.run_id, _Emitter(self, thread_id, active))
+            if self._spend_walls is not None else nullcontext()
+        )
+        spend_scope.__enter__()
         try:
             if self._symphony_experience is not None and (
                 active.turn.symphony is not None
@@ -958,6 +967,8 @@ class RunLoop:
                     emit=_Emitter(self, thread_id, active),
                     model_resolution=model_resolution,
                 )
+            if self._spend_walls is not None:
+                await self._spend_walls.check_current()
             stop_reason = outcome.stop_reason
         except asyncio.CancelledError:
             stop_reason = StopReason.CANCELLED
@@ -970,6 +981,8 @@ class RunLoop:
                 active.usage,
                 error_message=run_error_message(exc),
             )
+        finally:
+            spend_scope.__exit__(None, None, None)
 
         terminal = asyncio.create_task(
             self._finish(thread_id, active, outcome, stop_reason),
@@ -1511,6 +1524,7 @@ class RunLoop:
         value: Mapping[str, object],
     ) -> None:
         event = dict(value)
+        spend_boundary = event.get("event_kind") == "boundary_card" and event.get("wall") == "spend"
         delta = RunDeltaEventPayload(
             run_id=active.turn.run_id,
             kind="event",
@@ -1520,6 +1534,10 @@ class RunLoop:
             state = self._live_state_locked(thread_id, active)
             if state is None:
                 return
+            if spend_boundary and active.state != "cancelling":
+                active.state = (
+                    "waiting_gate" if event.get("decision") == "owner_action" else "running"
+                )
             active.assistant_message["events"].append(deepcopy(event))
             await self._publish_locked(
                 thread_id,
@@ -1529,6 +1547,8 @@ class RunLoop:
                     thread_id=thread_id,
                 ),
             )
+        if spend_boundary:
+            await self.publish_thread_snapshot(thread_id)
 
     async def _emit_usage(
         self,
