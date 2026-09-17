@@ -2,6 +2,7 @@ import { Canvas, useFrame, type GLProps } from '@react-three/fiber'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import {
   BufferGeometry,
+  AdditiveBlending,
   CatmullRomCurve3,
   Color,
   Float32BufferAttribute,
@@ -26,7 +27,6 @@ import {
   buildNebulaFilaments,
   NEBULA_BINDINGS,
   NEBULA_EVENT_COLORS,
-  type NebulaAxisMode,
   type NebulaBody,
   type NebulaCreatureFamily,
   type NebulaFilament,
@@ -66,7 +66,6 @@ export function PalaceNebula() {
   const selected = useRackSelection()
   const rack = useRackSnapshot()
   const visualization = useVisualization()
-  const [axis, setAxis] = useState<NebulaAxisMode>('activity')
   const [tier, setTier] = useState<NebulaHardwareTier>('full')
   const [scope, setScope] = useState<'GLOBAL' | 'ATTUNED'>('GLOBAL')
   const [load, setLoad] = useState<LoadState>({ kind: 'loading' })
@@ -115,14 +114,14 @@ export function PalaceNebula() {
     }
     return selected?.as_of ? null : load.kind === 'ready' ? load.snapshot : null
   }, [visualization.data, visualization.loading, selected?.as_of, scope, threadId, load])
-  const bodies = useMemo(() => sceneSnapshot ? buildNebulaBodies(sceneSnapshot, axis).map((body) => {
+  const bodies = useMemo(() => sceneSnapshot ? buildNebulaBodies(sceneSnapshot).map((body) => {
     const memory = sceneSnapshot.nodes.find((node) => node.memory.memory_id === body.id)?.memory
     const focused = selected?.kind === 'memory' ? selected.id === body.id
       : selected?.kind === 'agent' ? memory?.origin_thread_id === selected.thread_id
         : selected?.kind === 'thread' ? memory?.origin_thread_id === selected.id
           : selected?.kind === 'path' ? (memory?.origin_location ?? memory?.origin_path) === selected.id : body.in_current_context
     return { ...body, in_current_context: focused }
-  }) : [], [sceneSnapshot, axis, selected])
+  }) : [], [sceneSnapshot, selected])
   const memoryEvents = useMemo(() => sceneSnapshot ? buildNebulaEvents(sceneSnapshot) : [], [sceneSnapshot])
   const filaments = useMemo(() => sceneSnapshot ? buildNebulaFilaments(sceneSnapshot, bodies) : [], [sceneSnapshot, bodies])
   const families = useMemo(() => sceneSnapshot ? buildNebulaCreatureFamilies(sceneSnapshot, bodies, memoryEvents) : [], [sceneSnapshot, bodies, memoryEvents])
@@ -132,13 +131,14 @@ export function PalaceNebula() {
   const curatorRoute = useMemo(() => {
     const progress = visualization.data?.progress?.events ?? []
     const run = progress.at(-1)?.run_uid
-    return progress.filter((event) => event.run_uid === run && event.phase === 'finding.started').flatMap((event) => {
-      const targets = bodies.filter((body) => event.memory_ids.includes(body.id))
-      if (!targets.length) return []
-      const center = targets.reduce((point, body) => point.add(new Vector3(...body.position)), new Vector3()).divideScalar(targets.length)
-      return [center.toArray()]
-    })
-  }, [bodies, visualization.data])
+    const visits = progress.filter((event) => event.run_uid === run && event.phase === 'finding.started')
+      .flatMap((event) => families.flatMap((family) => {
+        const targets = bodies.filter((body) => family.memory_ids.includes(body.id) && event.memory_ids.includes(body.id))
+        return targets.length ? [targets.reduce((sum, body) => sum.add(new Vector3(...body.position)), new Vector3())
+          .divideScalar(targets.length).toArray()] : []
+      }))
+    return visits.filter((point, index) => point.some((value, axis) => value !== visits[index - 1]?.[axis]))
+  }, [bodies, families, visualization.data])
   const kinds = useMemo(() => (
     [...new Set(bodies.map((body) => body.kind))].sort()
   ), [bodies])
@@ -148,7 +148,7 @@ export function PalaceNebula() {
   const learning = load.kind === 'ready' ? load.scorer?.learning : undefined
   const contextName = scope === 'GLOBAL' ? 'Whole Palace' : rack.attunement?.name ?? 'Unattuned'
 
-  return <section className="palace-nebula" data-testid="palace-nebula" data-axis={axis} data-tier={tier} data-grammar="torrent-constellation">
+  return <section className="palace-nebula" data-testid="palace-nebula" data-axis="radial" data-tier={tier} data-grammar="torrent-constellation">
     <header className="palace-nebula__header">
       <div className="palace-nebula__title">
         <small>Palace current · {contextName}</small>
@@ -156,9 +156,6 @@ export function PalaceNebula() {
         <p>Every point is a recorded memory event. The graph is the instrument.</p>
       </div>
       <div className="palace-nebula__controls">
-        <label>Posture<select aria-label="Nebula axes" value={axis} onChange={(event) => setAxis(event.target.value as NebulaAxisMode)}>
-          <option value="activity">Activity</option><option value="provenance">Provenance</option>
-        </select></label>
         <label>Render<select aria-label="Nebula hardware tier" value={tier} onChange={(event) => { setFps(0); setBackend('starting'); setTier(event.target.value as NebulaHardwareTier) }}>
           <option value="full">Full</option><option value="efficient">Efficient</option>
         </select></label>
@@ -203,10 +200,10 @@ export function PalaceNebula() {
       {load.kind === 'ready' && bodies.length === 0 && memoryEvents.length === 0 && <p role="status" className="palace-nebula__notice">No memories or memory events exist in this Palace snapshot.</p>}
     </div>
     <aside className="palace-nebula__legend" aria-label="Living Memory data bindings">
-      <section><h2>{axis === 'activity' ? 'Activity posture' : 'Provenance posture'}</h2>{NEBULA_BINDINGS[axis].map((binding) => <p key={binding}>{binding}</p>)}</section>
+      <section><h2>Radial Palace</h2>{NEBULA_BINDINGS.radial.map((binding) => <p key={binding}>{binding}</p>)}</section>
       <section><h2>Memory current</h2>{NEBULA_BINDINGS.current.map((binding) => <p key={binding}>{binding}</p>)}</section>
       <section><h2>Creature + constellation</h2>{NEBULA_BINDINGS.shared.map((binding) => <p key={binding}>{binding}</p>)}</section>
-      <section><h2>Kinds in view</h2><p>{kinds.length === 0 ? 'None' : kinds.join(' · ')}</p><p>Camera moves freely; posture rebinds this same recorded snapshot.</p></section>
+      <section><h2>Kinds in view</h2><p>{kinds.length === 0 ? 'None' : kinds.join(' · ')}</p><p>Camera moves freely around the same recorded snapshot.</p></section>
     </aside>
     <details><summary>Memories in view</summary>
       {bodies.map((body) => <button key={body.id} type="button" aria-pressed={body.in_current_context} onClick={() => selection.select({ kind: 'memory', id: body.id, as_of: selected?.as_of ?? null })}>{body.label}</button>)}
@@ -248,13 +245,16 @@ function ThreeNebula({
     const parameters = { canvas: defaults.canvas, antialias: tier === 'full' }
     const renderer = new WebGPURenderer(parameters)
     await renderer.init()
+    // Async initialization can finish after R3F has already measured this canvas.
+    // Size this renderer too, rather than leaving its depth attachment at 300×150.
+    renderer.setSize(defaults.canvas.clientWidth, defaults.canvas.clientHeight, false)
     return renderer
   }, [tier])
 
   return <Canvas
     key={tier}
     aria-label={`Living Memory: ${bodies.length} active memories, ${events.length} memory events, ${filaments.length} relationships`}
-    camera={{ fov: 48, position: [0, 0.4, 13] }}
+    camera={{ fov: 48, position: [0, 0.4, 21] }}
     dpr={tier === 'full' ? [1, 2] : 1}
     gl={createRenderer}
     onCreated={({ gl }) => {
@@ -265,25 +265,36 @@ function ThreeNebula({
   >
     <ChromeEnvironment />
     <ambientLight color={new Color(0.1, 0.08, 0.2)} intensity={Math.PI * 0.8} />
-    <directionalLight color={new Color(0.96, 0.78, 0.58)} intensity={tier === 'full' ? 2.1 : 1.45} position={[5, 8, 7]} />
+    <directionalLight color="#dbe5ee" intensity={tier === 'full' ? 2.1 : 1.45} position={[5, 8, 7]} />
     <NebulaEventTorrent events={events} tier={tier} />
     <NebulaFilaments filaments={filaments} ghosts={ghosts} tier={tier} />
     <CuratorStream route={curatorRoute} tier={tier} />
-    {families.map((family) => <NebulaCreatureCluster key={family.id} family={family} tier={tier} />)}
+    {families.filter((family) => family.stipple_count > 0).map((family) => <NebulaCreatureCluster key={family.id} family={family} tier={tier} />)}
     {bodies.map((body) => <NebulaMemoryBody key={body.id} body={body} tier={tier} onSelect={onSelect} />)}
-    <CuratorGhost targets={ghosts} tier={tier} />
-    <CameraControls distance={13} />
+    <CuratorGhost targets={ghosts} route={curatorRoute} tier={tier} />
+    <CameraControls distance={Math.max(10, ...bodies.map((body) => (Math.abs(body.position[1]) + body.scale[1]) * 2.5))}
+      width={Math.max(10, ...bodies.map((body) => (Math.abs(body.position[0]) + body.scale[0]) * 2))} />
     <FpsMeter reportFps={reportFps} />
     <SceneStatistics report={reportTriangles} />
   </Canvas>
 }
 
+function curatorArc(from: readonly number[], to: readonly number[]) {
+  const start = new Vector3(...from).add(new Vector3(0, 0.9, 0))
+  const end = new Vector3(...to).add(new Vector3(0, 0.9, 0))
+  return new CatmullRomCurve3([start, start.clone().lerp(end, 0.5).add(new Vector3(0, 0, -1)), end])
+}
+
 function CuratorStream({ route, tier }: { route: readonly [number, number, number][]; tier: NebulaHardwareTier }) {
+  return <group name="recorded-curator-route">{route.slice(1).map((to, index) => <CuratorStreamArc
+    key={index} from={route[index]} to={to} tier={tier} />)}</group>
+}
+
+function CuratorStreamArc({ from, to, tier }: { from: readonly number[]; to: readonly number[]; tier: NebulaHardwareTier }) {
+  const [fx, fy, fz] = from, [tx, ty, tz] = to
   const geometry = useMemo(() => {
-    if (route.length < 2) return null
-    const points = route.map((point) => new Vector3(...point).add(new Vector3(0, 0.9, 0)))
-    const curve = new CatmullRomCurve3(points)
-    const segments = (tier === 'full' ? 32 : 12) * (points.length - 1), sides = tier === 'full' ? 8 : 4
+    const curve = curatorArc([fx, fy, fz], [tx, ty, tz])
+    const segments = tier === 'full' ? 32 : 12, sides = tier === 'full' ? 8 : 4
     const tube = new TubeGeometry(curve, segments, 0.025, sides, false)
     const colors: number[] = []
     for (let ring = 0; ring <= segments; ring++) {
@@ -291,32 +302,35 @@ function CuratorStream({ route, tier }: { route: readonly [number, number, numbe
       for (let side = 0; side <= sides; side++) colors.push(color.r, color.g, color.b)
     }
     tube.setAttribute('color', new Float32BufferAttribute(colors, 3))
-    return tube
-  }, [route, tier])
-  useEffect(() => () => geometry?.dispose(), [geometry])
-  return geometry && <mesh name="recorded-curator-route" geometry={geometry}>
-    <meshBasicMaterial vertexColors toneMapped={false} transparent opacity={0.8} />
-  </mesh>
+    const halo = new TubeGeometry(curve, segments, 0.09, sides, false)
+    halo.setAttribute('color', tube.getAttribute('color').clone())
+    return { tube, halo }
+  }, [fx, fy, fz, tx, ty, tz, tier])
+  useEffect(() => () => { geometry.tube.dispose(); geometry.halo.dispose() }, [geometry])
+  return <group>
+    <mesh geometry={geometry.tube}><meshBasicMaterial vertexColors toneMapped={false} transparent opacity={0.9} /></mesh>
+    <mesh geometry={geometry.halo}><meshBasicMaterial vertexColors toneMapped={false} transparent opacity={0.12} depthWrite={false} blending={AdditiveBlending} /></mesh>
+  </group>
 }
 
-function CuratorGhost({ targets, tier }: { targets: readonly NebulaBody[]; tier: NebulaHardwareTier }) {
+function CuratorGhost({ targets, route, tier }: { targets: readonly NebulaBody[]; route: readonly [number, number, number][]; tier: NebulaHardwareTier }) {
   const group = useRef<Group>(null)
-  const destination = useMemo(() => {
-    const point = new Vector3()
-    for (const body of targets) point.add(new Vector3(...body.position))
-    if (targets.length) point.divideScalar(targets.length).add(new Vector3(0, 0.9, 0))
-    return point
-  }, [targets])
-  const placed = useRef(false)
+  const last = route.at(-1)
+  const previous = route.at(-2) ?? last
+  const progress = useRef(1)
+  const curve = useMemo(() => {
+    if (!last || !previous) return null
+    return curatorArc(previous, last)
+    // Only a new recorded family visit starts another traversal.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [last?.[0], last?.[1], last?.[2], previous?.[0], previous?.[1], previous?.[2]])
+  useEffect(() => { progress.current = 0 }, [curve])
   useFrame((_, delta) => {
-    if (!group.current || !targets.length) return
-    if (!placed.current) { group.current.position.copy(destination); placed.current = true }
-    // Ease only a change in the recorded target. At rest, no clock-driven wandering.
-    if (group.current.position.distanceToSquared(destination) > 0.000001) {
-      group.current.position.lerp(destination, 1 - Math.exp(-delta * 8))
-    }
+    if (!group.current || !curve || !targets.length) return
+    progress.current = Math.min(1, progress.current + delta * 0.65)
+    group.current.position.copy(curve.getPoint(progress.current))
   })
-  return <group ref={group} visible={targets.length > 0}>
+  return <group ref={group} visible={targets.length > 0 && curve !== null}>
     <mesh scale={[0.5, 0.68, 0.5]}><sphereGeometry args={[1, tier === 'full' ? 32 : 12, 16]} /><meshPhysicalMaterial color="#dbe5ee" emissive="#8d50f5" emissiveIntensity={0.6} metalness={0.1} roughness={0.06} clearcoat={1} transparent opacity={0.28} depthWrite={false} /></mesh>
     <mesh scale={0.16}><sphereGeometry args={[1, 12, 8]} /><meshBasicMaterial color="#eff8fa" toneMapped={false} /></mesh>
   </group>
@@ -327,7 +341,6 @@ function NebulaMemoryBody({ body, tier, onSelect }: { body: NebulaBody; tier: Ne
   const [red, green, blue] = body.color
   const material = useMemo(() => {
     const base = new Color(red, green, blue)
-    const contextLight = body.pinned || body.in_current_context ? 0.055 : 0.005
     const next = new MeshPhysicalNodeMaterial({
       metalness: 0.35,
       roughness: 0.06,
@@ -340,17 +353,18 @@ function NebulaMemoryBody({ body, tier, onSelect }: { body: NebulaBody; tier: Ne
       opacity: tier === 'efficient' ? 0.64 : 1,
       envMapIntensity: 4,
     })
-    next.colorNode = tslColor(base.clone().lerp(new Color('#dbe5ee'), 0.65))
-    next.emissiveNode = tslColor(base).mul(contextLight + body.recency_glow * 0.012)
+    next.colorNode = tslColor(base.clone().lerp(new Color('#dbe5ee'), 0.2))
+    next.emissive.copy(base)
     // The efficient shell keeps grazing reflections without a transmission pass.
     if (tier === 'efficient') next.opacityNode = normalView.dot(positionViewDirection).abs().oneMinus().pow(2).mul(0.62).add(0.38)
     return next
-  }, [red, green, blue, body.in_current_context, body.pinned, body.recency_glow, tier])
+  }, [red, green, blue, tier])
 
   useEffect(() => () => material.dispose(), [material])
   return <mesh ref={meshRef} name={body.label} position={body.position} scale={body.scale} material={material}
+    material-emissiveIntensity={(body.pinned || body.in_current_context ? 0.055 : 0.005) + body.recency_glow * 0.012}
     onClick={(event) => { event.stopPropagation(); onSelect(body.id) }}>
-    <sphereGeometry args={[1, tier === 'full' ? 32 : 14, tier === 'full' ? 22 : 9]} />
+    <sphereGeometry args={[1, tier === 'full' ? 32 : 20, tier === 'full' ? 22 : 14]} />
   </mesh>
 }
 
@@ -382,10 +396,12 @@ function NebulaEventTorrent({ events, tier }: { events: readonly NebulaMemoryEve
 function NebulaFilaments({ filaments, ghosts, tier }: {
   filaments: readonly NebulaFilament[]; ghosts: readonly NebulaBody[]; tier: NebulaHardwareTier
 }) {
+  const geometryKey = JSON.stringify([filaments, ghosts.map((body) => body.position)])
   const geometry = useMemo(() => {
+    const [links, targets] = JSON.parse(geometryKey) as [NebulaFilament[], [number, number, number][]]
     const next = new BufferGeometry()
     const positions: number[] = [], colors: number[] = []
-    for (const filament of filaments) {
+    for (const filament of links) {
       const from = new Vector3(...filament.from), to = new Vector3(...filament.to)
       const midpoint = from.clone().lerp(to, 0.5)
       // Bow the real relationship, keeping both measured endpoints exact.
@@ -393,7 +409,7 @@ function NebulaFilaments({ filaments, ghosts, tier }: {
       midpoint.z -= 0.4
       const curve = new CatmullRomCurve3([from, midpoint, to])
       const points = curve.getPoints(tier === 'full' ? 32 : 12)
-      const working = ghosts.some((body) => new Vector3(...body.position).equals(from) || new Vector3(...body.position).equals(to))
+      const working = targets.some((point) => new Vector3(...point).equals(from) || new Vector3(...point).equals(to))
       for (let index = 1; index < points.length; index++) {
         positions.push(...points[index - 1].toArray(), ...points[index].toArray())
         for (const step of [index - 1, index]) {
@@ -406,36 +422,39 @@ function NebulaFilaments({ filaments, ghosts, tier }: {
     next.setAttribute('position', new Float32BufferAttribute(positions, 3))
     next.setAttribute('color', new Float32BufferAttribute(colors, 3))
     return next
-  }, [filaments, ghosts, tier])
-  const material = useMemo(() => new LineBasicMaterial({ transparent: true, opacity: 0.64, vertexColors: true, toneMapped: false }), [])
+  }, [geometryKey, tier])
+  const material = useMemo(() => new LineBasicMaterial({ transparent: true, opacity: 0.36, vertexColors: true, toneMapped: false }), [])
   useEffect(() => () => geometry.dispose(), [geometry])
   useEffect(() => () => material.dispose(), [material])
   return <lineSegments name="memory-relationships" geometry={geometry} material={material} />
 }
 
 function NebulaCreatureCluster({ family, tier }: { family: NebulaCreatureFamily; tier: NebulaHardwareTier }) {
+  const [x, y, z] = family.center
+  const { stipple_count: stippleCount, phase } = family
+  const memberCount = family.memory_ids.length
   const geometry = useMemo(() => {
     const positions: [number, number, number][] = []
     const colors: [number, number, number][] = []
-    const count = tier === 'full' ? family.stipple_count : Math.ceil(family.stipple_count / 2)
-    const radius = 0.72 + family.memory_ids.length * 0.16
+    const count = tier === 'full' ? stippleCount : Math.ceil(stippleCount / 2)
+    const radius = 0.72 + memberCount * 0.16
     for (let index = 0; index < count; index += 1) {
-      const y = 1 - ((index + 0.5) / count) * 2
-      const ring = Math.sqrt(Math.max(0, 1 - y * y))
-      const theta = family.phase + index * 2.399963229728653
+      const latitude = 1 - ((index + 0.5) / count) * 2
+      const ring = Math.sqrt(Math.max(0, 1 - latitude * latitude))
+      const theta = phase + index * 2.399963229728653
       positions.push([
-        family.center[0] + Math.cos(theta) * ring * radius,
-        family.center[1] + y * radius,
-        family.center[2] + Math.sin(theta) * ring * radius,
+        x + Math.cos(theta) * ring * radius,
+        y + latitude * radius,
+        z + Math.sin(theta) * ring * radius,
       ])
       colors.push([0.9, 0.94, 1])
     }
     return pointGeometry(positions, colors)
-  }, [family, tier])
+  }, [x, y, z, stippleCount, phase, memberCount, tier])
   const material = useMemo(() => new PointsMaterial({ size: 1.2, sizeAttenuation: false, transparent: true, opacity: 0.52, vertexColors: true }), [])
   useEffect(() => () => geometry.dispose(), [geometry])
   useEffect(() => () => material.dispose(), [material])
-  return <points name={`duplicate-family-${family.id}`} geometry={geometry} material={material} />
+  return <points name={`memory-family-${family.id}`} geometry={geometry} material={material} />
 }
 
 function pointGeometry(

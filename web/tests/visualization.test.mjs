@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { buildChambers, rootCurve } from '../src/visualization.ts'
+import { buildChambers, buildRootPaths, rootCurve } from '../src/visualization.ts'
 
 /** ADR-018 / FL-126: a frozen tree has repeatable geometry, including empty chambers. */
 test('directory layout preserves every chamber and cell and replays identically', () => {
@@ -31,4 +31,19 @@ test('roots grow only to their recorded end and preserve identity on replay', ()
   const long = rootCurve({ ...agent, updated_at: '2026-09-16T00:02:00Z' }, [], 0, begin, end)
   assert.ok(long.at(-1)[2] < short.at(-1)[2])
   assert.deepEqual(long[0], short[0])
+})
+
+/** ADR-018 / PLAN M3VL: nested forks attach to their actual parent's joined curve. */
+test('project trunks preserve true child and grandchild junctions regardless of input order', () => {
+  const parent = { id: 'parent', root: '/project', parent_id: null, started_at: '2026-09-16T00:00:00Z', updated_at: '2026-09-16T00:03:00Z' }
+  const child = { ...parent, id: 'child', root: '/attempt', parent_id: 'parent', started_at: '2026-09-16T00:01:00Z' }
+  const grandchild = { ...child, id: 'grandchild', parent_id: 'child', started_at: '2026-09-16T00:02:00Z' }
+  const agents = [grandchild, parent, child], begin = Date.parse(parent.started_at), end = Date.parse(parent.updated_at)
+  const paths = buildRootPaths(agents, {}, begin, end)
+  const replay = buildRootPaths([...agents].reverse(), {}, begin, end)
+  for (const agent of agents) assert.deepEqual(paths.get(agent.id), replay.get(agent.id))
+  for (const agent of [child, grandchild]) assert.ok(paths.get(agent.parent_id).some(point => JSON.stringify(point) === JSON.stringify(paths.get(agent.id)[0])))
+  const independent = { ...child, id: 'other-project', parent_id: null }
+  const separate = buildRootPaths([parent, independent], {}, begin, end)
+  assert.ok(Math.abs(separate.get(parent.id).at(-1)[1] - separate.get(independent.id).at(-1)[1]) > 3)
 })

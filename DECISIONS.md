@@ -3626,10 +3626,12 @@ duplicate more-options path was removed.
 ## M3VL — Reflective roots and glass memories [P2.5]
 
 PRECEDENT: PLAN M3VL, F115, M3VZ, D.2 107/109/110 and the committed plates.
-Tube taper and joined forks replace root strokes; a shared reflection environment
-lights chrome and glass without adding data marks. Sheet background travels with
-the Roots iframe. Efficient glass uses a reflective transparent shell instead of
-transmission. Curator streams join the actual finding targets of the latest run;
-ghost movement still follows the live targets. Existing memory coordinates,
-spend/time inputs and Farm stay intact. The Palace plate's central cluster conflicts
-with its existing Cartesian axes; this candidate preserves those axes for review.
+The owner's subsequent PLAN grants replace Cartesian placement with inverse-injection
+radius, family/creation angle and revision depth. Lineage and shared thread/keyword
+links support the filaments; recorded curator targets support streams and ghosts.
+Roots bundle by project, retain actual fork junctions, and add one tapered capillary
+per recorded file touch. The read-only feed projects successful journaled file tools
+and worker presence paths; opaque shell I/O is not guessed. Spend width, time depth,
+matte stopped roots, replay and Farm remain intact. Footer legends name the bindings.
+Chrome reflections and full/efficient glass emulate the committed plates; comparisons
+and live recordings remain the acceptance evidence, with the owner's eye at audit.
