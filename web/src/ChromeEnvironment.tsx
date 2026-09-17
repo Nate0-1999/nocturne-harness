@@ -4,7 +4,7 @@ import { CanvasTexture, EquirectangularReflectionMapping, SRGBColorSpace } from 
 /** M3VL plates: white strip reflections, black seams, a narrow cobalt horizon.
  * This is lighting, not scene population; no fabricated data marks or motion.
  */
-export function ChromeEnvironment({ glass = false }: { glass?: boolean }) {
+export function ChromeEnvironment() {
   const texture = useMemo(() => {
     const canvas = document.createElement('canvas')
     canvas.width = 1024
@@ -25,27 +25,11 @@ export function ChromeEnvironment({ glass = false }: { glass?: boolean }) {
     context.fillRect(640, 150, 110, 38)
     context.fillStyle = '#436ac5'
     context.fillRect(800, 250, 30, 150)
-    if (glass) {
-      context.fillStyle = '#020611'
-      context.fillRect(0, 0, 1024, 512)
-      // Curved studio strips give glass broad cobalt reflections and sharp
-      // white highlights; these are lights, never memories or relationships.
-      for (let strip = 0; strip < 9; strip++) {
-        context.beginPath()
-        context.moveTo(strip * 137 - 200, 0)
-        context.bezierCurveTo(strip * 90 + 80, 180, strip * 145 - 100, 340, strip * 120 + 180, 512)
-        context.strokeStyle = strip % 3 === 0 ? '#eff8fa' : '#174bff'
-        context.lineWidth = strip % 3 === 0 ? 14 : 35
-        context.shadowColor = '#436aff'
-        context.shadowBlur = 18
-        context.stroke()
-      }
-    }
     const texture = new CanvasTexture(canvas)
     texture.mapping = EquirectangularReflectionMapping
     texture.colorSpace = SRGBColorSpace
     return texture
-  }, [glass])
+  }, [])
   useEffect(() => () => texture.dispose(), [texture])
   return <primitive object={texture} attach="environment" />
 }
