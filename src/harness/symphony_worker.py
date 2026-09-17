@@ -215,6 +215,7 @@ async def run(assignment_path: Path) -> None:
             except (JudgePanelError, ValueError) as exc:
                 raise ModelRetry(str(exc)) from exc
 
+        metric_count = len(sealed.charter.metrics) if session["seat"] == "performance" else 0
         prompt += (
             f"\nYour current directory is {root}. Candidate artifact_root values are absolute "
             "paths; use them exactly as given. "
@@ -223,7 +224,7 @@ async def run(assignment_path: Path) -> None:
             "A failed metric or missing evidence is FAIL."
             " The performance seat must return one observation per charter metric, "
             "in the given order; the other seats return an empty metrics list."
-            f" This seat requires exactly {len(sealed.charter.metrics) if session['seat'] == 'performance' else 0} observations."
+            f" This seat requires exactly {metric_count} observations."
         )
     elif stage == "smoke":
         prompt = (
