@@ -350,8 +350,10 @@ async def test_interjection_is_a_new_user_instruction_after_the_running_tool(dur
             if during_final_response:
                 yield "amber"
             else:
-                yield {0: DeltaToolCall(name="write", json_args='{"path":"note.txt","content":"ok"}',
-                                       tool_call_id="write-one")}
+                yield {0: DeltaToolCall(
+                    name="write", json_args='{"path":"note.txt","content":"ok"}',
+                    tool_call_id="write-one",
+                )}
         else:
             assert isinstance(messages[-1], ModelRequest)
             assert any(isinstance(part, UserPromptPart) and "cobalt" in part.content
