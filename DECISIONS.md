@@ -3498,7 +3498,7 @@ next/last time, state, cost and verdict remain readable without invented edges.
 Recipes import from a file; the module runs, pauses and inspects them through
 the public rack adapter. A-069 enacts the durable Jobs contract.
 
-## M3BW — Retain the browser fallback until upstream can be embedded [P1, P3]
+## M3BW — Adopt the accepted Playwright browser hands [P1, P3]
 
 The revised charge prefers OpenAI's whole browser-use extension. The inspected
 `unified-computer-use` 26.908.70816 plugin starts `@oai/cua-repl` 0.1.0 and
@@ -3515,8 +3515,10 @@ five tools, thread consent, location fence and native screenshot path already
 share the normal journal/Tools surfaces. Fresh real-Palace/OpenRouter evidence
 proves that path, including both browser refusals; one owner-style correction
 from a relative filename to an absolute file URL was needed. This is fallback
-proof, not Codex-extension adoption. F116 keeps that requested adoption open;
-no runtime change or package release is justified by this investigation.
+proof, not Codex-extension adoption. PLAN M3BW RULING (2026-09-16) resolves
+F116 and accepts this fallback as the delivered browser hands; the extension
+returns to dormant until a standalone runtime exists. No runtime change or
+package release is needed for this handoff.
 
 ## M3OR — Steer active work and inspect worker context [P1.2, P2.2, P3.3]
 
