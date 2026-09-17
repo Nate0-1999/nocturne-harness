@@ -1,0 +1,113 @@
+[
+  {
+    "checkpoint": {
+      "commit": "7ca551562e5e3058e78904a9d10eb6ab69a0df23",
+      "location": "/private/tmp/m3ou-verification/final-work",
+      "parent_id": null
+    },
+    "content": "please reply with one short sentence about the moon",
+    "message_id": "01M2PGAX3VCQGZGSGVRQ4E2VMV",
+    "parentId": null,
+    "role": "user",
+    "run_id": "01M2PGAX3VFFSQB1PM9Q6A3X02",
+    "state": "end_turn"
+  },
+  {
+    "content": "The moon orbits the Earth approximately every 27.3 days. \n\n",
+    "events": [
+      {
+        "event_kind": "final_result",
+        "tool_call_id": null,
+        "tool_name": null
+      },
+      {
+        "event_kind": "part_end",
+        "index": 0,
+        "next_part_kind": null,
+        "part": {
+          "content": "The moon orbits the Earth approximately every 27.3 days. \n\n<nocturne-proposed-response>\n{\"primary\":\"The moon orbits the Earth roughly every 27 days.\",\"alternatives\":[\"The moon completes an orbit around Earth in about 27.3 days.\",\"Our moon takes almost 27 days to orbit the Earth.\"]} \n</nocturne-proposed-response>",
+          "id": null,
+          "part_kind": "text",
+          "provider_details": null,
+          "provider_name": null
+        }
+      },
+      {
+        "alternatives": [
+          "The moon completes an orbit around Earth in about 27.3 days.",
+          "Our moon takes almost 27 days to orbit the Earth."
+        ],
+        "created_at": "2026-09-17T01:40:14.568081+00:00",
+        "event_kind": "proposed_response",
+        "primary": "The moon orbits the Earth roughly every 27 days.",
+        "proposal_run_id": "01M2PGAX3VFFSQB1PM9Q6A3X02"
+      }
+    ],
+    "message_id": "01M2PGAX3VFFSQB1PM9Q6A3X02",
+    "parentId": "01M2PGAX3VCQGZGSGVRQ4E2VMV",
+    "partial": false,
+    "role": "assistant",
+    "run_id": "01M2PGAX3VFFSQB1PM9Q6A3X02",
+    "thinking": ""
+  },
+  {
+    "checkpoint": {
+      "commit": "e4afc41398f2a0ada4577ed28f5dd3e137548134",
+      "location": "/private/tmp/m3ou-verification/final-work",
+      "parent_id": "01M2PGAX3VFFSQB1PM9Q6A3X02"
+    },
+    "content": "thank you please tell me the color of moonlight in one sentence",
+    "message_id": "01M2PGBQ8608Q3WV122W5R37V0",
+    "parentId": "01M2PGAX3VFFSQB1PM9Q6A3X02",
+    "proposed_response": {
+      "edit_distance": 48,
+      "fired_at": "2026-09-17T01:40:37.766972+00:00",
+      "fired_text": "thank you please tell me the color of moonlight in one sentence",
+      "proposal_run_id": "01M2PGAX3VFFSQB1PM9Q6A3X02",
+      "proposed_text": "The moon orbits the Earth roughly every 27 days.",
+      "provenance": "owner_authored_with_assist"
+    },
+    "role": "user",
+    "run_id": "01M2PGBQ86G0EYCCC4B13ZCQ5Z",
+    "state": "end_turn"
+  },
+  {
+    "content": "Moonlight appears mostly white with a subtle bluish tint to the human eye. \n\n",
+    "events": [
+      {
+        "event_kind": "final_result",
+        "tool_call_id": null,
+        "tool_name": null
+      },
+      {
+        "event_kind": "part_end",
+        "index": 0,
+        "next_part_kind": null,
+        "part": {
+          "content": "Moonlight appears mostly white with a subtle bluish tint to the human eye. \n\n<nocturne-proposed-response>\n{\"primary\":\"Moonlight appears mostly white with a subtle bluish tint to the human eye.\",\"alternatives\":[\"Moonlight typically looks white, sometimes with a faint blue hue.\",\"The color of moonlight is generally white with a slight blue shade.\",\"Moonlight is seen as mostly white with a hint of blue.\"]} \n</nocturne-proposed-response>",
+          "id": null,
+          "part_kind": "text",
+          "provider_details": null,
+          "provider_name": null
+        }
+      },
+      {
+        "alternatives": [
+          "Moonlight typically looks white, sometimes with a faint blue hue.",
+          "The color of moonlight is generally white with a slight blue shade.",
+          "Moonlight is seen as mostly white with a hint of blue."
+        ],
+        "created_at": "2026-09-17T01:40:40.194139+00:00",
+        "event_kind": "proposed_response",
+        "primary": "Moonlight appears mostly white with a subtle bluish tint to the human eye.",
+        "proposal_run_id": "01M2PGBQ86G0EYCCC4B13ZCQ5Z"
+      }
+    ],
+    "message_id": "01M2PGBQ86G0EYCCC4B13ZCQ5Z",
+    "parentId": "01M2PGBQ8608Q3WV122W5R37V0",
+    "partial": false,
+    "role": "assistant",
+    "run_id": "01M2PGBQ86G0EYCCC4B13ZCQ5Z",
+    "thinking": ""
+  }
+]
