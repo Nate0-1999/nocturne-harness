@@ -263,7 +263,7 @@ function ThreeNebula({
     }}
     scene={{ background: new Color(0.004, 0.006, 0.015) }}
   >
-    <ChromeEnvironment glass />
+    <ChromeEnvironment />
     <ambientLight color={new Color(0.1, 0.08, 0.2)} intensity={Math.PI * 0.8} />
     <directionalLight color={new Color(0.96, 0.78, 0.58)} intensity={tier === 'full' ? 2.1 : 1.45} position={[5, 8, 7]} />
     <NebulaEventTorrent events={events} tier={tier} />
