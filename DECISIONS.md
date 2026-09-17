@@ -3505,3 +3505,23 @@ sigils overlapping attunement and conversation controls. Reserve a shrinking
 flex item for the existing strip instead of positioning it over text; the
 forge, finite animations and reduced-motion rest remain unchanged. The
 packaged favicon now uses the header's existing ouroboros-and-moon geometry.
+
+## M3BW — Retain the browser fallback until upstream can be embedded [P1, P3]
+
+The revised charge prefers OpenAI's whole browser-use extension. The inspected
+`unified-computer-use` 26.908.70816 plugin starts `@oai/cua-repl` 0.1.0 and
+`@oai/browser-desktop` 0.1.1 from ChatGPT.app and uses its native bridge. Both
+package names return 404 from public npm. The official [extension documentation](https://learn.chatgpt.com/docs/chrome-extension)
+describes desktop-app browser control, not a distributable headless embedding
+API. No independently installable, upstream-pinnable artifact was established.
+Copying this machine's application payload or recreating its bridge would not
+satisfy whole upstream adoption in the standalone Python product.
+
+Use the charge's first fallback: retain the existing `playwright==1.62.0`
+dependency, version-matched headless Chromium and single BrowserToolset. Its
+five tools, thread consent, location fence and native screenshot path already
+share the normal journal/Tools surfaces. Fresh real-Palace/OpenRouter evidence
+proves that path, including both browser refusals; one owner-style correction
+from a relative filename to an absolute file URL was needed. This is fallback
+proof, not Codex-extension adoption. F116 keeps that requested adoption open;
+no runtime change or package release is justified by this investigation.
