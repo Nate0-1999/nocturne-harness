@@ -7,12 +7,13 @@
     {
       "repo": "harness",
       "base": "465cd38f5d7ccafc6aa29b564978b2347a65cbee",
-      "head": "b5b5009ed980552f13e659667a96cd05e6d3e4c6"
+      "head": "e573e3132e9bae558e684a724be9ffab1b6b7bd3"
     }
   ],
   "unmapped": {
     "harness/CHANGELOG.md": "Packet decision, changelog, scoped finding or generated ledger view; records the verified brand change without introducing product behavior.",
     "harness/DECISIONS.md": "Packet decision, changelog, scoped finding or generated ledger view; records the verified brand change without introducing product behavior.",
+    "harness/src/harness/__init__.py": "Lockstep distribution/info version 0.1.28 only; no runtime or API schema behavior changed.",
     "harness/tests/test_m2ux6_grimoire_themes.py": "Existing regression assertions aligned with the verified layout or lockstep version; no product feature added.",
     "harness/verification/m3tm/FL-009.png": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/FL-069.png": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
@@ -118,6 +119,7 @@
     "harness/verification/m3tm/receipts/rules-tests.log": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/receipts/shared-port-interference.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/receipts/tool-inventory.txt": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
+    "harness/verification/m3tm/receipts/version-collision.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/receipts/web-build.log": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/receipts/web-lint.log": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/receipts/web-tests.log": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
@@ -127,8 +129,7 @@
     "harness/web/dist/assets/index-DM-Miss8.js": "Generated packaged copy of the verified theme CSS and favicon; source rows FL-144/147 cover the behavior.",
     "harness/web/dist/favicon.svg": "Generated packaged copy of the verified theme CSS and favicon; source rows FL-144/147 cover the behavior.",
     "harness/web/dist/index.html": "Generated packaged copy of the verified theme CSS and favicon; source rows FL-144/147 cover the behavior.",
-    "harness/verification/m3tm/impacted.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
-    "harness/verification/m3tm/receipts/version-collision.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact."
+    "harness/verification/m3tm/impacted.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -159,6 +160,33 @@
       "flag": "",
       "observed": "Exact sampled colors and recorded contrast repairs passed the existing deterministic extractor/validator. Live Seraph palette L1 distance 0.366642 and uploaded plate 0.386012 pass inherited 0.395 bound. This is distribution regression evidence, not pixel equality or a new aesthetic threshold."
     },
+    "FL-187": {
+      "label": "Two repos, the spine (memory) and the Harness, not a mono repo.",
+      "walk": "List the repositories; the spine and the Harness are two separate git repos.",
+      "protected": true,
+      "verdict": "PASS",
+      "screenshot": "FL-187.png",
+      "flag": "",
+      "observed": "Opened the public nocturne-harness and nocturne-memory GitHub repositories separately. Companion screenshot after/FL-187-memory-repository.png shows Memory; Git remotes and release metadata remain separate."
+    },
+    "FL-191": {
+      "label": "The tools and skills Claude Code and Codex use on this machine, pinned to versioned open-source sources.",
+      "walk": "Open the tool inventory; each tool or skill lists the versioned open-source source it is pinned to.",
+      "protected": true,
+      "verdict": "PASS",
+      "screenshot": "FL-191.png",
+      "flag": "",
+      "observed": "Opened live Tools & skills: each listed tool exposes a versioned source URL. Native additions 0.1.27, pydantic-ai-harness 0.31.0 and Playwright 1.62.0. Full visible text retained in receipts/tool-inventory.txt."
+    },
+    "FL-194": {
+      "label": "The Pydantic toolset and skills as the tool layer.",
+      "walk": "Open the agent's tool list in a thread; the tools come from the Pydantic toolset plus skills, not from pi.",
+      "protected": true,
+      "verdict": "PASS",
+      "screenshot": "FL-194.png",
+      "flag": "",
+      "observed": "Live thread Tools & skills lists Pydantic read/edit/write/grep/find/ls/bash and background shells with pinned upstream, plus native memory, move, browser and delegation tools; no pi toolset. See tool-inventory receipt."
+    },
     "FL-195": {
       "label": "The feature ledger generates coverage reports and requires evidence for the rows affected by a build.",
       "walk": "Compute the composer fix's impact with --paths and see attunement rows; push a branch touching socket.ts and observe the hook print rows and write impacted.json; observe a DONE handoff without screenshots fail CI, then verify complete evidence passes.",
@@ -176,6 +204,24 @@
       "screenshot": "FL-196.png",
       "flag": "F086",
       "observed": "Current rules pass and all 30 local negative/control tests pass. Dedicated hosted guard-citation and frozen-axiom mutation runs were not performed; screenshot is live-app context only."
+    },
+    "FL-009": {
+      "label": "Record files (history, transcripts) live apart from code so code can be deleted and re-downloaded without losing history.",
+      "walk": "Delete the code folder, reinstall, `nocturne up`; every thread is still there.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-009.png",
+      "flag": "F086",
+      "observed": "Public 0.1.27 code-environment deletion and reinstall restored the disposable conversation. The new 0.1.28 release install/restoration remains pending publication."
+    },
+    "FL-069": {
+      "label": "The core tools every modern harness has: files, terminal, Chrome, skills, changing models, compaction (our own take), and interactions with common apps, taken from the most modular standard source.",
+      "walk": "Ask the agent to read a file, run a terminal command, open a page in the browser and use a skill; each works.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-069.png",
+      "flag": "F086",
+      "observed": "No combined read, shell, browser and skill execution was performed in this brand walk. The live provider reply and installed inventory do not prove that broader workflow."
     },
     "FL-144": {
       "label": "The name Nocturne and the mark: an ouroboros around the moon.",
@@ -203,6 +249,51 @@
       "screenshot": "FL-148.png",
       "flag": "",
       "observed": "Liquid white gradient rims with excluded-center masks surround all fourteen modules, including Farm, Roots and Palace. Per-module final captures and before/all-module-rims.json retained. Ordinary button surfaces do not use the rim material. Three-dimensional content quality is M3VL scope; empty or costly scene rendering is not claimed as new proof here."
+    },
+    "FL-170": {
+      "label": "A fresh reinstall that reconnects to existing files and auto-finds the cloud palace.",
+      "walk": "Reinstall on the same machine and run the start command; it finds the existing cloud Palace and the old threads without being told where they are.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-170.png",
+      "flag": "F086",
+      "observed": "Public 0.1.27 reinstall restored the disposable identity and conversation. The new 0.1.28 registry-wheel restoration remains pending publication."
+    },
+    "FL-186": {
+      "label": "Build on Pydantic AI in a way that lets us modify and extend without waiting on them, passing features back and forth with their library.",
+      "walk": "Upgrade the Pydantic AI dependency; the Harness's own additions keep working and the new upstream features are usable.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-186.png",
+      "flag": "F086",
+      "observed": "No Pydantic AI upgrade was made or walked; only the lockstep Memory version changed. Existing tests pass but do not prove a new upstream upgrade."
+    },
+    "FL-190": {
+      "label": "The Harness can use skills and has the best and most common tools available, compiled from a list.",
+      "walk": "Ask the agent to use a skill in a thread; it loads the skill and follows it.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-190.png",
+      "flag": "F086",
+      "observed": "No skill execution was requested in the disposable live thread; inventory is context only."
+    },
+    "FL-192": {
+      "label": "Swappable seams: router, model policy with an off-switch, toolset as a unit, memory system.",
+      "walk": "Change the toolset in config to a different one as a unit; the next thread's agent has that toolset's tools.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-192.png",
+      "flag": "F086",
+      "observed": "No whole-toolset config replacement was exercised; this packet changes only brand assets and release metadata."
+    },
+    "FL-193": {
+      "label": "The common core of terminal-agent tools (skills, progressive prompting, model switching, compaction, app interactions) in one piece that pulls upstream updates.",
+      "walk": "Update the shared core-tools piece to its newest upstream version; skills, model switching and the rest keep working in the Harness.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-193.png",
+      "flag": "F086",
+      "observed": "No shared core-tools upgrade was made or walked; version bump impact alone does not prove that broader workflow."
     }
   },
   "not_run": {
@@ -214,7 +305,6 @@
     "FL-006": "outside diff",
     "FL-007": "outside diff",
     "FL-008": "outside diff",
-    "FL-009": "outside diff",
     "FL-010": "outside diff",
     "FL-011": "outside diff",
     "FL-012": "outside diff",
@@ -274,7 +364,6 @@
     "FL-066": "outside diff",
     "FL-067": "outside diff",
     "FL-068": "outside diff",
-    "FL-069": "outside diff",
     "FL-070": "outside diff",
     "FL-071": "outside diff",
     "FL-072": "outside diff",
@@ -370,7 +459,6 @@
     "FL-167": "unverified",
     "FL-168": "outside diff",
     "FL-169": "outside diff",
-    "FL-170": "outside diff",
     "FL-171": "outside diff",
     "FL-172": "not built",
     "FL-173": "outside diff",
@@ -386,14 +474,7 @@
     "FL-183": "outside diff",
     "FL-184": "outside diff",
     "FL-185": "horizon",
-    "FL-186": "outside diff",
-    "FL-187": "outside diff",
     "FL-188": "unverified",
-    "FL-189": "dropped",
-    "FL-190": "outside diff",
-    "FL-191": "outside diff",
-    "FL-192": "outside diff",
-    "FL-193": "outside diff",
-    "FL-194": "outside diff"
+    "FL-189": "dropped"
   }
 }
