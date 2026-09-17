@@ -1,0 +1,27 @@
+{
+  "version": "0.1.28",
+  "authorization": "Owner authorized next unused lockstep version and public runtime verification on 2026-09-16",
+  "release_order": [
+    "nocturne-memory",
+    "nocturne-harness"
+  ],
+  "status": "candidate gates in progress",
+  "memory": {
+    "version": "0.1.28",
+    "workflow": "https://github.com/Nate0-1999/nocturne-memory/actions/runs/35172874906",
+    "release": "https://github.com/Nate0-1999/nocturne-memory/releases/tag/v0.1.28",
+    "commit": "8982317ea7e9bef366992447240f49cb56105b85",
+    "artifacts": [
+      {
+        "filename": "nocturne_memory-0.1.28-py3-none-any.whl",
+        "sha256": "6fe393a757b9e2df0f12e27c624eb6acd3025ee3ef1ae41f31c96c1194b73401",
+        "uploaded": "2026-09-17T02:03:29.411010Z"
+      },
+      {
+        "filename": "nocturne_memory-0.1.28.tar.gz",
+        "sha256": "29e2e0497a71159621afa7933de55d5cec8d56dd4c1583e3a549aef2cc57968b",
+        "uploaded": "2026-09-17T02:03:30.741018Z"
+      }
+    ]
+  }
+}

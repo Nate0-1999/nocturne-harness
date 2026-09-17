@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.28 - 2026-09-16
 
 - Keep Wizard Mode and Technomancer glyphs clear of module controls and use
   the Nocturne ouroboros-and-moon mark for the packaged favicon.

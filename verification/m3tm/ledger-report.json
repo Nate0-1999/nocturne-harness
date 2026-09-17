@@ -2,18 +2,18 @@
   "packet": "M3TM",
   "mode": "builder",
   "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
-  "ledger_sha256": "0bbfbac9f1d71a9828df299971b60e1b4319075d69f9a6151812f9b969291aa9",
+  "ledger_sha256": "ee223f449cb20253de955b53bbd183f7200f5c6d4d9dfb3265fe30db98aea916",
   "diffs": [
     {
       "repo": "harness",
-      "base": "e48c46c85b28273e1e6c93898a634980ea8e9cb5",
-      "head": "4eb6b3538e8b42f7b04e5203acffa28cc5f5735b"
+      "base": "465cd38f5d7ccafc6aa29b564978b2347a65cbee",
+      "head": "e573e3132e9bae558e684a724be9ffab1b6b7bd3"
     }
   ],
   "unmapped": {
     "harness/CHANGELOG.md": "Packet decision, changelog, scoped finding or generated ledger view; records the verified brand change without introducing product behavior.",
     "harness/DECISIONS.md": "Packet decision, changelog, scoped finding or generated ledger view; records the verified brand change without introducing product behavior.",
-    "harness/src/harness/__init__.py": "Lockstep distribution/info version 0.1.27 only; no runtime or API schema behavior changed.",
+    "harness/src/harness/__init__.py": "Lockstep distribution/info version 0.1.28 only; no runtime or API schema behavior changed.",
     "harness/tests/test_m2ux6_grimoire_themes.py": "Existing regression assertions aligned with the verified layout or lockstep version; no product feature added.",
     "harness/verification/m3tm/FL-009.png": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/FL-069.png": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
@@ -69,6 +69,8 @@
     "harness/verification/m3tm/after/FL-187.png": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/after/glyph-state.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/after/live-state.png": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
+    "harness/verification/m3tm/after/public-027-before-reinstall.png": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
+    "harness/verification/m3tm/after/public-027-restored.png": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/after/tool-inventory.png": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/before/FL-143-default.png": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/before/FL-143-upload.png": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
@@ -102,26 +104,32 @@
     "harness/verification/m3tm/canon.log": "M3TM coverage/hash/canon artifact; no runtime feature impact.",
     "harness/verification/m3tm/ledger-report.json": "M3TM coverage/hash/canon artifact; no runtime feature impact.",
     "harness/verification/m3tm/receipts/canon-ground.log": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
+    "harness/verification/m3tm/receipts/ci-version-resolution.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/receipts/disposable-state.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/receipts/harness-tests.log": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
+    "harness/verification/m3tm/receipts/hosted-ci.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/receipts/live-turn.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/receipts/local-cleanup.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/receipts/memory-tests.log": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/receipts/packaged-icon.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/receipts/proposed-ci-companion.patch": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
+    "harness/verification/m3tm/receipts/public-027-baseline.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
+    "harness/verification/m3tm/receipts/public-027-restoration.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
+    "harness/verification/m3tm/receipts/public-identity.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/receipts/rules-tests.log": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
+    "harness/verification/m3tm/receipts/shared-port-interference.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/receipts/tool-inventory.txt": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
+    "harness/verification/m3tm/receipts/version-collision.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/receipts/web-build.log": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/receipts/web-lint.log": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
     "harness/verification/m3tm/receipts/web-tests.log": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
-    "harness/web/dist/assets/index-BKo4iDeo.js": "Generated packaged copy of the verified theme CSS and favicon; source rows FL-144/147 cover the behavior.",
-    "harness/web/dist/assets/index-DBt5NNWZ.css": "Generated packaged copy of the verified theme CSS and favicon; source rows FL-144/147 cover the behavior.",
-    "harness/web/dist/assets/index-DWt419cP.js": "Generated packaged copy of the verified theme CSS and favicon; source rows FL-144/147 cover the behavior.",
-    "harness/web/dist/assets/index-Dfnga6C9.css": "Generated packaged copy of the verified theme CSS and favicon; source rows FL-144/147 cover the behavior.",
+    "harness/web/dist/assets/index-B9YNPs1f.js": "Generated packaged copy of the verified theme CSS and favicon; source rows FL-144/147 cover the behavior.",
+    "harness/web/dist/assets/index-CDnpx6Yh.css": "Generated packaged copy of the verified theme CSS and favicon; source rows FL-144/147 cover the behavior.",
+    "harness/web/dist/assets/index-Cx9l7OAm.css": "Generated packaged copy of the verified theme CSS and favicon; source rows FL-144/147 cover the behavior.",
+    "harness/web/dist/assets/index-DM-Miss8.js": "Generated packaged copy of the verified theme CSS and favicon; source rows FL-144/147 cover the behavior.",
     "harness/web/dist/favicon.svg": "Generated packaged copy of the verified theme CSS and favicon; source rows FL-144/147 cover the behavior.",
     "harness/web/dist/index.html": "Generated packaged copy of the verified theme CSS and favicon; source rows FL-144/147 cover the behavior.",
-    "harness/verification/m3tm/impacted.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact.",
-    "harness/verification/m3tm/receipts/hosted-ci.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact."
+    "harness/verification/m3tm/impacted.json": "M3TM evidence artifact; documents this walk and has no runtime feature impact."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -204,7 +212,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-009.png",
       "flag": "F086",
-      "observed": "The clean public 0.1.27 reinstall/restoration walk is pending publication. The local candidate and live disposable thread passed, but code-folder deletion and public reinstall were not performed."
+      "observed": "Public 0.1.27 code-environment deletion and reinstall restored the disposable conversation. The new 0.1.28 release install/restoration remains pending publication."
     },
     "FL-069": {
       "label": "The core tools every modern harness has: files, terminal, Chrome, skills, changing models, compaction (our own take), and interactions with common apps, taken from the most modular standard source.",
@@ -249,7 +257,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-170.png",
       "flag": "F086",
-      "observed": "Public 0.1.27 reinstall and automatic Palace/thread restoration remain unperformed while release integration is pending."
+      "observed": "Public 0.1.27 reinstall restored the disposable identity and conversation. The new 0.1.28 registry-wheel restoration remains pending publication."
     },
     "FL-186": {
       "label": "Build on Pydantic AI in a way that lets us modify and extend without waiting on them, passing features back and forth with their library.",
@@ -364,7 +372,7 @@
     "FL-075": "outside diff",
     "FL-076": "outside diff",
     "FL-077": "horizon",
-    "FL-078": "not built",
+    "FL-078": "outside diff",
     "FL-079": "outside diff",
     "FL-080": "outside diff",
     "FL-081": "outside diff",
