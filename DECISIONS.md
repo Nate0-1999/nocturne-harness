@@ -3540,3 +3540,15 @@ input in the current run; queued prompts retain FIFO order. Duet config edits
 the chat policy; Symphony config edits subagent and judge policies. Named
 stratagems receive separate attempts within the signed maximum. Dead completion
 workers settle as failed evidence so healthy candidates can still be judged.
+
+## M3OU — Speak and dictate through the existing composer [P1.2, P2.2]
+
+PRECEDENT: SD-048, SD-063, PLAN M3OU; M3OM's single conversation module,
+M3DK's ordered Deck and the M3OR same-function ruling. Out Loud is a separate
+Web Speech component attached to the existing focused composer and primary
+Deck reply. Native synthesis finishes before listening opens; final dictation
+edits the ordinary draft and a standalone spoken “Send” invokes its existing
+submission control, including gates and undo. Typing interrupts dictation.
+The saved choice uses the existing principal/home preference scope. Browser
+permission/service failures remain visible with typing available; no speech
+vendor, credential, backend path or alternative journal is introduced.

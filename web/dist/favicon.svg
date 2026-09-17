@@ -1,12 +1,4 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <title>Nocturne — ouroboros around the moon</title>
-  <rect width="64" height="64" rx="14" fill="#03070c"/>
-  <g fill="#38d7ff">
-    <circle cx="32" cy="32" r="13" opacity="0.75"/>
-    <circle cx="27" cy="28" r="3" fill="#03070c" opacity="0.45"/>
-    <circle cx="37" cy="36" r="4" fill="#03070c" opacity="0.3"/>
-    <path d="M54 30a22 22 0 1 1-6-13" fill="none" stroke="#38d7ff" stroke-width="5" stroke-linecap="round"/>
-    <path d="M47 14q10 0 11 9l-5 8-5-8z"/>
-    <circle cx="53" cy="20" r="1.4" fill="#03070c"/>
-  </g>
+  <rect width="64" height="64" rx="14" fill="#17120f"/>
+  <path d="M17 15h8v13h14V15h8v34h-8V36H25v13h-8z" fill="#f1a96f"/>
 </svg>
