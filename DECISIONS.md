@@ -3530,3 +3530,14 @@ input in the current run; queued prompts retain FIFO order. Duet config edits
 the chat policy; Symphony config edits subagent and judge policies. Named
 stratagems receive separate attempts within the signed maximum. Dead completion
 workers settle as failed evidence so healthy candidates can still be judged.
+
+## M3VL — Reflective roots and glass memories [P2.5]
+
+PRECEDENT: PLAN M3VL, F115, M3VZ, D.2 107/109/110 and the committed plates.
+Tube taper and joined forks replace root strokes; a shared reflection environment
+lights chrome and glass without adding data marks. Sheet background travels with
+the Roots iframe. Efficient glass uses a reflective transparent shell instead of
+transmission. Curator streams join the actual finding targets of the latest run;
+ghost movement still follows the live targets. Existing memory coordinates,
+spend/time inputs and Farm stay intact. The Palace plate's central cluster conflicts
+with its existing Cartesian axes; this candidate preserves those axes for review.

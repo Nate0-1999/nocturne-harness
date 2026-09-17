@@ -19,3 +19,4 @@
 .work-viz__data button{border:0;background:transparent;padding:2px}.work-viz__data summary{cursor:pointer;color:#bcc2cd}.work-viz__data ul{list-style:none;padding:0}
 .work-viz__data td:first-child button{max-width:28ch;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .work-viz__primitives{position:absolute;right:14px;top:12px;color:#98a1b5;font-size:10px;pointer-events:none}
+.work-viz[data-sheet] .work-viz__readout,.work-viz[data-sheet] .work-viz__readout strong,.work-viz[data-sheet] .work-viz__primitives{color:#303747}

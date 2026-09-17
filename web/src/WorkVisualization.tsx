@@ -87,7 +87,8 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
       selection.select({ kind: 'agent', id: agent.id, thread_id: agent.thread_id, as_of: selected?.as_of ?? null, time_order: false })
     })
   }
-  return <section className="work-viz" data-testid={`${initialView}-module`} data-tier={tier} data-view={view}>
+  return <section className="work-viz" data-testid={`${initialView}-module`} data-tier={tier} data-view={view}
+    data-sheet={new URLSearchParams(globalThis.location.search).has('sheet') || undefined}>
     <header className="work-viz__header"><div><small>Work, made visible · {scope === 'GLOBAL' ? 'All projects' : rack.attunement?.name ?? 'Unattuned'}</small>
       <h1>{view === 'farm' ? 'The Farm' : 'The Roots'}</h1></div>
       <nav aria-label="Work visualization"><button aria-pressed={view === 'farm'} onClick={() => setView('farm')}>Farm</button><button aria-pressed={view === 'roots'} onClick={() => setView('roots')}>Roots</button></nav>
