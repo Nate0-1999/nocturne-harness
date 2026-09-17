@@ -46,7 +46,7 @@ export function AgentPolicies({ level }: { level?: 'Duet' | 'Symphony' }) {
           </select>
         </label>
         {separator >= 0 && <label>{kind === 'pinned' ? 'Model' : kind === 'floor' ? 'Intelligence floor' : 'Price slope'}
-          <input aria-label={`${label} policy value`} value={argument} onChange={(event) => setPolicies({ ...policies, [role]: `${kind}:${event.target.value}` })} />
+          <textarea rows={2} aria-label={`${label} policy value`} value={argument} onChange={(event) => setPolicies({ ...policies, [role]: `${kind}:${event.target.value}` })} />
         </label>}
         <div className="app-settings-actions"><button type="button" onClick={() => void save(role)}>Save {label.toLowerCase()} policy</button></div>
       </fieldset>

@@ -3811,6 +3811,7 @@ button.rack-module__resize-handle--nw {
 .memory-restore-dialog button,
 .memory-restore-dialog input,
 .agent-policy-settings input,
+.agent-policy-settings textarea,
 .rack-plugin-upload textarea,
 .rack-plugin-upload button {
   color: var(--ink);
@@ -3825,5 +3826,6 @@ button.rack-module__resize-handle--nw {
 .memory-restore-dialog li { overflow-wrap: anywhere; }
 .agent-policy-settings fieldset { min-width: 0; border: 1px solid var(--muted); margin: .75rem 0; padding: .6rem; }
 .agent-policy-settings input { width: 100%; box-sizing: border-box; }
+.agent-policy-settings textarea { display: block; width: 100%; box-sizing: border-box; resize: vertical; }
 .rack-plugin-upload label { display: block; margin: .5rem 0; }
 .rack-plugin-upload textarea { display: block; width: 100%; min-height: 5rem; box-sizing: border-box; }
