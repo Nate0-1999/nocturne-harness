@@ -1,0 +1,22 @@
+{
+  "FL-143": {
+    "verdict": "PASS",
+    "observed": "Fresh default NEO-NOIR; reference upload creates selectable validated PLATE 40BFC441; theme propagates through all frames and persists."
+  },
+  "FL-144": {
+    "verdict": "FAIL",
+    "observed": "Header has ouroboros around moon; live /favicon.svg and web package source retain a tan H glyph."
+  },
+  "FL-146": {
+    "verdict": "PASS",
+    "observed": "Live Seraph and pressed reference screenshot palette distance 0.366642 and 0.386012 against inherited 0.395 bound. Exact generated samples and recorded contrast repairs retained."
+  },
+  "FL-147": {
+    "verdict": "FAIL",
+    "observed": "Both original generated scripts render. Wizard head strip visibly overlaps attunement badge and Conversation Focused/Stack controls; absolute right:6rem does not reserve reading space."
+  },
+  "FL-148": {
+    "verdict": "PASS",
+    "observed": "All fourteen built-in modules including Farm, Roots and Palace render shared fixed chrome gradient rim with an excluded-center mask; module buttons retain their ordinary surfaces. Per-module screenshots and computed materials retained."
+  }
+}

@@ -1,0 +1,156 @@
+/model openrouter:openai/gpt-4.1-mini
+PROJECT
+WHERE · /private/tmp/m3tm-workspace/harness
+MODELopenrouter:openai/gpt-4.1-miniOPEN ↗
+Tools & skills
+
+Installed sources · disabled entries are unavailable to the model
+
+search_memory · tool · Enabled
+
+Search active memories for this user and current project; return up to k compact cards.
+
+https://github.com/Nate0-1999/nocturne-harness/tree/v0.1.27
+0.1.27
+edit_memory · tool · Enabled
+
+Replace one memory body by exact label or ID; explain why the correction is needed.
+
+https://github.com/Nate0-1999/nocturne-harness/tree/v0.1.27
+0.1.27
+read · tool · Enabled
+
+Read text from a file. Reads may inspect beyond the current location.
+
+https://github.com/pydantic/pydantic-ai-harness/tree/v0.31.0
+0.31.0
+edit · tool · Enabled
+
+Replace exact text in a file in the current directory.
+
+https://github.com/pydantic/pydantic-ai-harness/tree/v0.31.0
+0.31.0
+write · tool · Enabled
+
+Create or replace a file in the current directory.
+
+https://github.com/pydantic/pydantic-ai-harness/tree/v0.31.0
+0.31.0
+grep · tool · Enabled
+
+Search file contents and return matching lines.
+
+https://github.com/pydantic/pydantic-ai-harness/tree/v0.31.0
+0.31.0
+find · tool · Enabled
+
+Find files by glob pattern.
+
+https://github.com/pydantic/pydantic-ai-harness/tree/v0.31.0
+0.31.0
+ls · tool · Enabled
+
+List a directory.
+
+https://github.com/pydantic/pydantic-ai-harness/tree/v0.31.0
+0.31.0
+bash · tool · Enabled
+
+Run a shell command inside the current location's OS sandbox.
+
+https://github.com/pydantic/pydantic-ai-harness/tree/v0.31.0
+0.31.0
+start_shell · tool · Enabled
+
+Start a fenced shell that keeps running across turns until stopped or daemon exit.
+
+https://github.com/pydantic/pydantic-ai-harness/tree/v0.31.0
+0.31.0
+read_shell · tool · Enabled
+
+Read the state and output of a background shell belonging to this thread.
+
+https://github.com/pydantic/pydantic-ai-harness/tree/v0.31.0
+0.31.0
+stop_shell · tool · Enabled
+
+Explicitly stop a background shell and return its final output.
+
+https://github.com/pydantic/pydantic-ai-harness/tree/v0.31.0
+0.31.0
+move · tool · Enabled
+
+Move the agent's current location to a directory inside this workspace.
+
+https://github.com/Nate0-1999/nocturne-harness/tree/v0.1.27
+0.1.27
+navigate · tool · Enabled
+
+Open an allowed URL in this thread's headless browser.
+
+https://github.com/microsoft/playwright-python/tree/v1.62.0
+1.62.0
+click · tool · Enabled
+
+Click one element selected with a Playwright locator string.
+
+https://github.com/microsoft/playwright-python/tree/v1.62.0
+1.62.0
+type · tool · Enabled
+
+Replace the value of one selected form field.
+
+https://github.com/microsoft/playwright-python/tree/v1.62.0
+1.62.0
+read_page · tool · Enabled
+
+Read the current page URL, title, and visible body text.
+
+https://github.com/microsoft/playwright-python/tree/v1.62.0
+1.62.0
+screenshot · tool · Enabled
+
+Capture the current page and send the PNG back as model-visible image input.
+
+https://github.com/microsoft/playwright-python/tree/v1.62.0
+1.62.0
+delegate_task · tool · Enabled
+
+Delegate a bounded task and receive its concise result.
+
+https://github.com/Nate0-1999/nocturne-harness/tree/v0.1.27
+0.1.27
+YOU
+Chat + files
+Chat
+Files
+Rewind
+
+/model openrouter:openai/gpt-4.1-mini
+
+NOCTURNE
+
+Model changed from openrouter:minimax/minimax-m3 to openrouter:openai/gpt-4.1-mini. Context window: 1047576 tokens.
+
+TOOLS · 1 RUN EVENT
+YOU
+Chat + files
+Chat
+Files
+Rewind
+
+Reply exactly: M3TM live theme verification.
+
+NOCTURNE
+
+M3TM live theme verification.
+
+TOOLS · 3 RUN EVENTS
+Message Nocturne
+Attach image
+
+Enter to transmit
+
+⤓
+TRANSMIT
+↗
