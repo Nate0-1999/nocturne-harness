@@ -130,6 +130,7 @@ function assertDiagnostics({ consoleProblems, pageErrors, failedResponses }) {
       return ['scorer_console', 'context_window'].includes(parsed.searchParams.get('resource'))
     }
     return status === 404 && [
+      '/v1/model-policies',
       '/v1/approval-queue',
       '/v1/curation',
       '/v1/seeds/jump-start',
