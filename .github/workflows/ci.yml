@@ -9,6 +9,29 @@ permissions:
   contents: read
 
 jobs:
+  companion:
+    name: Resolve pinned Memory release
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.version.outputs.ref }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - id: version
+        run: |
+          python - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+
+          dependencies = tomllib.loads(Path("pyproject.toml").read_text())["project"]["dependencies"]
+          version = next(pin.removeprefix("nocturne-memory==") for pin in dependencies if pin.startswith("nocturne-memory=="))
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              print(f"ref=v{version}", file=output)
+          PY
+
   impact:
     name: Feature impact and handoff evidence
     if: github.event_name == 'push'
@@ -38,6 +61,7 @@ jobs:
 
   python:
     name: Python lint and tests
+    needs: companion
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,7 +69,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nate0-1999/nocturne-memory
-          ref: 99ca73994be36baadb7c32f423ef11381598a94f
+          ref: ${{ needs.companion.outputs.ref }}
           path: _d3/spine
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -81,6 +105,7 @@ jobs:
 
   web:
     name: Web lint, build, and UI canon
+    needs: companion
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -100,7 +125,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nate0-1999/nocturne-memory
-          ref: 99ca73994be36baadb7c32f423ef11381598a94f
+          ref: ${{ needs.companion.outputs.ref }}
           path: _canon/spine
           persist-credentials: false
       - name: Install web dependencies
@@ -127,6 +152,7 @@ jobs:
 
   contract:
     name: Live Spine contract tests
+    needs: companion
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -135,7 +161,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nate0-1999/nocturne-memory
-          ref: 99ca73994be36baadb7c32f423ef11381598a94f
+          ref: ${{ needs.companion.outputs.ref }}
           path: _contract/spine
           persist-credentials: false
       - uses: actions/setup-python@v5

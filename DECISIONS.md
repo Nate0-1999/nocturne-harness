@@ -3525,3 +3525,16 @@ proves that path, including both browser refusals; one owner-style correction
 from a relative filename to an absolute file URL was needed. This is fallback
 proof, not Codex-extension adoption. F116 keeps that requested adoption open;
 no runtime change or package release is justified by this investigation.
+
+## M3OR — Steer active work and inspect worker context [P1.2, P2.2, P3.3]
+
+PRECEDENT: PLAN M3OR same-function ruling, ADR-012, A-059, A-070.
+Real-provider walks exposed missing worker injection, invalid copied judge
+metadata, unavailable active-turn steering and an empty-thread archive failure.
+Workers reuse Palace injection and context bars; signed startup commits the
+initial selection without another human gate. Judges bind sealed provenance
+locally and independently assess the evidence. Interjections become new human
+input in the current run; queued prompts retain FIFO order. Duet config edits
+the chat policy; Symphony config edits subagent and judge policies. Named
+stratagems receive separate attempts within the signed maximum. Dead completion
+workers settle as failed evidence so healthy candidates can still be judged.

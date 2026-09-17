@@ -117,6 +117,7 @@ class _ActiveRun:
     gate_committing: bool = False
     model_candidate: ThreadModelResolution | None = None
     model_error: str | None = None
+    interjections: list[str] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -169,6 +170,9 @@ class _Emitter(RunEmitter):
     @property
     def prompt_id(self) -> str:
         return self._active.turn.prompt_id
+
+    def steering_instructions(self) -> str:
+        return "\n".join(self._active.interjections)
 
     async def text(self, value: str) -> None:
         await self._loop._emit_text(self._thread_id, self._active, value)
@@ -734,6 +738,33 @@ class RunLoop:
                 self._discard_pending_capture_locked(thread_id, turn)
             raise
         return run_id
+
+    async def interject(self, *, thread_id: str, run_id: str, prompt: str) -> None:
+        """Steer the next model request in the same solo run. [ADR-012, FL-075]"""
+        async with self._lock:
+            state = self._threads.get(thread_id)
+            active = None if state is None else state.active
+            # F104: steering belongs to the still-running turn, never a later prompt.
+            if active is None or active.turn.run_id != run_id or active.state != "running":
+                raise ValueError("The run has finished or paused. Send this as a new prompt.")
+            # F104: parallel steering uses the signed conductor intervention path.
+            if active.turn.symphony is not None or active.turn.symphony_intervention is not None:
+                raise ValueError("Steer parallel work through its conductor on the Deck.")
+            instruction = prompt.strip()
+            # F104: an empty composer supplies no steering instruction.
+            if not instruction:
+                raise ValueError("Enter an instruction to interject.")
+            active.interjections.append(instruction)
+            event = {"event_kind": "human_interjection", "instruction": instruction}
+            active.assistant_message["events"].append(event)
+            await self._publish_locked(
+                thread_id,
+                self._factory.create(
+                    MessageType.RUN_DELTA,
+                    RunDeltaEventPayload(run_id=run_id, kind="event", event=event),
+                    thread_id=thread_id,
+                ),
+            )
 
     async def cancel(
         self,

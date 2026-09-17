@@ -12,6 +12,7 @@ import type {
 } from './protocol'
 import { useRackPlugin, useRackSnapshot } from './rack'
 import './assets/symphonyDeck.css'
+import { WorkerContext } from './WorkerContext'
 
 interface DeckAttempt {
   attempt_id: string
@@ -387,6 +388,7 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
   const [signed, setSigned] = useState(false)
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
+  const [contextAttempt, setContextAttempt] = useState<string | null>(null)
 
   function chooseSeat(next: SymphonyJudgeCharter['seat']) {
     const charter = stack.launch.judge_charters.find((candidate) => candidate.seat === next)
@@ -434,7 +436,9 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
       <div className="deck-attempts">
         {stack.attempts.map((attempt) => (
           <div className="deck-attempt" key={attempt.attempt_id} data-state={attempt.state}>
-            <div><strong>{attempt.attempt_id}</strong><span>{attempt.state}</span></div>
+            <div><button type="button" onClick={() => setContextAttempt(
+              contextAttempt === attempt.attempt_id ? null : attempt.attempt_id
+            )}>{attempt.attempt_id}</button><span>{attempt.state}</span></div>
             <small>{attempt.partial_evidence.length} evidence mark(s) · {attempt.memories_admitted ? 'memories queued for review' : 'memories not admitted'}</small>
             {attempt.follow_ups.map((followUp, index) => <p key={index}>Follow-up: {followUp}</p>)}
             {stack.state === 'running' && attempt.state === 'running' && (
@@ -446,6 +450,8 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
           </div>
         ))}
       </div>
+      {contextAttempt !== null && <WorkerContext
+        symphonyId={stack.symphony_id} attemptId={contextAttempt} />}
       <p>Measured spend: ${stack.spend_usd} / ${String(stack.launch.authority.spend_wall_usd)}</p>
       {stack.evidence.map((entry, index) => (
         <details key={index}>

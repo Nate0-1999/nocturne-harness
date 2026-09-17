@@ -1,11 +1,11 @@
 """The single adapter from harness capabilities to pydantic-ai v2."""
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict
-from pydantic_ai import BinaryContent, RunContext, ToolReturn
+from pydantic_ai import BinaryContent, ModelRetry, RunContext, ToolReturn
 from pydantic_ai.capabilities import Capability
 from pydantic_ai.tools import Tool, ToolDefinition
 
@@ -27,6 +27,19 @@ WORKSPACE_INSTRUCTIONS = (
     " Never ask the owner for consent inside a tool call; a refused open-web request must wait"
     " for the owner's exact `/browser allow-web` command."
 )
+
+
+class PendingSteering(Capability[MemoryToolContext]):
+    """A correction arriving during final text still gets a model request. [FL-075]"""
+
+    def __init__(self, pending: Callable[[], bool]):
+        super().__init__()
+        self.pending = pending
+
+    async def after_model_request(self, ctx, *, request_context, response):
+        if not response.tool_calls and self.pending():
+            raise ModelRetry("Apply the new human instruction before finishing.")
+        return response
 
 
 def _adapt_search(handler: CapabilityHandler) -> Tool[MemoryToolContext]:

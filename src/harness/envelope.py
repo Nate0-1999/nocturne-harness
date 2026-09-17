@@ -166,6 +166,7 @@ class SymphonyRecipeStepPayload(BaseModel):
     title: NonBlankString
     done_when: NonBlankString
     search: StrictBool
+    stratagems: tuple[NonBlankString, ...] = ()
 
 
 class SymphonyJudgeCharterPayload(BaseModel):

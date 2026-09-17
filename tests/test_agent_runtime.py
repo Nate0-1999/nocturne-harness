@@ -333,6 +333,54 @@ class FailingSpend:
         raise RuntimeError("ledger unavailable")
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("during_final_response", [False, True])
+async def test_interjection_is_a_new_user_instruction_after_the_running_tool(during_final_response):
+    """ADR-012 / FL-075: a correction reaches the next request, even during final text."""
+    emitter = RecordingEmitter()
+    steering = []
+    emitter.steering_instructions = lambda: "\n".join(steering)
+    requests = 0
+
+    async def stream(messages, _info):
+        nonlocal requests
+        requests += 1
+        if requests == 1:
+            steering.append("Answer cobalt instead of amber.")
+            if during_final_response:
+                yield "amber"
+            else:
+                yield {
+                    0: DeltaToolCall(
+                        name="write",
+                        json_args='{"path":"note.txt","content":"ok"}',
+                        tool_call_id="write-one",
+                    )
+                }
+        else:
+            assert isinstance(messages[-1], ModelRequest)
+            assert any(
+                isinstance(part, UserPromptPart) and "cobalt" in part.content
+                for part in messages[-1].parts
+            )
+            yield "cobalt"
+
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(toolset=RecordingWorkspaceToolset()),
+    )
+    outcome = await runner.run(
+        thread_id=str(THREAD_UUID),
+        prompt="Write then answer amber.",
+        message_history=(),
+        emit=emitter,
+    )
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert outcome.assistant_text.endswith("cobalt")
+    assert "".join(emitter.texts) == outcome.assistant_text
+    assert requests == 2
+
+
 class IncompleteSpend:
     async def record_spend_events(self, request: SpendEventsRequest) -> SpendEventsResponse:
         return SpendEventsResponse(accepted=0)
