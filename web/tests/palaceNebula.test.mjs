@@ -136,7 +136,7 @@ test('production source uses the ruled Three stack and forbids random geometry',
   assert.match(component, /query\.query\(\{ resource: 'memory_graph', as_of: 'now', thread_id: threadId \}\)/u)
   assert.match(component, /<Canvas/u)
   assert.match(component, /new WebGPURenderer\(parameters\)/u)
-  assert.match(component, /new MeshStandardNodeMaterial/u)
+  assert.match(component, /new MeshPhysicalNodeMaterial/u)
   assert.match(component, /tslColor/u)
   assert.match(component, /useFrame/u)
   assert.match(component, /name="memory-event-current"/u)
