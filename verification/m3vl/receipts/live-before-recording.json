@@ -1,0 +1,3592 @@
+{
+  "agents": [
+    {
+      "cost_usd": "0.067055060000",
+      "id": "98b97d47-e472-4bd6-b6ba-8539239bd674",
+      "label": "/model openrouter:openai/gpt-4.1-mini",
+      "location": "/private/tmp/m3vl-verification/project/tests",
+      "parent_id": null,
+      "root": "/private/tmp/m3vl-verification/project",
+      "started_at": "2026-09-17T00:02:28.038Z",
+      "state": "waiting",
+      "thread_id": "98b97d47-e472-4bd6-b6ba-8539239bd674",
+      "updated_at": "2026-09-17T00:10:41.916Z",
+      "waiting_since": "2026-09-17T00:10:41.916Z"
+    },
+    {
+      "cost_usd": 0.00512478,
+      "id": "01M2PB1GYD1PY60MX5DZ4FX409/root/judge-implementation",
+      "label": "judge-implementation",
+      "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-implementation",
+      "parent_id": "98b97d47-e472-4bd6-b6ba-8539239bd674",
+      "root": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1",
+      "stage": "judge",
+      "started_at": "2026-09-17T00:09:38.492668+00:00",
+      "state": "stopped",
+      "thread_id": "98b97d47-e472-4bd6-b6ba-8539239bd674",
+      "ts": "2026-09-17T00:10:40.960744+00:00",
+      "updated_at": "2026-09-17T00:10:40.960744+00:00",
+      "waiting_since": null,
+      "workspace_root": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1"
+    },
+    {
+      "cost_usd": 0.00871746,
+      "id": "01M2PB1GYD1PY60MX5DZ4FX409/root/judge-motivation",
+      "label": "judge-motivation",
+      "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-motivation",
+      "parent_id": "98b97d47-e472-4bd6-b6ba-8539239bd674",
+      "root": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1",
+      "stage": "judge",
+      "started_at": "2026-09-17T00:09:38.490349+00:00",
+      "state": "stopped",
+      "thread_id": "98b97d47-e472-4bd6-b6ba-8539239bd674",
+      "ts": "2026-09-17T00:10:40.913076+00:00",
+      "updated_at": "2026-09-17T00:10:40.913076+00:00",
+      "waiting_since": null,
+      "workspace_root": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1"
+    },
+    {
+      "cost_usd": 0.00958554,
+      "id": "01M2PB1GYD1PY60MX5DZ4FX409/root/judge-performance",
+      "label": "judge-performance",
+      "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1",
+      "parent_id": "98b97d47-e472-4bd6-b6ba-8539239bd674",
+      "root": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1",
+      "stage": "judge",
+      "started_at": "2026-09-17T00:09:38.538009+00:00",
+      "state": "stopped",
+      "thread_id": "98b97d47-e472-4bd6-b6ba-8539239bd674",
+      "ts": "2026-09-17T00:10:41.004422+00:00",
+      "updated_at": "2026-09-17T00:10:41.004422+00:00",
+      "waiting_since": null,
+      "workspace_root": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1"
+    },
+    {
+      "cost_usd": 0.00847734,
+      "id": "01M2PB1GYD1PY60MX5DZ4FX409/root.1",
+      "label": "root.1",
+      "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1",
+      "parent_id": "98b97d47-e472-4bd6-b6ba-8539239bd674",
+      "root": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1",
+      "stage": "completion",
+      "started_at": "2026-09-17T00:07:42.712681+00:00",
+      "state": "stopped",
+      "thread_id": "98b97d47-e472-4bd6-b6ba-8539239bd674",
+      "ts": "2026-09-17T00:09:35.108223+00:00",
+      "updated_at": "2026-09-17T00:09:35.108223+00:00",
+      "waiting_since": null,
+      "workspace_root": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1"
+    },
+    {
+      "cost_usd": 0.00880626,
+      "id": "01M2PB1GYD1PY60MX5DZ4FX409/root.2",
+      "label": "root.2",
+      "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2",
+      "parent_id": "98b97d47-e472-4bd6-b6ba-8539239bd674",
+      "root": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2",
+      "stage": "completion",
+      "started_at": "2026-09-17T00:07:42.712957+00:00",
+      "state": "stopped",
+      "thread_id": "98b97d47-e472-4bd6-b6ba-8539239bd674",
+      "ts": "2026-09-17T00:09:19.294351+00:00",
+      "updated_at": "2026-09-17T00:09:19.294351+00:00",
+      "waiting_since": null,
+      "workspace_root": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2"
+    }
+  ],
+  "curation": {
+    "admitted_writes": 24,
+    "last_run_pressure": 0,
+    "last_run_writes": 24,
+    "latest_run": {
+      "admitted_writes_snapshot": 24,
+      "completed_at": "2026-09-17T00:11:27.312504Z",
+      "error": null,
+      "executed_count": 0,
+      "pressure_snapshot": 0,
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "queued_count": 3,
+      "report": {
+        "active_units": 24,
+        "as_of": "2026-09-17T00:11:19.678739Z",
+        "clusters": [],
+        "corpus_revision": "59b21bdb9bd00c170c17374ef2e8f163d3d3d0ce59b374e20acf9dfe1b9a87f3",
+        "findings": [
+          {
+            "evidence": {
+              "memory": {
+                "body": "River discharge is water volume crossing a section per second.",
+                "created_at": "2026-09-17T00:04:47.850676+00:00",
+                "keywords": [],
+                "kind": "fact",
+                "label": "M3VL Discharge",
+                "memory_id": "2759ac41-2e1d-450d-95df-8ade019e02cf",
+                "pin": false,
+                "revision": 3,
+                "stats": {
+                  "citations": 0,
+                  "injections": 1,
+                  "last_injected_at": "2026-09-17T00:08:29.244464+00:00",
+                  "never_kills": 0,
+                  "removals": 0
+                },
+                "updated_at": "2026-09-17T00:11:06.801314+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "dc57464069a727304de2c2a75fab98e9698eee3d22d3cbb5a2e720b772201ed3",
+            "kind": "keyword",
+            "memory_ids": [
+              "2759ac41-2e1d-450d-95df-8ade019e02cf"
+            ],
+            "ordinal": 0
+          },
+          {
+            "evidence": {
+              "memory": {
+                "body": "A tributary joins a larger river at a confluence.",
+                "created_at": "2026-09-17T00:04:47.291552+00:00",
+                "keywords": [],
+                "kind": "fact",
+                "label": "M3VL Tributary",
+                "memory_id": "b2caa01f-1de5-4ff6-b428-43f382281c51",
+                "pin": false,
+                "revision": 2,
+                "stats": {
+                  "citations": 0,
+                  "injections": 0,
+                  "last_injected_at": null,
+                  "never_kills": 0,
+                  "removals": 0
+                },
+                "updated_at": "2026-09-17T00:11:06.694895+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "fba2b3fdb2d200502d7971ec8805e92443c24dc873245ac3eb3fbd9b3f519881",
+            "kind": "keyword",
+            "memory_ids": [
+              "b2caa01f-1de5-4ff6-b428-43f382281c51"
+            ],
+            "ordinal": 1
+          },
+          {
+            "evidence": {
+              "memory": {
+                "body": "A watershed directs rainfall downhill through tributaries to a common outlet.",
+                "created_at": "2026-09-17T00:04:46.388824+00:00",
+                "keywords": [],
+                "kind": "fact",
+                "label": "M3VL Watershed",
+                "memory_id": "d8411723-fe80-4da4-b0d1-2f5fc4299756",
+                "pin": false,
+                "revision": 2,
+                "stats": {
+                  "citations": 0,
+                  "injections": 0,
+                  "last_injected_at": null,
+                  "never_kills": 0,
+                  "removals": 0
+                },
+                "updated_at": "2026-09-17T00:11:06.569485+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "4891462fbba8dd0af0d473b8eea87ec9dfa4e1b033e5b6635c549cba62d934e7",
+            "kind": "keyword",
+            "memory_ids": [
+              "d8411723-fe80-4da4-b0d1-2f5fc4299756"
+            ],
+            "ordinal": 2
+          }
+        ],
+        "format": "nocturne.palace-health",
+        "keyword_coverage_percent": "87.500",
+        "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+        "stats_delta": {
+          "merges": 0,
+          "reinforcements": 0,
+          "retirements": 0,
+          "revisions": 3
+        },
+        "version": "1"
+      },
+      "run_uid": "01M2PB86Q9CMTPJQ5NKNZ2J814",
+      "status": "completed",
+      "trigger": "manual",
+      "verdict_count": 3
+    },
+    "pending_cards": 3,
+    "pressure_events": 0,
+    "pressure_trigger_every": 3,
+    "pressure_until_run": 3,
+    "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+    "trigger_every": 25,
+    "writes_until_run": 25
+  },
+  "errors": [],
+  "palace": {
+    "edges": [
+      {
+        "edge_type": null,
+        "from_memory_id": "50d28c81-ac69-46c9-add9-99acd4fc29f7",
+        "kind": "similarity",
+        "revision_count": null,
+        "similarity": "0.7815300234092498",
+        "to_memory_id": "b2caa01f-1de5-4ff6-b428-43f382281c51"
+      },
+      {
+        "edge_type": null,
+        "from_memory_id": "07f82c53-e24c-4398-bdb8-ef6cc0205740",
+        "kind": "edit_trail",
+        "revision_count": 4,
+        "similarity": null,
+        "to_memory_id": "07f82c53-e24c-4398-bdb8-ef6cc0205740"
+      },
+      {
+        "edge_type": null,
+        "from_memory_id": "2759ac41-2e1d-450d-95df-8ade019e02cf",
+        "kind": "edit_trail",
+        "revision_count": 3,
+        "similarity": null,
+        "to_memory_id": "2759ac41-2e1d-450d-95df-8ade019e02cf"
+      },
+      {
+        "edge_type": null,
+        "from_memory_id": "2c419f28-da97-4dc7-9455-511db07d03ef",
+        "kind": "edit_trail",
+        "revision_count": 2,
+        "similarity": null,
+        "to_memory_id": "2c419f28-da97-4dc7-9455-511db07d03ef"
+      },
+      {
+        "edge_type": null,
+        "from_memory_id": "373b2aee-9365-413c-b752-63a685066a27",
+        "kind": "edit_trail",
+        "revision_count": 2,
+        "similarity": null,
+        "to_memory_id": "373b2aee-9365-413c-b752-63a685066a27"
+      },
+      {
+        "edge_type": null,
+        "from_memory_id": "4589bb38-f334-459d-9117-655938828e1d",
+        "kind": "edit_trail",
+        "revision_count": 2,
+        "similarity": null,
+        "to_memory_id": "4589bb38-f334-459d-9117-655938828e1d"
+      },
+      {
+        "edge_type": null,
+        "from_memory_id": "49441618-29bb-4232-9ad2-724ef2d72dbd",
+        "kind": "edit_trail",
+        "revision_count": 2,
+        "similarity": null,
+        "to_memory_id": "49441618-29bb-4232-9ad2-724ef2d72dbd"
+      },
+      {
+        "edge_type": null,
+        "from_memory_id": "50d28c81-ac69-46c9-add9-99acd4fc29f7",
+        "kind": "edit_trail",
+        "revision_count": 2,
+        "similarity": null,
+        "to_memory_id": "50d28c81-ac69-46c9-add9-99acd4fc29f7"
+      },
+      {
+        "edge_type": null,
+        "from_memory_id": "5c05bca9-3c1e-457d-ade2-9d7ed629e017",
+        "kind": "edit_trail",
+        "revision_count": 2,
+        "similarity": null,
+        "to_memory_id": "5c05bca9-3c1e-457d-ade2-9d7ed629e017"
+      },
+      {
+        "edge_type": null,
+        "from_memory_id": "5ff65859-d27e-419c-aa56-5fc5ec1cbf1b",
+        "kind": "edit_trail",
+        "revision_count": 2,
+        "similarity": null,
+        "to_memory_id": "5ff65859-d27e-419c-aa56-5fc5ec1cbf1b"
+      },
+      {
+        "edge_type": null,
+        "from_memory_id": "81985251-826f-4b4d-93c7-f4f3c3b1fb67",
+        "kind": "edit_trail",
+        "revision_count": 2,
+        "similarity": null,
+        "to_memory_id": "81985251-826f-4b4d-93c7-f4f3c3b1fb67"
+      },
+      {
+        "edge_type": null,
+        "from_memory_id": "97af8f8a-2c4d-4df9-ae3e-ce7001824857",
+        "kind": "edit_trail",
+        "revision_count": 2,
+        "similarity": null,
+        "to_memory_id": "97af8f8a-2c4d-4df9-ae3e-ce7001824857"
+      },
+      {
+        "edge_type": null,
+        "from_memory_id": "9a13f9d4-ad48-4319-8dfc-ed841ef51302",
+        "kind": "edit_trail",
+        "revision_count": 3,
+        "similarity": null,
+        "to_memory_id": "9a13f9d4-ad48-4319-8dfc-ed841ef51302"
+      },
+      {
+        "edge_type": null,
+        "from_memory_id": "9da22eb2-db1b-4fd2-b875-d7d3b0fbe679",
+        "kind": "edit_trail",
+        "revision_count": 2,
+        "similarity": null,
+        "to_memory_id": "9da22eb2-db1b-4fd2-b875-d7d3b0fbe679"
+      },
+      {
+        "edge_type": null,
+        "from_memory_id": "b2caa01f-1de5-4ff6-b428-43f382281c51",
+        "kind": "edit_trail",
+        "revision_count": 2,
+        "similarity": null,
+        "to_memory_id": "b2caa01f-1de5-4ff6-b428-43f382281c51"
+      },
+      {
+        "edge_type": null,
+        "from_memory_id": "b5f4f81e-b230-4b72-9892-509f187a0545",
+        "kind": "edit_trail",
+        "revision_count": 4,
+        "similarity": null,
+        "to_memory_id": "b5f4f81e-b230-4b72-9892-509f187a0545"
+      },
+      {
+        "edge_type": null,
+        "from_memory_id": "d3980f62-937f-4498-9e44-7394f6a8b771",
+        "kind": "edit_trail",
+        "revision_count": 3,
+        "similarity": null,
+        "to_memory_id": "d3980f62-937f-4498-9e44-7394f6a8b771"
+      },
+      {
+        "edge_type": null,
+        "from_memory_id": "d8411723-fe80-4da4-b0d1-2f5fc4299756",
+        "kind": "edit_trail",
+        "revision_count": 2,
+        "similarity": null,
+        "to_memory_id": "d8411723-fe80-4da4-b0d1-2f5fc4299756"
+      },
+      {
+        "edge_type": null,
+        "from_memory_id": "d8c5edcd-c8a4-4e28-aeb7-c2352ed4047d",
+        "kind": "edit_trail",
+        "revision_count": 2,
+        "similarity": null,
+        "to_memory_id": "d8c5edcd-c8a4-4e28-aeb7-c2352ed4047d"
+      },
+      {
+        "edge_type": null,
+        "from_memory_id": "f3b8c1a7-5a8e-4d0b-ad28-d66b74f72088",
+        "kind": "edit_trail",
+        "revision_count": 3,
+        "similarity": null,
+        "to_memory_id": "f3b8c1a7-5a8e-4d0b-ad28-d66b74f72088"
+      }
+    ],
+    "graph_edge_sim": 0.75,
+    "nodes": [
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "A watershed directs rainfall downhill through tributaries to a common outlet.",
+          "created_at": "2026-09-17T00:04:46.388824Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [],
+          "kind": "fact",
+          "label": "M3VL Watershed",
+          "memory_id": "d8411723-fe80-4da4-b0d1-2f5fc4299756",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 2,
+          "stats": {
+            "citations": 0,
+            "injections": 0,
+            "last_injected_at": null,
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:11:06.569485Z"
+        },
+        "revisions": [
+          {
+            "body": "A watershed directs rainfall downhill through tributaries to a common outlet.",
+            "label": "M3VL Watershed",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAW73GCKW7H0H5EW7YFAEM",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:46.388824Z"
+          },
+          {
+            "body": "A watershed directs rainfall downhill through tributaries to a common outlet.",
+            "label": "M3VL Watershed",
+            "parent_uid": "01M2PAW73GCKW7H0H5EW7YFAEM",
+            "reason": "verification keyword-repair exercise",
+            "rev_uid": "01M2PB7SXYFS5C1M6SH1A528AF",
+            "revision": 2,
+            "ts": "2026-09-17T00:11:06.569485Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "A tributary joins a larger river at a confluence.",
+          "created_at": "2026-09-17T00:04:47.291552Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [],
+          "kind": "fact",
+          "label": "M3VL Tributary",
+          "memory_id": "b2caa01f-1de5-4ff6-b428-43f382281c51",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 2,
+          "stats": {
+            "citations": 0,
+            "injections": 0,
+            "last_injected_at": null,
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:11:06.694895Z"
+        },
+        "revisions": [
+          {
+            "body": "A tributary joins a larger river at a confluence.",
+            "label": "M3VL Tributary",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAW7NMPN7KNYYAPM4YAW4P",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:47.291552Z"
+          },
+          {
+            "body": "A tributary joins a larger river at a confluence.",
+            "label": "M3VL Tributary",
+            "parent_uid": "01M2PAW7NMPN7KNYYAPM4YAW4P",
+            "reason": "verification keyword-repair exercise",
+            "rev_uid": "01M2PB7T1VB4KENDGBDX0XC0SJ",
+            "revision": 2,
+            "ts": "2026-09-17T00:11:06.694895Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "River discharge is water volume crossing a section per second.",
+          "created_at": "2026-09-17T00:04:47.850676Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [],
+          "kind": "fact",
+          "label": "M3VL Discharge",
+          "memory_id": "2759ac41-2e1d-450d-95df-8ade019e02cf",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 3,
+          "stats": {
+            "citations": 0,
+            "injections": 1,
+            "last_injected_at": "2026-09-17T00:08:29.244464+00:00",
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:11:06.801314Z"
+        },
+        "revisions": [
+          {
+            "body": "River discharge is water volume crossing a section per second.",
+            "label": "M3VL Discharge",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAW872M8W4ME8DGWQPY0C1",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:47.850676Z"
+          },
+          {
+            "body": "River discharge is water volume crossing a section per second.",
+            "label": "M3VL Discharge",
+            "parent_uid": "01M2PAW872M8W4ME8DGWQPY0C1",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB30CK4BAZQFWNKNTFSSDB",
+            "revision": 2,
+            "ts": "2026-09-17T00:08:29.238306Z"
+          },
+          {
+            "body": "River discharge is water volume crossing a section per second.",
+            "label": "M3VL Discharge",
+            "parent_uid": "01M2PB30CK4BAZQFWNKNTFSSDB",
+            "reason": "verification keyword-repair exercise",
+            "rev_uid": "01M2PB7T5512D1CT3BH4EK2WGV",
+            "revision": 3,
+            "ts": "2026-09-17T00:11:06.801314Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "At a confluence the outgoing discharge equals the incoming discharges without losses.",
+          "created_at": "2026-09-17T00:04:48.371671Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Conservation",
+          "memory_id": "d3980f62-937f-4498-9e44-7394f6a8b771",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 3,
+          "stats": {
+            "citations": 0,
+            "injections": 2,
+            "last_injected_at": "2026-09-17T00:08:28.418705+00:00",
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:08:28.413153Z"
+        },
+        "revisions": [
+          {
+            "body": "At a confluence the outgoing discharge equals the incoming discharges without losses.",
+            "label": "M3VL Conservation",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAW8N4A0MJDN425J4BDTAC",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:48.371671Z"
+          },
+          {
+            "body": "At a confluence the outgoing discharge equals the incoming discharges without losses.",
+            "label": "M3VL Conservation",
+            "parent_uid": "01M2PAW8N4A0MJDN425J4BDTAC",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB2V9YK1EAKEWBNYFFRW3M",
+            "revision": 2,
+            "ts": "2026-09-17T00:08:24.004998Z"
+          },
+          {
+            "body": "At a confluence the outgoing discharge equals the incoming discharges without losses.",
+            "label": "M3VL Conservation",
+            "parent_uid": "01M2PB2V9YK1EAKEWBNYFFRW3M",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB2ZMRSF8820B703VPR7E3",
+            "revision": 3,
+            "ts": "2026-09-17T00:08:28.413153Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "Water velocity increases when equal discharge passes through a narrower cross-section.",
+          "created_at": "2026-09-17T00:04:48.826095Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Velocity",
+          "memory_id": "4ae851ff-f631-4708-928e-b732641e2e06",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 1,
+          "stats": {
+            "citations": 0,
+            "injections": 0,
+            "last_injected_at": null,
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:04:48.826095Z"
+        },
+        "revisions": [
+          {
+            "body": "Water velocity increases when equal discharge passes through a narrower cross-section.",
+            "label": "M3VL Velocity",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAW94ZA4KNRWVZX238BAM7",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:48.826095Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "Channel slope affects the speed of flow and the energy available for erosion.",
+          "created_at": "2026-09-17T00:04:49.353410Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Slope",
+          "memory_id": "22146046-4ad6-4b9f-915f-7f560825845d",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 1,
+          "stats": {
+            "citations": 0,
+            "injections": 0,
+            "last_injected_at": null,
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:04:49.353410Z"
+        },
+        "revisions": [
+          {
+            "body": "Channel slope affects the speed of flow and the energy available for erosion.",
+            "label": "M3VL Slope",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAW9M1X115FV1E7CAH9VA3",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:49.353410Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "Suspended sediment travels with flowing water while coarse bedload rolls along the bed.",
+          "created_at": "2026-09-17T00:04:49.761067Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Sediment",
+          "memory_id": "373b2aee-9365-413c-b752-63a685066a27",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 2,
+          "stats": {
+            "citations": 0,
+            "injections": 1,
+            "last_injected_at": "2026-09-17T00:08:25.445996+00:00",
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:08:25.440285Z"
+        },
+        "revisions": [
+          {
+            "body": "Suspended sediment travels with flowing water while coarse bedload rolls along the bed.",
+            "label": "M3VL Sediment",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAWA0RVB2XT0PNTH10HE7W",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:49.761067Z"
+          },
+          {
+            "body": "Suspended sediment travels with flowing water while coarse bedload rolls along the bed.",
+            "label": "M3VL Sediment",
+            "parent_uid": "01M2PAWA0RVB2XT0PNTH10HE7W",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB2WQ0W1RRYFWEDYFR8D1D",
+            "revision": 2,
+            "ts": "2026-09-17T00:08:25.440285Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "Faster current at the outside of a river bend erodes its bank.",
+          "created_at": "2026-09-17T00:04:50.322889Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Erosion",
+          "memory_id": "ac28079a-ce15-4156-b3da-ee22a56bb689",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 1,
+          "stats": {
+            "citations": 0,
+            "injections": 0,
+            "last_injected_at": null,
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:04:50.322889Z"
+        },
+        "revisions": [
+          {
+            "body": "Faster current at the outside of a river bend erodes its bank.",
+            "label": "M3VL Erosion",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAWAHKR27SXQWX7H2RWFTN",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:50.322889Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "Slower current inside a river bend deposits transported sediment.",
+          "created_at": "2026-09-17T00:04:50.713149Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Deposition",
+          "memory_id": "2c419f28-da97-4dc7-9455-511db07d03ef",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 2,
+          "stats": {
+            "citations": 0,
+            "injections": 1,
+            "last_injected_at": "2026-09-17T00:08:25.445996+00:00",
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:08:25.440285Z"
+        },
+        "revisions": [
+          {
+            "body": "Slower current inside a river bend deposits transported sediment.",
+            "label": "M3VL Deposition",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAWAXS0WKX3MN63EJ3B31C",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:50.713149Z"
+          },
+          {
+            "body": "Slower current inside a river bend deposits transported sediment.",
+            "label": "M3VL Deposition",
+            "parent_uid": "01M2PAWAXS0WKX3MN63EJ3B31C",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB2WPA6T9PF0QTYHR88C8V",
+            "revision": 2,
+            "ts": "2026-09-17T00:08:25.440285Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "Meanders migrate as erosion and deposition reshape their banks.",
+          "created_at": "2026-09-17T00:04:51.154880Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Meander",
+          "memory_id": "4589bb38-f334-459d-9117-655938828e1d",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 2,
+          "stats": {
+            "citations": 0,
+            "injections": 1,
+            "last_injected_at": "2026-09-17T00:08:26.268015+00:00",
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:08:26.262653Z"
+        },
+        "revisions": [
+          {
+            "body": "Meanders migrate as erosion and deposition reshape their banks.",
+            "label": "M3VL Meander",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAWBBRQAV2KZXEBG6RDG6C",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:51.154880Z"
+          },
+          {
+            "body": "Meanders migrate as erosion and deposition reshape their banks.",
+            "label": "M3VL Meander",
+            "parent_uid": "01M2PAWBBRQAV2KZXEBG6RDG6C",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB2XG5NQCFJWVSY76QQTC8",
+            "revision": 2,
+            "ts": "2026-09-17T00:08:26.262653Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "A floodplain temporarily stores water that exceeds a river channel capacity.",
+          "created_at": "2026-09-17T00:04:51.571764Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Floodplain",
+          "memory_id": "5c05bca9-3c1e-457d-ade2-9d7ed629e017",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 2,
+          "stats": {
+            "citations": 0,
+            "injections": 1,
+            "last_injected_at": "2026-09-17T00:08:30.364209+00:00",
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:08:30.358991Z"
+        },
+        "revisions": [
+          {
+            "body": "A floodplain temporarily stores water that exceeds a river channel capacity.",
+            "label": "M3VL Floodplain",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAWBTYQBN45NV3SQQVK0R8",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:51.571764Z"
+          },
+          {
+            "body": "A floodplain temporarily stores water that exceeds a river channel capacity.",
+            "label": "M3VL Floodplain",
+            "parent_uid": "01M2PAWBTYQBN45NV3SQQVK0R8",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB31FGKBCQY466V4EK3YFK",
+            "revision": 2,
+            "ts": "2026-09-17T00:08:30.358991Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "A delta grows where a river deposits sediment near its mouth.",
+          "created_at": "2026-09-17T00:04:52.165566Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Delta",
+          "memory_id": "81985251-826f-4b4d-93c7-f4f3c3b1fb67",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 2,
+          "stats": {
+            "citations": 0,
+            "injections": 1,
+            "last_injected_at": "2026-09-17T00:08:25.445996+00:00",
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:08:25.440285Z"
+        },
+        "revisions": [
+          {
+            "body": "A delta grows where a river deposits sediment near its mouth.",
+            "label": "M3VL Delta",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAWCB50Z3HCQ6F4SKSH1DT",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:52.165566Z"
+          },
+          {
+            "body": "A delta grows where a river deposits sediment near its mouth.",
+            "label": "M3VL Delta",
+            "parent_uid": "01M2PAWCB50Z3HCQ6F4SKSH1DT",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB2WQPE02Y9YVX6Y0JJ3PK",
+            "revision": 2,
+            "ts": "2026-09-17T00:08:25.440285Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "Infiltration transfers surface water into permeable soil.",
+          "created_at": "2026-09-17T00:04:52.770223Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Infiltration",
+          "memory_id": "49441618-29bb-4232-9ad2-724ef2d72dbd",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 2,
+          "stats": {
+            "citations": 0,
+            "injections": 1,
+            "last_injected_at": "2026-09-17T00:08:31.210403+00:00",
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:08:31.205167Z"
+        },
+        "revisions": [
+          {
+            "body": "Infiltration transfers surface water into permeable soil.",
+            "label": "M3VL Infiltration",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAWD4W1YJNKQPXWEPJ1QM1",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:52.770223Z"
+          },
+          {
+            "body": "Infiltration transfers surface water into permeable soil.",
+            "label": "M3VL Infiltration",
+            "parent_uid": "01M2PAWD4W1YJNKQPXWEPJ1QM1",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB329MMPVEF9RXQA7FZ8W6",
+            "revision": 2,
+            "ts": "2026-09-17T00:08:31.205167Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "An aquifer stores and transmits groundwater through connected pores.",
+          "created_at": "2026-09-17T00:04:53.484427Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Aquifer",
+          "memory_id": "97af8f8a-2c4d-4df9-ae3e-ce7001824857",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 2,
+          "stats": {
+            "citations": 0,
+            "injections": 1,
+            "last_injected_at": "2026-09-17T00:08:31.210403+00:00",
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:08:31.205167Z"
+        },
+        "revisions": [
+          {
+            "body": "An aquifer stores and transmits groundwater through connected pores.",
+            "label": "M3VL Aquifer",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAWDMDJM3C188NBJ6XSYT5",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:53.484427Z"
+          },
+          {
+            "body": "An aquifer stores and transmits groundwater through connected pores.",
+            "label": "M3VL Aquifer",
+            "parent_uid": "01M2PAWDMDJM3C188NBJ6XSYT5",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB32AAVY8ZFAYB69MR4N4K",
+            "revision": 2,
+            "ts": "2026-09-17T00:08:31.205167Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "A spring releases groundwater where the water table intersects the land surface.",
+          "created_at": "2026-09-17T00:04:53.942800Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Spring",
+          "memory_id": "5ff65859-d27e-419c-aa56-5fc5ec1cbf1b",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 2,
+          "stats": {
+            "citations": 0,
+            "injections": 1,
+            "last_injected_at": "2026-09-17T00:08:24.696959+00:00",
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:08:24.691209Z"
+        },
+        "revisions": [
+          {
+            "body": "A spring releases groundwater where the water table intersects the land surface.",
+            "label": "M3VL Spring",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAWE2R6Z16MMX1YAY8DKRK",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:53.942800Z"
+          },
+          {
+            "body": "A spring releases groundwater where the water table intersects the land surface.",
+            "label": "M3VL Spring",
+            "parent_uid": "01M2PAWE2R6Z16MMX1YAY8DKRK",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB2VY6VRHA8E7ZT64KBPF6",
+            "revision": 2,
+            "ts": "2026-09-17T00:08:24.691209Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "Evaporation converts surface water into atmospheric water vapor.",
+          "created_at": "2026-09-17T00:04:54.346424Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Evaporation",
+          "memory_id": "9bd517a5-318c-46a0-b438-ca8525a9fbad",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 1,
+          "stats": {
+            "citations": 0,
+            "injections": 0,
+            "last_injected_at": null,
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:04:54.346424Z"
+        },
+        "revisions": [
+          {
+            "body": "Evaporation converts surface water into atmospheric water vapor.",
+            "label": "M3VL Evaporation",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAWEFN6FBCTR6Z5VRWQXA5",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:54.346424Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "Rainfall supplies water to the watershed and changes river discharge.",
+          "created_at": "2026-09-17T00:04:54.778652Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Rainfall",
+          "memory_id": "b5f4f81e-b230-4b72-9892-509f187a0545",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 4,
+          "stats": {
+            "citations": 0,
+            "injections": 3,
+            "last_injected_at": "2026-09-17T00:08:32.583908+00:00",
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:08:32.578401Z"
+        },
+        "revisions": [
+          {
+            "body": "Rainfall supplies water to the watershed and changes river discharge.",
+            "label": "M3VL Rainfall",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAWEWXQW396E4EY48RJ1J6",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:54.778652Z"
+          },
+          {
+            "body": "Rainfall supplies water to the watershed and changes river discharge.",
+            "label": "M3VL Rainfall",
+            "parent_uid": "01M2PAWEWXQW396E4EY48RJ1J6",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB2ZKWKKBKBDD56H57ZKY3",
+            "revision": 2,
+            "ts": "2026-09-17T00:08:28.413153Z"
+          },
+          {
+            "body": "Rainfall supplies water to the watershed and changes river discharge.",
+            "label": "M3VL Rainfall",
+            "parent_uid": "01M2PB2ZKWKKBKBDD56H57ZKY3",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB30E0FMC3VAXQ0GTY0DFN",
+            "revision": 3,
+            "ts": "2026-09-17T00:08:29.238306Z"
+          },
+          {
+            "body": "Rainfall supplies water to the watershed and changes river discharge.",
+            "label": "M3VL Rainfall",
+            "parent_uid": "01M2PB30E0FMC3VAXQ0GTY0DFN",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB33NV5SC6B827VXWZ45HR",
+            "revision": 4,
+            "ts": "2026-09-17T00:08:32.578401Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "A hydrograph plots discharge against time at a fixed river location.",
+          "created_at": "2026-09-17T00:04:55.169118Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Hydrograph",
+          "memory_id": "9da22eb2-db1b-4fd2-b875-d7d3b0fbe679",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 2,
+          "stats": {
+            "citations": 0,
+            "injections": 1,
+            "last_injected_at": "2026-09-17T00:08:26.956085+00:00",
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:08:26.950617Z"
+        },
+        "revisions": [
+          {
+            "body": "A hydrograph plots discharge against time at a fixed river location.",
+            "label": "M3VL Hydrograph",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAWF9MJEX0YJFGA8J9Q0F7",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:55.169118Z"
+          },
+          {
+            "body": "A hydrograph plots discharge against time at a fixed river location.",
+            "label": "M3VL Hydrograph",
+            "parent_uid": "01M2PAWF9MJEX0YJFGA8J9Q0F7",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB2Y4ZK1HKHH7KN9YAQDJ3",
+            "revision": 2,
+            "ts": "2026-09-17T00:08:26.950617Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "A stream gauge records water stage so discharge can be estimated using a rating curve.",
+          "created_at": "2026-09-17T00:04:55.626308Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Gauge",
+          "memory_id": "d8c5edcd-c8a4-4e28-aeb7-c2352ed4047d",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 2,
+          "stats": {
+            "citations": 0,
+            "injections": 1,
+            "last_injected_at": "2026-09-17T00:08:26.956085+00:00",
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:08:26.950617Z"
+        },
+        "revisions": [
+          {
+            "body": "A stream gauge records water stage so discharge can be estimated using a rating curve.",
+            "label": "M3VL Gauge",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAWFQDAK51ZQ39PWC2K2EV",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:55.626308Z"
+          },
+          {
+            "body": "A stream gauge records water stage so discharge can be estimated using a rating curve.",
+            "label": "M3VL Gauge",
+            "parent_uid": "01M2PAWFQDAK51ZQ39PWC2K2EV",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB2Y5PXDT9SGN8NKQ4MA7W",
+            "revision": 2,
+            "ts": "2026-09-17T00:08:26.950617Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "A basin simulation routes each tributary contribution into its downstream confluence.",
+          "created_at": "2026-09-17T00:04:56.079148Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Basin model",
+          "memory_id": "07f82c53-e24c-4398-bdb8-ef6cc0205740",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 4,
+          "stats": {
+            "citations": 0,
+            "injections": 3,
+            "last_injected_at": "2026-09-17T00:08:27.795262+00:00",
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:08:27.789276Z"
+        },
+        "revisions": [
+          {
+            "body": "A basin simulation routes each tributary contribution into its downstream confluence.",
+            "label": "M3VL Basin model",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAWG5GX67MZ3CNFBH5GS2E",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:56.079148Z"
+          },
+          {
+            "body": "A basin simulation routes each tributary contribution into its downstream confluence.",
+            "label": "M3VL Basin model",
+            "parent_uid": "01M2PAWG5GX67MZ3CNFBH5GS2E",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PAXX687E8VPHWM6VT8WH0X",
+            "revision": 2,
+            "ts": "2026-09-17T00:05:42.069104Z"
+          },
+          {
+            "body": "A basin simulation routes each tributary contribution into its downstream confluence.",
+            "label": "M3VL Basin model",
+            "parent_uid": "01M2PAXX687E8VPHWM6VT8WH0X",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB2V95RME8HMBZVXWMPCMZ",
+            "revision": 3,
+            "ts": "2026-09-17T00:08:24.004998Z"
+          },
+          {
+            "body": "A basin simulation routes each tributary contribution into its downstream confluence.",
+            "label": "M3VL Basin model",
+            "parent_uid": "01M2PB2V95RME8HMBZVXWMPCMZ",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB2YZ3F7NNJEX43TJBH6YD",
+            "revision": 4,
+            "ts": "2026-09-17T00:08:27.789276Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "The flow ledger records incoming water, outgoing water and retained storage.",
+          "created_at": "2026-09-17T00:04:56.476526Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Flow ledger",
+          "memory_id": "f3b8c1a7-5a8e-4d0b-ad28-d66b74f72088",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 3,
+          "stats": {
+            "citations": 0,
+            "injections": 2,
+            "last_injected_at": "2026-09-17T00:08:32.583908+00:00",
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:08:32.578401Z"
+        },
+        "revisions": [
+          {
+            "body": "The flow ledger records incoming water, outgoing water and retained storage.",
+            "label": "M3VL Flow ledger",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAWGHZMJN3YTBJCR9KZ2PS",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:56.476526Z"
+          },
+          {
+            "body": "The flow ledger records incoming water, outgoing water and retained storage.",
+            "label": "M3VL Flow ledger",
+            "parent_uid": "01M2PAWGHZMJN3YTBJCR9KZ2PS",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB30F7EC69ZF7BZ3MQHN0Y",
+            "revision": 2,
+            "ts": "2026-09-17T00:08:29.238306Z"
+          },
+          {
+            "body": "The flow ledger records incoming water, outgoing water and retained storage.",
+            "label": "M3VL Flow ledger",
+            "parent_uid": "01M2PB30F7EC69ZF7BZ3MQHN0Y",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB33PGN29X620ZJTW3FGN3",
+            "revision": 3,
+            "ts": "2026-09-17T00:08:32.578401Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "A smaller simulation timestep resolves fast changes at a greater computation cost.",
+          "created_at": "2026-09-17T00:04:56.908224Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Timestep",
+          "memory_id": "1dc31cd8-38b3-42bb-a84e-c3b5c4f6328a",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 1,
+          "stats": {
+            "citations": 0,
+            "injections": 0,
+            "last_injected_at": null,
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:04:56.908224Z"
+        },
+        "revisions": [
+          {
+            "body": "A smaller simulation timestep resolves fast changes at a greater computation cost.",
+            "label": "M3VL Timestep",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAWGZNSMR6A15TVVT1GVA7",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:56.908224Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "At a tributary junction downstream discharge is the sum of incoming discharge if storage is unchanged.",
+          "created_at": "2026-09-17T00:04:57.404587Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL Confluence balance",
+          "memory_id": "9a13f9d4-ad48-4319-8dfc-ed841ef51302",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 3,
+          "stats": {
+            "citations": 0,
+            "injections": 2,
+            "last_injected_at": "2026-09-17T00:08:29.244464+00:00",
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:08:29.238306Z"
+        },
+        "revisions": [
+          {
+            "body": "At a tributary junction downstream discharge is the sum of incoming discharge if storage is unchanged.",
+            "label": "M3VL Confluence balance",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAWHEX5EVYMJZPH0P95VKR",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:57.404587Z"
+          },
+          {
+            "body": "At a tributary junction downstream discharge is the sum of incoming discharge if storage is unchanged.",
+            "label": "M3VL Confluence balance",
+            "parent_uid": "01M2PAWHEX5EVYMJZPH0P95VKR",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB2ZJV7E3A9VAYSY3VX7N8",
+            "revision": 2,
+            "ts": "2026-09-17T00:08:28.413153Z"
+          },
+          {
+            "body": "At a tributary junction downstream discharge is the sum of incoming discharge if storage is unchanged.",
+            "label": "M3VL Confluence balance",
+            "parent_uid": "01M2PB2ZJV7E3A9VAYSY3VX7N8",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB30DBNYQPY4SWA5YQMSE6",
+            "revision": 3,
+            "ts": "2026-09-17T00:08:29.238306Z"
+          }
+        ]
+      },
+      {
+        "in_current_context": false,
+        "memory": {
+          "bias": 0.0,
+          "body": "A tributary junction connects a smaller channel to the receiving river.",
+          "created_at": "2026-09-17T00:04:57.816992Z",
+          "embedding_model": "openai/text-embedding-3-small",
+          "keywords": [
+            "river",
+            "water",
+            "simulation"
+          ],
+          "kind": "fact",
+          "label": "M3VL River junction",
+          "memory_id": "50d28c81-ac69-46c9-add9-99acd4fc29f7",
+          "origin_location": "/private/tmp/m3vl-verification/project",
+          "origin_path": ".",
+          "origin_thread_id": null,
+          "pin": false,
+          "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+          "project_key": "/private/tmp/m3vl-verification/project",
+          "revision": 2,
+          "stats": {
+            "citations": 0,
+            "injections": 1,
+            "last_injected_at": "2026-09-17T00:08:27.795262+00:00",
+            "never_kills": 0,
+            "removals": 0
+          },
+          "status": "active",
+          "thread_origin": null,
+          "updated_at": "2026-09-17T00:08:27.789276Z"
+        },
+        "revisions": [
+          {
+            "body": "A tributary junction connects a smaller channel to the receiving river.",
+            "label": "M3VL River junction",
+            "parent_uid": null,
+            "reason": "",
+            "rev_uid": "01M2PAWHVVNQQDHVNCNDR251W3",
+            "revision": 1,
+            "ts": "2026-09-17T00:04:57.816992Z"
+          },
+          {
+            "body": "A tributary junction connects a smaller channel to the receiving river.",
+            "label": "M3VL River junction",
+            "parent_uid": "01M2PAWHVVNQQDHVNCNDR251W3",
+            "reason": "inject/prepare",
+            "rev_uid": "01M2PB2YZSG6DH47WFY5CRK99K",
+            "revision": 2,
+            "ts": "2026-09-17T00:08:27.789276Z"
+          }
+        ]
+      }
+    ],
+    "omitted_memory_ids": []
+  },
+  "progress": {
+    "cursor": 26,
+    "events": [
+      {
+        "action": null,
+        "event_id": 17,
+        "finding_uid": null,
+        "memory_ids": [],
+        "phase": "run.started",
+        "run_uid": "01M2PB5FSVT89VHE7ZVZG047HX",
+        "ts": "2026-09-17T00:09:50.670149Z"
+      },
+      {
+        "action": null,
+        "event_id": 18,
+        "finding_uid": null,
+        "memory_ids": [],
+        "phase": "run.completed",
+        "run_uid": "01M2PB5FSVT89VHE7ZVZG047HX",
+        "ts": "2026-09-17T00:09:51.098185Z"
+      },
+      {
+        "action": null,
+        "event_id": 19,
+        "finding_uid": null,
+        "memory_ids": [],
+        "phase": "run.started",
+        "run_uid": "01M2PB86Q9CMTPJQ5NKNZ2J814",
+        "ts": "2026-09-17T00:11:19.673773Z"
+      },
+      {
+        "action": null,
+        "event_id": 20,
+        "finding_uid": "01M2PB871AW3CMJNSKM6FNK85N",
+        "memory_ids": [
+          "2759ac41-2e1d-450d-95df-8ade019e02cf"
+        ],
+        "phase": "finding.started",
+        "run_uid": "01M2PB86Q9CMTPJQ5NKNZ2J814",
+        "ts": "2026-09-17T00:11:19.992241Z"
+      },
+      {
+        "action": "keyword_repair",
+        "event_id": 21,
+        "finding_uid": "01M2PB871AW3CMJNSKM6FNK85N",
+        "memory_ids": [
+          "2759ac41-2e1d-450d-95df-8ade019e02cf"
+        ],
+        "phase": "finding.completed",
+        "run_uid": "01M2PB86Q9CMTPJQ5NKNZ2J814",
+        "ts": "2026-09-17T00:11:22.659299Z"
+      },
+      {
+        "action": null,
+        "event_id": 22,
+        "finding_uid": "01M2PB89P7RRF07PP0X4CPXRFN",
+        "memory_ids": [
+          "b2caa01f-1de5-4ff6-b428-43f382281c51"
+        ],
+        "phase": "finding.started",
+        "run_uid": "01M2PB86Q9CMTPJQ5NKNZ2J814",
+        "ts": "2026-09-17T00:11:22.711569Z"
+      },
+      {
+        "action": "keyword_repair",
+        "event_id": 23,
+        "finding_uid": "01M2PB89P7RRF07PP0X4CPXRFN",
+        "memory_ids": [
+          "b2caa01f-1de5-4ff6-b428-43f382281c51"
+        ],
+        "phase": "finding.completed",
+        "run_uid": "01M2PB86Q9CMTPJQ5NKNZ2J814",
+        "ts": "2026-09-17T00:11:24.892451Z"
+      },
+      {
+        "action": null,
+        "event_id": 24,
+        "finding_uid": "01M2PB8BVS1AT2STXPNKA4K5YJ",
+        "memory_ids": [
+          "d8411723-fe80-4da4-b0d1-2f5fc4299756"
+        ],
+        "phase": "finding.started",
+        "run_uid": "01M2PB86Q9CMTPJQ5NKNZ2J814",
+        "ts": "2026-09-17T00:11:24.939006Z"
+      },
+      {
+        "action": "keyword_repair",
+        "event_id": 25,
+        "finding_uid": "01M2PB8BVS1AT2STXPNKA4K5YJ",
+        "memory_ids": [
+          "d8411723-fe80-4da4-b0d1-2f5fc4299756"
+        ],
+        "phase": "finding.completed",
+        "run_uid": "01M2PB86Q9CMTPJQ5NKNZ2J814",
+        "ts": "2026-09-17T00:11:27.007892Z"
+      },
+      {
+        "action": null,
+        "event_id": 26,
+        "finding_uid": null,
+        "memory_ids": [],
+        "phase": "run.completed",
+        "run_uid": "01M2PB86Q9CMTPJQ5NKNZ2J814",
+        "ts": "2026-09-17T00:11:27.460484Z"
+      }
+    ]
+  },
+  "projects": [
+    {
+      "errors": [],
+      "nodes": [
+        {
+          "bytes": 224,
+          "kind": "directory",
+          "path": "."
+        },
+        {
+          "bytes": 416,
+          "kind": "directory",
+          "path": ".git"
+        },
+        {
+          "bytes": 70,
+          "kind": "file",
+          "path": ".git/COMMIT_EDITMSG"
+        },
+        {
+          "bytes": 21,
+          "kind": "file",
+          "path": ".git/HEAD"
+        },
+        {
+          "bytes": 137,
+          "kind": "file",
+          "path": ".git/config"
+        },
+        {
+          "bytes": 73,
+          "kind": "file",
+          "path": ".git/description"
+        },
+        {
+          "bytes": 480,
+          "kind": "directory",
+          "path": ".git/hooks"
+        },
+        {
+          "bytes": 478,
+          "kind": "file",
+          "path": ".git/hooks/applypatch-msg.sample"
+        },
+        {
+          "bytes": 896,
+          "kind": "file",
+          "path": ".git/hooks/commit-msg.sample"
+        },
+        {
+          "bytes": 4726,
+          "kind": "file",
+          "path": ".git/hooks/fsmonitor-watchman.sample"
+        },
+        {
+          "bytes": 189,
+          "kind": "file",
+          "path": ".git/hooks/post-update.sample"
+        },
+        {
+          "bytes": 424,
+          "kind": "file",
+          "path": ".git/hooks/pre-applypatch.sample"
+        },
+        {
+          "bytes": 1643,
+          "kind": "file",
+          "path": ".git/hooks/pre-commit.sample"
+        },
+        {
+          "bytes": 416,
+          "kind": "file",
+          "path": ".git/hooks/pre-merge-commit.sample"
+        },
+        {
+          "bytes": 1374,
+          "kind": "file",
+          "path": ".git/hooks/pre-push.sample"
+        },
+        {
+          "bytes": 4898,
+          "kind": "file",
+          "path": ".git/hooks/pre-rebase.sample"
+        },
+        {
+          "bytes": 544,
+          "kind": "file",
+          "path": ".git/hooks/pre-receive.sample"
+        },
+        {
+          "bytes": 1492,
+          "kind": "file",
+          "path": ".git/hooks/prepare-commit-msg.sample"
+        },
+        {
+          "bytes": 2783,
+          "kind": "file",
+          "path": ".git/hooks/push-to-checkout.sample"
+        },
+        {
+          "bytes": 3650,
+          "kind": "file",
+          "path": ".git/hooks/update.sample"
+        },
+        {
+          "bytes": 548,
+          "kind": "file",
+          "path": ".git/index"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/info"
+        },
+        {
+          "bytes": 263,
+          "kind": "file",
+          "path": ".git/info/exclude"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": ".git/logs"
+        },
+        {
+          "bytes": 230,
+          "kind": "file",
+          "path": ".git/logs/HEAD"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/logs/refs"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/logs/refs/heads"
+        },
+        {
+          "bytes": 230,
+          "kind": "file",
+          "path": ".git/logs/refs/heads/main"
+        },
+        {
+          "bytes": 864,
+          "kind": "directory",
+          "path": ".git/objects"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/00"
+        },
+        {
+          "bytes": 95,
+          "kind": "file",
+          "path": ".git/objects/00/43ba58371541a9e2dc5521cda63e6a9daf440b"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/17"
+        },
+        {
+          "bytes": 164,
+          "kind": "file",
+          "path": ".git/objects/17/e80da650c38883249c71d0e2f1bd931c5d8a20"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/1c"
+        },
+        {
+          "bytes": 102,
+          "kind": "file",
+          "path": ".git/objects/1c/e8c13ae5f30ff245eda7e8a3efc5d9bb9f03d2"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": ".git/objects/1e"
+        },
+        {
+          "bytes": 429,
+          "kind": "file",
+          "path": ".git/objects/1e/487725f54a562a7757cf5d60ccc25454a8b630"
+        },
+        {
+          "bytes": 783,
+          "kind": "file",
+          "path": ".git/objects/1e/d9503b73d22fe10dd1424ccbafa536c11051a8"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/21"
+        },
+        {
+          "bytes": 1408,
+          "kind": "file",
+          "path": ".git/objects/21/20b5098641f1e5eaa8af3aa426010916ffd854"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/37"
+        },
+        {
+          "bytes": 71,
+          "kind": "file",
+          "path": ".git/objects/37/54f0ccf3b95cb66dd59473198d294b62aad005"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/50"
+        },
+        {
+          "bytes": 173,
+          "kind": "file",
+          "path": ".git/objects/50/4e6ffa06f1855b733d263a5243e5ed10f9ee10"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/5c"
+        },
+        {
+          "bytes": 66,
+          "kind": "file",
+          "path": ".git/objects/5c/e5df64a5012e8d9fe0b987919e3270d610b42d"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/60"
+        },
+        {
+          "bytes": 90,
+          "kind": "file",
+          "path": ".git/objects/60/6d10a34874c2daea0b8093319701e6adaa911a"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/75"
+        },
+        {
+          "bytes": 90,
+          "kind": "file",
+          "path": ".git/objects/75/1912e0be1b9ade494801ad5364b91d565c8e04"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/76"
+        },
+        {
+          "bytes": 71,
+          "kind": "file",
+          "path": ".git/objects/76/712aa714d592e9cf9577d108a41d5b0d6e556e"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/83"
+        },
+        {
+          "bytes": 436,
+          "kind": "file",
+          "path": ".git/objects/83/85838d0566149f29b4e7a7146470e2ab8737d5"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/84"
+        },
+        {
+          "bytes": 343,
+          "kind": "file",
+          "path": ".git/objects/84/c45cc43d2f6e433a1dd64ae31df66dd6e98321"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/9f"
+        },
+        {
+          "bytes": 860,
+          "kind": "file",
+          "path": ".git/objects/9f/7c8e71dd28a84ffd9eddeb03b8923eda55cd2c"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/a1"
+        },
+        {
+          "bytes": 1407,
+          "kind": "file",
+          "path": ".git/objects/a1/e83c0832697df1453d22f8daff5ebbaedb96b4"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": ".git/objects/b0"
+        },
+        {
+          "bytes": 861,
+          "kind": "file",
+          "path": ".git/objects/b0/97369fb4098d58281e0f4fa4da83de25a3a22c"
+        },
+        {
+          "bytes": 55,
+          "kind": "file",
+          "path": ".git/objects/b0/e3447a113c4274aa65aa81a657c854cff79889"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": ".git/objects/b1"
+        },
+        {
+          "bytes": 66,
+          "kind": "file",
+          "path": ".git/objects/b1/27981db22f4766e42a359c3086cee01f1d076b"
+        },
+        {
+          "bytes": 102,
+          "kind": "file",
+          "path": ".git/objects/b1/71bd59b1ae28097e4f475d77492f969a4151db"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/b5"
+        },
+        {
+          "bytes": 103,
+          "kind": "file",
+          "path": ".git/objects/b5/9686383330dc0b4003be60a5ebe61836f5c50e"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/c0"
+        },
+        {
+          "bytes": 52,
+          "kind": "file",
+          "path": ".git/objects/c0/edf335d575c0edf8ae5a48cef7a3b29918fd2d"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/ca"
+        },
+        {
+          "bytes": 95,
+          "kind": "file",
+          "path": ".git/objects/ca/ec8873d8f34cdf90aa8cea02687eac18e29429"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/d7"
+        },
+        {
+          "bytes": 71,
+          "kind": "file",
+          "path": ".git/objects/d7/dd4993cdab84cc68bfc019fb7198053205fa22"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/e5"
+        },
+        {
+          "bytes": 176,
+          "kind": "file",
+          "path": ".git/objects/e5/577d80fc8c9a420686a82058b9b86f1a3f9bdb"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/objects/f8"
+        },
+        {
+          "bytes": 95,
+          "kind": "file",
+          "path": ".git/objects/f8/8af4ce97b8b61615659462807aae29c1406c12"
+        },
+        {
+          "bytes": 64,
+          "kind": "directory",
+          "path": ".git/objects/info"
+        },
+        {
+          "bytes": 64,
+          "kind": "directory",
+          "path": ".git/objects/pack"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": ".git/refs"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/refs/heads"
+        },
+        {
+          "bytes": 41,
+          "kind": "file",
+          "path": ".git/refs/heads/main"
+        },
+        {
+          "bytes": 64,
+          "kind": "directory",
+          "path": ".git/refs/tags"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": ".git/worktrees"
+        },
+        {
+          "bytes": 288,
+          "kind": "directory",
+          "path": ".git/worktrees/round-1-attempt-1"
+        },
+        {
+          "bytes": 35,
+          "kind": "file",
+          "path": ".git/worktrees/round-1-attempt-1/COMMIT_EDITMSG"
+        },
+        {
+          "bytes": 41,
+          "kind": "file",
+          "path": ".git/worktrees/round-1-attempt-1/HEAD"
+        },
+        {
+          "bytes": 41,
+          "kind": "file",
+          "path": ".git/worktrees/round-1-attempt-1/ORIG_HEAD"
+        },
+        {
+          "bytes": 6,
+          "kind": "file",
+          "path": ".git/worktrees/round-1-attempt-1/commondir"
+        },
+        {
+          "bytes": 124,
+          "kind": "file",
+          "path": ".git/worktrees/round-1-attempt-1/gitdir"
+        },
+        {
+          "bytes": 688,
+          "kind": "file",
+          "path": ".git/worktrees/round-1-attempt-1/index"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/worktrees/round-1-attempt-1/logs"
+        },
+        {
+          "bytes": 330,
+          "kind": "file",
+          "path": ".git/worktrees/round-1-attempt-1/logs/HEAD"
+        },
+        {
+          "bytes": 288,
+          "kind": "directory",
+          "path": ".git/worktrees/round-1-attempt-2"
+        },
+        {
+          "bytes": 35,
+          "kind": "file",
+          "path": ".git/worktrees/round-1-attempt-2/COMMIT_EDITMSG"
+        },
+        {
+          "bytes": 41,
+          "kind": "file",
+          "path": ".git/worktrees/round-1-attempt-2/HEAD"
+        },
+        {
+          "bytes": 41,
+          "kind": "file",
+          "path": ".git/worktrees/round-1-attempt-2/ORIG_HEAD"
+        },
+        {
+          "bytes": 6,
+          "kind": "file",
+          "path": ".git/worktrees/round-1-attempt-2/commondir"
+        },
+        {
+          "bytes": 124,
+          "kind": "file",
+          "path": ".git/worktrees/round-1-attempt-2/gitdir"
+        },
+        {
+          "bytes": 688,
+          "kind": "file",
+          "path": ".git/worktrees/round-1-attempt-2/index"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".git/worktrees/round-1-attempt-2/logs"
+        },
+        {
+          "bytes": 330,
+          "kind": "file",
+          "path": ".git/worktrees/round-1-attempt-2/logs/HEAD"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".nocturne-worktrees"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86"
+        },
+        {
+          "bytes": 224,
+          "kind": "directory",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-implementation"
+        },
+        {
+          "bytes": 18447,
+          "kind": "file",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-implementation/JUDGE_BRIEF.json"
+        },
+        {
+          "bytes": 341,
+          "kind": "file",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-implementation/JUDGE_SESSION.json"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-motivation"
+        },
+        {
+          "bytes": 18443,
+          "kind": "file",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-motivation/JUDGE_BRIEF.json"
+        },
+        {
+          "bytes": 337,
+          "kind": "file",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-motivation/JUDGE_SESSION.json"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-performance"
+        },
+        {
+          "bytes": 18506,
+          "kind": "file",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-performance/JUDGE_BRIEF.json"
+        },
+        {
+          "bytes": 338,
+          "kind": "file",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-performance/JUDGE_SESSION.json"
+        },
+        {
+          "bytes": 192,
+          "kind": "directory",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1"
+        },
+        {
+          "bytes": 80,
+          "kind": "file",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1/.git"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1/docs"
+        },
+        {
+          "bytes": 847,
+          "kind": "file",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1/docs/design.txt"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1/src"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1/src/__pycache__"
+        },
+        {
+          "bytes": 2639,
+          "kind": "file",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1/src/__pycache__/river.cpython-313.pyc"
+        },
+        {
+          "bytes": 1111,
+          "kind": "file",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1/src/river.py"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1/tests"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1/tests/__pycache__"
+        },
+        {
+          "bytes": 1428,
+          "kind": "file",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1/tests/__pycache__/test_river.cpython-313.pyc"
+        },
+        {
+          "bytes": 728,
+          "kind": "file",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1/tests/test_river.py"
+        },
+        {
+          "bytes": 192,
+          "kind": "directory",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2"
+        },
+        {
+          "bytes": 80,
+          "kind": "file",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2/.git"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2/docs"
+        },
+        {
+          "bytes": 847,
+          "kind": "file",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2/docs/design.txt"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2/src"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2/src/__pycache__"
+        },
+        {
+          "bytes": 2639,
+          "kind": "file",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2/src/__pycache__/river.cpython-313.pyc"
+        },
+        {
+          "bytes": 1111,
+          "kind": "file",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2/src/river.py"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2/tests"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2/tests/__pycache__"
+        },
+        {
+          "bytes": 1428,
+          "kind": "file",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2/tests/__pycache__/test_river.cpython-313.pyc"
+        },
+        {
+          "bytes": 728,
+          "kind": "file",
+          "path": ".nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2/tests/test_river.py"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": "docs"
+        },
+        {
+          "bytes": 847,
+          "kind": "file",
+          "path": "docs/design.txt"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": "src"
+        },
+        {
+          "bytes": 1111,
+          "kind": "file",
+          "path": "src/river.py"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": "tests"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": "tests/__pycache__"
+        },
+        {
+          "bytes": 1348,
+          "kind": "file",
+          "path": "tests/__pycache__/test_river.cpython-313.pyc"
+        },
+        {
+          "bytes": 728,
+          "kind": "file",
+          "path": "tests/test_river.py"
+        }
+      ],
+      "root": "/private/tmp/m3vl-verification/project"
+    },
+    {
+      "errors": [],
+      "nodes": [
+        {
+          "bytes": 224,
+          "kind": "directory",
+          "path": "."
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": "judge-implementation"
+        },
+        {
+          "bytes": 18447,
+          "kind": "file",
+          "path": "judge-implementation/JUDGE_BRIEF.json"
+        },
+        {
+          "bytes": 341,
+          "kind": "file",
+          "path": "judge-implementation/JUDGE_SESSION.json"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": "judge-motivation"
+        },
+        {
+          "bytes": 18443,
+          "kind": "file",
+          "path": "judge-motivation/JUDGE_BRIEF.json"
+        },
+        {
+          "bytes": 337,
+          "kind": "file",
+          "path": "judge-motivation/JUDGE_SESSION.json"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": "judge-performance"
+        },
+        {
+          "bytes": 18506,
+          "kind": "file",
+          "path": "judge-performance/JUDGE_BRIEF.json"
+        },
+        {
+          "bytes": 338,
+          "kind": "file",
+          "path": "judge-performance/JUDGE_SESSION.json"
+        },
+        {
+          "bytes": 192,
+          "kind": "directory",
+          "path": "round-1-attempt-1"
+        },
+        {
+          "bytes": 80,
+          "kind": "file",
+          "path": "round-1-attempt-1/.git"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": "round-1-attempt-1/docs"
+        },
+        {
+          "bytes": 847,
+          "kind": "file",
+          "path": "round-1-attempt-1/docs/design.txt"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": "round-1-attempt-1/src"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": "round-1-attempt-1/src/__pycache__"
+        },
+        {
+          "bytes": 2639,
+          "kind": "file",
+          "path": "round-1-attempt-1/src/__pycache__/river.cpython-313.pyc"
+        },
+        {
+          "bytes": 1111,
+          "kind": "file",
+          "path": "round-1-attempt-1/src/river.py"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": "round-1-attempt-1/tests"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": "round-1-attempt-1/tests/__pycache__"
+        },
+        {
+          "bytes": 1428,
+          "kind": "file",
+          "path": "round-1-attempt-1/tests/__pycache__/test_river.cpython-313.pyc"
+        },
+        {
+          "bytes": 728,
+          "kind": "file",
+          "path": "round-1-attempt-1/tests/test_river.py"
+        },
+        {
+          "bytes": 192,
+          "kind": "directory",
+          "path": "round-1-attempt-2"
+        },
+        {
+          "bytes": 80,
+          "kind": "file",
+          "path": "round-1-attempt-2/.git"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": "round-1-attempt-2/docs"
+        },
+        {
+          "bytes": 847,
+          "kind": "file",
+          "path": "round-1-attempt-2/docs/design.txt"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": "round-1-attempt-2/src"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": "round-1-attempt-2/src/__pycache__"
+        },
+        {
+          "bytes": 2639,
+          "kind": "file",
+          "path": "round-1-attempt-2/src/__pycache__/river.cpython-313.pyc"
+        },
+        {
+          "bytes": 1111,
+          "kind": "file",
+          "path": "round-1-attempt-2/src/river.py"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": "round-1-attempt-2/tests"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": "round-1-attempt-2/tests/__pycache__"
+        },
+        {
+          "bytes": 1428,
+          "kind": "file",
+          "path": "round-1-attempt-2/tests/__pycache__/test_river.cpython-313.pyc"
+        },
+        {
+          "bytes": 728,
+          "kind": "file",
+          "path": "round-1-attempt-2/tests/test_river.py"
+        }
+      ],
+      "root": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1"
+    },
+    {
+      "errors": [],
+      "nodes": [
+        {
+          "bytes": 192,
+          "kind": "directory",
+          "path": "."
+        },
+        {
+          "bytes": 80,
+          "kind": "file",
+          "path": ".git"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": "docs"
+        },
+        {
+          "bytes": 847,
+          "kind": "file",
+          "path": "docs/design.txt"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": "src"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": "src/__pycache__"
+        },
+        {
+          "bytes": 2639,
+          "kind": "file",
+          "path": "src/__pycache__/river.cpython-313.pyc"
+        },
+        {
+          "bytes": 1111,
+          "kind": "file",
+          "path": "src/river.py"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": "tests"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": "tests/__pycache__"
+        },
+        {
+          "bytes": 1428,
+          "kind": "file",
+          "path": "tests/__pycache__/test_river.cpython-313.pyc"
+        },
+        {
+          "bytes": 728,
+          "kind": "file",
+          "path": "tests/test_river.py"
+        }
+      ],
+      "root": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1"
+    },
+    {
+      "errors": [],
+      "nodes": [
+        {
+          "bytes": 192,
+          "kind": "directory",
+          "path": "."
+        },
+        {
+          "bytes": 80,
+          "kind": "file",
+          "path": ".git"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": "docs"
+        },
+        {
+          "bytes": 847,
+          "kind": "file",
+          "path": "docs/design.txt"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": "src"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": "src/__pycache__"
+        },
+        {
+          "bytes": 2639,
+          "kind": "file",
+          "path": "src/__pycache__/river.cpython-313.pyc"
+        },
+        {
+          "bytes": 1111,
+          "kind": "file",
+          "path": "src/river.py"
+        },
+        {
+          "bytes": 128,
+          "kind": "directory",
+          "path": "tests"
+        },
+        {
+          "bytes": 96,
+          "kind": "directory",
+          "path": "tests/__pycache__"
+        },
+        {
+          "bytes": 1428,
+          "kind": "file",
+          "path": "tests/__pycache__/test_river.cpython-313.pyc"
+        },
+        {
+          "bytes": 728,
+          "kind": "file",
+          "path": "tests/test_river.py"
+        }
+      ],
+      "root": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2"
+    }
+  ],
+  "as_of": "2026-09-17T00:18:40.351558+00:00",
+  "live": true,
+  "timeline": [
+    "2026-09-17T00:02:21.936387+00:00",
+    "2026-09-17T00:02:29.109737+00:00",
+    "2026-09-17T00:02:49.381119+00:00",
+    "2026-09-17T00:03:21.884533+00:00",
+    "2026-09-17T00:04:09.084355+00:00",
+    "2026-09-17T00:04:11.422686+00:00",
+    "2026-09-17T00:04:13.751366+00:00",
+    "2026-09-17T00:04:16.114300+00:00",
+    "2026-09-17T00:04:48.819423+00:00",
+    "2026-09-17T00:04:51.215954+00:00",
+    "2026-09-17T00:04:53.645454+00:00",
+    "2026-09-17T00:04:56.034582+00:00",
+    "2026-09-17T00:04:58.491536+00:00",
+    "2026-09-17T00:05:43.745222+00:00",
+    "2026-09-17T00:05:46.535570+00:00",
+    "2026-09-17T00:05:49.000395+00:00",
+    "2026-09-17T00:05:51.430070+00:00",
+    "2026-09-17T00:05:53.820027+00:00",
+    "2026-09-17T00:05:56.198684+00:00",
+    "2026-09-17T00:05:58.725856+00:00",
+    "2026-09-17T00:06:01.409945+00:00",
+    "2026-09-17T00:06:04.105421+00:00",
+    "2026-09-17T00:06:06.909910+00:00",
+    "2026-09-17T00:06:09.508361+00:00",
+    "2026-09-17T00:06:12.040165+00:00",
+    "2026-09-17T00:06:14.473817+00:00",
+    "2026-09-17T00:06:16.924170+00:00",
+    "2026-09-17T00:06:19.340996+00:00",
+    "2026-09-17T00:06:22.142855+00:00",
+    "2026-09-17T00:06:24.725812+00:00",
+    "2026-09-17T00:06:27.431102+00:00",
+    "2026-09-17T00:06:30.025864+00:00",
+    "2026-09-17T00:06:32.463343+00:00",
+    "2026-09-17T00:06:34.978393+00:00",
+    "2026-09-17T00:06:37.649165+00:00",
+    "2026-09-17T00:06:40.078726+00:00",
+    "2026-09-17T00:06:42.901784+00:00",
+    "2026-09-17T00:07:21.299480+00:00",
+    "2026-09-17T00:07:42.158592+00:00",
+    "2026-09-17T00:07:45.054772+00:00",
+    "2026-09-17T00:07:47.665837+00:00",
+    "2026-09-17T00:07:50.600687+00:00",
+    "2026-09-17T00:07:53.259264+00:00",
+    "2026-09-17T00:07:55.781199+00:00",
+    "2026-09-17T00:08:00.813790+00:00",
+    "2026-09-17T00:08:03.561122+00:00",
+    "2026-09-17T00:08:06.434562+00:00",
+    "2026-09-17T00:08:09.731157+00:00",
+    "2026-09-17T00:08:12.729171+00:00",
+    "2026-09-17T00:08:15.350961+00:00",
+    "2026-09-17T00:08:18.034816+00:00",
+    "2026-09-17T00:08:20.841606+00:00",
+    "2026-09-17T00:08:23.611166+00:00",
+    "2026-09-17T00:08:26.705084+00:00",
+    "2026-09-17T00:08:30.204653+00:00",
+    "2026-09-17T00:08:33.192353+00:00",
+    "2026-09-17T00:08:51.215668+00:00",
+    "2026-09-17T00:09:15.220566+00:00",
+    "2026-09-17T00:09:20.979855+00:00",
+    "2026-09-17T00:09:36.737340+00:00",
+    "2026-09-17T00:09:39.911274+00:00",
+    "2026-09-17T00:09:49.647073+00:00",
+    "2026-09-17T00:09:53.629004+00:00",
+    "2026-09-17T00:09:56.824348+00:00",
+    "2026-09-17T00:10:02.932083+00:00",
+    "2026-09-17T00:10:05.935347+00:00",
+    "2026-09-17T00:10:09.533903+00:00",
+    "2026-09-17T00:10:12.964785+00:00",
+    "2026-09-17T00:10:19.259130+00:00",
+    "2026-09-17T00:10:22.513291+00:00",
+    "2026-09-17T00:10:25.836949+00:00",
+    "2026-09-17T00:10:29.390834+00:00",
+    "2026-09-17T00:10:36.652753+00:00",
+    "2026-09-17T00:10:39.976571+00:00",
+    "2026-09-17T00:10:43.374118+00:00",
+    "2026-09-17T00:11:10.135296+00:00",
+    "2026-09-17T00:11:20.225932+00:00",
+    "2026-09-17T00:11:23.356533+00:00",
+    "2026-09-17T00:11:26.473912+00:00",
+    "2026-09-17T00:11:30.020654+00:00",
+    "2026-09-17T00:13:12.739696+00:00",
+    "2026-09-17T00:15:43.837630+00:00",
+    "2026-09-17T00:18:40.351558+00:00"
+  ],
+  "recorded_since": "2026-09-17T00:02:21.936387+00:00",
+  "trails": {
+    "98b97d47-e472-4bd6-b6ba-8539239bd674": [
+      {
+        "ts": "2026-09-17T00:02:29.109737+00:00",
+        "location": "/private/tmp/m3vl-verification/project",
+        "cost_usd": null,
+        "state": "stopped"
+      },
+      {
+        "ts": "2026-09-17T00:03:21.884533+00:00",
+        "location": "/private/tmp/m3vl-verification/project",
+        "cost_usd": "0.000000540000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:04:09.084355+00:00",
+        "location": "/private/tmp/m3vl-verification/project",
+        "cost_usd": "0.000000540000",
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:04:16.114300+00:00",
+        "location": "/private/tmp/m3vl-verification/project",
+        "cost_usd": "0.001373340000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:05:43.745222+00:00",
+        "location": "/private/tmp/m3vl-verification/project",
+        "cost_usd": "0.001375500000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:05:51.430070+00:00",
+        "location": "/private/tmp/m3vl-verification/project/src",
+        "cost_usd": "0.001378740000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:06:01.409945+00:00",
+        "location": "/private/tmp/m3vl-verification/project/src",
+        "cost_usd": "0.001379820000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:06:04.105421+00:00",
+        "location": "/private/tmp/m3vl-verification/project/src",
+        "cost_usd": "0.001380900000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:06:06.909910+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.001381980000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:06:09.508361+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.001383060000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:06:14.473817+00:00",
+        "location": "/private/tmp/m3vl-verification/project/docs",
+        "cost_usd": "0.001384140000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:06:19.340996+00:00",
+        "location": "/private/tmp/m3vl-verification/project/docs",
+        "cost_usd": "0.001384260000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:06:27.431102+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.001385340000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:06:30.025864+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.001385460000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:06:37.649165+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.026338260000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:06:42.901784+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.026338380000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:07:42.158592+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.026338480000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:07:45.054772+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.026338580000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:07:47.665837+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.026338680000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:07:50.600687+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.026338880000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:07:53.259264+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.026338980000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:07:55.781199+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.026339080000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:08:00.813790+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.028549040000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:08:03.561122+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.030154400000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:08:09.731157+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.030154600000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:08:12.729171+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.030154900000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:08:15.350961+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.030155100000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:08:18.034816+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.030155200000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:08:20.841606+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.030155500000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:08:23.611166+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.030155700000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:08:26.705084+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.030155900000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:08:30.204653+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.030156000000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:08:33.192353+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.030156100000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:08:51.215668+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.030156200000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:09:15.220566+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.030156300000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:09:20.979855+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.036752800000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:09:36.737340+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.043625180000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:09:39.911274+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.043625280000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:09:49.647073+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.043625380000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:09:53.629004+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.043625580000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:09:56.824348+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.043625780000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:10:02.932083+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.043625880000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:10:05.935347+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.043625980000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:10:12.964785+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.043626280000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:10:22.513291+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.043626380000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:10:25.836949+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.043626480000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:10:29.390834+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.043626580000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:10:36.652753+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.043626680000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:10:43.374118+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.067054760000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:13:12.739696+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.067054860000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:15:43.837630+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.067054960000",
+        "state": "waiting"
+      },
+      {
+        "ts": "2026-09-17T00:18:40.351558+00:00",
+        "location": "/private/tmp/m3vl-verification/project/tests",
+        "cost_usd": "0.067055060000",
+        "state": "waiting"
+      }
+    ],
+    "01M2PB1GYD1PY60MX5DZ4FX409/root.1": [
+      {
+        "ts": "2026-09-17T00:07:45.054772+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1",
+        "cost_usd": null,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:07:50.600687+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1",
+        "cost_usd": 0.00037104,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:07:53.259264+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1",
+        "cost_usd": 0.00079578,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:08:03.561122+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1",
+        "cost_usd": 0.00160506,
+        "state": "stopped"
+      },
+      {
+        "ts": "2026-09-17T00:08:06.434562+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1",
+        "cost_usd": null,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:08:09.731157+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1",
+        "cost_usd": 0.0021453,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:08:12.729171+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1",
+        "cost_usd": 0.0023965799999999997,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:08:18.034816+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1",
+        "cost_usd": 0.0027285599999999997,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:08:20.841606+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1",
+        "cost_usd": 0.00327672,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:08:23.611166+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1",
+        "cost_usd": 0.0035989200000000002,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:08:26.705084+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1",
+        "cost_usd": 0.00398322,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:08:30.204653+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1",
+        "cost_usd": 0.0045363,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:08:33.192353+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1",
+        "cost_usd": 0.00499008,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:09:36.737340+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-1",
+        "cost_usd": 0.00847734,
+        "state": "stopped"
+      }
+    ],
+    "01M2PB1GYD1PY60MX5DZ4FX409/root.2": [
+      {
+        "ts": "2026-09-17T00:07:45.054772+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2",
+        "cost_usd": null,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:07:47.665837+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2",
+        "cost_usd": 0.00078168,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:07:50.600687+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2",
+        "cost_usd": 0.00108582,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:07:53.259264+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2",
+        "cost_usd": 0.00152352,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:08:00.813790+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2",
+        "cost_usd": 0.00220986,
+        "state": "stopped"
+      },
+      {
+        "ts": "2026-09-17T00:08:06.434562+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2",
+        "cost_usd": null,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:08:09.731157+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2",
+        "cost_usd": 0.00301914,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:08:12.729171+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2",
+        "cost_usd": 0.00351762,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:08:15.350961+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2",
+        "cost_usd": 0.0038844,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:08:18.034816+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2",
+        "cost_usd": 0.0042708,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:08:20.841606+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2",
+        "cost_usd": 0.00459186,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:08:23.611166+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2",
+        "cost_usd": 0.0050307,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:08:26.705084+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2",
+        "cost_usd": 0.005502,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:08:51.215668+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2",
+        "cost_usd": 0.00701184,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:09:20.979855+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/round-1-attempt-2",
+        "cost_usd": 0.00880626,
+        "state": "stopped"
+      }
+    ],
+    "01M2PB1GYD1PY60MX5DZ4FX409/root/judge-implementation": [
+      {
+        "ts": "2026-09-17T00:09:39.911274+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-implementation",
+        "cost_usd": null,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:09:49.647073+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-implementation",
+        "cost_usd": 0.0021108,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:09:56.824348+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-implementation",
+        "cost_usd": 0.00290694,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:10:02.932083+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-implementation",
+        "cost_usd": 0.0039033,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:10:09.533903+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-implementation",
+        "cost_usd": 0.00512478,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:10:43.374118+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-implementation",
+        "cost_usd": 0.00512478,
+        "state": "stopped"
+      }
+    ],
+    "01M2PB1GYD1PY60MX5DZ4FX409/root/judge-motivation": [
+      {
+        "ts": "2026-09-17T00:09:39.911274+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-motivation",
+        "cost_usd": null,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:09:49.647073+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-motivation",
+        "cost_usd": 0.0020709,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:09:56.824348+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-motivation",
+        "cost_usd": 0.00293214,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:10:02.932083+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-motivation",
+        "cost_usd": 0.0038241,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:10:12.964785+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-motivation",
+        "cost_usd": 0.0051084,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:10:19.259130+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-motivation",
+        "cost_usd": 0.00612012,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:10:25.836949+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-motivation",
+        "cost_usd": 0.00717774,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:10:43.374118+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-motivation",
+        "cost_usd": 0.00871746,
+        "state": "stopped"
+      }
+    ],
+    "01M2PB1GYD1PY60MX5DZ4FX409/root/judge-performance": [
+      {
+        "ts": "2026-09-17T00:09:39.911274+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1/judge-performance",
+        "cost_usd": null,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:09:49.647073+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1",
+        "cost_usd": 0.00259746,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:09:56.824348+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1",
+        "cost_usd": 0.0034524,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:10:02.932083+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1",
+        "cost_usd": 0.00455748,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:10:12.964785+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1",
+        "cost_usd": 0.00570894,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:10:25.836949+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1",
+        "cost_usd": 0.00724416,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:10:36.652753+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1",
+        "cost_usd": 0.00847644,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:10:39.976571+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1",
+        "cost_usd": 0.00958554,
+        "state": "running"
+      },
+      {
+        "ts": "2026-09-17T00:10:43.374118+00:00",
+        "location": "/private/tmp/m3vl-verification/project/.nocturne-worktrees/01M2PB1GWEV55SN19DGNQJJH86/step-1-round-1",
+        "cost_usd": 0.00958554,
+        "state": "stopped"
+      }
+    ]
+  },
+  "observed_at": "2026-09-17T00:19:27.368131+00:00"
+}
