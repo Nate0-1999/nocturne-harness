@@ -1,0 +1,436 @@
+[
+  {
+    "schema_version": 1,
+    "id": "pressed-40bfc4414de3fe5d",
+    "label": "PLATE 40BFC441",
+    "sha256": "40bfc4414de3fe5d252060dc806cf5c795180d6fcd20aae37ac059a69498e069",
+    "image": {
+      "width": 460,
+      "height": 460
+    },
+    "kmeans": {
+      "color_space": "OKLab",
+      "k": 12,
+      "seed": 40
+    },
+    "clusters": [
+      {
+        "area_share_percent": 28.309546,
+        "hex": "#0a0909",
+        "oklch": {
+          "l": 0.139748,
+          "c": 0.001497,
+          "h": 353.448
+        }
+      },
+      {
+        "area_share_percent": 16.65879,
+        "hex": "#11233e",
+        "oklch": {
+          "l": 0.255617,
+          "c": 0.05765,
+          "h": 258.596
+        }
+      },
+      {
+        "area_share_percent": 11.333176,
+        "hex": "#14131b",
+        "oklch": {
+          "l": 0.190788,
+          "c": 0.015951,
+          "h": 294.282
+        }
+      },
+      {
+        "area_share_percent": 7.420132,
+        "hex": "#173474",
+        "oklch": {
+          "l": 0.344496,
+          "c": 0.114805,
+          "h": 262.985
+        }
+      },
+      {
+        "area_share_percent": 7.094045,
+        "hex": "#b3656d",
+        "oklch": {
+          "l": 0.597615,
+          "c": 0.100359,
+          "h": 14.501
+        }
+      },
+      {
+        "area_share_percent": 5.862476,
+        "hex": "#402c2c",
+        "oklch": {
+          "l": 0.316072,
+          "c": 0.029239,
+          "h": 17.406
+        }
+      },
+      {
+        "area_share_percent": 5.715501,
+        "hex": "#8e95ab",
+        "oklch": {
+          "l": 0.671571,
+          "c": 0.033351,
+          "h": 271.008
+        }
+      },
+      {
+        "area_share_percent": 4.426749,
+        "hex": "#3059a7",
+        "oklch": {
+          "l": 0.47758,
+          "c": 0.133482,
+          "h": 261.721
+        }
+      },
+      {
+        "area_share_percent": 4.161626,
+        "hex": "#aeb6c4",
+        "oklch": {
+          "l": 0.774938,
+          "c": 0.021846,
+          "h": 259.927
+        }
+      },
+      {
+        "area_share_percent": 4.132798,
+        "hex": "#665c63",
+        "oklch": {
+          "l": 0.486947,
+          "c": 0.017652,
+          "h": 337.092
+        }
+      },
+      {
+        "area_share_percent": 3.73724,
+        "hex": "#e6e8e9",
+        "oklch": {
+          "l": 0.930233,
+          "c": 0.002607,
+          "h": 220.263
+        }
+      },
+      {
+        "area_share_percent": 1.147921,
+        "hex": "#020101",
+        "oklch": {
+          "l": 0.068748,
+          "c": 0.007323,
+          "h": 6.446
+        }
+      }
+    ],
+    "accent_passes": {
+      "earned": {
+        "hex": "#11233e",
+        "area_share_percent": 16.65879,
+        "h": 258.596
+      },
+      "specular": {
+        "base": "#c4c4cc",
+        "peak": "#fdfef8",
+        "area_share_percent": 0.118147
+      }
+    },
+    "chrome_percentile_ramp": [
+      {
+        "percentile": 2,
+        "l": 0.106485,
+        "hex": "#080300"
+      },
+      {
+        "percentile": 50,
+        "l": 0.167285,
+        "hex": "#0a1109"
+      },
+      {
+        "percentile": 70,
+        "l": 0.282504,
+        "hex": "#372517"
+      },
+      {
+        "percentile": 85,
+        "l": 0.686866,
+        "hex": "#9a9b95"
+      },
+      {
+        "percentile": 93,
+        "l": 0.822712,
+        "hex": "#c4c4cc"
+      },
+      {
+        "percentile": 97,
+        "l": 0.938615,
+        "hex": "#f9e7d9"
+      },
+      {
+        "percentile": 99,
+        "l": 0.973786,
+        "hex": "#f5f7f4"
+      },
+      {
+        "percentile": 99.8,
+        "l": 0.994621,
+        "hex": "#fdfef8"
+      }
+    ],
+    "roles": {
+      "ground": "#020101",
+      "surface_deep": "#0a0909",
+      "surface": "#14131b",
+      "surface_raised": "#11233e",
+      "ink": "#e6e8e9",
+      "muted": "#b3656d",
+      "dim": "#3059a7",
+      "accent": "#3059a7",
+      "accent_strong": "#4874c4",
+      "earned": "#465b79",
+      "danger": "#b3656d"
+    },
+    "contrast_repairs": [
+      {
+        "pair": "earned_on_ground",
+        "raw": "#11233e",
+        "worn": "#465b79"
+      }
+    ],
+    "validation": {
+      "checks": {
+        "ink / ground contrast": true,
+        "muted / ground contrast": true,
+        "fleet / ground contrast": true,
+        "fleet pair separation": true,
+        "deuteranopia separation": true,
+        "one danger color": true
+      },
+      "passed": true
+    },
+    "tokens": {
+      "--seam-1b9a29d92971": "#e6e8e9",
+      "--seam-0a820a82e969": "#020101",
+      "--seam-ee6623f1a8b4": "#0a0909",
+      "--seam-e111b4bdf402": "#14131b",
+      "--seam-a89226244b3a": "#11233e",
+      "--seam-5b91e5b268de": "rgba(2, 1, 1, 0.9)",
+      "--seam-75142759e34b": "#b3656d",
+      "--seam-205e0febd250": "#3059a7",
+      "--seam-b76703e27aaa": "rgba(230, 232, 233, 0.18)",
+      "--seam-29784880c46b": "rgba(230, 232, 233, 0.42)",
+      "--seam-a46956e36ca1": "#3059a7",
+      "--seam-11a87d9b9e27": "#4874c4",
+      "--seam-4e1285da7308": "rgba(48, 89, 167, 0.12)",
+      "--seam-ad0061aa3454": "#465b79",
+      "--seam-b1c7172b3c1a": "rgba(70, 91, 121, 0.12)",
+      "--seam-7ff080c99f72": "#b3656d",
+      "--seam-b6642117663a": "rgba(179, 101, 109, 0.12)",
+      "--seam-4a8f71691312": "rgba(48, 89, 167, 0.1)",
+      "--seam-be43bbfc2ecc": "#465b79",
+      "--seam-635c59be60a5": "rgba(230, 232, 233, 0.03)",
+      "--seam-437335a997fc": "rgba(48, 89, 167, 0.14)",
+      "--seam-8ecfaf5b5293": "#465b79",
+      "--seam-8e6a0de0a345": "#f3ad78",
+      "--seam-fe1142d9242b": "rgba(179, 101, 109, 0.35)",
+      "--seam-bdafc90f198e": "#e6e8e9",
+      "--seam-8f40aeba6419": "#e6e8e9",
+      "--seam-e8a34ac23b1e": "#14131b",
+      "--seam-3658ea098a06": "#020101",
+      "--seam-e5e42364511b": "rgba(179, 101, 109, 0.55)",
+      "--seam-bc7491eef199": "rgba(217, 122, 58, 0.55)",
+      "--seam-47be9b9665e8": "#f0a36f",
+      "--seam-247674eb4dda": "#e6e8e9",
+      "--seam-d595f5dac840": "rgba(179, 101, 109, 0.45)",
+      "--seam-c746e3d9b955": "rgba(179, 101, 109, 0.5)",
+      "--seam-de697e75676f": "rgba(2, 1, 1, 0.25)",
+      "--seam-6ea56d5029ac": "#3059a7",
+      "--seam-7868d8734de9": "rgba(2, 1, 1, 0.72)",
+      "--seam-2893d65fe086": "rgba(2, 1, 1, 0.82)",
+      "--seam-b0cbc3ef605b": "#b3656d",
+      "--seam-b18d9dc68582": "rgba(217, 122, 58, 0.65)",
+      "--seam-b9b5dc7768ae": "#14131b",
+      "--seam-6ad401756512": "rgba(2, 1, 1, 0.6)",
+      "--seam-a5097f59d2f0": "#3059a7",
+      "--seam-f826f455ad20": "rgba(2, 1, 1, 0.22)",
+      "--seam-fe6f565a6ec4": "rgba(48, 89, 167, 0.16)",
+      "--seam-f2593db89763": "rgba(179, 101, 109, 0.13)",
+      "--seam-ce4d060095a9": "#020101",
+      "--seam-6b101cfcc67b": "#020101",
+      "--seam-907e9f63c782": "rgba(48, 89, 167, 0.25)",
+      "--seam-d5594b630084": "#4874c4",
+      "--seam-1cc748f7f308": "#b3656d",
+      "--seam-1fd4f831d07d": "rgba(48, 89, 167, 0.14)",
+      "--seam-afaf575b9ab9": "rgba(2, 1, 1, 0.96)",
+      "--seam-30f218adc639": "rgba(48, 89, 167, 0.24)",
+      "--seam-81ef715e3434": "#020101",
+      "--seam-440c215a95af": "#e6e8e9",
+      "--seam-d8e9af66c937": "rgba(48, 89, 167, 0.15)",
+      "--seam-af982d79b88d": "#020101",
+      "--seam-ba64e4ff64c2": "rgba(48, 89, 167, 0.2)",
+      "--seam-302957b8a588": "rgba(2, 1, 1, 0.94)",
+      "--seam-516f10054966": "rgba(70, 91, 121, 0.65)",
+      "--seam-298373638a4c": "rgba(70, 91, 121, 0.08)",
+      "--seam-8dedc70482a1": "#e6e8e9",
+      "--seam-5a5fbb963b2e": "#3059a7",
+      "--seam-a2554ec1f8a2": "#3059a7",
+      "--seam-4f41763edadb": "#e8916c",
+      "--seam-e6b985626daa": "#3059a7",
+      "--seam-bfd7ec77a10a": "#3059a7",
+      "--seam-5f909758d42a": "#704b86",
+      "--seam-2be7a20de69e": "#3059a7",
+      "--seam-e08de713877c": "#e6e8e9",
+      "--seam-74334a559f1f": "#e9c46a",
+      "--seam-476d40b9450f": "#b3656d",
+      "--seam-663a186d018f": "rgba(48, 89, 167, 0.18)",
+      "--seam-8aa96e18faa6": "#b3656d",
+      "--seam-417a529a45de": "#14131b",
+      "--seam-30fd209c1525": "#e6e8e9",
+      "--seam-3b635677f903": "#11233e",
+      "--seam-4fbad7161e2a": "#69dfb0",
+      "--seam-6c56aa245be4": "#465b79",
+      "--seam-e5abfa9e0920": "#0a0909",
+      "--seam-7986ed5949f4": "rgba(48, 89, 167, 0.14)",
+      "--seam-4ea186e53c42": "#b3656d",
+      "--seam-d286138b1fbe": "rgba(48, 89, 167, 0.28)",
+      "--seam-71396310a958": "rgba(10, 9, 9, 0.58)",
+      "--seam-a4347324cf8c": "rgba(48, 89, 167, 0.04)",
+      "--seam-96323b227b85": "rgba(48, 89, 167, 0.2)",
+      "--seam-4f65690bb165": "rgba(10, 9, 9, 0.58)",
+      "--seam-2a7b3c8c7c5c": "rgba(48, 89, 167, 0.12)",
+      "--seam-1ee7d93665a5": "#3059a7",
+      "--seam-baa50ef130bb": "#465b79",
+      "--seam-42f51c98138f": "rgba(70, 91, 121, 0.07)",
+      "--seam-92f9a1f009b1": "rgba(230, 232, 233, 0.12)",
+      "--seam-bf65b697f21d": "rgba(233, 196, 106, .65)",
+      "--seam-b8a555b93ea9": "rgba(70, 91, 121, 0.72)",
+      "--seam-a31cdad5729a": "rgba(105, 223, 176, .72)",
+      "--seam-24d049fa591d": "rgba(233, 196, 106, .28)",
+      "--seam-5c4ba6e248af": "#d6bf88",
+      "--seam-f3c456237444": "rgba(70, 91, 121, 0.35)",
+      "--seam-18f59f729ba3": "rgba(17, 35, 62, 0.14)",
+      "--seam-c97a465b7cbb": "rgba(48, 89, 167, 0.1)",
+      "--seam-6d74c0f8f133": "#11233e",
+      "--seam-5af691ae6c00": "#14131b",
+      "--seam-6e3a89f2c9df": "#3059a7",
+      "--seam-a1c9bb362cd2": "#b3656d",
+      "--seam-95a12bcf5755": "#11233e",
+      "--seam-9df89ba8f574": "#3059a7",
+      "--seam-a294f950e499": "#465b79",
+      "--seam-3fe560e43623": "#3059a7",
+      "--seam-25a8333a4598": "rgba(48, 89, 167, 0.035)",
+      "--seam-61914528a207": "rgba(230, 232, 233, 0.12)",
+      "--seam-4fecbe26f924": "rgba(48, 89, 167, 0.16)",
+      "--seam-f5a343747308": "rgba(230, 232, 233, 0.04)",
+      "--seam-845457e31628": "rgba(70, 91, 121, 0.38)",
+      "--seam-2455a39114f8": "rgba(70, 91, 121, 0.5)",
+      "--seam-4d596628d200": "rgba(48, 89, 167, 0.5)",
+      "--seam-7c55824b04e6": "rgba(2, 1, 1, 0.94)",
+      "--seam-7dbf07b61736": "rgba(48, 89, 167, 0.04)",
+      "--seam-c4438412564a": "rgba(10, 9, 9, 0.96)",
+      "--seam-b1f66adee390": "rgba(48, 89, 167, 0.09)",
+      "--seam-ff82f9842fa7": "rgba(2, 1, 1, 0.88)",
+      "--seam-178e57842e50": "rgba(70, 91, 121, 0.1)",
+      "--seam-f2a156f214e0": "rgba(48, 89, 167, 0.24)",
+      "--seam-92d165cee6fb": "rgba(70, 91, 121, 0.025)",
+      "--seam-d07e4b81f716": "#020101",
+      "--seam-7259c1b7a472": "rgba(2, 1, 1, 0.92)",
+      "--seam-7bfea5c9f214": "rgba(48, 89, 167, 0.1)",
+      "--seam-512c1d0a2b0e": "rgba(2, 1, 1, 0.98)",
+      "--seam-33c9a99ef417": "rgba(10, 9, 9, 0.98)",
+      "--seam-41d71f12a8d4": "rgba(70, 91, 121, 0.12)",
+      "--seam-4d6a4c015255": "rgba(2, 1, 1, 0.99)",
+      "--seam-b90b32646883": "rgba(10, 9, 9, 0.98)",
+      "--seam-c0397dffbbf0": "rgba(48, 89, 167, 0.04)",
+      "--seam-7b3561f9e742": "rgba(2, 1, 1, 0.92)",
+      "--seam-cd6dda976ea8": "rgba(2, 1, 1, 0.55)",
+      "--seam-d3c72ab27220": "rgba(10, 9, 9, 0.9)",
+      "--seam-407b4d300acc": "rgba(48, 89, 167, 0.05)",
+      "--seam-997a0fddcb0d": "rgba(2, 1, 1, 0.7)",
+      "--seam-7b1aa5c60b9c": "rgba(20, 19, 27, 0.94)",
+      "--seam-eb47bcb0485c": "rgba(2, 1, 1, 0.97)",
+      "--seam-86e5f6717d5a": "rgba(2, 1, 1, 0.4)",
+      "--seam-9b204d181360": "rgba(48, 89, 167, 0.03)",
+      "--seam-f42fb54a49c4": "rgba(48, 89, 167, 0.09)",
+      "--seam-ba6ed1e44a43": "rgba(48, 89, 167, 0.08)",
+      "--seam-3333c095fb2d": "rgba(230, 232, 233, 0.08)",
+      "--seam-8ebafc96bf26": "rgba(230, 232, 233, 0.16)",
+      "--seam-29d8623058d1": "rgba(230, 232, 233, 0.04)",
+      "--seam-539660590d01": "rgba(230, 232, 233, 0.18)",
+      "--seam-37b0b11038dc": "rgba(230, 232, 233, 0.025)",
+      "--seam-1f37bea0c79e": "rgba(230, 232, 233, 0.35)",
+      "--seam-988437660e49": "#3059a7",
+      "--seam-795eab265b1d": "#b589ff",
+      "--seam-74a182ca7d94": "#e2b55f",
+      "--seam-8597f7aa1a6d": "rgba(20, 19, 27, 0.96)",
+      "--seam-7f456a7460e7": "rgba(10, 9, 9, 0.98)",
+      "--seam-c42ab7e5bb24": "rgba(2, 1, 1, 0.32)",
+      "--seam-c77b304acf9d": "rgba(230, 232, 233, 0.14)",
+      "--seam-6920851a5fcf": "rgba(230, 232, 233, 0.09)",
+      "--seam-7443162aef9d": "rgba(230, 232, 233, 0.02)",
+      "--seam-c3eb6a13b0d3": "rgba(230, 232, 233, 0.1)",
+      "--seam-9152f1900ac7": "rgba(2, 1, 1, 0.18)",
+      "--seam-e047dfe057c9": "rgba(70, 91, 121, 0.5)",
+      "--seam-9e0866d51032": "rgba(48, 89, 167, 0.12)",
+      "--seam-72fcdfe1c64b": "rgba(48, 89, 167, 0.05)",
+      "--seam-db39d160715f": "rgba(48, 89, 167, 0.1)",
+      "--seam-b5466d0e8367": "rgba(48, 89, 167, 0.025)",
+      "--seam-43a3a27e36e1": "#b3656d",
+      "--seam-629f7b0daf2a": "rgba(48, 89, 167, 0.08)",
+      "--seam-b5f4de370f73": "rgba(48, 89, 167, 0.085)",
+      "--seam-c73fb2c0809f": "rgba(48, 89, 167, 0.35)",
+      "--seam-5fdc013e6b45": "rgba(179, 101, 109, 0.72)",
+      "--seam-269720efa4c9": "rgba(179, 101, 109, 0.075)",
+      "--seam-71828e5a3eb2": "#465b79",
+      "--seam-5fe5cef911c8": "rgba(2, 1, 1, 0.82)",
+      "--seam-d3741b57282e": "rgba(2, 1, 1, 0.9)",
+      "--seam-98c7c3cceb98": "rgba(179, 101, 109, 0.06)",
+      "--seam-56c6ff22c030": "rgba(20, 19, 27, 0.76)",
+      "--seam-a0cb19b5e0e9": "rgba(48, 89, 167, 0.025)",
+      "--seam-9396c5bca7ef": "rgba(10, 9, 9, 0.72)",
+      "--seam-67a88c092f29": "rgba(48, 89, 167, 0.045)",
+      "--seam-55eb94661d6c": "rgba(2, 1, 1, 0.62)",
+      "--seam-64b40b65c930": "rgba(48, 89, 167, 0.3)",
+      "--seam-4c53ef46e2d1": "rgba(48, 89, 167, 0.98)",
+      "--seam-90f5754b2c81": "rgba(48, 89, 167, 0.76)",
+      "--seam-39e5268646a8": "#14131b",
+      "--seam-d64da5b6228e": "rgba(17, 35, 62, 0.74)",
+      "--seam-2bbcf197e7a5": "rgba(48, 89, 167, 0.06)",
+      "--seam-e381737757ab": "rgba(70, 91, 121, 0.42)",
+      "--seam-8a7fb4e92fdf": "#e6e8e9",
+      "--seam-5d7874315a69": "rgba(20, 19, 27, 0.86)",
+      "--seam-e00d5f0f10c3": "rgba(48, 89, 167, 0.055)",
+      "--seam-a748717e957b": "rgba(2, 1, 1, 0.94)",
+      "--seam-d0e4b4894483": "rgba(2, 1, 1, 0.7)",
+      "--seam-8e022dc8f98c": "rgba(48, 89, 167, 0.07)",
+      "--seam-28f98c040cb6": "rgba(2, 1, 1, 0.84)",
+      "--seam-eda1a84078a3": "rgba(48, 89, 167, 0.11)",
+      "--seam-a0678e625832": "rgba(2, 1, 1, 0.88)",
+      "--seam-3260d77b6ec5": "rgba(10, 9, 9, 0.98)",
+      "--seam-4063e5c77a52": "rgba(2, 1, 1, 0.88)",
+      "--seam-df8ec2608c9e": "rgba(2, 1, 1, 0.97)",
+      "--plate-night": "#020101",
+      "--plate-night-deep": "#0a0909",
+      "--plate-cobalt": "#14131b",
+      "--plate-cobalt-day": "#11233e",
+      "--plate-horizon": "#465b79",
+      "--plate-horizon-deep": "#0a0909",
+      "--plate-chrome-seam": "#080300",
+      "--plate-chrome-dark": "#0a1109",
+      "--plate-chrome-transition": "#372517",
+      "--plate-chrome-mid": "#9a9b95",
+      "--plate-chrome-bright": "#f9e7d9",
+      "--plate-chrome-blaze": "#f5f7f4",
+      "--plate-chrome-peak": "#fdfef8",
+      "--plate-gold-base": "#465b79",
+      "--plate-gold-peak": "#465b79",
+      "--plate-iris": "#3059a7",
+      "--plate-coral": "#b3656d",
+      "--plate-coral-peak": "#b3656d",
+      "--theme-sky-wash": "linear-gradient(to bottom, #020101, #0a0909 34%, #14131b 72%, #11233e 90%, #465b79 100%)",
+      "--theme-rim": "linear-gradient(135deg, #fdfef8 0 7%, #0a1109 7% 43%, #f5f7f4 43% 49%, #080300 49% 78%, #fdfef8 78% 83%, #0a1109 83% 100%)",
+      "--theme-rim-hover": "linear-gradient(135deg, #fdfef8 0 12%, #080300 12% 38%, #f5f7f4 38% 52%, #0a1109 52% 72%, #fdfef8 72% 88%, #080300 88% 100%)",
+      "--theme-horizon": "#465b79"
+    }
+  }
+]

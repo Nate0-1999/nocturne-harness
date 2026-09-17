@@ -1,0 +1,9 @@
+{
+  "dependency_version": "0.1.27",
+  "resolved_output": "ref=v0.1.27",
+  "checkout_refs": {
+    "python": "${{ needs.companion.outputs.ref }}",
+    "web": "${{ needs.companion.outputs.ref }}",
+    "contract": "${{ needs.companion.outputs.ref }}"
+  }
+}

@@ -81,7 +81,9 @@ def test_conjurations_are_state_bound_and_data_surfaces_remain_still() -> None:
     assert "rack-ambient::after" in css
     assert ".rack-module:hover .rack-module__content::after" in css
     assert ".composer:focus-within::before" in css
-    assert "max-width: calc(100% - 14rem)" in css
+    assert "flex: 0 1000 7.5rem" in css
+    assert "min-width: 0" in css
+    assert ".rack-module__chrome > :not(.rack-module__drag)" in css
     assert "width: 7.5rem" in css
 
 

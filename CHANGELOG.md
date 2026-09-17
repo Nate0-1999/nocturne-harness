@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Keep Wizard Mode and Technomancer glyphs clear of module controls and use
+  the Nocturne ouroboros-and-moon mark for the packaged favicon.
+- Resolve all three CI Memory checkouts from the exact dependency version.
+
 ## 0.1.26 - 2026-09-16
 
 - Correct Palace change triggers to query the principal's full memory graph.

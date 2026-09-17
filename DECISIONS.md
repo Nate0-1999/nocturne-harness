@@ -3498,6 +3498,14 @@ next/last time, state, cost and verdict remain readable without invented edges.
 Recipes import from a file; the module runs, pauses and inspects them through
 the public rack adapter. A-069 enacts the durable Jobs contract.
 
+## M3TM — Keep original scripts clear of controls [P2.5]
+
+PRECEDENT: D.2 115–119, M2UX6 and M3SL. The live walk found header
+sigils overlapping attunement and conversation controls. Reserve a shrinking
+flex item for the existing strip instead of positioning it over text; the
+forge, finite animations and reduced-motion rest remain unchanged. The
+packaged favicon now uses the header's existing ouroboros-and-moon geometry.
+
 ## M3BW — Adopt the accepted Playwright browser hands [P1, P3]
 
 The revised charge prefers OpenAI's whole browser-use extension. The inspected
