@@ -457,10 +457,12 @@ class PydanticAITurnRunner:
                     blocks.append(await dynamic_instructions.render())
                 steering = getattr(emit, "steering_instructions", lambda: "")()
                 if steering and steering != applied_steering:
-                    run_context.messages[-1].parts.append(UserPromptPart(
-                        "New human instruction for this current run:\n"
-                        + steering[len(applied_steering):].strip()
-                    ))
+                    run_context.messages[-1].parts.append(
+                        UserPromptPart(
+                            "New human instruction for this current run:\n"
+                            + steering[len(applied_steering) :].strip()
+                        )
+                    )
                     applied_steering = steering
                     await emit.event({"event_kind": "human_interjection_applied"})
                 return "\n\n".join(block for block in blocks if block) or None
@@ -475,9 +477,12 @@ class PydanticAITurnRunner:
                     deps=context,
                     instructions=instructions,
                     capabilities=[
-                        PendingSteering(lambda: (
-                            getattr(emit, "steering_instructions", lambda: "")() != applied_steering
-                        )),
+                        PendingSteering(
+                            lambda: (
+                                getattr(emit, "steering_instructions", lambda: "")()
+                                != applied_steering
+                            )
+                        ),
                         *self._agent.tool_capabilities(context),
                         *(
                             [DelegateCapability()]

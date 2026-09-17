@@ -127,23 +127,43 @@ async def test_worker_context_injects_without_a_gate_and_reacts_to_selection(tmp
     """A-059 / FL-096/097: leaf startup carries real memory selection and tree context."""
     prepared = InjectPrepareResponse(
         injection_id="12345678-1234-5678-1234-567812345678",
-        snapshot_ts=datetime.now(UTC), scorer_version="test", injected=[], near_misses=[],
+        snapshot_ts=datetime.now(UTC),
+        scorer_version="test",
+        injected=[],
+        near_misses=[],
         final_block="<memories>UTF-8 checksum</memories>",
         memory_allocation=MemoryAllocation(
-            memory_context_share=0.05, share_tokens=500, regular_tokens=4,
-            pinned_tokens=0, total_tokens=4, pinned_overflow_tokens=0,
+            memory_context_share=0.05,
+            share_tokens=500,
+            regular_tokens=4,
+            pinned_tokens=0,
+            total_tokens=4,
+            pinned_overflow_tokens=0,
         ),
     )
     spine = SimpleNamespace(prepare_injection=AsyncMock(return_value=prepared))
     location = AgentLocation("worker", "machine", "session", tmp_path, tmp_path, False)
     context = SimpleNamespace(
-        spine=spine, agent_id="worker", machine_id="machine", principal_id="verification",
-        project_key=str(tmp_path), toolset=SimpleNamespace(location=lambda: location),
+        spine=spine,
+        agent_id="worker",
+        machine_id="machine",
+        principal_id="verification",
+        project_key=str(tmp_path),
+        toolset=SimpleNamespace(location=lambda: location),
     )
-    assignment = dict(stage="completion", brief="Implement checksum", prompt_id="worker-id",
-                      attempt_id="attempt", followups=str(tmp_path / "followups.json"))
-    worker = WorkerContext(assignment=assignment, output=tmp_path, context=context,
-                           resolution=SimpleNamespace(context_tokens=10000, model="test"))
+    assignment = dict(
+        stage="completion",
+        brief="Implement checksum",
+        prompt_id="worker-id",
+        attempt_id="attempt",
+        followups=str(tmp_path / "followups.json"),
+    )
+    worker = WorkerContext(
+        assignment=assignment,
+        output=tmp_path,
+        context=context,
+        resolution=SimpleNamespace(context_tokens=10000, model="test"),
+    )
     rendered = await worker.render([])
     assert COMPONENT_REGISTRY in rendered and "UTF-8 checksum" in rendered
     assert spine.prepare_injection.call_args.args[0].mode == "gate"
@@ -154,7 +174,8 @@ async def test_worker_context_injects_without_a_gate_and_reacts_to_selection(tmp
     await worker.render([])
     assert str(spine.prepare_injection.call_args.args[0].excluded_memory_ids[0]) == removed
     assignment["stage"] = "judge"
-    judge = WorkerContext(assignment=assignment, output=tmp_path, context=context,
-                          resolution=worker.resolution)
+    judge = WorkerContext(
+        assignment=assignment, output=tmp_path, context=context, resolution=worker.resolution
+    )
     assert "UTF-8 checksum" not in await judge.render([])
     assert spine.prepare_injection.call_count == 2

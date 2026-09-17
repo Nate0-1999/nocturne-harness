@@ -43,10 +43,13 @@ async def select_memory(output: Path, spine, memory_id, *, added: bool):
     cards = injection["injected"] + injection["near_misses"] + current["removed"]
     if str(memory_id) not in {card["memory_id"] for card in cards}:
         raise ValueError("This memory is not in the worker's injection or suggestions.")
-    await spine.submit_feedback(FeedbackRequest(
-        injection_id=current["sources"][str(memory_id)], memory_id=memory_id,
-        signal=FeedbackSignal.MID_THREAD_ADDED if added else FeedbackSignal.MID_THREAD_REMOVED,
-    ))
+    await spine.submit_feedback(
+        FeedbackRequest(
+            injection_id=current["sources"][str(memory_id)],
+            memory_id=memory_id,
+            signal=FeedbackSignal.MID_THREAD_ADDED if added else FeedbackSignal.MID_THREAD_REMOVED,
+        )
+    )
     path = output / "memory-selection.json"
     selected = json.loads(path.read_text()) if path.exists() else {"added": [], "removed": []}
     for field in ("added", "removed"):
@@ -76,30 +79,38 @@ class WorkerContext:
         selection = json.loads(selection_path.read_text()) if selection_path.exists() else {}
         key = (str(location.cwd), selection)
         if self.assignment["stage"] != "judge" and key != self.last_selection:
-            current = set() if self.prepared is None else {
-                str(card.memory_id) for card in self.prepared.injected
-            }
+            current = (
+                set()
+                if self.prepared is None
+                else {str(card.memory_id) for card in self.prepared.injected}
+            )
             current.update(selection.get("added", []))
             current.difference_update(selection.get("removed", []))
-            self.prepared = await self.context.spine.prepare_injection(InjectPrepareRequest(
-                thread_id=uuid5(NAMESPACE_URL, str(self.output)),
-                agent_id=self.context.agent_id,
-                machine_id=self.context.machine_id,
-                principal_id=self.context.principal_id,
-                project_key=self.context.project_key,
-                location_path=workspace_location_path(location),
-                current_location=str(location.cwd),
-                prompt=self.assignment["brief"],
-                model_context_tokens=self.resolution.context_tokens,
-                mode="gate" if self.prepared is None else "autonomous",
-                current_memory_ids=sorted(current),
-                confirmed_memory_ids=selection.get("added", []),
-                excluded_memory_ids=selection.get("removed", []),
-            ))
+            self.prepared = await self.context.spine.prepare_injection(
+                InjectPrepareRequest(
+                    thread_id=uuid5(NAMESPACE_URL, str(self.output)),
+                    agent_id=self.context.agent_id,
+                    machine_id=self.context.machine_id,
+                    principal_id=self.context.principal_id,
+                    project_key=self.context.project_key,
+                    location_path=workspace_location_path(location),
+                    current_location=str(location.cwd),
+                    prompt=self.assignment["brief"],
+                    model_context_tokens=self.resolution.context_tokens,
+                    mode="gate" if self.prepared is None else "autonomous",
+                    current_memory_ids=sorted(current),
+                    confirmed_memory_ids=selection.get("added", []),
+                    excluded_memory_ids=selection.get("removed", []),
+                )
+            )
             if self.prepared.final_block is None:
-                committed = await self.context.spine.commit_injection(InjectCommitRequest(
-                    injection_id=self.prepared.injection_id, removed=[], added_back=[],
-                ))
+                committed = await self.context.spine.commit_injection(
+                    InjectCommitRequest(
+                        injection_id=self.prepared.injection_id,
+                        removed=[],
+                        added_back=[],
+                    )
+                )
                 self.prepared = self.prepared.model_copy(
                     update={"final_block": committed.final_block},
                 )
@@ -111,31 +122,43 @@ class WorkerContext:
         followups = Path(self.assignment["followups"])
         clarification = (
             json.loads(followups.read_text()).get(self.assignment["attempt_id"], [])
-            if followups.exists() else []
+            if followups.exists()
+            else []
         )
-        return "\n\n".join((
-            self.workspace,
-            self.prepared.final_block or "" if self.prepared is not None else "",
-            "Conductor clarifications:\n" + json.dumps(clarification),
-        ))
+        return "\n\n".join(
+            (
+                self.workspace,
+                self.prepared.final_block or "" if self.prepared is not None else "",
+                "Conductor clarifications:\n" + json.dumps(clarification),
+            )
+        )
 
     def publish(self, captured):
         prepared = self.prepared
         self.tracker.record(
-            thread_id=self.context.agent_id, captured=captured, resolution=self.resolution,
+            thread_id=self.context.agent_id,
+            captured=captured,
+            resolution=self.resolution,
             memory_block=None if prepared is None else prepared.final_block,
             memory_allocation=None if prepared is None else prepared.memory_allocation,
             workspace_block=self.workspace,
         )
-        write_json(self.output / "context.json", {
-            "worker_id": self.assignment["prompt_id"],
-            "agent_id": self.context.agent_id,
-            "stage": self.assignment["stage"],
-            "attempt_id": self.assignment["attempt_id"],
-            "observation": self.tracker.snapshot(self.context.agent_id).model_dump(mode="json"),
-            "injection": None if prepared is None else prepared.model_dump(mode="json"),
-            "sources": self.sources,
-            "removed": [self.cards[value] for value in (
-                self.last_selection[1].get("removed", []) if self.last_selection else []
-            ) if value in self.cards],
-        })
+        write_json(
+            self.output / "context.json",
+            {
+                "worker_id": self.assignment["prompt_id"],
+                "agent_id": self.context.agent_id,
+                "stage": self.assignment["stage"],
+                "attempt_id": self.assignment["attempt_id"],
+                "observation": self.tracker.snapshot(self.context.agent_id).model_dump(mode="json"),
+                "injection": None if prepared is None else prepared.model_dump(mode="json"),
+                "sources": self.sources,
+                "removed": [
+                    self.cards[value]
+                    for value in (
+                        self.last_selection[1].get("removed", []) if self.last_selection else []
+                    )
+                    if value in self.cards
+                ],
+            },
+        )

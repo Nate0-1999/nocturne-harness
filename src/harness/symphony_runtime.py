@@ -442,10 +442,17 @@ class SymphonyExecution:
                             brief.attempt_id,
                             TypedDistillate.model_validate_json(path.read_text()),
                         )
-                    await update("running", {"stopped_attempt_ids": [
-                        item.attempt_id for item in conductor.search_results(child_id)
-                        if item.distillate is not None and item.distillate.status != "completed"
-                    ]})
+                    await update(
+                        "running",
+                        {
+                            "stopped_attempt_ids": [
+                                item.attempt_id
+                                for item in conductor.search_results(child_id)
+                                if item.distillate is not None
+                                and item.distillate.status != "completed"
+                            ]
+                        },
+                    )
                     panel = JudgePanel(
                         conductor=conductor,
                         search_child_id=child_id,

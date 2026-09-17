@@ -188,10 +188,21 @@ async def test_interjection_steers_active_run_without_starting_or_reordering_a_t
     loop = RunLoop(runner, factory(Ids()))
     sink = Sink()
     run_id = await loop.submit(
-        thread_id="thread-1", prompt_id=ulid(1), prompt="work", sink=sink,
+        thread_id="thread-1",
+        prompt_id=ulid(1),
+        prompt="work",
+        sink=sink,
     )
     await asyncio.wait_for(control.entered.wait(), TEST_TIMEOUT)
     await loop.submit(thread_id="thread-1", prompt_id=ulid(2), prompt="later", sink=sink)
+    with pytest.raises(ValueError, match="Enter an instruction to interject."):
+        await loop.interject(thread_id="thread-1", run_id=run_id, prompt="   ")
+    active = loop._threads["thread-1"].active
+    ordinary_turn = active.turn
+    active.turn = replace(ordinary_turn, symphony_intervention={})
+    with pytest.raises(ValueError, match="Steer parallel work through its conductor on the Deck."):
+        await loop.interject(thread_id="thread-1", run_id=run_id, prompt="Use blue instead.")
+    active.turn = ordinary_turn
     await loop.interject(thread_id="thread-1", run_id=run_id, prompt="Use blue instead.")
     assert runner.emitters["work"].steering_instructions() == "Use blue instead."
     assert len(runner.calls) == 1
@@ -200,7 +211,9 @@ async def test_interjection_steers_active_run_without_starting_or_reordering_a_t
     assert runner.emitters["later"].steering_instructions() == ""
     queued.release.set()
     await _wait_for_done_count(sink, 2)
-    with pytest.raises(ValueError, match="finished or paused"):
+    with pytest.raises(
+        ValueError, match="The run has finished or paused. Send this as a new prompt."
+    ):
         await loop.interject(thread_id="thread-1", run_id=run_id, prompt="Too late")
     await loop.close()
 

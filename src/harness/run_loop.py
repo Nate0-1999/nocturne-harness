@@ -744,21 +744,27 @@ class RunLoop:
         async with self._lock:
             state = self._threads.get(thread_id)
             active = None if state is None else state.active
+            # F104: steering belongs to the still-running turn, never a later prompt.
             if active is None or active.turn.run_id != run_id or active.state != "running":
                 raise ValueError("The run has finished or paused. Send this as a new prompt.")
+            # F104: parallel steering uses the signed conductor intervention path.
             if active.turn.symphony is not None or active.turn.symphony_intervention is not None:
                 raise ValueError("Steer parallel work through its conductor on the Deck.")
             instruction = prompt.strip()
+            # F104: an empty composer supplies no steering instruction.
             if not instruction:
                 raise ValueError("Enter an instruction to interject.")
             active.interjections.append(instruction)
             event = {"event_kind": "human_interjection", "instruction": instruction}
             active.assistant_message["events"].append(event)
-            await self._publish_locked(thread_id, self._factory.create(
-                MessageType.RUN_DELTA,
-                RunDeltaEventPayload(run_id=run_id, kind="event", event=event),
-                thread_id=thread_id,
-            ))
+            await self._publish_locked(
+                thread_id,
+                self._factory.create(
+                    MessageType.RUN_DELTA,
+                    RunDeltaEventPayload(run_id=run_id, kind="event", event=event),
+                    thread_id=thread_id,
+                ),
+            )
 
     async def cancel(
         self,

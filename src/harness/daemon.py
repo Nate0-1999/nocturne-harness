@@ -1252,15 +1252,23 @@ def create_dev_app(
         @app.get("/v1/symphonies/{symphony_id}/context")
         async def symphony_context(symphony_id: str):
             await read_symphony(symphony_id)
-            return {"workers": [
-                {**json.loads(path.read_text()),
-                 "state": json.loads(path.with_name("visualization.json").read_text())["state"]}
-                for path in sorted((home / "symphonies" / symphony_id).rglob("context.json"))
-            ]}
+            return {
+                "workers": [
+                    {
+                        **json.loads(path.read_text()),
+                        "state": json.loads(path.with_name("visualization.json").read_text())[
+                            "state"
+                        ],
+                    }
+                    for path in sorted((home / "symphonies" / symphony_id).rglob("context.json"))
+                ]
+            }
 
         @app.post("/v1/symphonies/{symphony_id}/context/{worker_id}")
         async def select_worker_memory(
-            symphony_id: str, worker_id: str, body: WorkerMemorySelection,
+            symphony_id: str,
+            worker_id: str,
+            body: WorkerMemorySelection,
         ):
             from harness.symphony_context import select_memory
 
@@ -1273,7 +1281,10 @@ def create_dev_app(
                 raise HTTPException(404, "Worker context is not available.")
             try:
                 return await select_memory(
-                    workers[worker_id], owned_spine, body.memory_id, added=body.added,
+                    workers[worker_id],
+                    owned_spine,
+                    body.memory_id,
+                    added=body.added,
                 )
             except ValueError as exc:
                 raise HTTPException(409, str(exc)) from exc
@@ -1282,7 +1293,9 @@ def create_dev_app(
         async def interject_thread(thread_id: UUID, body: InterjectionRequest):
             try:
                 await loop.interject(
-                    thread_id=str(thread_id), run_id=body.run_id, prompt=body.prompt,
+                    thread_id=str(thread_id),
+                    run_id=body.run_id,
+                    prompt=body.prompt,
                 )
             except ValueError as exc:
                 raise HTTPException(409, str(exc)) from exc

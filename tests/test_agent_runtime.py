@@ -350,22 +350,31 @@ async def test_interjection_is_a_new_user_instruction_after_the_running_tool(dur
             if during_final_response:
                 yield "amber"
             else:
-                yield {0: DeltaToolCall(
-                    name="write", json_args='{"path":"note.txt","content":"ok"}',
-                    tool_call_id="write-one",
-                )}
+                yield {
+                    0: DeltaToolCall(
+                        name="write",
+                        json_args='{"path":"note.txt","content":"ok"}',
+                        tool_call_id="write-one",
+                    )
+                }
         else:
             assert isinstance(messages[-1], ModelRequest)
-            assert any(isinstance(part, UserPromptPart) and "cobalt" in part.content
-                       for part in messages[-1].parts)
+            assert any(
+                isinstance(part, UserPromptPart) and "cobalt" in part.content
+                for part in messages[-1].parts
+            )
             yield "cobalt"
 
     runner = PydanticAITurnRunner(
         HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
         lambda _: context(toolset=RecordingWorkspaceToolset()),
     )
-    outcome = await runner.run(thread_id=str(THREAD_UUID), prompt="Write then answer amber.",
-                               message_history=(), emit=emitter)
+    outcome = await runner.run(
+        thread_id=str(THREAD_UUID),
+        prompt="Write then answer amber.",
+        message_history=(),
+        emit=emitter,
+    )
     assert outcome.stop_reason is StopReason.END_TURN
     assert outcome.assistant_text.endswith("cobalt")
     assert "".join(emitter.texts) == outcome.assistant_text

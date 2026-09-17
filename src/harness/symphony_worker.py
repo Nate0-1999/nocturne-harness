@@ -77,9 +77,10 @@ class JudgeAssessment(BaseModel):
             )
         verdict = JudgeVerdict(
             schema_version=1,
-            **{key: session[key] for key in (
-                "seat", "judge_session_id", "charter_sha256", "evidence_sha256"
-            )},
+            **{
+                key: session[key]
+                for key in ("seat", "judge_session_id", "charter_sha256", "evidence_sha256")
+            },
             **self.model_dump(exclude={"metrics", "feedback", "evidence_refs"}),
             evidence_refs=self.evidence_refs,
             feedback=self.feedback,
@@ -89,7 +90,9 @@ class JudgeAssessment(BaseModel):
             ),
         )
         validate_judge_verdict(
-            verdict, session=session, charter=sealed.charter,
+            verdict,
+            session=session,
+            charter=sealed.charter,
             candidate_ids={candidate.attempt_id for candidate in sealed.candidates},
         )
         return verdict
@@ -119,7 +122,9 @@ async def run(assignment_path: Path) -> None:
     )
     resolution = await resolver.resolve(assignment["thread_id"])
     output_type = {
-        "smoke": SmokeGateResult, "completion": WorkResult, "judge": JudgeAssessment,
+        "smoke": SmokeGateResult,
+        "completion": WorkResult,
+        "judge": JudgeAssessment,
     }[stage]
     agent = Agent(
         deps_type=MemoryToolContext,
@@ -168,7 +173,10 @@ async def run(assignment_path: Path) -> None:
     )
     captured = []
     worker_context = WorkerContext(
-        assignment=assignment, output=output, context=context, resolution=resolution,
+        assignment=assignment,
+        output=output,
+        context=context,
+        resolution=resolution,
     )
 
     async def instructions(_ctx):
@@ -230,7 +238,8 @@ async def run(assignment_path: Path) -> None:
         prompt = (
             "Assess readiness for the following proposed work. You are already in the "
             "isolated worktree. Read the directory and identify prerequisites; do not write "
-            "files or implement the proposal during this smoke stage.\nProposed work:\n" + prompt
+            "files or implement the proposal during this smoke stage.\nProposed work:\n"
+            + prompt
             + "\nEND OF PROPOSED WORK. You are the readiness checker, not its judge. "
             "A prior judge's repair request is work to perform AFTER readiness passes. "
             "Missing outputs that this step must CREATE are never missing prerequisites. "

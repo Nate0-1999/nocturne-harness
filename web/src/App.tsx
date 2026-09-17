@@ -2668,7 +2668,7 @@ function ChatModule() {
             </button>
           )}
           {activeRun !== null && (
-            <button type="button" disabled={!canSend || pendingImage !== null}
+            <button type="button" disabled={!canSend || pendingImage !== null /* F104: interjections carry text into the active request. */}
               title="Steer the next model request without queuing another run"
               onClick={() => void interjectPrompt()}>Interject</button>
           )}
