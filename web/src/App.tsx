@@ -2165,6 +2165,7 @@ function ChatModule() {
   const [promptBusy, setPromptBusy] = useState(false)
   const [hasUnread, setHasUnread] = useState(false)
   const [archiveBusy, setArchiveBusy] = useState(false)
+  const [orchestration, setOrchestration] = useState<'Duet' | 'Symphony'>('Duet')
   const transcriptRef = useRef<HTMLDivElement>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
@@ -2311,6 +2312,21 @@ function ChatModule() {
     setHasUnread(false)
   }
 
+  async function interjectPrompt() {
+    if (!canSend || activeRun === null || pendingImage !== null) return
+    setPromptBusy(true)
+    try {
+      await events.dispatch({ type: 'prompt.interject', run_id: activeRun.run_id, prompt: draft.trim() })
+      setDraft('')
+      if (selectedThreadId !== null) {
+        await events.dispatch({ type: 'draft.update', thread_id: selectedThreadId, draft: '' })
+      }
+      setImageStatus('Steering accepted for the next model request in this run.')
+    } catch (error) {
+      setImageStatus(error instanceof Error ? error.message : 'Steering was not sent.')
+    } finally { setPromptBusy(false) }
+  }
+
   async function attachImageFiles(files: readonly File[]) {
     if (files.length === 0) return
     // WALL attention / A-052: never silently discard a second selected attachment.
@@ -2399,6 +2415,21 @@ function ChatModule() {
   return (
     <main className="chat-panel" aria-labelledby="thread-title">
       <header className="chat-header">
+        <label>Orchestration
+          <select aria-label="Orchestration mode" value={orchestration} onChange={(event) => {
+            const next = event.target.value as 'Duet' | 'Symphony'
+            setOrchestration(next)
+            if (next === 'Symphony') {
+              void events.dispatch({ type: 'prompt.submit', prompt: 'Take this to a Symphony.' })
+                .catch(() => setImageStatus('The deliberation could not be opened.'))
+            }
+          }}>
+            <option>Duet</option><option>Symphony</option>
+          </select>
+        </label>
+        <details><summary>{orchestration} configuration</summary>
+          <AgentPolicies level={orchestration} />
+        </details>
         <h1 id="thread-title">
           {selectedMeta === undefined ? 'Opening thread' : visibleThreadTitle(selectedMeta.title)}
         </h1>
@@ -2635,6 +2666,11 @@ function ChatModule() {
             >
               <span aria-hidden="true">{archiveBusy ? '…' : '⤓'}</span>
             </button>
+          )}
+          {activeRun !== null && (
+            <button type="button" disabled={!canSend || pendingImage !== null /* F104: interjections carry text into the active request. */}
+              title="Steer the next model request without queuing another run"
+              onClick={() => void interjectPrompt()}>Interject</button>
           )}
           {activeRun !== null && (
             <button
@@ -3433,6 +3469,9 @@ function MessageRow({
         {status !== null && <span className="message__status">{status}</span>}
       </header>
       <div className="message__content">
+      {message.events.filter((event) => event.event_kind === 'human_interjection').map((event, index) => (
+        <p key={`steering-${index}`}><strong>You interjected:</strong> {String(event.instruction)}</p>
+      ))}
       {message.events.some((event) => event.event_kind === 'compaction_completed') && (
         <p className="message__content message__content--quiet" data-testid="compaction-completed">
           Conversation compacted · full history kept in the journal

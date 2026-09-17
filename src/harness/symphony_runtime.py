@@ -172,7 +172,12 @@ class SymphonyExecution:
             for step_index, step in enumerate(stack.launch.recipe):
                 feedback = ""
                 prior_decision = None
-                count = authority.attempts if step.search else 1
+                strategies = step.stratagems or (
+                    "Direct: implement the simplest solution from the acceptance criteria.",
+                    "Test first: encode the acceptance criteria before implementing.",
+                    "Boundary first: check edge cases, then build the smallest solution.",
+                )
+                count = min(authority.attempts, len(strategies)) if step.search else 1
                 budget = SearchBudget(
                     attempts=count,
                     spend_wall_usd=authority.spend_wall_usd,
@@ -236,6 +241,7 @@ class SymphonyExecution:
                             checkpoint = next_checkpoint
                     briefs = []
                     for number in range(1, count + 1):
+                        approach = strategies[number - 1]
                         attempt_id = f"round-{round_number}-attempt-{number}"
                         location = worktrees / child_id / attempt_id
                         location.parent.mkdir(parents=True, exist_ok=True)
@@ -243,10 +249,11 @@ class SymphonyExecution:
                         briefs.append(
                             SearchAttemptBrief(
                                 attempt_id=attempt_id,
-                                approach=f"Independent approach {number}",
+                                approach=approach,
                                 charge=(
                                     f"{stack.launch.objective}\n{step.title}\n"
-                                    f"Done when: {step.done_when}\n{feedback}"
+                                    f"Done when: {step.done_when}\n"
+                                    f"Stratagem: {approach}\n{feedback}"
                                 ),
                                 location=location,
                                 estimated_completion_cost_usd=authority.spend_wall_usd
@@ -333,7 +340,8 @@ class SymphonyExecution:
                             brief.location,
                             "smoke",
                             brief.charge,
-                            self.settings.effective_model_policy_chat,
+                            self.settings.model_policy_subagent
+                            or self.settings.effective_model_policy_chat,
                             origin,
                             f"{child_id}/{brief.attempt_id}/smoke",
                         )
@@ -363,14 +371,14 @@ class SymphonyExecution:
                     await wait(handles)
                     for brief in briefs:
                         path = outputs[brief.attempt_id] / "result.json"
-                        if brief.attempt_id in state["cancelled"]:
+                        if brief.attempt_id in state["cancelled"] or not path.exists():
                             _json(
                                 path,
                                 {
                                     "schema_version": 1,
                                     "status": "fail",
                                     "score": "0",
-                                    "checks": ["Cancelled by the conductor after process exit."],
+                                    "checks": ["Worker exited without a readiness result."],
                                     "evidence_refs": [str(brief.location)],
                                 },
                             )
@@ -395,7 +403,8 @@ class SymphonyExecution:
                             brief.location,
                             "completion",
                             brief.charge,
-                            self.settings.effective_model_policy_chat,
+                            self.settings.model_policy_subagent
+                            or self.settings.effective_model_policy_chat,
                             origin,
                             f"{child_id}/{brief.attempt_id}/completion",
                         )
@@ -408,16 +417,18 @@ class SymphonyExecution:
                     await wait(handles)
                     for brief in selected:
                         path = outputs[brief.attempt_id] / "result.json"
-                        if brief.attempt_id in state["cancelled"]:
+                        cancelled = brief.attempt_id in state["cancelled"]
+                        if cancelled or not path.exists():
                             _json(
                                 path,
                                 {
                                     "schema_version": 1,
-                                    "status": "cancelled",
+                                    "status": "cancelled" if cancelled else "failed",
                                     "claims": [],
                                     "evidence_refs": [str(brief.location)],
                                     "uncertainties": [
-                                        "Cancelled; partial files have not passed judges."
+                                        "Worker stopped without a completed result; "
+                                        "partial files have not passed judges."
                                     ],
                                     "metrics_refs": [],
                                     "artifacts": [],
@@ -425,11 +436,23 @@ class SymphonyExecution:
                                     "product": {"kind": "commit", "commit": checkpoint},
                                 },
                             )
+                            _json(outputs[brief.attempt_id] / "memories.json", [])
                         conductor.accept_search_distillate(
                             child_id,
                             brief.attempt_id,
                             TypedDistillate.model_validate_json(path.read_text()),
                         )
+                    await update(
+                        "running",
+                        {
+                            "stopped_attempt_ids": [
+                                item.attempt_id
+                                for item in conductor.search_results(child_id)
+                                if item.distillate is not None
+                                and item.distillate.status != "completed"
+                            ]
+                        },
+                    )
                     panel = JudgePanel(
                         conductor=conductor,
                         search_child_id=child_id,
@@ -544,13 +567,10 @@ class SymphonyExecution:
                         )
                         break
                     feedback = "\n".join(
-                        verdict.rationale
-                        + "\n"
-                        + "\n".join(
-                            item.problem + ": " + item.desired_observation
-                            for item in verdict.feedback
-                        )
-                        for verdict in decision.verdicts
+                        json.loads(
+                            (run_home / "feedback" / f"{packet.packet_id}.json").read_text()
+                        )["charge"]
+                        for packet in decision.feedback_packets
                     )
                 else:
                     raise ValueError("The judges did not agree before the signed round limit.")
