@@ -1,0 +1,23 @@
+[
+  {
+    "file": "FL-126-plate.png",
+    "actual": "farm-module.png",
+    "reference": "../m3vz/plates/farm.png",
+    "method": "Whole images fitted without cropping or aspect distortion into equal 780-pixel square panels; reference transparency composited on its mode background. No rendered content changed.",
+    "difference": "Unchanged renderer: six actual worktree chambers are sparser and less sculpted than the plate."
+  },
+  {
+    "file": "FL-129-plate.png",
+    "actual": "roots-module.png",
+    "reference": "../m3vz/plates/roots.png",
+    "method": "Whole images fitted without cropping or aspect distortion into equal 780-pixel square panels; reference transparency composited on its mode background. No rendered content changed.",
+    "difference": "Chrome and taper are present; the six real roots form fewer, shorter forks than the plate."
+  },
+  {
+    "file": "FL-133-plate.png",
+    "actual": "palace-module.png",
+    "reference": "../m3vz/plates/palace.png",
+    "method": "Whole images fitted without cropping or aspect distortion into equal 780-pixel square panels; reference transparency composited on its mode background. No rendered content changed.",
+    "difference": "Glass and real curator traffic are present; existing axes retain rows instead of a central cluster."
+  }
+]
