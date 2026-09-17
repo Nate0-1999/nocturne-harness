@@ -1,0 +1,30 @@
+{
+  "principals": [
+    {
+      "home": "home",
+      "principal_id": "nocturne-verification-2f3f6710-57a1-4291-8b47-f8bf6eb42009",
+      "active_memories": 0,
+      "pending_cards": 0,
+      "remote_mutations_required": false
+    },
+    {
+      "home": "wheel-home",
+      "principal_id": "nocturne-verification-bfc718e2-37e8-49fa-8967-f7abfdaaa42b",
+      "active_memories": 0,
+      "pending_cards": 0,
+      "remote_mutations_required": false
+    },
+    {
+      "home": "final-home",
+      "principal_id": "nocturne-verification-7f07969f-0975-4112-a48e-cea95cd8abfe",
+      "active_memories": 0,
+      "pending_cards": 0,
+      "remote_mutations_required": false
+    }
+  ],
+  "scope": "explicit principal memory-graph query and approval queue; no generic memory list used",
+  "retained": "Append-only conversation, injection and spend audit records; no active memories or pending cards.",
+  "task_daemons_stopped": true,
+  "task_env_files_removed": true,
+  "source_credentials_untouched": true
+}

@@ -82,6 +82,7 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
 }
 
 export interface RackSnapshot {
+  preferenceScope?: string
   drafts: Record<string, string>
   catalog: ThreadCatalogEntry[]
   selectedThreadId: string | null
@@ -501,6 +502,7 @@ function snapshotFromState(state: ReturnType<typeof useHarnessStore.getState>): 
     selectedThreadId === null || (state.threads[selectedThreadId]?.awaitingSnapshot ?? true),
   )
   return {
+    preferenceScope: useHarnessStore.persist.getOptions().name,
     drafts: state.drafts,
     catalog: state.catalog,
     selectedThreadId: state.selectedThreadId,

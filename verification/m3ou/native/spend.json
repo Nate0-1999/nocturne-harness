@@ -1,0 +1,135 @@
+{
+  "status": "live",
+  "as_of": null,
+  "data": {
+    "can_record_invoice": false,
+    "as_of": "2026-09-17T01:43:08.749188Z",
+    "window_minutes": 60,
+    "threads": [
+      {
+        "input_tokens": "1330.000000000",
+        "kv_cache_tokens": "1024.000000000",
+        "reasoning_tokens": "0",
+        "output_tokens": "181.000000000",
+        "total_usd": "0.000915640000",
+        "total_receipt_lines": 7,
+        "total_unpriced_lines": 0,
+        "spend_per_hour_usd": "0.000915640000",
+        "hourly_receipt_lines": 7,
+        "hourly_unpriced_lines": 0,
+        "thread_id": "f7e96c50-2696-4341-a71b-3a210ec97be1",
+        "models": [
+          {
+            "input_tokens": "1308.000000000",
+            "kv_cache_tokens": "1024.000000000",
+            "reasoning_tokens": "0",
+            "output_tokens": "181.000000000",
+            "total_usd": "0.000915200000",
+            "total_receipt_lines": 5,
+            "total_unpriced_lines": 0,
+            "spend_per_hour_usd": "0.000915200000",
+            "hourly_receipt_lines": 5,
+            "hourly_unpriced_lines": 0,
+            "model": "openai/gpt-4.1-mini"
+          },
+          {
+            "input_tokens": "22.000000000",
+            "kv_cache_tokens": "0",
+            "reasoning_tokens": "0",
+            "output_tokens": "0",
+            "total_usd": "0.000000440000",
+            "total_receipt_lines": 2,
+            "total_unpriced_lines": 0,
+            "spend_per_hour_usd": "0.000000440000",
+            "hourly_receipt_lines": 2,
+            "hourly_unpriced_lines": 0,
+            "model": "text-embedding-3-small"
+          }
+        ]
+      }
+    ],
+    "purposes": [],
+    "rates": [
+      {
+        "dimension": "agent",
+        "key": "nocturne",
+        "label": "Agent \u00b7 nocturne",
+        "points": [
+          {
+            "minute": "2026-09-17T01:40:00Z",
+            "cost_usd": "0.000915200000",
+            "receipt_lines": 5,
+            "unpriced_lines": 0
+          }
+        ]
+      },
+      {
+        "dimension": "model",
+        "key": "openai/gpt-4.1-mini",
+        "label": "Model \u00b7 openai/gpt-4.1-mini",
+        "points": [
+          {
+            "minute": "2026-09-17T01:40:00Z",
+            "cost_usd": "0.000915200000",
+            "receipt_lines": 5,
+            "unpriced_lines": 0
+          }
+        ]
+      },
+      {
+        "dimension": "model",
+        "key": "text-embedding-3-small",
+        "label": "Model \u00b7 text-embedding-3-small",
+        "points": [
+          {
+            "minute": "2026-09-17T01:40:00Z",
+            "cost_usd": "0.000000440000",
+            "receipt_lines": 2,
+            "unpriced_lines": 0
+          }
+        ]
+      },
+      {
+        "dimension": "total",
+        "key": null,
+        "label": "Total",
+        "points": [
+          {
+            "minute": "2026-09-17T01:40:00Z",
+            "cost_usd": "0.000915640000",
+            "receipt_lines": 7,
+            "unpriced_lines": 0
+          }
+        ]
+      }
+    ],
+    "rate_source": "spend_event",
+    "messages": [
+      {
+        "thread_id": "f7e96c50-2696-4341-a71b-3a210ec97be1",
+        "prompt_id": "01M2PGAX3VCQGZGSGVRQ4E2VMV",
+        "first_request_at": "2026-09-17T01:40:13.992652Z",
+        "fresh_tokens": "1148.000000000",
+        "cached_tokens": "0",
+        "cache_write_tokens": "0"
+      },
+      {
+        "thread_id": "f7e96c50-2696-4341-a71b-3a210ec97be1",
+        "prompt_id": "01M2PGBQ8608Q3WV122W5R37V0",
+        "first_request_at": "2026-09-17T01:40:39.200458Z",
+        "fresh_tokens": "160.000000000",
+        "cached_tokens": "1024.000000000",
+        "cache_write_tokens": "0"
+      }
+    ],
+    "days": [
+      {
+        "day": "2026-09-17T00:00:00Z",
+        "model_usd": "0.000915640000",
+        "infrastructure_usd": null,
+        "total_usd": "0.000915640000",
+        "unpriced_lines": 0
+      }
+    ]
+  }
+}

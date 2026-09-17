@@ -1,0 +1,9 @@
+........................................................................ [ 72%]
+...........................                                              [100%]
+=============================== warnings summary ===============================
+tests/test_agent_runtime.py::test_sd023_openrouter_usage_only_chunks_price_every_build_request
+  /private/tmp/m3ou-workspace/harness/tests/test_agent_runtime.py:665: PydanticAIDeprecationWarning: `httpx.AsyncClient` support for OpenAI-compatible providers is deprecated and will be removed in v3; use `httpx2.AsyncClient` instead.
+    provider=OpenRouterProvider(api_key="test", http_client=http_client),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+99 passed, 1 warning in 4.30s

@@ -13,6 +13,7 @@ import type {
 import { useRackPlugin, useRackSnapshot } from './rack'
 import './assets/symphonyDeck.css'
 import { WorkerContext } from './WorkerContext'
+import { OutLoud } from './OutLoud'
 
 interface DeckAttempt {
   attempt_id: string
@@ -323,6 +324,7 @@ function ProposedResponseCardView({
   onDraft: (value: string) => void
   onFire: () => void
 }) {
+  const composerRef = useRef<HTMLTextAreaElement>(null)
   function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return
     event.preventDefault()
@@ -355,6 +357,7 @@ function ProposedResponseCardView({
       <label>
         <span>Proposed response · edit freely</span>
         <textarea
+          ref={composerRef}
           data-testid={`deck-reply-${card.proposal_run_id}`}
           value={draft}
           rows={3}
@@ -364,6 +367,10 @@ function ProposedResponseCardView({
         />
       </label>
       <footer>
+        {primary && <OutLoud field={composerRef} response={card.assistant_text}
+          onSend={onFire}
+          responseId={card.proposal_run_id} blocked={fireDisabled}
+          replaceDraft={draft === card.primary} onDraft={onDraft} />}
         <small>Enter fires · Shift+Enter adds a line</small>
         <button type="button" disabled={fireDisabled || !draft.trim()} onClick={onFire}>
           Fire reply

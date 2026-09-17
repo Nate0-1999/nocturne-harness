@@ -248,6 +248,7 @@ export function RackPluginIframe({
       className="rack-plugin-frame"
       data-testid={`rack-plugin-frame-${manifest.id}`}
       title={manifest.name}
+      allow={!customPlugin && manifest.id === 'conversation' ? 'microphone; autoplay' : undefined}
       sandbox={customPlugin ? 'allow-scripts' : 'allow-scripts allow-same-origin'}
       src={customPlugin ? undefined : rackFrameUrl(manifest.id, theme, conversationMode)}
       srcDoc={customPlugin ? rackPluginDocument(customPlugin) : undefined}

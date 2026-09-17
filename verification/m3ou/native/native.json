@@ -1,0 +1,1125 @@
+{
+  "identity": {
+    "principal_id": "nocturne-verification-7f07969f-0975-4112-a48e-cea95cd8abfe",
+    "machine_id": "nocturne-dc7ce2eb-87bd-4218-a742-14494e04afa4",
+    "home": "/private/tmp/m3ou-verification/final-home"
+  },
+  "browser": "152.0.7977.83",
+  "audio_source": "OS-synthesized fixture WAVs passed to native SpeechRecognition.start(audioTrack); no transcript injection; physical microphone not exercised",
+  "synthesis": "native SpeechSynthesisUtterance, unmodified playback",
+  "screenshots": [
+    "out-loud-native-dictation",
+    "out-loud-voice-send-gate",
+    "out-loud-focused-read-aloud",
+    "out-loud-stack-read-aloud",
+    "out-loud-stack-dictation",
+    "out-loud-card-fired",
+    "out-loud-next-card"
+  ],
+  "traces": {
+    "focused": [
+      {
+        "kind": "start",
+        "at": 1789609203431
+      },
+      {
+        "kind": "audiostart",
+        "at": 1789609203441
+      },
+      {
+        "kind": "speechstart",
+        "at": 1789609205030
+      },
+      {
+        "kind": "result",
+        "at": 1789609205735,
+        "results": [
+          {
+            "final": false,
+            "text": "please"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609205919,
+        "results": [
+          {
+            "final": false,
+            "text": "please reply"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609206089,
+        "results": [
+          {
+            "final": false,
+            "text": "please reply with"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609206267,
+        "results": [
+          {
+            "final": false,
+            "text": "please"
+          },
+          {
+            "final": false,
+            "text": " reply with"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609206446,
+        "results": [
+          {
+            "final": false,
+            "text": "please reply"
+          },
+          {
+            "final": false,
+            "text": " with"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609206559,
+        "results": [
+          {
+            "final": false,
+            "text": "please reply"
+          },
+          {
+            "final": false,
+            "text": " with one"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609206696,
+        "results": [
+          {
+            "final": false,
+            "text": "please reply with"
+          },
+          {
+            "final": false,
+            "text": " one"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609206873,
+        "results": [
+          {
+            "final": false,
+            "text": "please reply with"
+          },
+          {
+            "final": false,
+            "text": " one short"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609207129,
+        "results": [
+          {
+            "final": false,
+            "text": "please reply with"
+          },
+          {
+            "final": false,
+            "text": " one short sent"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609207152,
+        "results": [
+          {
+            "final": false,
+            "text": "please reply with one"
+          },
+          {
+            "final": false,
+            "text": " short sent"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609207240,
+        "results": [
+          {
+            "final": false,
+            "text": "please reply with one"
+          },
+          {
+            "final": false,
+            "text": " short sentence"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609207353,
+        "results": [
+          {
+            "final": false,
+            "text": "please reply with one short"
+          },
+          {
+            "final": false,
+            "text": " sentence"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609207461,
+        "results": [
+          {
+            "final": false,
+            "text": "please reply with one short"
+          },
+          {
+            "final": false,
+            "text": " sentence about"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609207672,
+        "results": [
+          {
+            "final": false,
+            "text": "please reply with one short"
+          },
+          {
+            "final": false,
+            "text": " sentence about the"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609207786,
+        "results": [
+          {
+            "final": false,
+            "text": "please reply with one short"
+          },
+          {
+            "final": false,
+            "text": " sentence about the moon"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609207912,
+        "results": [
+          {
+            "final": false,
+            "text": "please reply with one short sentence"
+          },
+          {
+            "final": false,
+            "text": " about the moon"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609208039,
+        "results": [
+          {
+            "final": false,
+            "text": "please reply with one short sentence about"
+          },
+          {
+            "final": false,
+            "text": " the moon"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609208267,
+        "results": [
+          {
+            "final": false,
+            "text": "please reply with one short sentence about the"
+          },
+          {
+            "final": false,
+            "text": " moon"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609208416,
+        "results": [
+          {
+            "final": true,
+            "text": "please reply with one short sentence about the moon"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609210323,
+        "results": [
+          {
+            "final": true,
+            "text": "please reply with one short sentence about the moon"
+          },
+          {
+            "final": false,
+            "text": " send"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609211001,
+        "results": [
+          {
+            "final": true,
+            "text": "please reply with one short sentence about the moon"
+          },
+          {
+            "final": true,
+            "text": " send"
+          }
+        ]
+      },
+      {
+        "kind": "speechend",
+        "at": 1789609211002
+      },
+      {
+        "kind": "audioend",
+        "at": 1789609211002
+      },
+      {
+        "kind": "error",
+        "at": 1789609211002,
+        "error": "aborted"
+      },
+      {
+        "kind": "end",
+        "at": 1789609211002
+      },
+      {
+        "kind": "start",
+        "at": 1789609211047
+      },
+      {
+        "kind": "audiostart",
+        "at": 1789609211058
+      },
+      {
+        "kind": "audioend",
+        "at": 1789609211076
+      },
+      {
+        "kind": "error",
+        "at": 1789609211076,
+        "error": "aborted"
+      },
+      {
+        "kind": "end",
+        "at": 1789609211076
+      },
+      {
+        "kind": "synthesis.start",
+        "at": 1789609214716,
+        "text": "The moon orbits the Earth approximately every 27.3 days. \n\n"
+      }
+    ],
+    "stack": [
+      {
+        "kind": "synthesis.start",
+        "at": 1789609218978,
+        "text": "The moon orbits the Earth approximately every 27.3 days. \n\n"
+      },
+      {
+        "kind": "synthesis.end",
+        "at": 1789609223175,
+        "text": "The moon orbits the Earth approximately every 27.3 days. \n\n"
+      },
+      {
+        "kind": "start",
+        "at": 1789609223217
+      },
+      {
+        "kind": "audiostart",
+        "at": 1789609223228
+      },
+      {
+        "kind": "speechstart",
+        "at": 1789609224828
+      },
+      {
+        "kind": "result",
+        "at": 1789609225363,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609226071,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609226071,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you"
+          },
+          {
+            "final": false,
+            "text": " please"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609226417,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you"
+          },
+          {
+            "final": false,
+            "text": " please tell"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609226417,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you"
+          },
+          {
+            "final": false,
+            "text": " please tell me"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609226601,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please"
+          },
+          {
+            "final": false,
+            "text": " tell me"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609226768,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please"
+          },
+          {
+            "final": false,
+            "text": " tell me the"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609226946,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell"
+          },
+          {
+            "final": false,
+            "text": " me the"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609226946,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me"
+          },
+          {
+            "final": false,
+            "text": " the color"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609227126,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me"
+          },
+          {
+            "final": false,
+            "text": " the color of"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609227242,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the"
+          },
+          {
+            "final": false,
+            "text": " color of"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609227559,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the"
+          },
+          {
+            "final": false,
+            "text": " color of moon"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609227559,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color"
+          },
+          {
+            "final": false,
+            "text": " of moon"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609227736,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color of"
+          },
+          {
+            "final": false,
+            "text": " moon"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609227736,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color of"
+          },
+          {
+            "final": false,
+            "text": " moonlight"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609228136,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color of"
+          },
+          {
+            "final": false,
+            "text": " moonlight in"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609228253,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color of"
+          },
+          {
+            "final": false,
+            "text": " moonlight in one"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609228379,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color of moonlight"
+          },
+          {
+            "final": false,
+            "text": " in one"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609228399,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color of moonlight"
+          },
+          {
+            "final": false,
+            "text": " in one sent"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609228505,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color of moonlight"
+          },
+          {
+            "final": false,
+            "text": " in one sentence"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609228735,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color of moonlight in"
+          },
+          {
+            "final": false,
+            "text": " one sentence"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609228831,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color of moonlight in one"
+          },
+          {
+            "final": false,
+            "text": " sentence"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609229150,
+        "results": [
+          {
+            "final": true,
+            "text": "thank you please tell me the color of moonlight in one sentence"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609231234,
+        "results": [
+          {
+            "final": true,
+            "text": "thank you please tell me the color of moonlight in one sentence"
+          },
+          {
+            "final": false,
+            "text": " send"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609231764,
+        "results": [
+          {
+            "final": true,
+            "text": "thank you please tell me the color of moonlight in one sentence"
+          },
+          {
+            "final": true,
+            "text": " send"
+          }
+        ]
+      },
+      {
+        "kind": "speechend",
+        "at": 1789609231765
+      },
+      {
+        "kind": "audioend",
+        "at": 1789609231765
+      },
+      {
+        "kind": "error",
+        "at": 1789609231765,
+        "error": "aborted"
+      },
+      {
+        "kind": "end",
+        "at": 1789609231765
+      }
+    ],
+    "last": [
+      {
+        "kind": "synthesis.start",
+        "at": 1789609218978,
+        "text": "The moon orbits the Earth approximately every 27.3 days. \n\n"
+      },
+      {
+        "kind": "synthesis.end",
+        "at": 1789609223175,
+        "text": "The moon orbits the Earth approximately every 27.3 days. \n\n"
+      },
+      {
+        "kind": "start",
+        "at": 1789609223217
+      },
+      {
+        "kind": "audiostart",
+        "at": 1789609223228
+      },
+      {
+        "kind": "speechstart",
+        "at": 1789609224828
+      },
+      {
+        "kind": "result",
+        "at": 1789609225363,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609226071,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609226071,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you"
+          },
+          {
+            "final": false,
+            "text": " please"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609226417,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you"
+          },
+          {
+            "final": false,
+            "text": " please tell"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609226417,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you"
+          },
+          {
+            "final": false,
+            "text": " please tell me"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609226601,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please"
+          },
+          {
+            "final": false,
+            "text": " tell me"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609226768,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please"
+          },
+          {
+            "final": false,
+            "text": " tell me the"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609226946,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell"
+          },
+          {
+            "final": false,
+            "text": " me the"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609226946,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me"
+          },
+          {
+            "final": false,
+            "text": " the color"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609227126,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me"
+          },
+          {
+            "final": false,
+            "text": " the color of"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609227242,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the"
+          },
+          {
+            "final": false,
+            "text": " color of"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609227559,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the"
+          },
+          {
+            "final": false,
+            "text": " color of moon"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609227559,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color"
+          },
+          {
+            "final": false,
+            "text": " of moon"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609227736,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color of"
+          },
+          {
+            "final": false,
+            "text": " moon"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609227736,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color of"
+          },
+          {
+            "final": false,
+            "text": " moonlight"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609228136,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color of"
+          },
+          {
+            "final": false,
+            "text": " moonlight in"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609228253,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color of"
+          },
+          {
+            "final": false,
+            "text": " moonlight in one"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609228379,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color of moonlight"
+          },
+          {
+            "final": false,
+            "text": " in one"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609228399,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color of moonlight"
+          },
+          {
+            "final": false,
+            "text": " in one sent"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609228505,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color of moonlight"
+          },
+          {
+            "final": false,
+            "text": " in one sentence"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609228735,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color of moonlight in"
+          },
+          {
+            "final": false,
+            "text": " one sentence"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609228831,
+        "results": [
+          {
+            "final": false,
+            "text": "thank you please tell me the color of moonlight in one"
+          },
+          {
+            "final": false,
+            "text": " sentence"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609229150,
+        "results": [
+          {
+            "final": true,
+            "text": "thank you please tell me the color of moonlight in one sentence"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609231234,
+        "results": [
+          {
+            "final": true,
+            "text": "thank you please tell me the color of moonlight in one sentence"
+          },
+          {
+            "final": false,
+            "text": " send"
+          }
+        ]
+      },
+      {
+        "kind": "result",
+        "at": 1789609231764,
+        "results": [
+          {
+            "final": true,
+            "text": "thank you please tell me the color of moonlight in one sentence"
+          },
+          {
+            "final": true,
+            "text": " send"
+          }
+        ]
+      },
+      {
+        "kind": "speechend",
+        "at": 1789609231765
+      },
+      {
+        "kind": "audioend",
+        "at": 1789609231765
+      },
+      {
+        "kind": "error",
+        "at": 1789609231765,
+        "error": "aborted"
+      },
+      {
+        "kind": "end",
+        "at": 1789609231765
+      },
+      {
+        "kind": "synthesis.start",
+        "at": 1789609240271,
+        "text": "Moonlight appears mostly white with a subtle bluish tint to the human eye. \n\n"
+      },
+      {
+        "kind": "synthesis.error",
+        "at": 1789609240609,
+        "text": "Moonlight appears mostly white with a subtle bluish tint to the human eye. \n\n",
+        "error": "interrupted"
+      }
+    ]
+  }
+}

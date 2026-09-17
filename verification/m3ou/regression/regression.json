@@ -1,0 +1,12 @@
+{
+  "speech_doubles": true,
+  "dictation_waits_for_send": true,
+  "send_uses_memory_gate": true,
+  "response_spoken": true,
+  "listening_after_response": true,
+  "typing_interrupts_dictation": true,
+  "tap_interrupts_speech": true,
+  "preference_survives_reload": true,
+  "microphone_denied_explained": true,
+  "unsupported_keeps_typing": true
+}

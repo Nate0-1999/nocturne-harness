@@ -16,6 +16,7 @@ import {
 } from 'react'
 
 import { AssistantMarkdown } from './AssistantMarkdown'
+import { OutLoud } from './OutLoud'
 import { browserScreenshotDataUrl, elideBinaryPayload } from './runEventDisplay'
 import { SymphonyDeliberationCard, SymphonyResultCard } from './SymphonyCards'
 import { MemoryGate } from './MemoryGate'
@@ -2608,6 +2609,18 @@ function ChatModule() {
             onPaste={onComposerPaste}
           />
           <div className="composer__utility">
+            <OutLoud field={composerRef}
+              onSend={transmitPrompt}
+              response={messages.filter((message) => message.role === 'assistant' && !message.partial).at(-1)?.content ?? ''}
+              responseId={messages.filter((message) => message.role === 'assistant' && !message.partial).at(-1)?.message_id ?? null}
+              blocked={composerDisabled || promptBusy}
+              responding={activeRun !== null}
+              onDraft={(value) => {
+                setDraft(value)
+                if (selectedThreadId !== null) {
+                  void events.dispatch({ type: 'draft.update', thread_id: selectedThreadId, draft: value })
+                }
+              }} />
             <input
               id="prompt-image-input"
               ref={imageInputRef}

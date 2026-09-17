@@ -21,6 +21,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CANONS = (
     (
+        "m3ou-speech",
+        "verification.m3fp.scenario_app:create_scenario_app",
+        "M3FP REGRESSION",
+        (("out-loud", "verification/m3ou/browser_check.mjs"),),
+    ),
+    (
         "m3fp-heartbeat",
         "verification.m3fp.scenario_app:create_scenario_app",
         "M3FP REGRESSION",
@@ -161,8 +167,9 @@ def _run_canon(
                 fixture.wait(timeout=5)
     if fixture_identity == "M3FP REGRESSION" and not restore:
         # New process, same home: restore the durable heartbeat after a reinstall/restart.
-        _run_canon(output_root, fixture_path, fixture_identity, suites, base_environment,
-                   restore=True)
+        _run_canon(
+            output_root, fixture_path, fixture_identity, suites, base_environment, restore=True
+        )
 
 
 def _free_port() -> int:
