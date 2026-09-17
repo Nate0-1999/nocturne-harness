@@ -33,7 +33,7 @@ test('roots grow only to their recorded end and preserve identity on replay', ()
   assert.deepEqual(long[0], short[0])
 })
 
-/** PLAN M3VL: idle gaps cannot hide recorded capillaries; depth still carries elapsed time. */
+/** ADR-018 / FL-129: idle gaps cannot hide recorded capillaries; depth still carries elapsed time. */
 test('file chronology spreads work across a root without compressing temporal depth', () => {
   const agent = { id: 'worker', started_at: '2026-09-16T00:00:00Z', updated_at: '2026-09-16T01:00:00Z',
     touched_files: [{ path: '/a', ts: '2026-09-16T00:00:01Z' }, { path: '/b', ts: '2026-09-16T00:00:02Z' }] }
