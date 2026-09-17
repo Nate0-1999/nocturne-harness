@@ -3303,7 +3303,7 @@ button.rack-module__resize-handle--nw {
   background: none;
 }
 
-.stage-viewport--sheet .stage-canvas > .rack-module {
+.stage-viewport.stage-viewport--sheet .stage-canvas > .rack-module {
   position: relative;
   inset: auto !important;
   width: 100% !important;

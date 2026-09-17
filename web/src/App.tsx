@@ -2613,7 +2613,8 @@ function ChatModule() {
               onSend={transmitPrompt}
               response={messages.filter((message) => message.role === 'assistant' && !message.partial).at(-1)?.content ?? ''}
               responseId={messages.filter((message) => message.role === 'assistant' && !message.partial).at(-1)?.message_id ?? null}
-              blocked={composerDisabled || promptBusy || activeRun !== null}
+              blocked={composerDisabled || promptBusy}
+              responding={activeRun !== null}
               onDraft={(value) => {
                 setDraft(value)
                 if (selectedThreadId !== null) {

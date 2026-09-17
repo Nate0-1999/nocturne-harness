@@ -32,7 +32,7 @@ function subscribePreference(listener: () => void) {
 }
 
 /** PLAN M3OU / SD-048, SD-063: speech uses the ordinary composer and send rule. */
-export function OutLoud({ field, response, responseId, blocked, onDraft, onSend, replaceDraft = false }: {
+export function OutLoud({ field, response, responseId, blocked, onDraft, onSend, replaceDraft = false, responding = false }: {
   field: RefObject<HTMLTextAreaElement | null>
   response: string
   responseId: string | null
@@ -40,6 +40,7 @@ export function OutLoud({ field, response, responseId, blocked, onDraft, onSend,
   onDraft: (text: string) => void
   onSend: () => void
   replaceDraft?: boolean
+  responding?: boolean
 }) {
   const supported = SpeechRecognition !== undefined && 'speechSynthesis' in globalThis
   const { preferenceScope } = useRackSnapshot()
@@ -178,7 +179,7 @@ export function OutLoud({ field, response, responseId, blocked, onDraft, onSend,
   }
 
   useEffect(() => {
-    if (!enabled || !supported || blocked) return
+    if (!enabled || !supported || blocked || responding) return
     if (responseId !== null && response.trim() && spoken.current !== responseId) {
       spoken.current = responseId
       read()
@@ -188,7 +189,7 @@ export function OutLoud({ field, response, responseId, blocked, onDraft, onSend,
     return stop
     // Callbacks belong to this response; draft edits must not restart the microphone.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, supported, blocked, responseId, response])
+  }, [enabled, supported, blocked, responding, responseId, response])
 
   return (
     <div className="out-loud" data-testid="out-loud">
@@ -212,7 +213,8 @@ export function OutLoud({ field, response, responseId, blocked, onDraft, onSend,
           }
         }}>{phase === 'speaking' ? 'Interrupt and listen' : phase === 'listening' ? 'Stop listening' : 'Listen'}</button>
         {response.trim() && <button type="button" disabled={blocked} onClick={read}>Read aloud</button>}
-        <small role="status">{blocked ? 'Waiting for the conversation…' : status}</small>
+        <small role="status">{blocked ? 'Waiting for the conversation…'
+          : responding && phase === 'idle' ? 'Reply running. Tap Listen to dictate.' : status}</small>
       </>}
     </div>
   )
