@@ -263,7 +263,7 @@ function ThreeNebula({
     }}
     scene={{ background: new Color(0.004, 0.006, 0.015) }}
   >
-    <ChromeEnvironment />
+    <ChromeEnvironment glass />
     <ambientLight color={new Color(0.1, 0.08, 0.2)} intensity={Math.PI * 0.8} />
     <directionalLight color={new Color(0.96, 0.78, 0.58)} intensity={tier === 'full' ? 2.1 : 1.45} position={[5, 8, 7]} />
     <NebulaEventTorrent events={events} tier={tier} />
@@ -324,8 +324,9 @@ function CuratorGhost({ targets, tier }: { targets: readonly NebulaBody[]; tier:
 
 function NebulaMemoryBody({ body, tier, onSelect }: { body: NebulaBody; tier: NebulaHardwareTier; onSelect: (id: string) => void }) {
   const meshRef = useRef<Mesh>(null)
+  const [red, green, blue] = body.color
   const material = useMemo(() => {
-    const base = new Color(...body.color)
+    const base = new Color(red, green, blue)
     const contextLight = body.pinned || body.in_current_context ? 0.055 : 0.005
     const next = new MeshPhysicalNodeMaterial({
       metalness: 0.35,
@@ -344,7 +345,7 @@ function NebulaMemoryBody({ body, tier, onSelect }: { body: NebulaBody; tier: Ne
     // The efficient shell keeps grazing reflections without a transmission pass.
     if (tier === 'efficient') next.opacityNode = normalView.dot(positionViewDirection).abs().oneMinus().pow(2).mul(0.62).add(0.38)
     return next
-  }, [body.color, body.in_current_context, body.pinned, body.recency_glow, tier])
+  }, [red, green, blue, body.in_current_context, body.pinned, body.recency_glow, tier])
 
   useEffect(() => () => material.dispose(), [material])
   return <mesh ref={meshRef} name={body.label} position={body.position} scale={body.scale} material={material}
@@ -407,7 +408,8 @@ function NebulaFilaments({ filaments, ghosts, tier }: {
     return next
   }, [filaments, ghosts, tier])
   const material = useMemo(() => new LineBasicMaterial({ transparent: true, opacity: 0.64, vertexColors: true, toneMapped: false }), [])
-  useEffect(() => () => { geometry.dispose(); material.dispose() }, [geometry, material])
+  useEffect(() => () => geometry.dispose(), [geometry])
+  useEffect(() => () => material.dispose(), [material])
   return <lineSegments name="memory-relationships" geometry={geometry} material={material} />
 }
 
@@ -431,7 +433,8 @@ function NebulaCreatureCluster({ family, tier }: { family: NebulaCreatureFamily;
     return pointGeometry(positions, colors)
   }, [family, tier])
   const material = useMemo(() => new PointsMaterial({ size: 1.2, sizeAttenuation: false, transparent: true, opacity: 0.52, vertexColors: true }), [])
-  useEffect(() => () => { geometry.dispose(); material.dispose() }, [geometry, material])
+  useEffect(() => () => geometry.dispose(), [geometry])
+  useEffect(() => () => material.dispose(), [material])
   return <points name={`duplicate-family-${family.id}`} geometry={geometry} material={material} />
 }
 
