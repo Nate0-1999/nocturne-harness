@@ -1559,6 +1559,7 @@ function RackModuleFrame({
           instanceId={instanceId}
           manifest={manifest}
           conversationMode={conversationMode}
+          sheetMode={sheetMode}
           spatialContext={spatialContext}
           attunement={scope === 'ATTUNED' ? attunement : null}
           theme={theme}

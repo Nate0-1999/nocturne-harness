@@ -1,0 +1,1481 @@
+[
+  {
+    "prompt": "Explain how confluences conserve water discharge.",
+    "prepared": {
+      "injection_id": "67dcb006-bc76-430e-a456-19afb9283fff",
+      "snapshot_ts": "2026-09-17T00:08:24.010921Z",
+      "scorer_version": "m3tl-where-v1",
+      "injected": [
+        {
+          "memory_id": "d3980f62-937f-4498-9e44-7394f6a8b771",
+          "label": "M3VL Conservation",
+          "body": "At a confluence the outgoing discharge equals the incoming discharges without losses.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5721295475959778,
+          "features": {
+            "sem": 0.6134489089924114,
+            "kw": 0.16666666666666666,
+            "time": 0.9998764380757431,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 1
+        },
+        {
+          "memory_id": "07f82c53-e24c-4398-bdb8-ef6cc0205740",
+          "label": "M3VL Basin model",
+          "body": "A basin simulation routes each tributary contribution into its downstream confluence.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5514708757400513,
+          "features": {
+            "sem": 0.562204107199047,
+            "kw": 0.16666666666666666,
+            "time": 0.9999072054350898,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 2
+        }
+      ],
+      "near_misses": [
+        {
+          "memory_id": "9a13f9d4-ad48-4319-8dfc-ed841ef51302",
+          "label": "M3VL Confluence balance",
+          "body": "At a tributary junction downstream discharge is the sum of incoming discharge if storage is unchanged.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5477786064147949,
+          "features": {
+            "sem": 0.5530532786371046,
+            "kw": 0.16666666666666666,
+            "time": 0.9998816136567795,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 3
+        },
+        {
+          "memory_id": "b5f4f81e-b230-4b72-9892-509f187a0545",
+          "label": "M3VL Rainfall",
+          "body": "Rainfall supplies water to the watershed and changes river discharge.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5455674529075623,
+          "features": {
+            "sem": 0.5475697513271891,
+            "kw": 0.16666666666666666,
+            "time": 0.9998801090746116,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 4
+        },
+        {
+          "memory_id": "d8411723-fe80-4da4-b0d1-2f5fc4299756",
+          "label": "M3VL Watershed",
+          "body": "A watershed directs rainfall downhill through tributaries to a common outlet.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5430288910865784,
+          "features": {
+            "sem": 0.5412749642284617,
+            "kw": 0.16666666666666666,
+            "time": 0.9998753019694248,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 5
+        }
+      ],
+      "final_block": null,
+      "memory_allocation": {
+        "memory_context_share": 0.1,
+        "share_tokens": 2000,
+        "regular_tokens": 30,
+        "pinned_tokens": 0,
+        "total_tokens": 30,
+        "pinned_overflow_tokens": 0
+      }
+    },
+    "committed": {
+      "final_block": "<memory_system>\nThe following long-term memories were retrieved for this conversation.\nTreat them as your own accumulated knowledge; they may be imperfect.\n<memory label=\"M3VL Conservation\" kind=\"fact\" updated=\"2026-09-17T00:04:48.371671+00:00\">\nAt a confluence the outgoing discharge equals the incoming discharges without losses.\n</memory>\n<memory label=\"M3VL Basin model\" kind=\"fact\" updated=\"2026-09-17T00:05:42.069104+00:00\">\nA basin simulation routes each tributary contribution into its downstream confluence.\n</memory>\n</memory_system>",
+      "wrong_removed": []
+    }
+  },
+  {
+    "prompt": "How does groundwater reach a spring?",
+    "prepared": {
+      "injection_id": "a9aaf067-8a85-4e18-a383-3e3c8b20ecce",
+      "snapshot_ts": "2026-09-17T00:08:24.696959Z",
+      "scorer_version": "m3tl-where-v1",
+      "injected": [
+        {
+          "memory_id": "5ff65859-d27e-419c-aa56-5fc5ec1cbf1b",
+          "label": "M3VL Spring",
+          "body": "A spring releases groundwater where the water table intersects the land surface.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.606414258480072,
+          "features": {
+            "sem": 0.685781302234849,
+            "kw": 0.2,
+            "time": 0.9998792370782239,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 1
+        }
+      ],
+      "near_misses": [
+        {
+          "memory_id": "97af8f8a-2c4d-4df9-ae3e-ce7001824857",
+          "label": "M3VL Aquifer",
+          "body": "An aquifer stores and transmits groundwater through connected pores.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5052304267883301,
+          "features": {
+            "sem": 0.5110198897207245,
+            "kw": 0.0,
+            "time": 0.9998789744446739,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 2
+        },
+        {
+          "memory_id": "d8411723-fe80-4da4-b0d1-2f5fc4299756",
+          "label": "M3VL Watershed",
+          "body": "A watershed directs rainfall downhill through tributaries to a common outlet.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.4668317437171936,
+          "features": {
+            "sem": 0.41578611331145277,
+            "kw": 0.0,
+            "time": 0.9998749088924448,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 3
+        },
+        {
+          "memory_id": "49441618-29bb-4232-9ad2-724ef2d72dbd",
+          "label": "M3VL Infiltration",
+          "body": "Infiltration transfers surface water into permeable soil.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.4642392098903656,
+          "features": {
+            "sem": 0.40935525611962625,
+            "kw": 0.0,
+            "time": 0.9998785652280121,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 4
+        }
+      ],
+      "final_block": null,
+      "memory_allocation": {
+        "memory_context_share": 0.1,
+        "share_tokens": 2000,
+        "regular_tokens": 13,
+        "pinned_tokens": 0,
+        "total_tokens": 13,
+        "pinned_overflow_tokens": 0
+      }
+    },
+    "committed": {
+      "final_block": "<memory_system>\nThe following long-term memories were retrieved for this conversation.\nTreat them as your own accumulated knowledge; they may be imperfect.\n<memory label=\"M3VL Spring\" kind=\"fact\" updated=\"2026-09-17T00:04:53.942800+00:00\">\nA spring releases groundwater where the water table intersects the land surface.\n</memory>\n</memory_system>",
+      "wrong_removed": []
+    }
+  },
+  {
+    "prompt": "Describe sediment transport and deposition in a river delta.",
+    "prepared": {
+      "injection_id": "32fb5d5c-3bf7-474c-bd34-745859dd1804",
+      "snapshot_ts": "2026-09-17T00:08:25.445996Z",
+      "scorer_version": "m3tl-where-v1",
+      "injected": [
+        {
+          "memory_id": "81985251-826f-4b4d-93c7-f4f3c3b1fb67",
+          "label": "M3VL Delta",
+          "body": "A delta grows where a river deposits sediment near its mouth.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.6236034631729126,
+          "features": {
+            "sem": 0.6776199139590638,
+            "kw": 0.3333333333333333,
+            "time": 0.9998777896039445,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 1
+        },
+        {
+          "memory_id": "2c419f28-da97-4dc7-9455-511db07d03ef",
+          "label": "M3VL Deposition",
+          "body": "Slower current inside a river bend deposits transported sediment.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.587333619594574,
+          "features": {
+            "sem": 0.5876651596701591,
+            "kw": 0.3333333333333333,
+            "time": 0.9998769574153733,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 2
+        },
+        {
+          "memory_id": "373b2aee-9365-413c-b752-63a685066a27",
+          "label": "M3VL Sediment",
+          "body": "Suspended sediment travels with flowing water while coarse bedload rolls along the bed.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5708770155906677,
+          "features": {
+            "sem": 0.546850317581663,
+            "kw": 0.3333333333333333,
+            "time": 0.9998764119031592,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 3
+        }
+      ],
+      "near_misses": [
+        {
+          "memory_id": "4589bb38-f334-459d-9117-655938828e1d",
+          "label": "M3VL Meander",
+          "body": "Meanders migrate as erosion and deposition reshape their banks.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5034616589546204,
+          "features": {
+            "sem": 0.44314148835448924,
+            "kw": 0.16666666666666666,
+            "time": 0.9998772105130603,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 4
+        },
+        {
+          "memory_id": "5c05bca9-3c1e-457d-ade2-9d7ed629e017",
+          "label": "M3VL Floodplain",
+          "body": "A floodplain temporarily stores water that exceeds a river channel capacity.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.484088659286499,
+          "features": {
+            "sem": 0.395093267337522,
+            "kw": 0.16666666666666666,
+            "time": 0.9998774493742725,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 5
+        },
+        {
+          "memory_id": "07f82c53-e24c-4398-bdb8-ef6cc0205740",
+          "label": "M3VL Basin model",
+          "body": "A basin simulation routes each tributary contribution into its downstream confluence.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.47751712799072266,
+          "features": {
+            "sem": 0.3787629576052516,
+            "kw": 0.16666666666666666,
+            "time": 0.9999991742532337,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 6
+        }
+      ],
+      "final_block": null,
+      "memory_allocation": {
+        "memory_context_share": 0.1,
+        "share_tokens": 2000,
+        "regular_tokens": 39,
+        "pinned_tokens": 0,
+        "total_tokens": 39,
+        "pinned_overflow_tokens": 0
+      }
+    },
+    "committed": {
+      "final_block": "<memory_system>\nThe following long-term memories were retrieved for this conversation.\nTreat them as your own accumulated knowledge; they may be imperfect.\n<memory label=\"M3VL Delta\" kind=\"fact\" updated=\"2026-09-17T00:04:52.165566+00:00\">\nA delta grows where a river deposits sediment near its mouth.\n</memory>\n<memory label=\"M3VL Deposition\" kind=\"fact\" updated=\"2026-09-17T00:04:50.713149+00:00\">\nSlower current inside a river bend deposits transported sediment.\n</memory>\n<memory label=\"M3VL Sediment\" kind=\"fact\" updated=\"2026-09-17T00:04:49.761067+00:00\">\nSuspended sediment travels with flowing water while coarse bedload rolls along the bed.\n</memory>\n</memory_system>",
+      "wrong_removed": []
+    }
+  },
+  {
+    "prompt": "How do meanders change the outer and inner banks?",
+    "prepared": {
+      "injection_id": "ef983b09-a712-40bf-af0c-45459e9d2de4",
+      "snapshot_ts": "2026-09-17T00:08:26.268015Z",
+      "scorer_version": "m3tl-where-v1",
+      "injected": [
+        {
+          "memory_id": "4589bb38-f334-459d-9117-655938828e1d",
+          "label": "M3VL Meander",
+          "body": "Meanders migrate as erosion and deposition reshape their banks.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5777891874313354,
+          "features": {
+            "sem": 0.6909776581788651,
+            "kw": 0.0,
+            "time": 0.9998767395226048,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 1
+        }
+      ],
+      "near_misses": [
+        {
+          "memory_id": "ac28079a-ce15-4156-b3da-ee22a56bb689",
+          "label": "M3VL Erosion",
+          "body": "Faster current at the outside of a river bend erodes its bank.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5343022346496582,
+          "features": {
+            "sem": 0.5831232383214903,
+            "kw": 0.0,
+            "time": 0.9998762628187398,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 2
+        },
+        {
+          "memory_id": "2c419f28-da97-4dc7-9455-511db07d03ef",
+          "label": "M3VL Deposition",
+          "body": "Slower current inside a river bend deposits transported sediment.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.49445056915283203,
+          "features": {
+            "sem": 0.4842525528767742,
+            "kw": 0.0,
+            "time": 0.9999995256790842,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 3
+        },
+        {
+          "memory_id": "81985251-826f-4b4d-93c7-f4f3c3b1fb67",
+          "label": "M3VL Delta",
+          "body": "A delta grows where a river deposits sediment near its mouth.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.4610709846019745,
+          "features": {
+            "sem": 0.4014658761362487,
+            "kw": 0.0,
+            "time": 0.9999995256790842,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 4
+        }
+      ],
+      "final_block": null,
+      "memory_allocation": {
+        "memory_context_share": 0.1,
+        "share_tokens": 2000,
+        "regular_tokens": 11,
+        "pinned_tokens": 0,
+        "total_tokens": 11,
+        "pinned_overflow_tokens": 0
+      }
+    },
+    "committed": {
+      "final_block": "<memory_system>\nThe following long-term memories were retrieved for this conversation.\nTreat them as your own accumulated knowledge; they may be imperfect.\n<memory label=\"M3VL Meander\" kind=\"fact\" updated=\"2026-09-17T00:04:51.154880+00:00\">\nMeanders migrate as erosion and deposition reshape their banks.\n</memory>\n</memory_system>",
+      "wrong_removed": []
+    }
+  },
+  {
+    "prompt": "Compare a hydrograph and a gauge rating curve.",
+    "prepared": {
+      "injection_id": "d9428707-f944-4033-be91-6f5732b34caa",
+      "snapshot_ts": "2026-09-17T00:08:26.956085Z",
+      "scorer_version": "m3tl-where-v1",
+      "injected": [
+        {
+          "memory_id": "d8c5edcd-c8a4-4e28-aeb7-c2352ed4047d",
+          "label": "M3VL Gauge",
+          "body": "A stream gauge records water stage so discharge can be estimated using a rating curve.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.6024126410484314,
+          "features": {
+            "sem": 0.6758567186727698,
+            "kw": 0.2,
+            "time": 0.9998789072669267,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 1
+        },
+        {
+          "memory_id": "9da22eb2-db1b-4fd2-b875-d7d3b0fbe679",
+          "label": "M3VL Hydrograph",
+          "body": "A hydrograph plots discharge against time at a fixed river location.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5533589720726013,
+          "features": {
+            "sem": 0.5541959098989379,
+            "kw": 0.2,
+            "time": 0.9998786453112856,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 2
+        }
+      ],
+      "near_misses": [
+        {
+          "memory_id": "f3b8c1a7-5a8e-4d0b-ad28-d66b74f72088",
+          "label": "M3VL Flow ledger",
+          "body": "The flow ledger records incoming water, outgoing water and retained storage.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.44087380170822144,
+          "features": {
+            "sem": 0.35140510371535433,
+            "kw": 0.0,
+            "time": 0.9998793944155627,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 3
+        },
+        {
+          "memory_id": "b5f4f81e-b230-4b72-9892-509f187a0545",
+          "label": "M3VL Rainfall",
+          "body": "Rainfall supplies water to the watershed and changes river discharge.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.4382779896259308,
+          "features": {
+            "sem": 0.34496733939489427,
+            "kw": 0.0,
+            "time": 0.999878421586474,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 4
+        },
+        {
+          "memory_id": "2759ac41-2e1d-450d-95df-8ade019e02cf",
+          "label": "M3VL Discharge",
+          "body": "River discharge is water volume crossing a section per second.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.43614402413368225,
+          "features": {
+            "sem": 0.339675790123447,
+            "kw": 0.0,
+            "time": 0.9998744520811269,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 5
+        }
+      ],
+      "final_block": null,
+      "memory_allocation": {
+        "memory_context_share": 0.1,
+        "share_tokens": 2000,
+        "regular_tokens": 29,
+        "pinned_tokens": 0,
+        "total_tokens": 29,
+        "pinned_overflow_tokens": 0
+      }
+    },
+    "committed": {
+      "final_block": "<memory_system>\nThe following long-term memories were retrieved for this conversation.\nTreat them as your own accumulated knowledge; they may be imperfect.\n<memory label=\"M3VL Gauge\" kind=\"fact\" updated=\"2026-09-17T00:04:55.626308+00:00\">\nA stream gauge records water stage so discharge can be estimated using a rating curve.\n</memory>\n<memory label=\"M3VL Hydrograph\" kind=\"fact\" updated=\"2026-09-17T00:04:55.169118+00:00\">\nA hydrograph plots discharge against time at a fixed river location.\n</memory>\n</memory_system>",
+      "wrong_removed": []
+    }
+  },
+  {
+    "prompt": "Explain conservative timestep routing at a tributary junction.",
+    "prepared": {
+      "injection_id": "901bfd78-20de-451f-a70e-663156a5b9eb",
+      "snapshot_ts": "2026-09-17T00:08:27.795262Z",
+      "scorer_version": "m3tl-where-v1",
+      "injected": [
+        {
+          "memory_id": "50d28c81-ac69-46c9-add9-99acd4fc29f7",
+          "label": "M3VL River junction",
+          "body": "A tributary junction connects a smaller channel to the receiving river.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.569166898727417,
+          "features": {
+            "sem": 0.6061001741199712,
+            "kw": 0.16666666666666666,
+            "time": 0.9998796816387774,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 1
+        },
+        {
+          "memory_id": "07f82c53-e24c-4398-bdb8-ef6cc0205740",
+          "label": "M3VL Basin model",
+          "body": "A basin simulation routes each tributary contribution into its downstream confluence.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5502873063087463,
+          "features": {
+            "sem": 0.6227368791283021,
+            "kw": 0.0,
+            "time": 0.9999978280357539,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 2
+        }
+      ],
+      "near_misses": [
+        {
+          "memory_id": "b2caa01f-1de5-4ff6-b428-43f382281c51",
+          "label": "M3VL Tributary",
+          "body": "A tributary joins a larger river at a confluence.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5271233916282654,
+          "features": {
+            "sem": 0.5018271930215511,
+            "kw": 0.16666666666666666,
+            "time": 0.9998736509019579,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 3
+        },
+        {
+          "memory_id": "9a13f9d4-ad48-4319-8dfc-ed841ef51302",
+          "label": "M3VL Confluence balance",
+          "body": "At a tributary junction downstream discharge is the sum of incoming discharge if storage is unchanged.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.518371045589447,
+          "features": {
+            "sem": 0.5436105951432862,
+            "kw": 0.0,
+            "time": 0.9998794453433613,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 4
+        },
+        {
+          "memory_id": "d8411723-fe80-4da4-b0d1-2f5fc4299756",
+          "label": "M3VL Watershed",
+          "body": "A watershed directs rainfall downhill through tributaries to a common outlet.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5019513368606567,
+          "features": {
+            "sem": 0.5028887604055423,
+            "kw": 0.0,
+            "time": 0.9998731336696938,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 5
+        }
+      ],
+      "final_block": null,
+      "memory_allocation": {
+        "memory_context_share": 0.1,
+        "share_tokens": 2000,
+        "regular_tokens": 29,
+        "pinned_tokens": 0,
+        "total_tokens": 29,
+        "pinned_overflow_tokens": 0
+      }
+    },
+    "committed": {
+      "final_block": "<memory_system>\nThe following long-term memories were retrieved for this conversation.\nTreat them as your own accumulated knowledge; they may be imperfect.\n<memory label=\"M3VL River junction\" kind=\"fact\" updated=\"2026-09-17T00:04:57.816992+00:00\">\nA tributary junction connects a smaller channel to the receiving river.\n</memory>\n<memory label=\"M3VL Basin model\" kind=\"fact\" updated=\"2026-09-17T00:08:24.004998+00:00\">\nA basin simulation routes each tributary contribution into its downstream confluence.\n</memory>\n</memory_system>",
+      "wrong_removed": []
+    }
+  },
+  {
+    "prompt": "Explain why water balance at a confluence adds discharges.",
+    "prepared": {
+      "injection_id": "fadc1d34-b0e6-40df-9772-6b4a1c6db2a5",
+      "snapshot_ts": "2026-09-17T00:08:28.418705Z",
+      "scorer_version": "m3tl-where-v1",
+      "injected": [
+        {
+          "memory_id": "9a13f9d4-ad48-4319-8dfc-ed841ef51302",
+          "label": "M3VL Confluence balance",
+          "body": "At a tributary junction downstream discharge is the sum of incoming discharge if storage is unchanged.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.636433482170105,
+          "features": {
+            "sem": 0.6731589521895921,
+            "kw": 0.42857142857142855,
+            "time": 0.9998790881297499,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 1
+        },
+        {
+          "memory_id": "d3980f62-937f-4498-9e44-7394f6a8b771",
+          "label": "M3VL Conservation",
+          "body": "At a confluence the outgoing discharge equals the incoming discharges without losses.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5955910086631775,
+          "features": {
+            "sem": 0.6806756350028258,
+            "kw": 0.14285714285714285,
+            "time": 0.9999974707798496,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 2
+        },
+        {
+          "memory_id": "b5f4f81e-b230-4b72-9892-509f187a0545",
+          "label": "M3VL Rainfall",
+          "body": "Rainfall supplies water to the watershed and changes river discharge.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5738815665245056,
+          "features": {
+            "sem": 0.6268641942414165,
+            "kw": 0.14285714285714285,
+            "time": 0.9998775835513823,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 3
+        }
+      ],
+      "near_misses": [
+        {
+          "memory_id": "07f82c53-e24c-4398-bdb8-ef6cc0205740",
+          "label": "M3VL Basin model",
+          "body": "A basin simulation routes each tributary contribution into its downstream confluence.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5479109287261963,
+          "features": {
+            "sem": 0.5624208474325528,
+            "kw": 0.14285714285714285,
+            "time": 0.9999996393131134,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 4
+        },
+        {
+          "memory_id": "b2caa01f-1de5-4ff6-b428-43f382281c51",
+          "label": "M3VL Tributary",
+          "body": "A tributary joins a larger river at a confluence.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5404821038246155,
+          "features": {
+            "sem": 0.5440294061858207,
+            "kw": 0.14285714285714285,
+            "time": 0.9998732936904167,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 5
+        },
+        {
+          "memory_id": "4ae851ff-f631-4708-928e-b732641e2e06",
+          "label": "M3VL Velocity",
+          "body": "Water velocity increases when equal discharge passes through a narrower cross-section.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5347294807434082,
+          "features": {
+            "sem": 0.5297616825409623,
+            "kw": 0.14285714285714285,
+            "time": 0.9998741729313628,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 6
+        }
+      ],
+      "final_block": null,
+      "memory_allocation": {
+        "memory_context_share": 0.1,
+        "share_tokens": 2000,
+        "regular_tokens": 46,
+        "pinned_tokens": 0,
+        "total_tokens": 46,
+        "pinned_overflow_tokens": 0
+      }
+    },
+    "committed": {
+      "final_block": "<memory_system>\nThe following long-term memories were retrieved for this conversation.\nTreat them as your own accumulated knowledge; they may be imperfect.\n<memory label=\"M3VL Confluence balance\" kind=\"fact\" updated=\"2026-09-17T00:04:57.404587+00:00\">\nAt a tributary junction downstream discharge is the sum of incoming discharge if storage is unchanged.\n</memory>\n<memory label=\"M3VL Conservation\" kind=\"fact\" updated=\"2026-09-17T00:08:24.004998+00:00\">\nAt a confluence the outgoing discharge equals the incoming discharges without losses.\n</memory>\n<memory label=\"M3VL Rainfall\" kind=\"fact\" updated=\"2026-09-17T00:04:54.778652+00:00\">\nRainfall supplies water to the watershed and changes river discharge.\n</memory>\n</memory_system>",
+      "wrong_removed": []
+    }
+  },
+  {
+    "prompt": "What measurements establish the river water balance?",
+    "prepared": {
+      "injection_id": "9db6f50a-5774-4585-93b8-46ffc247ec34",
+      "snapshot_ts": "2026-09-17T00:08:29.244464Z",
+      "scorer_version": "m3tl-where-v1",
+      "injected": [
+        {
+          "memory_id": "9a13f9d4-ad48-4319-8dfc-ed841ef51302",
+          "label": "M3VL Confluence balance",
+          "body": "At a tributary junction downstream discharge is the sum of incoming discharge if storage is unchanged.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5757771134376526,
+          "features": {
+            "sem": 0.4954790242569508,
+            "kw": 0.5,
+            "time": 0.9999995236270349,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 1
+        },
+        {
+          "memory_id": "b5f4f81e-b230-4b72-9892-509f187a0545",
+          "label": "M3VL Rainfall",
+          "body": "Rainfall supplies water to the watershed and changes river discharge.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5717493295669556,
+          "features": {
+            "sem": 0.5489815824099202,
+            "kw": 0.3333333333333333,
+            "time": 0.9999995236270349,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 2
+        },
+        {
+          "memory_id": "f3b8c1a7-5a8e-4d0b-ad28-d66b74f72088",
+          "label": "M3VL Flow ledger",
+          "body": "The flow ledger records incoming water, outgoing water and retained storage.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5566964149475098,
+          "features": {
+            "sem": 0.5116798284362365,
+            "kw": 0.3333333333333333,
+            "time": 0.999878083245664,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 3
+        },
+        {
+          "memory_id": "2759ac41-2e1d-450d-95df-8ade019e02cf",
+          "label": "M3VL Discharge",
+          "body": "River discharge is water volume crossing a section per second.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5526005625724792,
+          "features": {
+            "sem": 0.5015227447421468,
+            "kw": 0.3333333333333333,
+            "time": 0.9998731409177093,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 4
+        }
+      ],
+      "near_misses": [
+        {
+          "memory_id": "d8c5edcd-c8a4-4e28-aeb7-c2352ed4047d",
+          "label": "M3VL Gauge",
+          "body": "A stream gauge records water stage so discharge can be estimated using a rating curve.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5462421774864197,
+          "features": {
+            "sem": 0.485719971343304,
+            "kw": 0.3333333333333333,
+            "time": 0.9999986855385783,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 5
+        },
+        {
+          "memory_id": "9da22eb2-db1b-4fd2-b875-d7d3b0fbe679",
+          "label": "M3VL Hydrograph",
+          "body": "A hydrograph plots discharge against time at a fixed river location.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5289075374603271,
+          "features": {
+            "sem": 0.44272738576417453,
+            "kw": 0.3333333333333333,
+            "time": 0.9999986855385783,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 6
+        },
+        {
+          "memory_id": "07f82c53-e24c-4398-bdb8-ef6cc0205740",
+          "label": "M3VL Basin model",
+          "body": "A basin simulation routes each tributary contribution into its downstream confluence.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5259455442428589,
+          "features": {
+            "sem": 0.4353809772213402,
+            "kw": 0.3333333333333333,
+            "time": 0.9999991661218264,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 7
+        }
+      ],
+      "final_block": null,
+      "memory_allocation": {
+        "memory_context_share": 0.1,
+        "share_tokens": 2000,
+        "regular_tokens": 55,
+        "pinned_tokens": 0,
+        "total_tokens": 55,
+        "pinned_overflow_tokens": 0
+      }
+    },
+    "committed": {
+      "final_block": "<memory_system>\nThe following long-term memories were retrieved for this conversation.\nTreat them as your own accumulated knowledge; they may be imperfect.\n<memory label=\"M3VL Confluence balance\" kind=\"fact\" updated=\"2026-09-17T00:08:28.413153+00:00\">\nAt a tributary junction downstream discharge is the sum of incoming discharge if storage is unchanged.\n</memory>\n<memory label=\"M3VL Rainfall\" kind=\"fact\" updated=\"2026-09-17T00:08:28.413153+00:00\">\nRainfall supplies water to the watershed and changes river discharge.\n</memory>\n<memory label=\"M3VL Flow ledger\" kind=\"fact\" updated=\"2026-09-17T00:04:56.476526+00:00\">\nThe flow ledger records incoming water, outgoing water and retained storage.\n</memory>\n<memory label=\"M3VL Discharge\" kind=\"fact\" updated=\"2026-09-17T00:04:47.850676+00:00\">\nRiver discharge is water volume crossing a section per second.\n</memory>\n</memory_system>",
+      "wrong_removed": []
+    }
+  },
+  {
+    "prompt": "How does flooding store water outside the river?",
+    "prepared": {
+      "injection_id": "2da21d0a-387a-48e8-9345-176d967c9c9e",
+      "snapshot_ts": "2026-09-17T00:08:30.364209Z",
+      "scorer_version": "m3tl-where-v1",
+      "injected": [
+        {
+          "memory_id": "5c05bca9-3c1e-457d-ade2-9d7ed629e017",
+          "label": "M3VL Floodplain",
+          "body": "A floodplain temporarily stores water that exceeds a river channel capacity.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.625352680683136,
+          "features": {
+            "sem": 0.7000996516848306,
+            "kw": 0.2857142857142857,
+            "time": 0.9998746313989993,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 1
+        }
+      ],
+      "near_misses": [
+        {
+          "memory_id": "b5f4f81e-b230-4b72-9892-509f187a0545",
+          "label": "M3VL Rainfall",
+          "body": "Rainfall supplies water to the watershed and changes river discharge.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5412843227386475,
+          "features": {
+            "sem": 0.49156417434910016,
+            "kw": 0.2857142857142857,
+            "time": 0.9999993548146179,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 2
+        },
+        {
+          "memory_id": "9a13f9d4-ad48-4319-8dfc-ed841ef51302",
+          "label": "M3VL Confluence balance",
+          "body": "At a tributary junction downstream discharge is the sum of incoming discharge if storage is unchanged.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5280064344406128,
+          "features": {
+            "sem": 0.4586329781931334,
+            "kw": 0.2857142857142857,
+            "time": 0.9999993548146179,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 3
+        },
+        {
+          "memory_id": "49441618-29bb-4232-9ad2-724ef2d72dbd",
+          "label": "M3VL Infiltration",
+          "body": "Infiltration transfers surface water into permeable soil.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5247553586959839,
+          "features": {
+            "sem": 0.45060218909868194,
+            "kw": 0.2857142857142857,
+            "time": 0.999875318076097,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 4
+        }
+      ],
+      "final_block": null,
+      "memory_allocation": {
+        "memory_context_share": 0.1,
+        "share_tokens": 2000,
+        "regular_tokens": 13,
+        "pinned_tokens": 0,
+        "total_tokens": 13,
+        "pinned_overflow_tokens": 0
+      }
+    },
+    "committed": {
+      "final_block": "<memory_system>\nThe following long-term memories were retrieved for this conversation.\nTreat them as your own accumulated knowledge; they may be imperfect.\n<memory label=\"M3VL Floodplain\" kind=\"fact\" updated=\"2026-09-17T00:04:51.571764+00:00\">\nA floodplain temporarily stores water that exceeds a river channel capacity.\n</memory>\n</memory_system>",
+      "wrong_removed": []
+    }
+  },
+  {
+    "prompt": "How does infiltration recharge an aquifer?",
+    "prepared": {
+      "injection_id": "8d9511f6-8287-4e09-83c5-eae17d4eb99d",
+      "snapshot_ts": "2026-09-17T00:08:31.210403Z",
+      "scorer_version": "m3tl-where-v1",
+      "injected": [
+        {
+          "memory_id": "49441618-29bb-4232-9ad2-724ef2d72dbd",
+          "label": "M3VL Infiltration",
+          "body": "Infiltration transfers surface water into permeable soil.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.591556191444397,
+          "features": {
+            "sem": 0.6489320117275992,
+            "kw": 0.2,
+            "time": 0.9998748332350648,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 1
+        },
+        {
+          "memory_id": "97af8f8a-2c4d-4df9-ae3e-ce7001824857",
+          "label": "M3VL Aquifer",
+          "body": "An aquifer stores and transmits groundwater through connected pores.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5677018761634827,
+          "features": {
+            "sem": 0.5897694801650294,
+            "kw": 0.2,
+            "time": 0.9998752424501992,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 2
+        }
+      ],
+      "near_misses": [
+        {
+          "memory_id": "5ff65859-d27e-419c-aa56-5fc5ec1cbf1b",
+          "label": "M3VL Spring",
+          "body": "A spring releases groundwater where the water table intersects the land surface.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.48527228832244873,
+          "features": {
+            "sem": 0.4614898083299516,
+            "kw": 0.0,
+            "time": 0.9999962642588458,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 3
+        },
+        {
+          "memory_id": "b5f4f81e-b230-4b72-9892-509f187a0545",
+          "label": "M3VL Rainfall",
+          "body": "Rainfall supplies water to the watershed and changes river discharge.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.4645329415798187,
+          "features": {
+            "sem": 0.4100522672128008,
+            "kw": 0.0,
+            "time": 0.99999886991344,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 4
+        },
+        {
+          "memory_id": "2759ac41-2e1d-450d-95df-8ade019e02cf",
+          "label": "M3VL Discharge",
+          "body": "River discharge is water volume crossing a section per second.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.450615793466568,
+          "features": {
+            "sem": 0.3755355158740444,
+            "kw": 0.0,
+            "time": 0.99999886991344,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 5
+        }
+      ],
+      "final_block": null,
+      "memory_allocation": {
+        "memory_context_share": 0.1,
+        "share_tokens": 2000,
+        "regular_tokens": 23,
+        "pinned_tokens": 0,
+        "total_tokens": 23,
+        "pinned_overflow_tokens": 0
+      }
+    },
+    "committed": {
+      "final_block": "<memory_system>\nThe following long-term memories were retrieved for this conversation.\nTreat them as your own accumulated knowledge; they may be imperfect.\n<memory label=\"M3VL Infiltration\" kind=\"fact\" updated=\"2026-09-17T00:04:52.770223+00:00\">\nInfiltration transfers surface water into permeable soil.\n</memory>\n<memory label=\"M3VL Aquifer\" kind=\"fact\" updated=\"2026-09-17T00:04:53.484427+00:00\">\nAn aquifer stores and transmits groundwater through connected pores.\n</memory>\n</memory_system>",
+      "wrong_removed": []
+    }
+  },
+  {
+    "prompt": "Explain how a conservative simulator handles river junctions.",
+    "prepared": {
+      "injection_id": "f468931d-739f-472e-8a30-7ef6fd1cac03",
+      "snapshot_ts": "2026-09-17T00:08:31.888024Z",
+      "scorer_version": "m3tl-where-v1",
+      "injected": [],
+      "near_misses": [
+        {
+          "memory_id": "07f82c53-e24c-4398-bdb8-ef6cc0205740",
+          "label": "M3VL Basin model",
+          "body": "A basin simulation routes each tributary contribution into its downstream confluence.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5317484140396118,
+          "features": {
+            "sem": 0.5223357843015667,
+            "kw": 0.14285714285714285,
+            "time": 0.999997651262993,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 1
+        },
+        {
+          "memory_id": "2c419f28-da97-4dc7-9455-511db07d03ef",
+          "label": "M3VL Deposition",
+          "body": "Slower current inside a river bend deposits transported sediment.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.49083277583122253,
+          "features": {
+            "sem": 0.42085890951879634,
+            "kw": 0.14285714285714285,
+            "time": 0.9999963052051485,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 2
+        },
+        {
+          "memory_id": "50d28c81-ac69-46c9-add9-99acd4fc29f7",
+          "label": "M3VL River junction",
+          "body": "A tributary junction connects a smaller channel to the receiving river.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.4895588755607605,
+          "features": {
+            "sem": 0.41769908249621424,
+            "kw": 0.14285714285714285,
+            "time": 0.999997651262993,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 3
+        }
+      ],
+      "final_block": null,
+      "memory_allocation": {
+        "memory_context_share": 0.1,
+        "share_tokens": 2000,
+        "regular_tokens": 0,
+        "pinned_tokens": 0,
+        "total_tokens": 0,
+        "pinned_overflow_tokens": 0
+      }
+    },
+    "committed": {
+      "final_block": "<memory_system>\nThe following long-term memories were retrieved for this conversation.\nTreat them as your own accumulated knowledge; they may be imperfect.\n</memory_system>",
+      "wrong_removed": []
+    }
+  },
+  {
+    "prompt": "How does rainfall affect the flow ledger?",
+    "prepared": {
+      "injection_id": "15fa8893-16b9-470f-938e-967fe82b81df",
+      "snapshot_ts": "2026-09-17T00:08:32.583908Z",
+      "scorer_version": "m3tl-where-v1",
+      "injected": [
+        {
+          "memory_id": "f3b8c1a7-5a8e-4d0b-ad28-d66b74f72088",
+          "label": "M3VL Flow ledger",
+          "body": "The flow ledger records incoming water, outgoing water and retained storage.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.6103295683860779,
+          "features": {
+            "sem": 0.6446670895943727,
+            "kw": 0.3333333333333333,
+            "time": 0.9999980828436089,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 1
+        },
+        {
+          "memory_id": "b5f4f81e-b230-4b72-9892-509f187a0545",
+          "label": "M3VL Rainfall",
+          "body": "Rainfall supplies water to the watershed and changes river discharge.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.5522413849830627,
+          "features": {
+            "sem": 0.5640912727576118,
+            "kw": 0.16666666666666666,
+            "time": 0.9999980828436089,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 2
+        }
+      ],
+      "near_misses": [
+        {
+          "memory_id": "d8411723-fe80-4da4-b0d1-2f5fc4299756",
+          "label": "M3VL Watershed",
+          "body": "A watershed directs rainfall downhill through tributaries to a common outlet.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.4926975667476654,
+          "features": {
+            "sem": 0.47993862561926864,
+            "kw": 0.0,
+            "time": 0.9998703899438169,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 3
+        },
+        {
+          "memory_id": "2759ac41-2e1d-450d-95df-8ade019e02cf",
+          "label": "M3VL Discharge",
+          "body": "River discharge is water volume crossing a section per second.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.47486186027526855,
+          "features": {
+            "sem": 0.4356697711057139,
+            "kw": 0.0,
+            "time": 0.9999980828436089,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 4
+        },
+        {
+          "memory_id": "9a13f9d4-ad48-4319-8dfc-ed841ef51302",
+          "label": "M3VL Confluence balance",
+          "body": "At a tributary junction downstream discharge is the sum of incoming discharge if storage is unchanged.",
+          "kind": "fact",
+          "pin": false,
+          "score": 0.46498504281044006,
+          "features": {
+            "sem": 0.4111737359057234,
+            "kw": 0.0,
+            "time": 0.9999980828436089,
+            "proj": 1.0,
+            "freq": 0.0,
+            "hist": 0.0,
+            "loc": null,
+            "thread": null,
+            "where": 1.0
+          },
+          "rank": 5
+        }
+      ],
+      "final_block": null,
+      "memory_allocation": {
+        "memory_context_share": 0.1,
+        "share_tokens": 2000,
+        "regular_tokens": 25,
+        "pinned_tokens": 0,
+        "total_tokens": 25,
+        "pinned_overflow_tokens": 0
+      }
+    },
+    "committed": {
+      "final_block": "<memory_system>\nThe following long-term memories were retrieved for this conversation.\nTreat them as your own accumulated knowledge; they may be imperfect.\n<memory label=\"M3VL Flow ledger\" kind=\"fact\" updated=\"2026-09-17T00:08:29.238306+00:00\">\nThe flow ledger records incoming water, outgoing water and retained storage.\n</memory>\n<memory label=\"M3VL Rainfall\" kind=\"fact\" updated=\"2026-09-17T00:08:29.238306+00:00\">\nRainfall supplies water to the watershed and changes river discharge.\n</memory>\n</memory_system>",
+      "wrong_removed": []
+    }
+  }
+]

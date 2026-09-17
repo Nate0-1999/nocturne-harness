@@ -1,0 +1,17 @@
+{
+  "context": "Final renderer; Palace visible in Sheet; all three visualization modules on efficient tier",
+  "samples": [
+    "6 fps",
+    "6 fps",
+    "1 fps",
+    "61 fps",
+    "62 fps",
+    "60 fps",
+    "63 fps",
+    "60 fps",
+    "60 fps",
+    "62 fps",
+    "60 fps",
+    "62 fps"
+  ]
+}
