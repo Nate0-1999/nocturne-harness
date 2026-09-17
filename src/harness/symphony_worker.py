@@ -230,6 +230,10 @@ async def run(assignment_path: Path) -> None:
             "Assess readiness for the following proposed work. You are already in the "
             "isolated worktree. Read the directory and identify prerequisites; do not write "
             "files or implement the proposal during this smoke stage.\nProposed work:\n" + prompt
+            + "\nEND OF PROPOSED WORK. You are the readiness checker, not its judge. "
+            "A prior judge's repair request is work to perform AFTER readiness passes. "
+            "Missing outputs that this step must CREATE are never missing prerequisites. "
+            "Do not apply completion acceptance criteria to this readiness verdict."
         )
     else:
         prompt += (

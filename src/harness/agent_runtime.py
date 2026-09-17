@@ -13,8 +13,7 @@ from pathlib import Path
 from typing import Any, cast
 from uuid import UUID
 
-from pydantic_ai import ModelHTTPError, ModelRetry, UsageLimitExceeded, capture_run_messages
-from pydantic_ai.capabilities import Capability
+from pydantic_ai import ModelHTTPError, UsageLimitExceeded, capture_run_messages
 from pydantic_ai.messages import (
     AgentStreamEvent,
     BinaryContent,
@@ -50,7 +49,7 @@ from harness.proposed_response import (
     parse_proposed_response_output,
     proposed_response_event,
 )
-from harness.pydantic_ai_adapter import DelegateCapability
+from harness.pydantic_ai_adapter import DelegateCapability, PendingSteering
 from harness.pydantic_harness_adapter import CompactionPolicy, MemoryCompaction
 from harness.receipt_queue import SpendReceiptQueue
 from harness.run_protocol import (
@@ -451,14 +450,6 @@ class PydanticAITurnRunner:
 
             applied_steering = ""
 
-            class PendingSteering(Capability[MemoryToolContext]):
-                async def after_model_request(self, ctx, *, request_context, response):
-                    # A correction arriving during a final response still gets a request.
-                    pending = getattr(emit, "steering_instructions", lambda: "")()
-                    if not response.tool_calls and pending != applied_steering:
-                        raise ModelRetry("Apply the new human instruction before finishing.")
-                    return response
-
             async def current_instructions(run_context) -> str | None:
                 nonlocal applied_steering
                 blocks = []
@@ -484,7 +475,9 @@ class PydanticAITurnRunner:
                     deps=context,
                     instructions=instructions,
                     capabilities=[
-                        PendingSteering(),
+                        PendingSteering(lambda: (
+                            getattr(emit, "steering_instructions", lambda: "")() != applied_steering
+                        )),
                         *self._agent.tool_capabilities(context),
                         *(
                             [DelegateCapability()]
