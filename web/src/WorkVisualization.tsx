@@ -113,7 +113,7 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
       {(!data || error) && <p className="work-viz__notice" role="status">{error ?? 'Recording the first real state…'}</p>}
     </div>
     <footer className="work-viz__foot">{data && <>Recorded since {new Date(data.recorded_since).toLocaleString()} · {data.timeline.length} states · {data.live ? 'Live observation' : 'Recorded history'}</>}
-      {view === 'roots' && <span>Trunk = project (including its worker forks) · capillary = recorded file touch · width = spend · depth = time · junction = fork · dry = stopped</span>}
+      {view === 'roots' && <span>Trunk = project (including its worker forks) · capillary = recorded file touch · across = work order · width = spend · depth = time · junction = fork · dry = stopped</span>}
       {project?.errors.map((item) => <span key={item.path}>Cannot read {item.path}: {item.error}</span>)}
       {data?.errors.map((item) => <span key={item.feed}>{item.feed} feed unavailable</span>)}
     </footer>

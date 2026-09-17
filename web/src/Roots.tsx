@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { CatmullRomCurve3, TubeGeometry, Vector3 } from 'three'
-import { agentColor, buildRootPaths, identitySeed, type DetailTier, type Point3, type VisualizationSnapshot, type WorkAgent } from './visualization'
+import { agentColor, buildRootPaths, identitySeed, rootWorkPosition, rootWorkTimes, type DetailTier, type Point3, type VisualizationSnapshot, type WorkAgent } from './visualization'
 import { ChromeEnvironment } from './ChromeEnvironment'
 
 export function Roots({ data, agents, selectedId, tier, pick, newest }: {
@@ -11,6 +11,7 @@ export function Roots({ data, agents, selectedId, tier, pick, newest }: {
   const end = Date.parse(data.as_of)
   const ordered = [...agents].sort((a, b) => a.root.localeCompare(b.root) || a.id.localeCompare(b.id))
   const curves = buildRootPaths(ordered, data.trails, begin, end)
+  const moments = rootWorkTimes(ordered)
   const latest = [...agents].sort((a, b) => b.started_at.localeCompare(a.started_at))[0]?.id
   const spendScale = Math.max(0.01, ...agents.map((agent) => Number(agent.cost_usd ?? 0)))
   return <>
@@ -28,7 +29,7 @@ export function Roots({ data, agents, selectedId, tier, pick, newest }: {
       return <group key={agent.id}>
         <ChromeRoot points={points} radius={radius} color={color} tier={tier}
           stopped={stopped} selected={selected} forked={forked} onClick={() => pick(agent)} />
-        <FileCapillaries agent={agent} points={points} begin={begin} end={end} radius={radius}
+        <FileCapillaries agent={agent} points={points} moments={moments} radius={radius}
           tier={tier} selected={selected} stopped={stopped} pick={() => pick(agent)} />
         <mesh position={points.at(-1)} onClick={(event) => { event.stopPropagation(); pick(agent) }}>
           <sphereGeometry args={[0.045, tier === 'full' ? 20 : 8, 10]} />
@@ -40,13 +41,13 @@ export function Roots({ data, agents, selectedId, tier, pick, newest }: {
   </>
 }
 
-function FileCapillaries({ agent, points, begin, end, radius, tier, selected, stopped, pick }: {
-  agent: WorkAgent; points: Point3[]; begin: number; end: number; radius: number; tier: DetailTier
+function FileCapillaries({ agent, points, moments, radius, tier, selected, stopped, pick }: {
+  agent: WorkAgent; points: Point3[]; moments: number[]; radius: number; tier: DetailTier
   selected: boolean; stopped: boolean; pick: () => void
 }) {
   const curve = new CatmullRomCurve3(points.map((point) => new Vector3(...point)))
   return [...(agent.touched_files ?? [])].sort((a, b) => a.path.localeCompare(b.path)).map((file, index, files) => {
-    const timeX = -9 + (Date.parse(file.ts) - begin) / Math.max(1000, end - begin) * 18
+    const timeX = -9 + rootWorkPosition(Date.parse(file.ts), moments) * 18
     const t = Math.max(0, Math.min(1, (timeX - points[0][0]) / Math.max(0.001, points.at(-1)![0] - points[0][0])))
     const start = curve.getPoint(t)
     const side = index % 2 ? -1 : 1, fan = (Math.floor(index / 2) + 0.5) / Math.ceil(files.length / 2)

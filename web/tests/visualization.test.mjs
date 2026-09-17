@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { buildChambers, buildRootPaths, rootCurve } from '../src/visualization.ts'
+import { buildChambers, buildRootPaths, rootCurve, rootWorkPosition, rootWorkTimes } from '../src/visualization.ts'
 
 /** ADR-018 / FL-126: a frozen tree has repeatable geometry, including empty chambers. */
 test('directory layout preserves every chamber and cell and replays identically', () => {
@@ -31,6 +31,18 @@ test('roots grow only to their recorded end and preserve identity on replay', ()
   const long = rootCurve({ ...agent, updated_at: '2026-09-16T00:02:00Z' }, [], 0, begin, end)
   assert.ok(long.at(-1)[2] < short.at(-1)[2])
   assert.deepEqual(long[0], short[0])
+})
+
+/** PLAN M3VL: idle gaps cannot hide recorded capillaries; depth still carries elapsed time. */
+test('file chronology spreads work across a root without compressing temporal depth', () => {
+  const agent = { id: 'worker', started_at: '2026-09-16T00:00:00Z', updated_at: '2026-09-16T01:00:00Z',
+    touched_files: [{ path: '/a', ts: '2026-09-16T00:00:01Z' }, { path: '/b', ts: '2026-09-16T00:00:02Z' }] }
+  const moments = rootWorkTimes([agent]), begin = Date.parse(agent.started_at), end = Date.parse(agent.updated_at)
+  assert.equal(rootWorkPosition(Date.parse(agent.touched_files[0].ts), moments), 1 / 3)
+  assert.equal(rootWorkPosition(Date.parse(agent.touched_files[1].ts), moments), 2 / 3)
+  const points = rootCurve(agent, [], 0, begin, end, moments)
+  assert.ok(Math.abs(points[0][2]) < 1e-10)
+  assert.equal(points.at(-1)[2], -3)
 })
 
 /** ADR-018 / PLAN M3VL: nested forks attach to their actual parent's joined curve. */

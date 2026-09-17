@@ -67,21 +67,35 @@ export function buildChambers(project: WorkProject): Chamber[] {
   })
 }
 
-export function rootCurve(agent: WorkAgent, trail: RootPoint[], lane: number, begin: number, end: number): Point3[] {
+export function rootWorkTimes(agents: WorkAgent[]): number[] {
+  return [...new Set(agents.flatMap((agent) => [agent.started_at, agent.updated_at,
+    ...(agent.touched_files ?? []).map((file) => file.ts)]).map(Date.parse))].sort((a, b) => a - b)
+}
+
+export function rootWorkPosition(time: number, moments: number[]): number {
+  const next = moments.findIndex((moment) => moment >= time)
+  if (next <= 0) return next === 0 ? 0 : 1
+  return (next - 1 + (time - moments[next - 1]) / Math.max(1, moments[next] - moments[next - 1])) / (moments.length - 1)
+}
+
+export function rootCurve(agent: WorkAgent, trail: RootPoint[], lane: number, begin: number, end: number, moments: number[] = [begin, end]): Point3[] {
   const duration = Math.max(1000, end - begin)
   const first = trail[0]?.ts ?? agent.started_at
   const last = trail.at(-1)?.ts ?? agent.updated_at
-  const start = Math.max(0, (Date.parse(first) - begin) / duration)
-  const stop = Math.max(start + 0.005, (Date.parse(last) - begin) / duration)
+  const start = rootWorkPosition(Date.parse(first), moments)
+  const stop = Math.max(start + 0.005, rootWorkPosition(Date.parse(last), moments))
   const seed = identitySeed(agent.id) * Math.PI * 2
   return Array.from({ length: 32 }, (_, i) => {
-    const t = i / 31, time = start + (stop - start) * t
-    return [-9 + time * 18, lane + Math.sin(t * 7 + seed) * Math.sin(t * Math.PI) * 0.55,
+    const t = i / 31, work = Math.min(1, start + (stop - start) * t)
+    const index = work * (moments.length - 1), before = Math.floor(index), after = Math.min(moments.length - 1, before + 1)
+    const time = (moments[before] + (moments[after] - moments[before]) * (index - before) - begin) / duration
+    return [-9 + work * 18, lane + Math.sin(t * 7 + seed) * Math.sin(t * Math.PI) * 0.55,
       -time * 3 + Math.sin(t * 5 + seed) * Math.sin(t * Math.PI) * 0.4]
   })
 }
 
 export function buildRootPaths(agents: WorkAgent[], trails: Record<string, RootPoint[]>, begin: number, end: number): Map<string, Point3[]> {
+  const moments = rootWorkTimes(agents)
   const byId = new Map(agents.map((agent) => [agent.id, agent]))
   const project = (agent: WorkAgent): string => {
     const visited = new Set<string>()
@@ -101,7 +115,7 @@ export function buildRootPaths(agents: WorkAgent[], trails: Record<string, RootP
     const lane = peers.findIndex((peer) => peer.id === agent.id) - (peers.length - 1) / 2
     const projectLane = (projects.indexOf(root) - (projects.length - 1) / 2) * 7
     const phase = identitySeed(root) * Math.PI * 2
-    const points = rootCurve(agent, trails[agent.id] ?? [], 0, begin, end).map((point, index): Point3 => {
+    const points = rootCurve(agent, trails[agent.id] ?? [], 0, begin, end, moments).map((point, index): Point3 => {
       const time = (point[0] + 9) / 18, t = index / 31
       return [point[0], projectLane + Math.sin(time * 6 + phase) * 1.8
         + lane * (0.18 + 0.8 * Math.pow(1 - t, 3) + 0.48 * Math.pow(t, 3)), point[2]]
