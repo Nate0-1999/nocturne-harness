@@ -32,6 +32,7 @@ const dictate=async text=>contentFrame().evaluate(text=>window.speechTest.recogn
 try{
  await mkdir(output,{recursive:true})
  await page.goto(`${base}/?fixture=${encodeURIComponent(fixture)}`)
+ await page.frameLocator('[data-testid="rack-plugin-frame-threads"]').locator('.thread-item--selected').waitFor()
  await page.getByRole('button',{name:'Sheet',exact:true}).click()
  await conversation().getByTestId('composer').waitFor()
  await conversation().getByRole('button',{name:'Out Loud',exact:true}).click()
@@ -65,6 +66,7 @@ try{
  await page.reload()
  await page.getByRole('button',{name:'Sheet',exact:true}).click()
  await wait(async()=>await conversation().getByRole('button',{name:'Out Loud',exact:true}).getAttribute('aria-pressed')==='true')
+ await wait(()=>contentFrame().evaluate(()=>window.speechTest.utterances.length>0))
  await conversation().getByRole('button',{name:'Typing',exact:true}).click()
  await conversation().getByRole('button',{name:'Out Loud',exact:true}).click()
  await wait(()=>contentFrame().evaluate(()=>window.speechTest.recognitions.at(-1)?.active))
