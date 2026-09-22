@@ -10,6 +10,7 @@ import type {
   SymphonyRecipeStep,
 } from './protocol'
 import { useRackPlugin } from './rack'
+import { Button, TextArea, TextField, Toggle } from './kit'
 
 type DraftAuthority = Omit<SymphonyAuthority, 'signed'> & { signed: boolean }
 
@@ -234,41 +235,41 @@ export function SymphonyDeliberationCard({ event }: { event: JsonObject }) {
         <span>Draft {draft.draft_id.slice(-6)}</span>
       </header>
       <p className="symphony-card__intro">Fix what good means before the conductor can fire.</p>
-      <label>Desired outcome<textarea value={objective} onChange={(event) => setObjective(event.target.value)} placeholder="What result should return to this conversation?" /></label>
-      <label>Why this deserves a Symphony<textarea value={motivation} onChange={(event) => setMotivation(event.target.value)} placeholder="What is difficult or valuable enough to justify parallel work?" /></label>
+      <label>Desired outcome<TextArea value={objective} onChange={(event) => setObjective(event.target.value)} placeholder="What result should return to this conversation?" /></label>
+      <label>Why this deserves a Symphony<TextArea value={motivation} onChange={(event) => setMotivation(event.target.value)} placeholder="What is difficult or valuable enough to justify parallel work?" /></label>
       <fieldset><legend>Recipe</legend>
         {recipe.map((step, index) => <div className="symphony-step" key={step.step_id}>
-          <label>Step {index + 1}<input value={step.title} onChange={(event) => updateStep(index, { title: event.target.value })} placeholder="What should happen?" /></label>
-          <label>Done when<input value={step.done_when} onChange={(event) => updateStep(index, { done_when: event.target.value })} placeholder="Observable acceptance evidence" /></label>
-          <label className="symphony-check"><input type="checkbox" checked={step.search} onChange={(event) => updateStep(index, { search: event.target.checked })} /> Search node — spend may occur here</label>
-          {step.search && <label>Stratagems · one named approach per line<textarea
+          <label>Step {index + 1}<TextField value={step.title} onChange={(event) => updateStep(index, { title: event.target.value })} placeholder="What should happen?" /></label>
+          <label>Done when<TextField value={step.done_when} onChange={(event) => updateStep(index, { done_when: event.target.value })} placeholder="Observable acceptance evidence" /></label>
+          <label className="symphony-check"><Toggle checked={step.search} onChange={(event) => updateStep(index, { search: event.target.checked })} /> Search node — spend may occur here</label>
+          {step.search && <label>Stratagems · one named approach per line<TextArea
             value={(step.stratagems ?? []).join('\n')}
             placeholder={'Direct: simplest implementation\nTest first: acceptance tests before code'}
             onChange={(event) => updateStep(index, { stratagems: event.target.value.split('\n') })}
           /></label>}
         </div>)}
-        <button type="button" className="symphony-card__minor" disabled={recipe.length >= 12} onClick={() => setRecipe((current) => [...current, { step_id: `step-${current.length + 1}`, title: '', done_when: '', search: false }])}>Add recipe step</button>
+        <Button variant="bare" type="button" className="symphony-card__minor" disabled={recipe.length >= 12} onClick={() => setRecipe((current) => [...current, { step_id: `step-${current.length + 1}`, title: '', done_when: '', search: false }])}>Add recipe step</Button>
       </fieldset>
       <fieldset><legend>Fixed judge charters</legend>
         {charters.map((charter, index) => <div className="symphony-judge" key={charter.seat}>
           <strong>{charter.seat}</strong>
-          <label>Rubric<input value={charter.rubric[0]} onChange={(event) => updateCharter(index, 'rubric', event.target.value)} /></label>
-          <label>Required evidence<input value={charter.evidence_requirements[0]} onChange={(event) => updateCharter(index, 'evidence_requirements', event.target.value)} /></label>
-          {charter.seat === 'performance' && <label>Precalculated metric<input value={charter.metrics[0]} onChange={(event) => updateCharter(index, 'metrics', event.target.value)} /></label>}
+          <label>Rubric<TextField value={charter.rubric[0]} onChange={(event) => updateCharter(index, 'rubric', event.target.value)} /></label>
+          <label>Required evidence<TextField value={charter.evidence_requirements[0]} onChange={(event) => updateCharter(index, 'evidence_requirements', event.target.value)} /></label>
+          {charter.seat === 'performance' && <label>Precalculated metric<TextField value={charter.metrics[0]} onChange={(event) => updateCharter(index, 'metrics', event.target.value)} /></label>}
         </div>)}
       </fieldset>
       <fieldset><legend>T2 AUTHORITY — real walls</legend>
         <div className="symphony-authority">
-          <label>Attempts<input type="number" min="1" value={authority.attempts} onChange={(event) => setAuthority({ ...authority, attempts: event.target.valueAsNumber })} /></label>
-          <label>Spend USD<input type="number" min="0.01" step="0.01" value={authority.spend_wall_usd} onChange={(event) => setAuthority({ ...authority, spend_wall_usd: event.target.value })} /></label>
-          <label>Rounds<input type="number" min="1" value={authority.max_rounds} onChange={(event) => setAuthority({ ...authority, max_rounds: event.target.valueAsNumber })} /></label>
-          <label>Depth<input type="number" min="0" value={authority.depth_cap} onChange={(event) => setAuthority({ ...authority, depth_cap: event.target.valueAsNumber })} /></label>
-          <label>Children / attempt<input type="number" min="0" value={authority.children_per_attempt} onChange={(event) => setAuthority({ ...authority, children_per_attempt: event.target.valueAsNumber })} /></label>
-          <label>Minutes<input type="number" min="1" value={authority.duration_minutes} onChange={(event) => setAuthority({ ...authority, duration_minutes: event.target.valueAsNumber })} /></label>
+          <label>Attempts<TextField type="number" min="1" value={authority.attempts} onChange={(event) => setAuthority({ ...authority, attempts: event.target.valueAsNumber })} /></label>
+          <label>Spend USD<TextField type="number" min="0.01" step="0.01" value={authority.spend_wall_usd} onChange={(event) => setAuthority({ ...authority, spend_wall_usd: event.target.value })} /></label>
+          <label>Rounds<TextField type="number" min="1" value={authority.max_rounds} onChange={(event) => setAuthority({ ...authority, max_rounds: event.target.valueAsNumber })} /></label>
+          <label>Depth<TextField type="number" min="0" value={authority.depth_cap} onChange={(event) => setAuthority({ ...authority, depth_cap: event.target.valueAsNumber })} /></label>
+          <label>Children / attempt<TextField type="number" min="0" value={authority.children_per_attempt} onChange={(event) => setAuthority({ ...authority, children_per_attempt: event.target.valueAsNumber })} /></label>
+          <label>Minutes<TextField type="number" min="1" value={authority.duration_minutes} onChange={(event) => setAuthority({ ...authority, duration_minutes: event.target.valueAsNumber })} /></label>
         </div>
-        <label className="symphony-check symphony-sign"><input type="checkbox" checked={authority.signed} onChange={(event) => setAuthority({ ...authority, signed: event.target.checked })} /> I authorize up to {authority.attempts} attempts, ${authority.spend_wall_usd}, {authority.max_rounds} rounds, depth {authority.depth_cap}, {authority.children_per_attempt} children per attempt, and {authority.duration_minutes} minutes.</label>
+        <label className="symphony-check symphony-sign"><Toggle checked={authority.signed} onChange={(event) => setAuthority({ ...authority, signed: event.target.checked })} /> I authorize up to {authority.attempts} attempts, ${authority.spend_wall_usd}, {authority.max_rounds} rounds, depth {authority.depth_cap}, {authority.children_per_attempt} children per attempt, and {authority.duration_minutes} minutes.</label>
       </fieldset>
-      <footer className="symphony-card__footer"><span role="status">{status}</span><button type="button" disabled={!complete || busy} onClick={() => void launch()}>{busy ? 'Launching…' : 'Sign & run Symphony'}</button></footer>
+      <footer className="symphony-card__footer"><span role="status">{status}</span><Button variant="primary" type="button" disabled={!complete || busy} onClick={() => void launch()}>{busy ? 'Launching…' : 'Sign & run Symphony'}</Button></footer>
     </section>
   )
 }

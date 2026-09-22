@@ -4,6 +4,7 @@ import type { JsonValue } from './protocol'
 import { useRackPlugin, useRackSnapshot } from './rack'
 import { formatHumanCount, formatHumanPercent } from './humanNumbers'
 import './assets/honest-display.css'
+import { Button } from './kit'
 
 type Scope = 'GLOBAL' | 'ATTUNED'
 type Category = 'system' | 'history' | 'memory' | 'tools'
@@ -121,7 +122,7 @@ export function ContextBars({ workerSnapshot }: { workerSnapshot?: JsonValue } =
           <p className="context-bars__note">Provider total {formatHumanPercent(usedPercent)} · lanes estimated{workerSnapshot === undefined ? ` · Compaction at ${formatHumanPercent(visibleObservation.threshold_tokens / visibleObservation.context_tokens * 100)} of the main conversation` : ' · Latest completed worker request'}</p>
         </>
       )}
-      {failed && <button className="context-bars__retry" onClick={() => setRefresh((value) => value + 1)}>Context usage unavailable · retry</button>}
+      {failed && <Button variant="bare" className="context-bars__retry" onClick={() => setRefresh((value) => value + 1)}>Context usage unavailable · retry</Button>}
     </section>
   )
 }

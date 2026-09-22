@@ -8,6 +8,7 @@ import {
   reconcileProjectControlState,
   projectScopeLabel,
 } from './projectPath'
+import { Button, TextField } from './kit'
 
 export interface ProjectSelectorProps {
   selectedThreadId: string | null
@@ -109,7 +110,7 @@ export function ProjectSelector({
     <form className="project-selector" aria-label="Current project" onSubmit={submitProject}>
       <label htmlFor="current-project-path">
         <span>Project</span>
-        <input
+        <TextField
           id="current-project-path"
           data-testid="current-project"
           type="text"
@@ -137,7 +138,7 @@ export function ProjectSelector({
       <datalist id="known-project-paths">
         {projectPaths.map((path) => <option value={path} key={path} />)}
       </datalist>
-      <button className="visually-hidden" type="submit">Open project</button>
+      <Button variant="bare" className="visually-hidden" type="submit">Open project</Button>
       <span
         id="project-selector-status"
         className="project-selector__status"

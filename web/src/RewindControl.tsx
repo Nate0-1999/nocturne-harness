@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useRackPlugin } from './rack'
+import { Button, Select } from './kit'
 
 export function RewindControl({ threadId, promptId, disabled }: {
   threadId: string; promptId: string; disabled: boolean
@@ -17,12 +18,12 @@ export function RewindControl({ threadId, promptId, disabled }: {
     finally { setBusy(false) }
   }
   return <span className="rewind-control">
-    <select aria-label="Rewind scope" value={scope} disabled={busy || disabled}
+    <Select aria-label="Rewind scope" value={scope} disabled={busy || disabled}
       onChange={(event) => setScope(event.target.value as typeof scope)}>
       <option value="both">Chat + files</option><option value="conversation">Chat</option><option value="files">Files</option>
-    </select>
-    <button type="button" disabled={busy || disabled} onClick={() => void rewind()}
-      title="Return to before this turn. Ignored files and real Git history stay unchanged.">Rewind</button>
+    </Select>
+    <Button type="button" disabled={busy || disabled} onClick={() => void rewind()}
+      title="Return to before this turn. Ignored files and real Git history stay unchanged.">Rewind</Button>
     {status && <small role="status">{status}</small>}
   </span>
 }

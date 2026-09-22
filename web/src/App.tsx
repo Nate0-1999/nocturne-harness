@@ -152,6 +152,7 @@ import {
   type AttunementTarget,
   type StickyAttunementPick,
 } from './attunement'
+import { Button, Select, TextField, Toggle } from './kit'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
 const SEAM_COLORS = (JSON.parse(seamColorsRaw) as { colors: SeamColorEntry[] }).colors
@@ -782,7 +783,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           theme={theme}
           isRegressionFixture={isRegressionFixture}
         />
-        <button
+        <Button variant="bare"
           className="app-settings-toggle"
           type="button"
           data-testid="app-settings-toggle"
@@ -792,19 +793,19 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           onClick={() => setAppSettingsOpen((open) => !open)}
         >
           <span aria-hidden="true">⚙</span>
-        </button>
+        </Button>
       </div>
       {appSettingsOpen && (
         <aside className="app-settings-panel" data-testid="app-settings-panel" aria-label="App settings">
           <header>
             <strong>Settings</strong>
-            <button type="button" aria-label="Close app settings" onClick={() => setAppSettingsOpen(false)}>×</button>
+            <Button type="button" aria-label="Close app settings" data-tooltip-detail="Hide the settings panel." onClick={() => setAppSettingsOpen(false)}>×</Button>
           </header>
           <section>
             <h2>Appearance</h2>
             <label className="theme-control">
               <span>Theme</span>
-              <select
+              <Select
                 value={theme}
                 data-testid="theme-control"
                 data-tooltip-detail="Apply a color theme across the Stage and every module."
@@ -816,7 +817,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                 {colorways.map((choice) => (
                   <option key={choice.id} value={choice.id}>{choice.label}</option>
                 ))}
-              </select>
+              </Select>
             </label>
             <input
               ref={plateInputRef}
@@ -827,7 +828,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               onChange={(event) => void pressPlate(event)}
             />
             <div className="app-settings-actions">
-              <button
+              <Button
                 className="plate-press-button"
                 type="button"
                 disabled={platePressBusy}
@@ -836,25 +837,26 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                 onClick={() => plateInputRef.current?.click()}
               >
                 {platePressBusy ? 'Pressing…' : 'Press image'}
-              </button>
+              </Button>
               {selectedColorway !== null ? (
-                <button
+                <Button variant="bare"
                   className="plate-remove-button"
                   type="button"
                   data-testid="plate-remove-button"
                   onClick={removeSelectedColorway}
                 >
                   Remove colorway
-                </button>
+                </Button>
               ) : null}
             </div>
           </section>
           <section>
             <h2>Conversation backup</h2>
             <label className="transcript-backup-control">
-              <input
-                type="checkbox"
+              <Toggle
                 data-testid="transcript-backup-toggle"
+                data-tooltip="Transcript backup"
+                data-tooltip-detail="Copy conversation transcripts to your Palace as well as this machine."
                 checked={transcriptBackup?.enabled ?? false}
                 disabled={transcriptBackup === null || transcriptBackupBusy}
                 onChange={(event) => void changeTranscriptBackup(event.currentTarget.checked)}
@@ -876,16 +878,18 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             <h2>Stage layout</h2>
             <p data-testid="layout-status">{layoutStatus}</p>
             <div className="app-settings-actions">
-              <button type="button" data-testid="layout-save" onClick={saveCurrentSet}>Save</button>
-              <button
+              <Button type="button" data-testid="layout-save" data-tooltip="Save layout" data-tooltip-detail="Keep the current stage layout as your saved set." onClick={saveCurrentSet}>Save</Button>
+              <Button
                 type="button"
                 data-testid="layout-restore"
+                data-tooltip="Restore layout"
+                data-tooltip-detail="Return the stage to your saved set."
                 disabled={savedSet === null}
                 onClick={restoreSavedSet}
               >
                 Restore
-              </button>
-              <button type="button" data-testid="layout-reset" onClick={resetFactorySet}>Reset</button>
+              </Button>
+              <Button type="button" data-testid="layout-reset" data-tooltip="Reset layout" data-tooltip-detail="Return the stage to the factory layout." onClick={resetFactorySet}>Reset</Button>
             </div>
           </section>
           <MemoryRestore />
@@ -901,25 +905,26 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
         <div className="stage-layers" role="tablist" aria-label="Stage layers">
           {layout.layers.map((candidate) => (
             <div className="stage-layer-tab" key={candidate.layer_id}>
-              <button
+              <Button variant="bare"
                 type="button"
                 role="tab"
                 aria-selected={candidate.layer_id === layout.active_layer_id}
                 onClick={() => setLayout((current) => selectStageLayer(current, candidate.layer_id))}
               >
                 {candidate.name}
-              </button>
-              <button
+              </Button>
+              <Button variant="bare"
                 type="button"
                 aria-label={`Remove ${candidate.name} layer`}
+                data-tooltip-detail="Shelve this layer; the library can bring it back."
                 onClick={() => setLayout((current) => removeStageLayer(current, candidate.layer_id))}
               >
                 ×
-              </button>
+              </Button>
             </div>
           ))}
         </div>
-        <button
+        <Button variant="bare"
           className="stage-layer-create"
           type="button"
           data-testid="stage-layer-create"
@@ -929,25 +934,25 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
         >
           <span aria-hidden="true">＋</span>
           Layer
-        </button>
+        </Button>
         <div className="stage-camera-controls" role="group" aria-label="View layout">
-          <button type="button" aria-pressed={!sheetMode} onClick={() => setSheetMode(false)}>Stage</button>
-          <button type="button" aria-pressed={sheetMode} onClick={() => setSheetMode(true)}>Sheet</button>
+          <Button variant="bare" type="button" data-tooltip-detail="Free placement: drag, resize and zoom the modules." aria-pressed={!sheetMode} onClick={() => setSheetMode(false)}>Stage</Button>
+          <Button variant="bare" type="button" data-tooltip-detail="The same modules laid out full size in one scrolling sheet." aria-pressed={sheetMode} onClick={() => setSheetMode(true)}>Sheet</Button>
         </div>
         <div className="stage-camera-controls" aria-label="Stage camera" hidden={sheetMode}>
-          <button type="button" aria-label="Zoom out" data-tooltip-detail="Show more of this layer without changing module sizes or positions." onClick={() => zoomAt(layer.camera.zoom - 0.1)}>−</button>
+          <Button variant="bare" type="button" aria-label="Zoom out" data-tooltip-detail="Show more of this layer without changing module sizes or positions." onClick={() => zoomAt(layer.camera.zoom - 0.1)}>−</Button>
           <output data-testid="stage-zoom">{Math.round(layer.camera.zoom * 100)}%</output>
-          <button type="button" aria-label="Zoom in" data-tooltip-detail="Enlarge this layer on screen without changing its layout." onClick={() => zoomAt(layer.camera.zoom + 0.1)}>+</button>
-          <button
+          <Button variant="bare" type="button" aria-label="Zoom in" data-tooltip-detail="Enlarge this layer on screen without changing its layout." onClick={() => zoomAt(layer.camera.zoom + 0.1)}>+</Button>
+          <Button variant="bare"
             type="button"
             data-testid="stage-fit"
             data-tooltip-detail="Fit every module on this layer into the visible Stage."
             onClick={() => changeCamera(fitStageCamera(viewportSize.width, viewportSize.height))}
           >
             Whole stage
-          </button>
+          </Button>
         </div>
-        <button
+        <Button variant="bare"
           className="stage-library-toggle"
           type="button"
           data-testid="stage-library-toggle"
@@ -956,7 +961,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           onClick={() => setLibraryOpen((open) => !open)}
         >
           Library
-        </button>
+        </Button>
       </div>
       <output className="plate-press-status" role="status" data-testid="plate-press-status">
         {platePressStatus}
@@ -1005,7 +1010,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               namedStackSelected={scope !== 'GLOBAL' && Boolean(module.attunement_source_id)}
               attunementControl={!attunements.sources.some((source) => source.source_instance_id === module.instance_id) && (
                 <label className="rack-stack-control"><span>Named stack</span>
-                  <select
+                  <Select
                     aria-label={`${RACK_MANIFESTS[module.module_id].name} named stack`}
                     value={scope === 'GLOBAL' ? '' : module.attunement_source_id ?? ''}
                     onChange={(event) => {
@@ -1020,7 +1025,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                     {attunements.sources.filter((source) => source.kind === 'stack').map((source) => (
                       <option key={source.source_instance_id} value={source.source_instance_id}>{source.name}</option>
                     ))}
-                  </select>
+                  </Select>
                 </label>
               )}
               conversationMode={module.conversation_mode}
@@ -1041,9 +1046,9 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           <nav className="stage-recall" aria-label="Off-screen modules">
             <span>Off-screen</span>
             {offscreenModules.map((module) => (
-              <button key={module.instance_id} type="button" onClick={() => focusModule(module)}>
+              <Button variant="bare" key={module.instance_id} type="button" onClick={() => focusModule(module)}>
                 {RACK_MANIFESTS[module.module_id].name}
-              </button>
+              </Button>
             ))}
           </nav>
         )}
@@ -1053,9 +1058,8 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
         <aside className="stage-library" data-testid="stage-library" aria-label="Stage library">
           <header>
             <strong>Stage library</strong>
-            <button type="button" aria-label="Close stage library" onClick={() => setLibraryOpen(false)}>×</button>
+            <Button variant="bare" type="button" aria-label="Close stage library" onClick={() => setLibraryOpen(false)}>×</Button>
           </header>
-          <p>Put any instrument back on this layer.</p>
           <RackPluginUpload onInstalled={(id) => setLayout((current) => restoreStageModule(current, id))} />
           <ul>
             {STAGE_MODULE_IDS.map((moduleId) => {
@@ -1064,7 +1068,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               return (
                 <li key={moduleId}>
                   <span>{RACK_MANIFESTS[moduleId].name}</span>
-                  <button
+                  <Button variant="bare"
                     type="button"
                     disabled={present && !multiInstance}
                     onClick={() => setLayout((current) => multiInstance && present
@@ -1072,7 +1076,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                       : restoreStageModule(current, moduleId))}
                   >
                     {present ? multiInstance ? 'Add another' : 'On stage' : 'Add'}
-                  </button>
+                  </Button>
                 </li>
               )
             })}
@@ -1084,7 +1088,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                 {layer.removed_modules.map((removed) => (
                   <li key={removed.instance_id}>
                     <span>{RACK_MANIFESTS[removed.module_id].name}</span>
-                    <button
+                    <Button variant="bare"
                       type="button"
                       onClick={() => setLayout((current) => restoreStageModule(
                         current,
@@ -1092,7 +1096,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                       ))}
                     >
                       Restore
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>
@@ -1105,12 +1109,12 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                 {layout.removed_layers.map((removed) => (
                   <li key={removed.layer_id}>
                     <span>{removed.name}</span>
-                    <button
+                    <Button variant="bare"
                       type="button"
                       onClick={() => setLayout((current) => restoreStageLayer(current, removed.layer_id))}
                     >
                       Restore
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>
@@ -1120,7 +1124,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
       )}
 
       {drawerModule !== null && (
-        <button
+        <Button variant="bare"
           className="drawer-scrim rack-drawer-scrim"
           type="button"
           tabIndex={-1}
@@ -1178,7 +1182,7 @@ function DismissibleRackOverlay({
       data-rack-module={moduleId}
       data-stage-return="one-click"
     >
-      <button
+      <Button variant="bare"
         className="rack-stage-back"
         type="button"
         data-testid="back-to-stage"
@@ -1186,7 +1190,7 @@ function DismissibleRackOverlay({
       >
         <span aria-hidden="true">←</span>
         Back to stage
-      </button>
+      </Button>
       <RackSettingsControl
         manifest={RACK_MANIFESTS[moduleId]}
         scope={scope}
@@ -1465,14 +1469,15 @@ function RackModuleFrame({
           {manifest.id === 'conversation' && conversationMode !== undefined && (
             <div className="conversation-mode" role="group" aria-label="Conversation mode">
               {(['focused', 'stack'] as const).map((mode) => (
-                <button
+                <Button variant="bare"
                   key={mode}
                   type="button"
                   aria-pressed={conversationMode === mode}
+                  data-tooltip-detail={mode === 'focused' ? 'One conversation fills the module.' : 'Every live conversation as a stack of cards.'}
                   onClick={() => onConversationModeChange?.(instanceId, mode)}
                 >
                   {mode === 'focused' ? 'Focused' : 'Stack'}
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -1485,7 +1490,7 @@ function RackModuleFrame({
             namedStackSelected={namedStackSelected}
           />
           {onRemove !== undefined && (
-            <button
+            <Button variant="bare"
               className="rack-module__remove"
               type="button"
               aria-label={`Remove ${manifest.name}`}
@@ -1494,10 +1499,10 @@ function RackModuleFrame({
               onClick={() => onRemove(instanceId)}
             >
               ×
-            </button>
+            </Button>
           )}
           {onCollapseToggle !== undefined && (
-            <button
+            <Button variant="bare"
               className="rack-module__collapse"
               type="button"
               data-testid="vitals-collapse"
@@ -1507,7 +1512,7 @@ function RackModuleFrame({
             >
               <span aria-hidden="true">{collapsed ? '⌃' : '⌄'}</span>
               {collapsed ? 'Expand' : 'Collapse'}
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -1519,7 +1524,7 @@ function RackModuleFrame({
       )}
       {!sheetMode && resizeDirections.map((direction) => {
         return (
-          <button
+          <Button variant="bare"
             key={direction}
             className={`rack-module__resize-handle rack-module__resize-handle--${direction}`}
             type="button"
@@ -1623,7 +1628,7 @@ function RackSettingsControl({
 
   return (
     <div ref={rootRef} className="rack-module__settings" data-settings-open={open || undefined}>
-      <button
+      <Button variant="bare"
         className="rack-module__settings-toggle"
         type="button"
         data-testid={`rack-settings-${manifest.id}`}
@@ -1634,32 +1639,32 @@ function RackSettingsControl({
         onClick={toggle}
       >
         <span aria-hidden="true">⚙</span>
-      </button>
+      </Button>
       {open && (
         <dialog open className="rack-module__settings-dialog" aria-label={`${manifest.name} settings`}>
           {scopeAdjustable ? (
             <>
               <header>
                 <strong>{manifest.name}</strong>
-                <button
+                <Button
                   type="button"
                   aria-label={`Close ${manifest.name} settings`}
                   onClick={toggle}
                 >
                   ×
-                </button>
+                </Button>
               </header>
               <p>Choose what this module {spatial ? 'watches' : 'follows'}.</p>
               <div className="rack-module__scope" aria-label={`${manifest.name} view`}>
                 {(['GLOBAL', 'ATTUNED'] as const).map((value) => (
-                  <button
+                  <Button
                     key={value}
                     type="button"
                     aria-pressed={scope === value && !namedStackSelected}
                     onClick={() => onScopeChange?.(value)}
                   >
                     {value === 'GLOBAL' ? 'Everything' : spatial ? 'Nearest frame' : 'Nearest source'}
-                  </button>
+                  </Button>
                 ))}
               </div>
               {attunementControl}
@@ -1814,7 +1819,7 @@ function HeaderModule() {
       <span className="app-settings-reserve" aria-hidden="true" />
 
       <div className="mobile-navigation">
-        <button
+        <Button variant="bare"
           className="mobile-threads"
           type="button"
           data-testid="mobile-threads"
@@ -1824,8 +1829,8 @@ function HeaderModule() {
         >
           <span className="mobile-navigation__label">Threads</span>
           <span>{snapshot.catalog.length.toString().padStart(2, '0')}</span>
-        </button>
-        <button
+        </Button>
+        <Button variant="bare"
           className="mobile-memories"
           type="button"
           data-testid="mobile-memories"
@@ -1835,7 +1840,7 @@ function HeaderModule() {
         >
           <span className="mobile-navigation__label">Memory</span>
           <span>{memoryTotal}</span>
-        </button>
+        </Button>
       </div>
 
       <p
@@ -1893,7 +1898,7 @@ function ThreadsModule() {
     <aside className="thread-rail" aria-labelledby="thread-rail-title">
       <div className="thread-rail__header">
         <h2 id="thread-rail-title">Threads</h2>
-        <button
+        <Button variant="bare"
           className="rail-close"
           type="button"
           data-testid="mobile-close-threads"
@@ -1901,24 +1906,55 @@ function ThreadsModule() {
           onClick={() => selection.select(null)}
         >
           Back
-        </button>
+        </Button>
       </div>
 
-      <button
-        className="new-thread"
-        type="button"
-        data-testid="new-thread"
-        onClick={() => {
-          setCreateFailure(null)
-          setWorkspaceDraft(
-            selectedEntry?.current_location ?? selectedEntry?.workspace_root ?? '',
-          )
-          setCreating((value) => !value)
-        }}
-      >
-        <span aria-hidden="true">＋</span>
-        New thread
-      </button>
+      <div className="thread-rail__actions">
+        <Button variant="primary"
+          className="new-thread"
+          type="button"
+          data-testid="new-thread"
+          data-tooltip="New thread"
+          data-tooltip-detail="Start a conversation in a folder you choose."
+          onClick={() => {
+            setCreateFailure(null)
+            setWorkspaceDraft(
+              selectedEntry?.current_location ?? selectedEntry?.workspace_root ?? '',
+            )
+            setCreating((value) => !value)
+          }}
+        >
+          <span aria-hidden="true">＋</span>
+          New thread
+        </Button>
+        {selectedEntry?.workspace_root === null && selectedEntry.project_key !== null && (
+            <Button
+              className="new-thread"
+              type="button"
+              data-testid="bind-thread-folder"
+              data-tooltip="Bind to a folder"
+              data-tooltip-detail="Give this older thread a working folder."
+              onClick={() => {
+                setLegacyWorkspaceDraft('')
+                setBindingLegacy((value) => !value)
+              }}
+            >
+              Bind to folder
+            </Button>
+        )}
+        {fixtureThreadCount > 0 && (
+          <Button variant="danger"
+            className="fixture-catalog-cleanup"
+            type="button"
+            data-tooltip-detail="Remove threads left behind by verification fixtures."
+            onClick={() => {
+              void events.dispatch({ type: 'catalog.cleanup-fixtures' })
+            }}
+          >
+            Remove {fixtureThreadCount} fixture {fixtureThreadCount === 1 ? 'thread' : 'threads'}
+          </Button>
+        )}
+      </div>
 
       {creating && (
         <form
@@ -1931,7 +1967,7 @@ function ThreadsModule() {
         >
           <label htmlFor="thread-workspace-root">Start this thread in</label>
           <div className="thread-create__row">
-            <input
+            <TextField
               id="thread-workspace-root"
               data-testid="thread-workspace-root"
               type="text"
@@ -1941,7 +1977,7 @@ function ThreadsModule() {
               autoFocus
               onChange={(event) => setWorkspaceDraft(event.currentTarget.value)}
             />
-            <button
+            <Button variant="primary"
               type="submit"
               disabled={workspaceDraft.trim() === ''}
               onClick={(event) => {
@@ -1950,7 +1986,7 @@ function ThreadsModule() {
               }}
             >
               Create
-            </button>
+            </Button>
           </div>
           <datalist id="known-thread-locations">
             {knownLocations.map((location) => <option value={location} key={location} />)}
@@ -1959,20 +1995,7 @@ function ThreadsModule() {
         </form>
       )}
 
-      {selectedEntry?.workspace_root === null && selectedEntry.project_key !== null && (
-        <>
-          <button
-            className="new-thread"
-            type="button"
-            data-testid="bind-thread-folder"
-            onClick={() => {
-              setLegacyWorkspaceDraft('')
-              setBindingLegacy((value) => !value)
-            }}
-          >
-            Bind this thread to a folder
-          </button>
-          {bindingLegacy && (
+      {selectedEntry?.workspace_root === null && selectedEntry.project_key !== null && bindingLegacy && (
             <form
               className="thread-create"
               data-testid="thread-bind-workspace"
@@ -1989,7 +2012,7 @@ function ThreadsModule() {
             >
               <label htmlFor="legacy-thread-workspace-root">Folder for this thread</label>
               <div className="thread-create__row">
-                <input
+                <TextField
                   id="legacy-thread-workspace-root"
                   data-testid="legacy-thread-workspace-root"
                   type="text"
@@ -1999,24 +2022,10 @@ function ThreadsModule() {
                   autoFocus
                   onChange={(event) => setLegacyWorkspaceDraft(event.currentTarget.value)}
                 />
-                <button type="submit" disabled={legacyWorkspaceDraft.trim() === ''}>Bind</button>
+                <Button variant="primary" type="submit" disabled={legacyWorkspaceDraft.trim() === ''}>Bind</Button>
               </div>
             </form>
           )}
-        </>
-      )}
-
-      {fixtureThreadCount > 0 && (
-        <button
-          className="fixture-catalog-cleanup"
-          type="button"
-          onClick={() => {
-            void events.dispatch({ type: 'catalog.cleanup-fixtures' })
-          }}
-        >
-          Remove {fixtureThreadCount} fixture {fixtureThreadCount === 1 ? 'thread' : 'threads'}
-        </button>
-      )}
 
       <nav className="thread-list" data-testid="thread-list" aria-label="Known threads">
         {sortedCatalog.map((entry) => {
@@ -2026,7 +2035,7 @@ function ThreadsModule() {
           const queueCount = runtime?.queuedPrompts.length ?? 0
           const outboundCount = runtime?.outboundPrompts.length ?? 0
           const detail = runtime?.awaitingSnapshot
-            ? 'Not loaded'
+            ? ''
             : liveState === 'cancelling'
               ? 'Stopping'
               : liveState === 'waiting_gate'
@@ -2047,9 +2056,11 @@ function ThreadsModule() {
               className={`thread-item${isSelected ? ' thread-item--selected' : ''}`}
               data-thread-id={entry.thread_id}
             >
-              <button
+              <Button variant="bare"
                 className="thread-item__select"
                 type="button"
+                data-tooltip={visibleThreadTitle(entry.title)}
+                data-tooltip-detail="Open this thread."
                 aria-current={isSelected ? 'page' : undefined}
                 onClick={() => {
                   selection.select({ kind: 'thread', id: entry.thread_id })
@@ -2068,8 +2079,8 @@ function ThreadsModule() {
                     {entry.current_location}
                   </span>
                 )}
-              </button>
-              <button
+              </Button>
+              <Button
                 className="thread-item__archive"
                 type="button"
                 aria-label={`Archive ${visibleThreadTitle(entry.title)}`}
@@ -2085,7 +2096,7 @@ function ThreadsModule() {
                 }}
               >
                 <span aria-hidden="true">{archiveBusyThreadId === entry.thread_id ? '…' : '⤓'}</span>
-              </button>
+              </Button>
             </div>
           )
         })}
@@ -2129,7 +2140,7 @@ function ThreadWorkspaceContext({
     >
       <label htmlFor="current-project-label">
         <span>Project</span>
-        <input
+        <TextField
           id="current-project-label"
           data-testid="current-project"
           type="text"
@@ -2783,8 +2794,7 @@ function ThreadEndModule({ inline = false }: { inline?: boolean }) {
     <div className="thread-end-module">
       {cards.length === 0 ? (inline ? null : (
         <section className="thread-end-card thread-end-card--empty">
-          <h2>Nothing pending</h2>
-          <p>Duplicate lessons were folded out, or this thread produced no durable candidates.</p>
+          <h2 title="Duplicate lessons were folded out, or this thread produced no durable candidates.">Nothing pending</h2>
         </section>
       )) : (
         <ThreadEndCard
@@ -2873,14 +2883,14 @@ function ThreadEndCard({
         <span>Final post</span>
         <p>{view.final_post || 'No final assistant post was captured.'}</p>
       </div>}
-      <button
+      <Button
         className="thread-end-card__collapse"
         type="button"
         aria-expanded={!collapsed}
         onClick={() => setCollapsed((value) => !value)}
       >
         {collapsed ? `Show ${view.cards.length} candidates` : 'Collapse candidates'}
-      </button>
+      </Button>
       {!collapsed && (
         <div className="thread-end-list">
           {view.cards.map((card) => (
@@ -2902,9 +2912,9 @@ function ThreadEndCard({
         </div>
       )}
       <footer>
-        <button type="button" onClick={resolveVisible} disabled={collapsed}>
+        <Button type="button" onClick={resolveVisible} disabled={collapsed}>
           Resolve visible · keep unseen pending
-        </button>
+        </Button>
         <span>Contradictions always need a tap.</span>
       </footer>
     </section>
@@ -2957,8 +2967,8 @@ function VisibleQueueRow({
         <small>Neighbors: {card.neighbors.map((item) => item.label).join(', ')}</small>
       )}
       <div className="thread-end-row__actions">
-        <button type="button" disabled={disabled} onClick={onDeny}>Deny</button>
-        <button type="button" disabled={disabled} onClick={onApprove}>Approve</button>
+        <Button variant="danger" type="button" disabled={disabled} onClick={onDeny}>Deny</Button>
+        <Button variant="primary" type="button" disabled={disabled} onClick={onApprove}>Approve</Button>
       </div>
     </article>
   )
@@ -3042,7 +3052,7 @@ function PalaceQueueModule() {
   const [agentFiles, setAgentFiles] = useState<AgentFileOffer[]>([])
   const [agentFilesTruncated, setAgentFilesTruncated] = useState(false)
   const [queuedAgentFiles, setQueuedAgentFiles] = useState(new Set<string>())
-  const [statusText, setStatusText] = useState('Add Markdown when you want to grow your Palace.')
+  const [statusText, setStatusText] = useState('')
   const [busy, setBusy] = useState(false)
   const [dragging, setDragging] = useState(false)
 
@@ -3182,22 +3192,16 @@ function PalaceQueueModule() {
   return (
     <div className="palace-queue-module" data-testid="memory-ingest">
       <section className="palace-queue-card" aria-label="Memory Ingest">
-        <header className="palace-queue-card__header">
-          <div>
-            <h2>Bring knowledge into your Palace</h2>
-            <p>Documents become standalone memories for review. Nothing enters until you approve the document.</p>
-          </div>
-        </header>
         <section className="curator-state" aria-labelledby="curator-proposals-title" data-testid="curator-proposals">
           <header>
             <div>
               <span>Curator proposals</span>
               <h3 id="curator-proposals-title">Corpus repairs need your consent</h3>
             </div>
-            <strong>{curatorCards.length} awaiting your tap</strong>
+            <strong>{curatorCards.length} waiting</strong>
           </header>
           {curatorCards.length === 0 ? (
-            <small>No surgery is waiting. Curators never change memories without this queue.</small>
+            <small title="Curators never change memories without this queue.">None waiting</small>
           ) : (
             <div className="curator-proposals">
               {curatorCards.map((card) => (
@@ -3208,8 +3212,8 @@ function PalaceQueueModule() {
                     ? card.proposal_payload.rationale
                     : 'The curator supplied no readable rationale.'}</p>
                   <div>
-                    <button type="button" disabled={busy} onClick={() => decideCurator(card.item_uid, 'deny')}>Keep as is</button>
-                    <button type="button" disabled={busy} onClick={() => decideCurator(card.item_uid, 'approve')}>Approve repair</button>
+                    <Button type="button" data-tooltip-detail="Leave this memory unchanged." disabled={busy} onClick={() => decideCurator(card.item_uid, 'deny')}>Keep as is</Button>
+                    <Button variant="primary" type="button" data-tooltip-detail="Apply the curator's repair to this memory." disabled={busy} onClick={() => decideCurator(card.item_uid, 'approve')}>Approve repair</Button>
                   </div>
                 </article>
               ))}
@@ -3220,7 +3224,6 @@ function PalaceQueueModule() {
           <header>
             <div>
               <h3 id="agent-file-jump-start-title">Start with your agent files</h3>
-              <p>These files already guide agents in this workspace. Queue any one to review its memories first.</p>
             </div>
             {agentFilesTruncated ? <span>Showing the first 64 files</span> : null}
           </header>
@@ -3237,9 +3240,9 @@ function PalaceQueueModule() {
                       <strong>{file.relative_path}</strong>
                       <span>{file.byte_count.toLocaleString()} bytes</span>
                     </div>
-                    <button type="button" disabled={busy || queued} onClick={() => queueAgentFile(file)}>
+                    <Button type="button" data-tooltip-detail="Split this file into memories for your review; nothing enters until you approve." disabled={busy || queued} onClick={() => queueAgentFile(file)}>
                       {queued ? 'Waiting for review' : 'Queue for review'}
-                    </button>
+                    </Button>
                   </li>
                 )
               })}
@@ -3264,6 +3267,8 @@ function PalaceQueueModule() {
         >
           <span>{busy ? 'Working…' : 'Drop, paste, or choose Markdown'}</span>
           <input
+            data-tooltip="Add Markdown"
+            data-tooltip-detail="Documents become memories only after you approve them."
             ref={seedInputRef}
             data-testid="seed-upload"
             type="file"
@@ -3278,8 +3283,7 @@ function PalaceQueueModule() {
         <p className="seed-status" aria-live="polite">{statusText}</p>
         {batches.length === 0 ? (
           <div className="palace-queue-empty">
-            <h3>The queue is clear</h3>
-            <p>Pending seed documents will wait here without expiring or interrupting you.</p>
+            <h3>Queue clear</h3>
           </div>
         ) : (
           <div className="seed-batch-list">
@@ -3299,8 +3303,8 @@ function PalaceQueueModule() {
                     ) : null}
                   </div>
                   <div className="seed-batch__actions">
-                    <button type="button" disabled={busy} onClick={() => decideBatch(batchUid, 'deny')}>Reject batch</button>
-                    <button type="button" disabled={busy} onClick={() => decideBatch(batchUid, 'approve')}>Approve batch</button>
+                    <Button variant="danger" type="button" data-tooltip-detail="Discard every memory from this document." disabled={busy} onClick={() => decideBatch(batchUid, 'deny')}>Reject batch</Button>
+                    <Button variant="primary" type="button" data-tooltip-detail="Admit every memory from this document to your Palace." disabled={busy} onClick={() => decideBatch(batchUid, 'approve')}>Approve batch</Button>
                   </div>
                 </header>
                 <div className="seed-batch__memories">

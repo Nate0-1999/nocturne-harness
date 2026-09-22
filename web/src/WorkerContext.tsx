@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ContextBars } from './ContextBars'
 import type { JsonValue } from './protocol'
 import { useRackPlugin } from './rack'
+import { Button } from './kit'
 
 interface Card { memory_id: string; label: string; body: string }
 interface Worker {
@@ -51,12 +52,12 @@ export function WorkerContext({ symphonyId, attemptId }: { symphonyId: string; a
       <h4>Injected memories</h4>
       {worker.injection?.injected.map((card) => <article key={card.memory_id}>
         <strong>{card.label}</strong><p>{card.body}</p>
-        <button type="button" disabled={worker.state !== 'running'} onClick={() => void select(worker, card, false)}>Pop off {card.label}</button>
+        <Button type="button" disabled={worker.state !== 'running'} onClick={() => void select(worker, card, false)}>Pop off {card.label}</Button>
       </article>)}
       <h4>Suggestions and removed memories</h4>
       {[...(worker.injection?.near_misses ?? []), ...worker.removed].map((card) => <article key={card.memory_id}>
         <strong>{card.label}</strong><p>{card.body}</p>
-        <button type="button" disabled={worker.state !== 'running'} onClick={() => void select(worker, card, true)}>Add {card.label}</button>
+        <Button type="button" disabled={worker.state !== 'running'} onClick={() => void select(worker, card, true)}>Add {card.label}</Button>
       </article>)}
     </details>)}
   </section>

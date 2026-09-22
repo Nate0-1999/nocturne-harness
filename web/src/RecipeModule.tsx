@@ -9,6 +9,7 @@ import {
 } from './recipeGraph'
 import { useRackPlugin, useRackSelection } from './rack'
 import './assets/recipe.css'
+import { Button } from './kit'
 
 const POLL_INTERVAL_MS = 2_000
 
@@ -163,15 +164,15 @@ export function RecipeModule() {
                       gridRow: `${cell.row_start + 1} / span ${cell.row_span}`,
                     }}
                   >
-                    <button type="button" onClick={() => inspect(node)}>
+                    <Button variant="bare" type="button" onClick={() => inspect(node)}>
                       <span>{cell.input_node_ids.length} streams join</span>
                       <strong>{node.label}</strong>
                       <small>After {cell.input_node_ids.filter((nodeId) => nodeId !== node.node_id).join(' + ')}</small>
-                    </button>
+                    </Button>
                     {judgeNodes.length > 0 && (
                       <div className="recipe-grid__judges" aria-label={`${judgeNodes.length} judge gates`}>
                         {judgeNodes.map((judge) => (
-                          <button
+                          <Button variant="bare"
                             key={judge.node_id}
                             type="button"
                             data-state={judge.state}
@@ -180,7 +181,7 @@ export function RecipeModule() {
                             onClick={() => inspect(judge)}
                           >
                             {judge.label}
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     )}
@@ -240,7 +241,7 @@ function RecipeCell({
   style: CSSProperties
 }) {
   return (
-    <button
+    <Button variant="bare"
       type="button"
       className={className}
       data-kind={node.kind}
@@ -251,7 +252,7 @@ function RecipeCell({
       onClick={() => onInspect(node)}
     >
       {children}
-    </button>
+    </Button>
   )
 }
 

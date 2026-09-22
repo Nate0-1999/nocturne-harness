@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type RefObject } from 'react'
 import { useRackSnapshot } from './rack'
 import './assets/out-loud.css'
+import { Button } from './kit'
 
 // Web Speech's recognition types are not yet included in TypeScript's DOM library.
 interface Recognition extends EventTarget {
@@ -194,25 +195,25 @@ export function OutLoud({ field, response, responseId, blocked, onDraft, onSend,
   return (
     <div className="out-loud" data-testid="out-loud">
       <div role="group" aria-label="Input mode">
-        <button type="button" aria-pressed={!enabled} onClick={() => {
+        <Button type="button" aria-pressed={!enabled} onClick={() => {
           stop(); setPhase('idle'); setStatus(''); setEnabled(false)
-        }}>Typing</button>
-        <button type="button" aria-pressed={enabled} disabled={!supported || preferenceKey === null}
+        }}>Typing</Button>
+        <Button type="button" aria-pressed={enabled} disabled={!supported || preferenceKey === null}
           onClick={() => {
             setEnabled(true)
-          }}>Out Loud</button>
+          }}>Out Loud</Button>
       </div>
       {!supported && <small>This browser does not support Out Loud. Typing is available.</small>}
       {enabled && <>
-        <button type="button" disabled={blocked} onClick={() => {
+        <Button type="button" disabled={blocked} onClick={() => {
           if (phase === 'listening') {
             recognition.current?.stop()
             setStatus('Listening stopped.')
           } else {
             listen()
           }
-        }}>{phase === 'speaking' ? 'Interrupt and listen' : phase === 'listening' ? 'Stop listening' : 'Listen'}</button>
-        {response.trim() && <button type="button" disabled={blocked} onClick={read}>Read aloud</button>}
+        }}>{phase === 'speaking' ? 'Interrupt and listen' : phase === 'listening' ? 'Stop listening' : 'Listen'}</Button>
+        {response.trim() && <Button type="button" disabled={blocked} onClick={read}>Read aloud</Button>}
         <small role="status">{blocked ? 'Waiting for the conversation…'
           : responding && phase === 'idle' ? 'Reply running. Tap Listen to dictate.' : status}</small>
       </>}

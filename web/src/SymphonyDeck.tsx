@@ -14,6 +14,7 @@ import { useRackPlugin, useRackSnapshot } from './rack'
 import './assets/symphonyDeck.css'
 import { WorkerContext } from './WorkerContext'
 import { OutLoud } from './OutLoud'
+import { Button, Select, TextArea, TextField, Toggle } from './kit'
 
 interface DeckAttempt {
   attempt_id: string
@@ -294,7 +295,7 @@ export function SymphonyDeck() {
       {undo !== null && (
         <aside className="deck-undo" role="status" data-testid="deck-undo">
           <span>Firing to {undo.card.thread_title} in 6 seconds.</span>
-          <button type="button" onClick={recall}>Undo</button>
+          <Button type="button" onClick={recall}>Undo</Button>
         </aside>
       )}
       <p className="deck-status" role="status">{status}</p>
@@ -348,15 +349,15 @@ function ProposedResponseCardView({
       {card.alternatives.length > 0 && (
         <div className="deck-alternatives" aria-label="Alternative replies">
           {card.alternatives.map((alternative) => (
-            <button key={alternative} type="button" onClick={() => onDraft(alternative)}>
+            <Button key={alternative} type="button" onClick={() => onDraft(alternative)}>
               {alternative}
-            </button>
+            </Button>
           ))}
         </div>
       )}
       <label>
         <span>Proposed response · edit freely</span>
-        <textarea
+        <TextArea
           ref={composerRef}
           data-testid={`deck-reply-${card.proposal_run_id}`}
           value={draft}
@@ -372,9 +373,9 @@ function ProposedResponseCardView({
           responseId={card.proposal_run_id} blocked={fireDisabled}
           replaceDraft={draft === card.primary} onDraft={onDraft} />}
         <small>Enter fires · Shift+Enter adds a line</small>
-        <button type="button" disabled={fireDisabled || !draft.trim()} onClick={onFire}>
+        <Button variant="primary" type="button" disabled={fireDisabled || !draft.trim()} onClick={onFire}>
           Fire reply
-        </button>
+        </Button>
       </footer>
     </article>
   )
@@ -443,16 +444,16 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
       <div className="deck-attempts">
         {stack.attempts.map((attempt) => (
           <div className="deck-attempt" key={attempt.attempt_id} data-state={attempt.state}>
-            <div><button type="button" onClick={() => setContextAttempt(
+            <div><Button type="button" onClick={() => setContextAttempt(
               contextAttempt === attempt.attempt_id ? null : attempt.attempt_id
-            )}>{attempt.attempt_id}</button><span>{attempt.state}</span></div>
+            )}>{attempt.attempt_id}</Button><span>{attempt.state}</span></div>
             <small>{attempt.partial_evidence.length} evidence mark(s) · {attempt.memories_admitted ? 'memories queued for review' : 'memories not admitted'}</small>
             {attempt.follow_ups.map((followUp, index) => <p key={index}>Follow-up: {followUp}</p>)}
             {stack.state === 'running' && attempt.state === 'running' && (
-              <button type="button" disabled={busy} onClick={() => void intervene({
+              <Button variant="danger" type="button" disabled={busy} onClick={() => void intervene({
                 kind: 'cancel_attempt', symphony_id: stack.symphony_id,
                 attempt_id: attempt.attempt_id,
-              }, `${attempt.attempt_id} cancelled after draining.`)}>Cancel attempt</button>
+              }, `${attempt.attempt_id} cancelled after draining.`)}>Cancel attempt</Button>
             )}
           </div>
         ))}
@@ -476,31 +477,31 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
         <div className="deck-controls">
           <fieldset>
             <legend>Clarify inside the signed charge</legend>
-            <label>Attempt<select value={selectedAttemptId} onChange={(event) => setAttemptId(event.target.value)}>
+            <label>Attempt<Select value={selectedAttemptId} onChange={(event) => setAttemptId(event.target.value)}>
               {running.map((attempt) => <option key={attempt.attempt_id}>{attempt.attempt_id}</option>)}
-            </select></label>
-            <label>Follow-up<textarea value={instruction} onChange={(event) => setInstruction(event.target.value)} /></label>
-            <button type="button" disabled={busy || selectedAttemptId === '' || instruction.trim() === ''} onClick={() => void intervene({
+            </Select></label>
+            <label>Follow-up<TextArea value={instruction} onChange={(event) => setInstruction(event.target.value)} /></label>
+            <Button type="button" disabled={busy || selectedAttemptId === '' || instruction.trim() === ''} onClick={() => void intervene({
               kind: 'clarification', symphony_id: stack.symphony_id,
               attempt_id: selectedAttemptId, instruction: instruction.trim(),
-            }, 'Clarification logged without changing the charge.')}>Log clarification</button>
+            }, 'Clarification logged without changing the charge.')}>Log clarification</Button>
           </fieldset>
           <fieldset>
             <legend>Change a charter by forking</legend>
-            <label>Judge seat<select value={seat} onChange={(event) => chooseSeat(event.target.value as SymphonyJudgeCharter['seat'])}>
+            <label>Judge seat<Select value={seat} onChange={(event) => chooseSeat(event.target.value as SymphonyJudgeCharter['seat'])}>
               <option value="motivation">motivation</option><option value="implementation">implementation</option><option value="performance">performance</option>
-            </select></label>
-            <label>New rubric<input value={rubric} onChange={(event) => setRubric(event.target.value)} /></label>
-            <label>Required evidence<input value={evidence} onChange={(event) => setEvidence(event.target.value)} /></label>
-            {seat === 'performance' && <label>Metric<input value={metric} onChange={(event) => setMetric(event.target.value)} /></label>}
-            <label className="deck-sign"><input type="checkbox" checked={signed} onChange={(event) => setSigned(event.target.checked)} /> Sign a new fork; never rewrite this stack</label>
-            <button type="button" disabled={busy || !signed || rubric.trim() === '' || evidence.trim() === '' || (seat === 'performance' && metric.trim() === '')} onClick={() => void intervene({
+            </Select></label>
+            <label>New rubric<TextField value={rubric} onChange={(event) => setRubric(event.target.value)} /></label>
+            <label>Required evidence<TextField value={evidence} onChange={(event) => setEvidence(event.target.value)} /></label>
+            {seat === 'performance' && <label>Metric<TextField value={metric} onChange={(event) => setMetric(event.target.value)} /></label>}
+            <label className="deck-sign"><Toggle checked={signed} onChange={(event) => setSigned(event.target.checked)} /> Sign a new fork; never rewrite this stack</label>
+            <Button variant="primary" type="button" disabled={busy || !signed || rubric.trim() === '' || evidence.trim() === '' || (seat === 'performance' && metric.trim() === '')} onClick={() => void intervene({
               kind: 'charter_change', symphony_id: stack.symphony_id, fork_signed: true,
               charter: {
                 seat, rubric: [rubric.trim()], evidence_requirements: [evidence.trim()],
                 metrics: seat === 'performance' ? [metric.trim()] : [],
               },
-            }, 'Fork created. Follow the new lineage card.')}>Sign & fork</button>
+            }, 'Fork created. Follow the new lineage card.')}>Sign & fork</Button>
           </fieldset>
           <p>The judges release completion after inspecting the work.</p>
         </div>
