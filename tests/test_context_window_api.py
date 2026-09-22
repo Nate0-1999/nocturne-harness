@@ -62,7 +62,8 @@ def test_context_history_is_not_fabricated() -> None:
 
 
 def test_public_rack_query_returns_the_shares_and_cuts_in_force() -> None:
-    """FL-198: the Security module reads the shares, bounds, cuts and send-backs live."""
+    """SPEC D.2 153 / FL-198: the Security module reads the shares, bounds, cuts and
+    send-backs live, so the protection is watchable without demanding attention."""
     bounds = ReturnShareBounds(default_percent=10, min_percent=1, max_percent=25)
     tracker = OverwhelmTracker(bounds)
     share = tracker.share_for("thread-a", 1600)

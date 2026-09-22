@@ -294,7 +294,8 @@ async def test_large_worker_return_is_sent_back_twice_then_cut_with_a_head(tmp_p
 
 @pytest.mark.asyncio
 async def test_worker_that_shortens_on_request_is_delivered_whole(tmp_path):
-    """FL-198: one send-back, a compliant return under the share, delivered untouched."""
+    """SPEC D.2 153 / FL-198: one send-back, a compliant return under the share, delivered
+    untouched — worker bulk never forces the main thread to compact."""
     full_return = "worker evidence " * 6000
     parent_returns = []
 
@@ -318,7 +319,8 @@ async def test_worker_that_shortens_on_request_is_delivered_whole(tmp_path):
 
 @pytest.mark.asyncio
 async def test_sender_picks_a_share_inside_the_system_bounds(tmp_path):
-    """FL-198: the delegating agent chooses the share per call; the bounds clamp it."""
+    """SPEC D.2 153 / FL-198: the delegating agent chooses the share per call and the
+    system bounds clamp it, so no sender can exceed the compaction protection."""
     parent_returns = []
 
     def worker(messages, info):
@@ -337,8 +339,8 @@ async def test_sender_picks_a_share_inside_the_system_bounds(tmp_path):
 
 @pytest.mark.asyncio
 async def test_query_result_over_its_share_is_refused_with_a_brief_head():
-    """FL-198: a tool result over the share is not delivered; the agent gets the error and
-    the library's head, and the full text goes to the journal through record_cut."""
+    """SPEC D.2 153 / FL-198: a tool result over the share is not delivered; the agent gets
+    the error and the library's head, and the full text goes to the journal through record_cut."""
     seen = []
 
     def model(messages, info):
