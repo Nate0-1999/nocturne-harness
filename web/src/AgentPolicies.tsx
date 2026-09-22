@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createHostPluginApi, RACK_MANIFESTS, useOptionalRackPlugin } from './rack'
+import { Button, Select, TextArea } from './kit'
 
 const hostPolicies = createHostPluginApi(RACK_MANIFESTS.conversation)
 
@@ -14,7 +15,7 @@ export function AgentPolicies({ level }: { level?: 'Duet' | 'Symphony' }) {
   useEffect(() => {
     events.dispatch({ type: 'policies.load' }).then((value) => {
       setPolicies((value as { policies: Record<string, string> }).policies)
-      setStatus('Applies to new threads and future Symphony rounds. Existing thread choices stay fixed.')
+      setStatus('')
     }).catch((error: Error) => setStatus(error.message))
   }, [events])
   async function save(role: string) {
@@ -37,18 +38,18 @@ export function AgentPolicies({ level }: { level?: 'Duet' | 'Symphony' }) {
       return <fieldset key={role}>
         <legend>{label}</legend>
         <label className="theme-control">Token-cost policy
-          <select aria-label={`${label} token-cost policy`} value={kind} onChange={(event) => {
+          <Select aria-label={`${label} token-cost policy`} data-tooltip-detail="How this role's model is chosen. Applies to new threads and future rounds; existing choices stay fixed." value={kind} onChange={(event) => {
             const next = event.target.value
             setPolicies({ ...policies, [role]: next === 'pinned' ? 'pinned:' : next === 'floor' || next === 'slope' ? `${next}:1` : next })
           }}>
             <option value="pinned">Pinned</option><option value="max">Max</option>
             <option value="elbow">Elbow</option><option value="floor">Floor</option><option value="slope">Slope</option>
-          </select>
+          </Select>
         </label>
         {separator >= 0 && <label>{kind === 'pinned' ? 'Model' : kind === 'floor' ? 'Intelligence floor' : 'Price slope'}
-          <textarea rows={2} aria-label={`${label} policy value`} value={argument} onChange={(event) => setPolicies({ ...policies, [role]: `${kind}:${event.target.value}` })} />
+          <TextArea rows={2} aria-label={`${label} policy value`} data-tooltip-detail="The model id, intelligence floor or price slope this policy uses." value={argument} onChange={(event) => setPolicies({ ...policies, [role]: `${kind}:${event.target.value}` })} />
         </label>}
-        <div className="app-settings-actions"><button type="button" onClick={() => void save(role)}>Save {label.toLowerCase()} policy</button></div>
+        <div className="app-settings-actions"><Button variant="primary" type="button" data-tooltip-detail="Save this role's policy for new threads." onClick={() => void save(role)}>Save {label.toLowerCase()} policy</Button></div>
       </fieldset>
     })}
     {level === 'Symphony'

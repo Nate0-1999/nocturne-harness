@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { JsonValue } from './protocol'
 import { RACK_MANIFESTS, useRackPlugin, useRackSnapshot } from './rack'
+import { Button, Select, TextField } from './kit'
 
 type ParameterValue = string | number | null
 
@@ -154,8 +155,9 @@ export function ModelDevice() {
         }}
       >
         <label htmlFor="model-device-slug">OpenRouter model</label>
-        <input
+        <TextField
           id="model-device-slug"
+          data-tooltip-detail="Any OpenRouter model id, such as provider/model."
           value={slug}
           disabled={!editable}
           onChange={(event) => {
@@ -164,13 +166,14 @@ export function ModelDevice() {
           }}
           spellCheck={false}
         />
-        <button
+        <Button variant="primary"
           type="button"
+          data-tooltip-detail="Switch this conversation to the typed model from the next turn."
           disabled={!editable || slug.trim().length === 0}
           onClick={() => { void write('model.slug', slug) }}
         >
           Resolve
-        </button>
+        </Button>
       </form>
 
       <div className="model-device__controls">
@@ -187,6 +190,7 @@ export function ModelDevice() {
               <input
                 id={`control-${descriptor.id}`}
                 type="range"
+                data-tooltip-detail="Drag to set; the value is journaled with the next turn."
                 min={range.minimum}
                 max={range.maximum}
                 step={range.step ?? 1}
@@ -198,9 +202,9 @@ export function ModelDevice() {
                   void write(descriptor.id, next)
                 }}
               />
-              <button type="button" disabled={!editable || current === null} onClick={() => { void write(descriptor.id, null) }}>
+              <Button type="button" data-tooltip={`Inherit ${descriptor.label}`} data-tooltip-detail="Clear this value and use the provider's default." disabled={!editable || current === null} onClick={() => { void write(descriptor.id, null) }}>
                 Inherit
-              </button>
+              </Button>
             </div>
           )
         })}
@@ -208,15 +212,16 @@ export function ModelDevice() {
         {effort !== undefined && (
           <label className="model-effort" htmlFor="model-device-effort">
             <span>Reasoning effort</span>
-            <select
+            <Select
               id="model-device-effort"
+              data-tooltip-detail="How long the model may think before answering."
               disabled={!editable}
               value={String(scope === 'GLOBAL' ? effort.default ?? '' : view?.values[effort.id] ?? '')}
               onChange={(event) => { void write(effort.id, event.target.value || null) }}
             >
               <option value="">Inherit</option>
               {effort.options.map((option) => <option key={option} value={option}>{option}</option>)}
-            </select>
+            </Select>
           </label>
         )}
       </div>
@@ -226,6 +231,7 @@ export function ModelDevice() {
         <input
           id="model-device-history"
           type="range"
+          data-tooltip-detail="Scrub back through this conversation's control changes."
           min={0}
           max={live?.changes.length ?? 0}
           value={historyIndex}
@@ -235,9 +241,6 @@ export function ModelDevice() {
         <span>{historyIndex === (live?.changes.length ?? 0) ? 'Now' : `${historyIndex} / ${live?.changes.length ?? 0}`}</span>
       </div>
 
-      <p className="model-device__note">
-        Every accepted turn is journaled. Defaults inherit the provider; no decorative controls.
-      </p>
     </section>
   )
 }

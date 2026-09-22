@@ -5,6 +5,7 @@ import { useRackPlugin, useRackSelection, useRackSnapshot, type RackModuleId } f
 import { VisualizationScene } from './VisualizationScene'
 import { agentColor, buildChambers, type DetailTier, type VisualizationSnapshot, type WorkAgent } from './visualization'
 import './assets/work-visualization.css'
+import { Button, Select } from './kit'
 
 /* eslint-disable react-refresh/only-export-components -- the three modules share this feed hook and its toolbar */
 
@@ -51,13 +52,13 @@ export function VisualizationToolbar({ data, moduleId, tier, setTier }: {
   const index = selected?.as_of ? Math.max(0, timeline.indexOf(selected.as_of)) : Math.max(0, timeline.length - 1)
   const scrub = (as_of: string | null) => selection.select({ ...(selected ?? { kind: 'module', id: moduleId }), as_of })
   return <div className="work-viz__toolbar">
-    <label>Detail<select aria-label="Visualization detail" value={tier} onChange={(event) => setTier(event.target.value as DetailTier)}>
+    <label>Detail<Select aria-label="Visualization detail" data-tooltip-detail="Full draws everything; Efficient is lighter on the machine." value={tier} onChange={(event) => setTier(event.target.value as DetailTier)}>
       <option value="full">Full</option><option value="efficient">Efficient</option>
-    </select></label>
-    <button type="button" aria-pressed={timeOrdered} onClick={() => selection.select({ ...(selected ?? { kind: 'module', id: moduleId }), time_order: !timeOrdered })}>Time order</button>
-    <label className="work-viz__scrub">History<input aria-label="Visualization history" type="range" min="0" max={Math.max(0, timeline.length - 1)}
+    </Select></label>
+    <Button type="button" data-tooltip-detail="Order the scene by time so the newest work stands out." aria-pressed={timeOrdered} onClick={() => selection.select({ ...(selected ?? { kind: 'module', id: moduleId }), time_order: !timeOrdered })}>Time order</Button>
+    <label className="work-viz__scrub">History<input aria-label="Visualization history" data-tooltip-detail="Scrub the scene back to an earlier moment." type="range" min="0" max={Math.max(0, timeline.length - 1)}
       value={index} disabled={!timeline.length} onChange={(event) => scrub(timeline[Number(event.target.value)])} /></label>
-    <button type="button" aria-pressed={!selected?.as_of} onClick={() => scrub(null)}>Live</button>
+    <Button type="button" data-tooltip-detail="Return to the present." aria-pressed={!selected?.as_of} onClick={() => scrub(null)}>Live</Button>
     <time>{data ? new Date(data.as_of).toLocaleTimeString() : 'Waiting for first observation'}</time>
   </div>
 }

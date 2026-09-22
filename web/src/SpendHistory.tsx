@@ -8,6 +8,7 @@ import {
   reconciliationCopy, type ReconciliationSnapshot,
 } from './vitals'
 import './assets/spend-history.css'
+import { Button, Select, TextField } from './kit'
 
 const DIMENSIONS = ['total', 'agent', 'subagent', 'model', 'curation'] as const
 const LABELS = { total: 'Total', agent: 'Agents', subagent: 'Sub-agents', model: 'Models', curation: 'Memory curation' }
@@ -32,12 +33,12 @@ export function InfrastructureInvoiceForm({ onSaved }: { onSaved: () => void }) 
   return <details className="spend-history">
     <summary>Record a cloud invoice · owner only</summary>
     <form onSubmit={(event) => { event.preventDefault(); void save() }}>
-      <label>Amount · USD<input aria-label="Invoice amount USD" required type="number" min="0.000000000001" step="any" value={amount} onChange={(event) => setAmount(event.target.value)} /></label>
-      <label>Invoice date · UTC<input aria-label="Invoice date" required type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
-      <label>Invoice ID<input aria-label="Invoice ID" required value={invoice} onChange={(event) => setInvoice(event.target.value)} /></label>
-      <button type="button" disabled={pending} onClick={(event) => {
+      <label>Amount · USD<TextField aria-label="Invoice amount USD" required type="number" min="0.000000000001" step="any" value={amount} onChange={(event) => setAmount(event.target.value)} /></label>
+      <label>Invoice date · UTC<TextField aria-label="Invoice date" required type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
+      <label>Invoice ID<TextField aria-label="Invoice ID" required value={invoice} onChange={(event) => setInvoice(event.target.value)} /></label>
+      <Button variant="primary" type="button" disabled={pending} onClick={(event) => {
         if (event.currentTarget.form?.reportValidity()) void save()
-      }}>{pending ? 'Recording…' : 'Record invoice'}</button>
+      }}>{pending ? 'Recording…' : 'Record invoice'}</Button>
     </form>
     <p role="status">{status}</p>
   </details>
@@ -50,9 +51,9 @@ export function SpendRates({ snapshot, compact = false }: { snapshot: SpendTable
   return <section className={`spend-history${compact ? ' spend-history--compact' : ''}`} aria-label="Spend over time">
     <div className="spend-history__controls">
       <strong>Recorded USD / minute</strong>
-      <select aria-label="Spend graph grouping" value={dimension} onChange={(event) => setDimension(event.target.value as SpendRateLane['dimension'])}>
+      <Select aria-label="Spend graph grouping" data-tooltip-detail="Split the last hour's spend by agent, model or purpose." value={dimension} onChange={(event) => setDimension(event.target.value as SpendRateLane['dimension'])}>
         {DIMENSIONS.map((value) => <option key={value} value={value}>{LABELS[value]}</option>)}
-      </select>
+      </Select>
       <small>Last hour</small>
     </div>
     {lanes.length === 0 ? <p>No {LABELS[dimension].toLowerCase()} receipts in this hour.</p> : lanes.map((lane) => {
@@ -81,7 +82,7 @@ export function SpendRates({ snapshot, compact = false }: { snapshot: SpendTable
 
 export function SpendReconciliation({ value }: { value: ReconciliationSnapshot | null }) {
   return <section className="spend-history" aria-label="Daily broker reconciliation">
-    <h3>Daily broker reconciliation</h3>
+    <h3 title="Cumulative changes from the same baseline; infrastructure bills are outside broker usage.">Daily broker reconciliation</h3>
     {value === null ? <p>Reconciliation unavailable.</p> : <>
       <p>{reconciliationCopy(value)}{value.checked_at && ` · Checked ${new Date(value.checked_at).toLocaleString()}`}</p>
       <dl className="spend-history__totals">
@@ -89,7 +90,7 @@ export function SpendReconciliation({ value }: { value: ReconciliationSnapshot |
         <div><dt>Broker usage</dt><dd>{money(value.broker_usage_usd)}</dd></div>
         <div><dt>Drift since baseline</dt><dd>{value.drift_usd === null ? 'Not recorded' : formatSignedUsd(value.drift_usd)}</dd></div>
       </dl>
-      <small>{value.status === 'not_recorded' ? 'Broker totals require a recorded owner-scope reconciliation.' : 'Cumulative changes from the same baseline; infrastructure bills are outside broker usage.'}</small>
+      {value.status === 'not_recorded' && <small>Broker totals require a recorded owner-scope reconciliation.</small>}
     </>}
   </section>
 }
@@ -112,9 +113,9 @@ export function CacheHistory({ snapshot, threadNames }: { snapshot: SpendTableSn
   return <section className="spend-history" aria-label="Cache efficiency">
     <h3>Cache efficiency by message</h3>
     {threads.length === 0 ? <p>No message receipts recorded.</p> : <>
-      <select aria-label="Cache conversation" value={thread} onChange={(event) => setSelected(event.target.value)}>
+      <Select aria-label="Cache conversation" value={thread} onChange={(event) => setSelected(event.target.value)}>
         {threads.map((id) => <option key={id} value={id}>{threadNames.get(id) ?? `Conversation ${id.slice(0, 8)}`}</option>)}
-      </select>
+      </Select>
       <table><thead><tr><th>Message</th><th>Fresh</th><th>Cached</th><th>Cache writes</th><th>Reuse</th></tr></thead>
         <tbody>{messages.map((message, index) => {
           const denominator = Number(message.fresh_tokens) + Number(message.cached_tokens)

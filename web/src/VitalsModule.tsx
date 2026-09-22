@@ -11,6 +11,7 @@ import {
   type SpendTableSnapshot,
 } from './spendTable'
 import './assets/honest-display.css'
+import { Button } from './kit'
 
 type LoadPhase = 'loading' | 'live' | 'refreshing' | 'failed'
 
@@ -84,7 +85,7 @@ export function VitalsModule() {
         {phase === 'failed'
           ? failure
           : 'Reading spend…'}
-        {phase === 'failed' && <button type="button" onClick={refresh}>Try again</button>}
+        {phase === 'failed' && <Button type="button" data-tooltip-detail="Read spend again." onClick={refresh}>Try again</Button>}
       </SpendNotice>
     )
   }
@@ -102,11 +103,11 @@ export function VitalsModule() {
   return (
     <section className="spend-table" aria-label="Spend">
       <div className="spend-table__toolbar">
-        <p>Conversations and model costs <span>Through {formatTime(snapshot.as_of)}</span></p>
+        <p><span>As of {formatTime(snapshot.as_of)}</span></p>
         <div aria-live="polite">
           {phase === 'failed' && <span role="alert">Spend couldn’t refresh.</span>}
           {phase === 'refreshing' && <span>Refreshing…</span>}
-          <button type="button" onClick={refresh}>Refresh</button>
+          <Button type="button" data-tooltip-detail="Read the latest spend now." onClick={refresh}>Refresh</Button>
         </div>
       </div>
       <SpendRates snapshot={snapshot} />
@@ -195,11 +196,11 @@ function SpendRow({
     <tr className={nested ? 'spend-table__model' : purpose ? 'spend-table__purpose' : undefined}>
       <th scope="row">
         {disclosure === undefined ? <span>{name}</span> : (
-          <button type="button" aria-expanded={disclosure.expanded} onClick={disclosure.toggle}>
+          <Button variant="bare" type="button" data-tooltip-detail="Show or hide this conversation's models." aria-expanded={disclosure.expanded} onClick={disclosure.toggle}>
             <span aria-hidden="true">{disclosure.expanded ? '−' : '+'}</span>
             <span className="spend-table__name" title={name}>{name}</span>
             <small>{disclosure.count} {disclosure.count === 1 ? 'model' : 'models'}</small>
-          </button>
+          </Button>
         )}
         {purpose && <small>Other work</small>}
       </th>

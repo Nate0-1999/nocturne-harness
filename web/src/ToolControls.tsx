@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useRackPlugin } from './rack'
+import { Button, Select } from './kit'
 
 interface InventoryEntry {
   name: string
@@ -29,7 +30,7 @@ export function ToolInventory({ threadId }: { threadId: string | null }) {
     }
   }
   return <div className="tool-inventory">
-    <button type="button" disabled={threadId === null} aria-expanded={open} onClick={() => void toggle()}>Tools & skills</button>
+    <Button type="button" data-tooltip-detail="List the tools and skills this conversation can use." disabled={threadId === null} aria-expanded={open} onClick={() => void toggle()}>Tools & skills</Button>
     {open && <section aria-label="Tools and skills" className="tool-inventory__panel">
       <p role="status">{status}</p>
       <ul>{entries.map((entry) => <li key={`${entry.kind}:${entry.name}`}>
@@ -52,7 +53,7 @@ export function ToolsetSettings() {
       if (!response.ok) throw new Error('Toolset unavailable')
       setSelection((await response.json()).toolset)
       setLoaded(true)
-      setStatus('Applies at the next turn. Memory tools stay available.')
+      setStatus('')
     }).catch((error: Error) => setStatus(error.message))
   }, [])
   async function change(toolset: string) {
@@ -68,10 +69,10 @@ export function ToolsetSettings() {
   }
   return <section>
     <h2>Workspace tools</h2>
-    <label>Toolset<select aria-label="Workspace toolset" disabled={!loaded} value={selection} onChange={(event) => void change(event.target.value)}>
+    <label>Toolset<Select aria-label="Workspace toolset" data-tooltip-detail="Applies at the next turn. Memory tools stay available." disabled={!loaded} value={selection} onChange={(event) => void change(event.target.value)}>
       <option value="pydantic">Pydantic · files, shell, browser, skills and delegation</option>
       <option value="none">Off</option>
-    </select></label>
+    </Select></label>
     <p role="status">{status}</p>
   </section>
 }
