@@ -3581,3 +3581,5 @@ in force, bounds, every cut and send-back with its D), scoped like Context
 Bars. The two parameters ride the Palace's trainable registry as configured
 rows — two lines in `spine/learner/service.py`, outside the harness-only
 authority because the charge names the registry and that is where it lives.
+The heartbeat fixture declared a 4,096-token window, so its 2,102-token read fell
+to the share; it now declares 200,000, a window a real model has.

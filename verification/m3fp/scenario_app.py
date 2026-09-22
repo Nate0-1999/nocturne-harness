@@ -148,7 +148,8 @@ def create_scenario_app() -> FastAPI:
         machine_id="m3fp-heartbeat",
         agent_id="m3fp-heartbeat",
         chat_model="local:m3fp-heartbeat",
-        model_context_tokens=4096,
+        # FL-198: a real-sized window; at 4,096 tokens the share cut the heartbeat's own read.
+        model_context_tokens=200_000,
         extraction_idle_hours=None,
     )
     spine = HeartbeatSpine()
