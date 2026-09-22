@@ -12,6 +12,7 @@ import { ContributionBars, useContributionMap, useScorerAuditionMap } from './Co
 import { formatHumanScore } from './humanNumbers.ts'
 import { useRackPlugin, useRackSelection, useRackSnapshot } from './rack'
 import { ContextBars } from './ContextBars'
+import { Button, EmptyState, Select, TextArea } from './kit'
 
 interface MemoryPanelProps {
   panel: MemoryPanelState
@@ -311,7 +312,7 @@ export function MemoryPanel({
     >
       <header className="memory-panel__header">
         <h2 id="memory-panel-title">Memory</h2>
-        <button
+        <Button
           ref={closeRef}
           className="memory-panel__close"
           type="button"
@@ -319,7 +320,7 @@ export function MemoryPanel({
           onClick={onClose}
         >
           Back
-        </button>
+        </Button>
       </header>
 
       <div className="memory-panel__toolbar">
@@ -328,14 +329,15 @@ export function MemoryPanel({
           <span>{activeCount === 1 ? ' active unit' : ' active units'}</span>
           {panel.items.length > activeCount && <span> · {panel.items.length - activeCount} retained in context</span>}
         </p>
-        <button
+        <Button
           type="button"
           data-testid="memory-refresh"
+          data-tooltip-detail="Read this thread's memories again."
           disabled={!connected || busy}
           onClick={refresh}
         >
           {panel.pending?.operation === 'refresh' ? 'Refreshing' : 'Refresh'}
-        </button>
+        </Button>
       </div>
 
       <div className="memory-panel__feedback" aria-live="polite">
@@ -383,11 +385,7 @@ export function MemoryPanel({
             <p>Loading memories from your Palace.</p>
           </div>
         ) : panel.items.length === 0 ? (
-          <div className="memory-panel__empty" data-testid="memory-empty">
-            <p className="eyebrow">Nothing stored</p>
-            <h3>No active memories</h3>
-            <p>Memories saved in conversation will appear here.</p>
-          </div>
+          <EmptyState data-testid="memory-empty" title="No active memories" />
         ) : (
           <div className="memory-panel__list" data-testid="memory-list">
             {panel.items.map(({ memory, score, revisions, near_miss: nearMiss, in_context: inContext, thread_excluded: threadExcluded }) => {
@@ -445,10 +443,10 @@ export function MemoryPanel({
                   <p>Project · {memory.project_key ?? 'No project'}</p>
                   <p>Thread · {originThread?.title ?? origin ?? 'No origin thread'}</p>
                   <p>Keywords · {memory.keywords.join(', ') || 'None recorded'}</p>
-                  {originThread !== undefined && <div className="principal-memory__actions"><button type="button" onClick={() => {
+                  {originThread !== undefined && <div className="principal-memory__actions"><Button type="button" onClick={() => {
                     void events.dispatch({ type: 'thread.select', thread_id: originThread.thread_id })
                       .catch((error: unknown) => reportClientError(error, 'Origin conversation could not be opened'))
-                  }}>Open the conversation</button></div>}
+                  }}>Open the conversation</Button></div>}
                   <details><summary>Revision history · r{memory.revision}</summary>
                     {(revisions?.length ?? 0) === 0 ? <p>History unavailable.</p> : <ol>
                       {revisions?.map((revision) => <li key={String(revision.rev_uid)}>
@@ -467,7 +465,7 @@ export function MemoryPanel({
                       <label htmlFor={`memory-body-${memory.memory_id}`}>
                         Memory body
                       </label>
-                      <textarea
+                      <TextArea
                         id={`memory-body-${memory.memory_id}`}
                         value={editor.body}
                         aria-invalid={!editor.body.trim() || undefined}
@@ -517,14 +515,14 @@ export function MemoryPanel({
                         </p>
                       )}
                       <div className="principal-memory__editor-actions">
-                        <button
+                        <Button
                           type="button"
                           onClick={() => setEditor(null)}
                         >
                           {editSaved ? 'Done' : 'Cancel'}
-                        </button>
+                        </Button>
                         {!editSaved && (
-                          <button
+                          <Button variant="bare"
                             className="principal-memory__primary"
                             type="button"
                             disabled={
@@ -539,7 +537,7 @@ export function MemoryPanel({
                             {editConflict !== null || editError !== null
                               ? 'Retry save'
                               : 'Save body'}
-                          </button>
+                          </Button>
                         )}
                       </div>
                     </form>
@@ -549,7 +547,7 @@ export function MemoryPanel({
                       {auditions[memory.memory_id] !== undefined && <p className="scorer-preview-mark">Audition: {formatHumanScore(auditions[memory.memory_id].preview_score)} · #{auditions[memory.memory_id].preview_rank} {auditions[memory.memory_id].disposition.replace('_', ' ')}</p>}
                       {contributions[memory.memory_id] !== undefined && <ContributionBars values={contributions[memory.memory_id]} />}
                       <div className="principal-memory__actions">
-                        <button
+                        <Button
                           type="button"
                           disabled={!connected || busy || unavailable}
                           onClick={() => beginEdit(memory)}
@@ -557,8 +555,8 @@ export function MemoryPanel({
                           title="Edit body"
                         >
                           ✎
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
                           aria-pressed={memory.pin}
                           aria-label={memory.pin ? 'Unpin' : 'Pin'}
@@ -567,31 +565,31 @@ export function MemoryPanel({
                           onClick={() => togglePin(memory)}
                         >
                           <span aria-hidden="true">⚑</span>
-                        </button>
-                        <button type="button" aria-label="Delete memory" title="Delete memory"
+                        </Button>
+                        <Button type="button" aria-label="Delete memory" title="Delete memory"
                           disabled={!connected || busy || unavailable}
                           onClick={() => { setDeletionReason('no_longer_needed'); setDeleting(memory); deleteDialog.current?.showModal() }}>
                           <span aria-hidden="true">⌫</span>
-                        </button>
+                        </Button>
                         {inContext && (
-                          <button
+                          <Button variant="bare"
                             className="principal-memory__remove"
                             type="button"
                             disabled={!connected || !removeEnabled || busy}
                             onClick={() => remove(memory.memory_id)}
                           >
                             Remove
-                          </button>
+                          </Button>
                         )}
                         {(threadExcluded || nearMiss) && (
-                          <button
+                          <Button variant="bare"
                             className="principal-memory__primary"
                             type="button"
                             disabled={!connected || !removeEnabled || busy || unavailable}
                             onClick={() => add(memory.memory_id)}
                           >
                             {nearMiss ? 'Add to context' : 'Re-add'}
-                          </button>
+                          </Button>
                         )}
                       </div>
                     </>
@@ -609,13 +607,13 @@ export function MemoryPanel({
         <p>{deleting?.body}</p>
         <p>It will no longer be offered to conversations. Its history is preserved and can be restored; this does not erase past conversations.</p>
         <label>Why delete?
-          <select value={deletionReason} onChange={(event) => setDeletionReason(event.target.value as typeof deletionReason)}>
+          <Select value={deletionReason} onChange={(event) => setDeletionReason(event.target.value as typeof deletionReason)}>
             <option value="no_longer_needed">No longer needed</option>
             <option value="should_never_have_been_saved">Should never have been saved</option>
-          </select>
+          </Select>
         </label>
-        <button type="button" onClick={() => deleteDialog.current?.close()}>Cancel</button>
-        <button type="button" disabled={!connected || busy || deleting === null} onClick={() => void deleteMemory()}>Delete from Palace</button>
+        <Button type="button" onClick={() => deleteDialog.current?.close()}>Cancel</Button>
+        <Button variant="danger" type="button" disabled={!connected || busy || deleting === null} onClick={() => void deleteMemory()}>Delete from Palace</Button>
       </dialog>
     </aside>
   )
@@ -644,10 +642,10 @@ export function MemoryTrace() {
       <header className="principal-memory__header"><h3>{item.memory.label} · {item.in_context ? 'In context' : item.near_miss ? 'Near miss' : 'Removed'}</h3></header>
       <p className="principal-memory__body">{item.memory.body}</p>
       <div className="principal-memory__actions">
-      <button type="button" disabled={disabled || (!item.in_context && item.memory.status !== 'active')}
+      <Button type="button" disabled={disabled || (!item.in_context && item.memory.status !== 'active')}
         onClick={() => change(item.in_context ? 'memory.remove' : 'memory.add', item.memory.memory_id)}>
         {item.in_context ? 'Pop off' : item.near_miss ? 'Add to context' : 'Re-add'}
-      </button>
+      </Button>
       </div>
     </article>)}
   </section>

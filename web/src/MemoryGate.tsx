@@ -20,6 +20,7 @@ import type {
 } from './protocol'
 import { ContributionBars, useContributionMap, useScorerAuditionMap } from './ContributionBars'
 import { formatHumanScore } from './humanNumbers.ts'
+import { Button, TextArea } from './kit'
 
 const LONG_PRESS_MS = 550
 const LONG_PRESS_MOVE_TOLERANCE_PX = 10
@@ -477,7 +478,7 @@ export function MemoryGate({
                               role="group"
                               aria-label={`Decision for ${card.label}`}
                             >
-                              <button
+                              <Button variant="bare"
                                 className="memory-card__add"
                                 type="button"
                                 data-testid="near-miss-toggle"
@@ -487,8 +488,8 @@ export function MemoryGate({
                                 onClick={() => toggleAddBack(card.memory_id)}
                               >
                                 {added ? 'Added ✓' : '+ Add'}
-                              </button>
-                              <button
+                              </Button>
+                              <Button variant="bare"
                                 className="memory-card__never"
                                 type="button"
                                 data-testid="near-miss-never"
@@ -498,8 +499,8 @@ export function MemoryGate({
                                 onClick={() => toggleNearMissNever(card.memory_id)}
                               >
                                 {never ? 'Never ✓' : 'Never'}
-                              </button>
-                              <button className="memory-card__remove" type="button" aria-label={`More options for ${card.label}`}
+                              </Button>
+                              <Button variant="bare" className="memory-card__remove" type="button" aria-label={`More options for ${card.label}`}
                                 aria-haspopup="dialog" aria-expanded={modifierFor === card.memory_id}
                                 disabled={controlsDisabled}
                                 onPointerDown={(event) => beginLongPress(event, card.memory_id)}
@@ -507,12 +508,12 @@ export function MemoryGate({
                                 onPointerCancel={clearLongPress} onPointerLeave={clearLongPress}
                                 onClick={() => { suppressClickRef.current = null; setModifierFor(card.memory_id) }}>
                                 <span aria-hidden="true">×</span>
-                              </button>
+                              </Button>
                               {modifierFor === card.memory_id && <div className="memory-card__modifier" role="dialog" aria-label={`Exclude ${card.label}`}>
-                                <button type="button" disabled={controlsDisabled} onClick={() => {
+                                <Button variant="danger" type="button" disabled={controlsDisabled} onClick={() => {
                                   toggleNearMissNever(card.memory_id); setModifierFor(null)
-                                }}>Never show this</button>
-                                <button type="button" onClick={() => setModifierFor(null)}>Cancel</button>
+                                }}>Never show this</Button>
+                                <Button type="button" onClick={() => setModifierFor(null)}>Cancel</Button>
                               </div>}
                             </div>
                           }
@@ -562,7 +563,7 @@ export function MemoryGate({
             </p>
           )}
           <div className="memory-gate__actions">
-            <button
+            <Button variant="bare"
               className="memory-gate__stop"
               type="button"
               data-testid="memory-gate-stop"
@@ -570,8 +571,8 @@ export function MemoryGate({
               onClick={stopRun}
             >
               {cancelling ? 'Stopping…' : 'Stop run'}
-            </button>
-            <button
+            </Button>
+            <Button variant="bare"
               className="memory-gate__continue"
               type="button"
               data-testid="memory-gate-continue"
@@ -588,7 +589,7 @@ export function MemoryGate({
                     ? 'Save correction'
                     : 'Expire memory'}
               {!submitting && <span aria-hidden="true">↗</span>}
-            </button>
+            </Button>
           </div>
         </footer>
       </div>
@@ -640,7 +641,7 @@ function WrongResolutionEditor({
           role="group"
           aria-label="Choose how to resolve this wrong memory"
         >
-          <button
+          <Button
             type="button"
             data-testid="wrong-resolution-edit"
             aria-pressed={action === 'edit'}
@@ -648,8 +649,8 @@ function WrongResolutionEditor({
             onClick={() => onActionChange('edit')}
           >
             Edit body
-          </button>
-          <button
+          </Button>
+          <Button variant="danger"
             type="button"
             data-testid="wrong-resolution-expire"
             aria-pressed={action === 'expire'}
@@ -657,13 +658,13 @@ function WrongResolutionEditor({
             onClick={() => onActionChange('expire')}
           >
             Expire memory
-          </button>
+          </Button>
         </div>
 
         {action === 'edit' ? (
           <label className="wrong-resolution__editor">
             Corrected body
-            <textarea
+            <TextArea
               data-testid="wrong-resolution-body"
               value={body}
               rows={8}
@@ -742,7 +743,7 @@ function InjectedCard({
       status={removed ? `Removed · ${reason.replace('_', ' ')}` : undefined}
       action={
         <div className="memory-card__decision">
-          <button
+          <Button variant="bare"
             ref={removeButtonRef}
             className="memory-card__remove"
             type="button"
@@ -768,7 +769,7 @@ function InjectedCard({
             onClick={(event) => onRemove(event, card.memory_id)}
           >
             <span aria-hidden="true">×</span>
-          </button>
+          </Button>
           {modifierOpen && (
             <div
               id={modifierId}
@@ -778,24 +779,24 @@ function InjectedCard({
               data-testid="memory-modifier"
             >
               <span>Remove as</span>
-              <button
+              <Button
                 ref={firstReasonRef}
                 type="button"
                 disabled={disabled}
                 onClick={() => onChooseReason(card.memory_id, 'wrong')}
               >
                 Wrong
-              </button>
-              <button
+              </Button>
+              <Button variant="danger"
                 type="button"
                 disabled={disabled}
                 onClick={() => onChooseReason(card.memory_id, 'never')}
               >
                 Never
-              </button>
-              <button type="button" disabled={disabled} onClick={onCloseModifier}>
+              </Button>
+              <Button type="button" disabled={disabled} onClick={onCloseModifier}>
                 Cancel
-              </button>
+              </Button>
             </div>
           )}
         </div>

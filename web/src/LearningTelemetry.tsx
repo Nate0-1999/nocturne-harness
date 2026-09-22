@@ -60,7 +60,7 @@ export function ScoreTerrain({ points }: { points: TerrainPoint[] }) {
     <h3>Score terrain</h3>
     <p>Held-out decision agreement across minimum match × memory share. Height is agreement; the surface interpolates measured grid points.</p>
     {points.length === 0 ? <p>No replayable held-out gates yet.</p> : <>
-      <div style={{ height: 280, background: '#08121b' }}>
+      <div className="score-terrain">
         <Canvas camera={{ position: [1.8, 1.5, 1.8], fov: 42 }} frameloop="demand">
           <group rotation={[0, angle * Math.PI / 180, 0]} position={[0, -0.4, 0]}>
             <gridHelper args={[1, 8, '#60cfea', '#264455']} />

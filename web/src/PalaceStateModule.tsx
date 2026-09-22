@@ -14,6 +14,7 @@ import {
   type GaugeStatus,
   type VitalsSnapshot,
 } from './vitals'
+import { Button } from './kit'
 
 const METRIC_LABELS: Record<string, string> = {
   created: 'Created',
@@ -89,7 +90,7 @@ export function PalaceStateModule() {
         <p role={failed ? 'alert' : 'status'}>
           {failed ? 'Palace state couldn’t refresh. Chat is still available.' : 'Reading Palace state…'}
         </p>
-        {failed && <button type="button" onClick={refresh}>Try again</button>}
+        {failed && <Button type="button" data-tooltip-detail="Read Palace state again." onClick={refresh}>Try again</Button>}
       </section>
     )
   }
@@ -108,11 +109,11 @@ export function PalaceStateModule() {
   return (
     <section className="palace-state" aria-label="Palace State">
       <div className="palace-state__toolbar">
-        <p>Health, memory and learning <span>Through {formatTime(snapshot.as_of)}</span></p>
+        <p><span>As of {formatTime(snapshot.as_of)}</span></p>
         <div aria-live="polite">
           {failed && <span role="alert">Palace state couldn’t refresh.</span>}
           {refreshing && <span>Refreshing…</span>}
-          <button type="button" onClick={refresh}>Refresh</button>
+          <Button type="button" data-tooltip-detail="Read the latest Palace state now." onClick={refresh}>Refresh</Button>
         </div>
       </div>
 

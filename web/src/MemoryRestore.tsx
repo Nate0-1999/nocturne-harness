@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { Button, TextField } from './kit'
 
 type MemoryChange = { memory_id: string; label: string; current_revision: number; candidate_revision: number | null }
 type RestorePreview = {
@@ -35,14 +36,13 @@ export function MemoryRestore() {
   }
   return <section>
     <h2>Memory restore</h2>
-    <div className="app-settings-actions"><button type="button" onClick={() => dialog.current?.showModal()}>Restore memories</button></div>
+    <div className="app-settings-actions"><Button type="button" data-tooltip-detail="Preview a local Palace backup before restoring anything." onClick={() => dialog.current?.showModal()}>Restore memories</Button></div>
     <dialog ref={dialog} className="memory-restore-dialog" aria-labelledby="memory-restore-title">
       <h2 id="memory-restore-title">Roll back these memories?</h2>
-      <p>Preview a local Palace backup before restoring. Your current Palace remains active.</p>
-      <label>Backup ID <input value={backup} disabled={busy} onChange={(event) => {
+      <label>Backup ID <TextField data-tooltip-detail="The id printed by the backup you want to inspect." value={backup} disabled={busy} onChange={(event) => {
         setBackup(event.target.value); setPreview(null)
       }} /></label>
-      <button type="button" disabled={busy || !backup.trim()} onClick={() => void inspect()}>{busy ? 'Inspecting…' : 'Preview memories'}</button>
+      <Button type="button" data-tooltip-detail="Show what this backup would change. Nothing is restored yet." disabled={busy || !backup.trim()} onClick={() => void inspect()}>{busy ? 'Inspecting…' : 'Preview memories'}</Button>
       {error && <p role="alert">{error}</p>}
       {preview && <>
         {([
@@ -60,7 +60,7 @@ export function MemoryRestore() {
         <ul>{preview.manifest.event_counts.map((count) => <li key={count.table}>{count.table}: {count.current} → {count.candidate}</li>)}</ul>
         <p>To restore, stop Nocturne and run <code>nocturne restore {preview.backup_id}</code>. The command rechecks this list and asks for confirmation before switching.</p>
       </>}
-      <button type="button" onClick={() => dialog.current?.close()}>Close preview</button>
+      <Button type="button" data-tooltip-detail="Close without restoring anything." onClick={() => dialog.current?.close()}>Close preview</Button>
     </dialog>
   </section>
 }

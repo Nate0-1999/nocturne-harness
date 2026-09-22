@@ -16,6 +16,7 @@ import {
   type ScorerConsoleLearning,
 } from './learning'
 import { useRackPlugin, useRackSnapshot } from './rack'
+import { Button, Select, TextField } from './kit'
 
 type Values = {
   tau: number
@@ -380,12 +381,12 @@ export function InjectionConsole() {
         <h1>Injection Console</h1>
         {scope === 'ATTUNED' && rack.attunement?.kind === 'stack' && (
           <label>Conversation for preview
-            <select value={consoleThreadId ?? ''} onChange={(event) => setContextThread(event.target.value || null)}>
+            <Select data-tooltip-detail="Choose the thread whose gate the console reads." value={consoleThreadId ?? ''} onChange={(event) => setContextThread(event.target.value || null)}>
               <option value="">Choose a conversation</option>
               {rack.catalog.filter((entry) => contextIds.includes(entry.thread_id)).map((entry) => (
                 <option key={entry.thread_id} value={entry.thread_id}>{entry.title || entry.thread_id}</option>
               ))}
-            </select>
+            </Select>
           </label>
         )}
         <p data-testid="injection-current-location">
@@ -397,14 +398,15 @@ export function InjectionConsole() {
         <div className="console-learning-overview">
           <div className="console-learning-control">
             <LearningSummary learning={data.learning} scope={data.metrics_scope} />
-            <button
+            <Button
               className="retrain-control"
               type="button"
+              data-tooltip-detail="Refit the scorer from your gate signals now."
               disabled={busy}
               onClick={() => void forceRetrain()}
             >
               {FORCE_RETRAIN_LABEL}
-            </button>
+            </Button>
             {retrainNotice !== null && (
               <p className="console-note" role="status">{retrainNotice.copy}</p>
             )}
@@ -452,20 +454,22 @@ export function InjectionConsole() {
                     : `${point.weighted_dispositions} weighted held-out dispositions.`}
                 </p>
                 <div className="proposal-actions">
-                  <button
+                  <Button variant="bare"
                     className="console-secondary-action"
+                    data-tooltip-detail="Shadow this proposal on the selected gate; the current scorer still governs."
                     disabled={injectionId === undefined || busy}
                     onClick={() => void tryProposal(proposal.version)}
                   >
                     {AUDITION_LABEL}
-                  </button>
-                  <button
+                  </Button>
+                  <Button variant="primary"
                     className="enact"
+                    data-tooltip-detail="Make this proposal the governing scorer."
                     disabled={busy}
                     onClick={() => void activateProposal(proposal.version)}
                   >
                     {ACTIVATE_LABEL}
-                  </button>
+                  </Button>
                 </div>
                 {injectionId === undefined && (
                   <small>Select a thread with a frozen gate to audition. Activation remains available.</small>
@@ -479,8 +483,9 @@ export function InjectionConsole() {
                 .map((key) => (
                   <label key={key}>
                     <span>{CONTROL_LABELS[key]}</span>
-                    <input
+                    <TextField
                       type="number"
+                      data-tooltip-detail="Scorer value; simulate before forcing it."
                       value={draft[key]}
                       min={key === 'tau' ? 0 : key === 'memory_context_share' ? 0.01 : 1}
                       max={key === 'tau' ? 1 : key === 'memory_context_share' ? 0.5 : undefined}
@@ -492,8 +497,9 @@ export function InjectionConsole() {
               {Object.entries(draft.weights).map(([key, value]) => (
                 <label key={key}>
                   <span>{WEIGHT_LABELS[key] ?? key}</span>
-                  <input
+                  <TextField
                     type="number"
+                    data-tooltip-detail="Feature weight; all weights sum to one."
                     min="0"
                     max="1"
                     step="0.01"
@@ -507,7 +513,8 @@ export function InjectionConsole() {
               </p>
               <label>
                 <span>Accuracy slice</span>
-                <select
+                <Select
+                  data-tooltip-detail="Pick the value the accuracy curve sweeps."
                   value={sliceParameter}
                   onChange={(event) => {
                     clearSimulation()
@@ -525,23 +532,25 @@ export function InjectionConsole() {
                       {CONTROL_LABELS[key] ?? WEIGHT_LABELS[key.replace('weight.', '')] ?? key}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
               <div className="simulation-actions">
-                <button
+                <Button variant="bare"
                   className="console-secondary-action"
+                  data-tooltip-detail="Back-test these values against your recorded gates."
                   disabled={!valid || busy}
                   onClick={() => void simulate()}
                 >
                   Run DEEP simulation
-                </button>
-                <button
+                </Button>
+                <Button variant="primary"
                   className="enact"
+                  data-tooltip-detail="Apply these values by hand; needs a simulation receipt first."
                   disabled={receipt === null || busy}
                   onClick={() => void enact()}
                 >
                   {FORCE_VALUES_LABEL}
-                </button>
+                </Button>
               </div>
               {receipt && (
                 <div className="simulation-receipt" aria-label="Deep simulation receipt">
