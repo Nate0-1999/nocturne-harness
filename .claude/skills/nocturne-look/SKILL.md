@@ -8,6 +8,17 @@ description: How Nocturne's surfaces must look and read. Load before changing an
 You are polishing surfaces, not fixing features. Same handlers, same
 meaning, same test ids. If something is broken, write one flag and move on.
 
+## The owner's principles (from ~/.claude/skills/ui-taste — same law, his words)
+
+1. Words earn their place. 2. Glance first, detail on demand: a row shows
+the aggregate, the name, the content; the breakdown pops up on hover.
+3. One button style, right-sized, chamfered, tipped; row actions are small
+icon buttons (× remove, ×! delete permanently). 4. Destructive needs a
+yes/no. 5. Cohesion over character. 6. Density is the reward.
+
+Ruled 2026-09-22 for memory cards: score, name, memory only; a spider-web
+chart of the relevance features on hover; × and ×! with a confirmation.
+
 ## The owner's words (these are the law)
 
 - "get rid of slop like phrases that don't need to be there"
