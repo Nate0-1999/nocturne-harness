@@ -1,0 +1,361 @@
+/* PLAN M3UI: one hand. The type scale, the spacing scale and the control kit.
+   Every part is built from the themes' semantic tokens, so every theme renders the
+   kit with no per-theme fork. Rim law (D.2 110): fills stay dark cel; the accent
+   lives on the border and the ink, never as chrome on a control. */
+:root {
+  /* Six sizes. Mono caps for labels (xs, sm); sans for content (md and up). */
+  --text-xs: 0.56rem;
+  --text-sm: 0.64rem;
+  --text-md: 0.72rem;
+  --text-base: 0.82rem;
+  --text-lg: 1.05rem;
+  --text-xl: clamp(1.35rem, 3vw, 2.1rem);
+  --space-1: 0.2rem;
+  --space-2: 0.35rem;
+  --space-3: 0.5rem;
+  --space-4: 0.75rem;
+  --space-5: 1rem;
+  --space-6: 1.5rem;
+  --control-height: 2rem;
+  --chamfer: 0.4rem;
+}
+
+/* A native file chooser: its button wears the kit. */
+input[type="file"] {
+  color: var(--muted);
+  font-family: var(--data-font);
+  font-size: var(--text-sm);
+}
+
+input[type="file"]::file-selector-button {
+  min-height: var(--control-height);
+  margin-right: var(--space-3);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-deep);
+  color: var(--muted);
+  font: inherit;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* A label over a text area stacks; a fieldset's legend is a label too. */
+label:has(> textarea.kit-field) {
+  display: grid;
+}
+
+legend {
+  padding: 0 var(--space-2);
+  color: var(--muted);
+  font-family: var(--data-font);
+  font-size: var(--text-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* KEEP OUT (PLAN M3UI): the composer function was a live peer's (M3OR), so its two
+   undressed controls stay raw in the markup and the kit reaches them from here.
+   When the composer is next opened, they become kit parts and the `.chat-header` and
+   `.composer__actions` selectors in this file go. */
+
+/* A label that wraps its control: the words and the control never run together. */
+.kit-label,
+label:has(> .kit-select, > .kit-field),
+.chat-header > label:has(> select) {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  max-width: 100%;
+  color: var(--dim);
+  font-size: var(--text-xs);
+}
+
+.kit-label,
+label:has(> .kit-select, > .kit-field),
+.kit-button,
+.composer__actions > button:not([class]),
+.chat-header > label:has(> select),
+.kit-chip,
+.kit-empty__label {
+  font-family: var(--data-font);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* The one button. Two opposite corners are cut; the cut edges are drawn by the two
+   corner gradients because a clip removes the border there. The focus ring is inset
+   for the same reason. --kit-edge and --kit-fill carry the state. */
+.kit-button,
+.kit-select,
+.stop-button,
+.memory-gate__stop,
+.composer__attach,
+.composer-attachment__remove,
+.archive-button,
+.composer__actions > button:not([class]),
+.chat-header > label > select {
+  --kit-edge: var(--line-strong);
+  --kit-fill: var(--surface-deep);
+  --kit-cut: calc(var(--chamfer) * 0.7071);
+  border: 1px solid var(--kit-edge);
+  border-radius: 0;
+  background:
+    linear-gradient(135deg, transparent var(--kit-cut), var(--kit-edge) 0 calc(var(--kit-cut) + 1.5px), transparent 0),
+    linear-gradient(315deg, transparent var(--kit-cut), var(--kit-edge) 0 calc(var(--kit-cut) + 1.5px), transparent 0),
+    var(--kit-fill);
+  clip-path: polygon(
+    var(--chamfer) 0, 100% 0, 100% calc(100% - var(--chamfer)),
+    calc(100% - var(--chamfer)) 100%, 0 100%, 0 var(--chamfer)
+  );
+}
+
+.kit-button,
+.composer__actions > button:not([class]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  padding: 0 var(--space-4);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.kit-button:focus-visible,
+.kit-select:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.kit-button:not(:disabled):hover,
+.kit-select:not(:disabled):hover,
+.kit-field:not(:disabled):hover {
+  --kit-edge: var(--accent);
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.kit-button--primary {
+  --kit-edge: var(--accent);
+  --kit-fill: var(--primary-fill, var(--accent-soft));
+  color: var(--primary-ink, var(--ink));
+}
+
+.kit-button--primary:not(:disabled):hover {
+  --kit-fill: var(--accent-strong);
+  color: var(--primary-ink, var(--ground));
+}
+
+/* The hero actions (transmit, the gate's continue, a memory's save) are filled slabs:
+   they take the same cut corners; a fill needs no drawn edge. */
+.send-button,
+.memory-gate__continue,
+.principal-memory__primary {
+  clip-path: polygon(
+    var(--chamfer) 0, 100% 0, 100% calc(100% - var(--chamfer)),
+    calc(100% - var(--chamfer)) 100%, 0 100%, 0 var(--chamfer)
+  );
+}
+
+.kit-button--danger,
+.kit-button--danger:not(:disabled):hover {
+  --kit-edge: var(--danger);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.kit-button--danger:not(:disabled):hover {
+  --kit-fill: var(--danger-soft);
+  color: var(--ink);
+}
+
+.kit-button[aria-pressed="true"],
+.kit-button[aria-selected="true"],
+.kit-button[aria-expanded="true"] {
+  --kit-edge: var(--accent);
+  --kit-fill: var(--accent-soft);
+  color: var(--ink);
+}
+
+/* One touch-target rule replaces the per-module 2.75rem copies. */
+@media (pointer: coarse) {
+  .kit-button,
+  .kit-select,
+  .kit-field {
+    min-height: 2.75rem;
+  }
+}
+
+.kit-segmented {
+  display: inline-flex;
+}
+
+.kit-segmented > .kit-button + .kit-button {
+  margin-left: -1px;
+}
+
+.kit-segmented > .kit-button[aria-pressed="true"],
+.kit-segmented > .kit-button[aria-selected="true"] {
+  z-index: 1;
+}
+
+.kit-select,
+.kit-field,
+.chat-header > label > select {
+  min-height: var(--control-height);
+  max-width: 100%;
+  padding: 0 var(--space-3);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: var(--text-md);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.kit-field {
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  background: var(--surface-deep);
+}
+
+textarea.kit-field {
+  padding: var(--space-3);
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.kit-field::placeholder {
+  color: var(--dim);
+}
+
+.kit-field:focus-visible,
+.kit-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.kit-select:disabled,
+.kit-field:disabled,
+.kit-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.44;
+}
+
+.kit-toggle {
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-deep);
+  clip-path: polygon(0.25rem 0, 100% 0, 100% calc(100% - 0.25rem), calc(100% - 0.25rem) 100%, 0 100%, 0 0.25rem);
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.kit-toggle:checked {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 3px var(--surface-deep);
+}
+
+.kit-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--line);
+  color: var(--dim);
+  font-size: var(--text-xs);
+  line-height: 1.25;
+}
+
+/* One title and one section head for every module, whatever markup it grew up with. */
+.kit-module-header h2,
+.thread-rail .thread-rail__header h2,
+.memory-panel .memory-panel__header h2,
+.instrument > header h1,
+.jobs-instrument > header h1,
+header.work-viz__header h1,
+header.recipe-instrument__header h1,
+.model-device > header h1,
+.model-device > header h2 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--display-font);
+  font-size: var(--text-lg);
+  font-stretch: condensed;
+  font-weight: 760;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.instrument section > h2,
+.instrument aside h2,
+.jobs-instrument aside h2,
+details .agent-policy-settings h2,
+.spend-history > h3,
+.palace-queue-card h3 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--body-font);
+  font-size: var(--text-base);
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.3;
+  text-transform: none;
+}
+
+.kit-module-header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-4) var(--space-5) var(--space-3);
+  border-bottom: 1px solid var(--line);
+}
+
+.kit-module-header__detail {
+  color: var(--muted);
+  font-size: var(--text-md);
+}
+
+.kit-module-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.kit-empty {
+  display: grid;
+  align-content: center;
+  gap: var(--space-2);
+  min-height: 100%;
+  padding: var(--space-6) var(--space-4);
+  color: var(--muted);
+  font-size: var(--text-md);
+}
+
+.kit-empty__label {
+  color: var(--accent);
+  font-size: var(--text-xs);
+}
+
+.kit-empty strong {
+  color: var(--ink);
+  font-family: var(--display-font);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.kit-empty p {
+  margin: 0;
+}
