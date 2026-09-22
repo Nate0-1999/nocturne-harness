@@ -2359,11 +2359,6 @@ button.rack-module__resize-handle--nw {
   background: var(--accent-soft);
 }
 
-.feature-score__track > span {
-  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
-  box-shadow: 0 0 0.45rem var(--seam-f2a156f214e0);
-}
-
 .rack-drawer-scrim {
   display: none;
 }

@@ -7,6 +7,8 @@
   narrating sentences removed; one title style; denser threads and spend table.
   The memory gate: one heading over injected memories and two small buttons
   per card, × to remove and ×! to delete permanently behind a yes/no.
+  Cards show score, name and memory; the relevance features are a spider-web
+  chart on hover.
   Otherwise behavior is unchanged. Pair with Memory 0.1.30; the API contract
   is unchanged.
 

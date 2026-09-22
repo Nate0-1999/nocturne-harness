@@ -13,33 +13,19 @@ import type {
   GateCommitPayload,
   GateOpenPayload,
   JsonValue,
-  MemoryFeatures,
   MemoryUnit,
   RemovalReason,
   ScoredMemoryCard,
 } from './protocol'
-import { ContributionBars, useContributionMap, useScorerAuditionMap } from './ContributionBars'
+import { useContributionMap, useScorerAuditionMap } from './ContributionBars'
+import { FeatureRadar, HoverReveal } from './FeatureRadar'
 import { formatHumanScore } from './humanNumbers.ts'
 import { Button, TextArea } from './kit'
 
 const LONG_PRESS_MS = 550
 const LONG_PRESS_MOVE_TOLERANCE_PX = 10
 
-type FeatureKey =
-  | 'sem' | 'kw' | 'time' | 'proj' | 'freq' | 'hist' | 'loc' | 'thread' | 'where'
 type WrongResolutionAction = 'edit' | 'expire'
-
-const FEATURE_LABELS: readonly { key: FeatureKey; label: string }[] = [
-  { key: 'sem', label: 'Semantic' },
-  { key: 'kw', label: 'Keyword' },
-  { key: 'time', label: 'Recency' },
-  { key: 'proj', label: 'Project' },
-  { key: 'thread', label: 'Thread' },
-  { key: 'loc', label: 'Location' },
-  { key: 'where', label: 'Where' },
-  { key: 'freq', label: 'Citation' },
-  { key: 'hist', label: 'Edit history' },
-]
 
 interface MemoryGateProps {
   gate: GateOpenPayload
@@ -473,7 +459,7 @@ export function MemoryGate({
                               role="group"
                               aria-label={`Decision for ${card.label}`}
                             >
-                              <Button variant="bare"
+                              <Button variant="primary"
                                 className="memory-card__add"
                                 type="button"
                                 data-testid="near-miss-toggle"
@@ -484,7 +470,7 @@ export function MemoryGate({
                               >
                                 {added ? 'Added ✓' : '+ Add'}
                               </Button>
-                              <Button variant="bare"
+                              <Button variant="danger"
                                 className="memory-card__never"
                                 type="button"
                                 data-testid="near-miss-never"
@@ -495,7 +481,7 @@ export function MemoryGate({
                               >
                                 {never ? 'Never ✓' : 'Never'}
                               </Button>
-                              <Button variant="bare" className="memory-card__remove" type="button" aria-label={`More options for ${card.label}`}
+                              <Button className="memory-card__remove" type="button" aria-label={`More options for ${card.label}`}
                                 aria-haspopup="dialog" aria-expanded={modifierFor === card.memory_id}
                                 disabled={controlsDisabled}
                                 onPointerDown={(event) => beginLongPress(event, card.memory_id)}
@@ -858,53 +844,22 @@ function MemoryCardFrame({ card, tone, status, action }: MemoryCardFrameProps) {
       data-tone={tone}
     >
       <header className="memory-card__header">
-        <div className="memory-card__title">
-          <div className="memory-card__badges">
-            <span>#{card.rank}</span>
-            <span>{card.kind.replace('_', ' ')}</span>
-            {card.pin && <span className="memory-card__pin">Pinned</span>}
-          </div>
+        <HoverReveal
+          className="memory-card__title"
+          panel={<FeatureRadar features={card.features} contributions={contributions[card.memory_id]} />}
+        >
+          <strong className="memory-card__total" data-testid="memory-total-score" title={`${card.kind.replace('_', ' ')} · ${card.memory_id}`}>
+            {score(card.score)}
+          </strong>
           <h4>{card.label}</h4>
-          {status !== undefined && <p className="memory-card__status">{status}</p>}
-        </div>
+          {card.pin && <span className="memory-card__pin">Pinned</span>}
+        </HoverReveal>
         {action}
       </header>
+      {status !== undefined && <p className="memory-card__status">{status}</p>}
+      {audition !== undefined && <p className="scorer-preview-mark">Audition: {formatHumanScore(audition.preview_score)} · #{audition.preview_rank} {audition.disposition.replace('_', ' ')}</p>}
       <p className="memory-card__body">{card.body}</p>
-      <div className="memory-card__score">
-        <div className="memory-card__total" data-testid="memory-total-score">
-          <span>Total score</span>
-          <strong>{score(card.score)}</strong>
-        </div>
-        {audition !== undefined && <p className="scorer-preview-mark">Audition: {formatHumanScore(audition.preview_score)} · #{audition.preview_rank} {audition.disposition.replace('_', ' ')}</p>}
-        <FeatureScores features={card.features} />
-        <ContributionBars values={contributions[card.memory_id]} />
-      </div>
-      <code className="memory-card__id">{card.memory_id}</code>
     </article>
   )
 }
 
-function FeatureScores({ features }: { features: MemoryFeatures }) {
-  return (
-    <div className="feature-scores" aria-label="Raw, unweighted feature scores">
-      {FEATURE_LABELS.map(({ key, label }) => {
-        const value = features[key]
-        return (
-          <div
-            className="feature-score"
-            key={key}
-            data-testid="memory-feature"
-            data-feature={key}
-          >
-            <span className="feature-score__label">{label}</span>
-            <span className="feature-score__track" aria-hidden="true">
-              <span style={{ width: `${Math.min(1, Math.max(0, value ?? 0)) * 100}%` }} />
-            </span>
-            <span className="feature-score__value">{value === null ? '—' : score(value)}</span>
-          </div>
-        )
-      })}
-      <p>Raw feature scores · unweighted</p>
-    </div>
-  )
-}

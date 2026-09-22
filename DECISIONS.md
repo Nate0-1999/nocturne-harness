@@ -3611,3 +3611,9 @@ existing not-relevant toggle; Alt or press-and-hold still reaches 'wrong') and
 'never' veto — the Palace's permanent exclusion. Nothing is hard-deleted: the
 Palace keeps its tombstone (Invariant: no hard deletes), so 'permanently' means
 never shown again, which is what the veto already promised.
+Owner, same day, on the cards: only the score, the name and the memory; the
+relevance features pop up as a spider-web chart on hover. So the card is one
+line of score and name over the body; rank, kind and id moved to the score's
+tip; the nine raw features (project → thread → location order kept, A-060) and
+the weighted contributions draw as two polygons in FeatureRadar.tsx on hover
+or focus. The feature bars and their CSS are gone.

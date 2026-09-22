@@ -313,14 +313,6 @@
       "wizard_mode": "#c9c6c1"
     },
     {
-      "gold_lines": "rgba(217, 122, 58, 0.65)",
-      "neo_noir": "rgba(217, 122, 58, 0.65)",
-      "seraph_dressed": "rgba(217, 122, 58, 0.65)",
-      "technomancer": "rgba(126, 209, 66, 0.65)",
-      "variable": "--seam-b18d9dc68582",
-      "wizard_mode": "rgba(217, 164, 58, 0.65)"
-    },
-    {
       "gold_lines": "#f2f5fa",
       "neo_noir": "#151619",
       "seraph_dressed": "#0d1226",
@@ -335,14 +327,6 @@
       "technomancer": "rgba(0, 0, 0, 0.6)",
       "variable": "--seam-6ad401756512",
       "wizard_mode": "rgba(0, 0, 0, 0.6)"
-    },
-    {
-      "gold_lines": "#5a6b8a",
-      "neo_noir": "#73777f",
-      "seraph_dressed": "#6b7a99",
-      "technomancer": "#7a737f",
-      "variable": "--seam-a5097f59d2f0",
-      "wizard_mode": "#7e7a74"
     },
     {
       "gold_lines": "rgba(215, 224, 238, 0.22)",

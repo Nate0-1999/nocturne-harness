@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
 const protocol = readFileSync(new URL('../src/protocol.ts', import.meta.url), 'utf8')
-const gate = readFileSync(new URL('../src/MemoryGate.tsx', import.meta.url), 'utf8')
+// M3UI: the gate's feature display is the spider web in FeatureRadar.tsx.
+const gate = readFileSync(new URL('../src/FeatureRadar.tsx', import.meta.url), 'utf8')
 const contributions = readFileSync(
   new URL('../src/ContributionBars.tsx', import.meta.url),
   'utf8',
