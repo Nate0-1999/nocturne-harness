@@ -59,7 +59,7 @@ export function SecurityModule() {
   return (
     <section className="security-instrument" aria-label="Context shares">
       <header>
-        <div><small>Context shares</small><h1>Security</h1></div>
+        <h1>Security</h1>
         {snapshot && (
           <dl className="security-shares" data-testid="security-shares">
             <div>

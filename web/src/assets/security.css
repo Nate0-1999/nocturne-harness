@@ -1,13 +1,12 @@
 .security-instrument { box-sizing: border-box; min-height: 100%; padding: 1.2rem; background: var(--surface-deep); color: var(--ink); }
 .security-instrument header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
-.security-instrument h1 { font: 500 2rem var(--display-font); margin: .2rem 0 1rem; }
-.security-instrument small, .security-instrument dt, .security-instrument th { display: block; color: var(--muted); font: .75rem var(--data-font); text-transform: uppercase; letter-spacing: .06em; }
+.security-instrument small, .security-instrument dt, .security-instrument th { display: block; color: var(--muted); font: var(--text-sm) var(--data-font); text-transform: uppercase; letter-spacing: .06em; }
 .security-shares { display: flex; gap: 1.2rem; margin: 0; }
-.security-shares dd { margin: .2rem 0 0; font: .9rem var(--data-font); white-space: nowrap; }
+.security-shares dd { margin: .2rem 0 0; font: var(--text-base) var(--data-font); white-space: nowrap; }
 .security-scroll { overflow: auto; }
-.security-instrument table { width: 100%; border-collapse: collapse; text-align: left; font: .8rem var(--data-font); }
+.security-instrument table { width: 100%; border-collapse: collapse; text-align: left; font: var(--text-md) var(--data-font); }
 .security-instrument th { display: table-cell; font-weight: normal; }
 .security-instrument td, .security-instrument th { padding: .6rem .5rem; border-bottom: 1px solid var(--line); }
-.security-instrument [data-action=cut] td:last-child { color: var(--warning, var(--accent)); }
-.security-instrument [role=alert] { color: var(--warning, var(--accent)); }
+.security-instrument [data-action=cut] td:last-child { color: var(--danger); }
+.security-instrument [role=alert] { color: var(--danger); }
 .security-empty { color: var(--muted); }
