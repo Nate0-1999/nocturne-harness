@@ -1,0 +1,12 @@
+{
+  "principal_id": "nocturne-verification-6afb2b58-966a-4b16-a52c-9cb1f0ceb46d",
+  "home": "/private/tmp/m3co-verification/home",
+  "active_memories": 0,
+  "pending_cards": 0,
+  "scope": "explicit principal memory-graph query and approval queue",
+  "retained": "append-only conversation and spend records under the disposable principal; the archived walk thread's close extraction produced no memories",
+  "task_daemon_stopped": true,
+  "task_env_files_removed": true,
+  "source_credentials_untouched": true,
+  "owner_home_untouched": true
+}

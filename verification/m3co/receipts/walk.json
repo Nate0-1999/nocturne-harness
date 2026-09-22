@@ -1,0 +1,57 @@
+{
+  "base_url": "http://127.0.0.1:8765",
+  "identity": {
+    "principal_id": "nocturne-verification-6afb2b58-966a-4b16-a52c-9cb1f0ceb46d",
+    "home": "/private/tmp/m3co-verification/home"
+  },
+  "threads": [
+    {
+      "thread_id": "c615f3f7-dd65-40e5-9d6a-c1f558ba277f",
+      "title": "Run exactly this shell command with the bash tool and then tell me in one senten",
+      "workspace_root": "/private/tmp/m3co-workspace/harness"
+    }
+  ],
+  "prompts": [
+    "Using only the bash tool, run exactly this command: cat uv.lock uv.lock — then tell me in one sentence what the tool returned to you.",
+    "Call the delegate_task tool once with share_percent set to 0.1 and this task: \"Without using any tools, write about 700 words explaining what a memory palace is and how the method of loci works, as your answer.\" Then tell me in two sentences what came back and whether it had been shortened."
+  ],
+  "query_cut": {
+    "thread_id": "c615f3f7-dd65-40e5-9d6a-c1f558ba277f",
+    "agent_id": "nocturne",
+    "at": "2026-09-22T17:15:38.600344Z",
+    "kind": "query",
+    "source": "bash",
+    "size_tokens": 162791,
+    "share": {
+      "percent": 10,
+      "limit_tokens": 838860,
+      "tokens": 83886
+    },
+    "action": "cut",
+    "shorten_by": null,
+    "attempt": 1
+  },
+  "sub_agent_cuts": [
+    {
+      "thread_id": "c615f3f7-dd65-40e5-9d6a-c1f558ba277f",
+      "agent_id": "nocturne/01M352N571JJ97FRH9ZQXJS57P",
+      "at": "2026-09-22T17:29:49.193497Z",
+      "kind": "sub_agent",
+      "source": "01M352N571JJ97FRH9ZQXJS57P",
+      "size_tokens": 1026,
+      "share": {
+        "percent": 0.1,
+        "limit_tokens": 838860,
+        "tokens": 838
+      },
+      "action": "send_back",
+      "shorten_by": 235,
+      "attempt": 1
+    }
+  ],
+  "bounds": {
+    "default_percent": 10,
+    "min_percent": 0.1,
+    "max_percent": 25
+  }
+}

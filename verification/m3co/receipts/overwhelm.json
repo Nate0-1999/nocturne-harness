@@ -1,0 +1,54 @@
+{
+  "status": "live",
+  "as_of": null,
+  "data": {
+    "scope": "GLOBAL",
+    "selected_thread_id": null,
+    "bounds": {
+      "default_percent": 10,
+      "min_percent": 0.1,
+      "max_percent": 25
+    },
+    "shares": {
+      "c615f3f7-dd65-40e5-9d6a-c1f558ba277f": {
+        "percent": 10,
+        "limit_tokens": 838860,
+        "tokens": 83886
+      }
+    },
+    "cuts": [
+      {
+        "thread_id": "c615f3f7-dd65-40e5-9d6a-c1f558ba277f",
+        "agent_id": "nocturne",
+        "at": "2026-09-22T17:15:38.600344Z",
+        "kind": "query",
+        "source": "bash",
+        "size_tokens": 162791,
+        "share": {
+          "percent": 10,
+          "limit_tokens": 838860,
+          "tokens": 83886
+        },
+        "action": "cut",
+        "shorten_by": null,
+        "attempt": 1
+      },
+      {
+        "thread_id": "c615f3f7-dd65-40e5-9d6a-c1f558ba277f",
+        "agent_id": "nocturne/01M352N571JJ97FRH9ZQXJS57P",
+        "at": "2026-09-22T17:29:49.193497Z",
+        "kind": "sub_agent",
+        "source": "01M352N571JJ97FRH9ZQXJS57P",
+        "size_tokens": 1026,
+        "share": {
+          "percent": 0.1,
+          "limit_tokens": 838860,
+          "tokens": 838
+        },
+        "action": "send_back",
+        "shorten_by": 235,
+        "attempt": 1
+      }
+    ]
+  }
+}
