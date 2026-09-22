@@ -618,6 +618,14 @@ class TranscriptJournal:
                 },
             )
 
+    def append_return_cut(self, thread_id: str, cut: dict[str, Any], result: str) -> None:
+        """FL-198: a return over its share is refused or sent back; its full text stays here."""
+        with self._lock:
+            self._append(
+                thread_id,
+                {"version": 1, "record_type": "return_cut", "cut": cut, "result": result},
+            )
+
     def idle_thread_ids(self, cutoff: datetime) -> list[str]:
         """List transcript threads whose last captured message predates cutoff."""
 

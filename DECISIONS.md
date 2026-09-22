@@ -3552,3 +3552,32 @@ submission control, including gates and undo. Typing interrupts dictation.
 The saved choice uses the existing principal/home preference scope. Browser
 permission/service failures remain visible with typing available; no speech
 vendor, credential, backend path or alternative journal is introduced.
+
+## M3CO — One share of the compaction limit per return [P2, P4.1]
+
+PRECEDENT: SD-067, PLAN M3CO, FL-198; D.2 153 (returns capped), M3CM step 3
+(the conductor's fixed 64 KB distillate cap), the memory share. The limit is
+the thread's fill line (window × compaction fraction); one query or sub-agent
+return may take `return_share_percent` of it, and a delegating agent may pick a
+share per call inside `return_share_min_percent`..`return_share_max_percent`
+(system parameters; default 10 / 1 / 25 — 64 KB is 10% of a 200K window's
+80% line, so the old cap is the default share, nothing beside it). Sizes are
+cl100k tokens, the unit the fill line already uses. A query over its share is
+not delivered: the tool return becomes the error naming size and share plus the
+library's `truncate_head` of 240 characters, the full text journaled as
+`return_cut`; a `ModelRetry` was rejected because it re-runs the same call. A
+sub-agent over its share is re-run on its own history with one instruction —
+shorten by exactly D = size − share + the cut notice's own tokens — twice, then
+delivered as the query error; every attempt's full return stays in the
+journal. The former shared per-history worker allowance is deleted: the share
+is per return, and D.2 153's own-fill trigger still ignores worker returns.
+The conductor keeps a byte check (4 bytes per token, the library's heuristic)
+from the same share; Symphony sizes it from `model_context_tokens` × 0.8
+because no per-thread resolution exists there. The library's silent clamps
+(`ToolOutputLimits.Truncate`, `ClampOversizedMessages`) were not adopted: the
+owner ruled an error with a brief head, and both hide the cut from the sender.
+The Security module reads a daemon-lifetime `overwhelm` rack resource (shares
+in force, bounds, every cut and send-back with its D), scoped like Context
+Bars. The two parameters ride the Palace's trainable registry as configured
+rows — two lines in `spine/learner/service.py`, outside the harness-only
+authority because the charge names the registry and that is where it lives.

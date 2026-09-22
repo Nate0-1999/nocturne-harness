@@ -58,7 +58,7 @@ import {
   type ThreadState,
 } from './store'
 
-export type RackModuleId = CustomRackModuleId | 'header' | 'threads' | 'conversation' | 'memory' | 'vitals' | 'palace_state' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'farm' | 'roots' | 'injection_console' | 'recipe' | 'jobs'
+export type RackModuleId = CustomRackModuleId | 'header' | 'threads' | 'conversation' | 'memory' | 'vitals' | 'palace_state' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'farm' | 'roots' | 'injection_console' | 'recipe' | 'jobs' | 'security'
 export type RackModuleSlot = 'header' | 'panel' | 'strip' | 'overlay'
 export type RackMemoryPanelState = MemoryPanelState
 
@@ -78,7 +78,7 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
     value === 'palace_nebula' ||
     value === 'farm' || value === 'roots' ||
     value === 'injection_console' ||
-    value === 'recipe' || value === 'jobs'
+    value === 'recipe' || value === 'jobs' || value === 'security'
 }
 
 export interface RackSnapshot {
@@ -178,7 +178,7 @@ export interface RackModuleManifest {
 }
 
 export interface RackQueryRequest {
-  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'spend_table' | 'context_window' | 'parameters' | 'memory_graph' | 'scorer_console' | 'recipe_graph' | 'tools' | 'visualization' | 'jobs'
+  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'spend_table' | 'context_window' | 'parameters' | 'memory_graph' | 'scorer_console' | 'recipe_graph' | 'tools' | 'visualization' | 'jobs' | 'overwhelm'
   as_of?: string | null
   thread_id?: string
   thread_ids?: string[]
@@ -462,6 +462,12 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     streams: [], actions: ['jobs.save', 'jobs.run', 'jobs.stop', 'thread.select', 'rack.scope.get'],
     bounds: stageGridBounds(instrumentStageBounds.preferred), movable: true,
     law_bound: true, default_scope: 'GLOBAL',
+  },
+  security: {
+    id: 'security', name: 'Security', version: '1.0.0', class: 'visualizer', slot: 'panel',
+    streams: ['run.done'], actions: ['rack.scope.get', 'rack.scope.set'],
+    bounds: stageGridBounds(instrumentStageBounds.preferred), movable: true,
+    law_bound: true, default_scope: 'ATTUNED',
   },
 }
 
@@ -811,7 +817,7 @@ export const rackQuerySurface: RackQuerySurface = {
       if (!response.ok) throw await rackResponseError(response)
       return { status: 'live', as_of: asOf, data: await response.json() as JsonValue }
     }
-    if (request.resource === 'vitals' || request.resource === 'spend_table' || request.resource === 'context_window' || request.resource === 'memory_graph' || request.resource === 'scorer_console' || request.resource === 'recipe_graph' || request.resource === 'tools') {
+    if (request.resource === 'vitals' || request.resource === 'spend_table' || request.resource === 'context_window' || request.resource === 'overwhelm' || request.resource === 'memory_graph' || request.resource === 'scorer_console' || request.resource === 'recipe_graph' || request.resource === 'tools') {
       if (asOf !== null && asOf !== 'now') {
         return { status: 'historical_unavailable', as_of: asOf, data: null }
       }

@@ -33,6 +33,7 @@ import { WorkVisualization } from './WorkVisualization'
 import { InjectionConsole } from './InjectionConsole'
 import { RecipeModule } from './RecipeModule'
 import { JobsModule } from './JobsModule'
+import { SecurityModule } from './SecurityModule'
 import { SymphonyDeck } from './SymphonyDeck'
 import { ModelDevice } from './ModelDevice'
 import { VitalsModule } from './VitalsModule'
@@ -1741,6 +1742,8 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
         <InjectionConsole />
       ) : moduleId === 'jobs' ? (
         <JobsModule />
+      ) : moduleId === 'security' ? (
+        <SecurityModule />
       ) : moduleId === 'recipe' ? (
         <RecipeModule />
       ) : (
@@ -3492,7 +3495,7 @@ function MessageRow({
       )}
       {message.events.filter((event) => event.event_kind === 'worker_return').map((event, index) => (
         <p key={`worker-return-${index}`} className="message__content message__content--quiet" data-testid="worker-return">
-          Worker returned {String(event.returned_bytes)} bytes{event.capped ? ' · capped' : ''} · full result kept in the journal
+          Worker returned {String(event.returned_bytes)} bytes{event.capped ? ' · cut' : ''}{Number(event.send_backs) > 0 ? ` · sent back ×${String(event.send_backs)}` : ''} · full result kept in the journal
         </p>
       ))}
       {spendBoundary?.decision === 'owner_action' && (

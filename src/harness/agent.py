@@ -20,6 +20,7 @@ from spine.tokens import cl100k_token_count
 
 from harness.commands import remember_command_text
 from harness.config import HarnessSettings
+from harness.context_window import ReturnShareBounds, bounds_from
 from harness.model_router import (
     CompletionRouter,
 )
@@ -28,6 +29,7 @@ from harness.model_router import (
 )
 from harness.pydantic_ai_adapter import (
     MemoryCapability,
+    ReturnShareCapability,
     WorkspaceCapability,
     adopted_skill_capabilities,
 )
@@ -280,6 +282,7 @@ class HarnessAgent:
         )
         chat_capabilities = [
             MemoryCapability(),
+            ReturnShareCapability(),
         ]
         self._chat_agent = Agent(
             self._default_model,
@@ -303,7 +306,7 @@ class HarnessAgent:
         self.worker_agent = Agent(
             self._default_model,
             deps_type=MemoryToolContext,
-            capabilities=[WorkspaceCapability()],
+            capabilities=[WorkspaceCapability(), ReturnShareCapability()],
             instructions=(
                 "Complete only the delegated task. Return a concise distillate: findings, "
                 "evidence paths, and unresolved questions. Keep bulk output in files. "
@@ -374,6 +377,11 @@ class HarnessAgent:
     @property
     def usage_limits(self) -> UsageLimits:
         return self._usage_limits
+
+    @property
+    def return_share_bounds(self) -> ReturnShareBounds:
+        """FL-198: the system bounds on one return's share of the compaction limit."""
+        return bounds_from(self._settings)
 
     def model_for(self, model: Model | str | None = None) -> Model:
         """Return one cached settings-owned model instance for a resolved route."""

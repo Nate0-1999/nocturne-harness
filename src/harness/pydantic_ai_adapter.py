@@ -1,15 +1,19 @@
 """The single adapter from harness capabilities to pydantic-ai v2."""
 
 from collections.abc import Callable, Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 from pydantic_ai import BinaryContent, ModelRetry, RunContext, ToolReturn
-from pydantic_ai.capabilities import Capability
+from pydantic_ai.capabilities import AbstractCapability, Capability
+from pydantic_ai.messages import ToolCallPart
 from pydantic_ai.tools import Tool, ToolDefinition
+from spine.tokens import cl100k_token_count
 
 from harness.capability import CapabilityHandler, CapabilityTool, HarnessCapability
+from harness.context_window import ContextCut, cut_notice
 from harness.memory_capability import DEFAULT_MEMORY_FEATURE
 from harness.pydantic_harness_adapter import adopted_skills
 from harness.tools_memory import MemoryToolContext
@@ -347,8 +351,52 @@ class DelegateCapability(Capability[MemoryToolContext]):
     """One bounded worker return through the ordinary Pydantic AI tool seam."""
 
     def __init__(self) -> None:
-        async def delegate_task(ctx: RunContext[MemoryToolContext], task: str) -> str:
-            """Delegate a self-contained task; receive a concise result with full work journaled."""
-            return await ctx.deps.delegate(task)
+        async def delegate_task(
+            ctx: RunContext[MemoryToolContext], task: str, share_percent: float | None = None
+        ) -> str:
+            """Delegate a self-contained task; receive a concise result with full work journaled.
+
+            share_percent: how much of the compaction limit the return may take, within the
+            system bounds; the default share applies when omitted.
+            """
+            return await ctx.deps.delegate(task, share_percent)
 
         super().__init__(id="delegate", tools=[Tool(delegate_task)], defer_loading=False)
+
+
+class ReturnShareCapability(AbstractCapability[MemoryToolContext]):
+    """FL-198: a query result over its share is not delivered; an error with a head is."""
+
+    id: str | None = "return_share"
+
+    async def after_tool_execute(
+        self,
+        ctx: RunContext[MemoryToolContext],
+        *,
+        call: ToolCallPart,
+        tool_def: ToolDefinition,
+        args: Any,
+        result: Any,
+    ) -> Any:
+        share = ctx.deps.return_share
+        if share is None or call.tool_name == "delegate_task":
+            return result
+        text = result.return_value if isinstance(result, ToolReturn) else result
+        if not isinstance(text, str):
+            return result
+        size = cl100k_token_count(text)
+        if size <= share.tokens:
+            return result
+        cut = ContextCut(
+            thread_id=str(ctx.deps.thread_id),
+            agent_id=ctx.deps.agent_id,
+            at=datetime.now(UTC),
+            kind="query",
+            source=call.tool_name,
+            size_tokens=size,
+            share=share,
+            action="cut",
+        )
+        if ctx.deps.record_cut is not None:
+            await ctx.deps.record_cut(cut, text)
+        return cut_notice(cut, text, journaled=ctx.deps.record_cut is not None)

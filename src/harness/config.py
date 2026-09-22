@@ -35,6 +35,10 @@ class HarnessSettings(BaseSettings):
     run_total_tokens_limit: int = Field(default=500_000, ge=1)
     label_max: int = Field(default=64, ge=1)
     memory_max_tokens: int = Field(default=128, ge=1)
+    # FL-198: one query or sub-agent return may take this share of the compaction limit.
+    return_share_percent: float = Field(default=10.0, gt=0, le=100)
+    return_share_min_percent: float = Field(default=1.0, gt=0, le=100)
+    return_share_max_percent: float = Field(default=25.0, gt=0, le=100)
     remember_split_timeout_seconds: float = Field(default=30.0, gt=0)
     extraction_idle_hours: float | None = Field(default=24.0, gt=0)
     nocturne_transcript_backup: bool = False

@@ -12,6 +12,7 @@ from uuid import UUID
 from pydantic import ValidationError
 
 if TYPE_CHECKING:
+    from harness.context_window import ContextCut, ReturnShare
     from harness.toolset import StandardToolset
 
 from harness.progressive_prompt import workspace_location_path
@@ -87,7 +88,9 @@ class MemoryToolContext:
     skill_directories: tuple[Path, ...] = ()
     boundary_review: Callable[[str, str], Awaitable[str]] | None = None
     excluded_memory_ids: frozenset[UUID] = frozenset()
-    delegate: Callable[[str], Awaitable[str]] | None = None
+    delegate: Callable[[str, float | None], Awaitable[str]] | None = None
+    return_share: ReturnShare | None = None
+    record_cut: Callable[[ContextCut, str], Awaitable[None]] | None = None
     _run_state: _MemoryToolRunState = field(
         default_factory=_MemoryToolRunState,
         repr=False,

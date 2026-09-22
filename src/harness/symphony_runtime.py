@@ -24,6 +24,7 @@ from harness.conductor import (
     SmokeGateResult,
     TypedDistillate,
 )
+from harness.context_window import bounds_from
 from harness.envelope import generate_ulid
 from harness.judge_panel import FeedbackPacketReceipt, JudgeLaunch, JudgePanel
 from harness.memory_bridge import SymphonyMemoryBridge
@@ -299,6 +300,9 @@ class SymphonyExecution:
                             or self.settings.effective_model_policy_chat,
                         ),
                         search_spend_reader=lambda *_: cost(),
+                        result_share=bounds_from(self.settings).share(
+                            int(self.settings.model_context_tokens * 0.8)
+                        ),
                     )
                     conductor.claim(
                         AuthoritativeClaim(

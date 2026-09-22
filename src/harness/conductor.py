@@ -17,12 +17,13 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from harness.config import HarnessSettings
+from harness.context_window import ReturnShare, bounds_from
 from harness.model_policy import parse_model_policy
 from harness.supervisor import SupervisorError, WorkerSupervisor
 
 _IDENTITY = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}\Z")
 _SAFE_ENVIRONMENT = ("PATH", "LANG", "LC_ALL", "TMPDIR")
-_MAX_DISTILLATE_BYTES = 64 * 1024
 
 
 class ConductorError(RuntimeError):
@@ -509,9 +510,14 @@ class Conductor:
         max_retries: Literal[2] = 2,
         search_spend_reader: SearchSpendReader | None = None,
         search_clock: SearchClock = time.monotonic,
+        result_share: ReturnShare | None = None,
     ) -> None:
         if max_retries != 2:
             raise ValueError("G7 fixes the worker retry count at two")
+        # FL-198: the bounded result size is the default share of a 200K window's fill line.
+        self._result_share = result_share or bounds_from(HarnessSettings.model_construct()).share(
+            160_000
+        )
         self._supervisor = supervisor
         self._event_sink = event_sink
         self._policies = policies or ModelPolicyByBlastRadius()
@@ -1377,7 +1383,7 @@ class Conductor:
             path = value.expanduser().resolve(strict=True)
             if not path.is_relative_to(attempt.brief.location):
                 raise ConductorError("smoke result must stay inside the attempt location")
-            if path.stat().st_size > _MAX_DISTILLATE_BYTES:
+            if path.stat().st_size > self._result_share.bytes:
                 raise ConductorError("smoke result exceeds the bounded result size")
             try:
                 raw = path.read_text(encoding="utf-8")
@@ -1387,7 +1393,7 @@ class Conductor:
                 raise ConductorError("smoke result is not trustworthy JSON") from exc
         else:
             result = SmokeGateResult.model_validate(value)
-        if len(result.model_dump_json().encode("utf-8")) > _MAX_DISTILLATE_BYTES:
+        if len(result.model_dump_json().encode("utf-8")) > self._result_share.bytes:
             raise ConductorError("smoke result exceeds the bounded result size")
         return result
 
@@ -1410,7 +1416,7 @@ class Conductor:
             path = value.expanduser().resolve(strict=True)
             if not path.is_relative_to(location):
                 raise ConductorError("distillate path must stay inside the worker location")
-            if path.stat().st_size > _MAX_DISTILLATE_BYTES:
+            if path.stat().st_size > self._result_share.bytes:
                 raise ConductorError("distillate exceeds the bounded result size")
             try:
                 raw = path.read_text(encoding="utf-8")
@@ -1420,7 +1426,8 @@ class Conductor:
                 raise ConductorError("worker distillate is not trustworthy JSON") from exc
         else:
             result = TypedDistillate.model_validate(value)
-        if len(result.model_dump_json(exclude_none=False).encode("utf-8")) > _MAX_DISTILLATE_BYTES:
+        encoded = result.model_dump_json(exclude_none=False).encode("utf-8")
+        if len(encoded) > self._result_share.bytes:
             raise ConductorError("distillate exceeds the bounded result size")
         for artifact in result.artifacts:
             artifact_path = PurePosixPath(artifact)

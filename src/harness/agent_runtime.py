@@ -37,8 +37,14 @@ from pydantic_core import to_jsonable_python
 
 from harness.agent import HarnessAgent
 from harness.commands import browser_open_web_command, remember_command_text
-from harness.conductor import _MAX_DISTILLATE_BYTES
-from harness.context_window import ContextWindowTracker
+from harness.context_window import (
+    ContextCut,
+    ContextWindowTracker,
+    OverwhelmTracker,
+    cut_notice,
+    send_back_instruction,
+    shorten_by,
+)
 from harness.envelope import ProviderErrorPayload, StopReason, generate_ulid
 from harness.extraction import ExtractionService
 from harness.model_policy import ThreadModelResolution
@@ -137,12 +143,14 @@ class PydanticAITurnRunner:
         context_windows: ContextWindowTracker | None = None,
         clock: Callable[[], datetime] | None = None,
         extraction: ExtractionService | None = None,
+        overwhelm: OverwhelmTracker | None = None,
     ) -> None:
         self._agent = agent
         self._context_factory = context_factory
         self._spend = spend
         self._receipt_queue = receipt_queue
         self._context_windows = context_windows
+        self._overwhelm = overwhelm
         self._clock = clock or (lambda: datetime.now(UTC))
         self._extraction = extraction
 
@@ -292,21 +300,32 @@ class PydanticAITurnRunner:
 
             from spine.tokens import cl100k_token_count
 
-            worker_budget = min(
-                _MAX_DISTILLATE_BYTES // 4,
-                (model_resolution.context_tokens if model_resolution else 200_000) // 10,
+            # FL-198: one return may take a share of this thread's compaction limit.
+            limit_tokens = max(
+                1,
+                int(
+                    (model_resolution.context_tokens if model_resolution else 200_000)
+                    * (compaction.policy.fraction if compaction else 0.8)
+                ),
             )
-            worker_budget -= sum(
-                cl100k_token_count(str(part.content))
-                for message in prior_history
-                if isinstance(message, ModelRequest)
-                for part in message.parts
-                if isinstance(part, ToolReturnPart) and part.tool_name == "delegate_task"
-            )
+            bounds = self._agent.return_share_bounds
+            share = bounds.share(limit_tokens)
+            if self._overwhelm is not None:
+                self._overwhelm.share_for(thread_id, limit_tokens)
+            journal = self._extraction._journal if self._extraction is not None else None
 
-            async def delegate(task: str) -> str:
-                nonlocal worker_budget
+            async def record_cut(cut: ContextCut, full: str) -> None:
+                if journal is not None:
+                    journal.append_return_cut(thread_id, cut.model_dump(mode="json"), full)
+                if self._overwhelm is not None:
+                    self._overwhelm.record(cut)
+                await emit.event({"event_kind": "context_cut", **cut.model_dump(mode="json")})
+
+            context = replace(context, return_share=share, record_cut=record_cut)
+
+            async def delegate(task: str, share_percent: float | None = None) -> str:
                 worker_id = generate_ulid()
+                worker_share = bounds.share(limit_tokens, share_percent)
                 location = context.toolset.location() if context.toolset is not None else None
                 toolset = (
                     None
@@ -327,64 +346,75 @@ class PydanticAITurnRunner:
                     agent_id=f"{context.agent_id}/{worker_id}",
                 )
                 try:
-                    result = await self._agent.worker_agent.run(
-                        task,
-                        deps=worker_context,
-                        model=selected_model,
-                        model_settings=model_settings,
-                        usage=run_usage,
-                        usage_limits=self._agent.usage_limits,
-                    )
-                    full = result.output
-                    self._extraction._journal.append_worker_return(
-                        thread_id,
-                        worker_id,
-                        full,
-                        to_jsonable_python(result.all_messages()),
-                    )
-                    await self._record_spend(
-                        result.all_messages(),
-                        prior_history=(),
-                        context=worker_context,
-                        emit=emit,
-                        purpose="building",
-                        memory_id=None,
-                    )
-                    encoded = full.encode("utf-8")
-                    marker = "\n[Return capped; full result is in the conversation journal.]"
+                    prompt, history = task, ()
                     # WALL main context / D.2 153: worker bulk must not force compaction.
-                    distilled = (
-                        full
-                        if len(encoded) <= _MAX_DISTILLATE_BYTES
-                        else (
-                            encoded[: _MAX_DISTILLATE_BYTES - len(marker.encode())].decode(
-                                "utf-8", errors="ignore"
-                            )
-                            + marker
+                    # Over the share: sent back to shorten by exactly D, twice; then cut.
+                    for attempt in range(1, 4):
+                        result = await self._agent.worker_agent.run(
+                            prompt,
+                            deps=worker_context,
+                            model=selected_model,
+                            model_settings=model_settings,
+                            usage=run_usage,
+                            usage_limits=self._agent.usage_limits,
+                            message_history=list(history) or None,
                         )
-                    )
-                    # One shared allowance covers all worker returns already in this history.
-                    limit = max(0, worker_budget)
-                    if cl100k_token_count(distilled) > limit:
-                        low, high = 0, len(distilled)
-                        while low < high:
-                            middle = (low + high + 1) // 2
-                            if cl100k_token_count(distilled[:middle] + marker) <= limit:
-                                low = middle
-                            else:
-                                high = middle - 1
-                        distilled = distilled[:low] + marker if low else ""
-                    worker_budget -= cl100k_token_count(distilled)
+                        full = result.output
+                        self._extraction._journal.append_worker_return(
+                            thread_id,
+                            worker_id,
+                            full,
+                            to_jsonable_python(result.all_messages()),
+                        )
+                        await self._record_spend(
+                            result.all_messages(),
+                            prior_history=history,
+                            context=worker_context,
+                            emit=emit,
+                            purpose="building",
+                            memory_id=None,
+                        )
+                        size = cl100k_token_count(full)
+                        if size <= worker_share.tokens:
+                            delivered = full
+                            break
+                        cut = ContextCut(
+                            thread_id=thread_id,
+                            agent_id=worker_context.agent_id,
+                            at=self._clock(),
+                            kind="sub_agent",
+                            source=worker_id,
+                            size_tokens=size,
+                            share=worker_share,
+                            action="send_back" if attempt < 3 else "cut",
+                            shorten_by=(
+                                shorten_by(
+                                    size,
+                                    worker_share,
+                                    thread_id=thread_id,
+                                    agent_id=worker_context.agent_id,
+                                )
+                                if attempt < 3
+                                else None
+                            ),
+                            attempt=attempt,
+                        )
+                        await record_cut(cut, full)
+                        if attempt == 3:
+                            delivered = cut_notice(cut, full, journaled=True)
+                            break
+                        prompt, history = send_back_instruction(cut), result.all_messages()
                     await emit.event(
                         {
                             "event_kind": "worker_return",
                             "worker_id": worker_id,
-                            "full_bytes": len(encoded),
-                            "returned_bytes": len(distilled.encode()),
-                            "capped": distilled != full,
+                            "full_bytes": len(full.encode()),
+                            "returned_bytes": len(delivered.encode()),
+                            "capped": delivered != full,
+                            "send_backs": attempt - 1,
                         }
                     )
-                    return distilled
+                    return delivered
                 finally:
                     if toolset is not None:
                         await toolset.close()

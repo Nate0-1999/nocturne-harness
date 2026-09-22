@@ -1109,6 +1109,8 @@ async def test_remember_dispatch_receives_the_same_thread_model_and_routing_sett
     marker = FunctionModel(function=lambda _messages, _info: ModelResponse(parts=[TextPart("x")]))
 
     class RememberSpyAgent:
+        return_share_bounds = HarnessAgent(settings()).return_share_bounds
+
         def __init__(self) -> None:
             self.selected_names: list[str | None] = []
             self.dispatch_calls: list[dict[str, Any]] = []

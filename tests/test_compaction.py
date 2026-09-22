@@ -1,20 +1,31 @@
 """SPEC D.2 101/144/153: the one memory creation event preserves live work."""
 
 import json
+from dataclasses import replace
 
 import pytest
+from pydantic_ai.capabilities import Capability
 from pydantic_ai.messages import (
     ModelRequest,
     ModelResponse,
     TextPart,
+    ToolCallPart,
     ToolReturnPart,
     UserPromptPart,
 )
 from pydantic_ai.models.function import DeltaToolCall, FunctionModel
+from pydantic_ai.tools import Tool
 from pydantic_ai_harness.compaction import pin
+from spine.tokens import cl100k_token_count
 
 from harness.agent import HarnessAgent
 from harness.agent_runtime import PydanticAITurnRunner, _configure_compaction
+from harness.context_window import (
+    OverwhelmTracker,
+    cut_notice,
+    send_back_instruction,
+    shorten_by,
+)
 from harness.extraction import ExtractionService
 from harness.model_policy import ThreadModelResolution
 from harness.pydantic_harness_adapter import CompactionPolicy
@@ -161,18 +172,7 @@ async def test_real_runner_compacts_once_and_keeps_resumable_history(tmp_path, s
     assert emit.run_id in restored.compaction_histories
 
 
-@pytest.mark.asyncio
-async def test_large_worker_return_is_journaled_capped_and_cannot_trigger_compaction(tmp_path):
-    """SPEC D.2 153: workers have no memory tools and bulk never forces compaction."""
-    full_return = "worker evidence " * 6000
-    parent_returns = []
-
-    def worker(messages, info):
-        assert not {"save_memory", "search_memory", "edit_memory"} & {
-            tool.name for tool in info.function_tools
-        }
-        return ModelResponse([TextPart(full_return)])
-
+def _delegating_parent(parent_returns, json_args='{"task":"Report evidence"}'):
     async def parent(messages, info):
         returned = [
             part
@@ -187,13 +187,14 @@ async def test_large_worker_return_is_journaled_capped_and_cannot_trigger_compac
         else:
             yield {
                 0: DeltaToolCall(
-                    name="delegate_task",
-                    json_args='{"task":"Report evidence"}',
-                    tool_call_id="worker-call",
+                    name="delegate_task", json_args=json_args, tool_call_id="worker-call"
                 )
             }
 
-    model = FunctionModel(function=worker, stream_function=parent)
+    return parent
+
+
+async def _delegate_turn(tmp_path, model, *, context_tokens=2000):
     agent = HarnessAgent(settings(), model=model)
     deps = context()
     journal = TranscriptJournal(tmp_path / "journal")
@@ -205,7 +206,8 @@ async def test_large_worker_return_is_journaled_capped_and_cannot_trigger_compac
         principal_id="principal-1",
         machine_id="machine-1",
     )
-    runner = PydanticAITurnRunner(agent, lambda _: deps, extraction=service)
+    tracker = OverwhelmTracker(agent.return_share_bounds)
+    runner = PydanticAITurnRunner(agent, lambda _: deps, extraction=service, overwhelm=tracker)
     emit = RecordingEmitter()
     outcome = await runner.run(
         thread_id=str(deps.thread_id),
@@ -213,20 +215,171 @@ async def test_large_worker_return_is_journaled_capped_and_cannot_trigger_compac
         message_history=(),
         emit=emit,
         model_resolution=ThreadModelResolution(
-            model=settings().chat_model, context_tokens=2000, policy="pinned"
+            model=settings().chat_model, context_tokens=context_tokens, policy="pinned"
         ),
     )
     assert outcome.stop_reason.value == "end_turn", outcome.error_message
-    assert len(parent_returns) == 1
-    assert len(parent_returns[0].content.encode()) <= 64 * 1024
-    assert "Return capped" in parent_returns[0].content
-    assert not any(event["event_kind"].startswith("compaction") for event in emit.events)
     rows = [
         json.loads(line)
         for line in journal.path_for_thread(str(deps.thread_id)).read_text().splitlines()
     ]
-    saved = next(row for row in rows if row["record_type"] == "worker_return")
-    assert saved["result"] == full_return
+    return emit, rows, tracker.snapshot(str(deps.thread_id))
+
+
+def _last_prompt(messages):
+    return next(
+        part.content
+        for message in reversed(messages)
+        if isinstance(message, ModelRequest)
+        for part in message.parts
+        if isinstance(part, UserPromptPart)
+    )
+
+
+@pytest.mark.asyncio
+async def test_large_worker_return_is_sent_back_twice_then_cut_with_a_head(tmp_path):
+    """SPEC D.2 153 / FL-198: a return over its share is told the exact shorten-by, twice,
+    then delivered as an error with a brief head; every full return stays in the journal."""
+    full_return = "worker evidence " * 6000
+    parent_returns = []
+    worker_prompts = []
+
+    def worker(messages, info):
+        assert not {"save_memory", "search_memory", "edit_memory"} & {
+            tool.name for tool in info.function_tools
+        }
+        worker_prompts.append(_last_prompt(messages))
+        return ModelResponse([TextPart(full_return)])
+
+    model = FunctionModel(function=worker, stream_function=_delegating_parent(parent_returns))
+    emit, rows, snapshot = await _delegate_turn(tmp_path, model)
+
+    share = snapshot.shares[snapshot.selected_thread_id]
+    assert (share.percent, share.limit_tokens, share.tokens) == (10.0, 1600, 160)
+    size = cl100k_token_count(full_return)
+    expected_d = shorten_by(size, share, thread_id="t", agent_id="a")
+    assert expected_d == size - 160 + cl100k_token_count(
+        cut_notice(snapshot.cuts[-1], "", journaled=True)
+    )
+    assert [cut.action for cut in snapshot.cuts] == ["send_back", "send_back", "cut"]
+    assert [cut.shorten_by for cut in snapshot.cuts] == [expected_d, expected_d, None]
+    assert len(worker_prompts) == 3
+    assert worker_prompts[1] == worker_prompts[2] == send_back_instruction(snapshot.cuts[0])
+    assert f"shortened by exactly {expected_d:,} tokens" in worker_prompts[1]
+
+    assert len(parent_returns) == 1
+    delivered = parent_returns[0].content
+    assert delivered.startswith(
+        f"Not delivered: this sub-agent return is {size:,} tokens; its share is 160 tokens "
+        "(10% of the 1,600-token compaction limit). The full text is in the conversation "
+        "journal.\nHead:\n"
+    )
+    assert delivered.endswith("[... page text truncated at 240 characters]")
+    assert cl100k_token_count(delivered) < 160
+    assert not any(event["event_kind"].startswith("compaction") for event in emit.events)
+    worker_event = next(event for event in emit.events if event["event_kind"] == "worker_return")
+    assert (worker_event["capped"], worker_event["send_backs"]) == (True, 2)
+    assert [event["action"] for event in emit.events if event["event_kind"] == "context_cut"] == [
+        "send_back",
+        "send_back",
+        "cut",
+    ]
+    assert [row["result"] for row in rows if row["record_type"] == "worker_return"] == [
+        full_return
+    ] * 3
+    cuts = [row for row in rows if row["record_type"] == "return_cut"]
+    assert [row["cut"]["action"] for row in cuts] == ["send_back", "send_back", "cut"]
+    assert all(row["result"] == full_return for row in cuts)
+
+
+@pytest.mark.asyncio
+async def test_worker_that_shortens_on_request_is_delivered_whole(tmp_path):
+    """FL-198: one send-back, a compliant return under the share, delivered untouched."""
+    full_return = "worker evidence " * 6000
+    parent_returns = []
+
+    def worker(messages, info):
+        if _last_prompt(messages).startswith("Your return is"):
+            return ModelResponse([TextPart("Short evidence.")])
+        return ModelResponse([TextPart(full_return)])
+
+    model = FunctionModel(function=worker, stream_function=_delegating_parent(parent_returns))
+    emit, rows, snapshot = await _delegate_turn(tmp_path, model)
+
+    assert parent_returns[0].content == "Short evidence."
+    assert [cut.action for cut in snapshot.cuts] == ["send_back"]
+    worker_event = next(event for event in emit.events if event["event_kind"] == "worker_return")
+    assert (worker_event["capped"], worker_event["send_backs"]) == (False, 1)
+    assert [row["result"] for row in rows if row["record_type"] == "worker_return"] == [
+        full_return,
+        "Short evidence.",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_sender_picks_a_share_inside_the_system_bounds(tmp_path):
+    """FL-198: the delegating agent chooses the share per call; the bounds clamp it."""
+    parent_returns = []
+
+    def worker(messages, info):
+        return ModelResponse([TextPart("worker evidence " * 6000)])
+
+    model = FunctionModel(
+        function=worker,
+        stream_function=_delegating_parent(
+            parent_returns, json_args='{"task":"Report evidence","share_percent":90}'
+        ),
+    )
+    _, _, snapshot = await _delegate_turn(tmp_path, model)
+    assert snapshot.bounds.max_percent == 25.0
+    assert {(cut.share.percent, cut.share.tokens) for cut in snapshot.cuts} == {(25.0, 400)}
+
+
+@pytest.mark.asyncio
+async def test_query_result_over_its_share_is_refused_with_a_brief_head():
+    """FL-198: a tool result over the share is not delivered; the agent gets the error and
+    the library's head, and the full text goes to the journal through record_cut."""
+    seen = []
+
+    def model(messages, info):
+        returned = [
+            part
+            for message in messages
+            if isinstance(message, ModelRequest)
+            for part in message.parts
+            if isinstance(part, ToolReturnPart)
+        ]
+        if returned:
+            seen.extend(returned)
+            return ModelResponse([TextPart("done")])
+        return ModelResponse([ToolCallPart(tool_name="probe", args={}, tool_call_id="c1")])
+
+    def probe() -> str:
+        return "page text " * 2000
+
+    recorded = []
+
+    async def record(cut, text):
+        recorded.append((cut, text))
+
+    share = HarnessAgent(settings()).return_share_bounds.share(1600)
+    deps = replace(context(), return_share=share, record_cut=record)
+    agent = HarnessAgent(settings(), model=FunctionModel(function=model))
+    await agent.chat_agent.run(
+        "go", deps=deps, capabilities=[Capability(id="probe", tools=[Tool(probe)])]
+    )
+    assert seen[0].content == cut_notice(recorded[0][0], "page text " * 2000, journaled=True)
+    assert seen[0].content.startswith(
+        "Not delivered: this result is 4,001 tokens; its share is 160 tokens "
+        "(10% of the 1,600-token compaction limit). The full text is in the conversation "
+        "journal.\nHead:\npage text page text"
+    )
+    assert seen[0].content.endswith("[... page text truncated at 240 characters]")
+    assert (recorded[0][0].kind, recorded[0][0].source, recorded[0][1]) == (
+        "query",
+        "probe",
+        "page text " * 2000,
+    )
 
 
 @pytest.mark.asyncio

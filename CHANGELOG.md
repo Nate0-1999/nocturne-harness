@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.29 - 2026-09-22
+
+- Protect the context window from oversized returns: one query or sub-agent
+  return may take a share of the compaction limit (10% by default, 1–25% by the
+  sender's choice). A query over its share arrives as an error with a brief
+  head; a sub-agent over its share is told exactly how much to shorten, twice,
+  then cut. The Security module shows shares, bounds, cuts and send-backs.
+  Pair with Memory 0.1.29.
+
 ## 0.1.28 - 2026-09-16
 
 - Keep Wizard Mode and Technomancer glyphs clear of module controls and use

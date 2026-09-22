@@ -32,7 +32,12 @@ from harness.agent_runtime import PydanticAITurnRunner
 from harness.checkpoints import WorkspaceCheckpoints
 from harness.commands import browser_open_web_command
 from harness.config import HarnessSettings
-from harness.context_window import ContextWindowSnapshot, ContextWindowTracker
+from harness.context_window import (
+    ContextWindowSnapshot,
+    ContextWindowTracker,
+    OverwhelmSnapshot,
+    OverwhelmTracker,
+)
 from harness.envelope import (
     Envelope,
     EnvelopeFactory,
@@ -135,6 +140,7 @@ type ScorerProposalActivator = Callable[
     [str, RackScorerActivateRequest], Awaitable[ScorerConfigurationView]
 ]
 type ContextWindowReader = Callable[[str | None], ContextWindowSnapshot]
+type OverwhelmReader = Callable[[str | None], OverwhelmSnapshot]
 type RecipeGraphReader = Callable[[], RecipeGraphSnapshot]
 type ToolInventoryReader = Callable[[str], ToolInventory]
 
@@ -202,6 +208,7 @@ _RACK_MODULE_IDS = frozenset(
         "injection_console",
         "recipe",
         "jobs",
+        "security",
     }
 )
 _RACK_FRAME_CSP = "; ".join(
@@ -309,6 +316,7 @@ def create_app(
     scorer_retrainer: ScorerRetrainer | None = None,
     scorer_proposal_activator: ScorerProposalActivator | None = None,
     context_window_reader: ContextWindowReader | None = None,
+    overwhelm_reader: OverwhelmReader | None = None,
     recipe_graph_reader: RecipeGraphReader | None = None,
     tool_inventory_reader: ToolInventoryReader | None = None,
     before_static_mount: Callable[[FastAPI], None] | None = None,
@@ -367,6 +375,7 @@ def create_app(
             "memory_graph",
             "scorer_console",
             "context_window",
+            "overwhelm",
             "recipe_graph",
             "tools",
         ],
@@ -423,6 +432,12 @@ def create_app(
             if context_window_reader is None:
                 raise HTTPException(status_code=503, detail="Context usage is unavailable.")
             return RackQueryResult(status="live", as_of=None, data=context_window_reader(thread_id))
+        if resource == "overwhelm":
+            if as_of not in {None, "now"}:
+                return RackQueryResult(status="historical_unavailable", as_of=as_of, data=None)
+            if overwhelm_reader is None:
+                raise HTTPException(status_code=503, detail="Context shares are unavailable.")
+            return RackQueryResult(status="live", as_of=None, data=overwhelm_reader(thread_id))
         if resource == "parameters":
             if thread_id is None or not thread_id.strip():
                 raise HTTPException(
@@ -936,6 +951,7 @@ def create_dev_app(
 
     memory_contexts = ThreadMemoryContextRegistry()
     context_windows = ContextWindowTracker()
+    overwhelm = OverwhelmTracker(owned_agent.return_share_bounds)
     receipt_queue = SpendReceiptQueue(home / "receipt-queue")
     spend_walls = SpendWalls(
         home / "spend-walls.json", owned_spine, lambda: owned_spine.spend_table()
@@ -1016,6 +1032,7 @@ def create_dev_app(
             receipt_queue=receipt_queue,
             context_windows=context_windows,
             extraction=extraction,
+            overwhelm=overwhelm,
         ),
         owned_spine,
         context_factory,
@@ -1489,6 +1506,7 @@ def create_dev_app(
         scorer_retrainer=retrain_scorer,
         scorer_proposal_activator=activate_scorer,
         context_window_reader=context_windows.snapshot,
+        overwhelm_reader=overwhelm.snapshot,
         recipe_graph_reader=owned_symphony_experience.recipe_snapshot,
         tool_inventory_reader=lambda thread_id: inventory(context_factory(thread_id)),
         before_static_mount=configure_visualization_routes,

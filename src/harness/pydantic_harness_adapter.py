@@ -26,6 +26,7 @@ from pydantic_ai.messages import (
     UserPromptPart,
 )
 from pydantic_ai_harness import Skills
+from pydantic_ai_harness._output import truncate_head  # noqa: F401  (FL-198 head; fenced here)
 from pydantic_ai_harness.compaction import (
     SlidingWindowCompaction,
     SummarizingCompaction,
