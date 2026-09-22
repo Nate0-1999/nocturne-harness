@@ -8,11 +8,6 @@
       "repo": "harness",
       "base": "061d7fdd43133b14268e1234d37f4feec43063c9",
       "head": "914aed78b0d1c0cae55d57d768134ba5476f9026"
-    },
-    {
-      "repo": "spine",
-      "base": "8c3ef33aee312d36ac9316390c68e003c54fe735",
-      "head": "3cb3d54f5616fbdc39285fc52d8ffe0603f2e691"
     }
   ],
   "unmapped": {
@@ -31,9 +26,6 @@
     "harness/web/dist/assets/index-DAjykALT.js": "Supporting tests, the 0.1.29 lockstep release metadata, generated web assets, the journal and decision record, or the heartbeat fixture's declared window; no feature behavior beyond FL-198.",
     "harness/web/dist/index.html": "Supporting tests, the 0.1.29 lockstep release metadata, generated web assets, the journal and decision record, or the heartbeat fixture's declared window; no feature behavior beyond FL-198.",
     "harness/web/tests/rackModuleTemplate.test.mjs": "Supporting tests, the 0.1.29 lockstep release metadata, generated web assets, the journal and decision record, or the heartbeat fixture's declared window; no feature behavior beyond FL-198.",
-    "spine/openapi.json": "Supporting tests, the 0.1.29 lockstep release metadata, generated web assets, the journal and decision record, or the heartbeat fixture's declared window; no feature behavior beyond FL-198.",
-    "spine/src/spine/__init__.py": "Supporting tests, the 0.1.29 lockstep release metadata, generated web assets, the journal and decision record, or the heartbeat fixture's declared window; no feature behavior beyond FL-198.",
-    "spine/tests/test_packaging.py": "Supporting tests, the 0.1.29 lockstep release metadata, generated web assets, the journal and decision record, or the heartbeat fixture's declared window; no feature behavior beyond FL-198.",
     "harness/verification/m3co/FL-002.png": "M3CO packet evidence: the walk script, the coverage report, captures and receipts; no feature behavior.",
     "harness/verification/m3co/FL-006.png": "M3CO packet evidence: the walk script, the coverage report, captures and receipts; no feature behavior.",
     "harness/verification/m3co/FL-007.png": "M3CO packet evidence: the walk script, the coverage report, captures and receipts; no feature behavior.",
@@ -192,42 +184,6 @@
       "protected": true,
       "verdict": "FAIL",
       "screenshot": "FL-042.png",
-      "flag": "F086",
-      "observed": "Not walked by M3CO. This row's surface is a shared file this packet changed by function for FL-198 (the run loop's return share, the rack registration of the Security module, the daemon's overwhelm resource); its own behavior was not exercised, so required proof is missing, not failed. Context-only capture of the walked thread."
-    },
-    "FL-052": {
-      "label": "The scoreboard counts right and wrong injection decisions, injected or not, with no arbitrary scoring.",
-      "walk": "Open the scoreboard; it shows separate integer counts of right and wrong decisions (the weighted-disagreement figures are the tuner's trigger, not a score on a memory).",
-      "protected": true,
-      "verdict": "FAIL",
-      "screenshot": "FL-052.png",
-      "flag": "F086",
-      "observed": "Not walked by M3CO. This row's surface is a shared file this packet changed by function for FL-198 (the run loop's return share, the rack registration of the Security module, the daemon's overwhelm resource); its own behavior was not exercised, so required proof is missing, not failed. Context-only capture of the walked thread."
-    },
-    "FL-053": {
-      "label": "Every feature's weight labeled and shown normalized to a decimal.",
-      "walk": "Open the Injection Console; each feature's weight is labeled and shown as a decimal.",
-      "protected": true,
-      "verdict": "FAIL",
-      "screenshot": "FL-053.png",
-      "flag": "F086",
-      "observed": "Not walked by M3CO. This row's surface is a shared file this packet changed by function for FL-198 (the run loop's return share, the rack registration of the Security module, the daemon's overwhelm resource); its own behavior was not exercised, so required proof is missing, not failed. Context-only capture of the walked thread."
-    },
-    "FL-056": {
-      "label": "Automatic training of the memory line and the share from human feedback, switching on by itself after 100 pieces of authentic feedback.",
-      "walk": "Below 100 pieces of feedback the ledger says the memory line and share are fixed; the 100 floor is shown.",
-      "protected": true,
-      "verdict": "FAIL",
-      "screenshot": "FL-056.png",
-      "flag": "F086",
-      "observed": "Not walked by M3CO. This row's surface is a shared file this packet changed by function for FL-198 (the run loop's return share, the rack registration of the Security module, the daemon's overwhelm resource); its own behavior was not exercised, so required proof is missing, not failed. Context-only capture of the walked thread."
-    },
-    "FL-060": {
-      "label": "An optimization ledger: state and scores across runs in a proper history schema.",
-      "walk": "Force retrain; a row appears in the optimization ledger with its state and score.",
-      "protected": true,
-      "verdict": "FAIL",
-      "screenshot": "FL-060.png",
       "flag": "F086",
       "observed": "Not walked by M3CO. This row's surface is a shared file this packet changed by function for FL-198 (the run loop's return share, the rack registration of the Security module, the daemon's overwhelm resource); its own behavior was not exercised, so required proof is missing, not failed. Context-only capture of the walked thread."
     },
@@ -600,105 +556,6 @@
       "flag": "F086",
       "observed": "Not walked by M3CO. This row's surface is a shared file this packet changed by function for FL-198 (the run loop's return share, the rack registration of the Security module, the daemon's overwhelm resource); its own behavior was not exercised, so required proof is missing, not failed. Context-only capture of the walked thread."
     },
-    "FL-021": {
-      "label": "The memory visualizer shows the hyperparameters and lets the user go in and tweak memories.",
-      "walk": "Open the memory visualizer; the hyperparameters are displayed and a memory can be edited from there.",
-      "protected": false,
-      "verdict": "FAIL",
-      "screenshot": "FL-021.png",
-      "flag": "F086",
-      "observed": "Not walked by M3CO. This row's surface is a shared file this packet changed by function for FL-198 (the run loop's return share, the rack registration of the Security module, the daemon's overwhelm resource); its own behavior was not exercised, so required proof is missing, not failed. Context-only capture of the walked thread."
-    },
-    "FL-049": {
-      "label": "Scoring parameters that can be added and removed easily; curators can add and retire axes over time.",
-      "walk": "Add or remove a scoring axis in config; the score breakdown gains or loses that row.",
-      "protected": false,
-      "verdict": "FAIL",
-      "screenshot": "FL-049.png",
-      "flag": "F086",
-      "observed": "Not walked by M3CO. This row's surface is a shared file this packet changed by function for FL-198 (the run loop's return share, the rack registration of the Security module, the daemon's overwhelm resource); its own behavior was not exercised, so required proof is missing, not failed. Context-only capture of the walked thread."
-    },
-    "FL-050": {
-      "label": "Weight refits run offline while the previous weights keep serving; the method (gradient descent, linear programming or a solver) was his guess, and it must not slow things down massively.",
-      "walk": "M3WF fixture (harness/verification/m3wf/README.md): Force retrain; the incumbent weights keep serving during the refit and a proposal appears afterward.",
-      "protected": false,
-      "verdict": "FAIL",
-      "screenshot": "FL-050.png",
-      "flag": "F086",
-      "observed": "Not walked by M3CO. This row's surface is a shared file this packet changed by function for FL-198 (the run loop's return share, the rack registration of the Security module, the daemon's overwhelm resource); its own behavior was not exercised, so required proof is missing, not failed. Context-only capture of the walked thread."
-    },
-    "FL-051": {
-      "label": "A performance score for the memory system, back-tested on the history of manual adds and removes plus successful injections; a new set of weights is accepted only if it scores better than the previous generation.",
-      "walk": "M3WF fixture (harness/verification/m3wf/README.md): Force retrain; the scoreboard shows the new weights' back-test score beside the previous generation's, and the update lands only if it is higher.",
-      "protected": false,
-      "verdict": "FAIL",
-      "screenshot": "FL-051.png",
-      "flag": "F086",
-      "observed": "Not walked by M3CO. This row's surface is a shared file this packet changed by function for FL-198 (the run loop's return share, the rack registration of the Security module, the daemon's overwhelm resource); its own behavior was not exercised, so required proof is missing, not failed. Context-only capture of the walked thread."
-    },
-    "FL-054": {
-      "label": "Simulate: change weights and back-test the result before forcing them.",
-      "walk": "M3WF fixture (harness/verification/m3wf/README.md): Simulate in the Injection Console; a back-test score appears before force is enabled.",
-      "protected": false,
-      "verdict": "FAIL",
-      "screenshot": "FL-054.png",
-      "flag": "F086",
-      "observed": "Not walked by M3CO. This row's surface is a shared file this packet changed by function for FL-198 (the run loop's return share, the rack registration of the Security module, the daemon's overwhelm resource); its own behavior was not exercised, so required proof is missing, not failed. Context-only capture of the walked thread."
-    },
-    "FL-055": {
-      "label": "Background retraining on work-based triggers, with one \"force retrain\" button as the only manual lever.",
-      "walk": "M3WF fixture (harness/verification/m3wf/README.md): Look for retrain controls; one 'force retrain' button exists, and retrain also fires on its own after work.",
-      "protected": false,
-      "verdict": "FAIL",
-      "screenshot": "FL-055.png",
-      "flag": "F086",
-      "observed": "Not walked by M3CO. This row's surface is a shared file this packet changed by function for FL-198 (the run loop's return share, the rack registration of the Security module, the daemon's overwhelm resource); its own behavior was not exercised, so required proof is missing, not failed. Context-only capture of the walked thread."
-    },
-    "FL-058": {
-      "label": "A standing registry of every trainable parameter; all training loops triggered from one place in the code where their documentation lives.",
-      "walk": "Open the trainable-parameter registry; every trainable parameter is listed, and the training trigger point is one place in code with its documentation beside it.",
-      "protected": false,
-      "verdict": "FAIL",
-      "screenshot": "FL-058.png",
-      "flag": "F086",
-      "observed": "Not walked by M3CO. This row's surface is a shared file this packet changed by function for FL-198 (the run loop's return share, the rack registration of the Security module, the daemon's overwhelm resource); its own behavior was not exercised, so required proof is missing, not failed. Context-only capture of the walked thread."
-    },
-    "FL-059": {
-      "label": "Optimization at every compaction of a main thread, one at a time under a lock, with mixed and capped back-test material.",
-      "walk": "Cross a compaction on a main thread; one optimization runs under a lock on a capped, mixed back-test.",
-      "protected": false,
-      "verdict": "FAIL",
-      "screenshot": "FL-059.png",
-      "flag": "F086",
-      "observed": "Not walked by M3CO. This row's surface is a shared file this packet changed by function for FL-198 (the run loop's return share, the rack registration of the Security module, the daemon's overwhelm resource); its own behavior was not exercised, so required proof is missing, not failed. Context-only capture of the walked thread."
-    },
-    "FL-062": {
-      "label": "Constitution: The audition: a proposed scorer runs as a visible shadow beside the incumbent before acceptance (gate-day).",
-      "walk": "M3WF fixture (harness/verification/m3wf/README.md): Open a proposal; its shadow results show beside the incumbent's on the live gate.",
-      "protected": false,
-      "verdict": "FAIL",
-      "screenshot": "FL-062.png",
-      "flag": "F086",
-      "observed": "Not walked by M3CO. This row's surface is a shared file this packet changed by function for FL-198 (the run loop's return share, the rack registration of the Security module, the daemon's overwhelm resource); its own behavior was not exercised, so required proof is missing, not failed. Context-only capture of the walked thread."
-    },
-    "FL-063": {
-      "label": "The scorer need not stay linear forever, and black-box changes from optimization are fine as long as the features being weighted stay understandable.",
-      "walk": "M3WF fixture (harness/verification/m3wf/README.md): Open the score breakdown after a retrain; each feature is still named and understandable even if the weights came from a black box.",
-      "protected": false,
-      "verdict": "FAIL",
-      "screenshot": "FL-063.png",
-      "flag": "F086",
-      "observed": "Not walked by M3CO. This row's surface is a shared file this packet changed by function for FL-198 (the run loop's return share, the rack registration of the Security module, the daemon's overwhelm resource); its own behavior was not exercised, so required proof is missing, not failed. Context-only capture of the walked thread."
-    },
-    "FL-064": {
-      "label": "Constitution: Per-project weight offsets starting at zero, after global weights (founding ADR-005 / SD-041).",
-      "walk": "Train on two projects; each project's effective weights differ from the global ones by its own offset.",
-      "protected": false,
-      "verdict": "FAIL",
-      "screenshot": "FL-064.png",
-      "flag": "F086",
-      "observed": "Not walked by M3CO. This row's surface is a shared file this packet changed by function for FL-198 (the run loop's return share, the rack registration of the Security module, the daemon's overwhelm resource); its own behavior was not exercised, so required proof is missing, not failed. Context-only capture of the walked thread."
-    },
     "FL-068": {
       "label": "Injected memories refreshed on every move.",
       "walk": "Move to a folder with its own memories; the next turn's injection is refreshed with them.",
@@ -915,15 +772,6 @@
       "flag": "F086",
       "observed": "Not walked by M3CO. This row's surface is a shared file this packet changed by function for FL-198 (the run loop's return share, the rack registration of the Security module, the daemon's overwhelm resource); its own behavior was not exercised, so required proof is missing, not failed. Context-only capture of the walked thread."
     },
-    "FL-137": {
-      "label": "A line graph of the injection system's historical performance; a 3D terrain of the score surface across parameters; the optimization shown while it runs (the landscape module is this terrain, placed beside the curators).",
-      "walk": "M3WF fixture (harness/verification/m3wf/README.md): Open the module during a retrain; a line graph of the score's history, a 3D terrain of the score across parameters, and the running optimization are all shown.",
-      "protected": false,
-      "verdict": "FAIL",
-      "screenshot": "FL-137.png",
-      "flag": "F086",
-      "observed": "Not walked by M3CO. This row's surface is a shared file this packet changed by function for FL-198 (the run loop's return share, the rack registration of the Security module, the daemon's overwhelm resource); its own behavior was not exercised, so required proof is missing, not failed. Context-only capture of the walked thread."
-    },
     "FL-168": {
       "label": "A restore popup that asks whether to roll back these memories and lists them.",
       "walk": "Press restore; a popup asks whether to roll back and lists the memories that would come back.",
@@ -1028,6 +876,7 @@
     "FL-018": "outside diff",
     "FL-019": "outside diff",
     "FL-020": "outside diff",
+    "FL-021": "outside diff",
     "FL-022": "outside diff",
     "FL-023": "outside diff",
     "FL-024": "outside diff",
@@ -1052,8 +901,22 @@
     "FL-046": "outside diff",
     "FL-047": "outside diff",
     "FL-048": "outside diff",
+    "FL-049": "outside diff",
+    "FL-050": "outside diff",
+    "FL-051": "outside diff",
+    "FL-052": "outside diff",
+    "FL-053": "outside diff",
+    "FL-054": "outside diff",
+    "FL-055": "outside diff",
+    "FL-056": "outside diff",
     "FL-057": "outside diff",
+    "FL-058": "outside diff",
+    "FL-059": "outside diff",
+    "FL-060": "outside diff",
     "FL-061": "not built",
+    "FL-062": "outside diff",
+    "FL-063": "outside diff",
+    "FL-064": "outside diff",
     "FL-065": "horizon",
     "FL-066": "outside diff",
     "FL-077": "horizon",
@@ -1080,6 +943,7 @@
     "FL-134": "outside diff",
     "FL-135": "dropped",
     "FL-136": "horizon",
+    "FL-137": "outside diff",
     "FL-138": "outside diff",
     "FL-139": "outside diff",
     "FL-140": "horizon",
