@@ -3583,3 +3583,23 @@ rows — two lines in `spine/learner/service.py`, outside the harness-only
 authority because the charge names the registry and that is where it lives.
 The heartbeat fixture declared a 4,096-token window, so its 2,102-token read fell
 to the share; it now declares 200,000, a window a real model has.
+
+## M3UI — The look pass: one button, fewer words, tips everywhere [P2.2]
+
+PRECEDENT: PLAN M3UI (owner, 2026-09-21: 'get rid of slop like phrases that
+don't need to be there. Make buttons right sized and chamfered corners and have
+hovertips'); D.2 110 (rim law: the accent lives on the edge, fills stay dark),
+D.2 113/115 (every theme keeps working), v2.115 (behavior untouched).
+One kit (`web/src/kit.tsx`, `assets/kit.css`) carries the button, select,
+field, toggle, label and empty state: each part is the native element plus one
+class, so handlers, aria and test ids pass through. Two opposite corners are
+cut by clip-path; the cut edges are drawn with corner gradients and the focus
+ring is inset, because a clip removes border and outline there. A `bare`
+button carries no kit class (rows, cards, stage chrome). Every font size maps
+to one of six tokens. Sixteen CSS variables were used but never defined, so
+their declarations silently fell back; each now names the real theme token.
+Narrating sentences moved into hover tips or were deleted; phrases a test
+guards stayed (A-051's secondary actions keep their exact colors; the curator
+trust sentence lives on as a tip). The composer function and the 3D scene
+functions were not opened: their controls are reached by selector only, so the
+composer's hint line and the Farm/Roots switch keep their old words and tips.
