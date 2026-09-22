@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { ContextBars } from './ContextBars'
-import type { JsonValue } from './protocol'
+import type { JsonValue, MemoryFeatures } from './protocol'
 import { useRackPlugin } from './rack'
 import { Button } from './kit'
+import { MemoryCard } from './MemoryCard'
 
-interface Card { memory_id: string; label: string; body: string }
+interface Card { memory_id: string; label: string; body: string; score?: number; pin?: boolean; features?: MemoryFeatures | null }
 interface Worker {
   worker_id: string
   agent_id: string
@@ -50,15 +51,21 @@ export function WorkerContext({ symphonyId, attemptId }: { symphonyId: string; a
       <summary>{worker.stage} · {worker.state} · {worker.agent_id}</summary>
       <ContextBars workerSnapshot={worker.observation} />
       <h4>Injected memories</h4>
-      {worker.injection?.injected.map((card) => <article key={card.memory_id}>
-        <strong>{card.label}</strong><p>{card.body}</p>
-        <Button type="button" disabled={worker.state !== 'running'} onClick={() => void select(worker, card, false)}>Pop off {card.label}</Button>
-      </article>)}
+      {worker.injection?.injected.map((card) => <MemoryCard key={card.memory_id} memoryId={card.memory_id} label={card.label}
+        body={card.body} score={card.score} pin={card.pin} features={card.features} tone="injected"
+        actions={<Button className="memory-card__remove" type="button" aria-label={`Pop off ${card.label}`}
+          data-tooltip="Pop off" data-tooltip-detail="Leave this memory out of the worker's next request."
+          disabled={worker.state !== 'running'} onClick={() => void select(worker, card, false)}>
+          <span aria-hidden="true">×</span>
+        </Button>} />)}
       <h4>Suggestions and removed memories</h4>
-      {[...(worker.injection?.near_misses ?? []), ...worker.removed].map((card) => <article key={card.memory_id}>
-        <strong>{card.label}</strong><p>{card.body}</p>
-        <Button type="button" disabled={worker.state !== 'running'} onClick={() => void select(worker, card, true)}>Add {card.label}</Button>
-      </article>)}
+      {[...(worker.injection?.near_misses ?? []), ...worker.removed].map((card) => <MemoryCard key={card.memory_id} memoryId={card.memory_id}
+        label={card.label} body={card.body} score={card.score} pin={card.pin} features={card.features} tone="near-miss"
+        actions={<Button variant="primary" className="memory-card__add" type="button" aria-label={`Add ${card.label}`}
+          data-tooltip="Add" data-tooltip-detail="Bring this memory into the worker's next request."
+          disabled={worker.state !== 'running'} onClick={() => void select(worker, card, true)}>
+          <span aria-hidden="true">+</span>
+        </Button>} />)}
     </details>)}
   </section>
 }

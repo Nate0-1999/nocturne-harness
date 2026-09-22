@@ -8,7 +8,8 @@ import {
 
 import type { MemoryPanelState } from './store'
 import type { MemoryPanelConflictPayload, MemoryUnit, Ulid } from './protocol'
-import { ContributionBars, useContributionMap, useScorerAuditionMap } from './ContributionBars'
+import { useContributionMap, useScorerAuditionMap } from './ContributionBars'
+import { MemoryCard, Provenance } from './MemoryCard'
 import { formatHumanScore } from './humanNumbers.ts'
 import { useRackPlugin, useRackSelection, useRackSnapshot } from './rack'
 import { ContextBars } from './ContextBars'
@@ -395,69 +396,111 @@ export function MemoryPanel({
                 editor?.memoryId === memory.memory_id
               const unavailable = memory.status !== 'active'
               return (
-                <article
-                  key={memory.memory_id}
-                  className={`principal-memory${
-                    inContext ? ' principal-memory--context' : ''
-                  }${
-                    unavailable ? ' principal-memory--unavailable' : ''
-                  }`}
-                >
-                  <header className="principal-memory__header">
-                    <h3>{memoryTitle(memory)}</h3>
-                    <div
-                      className="principal-memory__badges"
-                      aria-label="Memory state"
+                <MemoryCard
+                  memoryId={memory.memory_id}
+                  label={memoryTitle(memory)}
+                  body={memory.body}
+                  score={score}
+                  pin={memory.pin}
+                  contributions={contributions[memory.memory_id]}
+                  provenance={<>
+                    <Provenance term="Kind">{memory.kind} · r{memory.revision}</Provenance>
+                    <Provenance term="Where">{memory.origin_location ?? 'Older memory · location unavailable'}</Provenance>
+                    <Provenance term="Project">{memory.project_key ?? 'No project'}</Provenance>
+                    <Provenance term="Thread">{originThread?.title ?? origin ?? 'No origin thread'}</Provenance>
+                    <Provenance term="Keywords">{memory.keywords.join(', ') || 'None recorded'}</Provenance>
+                  </>}
+                  status={unavailable
+                    ? (inContext && revisions?.some((revision) => String(revision.reason).includes('supersede'))
+                      ? 'Superseded after injection · retained in this conversation'
+                      : `Unavailable · ${memory.status}`)
+                    : inContext ? 'In context' : nearMiss ? 'Near miss · suggestion' : undefined}
+                  tone={unavailable ? 'unavailable' : inContext ? 'context' : nearMiss ? 'near-miss' : 'stored'}
+                  testId="principal-memory"
+                  actions={<>
+                    {inContext && (
+                      <Button
+                        className="memory-card__remove principal-memory__remove"
+                        type="button"
+                        data-tooltip="Remove"
+                        data-tooltip-detail="Leave this memory out of the conversation from the next request."
+                        aria-label={`Remove ${memoryTitle(memory)} from the conversation`}
+                        disabled={!connected || !removeEnabled || busy}
+                        onClick={() => remove(memory.memory_id)}
+                      >
+                        <span aria-hidden="true">×</span>
+                      </Button>
+                    )}
+                    {(threadExcluded || nearMiss) && (
+                      <Button variant="primary"
+                        className="memory-card__add principal-memory__primary"
+                        type="button"
+                        data-tooltip={nearMiss ? 'Add to context' : 'Re-add'}
+                        data-tooltip-detail="Bring this memory into the conversation from the next request."
+                        aria-label={`${nearMiss ? 'Add' : 'Re-add'} ${memoryTitle(memory)}`}
+                        disabled={!connected || !removeEnabled || busy || unavailable}
+                        onClick={() => add(memory.memory_id)}
+                      >
+                        <span aria-hidden="true">+</span>
+                      </Button>
+                    )}
+                    <Button
+                      className="memory-card__remove"
+                      type="button"
+                      data-tooltip="Edit"
+                      data-tooltip-detail="Rewrite this memory's text; a new revision is kept."
+                      disabled={!connected || busy || unavailable}
+                      onClick={() => beginEdit(memory)}
+                      aria-label="Edit body"
                     >
-                      {inContext && (
-                        <span className="memory-badge memory-badge--context">
-                          In context
-                        </span>
-                      )}
-                      {!inContext && !unavailable && (
-                        <span className="memory-badge">{nearMiss ? 'Near miss · suggestion' : 'Stored'}</span>
-                      )}
-                      {unavailable && (
-                        <span
-                          className="memory-badge memory-badge--unavailable"
-                          data-testid="memory-unavailable"
-                        >
-                          {inContext && revisions?.some((revision) => String(revision.reason).includes('supersede'))
-                            ? 'Superseded after injection · retained in this conversation'
-                            : `Unavailable · ${memory.status}`}
-                        </span>
-                      )}
-                      {memory.pin && (
-                        <span className="memory-badge memory-badge--pinned">
-                          Pinned
-                        </span>
-                      )}
-                      <span className="memory-badge">{memory.kind}</span>
-                      <span className="memory-badge">r{memory.revision}</span>
-                    </div>
-                  </header>
-
-                  <p className="principal-memory__where" data-testid="memory-origin-location">
-                    WHERE · {memory.origin_location ?? 'Older memory · location unavailable'}
-                  </p>
-                  <p>Project · {memory.project_key ?? 'No project'}</p>
-                  <p>Thread · {originThread?.title ?? origin ?? 'No origin thread'}</p>
-                  <p>Keywords · {memory.keywords.join(', ') || 'None recorded'}</p>
-                  {originThread !== undefined && <div className="principal-memory__actions"><Button type="button" onClick={() => {
-                    void events.dispatch({ type: 'thread.select', thread_id: originThread.thread_id })
-                      .catch((error: unknown) => reportClientError(error, 'Origin conversation could not be opened'))
-                  }}>Open the conversation</Button></div>}
-                  <details><summary>Revision history · r{memory.revision}</summary>
-                    {(revisions?.length ?? 0) === 0 ? <p>History unavailable.</p> : <ol>
+                      <span aria-hidden="true">✎</span>
+                    </Button>
+                    <Button
+                      className="memory-card__remove"
+                      type="button"
+                      aria-pressed={memory.pin}
+                      aria-label={memory.pin ? 'Unpin' : 'Pin'}
+                      data-tooltip={memory.pin ? 'Unpin' : 'Pin'}
+                      data-tooltip-detail="A pinned memory is always injected, beyond the score and the share."
+                      disabled={!connected || busy || unavailable}
+                      onClick={() => togglePin(memory)}
+                    >
+                      <span aria-hidden="true">⚑</span>
+                    </Button>
+                    <Button variant="danger"
+                      className="memory-card__delete"
+                      type="button"
+                      data-testid="memory-delete"
+                      data-memory-id={memory.memory_id}
+                      data-tooltip="Delete permanently"
+                      data-tooltip-detail="Remove this memory from your Palace. Asks first; its history stays restorable."
+                      aria-label={`Permanently delete ${memoryTitle(memory)}`}
+                      aria-haspopup="dialog"
+                      disabled={!connected || busy || unavailable}
+                      onClick={() => { setDeletionReason('no_longer_needed'); setDeleting(memory); deleteDialog.current?.showModal() }}
+                    >
+                      <span aria-hidden="true">×!</span>
+                    </Button>
+                  </>}
+                >
+                  {originThread !== undefined && (
+                    <Button variant="bare" className="memory-card__link" type="button"
+                      data-tooltip="Open the conversation" data-tooltip-detail="Go to the thread this memory was born in."
+                      onClick={() => {
+                        void events.dispatch({ type: 'thread.select', thread_id: originThread.thread_id })
+                          .catch((error: unknown) => reportClientError(error, 'Origin conversation could not be opened'))
+                      }}>Open the conversation ↗</Button>
+                  )}
+                  {(revisions?.length ?? 0) > 0 && <details className="memory-card__history"><summary>Revision history · r{memory.revision}</summary>
+                    <ol>
                       {revisions?.map((revision) => <li key={String(revision.rev_uid)}>
                         r{String(revision.revision ?? '—')} · {String(revision.reason)} · {String(revision.ts)}
                         {typeof revision.body === 'string' && <blockquote>{revision.body}</blockquote>}
                       </li>)}
-                    </ol>}
-                  </details>
-                  <p aria-label="Current context score">Score · {score == null ? 'Unavailable' : formatHumanScore(score)}</p>
-
-                  {editing && editor !== null ? (
+                    </ol>
+                  </details>}
+                  {auditions[memory.memory_id] !== undefined && <p className="scorer-preview-mark">Audition: {formatHumanScore(auditions[memory.memory_id].preview_score)} · #{auditions[memory.memory_id].preview_rank} {auditions[memory.memory_id].disposition.replace('_', ' ')}</p>}
+                  {editing && editor !== null && (
                     <form
                       className="principal-memory__editor"
                       onSubmit={submitEdit}
@@ -541,79 +584,28 @@ export function MemoryPanel({
                         )}
                       </div>
                     </form>
-                  ) : (
-                    <>
-                      <p className="principal-memory__body">{memory.body}</p>
-                      {auditions[memory.memory_id] !== undefined && <p className="scorer-preview-mark">Audition: {formatHumanScore(auditions[memory.memory_id].preview_score)} · #{auditions[memory.memory_id].preview_rank} {auditions[memory.memory_id].disposition.replace('_', ' ')}</p>}
-                      {contributions[memory.memory_id] !== undefined && <ContributionBars values={contributions[memory.memory_id]} />}
-                      <div className="principal-memory__actions">
-                        <Button
-                          type="button"
-                          disabled={!connected || busy || unavailable}
-                          onClick={() => beginEdit(memory)}
-                          aria-label="Edit body"
-                          title="Edit body"
-                        >
-                          ✎
-                        </Button>
-                        <Button
-                          type="button"
-                          aria-pressed={memory.pin}
-                          aria-label={memory.pin ? 'Unpin' : 'Pin'}
-                          title={memory.pin ? 'Unpin' : 'Pin'}
-                          disabled={!connected || busy || unavailable}
-                          onClick={() => togglePin(memory)}
-                        >
-                          <span aria-hidden="true">⚑</span>
-                        </Button>
-                        <Button type="button" aria-label="Delete memory" title="Delete memory"
-                          disabled={!connected || busy || unavailable}
-                          onClick={() => { setDeletionReason('no_longer_needed'); setDeleting(memory); deleteDialog.current?.showModal() }}>
-                          <span aria-hidden="true">⌫</span>
-                        </Button>
-                        {inContext && (
-                          <Button variant="bare"
-                            className="principal-memory__remove"
-                            type="button"
-                            disabled={!connected || !removeEnabled || busy}
-                            onClick={() => remove(memory.memory_id)}
-                          >
-                            Remove
-                          </Button>
-                        )}
-                        {(threadExcluded || nearMiss) && (
-                          <Button variant="bare"
-                            className="principal-memory__primary"
-                            type="button"
-                            disabled={!connected || !removeEnabled || busy || unavailable}
-                            onClick={() => add(memory.memory_id)}
-                          >
-                            {nearMiss ? 'Add to context' : 'Re-add'}
-                          </Button>
-                        )}
-                      </div>
-                    </>
                   )}
-                </article>
+                </MemoryCard>
               )
             })}
           </div>
         )}
       </div>
-      <dialog ref={deleteDialog} aria-labelledby="delete-memory-title" className="memory-restore-dialog"
+      <dialog ref={deleteDialog} aria-labelledby="delete-memory-title" className="memory-restore-dialog memory-delete-dialog"
         onClose={() => setDeleting(null)}>
-        <h2 id="delete-memory-title">Delete this memory from the Palace?</h2>
+        <h2 id="delete-memory-title">Permanently delete?</h2>
         <p><strong>{deleting?.label}</strong></p>
-        <p>{deleting?.body}</p>
-        <p>It will no longer be offered to conversations. Its history is preserved and can be restored; this does not erase past conversations.</p>
-        <label>Why delete?
-          <Select value={deletionReason} onChange={(event) => setDeletionReason(event.target.value as typeof deletionReason)}>
+        <p>It will never be offered to a conversation again. Its history stays restorable; past conversations keep it.</p>
+        <label>Why
+          <Select value={deletionReason} data-tooltip-detail="Your reason trains what gets saved in future." onChange={(event) => setDeletionReason(event.target.value as typeof deletionReason)}>
             <option value="no_longer_needed">No longer needed</option>
             <option value="should_never_have_been_saved">Should never have been saved</option>
           </Select>
         </label>
-        <Button type="button" onClick={() => deleteDialog.current?.close()}>Cancel</Button>
-        <Button variant="danger" type="button" disabled={!connected || busy || deleting === null} onClick={() => void deleteMemory()}>Delete from Palace</Button>
+        <div className="app-settings-actions">
+          <Button variant="danger" type="button" data-tooltip-detail="Yes: delete it from the Palace." disabled={!connected || busy || deleting === null} onClick={() => void deleteMemory()}>Yes</Button>
+          <Button type="button" data-tooltip-detail="Keep the memory as it is." onClick={() => deleteDialog.current?.close()}>No</Button>
+        </div>
       </dialog>
     </aside>
   )
@@ -638,16 +630,18 @@ export function MemoryTrace() {
     {error && <p role="alert">{error}</p>}
     {panel.lastResponse?.action === 'error' && <p role="alert">{panel.lastResponse.message}</p>}
     {items.length === 0 && <p>This conversation has no injected memories or near-miss suggestions.</p>}
-    {items.map((item) => <article className="principal-memory" key={item.memory.memory_id}>
-      <header className="principal-memory__header"><h3>{item.memory.label} · {item.in_context ? 'In context' : item.near_miss ? 'Near miss' : 'Removed'}</h3></header>
-      <p className="principal-memory__body">{item.memory.body}</p>
-      <div className="principal-memory__actions">
-      <Button type="button" disabled={disabled || (!item.in_context && item.memory.status !== 'active')}
+    {items.map((item) => <MemoryCard key={item.memory.memory_id} memoryId={item.memory.memory_id} label={item.memory.label}
+      body={item.memory.body} score={item.score} pin={item.memory.pin} testId="principal-memory"
+      tone={item.in_context ? 'context' : item.near_miss ? 'near-miss' : 'removed'}
+      status={item.in_context ? 'In context' : item.near_miss ? 'Near miss' : 'Removed'}
+      actions={<Button variant={item.in_context ? 'quiet' : 'primary'} className={item.in_context ? 'memory-card__remove' : 'memory-card__add'} type="button"
+        data-tooltip={item.in_context ? 'Pop off' : item.near_miss ? 'Add to context' : 'Re-add'}
+        data-tooltip-detail={item.in_context ? 'Leave this memory out from the next request.' : 'Bring this memory in from the next request.'}
+        aria-label={`${item.in_context ? 'Pop off' : item.near_miss ? 'Add' : 'Re-add'} ${item.memory.label}`}
+        disabled={disabled || (!item.in_context && item.memory.status !== 'active')}
         onClick={() => change(item.in_context ? 'memory.remove' : 'memory.add', item.memory.memory_id)}>
-        {item.in_context ? 'Pop off' : item.near_miss ? 'Add to context' : 'Re-add'}
-      </Button>
-      </div>
-    </article>)}
+        <span aria-hidden="true">{item.in_context ? '×' : '+'}</span>
+      </Button>} />)}
   </section>
 }
 

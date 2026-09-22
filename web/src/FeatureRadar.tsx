@@ -30,10 +30,10 @@ function polygon(values: readonly number[]): string {
 }
 
 export function FeatureRadar({ features, contributions }: {
-  features: MemoryFeatures
+  features?: MemoryFeatures | null
   contributions?: Record<string, string | null> | null
 }) {
-  const raw = RADAR_AXES.map(({ key }) => Number(features[key] ?? 0))
+  const raw = features == null ? null : RADAR_AXES.map(({ key }) => Number(features[key] ?? 0))
   const weighted = contributions == null ? null : RADAR_AXES.map(({ key }) => Number(contributions[key] ?? 0))
   const weightedMax = weighted === null ? 1 : Math.max(...weighted.map(Math.abs), 0.001)
   return (
@@ -55,8 +55,8 @@ export function FeatureRadar({ features, contributions }: {
         {weighted !== null && (
           <polygon className="feature-radar__weighted" points={polygon(weighted.map((value) => Math.abs(value) / weightedMax))} />
         )}
-        <polygon className="feature-radar__raw" points={polygon(raw)} />
-        {raw.map((value, index) => {
+        {raw !== null && <polygon className="feature-radar__raw" points={polygon(raw)} />}
+        {raw?.map((value, index) => {
           const [x, y] = point(index, Math.min(1, Math.max(0, value)))
           return <circle key={RADAR_AXES[index].key} className="feature-radar__dot" cx={x} cy={y} r={2.4} />
         })}
@@ -65,11 +65,11 @@ export function FeatureRadar({ features, contributions }: {
         {RADAR_AXES.map(({ key, label }, index) => (
           <span key={key}>
             <span>{label}</span>
-            <strong>{features[key] === null ? '—' : formatHumanScore(raw[index])}</strong>
+            <strong>{raw === null || features?.[key] === null ? '—' : formatHumanScore(raw[index])}</strong>
             {weighted !== null && <em>{contributions?.[key] === null ? '—' : formatHumanScore(weighted[index])}</em>}
           </span>
         ))}
-        <small>{weighted === null ? 'Raw features · not weighted yet' : 'Raw features · weighted contribution'}</small>
+        <small>{raw === null ? 'Weighted contribution' : weighted === null ? 'Raw features · not weighted yet' : 'Raw features · weighted contribution'}</small>
       </figcaption>
     </figure>
   )

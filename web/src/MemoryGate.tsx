@@ -18,7 +18,7 @@ import type {
   ScoredMemoryCard,
 } from './protocol'
 import { useContributionMap, useScorerAuditionMap } from './ContributionBars'
-import { FeatureRadar, HoverReveal } from './FeatureRadar'
+import { MemoryCard, Provenance } from './MemoryCard'
 import { formatHumanScore } from './humanNumbers.ts'
 import { Button, TextArea } from './kit'
 
@@ -34,10 +34,6 @@ interface MemoryGateProps {
   serverError: JsonValue | null
   onCommit: (decision: GateCommitPayload) => void
   onStop: () => void
-}
-
-function score(value: number): string {
-  return value.toFixed(3)
 }
 
 function gateRejectionMessage(detail: JsonValue | null): string | null {
@@ -454,49 +450,49 @@ export function MemoryGate({
                           tone={added ? 'added' : never ? 'removed' : 'near-miss'}
                           status={never ? 'Removed · never' : undefined}
                           action={
-                            <div
-                              className="memory-card__near-actions"
-                              role="group"
-                              aria-label={`Decision for ${card.label}`}
-                            >
+                            <>
                               <Button variant="primary"
                                 className="memory-card__add"
                                 type="button"
                                 data-testid="near-miss-toggle"
                                 data-memory-id={card.memory_id}
+                                data-tooltip={added ? `Added ${card.label}` : `Add ${card.label}`}
+                                data-tooltip-detail="Add this memory to the thread; a strong signal it was relevant."
                                 aria-pressed={added}
+                                aria-label={added ? `Added ${card.label}` : `Add ${card.label}`}
                                 disabled={controlsDisabled}
                                 onClick={() => toggleAddBack(card.memory_id)}
                               >
-                                {added ? 'Added ✓' : '+ Add'}
+                                <span aria-hidden="true">{added ? '✓' : '+'}</span>
                               </Button>
                               <Button variant="danger"
-                                className="memory-card__never"
+                                className="memory-card__delete"
                                 type="button"
                                 data-testid="near-miss-never"
                                 data-memory-id={card.memory_id}
+                                data-tooltip="Delete permanently"
+                                data-tooltip-detail="Never show this memory again, in any conversation. Asks first."
                                 aria-pressed={never}
+                                aria-haspopup="dialog"
+                                aria-expanded={confirmDeleteFor === card.memory_id}
+                                aria-label={`Permanently delete ${card.label}`}
                                 disabled={controlsDisabled}
-                                onClick={() => toggleNearMissNever(card.memory_id)}
+                                onClick={() => never ? toggleNearMissNever(card.memory_id) : setConfirmDeleteFor(card.memory_id)}
                               >
-                                {never ? 'Never ✓' : 'Never'}
+                                <span aria-hidden="true">×!</span>
                               </Button>
-                              <Button className="memory-card__remove" type="button" aria-label={`More options for ${card.label}`}
-                                aria-haspopup="dialog" aria-expanded={modifierFor === card.memory_id}
-                                disabled={controlsDisabled}
-                                onPointerDown={(event) => beginLongPress(event, card.memory_id)}
-                                onPointerMove={moveLongPress} onPointerUp={clearLongPress}
-                                onPointerCancel={clearLongPress} onPointerLeave={clearLongPress}
-                                onClick={() => { suppressClickRef.current = null; setModifierFor(card.memory_id) }}>
-                                <span aria-hidden="true">×</span>
-                              </Button>
-                              {modifierFor === card.memory_id && <div className="memory-card__modifier" role="dialog" aria-label={`Exclude ${card.label}`}>
-                                <Button variant="danger" type="button" disabled={controlsDisabled} onClick={() => {
-                                  toggleNearMissNever(card.memory_id); setModifierFor(null)
-                                }}>Never show this</Button>
-                                <Button type="button" onClick={() => setModifierFor(null)}>Cancel</Button>
-                              </div>}
-                            </div>
+                              {confirmDeleteFor === card.memory_id && (
+                                <div className="memory-card__modifier" role="dialog" aria-label={`Permanently delete ${card.label}?`} data-testid="memory-delete-confirm">
+                                  <span>Permanently delete?</span>
+                                  <Button variant="danger" type="button" autoFocus disabled={controlsDisabled}
+                                    data-tooltip-detail="Yes: this memory is never shown again."
+                                    onClick={() => { toggleNearMissNever(card.memory_id); setConfirmDeleteFor(null) }}>
+                                    Yes
+                                  </Button>
+                                  <Button type="button" data-tooltip-detail="Keep the memory as it is." onClick={() => setConfirmDeleteFor(null)}>No</Button>
+                                </div>
+                              )}
+                            </>
                           }
                         />
                       )
@@ -729,7 +725,7 @@ function InjectedCard({
       tone={removed ? 'removed' : 'injected'}
       status={removed ? `Removed · ${reason.replace('_', ' ')}` : undefined}
       action={
-        <div className="memory-card__decision">
+        <>
           <Button
             ref={removeButtonRef}
             className="memory-card__remove"
@@ -820,7 +816,7 @@ function InjectedCard({
               </Button>
             </div>
           )}
-        </div>
+        </>
       }
     />
   )
@@ -837,29 +833,25 @@ function MemoryCardFrame({ card, tone, status, action }: MemoryCardFrameProps) {
   const contributions = useContributionMap()
   const audition = useScorerAuditionMap()[card.memory_id]
   return (
-    <article
-      className={`memory-card memory-card--${tone}`}
-      data-testid="memory-card"
-      data-memory-id={card.memory_id}
-      data-tone={tone}
+    <MemoryCard
+      memoryId={card.memory_id}
+      label={card.label}
+      body={card.body}
+      score={card.score}
+      pin={card.pin}
+      features={card.features}
+      contributions={contributions[card.memory_id]}
+      provenance={<>
+        <Provenance term="Rank">#{card.rank}</Provenance>
+        <Provenance term="Kind">{card.kind.replace('_', ' ')}</Provenance>
+        <Provenance term="Id"><code>{card.memory_id}</code></Provenance>
+      </>}
+      status={status}
+      actions={action}
+      tone={tone}
     >
-      <header className="memory-card__header">
-        <HoverReveal
-          className="memory-card__title"
-          panel={<FeatureRadar features={card.features} contributions={contributions[card.memory_id]} />}
-        >
-          <strong className="memory-card__total" data-testid="memory-total-score" title={`${card.kind.replace('_', ' ')} · ${card.memory_id}`}>
-            {score(card.score)}
-          </strong>
-          <h4>{card.label}</h4>
-          {card.pin && <span className="memory-card__pin">Pinned</span>}
-        </HoverReveal>
-        {action}
-      </header>
-      {status !== undefined && <p className="memory-card__status">{status}</p>}
       {audition !== undefined && <p className="scorer-preview-mark">Audition: {formatHumanScore(audition.preview_score)} · #{audition.preview_rank} {audition.disposition.replace('_', ' ')}</p>}
-      <p className="memory-card__body">{card.body}</p>
-    </article>
+    </MemoryCard>
   )
 }
 

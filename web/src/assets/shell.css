@@ -1404,91 +1404,6 @@
   gap: 0.65rem;
 }
 
-.principal-memory {
-  min-width: 0;
-  padding: 0.8rem;
-  border: 1px solid var(--line-strong);
-  background: var(--seam-3658ea098a06);
-}
-
-.principal-memory--context {
-  border-left: 2px solid var(--accent);
-}
-
-.principal-memory--unavailable {
-  border-color: var(--seam-e5e42364511b);
-}
-
-.principal-memory__header {
-  display: grid;
-  min-width: 0;
-  gap: 0.55rem;
-}
-
-.principal-memory__header h3 {
-  margin: 0;
-  font-family: var(--display-font);
-  font-size: var(--text-base);
-  font-weight: 800;
-  letter-spacing: 0.025em;
-  line-height: 1.25;
-}
-
-.principal-memory__badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
-
-.memory-badge {
-  padding: 0.18rem 0.35rem;
-  border: 1px solid var(--line);
-  color: var(--dim);
-  font-family: var(--data-font);
-  font-size: var(--text-xs);
-  letter-spacing: 0.04em;
-  line-height: 1.25;
-  text-transform: uppercase;
-}
-
-.memory-badge--context {
-  border-color: var(--seam-bc7491eef199);
-  color: var(--seam-47be9b9665e8);
-}
-
-.memory-badge--pinned {
-  color: var(--ink);
-}
-
-.memory-badge--unavailable {
-  border-color: var(--seam-e5e42364511b);
-  color: var(--seam-8ecfaf5b5293);
-}
-
-.principal-memory__body {
-  margin: 0.75rem 0;
-  color: var(--seam-247674eb4dda);
-  font-size: var(--text-md);
-  line-height: 1.55;
-  white-space: pre-wrap;
-}
-
-.principal-memory__actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.4rem;
-}
-
-.principal-memory__actions button {
-  min-width: 0;
-}
-
-.principal-memory__actions .principal-memory__remove {
-  grid-column: 1 / -1;
-  border-color: var(--seam-d595f5dac840);
-  color: var(--seam-8ecfaf5b5293);
-}
-
 .principal-memory__editor {
   display: grid;
   gap: 0.55rem;
@@ -1740,6 +1655,77 @@
   background: var(--accent-soft);
 }
 
+.memory-card--context {
+  border-left: 2px solid var(--accent);
+}
+
+.memory-card--unavailable {
+  border-style: dashed;
+  opacity: 0.6;
+}
+
+.memory-card__link {
+  margin-top: var(--space-2);
+  color: var(--accent);
+  font-family: var(--data-font);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.memory-card__history {
+  margin-top: var(--space-2);
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.memory-card__history summary {
+  cursor: pointer;
+  font-family: var(--data-font);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.memory-card__editor,
+.memory-card .principal-memory__editor {
+  margin-top: var(--space-3);
+}
+
+.memory-card__detail {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.memory-card__provenance {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-deep);
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+
+.memory-card__provenance dt {
+  color: var(--dim);
+  font-family: var(--data-font);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.memory-card__provenance dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.memory-delete-dialog {
+  width: min(28rem, 90vw);
+}
+
 .memory-card__header {
   display: flex;
   align-items: flex-start;
@@ -1925,6 +1911,7 @@
 .feature-radar {
   display: grid;
   grid-template-columns: 15rem minmax(9rem, auto);
+  max-width: none;
   align-items: center;
   gap: var(--space-3);
   width: max-content;
