@@ -385,14 +385,6 @@
       "wizard_mode": "#0c0805"
     },
     {
-      "gold_lines": "rgba(28,63,168,.25)",
-      "neo_noir": "rgba(116,242,255,.25)",
-      "seraph_dressed": "rgba(93,140,242,.25)",
-      "technomancer": "rgba(119, 252, 163, .25)",
-      "variable": "--seam-907e9f63c782",
-      "wizard_mode": "rgba(245, 205, 126, .25)"
-    },
-    {
       "gold_lines": "#16307e",
       "neo_noir": "#9df8ff",
       "seraph_dressed": "#bcd4ff",
@@ -407,14 +399,6 @@
       "technomancer": "#77fca3",
       "variable": "--seam-1cc748f7f308",
       "wizard_mode": "#f5cd7e"
-    },
-    {
-      "gold_lines": "rgba(28,63,168,.14)",
-      "neo_noir": "rgba(70,230,255,.14)",
-      "seraph_dressed": "rgba(93,140,242,.14)",
-      "technomancer": "rgba(75, 250, 133, .14)",
-      "variable": "--seam-1fd4f831d07d",
-      "wizard_mode": "rgba(241, 189, 84, .14)"
     },
     {
       "gold_lines": "rgba(215,224,238,.96)",
@@ -609,14 +593,6 @@
       "wizard_mode": "#160f09"
     },
     {
-      "gold_lines": "#101c3a",
-      "neo_noir": "#dff",
-      "seraph_dressed": "#eef4fb",
-      "technomancer": "#e9f3ec",
-      "variable": "--seam-30fd209c1525",
-      "wizard_mode": "#f4f0e8"
-    },
-    {
       "gold_lines": "#ffffff",
       "neo_noir": "#294b55",
       "seraph_dressed": "#141d3a",
@@ -639,14 +615,6 @@
       "technomancer": "#f991a2",
       "variable": "--seam-6c56aa245be4",
       "wizard_mode": "#f3979e"
-    },
-    {
-      "gold_lines": "#e6ecf5",
-      "neo_noir": "#041015",
-      "seraph_dressed": "#0a0d1a",
-      "technomancer": "#0c0613",
-      "variable": "--seam-e5abfa9e0920",
-      "wizard_mode": "#120c07"
     },
     {
       "gold_lines": "rgba(28,63,168,.14)",
@@ -727,14 +695,6 @@
       "technomancer": "#e294fc",
       "variable": "--seam-baa50ef130bb",
       "wizard_mode": "#9ff1d3"
-    },
-    {
-      "gold_lines": "rgba(176, 122, 63, .07)",
-      "neo_noir": "rgba(255, 145, 197, .07)",
-      "seraph_dressed": "rgba(219, 153, 105, .07)",
-      "technomancer": "rgba(226, 148, 252, .07)",
-      "variable": "--seam-42f51c98138f",
-      "wizard_mode": "rgba(159, 241, 211, .07)"
     },
     {
       "gold_lines": "rgba(16, 28, 58, .12)",
@@ -1081,14 +1041,6 @@
       "wizard_mode": "rgb(0 0 0 / 55%)"
     },
     {
-      "gold_lines": "rgb(230 236 245 / 90%)",
-      "neo_noir": "rgb(4 12 18 / 90%)",
-      "seraph_dressed": "rgb(10 13 26 / 90%)",
-      "technomancer": "rgb(4 12 18 / 90%)",
-      "variable": "--seam-d3c72ab27220",
-      "wizard_mode": "rgb(4 12 18 / 90%)"
-    },
-    {
       "gold_lines": "rgb(150 104 44 / 5%)",
       "neo_noir": "rgb(56 215 255 / 5%)",
       "seraph_dressed": "rgb(93 140 242 / 5%)",
@@ -1169,14 +1121,6 @@
       "wizard_mode": "rgb(255 255 255 / 16%)"
     },
     {
-      "gold_lines": "rgb(16 28 58 / 4%)",
-      "neo_noir": "rgb(255 255 255 / 4%)",
-      "seraph_dressed": "rgb(238 244 251 / 4%)",
-      "technomancer": "rgb(255 255 255 / 4%)",
-      "variable": "--seam-29d8623058d1",
-      "wizard_mode": "rgb(255 255 255 / 4%)"
-    },
-    {
       "gold_lines": "rgb(16 28 58 / 18%)",
       "neo_noir": "rgb(255 255 255 / 18%)",
       "seraph_dressed": "rgb(238 244 251 / 18%)",
@@ -1247,14 +1191,6 @@
       "technomancer": "rgb(0 0 0 / 32%)",
       "variable": "--seam-c42ab7e5bb24",
       "wizard_mode": "rgb(0 0 0 / 32%)"
-    },
-    {
-      "gold_lines": "rgb(16 28 58 / 14%)",
-      "neo_noir": "rgb(255 255 255 / 14%)",
-      "seraph_dressed": "rgb(238 244 251 / 14%)",
-      "technomancer": "rgb(255 255 255 / 14%)",
-      "variable": "--seam-c77b304acf9d",
-      "wizard_mode": "rgb(255 255 255 / 14%)"
     },
     {
       "gold_lines": "rgb(16 28 58 / 9%)",
@@ -1407,14 +1343,6 @@
       "technomancer": "rgba(245, 74, 102, 0.06)",
       "variable": "--seam-98c7c3cceb98",
       "wizard_mode": "rgba(236, 83, 96, 0.06)"
-    },
-    {
-      "gold_lines": "rgba(242, 245, 250, 0.76)",
-      "neo_noir": "rgba(5, 16, 24, 0.76)",
-      "seraph_dressed": "rgba(13, 18, 38, 0.76)",
-      "technomancer": "rgba(14, 7, 22, 0.76)",
-      "variable": "--seam-56c6ff22c030",
-      "wizard_mode": "rgba(21, 14, 8, 0.76)"
     },
     {
       "gold_lines": "rgba(150, 104, 44, 0.025)",

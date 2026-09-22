@@ -5,7 +5,7 @@
 
 .vitals-gauges > .vitals-gauge--not_recorded > strong,
 .vitals-gauges > .vitals-gauge--placeholder > strong {
-  font-size: 0.72rem;
+  font-size: var(--text-md);
 }
 
 .vitals-lanes > .vitals-lane {

@@ -30,7 +30,7 @@
 .palace-nebula h2,
 .palace-nebula p { margin: 0; }
 .palace-nebula h1 {
-  font: 500 clamp(1.25rem, 2.5vw, 2rem)/1 var(--display-font, sans-serif);
+  font: 500 var(--text-xl)/1 var(--display-font, sans-serif);
   letter-spacing: -.025em;
 }
 .palace-nebula__title { display: grid; gap: .2rem; }
@@ -38,13 +38,13 @@
 .palace-nebula__readouts span,
 .palace-nebula__legend h2 {
   color: #c4b6e8;
-  font: .61rem/1.25 var(--data-font, ui-monospace);
+  font: var(--text-sm)/1.25 var(--data-font, ui-monospace);
   text-transform: uppercase;
   letter-spacing: .16em;
 }
 .palace-nebula__title p {
   color: #8d82a5;
-  font: .68rem/1.35 var(--body-font, sans-serif);
+  font: var(--text-md)/1.35 var(--body-font, sans-serif);
 }
 
 .palace-nebula__controls { display: flex; gap: .6rem; }
@@ -52,7 +52,7 @@
   display: grid;
   gap: .18rem;
   color: #9c91b6;
-  font: .59rem/1.2 var(--data-font, ui-monospace);
+  font: var(--text-xs)/1.2 var(--data-font, ui-monospace);
   text-transform: uppercase;
   letter-spacing: .12em;
 }
@@ -112,14 +112,14 @@
 .palace-nebula__readouts strong {
   overflow: hidden;
   color: #fff;
-  font: 600 .82rem/1.25 var(--data-font, ui-monospace);
+  font: 600 var(--text-base)/1.25 var(--data-font, ui-monospace);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .palace-nebula__readouts small {
   overflow: hidden;
   color: #8f86a3;
-  font: .6rem/1.25 var(--body-font, sans-serif);
+  font: var(--text-sm)/1.25 var(--body-font, sans-serif);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -138,7 +138,7 @@
 }
 .palace-nebula__event-key span {
   color: #a59ab8;
-  font: .58rem/1.2 var(--data-font, ui-monospace);
+  font: var(--text-xs)/1.2 var(--data-font, ui-monospace);
   text-transform: uppercase;
   letter-spacing: .08em;
 }
@@ -162,7 +162,7 @@
   gap: .08rem;
   max-width: min(23rem, 55%);
   color: #9c91b6;
-  font: .58rem/1.35 var(--data-font, ui-monospace);
+  font: var(--text-xs)/1.35 var(--data-font, ui-monospace);
   pointer-events: none;
 }
 .palace-nebula__telemetry strong { color: #f1c47d; }
@@ -187,7 +187,7 @@
 .palace-nebula__legend h2 { margin-bottom: .26rem; color: #e1b975; }
 .palace-nebula__legend p {
   color: #756e85;
-  font: .58rem/1.38 var(--data-font, ui-monospace);
+  font: var(--text-xs)/1.38 var(--data-font, ui-monospace);
   overflow-wrap: anywhere;
 }
 

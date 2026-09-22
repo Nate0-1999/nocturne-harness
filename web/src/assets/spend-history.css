@@ -1,4 +1,4 @@
-.spend-history { padding: 0.75rem; border-top: 1px solid var(--border, #394048); }
+.spend-history { padding: 0.75rem; border-top: 1px solid var(--line, #394048); }
 .spend-history h3, .spend-history p { margin: 0.25rem 0 0.6rem; }
 .spend-history__controls, .spend-history__totals { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
 .spend-history__totals dd { margin: 0.3rem 0; font-variant-numeric: tabular-nums; }
@@ -12,11 +12,9 @@
 .spend-history--compact { display: flex; align-items: center; gap: 1rem; padding: 0.25rem; width: 100%; }
 .spend-history--compact figure { flex: 1; min-width: 100px; margin: 0; }
 .spend-history--compact svg { height: 36px; }
-.spend-history--compact figcaption { font-size: 0.65rem; }
+.spend-history--compact figcaption { font-size: var(--text-sm); }
 .spend-history meter { width: 4rem; }
 .spend-table__name { overflow: hidden; text-overflow: ellipsis; }
 .spend-history form { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; margin-block: 0.75rem; }
 .spend-history form label { display: grid; gap: 0.25rem; }
-.spend-history input, .spend-history button, .spend-history select { color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); padding: 0.4rem; border-radius: 3px; }
-.spend-history button:not(:disabled) { cursor: pointer; }
 .spend-history input { min-width: 0; width: 100%; }
