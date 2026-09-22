@@ -94,6 +94,7 @@ export function MemoryGate({
   const [removed, setRemoved] = useState<Partial<Record<string, RemovalReason>>>({})
   const [addedBack, setAddedBack] = useState<string[]>([])
   const [modifierFor, setModifierFor] = useState<string | null>(null)
+  const [confirmDeleteFor, setConfirmDeleteFor] = useState<string | null>(null)
   const [pendingCommit, setPendingCommit] = useState<{
     errorAtSubmit: JsonValue | null
     gateAtSubmit: GateOpenPayload
@@ -231,6 +232,7 @@ export function MemoryGate({
   function chooseRemoval(memoryId: string, reason: RemovalReason): void {
     setRemoved((current) => ({ ...current, [memoryId]: reason }))
     setModifierFor(null)
+    setConfirmDeleteFor(null)
   }
 
   function toggleAddBack(memoryId: string): void {
@@ -411,16 +413,9 @@ export function MemoryGate({
                 aria-labelledby="injected-memories-title"
               >
                 <div className="memory-gate__section-heading">
-                  <div>
-                    <p className="eyebrow">Proposed context</p>
-                    <h3 id="injected-memories-title">Injected memories</h3>
-                  </div>
+                  <h3 id="injected-memories-title">Injected memories</h3>
                   <p>{gate.injected.length} selected</p>
                 </div>
-                <p className="memory-gate__help">
-                  Tap × to mark not relevant. Alt+× or press and hold × for wrong /
-                  never.
-                </p>
                 {gate.injected.length === 0 ? (
                   <p className="memory-gate__empty">
                     No memories met the injection threshold.
@@ -433,6 +428,9 @@ export function MemoryGate({
                         card={card}
                         reason={removed[card.memory_id]}
                         modifierOpen={modifierFor === card.memory_id}
+                        confirmOpen={confirmDeleteFor === card.memory_id}
+                        onConfirmDelete={(memoryId) => { setModifierFor(null); setConfirmDeleteFor(memoryId) }}
+                        onCloseConfirm={() => setConfirmDeleteFor(null)}
                         disabled={controlsDisabled}
                         onRemove={toggleDefaultRemoval}
                         onLongPressStart={beginLongPress}
@@ -451,10 +449,7 @@ export function MemoryGate({
                 aria-labelledby="near-misses-title"
               >
                 <div className="memory-gate__section-heading">
-                  <div>
-                    <p className="eyebrow">Just below the line</p>
-                    <h3 id="near-misses-title">Near misses</h3>
-                  </div>
+                  <h3 id="near-misses-title">Near misses</h3>
                   <p>{addedBack.length} added</p>
                 </div>
                 {gate.near_misses.length === 0 ? (
@@ -697,7 +692,10 @@ interface InjectedCardProps {
   card: ScoredMemoryCard
   reason: RemovalReason | undefined
   modifierOpen: boolean
+  confirmOpen: boolean
   disabled: boolean
+  onConfirmDelete: (memoryId: string) => void
+  onCloseConfirm: () => void
   onRemove: (event: MouseEvent<HTMLButtonElement>, memoryId: string) => void
   onLongPressStart: (
     event: PointerEvent<HTMLButtonElement>,
@@ -713,7 +711,10 @@ function InjectedCard({
   card,
   reason,
   modifierOpen,
+  confirmOpen,
   disabled,
+  onConfirmDelete,
+  onCloseConfirm,
   onRemove,
   onLongPressStart,
   onLongPressMove,
@@ -743,7 +744,7 @@ function InjectedCard({
       status={removed ? `Removed · ${reason.replace('_', ' ')}` : undefined}
       action={
         <div className="memory-card__decision">
-          <Button variant="bare"
+          <Button
             ref={removeButtonRef}
             className="memory-card__remove"
             type="button"
@@ -758,7 +759,8 @@ function InjectedCard({
                 ? `Restore ${card.label}`
                 : `Remove ${card.label} as not relevant`
             }
-            title="Remove as not relevant. Hold Alt or press and hold for wrong / never."
+            data-tooltip={removed ? `Restore ${card.label}` : 'Remove'}
+            data-tooltip-detail="Leave this memory out of this turn as not relevant. Alt or press and hold: mark it wrong."
             disabled={disabled}
             onPointerDown={(event) => onLongPressStart(event, card.memory_id)}
             onPointerMove={onLongPressMove}
@@ -770,6 +772,39 @@ function InjectedCard({
           >
             <span aria-hidden="true">×</span>
           </Button>
+          <Button variant="danger"
+            className="memory-card__delete"
+            type="button"
+            data-testid="memory-delete"
+            data-memory-id={card.memory_id}
+            data-tooltip="Delete permanently"
+            data-tooltip-detail="Never show this memory again, in any conversation. Asks first."
+            aria-haspopup="dialog"
+            aria-expanded={confirmOpen}
+            aria-label={`Permanently delete ${card.label}`}
+            disabled={disabled || reason === 'never'}
+            onClick={() => onConfirmDelete(card.memory_id)}
+          >
+            <span aria-hidden="true">×!</span>
+          </Button>
+          {confirmOpen && (
+            <div
+              className="memory-card__modifier"
+              role="dialog"
+              aria-label={`Permanently delete ${card.label}?`}
+              data-testid="memory-delete-confirm"
+            >
+              <span>Permanently delete?</span>
+              <Button variant="danger" type="button" autoFocus disabled={disabled}
+                data-tooltip-detail="Yes: this memory is never shown again."
+                onClick={() => onChooseReason(card.memory_id, 'never')}>
+                Yes
+              </Button>
+              <Button type="button" disabled={disabled} data-tooltip-detail="Keep the memory as it is." onClick={onCloseConfirm}>
+                No
+              </Button>
+            </div>
+          )}
           {modifierOpen && (
             <div
               id={modifierId}

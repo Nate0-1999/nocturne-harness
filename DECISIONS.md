@@ -3603,3 +3603,11 @@ guards stayed (A-051's secondary actions keep their exact colors; the curator
 trust sentence lives on as a tip). The composer function and the 3D scene
 functions were not opened: their controls are reached by selector only, so the
 composer's hint line and the Farm/Roots switch keep their old words and tips.
+Owner, 2026-09-22, on the gate: injected memories need one heading, not four;
+two small buttons, × to remove and ×! to delete permanently behind a yes/no.
+So the eyebrows and the instruction line went; each card carries × (the
+existing not-relevant toggle; Alt or press-and-hold still reaches 'wrong') and
+×! which asks 'Permanently delete? Yes / No' and on Yes records the existing
+'never' veto — the Palace's permanent exclusion. Nothing is hard-deleted: the
+Palace keeps its tombstone (Invariant: no hard deletes), so 'permanently' means
+never shown again, which is what the veto already promised.

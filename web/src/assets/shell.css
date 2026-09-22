@@ -1790,7 +1790,20 @@
 
 .memory-card__decision {
   position: relative;
+  display: flex;
   flex: 0 0 auto;
+  gap: var(--space-2);
+}
+
+.memory-card__remove,
+.memory-card__delete {
+  --chamfer: 0.3rem;
+  min-width: 1.85rem;
+  min-height: 1.85rem;
+  padding: 0 var(--space-2);
+  font-family: var(--data-font);
+  font-size: var(--text-base);
+  line-height: 1;
 }
 
 .memory-card__near-actions {
@@ -1800,7 +1813,6 @@
   gap: 0.35rem;
 }
 
-.memory-card__remove,
 .memory-card__add,
 .memory-card__never {
   min-width: 2.75rem;
@@ -1808,12 +1820,6 @@
   border: 1px solid var(--line-strong);
   background: transparent;
   color: var(--muted);
-}
-
-.memory-card__remove {
-  font-family: var(--data-font);
-  font-size: var(--text-xl);
-  line-height: 1;
 }
 
 .memory-card__remove[aria-pressed="true"] {
@@ -1887,6 +1893,11 @@
 
 .memory-card__modifier button:last-child {
   grid-column: 1 / -1;
+}
+
+/* The yes/no confirmation is one row: the question, then the two answers side by side. */
+.memory-card__modifier[data-testid="memory-delete-confirm"] button:last-child {
+  grid-column: auto;
 }
 
 .memory-card__body {

@@ -5,7 +5,10 @@
 - The look pass: one right-sized, chamfered button style with matching selects
   and toggles in every module and theme; a short hover tip on every control;
   narrating sentences removed; one title style; denser threads and spend table.
-  Behavior is unchanged. Pair with Memory 0.1.30; the API contract is unchanged.
+  The memory gate: one heading over injected memories and two small buttons
+  per card, × to remove and ×! to delete permanently behind a yes/no.
+  Otherwise behavior is unchanged. Pair with Memory 0.1.30; the API contract
+  is unchanged.
 
 ## 0.1.29 - 2026-09-22
 
