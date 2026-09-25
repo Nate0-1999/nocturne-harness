@@ -1,0 +1,19 @@
+{
+  "session": "vl24",
+  "source_head": "e41fa76de0f1d8785fa1a17f340f10be0f3fb39a",
+  "base": "61cb45149fa7e15bab939522e4977a69dba770ef",
+  "principal": {
+    "principal_id": "nocturne-verification-bfd0d9bf-4c72-48bd-aa7a-f0955cca4dc2",
+    "machine_id": "nocturne-0ec9abbf-1e55-406e-8c08-fba5d23cd87f",
+    "home": "/private/tmp/m3vl24-verification/home"
+  },
+  "memory_count": 24,
+  "agents": 6,
+  "file_capillaries": 184,
+  "recordings": "Native browser screenshot sequences, actual timestamp spacing, exactly 10 seconds exported at 30 fps. Final Roots and Farm use camera orbit; roots-activity.webm retains real worker activity. Palace shows live curator progress.",
+  "limitations": [
+    "Every recorded successful explicit file touch is projected; opaque shell file IO is not inferred.",
+    "Root efficient-tier 60-fps floor was not independently measured.",
+    "Owner visual acceptance remains open."
+  ]
+}
