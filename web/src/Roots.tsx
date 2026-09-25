@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { CatmullRomCurve3, TubeGeometry, Vector3 } from 'three'
-import { agentColor, buildRootPaths, identitySeed, rootWorkPosition, rootWorkTimes, type DetailTier, type Point3, type VisualizationSnapshot, type WorkAgent } from './visualization'
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
+import { agentColor, buildRootPaths, buildRootRiver, rootSpendShares, rootWorkTimes, type DetailTier, type Point3, type RootBranch, type VisualizationSnapshot, type WorkAgent } from './visualization'
 import { ChromeEnvironment } from './ChromeEnvironment'
 
 export function Roots({ data, agents, selectedId, tier, pick, newest }: {
@@ -24,12 +25,12 @@ export function Roots({ data, agents, selectedId, tier, pick, newest }: {
       const stopped = agent.state === 'stopped' || agent.state === 'cancelled'
       const measured = agent.cost_usd !== null
       const radius = measured ? 0.025 + Math.sqrt(Number(agent.cost_usd) / spendScale) * 0.65 : 0.018
-      const color = stopped ? '#888d9b' : '#eff8fa'
       const forked = ordered.some((child) => child.parent_id === agent.id)
       return <group key={agent.id}>
-        <ChromeRoot points={points} radius={radius} color={color} tier={tier}
+        <ChromeRoot points={points} spent={rootSpendShares(agent, data.trails[agent.id] ?? [], points, moments)} radius={radius} tier={tier}
           stopped={stopped} selected={selected} forked={forked} onClick={() => pick(agent)} />
-        <FileCapillaries agent={agent} points={points} moments={moments} radius={radius}
+        <RootRiver agent={agent} points={points} moments={moments} begin={begin} end={end} radius={radius}
+          spent={rootSpendShares(agent, data.trails[agent.id] ?? [], points, moments)}
           tier={tier} selected={selected} stopped={stopped} pick={() => pick(agent)} />
         <mesh position={points.at(-1)} onClick={(event) => { event.stopPropagation(); pick(agent) }}>
           <sphereGeometry args={[0.045, tier === 'full' ? 20 : 8, 10]} />
@@ -41,60 +42,95 @@ export function Roots({ data, agents, selectedId, tier, pick, newest }: {
   </>
 }
 
-function FileCapillaries({ agent, points, moments, radius, tier, selected, stopped, pick }: {
-  agent: WorkAgent; points: Point3[]; moments: number[]; radius: number; tier: DetailTier
+function RootRiver({ agent, points, moments, begin, end, radius, spent, tier, selected, stopped, pick }: {
+  agent: WorkAgent; points: Point3[]; moments: number[]; begin: number; end: number; radius: number; spent: number[]; tier: DetailTier
   selected: boolean; stopped: boolean; pick: () => void
 }) {
-  const curve = new CatmullRomCurve3(points.map((point) => new Vector3(...point)))
-  return [...(agent.touched_files ?? [])].sort((a, b) => a.path.localeCompare(b.path)).map((file, index) => {
-    const timeX = -9 + rootWorkPosition(Date.parse(file.ts), moments) * 18
-    const t = Math.max(0, Math.min(1, (timeX - points[0][0]) / Math.max(0.001, points.at(-1)![0] - points[0][0])))
-    const start = curve.getPoint(t)
-    const side = index % 2 ? -1 : 1, fan = identitySeed(file.path)
-    const length = 1.2 + fan * 3.8
-    const rise = side * (0.35 + identitySeed(file.path + ':rise') * 2.2)
-    const depth = (identitySeed(file.path + ':depth') - 0.5) * 0.8
-    const branch: Point3[] = Array.from({ length: 7 }, (_, step) => {
-      const u = step / 6
-      return start.clone().add(new Vector3(length * u,
-        rise * u * u + Math.sin(u * 7 + fan * 6) * Math.sin(u * Math.PI) * 0.12,
-        depth * u)).toArray()
+  const key = JSON.stringify([agent.id, agent.turns, agent.tool_calls, agent.touched_files, points, moments, begin, end, radius, spent, tier])
+  const geometry = useMemo(() => {
+    const branches = buildRootRiver(agent, points, moments, begin, end)
+    const heaviest = Math.max(1, ...branches.filter((branch) => branch.kind === 'turn').map((branch) => branch.weight))
+    const full = tier === 'full'
+    const rootWidth = (x: number) => radius * Math.max(0.1, Math.sqrt(spent[Math.round(Math.min(1, Math.max(0, (x - points[0][0]) / Math.max(1e-6, points.at(-1)![0] - points[0][0]))) * (spent.length - 1))]))
+    // Width grows with the work recorded beneath a branch, and a branch is never wider than where it leaves.
+    const widths: number[] = []
+    for (const branch of branches) {
+      const room = 0.75 * (branch.parent < 0 ? rootWidth(branch.points[0][0]) : widths[branch.parent])
+      widths.push(Math.min(room, branch.kind === 'turn' ? radius * (0.12 + 0.25 * Math.sqrt(branch.weight / heaviest))
+        : branch.kind === 'tool' ? radius * (0.05 + 0.03 * Math.min(4, branch.weight)) : 0.0065))
+    }
+    const shape = { turn: [28, 12, 10, 5, 0.16], tool: [14, 7, 6, 4, 0.12], file: [8, 5, 4, 3, 0.1] } as const
+    const tubes = (kinds: RootBranch['kind'][]) => branches.flatMap((branch, index) => {
+      if (!kinds.includes(branch.kind)) return []
+      const [length, lengthLow, sides, sidesLow, end] = shape[branch.kind]
+      return [taperedTube(branch.points, Math.max({ turn: 0.016, tool: 0.009, file: 0.0045 }[branch.kind], widths[index]), full ? length : lengthLow, full ? sides : sidesLow, tip(end))]
     })
-    return <group key={file.path} name={`file:${file.path}`}>
-      <ChromeRoot points={branch} radius={Math.max(0.009, radius * (0.025 + fan * 0.04))} color={stopped ? '#888d9b' : '#eff8fa'}
-        tier={tier} stopped={stopped} selected={selected} forked={false} onClick={pick} fine />
-    </group>
-  })
+    const merged = (parts: TubeGeometry[]) => {
+      const geometry = parts.length ? mergeGeometries(parts) : null
+      parts.forEach((part) => part.dispose())
+      return geometry
+    }
+    return { chrome: merged(tubes(['turn', 'tool'])), capillaries: merged(tubes(['file'])) }
+    // The key carries every input; recorded data arrives as fresh objects on each feed refresh.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key])
+  useEffect(() => () => { geometry.chrome?.dispose(); geometry.capillaries?.dispose() }, [geometry])
+  const click = (event: { stopPropagation: () => void }) => { event.stopPropagation(); pick() }
+  return <group name={`river:${agent.id}`}>
+    {geometry.chrome && <mesh geometry={geometry.chrome} onClick={click}><ChromeMaterial stopped={stopped} selected={selected} /></mesh>}
+    {geometry.capillaries && <mesh geometry={geometry.capillaries} onClick={click}>
+      <meshPhysicalMaterial color={stopped ? '#8a8f99' : agentColor(agent.id)} metalness={stopped ? 0.2 : 0.85}
+        roughness={stopped ? 0.8 : 0.2} envMapIntensity={selected ? 2.2 : 1.5} />
+    </mesh>}
+  </group>
 }
 
-function ChromeRoot({ points, radius, color, tier, stopped, selected, forked, onClick, fine = false }: {
-  points: Point3[]; radius: number; color: string; tier: DetailTier
-  stopped: boolean; selected: boolean; forked: boolean; onClick: () => void; fine?: boolean
-}) {
-  const geometry = useMemo(() => {
-    const curve = new CatmullRomCurve3(points.map((point) => new Vector3(...point)))
-    const length = fine ? (tier === 'full' ? 24 : 8) : (tier === 'full' ? 96 : 32)
-    const sides = fine ? (tier === 'full' ? 8 : 4) : (tier === 'full' ? 12 : 6)
-    const tube = new TubeGeometry(curve, length, radius, sides, false)
-    const positions = tube.attributes.position
-    for (let ring = 0; ring <= length; ring++) {
-      const t = ring / length, center = curve.getPointAt(t)
-      const end = forked ? 0.35 : 0.035
-      const taper = end + (1 - end) * Math.pow(1 - t, 0.65)
-      for (let side = 0; side <= sides; side++) {
-        const index = ring * (sides + 1) + side
-        const point = new Vector3().fromBufferAttribute(positions, index)
-        point.sub(center).multiplyScalar(taper).add(center)
-        positions.setXYZ(index, point.x, point.y, point.z)
-      }
+/** Full width at a junction, thinning to `end` of that width at the tip. */
+const tip = (end: number) => (t: number) => end + (1 - end) * Math.pow(1 - t, 0.65)
+
+/** A tube along a curve whose width at each point is `radius × profile(t)`. */
+function taperedTube(points: Point3[], radius: number, length: number, sides: number, profile: (t: number) => number): TubeGeometry {
+  const curve = new CatmullRomCurve3(points.map((point) => new Vector3(...point)))
+  const tube = new TubeGeometry(curve, length, radius, sides, false)
+  const positions = tube.attributes.position
+  for (let ring = 0; ring <= length; ring++) {
+    const t = ring / length, center = curve.getPointAt(t)
+    const taper = profile(t)
+    for (let side = 0; side <= sides; side++) {
+      const index = ring * (sides + 1) + side
+      const point = new Vector3().fromBufferAttribute(positions, index)
+      point.sub(center).multiplyScalar(taper).add(center)
+      positions.setXYZ(index, point.x, point.y, point.z)
     }
-    tube.computeVertexNormals()
-    return tube
-  }, [points, radius, tier, forked, fine])
+  }
+  tube.computeVertexNormals()
+  return tube
+}
+
+function ChromeMaterial({ stopped, selected }: { stopped: boolean; selected: boolean }) {
+  // Live roots are cool blue-white mirror chrome; dried roots are desaturated and matte.
+  return <meshPhysicalMaterial color={stopped ? '#3a3e46' : '#e4ecf8'} metalness={stopped ? 0.5 : 1}
+    roughness={stopped ? 0.62 : 0.13} clearcoat={stopped ? 0 : 1} clearcoatRoughness={0.05}
+    envMapIntensity={selected ? 1.6 : 1.2} />
+}
+
+function ChromeRoot({ points, spent, radius, tier, stopped, selected, forked, onClick }: {
+  points: Point3[]; spent: number[]; radius: number; tier: DetailTier
+  stopped: boolean; selected: boolean; forked: boolean; onClick: () => void
+}) {
+  const key = spent.join(',')
+  const geometry = useMemo(() => {
+    // Width follows recorded spend so far: a fine point at the root's start, full width where it has spent.
+    const shares = key.split(',').map(Number)
+    const profile = (t: number) => {
+      const index = t * (shares.length - 1), low = Math.min(shares.length - 2, Math.floor(index))
+      const share = shares[low] + (shares[low + 1] - shares[low]) * (index - low)
+      return Math.max(0.1, Math.sqrt(share)) * Math.min(1, t / 0.04 + 0.2) * (t > 0.75 ? 1 - (1 - (forked ? 0.35 : 0.08)) * ((t - 0.75) / 0.25) ** 1.5 : 1)
+    }
+    return taperedTube(points, radius, tier === 'full' ? 96 : 32, tier === 'full' ? 12 : 6, profile)
+  }, [points, key, radius, tier, forked])
   useEffect(() => () => geometry.dispose(), [geometry])
   return <mesh geometry={geometry} onClick={(event) => { event.stopPropagation(); onClick() }}>
-    <meshPhysicalMaterial color={color} metalness={stopped ? 0.12 : 1}
-      roughness={stopped ? 0.88 : 0.075} clearcoat={stopped ? 0 : 1}
-      clearcoatRoughness={0.04} envMapIntensity={selected ? 2.4 : 1.8} />
+    <ChromeMaterial stopped={stopped} selected={selected} />
   </mesh>
 }

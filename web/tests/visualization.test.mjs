@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { buildChambers, buildRootPaths, rootCurve, rootWorkPosition, rootWorkTimes } from '../src/visualization.ts'
+import { buildChambers, buildRootPaths, buildRootRiver, rootCurve, rootSpendShares, rootWorkPosition, rootWorkTimes } from '../src/visualization.ts'
 
 /** ADR-018 / FL-126: a frozen tree has repeatable geometry, including empty chambers. */
 test('directory layout preserves every chamber and cell and replays identically', () => {
@@ -58,4 +58,33 @@ test('project trunks preserve true child and grandchild junctions regardless of 
   const independent = { ...child, id: 'other-project', parent_id: null }
   const separate = buildRootPaths([parent, independent], {}, begin, end)
   assert.ok(Math.abs(separate.get(parent.id).at(-1)[1] - separate.get(independent.id).at(-1)[1]) > 3)
+})
+
+/** PLAN M3VL send-back 1: a root branches at each recorded turn and tool call; file touches grow from those. */
+test('root river grows one branch per turn, tool call and file touch from its recorded parent', () => {
+  const agent = { id: 'worker', root: '/project', parent_id: null, started_at: '2026-09-16T00:00:00Z', updated_at: '2026-09-16T00:04:00Z',
+    turns: ['2026-09-16T00:01:00Z', '2026-09-16T00:03:00Z'], tool_calls: ['2026-09-16T00:01:00Z', '2026-09-16T00:03:00Z'],
+    touched_files: [{ path: '/a', ts: '2026-09-16T00:01:30Z' }, { path: '/b', ts: '2026-09-16T00:03:30Z' }] }
+  const begin = Date.parse(agent.started_at), end = Date.parse(agent.updated_at), moments = rootWorkTimes([agent])
+  const root = buildRootPaths([agent], {}, begin, end).get(agent.id)
+  const river = buildRootRiver(agent, root, moments, begin, end)
+  assert.deepEqual(river, buildRootRiver(structuredClone(agent), structuredClone(root), moments, begin, end))
+  assert.deepEqual(river.map((branch) => [branch.kind, branch.parent]), [['turn', -1], ['turn', -1], ['tool', 0], ['tool', 1], ['file', 2], ['file', 3]])
+  // A turn joins the root where the root is at that turn's work-order moment.
+  assert.ok(Math.abs(river[1].points[0][0] - (-9 + rootWorkPosition(Date.parse(agent.turns[1]), moments) * 18)) < 1e-9)
+  for (const branch of river.filter((item) => item.parent >= 0)) {
+    const parent = river[branch.parent].points
+    assert.ok(parent.some((point, index) => index > 0 && Math.hypot(...branch.points[0].map((value, axis) => value - (parent[index - 1][axis] + point[axis]) / 2)) <= Math.hypot(...point.map((value, axis) => value - parent[index - 1][axis]))))
+  }
+  assert.deepEqual(buildRootRiver({ ...agent, turns: [], tool_calls: [], touched_files: [] }, root, moments, begin, end), [])
+})
+
+/** PLAN M3VL: root width follows recorded spend so far; unpriced roots keep one width. */
+test('root spend shares rise with the recorded cost trail', () => {
+  const agent = { id: 'worker', cost_usd: 0.4, started_at: '2026-09-16T00:00:00Z', updated_at: '2026-09-16T00:02:00Z' }
+  const trail = [{ ts: '2026-09-16T00:00:00Z', cost_usd: null }, { ts: '2026-09-16T00:01:00Z', cost_usd: '0.1' }, { ts: '2026-09-16T00:02:00Z', cost_usd: '0.4' }]
+  const moments = rootWorkTimes([{ ...agent, turns: ['2026-09-16T00:01:00Z'] }])
+  const shares = rootSpendShares(agent, trail, [[-9, 0, 0], [0, 0, 0], [9, 0, 0]], moments)
+  assert.deepEqual(shares, [0, 0.25, 1])
+  assert.deepEqual(rootSpendShares({ ...agent, cost_usd: null }, trail, [[-9, 0, 0]], moments), [1])
 })
