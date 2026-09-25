@@ -48,7 +48,7 @@ class AgentFileOffers(BaseModel):
     truncated: bool
 
 
-def discover_agent_files(root: Path) -> AgentFileOffers:
+def discover_agent_files(root: Path, *, principal_id: str = "local") -> AgentFileOffers:
     """Find eligible AGENTS.md/CLAUDE.md files without following workspace symlinks."""
 
     scan_root = root.resolve()
@@ -90,7 +90,7 @@ def discover_agent_files(root: Path) -> AgentFileOffers:
                 return AgentFileOffers(files=offers, truncated=truncated)
             offers.append(
                 AgentFileOffer(
-                    batch_uid=seed_batch_uid(filename, markdown),
+                    batch_uid=seed_batch_uid(filename, markdown, principal_id=principal_id),
                     relative_path=path.relative_to(scan_root).as_posix(),
                     source_name=filename,
                     markdown=markdown,

@@ -486,3 +486,31 @@ def test_seed_batch_uid_is_stable_and_document_specific() -> None:
     assert seed_batch_uid("garden.md", markdown) == seed_batch_uid("garden.md", markdown)
     assert seed_batch_uid("garden.md", markdown).version == 8
     assert seed_batch_uid("garden.md", markdown) != seed_batch_uid("other.md", markdown)
+
+
+@pytest.mark.asyncio
+async def test_cli_generated_seed_ids_are_scoped_before_the_palace_write() -> None:
+    """PLAN M3OB / A-033: CLI retries retain identity without colliding across users."""
+
+    class ScopedSpine(FakeSpine):
+        async def approval_queue(self, principal_id, **kwargs):
+            return QueueResponse(cards=[])
+
+    markdown = "# Garden\n\nSeed batches require explicit owner consent."
+    upload = SeedUploadRequest(
+        batch_uid=seed_batch_uid("garden.md", markdown),
+        source_name="garden.md",
+        markdown=markdown,
+    )
+    ids = []
+    for principal in ("owner", "owner", "other"):
+        spine = ScopedSpine()
+        service = SeedIngestionService(
+            agent=FakeAgent(),  # type: ignore[arg-type]
+            spine=spine,  # type: ignore[arg-type]
+            principal_id=principal,
+            machine_id="mac",
+        )
+        ids.append((await service.ingest(upload)).batch_uid)
+    assert ids[0] == ids[1]
+    assert ids[0] != ids[2]
