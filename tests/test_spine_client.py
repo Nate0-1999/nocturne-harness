@@ -121,6 +121,7 @@ def test_client_exposes_all_spine_routes() -> None:
         "jobs",
         "job_write",
         "prepare_injection",
+        "restore_injection",
         "commit_injection",
         "submit_feedback",
         "annotate_injection_events",

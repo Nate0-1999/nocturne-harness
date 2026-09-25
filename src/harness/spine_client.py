@@ -168,6 +168,14 @@ class InjectPrepareResponse(ContractModel):
     memory_allocation: MemoryAllocation
 
 
+class RestoredInjection(ContractModel):
+    prepared: InjectPrepareResponse
+    confirmed_memory_ids: list[UUID]
+    excluded_memory_ids: list[UUID]
+    event_sources: dict[UUID, UUID]
+    pending: bool
+
+
 class RemovedMemory(ContractModel):
     memory_id: UUID
     reason: RemovalReason
@@ -1129,6 +1137,18 @@ class SpineClient:
             json_body=request.model_dump(mode="json", exclude_none=True, exclude_defaults=True),
         )
         return _expect_success(response, status=200, adapter=_PREPARE_RESPONSE)
+
+    async def restore_injection(
+        self,
+        thread_id: UUID,
+        principal_id: str,
+    ) -> RestoredInjection | None:
+        response = await self._request(
+            "GET",
+            f"v1/inject/threads/{thread_id}",
+            params={"principal_id": principal_id},
+        )
+        return _expect_success(response, status=200, adapter=TypeAdapter(RestoredInjection | None))
 
     async def commit_injection(self, request: InjectCommitRequest) -> InjectCommitResponse:
         """Mirror POST /v1/inject/commit."""

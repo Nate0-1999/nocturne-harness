@@ -1456,7 +1456,7 @@ def create_dev_app(
 
         @app.get("/v1/seeds/jump-start")
         async def seed_jump_start() -> AgentFileOffers:
-            return discover_agent_files(discovery_root)
+            return discover_agent_files(discovery_root, principal_id=configured.principal_id)
 
         @app.post("/v1/seeds")
         async def ingest_seed(upload: SeedUploadRequest):

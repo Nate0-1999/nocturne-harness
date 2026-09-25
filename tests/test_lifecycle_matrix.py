@@ -160,7 +160,7 @@ def test_every_reachable_lifecycle_state_has_one_voice_and_action(
         failures=tuple(failures),
     )
     relation = {
-        "current": ("0.1.7", "compatible"),
+        "current": (onboarding.API_CONTRACT_VERSION, "compatible"),
         "behind": ("0.0.9", "older"),
         "ahead": ("0.2.0", "newer"),
         "legacy": (None, "older"),
@@ -206,6 +206,7 @@ def test_every_reachable_lifecycle_state_has_one_voice_and_action(
     )
     monkeypatch.setattr(onboarding, "_wait_for_url", lambda *args, **kwargs: None)
     monkeypatch.setattr(onboarding, "_supervise", lambda processes: None)
+    monkeypatch.setattr("harness.deploy.run_cloud_deploy", lambda **kwargs: events.append("deploy"))
     monkeypatch.setattr(onboarding, "_stop_processes", lambda processes: None)
     prompts: list[str] = []
     output = io.StringIO()
@@ -263,10 +264,9 @@ def test_every_reachable_lifecycle_state_has_one_voice_and_action(
         assert prompts == []
         assert events == ["journal", "health", "guard", "start"]
     elif action == "postpone-start":
-        assert len(prompts) == 1
-        assert "Update now?" in prompts[0]
-        assert "update was postponed" in rendered
-        assert events == ["journal", "health", "guard", "start"]
+        assert prompts == []
+        assert "Updating your Palace" in rendered
+        assert events == ["journal", "health", "guard", "deploy", "start"]
     else:
         assert prompts == []
         expected = f"{onboarding.PALACE_CHECKING_LINE}\n"

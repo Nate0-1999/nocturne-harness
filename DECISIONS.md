@@ -3649,3 +3649,17 @@ thread's turns are its run starts, a worker's are its model responses. Root widt
 far; branch width and reach follow the recorded work beneath; dry roots are desaturated satin; the
 view centres and fits the river. Farm is unchanged. Side-by-sides and live recordings are the
 acceptance evidence, with the owner's eye at audit.
+
+## M3OB — Repair the walked front door [P1.1, P4.1]
+
+PRECEDENT: PLAN M3OB, M3FR, F113, A-070/071. The fresh public install
+lost injection context on restart, asked for a Palace token, and lacked
+offline startup, paired package updates and memory portability. Recover
+recorded Palace decisions before autonomous retrieval; keep human locks.
+Offline configuration uses the existing OpenAI-compatible adapters with
+local models and skips downloads. Package upgrades choose the newest
+complete published pair. Agent-file review already worked and stays intact.
+
+The public 0.1.32 repeat with another identity exposed a deterministic seed-ID
+collision. Scope generated IDs to the principal; preserve legacy `local` IDs
+and explicit caller UUIDs. Same-user retries remain stable across machines.

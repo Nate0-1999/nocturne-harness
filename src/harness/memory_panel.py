@@ -40,6 +40,7 @@ from harness.spine_client import (
     PatchMemoryConflictError,
     PatchMemoryRequest,
     PatchMemoryResponse,
+    RestoredInjection,
     RevisionConflict,
     ScoredMemoryCard,
     SpineClientError,
@@ -210,6 +211,22 @@ class ThreadMemoryContextRegistry:
     def snapshot(self, thread_id: str) -> ThreadMemorySnapshot | None:
         state = self._threads.get(thread_id)
         return None if state is None else state.snapshot()
+
+    def restore(self, thread_id: str, restored: RestoredInjection) -> None:
+        """Recover the Palace's frozen membership and human locks (A-070)."""
+        if restored.pending or restored.prepared.final_block is None:
+            raise ValueError("an unfinished gate needs consent")
+        self.install(
+            thread_id,
+            prepared=restored.prepared,
+            removed_memory_ids=frozenset(),
+            added_back=[],
+            final_block=restored.prepared.final_block,
+        )
+        state = self._threads[thread_id]
+        state.confirmed_memory_ids = set(restored.confirmed_memory_ids)
+        state.excluded_memory_ids = set(restored.excluded_memory_ids)
+        state.event_sources = dict(restored.event_sources)
 
     def remove(self, thread_id: str, memory_id: UUID) -> bool:
         """Remove one retained fragment and persist its tool exclusion."""

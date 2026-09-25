@@ -44,3 +44,14 @@ def test_agent_file_discovery_deduplicates_identical_named_documents(tmp_path: P
     result = discover_agent_files(tmp_path)
 
     assert [offer.relative_path for offer in result.files] == ["one/AGENTS.md"]
+
+
+def test_agent_file_batches_are_stable_per_principal(tmp_path: Path) -> None:
+    """PLAN M3OB / A-033: identical files must not claim another user's seed batch."""
+    (tmp_path / "AGENTS.md").write_text("The project codeword is copper-orchid.")
+    first = discover_agent_files(tmp_path, principal_id="verification-a")
+    retry = discover_agent_files(tmp_path, principal_id="verification-a")
+    other = discover_agent_files(tmp_path, principal_id="verification-b")
+    legacy = discover_agent_files(tmp_path)
+    assert first.files[0].batch_uid == retry.files[0].batch_uid
+    assert len({first.files[0].batch_uid, other.files[0].batch_uid, legacy.files[0].batch_uid}) == 3

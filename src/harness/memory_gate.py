@@ -171,6 +171,8 @@ class InjectionGateway(Protocol):
 
     async def prepare_injection(self, request: InjectPrepareRequest) -> InjectPrepareResponse: ...
 
+    async def restore_injection(self, thread_id: UUID, principal_id: str): ...
+
     async def commit_injection(self, request: InjectCommitRequest) -> InjectCommitResponse: ...
 
     async def submit_feedback(self, request: FeedbackRequest) -> FeedbackResponse: ...
@@ -291,22 +293,41 @@ class MemoryGateTurnRunner:
         context = self._context_factory(thread_id)
 
         try:
-            prepared = await self._spine.prepare_injection(
-                InjectPrepareRequest(
-                    thread_id=context.thread_id,
-                    agent_id=context.agent_id,
-                    machine_id=context.machine_id,
-                    principal_id=context.principal_id,
-                    project_key=context.project_key,
-                    location_path=_live_location_path(context),
-                    current_location=_live_current_location(context),
-                    agent_kind=None,
+            restored = (
+                await self._spine.restore_injection(context.thread_id, context.principal_id)
+                if message_history
+                else None
+            )
+            if restored is not None and not restored.pending:
+                self._contexts.restore(thread_id, restored)
+                return await self._run_autonomous(
+                    thread_id=thread_id,
                     prompt=prompt,
-                    model_context_tokens=(
-                        model_resolution.context_tokens
-                        if model_resolution is not None
-                        else self._model_context_tokens
-                    ),
+                    message_history=message_history,
+                    emit=emit,
+                    model_resolution=model_resolution,
+                    image=image,
+                )
+            prepared = (
+                restored.prepared
+                if restored
+                else await self._spine.prepare_injection(
+                    InjectPrepareRequest(
+                        thread_id=context.thread_id,
+                        agent_id=context.agent_id,
+                        machine_id=context.machine_id,
+                        principal_id=context.principal_id,
+                        project_key=context.project_key,
+                        location_path=_live_location_path(context),
+                        current_location=_live_current_location(context),
+                        agent_kind=None,
+                        prompt=prompt,
+                        model_context_tokens=(
+                            model_resolution.context_tokens
+                            if model_resolution is not None
+                            else self._model_context_tokens
+                        ),
+                    )
                 )
             )
         except SpineClientError:

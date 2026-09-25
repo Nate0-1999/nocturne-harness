@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.33 - 2026-09-24
+
+- Keep deterministic agent-file and CLI seed batches separate between users.
+  The same AGENTS.md can initialize another verification identity without a 409.
+  Pair with Memory 0.1.33; its API contract remains 0.1.32.
+
+## 0.1.32 - 2026-09-24
+
+- Restore Palace injection context on resumed conversations; retain reviewed
+  memories and movement refresh across daemon restart.
+- Add offline local-model startup, paired package update offers, automatic
+  guarded Palace updates, and one-file memory export/import. Remote setup
+  discovers or uses supplied Palace access without a token prompt.
+
 ## 0.1.31 - 2026-09-24
 
 - Uploaded picture themes now use the full chrome border, including saved

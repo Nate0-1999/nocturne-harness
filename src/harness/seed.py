@@ -8,6 +8,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from harness.agent import HarnessAgent
+from harness.seed_identity import seed_batch_uid
 from harness.spine_client import (
     ExtractionCandidate,
     QueueCard,
@@ -46,6 +47,14 @@ class SeedIngestionService:
 
     async def ingest(self, upload: SeedUploadRequest) -> SeedResponse:
         _validate_upload(upload)
+        if upload.batch_uid == seed_batch_uid(upload.source_name, upload.markdown):
+            upload = upload.model_copy(
+                update={
+                    "batch_uid": seed_batch_uid(
+                        upload.source_name, upload.markdown, principal_id=self._principal_id
+                    )
+                }
+            )
         source_name = _canonical_seed_source_name(upload.source_name)
         source_sha256 = sha256(upload.markdown.encode("utf-8")).hexdigest()
         try:
