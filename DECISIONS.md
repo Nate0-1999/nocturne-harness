@@ -3617,3 +3617,9 @@ line of score and name over the body; rank, kind and id moved to the score's
 tip; the nine raw features (project → thread → location order kept, A-060) and
 the weighted contributions draw as two polygons in FeatureRadar.tsx on hover
 or focus. The feature bars and their CSS are gone.
+The same card (`MemoryCard.tsx`) now serves the gate, the near misses, the
+memory panel, the trace and the Deck's worker context. ×! is the palace delete
+(tombstone with restore, the reason kept as FL-057's signal) wherever the
+memory's revision is known — the panel; on the gate, where a scored card carries
+no revision, it records the never veto. The near-miss row is + and ×!; its
+duplicate more-options path was removed.

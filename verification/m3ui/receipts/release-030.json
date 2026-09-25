@@ -1,0 +1,45 @@
+{
+  "version": "0.1.30",
+  "authorization": "Standing release grant; PLAN M3UI AUTHORITY: publish both packages at the next unused version (0.1.29 was taken by M3CO the same day)",
+  "release_order": [
+    "nocturne-memory",
+    "nocturne-harness"
+  ],
+  "status": "published",
+  "memory": {
+    "version": "0.1.30",
+    "workflow": "https://github.com/Nate0-1999/nocturne-memory/actions/runs/36078727657",
+    "release": "https://github.com/Nate0-1999/nocturne-memory/releases/tag/v0.1.30",
+    "commit": "89cb391e9386dd02f9009a854ea1d59a7c2be8c2",
+    "artifacts": [
+      {
+        "filename": "nocturne_memory-0.1.30-py3-none-any.whl",
+        "sha256": "7edc703f567661c9a777ad72d335f3602c7a989ff745ac5124ca4a6fe12daa88",
+        "uploaded": "2026-09-25T00:42:47.857996Z"
+      },
+      {
+        "filename": "nocturne_memory-0.1.30.tar.gz",
+        "sha256": "2cf48d876cbcfc185c7f98136542dff503b4b8a500db043689ad032ccbb48986",
+        "uploaded": "2026-09-25T00:42:49.530077Z"
+      }
+    ]
+  },
+  "harness": {
+    "version": "0.1.30",
+    "workflow": "https://github.com/Nate0-1999/nocturne-harness/actions/runs/36078848543",
+    "release": "https://github.com/Nate0-1999/nocturne-harness/releases/tag/v0.1.30",
+    "commit": "cd8a38f75390ab248b9a0133473e2db44bea3905",
+    "artifacts": [
+      {
+        "filename": "nocturne_harness-0.1.30-py3-none-any.whl",
+        "sha256": "f8dfc77e6aef8517cb8736b11abd34b90ef04493d0170e6bcdaebcbc250cb85a",
+        "uploaded": "2026-09-25T00:44:50.302729Z"
+      },
+      {
+        "filename": "nocturne_harness-0.1.30.tar.gz",
+        "sha256": "fbe479063ca929f6c606d1582e74cce3208849bb1a5da48de644081c0889f17f",
+        "uploaded": "2026-09-25T00:44:51.983347Z"
+      }
+    ]
+  }
+}
