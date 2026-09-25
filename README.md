@@ -38,13 +38,25 @@ nocturne init --remote https://YOUR-SPINE-SERVICE
 nocturne up
 ```
 
-`init` uses `OPENROUTER_API_KEY` when it is already exported, otherwise it
-prompts for it, then privately prompts for your Palace access token. `up` checks that
-Palace, starts only the local daemon, and opens the Rack; it does not start
-Docker or a second Spine. Existing checkout users can replace sourcing `.env`
-and running `uv run harness dev` with those two commands, entering the same
-`SPINE_URL`, `SPINE_TOKEN`, and OpenRouter key when prompted. The private config
-remains at `~/.nocturne/env` with owner-only permissions.
+`init` uses an exported OpenRouter key or asks for it. Palace access is
+discovered through your signed-in Google Cloud account or supplied through
+the existing `SPINE_URL`/`SPINE_TOKEN` environment; it never asks for a third
+secret. `up` starts only the local daemon for a remote Palace. The private
+config remains at `~/.nocturne/env` with owner-only permissions.
+
+`up` checks for a newer published package pair and offers to update both;
+`nocturne update` runs that check separately. A behind Palace updates
+automatically through the guarded, backup-first deployment path.
+
+For fully local operation, provision Ollama's `qwen3:1.7b` and
+`qwen3-embedding:4b` models and the packaged pgvector image while online,
+then run `nocturne init --offline` in a separate `NOCTURNE_HOME`.
+`up` then uses local models and skips downloads and registry checks.
+See `init --help` for model/URL overrides.
+
+`nocturne export FILE` saves every memory with its revisions, relationships
+and review history to one private file. `nocturne import FILE` restores it
+into another Palace under the same principal, without overwriting conflicts.
 
 `nocturne doctor` checks the remote Spine plus the local conversation journal
 and disk. It says plainly that local database and backup checks are skipped;

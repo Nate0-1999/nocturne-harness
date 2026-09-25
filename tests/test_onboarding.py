@@ -19,6 +19,11 @@ def _ready_browser_runtime(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(onboarding, "browser_runtime_is_ready", lambda _home: True)
     monkeypatch.setattr(onboarding, "ensure_browser_runtime", lambda home: home / "tools")
+    which = onboarding.shutil.which
+    monkeypatch.setattr(
+        onboarding.shutil, "which", lambda name: None if name == "gcloud" else which(name)
+    )
+    monkeypatch.setenv("SPINE_TOKEN", "remote-bearer")
 
 
 class _HealthResponse:
@@ -369,10 +374,10 @@ def test_init_uses_environment_secret_and_existing_config_is_inert(
     assert first.read_bytes() == original
 
 
-def test_remote_init_records_one_palace_origin_and_prompts_only_for_its_bearer(
+def test_remote_init_uses_supplied_access_without_a_third_secret_prompt(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """M2S and ADR-019 require remote rung setup to fit the same two-command surface."""
+    """ADR-019 / FL-162 never asks the user for a Palace token."""
 
     monkeypatch.setenv("OPENROUTER_API_KEY", "environment-secret")
     prompts: list[str] = []
@@ -389,7 +394,6 @@ def test_remote_init_records_one_palace_origin_and_prompts_only_for_its_bearer(
     config = onboarding.load_config(home=tmp_path)
 
     assert prompts == [
-        "Your Palace access token: ",
         "Back up conversation transcripts to your cloud Palace? [y/N] ",
     ]
     assert config.palace_mode == "remote"
@@ -532,7 +536,7 @@ def test_remote_up_starts_only_the_daemon_and_opens_the_browser(
     monkeypatch.setattr(
         onboarding,
         "_remote_api_contract_version",
-        lambda service_url, token, **kwargs: "0.1.7",
+        lambda service_url, token, **kwargs: onboarding.API_CONTRACT_VERSION,
     )
     monkeypatch.setattr(onboarding, "_daemon_preflight", lambda config: _ready_preflight())
 
@@ -612,7 +616,7 @@ def test_remote_doctor_checks_spine_journal_and_disk_without_local_database(
         "_remote_api_contract_version",
         lambda service_url, token, **kwargs: (
             checks.append((service_url, token)),
-            "0.1.7",
+            onboarding.API_CONTRACT_VERSION,
         )[1],
     )
     monkeypatch.setattr(onboarding, "_daemon_preflight", lambda config: _ready_preflight())
@@ -624,7 +628,10 @@ def test_remote_doctor_checks_spine_journal_and_disk_without_local_database(
     assert "Remote Palace: healthy" in rendered
     assert "Conversation journal:" in rendered
     assert "Disk:" in rendered
-    assert "Palace API contract: 0.1.7 (app supports >=0.1.0,<0.2.0)" in rendered
+    assert (
+        f"Palace API contract: {onboarding.API_CONTRACT_VERSION} (app supports >=0.1.0,<0.2.0)"
+        in rendered
+    )
     assert "Local database and backup checks are skipped for a remote Palace." in rendered
 
 
@@ -672,12 +679,10 @@ def test_doctor_reports_observed_breaker_or_unverified(
     assert unrelated.getvalue() == ""
 
 
-def test_remote_up_keeps_running_with_a_visible_notice_when_update_is_declined(
+def test_remote_up_automatically_updates_a_behind_palace_without_prompting(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """A-056, M2Z9, SPEC D.2 093, and SPEC B.6 rule 12 keep an older-contract Palace
-    usable when its plain offered update is declined.
-    """
+    """SPEC B.6 / M3FR makes the guarded, backup-first Palace update automatic."""
 
     config = onboarding.NocturneConfig(
         home=tmp_path,
@@ -713,6 +718,7 @@ def test_remote_up_keeps_running_with_a_visible_notice_when_update_is_declined(
     monkeypatch.setattr(onboarding, "_wait_for_url", lambda *args, **kwargs: None)
     monkeypatch.setattr(onboarding, "_remote_palace_status", palace_status)
     monkeypatch.setattr("harness.deploy.preflight_release_guard", release_guard)
+    monkeypatch.setattr("harness.deploy.run_cloud_deploy", lambda **kwargs: probes.append("deploy"))
     monkeypatch.setattr(onboarding, "_start_service", lambda *args, **kwargs: Process())
     monkeypatch.setattr(onboarding, "_supervise", lambda processes: None)
     monkeypatch.setattr(onboarding, "_stop_processes", lambda processes: None)
@@ -727,16 +733,11 @@ def test_remote_up_keeps_running_with_a_visible_notice_when_update_is_declined(
         )
         == 0
     )
-    assert "update was postponed" in output.getvalue()
+    assert "Updating your Palace" in output.getvalue()
     assert "Nocturne is running" in output.getvalue()
     assert output.getvalue().splitlines()[0] == onboarding.PALACE_CHECKING_LINE
-    assert prompts == [
-        "Your Palace needs an update to work with this version of Nocturne. Update now? "
-        "Nocturne backs it up first; this takes a few minutes. [y/N] "
-    ]
-    assert "schema" not in prompts[0].lower()
-    assert ">=" not in prompts[0]
-    assert probes == ["health", "guard"]
+    assert prompts == []
+    assert probes == ["health", "guard", "deploy"]
 
 
 def test_remote_up_acceptance_runs_full_deploy_with_the_same_consent(
@@ -792,7 +793,6 @@ def test_remote_up_acceptance_runs_full_deploy_with_the_same_consent(
             "dry_run": False,
             "openrouter_key": config.openrouter_api_key,
             "home": config.home,
-            "credential_alignment_consent": True,
         }
     ]
 
@@ -1013,7 +1013,7 @@ def test_present_invalid_api_contract_refuses_before_prompt_or_start(
 @pytest.mark.parametrize(
     ("remote_contract", "relation", "exit_code", "message"),
     [
-        ("0.0.9", "older", 1, "accept the offered update"),
+        ("0.0.9", "older", 1, "complete the automatic update"),
         ("0.2.0", "newer", 2, "This Nocturne app is older than your Palace"),
     ],
 )

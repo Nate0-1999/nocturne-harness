@@ -5,12 +5,14 @@ from __future__ import annotations
 import argparse
 import glob
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
 from collections.abc import Sequence
 from pathlib import Path
 from typing import TextIO
+from urllib.parse import urlencode
 
 from harness.deploy import DeployError
 from harness.lifecycle import LifecycleError
@@ -23,6 +25,7 @@ from harness.onboarding import (
     open_nocturne,
     restore_nocturne,
     up_nocturne,
+    update_nocturne,
 )
 from harness.seed_identity import seed_batch_uid
 
@@ -44,6 +47,10 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="SPINE_URL",
         help="connect this daemon to an existing remote Palace",
     )
+    init.add_argument("--offline", action="store_true", help="use a local Palace and local models")
+    init.add_argument("--local-model", default="qwen3:1.7b")
+    init.add_argument("--embedding-model", default="qwen3-embedding:4b")
+    init.add_argument("--model-url", default="http://127.0.0.1:11434/v1")
     up = commands.add_parser("up", help="start Nocturne for the configured Palace")
     up.add_argument(
         "--no-open",
@@ -57,6 +64,11 @@ def build_parser() -> argparse.ArgumentParser:
     seed = commands.add_parser("seed", help="add Markdown documents to the Palace review queue")
     seed.add_argument("paths", nargs="+", help="Markdown files or glob patterns")
     commands.add_parser("doctor", help="inspect Palace health and startup readiness")
+    commands.add_parser("update", help="update both packages to the latest published release")
+    export = commands.add_parser("export", help="save every memory and its lineage in one file")
+    export.add_argument("path", type=Path)
+    import_command = commands.add_parser("import", help="restore a memory file into another Palace")
+    import_command.add_argument("path", type=Path)
     jobs = commands.add_parser("jobs", help="save, monitor and run workflow recipes")
     jobs.add_argument("action", choices=["list", "save", "run", "stop"])
     jobs.add_argument("target", nargs="?", help="recipe JSON file, job ID or run ID")
@@ -136,9 +148,30 @@ def main(
     args = build_parser().parse_args(argv)
     try:
         if args.command == "init":
-            init_nocturne(remote=args.remote, verification=args.verification, stdout=stdout)
+            init_nocturne(
+                remote=args.remote,
+                verification=args.verification,
+                offline=args.offline,
+                local_model=args.local_model,
+                embedding_model=args.embedding_model,
+                model_url=args.model_url,
+                stdout=stdout,
+            )
         elif args.command == "up":
+            if update_nocturne(stdout=stdout):
+                os.execv(
+                    sys.executable,
+                    [
+                        sys.executable,
+                        "-m",
+                        "harness.cli",
+                        "up",
+                        *(["--no-open"] if args.no_open else []),
+                    ],
+                )
             up_nocturne(open_browser=not args.no_open, stdout=stdout)
+        elif args.command == "update":
+            update_nocturne(stdout=stdout)
         elif args.command == "open":
             open_nocturne(stdout=stdout)
         elif args.command == "backup":
@@ -149,6 +182,8 @@ def main(
             return seed_nocturne(args.paths, stdout=stdout)
         elif args.command == "doctor":
             return doctor_nocturne(stdout=stdout)
+        elif args.command in {"export", "import"}:
+            return memory_archive_nocturne(args.command, args.path, stdout=stdout)
         elif args.command == "jobs":
             from harness.jobs_cli import jobs_nocturne
 
@@ -167,6 +202,47 @@ def main(
         return 2
     except KeyboardInterrupt:
         return 130
+    return 0
+
+
+def memory_archive_nocturne(action: str, path: Path, *, stdout: TextIO = sys.stdout) -> int:
+    """FL-172: one private portable file, using the configured Palace identity."""
+    config = load_config()
+    try:
+        data = path.read_bytes() if action == "import" else None
+    except OSError as exc:
+        raise OnboardingError(f"Could not read the memory archive at {path}.") from exc
+    query = urlencode({"principal_id": config.principal_id})
+    request = urllib.request.Request(
+        f"{config.spine_url}/v1/memories/{action}?{query}",
+        data=data,
+        method="POST" if data is not None else "GET",
+        headers={
+            "Authorization": f"Bearer {config.spine_token}",
+            "Content-Type": "application/json",
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=120) as response:
+            result = json.loads(response.read())
+        if action == "export":
+            with os.fdopen(
+                os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "w"
+            ) as handle:
+                json.dump(result, handle, ensure_ascii=False, indent=2)
+                handle.write("\n")
+            print(f"Saved {len(result['memories'])} memories with lineage to {path}.", file=stdout)
+        else:
+            print(f"Imported {result['memories']} memories with lineage.", file=stdout)
+    except urllib.error.HTTPError as exc:
+        raise OnboardingError(
+            f"Memory {action} failed (HTTP {exc.code}); "
+            "check Palace compatibility and archive identity."
+        ) from exc
+    except (OSError, ValueError) as exc:
+        raise OnboardingError(
+            f"Memory {action} could not read or write its file or Palace."
+        ) from exc
     return 0
 
 

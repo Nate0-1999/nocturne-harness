@@ -147,7 +147,8 @@ class DirectCompletionAdapter:
             )
         if name in {"openai", "openai-chat", "openai-responses"}:
             return OpenAIProvider(
-                api_key=_required_secret(self._settings.openai_api_key, "OPENAI_API_KEY")
+                api_key=_required_secret(self._settings.openai_api_key, "OPENAI_API_KEY"),
+                base_url=self._settings.openai_base_url,
             )
         return infer_provider(name)
 

@@ -27,7 +27,7 @@ def initialize(home, monkeypatch, *, verification=True):
     onboarding.init_nocturne(
         home=home,
         verification=verification,
-        environ={"OPENROUTER_API_KEY": "test-key"},
+        environ={"OPENROUTER_API_KEY": "test-key", "SPINE_TOKEN": "test-token"},
         remote="https://palace.example.test",
         prompt=lambda _: "test-token",
         stdout=io.StringIO(),
