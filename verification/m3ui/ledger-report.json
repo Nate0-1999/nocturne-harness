@@ -7,12 +7,7 @@
     {
       "repo": "harness",
       "base": "aae1815eaa834a48834a18148030aac6cfc3eed7",
-      "head": "7ecf23962c91425ea80e46d12276f68cdd6c84f1"
-    },
-    {
-      "repo": "spine",
-      "base": "41f2ae75549ca576d62bdf887e509acfc49f395d",
-      "head": "78bab6236f147e17c1358247787b1d0f61fb30d2"
+      "head": "aa2a1455d12a5f53adad12094830102840760a47"
     }
   ],
   "unmapped": {
@@ -23,8 +18,6 @@
     "harness/docs/frozen-law.json": "M3UI look pass support: the kit and its stylesheet, the shared card and radar, the settings and shell components, the theme-seam tables, the type-scale test pointer, the 0.1.30 release metadata, the journal and changelog, and the walk evidence (before/after pairs, row captures, hashes, report, release receipts). No feature behavior beyond the rulings recorded on FL-013, FL-033 and FL-081.",
     "harness/src/harness/__init__.py": "M3UI look pass support: the kit and its stylesheet, the shared card and radar, the settings and shell components, the theme-seam tables, the type-scale test pointer, the 0.1.30 release metadata, the journal and changelog, and the walk evidence (before/after pairs, row captures, hashes, report, release receipts). No feature behavior beyond the rulings recorded on FL-013, FL-033 and FL-081.",
     "harness/uv.lock": "M3UI look pass support: the kit and its stylesheet, the shared card and radar, the settings and shell components, the theme-seam tables, the type-scale test pointer, the 0.1.30 release metadata, the journal and changelog, and the walk evidence (before/after pairs, row captures, hashes, report, release receipts). No feature behavior beyond the rulings recorded on FL-013, FL-033 and FL-081.",
-    "harness/verification/m3co/SHA256SUMS": "M3UI look pass support: the kit and its stylesheet, the shared card and radar, the settings and shell components, the theme-seam tables, the type-scale test pointer, the 0.1.30 release metadata, the journal and changelog, and the walk evidence (before/after pairs, row captures, hashes, report, release receipts). No feature behavior beyond the rulings recorded on FL-013, FL-033 and FL-081.",
-    "harness/verification/m3co/ledger-report.json": "M3UI look pass support: the kit and its stylesheet, the shared card and radar, the settings and shell components, the theme-seam tables, the type-scale test pointer, the 0.1.30 release metadata, the journal and changelog, and the walk evidence (before/after pairs, row captures, hashes, report, release receipts). No feature behavior beyond the rulings recorded on FL-013, FL-033 and FL-081.",
     "harness/verification/m3ui/FL-004.png": "M3UI look pass support: the kit and its stylesheet, the shared card and radar, the settings and shell components, the theme-seam tables, the type-scale test pointer, the 0.1.30 release metadata, the journal and changelog, and the walk evidence (before/after pairs, row captures, hashes, report, release receipts). No feature behavior beyond the rulings recorded on FL-013, FL-033 and FL-081.",
     "harness/verification/m3ui/FL-006.png": "M3UI look pass support: the kit and its stylesheet, the shared card and radar, the settings and shell components, the theme-seam tables, the type-scale test pointer, the 0.1.30 release metadata, the journal and changelog, and the walk evidence (before/after pairs, row captures, hashes, report, release receipts). No feature behavior beyond the rulings recorded on FL-013, FL-033 and FL-081.",
     "harness/verification/m3ui/FL-007.png": "M3UI look pass support: the kit and its stylesheet, the shared card and radar, the settings and shell components, the theme-seam tables, the type-scale test pointer, the 0.1.30 release metadata, the journal and changelog, and the walk evidence (before/after pairs, row captures, hashes, report, release receipts). No feature behavior beyond the rulings recorded on FL-013, FL-033 and FL-081.",
@@ -170,30 +163,7 @@
     "harness/web/tests/threadIndexSource.test.mjs": "M3UI look pass support: the kit and its stylesheet, the shared card and radar, the settings and shell components, the theme-seam tables, the type-scale test pointer, the 0.1.30 release metadata, the journal and changelog, and the walk evidence (before/after pairs, row captures, hashes, report, release receipts). No feature behavior beyond the rulings recorded on FL-013, FL-033 and FL-081.",
     "spine/docs/feature-ledger.md": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
     "spine/docs/feature-ledger.yaml": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/docs/frozen-law.json": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/openapi.json": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/src/spine/__init__.py": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/tests/test_packaging.py": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/FL-021.png": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/FL-049.png": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/FL-050.png": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/FL-051.png": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/FL-052.png": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/FL-053.png": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/FL-054.png": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/FL-055.png": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/FL-056.png": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/FL-058.png": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/FL-059.png": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/FL-060.png": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/FL-062.png": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/FL-063.png": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/FL-064.png": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/FL-137.png": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/FL-195.png": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/FL-196.png": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/SHA256SUMS": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed.",
-    "spine/verification/m3co/ledger-report.json": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed."
+    "spine/docs/frozen-law.json": "Memory 0.1.30 lockstep version metadata only; no runtime or API schema behavior changed."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
