@@ -16,6 +16,11 @@ html[data-theme="seraph-dressed"] {
     var(--plate-horizon) 98.6%,
     var(--plate-horizon-deep)
   );
+  --theme-horizon: var(--plate-horizon);
+}
+
+html[data-theme="seraph-dressed"] .rack-module,
+html[data-pressed-colorway] .rack-module {
   --theme-rim: linear-gradient(
     135deg,
     var(--plate-chrome-peak) 0%,
@@ -37,7 +42,10 @@ html[data-theme="seraph-dressed"] {
   );
   --theme-rim-width: 2px;
   --theme-rim-hover-width: 3px;
-  --theme-horizon: var(--plate-horizon);
+}
+
+html[data-pressed-colorway] .rack-module {
+  --theme-rim-width: 3px;
 }
 
 html[data-theme="gold-lines"] {
@@ -82,7 +90,8 @@ html[data-pressed-colorway] .rack-module {
   border-color: transparent;
 }
 
-html[data-theme="seraph-dressed"] .rack-module::after {
+html[data-theme="seraph-dressed"] .rack-module::after,
+html[data-pressed-colorway] .rack-module::after {
   width: auto;
   height: auto;
   box-sizing: border-box;
