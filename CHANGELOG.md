@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.31 - 2026-09-24
+
+- Uploaded picture themes now use the full chrome border, including saved
+  colorways. Share Seraph's border material with the uploaded plate's sampled
+  colors. Pair with Memory 0.1.31; the API contract is unchanged.
+
 ## 0.1.30 - 2026-09-22
 
 - The look pass: one right-sized, chamfered button style with matching selects

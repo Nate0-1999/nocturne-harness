@@ -416,8 +416,6 @@ function buildTokens(roles: Record<string, string>, ramp: PressedColorway['chrom
     '--plate-coral': roles.danger,
     '--plate-coral-peak': roles.danger,
     '--theme-sky-wash': `linear-gradient(to bottom, ${roles.ground}, ${roles.surface_deep} 34%, ${roles.surface} 72%, ${roles.surface_raised} 90%, ${roles.earned} 100%)`,
-    '--theme-rim': `linear-gradient(135deg, ${stops[7]} 0 7%, ${stops[1]} 7% 43%, ${stops[6]} 43% 49%, ${stops[0]} 49% 78%, ${stops[7]} 78% 83%, ${stops[1]} 83% 100%)`,
-    '--theme-rim-hover': `linear-gradient(135deg, ${stops[7]} 0 12%, ${stops[0]} 12% 38%, ${stops[6]} 38% 52%, ${stops[1]} 52% 72%, ${stops[7]} 72% 88%, ${stops[0]} 88% 100%)`,
     '--theme-horizon': roles.earned,
   })
   return tokens
