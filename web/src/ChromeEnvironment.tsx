@@ -25,6 +25,18 @@ export function ChromeEnvironment() {
     context.fillRect(640, 150, 110, 38)
     context.fillStyle = '#436ac5'
     context.fillRect(800, 250, 30, 150)
+    // Uneven studio highlights break the long rings into the plate's liquid glints.
+    for (let index = 0; index < 18; index++) {
+      const x = (index * 173 + 67) % 1024, y = (index * 89 + 31) % 512
+      const radius = 12 + index % 5 * 7
+      const light = context.createRadialGradient(x, y, 0, x, y, radius)
+      light.addColorStop(0, '#eff8fa')
+      light.addColorStop(0.2, '#eff8fa')
+      light.addColorStop(0.55, '#a1aebd')
+      light.addColorStop(1, 'rgba(3,5,9,0)')
+      context.fillStyle = light
+      context.fillRect(x - radius, y - radius, radius * 2, radius * 2)
+    }
     const texture = new CanvasTexture(canvas)
     texture.mapping = EquirectangularReflectionMapping
     texture.colorSpace = SRGBColorSpace

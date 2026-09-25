@@ -142,7 +142,6 @@ test('production source uses the ruled Three stack and forbids random geometry',
   assert.match(component, /useFrame/u)
   assert.match(component, /name="memory-event-current"/u)
   assert.match(component, /<instancedMesh/u)
-  assert.match(component, /<octahedronGeometry/u)
   assert.match(component, /name="memory-relationships"/u)
   assert.match(component, /data-grammar="torrent-constellation"/u)
   assert.doesNotMatch(component, /clock\.elapsedTime|motion_hz|motion_amplitude/u)

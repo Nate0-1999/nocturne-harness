@@ -46,17 +46,22 @@ function FileCapillaries({ agent, points, moments, radius, tier, selected, stopp
   selected: boolean; stopped: boolean; pick: () => void
 }) {
   const curve = new CatmullRomCurve3(points.map((point) => new Vector3(...point)))
-  return [...(agent.touched_files ?? [])].sort((a, b) => a.path.localeCompare(b.path)).map((file, index, files) => {
+  return [...(agent.touched_files ?? [])].sort((a, b) => a.path.localeCompare(b.path)).map((file, index) => {
     const timeX = -9 + rootWorkPosition(Date.parse(file.ts), moments) * 18
     const t = Math.max(0, Math.min(1, (timeX - points[0][0]) / Math.max(0.001, points.at(-1)![0] - points[0][0])))
     const start = curve.getPoint(t)
-    const side = index % 2 ? -1 : 1, fan = (Math.floor(index / 2) + 0.5) / Math.ceil(files.length / 2)
-    const length = 1.2 + identitySeed(file.path) * 1.8
-    const tip = start.clone().add(new Vector3(length, side * (1 + fan * 3), (identitySeed(file.path + ':depth') - 0.5) * 1.4))
-    const branch: Point3[] = [start.toArray(), start.clone().add(new Vector3(length * 0.45, side * 0.2, 0)).toArray(),
-      start.clone().lerp(tip, 0.65).toArray(), tip.toArray()]
+    const side = index % 2 ? -1 : 1, fan = identitySeed(file.path)
+    const length = 1.2 + fan * 3.8
+    const rise = side * (0.35 + identitySeed(file.path + ':rise') * 2.2)
+    const depth = (identitySeed(file.path + ':depth') - 0.5) * 0.8
+    const branch: Point3[] = Array.from({ length: 7 }, (_, step) => {
+      const u = step / 6
+      return start.clone().add(new Vector3(length * u,
+        rise * u * u + Math.sin(u * 7 + fan * 6) * Math.sin(u * Math.PI) * 0.12,
+        depth * u)).toArray()
+    })
     return <group key={file.path} name={`file:${file.path}`}>
-      <ChromeRoot points={branch} radius={Math.max(0.012, radius * 0.12)} color={stopped ? '#888d9b' : '#eff8fa'}
+      <ChromeRoot points={branch} radius={Math.max(0.009, radius * (0.025 + fan * 0.04))} color={stopped ? '#888d9b' : '#eff8fa'}
         tier={tier} stopped={stopped} selected={selected} forked={false} onClick={pick} fine />
     </group>
   })

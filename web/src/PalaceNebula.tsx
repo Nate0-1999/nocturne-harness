@@ -280,9 +280,12 @@ function ThreeNebula({
 }
 
 function curatorArc(from: readonly number[], to: readonly number[]) {
-  const start = new Vector3(...from).add(new Vector3(0, 0.9, 0))
-  const end = new Vector3(...to).add(new Vector3(0, 0.9, 0))
-  return new CatmullRomCurve3([start, start.clone().lerp(end, 0.5).add(new Vector3(0, 0, -1)), end])
+  const start = new Vector3(...from), end = new Vector3(...to)
+  const direction = end.clone().sub(start)
+  const bow = new Vector3(-direction.y, direction.x, 0).normalize()
+    .multiplyScalar(Math.min(3.5, start.distanceTo(end) * 0.35))
+  return new CatmullRomCurve3([start, start.clone().lerp(end, 0.35).add(bow),
+    start.clone().lerp(end, 0.7).add(bow.clone().multiplyScalar(0.75)), end])
 }
 
 function CuratorStream({ route, tier }: { route: readonly [number, number, number][]; tier: NebulaHardwareTier }) {
@@ -294,15 +297,15 @@ function CuratorStreamArc({ from, to, tier }: { from: readonly number[]; to: rea
   const [fx, fy, fz] = from, [tx, ty, tz] = to
   const geometry = useMemo(() => {
     const curve = curatorArc([fx, fy, fz], [tx, ty, tz])
-    const segments = tier === 'full' ? 32 : 12, sides = tier === 'full' ? 8 : 4
-    const tube = new TubeGeometry(curve, segments, 0.025, sides, false)
+    const segments = tier === 'full' ? 48 : 24, sides = tier === 'full' ? 8 : 4
+    const tube = new TubeGeometry(curve, segments, 0.009, sides, false)
     const colors: number[] = []
     for (let ring = 0; ring <= segments; ring++) {
       const color = new Color('#8d50f5').lerp(new Color('#ff5957'), ring / segments)
       for (let side = 0; side <= sides; side++) colors.push(color.r, color.g, color.b)
     }
     tube.setAttribute('color', new Float32BufferAttribute(colors, 3))
-    const halo = new TubeGeometry(curve, segments, 0.09, sides, false)
+    const halo = new TubeGeometry(curve, segments, 0.055, sides, false)
     halo.setAttribute('color', tube.getAttribute('color').clone())
     return { tube, halo }
   }, [fx, fy, fz, tx, ty, tz, tier])
@@ -342,8 +345,8 @@ function NebulaMemoryBody({ body, tier, onSelect }: { body: NebulaBody; tier: Ne
   const material = useMemo(() => {
     const base = new Color(red, green, blue)
     const next = new MeshPhysicalNodeMaterial({
-      metalness: 0.35,
-      roughness: 0.06,
+      metalness: 0.65,
+      roughness: 0.035,
       clearcoat: 1,
       clearcoatRoughness: 0.025,
       transmission: tier === 'full' ? 0.72 : 0,
@@ -388,8 +391,8 @@ function NebulaEventTorrent({ events, tier }: { events: readonly NebulaMemoryEve
     renderOrder={3}
     args={[undefined, undefined, events.length]}
   >
-    <octahedronGeometry args={[tier === 'full' ? 0.09 : 0.065, 0]} />
-    <meshBasicMaterial transparent opacity={0.96} depthTest={false} depthWrite={false} toneMapped={false} />
+    <sphereGeometry args={[tier === 'full' ? 0.035 : 0.028, 6, 4]} />
+    <meshBasicMaterial transparent opacity={0.96} depthWrite={false} toneMapped={false} />
   </instancedMesh>
 }
 
@@ -423,7 +426,7 @@ function NebulaFilaments({ filaments, ghosts, tier }: {
     next.setAttribute('color', new Float32BufferAttribute(colors, 3))
     return next
   }, [geometryKey, tier])
-  const material = useMemo(() => new LineBasicMaterial({ transparent: true, opacity: 0.36, vertexColors: true, toneMapped: false }), [])
+  const material = useMemo(() => new LineBasicMaterial({ transparent: true, opacity: 0.55, vertexColors: true, toneMapped: false }), [])
   useEffect(() => () => geometry.dispose(), [geometry])
   useEffect(() => () => material.dispose(), [material])
   return <lineSegments name="memory-relationships" geometry={geometry} material={material} />
@@ -451,7 +454,7 @@ function NebulaCreatureCluster({ family, tier }: { family: NebulaCreatureFamily;
     }
     return pointGeometry(positions, colors)
   }, [x, y, z, stippleCount, phase, memberCount, tier])
-  const material = useMemo(() => new PointsMaterial({ size: 1.2, sizeAttenuation: false, transparent: true, opacity: 0.52, vertexColors: true }), [])
+  const material = useMemo(() => new PointsMaterial({ size: 0.7, sizeAttenuation: false, transparent: true, opacity: 0.18, vertexColors: true }), [])
   useEffect(() => () => geometry.dispose(), [geometry])
   useEffect(() => () => material.dispose(), [material])
   return <points name={`memory-family-${family.id}`} geometry={geometry} material={material} />

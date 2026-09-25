@@ -144,7 +144,7 @@ export function buildNebulaBodies(
     const orbit = 8 / (1 + injection), angle = angles.get(node.memory.memory_id)!
     const position = [Math.cos(angle) * orbit, Math.sin(angle) * orbit,
       spread(normalize(revision, revisions), 4)] as const
-    const radius = 0.28 + 0.17 * Math.log2(injection + 1)
+    const radius = 0.25 + 0.65 * Math.log2(injection + 1)
     const stretch = 1 + Math.min(revision, 12) * 0.015
     return {
       id: node.memory.memory_id,

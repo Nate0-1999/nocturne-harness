@@ -117,8 +117,9 @@ export function buildRootPaths(agents: WorkAgent[], trails: Record<string, RootP
     const phase = identitySeed(root) * Math.PI * 2
     const points = rootCurve(agent, trails[agent.id] ?? [], 0, begin, end, moments).map((point, index): Point3 => {
       const time = (point[0] + 9) / 18, t = index / 31
-      return [point[0], projectLane + Math.sin(time * 6 + phase) * 1.8
-        + lane * (0.18 + 0.8 * Math.pow(1 - t, 3) + 0.48 * Math.pow(t, 3)), point[2]]
+      return [point[0], projectLane + Math.sin(time * 7 + phase) * 0.85
+        + lane * (0.18 + 0.8 * Math.pow(1 - t, 3) + 1.8 * Math.pow(t, 2))
+        + Math.sin(t * 9 + identitySeed(agent.id) * 6) * Math.sin(t * Math.PI) * 0.3, point[2]]
     })
     paths.set(agent.id, points)
     const parent = agent.parent_id ? byId.get(agent.parent_id) : undefined
