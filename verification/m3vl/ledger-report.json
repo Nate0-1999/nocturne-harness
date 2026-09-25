@@ -225,7 +225,12 @@
     "harness/web/tests/palaceNebula.test.mjs": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/web/tests/visualization.test.mjs": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/verification/m3vl/plates/gallery.html": "M3VL packet evidence; no product behavior.",
-    "harness/verification/m3vl/plates/canon.log": "M3VL packet evidence; no product behavior."
+    "harness/verification/m3vl/plates/canon.log": "M3VL packet evidence; no product behavior.",
+    "harness/web/dist/assets/index-4Z9KdWsT.js": "Built bundle of the mapped web sources, superseded within the packet; no separate behavior.",
+    "harness/web/dist/assets/index-C-Dd8gOj.js": "Built bundle of the mapped web sources, superseded within the packet; no separate behavior.",
+    "harness/web/dist/assets/index-CLILYuXf.css": "Built bundle of the mapped web sources, superseded within the packet; no separate behavior.",
+    "harness/web/dist/assets/index-DS65beS5.css": "Built bundle of the mapped web sources, superseded within the packet; no separate behavior.",
+    "harness/web/dist/assets/index-DVRW3kW8.js": "Built bundle of the mapped web sources, superseded within the packet; no separate behavior."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
