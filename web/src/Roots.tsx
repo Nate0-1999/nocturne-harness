@@ -30,7 +30,7 @@ export function Roots({ data, agents, selectedId, tier, pick, newest }: {
   }, [extent])
   return <>
     <ChromeEnvironment />
-    <color attach="background" args={[new URLSearchParams(globalThis.location.search).has('sheet') ? '#f5f5f2' : '#030509']} />
+    <color attach="background" args={[SHEET ? '#f5f5f2' : '#030509']} />
     <group ref={river}>
     {ordered.map((agent) => {
       const points = curves.get(agent.id)!
@@ -93,7 +93,7 @@ function RootRiver({ agent, points, moments, begin, end, radius, spent, tier, se
   return <group name={`river:${agent.id}`}>
     {geometry.chrome && <mesh geometry={geometry.chrome} onClick={click}><ChromeMaterial stopped={stopped} selected={selected} /></mesh>}
     {geometry.capillaries && <mesh geometry={geometry.capillaries} onClick={click}>
-      <meshPhysicalMaterial color={stopped ? '#8a8f99' : agentColor(agent.id)} metalness={stopped ? 0.2 : 0.85}
+      <meshPhysicalMaterial color={stopped ? SHEET ? '#5a5f68' : '#8a8f99' : agentColor(agent.id)} metalness={stopped ? 0.2 : 0.85}
         roughness={stopped ? 0.8 : 0.2} envMapIntensity={selected ? 2.2 : 1.5} />
     </mesh>}
   </group>
@@ -121,9 +121,11 @@ function taperedTube(points: Point3[], radius: number, length: number, sides: nu
   return tube
 }
 
+const SHEET = new URLSearchParams(globalThis.location.search).has('sheet')
+
 function ChromeMaterial({ stopped, selected }: { stopped: boolean; selected: boolean }) {
-  // Live roots are cool blue-white mirror chrome; dried roots are desaturated and matte.
-  return <meshPhysicalMaterial color={stopped ? '#8a8e96' : '#e4ecf8'} metalness={stopped ? 0.35 : 1}
+  // Live roots are cool blue-white mirror chrome; dried roots are desaturated and matte (dark on the sheet).
+  return <meshPhysicalMaterial color={stopped ? SHEET ? '#4c5058' : '#8a8e96' : '#e4ecf8'} metalness={stopped ? 0.35 : 1}
     roughness={stopped ? 0.55 : 0.13} clearcoat={stopped ? 0 : 1} clearcoatRoughness={0.05}
     envMapIntensity={selected ? 1.6 : 1.2} />
 }

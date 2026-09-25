@@ -314,18 +314,18 @@ function CuratorStreamArc({ from, to, strand, tier }: { from: readonly number[];
     const colors: number[] = []
     for (let ring = 0; ring <= segments; ring++) {
       // HDR violet-to-red: the stream is light, so the bloom pass carries it.
-      const color = new Color('#7a4dff').lerp(new Color('#ff6a55'), ring / segments).multiplyScalar(2.6)
+      const color = new Color('#7a4dff').lerp(new Color('#ff6a55'), ring / segments).multiplyScalar(4)
       for (let side = 0; side <= sides; side++) colors.push(color.r, color.g, color.b)
     }
     tube.setAttribute('color', new Float32BufferAttribute(colors, 3))
-    const halo = new TubeGeometry(curve, segments, 0.05, sides, false)
+    const halo = new TubeGeometry(curve, segments, 0.09, sides, false)
     halo.setAttribute('color', tube.getAttribute('color').clone())
     return { tube, halo }
   }, [fx, fy, fz, tx, ty, tz, strand, tier])
   useEffect(() => () => { geometry.tube.dispose(); geometry.halo.dispose() }, [geometry])
   return <group>
     <mesh geometry={geometry.tube}><meshBasicMaterial vertexColors toneMapped={false} transparent opacity={0.85} depthWrite={false} blending={AdditiveBlending} /></mesh>
-    <mesh geometry={geometry.halo}><meshBasicMaterial vertexColors toneMapped={false} transparent opacity={0.06} depthWrite={false} blending={AdditiveBlending} /></mesh>
+    <mesh geometry={geometry.halo}><meshBasicMaterial vertexColors toneMapped={false} transparent opacity={0.1} depthWrite={false} blending={AdditiveBlending} /></mesh>
   </group>
 }
 
@@ -358,7 +358,7 @@ function NebulaBloom({ tier }: { tier: NebulaHardwareTier }) {
   const pipeline = useMemo(() => {
     const post = new PostProcessing(gl as unknown as WebGPURenderer)
     const color = pass(scene, camera).getTextureNode('output')
-    post.outputNode = color.add(bloom(color, tier === 'full' ? 0.7 : 0.6, 0.3, 1))
+    post.outputNode = color.add(bloom(color, tier === 'full' ? 1 : 0.85, 0.45, 0.9))
     return post
   }, [gl, scene, camera, tier])
   useEffect(() => () => pipeline.dispose(), [pipeline])
@@ -448,7 +448,7 @@ function NebulaFilaments({ filaments, ghosts, tier }: {
     next.setAttribute('color', new Float32BufferAttribute(colors, 3))
     return next
   }, [geometryKey, tier])
-  const material = useMemo(() => new LineBasicMaterial({ transparent: true, opacity: 0.55, vertexColors: true, toneMapped: false }), [])
+  const material = useMemo(() => new LineBasicMaterial({ transparent: true, opacity: 0.32, vertexColors: true, toneMapped: false }), [])
   useEffect(() => () => geometry.dispose(), [geometry])
   useEffect(() => () => material.dispose(), [material])
   return <lineSegments name="memory-relationships" geometry={geometry} material={material} />
