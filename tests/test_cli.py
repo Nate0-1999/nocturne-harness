@@ -26,6 +26,9 @@ def test_parser_exposes_onboarding_and_lifecycle_commands() -> None:
         "seed",
         "doctor",
         "jobs",
+        "export",
+        "import",
+        "update",
     }
 
 
@@ -50,10 +53,11 @@ def test_local_commands_dispatch(
 ) -> None:
     """ADR-019, A-042, and A-045 route each local command to one owner-facing operation."""
     calls: list[tuple[object, ...]] = []
+    monkeypatch.setattr(cli, "update_nocturne", lambda **kwargs: False)
     monkeypatch.setattr(
         cli,
         "init_nocturne",
-        lambda *, remote, verification, stdout: calls.append(("init", remote)),
+        lambda *, remote, verification, stdout, **kwargs: calls.append(("init", remote)),
     )
     monkeypatch.setattr(
         cli,

@@ -25,6 +25,7 @@ class HarnessSettings(BaseSettings):
     agent_id: str = Field(default="harness-agent", min_length=1)
     anthropic_api_key: SecretStr | None = None
     openai_api_key: SecretStr | None = None
+    openai_base_url: str | None = None
     openrouter_api_key: SecretStr | None = None
     chat_model: str = "openrouter:minimax/minimax-m3"
     model_policy_chat: str | None = None

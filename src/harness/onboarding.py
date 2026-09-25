@@ -22,9 +22,13 @@ import webbrowser
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from importlib import resources
+from importlib.metadata import version as distribution_version
 from pathlib import Path
 from typing import TextIO
 from urllib.parse import quote, urlsplit
+
+from packaging.version import Version
+from spine.api_contract import API_CONTRACT_VERSION
 
 from harness.browser_runtime import (
     BrowserRuntimeError,
@@ -85,6 +89,9 @@ class NocturneConfig:
     postgres_volume: str | None = None
     transcript_backup: bool = False
     principal_id: str = "local"
+    local_model: str = ""
+    local_embedding_model: str = "qwen3-embedding:4b"
+    local_model_url: str = "http://127.0.0.1:11434/v1"
 
     @property
     def path(self) -> Path:
@@ -126,6 +133,22 @@ class NocturneConfig:
                     "NOCTURNE_POSTGRES_VOLUME": self.active_postgres_volume,
                 }
             )
+        if self.local_model:
+            environment.update(
+                {
+                    "OPENROUTER_API_KEY": "",
+                    "OPENAI_API_KEY": "local",
+                    "OPENAI_BASE_URL": self.local_model_url,
+                    "CHAT_MODEL": f"openai:{self.local_model}",
+                    "MODEL_POLICY_CHAT": f"pinned:openai:{self.local_model}",
+                    "MODEL_CONTEXT_TOKENS": "32768",
+                    "SPINE_OPENAI_API_KEY": "local",
+                    "SPINE_EMBED_BASE_URL": self.local_model_url,
+                    "SPINE_EMBED_MODEL": self.local_embedding_model,
+                    "SPINE_CHAT_BASE_URL": self.local_model_url,
+                    "SPINE_CHAT_MODEL": self.local_model,
+                }
+            )
         if browser_runtime_is_ready(self.home):
             environment["PLAYWRIGHT_BROWSERS_PATH"] = str(browser_runtime_path(self.home))
         return environment
@@ -154,6 +177,10 @@ def init_nocturne(
     *,
     remote: str | None = None,
     verification: bool = False,
+    offline: bool = False,
+    local_model: str = "qwen3:1.7b",
+    embedding_model: str = "qwen3-embedding:4b",
+    model_url: str = "http://127.0.0.1:11434/v1",
     home: Path | None = None,
     environ: Mapping[str, str] | None = None,
     prompt: Callable[[str], str] = getpass.getpass,
@@ -171,12 +198,24 @@ def init_nocturne(
             "nocturne-verification-"
         ):
             raise OnboardingError("This home is not a verification identity. Use a fresh folder.")
-        load_config(home=target_home)
-        _ensure_tool_runtimes(target_home, stdout=stdout)
+        existing = load_config(home=target_home)
+        if not existing.local_model:
+            _ensure_tool_runtimes(target_home, stdout=stdout)
         print(f"Nocturne is already initialized at {target_home}.", file=stdout)
         return target
 
-    discovered = None if remote is not None else _discover_cloud_palace(values)
+    if offline:
+        if remote or urlsplit(model_url).hostname not in {"localhost", "127.0.0.1", "::1"}:
+            raise OnboardingError("Offline mode needs a local Palace and a loopback model URL.")
+    else:
+        remote = remote if remote is not None else values.get("SPINE_URL", "").strip() or None
+    if remote is not None:
+        _parse_remote_url(remote)
+    discovered = (
+        None
+        if offline or (remote and values.get("SPINE_TOKEN"))
+        else _discover_cloud_palace(values)
+    )
     if discovered is not None:
         project, region, discovered_url = discovered
         answer = prompt(f"Found your Palace ({project}, {region}) — reconnect? [y/N] ").strip()
@@ -189,18 +228,20 @@ def init_nocturne(
         discovered_token = None
     palace_mode = "remote" if remote is not None else "local"
     spine_url = _parse_remote_url(remote) if remote is not None else SPINE_URL
-    openrouter_key = values.get("OPENROUTER_API_KEY", "").strip()
-    if not openrouter_key:
+    openrouter_key = "" if offline else values.get("OPENROUTER_API_KEY", "").strip()
+    if not openrouter_key and not offline:
         openrouter_key = prompt("OpenRouter API key: ").strip()
-    if not openrouter_key:
+    if not openrouter_key and not offline:
         raise OnboardingError("An OpenRouter API key is required.")
     spine_token = secrets.token_urlsafe(32)
     if palace_mode == "remote":
-        spine_token = discovered_token or prompt("Your Palace access token: ").strip()
+        spine_token = discovered_token or values.get("SPINE_TOKEN", "").strip()
         if not spine_token:
-            raise OnboardingError("Your Palace access token is required for a remote Palace.")
+            raise OnboardingError(
+                "Sign in with `gcloud auth login` so Nocturne can discover your Palace access."
+            )
     postgres_port = _parse_port(values.get("NOCTURNE_POSTGRES_PORT", "5432"))
-    transcript_backup = prompt(
+    transcript_backup = not offline and prompt(
         "Back up conversation transcripts to your cloud Palace? [y/N] "
     ).strip().lower() in {"y", "yes"}
 
@@ -215,9 +256,13 @@ def init_nocturne(
         postgres_port=postgres_port,
         transcript_backup=transcript_backup,
         principal_id=f"nocturne-verification-{uuid.uuid4()}" if verification else "local",
+        local_model=local_model if offline else "",
+        local_embedding_model=embedding_model,
+        local_model_url=model_url,
     )
     _write_config(config)
-    _ensure_tool_runtimes(target_home, stdout=stdout)
+    if not offline:
+        _ensure_tool_runtimes(target_home, stdout=stdout)
     print(f"Initialized Nocturne at {target_home}. Run `nocturne up`.", file=stdout)
     return target
 
@@ -278,7 +323,9 @@ def load_config(*, home: Path | None = None) -> NocturneConfig:
     spine_url = (
         SPINE_URL if palace_mode == "local" else _parse_remote_url(values.get("SPINE_URL", ""))
     )
-    required = ("OPENROUTER_API_KEY", "SPINE_TOKEN", "NOCTURNE_DB_PASSWORD", "MACHINE_ID")
+    required = ("SPINE_TOKEN", "NOCTURNE_DB_PASSWORD", "MACHINE_ID")
+    if not values.get("NOCTURNE_LOCAL_MODEL"):
+        required += ("OPENROUTER_API_KEY",)
     missing = [name for name in required if not values.get(name, "").strip()]
     if missing:
         raise OnboardingError(f"Nocturne config is missing required fields: {', '.join(missing)}")
@@ -295,6 +342,9 @@ def load_config(*, home: Path | None = None) -> NocturneConfig:
         postgres_volume=postgres_volume,
         transcript_backup=transcript_backup,
         principal_id=_config_principal(values),
+        local_model=values.get("NOCTURNE_LOCAL_MODEL", ""),
+        local_embedding_model=values.get("NOCTURNE_LOCAL_EMBEDDING_MODEL", "qwen3-embedding:4b"),
+        local_model_url=values.get("NOCTURNE_LOCAL_MODEL_URL", "http://127.0.0.1:11434/v1"),
     )
 
 
@@ -340,8 +390,18 @@ def up_nocturne(
             "--file",
             str(compose_file),
         ]
-        _run([*compose, "pull", "postgres"])
-        _run([*compose, "up", "--detach", "--wait", "postgres"])
+        if not config.local_model:
+            _run([*compose, "pull", "postgres"])
+        _run(
+            [
+                *compose,
+                "up",
+                "--detach",
+                "--wait",
+                *(["--pull", "never"] if config.local_model else []),
+                "postgres",
+            ]
+        )
 
     create_local_backup(config, reason="pre_migration", stdout=stdout)
     _upgrade_database(config.database_url)
@@ -370,6 +430,51 @@ def up_nocturne(
         _stop_processes(tuple(process for process in (harness, spine) if process is not None))
 
 
+def update_nocturne(*, prompt: Callable[[str], str] = input, stdout: TextIO = sys.stdout) -> bool:
+    """Offer a complete published pair and update this installation together."""
+    if load_config().local_model:
+        return False
+    packages = ("nocturne-memory", "nocturne-harness")
+    try:
+        published = []
+        for package in packages:
+            with urllib.request.urlopen(
+                f"https://pypi.org/pypi/{package}/json", timeout=4
+            ) as response:
+                releases = json.loads(response.read())["releases"]
+            published.append(
+                {
+                    Version(number)
+                    for number, files in releases.items()
+                    if not Version(number).is_prerelease
+                    and files
+                    and any(not file.get("yanked", False) for file in files)
+                }
+            )
+        latest = max(published[0] & published[1])
+        installed = [Version(distribution_version(package)) for package in packages]
+        if latest < max(installed) or all(latest == current for current in installed):
+            return False
+    except (OSError, ValueError, KeyError):
+        print("The release check is unavailable; starting your installed version.", file=stdout)
+        return False
+    answer = prompt(
+        f"Nocturne {latest} is available. Update the app and Memory Palace together? [y/N] "
+    )
+    if answer.strip().lower() not in {"y", "yes"}:
+        return False
+    pins = [f"{package}=={latest}" for package in packages]
+    uv = shutil.which("uv")
+    command = (
+        [uv, "pip", "install", "--python", sys.executable]
+        if uv
+        else [sys.executable, "-m", "pip", "install"]
+    )
+    _run([*command, "--upgrade", "--index-url", "https://pypi.org/simple", *pins])
+    print(f"Updated both packages to Nocturne {latest}.", file=stdout)
+    return True
+
+
 def _up_remote(
     config: NocturneConfig,
     *,
@@ -380,10 +485,13 @@ def _up_remote(
     """Start only the local daemon against an owner-operated remote Palace."""
 
     print(PALACE_CHECKING_LINE, file=stdout, flush=True)
-    _, relation = _remote_palace_status(config, stdout=stdout)
+    remote_contract, relation = _remote_palace_status(config, stdout=stdout)
     if relation == "newer":
         raise OnboardingError(_app_older_refusal())
-    if relation == "older":
+    if relation == "older" or (
+        remote_contract
+        and _api_contract_semver(remote_contract) < _api_contract_semver(API_CONTRACT_VERSION)
+    ):
         from harness.deploy import DeployError, preflight_release_guard
 
         try:
@@ -403,24 +511,17 @@ def _up_remote(
                 file=stdout,
             )
         else:
-            answer = prompt(
-                "Your Palace needs an update to work with this version of Nocturne. Update now? "
-                "Nocturne backs it up first; this takes a few minutes. [y/N] "
-            ).strip()
-            if answer.lower() in {"y", "yes"}:
-                from harness.deploy import run_cloud_deploy
+            from harness.deploy import run_cloud_deploy
 
-                run_cloud_deploy(
-                    dry_run=False,
-                    openrouter_key=config.openrouter_api_key,
-                    home=config.home,
-                    credential_alignment_consent=True,
-                )
-            else:
-                print(
-                    "Your Palace update was postponed; some newer screens may be unavailable.",
-                    file=stdout,
-                )
+            print(
+                "Updating your Palace; Nocturne backs it up first. This takes a few minutes.",
+                file=stdout,
+            )
+            run_cloud_deploy(
+                dry_run=False,
+                openrouter_key=config.openrouter_api_key,
+                home=config.home,
+            )
     _restore_transcripts_from_palace(config, stdout=stdout)
     harness = _start_service(
         "harness.packaged:create_app",
@@ -665,11 +766,14 @@ def _doctor_remote(
     try:
         remote_contract, relation = _remote_palace_status(config, stdout=stdout)
         contract_display = remote_contract or "not reported"
-        if relation == "older":
+        if relation == "older" or (
+            remote_contract
+            and _api_contract_semver(remote_contract) < _api_contract_semver(API_CONTRACT_VERSION)
+        ):
             contract_warning = (
                 f"Remote Palace API contract {remote_contract or 'not reported'} is older than "
                 f"this app's supported range {API_CONTRACT_RANGE}; run `nocturne up` and "
-                "accept the offered update."
+                "complete the automatic update."
             )
         elif relation == "newer":
             contract_failure = _app_older_refusal()
@@ -804,6 +908,9 @@ def _write_config(config: NocturneConfig) -> None:
         "NOCTURNE_POSTGRES_VOLUME": config.active_postgres_volume,
         "NOCTURNE_TRANSCRIPT_BACKUP": "true" if config.transcript_backup else "false",
         "MACHINE_ID": config.machine_id,
+        "NOCTURNE_LOCAL_MODEL": config.local_model,
+        "NOCTURNE_LOCAL_EMBEDDING_MODEL": config.local_embedding_model,
+        "NOCTURNE_LOCAL_MODEL_URL": config.local_model_url,
     }
     content = "".join(f"{name}={json.dumps(value)}\n" for name, value in values.items())
     _atomic_write_config(config.path, content)
@@ -1251,6 +1358,7 @@ def _print_daemon_preflight(preflight: DaemonPreflight, *, stdout: TextIO) -> No
 def _port_available(port: int) -> bool:
     try:
         with socket.socket() as reservation:
+            reservation.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             reservation.bind(("127.0.0.1", port))
     except OSError:
         return False

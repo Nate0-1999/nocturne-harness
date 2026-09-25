@@ -36,6 +36,7 @@ from harness.spine_client import (
     MemoryUnit,
     PatchMemoryConflictError,
     PatchMemoryRequest,
+    RestoredInjection,
     RevisionConflict,
     ScoredMemoryCard,
     SpineTransportError,
@@ -174,6 +175,9 @@ class RecordingEmitter:
 
 
 class RecordingSpine:
+    async def restore_injection(self, thread_id, principal_id):
+        return None
+
     def __init__(self, *, fail_prepare: bool = False, fail_commit: bool = False) -> None:
         self.fail_prepare = fail_prepare
         self.fail_commit = fail_commit
@@ -364,6 +368,39 @@ async def wait_for_gate_count(emitter: RecordingEmitter, count: int) -> None:
     async with asyncio.timeout(1):
         while len(emitter.gate_values) < count:
             await asyncio.sleep(0)
+
+
+@pytest.mark.asyncio
+async def test_restart_recovers_context_before_autonomous_prepare() -> None:
+    """A-070 / F113: restored history never repeats first-gate preparation."""
+    spine = RecordingSpine()
+    restored = RestoredInjection(
+        prepared=spine.prepare_response.model_copy(update={"final_block": EMPTY_MEMORY_BLOCK}),
+        confirmed_memory_ids=[],
+        excluded_memory_ids=[],
+        event_sources={},
+        pending=False,
+    )
+
+    async def restore(thread_id, principal_id):
+        assert thread_id == UUID(THREAD_ID)
+        assert principal_id == "principal-1"
+        return restored
+
+    spine.restore_injection = restore
+    spine.prepare_response = restored.prepared
+    delegate = RecordingDelegate()
+    emitter = RecordingEmitter()
+    runner = MemoryGateTurnRunner(
+        delegate, spine, context_factory(spine), model_context_tokens=100000
+    )
+    await runner.run(
+        thread_id=THREAD_ID, prompt="resume", message_history=("prior turn",), emit=emitter
+    )
+    assert [request.mode for request in spine.prepare_requests] == ["autonomous"]
+    assert spine.commit_requests == []
+    assert emitter.gate_values == []
+    assert delegate.calls[-1][-2] == EMPTY_MEMORY_BLOCK
 
 
 @pytest.mark.asyncio

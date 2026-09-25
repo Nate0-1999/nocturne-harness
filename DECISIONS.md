@@ -3631,3 +3631,13 @@ memory panel, the trace and the Deck's worker context. ×! is the palace delete
 memory's revision is known — the panel; on the gate, where a scored card carries
 no revision, it records the never veto. The near-miss row is + and ×!; its
 duplicate more-options path was removed.
+
+## M3OB — Repair the walked front door [P1.1, P4.1]
+
+PRECEDENT: PLAN M3OB, M3FR, F113, A-070/071. The fresh public install
+lost injection context on restart, asked for a Palace token, and lacked
+offline startup, paired package updates and memory portability. Recover
+recorded Palace decisions before autonomous retrieval; keep human locks.
+Offline configuration uses the existing OpenAI-compatible adapters with
+local models and skips downloads. Package upgrades choose the newest
+complete published pair. Agent-file review already worked and stays intact.
