@@ -6,16 +6,22 @@ type Light = { at: [number, number, number]; size: number; color: [number, numbe
 // A dark studio: cool-white softboxes, cobalt fill and a few sharp glints, in HDR so chrome and glass
 // catch real, bright reflections. Lighting only; nothing here encodes or fabricates data.
 const LIGHTS: Light[] = [
-  { at: [-0.45, 0.55, 0.7], size: 0.3, color: [5.2, 5.6, 6.2] },
-  { at: [0.5, 0.75, 0.45], size: 0.16, color: [7, 7.4, 8] },
-  { at: [0.65, -0.15, 0.65], size: 0.5, color: [0.25, 0.55, 2.6] },
-  { at: [-0.8, -0.35, 0.2], size: 0.35, color: [0.12, 0.3, 1.6] },
-  ...Array.from({ length: 12 }, (_, index): Light => {
+  // A cluster of small cool-white softboxes: several crisp sparkles rather than one round highlight.
+  ...[[-0.45, 0.55, 0.7], [-0.3, 0.62, 0.72], [-0.55, 0.42, 0.72], [0.5, 0.75, 0.45]].map((at, index): Light => ({
+    at: at as [number, number, number], size: [0.09, 0.05, 0.06, 0.1][index], color: [11, 11.6, 12.8] })),
+  { at: [0.65, -0.15, 0.65], size: 0.35, color: [0.12, 0.3, 1.5] },
+  ...Array.from({ length: 16 }, (_, index): Light => {
     const azimuth = index * 2.399963 + 0.4, elevation = Math.sin(index * 1.7) * 0.9
     return { at: [Math.cos(azimuth) * Math.cos(elevation), Math.sin(elevation), Math.abs(Math.sin(azimuth)) * Math.cos(elevation)],
-      size: 0.035 + (index % 3) * 0.012, color: [26, 27, 30] }
+      size: 0.025 + (index % 3) * 0.01, color: [30, 31, 34] }
   }),
 ]
+
+// Thin tilted cobalt bands reflect as the plate's curved blue lines across glass and along chrome.
+const BANDS = [[0.3, 0.9, 0.3], [-0.6, 0.5, 0.62], [0.8, 0.2, -0.55], [0.1, -0.7, 0.7]].map((normal) => {
+  const length = Math.hypot(...normal)
+  return normal.map((value) => value / length)
+})
 
 function studio(width: number, height: number): Uint16Array {
   const data = new Uint16Array(width * height * 4)
@@ -31,9 +37,14 @@ function studio(width: number, height: number): Uint16Array {
       // Near-black room, a narrow cobalt horizon and two tall white strip lights at the sides.
       const horizon = Math.exp(-((elevation / 0.07) ** 2))
       const color = [0.004 + horizon * 0.05, 0.006 + horizon * 0.1, 0.014 + horizon * 0.45]
-      const strip = Math.max(0, 1 - Math.abs(Math.abs(direction[0]) - 0.97) / 0.02) * (Math.abs(elevation) < 1 ? 1 : 0)
+      const strip = 0.55 * Math.max(0, 1 - Math.abs(Math.abs(direction[0]) - 0.97) / 0.012) * (Math.abs(elevation) < 1 ? 1 : 0)
       for (let channel = 0; channel < 3; channel++) color[channel] += strip * [3.6, 3.9, 4.4][channel]
-      if (elevation > 1.2) for (let channel = 0; channel < 3; channel++) color[channel] += [2.4, 2.6, 3][channel]
+      if (elevation > 1.2) for (let channel = 0; channel < 3; channel++) color[channel] += [1.6, 1.75, 2.1][channel]
+      for (const [index, normal] of BANDS.entries()) {
+        const offset = Math.abs(direction[0] * normal[0] + direction[1] * normal[1] + direction[2] * normal[2])
+        const band = Math.exp(-((offset / (0.012 + index * 0.004)) ** 2)) * (index % 2 ? 1.4 : 2.2)
+        color[0] += band * 0.18; color[1] += band * 0.42; color[2] += band * 1.6
+      }
       for (const light of lights) {
         const facing = direction[0] * light.at[0] + direction[1] * light.at[1] + direction[2] * light.at[2]
         if (facing <= light.cos) continue

@@ -1,4 +1,4 @@
-import { Canvas, useFrame, type GLProps } from '@react-three/fiber'
+import { Canvas, useFrame, useThree, type GLProps } from '@react-three/fiber'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import {
   BufferGeometry,
@@ -16,8 +16,9 @@ import {
   TubeGeometry,
   Vector3,
 } from 'three'
-import { color as tslColor, normalView, positionViewDirection } from 'three/tsl'
-import { MeshPhysicalNodeMaterial, WebGPURenderer } from 'three/webgpu'
+import { color as tslColor, normalView, pass, positionViewDirection, uniform } from 'three/tsl'
+import { bloom } from 'three/addons/tsl/display/BloomNode.js'
+import { MeshPhysicalNodeMaterial, PostProcessing, WebGPURenderer } from 'three/webgpu'
 import { useRackPlugin, useRackSelection, useRackSnapshot } from './rack'
 import { MemoryTrace, SelectedMemoryPanel } from './MemoryPanel'
 import {
@@ -238,6 +239,7 @@ function ThreeNebula({
   reportTriangles: (triangles: number) => void
   onSelect: (id: string) => void
 }) {
+  const mostInjected = Math.max(0, ...bodies.map((body) => body.injections))
   const createRenderer = useMemo(() => async (defaults: RendererDefaults) => {
     if (!(defaults.canvas instanceof HTMLCanvasElement)) {
       throw new Error('Palace Nebula requires a browser canvas')
@@ -270,49 +272,60 @@ function ThreeNebula({
     <NebulaFilaments filaments={filaments} ghosts={ghosts} tier={tier} />
     <CuratorStream route={curatorRoute} tier={tier} />
     {families.filter((family) => family.stipple_count > 0).map((family) => <NebulaCreatureCluster key={family.id} family={family} tier={tier} />)}
-    {bodies.map((body) => <NebulaMemoryBody key={body.id} body={body} tier={tier} onSelect={onSelect} />)}
+    {bodies.map((body) => <NebulaMemoryBody key={body.id} body={body} share={mostInjected > 0 ? Math.log2(1 + body.injections) / Math.log2(1 + mostInjected) : 0}
+      tier={tier} onSelect={onSelect} />)}
     <CuratorGhost targets={ghosts} route={curatorRoute} tier={tier} />
     <CameraControls distance={Math.max(10, ...bodies.map((body) => (Math.abs(body.position[1]) + body.scale[1]) * 2.5))}
       width={Math.max(10, ...bodies.map((body) => (Math.abs(body.position[0]) + body.scale[0]) * 2))} />
+    <NebulaBloom tier={tier} />
     <FpsMeter reportFps={reportFps} />
     <SceneStatistics report={reportTriangles} />
   </Canvas>
 }
 
-function curatorArc(from: readonly number[], to: readonly number[]) {
+function curatorArc(from: readonly number[], to: readonly number[], strand = 0) {
   const start = new Vector3(...from), end = new Vector3(...to)
   const direction = end.clone().sub(start)
-  const bow = new Vector3(-direction.y, direction.x, 0).normalize()
-    .multiplyScalar(Math.min(3.5, start.distanceTo(end) * 0.35))
+  // Bow toward the palace centre, where the most-injected memories gather; each repeat traversal fans out.
+  const middle = start.clone().lerp(end, 0.5)
+  const normal = new Vector3(-direction.y, direction.x, 0).normalize()
+  const bow = normal.multiplyScalar(Math.sign(normal.dot(middle.clone().negate())) || 1)
+    .multiplyScalar(Math.min(3.5, start.distanceTo(end) * 0.35) * (1 + strand * 0.07)).setZ(strand * 0.06)
   return new CatmullRomCurve3([start, start.clone().lerp(end, 0.35).add(bow),
     start.clone().lerp(end, 0.7).add(bow.clone().multiplyScalar(0.75)), end])
 }
 
 function CuratorStream({ route, tier }: { route: readonly [number, number, number][]; tier: NebulaHardwareTier }) {
-  return <group name="recorded-curator-route">{route.slice(1).map((to, index) => <CuratorStreamArc
-    key={index} from={route[index]} to={to} tier={tier} />)}</group>
+  const seen = new Map<string, number>()
+  return <group name="recorded-curator-route">{route.slice(1).map((to, index) => {
+    const pair = [route[index], to].map((point) => point.join(',')).sort().join('|')
+    const strand = seen.get(pair) ?? 0
+    seen.set(pair, strand + 1)
+    return <CuratorStreamArc key={index} from={route[index]} to={to} strand={strand} tier={tier} />
+  })}</group>
 }
 
-function CuratorStreamArc({ from, to, tier }: { from: readonly number[]; to: readonly number[]; tier: NebulaHardwareTier }) {
+function CuratorStreamArc({ from, to, strand, tier }: { from: readonly number[]; to: readonly number[]; strand: number; tier: NebulaHardwareTier }) {
   const [fx, fy, fz] = from, [tx, ty, tz] = to
   const geometry = useMemo(() => {
-    const curve = curatorArc([fx, fy, fz], [tx, ty, tz])
+    const curve = curatorArc([fx, fy, fz], [tx, ty, tz], strand)
     const segments = tier === 'full' ? 48 : 24, sides = tier === 'full' ? 8 : 4
-    const tube = new TubeGeometry(curve, segments, 0.009, sides, false)
+    const tube = new TubeGeometry(curve, segments, 0.007, sides, false)
     const colors: number[] = []
     for (let ring = 0; ring <= segments; ring++) {
-      const color = new Color('#8d50f5').lerp(new Color('#ff5957'), ring / segments)
+      // HDR violet-to-red: the stream is light, so the bloom pass carries it.
+      const color = new Color('#7a4dff').lerp(new Color('#ff6a55'), ring / segments).multiplyScalar(2.6)
       for (let side = 0; side <= sides; side++) colors.push(color.r, color.g, color.b)
     }
     tube.setAttribute('color', new Float32BufferAttribute(colors, 3))
-    const halo = new TubeGeometry(curve, segments, 0.055, sides, false)
+    const halo = new TubeGeometry(curve, segments, 0.05, sides, false)
     halo.setAttribute('color', tube.getAttribute('color').clone())
     return { tube, halo }
-  }, [fx, fy, fz, tx, ty, tz, tier])
+  }, [fx, fy, fz, tx, ty, tz, strand, tier])
   useEffect(() => () => { geometry.tube.dispose(); geometry.halo.dispose() }, [geometry])
   return <group>
-    <mesh geometry={geometry.tube}><meshBasicMaterial vertexColors toneMapped={false} transparent opacity={0.9} /></mesh>
-    <mesh geometry={geometry.halo}><meshBasicMaterial vertexColors toneMapped={false} transparent opacity={0.12} depthWrite={false} blending={AdditiveBlending} /></mesh>
+    <mesh geometry={geometry.tube}><meshBasicMaterial vertexColors toneMapped={false} transparent opacity={0.85} depthWrite={false} blending={AdditiveBlending} /></mesh>
+    <mesh geometry={geometry.halo}><meshBasicMaterial vertexColors toneMapped={false} transparent opacity={0.06} depthWrite={false} blending={AdditiveBlending} /></mesh>
   </group>
 }
 
@@ -339,35 +352,43 @@ function CuratorGhost({ targets, route, tier }: { targets: readonly NebulaBody[]
   </group>
 }
 
-function NebulaMemoryBody({ body, tier, onSelect }: { body: NebulaBody; tier: NebulaHardwareTier; onSelect: (id: string) => void }) {
+/** Scene → bloom: HDR light (glow, rims, streams, points) spills into a soft halo; everything else stays crisp. */
+function NebulaBloom({ tier }: { tier: NebulaHardwareTier }) {
+  const { gl, scene, camera } = useThree()
+  const pipeline = useMemo(() => {
+    const post = new PostProcessing(gl as unknown as WebGPURenderer)
+    const color = pass(scene, camera).getTextureNode('output')
+    post.outputNode = color.add(bloom(color, tier === 'full' ? 0.7 : 0.6, 0.3, 1))
+    return post
+  }, [gl, scene, camera, tier])
+  useEffect(() => () => pipeline.dispose(), [pipeline])
+  useFrame(() => { pipeline.render() }, 1)
+  return null
+}
+
+function NebulaMemoryBody({ body, share, tier, onSelect }: { body: NebulaBody; share: number; tier: NebulaHardwareTier; onSelect: (id: string) => void }) {
   const meshRef = useRef<Mesh>(null)
   const [red, green, blue] = body.color
+  const focused = body.pinned || body.in_current_context
+  // Lit from within: inner glow and a bright rim, both scaled by injections; barely-injected memories shine as points of light.
+  const glow = (0.1 + 0.9 * share) * (0.55 + 0.45 * body.recency_glow) * (focused ? 1.35 : 1)
+  const rim = (0.6 + 1.8 * share) * (focused ? 1.6 : 1)
+  const point = 1.6 * (1 - share) ** 10
   const material = useMemo(() => {
-    const base = new Color(red, green, blue)
-    const next = new MeshPhysicalNodeMaterial({
-      metalness: 0.9,
-      roughness: 0.035,
-      clearcoat: 1,
-      clearcoatRoughness: 0.025,
-      transmission: tier === 'full' ? 0.35 : 0,
-      thickness: 0.8,
-      ior: 1.8,
-      transparent: tier === 'efficient',
-      opacity: tier === 'efficient' ? 0.64 : 1,
-      envMapIntensity: 8,
-    })
-    next.colorNode = tslColor(base.clone().lerp(new Color('#dbe5ee'), 0.2))
-    next.emissive.copy(base)
-    // The efficient shell keeps grazing reflections without a transmission pass.
-    if (tier === 'efficient') next.opacityNode = normalView.dot(positionViewDirection).abs().oneMinus().pow(2).mul(0.62).add(0.38)
+    // Glass: a dark kind-tinted body whose reflections come from the studio environment, strongest at the rim.
+    const next = new MeshPhysicalNodeMaterial({ metalness: 0, roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1 })
+    const facing = normalView.dot(positionViewDirection).abs()
+    const tint = uniform(new Color(red, green, blue))
+    next.colorNode = tint.mul(0.04)
+    next.emissiveNode = tint.mul(facing.pow(3).mul(uniform(glow)))
+      .add(tslColor('#cfe0ff').mul(facing.oneMinus().pow(6).mul(uniform(rim))))
+      .add(tint.mix(tslColor('#f2f6ff'), 0.6).mul(facing.pow(3).mul(uniform(point))))
     return next
-  }, [red, green, blue, tier])
-
+  }, [red, green, blue, glow, rim, point])
   useEffect(() => () => material.dispose(), [material])
   return <mesh ref={meshRef} name={body.label} position={body.position} scale={body.scale} material={material}
-    material-emissiveIntensity={(body.pinned || body.in_current_context ? 0.055 : 0.005) + body.recency_glow * 0.012}
     onClick={(event) => { event.stopPropagation(); onSelect(body.id) }}>
-    <sphereGeometry args={[1, tier === 'full' ? 32 : 20, tier === 'full' ? 22 : 14]} />
+    <sphereGeometry args={[1, tier === 'full' ? 40 : 20, tier === 'full' ? 28 : 14]} />
   </mesh>
 }
 
@@ -380,7 +401,7 @@ function NebulaEventTorrent({ events, tier }: { events: readonly NebulaMemoryEve
     events.forEach((event, index) => {
       matrix.makeTranslation(...event.position)
       mesh.setMatrixAt(index, matrix)
-      mesh.setColorAt(index, new Color(...event.color))
+      mesh.setColorAt(index, new Color(...event.color).multiplyScalar(2.4))
     })
     mesh.instanceMatrix.needsUpdate = true
     if (mesh.instanceColor !== null) mesh.instanceColor.needsUpdate = true
@@ -407,9 +428,10 @@ function NebulaFilaments({ filaments, ghosts, tier }: {
     for (const filament of links) {
       const from = new Vector3(...filament.from), to = new Vector3(...filament.to)
       const midpoint = from.clone().lerp(to, 0.5)
-      // Bow the real relationship, keeping both measured endpoints exact.
-      midpoint.y += Math.min(1.6, from.distanceTo(to) * 0.18)
-      midpoint.z -= 0.4
+      // Bow the real relationship away from the palace centre, keeping both measured endpoints exact.
+      const outward = new Vector3(midpoint.x, midpoint.y, 0)
+      midpoint.add((outward.lengthSq() > 1e-6 ? outward.normalize() : new Vector3(0, 1, 0)).multiplyScalar(Math.min(1.2, from.distanceTo(to) * 0.15)))
+      midpoint.z -= 0.3
       const curve = new CatmullRomCurve3([from, midpoint, to])
       const points = curve.getPoints(tier === 'full' ? 32 : 12)
       const working = targets.some((point) => new Vector3(...point).equals(from) || new Vector3(...point).equals(to))

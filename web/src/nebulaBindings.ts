@@ -54,6 +54,7 @@ export interface NebulaBody {
   scale: readonly [number, number, number]
   color: readonly [number, number, number]
   recency_glow: number
+  injections: number
   pinned: boolean
   in_current_context: boolean
 }
@@ -144,7 +145,7 @@ export function buildNebulaBodies(
     const orbit = 8 / (1 + injection), angle = angles.get(node.memory.memory_id)!
     const position = [Math.cos(angle) * orbit, Math.sin(angle) * orbit,
       spread(normalize(revision, revisions), 4)] as const
-    const radius = 0.25 + 0.65 * Math.log2(injection + 1)
+    const radius = 0.12 + 0.34 * Math.log2(injection + 1)
     const stretch = 1 + Math.min(revision, 12) * 0.015
     return {
       id: node.memory.memory_id,
@@ -154,6 +155,7 @@ export function buildNebulaBodies(
       scale: [radius, radius * stretch, radius],
       color: colorForKind(node.memory.kind),
       recency_glow: 0.18 + 0.82 / (1 + ageDays / 14),
+      injections: injection,
       pinned: node.memory.pin,
       in_current_context: node.in_current_context,
     }
@@ -223,7 +225,7 @@ export function buildNebulaFilaments(
       const id = members[index].memory.memory_id, from = positions.get(id)!
       const distance = (node: PalaceMemoryNode) => positions.get(node.memory.memory_id)!
         .reduce((sum, value, axis) => sum + (value - from[axis]) ** 2, 0)
-      for (const neighbor of members.slice(0, index).sort((a, b) => distance(a) - distance(b)).slice(0, 2)) {
+      for (const neighbor of members.slice(0, index).sort((a, b) => distance(a) - distance(b)).slice(0, 3)) {
         const other = neighbor.memory.memory_id, pair = [id, other].sort().join(':')
         if (seen.has(pair)) continue
         seen.add(pair)
