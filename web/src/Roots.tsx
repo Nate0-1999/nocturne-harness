@@ -24,7 +24,7 @@ export function Roots({ data, agents, selectedId, tier, pick, newest }: {
       const selected = selectedId === agent.id || newest && latest === agent.id
       const stopped = agent.state === 'stopped' || agent.state === 'cancelled'
       const measured = agent.cost_usd !== null
-      const radius = measured ? 0.025 + Math.sqrt(Number(agent.cost_usd) / spendScale) * 0.65 : 0.018
+      const radius = measured ? 0.04 + Math.sqrt(Number(agent.cost_usd) / spendScale) * 0.34 : 0.03
       const forked = ordered.some((child) => child.parent_id === agent.id)
       return <group key={agent.id}>
         <ChromeRoot points={points} spent={rootSpendShares(agent, data.trails[agent.id] ?? [], points, moments)} radius={radius} tier={tier}
@@ -51,13 +51,14 @@ function RootRiver({ agent, points, moments, begin, end, radius, spent, tier, se
     const branches = buildRootRiver(agent, points, moments, begin, end)
     const heaviest = Math.max(1, ...branches.filter((branch) => branch.kind === 'turn').map((branch) => branch.weight))
     const full = tier === 'full'
-    const rootWidth = (x: number) => radius * Math.max(0.1, Math.sqrt(spent[Math.round(Math.min(1, Math.max(0, (x - points[0][0]) / Math.max(1e-6, points.at(-1)![0] - points[0][0]))) * (spent.length - 1))]))
-    // Width grows with the work recorded beneath a branch, and a branch is never wider than where it leaves.
+    // Width grows with the work recorded beneath a branch; a turn is at most most of its root's width,
+    // and a call or a file touch is finer than the branch it leaves.
     const widths: number[] = []
     for (const branch of branches) {
-      const room = 0.75 * (branch.parent < 0 ? rootWidth(branch.points[0][0]) : widths[branch.parent])
-      widths.push(Math.min(room, branch.kind === 'turn' ? radius * (0.12 + 0.25 * Math.sqrt(branch.weight / heaviest))
-        : branch.kind === 'tool' ? radius * (0.05 + 0.03 * Math.min(4, branch.weight)) : 0.0065))
+      widths.push(branch.kind === 'turn' ? radius * (0.25 + 0.45 * Math.sqrt(branch.weight / heaviest))
+        : branch.kind === 'tool' ? widths[branch.parent] !== undefined && branch.parent >= 0
+          ? Math.min(widths[branch.parent] * 0.6, 0.012 + 0.006 * Math.min(4, branch.weight)) : 0.014
+          : 0.0065)
     }
     const shape = { turn: [28, 12, 10, 5, 0.16], tool: [14, 7, 6, 4, 0.12], file: [8, 5, 4, 3, 0.1] } as const
     const tubes = (kinds: RootBranch['kind'][]) => branches.flatMap((branch, index) => {
@@ -85,8 +86,8 @@ function RootRiver({ agent, points, moments, begin, end, radius, spent, tier, se
   </group>
 }
 
-/** Full width at a junction, thinning to `end` of that width at the tip. */
-const tip = (end: number) => (t: number) => end + (1 - end) * Math.pow(1 - t, 0.65)
+/** Swelling from its junction to full width, then thinning to `end` of that width at the tip. */
+const tip = (end: number) => (t: number) => Math.min(1, 0.45 + t * 6) * (end + (1 - end) * Math.pow(1 - t, 0.65))
 
 /** A tube along a curve whose width at each point is `radius × profile(t)`. */
 function taperedTube(points: Point3[], radius: number, length: number, sides: number, profile: (t: number) => number): TubeGeometry {
@@ -125,7 +126,7 @@ function ChromeRoot({ points, spent, radius, tier, stopped, selected, forked, on
     const profile = (t: number) => {
       const index = t * (shares.length - 1), low = Math.min(shares.length - 2, Math.floor(index))
       const share = shares[low] + (shares[low + 1] - shares[low]) * (index - low)
-      return Math.max(0.1, Math.sqrt(share)) * Math.min(1, t / 0.04 + 0.2) * (t > 0.75 ? 1 - (1 - (forked ? 0.35 : 0.08)) * ((t - 0.75) / 0.25) ** 1.5 : 1)
+      return Math.max(0.3, Math.sqrt(share)) * Math.min(1, t / 0.05 + 0.15) * (t > 0.75 ? 1 - (1 - (forked ? 0.35 : 0.08)) * ((t - 0.75) / 0.25) ** 1.5 : 1)
     }
     return taperedTube(points, radius, tier === 'full' ? 96 : 32, tier === 'full' ? 12 : 6, profile)
   }, [points, key, radius, tier, forked])
