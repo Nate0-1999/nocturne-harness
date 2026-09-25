@@ -18,7 +18,7 @@ import {
 } from 'three'
 import { color as tslColor, normalView, pass, positionViewDirection, uniform } from 'three/tsl'
 import { bloom } from 'three/addons/tsl/display/BloomNode.js'
-import { MeshPhysicalNodeMaterial, PostProcessing, WebGPURenderer } from 'three/webgpu'
+import { MeshBasicNodeMaterial, MeshPhysicalNodeMaterial, PostProcessing, WebGPURenderer } from 'three/webgpu'
 import { useRackPlugin, useRackSelection, useRackSnapshot } from './rack'
 import { MemoryTrace, SelectedMemoryPanel } from './MemoryPanel'
 import {
@@ -240,6 +240,8 @@ function ThreeNebula({
   onSelect: (id: string) => void
 }) {
   const mostInjected = Math.max(0, ...bodies.map((body) => body.injections))
+  // Memories present when the Palace opens are already there; any later one arrives.
+  const [present] = useState(() => new Set(bodies.map((body) => body.id)))
   const createRenderer = useMemo(() => async (defaults: RendererDefaults) => {
     if (!(defaults.canvas instanceof HTMLCanvasElement)) {
       throw new Error('Palace Nebula requires a browser canvas')
@@ -272,7 +274,8 @@ function ThreeNebula({
     <NebulaFilaments filaments={filaments} ghosts={ghosts} tier={tier} />
     <CuratorStream route={curatorRoute} tier={tier} />
     {families.filter((family) => family.stipple_count > 0).map((family) => <NebulaCreatureCluster key={family.id} family={family} tier={tier} />)}
-    {bodies.map((body) => <NebulaMemoryBody key={body.id} body={body} share={mostInjected > 0 ? Math.log2(1 + body.injections) / Math.log2(1 + mostInjected) : 0}
+    {bodies.map((body) => <NebulaMemoryBody key={body.id} body={body} arriving={!present.has(body.id)}
+      share={mostInjected > 0 ? Math.log2(1 + body.injections) / Math.log2(1 + mostInjected) : 0}
       tier={tier} onSelect={onSelect} />)}
     <CuratorGhost targets={ghosts} route={curatorRoute} tier={tier} />
     <CameraControls distance={Math.max(10, ...bodies.map((body) => (Math.abs(body.position[1]) + body.scale[1]) * 2.5))}
@@ -324,8 +327,9 @@ function CuratorStreamArc({ from, to, strand, tier }: { from: readonly number[];
   }, [fx, fy, fz, tx, ty, tz, strand, tier])
   useEffect(() => () => { geometry.tube.dispose(); geometry.halo.dispose() }, [geometry])
   return <group>
-    <mesh geometry={geometry.tube}><meshBasicMaterial vertexColors toneMapped={false} transparent opacity={0.85} depthWrite={false} blending={AdditiveBlending} /></mesh>
-    <mesh geometry={geometry.halo}><meshBasicMaterial vertexColors toneMapped={false} transparent opacity={0.1} depthWrite={false} blending={AdditiveBlending} /></mesh>
+    {/* A new geometry gets a new mesh: swapping geometry under a live WebGPU render object drops its colour buffer. */}
+    <mesh key={geometry.tube.uuid} geometry={geometry.tube}><meshBasicMaterial vertexColors toneMapped={false} transparent opacity={0.85} depthWrite={false} blending={AdditiveBlending} /></mesh>
+    <mesh key={geometry.halo.uuid} geometry={geometry.halo}><meshBasicMaterial vertexColors toneMapped={false} transparent opacity={0.1} depthWrite={false} blending={AdditiveBlending} /></mesh>
   </group>
 }
 
@@ -366,8 +370,31 @@ function NebulaBloom({ tier }: { tier: NebulaHardwareTier }) {
   return null
 }
 
-function NebulaMemoryBody({ body, share, tier, onSelect }: { body: NebulaBody; share: number; tier: NebulaHardwareTier; onSelect: (id: string) => void }) {
-  const meshRef = useRef<Mesh>(null)
+function NebulaMemoryBody({ body, share, arriving, tier, onSelect }: {
+  body: NebulaBody; share: number; arriving: boolean; tier: NebulaHardwareTier; onSelect: (id: string) => void
+}) {
+  const meshRef = useRef<Mesh>(null), ringRef = useRef<Mesh>(null)
+  const arrival = useRef<number | null>(null)
+  useLayoutEffect(() => { if (arriving) arrival.current = performance.now() }, [arriving])
+  const ring = useMemo(() => {
+    const next = new MeshBasicNodeMaterial({ transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending })
+    next.colorNode = tslColor('#cfe0ff').mul(3)
+    return next
+  }, [])
+  useEffect(() => () => ring.dispose(), [ring])
+  const [sx, sy, sz] = body.scale
+  // A new memory grows in with an expanding ring of light over 1.4 s, then rests.
+  useFrame(() => {
+    const mesh = meshRef.current, halo = ringRef.current, start = arrival.current
+    if (!mesh || !halo || start === null) return
+    const t = Math.min(1, (performance.now() - start) / 1400), grow = 1 + 2.2 * Math.pow(1 - t, 3) * Math.sin(t * Math.PI * 1.5)
+    const size = t < 0.25 ? t / 0.25 : grow
+    mesh.scale.set(sx * size, sy * size, sz * size)
+    halo.visible = t < 1
+    halo.scale.setScalar(sx * (1 + t * 2.4))
+    ;(halo.material as MeshBasicNodeMaterial).opacity = 0.9 * (1 - t)
+    if (t >= 1) { arrival.current = null; mesh.scale.set(sx, sy, sz) }
+  })
   const [red, green, blue] = body.color
   const focused = body.pinned || body.in_current_context
   // Lit from within: inner glow and a bright rim, both scaled by injections; barely-injected memories shine as points of light.
@@ -386,10 +413,15 @@ function NebulaMemoryBody({ body, share, tier, onSelect }: { body: NebulaBody; s
     return next
   }, [red, green, blue, glow, rim, point])
   useEffect(() => () => material.dispose(), [material])
-  return <mesh ref={meshRef} name={body.label} position={body.position} scale={body.scale} material={material}
-    onClick={(event) => { event.stopPropagation(); onSelect(body.id) }}>
-    <sphereGeometry args={[1, tier === 'full' ? 40 : 20, tier === 'full' ? 28 : 14]} />
-  </mesh>
+  return <>
+    <mesh ref={meshRef} name={body.label} position={body.position} scale={body.scale} material={material}
+      onClick={(event) => { event.stopPropagation(); onSelect(body.id) }}>
+      <sphereGeometry args={[1, tier === 'full' ? 40 : 20, tier === 'full' ? 28 : 14]} />
+    </mesh>
+    <mesh ref={ringRef} position={body.position} visible={false} material={ring}>
+      <torusGeometry args={[1, 0.02, 6, 64]} />
+    </mesh>
+  </>
 }
 
 function NebulaEventTorrent({ events, tier }: { events: readonly NebulaMemoryEvent[]; tier: NebulaHardwareTier }) {
@@ -451,7 +483,7 @@ function NebulaFilaments({ filaments, ghosts, tier }: {
   const material = useMemo(() => new LineBasicMaterial({ transparent: true, opacity: 0.32, vertexColors: true, toneMapped: false }), [])
   useEffect(() => () => geometry.dispose(), [geometry])
   useEffect(() => () => material.dispose(), [material])
-  return <lineSegments name="memory-relationships" geometry={geometry} material={material} />
+  return <lineSegments key={geometry.uuid} name="memory-relationships" geometry={geometry} material={material} />
 }
 
 function NebulaCreatureCluster({ family, tier }: { family: NebulaCreatureFamily; tier: NebulaHardwareTier }) {
@@ -479,7 +511,7 @@ function NebulaCreatureCluster({ family, tier }: { family: NebulaCreatureFamily;
   const material = useMemo(() => new PointsMaterial({ size: 0.7, sizeAttenuation: false, transparent: true, opacity: 0.18, vertexColors: true }), [])
   useEffect(() => () => geometry.dispose(), [geometry])
   useEffect(() => () => material.dispose(), [material])
-  return <points name={`memory-family-${family.id}`} geometry={geometry} material={material} />
+  return <points key={geometry.uuid} name={`memory-family-${family.id}`} geometry={geometry} material={material} />
 }
 
 function pointGeometry(

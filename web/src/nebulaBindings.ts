@@ -106,8 +106,8 @@ export const NEBULA_BINDINGS = {
   ],
   shared: [
     'Size · memory.stats.injections (log scale)',
-    'Glow · memory.updated_at at snapshot time',
-    'Brightness · memory.pin or current-context membership',
+    'Inner glow and bright rim · injections (log), dimmed by age since memory.updated_at',
+    'Brighter still · memory.pin or current-context membership; point of light · barely injected',
     'Filament · lineage; nearest links sharing an origin thread or keyword',
     'Family · connected by similarity, thread or keyword; curator streams join visited families',
   ],
@@ -116,6 +116,8 @@ export const NEBULA_BINDINGS = {
     'Hue · add / delete / modify / merge / split',
     'Curve around its memory · event timestamp; density · event rate',
     'No revision event · no particle; replay · identical current',
+    'Arrival · a memory that appears while you watch grows in with a ring of light',
+    'Stream · a recorded curator visit between families, violet to red; the ghost travels the latest',
   ],
 } as const
 

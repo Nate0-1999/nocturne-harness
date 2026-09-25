@@ -1,4 +1,4 @@
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import {
   AdditiveBlending, BoxGeometry, CatmullRomCurve3, Color, DoubleSide, Group, InstancedMesh, LatheGeometry,
@@ -161,6 +161,7 @@ function Cells({ cells, lastTouch, asOf, selectedPath, full, pickPath }: {
 }) {
   const glass = useRef<InstancedMesh>(null), glow = useRef<InstancedMesh>(null)
   const seen = useRef(new Map<string, number>()), flashes = useRef(new Map<number, number>())
+  const invalidate = useThree((state) => state.invalidate)
   const box = useMemo(() => new BoxGeometry(1, 1, 1), [])
   useEffect(() => () => box.dispose(), [box])
   const brightness = (index: number, now: number) => {
@@ -198,6 +199,8 @@ function Cells({ cells, lastTouch, asOf, selectedPath, full, pickPath }: {
       mesh.current.computeBoundingSphere()
     }
     paint(now)
+    // The scene renders on demand: a repaint or a new flash asks for frames.
+    invalidate()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cells, lastTouch, asOf, selectedPath])
   useFrame(({ invalidate }) => {
@@ -239,6 +242,7 @@ function Ant({ agent, chamber, byPath, slot, selected, full, pick }: {
   const group = useRef<Group>(null), legs = useRef<Group>(null)
   const walk = useRef<{ curve: CatmullRomCurve3; start: number; duration: number } | null>(null)
   const at = useRef<string | null>(null)
+  const invalidate = useThree((state) => state.invalidate)
   const home = byPath.get(chamber)!
   const angle = identitySeed(agent.id) * Math.PI * 2 + slot * 2.4
   const rest = new Vector3(home.position[0] + Math.cos(angle) * home.radius * 0.45,
@@ -258,7 +262,8 @@ function Ant({ agent, chamber, byPath, slot, selected, full, pick }: {
       node.rotation.set(0, 0, angle + Math.PI / 2)
     }
     at.current = chamber
-  }, [chamber, rx, ry, rz, byPath, angle])
+    invalidate()
+  }, [chamber, rx, ry, rz, byPath, angle, invalidate])
   useFrame(({ invalidate }) => {
     const node = group.current, moving = walk.current
     if (!node || !moving) return
