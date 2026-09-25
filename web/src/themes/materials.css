@@ -44,8 +44,12 @@ html[data-pressed-colorway] .rack-module {
   --theme-rim-hover-width: 3px;
 }
 
-html[data-pressed-colorway] .rack-module {
-  --theme-rim-width: 3px;
+html[data-pressed-colorway] .rack-module__chrome {
+  border-bottom-color: var(--plate-chrome-bright);
+}
+
+html[data-pressed-colorway] .rack-module__content {
+  border-top: 1px solid var(--plate-chrome-bright);
 }
 
 html[data-theme="gold-lines"] {

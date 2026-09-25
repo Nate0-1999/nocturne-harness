@@ -3511,8 +3511,8 @@ and a separate dark rim pattern. D.2 112–114 applies the same border law to
 the plate press: share Seraph's module material and geometry, consuming the
 uploaded plate's sampled colors. Module-local tokens also repair saved
 colorways without changing their palette or stored data.
-The uploaded rim uses the existing 3px chrome width to meet the unchanged
-palette-area bound in the 1440×1000 live comparison (0.3966 before, 0.3892 after).
+Resting rims stay 2px; 1px header and content separators take sampled bright
+chrome, keeping the material on edges under D.2 110.
 
 ## M3BW — Adopt the accepted Playwright browser hands [P1, P3]
 
