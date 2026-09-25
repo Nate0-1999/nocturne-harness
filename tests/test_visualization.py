@@ -144,3 +144,64 @@ def test_file_capillaries_project_successful_paths_without_contents_or_directory
         json.loads((tmp_path / "visualization.json").read_text())["touched_files"]
         == value["touched_files"]
     )
+
+
+def test_root_branches_project_turn_and_tool_call_times_without_content(tmp_path):
+    """PLAN M3VL send-back 1: roots branch at each recorded turn and tool call, never content."""
+    import json
+    from datetime import UTC, datetime
+    from types import SimpleNamespace
+
+    from pydantic_ai.messages import ModelRequest, ModelResponse, TextPart, ToolCallPart
+
+    from harness.visualization import work_observation
+
+    first, second = datetime(2026, 9, 24, 1, tzinfo=UTC), datetime(2026, 9, 24, 2, tzinfo=UTC)
+    messages = [
+        ModelRequest.user_text_prompt("PRIVATE-BRIEF"),
+        ModelResponse(parts=[ToolCallPart("read", {"path": "SECRET-FILE"})], timestamp=first),
+        ModelResponse(parts=[TextPart("PRIVATE-ANSWER")], timestamp=second),
+    ]
+    output = tmp_path / "symphonies" / "run" / "worker"
+    output.mkdir(parents=True)
+    location = SimpleNamespace(cwd=tmp_path, workspace_root=tmp_path)
+    assignment = {"origin_agent": "run/root.1", "thread_id": "thread", "stage": "completion"}
+    observe_worker(output, assignment, location, "running", (), messages)
+    worker = json.loads((output / "visualization.json").read_text())
+    assert worker["turns"] == [first.isoformat(), second.isoformat()]
+    assert worker["tool_calls"] == [first.isoformat()]
+
+    rows = [
+        {"captured_at": "t1", "event": {"type": "run.started"}},
+        {
+            "captured_at": "t2",
+            "event": {
+                "type": "run.delta",
+                "payload": {
+                    "event": {
+                        "event_kind": "function_tool_call",
+                        "part": {"tool_name": "bash", "args": {"command": "PRIVATE-COMMAND"}},
+                    }
+                },
+            },
+        },
+        {"captured_at": "t3", "event": {"type": "run.done"}},
+    ]
+    transcript = tmp_path / "thread.jsonl"
+    transcript.write_text("".join(json.dumps(row) + "\n" for row in rows))
+    entry = SimpleNamespace(
+        thread_id="thread",
+        workspace_root=str(tmp_path),
+        current_location=None,
+        proposed_response=None,
+        title="Thread",
+        created_at="t0",
+        updated_at="t3",
+    )
+    journal = SimpleNamespace(catalog=lambda: [entry], path_for_thread=lambda _id: transcript)
+    observed = work_observation(journal, tmp_path, tmp_path)["agents"]
+    agents = {agent["id"]: agent for agent in observed}
+    assert agents["thread"]["turns"] == ["t1"] and agents["thread"]["tool_calls"] == ["t2"]
+    assert agents["run/root.1"]["tool_calls"] == [first.isoformat()]
+    feed = json.dumps(agents)
+    assert "PRIVATE" not in feed and "SECRET" not in feed

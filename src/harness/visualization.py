@@ -34,7 +34,9 @@ def directory_tree(root: Path) -> dict:
     return {"root": str(root), "nodes": sorted(nodes, key=lambda n: n["path"]), "errors": errors}
 
 
-def observe_worker(output: Path, assignment: dict, location, state: str, presence=()) -> None:
+def observe_worker(
+    output: Path, assignment: dict, location, state: str, presence=(), messages=()
+) -> None:
     """Observe the worker's actual feet, without changing its tools or decisions."""
     path = output / "visualization.json"
     try:
@@ -45,6 +47,8 @@ def observe_worker(output: Path, assignment: dict, location, state: str, presenc
     for event in presence:
         if event.event in {"read", "write"} and event.path.is_file():
             files.setdefault(str(event.path), event.ts.isoformat())
+    # A worker's turns are its model responses; each tool call happens at its response.
+    responses = [message for message in messages if message.kind == "response"]
     value = {
         "id": assignment["origin_agent"],
         "thread_id": assignment["thread_id"],
@@ -55,6 +59,13 @@ def observe_worker(output: Path, assignment: dict, location, state: str, presenc
         "stage": assignment["stage"],
         "state": state,
         "touched_files": [{"path": path, "ts": ts} for path, ts in sorted(files.items())],
+        "turns": [response.timestamp.isoformat() for response in responses],
+        "tool_calls": [
+            response.timestamp.isoformat()
+            for response in responses
+            for part in response.parts
+            if part.part_kind == "tool-call"
+        ],
     }
     if all(previous.get(key) == value[key] for key in value):
         return
@@ -106,20 +117,18 @@ def work_observation(journal, home: Path, default_root: Path) -> dict:
             continue
         roots.add(entry.workspace_root)
         state, waiting_since = "stopped", None
-        pending, files = {}, {}
+        pending, files, turns, tool_calls = {}, {}, [], []
         cwd = entry.workspace_root
         for line in journal.path_for_thread(entry.thread_id).read_text().splitlines():
             row = json.loads(line)
             cwd = row.get("current_location") or cwd
             event = row.get("event", {})
-            _journal_file_touch(
-                event.get("payload", {}).get("event", {}),
-                cwd,
-                row["captured_at"],
-                pending,
-                files,
-            )
+            stream = event.get("payload", {}).get("event", {})
+            _journal_file_touch(stream, cwd, row["captured_at"], pending, files)
+            if stream.get("event_kind") == "function_tool_call":
+                tool_calls.append(row["captured_at"])
             if event.get("type") == "run.started":
+                turns.append(row["captured_at"])
                 state, waiting_since = "running", None
             elif event.get("type") == "gate.open":
                 state, waiting_since = "waiting", row["captured_at"]
@@ -143,6 +152,8 @@ def work_observation(journal, home: Path, default_root: Path) -> dict:
                 "waiting_since": waiting_since,
                 "cost_usd": None,
                 "touched_files": [{"path": path, "ts": ts} for path, ts in sorted(files.items())],
+                "turns": turns,
+                "tool_calls": tool_calls,
             }
         )
     workers = {}
@@ -173,10 +184,17 @@ def work_observation(journal, home: Path, default_root: Path) -> dict:
                     item["path"]: item
                     for item in previous.get("touched_files", []) + value.get("touched_files", [])
                 }
+                history = {
+                    field: sorted(previous.get(field, []) + value.get(field, []))
+                    for field in ("turns", "tool_calls")
+                }
                 if value["ts"] > previous["ts"]:
                     workers[key].update(value)
                 workers[key].update(
-                    started_at=started, cost_usd=total, touched_files=list(files.values())
+                    started_at=started,
+                    cost_usd=total,
+                    touched_files=list(files.values()),
+                    **history,
                 )
         except (OSError, ValueError, KeyError):
             continue  # A worker is atomically replacing its observation; next sample retries.

@@ -192,7 +192,12 @@ async def run(assignment_path: Path) -> None:
     async def observe(_context, events):
         async for _event in events:
             observe_worker(
-                output, assignment, toolset.location(), "running", toolset.presence_events()
+                output,
+                assignment,
+                toolset.location(),
+                "running",
+                toolset.presence_events(),
+                captured,
             )
             worker_context.publish(captured)
             request = receipt()
@@ -318,7 +323,14 @@ async def run(assignment_path: Path) -> None:
             _write(root / "judge-verdict.json", value.model_dump_json(indent=2))
     finally:
         asyncio.get_running_loop().remove_signal_handler(signal.SIGTERM)
-        observe_worker(output, assignment, toolset.location(), "stopped", toolset.presence_events())
+        observe_worker(
+            output,
+            assignment,
+            toolset.location(),
+            "stopped",
+            toolset.presence_events(),
+            captured,
+        )
         _write(output / "messages.json", ModelMessagesTypeAdapter.dump_json(captured).decode())
         request = receipt()
         if request is not None:
