@@ -2,12 +2,12 @@
   "packet": "M3VL",
   "mode": "builder",
   "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
-  "ledger_sha256": "d11c9fd4e9d5d3b863877584c080e7dc7f107393b40b9464b08e65a153231d5f",
+  "ledger_sha256": "0ac51fdceb406a10b108d12052519d6591b2118ebc465bebf9441255c9651dd1",
   "diffs": [
     {
       "repo": "harness",
-      "base": "61cb45149fa7e15bab939522e4977a69dba770ef",
-      "head": "e41fa76de0f1d8785fa1a17f340f10be0f3fb39a"
+      "base": "8a1b24aaef38d3577f6ed89911594a0e4cb41c14",
+      "head": "9f692cdb0568b65a6f46bc14f73bdd1d4a0322af"
     }
   ],
   "unmapped": {
@@ -16,6 +16,7 @@
     "harness/verification/m3vl/FL-046.png": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/verification/m3vl/FL-070.png": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/verification/m3vl/FL-075.png": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
+    "harness/verification/m3vl/FL-085.png": "Fresh row context screenshot; verdict and limitations are in the ledger.",
     "harness/verification/m3vl/FL-102.png": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/verification/m3vl/FL-104.png": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/verification/m3vl/FL-105.png": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
@@ -24,6 +25,7 @@
     "harness/verification/m3vl/FL-115.png": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/verification/m3vl/FL-116.png": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/verification/m3vl/FL-117.png": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
+    "harness/verification/m3vl/FL-118.png": "Fresh row context screenshot; verdict and limitations are in the ledger.",
     "harness/verification/m3vl/FL-120.png": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/verification/m3vl/FL-123.png": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/verification/m3vl/FL-126-plate.png": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
@@ -50,6 +52,62 @@
     "harness/verification/m3vl/farm-live.webm": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/verification/m3vl/farm-module.png": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/verification/m3vl/farm-recording-frame.png": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
+    "harness/verification/m3vl/fresh/FL-126-plate.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/FL-129-plate.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/FL-133-plate.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/after-work.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/canon-final.log": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/cleanup.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/created.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/curator-preparation.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/curator-run.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/farm-live.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/farm-live.webm": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/farm-recording-source.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/final-curator-preparation.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/final-curator-run.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/final-live-feed.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/first-cleanup.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/first-curator-denied.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/footer-bindings.txt": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/gallery.html": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/harness-final.log": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/identity.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/ledger-ci.log": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/local-cleanup.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/memory-final.log": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/palace-corrected-recording-source.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/palace-efficient-samples.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/palace-efficient.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/palace-final-recording-source.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/palace-full.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/palace-history.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/palace-live.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/palace-live.webm": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/palace-recording-source.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/plate-comparisons.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/provenance.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/render-refinement-curator-run.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/render-refinement-restored.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/retrievals.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/roots-activity.webm": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/roots-corrected-recording-source.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/roots-efficient-performance.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/roots-efficient-performance.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/roots-efficient.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/roots-full.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/roots-live.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/roots-live.webm": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/roots-performance-fixture.tsx": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/roots-recording-source.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/rules.log": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/shared-history.txt": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/shared-selection.txt": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/stage.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/static-checks.log": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/web-build.log": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/web-lint.log": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
+    "harness/verification/m3vl/fresh/web-tests.log": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
     "harness/verification/m3vl/gallery-review.png": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/verification/m3vl/gallery.html": "Packet evidence and coverage accounting; no product behavior.",
     "harness/verification/m3vl/harness-final.log": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
@@ -66,6 +124,58 @@
     "harness/verification/m3vl/palace-live.webm": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/verification/m3vl/palace-module.png": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/verification/m3vl/palace-recording-frame.png": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
+    "harness/verification/m3vl/plates/FL-126-plate.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/FL-129-plate.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/FL-130.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/FL-132.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/FL-133-plate.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/FL-134.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/FL-142-stage.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/FL-142.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/capture.mjs": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/context.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/farm-efficient.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/farm-full.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/farm-live.webm": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/palace-efficient.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/palace-full.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/palace-live.webm": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/palace_seed.py": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/capture-efficient.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/capture-farm.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/capture-full.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/capture-palace.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/capture-roots.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/curator-runs.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/efficient-performance.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/farm-efficient-viewport.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/farm-freeze.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/farm-full-viewport.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/final-feed.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/first-palace/curator-runs.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/first-palace/injections.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/first-palace/memories-created.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/first-palace/tombstones.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/idle-stillness.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/injections.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/memories-created.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/palace-efficient-viewport.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/palace-full-viewport.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/palace-live-curation-frame.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/perf-fixture/perf.html": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/perf-fixture/perf.mjs": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/perf-fixture/perf.tsx": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/roots-efficient-viewport.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/roots-full-viewport.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/rows-walk.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/stray-thread.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/symphony.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/receipts/walk.json": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/roots-efficient-sheet.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/roots-full-sheet.png": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/roots-live.webm": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/rows.mjs": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
+    "harness/verification/m3vl/plates/walk.mjs": "Send-back 1 walk evidence (captures, recordings, receipts, walk scripts); no product behavior.",
     "harness/verification/m3vl/receipts/curator-final-recording-run.json": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/verification/m3vl/receipts/curator-final-render-run.json": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/verification/m3vl/receipts/curator-recording-run.json": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
@@ -106,73 +216,16 @@
     "harness/verification/m3vl/web-rebased-lint.log": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/verification/m3vl/web-rebased-tests.log": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/verification/m3vl/web-tests.log": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
-    "harness/web/dist/assets/index-4Z9KdWsT.js": "Generated web bundle for mapped visualization changes; no independent feature.",
-    "harness/web/dist/assets/index-BOUS3sOi.js": "Generated web bundle for mapped visualization changes; no independent feature.",
-    "harness/web/dist/assets/index-CLILYuXf.css": "Generated web bundle for mapped visualization changes; no independent feature.",
-    "harness/web/dist/assets/index-DS65beS5.css": "Generated web bundle for mapped visualization changes; no independent feature.",
+    "harness/web/dist/assets/index-Bw3Pnk3q.js": "Built bundle of the mapped web sources; no separate behavior.",
+    "harness/web/dist/assets/index-By6CNmrf.css": "Built bundle of the mapped web sources; no separate behavior.",
+    "harness/web/dist/assets/index-ChC9hJlO.js": "Built bundle of the mapped web sources; no separate behavior.",
+    "harness/web/dist/assets/index-j4p8hURz.css": "Built bundle of the mapped web sources; no separate behavior.",
     "harness/web/dist/index.html": "Generated web bundle for mapped visualization changes; no independent feature.",
     "harness/web/src/ChromeEnvironment.tsx": "Rendering decision or shared reflection support for the mapped visualization surfaces; no independent feature.",
     "harness/web/tests/palaceNebula.test.mjs": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
     "harness/web/tests/visualization.test.mjs": "Packet evidence or verification support; records the mapped rendering walk without adding a product feature.",
-    "harness/verification/m3vl/fresh/roots-recording-source.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/roots-corrected-recording-source.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/farm-live.webm": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/palace-full.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/palace-live.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/render-refinement-curator-run.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/FL-133-plate.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/roots-live.webm": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/final-curator-preparation.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/curator-run.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/first-cleanup.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/palace-efficient-samples.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/palace-history.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/created.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/roots-activity.webm": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/after-work.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/roots-efficient.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/final-live-feed.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/palace-live.webm": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/shared-selection.txt": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/palace-corrected-recording-source.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/FL-126-plate.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/farm-recording-source.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/cleanup.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/gallery.html": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/render-refinement-restored.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/palace-final-recording-source.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/identity.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/footer-bindings.txt": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/palace-recording-source.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/retrievals.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/roots-full.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/roots-live.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/plate-comparisons.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/FL-129-plate.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/palace-efficient.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/final-curator-run.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/curator-preparation.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/shared-history.txt": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/stage.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/first-curator-denied.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/farm-live.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/provenance.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/harness-final.log": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/web-build.log": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/memory-final.log": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/rules.log": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/web-lint.log": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/static-checks.log": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/web-tests.log": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/local-cleanup.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/canon-final.log": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/ledger-ci.log": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/FL-085.png": "Fresh row context screenshot; verdict and limitations are in the ledger.",
-    "harness/verification/m3vl/FL-118.png": "Fresh row context screenshot; verdict and limitations are in the ledger.",
-    "harness/web/dist/assets/index-C-Dd8gOj.js": "Intermediate generated bundle replaced by the final build; no independent feature.",
-    "harness/verification/m3vl/fresh/roots-performance-fixture.tsx": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/roots-efficient-performance.png": "Fresh disposable verification evidence or isolated performance fixture; no product behavior.",
-    "harness/verification/m3vl/fresh/roots-efficient-performance.json": "Fresh disposable verification evidence or isolated performance fixture; no product behavior."
+    "harness/verification/m3vl/plates/gallery.html": "M3VL packet evidence; no product behavior.",
+    "harness/verification/m3vl/plates/canon.log": "M3VL packet evidence; no product behavior."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -183,7 +236,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-070.png",
       "flag": "F086",
-      "observed": "Context capture only: this broader file-impact gesture was not repeated during this rendering walk; no new PASS is claimed."
+      "observed": "Context capture only: this row's gesture was not repeated during this rendering walk; no new PASS is claimed."
     },
     "FL-102": {
       "label": "The Deck: a flashcard stack of terminals, cards colored to match their agents, only one card on top at a time (that project's agent's last response) to interact with, the next card popping up once you respond, ordered purely by which finished first.",
@@ -192,7 +245,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-102.png",
       "flag": "F086",
-      "observed": "Context capture only: this broader file-impact gesture was not repeated during this rendering walk; no new PASS is claimed."
+      "observed": "Context capture only: this row's gesture was not repeated during this rendering walk; no new PASS is claimed."
     },
     "FL-104": {
       "label": "A draft response to the final synthesis that you tweak and fire, after which the stack switches to the agent that has waited longest for your attention.",
@@ -201,7 +254,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-104.png",
       "flag": "F086",
-      "observed": "Context capture only: this broader file-impact gesture was not repeated during this rendering walk; no new PASS is claimed."
+      "observed": "Context capture only: this row's gesture was not repeated during this rendering walk; no new PASS is claimed."
     },
     "FL-105": {
       "label": "An Ableton-like rack: the shipped layout is only version one of the default opinion, and people can easily roll and add their own plugins and visualizers to the views from the ground up.",
@@ -210,7 +263,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-105.png",
       "flag": "F086",
-      "observed": "Context capture only: this broader file-impact gesture was not repeated during this rendering walk; no new PASS is claimed."
+      "observed": "Context capture only: this row's gesture was not repeated during this rendering walk; no new PASS is claimed."
     },
     "FL-110": {
       "label": "Global or current on every module; current modules switch together with the work.",
@@ -219,7 +272,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-110.png",
       "flag": "F086",
-      "observed": "Context capture only: this broader file-impact gesture was not repeated during this rendering walk; no new PASS is claimed."
+      "observed": "Context capture only: this row's gesture was not repeated during this rendering walk; no new PASS is claimed."
     },
     "FL-115": {
       "label": "Attunement to a specific stack beyond global and current.",
@@ -228,7 +281,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-115.png",
       "flag": "F086",
-      "observed": "Context capture only: this broader file-impact gesture was not repeated during this rendering walk; no new PASS is claimed."
+      "observed": "Context capture only: this row's gesture was not repeated during this rendering walk; no new PASS is claimed."
     },
     "FL-116": {
       "label": "A module not set to global attunes by proximity, measured across tabs (a tab counting one unit) and grid position, ties picked at random, and it shows which thread or stack it is attuned to.",
@@ -237,7 +290,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-116.png",
       "flag": "F086",
-      "observed": "Context capture only: this broader file-impact gesture was not repeated during this rendering walk; no new PASS is claimed."
+      "observed": "Context capture only: this row's gesture was not repeated during this rendering walk; no new PASS is claimed."
     },
     "FL-117": {
       "label": "A proposed reply prefilled and editable; queued prompts advance on Enter with a scrollable queue.",
@@ -246,7 +299,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-117.png",
       "flag": "F086",
-      "observed": "Context capture only: this broader file-impact gesture was not repeated during this rendering walk; no new PASS is claimed."
+      "observed": "Context capture only: this row's gesture was not repeated during this rendering walk; no new PASS is claimed."
     },
     "FL-120": {
       "label": "One conversation module with stack and focused modes.",
@@ -255,7 +308,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-120.png",
       "flag": "F086",
-      "observed": "Context capture only: this broader file-impact gesture was not repeated during this rendering walk; no new PASS is claimed."
+      "observed": "Context capture only: this row's gesture was not repeated during this rendering walk; no new PASS is claimed."
     },
     "FL-127": {
       "label": "Memories visualized in a cool tesseract-graph style.",
@@ -264,16 +317,25 @@
       "verdict": "FAIL",
       "screenshot": "FL-127.png",
       "flag": "F086",
-      "observed": "Context capture only: this broader file-impact gesture was not repeated during this rendering walk; no new PASS is claimed."
+      "observed": "Context capture only: this row's gesture was not repeated during this rendering walk; no new PASS is claimed."
     },
     "FL-141": {
       "label": "The visualization looks cool but is functional: it changes only when the underlying data or actual running processes change.",
       "walk": "Leave the visualization open with the system idle; nothing moves until a real process such as a curator pass runs.",
       "protected": true,
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "screenshot": "FL-141.png",
+      "flag": "",
+      "observed": "Idle, the Palace and Roots canvases were pixel-identical across three captures 3 s apart (fps readout excluded); they changed only during real turns and a real curator pass (idle-stillness.json, recordings)."
+    },
+    "FL-196": {
+      "label": "The rules machine checks citations, frozen law, product vocabulary, seed states and packet precedents.",
+      "walk": "Remove a guard citation on a disposable branch and observe CI fail; change a frozen axiom and observe the freeze step fail; restore both and observe Rules pass. The master ADR check remains red until the owner applies the citation patch.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-196.png",
       "flag": "F086",
-      "observed": "Context capture only: this broader file-impact gesture was not repeated during this rendering walk; no new PASS is claimed."
+      "observed": "F122 was added and the law re-frozen; bin/check_rules passed. The full rules gesture was not repeated in this rendering packet."
     },
     "FL-046": {
       "label": "A curation animation of its own, blended into the 3D palace.",
@@ -281,7 +343,8 @@
       "protected": false,
       "verdict": "PASS",
       "screenshot": "FL-046.png",
-      "observed": "Three actual curator runs produced finding.started events and target ghosts; final recording shows movement before completion."
+      "flag": "",
+      "observed": "A real curator pass ran while the Palace was open: finding.started events drew violet-to-red streams between the visited families and the ghost travelled them (palace-live.webm; curator-runs.json)."
     },
     "FL-075": {
       "label": "Queuing prompts and interjecting or steering a running agent, like the modern harnesses do.",
@@ -290,7 +353,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-075.png",
       "flag": "F086",
-      "observed": "Context capture only: this broader file-impact gesture was not repeated during this rendering walk; no new PASS is claimed."
+      "observed": "Context capture only: this row's gesture was not repeated during this rendering walk; no new PASS is claimed."
     },
     "FL-085": {
       "label": "The work loop: spec alignment with the user, then the agent loop (optionally several agents in worktrees attempting the same thing), then the judge checks the work against the spec and either calls it done or sends another agent to continue or fix, and the human is only brought back in when the judge says done.",
@@ -299,7 +362,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-085.png",
       "flag": "F086",
-      "observed": "One real Symphony produced two worktree attempts and three judges (six agents including parent); the complete judged-card return gesture was not independently audited."
+      "observed": "A real Symphony ran two worktree attempts (50 and 49 turns) and three judge seats, then blocked on a missing judge verdict file (symphony.json); the judged-card return was not reached. Observed, not diagnosed."
     },
     "FL-108": {
       "label": "Resizable modules and a plugin-contributor skill shipped with the repo.",
@@ -308,7 +371,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-108.png",
       "flag": "F086",
-      "observed": "Context capture only: this broader file-impact gesture was not repeated during this rendering walk; no new PASS is claimed."
+      "observed": "Context capture only: this row's gesture was not repeated during this rendering walk; no new PASS is claimed."
     },
     "FL-118": {
       "label": "Out Loud mode: responses are read aloud and listen-triggered dictation is a primary way in, equal to typing, not an add-on.",
@@ -317,7 +380,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-118.png",
       "flag": "F086",
-      "observed": "Context capture only: this broader file-impact gesture was not repeated during this rendering walk; no new PASS is claimed."
+      "observed": "Context capture only: this row's gesture was not repeated during this rendering walk; no new PASS is claimed."
     },
     "FL-123": {
       "label": "Each main cube view as its own module with its own 3D asset.",
@@ -326,7 +389,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-123.png",
       "flag": "F115",
-      "observed": "Granted bindings and real-data rendering are implemented; the side-by-side retains material/density differences and owner visual acceptance is still open under F115."
+      "observed": "Farm, Roots and Palace are three separate three.js modules on real data; send-back 1 lighting and the turn-by-turn river are in, and the look awaits the owner's eye under F115."
     },
     "FL-126": {
       "label": "The ant farm: the whole directory tree as chambered burrows with files as cells, zoomable, floating on black with a faint grid, showing worktrees.",
@@ -335,7 +398,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-126.png",
       "flag": "F119",
-      "observed": "Unchanged Farm re-captured on the real worker tree: three chambers and 50 file cells. Comparison and camera-orbit recording exist; plate-density acceptance is not asserted."
+      "observed": "The unchanged Farm re-captured on the real project and Symphony worktrees (12 chambers, 33 file cells); plate density is not asserted. On a 31,878-entry tree it freezes the page (F122)."
     },
     "FL-129": {
       "label": "Roots: every parallel agent across projects gets a root-like, naturally meandering flow growing horizontally from roughly its agent's location, with dead roots for active loops, tips seen end-on as grids of starts in the next rotation, clustered by project on the view opposite the ant farm.",
@@ -344,7 +407,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-129.png",
       "flag": "F115",
-      "observed": "Granted bindings and real-data rendering are implemented; the side-by-side retains material/density differences and owner visual acceptance is still open under F115."
+      "observed": "Eight real roots branch at every recorded turn and tool call with file capillaries off their calls, in cool chrome on the sheet ground; the plate still reads as one wide dark trunk with finer, longer branching (F115, owner's eye)."
     },
     "FL-130": {
       "label": "A tree-search view reached by rotating the farm.",
@@ -352,7 +415,8 @@
       "protected": false,
       "verdict": "PASS",
       "screenshot": "FL-130.png",
-      "observed": "Selecting root.1 survived in the shared agent selection and the Farm/Roots module state; shared-selection.txt records the propagated selection."
+      "flag": "",
+      "observed": "Picking root.1 in the Roots table selected root.1 in the Farm too; the Farm readout followed it to its worktree (rows-walk.json)."
     },
     "FL-132": {
       "label": "A time-order control that highlights new roots and moves the panels to the longest-waiting response.",
@@ -360,7 +424,8 @@
       "protected": false,
       "verdict": "PASS",
       "screenshot": "FL-132.png",
-      "observed": "Time order selected the waiting parent; the shared Farm/Roots controls changed together, preserving longest-waiting selection."
+      "flag": "",
+      "observed": "Time order pressed in Roots pressed it in the Farm as well and selected the longest-waiting thread (rows-walk.json)."
     },
     "FL-133": {
       "label": "A corner palace view with curators as ghosts moving through the database.",
@@ -369,7 +434,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-133.png",
       "flag": "F115",
-      "observed": "Granted bindings and real-data rendering are implemented; the side-by-side retains material/density differences and owner visual acceptance is still open under F115."
+      "observed": "Glass memories glow and rim by injection count with real reflections, bloom and live curator streams; the plate is denser, with more small lit nodes and brighter blue-white glass (F115, owner's eye)."
     },
     "FL-134": {
       "label": "A way to see things being added or removed over time, as SolidWorks does, the project growing like an organic object.",
@@ -377,7 +442,8 @@
       "protected": false,
       "verdict": "PASS",
       "screenshot": "FL-134.png",
-      "observed": "Scrubbing to the first recorded state changed Palace to zero memories and Farm/Roots to zero agents; Live restored the recorded six-agent feed."
+      "flag": "",
+      "observed": "Scrubbing History to an early recorded state showed 2 roots and an empty Palace; Live restored 8 roots and 44 memories. The first recorded state was not walked with the Farm open: it freezes on the launch folder (F122)."
     },
     "FL-138": {
       "label": "The palace nebula (the memory palace visualization module) looks super liquid and smooth, with the upper end amazing and lesser hardware considered, and its colors and shapes change quickly when the user changes the axis connecting the memories.",
@@ -386,7 +452,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-138.png",
       "flag": "F086",
-      "observed": "Context capture only: this broader file-impact gesture was not repeated during this rendering walk; no new PASS is claimed."
+      "observed": "Context capture only: this row's gesture was not repeated during this rendering walk; no new PASS is claimed."
     },
     "FL-139": {
       "label": "The 3D memory palace shows curation as it happens: curators combining and separating memories in real time, tied to live feeds.",
@@ -395,7 +461,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-139.png",
       "flag": "F086",
-      "observed": "Context capture only: this broader file-impact gesture was not repeated during this rendering walk; no new PASS is claimed."
+      "observed": "Context capture only: this row's gesture was not repeated during this rendering walk; no new PASS is claimed."
     },
     "FL-142": {
       "label": "Constitution: A sheet mode: an annotated layout of the same views. (chat 2026-08-31 21:38:35)",
@@ -403,7 +469,8 @@
       "protected": false,
       "verdict": "PASS",
       "screenshot": "FL-142.png",
-      "observed": "Stage and Sheet both render the three modules; Sheet adds the complete data-binding legends and the white Roots ground."
+      "flag": "",
+      "observed": "Sheet renders the three modules with their binding legends and the white Roots ground; Stage renders the same modules (FL-142-stage.png)."
     },
     "FL-184": {
       "label": "A distinct module for scheduled jobs that makes them easy to monitor; the best visualization is still to be worked out.",
@@ -412,7 +479,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-184.png",
       "flag": "F086",
-      "observed": "Context capture only: this broader file-impact gesture was not repeated during this rendering walk; no new PASS is claimed."
+      "observed": "Context capture only: this row's gesture was not repeated during this rendering walk; no new PASS is claimed."
     }
   },
   "not_run": {
@@ -553,16 +620,16 @@
     "FL-160": "not built",
     "FL-161": "not built",
     "FL-162": "outside diff",
-    "FL-163": "unverified",
-    "FL-164": "unverified",
+    "FL-163": "outside diff",
+    "FL-164": "outside diff",
     "FL-165": "horizon",
     "FL-166": "outside diff",
-    "FL-167": "unverified",
+    "FL-167": "outside diff",
     "FL-168": "outside diff",
     "FL-169": "outside diff",
     "FL-170": "outside diff",
     "FL-171": "outside diff",
-    "FL-172": "not built",
+    "FL-172": "outside diff",
     "FL-173": "outside diff",
     "FL-174": "outside diff",
     "FL-175": "outside diff",
@@ -585,7 +652,6 @@
     "FL-193": "outside diff",
     "FL-194": "outside diff",
     "FL-195": "outside diff",
-    "FL-196": "outside diff",
     "FL-198": "outside diff"
   }
 }
