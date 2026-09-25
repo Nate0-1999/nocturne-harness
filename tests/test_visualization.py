@@ -147,7 +147,7 @@ def test_file_capillaries_project_successful_paths_without_contents_or_directory
 
 
 def test_root_branches_project_turn_and_tool_call_times_without_content(tmp_path):
-    """PLAN M3VL send-back 1: roots branch at each recorded turn and tool call, never content."""
+    """ADR-018 / F115 (M3VL send-back 1): roots branch at each turn and tool call, no content."""
     import json
     from datetime import UTC, datetime
     from types import SimpleNamespace

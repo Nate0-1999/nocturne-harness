@@ -60,7 +60,7 @@ test('project trunks preserve true child and grandchild junctions regardless of 
   assert.ok(Math.abs(separate.get(parent.id).at(-1)[1] - separate.get(independent.id).at(-1)[1]) > 3)
 })
 
-/** PLAN M3VL send-back 1: a root branches at each recorded turn and tool call; file touches grow from those. */
+/** ADR-018 / F115 (PLAN M3VL send-back 1): a root branches at each recorded turn and tool call; file touches grow from those. */
 test('root river grows one branch per turn, tool call and file touch from its recorded parent', () => {
   const agent = { id: 'worker', root: '/project', parent_id: null, started_at: '2026-09-16T00:00:00Z', updated_at: '2026-09-16T00:04:00Z',
     turns: ['2026-09-16T00:01:00Z', '2026-09-16T00:03:00Z'], tool_calls: ['2026-09-16T00:01:00Z', '2026-09-16T00:03:00Z'],
@@ -79,7 +79,7 @@ test('root river grows one branch per turn, tool call and file touch from its re
   assert.deepEqual(buildRootRiver({ ...agent, turns: [], tool_calls: [], touched_files: [] }, root, moments, begin, end), [])
 })
 
-/** PLAN M3VL: root width follows recorded spend so far; unpriced roots keep one width. */
+/** ADR-018 / F115 (PLAN M3VL): root width follows recorded spend so far; unpriced roots keep one width. */
 test('root spend shares rise with the recorded cost trail', () => {
   const agent = { id: 'worker', cost_usd: 0.4, started_at: '2026-09-16T00:00:00Z', updated_at: '2026-09-16T00:02:00Z' }
   const trail = [{ ts: '2026-09-16T00:00:00Z', cost_usd: null }, { ts: '2026-09-16T00:01:00Z', cost_usd: '0.1' }, { ts: '2026-09-16T00:02:00Z', cost_usd: '0.4' }]
