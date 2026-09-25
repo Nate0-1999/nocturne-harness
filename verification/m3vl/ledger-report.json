@@ -166,7 +166,10 @@
     "harness/verification/m3vl/fresh/web-tests.log": "Fresh disposable verification evidence; no product behavior.",
     "harness/verification/m3vl/fresh/local-cleanup.json": "Fresh disposable verification evidence; no product behavior.",
     "harness/verification/m3vl/fresh/canon-final.log": "Verification results for this packet; no product behavior.",
-    "harness/verification/m3vl/fresh/ledger-ci.log": "Verification results for this packet; no product behavior."
+    "harness/verification/m3vl/fresh/ledger-ci.log": "Verification results for this packet; no product behavior.",
+    "harness/verification/m3vl/FL-085.png": "Fresh row context screenshot; verdict and limitations are in the ledger.",
+    "harness/verification/m3vl/FL-118.png": "Fresh row context screenshot; verdict and limitations are in the ledger.",
+    "harness/web/dist/assets/index-C-Dd8gOj.js": "Intermediate generated bundle replaced by the final build; no independent feature."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
