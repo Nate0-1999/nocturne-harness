@@ -80,8 +80,9 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
   const focused = agents.find((agent) => agent.id === selectedId)
   const project = data?.projects.find((candidate) => candidate.root === (projectRoot ?? focused?.root)) ?? data?.projects[0]
   const chambers = useMemo(() => project ? buildChambers(project) : [], [project])
-  const distance = view === 'farm' ? Math.max(15, ...chambers.map((c) => (Math.abs(c.position[1]) + 2) * 3)) : 12
-  const width = view === 'farm' ? Math.max(10, ...chambers.map((c) => (Math.abs(c.position[0]) + 2) * 2)) : 20
+  const reach = Math.max(0, ...chambers.map((c) => Math.hypot(c.position[0], c.position[1]) + c.radius))
+  const distance = view === 'farm' ? Math.max(8, reach * 2.1 + 4) : 12
+  const width = view === 'farm' ? (reach + 1) * 2 : 20
   const pick = (agent: WorkAgent) => {
     setProjectRoot(agent.root)
     void events.dispatch({ type: 'thread.select', thread_id: agent.thread_id }).then(() => {
@@ -100,7 +101,7 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
     </select></label>}
     <div className="work-viz__viewport">
       {data && project && <VisualizationScene tier={tier} distance={distance} width={width} label={view === 'farm' ? 'Directory chambers and live agents' : 'Agent roots: thickness is measured spend, depth is time'}>
-        {view === 'farm' ? <Farm project={project} agents={agents} selectedId={selectedId} selectedPath={selected?.kind === 'path' ? selected.id : null} tier={tier} pick={pick}
+        {view === 'farm' ? <Farm project={project} agents={agents} selectedId={selectedId} selectedPath={selected?.kind === 'path' ? selected.id : null} tier={tier} asOf={data.as_of} pick={pick}
           pickPath={(path) => selection.select({ kind: 'path', id: `${project.root}${path === '.' ? '' : '/' + path}`, as_of: selected?.as_of ?? null })} />
           : <Roots data={data} agents={agents} selectedId={selectedId} tier={tier} pick={pick} newest={selected?.time_order ?? false} />}
       </VisualizationScene>}
@@ -113,7 +114,8 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
       {(!data || error) && <p className="work-viz__notice" role="status">{error ?? 'Recording the first real state…'}</p>}
     </div>
     <footer className="work-viz__foot">{data && <>Recorded since {new Date(data.recorded_since).toLocaleString()} · {data.timeline.length} states · {data.live ? 'Live observation' : 'Recorded history'}</>}
-      {view === 'roots' && <span>Trunk = project (including its worker forks) · capillary = recorded file touch · across = work order · width = spend · depth = time · junction = fork · dry = stopped</span>}
+      {view === 'roots' && <span>Trunk = project (including its worker forks) · branch = turn · twig = tool call · capillary = recorded file touch · across = work order · width = spend so far · depth = time · junction = fork · dry = stopped</span>}
+      {view === 'farm' && <span>Chamber = folder · size = files it holds · dim = empty · link = parent folder, width = files beneath · cell = file, size = bytes · lit = touched by an agent, brighter = more recent, flash = new touch · ant = agent in its current folder · walk = location changed</span>}
       {project?.errors.map((item) => <span key={item.path}>Cannot read {item.path}: {item.error}</span>)}
       {data?.errors.map((item) => <span key={item.feed}>{item.feed} feed unavailable</span>)}
     </footer>

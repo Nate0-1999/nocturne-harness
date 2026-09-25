@@ -22,6 +22,30 @@ test('directory layout preserves every chamber and cell and replays identically'
   assert.equal(after.find(c => c.path === '.').radius, before.find(c => c.path === '.').radius)
 })
 
+/** ADR-018 / F115 (M3VL send-back 2): a `.git` store is one chamber; the rest keep one chamber per folder,
+ * never overlapping, and a large tree lays out in one pass. */
+test('farm folds the git store and spaces every other folder without overlap', () => {
+  const project = { root: '/work', nodes: [
+    { path: '.', kind: 'directory', bytes: 0 }, { path: '.git', kind: 'directory', bytes: 0 },
+    { path: '.git/objects', kind: 'directory', bytes: 0 }, { path: '.git/objects/ab', kind: 'directory', bytes: 0 },
+    { path: '.git/objects/ab/cd', kind: 'file', bytes: 40 }, { path: '.git/HEAD', kind: 'file', bytes: 20 },
+    ...Array.from({ length: 12 }, (_, i) => ({ path: `pkg${i}`, kind: 'directory', bytes: 0 })),
+    ...Array.from({ length: 12 }, (_, i) => ({ path: `pkg${i}/mod`, kind: 'directory', bytes: 0 })),
+  ] }
+  const chambers = buildChambers(project)
+  assert.deepEqual(chambers.filter((c) => c.path.startsWith('.git')).map((c) => [c.path, c.files.length]), [['.git', 2]])
+  assert.equal(chambers.length, 1 + 1 + 24)
+  for (const [i, a] of chambers.entries()) for (const b of chambers.slice(i + 1)) {
+    assert.ok(Math.hypot(a.position[0] - b.position[0], a.position[1] - b.position[1]) > a.radius + b.radius, `${a.path} overlaps ${b.path}`)
+  }
+  const big = { root: '/big', nodes: [{ path: '.', kind: 'directory', bytes: 0 }, ...Array.from({ length: 3000 }, (_, i) => (
+    { path: `d${i % 60}${i >= 60 ? `/e${i}` : ''}`, kind: 'directory', bytes: 0 })),
+  ...Array.from({ length: 30000 }, (_, i) => ({ path: `d${i % 60}/f${i}`, kind: 'file', bytes: 10 }))] }
+  const started = performance.now()
+  assert.equal(buildChambers(big).length, 3001)
+  assert.ok(performance.now() - started < 500)
+})
+
 /** ADR-018 / FL-129/134: replay uses observed time; an elapsed run grows in temporal depth. */
 test('roots grow only to their recorded end and preserve identity on replay', () => {
   const agent = { id: 'worker', started_at: '2026-09-16T00:00:00Z', updated_at: '2026-09-16T00:01:00Z' }

@@ -37,33 +37,103 @@ export function parentPath(path: string): string {
   return path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '.'
 }
 export interface Chamber {
-  path: string; position: Point3; radius: number; parent: string | null; files: DirectoryEntry[]
+  path: string; position: Point3; radius: number; parent: string | null; files: DirectoryEntry[]; beneath: number
 }
+
+/** The folder a chamber stands for: everything inside a `.git` store folds into that one chamber. */
+function chamberOf(path: string): string {
+  const inner = path.startsWith('.git/') ? 0 : path.indexOf('/.git/')
+  return inner < 0 ? path : path.slice(0, inner === 0 ? 4 : inner + 5)
+}
+
+/** One chamber per folder (a `.git` store is one chamber holding all its files), laid out as a branching
+ * tree: the root folder at the centre, each folder's children fanned outward from it at chamber-sized spacing.
+ * Position depends only on the folder structure, so replay and file changes keep every chamber in place;
+ * size follows the files a folder holds. One pass over the entries, so large trees stay cheap (F122). */
 export function buildChambers(project: WorkProject): Chamber[] {
-  const folders = project.nodes.filter((node) => node.kind === 'directory')
-  const children = new Map<string, string[]>()
-  for (const folder of folders) {
-    if (folder.path === '.') continue
-    const parent = parentPath(folder.path)
-    children.set(parent, [...(children.get(parent) ?? []), folder.path])
+  const children = new Map<string, string[]>(), files = new Map<string, DirectoryEntry[]>()
+  const folders = project.nodes.filter((node) => node.kind === 'directory' && chamberOf(node.path) === node.path)
+  for (const node of project.nodes) {
+    if (node.path === '.') continue
+    if (node.kind === 'directory') {
+      if (chamberOf(node.path) !== node.path) continue
+      const parent = parentPath(node.path), kids = children.get(parent)
+      if (kids) kids.push(node.path)
+      else children.set(parent, [node.path])
+    } else {
+      const parent = chamberOf(parentPath(node.path)), held = files.get(parent)
+      if (held) held.push(node)
+      else files.set(parent, [node])
+    }
   }
-  const positions = new Map<string, Point3>()
-  let leaf = 0
-  const visit = (path: string, depth: number): number => {
-    const descendants = (children.get(path) ?? []).sort().map((child) => visit(child, depth + 1))
-    const y = descendants.length ? descendants.reduce((a, b) => a + b, 0) / descendants.length : leaf++ * 2.4
-    positions.set(path, [y, -depth * 3.2, (identitySeed(path) - 0.5) * 1.8])
-    return y
+  for (const kids of children.values()) kids.sort()
+  // Each folder fans its children around itself, weighted by their leaf folders, at the distance that keeps
+  // siblings apart; a relaxation pass on a spatial grid then separates any cousins that still touch.
+  const SIZE = 1.7, CLEAR = 2 * SIZE + 0.5
+  const leaves = new Map<string, number>(), beneath = new Map<string, number>()
+  const count = (path: string): void => {
+    const kids = children.get(path) ?? []
+    kids.forEach(count)
+    leaves.set(path, kids.length ? kids.reduce((sum, kid) => sum + leaves.get(kid)!, 0) : 1)
+    beneath.set(path, (files.get(path)?.length ?? 0) + kids.reduce((sum, kid) => sum + beneath.get(kid)!, 0))
   }
-  visit('.', 0)
-  const center = Math.max(0, leaf - 1) * 1.2
-  const verticalCenter = Math.min(0, ...[...positions.values()].map((point) => point[1])) / 2
+  count('.')
+  const points = new Map<string, [number, number]>()
+  const place = (path: string, x: number, y: number, facing: number, root: boolean): void => {
+    points.set(path, [x, y])
+    const kids = children.get(path) ?? []
+    if (!kids.length) return
+    const sweep = root ? Math.PI * 2 : Math.min(Math.PI, 0.95 * kids.length)
+    const total = leaves.get(path)!
+    let cursor = facing - sweep / 2
+    const directions = kids.map((kid) => {
+      const share = sweep * leaves.get(kid)! / total, angle = cursor + share / 2
+      cursor += share
+      return angle
+    })
+    const closest = kids.length < 2 ? Math.PI : Math.min(...directions.slice(1).map((angle, i) => angle - directions[i]),
+      root ? directions[0] + Math.PI * 2 - directions.at(-1)! : Math.PI)
+    const reach = Math.max(CLEAR, CLEAR / (2 * Math.sin(Math.min(Math.PI, closest) / 2)))
+    kids.forEach((kid, i) => place(kid, x + Math.cos(directions[i]) * reach, y + Math.sin(directions[i]) * reach, directions[i], false))
+  }
+  place('.', 0, 0, -Math.PI / 2, true)
+  const paths = [...points.keys()]
+  for (let pass = 0; pass < 40; pass++) {
+    const grid = new Map<string, string[]>()
+    const cell = (value: number) => Math.floor(value / CLEAR)
+    for (const path of paths) {
+      const [x, y] = points.get(path)!, key = `${cell(x)},${cell(y)}`
+      const bucket = grid.get(key)
+      if (bucket) bucket.push(path)
+      else grid.set(key, [path])
+    }
+    let moved = false
+    for (const path of paths) {
+      const [x, y] = points.get(path)!
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+        for (const other of grid.get(`${cell(x) + dx},${cell(y) + dy}`) ?? []) {
+          if (other <= path) continue
+          const a = points.get(path)!, b = points.get(other)!
+          const gapX = b[0] - a[0], gapY = b[1] - a[1], distance = Math.hypot(gapX, gapY) || 1e-6
+          if (distance >= CLEAR) continue
+          const push = (CLEAR - distance) / 2 + 0.01, ux = gapX / distance, uy = gapY / distance
+          if (path !== '.') { a[0] -= ux * push; a[1] -= uy * push }
+          if (other !== '.') { b[0] += ux * push; b[1] += uy * push }
+          moved = true
+        }
+      }
+    }
+    if (!moved) break
+  }
+  // Centre the layout on its own extent so the camera frames the whole farm.
+  const xs = [...points.values()].map(([x]) => x), ys = [...points.values()].map(([, y]) => y)
+  const middle = [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2]
+  const positions = new Map<string, Point3>([...points].map(([path, [x, y]]) =>
+    [path, [x - middle[0], y - middle[1], path === '.' ? 0 : (identitySeed(path) - 0.5) * 0.9]]))
   return folders.map(({ path }) => {
-    const point = positions.get(path) ?? [0, 0, 0]
-    const files = project.nodes.filter((node) => node.kind !== 'directory' && parentPath(node.path) === path)
-    return { path, parent: path === '.' ? null : parentPath(path),
-      position: [point[0] - center, point[1] - verticalCenter, point[2]], files,
-      radius: 0.64 + Math.min(0.45, Math.sqrt(files.length) * 0.04) }
+    const held = files.get(path) ?? []
+    return { path, parent: path === '.' ? null : parentPath(path), position: positions.get(path) ?? [0, 0, 0],
+      files: held, beneath: beneath.get(path) ?? 0, radius: 1.05 + Math.min(0.65, Math.sqrt(held.length) * 0.16) }
   })
 }
 
