@@ -129,7 +129,8 @@
     "harness/verification/m3co/receipts/overwhelm.json": "M3CO packet evidence: the walk script, the coverage report, captures and receipts; no feature behavior.",
     "harness/verification/m3co/receipts/walk.json": "M3CO packet evidence: the walk script, the coverage report, captures and receipts; no feature behavior.",
     "harness/verification/m3co/walk.mjs": "M3CO packet evidence: the walk script, the coverage report, captures and receipts; no feature behavior.",
-    "harness/verification/m3co/receipts/cleanup.json": "M3CO packet evidence: the walk script, the coverage report, captures and receipts; no feature behavior."
+    "harness/verification/m3co/receipts/cleanup.json": "M3CO packet evidence: the walk script, the coverage report, captures and receipts; no feature behavior.",
+    "harness/verification/m3co/SHA256SUMS": "M3CO packet evidence: the hashes of the report and captures; no feature behavior."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
