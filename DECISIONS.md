@@ -3633,13 +3633,19 @@ no revision, it records the never veto. The near-miss row is + and ×!; its
 duplicate more-options path was removed.
 ## M3VL — Reflective roots and glass memories [P2.5]
 
-PRECEDENT: PLAN M3VL, F115, M3VZ, D.2 107/109/110 and the committed plates.
-The owner's subsequent PLAN grants replace Cartesian placement with inverse-injection
-radius, family/creation angle and revision depth. Lineage and shared thread/keyword
-links support the filaments; recorded curator targets support streams and ghosts.
-Roots bundle by project, retain actual fork junctions, and add one tapered capillary
-per recorded file touch. The read-only feed projects successful journaled file tools
-and worker presence paths; opaque shell I/O is not guessed. Spend width, time depth,
-matte stopped roots, replay and Farm remain intact. Footer legends name the bindings.
-Chrome reflections and full/efficient glass emulate the committed plates; comparisons
-and live recordings remain the acceptance evidence, with the owner's eye at audit.
+PRECEDENT: PLAN M3VL (grants; send-back 1), F115, M3VZ, D.2 107/109/110 and the committed plates.
+Palace: inverse-injection radius, family/creation angle and revision depth replace Cartesian
+placement; filaments are lineage plus the three nearest links sharing an origin thread or keyword;
+recorded curator visits draw streams that bow through the central mass, a repeated traversal
+fanning into its bundle, with the ghost on the latest. Send-back 1 lit it: glass spheres glow from
+within and carry a bright rim, both scaled by injections; barely-injected memories are points of
+light; streams and event particles are HDR light carried by a WebGPU bloom pass; one HDR studio map
+gives glass and chrome real reflections. Similarity edges as filaments were tried and dropped (739
+lines on a 42-memory Palace), as were all-pairs family links (quadratic in a thread's memories).
+Roots: a project's roots merge into a trunk and forks diverge from their junction as limbs. Each
+turn branches off its root at its recorded moment, each tool call off its turn, each file touch off
+the latest call before it. The feed projects only turn and tool-call times, never content: a
+thread's turns are its run starts, a worker's are its model responses. Root width follows spend so
+far; branch width and reach follow the recorded work beneath; dry roots are desaturated satin; the
+view centres and fits the river. Farm is unchanged. Side-by-sides and live recordings are the
+acceptance evidence, with the owner's eye at audit.
