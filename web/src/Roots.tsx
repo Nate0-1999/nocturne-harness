@@ -1,5 +1,6 @@
+import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
-import { Box3, CatmullRomCurve3, Group, TubeGeometry, Vector3 } from 'three'
+import { AdditiveBlending, Box3, CatmullRomCurve3, Group, Mesh, MeshBasicMaterial, NormalBlending, TubeGeometry, Vector3 } from 'three'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import { agentColor, buildRootPaths, buildRootRiver, rootSpendShares, rootWorkTimes, type DetailTier, type Point3, type RootBranch, type VisualizationSnapshot, type WorkAgent } from './visualization'
 import { ChromeEnvironment } from './ChromeEnvironment'
@@ -16,18 +17,34 @@ export function Roots({ data, agents, selectedId, tier, pick, newest }: {
   const latest = [...agents].sort((a, b) => b.started_at.localeCompare(a.started_at))[0]?.id
   const spendScale = Math.max(0.01, ...agents.map((agent) => Number(agent.cost_usd ?? 0)))
   // Frame what was recorded: centre the drawn river on the camera's target and fit it to the view.
-  const river = useRef<Group>(null)
+  // When the river grows, the framing eases to its new extent rather than jumping.
+  const river = useRef<Group>(null), framing = useRef<{ from: [Vector3, number]; to: [Vector3, number]; start: number } | null>(null)
+  const invalidate = useThree((state) => state.invalidate)
   const extent = JSON.stringify([...curves.values()].map((points) => [points[0], points.at(-1)]))
   useLayoutEffect(() => {
     const group = river.current
     if (group === null) return
+    const was: [Vector3, number] = [group.position.clone(), group.scale.x]
     group.position.set(0, 0, 0)
     group.scale.setScalar(1)
     const box = new Box3().setFromObject(group), size = box.getSize(new Vector3()), center = box.getCenter(new Vector3())
     const scale = Math.min(1.25, 20 / Math.max(1e-3, size.x), 8 / Math.max(1e-3, size.y))
-    group.scale.setScalar(scale)
-    group.position.set(-center.x * scale, -center.y * scale, -center.z * scale)
-  }, [extent])
+    const target: [Vector3, number] = [center.multiplyScalar(-scale), scale]
+    const first = was[1] === 1 && was[0].lengthSq() === 0
+    group.scale.setScalar(first ? scale : was[1])
+    group.position.copy(first ? target[0] : was[0])
+    framing.current = first ? null : { from: was, to: target, start: performance.now() }
+    invalidate()
+  }, [extent, invalidate])
+  useFrame(({ invalidate: frame }) => {
+    const group = river.current, move = framing.current
+    if (!group || !move) return
+    const t = Math.min(1, (performance.now() - move.start) / 600), eased = t * t * (3 - 2 * t)
+    group.position.lerpVectors(move.from[0], move.to[0], eased)
+    group.scale.setScalar(move.from[1] + (move.to[1] - move.from[1]) * eased)
+    if (t >= 1) framing.current = null
+    frame()
+  })
   return <>
     <ChromeEnvironment />
     <color attach="background" args={[SHEET ? '#f5f5f2' : '#030509']} />
@@ -84,13 +101,50 @@ function RootRiver({ agent, points, moments, begin, end, radius, spent, tier, se
       parts.forEach((part) => part.dispose())
       return geometry
     }
-    return { chrome: merged(tubes(['turn', 'tool'])), capillaries: merged(tubes(['file'])) }
+    // Stable identity per branch: its kind and its order in time within that kind.
+    const seen = { turn: 0, tool: 0, file: 0 }
+    const identities = branches.map((branch, index) => ({ key: `${branch.kind}:${seen[branch.kind]++}`, points: branch.points,
+      width: Math.max({ turn: 0.016, tool: 0.009, file: 0.0045 }[branch.kind], widths[index]) }))
+    return { chrome: merged(tubes(['turn', 'tool'])), capillaries: merged(tubes(['file'])), identities }
     // The key carries every input; recorded data arrives as fresh objects on each feed refresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
   useEffect(() => () => { geometry.chrome?.dispose(); geometry.capillaries?.dispose() }, [geometry])
+  // A branch that appears while you watch grows: light runs from its junction to its tip, then fades.
+  const growth = useRef<Group>(null), born = useRef<Set<string> | null>(null)
+  const invalidate = useThree((state) => state.invalidate)
+  useLayoutEffect(() => {
+    const group = growth.current
+    if (!group) return
+    if (born.current === null) { born.current = new Set(geometry.identities.map((branch) => branch.key)); return }
+    for (const branch of geometry.identities) {
+      if (born.current.has(branch.key)) continue
+      born.current.add(branch.key)
+      const light = new Mesh(taperedTube(branch.points, branch.width * 1.9, 24, 6, tip(0.3)),
+        // White light on the stage's black ground; a cobalt sweep on the sheet's white ground.
+        new MeshBasicMaterial({ color: SHEET ? '#2f5bff' : '#dbe7ff', transparent: true, opacity: 0.95,
+          blending: SHEET ? NormalBlending : AdditiveBlending, depthWrite: false, toneMapped: false }))
+      light.userData.start = performance.now()
+      light.geometry.setDrawRange(0, 0)
+      group.add(light)
+    }
+    invalidate()
+  }, [geometry, invalidate])
+  useFrame(({ invalidate: frame }) => {
+    const group = growth.current
+    if (!group?.children.length) return
+    for (const light of [...group.children] as Mesh<TubeGeometry, MeshBasicMaterial>[]) {
+      const t = (performance.now() - light.userData.start) / 1600
+      const count = light.geometry.index!.count
+      light.geometry.setDrawRange(0, Math.floor(Math.min(1, t / 0.55) * count / 3) * 3)
+      light.material.opacity = 0.95 * Math.min(1, Math.max(0, (1 - t) / 0.45))
+      if (t >= 1) { group.remove(light); light.geometry.dispose(); light.material.dispose() }
+    }
+    frame()
+  })
   const click = (event: { stopPropagation: () => void }) => { event.stopPropagation(); pick() }
   return <group name={`river:${agent.id}`}>
+    <group ref={growth} />
     {geometry.chrome && <mesh geometry={geometry.chrome} onClick={click}><ChromeMaterial stopped={stopped} selected={selected} /></mesh>}
     {geometry.capillaries && <mesh geometry={geometry.capillaries} onClick={click}>
       <meshPhysicalMaterial color={stopped ? SHEET ? '#5a5f68' : '#8a8f99' : agentColor(agent.id)} metalness={stopped ? 0.2 : 0.85}
