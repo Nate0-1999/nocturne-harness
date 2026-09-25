@@ -345,16 +345,16 @@ function NebulaMemoryBody({ body, tier, onSelect }: { body: NebulaBody; tier: Ne
   const material = useMemo(() => {
     const base = new Color(red, green, blue)
     const next = new MeshPhysicalNodeMaterial({
-      metalness: 0.65,
+      metalness: 0.9,
       roughness: 0.035,
       clearcoat: 1,
       clearcoatRoughness: 0.025,
-      transmission: tier === 'full' ? 0.72 : 0,
+      transmission: tier === 'full' ? 0.35 : 0,
       thickness: 0.8,
       ior: 1.8,
       transparent: tier === 'efficient',
       opacity: tier === 'efficient' ? 0.64 : 1,
-      envMapIntensity: 4,
+      envMapIntensity: 8,
     })
     next.colorNode = tslColor(base.clone().lerp(new Color('#dbe5ee'), 0.2))
     next.emissive.copy(base)
