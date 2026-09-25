@@ -1,0 +1,35 @@
+[
+  {
+    "status": 200,
+    "body": {
+      "run_uid": "01M3BD3V3N5FZ9B0RRXYY2RWPP",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "trigger": "manual",
+      "status": "completed",
+      "admitted_writes_snapshot": 33,
+      "pressure_snapshot": 0,
+      "verdict_count": 0,
+      "queued_count": 0,
+      "executed_count": 0,
+      "report": {
+        "format": "nocturne.palace-health",
+        "version": "1",
+        "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+        "as_of": "2026-09-25T04:27:56.935462Z",
+        "corpus_revision": "c180f796cae70f0d15ae28fa10807254459a85dfedc78221175f556ad9236b43",
+        "active_units": 33,
+        "clusters": [],
+        "findings": [],
+        "keyword_coverage_percent": "100.000",
+        "stats_delta": {
+          "merges": 0,
+          "revisions": 86,
+          "retirements": 0,
+          "reinforcements": 0
+        }
+      },
+      "error": null,
+      "completed_at": "2026-09-25T04:27:57.605143Z"
+    }
+  }
+]

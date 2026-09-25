@@ -1,0 +1,940 @@
+[
+  {
+    "status": 200,
+    "body": {
+      "run_uid": "01M3BDK4P4YS213RHY98WMA6CA",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "trigger": "manual",
+      "status": "completed",
+      "admitted_writes_snapshot": 82,
+      "pressure_snapshot": 0,
+      "verdict_count": 4,
+      "queued_count": 4,
+      "executed_count": 0,
+      "report": {
+        "format": "nocturne.palace-health",
+        "version": "1",
+        "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+        "as_of": "2026-09-25T04:36:18.263695Z",
+        "corpus_revision": "3b8316dad74d678cefad8c2b0bf510a63861686ff2088faeba746a1f75e71159",
+        "active_units": 42,
+        "clusters": [
+          [
+            "15c6202c-1bee-4416-9ba2-4620f0b15c02",
+            "6ee55f87-beb0-468f-b9b2-0bccf93f88e6"
+          ]
+        ],
+        "findings": [
+          {
+            "ordinal": 0,
+            "kind": "duplicate",
+            "memory_ids": [
+              "15c6202c-1bee-4416-9ba2-4620f0b15c02",
+              "6ee55f87-beb0-468f-b9b2-0bccf93f88e6"
+            ],
+            "evidence": {
+              "cosine": "0.919829947",
+              "memories": [
+                {
+                  "pin": false,
+                  "body": "Floodplains store the flood peak.",
+                  "kind": "fact",
+                  "label": "VL24C Floodplains store the flood peak",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 1,
+                    "never_kills": 0,
+                    "last_injected_at": "2026-09-25T04:33:14.379652+00:00"
+                  },
+                  "keywords": [
+                    "sourdough",
+                    "baking"
+                  ],
+                  "revision": 2,
+                  "memory_id": "15c6202c-1bee-4416-9ba2-4620f0b15c02",
+                  "created_at": "2026-09-25T04:32:47.332970+00:00",
+                  "updated_at": "2026-09-25T04:33:14.374704+00:00"
+                },
+                {
+                  "pin": false,
+                  "body": "Floodplains store peak flow.",
+                  "kind": "fact",
+                  "label": "VL24C Floodplains store peak flow",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 1,
+                    "never_kills": 0,
+                    "last_injected_at": "2026-09-25T04:33:14.379652+00:00"
+                  },
+                  "keywords": [
+                    "river",
+                    "discharge"
+                  ],
+                  "revision": 2,
+                  "memory_id": "6ee55f87-beb0-468f-b9b2-0bccf93f88e6",
+                  "created_at": "2026-09-25T04:32:32.273229+00:00",
+                  "updated_at": "2026-09-25T04:33:14.374704+00:00"
+                }
+              ]
+            },
+            "fingerprint": "52008fc3fb3e9fdc1548ace8a65ca182c2a2fe3e40cb838df21383b67773701b"
+          },
+          {
+            "ordinal": 1,
+            "kind": "keyword",
+            "memory_ids": [
+              "5230718c-b128-459d-b850-0cdce0820e58"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Summer pruning slows vigorous growth.",
+                "kind": "fact",
+                "label": "VL24C Summer pruning slows vigorous growth",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "orchard"
+                ],
+                "revision": 1,
+                "memory_id": "5230718c-b128-459d-b850-0cdce0820e58",
+                "created_at": "2026-09-25T04:32:46.071071+00:00",
+                "updated_at": "2026-09-25T04:32:46.071071+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "fca2beb6b017b28b4dec18583a58d07fab0894c0ca4b46a2e1506ff92c36666d"
+          },
+          {
+            "ordinal": 2,
+            "kind": "keyword",
+            "memory_ids": [
+              "af5500c4-22f3-46a0-9faf-9ec5fc241b0f"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Seeing limits planetary detail more than aperture.",
+                "kind": "fact",
+                "label": "VL24C Seeing limits planetary detail more than",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "Telescope"
+                ],
+                "revision": 1,
+                "memory_id": "af5500c4-22f3-46a0-9faf-9ec5fc241b0f",
+                "created_at": "2026-09-25T04:32:46.423875+00:00",
+                "updated_at": "2026-09-25T04:32:46.423875+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "810757c4628dc74d5827f0cf040a369a1b447cc28c09e14631c2b5dc8bf20b52"
+          },
+          {
+            "ordinal": 3,
+            "kind": "keyword",
+            "memory_ids": [
+              "d5b56548-c9e9-4311-bfc7-59b9487337bd"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Voice leading favors the smallest motion.",
+                "kind": "fact",
+                "label": "VL24C Voice leading favors the smallest motion",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "harmony"
+                ],
+                "revision": 1,
+                "memory_id": "d5b56548-c9e9-4311-bfc7-59b9487337bd",
+                "created_at": "2026-09-25T04:32:46.874918+00:00",
+                "updated_at": "2026-09-25T04:32:46.874918+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "96805ea4932e71fe844a5c1d926127a2ecd46b6519e32b2f099e05ac161b56aa"
+          }
+        ],
+        "keyword_coverage_percent": "92.857",
+        "stats_delta": {
+          "merges": 0,
+          "revisions": 58,
+          "retirements": 0,
+          "reinforcements": 0
+        }
+      },
+      "error": null,
+      "completed_at": "2026-09-25T04:36:34.308310Z"
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "run_uid": "01M3BHETPJ1F56QZ4EGNQE3AEV",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "trigger": "manual",
+      "status": "completed",
+      "admitted_writes_snapshot": 84,
+      "pressure_snapshot": 0,
+      "verdict_count": 6,
+      "queued_count": 2,
+      "executed_count": 0,
+      "report": {
+        "format": "nocturne.palace-health",
+        "version": "1",
+        "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+        "as_of": "2026-09-25T05:43:51.271138Z",
+        "corpus_revision": "2b075def7626330b01edaf155b87a1a947b206f861bf66395b90f2a7e5ec8379",
+        "active_units": 44,
+        "clusters": [
+          [
+            "15c6202c-1bee-4416-9ba2-4620f0b15c02",
+            "6ee55f87-beb0-468f-b9b2-0bccf93f88e6"
+          ]
+        ],
+        "findings": [
+          {
+            "ordinal": 0,
+            "kind": "duplicate",
+            "memory_ids": [
+              "15c6202c-1bee-4416-9ba2-4620f0b15c02",
+              "6ee55f87-beb0-468f-b9b2-0bccf93f88e6"
+            ],
+            "evidence": {
+              "cosine": "0.919829947",
+              "memories": [
+                {
+                  "pin": false,
+                  "body": "Floodplains store the flood peak.",
+                  "kind": "fact",
+                  "label": "VL24C Floodplains store the flood peak",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 1,
+                    "never_kills": 0,
+                    "last_injected_at": "2026-09-25T04:33:14.379652+00:00"
+                  },
+                  "keywords": [
+                    "sourdough",
+                    "baking"
+                  ],
+                  "revision": 2,
+                  "memory_id": "15c6202c-1bee-4416-9ba2-4620f0b15c02",
+                  "created_at": "2026-09-25T04:32:47.332970+00:00",
+                  "updated_at": "2026-09-25T04:33:14.374704+00:00"
+                },
+                {
+                  "pin": false,
+                  "body": "Floodplains store peak flow.",
+                  "kind": "fact",
+                  "label": "VL24C Floodplains store peak flow",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 1,
+                    "never_kills": 0,
+                    "last_injected_at": "2026-09-25T04:33:14.379652+00:00"
+                  },
+                  "keywords": [
+                    "river",
+                    "discharge"
+                  ],
+                  "revision": 2,
+                  "memory_id": "6ee55f87-beb0-468f-b9b2-0bccf93f88e6",
+                  "created_at": "2026-09-25T04:32:32.273229+00:00",
+                  "updated_at": "2026-09-25T04:33:14.374704+00:00"
+                }
+              ]
+            },
+            "fingerprint": "52008fc3fb3e9fdc1548ace8a65ca182c2a2fe3e40cb838df21383b67773701b"
+          },
+          {
+            "ordinal": 1,
+            "kind": "keyword",
+            "memory_ids": [
+              "5230718c-b128-459d-b850-0cdce0820e58"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Summer pruning slows vigorous growth.",
+                "kind": "fact",
+                "label": "VL24C Summer pruning slows vigorous growth",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "orchard"
+                ],
+                "revision": 1,
+                "memory_id": "5230718c-b128-459d-b850-0cdce0820e58",
+                "created_at": "2026-09-25T04:32:46.071071+00:00",
+                "updated_at": "2026-09-25T04:32:46.071071+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "fca2beb6b017b28b4dec18583a58d07fab0894c0ca4b46a2e1506ff92c36666d"
+          },
+          {
+            "ordinal": 2,
+            "kind": "keyword",
+            "memory_ids": [
+              "74387e0d-5eb2-4454-93a7-73dd3234c6fd"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Modulation pivots on a shared chord.",
+                "kind": "fact",
+                "label": "VL24C Modulation pivots on a shared chord",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "Harmony"
+                ],
+                "revision": 1,
+                "memory_id": "74387e0d-5eb2-4454-93a7-73dd3234c6fd",
+                "created_at": "2026-09-25T05:43:41.633463+00:00",
+                "updated_at": "2026-09-25T05:43:41.633463+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "c5f5c755849c11549a47d68d3197796e2f168438fe314b18119e7a09222f92e0"
+          },
+          {
+            "ordinal": 3,
+            "kind": "keyword",
+            "memory_ids": [
+              "af5500c4-22f3-46a0-9faf-9ec5fc241b0f"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Seeing limits planetary detail more than aperture.",
+                "kind": "fact",
+                "label": "VL24C Seeing limits planetary detail more than",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "Telescope"
+                ],
+                "revision": 1,
+                "memory_id": "af5500c4-22f3-46a0-9faf-9ec5fc241b0f",
+                "created_at": "2026-09-25T04:32:46.423875+00:00",
+                "updated_at": "2026-09-25T04:32:46.423875+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "810757c4628dc74d5827f0cf040a369a1b447cc28c09e14631c2b5dc8bf20b52"
+          },
+          {
+            "ordinal": 4,
+            "kind": "keyword",
+            "memory_ids": [
+              "d4ff1a81-0c5c-4f2a-b341-a42ef14ff3c5"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Cross-pollination needs a compatible variety.",
+                "kind": "fact",
+                "label": "VL24C Cross-pollination needs a compatible var",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "orchard"
+                ],
+                "revision": 1,
+                "memory_id": "d4ff1a81-0c5c-4f2a-b341-a42ef14ff3c5",
+                "created_at": "2026-09-25T05:43:42.577151+00:00",
+                "updated_at": "2026-09-25T05:43:42.577151+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "3672ae830515c6f2be7257d3571b48e8bcc96a36a6dc7fbdbe27801f96c9a371"
+          },
+          {
+            "ordinal": 5,
+            "kind": "keyword",
+            "memory_ids": [
+              "d5b56548-c9e9-4311-bfc7-59b9487337bd"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Voice leading favors the smallest motion.",
+                "kind": "fact",
+                "label": "VL24C Voice leading favors the smallest motion",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "harmony"
+                ],
+                "revision": 1,
+                "memory_id": "d5b56548-c9e9-4311-bfc7-59b9487337bd",
+                "created_at": "2026-09-25T04:32:46.874918+00:00",
+                "updated_at": "2026-09-25T04:32:46.874918+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "96805ea4932e71fe844a5c1d926127a2ecd46b6519e32b2f099e05ac161b56aa"
+          }
+        ],
+        "keyword_coverage_percent": "88.636",
+        "stats_delta": {
+          "merges": 0,
+          "revisions": 2,
+          "retirements": 0,
+          "reinforcements": 0
+        }
+      },
+      "error": null,
+      "completed_at": "2026-09-25T05:44:13.907134Z"
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "run_uid": "01M3BHHS2EPZ3SN9C7QFEAC70H",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "trigger": "manual",
+      "status": "completed",
+      "admitted_writes_snapshot": 84,
+      "pressure_snapshot": 0,
+      "verdict_count": 6,
+      "queued_count": 0,
+      "executed_count": 0,
+      "report": {
+        "format": "nocturne.palace-health",
+        "version": "1",
+        "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+        "as_of": "2026-09-25T05:45:27.903702Z",
+        "corpus_revision": "2b075def7626330b01edaf155b87a1a947b206f861bf66395b90f2a7e5ec8379",
+        "active_units": 44,
+        "clusters": [
+          [
+            "15c6202c-1bee-4416-9ba2-4620f0b15c02",
+            "6ee55f87-beb0-468f-b9b2-0bccf93f88e6"
+          ]
+        ],
+        "findings": [
+          {
+            "ordinal": 0,
+            "kind": "duplicate",
+            "memory_ids": [
+              "15c6202c-1bee-4416-9ba2-4620f0b15c02",
+              "6ee55f87-beb0-468f-b9b2-0bccf93f88e6"
+            ],
+            "evidence": {
+              "cosine": "0.919829947",
+              "memories": [
+                {
+                  "pin": false,
+                  "body": "Floodplains store the flood peak.",
+                  "kind": "fact",
+                  "label": "VL24C Floodplains store the flood peak",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 1,
+                    "never_kills": 0,
+                    "last_injected_at": "2026-09-25T04:33:14.379652+00:00"
+                  },
+                  "keywords": [
+                    "sourdough",
+                    "baking"
+                  ],
+                  "revision": 2,
+                  "memory_id": "15c6202c-1bee-4416-9ba2-4620f0b15c02",
+                  "created_at": "2026-09-25T04:32:47.332970+00:00",
+                  "updated_at": "2026-09-25T04:33:14.374704+00:00"
+                },
+                {
+                  "pin": false,
+                  "body": "Floodplains store peak flow.",
+                  "kind": "fact",
+                  "label": "VL24C Floodplains store peak flow",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 1,
+                    "never_kills": 0,
+                    "last_injected_at": "2026-09-25T04:33:14.379652+00:00"
+                  },
+                  "keywords": [
+                    "river",
+                    "discharge"
+                  ],
+                  "revision": 2,
+                  "memory_id": "6ee55f87-beb0-468f-b9b2-0bccf93f88e6",
+                  "created_at": "2026-09-25T04:32:32.273229+00:00",
+                  "updated_at": "2026-09-25T04:33:14.374704+00:00"
+                }
+              ]
+            },
+            "fingerprint": "52008fc3fb3e9fdc1548ace8a65ca182c2a2fe3e40cb838df21383b67773701b"
+          },
+          {
+            "ordinal": 1,
+            "kind": "keyword",
+            "memory_ids": [
+              "5230718c-b128-459d-b850-0cdce0820e58"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Summer pruning slows vigorous growth.",
+                "kind": "fact",
+                "label": "VL24C Summer pruning slows vigorous growth",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "orchard"
+                ],
+                "revision": 1,
+                "memory_id": "5230718c-b128-459d-b850-0cdce0820e58",
+                "created_at": "2026-09-25T04:32:46.071071+00:00",
+                "updated_at": "2026-09-25T04:32:46.071071+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "fca2beb6b017b28b4dec18583a58d07fab0894c0ca4b46a2e1506ff92c36666d"
+          },
+          {
+            "ordinal": 2,
+            "kind": "keyword",
+            "memory_ids": [
+              "74387e0d-5eb2-4454-93a7-73dd3234c6fd"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Modulation pivots on a shared chord.",
+                "kind": "fact",
+                "label": "VL24C Modulation pivots on a shared chord",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "Harmony"
+                ],
+                "revision": 1,
+                "memory_id": "74387e0d-5eb2-4454-93a7-73dd3234c6fd",
+                "created_at": "2026-09-25T05:43:41.633463+00:00",
+                "updated_at": "2026-09-25T05:43:41.633463+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "c5f5c755849c11549a47d68d3197796e2f168438fe314b18119e7a09222f92e0"
+          },
+          {
+            "ordinal": 3,
+            "kind": "keyword",
+            "memory_ids": [
+              "af5500c4-22f3-46a0-9faf-9ec5fc241b0f"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Seeing limits planetary detail more than aperture.",
+                "kind": "fact",
+                "label": "VL24C Seeing limits planetary detail more than",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "Telescope"
+                ],
+                "revision": 1,
+                "memory_id": "af5500c4-22f3-46a0-9faf-9ec5fc241b0f",
+                "created_at": "2026-09-25T04:32:46.423875+00:00",
+                "updated_at": "2026-09-25T04:32:46.423875+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "810757c4628dc74d5827f0cf040a369a1b447cc28c09e14631c2b5dc8bf20b52"
+          },
+          {
+            "ordinal": 4,
+            "kind": "keyword",
+            "memory_ids": [
+              "d4ff1a81-0c5c-4f2a-b341-a42ef14ff3c5"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Cross-pollination needs a compatible variety.",
+                "kind": "fact",
+                "label": "VL24C Cross-pollination needs a compatible var",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "orchard"
+                ],
+                "revision": 1,
+                "memory_id": "d4ff1a81-0c5c-4f2a-b341-a42ef14ff3c5",
+                "created_at": "2026-09-25T05:43:42.577151+00:00",
+                "updated_at": "2026-09-25T05:43:42.577151+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "3672ae830515c6f2be7257d3571b48e8bcc96a36a6dc7fbdbe27801f96c9a371"
+          },
+          {
+            "ordinal": 5,
+            "kind": "keyword",
+            "memory_ids": [
+              "d5b56548-c9e9-4311-bfc7-59b9487337bd"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Voice leading favors the smallest motion.",
+                "kind": "fact",
+                "label": "VL24C Voice leading favors the smallest motion",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "harmony"
+                ],
+                "revision": 1,
+                "memory_id": "d5b56548-c9e9-4311-bfc7-59b9487337bd",
+                "created_at": "2026-09-25T04:32:46.874918+00:00",
+                "updated_at": "2026-09-25T04:32:46.874918+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "96805ea4932e71fe844a5c1d926127a2ecd46b6519e32b2f099e05ac161b56aa"
+          }
+        ],
+        "keyword_coverage_percent": "88.636",
+        "stats_delta": {
+          "merges": 0,
+          "revisions": 0,
+          "retirements": 0,
+          "reinforcements": 0
+        }
+      },
+      "error": null,
+      "completed_at": "2026-09-25T05:45:50.082643Z"
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "run_uid": "01M3BHMAAQCYYBYWAZJTECAPJ1",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "trigger": "manual",
+      "status": "completed",
+      "admitted_writes_snapshot": 84,
+      "pressure_snapshot": 0,
+      "verdict_count": 6,
+      "queued_count": 0,
+      "executed_count": 0,
+      "report": {
+        "format": "nocturne.palace-health",
+        "version": "1",
+        "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+        "as_of": "2026-09-25T05:46:51.192387Z",
+        "corpus_revision": "2b075def7626330b01edaf155b87a1a947b206f861bf66395b90f2a7e5ec8379",
+        "active_units": 44,
+        "clusters": [
+          [
+            "15c6202c-1bee-4416-9ba2-4620f0b15c02",
+            "6ee55f87-beb0-468f-b9b2-0bccf93f88e6"
+          ]
+        ],
+        "findings": [
+          {
+            "ordinal": 0,
+            "kind": "duplicate",
+            "memory_ids": [
+              "15c6202c-1bee-4416-9ba2-4620f0b15c02",
+              "6ee55f87-beb0-468f-b9b2-0bccf93f88e6"
+            ],
+            "evidence": {
+              "cosine": "0.919829947",
+              "memories": [
+                {
+                  "pin": false,
+                  "body": "Floodplains store the flood peak.",
+                  "kind": "fact",
+                  "label": "VL24C Floodplains store the flood peak",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 1,
+                    "never_kills": 0,
+                    "last_injected_at": "2026-09-25T04:33:14.379652+00:00"
+                  },
+                  "keywords": [
+                    "sourdough",
+                    "baking"
+                  ],
+                  "revision": 2,
+                  "memory_id": "15c6202c-1bee-4416-9ba2-4620f0b15c02",
+                  "created_at": "2026-09-25T04:32:47.332970+00:00",
+                  "updated_at": "2026-09-25T04:33:14.374704+00:00"
+                },
+                {
+                  "pin": false,
+                  "body": "Floodplains store peak flow.",
+                  "kind": "fact",
+                  "label": "VL24C Floodplains store peak flow",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 1,
+                    "never_kills": 0,
+                    "last_injected_at": "2026-09-25T04:33:14.379652+00:00"
+                  },
+                  "keywords": [
+                    "river",
+                    "discharge"
+                  ],
+                  "revision": 2,
+                  "memory_id": "6ee55f87-beb0-468f-b9b2-0bccf93f88e6",
+                  "created_at": "2026-09-25T04:32:32.273229+00:00",
+                  "updated_at": "2026-09-25T04:33:14.374704+00:00"
+                }
+              ]
+            },
+            "fingerprint": "52008fc3fb3e9fdc1548ace8a65ca182c2a2fe3e40cb838df21383b67773701b"
+          },
+          {
+            "ordinal": 1,
+            "kind": "keyword",
+            "memory_ids": [
+              "5230718c-b128-459d-b850-0cdce0820e58"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Summer pruning slows vigorous growth.",
+                "kind": "fact",
+                "label": "VL24C Summer pruning slows vigorous growth",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "orchard"
+                ],
+                "revision": 1,
+                "memory_id": "5230718c-b128-459d-b850-0cdce0820e58",
+                "created_at": "2026-09-25T04:32:46.071071+00:00",
+                "updated_at": "2026-09-25T04:32:46.071071+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "fca2beb6b017b28b4dec18583a58d07fab0894c0ca4b46a2e1506ff92c36666d"
+          },
+          {
+            "ordinal": 2,
+            "kind": "keyword",
+            "memory_ids": [
+              "74387e0d-5eb2-4454-93a7-73dd3234c6fd"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Modulation pivots on a shared chord.",
+                "kind": "fact",
+                "label": "VL24C Modulation pivots on a shared chord",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "Harmony"
+                ],
+                "revision": 1,
+                "memory_id": "74387e0d-5eb2-4454-93a7-73dd3234c6fd",
+                "created_at": "2026-09-25T05:43:41.633463+00:00",
+                "updated_at": "2026-09-25T05:43:41.633463+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "c5f5c755849c11549a47d68d3197796e2f168438fe314b18119e7a09222f92e0"
+          },
+          {
+            "ordinal": 3,
+            "kind": "keyword",
+            "memory_ids": [
+              "af5500c4-22f3-46a0-9faf-9ec5fc241b0f"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Seeing limits planetary detail more than aperture.",
+                "kind": "fact",
+                "label": "VL24C Seeing limits planetary detail more than",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "Telescope"
+                ],
+                "revision": 1,
+                "memory_id": "af5500c4-22f3-46a0-9faf-9ec5fc241b0f",
+                "created_at": "2026-09-25T04:32:46.423875+00:00",
+                "updated_at": "2026-09-25T04:32:46.423875+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "810757c4628dc74d5827f0cf040a369a1b447cc28c09e14631c2b5dc8bf20b52"
+          },
+          {
+            "ordinal": 4,
+            "kind": "keyword",
+            "memory_ids": [
+              "d4ff1a81-0c5c-4f2a-b341-a42ef14ff3c5"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Cross-pollination needs a compatible variety.",
+                "kind": "fact",
+                "label": "VL24C Cross-pollination needs a compatible var",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "orchard"
+                ],
+                "revision": 1,
+                "memory_id": "d4ff1a81-0c5c-4f2a-b341-a42ef14ff3c5",
+                "created_at": "2026-09-25T05:43:42.577151+00:00",
+                "updated_at": "2026-09-25T05:43:42.577151+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "3672ae830515c6f2be7257d3571b48e8bcc96a36a6dc7fbdbe27801f96c9a371"
+          },
+          {
+            "ordinal": 5,
+            "kind": "keyword",
+            "memory_ids": [
+              "d5b56548-c9e9-4311-bfc7-59b9487337bd"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Voice leading favors the smallest motion.",
+                "kind": "fact",
+                "label": "VL24C Voice leading favors the smallest motion",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "harmony"
+                ],
+                "revision": 1,
+                "memory_id": "d5b56548-c9e9-4311-bfc7-59b9487337bd",
+                "created_at": "2026-09-25T04:32:46.874918+00:00",
+                "updated_at": "2026-09-25T04:32:46.874918+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "96805ea4932e71fe844a5c1d926127a2ecd46b6519e32b2f099e05ac161b56aa"
+          }
+        ],
+        "keyword_coverage_percent": "88.636",
+        "stats_delta": {
+          "merges": 0,
+          "revisions": 0,
+          "retirements": 0,
+          "reinforcements": 0
+        }
+      },
+      "error": null,
+      "completed_at": "2026-09-25T05:47:12.549297Z"
+    }
+  }
+]
