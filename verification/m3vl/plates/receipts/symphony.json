@@ -1,0 +1,15 @@
+{
+  "symphony_id": "01M3BEVMK362HBSR5AVR9HCY3E",
+  "state": "blocked",
+  "timeline": [
+    "deliberation_ratified",
+    "authority_signed",
+    "execution_requested",
+    "step-1-round-1:workers_started",
+    "blocked"
+  ],
+  "spend_usd": "0.170253598",
+  "blocked_reason": "No such file or directory: <project>/.nocturne-worktrees/01M3BEVMK362HBSR5AVR9HCY3E/step-1-round-1/judge-motivation/judge-verdict.json",
+  "note": "observed, not diagnosed; two attempts (50/49 turns) and three judge seats ran; the judged-card return was not reached",
+  "earlier_attempt": "01M3BE6NV250YYAP7RGPPQ8GH2 blocked: the project folder had uncommitted thread work (the runtime's own guard); committed and relaunched"
+}
