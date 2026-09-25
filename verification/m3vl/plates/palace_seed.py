@@ -20,6 +20,7 @@ from harness.spine_client import (
     InjectCommitRequest,
     InjectPrepareRequest,
     PatchMemoryRequest,
+    QueueDecisionRequest,
     SpineClient,
 )
 
@@ -186,6 +187,40 @@ def created_ids(evidence: Path) -> list[str]:
     )
 
 
+async def cleanup(evidence: Path) -> None:
+    """Deny this principal's pending cards, then tombstone the recorded memories; report counts."""
+    denied = []
+    async with client() as palace:
+        queue = await palace.approval_queue(PRINCIPAL)
+        for card in queue.cards:
+            decided = await palace.decide_queue_item(
+                card.item_uid,
+                QueueDecisionRequest(
+                    decision="deny",
+                    approval_mode="explicit",
+                    actor_class="human",
+                    machine_id=MACHINE,
+                ),
+            )
+            denied.append({"item_uid": card.item_uid, "decision_uid": str(decided.decision_uid)})
+    (evidence / "receipts" / "queue-denied.json").write_text(json.dumps(denied, indent=2) + "\n")
+    print(f"denied {len(denied)} pending cards")
+    await tombstone(evidence)
+    async with client() as palace:
+        pending = len((await palace.approval_queue(PRINCIPAL)).cards)
+    feed = httpx.get("http://127.0.0.1:8765/v1/visualization", timeout=60).json()["palace"]["nodes"]
+    active = [n["memory"]["memory_id"] for n in feed if n["memory"]["status"] == "active"]
+    summary = {
+        "principal_id": PRINCIPAL,
+        "denied": len(denied),
+        "pending_after": pending,
+        "active_after": len(active),
+        "recorded_ids": len(created_ids(evidence)),
+    }
+    (evidence / "receipts" / "cleanup.json").write_text(json.dumps(summary, indent=2) + "\n")
+    print(summary)
+
+
 async def tombstone(evidence: Path) -> None:
     """Retire exactly the memories this walk created, by recorded id; nothing else is touched."""
     results = []
@@ -295,6 +330,8 @@ if __name__ == "__main__":
         FAMILIES.clear()
         FAMILIES.update({"harmony": ([], None, []), "orchard": ([], None, [])})
         asyncio.run(memories(evidence))
+    elif action == "cleanup":
+        asyncio.run(cleanup(evidence))
     elif action == "tombstone":
         asyncio.run(tombstone(evidence))
     elif action == "topics":
