@@ -3641,3 +3641,7 @@ recorded Palace decisions before autonomous retrieval; keep human locks.
 Offline configuration uses the existing OpenAI-compatible adapters with
 local models and skips downloads. Package upgrades choose the newest
 complete published pair. Agent-file review already worked and stays intact.
+
+The public 0.1.32 repeat with another identity exposed a deterministic seed-ID
+collision. Scope generated IDs to the principal; preserve legacy `local` IDs
+and explicit caller UUIDs. Same-user retries remain stable across machines.

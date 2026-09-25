@@ -6,11 +6,12 @@ from uuid import UUID
 _IDENTITY_PREFIX = "nocturne-seed-v1\0"
 
 
-def seed_batch_uid(source_name: str, markdown: str) -> UUID:
-    """Mint the same RFC 9562 UUIDv8 for the same named Markdown document."""
+def seed_batch_uid(source_name: str, markdown: str, *, principal_id: str = "local") -> UUID:
+    """Mint a stable UUIDv8 per principal; preserve the original local-owner IDs."""
 
     source_digest = sha256(markdown.encode("utf-8")).hexdigest()
-    digest = sha256(f"{_IDENTITY_PREFIX}{source_name}\0{source_digest}".encode()).digest()
+    scope = "" if principal_id == "local" else f"{principal_id}\0"
+    digest = sha256(f"{_IDENTITY_PREFIX}{scope}{source_name}\0{source_digest}".encode()).digest()
     value = bytearray(digest[:16])
     value[6] = (value[6] & 0x0F) | 0x80
     value[8] = (value[8] & 0x3F) | 0x80

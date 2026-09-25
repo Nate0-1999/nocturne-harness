@@ -242,7 +242,7 @@ def test_jump_start_route_only_offers_workspace_agent_files(
     assert response.status_code == 200
     assert response.json()["files"] == [
         {
-            "batch_uid": str(seed_batch_uid("AGENTS.md", markdown)),
+            "batch_uid": str(seed_batch_uid("AGENTS.md", markdown, principal_id="principal-test")),
             "relative_path": "AGENTS.md",
             "source_name": "AGENTS.md",
             "markdown": markdown,
