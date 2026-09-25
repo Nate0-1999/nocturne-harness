@@ -3506,6 +3506,14 @@ flex item for the existing strip instead of positioning it over text; the
 forge, finite animations and reduced-motion rest remain unchanged. The
 packaged favicon now uses the header's existing ouroboros-and-moon geometry.
 
+The tm24 public walk found uploaded colorways retaining the 20px corner clip
+and a separate dark rim pattern. D.2 112–114 applies the same border law to
+the plate press: share Seraph's module material and geometry, consuming the
+uploaded plate's sampled colors. Module-local tokens also repair saved
+colorways without changing their palette or stored data.
+Resting rims stay 2px; 1px header and content separators take sampled bright
+chrome, keeping the material on edges under D.2 110.
+
 ## M3BW — Adopt the accepted Playwright browser hands [P1, P3]
 
 The revised charge prefers OpenAI's whole browser-use extension. The inspected
