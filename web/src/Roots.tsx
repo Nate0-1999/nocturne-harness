@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react'
-import { CatmullRomCurve3, TubeGeometry, Vector3 } from 'three'
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { Box3, CatmullRomCurve3, Group, TubeGeometry, Vector3 } from 'three'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import { agentColor, buildRootPaths, buildRootRiver, rootSpendShares, rootWorkTimes, type DetailTier, type Point3, type RootBranch, type VisualizationSnapshot, type WorkAgent } from './visualization'
 import { ChromeEnvironment } from './ChromeEnvironment'
@@ -15,16 +15,29 @@ export function Roots({ data, agents, selectedId, tier, pick, newest }: {
   const moments = rootWorkTimes(ordered)
   const latest = [...agents].sort((a, b) => b.started_at.localeCompare(a.started_at))[0]?.id
   const spendScale = Math.max(0.01, ...agents.map((agent) => Number(agent.cost_usd ?? 0)))
+  // Frame what was recorded: centre the drawn river on the camera's target and fit it to the view.
+  const river = useRef<Group>(null)
+  const extent = JSON.stringify([...curves.values()].map((points) => [points[0], points.at(-1)]))
+  useLayoutEffect(() => {
+    const group = river.current
+    if (group === null) return
+    group.position.set(0, 0, 0)
+    group.scale.setScalar(1)
+    const box = new Box3().setFromObject(group), size = box.getSize(new Vector3()), center = box.getCenter(new Vector3())
+    const scale = Math.min(1.25, 20 / Math.max(1e-3, size.x), 8 / Math.max(1e-3, size.y))
+    group.scale.setScalar(scale)
+    group.position.set(-center.x * scale, -center.y * scale, -center.z * scale)
+  }, [extent])
   return <>
     <ChromeEnvironment />
     <color attach="background" args={[new URLSearchParams(globalThis.location.search).has('sheet') ? '#f5f5f2' : '#030509']} />
-    <group>
+    <group ref={river}>
     {ordered.map((agent) => {
       const points = curves.get(agent.id)!
       const selected = selectedId === agent.id || newest && latest === agent.id
       const stopped = agent.state === 'stopped' || agent.state === 'cancelled'
       const measured = agent.cost_usd !== null
-      const radius = measured ? 0.04 + Math.sqrt(Number(agent.cost_usd) / spendScale) * 0.34 : 0.03
+      const radius = measured ? 0.05 + Math.sqrt(Number(agent.cost_usd) / spendScale) * 0.48 : 0.03
       const forked = ordered.some((child) => child.parent_id === agent.id)
       return <group key={agent.id}>
         <ChromeRoot points={points} spent={rootSpendShares(agent, data.trails[agent.id] ?? [], points, moments)} radius={radius} tier={tier}
@@ -55,7 +68,7 @@ function RootRiver({ agent, points, moments, begin, end, radius, spent, tier, se
     // and a call or a file touch is finer than the branch it leaves.
     const widths: number[] = []
     for (const branch of branches) {
-      widths.push(branch.kind === 'turn' ? radius * (0.25 + 0.45 * Math.sqrt(branch.weight / heaviest))
+      widths.push(branch.kind === 'turn' ? radius * (0.12 + 0.33 * Math.sqrt(branch.weight / heaviest))
         : branch.kind === 'tool' ? widths[branch.parent] !== undefined && branch.parent >= 0
           ? Math.min(widths[branch.parent] * 0.6, 0.012 + 0.006 * Math.min(4, branch.weight)) : 0.014
           : 0.0065)
@@ -110,8 +123,8 @@ function taperedTube(points: Point3[], radius: number, length: number, sides: nu
 
 function ChromeMaterial({ stopped, selected }: { stopped: boolean; selected: boolean }) {
   // Live roots are cool blue-white mirror chrome; dried roots are desaturated and matte.
-  return <meshPhysicalMaterial color={stopped ? '#3a3e46' : '#e4ecf8'} metalness={stopped ? 0.5 : 1}
-    roughness={stopped ? 0.62 : 0.13} clearcoat={stopped ? 0 : 1} clearcoatRoughness={0.05}
+  return <meshPhysicalMaterial color={stopped ? '#8a8e96' : '#e4ecf8'} metalness={stopped ? 0.35 : 1}
+    roughness={stopped ? 0.55 : 0.13} clearcoat={stopped ? 0 : 1} clearcoatRoughness={0.05}
     envMapIntensity={selected ? 1.6 : 1.2} />
 }
 

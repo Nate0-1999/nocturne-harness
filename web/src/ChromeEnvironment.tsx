@@ -39,7 +39,7 @@ function studio(width: number, height: number): Uint16Array {
       const color = [0.004 + horizon * 0.05, 0.006 + horizon * 0.1, 0.014 + horizon * 0.45]
       const strip = 0.55 * Math.max(0, 1 - Math.abs(Math.abs(direction[0]) - 0.97) / 0.012) * (Math.abs(elevation) < 1 ? 1 : 0)
       for (let channel = 0; channel < 3; channel++) color[channel] += strip * [3.6, 3.9, 4.4][channel]
-      if (elevation > 1.2) for (let channel = 0; channel < 3; channel++) color[channel] += [1.6, 1.75, 2.1][channel]
+      if (elevation > 1.2) for (let channel = 0; channel < 3; channel++) color[channel] += [0.5, 0.55, 0.7][channel]
       for (const [index, normal] of BANDS.entries()) {
         const offset = Math.abs(direction[0] * normal[0] + direction[1] * normal[1] + direction[2] * normal[2])
         const band = Math.exp(-((offset / (0.012 + index * 0.004)) ** 2)) * (index % 2 ? 1.4 : 2.2)

@@ -80,8 +80,8 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
   const focused = agents.find((agent) => agent.id === selectedId)
   const project = data?.projects.find((candidate) => candidate.root === (projectRoot ?? focused?.root)) ?? data?.projects[0]
   const chambers = useMemo(() => project ? buildChambers(project) : [], [project])
-  const distance = view === 'farm' ? Math.max(15, ...chambers.map((c) => (Math.abs(c.position[1]) + 2) * 3)) : 16
-  const width = view === 'farm' ? Math.max(10, ...chambers.map((c) => (Math.abs(c.position[0]) + 2) * 2)) : 24
+  const distance = view === 'farm' ? Math.max(15, ...chambers.map((c) => (Math.abs(c.position[1]) + 2) * 3)) : 12
+  const width = view === 'farm' ? Math.max(10, ...chambers.map((c) => (Math.abs(c.position[0]) + 2) * 2)) : 20
   const pick = (agent: WorkAgent) => {
     setProjectRoot(agent.root)
     void events.dispatch({ type: 'thread.select', thread_id: agent.thread_id }).then(() => {

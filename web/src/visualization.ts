@@ -127,10 +127,16 @@ export function buildRootPaths(agents: WorkAgent[], trails: Record<string, RootP
       const parentPoints = visit(parent)
       const junction = parentPoints.reduce((closest, point) =>
         Math.abs(point[0] - points[0][0]) < Math.abs(closest[0] - points[0][0]) ? point : closest)
-      const offset = [junction[1] - points[0][1], junction[2] - points[0][2]]
+      // A fork leaves its parent at the junction and diverges like a limb; siblings fan to either side.
+      const siblings = agents.filter((item) => item.parent_id === agent.parent_id)
+        .sort((a, b) => a.started_at.localeCompare(b.started_at) || a.id.localeCompare(b.id))
+      const order = siblings.findIndex((item) => item.id === agent.id)
+      const side = order % 2 ? -1 : 1, reach = 1.1 + Math.floor(order / 2) * 0.9 + identitySeed(agent.id) * 0.6
+      const depth = junction[2] - points[0][2], seed = identitySeed(agent.id) * 6
       points.forEach((point, index) => {
-        const join = Math.pow(1 - index / 31, 2)
-        point[1] += offset[0] * join; point[2] += offset[1] * join
+        const t = index / 31
+        point[1] = junction[1] + side * reach * (1 - (1 - t) ** 2) + Math.sin(t * 6 + seed) * Math.sin(t * Math.PI) * 0.2
+        point[2] += depth * Math.pow(1 - t, 2)
       })
       points[0] = [...junction]
     }
@@ -191,7 +197,7 @@ export function buildRootRiver(agent: WorkAgent, root: Point3[], moments: number
     const stop = Math.max(start, ...work)
     const [origin, heading] = junction(parent, start, from)
     const length = Math.max(reach, across(stop) - across(start))
-    const first = Math.max(-0.95, Math.min(0.95, heading + side * (turn[0] + turn[1] * seed))), last = first * (0.25 + 0.35 * seed)
+    const first = Math.max(-1.1, Math.min(1.1, heading + side * (turn[0] + turn[1] * seed))), last = first * (0.1 + 0.6 * identitySeed(`${seed}:bend`))
     const points: Point3[] = [origin]
     for (let step = 1; step < steps; step++) {
       const u = step / (steps - 1), angle = first + (last - first) * u, previous = points[step - 1]
@@ -203,7 +209,7 @@ export function buildRootRiver(agent: WorkAgent, root: Point3[], moments: number
   const turnBranches = turns.map((turn, index) => {
     const work = [...calls.filter((call) => owner(call, turns) === index), ...files.filter((file) => owner(file.time, turns) === index).map((file) => file.time)]
     const side = (index + Math.round(identitySeed(agent.id))) % 2 ? -1 : 1
-    return branch('turn', trunk, turn, work, side, identitySeed(`${agent.id}:turn:${index}`), 1 + 0.9 * Math.sqrt(work.length + 1), [0.35, 0.45], 0, 14)
+    return branch('turn', trunk, turn, work, side, identitySeed(`${agent.id}:turn:${index}`), 1 + 0.9 * Math.sqrt(work.length + 1), [0.2, 0.75], 0, 14)
   })
   const toolBranches = calls.map((call, index) => {
     const parent = turnBranches[owner(call, turns)] ?? trunk
@@ -214,7 +220,7 @@ export function buildRootRiver(agent: WorkAgent, root: Point3[], moments: number
   const fileBranches = files.map((file) => {
     const parent = toolBranches[owner(file.time, calls)] ?? turnBranches[owner(file.time, turns)] ?? trunk
     const seed = identitySeed(`${agent.id}:file:${file.path}`)
-    return branch('file', parent, file.time, [], seed < 0.6 ? parent.side : -parent.side, seed, 0.45 + seed * 0.5, [0.35, 0.5], 0.55, 6)
+    return branch('file', parent, file.time, [], seed < 0.6 ? parent.side : -parent.side, seed, 0.7 + seed * 0.8, [0.3, 0.6], 0.55, 7)
   })
   return [...turnBranches, ...toolBranches, ...fileBranches].map(({ kind, points, weight, parent }) => ({ kind, points, weight, parent }))
 }
