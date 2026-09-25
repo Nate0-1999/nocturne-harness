@@ -1,0 +1,12 @@
+{
+  "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+  "home": "/private/tmp/m3vl-verification/home",
+  "daemon_stopped": true,
+  "project_files": {
+    "tests/test_spring.py": "7dcf1fafba9d50bad5449ea8a6a92aa1c7cf3d0596107c018f92a2add1954047",
+    "tests/test_river.py": "3bc058c6d2684a1b975b3dfa82fb675c418eafd1698958148ee38d8b5a8c7798",
+    "src/spring.py": "6a8d8902514e59abc525af461bdaa8e0251fee7596effbbb6831cbe60de61d41",
+    "src/river.py": "31516338fef54aed0b11f576dbffb1bbc62588608aae5aecd032783c5cc47510"
+  },
+  "disposable_home_and_project_removed": true
+}

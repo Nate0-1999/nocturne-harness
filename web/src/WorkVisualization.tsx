@@ -80,15 +80,16 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
   const focused = agents.find((agent) => agent.id === selectedId)
   const project = data?.projects.find((candidate) => candidate.root === (projectRoot ?? focused?.root)) ?? data?.projects[0]
   const chambers = useMemo(() => project ? buildChambers(project) : [], [project])
-  const distance = view === 'farm' ? Math.max(15, ...chambers.map((c) => (Math.abs(c.position[1]) + 2) * 3)) : Math.max(12, agents.length * 2.8)
-  const width = view === 'farm' ? Math.max(10, ...chambers.map((c) => (Math.abs(c.position[0]) + 2) * 2)) : 22
+  const distance = view === 'farm' ? Math.max(15, ...chambers.map((c) => (Math.abs(c.position[1]) + 2) * 3)) : 16
+  const width = view === 'farm' ? Math.max(10, ...chambers.map((c) => (Math.abs(c.position[0]) + 2) * 2)) : 24
   const pick = (agent: WorkAgent) => {
     setProjectRoot(agent.root)
     void events.dispatch({ type: 'thread.select', thread_id: agent.thread_id }).then(() => {
       selection.select({ kind: 'agent', id: agent.id, thread_id: agent.thread_id, as_of: selected?.as_of ?? null, time_order: false })
     })
   }
-  return <section className="work-viz" data-testid={`${initialView}-module`} data-tier={tier} data-view={view}>
+  return <section className="work-viz" data-testid={`${initialView}-module`} data-tier={tier} data-view={view}
+    data-sheet={new URLSearchParams(globalThis.location.search).has('sheet') || undefined}>
     <header className="work-viz__header"><div><small>Work, made visible · {scope === 'GLOBAL' ? 'All projects' : rack.attunement?.name ?? 'Unattuned'}</small>
       <h1>{view === 'farm' ? 'The Farm' : 'The Roots'}</h1></div>
       <nav aria-label="Work visualization"><button aria-pressed={view === 'farm'} onClick={() => setView('farm')}>Farm</button><button aria-pressed={view === 'roots'} onClick={() => setView('roots')}>Roots</button></nav>
@@ -104,13 +105,15 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
           : <Roots data={data} agents={agents} selectedId={selectedId} tier={tier} pick={pick} newest={selected?.time_order ?? false} />}
       </VisualizationScene>}
       <aside className="work-viz__readout"><strong>{view === 'farm' ? `${chambers.length} chambers` : `${agents.length} roots`}</strong>
-        <span>{project?.nodes.filter((node) => node.kind !== 'directory').length ?? 0} file cells · {agents.length} agents</span>
+        <span>{view === 'farm' ? `${project?.nodes.filter((node) => node.kind !== 'directory').length ?? 0} file cells`
+          : `${agents.reduce((count, agent) => count + (agent.touched_files?.length ?? 0), 0)} touched-file capillaries`} · {agents.length} agents</span>
         <span>{view === 'farm' ? 'Drag or Ctrl+arrows to orbit · scroll or +/− to zoom · pick an ant' : 'Width = dollars · depth = time · junction = fork · dry = stopped'}</span>
         {focused && <span style={{ color: agentColor(focused.id) }}>{focused.label} · {focused.location}</span>}
       </aside>
       {(!data || error) && <p className="work-viz__notice" role="status">{error ?? 'Recording the first real state…'}</p>}
     </div>
     <footer className="work-viz__foot">{data && <>Recorded since {new Date(data.recorded_since).toLocaleString()} · {data.timeline.length} states · {data.live ? 'Live observation' : 'Recorded history'}</>}
+      {view === 'roots' && <span>Trunk = project (including its worker forks) · capillary = recorded file touch · across = work order · width = spend · depth = time · junction = fork · dry = stopped</span>}
       {project?.errors.map((item) => <span key={item.path}>Cannot read {item.path}: {item.error}</span>)}
       {data?.errors.map((item) => <span key={item.feed}>{item.feed} feed unavailable</span>)}
     </footer>

@@ -3623,3 +3623,15 @@ memory panel, the trace and the Deck's worker context. ×! is the palace delete
 memory's revision is known — the panel; on the gate, where a scored card carries
 no revision, it records the never veto. The near-miss row is + and ×!; its
 duplicate more-options path was removed.
+## M3VL — Reflective roots and glass memories [P2.5]
+
+PRECEDENT: PLAN M3VL, F115, M3VZ, D.2 107/109/110 and the committed plates.
+The owner's subsequent PLAN grants replace Cartesian placement with inverse-injection
+radius, family/creation angle and revision depth. Lineage and shared thread/keyword
+links support the filaments; recorded curator targets support streams and ghosts.
+Roots bundle by project, retain actual fork junctions, and add one tapered capillary
+per recorded file touch. The read-only feed projects successful journaled file tools
+and worker presence paths; opaque shell I/O is not guessed. Spend width, time depth,
+matte stopped roots, replay and Farm remain intact. Footer legends name the bindings.
+Chrome reflections and full/efficient glass emulate the committed plates; comparisons
+and live recordings remain the acceptance evidence, with the owner's eye at audit.

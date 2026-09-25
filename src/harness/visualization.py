@@ -34,13 +34,17 @@ def directory_tree(root: Path) -> dict:
     return {"root": str(root), "nodes": sorted(nodes, key=lambda n: n["path"]), "errors": errors}
 
 
-def observe_worker(output: Path, assignment: dict, location, state: str) -> None:
+def observe_worker(output: Path, assignment: dict, location, state: str, presence=()) -> None:
     """Observe the worker's actual feet, without changing its tools or decisions."""
     path = output / "visualization.json"
     try:
         previous = json.loads(path.read_text()) if path.exists() else {}
     except (OSError, ValueError):
         previous = {}
+    files = {item["path"]: item["ts"] for item in previous.get("touched_files", [])}
+    for event in presence:
+        if event.event in {"read", "write"} and event.path.is_file():
+            files.setdefault(str(event.path), event.ts.isoformat())
     value = {
         "id": assignment["origin_agent"],
         "thread_id": assignment["thread_id"],
@@ -50,6 +54,7 @@ def observe_worker(output: Path, assignment: dict, location, state: str) -> None
         "workspace_root": str(location.workspace_root),
         "stage": assignment["stage"],
         "state": state,
+        "touched_files": [{"path": path, "ts": ts} for path, ts in sorted(files.items())],
     }
     if all(previous.get(key) == value[key] for key in value):
         return
@@ -64,6 +69,34 @@ def observe_worker(output: Path, assignment: dict, location, state: str) -> None
         pass  # Observation failure must not interrupt the worker's actual work.
 
 
+def _journal_file_touch(event: dict, cwd: str, ts: str, pending: dict, files: dict) -> None:
+    """Project successful explicit file tools; never infer file I/O from shell text."""
+    part = event.get("part", {})
+    name, call_id = part.get("tool_name"), part.get("tool_call_id")
+    if name not in {"read", "write", "edit"}:
+        return
+    if event.get("event_kind") == "function_tool_call":
+        args = part.get("args", {})
+        if isinstance(args, str):
+            try:
+                args = json.loads(args)
+            except ValueError:
+                return
+        path = args.get("path") if isinstance(args, dict) else None
+        if isinstance(path, str) and path:
+            pending[call_id] = os.path.normpath(os.path.join(cwd, path))
+    elif event.get("event_kind") == "function_tool_result":
+        path = pending.pop(call_id, None)
+        content = part.get("content", "")
+        if (
+            path is not None
+            and part.get("part_kind") == "tool-return"
+            and part.get("outcome", "success") == "success"
+            and not str(content).startswith(f"{name} refused:")
+        ):
+            files.setdefault(path, ts)
+
+
 def work_observation(journal, home: Path, default_root: Path) -> dict:
     """Project durable thread events and the worker's own observations, never prompts."""
     agents = []
@@ -73,9 +106,19 @@ def work_observation(journal, home: Path, default_root: Path) -> dict:
             continue
         roots.add(entry.workspace_root)
         state, waiting_since = "stopped", None
+        pending, files = {}, {}
+        cwd = entry.workspace_root
         for line in journal.path_for_thread(entry.thread_id).read_text().splitlines():
             row = json.loads(line)
+            cwd = row.get("current_location") or cwd
             event = row.get("event", {})
+            _journal_file_touch(
+                event.get("payload", {}).get("event", {}),
+                cwd,
+                row["captured_at"],
+                pending,
+                files,
+            )
             if event.get("type") == "run.started":
                 state, waiting_since = "running", None
             elif event.get("type") == "gate.open":
@@ -99,6 +142,7 @@ def work_observation(journal, home: Path, default_root: Path) -> dict:
                 "updated_at": entry.updated_at,
                 "waiting_since": waiting_since,
                 "cost_usd": None,
+                "touched_files": [{"path": path, "ts": ts} for path, ts in sorted(files.items())],
             }
         )
     workers = {}
@@ -125,9 +169,15 @@ def work_observation(journal, home: Path, default_root: Path) -> dict:
                     if cost is None or previous["cost_usd"] is None
                     else (previous["cost_usd"] + cost)
                 )
+                files = {
+                    item["path"]: item
+                    for item in previous.get("touched_files", []) + value.get("touched_files", [])
+                }
                 if value["ts"] > previous["ts"]:
                     workers[key].update(value)
-                workers[key].update(started_at=started, cost_usd=total)
+                workers[key].update(
+                    started_at=started, cost_usd=total, touched_files=list(files.values())
+                )
         except (OSError, ValueError, KeyError):
             continue  # A worker is atomically replacing its observation; next sample retries.
     for value in workers.values():
