@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { buildChambers, buildRootPaths, buildRootRiver, rootCurve, rootSpendShares, rootWorkPosition, rootWorkTimes } from '../src/visualization.ts'
+import { ACROSS, buildChambers, buildRootPaths, buildRootRiver, rootCurve, rootSpendShares, rootWorkPosition, rootWorkTimes } from '../src/visualization.ts'
 
 /** ADR-018 / FL-126: a frozen tree has repeatable geometry, including empty chambers. */
 test('directory layout preserves every chamber and cell and replays identically', () => {
@@ -95,7 +95,7 @@ test('root river grows one branch per turn, tool call and file touch from its re
   assert.deepEqual(river, buildRootRiver(structuredClone(agent), structuredClone(root), moments, begin, end))
   assert.deepEqual(river.map((branch) => [branch.kind, branch.parent]), [['turn', -1], ['turn', -1], ['tool', 0], ['tool', 1], ['file', 2], ['file', 3]])
   // A turn joins the root where the root is at that turn's work-order moment.
-  assert.ok(Math.abs(river[1].points[0][0] - (-9 + rootWorkPosition(Date.parse(agent.turns[1]), moments) * 18)) < 1e-9)
+  assert.ok(Math.abs(river[1].points[0][0] - (-ACROSS + rootWorkPosition(Date.parse(agent.turns[1]), moments) * 2 * ACROSS)) < 1e-9)
   for (const branch of river.filter((item) => item.parent >= 0)) {
     const parent = river[branch.parent].points
     assert.ok(parent.some((point, index) => index > 0 && Math.hypot(...branch.points[0].map((value, axis) => value - (parent[index - 1][axis] + point[axis]) / 2)) <= Math.hypot(...point.map((value, axis) => value - parent[index - 1][axis]))))
@@ -108,7 +108,7 @@ test('root spend shares rise with the recorded cost trail', () => {
   const agent = { id: 'worker', cost_usd: 0.4, started_at: '2026-09-16T00:00:00Z', updated_at: '2026-09-16T00:02:00Z' }
   const trail = [{ ts: '2026-09-16T00:00:00Z', cost_usd: null }, { ts: '2026-09-16T00:01:00Z', cost_usd: '0.1' }, { ts: '2026-09-16T00:02:00Z', cost_usd: '0.4' }]
   const moments = rootWorkTimes([{ ...agent, turns: ['2026-09-16T00:01:00Z'] }])
-  const shares = rootSpendShares(agent, trail, [[-9, 0, 0], [0, 0, 0], [9, 0, 0]], moments)
+  const shares = rootSpendShares(agent, trail, [[-ACROSS, 0, 0], [0, 0, 0], [ACROSS, 0, 0]], moments)
   assert.deepEqual(shares, [0, 0.25, 1])
   assert.deepEqual(rootSpendShares({ ...agent, cost_usd: null }, trail, [[-9, 0, 0]], moments), [1])
 })

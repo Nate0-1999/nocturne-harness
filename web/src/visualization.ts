@@ -137,6 +137,9 @@ export function buildChambers(project: WorkProject): Chamber[] {
   })
 }
 
+/** Half the width of the Roots work-order axis: the river runs long, like the plate. */
+export const ACROSS = 14
+
 export function rootWorkTimes(agents: WorkAgent[]): number[] {
   return [...new Set(agents.flatMap((agent) => [agent.started_at, agent.updated_at, ...(agent.turns ?? []),
     ...(agent.tool_calls ?? []), ...(agent.touched_files ?? []).map((file) => file.ts)]).map(Date.parse))].sort((a, b) => a - b)
@@ -159,7 +162,7 @@ export function rootCurve(agent: WorkAgent, trail: RootPoint[], lane: number, be
     const t = i / 31, work = Math.min(1, start + (stop - start) * t)
     const index = work * (moments.length - 1), before = Math.floor(index), after = Math.min(moments.length - 1, before + 1)
     const time = (moments[before] + (moments[after] - moments[before]) * (index - before) - begin) / duration
-    return [-9 + work * 18, lane + Math.sin(t * 7 + seed) * Math.sin(t * Math.PI) * 0.55,
+    return [-ACROSS + work * 2 * ACROSS, lane + Math.sin(t * 7 + seed) * Math.sin(t * Math.PI) * 0.55,
       -time * 3 + Math.sin(t * 5 + seed) * Math.sin(t * Math.PI) * 0.4]
   })
 }
@@ -183,10 +186,10 @@ export function buildRootPaths(agents: WorkAgent[], trails: Record<string, RootP
     const root = project(agent), peers = agents.filter((item) => project(item) === root)
       .sort((a, b) => a.started_at.localeCompare(b.started_at) || a.id.localeCompare(b.id))
     const lane = peers.findIndex((peer) => peer.id === agent.id) - (peers.length - 1) / 2
-    const projectLane = (projects.indexOf(root) - (projects.length - 1) / 2) * 7
+    const projectLane = (projects.indexOf(root) - (projects.length - 1) / 2) * 4.5
     const phase = identitySeed(root) * Math.PI * 2
     const points = rootCurve(agent, trails[agent.id] ?? [], 0, begin, end, moments).map((point, index): Point3 => {
-      const time = (point[0] + 9) / 18, t = index / 31
+      const time = (point[0] + ACROSS) / (2 * ACROSS), t = index / 31
       return [point[0], projectLane + Math.sin(time * 5 + phase) * 0.9
         + lane * (0.12 + 0.8 * Math.pow(1 - t, 3) + 0.8 * Math.pow(t, 2))
         + Math.sin(t * 7 + identitySeed(agent.id) * 6) * Math.sin(t * Math.PI) * 0.25, point[2]]
@@ -222,7 +225,7 @@ export function rootSpendShares(agent: WorkAgent, trail: RootPoint[], points: Po
   const recorded = trail.filter((point) => point.cost_usd !== null).map((point) => ({ time: Date.parse(point.ts), cost: Number(point.cost_usd) }))
   if (!(total > 0) || !recorded.length) return points.map(() => 1)
   return points.map(([x]) => {
-    const index = Math.min(1, Math.max(0, (x + 9) / 18)) * (moments.length - 1), low = Math.floor(index)
+    const index = Math.min(1, Math.max(0, (x + ACROSS) / (2 * ACROSS))) * (moments.length - 1), low = Math.floor(index)
     const time = moments[low] + ((moments[Math.min(moments.length - 1, low + 1)] ?? moments[low]) - moments[low]) * (index - low)
     const spent = recorded.filter((point) => point.time <= time).at(-1)?.cost ?? 0
     return Math.min(1, spent / total)
@@ -236,7 +239,7 @@ export interface RootBranch { kind: 'turn' | 'tool' | 'file'; points: Point3[]; 
  * and depth = time, so every turn joins at its recorded moment; along a branch, its calls and touches keep
  * their recorded order and relative time. A branch's reach grows with the work recorded beneath it. */
 export function buildRootRiver(agent: WorkAgent, root: Point3[], moments: number[], begin: number, end: number): RootBranch[] {
-  const across = (time: number) => -9 + rootWorkPosition(time, moments) * 18
+  const across = (time: number) => -ACROSS + rootWorkPosition(time, moments) * 2 * ACROSS
   const depth = (time: number) => -((time - begin) / Math.max(1000, end - begin)) * 3
   const times = (values: string[] = []) => values.map(Date.parse).filter(Number.isFinite).sort((a, b) => a - b)
   const turns = times(agent.turns), calls = times(agent.tool_calls)

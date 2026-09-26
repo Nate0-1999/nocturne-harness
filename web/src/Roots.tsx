@@ -20,6 +20,7 @@ export function Roots({ data, agents, selectedId, tier, pick, newest }: {
   // When the river grows, the framing eases to its new extent rather than jumping.
   const river = useRef<Group>(null), framing = useRef<{ from: [Vector3, number]; to: [Vector3, number]; start: number } | null>(null)
   const invalidate = useThree((state) => state.invalidate)
+  const camera = useThree((state) => state.camera), view = useThree((state) => state.size)
   const extent = JSON.stringify([...curves.values()].map((points) => [points[0], points.at(-1)]))
   useLayoutEffect(() => {
     const group = river.current
@@ -28,14 +29,17 @@ export function Roots({ data, agents, selectedId, tier, pick, newest }: {
     group.position.set(0, 0, 0)
     group.scale.setScalar(1)
     const box = new Box3().setFromObject(group), size = box.getSize(new Vector3()), center = box.getCenter(new Vector3())
-    const scale = Math.min(1.25, 20 / Math.max(1e-3, size.x), 8 / Math.max(1e-3, size.y))
+    // Fit to what the camera actually sees at its distance, with a margin for the readout.
+    const fov = 'fov' in camera ? (camera.fov as number) : 42
+    const high = 2 * camera.position.length() * Math.tan(fov * Math.PI / 360), wide = high * view.width / Math.max(1, view.height)
+    const scale = Math.min(2.5, 0.88 * wide / Math.max(1e-3, size.x), 0.78 * high / Math.max(1e-3, size.y))
     const target: [Vector3, number] = [center.multiplyScalar(-scale), scale]
     const first = was[1] === 1 && was[0].lengthSq() === 0
     group.scale.setScalar(first ? scale : was[1])
     group.position.copy(first ? target[0] : was[0])
     framing.current = first ? null : { from: was, to: target, start: performance.now() }
     invalidate()
-  }, [extent, invalidate])
+  }, [extent, invalidate, camera, view.width, view.height])
   useFrame(({ invalidate: frame }) => {
     const group = river.current, move = framing.current
     if (!group || !move) return
@@ -179,9 +183,10 @@ const SHEET = new URLSearchParams(globalThis.location.search).has('sheet')
 
 function ChromeMaterial({ stopped, selected }: { stopped: boolean; selected: boolean }) {
   // Live roots are cool blue-white mirror chrome; dried roots are desaturated and matte (dark on the sheet).
-  return <meshPhysicalMaterial color={stopped ? SHEET ? '#4c5058' : '#8a8e96' : '#e4ecf8'} metalness={stopped ? 0.35 : 1}
-    roughness={stopped ? 0.55 : 0.13} clearcoat={stopped ? 0 : 1} clearcoatRoughness={0.05}
-    envMapIntensity={selected ? 1.6 : 1.2} />
+  // On the sheet the chrome is the plate's dark mirror: a deep body and bright cool reflections.
+  return <meshPhysicalMaterial color={stopped ? SHEET ? '#4c5058' : '#8a8e96' : SHEET ? '#7d8cab' : '#e4ecf8'} metalness={stopped ? 0.35 : 1}
+    roughness={stopped ? 0.55 : SHEET ? 0.08 : 0.13} clearcoat={stopped ? 0 : 1} clearcoatRoughness={0.04}
+    envMapIntensity={(selected ? 1.6 : 1.2) * (SHEET && !stopped ? 1.5 : 1)} />
 }
 
 function ChromeRoot({ points, spent, radius, tier, stopped, selected, forked, onClick }: {
