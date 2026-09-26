@@ -87,7 +87,7 @@ function Basins({ chambers, full, selectedPath, root, pickPath }: {
         new Vector3(r * (1 + (seed - 0.5) * 0.22), r * (1 - (seed - 0.5) * 0.22), 1.6 + Math.min(r, 1.7) * 0.6))
       const empty = chamber.files.length === 0
       const selected = selectedPath === `${root}${chamber.path === '.' ? '' : `/${chamber.path}`}`
-      for (const [mesh, lit, dim] of [[walls, '#dfe8ff', '#4a5060'], [rims, '#f4f7ff', '#4d525e'], [floors, '#08122a', '#020308']] as const) {
+      for (const [mesh, lit, dim] of [[walls, '#f2f6ff', '#4a5060'], [rims, '#f7f9ff', '#4d525e'], [floors, '#0a1430', '#020308']] as const) {
         mesh.current?.setMatrixAt(index, matrix)
         mesh.current?.setColorAt(index, color.set(selected ? '#ffffff' : empty ? dim : lit))
       }
@@ -110,7 +110,7 @@ function Basins({ chambers, full, selectedPath, root, pickPath }: {
     </instancedMesh>
     <instancedMesh key={`wall:${chambers.length}`} ref={walls} args={[geometry.wall, undefined, chambers.length]} onClick={click}>
       <meshPhysicalMaterial color={full ? '#ffffff' : '#2a4590'} metalness={0} roughness={0.02} clearcoat={1} clearcoatRoughness={0.02}
-        ior={1.5} transmission={full ? 1 : 0} thickness={0.35} attenuationColor="#6f8fff" attenuationDistance={1.2}
+        ior={1.5} transmission={full ? 1 : 0} thickness={0.35} attenuationColor="#b4c6ff" attenuationDistance={2.4}
         transparent={!full} opacity={full ? 1 : 0.55} envMapIntensity={1.5} side={DoubleSide} depthWrite={full} />
     </instancedMesh>
     <instancedMesh key={`rim:${chambers.length}`} ref={rims} args={[geometry.rim, undefined, chambers.length]} onClick={click}>
@@ -185,7 +185,8 @@ function Cells({ cells, lastTouch, asOf, selectedPath, full, pickPath }: {
     cells.forEach((cell, index) => {
       matrix.makeScale(cell.size, cell.size, cell.size).setPosition(...cell.position)
       glass.current?.setMatrixAt(index, matrix)
-      matrix.makeScale(cell.size * 0.55, cell.size * 0.55, cell.size * 0.55).setPosition(...cell.position)
+      // The light is a shell around the glass: anything inside a transmissive body would not show through it.
+      matrix.makeScale(cell.size * 1.18, cell.size * 1.18, cell.size * 1.18).setPosition(...cell.position)
       glow.current?.setMatrixAt(index, matrix)
       const touched = lastTouch.get(cell.path)
       const previous = seen.current.get(cell.path)
@@ -216,8 +217,8 @@ function Cells({ cells, lastTouch, asOf, selectedPath, full, pickPath }: {
       <meshPhysicalMaterial color="#e6eeff" metalness={0} roughness={0.03} clearcoat={1} ior={1.5}
         transmission={full ? 0.9 : 0} thickness={0.3} transparent={!full} opacity={full ? 1 : 0.42} envMapIntensity={1.8} />
     </instancedMesh>
-    <instancedMesh key={`glow:${cells.length}`} ref={glow} args={[box, undefined, cells.length]}>
-      <meshBasicMaterial toneMapped={false} transparent blending={AdditiveBlending} depthWrite={false} />
+    <instancedMesh key={`glow:${cells.length}`} ref={glow} args={[box, undefined, cells.length]} renderOrder={2}>
+      <meshBasicMaterial toneMapped={false} transparent opacity={0.55} blending={AdditiveBlending} depthWrite={false} />
     </instancedMesh>
   </>
 }

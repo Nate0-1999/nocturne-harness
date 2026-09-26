@@ -81,7 +81,7 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
   const project = data?.projects.find((candidate) => candidate.root === (projectRoot ?? focused?.root)) ?? data?.projects[0]
   const chambers = useMemo(() => project ? buildChambers(project) : [], [project])
   const reach = Math.max(0, ...chambers.map((c) => Math.hypot(c.position[0], c.position[1]) + c.radius))
-  const distance = view === 'farm' ? Math.max(8, reach * 2.1 + 4) : 12
+  const distance = view === 'farm' ? Math.max(8, reach * 1.6 + 3.5) : 12
   const width = view === 'farm' ? (reach + 1) * 2 : 20
   const pick = (agent: WorkAgent) => {
     setProjectRoot(agent.root)
