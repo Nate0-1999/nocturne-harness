@@ -1,0 +1,27 @@
+{
+  "found": "M3VL vl24c row walk, scrubbing history to the first recorded state",
+  "state": {
+    "ts": "2026-09-25T04:16:05.491666+00:00",
+    "projects": [
+      {
+        "root": "the daemon launch folder (this harness worktree)",
+        "entries": 31878,
+        "folders": 3126
+      }
+    ],
+    "agents": 0
+  },
+  "probe": {
+    "farm_alone": "page produced no animation frames within 5 s after the scrub",
+    "farm_and_roots": "no frames",
+    "palace_and_roots": "frames every rAF; responsive",
+    "roots_alone": "responsive"
+  },
+  "measured": {
+    "buildChambers_ms_on_that_tree": 3127,
+    "feed_poll_interval_ms": 2500,
+    "chambers": 3126
+  },
+  "mechanism": "useMemo(() => buildChambers(project), [project]) recomputes on every feed refresh because each poll delivers a new project object; 3.1 s of layout per 2.5 s poll keeps the shared renderer thread busy, so every module frame stops painting",
+  "scope": "Farm renderer and buildChambers are unchanged by M3VL; not fixed here"
+}

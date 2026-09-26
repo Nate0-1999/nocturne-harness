@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.34 - 2026-09-25
+
+- Palace: glass memories glow from within with a bright rim scaled by how often
+  they are injected, with real reflections and bloom on curator streams.
+- Roots: each root branches at every recorded turn and tool call, with file
+  touches off those branches; a project's roots merge into a trunk.
+  Pair with Memory 0.1.34; its API contract is unchanged.
+
 ## 0.1.33 - 2026-09-24
 
 - Keep deterministic agent-file and CLI seed batches separate between users.

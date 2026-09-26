@@ -1,0 +1,173 @@
+{
+  "principal_id": "nocturne-verification-bfd0d9bf-4c72-48bd-aa7a-f0955cca4dc2",
+  "owned_ids": [
+    "147a232c-53d0-46b1-90c1-9e614710732f",
+    "1f99bd3a-b79f-4f95-acb7-7ba40cbbc073",
+    "20fda1c4-f73f-403b-b3d5-3892690e48d5",
+    "258506a5-059f-4e49-b015-07d15520038f",
+    "28b6b4a2-ef1b-4297-b6a5-4562fe13913f",
+    "2c4d5625-b523-4667-a3ef-c60e144e7a41",
+    "3d84092f-0095-41a4-baec-d6efcdbb57c3",
+    "47b9061e-dbc6-4513-84e2-e7eab15842a4",
+    "5fdde758-b55c-47e4-9b81-4eff9effec4d",
+    "6c14fefe-898c-4f14-b0bf-3b0bb46e9124",
+    "775c8362-f595-45df-89ea-2543a63ade09",
+    "9ef253ac-5c4e-42ec-9c48-71adc9d230bb",
+    "a1806163-9225-467b-bcf7-cf0b66ef51ee",
+    "a3a69bcc-9976-44d2-93b3-fbb6c0328a64",
+    "a3d13eef-d3d9-4357-830d-dd2e4be52a10",
+    "a3d4632a-c3a5-48e3-a297-d650c3728514",
+    "a615bcad-5626-435b-9cd8-6284b0e602b0",
+    "a9e5b848-eadb-4e31-87cc-42361e5b1708",
+    "b6bb8507-8d52-4fb2-b87d-395f6cd361fa",
+    "be11d643-0f9a-4e65-b71b-486e22b3a0b0",
+    "c3bd5b6e-f55b-4013-9eeb-5d7de313dad4",
+    "cf5db1fc-2caa-4cd4-9aeb-fae4efa9baa9",
+    "e5c68536-1fad-4e07-b4a1-8dd1dd2e4205",
+    "e8c59f3f-c822-4160-8236-152f55344e17"
+  ],
+  "denied": [
+    "01M3B4MDY1FEXE8RNXRY106979",
+    "01M3B4MDZA2HC58DA872ZCC3RM",
+    "01M3B4ME0A8G9ZMCF4BKMGM4HR",
+    "01M3B4ME1EDAV6HPPFB0475NGA",
+    "01M3B4ME2HX957J4BR9M8YCH11",
+    "01M3B4ME3NRQSRDMAM1MZVZ9Q2",
+    "01M3B4ME4Q1Z9GY2EGPZ18PQJV",
+    "01M3B4ME5TYN64H16NB7D8EKV0",
+    "01M3B4ME6VPVB2X32BQ8J0ZV9J",
+    "01M3B4ME80G92MC1TNN843GSK9",
+    "01M3B4ME90CEZ4SPNXEN90QW4E",
+    "01M3B4MEA4H2JMYNMR7CPFQ4HM"
+  ],
+  "tombstoned": [
+    {
+      "memory_id": "a9e5b848-eadb-4e31-87cc-42361e5b1708",
+      "status": "tombstoned",
+      "revision": 10
+    },
+    {
+      "memory_id": "be11d643-0f9a-4e65-b71b-486e22b3a0b0",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "28b6b4a2-ef1b-4297-b6a5-4562fe13913f",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "1f99bd3a-b79f-4f95-acb7-7ba40cbbc073",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "47b9061e-dbc6-4513-84e2-e7eab15842a4",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "a1806163-9225-467b-bcf7-cf0b66ef51ee",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "a3d13eef-d3d9-4357-830d-dd2e4be52a10",
+      "status": "tombstoned",
+      "revision": 6
+    },
+    {
+      "memory_id": "9ef253ac-5c4e-42ec-9c48-71adc9d230bb",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "b6bb8507-8d52-4fb2-b87d-395f6cd361fa",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "c3bd5b6e-f55b-4013-9eeb-5d7de313dad4",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "20fda1c4-f73f-403b-b3d5-3892690e48d5",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "775c8362-f595-45df-89ea-2543a63ade09",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "2c4d5625-b523-4667-a3ef-c60e144e7a41",
+      "status": "tombstoned",
+      "revision": 5
+    },
+    {
+      "memory_id": "cf5db1fc-2caa-4cd4-9aeb-fae4efa9baa9",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "3d84092f-0095-41a4-baec-d6efcdbb57c3",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "a3a69bcc-9976-44d2-93b3-fbb6c0328a64",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "6c14fefe-898c-4f14-b0bf-3b0bb46e9124",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "e5c68536-1fad-4e07-b4a1-8dd1dd2e4205",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "a615bcad-5626-435b-9cd8-6284b0e602b0",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "e8c59f3f-c822-4160-8236-152f55344e17",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "a3d4632a-c3a5-48e3-a297-d650c3728514",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "147a232c-53d0-46b1-90c1-9e614710732f",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "5fdde758-b55c-47e4-9b81-4eff9effec4d",
+      "status": "tombstoned",
+      "revision": 3
+    },
+    {
+      "memory_id": "258506a5-059f-4e49-b015-07d15520038f",
+      "status": "tombstoned",
+      "revision": 3
+    }
+  ],
+  "pending_after": 0,
+  "active_after": 0,
+  "feed_errors": [],
+  "scoped_check_as_of": "2026-09-25T02:01:45.567772+00:00",
+  "tombstoned_nodes_after": 24,
+  "scoped_status_counts": {
+    "tombstoned": 24
+  }
+}

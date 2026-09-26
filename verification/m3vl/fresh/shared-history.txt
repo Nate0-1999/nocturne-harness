@@ -1,0 +1,187 @@
+- iframe:
+  - banner:
+    - generic "Nocturne":
+      - img "Ouroboros around the moon"
+      - generic: Nocturne
+    - paragraph: Palace ready
+- button "App settings":
+  - generic: ⚙
+- generic "Stage controls":
+  - tablist "Stage layers":
+    - tab "Work"
+    - button "Remove Work layer": ×
+    - tab "Graph"
+    - button "Remove Graph layer": ×
+    - tab "Injection"
+    - button "Remove Injection layer": ×
+    - tab "Layer 1" [selected]
+    - button "Remove Layer 1 layer": ×
+  - button "Layer":
+    - generic: ＋
+    - text: Layer
+  - group "View layout":
+    - button "Stage"
+    - button "Sheet" [pressed]
+  - button "Library"
+- generic: ⠿
+- strong: Palace
+- generic: Global
+- button "Palace settings": ⚙
+- button "Remove Palace": ×
+- paragraph: Shows all accessible data · Live recorded view
+- iframe [active]:
+  - generic: Palace current · Whole Palace
+  - heading "Living Memory" [level=1]
+  - paragraph: Every point is a recorded memory event. The graph is the instrument.
+  - text: Render
+  - combobox "Nebula hardware tier":
+    - option "Full"
+    - option "Efficient" [selected]
+  - text: Detail
+  - combobox "Visualization detail":
+    - option "Full"
+    - option "Efficient" [selected]
+  - button "Time order"
+  - text: History
+  - slider "Visualization history" [active]: "0"
+  - button "Live"
+  - time: 8:45:29 PM
+  - generic "Attuned Palace readouts":
+    - article:
+      - generic: Constellation
+      - strong: 0 bodies
+      - generic: 0 real filaments
+    - article:
+      - generic: Memory current
+      - strong: 0 events
+      - generic: No recorded current
+    - article:
+      - generic: Creature
+      - strong: 0 families
+      - generic: 0 splits · 0 merges
+    - article "Curator progress":
+      - generic: Curator progress
+      - strong: 0 targets
+      - generic: No recorded curator progress
+  - generic "Memory event hues":
+    - generic: add
+    - generic: delete
+    - generic: modify
+    - generic: merge
+    - generic: split
+  - strong: — fps
+  - status "Rendered triangles": 0 triangles · efficient
+  - generic: Three r182 · R3F + TSL · WebGPU · efficient
+  - generic: Reading current reality
+  - status: Loading the recorded Palace state…
+  - status: No memories or memory events exist in this Palace snapshot.
+  - complementary "Living Memory data bindings":
+    - heading "Radial Palace" [level=2]
+    - paragraph: Radius · 8 / (1 + injections); most-injected memories gather centrally
+    - paragraph: Angle · related family, then creation order within that family
+    - paragraph: Depth · memory.revision (linear scale)
+    - paragraph: Color · memory.kind (deterministic palette)
+    - paragraph: Shape · memory.revision (vertical stretch)
+    - heading "Memory current" [level=2]
+    - paragraph: Particle · one memory revision event (never decorative)
+    - paragraph: Hue · add / delete / modify / merge / split
+    - paragraph: Curve around its memory · event timestamp; density · event rate
+    - paragraph: No revision event · no particle; replay · identical current
+    - heading "Creature + constellation" [level=2]
+    - paragraph: Size · memory.stats.injections (log scale)
+    - paragraph: Glow · memory.updated_at at snapshot time
+    - paragraph: Brightness · memory.pin or current-context membership
+    - paragraph: Filament · lineage; nearest links sharing an origin thread or keyword
+    - paragraph: Family · connected by similarity, thread or keyword; curator streams join visited families
+    - heading "Kinds in view" [level=2]
+    - paragraph: None
+    - paragraph: Camera moves freely around the same recorded snapshot.
+  - generic "Memories in view"
+  - tooltip "Visualization history Scrub the scene back to an earlier moment.":
+    - strong: Visualization history
+    - generic: Scrub the scene back to an earlier moment.
+- generic: ⠿
+- strong: Farm
+- generic: Global
+- button "Farm settings": ⚙
+- button "Remove Farm": ×
+- paragraph: Shows all accessible data · Live recorded view
+- iframe:
+  - generic: Work, made visible · All projects
+  - heading "The Farm" [level=1]
+  - navigation "Work visualization":
+    - button "Farm" [pressed]
+    - button "Roots"
+  - text: Detail
+  - combobox "Visualization detail":
+    - option "Full" [selected]
+    - option "Efficient"
+  - button "Time order"
+  - text: History
+  - slider "Visualization history": "0"
+  - button "Live"
+  - time: 8:45:29 PM
+  - text: Project
+  - combobox "Visualized project":
+    - option "/private/tmp/m3vl24-verification/project" [selected]
+  - generic "Directory chambers and live agents"
+  - status "Rendered triangles": 0 triangles · full
+  - complementary:
+    - strong: 2 chambers
+    - generic: 0 file cells · 0 agents
+    - generic: Drag or Ctrl+arrows to orbit · scroll or +/− to zoom · pick an ant
+  - text: Recorded since 9/24/2026, 8:45:29 PM · 93 states · Recorded history
+  - generic: palace feed unavailable
+  - generic "Agents and measured work"
+  - table:
+    - rowgroup:
+      - row "Agent Where State Spend":
+        - columnheader "Agent"
+        - columnheader "Where"
+        - columnheader "State"
+        - columnheader "Spend"
+    - rowgroup
+  - generic "Complete directory tree · 2 entries"
+- generic: ⠿
+- strong: Roots
+- generic: Global
+- button "Roots settings": ⚙
+- button "Remove Roots": ×
+- paragraph: Shows all accessible data · Live recorded view
+- iframe:
+  - generic: Work, made visible · All projects
+  - heading "The Roots" [level=1]
+  - navigation "Work visualization":
+    - button "Farm"
+    - button "Roots" [pressed]
+  - text: Detail
+  - combobox "Visualization detail":
+    - option "Full" [selected]
+    - option "Efficient"
+  - button "Time order"
+  - text: History
+  - slider "Visualization history": "0"
+  - button "Live"
+  - time: 8:45:29 PM
+  - text: Project
+  - combobox "Visualized project":
+    - option "/private/tmp/m3vl24-verification/project" [selected]
+  - 'generic "Agent roots: thickness is measured spend, depth is time"'
+  - status "Rendered triangles": 0 triangles · full
+  - complementary:
+    - strong: 0 roots
+    - generic: 0 touched-file capillaries · 0 agents
+    - generic: Width = dollars · depth = time · junction = fork · dry = stopped
+  - text: Recorded since 9/24/2026, 8:45:29 PM · 93 states · Recorded history
+  - generic: Trunk = project (including its worker forks) · capillary = recorded file touch · across = work order · width = spend · depth = time · junction = fork · dry = stopped
+  - generic: palace feed unavailable
+  - generic "Agents and measured work"
+  - table:
+    - rowgroup:
+      - row "Agent Where State Spend":
+        - columnheader "Agent"
+        - columnheader "Where"
+        - columnheader "State"
+        - columnheader "Spend"
+    - rowgroup
+  - generic "Complete directory tree · 2 entries"

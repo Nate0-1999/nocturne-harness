@@ -1,0 +1,53 @@
+{
+  "base_url": "http://127.0.0.1:8765",
+  "tier": "efficient",
+  "captures": [
+    {
+      "module": "roots",
+      "row": "FL-129",
+      "full": "roots-efficient-sheet.png",
+      "crop": {
+        "x": 25,
+        "y": 603.34375,
+        "width": 762,
+        "height": 320
+      },
+      "telemetry": [
+        "41,852 triangles · efficient",
+        "8 roots\n82 touched-file capillaries · 8 agents\nWidth = dollars · depth = time · junction = fork · dry = stopped\nRead every Markdown file in references one at a time with the read tool, then wr · /private/tmp/m3vl24c-verification/project/notes"
+      ],
+      "at": "2026-09-25T05:48:53.517Z"
+    },
+    {
+      "module": "palace",
+      "row": "FL-133",
+      "full": "palace-efficient.png",
+      "crop": {
+        "x": 25,
+        "y": 224.21875,
+        "width": 762,
+        "height": 352
+      },
+      "telemetry": [
+        "62 fps\n33,813 triangles · efficient\nThree r182 · R3F + TSL · WebGPU · efficient\n2026-09-25T05:48:39.714658+00:00"
+      ],
+      "at": "2026-09-25T05:48:59.968Z"
+    },
+    {
+      "module": "farm",
+      "row": "FL-126",
+      "full": "farm-efficient.png",
+      "crop": {
+        "x": 813,
+        "y": 241.84375,
+        "width": 762,
+        "height": 320
+      },
+      "telemetry": [
+        "46,148 triangles · efficient",
+        "86 chambers\n164 file cells · 8 agents\nDrag or Ctrl+arrows to orbit · scroll or +/− to zoom · pick an ant\nRead every Markdown file in references one at a time with the read tool, then wr · /private/tmp/m3vl24c-verification/project/notes"
+      ],
+      "at": "2026-09-25T05:49:06.414Z"
+    }
+  ]
+}

@@ -1,0 +1,727 @@
+{
+  "run_uid": "01M3B4JAEJ21NYHF6EYM9PFJJZ",
+  "principal_id": "nocturne-verification-bfd0d9bf-4c72-48bd-aa7a-f0955cca4dc2",
+  "trigger": "manual",
+  "status": "completed",
+  "admitted_writes_snapshot": 24,
+  "pressure_snapshot": 0,
+  "verdict_count": 24,
+  "queued_count": 12,
+  "executed_count": 0,
+  "report": {
+    "format": "nocturne.palace-health",
+    "version": "1",
+    "principal_id": "nocturne-verification-bfd0d9bf-4c72-48bd-aa7a-f0955cca4dc2",
+    "as_of": "2026-09-25T01:58:34.211924Z",
+    "corpus_revision": "a1c4c6884e1c3194fb91e661e32533bf1e9bd1b53c7a42651ce576f14bef9ba3",
+    "active_units": 24,
+    "clusters": [],
+    "findings": [
+      {
+        "ordinal": 0,
+        "kind": "keyword",
+        "memory_ids": [
+          "147a232c-53d0-46b1-90c1-9e614710732f"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "Sensor timestamps need a shared time zone for comparison.",
+            "kind": "fact",
+            "label": "VL24 sensors 4",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "147a232c-53d0-46b1-90c1-9e614710732f",
+            "created_at": "2026-09-25T01:47:01.821375+00:00",
+            "updated_at": "2026-09-25T01:58:33.899657+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "4e9bb2a0546d18cbc8e6fbd21f6ec7c1f8870206a96a6439481a695dfa91f49e"
+      },
+      {
+        "ordinal": 1,
+        "kind": "keyword",
+        "memory_ids": [
+          "1f99bd3a-b79f-4f95-acb7-7ba40cbbc073"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "At a confluence the outgoing discharge equals the incoming discharges without losses.",
+            "kind": "fact",
+            "label": "VL24 Conservation",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "1f99bd3a-b79f-4f95-acb7-7ba40cbbc073",
+            "created_at": "2026-09-25T01:46:53.900112+00:00",
+            "updated_at": "2026-09-25T01:53:22.705142+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "a21a0a85bf704e9708bb5cd71bdd860c986b66eb16671b47ba57495efc8b6ac9"
+      },
+      {
+        "ordinal": 2,
+        "kind": "keyword",
+        "memory_ids": [
+          "20fda1c4-f73f-403b-b3d5-3892690e48d5"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "Dead wood can create habitat and slow local stream flow.",
+            "kind": "fact",
+            "label": "VL24 forest 5",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "20fda1c4-f73f-403b-b3d5-3892690e48d5",
+            "created_at": "2026-09-25T01:46:57.508311+00:00",
+            "updated_at": "2026-09-25T01:53:23.437854+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "eabbc47aa86b18b6eb2cb0ddba288dbe62d65faebf05a3a2b734d2f6ca92a7c8"
+      },
+      {
+        "ordinal": 3,
+        "kind": "keyword",
+        "memory_ids": [
+          "258506a5-059f-4e49-b015-07d15520038f"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "Missing samples should remain explicit gaps in a time series.",
+            "kind": "fact",
+            "label": "VL24 sensors 6",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "258506a5-059f-4e49-b015-07d15520038f",
+            "created_at": "2026-09-25T01:47:02.610955+00:00",
+            "updated_at": "2026-09-25T01:58:34.104076+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "6910e022bbfa52b956e067b0b4c8295ce37a6ae6862ab540f7001e0f452c4f60"
+      },
+      {
+        "ordinal": 4,
+        "kind": "keyword",
+        "memory_ids": [
+          "28b6b4a2-ef1b-4297-b6a5-4562fe13913f"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "River discharge is water volume crossing a section per second.",
+            "kind": "fact",
+            "label": "VL24 Discharge",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "28b6b4a2-ef1b-4297-b6a5-4562fe13913f",
+            "created_at": "2026-09-25T01:46:53.309723+00:00",
+            "updated_at": "2026-09-25T01:53:22.578464+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "0552e36becd31b1cadb4dc54040369c9819cd052561bceed7410c3912a01b1cb"
+      },
+      {
+        "ordinal": 5,
+        "kind": "keyword",
+        "memory_ids": [
+          "2c4d5625-b523-4667-a3ef-c60e144e7a41"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "Porous sandstone can store groundwater in connected pore spaces.",
+            "kind": "fact",
+            "label": "VL24 geology 1",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 2,
+              "never_kills": 0,
+              "last_injected_at": "2026-09-25T01:47:10.172927+00:00"
+            },
+            "keywords": [],
+            "revision": 4,
+            "memory_id": "2c4d5625-b523-4667-a3ef-c60e144e7a41",
+            "created_at": "2026-09-25T01:46:58.273614+00:00",
+            "updated_at": "2026-09-25T01:58:33.049994+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "450526204770a9fa5cb48798a906e20bc51c86b8daba84a2484b2505b54ab04e"
+      },
+      {
+        "ordinal": 6,
+        "kind": "keyword",
+        "memory_ids": [
+          "3d84092f-0095-41a4-baec-d6efcdbb57c3"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "Karst drainage follows dissolved passages in carbonate rock.",
+            "kind": "fact",
+            "label": "VL24 geology 3",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "3d84092f-0095-41a4-baec-d6efcdbb57c3",
+            "created_at": "2026-09-25T01:46:59.032940+00:00",
+            "updated_at": "2026-09-25T01:58:33.249878+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "bcb16e54963f7c385c29f1aad2b1c72ff19b6f83270ae0b1d0352c96c21e9b28"
+      },
+      {
+        "ordinal": 7,
+        "kind": "keyword",
+        "memory_ids": [
+          "47b9061e-dbc6-4513-84e2-e7eab15842a4"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "Water velocity increases when equal discharge passes through a narrower cross-section.",
+            "kind": "fact",
+            "label": "VL24 Velocity",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "47b9061e-dbc6-4513-84e2-e7eab15842a4",
+            "created_at": "2026-09-25T01:46:54.427185+00:00",
+            "updated_at": "2026-09-25T01:53:22.820821+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "6b207c88b2ed907e1b73028eaee1995b8635b698f6c13848ce66d11ce941e523"
+      },
+      {
+        "ordinal": 8,
+        "kind": "keyword",
+        "memory_ids": [
+          "5fdde758-b55c-47e4-9b81-4eff9effec4d"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "Calibration checks compare instruments against known references.",
+            "kind": "fact",
+            "label": "VL24 sensors 5",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "5fdde758-b55c-47e4-9b81-4eff9effec4d",
+            "created_at": "2026-09-25T01:47:02.269750+00:00",
+            "updated_at": "2026-09-25T01:58:34.010447+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "e31bd0058ae8e8ca33dbeb276dd65074401147c87dfd308246aebca5b17f3a78"
+      },
+      {
+        "ordinal": 9,
+        "kind": "keyword",
+        "memory_ids": [
+          "6c14fefe-898c-4f14-b0bf-3b0bb46e9124"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "Bedrock outcrops can constrain channel migration.",
+            "kind": "fact",
+            "label": "VL24 geology 5",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "6c14fefe-898c-4f14-b0bf-3b0bb46e9124",
+            "created_at": "2026-09-25T01:46:59.800394+00:00",
+            "updated_at": "2026-09-25T01:58:33.437317+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "28d76567cd2761da5c65bbae393108652d186c193368d7c56e951045e42921e5"
+      },
+      {
+        "ordinal": 10,
+        "kind": "keyword",
+        "memory_ids": [
+          "775c8362-f595-45df-89ea-2543a63ade09"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "Transpiration returns soil water to the atmosphere through plants.",
+            "kind": "fact",
+            "label": "VL24 forest 6",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "775c8362-f595-45df-89ea-2543a63ade09",
+            "created_at": "2026-09-25T01:46:57.895390+00:00",
+            "updated_at": "2026-09-25T01:53:23.528423+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "d76632c9f5d4cdf942ded284b33d54abc43784d2a46494034e0978064e960b90"
+      },
+      {
+        "ordinal": 11,
+        "kind": "keyword",
+        "memory_ids": [
+          "9ef253ac-5c4e-42ec-9c48-71adc9d230bb"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "Tree roots stabilize streambanks by reinforcing soil.",
+            "kind": "fact",
+            "label": "VL24 forest 2",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "9ef253ac-5c4e-42ec-9c48-71adc9d230bb",
+            "created_at": "2026-09-25T01:46:56.227825+00:00",
+            "updated_at": "2026-09-25T01:53:23.152130+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "6aac455c8296823eb5fbf372bcc8700842721ae572666f158428cd0232c0412e"
+      },
+      {
+        "ordinal": 12,
+        "kind": "keyword",
+        "memory_ids": [
+          "a1806163-9225-467b-bcf7-cf0b66ef51ee"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "Channel slope affects the speed of flow and the energy available for erosion.",
+            "kind": "fact",
+            "label": "VL24 Slope",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "a1806163-9225-467b-bcf7-cf0b66ef51ee",
+            "created_at": "2026-09-25T01:46:54.829700+00:00",
+            "updated_at": "2026-09-25T01:53:22.916497+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "28178ede018ded95fb60f8e316d396a1fa3ce6ebe521b668df2a8a14e8d8eb32"
+      },
+      {
+        "ordinal": 13,
+        "kind": "keyword",
+        "memory_ids": [
+          "a3a69bcc-9976-44d2-93b3-fbb6c0328a64"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "Clay layers often slow vertical infiltration.",
+            "kind": "fact",
+            "label": "VL24 geology 4",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "a3a69bcc-9976-44d2-93b3-fbb6c0328a64",
+            "created_at": "2026-09-25T01:46:59.401372+00:00",
+            "updated_at": "2026-09-25T01:58:33.348076+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "ed1df272cd9fca46c0261b611d98140a1a32ef0dcaeadd44db69d145f5fc3186"
+      },
+      {
+        "ordinal": 14,
+        "kind": "keyword",
+        "memory_ids": [
+          "a3d13eef-d3d9-4357-830d-dd2e4be52a10"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "Canopy cover shades streams and reduces summer water heating.",
+            "kind": "fact",
+            "label": "VL24 forest 1",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 3,
+              "never_kills": 0,
+              "last_injected_at": "2026-09-25T01:47:09.058976+00:00"
+            },
+            "keywords": [],
+            "revision": 5,
+            "memory_id": "a3d13eef-d3d9-4357-830d-dd2e4be52a10",
+            "created_at": "2026-09-25T01:46:55.283287+00:00",
+            "updated_at": "2026-09-25T01:53:23.030720+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "0321d3b00c66708f5e12d46e9439273b736dcd3a2cd846e734f21461ead15465"
+      },
+      {
+        "ordinal": 15,
+        "kind": "keyword",
+        "memory_ids": [
+          "a3d4632a-c3a5-48e3-a297-d650c3728514"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "A rain gauge records precipitation at its installation point.",
+            "kind": "fact",
+            "label": "VL24 sensors 3",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "a3d4632a-c3a5-48e3-a297-d650c3728514",
+            "created_at": "2026-09-25T01:47:01.392589+00:00",
+            "updated_at": "2026-09-25T01:58:33.808103+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "5f086e9a5de8aba6a44a12c1b1d5ee1d184a5676e3bec059a022dfd8624dace2"
+      },
+      {
+        "ordinal": 16,
+        "kind": "keyword",
+        "memory_ids": [
+          "a615bcad-5626-435b-9cd8-6284b0e602b0"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "A stage sensor measures water level relative to a local reference.",
+            "kind": "fact",
+            "label": "VL24 sensors 1",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "a615bcad-5626-435b-9cd8-6284b0e602b0",
+            "created_at": "2026-09-25T01:47:00.614769+00:00",
+            "updated_at": "2026-09-25T01:58:33.619537+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "63b0b93217183a8aea891ae06f3800719562afc4fcece571ad06794676692ab5"
+      },
+      {
+        "ordinal": 17,
+        "kind": "keyword",
+        "memory_ids": [
+          "a9e5b848-eadb-4e31-87cc-42361e5b1708"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "A watershed directs rainfall downhill through tributaries to a common outlet.",
+            "kind": "fact",
+            "label": "VL24 Watershed",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 7,
+              "never_kills": 0,
+              "last_injected_at": "2026-09-25T01:47:07.369262+00:00"
+            },
+            "keywords": [],
+            "revision": 9,
+            "memory_id": "a9e5b848-eadb-4e31-87cc-42361e5b1708",
+            "created_at": "2026-09-25T01:46:51.939369+00:00",
+            "updated_at": "2026-09-25T01:53:22.320647+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "4b4082b5e3f726203495ea94c60c52679b203f9001862ad5f8d684e75f0d1a44"
+      },
+      {
+        "ordinal": 18,
+        "kind": "keyword",
+        "memory_ids": [
+          "b6bb8507-8d52-4fb2-b87d-395f6cd361fa"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "Leaf litter supplies organic material to forest streams.",
+            "kind": "fact",
+            "label": "VL24 forest 3",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "b6bb8507-8d52-4fb2-b87d-395f6cd361fa",
+            "created_at": "2026-09-25T01:46:56.698532+00:00",
+            "updated_at": "2026-09-25T01:53:23.242698+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "c94900fe2e6c78b542fd33a51c583aeaec14bec4a44fe6baccaa63fcb889462d"
+      },
+      {
+        "ordinal": 19,
+        "kind": "keyword",
+        "memory_ids": [
+          "be11d643-0f9a-4e65-b71b-486e22b3a0b0"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "A tributary joins a larger river at a confluence.",
+            "kind": "fact",
+            "label": "VL24 Tributary",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "be11d643-0f9a-4e65-b71b-486e22b3a0b0",
+            "created_at": "2026-09-25T01:46:52.830597+00:00",
+            "updated_at": "2026-09-25T01:53:22.460321+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "c48a0ccc98c3c182b91e0b6b19bc9c3f2aa50590b8ebc7988a9d0ab49dd7f171"
+      },
+      {
+        "ordinal": 20,
+        "kind": "keyword",
+        "memory_ids": [
+          "c3bd5b6e-f55b-4013-9eeb-5d7de313dad4"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "Riparian buffers trap some sediment before it reaches a channel.",
+            "kind": "fact",
+            "label": "VL24 forest 4",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "c3bd5b6e-f55b-4013-9eeb-5d7de313dad4",
+            "created_at": "2026-09-25T01:46:57.060927+00:00",
+            "updated_at": "2026-09-25T01:53:23.338022+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "4a8254f2c42aec26748607a6660b50133251bcce3581e91a6138c844e8215f5a"
+      },
+      {
+        "ordinal": 21,
+        "kind": "keyword",
+        "memory_ids": [
+          "cf5db1fc-2caa-4cd4-9aeb-fae4efa9baa9"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "Fractures can carry groundwater through otherwise impermeable rock.",
+            "kind": "fact",
+            "label": "VL24 geology 2",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "cf5db1fc-2caa-4cd4-9aeb-fae4efa9baa9",
+            "created_at": "2026-09-25T01:46:58.634542+00:00",
+            "updated_at": "2026-09-25T01:58:33.157619+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "d9be5c355fa5e3465ac93da02bc3f0468759ba7fac7ef5c9109dde8e53b89dfe"
+      },
+      {
+        "ordinal": 22,
+        "kind": "keyword",
+        "memory_ids": [
+          "e5c68536-1fad-4e07-b4a1-8dd1dd2e4205"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "Alluvial deposits record earlier river positions.",
+            "kind": "fact",
+            "label": "VL24 geology 6",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "e5c68536-1fad-4e07-b4a1-8dd1dd2e4205",
+            "created_at": "2026-09-25T01:47:00.204075+00:00",
+            "updated_at": "2026-09-25T01:58:33.534331+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "a2017adf082b05f957f5ba1d03d45db44db83f926c6702a98897b07244dcccc6"
+      },
+      {
+        "ordinal": 23,
+        "kind": "keyword",
+        "memory_ids": [
+          "e8c59f3f-c822-4160-8236-152f55344e17"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "A rating curve relates measured stage to estimated discharge.",
+            "kind": "fact",
+            "label": "VL24 sensors 2",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "e8c59f3f-c822-4160-8236-152f55344e17",
+            "created_at": "2026-09-25T01:47:01.012658+00:00",
+            "updated_at": "2026-09-25T01:58:33.712800+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "25c38990771ae2f13a57a0c66cbe1f73f4b86ec31a9d9ec058bce6829a8ab53c"
+      }
+    ],
+    "keyword_coverage_percent": "0.000",
+    "stats_delta": {
+      "merges": 0,
+      "revisions": 12,
+      "retirements": 0,
+      "reinforcements": 0
+    }
+  },
+  "error": null,
+  "completed_at": "2026-09-25T01:59:43.709976Z"
+}

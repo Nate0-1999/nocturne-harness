@@ -1,0 +1,1197 @@
+[
+  {
+    "created": {
+      "memory_id": "fae3f8ec-1080-4c8c-b13b-83b434999597",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C A watershed drains all rainfall to one o",
+      "body": "A watershed drains all rainfall to one outlet.",
+      "kind": "fact",
+      "keywords": [
+        "watershed",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:08.766153Z",
+      "updated_at": "2026-09-25T04:24:08.766153Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "eab55015-e803-4b40-99ca-efcc005d2a36",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Basin boundaries follow ridge lines",
+      "body": "Basin boundaries follow ridge lines.",
+      "kind": "fact",
+      "keywords": [
+        "watershed",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:09.568240Z",
+      "updated_at": "2026-09-25T04:24:09.568240Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "f6f940bb-2d01-4f85-9b9d-2272f952a1d6",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Headwater reaches are steep and narrow",
+      "body": "Headwater reaches are steep and narrow.",
+      "kind": "fact",
+      "keywords": [
+        "watershed",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:10.116572Z",
+      "updated_at": "2026-09-25T04:24:10.116572Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "3b933394-a594-4689-bb51-cee0a8cc2618",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Catchment area sets peak discharge scale",
+      "body": "Catchment area sets peak discharge scale.",
+      "kind": "fact",
+      "keywords": [
+        "watershed",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:10.561581Z",
+      "updated_at": "2026-09-25T04:24:10.561581Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "8fe9fa76-72e0-4589-adac-19cc28d453f3",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Land cover changes runoff timing",
+      "body": "Land cover changes runoff timing.",
+      "kind": "fact",
+      "keywords": [
+        "watershed",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:11.134265Z",
+      "updated_at": "2026-09-25T04:24:11.134265Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "5b380797-f6e1-4034-abc8-3ab9812ac830",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Snowmelt shifts the spring hydrograph",
+      "body": "Snowmelt shifts the spring hydrograph.",
+      "kind": "fact",
+      "keywords": [
+        "watershed",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:11.499559Z",
+      "updated_at": "2026-09-25T04:24:11.499559Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "b5fd57f8-f5c0-460a-a8a8-cbde408c0879",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C A confluence conserves discharge",
+      "body": "A confluence conserves discharge.",
+      "kind": "fact",
+      "keywords": [
+        "confluence",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:11.966237Z",
+      "updated_at": "2026-09-25T04:24:11.966237Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "9288c339-3a29-47fd-bed1-8e77e9e4cbc3",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C merge() sums incoming discharges",
+      "body": "merge() sums incoming discharges.",
+      "kind": "fact",
+      "keywords": [
+        "confluence",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:12.431151Z",
+      "updated_at": "2026-09-25T04:24:12.431151Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "fddd8bde-0107-4ede-b49c-84b29a118498",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Tributary order increases downstream",
+      "body": "Tributary order increases downstream.",
+      "kind": "fact",
+      "keywords": [
+        "confluence",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:12.987382Z",
+      "updated_at": "2026-09-25T04:24:12.987382Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "733f3c37-40a1-4d04-a5ca-d62c7a56b4de",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Backwater forms at a confluence",
+      "body": "Backwater forms at a confluence.",
+      "kind": "fact",
+      "keywords": [
+        "confluence",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:13.712784Z",
+      "updated_at": "2026-09-25T04:24:13.712784Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "3c0daeba-a646-46e0-b479-a0c3dd17946c",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Confluence angles shape scour holes",
+      "body": "Confluence angles shape scour holes.",
+      "kind": "fact",
+      "keywords": [
+        "confluence",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:14.068371Z",
+      "updated_at": "2026-09-25T04:24:14.068371Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "118f7660-ff4c-4163-9eb2-7e5f0db4a3c4",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Reach.discharge recurses through childre",
+      "body": "Reach.discharge recurses through children.",
+      "kind": "fact",
+      "keywords": [
+        "confluence",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:14.516536Z",
+      "updated_at": "2026-09-25T04:24:14.516536Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "af06f780-28a5-4032-b3f1-92f5b1f4328d",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Mixing zones extend below a confluence",
+      "body": "Mixing zones extend below a confluence.",
+      "kind": "fact",
+      "keywords": [
+        "confluence",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:14.955373Z",
+      "updated_at": "2026-09-25T04:24:14.955373Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "6961666b-0c87-4bd4-a03d-c1e976134afc",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Manning velocity uses slope and roughnes",
+      "body": "Manning velocity uses slope and roughness.",
+      "kind": "fact",
+      "keywords": [
+        "routing",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:15.346499Z",
+      "updated_at": "2026-09-25T04:24:15.346499Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "c34311e1-3d39-4f67-a541-b42642796c25",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Travel time is length over velocity",
+      "body": "Travel time is length over velocity.",
+      "kind": "fact",
+      "keywords": [
+        "routing",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:15.930464Z",
+      "updated_at": "2026-09-25T04:24:15.930464Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "ce2e907a-5511-475b-9479-57b623df9ac8",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Roughness 0.035 suits natural channels",
+      "body": "Roughness 0.035 suits natural channels.",
+      "kind": "fact",
+      "keywords": [
+        "routing",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:16.432367Z",
+      "updated_at": "2026-09-25T04:24:16.432367Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "998d0408-ddaf-4ac7-94fa-90b74f99c8df",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Flood waves attenuate along a reach",
+      "body": "Flood waves attenuate along a reach.",
+      "kind": "fact",
+      "keywords": [
+        "routing",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:16.821299Z",
+      "updated_at": "2026-09-25T04:24:16.821299Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "c3c933c9-75e7-48b2-aac7-78f77e8e8d65",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Muskingum routing needs two parameters",
+      "body": "Muskingum routing needs two parameters.",
+      "kind": "fact",
+      "keywords": [
+        "routing",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:17.292257Z",
+      "updated_at": "2026-09-25T04:24:17.292257Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "290454fe-4f8f-4fbc-b3df-9db5d6593763",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Steeper reaches route water faster",
+      "body": "Steeper reaches route water faster.",
+      "kind": "fact",
+      "keywords": [
+        "routing",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:17.710363Z",
+      "updated_at": "2026-09-25T04:24:17.710363Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "d042bedd-9d1a-4ea0-b723-d6f50cd5c99c",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C read_stations loads flow per station",
+      "body": "read_stations loads flow per station.",
+      "kind": "fact",
+      "keywords": [
+        "gauges",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:18.053076Z",
+      "updated_at": "2026-09-25T04:24:18.053076Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "c6c612a7-0e45-411a-95aa-158608a73751",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C stations.csv lists north_fork south_fork",
+      "body": "stations.csv lists north_fork south_fork and mouth.",
+      "kind": "fact",
+      "keywords": [
+        "gauges",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:18.480884Z",
+      "updated_at": "2026-09-25T04:24:18.480884Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "604af3df-672a-40cd-bb0b-c38c740b7722",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Gauge flow calibrates the model",
+      "body": "Gauge flow calibrates the model.",
+      "kind": "fact",
+      "keywords": [
+        "gauges",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:18.878013Z",
+      "updated_at": "2026-09-25T04:24:18.878013Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "0839610d-ec13-4713-85b6-88df8a3cb9af",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Mouth flow should equal the fork sum",
+      "body": "Mouth flow should equal the fork sum.",
+      "kind": "fact",
+      "keywords": [
+        "gauges",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:19.406935Z",
+      "updated_at": "2026-09-25T04:24:19.406935Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "3decd834-f0d1-4814-a5b9-0e5f1acfa6d8",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Rating curves map stage to discharge",
+      "body": "Rating curves map stage to discharge.",
+      "kind": "fact",
+      "keywords": [
+        "gauges",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:19.788121Z",
+      "updated_at": "2026-09-25T04:24:19.788121Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "a29142d0-1ae2-411e-9b45-cd561d4d1ba9",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Sediment load rises with discharge",
+      "body": "Sediment load rises with discharge.",
+      "kind": "fact",
+      "keywords": [
+        "sediment",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:20.192439Z",
+      "updated_at": "2026-09-25T04:24:20.192439Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "3e5ef79c-d4fa-4bcd-b37b-28c0ca7d1345",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Fine sediment settles on floodplains",
+      "body": "Fine sediment settles on floodplains.",
+      "kind": "fact",
+      "keywords": [
+        "sediment",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:20.551998Z",
+      "updated_at": "2026-09-25T04:24:20.551998Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "ba962ea6-5426-4372-adf1-8cbbc308aa86",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Bedload moves in pulses during floods",
+      "body": "Bedload moves in pulses during floods.",
+      "kind": "fact",
+      "keywords": [
+        "sediment",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:20.936719Z",
+      "updated_at": "2026-09-25T04:24:20.936719Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "52396904-846b-4078-9243-702c1adc8c08",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Reservoirs trap most incoming sediment",
+      "body": "Reservoirs trap most incoming sediment.",
+      "kind": "fact",
+      "keywords": [
+        "sediment",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:21.275695Z",
+      "updated_at": "2026-09-25T04:24:21.275695Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "1eac9574-91aa-45b7-8202-a3ffce3f51e8",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Floodplains store peak flow",
+      "body": "Floodplains store peak flow.",
+      "kind": "fact",
+      "keywords": [
+        "floodplain",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:21.646559Z",
+      "updated_at": "2026-09-25T04:24:21.646559Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "54d40496-999f-4e21-84c9-b157e8ea4eec",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Overbank flow slows on vegetated plains",
+      "body": "Overbank flow slows on vegetated plains.",
+      "kind": "fact",
+      "keywords": [
+        "floodplain",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:22.011948Z",
+      "updated_at": "2026-09-25T04:24:22.011948Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "ad5cbc6f-f3f1-4290-9085-068618b16d87",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Levees raise in-channel flood stage",
+      "body": "Levees raise in-channel flood stage.",
+      "kind": "fact",
+      "keywords": [
+        "floodplain",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:22.385561Z",
+      "updated_at": "2026-09-25T04:24:22.385561Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "194b004f-78bd-49be-9d1e-3401a5d329c2",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Floodplain width controls attenuation",
+      "body": "Floodplain width controls attenuation.",
+      "kind": "fact",
+      "keywords": [
+        "floodplain",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:23.095914Z",
+      "updated_at": "2026-09-25T04:24:23.095914Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "27164afd-dab1-4bda-b2c5-b6053e611738",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Wetlands buffer the flood peak",
+      "body": "Wetlands buffer the flood peak.",
+      "kind": "fact",
+      "keywords": [
+        "floodplain",
+        "riverflow"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "origin_path": "references",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/references",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:24:23.430927Z",
+      "updated_at": "2026-09-25T04:24:23.430927Z"
+    }
+  },
+  {
+    "existing": {
+      "label_conflict": {
+        "memory_id": "36b61d6f-1365-4b49-8943-52d5aba150e4",
+        "label": "VL24C Discharge is conserved where two rivers "
+      }
+    }
+  },
+  {
+    "existing": {
+      "label_conflict": {
+        "memory_id": "3d47f945-16d4-4871-b9f2-eaf816c77dc0",
+        "label": "VL24C Flow at the mouth equals the sum of the "
+      }
+    }
+  },
+  {
+    "existing": {
+      "label_conflict": {
+        "memory_id": "a6cbd6b5-9473-4157-8530-2295d5e40ad2",
+        "label": "VL24C Flood waves lose height as they travel a"
+      }
+    }
+  },
+  {
+    "existing": {
+      "label_conflict": {
+        "memory_id": "dd31e420-40b2-4de0-a0ba-745ad087d4eb",
+        "label": "VL24C Floodplain wetlands store the flood peak"
+      }
+    }
+  },
+  {
+    "existing": {
+      "duplicate_of": {
+        "memory_id": "6961666b-0c87-4bd4-a03d-c1e976134afc",
+        "label": "VL24C Manning velocity uses slope and roughnes",
+        "body": "Manning velocity uses slope and roughness.",
+        "kind": "fact",
+        "pin": false,
+        "score": 0.9259029200091904,
+        "features": null,
+        "rank": null
+      }
+    }
+  },
+  {
+    "created": {
+      "memory_id": "b712e303-dbc3-449d-b9c5-8bbc5ba068b9",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Confluence scour deepens at sharp juncti",
+      "body": "Confluence scour deepens at sharp junction angles.",
+      "kind": "fact",
+      "keywords": [
+        "confluence"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "origin_path": "notes",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/notes",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:29:13.586691Z",
+      "updated_at": "2026-09-25T04:29:13.586691Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "b311ebdc-6a82-4a65-8a7f-b6ba49023ef5",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Stage readings convert to discharge with",
+      "body": "Stage readings convert to discharge with a rating curve.",
+      "kind": "fact",
+      "keywords": [
+        "Gauges"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "origin_path": "notes",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/notes",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:29:14.051922Z",
+      "updated_at": "2026-09-25T04:29:14.051922Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "c6ae1e95-8f68-4aaf-96ef-47ef7228907a",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Bedload pulses follow flood peaks",
+      "body": "Bedload pulses follow flood peaks.",
+      "kind": "fact",
+      "keywords": [
+        "sediment"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "origin_path": "notes",
+      "origin_location": "/private/tmp/m3vl24c-verification/project/notes",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:29:14.417562Z",
+      "updated_at": "2026-09-25T04:29:14.417562Z"
+    }
+  }
+]

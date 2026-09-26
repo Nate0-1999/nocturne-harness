@@ -1,0 +1,27 @@
+........................................................................ [ 22%]
+........................................................................ [ 44%]
+........................................................................ [ 66%]
+.........................................................F.............. [ 89%]
+..........................sss......                                      [100%]
+=================================== FAILURES ===================================
+_____________ test_distribution_metadata_uses_the_package_version ______________
+
+    def test_distribution_metadata_uses_the_package_version() -> None:
+        """P4 is defended by verifying that distribution metadata uses the package version; this
+        prevents drift in the reproducible and least-surprise packaging boundary.
+        """
+>       assert version("nocturne-memory") == __version__ == "0.1.27"
+E       AssertionError: assert '0.1.26' == '0.1.27'
+E         
+E         - 0.1.27
+E         ?      ^
+E         + 0.1.26
+E         ?      ^
+
+tests/test_packaging.py:51: AssertionError
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_unbuilt_rules.py:6: r11-2: shared Palaces and revocable principal grants are horizon work
+SKIPPED [1] tests/test_unbuilt_rules.py:12: r9-9: worker/local cost stores have not converged into the spend ledger
+SKIPPED [1] tests/test_unbuilt_rules.py:18: r9-6: strongest curator model policy awaits SD-018
+FAILED tests/test_packaging.py::test_distribution_metadata_uses_the_package_version
+1 failed, 319 passed, 3 skipped in 26.79s

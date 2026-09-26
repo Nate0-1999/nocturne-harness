@@ -75,6 +75,7 @@ export function RackPluginIframe({
   spatialContext = null,
   attunement = null,
   conversationMode,
+  sheetMode = false,
   theme,
   isRegressionFixture = false,
 }: {
@@ -83,6 +84,7 @@ export function RackPluginIframe({
   spatialContext?: SpatialSelectionContext | null
   attunement?: AttunementTarget | null
   conversationMode?: ConversationMode
+  sheetMode?: boolean
   theme: ThemeId
   isRegressionFixture?: boolean
 }) {
@@ -250,7 +252,7 @@ export function RackPluginIframe({
       title={manifest.name}
       allow={!customPlugin && manifest.id === 'conversation' ? 'microphone; autoplay' : undefined}
       sandbox={customPlugin ? 'allow-scripts' : 'allow-scripts allow-same-origin'}
-      src={customPlugin ? undefined : rackFrameUrl(manifest.id, theme, conversationMode)}
+      src={customPlugin ? undefined : rackFrameUrl(manifest.id, theme, conversationMode, sheetMode)}
       srcDoc={customPlugin ? rackPluginDocument(customPlugin) : undefined}
     />
   )
@@ -260,6 +262,7 @@ function rackFrameUrl(
   moduleId: RackModuleId,
   theme: ThemeId,
   conversationMode?: ConversationMode,
+  sheetMode = false,
 ): string {
   const url = new URL(globalThis.location.href)
   const fixture = url.searchParams.get('fixture')
@@ -270,6 +273,7 @@ function rackFrameUrl(
   url.searchParams.set('module_version', RACK_MANIFESTS[moduleId].version)
   url.searchParams.set('rack_host', globalThis.location.origin)
   url.searchParams.set('theme', theme)
+  if (moduleId === 'roots' && sheetMode) url.searchParams.set('sheet', 'true')
   if (moduleId === 'conversation') {
     url.searchParams.set('conversation_mode', conversationMode ?? 'focused')
   }

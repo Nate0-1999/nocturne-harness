@@ -1,0 +1,14 @@
+{
+  "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+  "denied": 6,
+  "pending_after": 0,
+  "active_after": 0,
+  "recorded_ids": 44,
+  "after_feed_refresh": {
+    "graph_nodes_for_principal": 85,
+    "status_counts": {
+      "tombstoned": 85
+    },
+    "note": "85 = both seedings (the first 40 tombstoned mid-walk, receipts/first-palace/)"
+  }
+}

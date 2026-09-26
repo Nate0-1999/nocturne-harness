@@ -1,0 +1,12 @@
+{
+  "candidate_commit": "33a7bc9c201f81ba431632245bbbc8b2471ca53e",
+  "base_commit": "dd5f53d",
+  "appearance_and_live_walk_base": "e48c46c",
+  "unchanged_binding_files": [
+    "web/src/visualization.ts",
+    "web/src/nebulaBindings.ts",
+    "web/src/Farm.tsx"
+  ],
+  "binding_diff": "",
+  "runtime_changes": "Only rendering, Sheet propagation and material lifetime changes. Live recordings predate the final peer rebase; final assets were rebuilt and regression checked."
+}

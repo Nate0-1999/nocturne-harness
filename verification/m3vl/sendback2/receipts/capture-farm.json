@@ -1,0 +1,21 @@
+{
+  "base_url": "http://127.0.0.1:8765",
+  "tier": "full",
+  "captures": [
+    {
+      "module": "farm",
+      "view": "stage",
+      "record_start_s": 10.061,
+      "seconds": 40,
+      "trigger": "cd /private/tmp/m3vl24c-workspace/harness/verification/m3vl/plates && node send.mjs --base-url http://127.0.0.1:8765 --home /private/tmp/m3vl24c-v2/home --thread f1e3ca9c-0a60-4dd8-b49b-d201059e7423 --prompt 'Tour the project with the move tool, reading one file in each folder as you go: move into references and read gauges.md; move into data and read stations.csv; move into src/riverflow and read gauge.py; move into tests and read test_confluence.py; move into notes and read gauges.md; then move into docs and write docs/gauges-tour.md with one line per folder; finally move back to the project root.'",
+      "lead": 3,
+      "crop": {
+        "x": 0.139892578125,
+        "y": 328.54713937222334,
+        "width": 1104.639892578125,
+        "height": 510.29995037534144
+      },
+      "camera": "slow orbit by mouse drag, 25 px over 40 s"
+    }
+  ]
+}

@@ -23,8 +23,8 @@ const snapshot = {
 
 /** SPEC D.2 124: every active memory is one body; inactive rows are not decoration. */
 test('nebula creates exactly one deterministic body per active memory', () => {
-  const first = buildNebulaBodies(snapshot, 'activity', Date.parse('2026-08-21T20:00:00Z'))
-  const second = buildNebulaBodies(snapshot, 'activity', Date.parse('2026-08-21T20:00:00Z'))
+  const first = buildNebulaBodies(snapshot, Date.parse('2026-08-21T20:00:00Z'))
+  const second = buildNebulaBodies(snapshot, Date.parse('2026-08-21T20:00:00Z'))
   assert.deepEqual(first, second)
   assert.deepEqual(first.map((body) => body.id), ['a', 'b'])
   assert.ok(first[1].scale[0] > first[0].scale[0], 'injections enlarge the body')
@@ -33,20 +33,20 @@ test('nebula creates exactly one deterministic body per active memory', () => {
   assert.equal(first[1].pinned, true)
 })
 
-/** ADR-018: M3GE requires the owner axis switch to rebind actual data, not rename a fixed layout. */
-test('activity and provenance modes produce different named data transforms', () => {
-  const activity = buildNebulaBodies(snapshot, 'activity', Date.parse('2026-08-21T20:00:00Z'))
-  const provenance = buildNebulaBodies(snapshot, 'provenance', Date.parse('2026-08-21T20:00:00Z'))
-  assert.notDeepEqual(activity.map((body) => body.position), provenance.map((body) => body.position))
-  assert.notDeepEqual(activity.map((body) => body.color), provenance.map((body) => body.color))
-  assert.notDeepEqual(activity.map((body) => body.scale), provenance.map((body) => body.scale))
-  assert.deepEqual(NEBULA_BINDINGS.activity, [
-    'X · memory.created_at (chronological rank)',
-    'Y · memory.stats.injections (log scale)',
-    'Z · memory.revision (linear scale)',
-    'Color · memory.kind (deterministic palette)',
-    'Shape · memory.revision (vertical stretch)',
-  ])
+/** ADR-018 and PLAN M3VL GRANTS replace Cartesian axes with the same inputs, radially. */
+test('radial placement binds inverse injection count, family creation order and revision depth', () => {
+  const bodies = buildNebulaBodies(snapshot)
+  assert.equal(Math.hypot(...bodies[0].position.slice(0, 2)), 8)
+  assert.ok(Math.abs(Math.hypot(...bodies[1].position.slice(0, 2)) - 8 / 13) < 1e-12)
+  assert.ok(bodies[1].position[2] > bodies[0].position[2])
+  const source = { ...snapshot, edges: [{ kind: 'similarity', from_memory_id: 'a', to_memory_id: 'b' }] }
+  const reordered = buildNebulaBodies({ ...source, nodes: [...source.nodes].reverse() })
+  assert.deepEqual(buildNebulaBodies(source).map((body) => body.position), reordered.reverse().map((body) => body.position))
+  const reversedCreation = buildNebulaBodies({ ...source, nodes: [
+    node('a', { created_at: '2026-09-01T00:00:00Z' }), node('b', { created_at: '2026-01-01T00:00:00Z' }),
+  ] })
+  assert.ok(reversedCreation[0].position[0] < reversedCreation[1].position[0])
+  assert.match(NEBULA_BINDINGS.radial[0], /inverse|8 \/ \(1 \+ injections\)/u)
   assert.equal(NEBULA_BINDINGS.shared.length, 5)
 })
 
@@ -78,24 +78,25 @@ test('memory current emits only real revision events and replays byte-identicall
 })
 
 /** ADR-018 and PLAN M3SL bind constellation filaments and creature stipple to graph truth. */
-test('real graph edges alone create filaments and duplicate-family creatures', () => {
+test('lineage, shared threads and keywords create only evidenced filaments', () => {
   const source = {
     ...snapshot,
-    nodes: [node('a'), node('b'), node('c')],
+    nodes: [node('a', { origin_thread_id: 'thread-1', keywords: ['river'] }), node('b', { thread_origin: 'thread-1' }), node('c', { keywords: ['River'] })],
     edges: [
       { kind: 'similarity', from_memory_id: 'a', to_memory_id: 'b', similarity: '0.91' },
       { kind: 'lineage', from_memory_id: 'b', to_memory_id: 'c', edge_type: 'merged_from' },
       { kind: 'edit_trail', from_memory_id: 'a', to_memory_id: 'a', revision_count: 2 },
     ],
   }
-  const bodies = buildNebulaBodies(source, 'activity')
+  const bodies = buildNebulaBodies(source)
   const events = buildNebulaEvents(source)
   const filaments = buildNebulaFilaments(source, bodies)
   const families = buildNebulaCreatureFamilies(source, bodies, events)
-  assert.deepEqual(filaments.map((item) => item.kind), ['similarity', 'lineage'])
-  assert.deepEqual(families.map((item) => item.memory_ids), [['a', 'b']])
-  assert.equal(families[0].stipple_count, 96)
-  assert.deepEqual(buildNebulaCreatureFamilies({ ...source, edges: [] }, bodies, events), [])
+  assert.deepEqual(filaments.map((item) => item.kind).sort(), ['keyword', 'lineage', 'thread'])
+  assert.deepEqual(families.map((item) => item.memory_ids), [['a', 'b', 'c']])
+  assert.equal(families[0].stipple_count, 144)
+  assert.equal(buildNebulaCreatureFamilies({ ...source, edges: [] }, bodies, events).length, 1)
+  assert.deepEqual(buildNebulaFilaments({ ...source, nodes: [node('a'), node('b')], edges: [] }, bodies), [])
 })
 
 /** ADR-018: M3SL keeps absorbed duplicate history visible without reviving tombstoned memories as bodies. */
@@ -107,7 +108,7 @@ test('historical similarity families anchor to their latest real events', () => 
     nodes: [absorbed, survivor],
     edges: [{ kind: 'similarity', from_memory_id: 'absorbed', to_memory_id: 'survivor', similarity: '0.93' }],
   }
-  const bodies = buildNebulaBodies(source, 'activity')
+  const bodies = buildNebulaBodies(source)
   const events = buildNebulaEvents(source)
   const families = buildNebulaCreatureFamilies(source, bodies, events)
 
@@ -117,11 +118,11 @@ test('historical similarity families anchor to their latest real events', () => 
 })
 
 /** SPEC C.4: the visual projection must bind the released thread_origin compatibility field. */
-test('provenance binds the released Palace thread_origin compatibility field', () => {
+test('shared-thread filaments bind the released Palace thread_origin compatibility field', () => {
   const legacy = node('legacy', { thread_origin: 'released-thread', origin_thread_id: undefined })
-  const absent = node('absent')
-  const bodies = buildNebulaBodies({ as_of: snapshot.as_of, nodes: [legacy, absent] }, 'provenance')
-  assert.notEqual(bodies[0].position[1], bodies[1].position[1])
+  const current = node('current', { origin_thread_id: 'released-thread' })
+  const source = { as_of: snapshot.as_of, nodes: [legacy, current] }
+  assert.equal(buildNebulaFilaments(source, buildNebulaBodies(source))[0].kind, 'thread')
 })
 
 /** ADR-018/023 and D.2 130: Three/r3f/TSL replace PlayCanvas without moving text into the scene. */
@@ -136,12 +137,11 @@ test('production source uses the ruled Three stack and forbids random geometry',
   assert.match(component, /query\.query\(\{ resource: 'memory_graph', as_of: 'now', thread_id: threadId \}\)/u)
   assert.match(component, /<Canvas/u)
   assert.match(component, /new WebGPURenderer\(parameters\)/u)
-  assert.match(component, /new MeshStandardNodeMaterial/u)
+  assert.match(component, /new MeshPhysicalNodeMaterial/u)
   assert.match(component, /tslColor/u)
   assert.match(component, /useFrame/u)
   assert.match(component, /name="memory-event-current"/u)
   assert.match(component, /<instancedMesh/u)
-  assert.match(component, /<octahedronGeometry/u)
   assert.match(component, /name="memory-relationships"/u)
   assert.match(component, /data-grammar="torrent-constellation"/u)
   assert.doesNotMatch(component, /clock\.elapsedTime|motion_hz|motion_amplitude/u)

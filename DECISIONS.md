@@ -3631,6 +3631,41 @@ memory panel, the trace and the Deck's worker context. ×! is the palace delete
 memory's revision is known — the panel; on the gate, where a scored card carries
 no revision, it records the never veto. The near-miss row is + and ×!; its
 duplicate more-options path was removed.
+## M3VL — Reflective roots and glass memories [P2.5]
+
+PRECEDENT: PLAN M3VL (grants; send-back 1), F115, M3VZ, D.2 107/109/110 and the committed plates.
+Palace: inverse-injection radius, family/creation angle and revision depth replace Cartesian
+placement; filaments are lineage plus the three nearest links sharing an origin thread or keyword;
+recorded curator visits draw streams that bow through the central mass, a repeated traversal
+fanning into its bundle, with the ghost on the latest. Send-back 1 lit it: glass spheres glow from
+within and carry a bright rim, both scaled by injections; barely-injected memories are points of
+light; streams and event particles are HDR light carried by a WebGPU bloom pass; one HDR studio map
+gives glass and chrome real reflections. Similarity edges as filaments were tried and dropped (739
+lines on a 42-memory Palace), as were all-pairs family links (quadratic in a thread's memories).
+Roots: a project's roots merge into a trunk and forks diverge from their junction as limbs. Each
+turn branches off its root at its recorded moment, each tool call off its turn, each file touch off
+the latest call before it. The feed projects only turn and tool-call times, never content: a
+thread's turns are its run starts, a worker's are its model responses. Root width follows spend so
+far; branch width and reach follow the recorded work beneath; dry roots are desaturated satin; the
+view centres and fits the river. Side-by-sides and live recordings are the acceptance evidence,
+with the owner's eye at audit.
+Send-back 2 brought the Farm in: chrome-rimmed glass basins in a branching tree (size = files
+held, dim = empty), limbs as wide as the files beneath, glass cells sized by bytes that glow when
+touched (brighter when recent, a flash on a new touch), and blue-and-white ants that walk the limbs
+when their location changes. A `.git` store folds into one chamber: it is version control, not the
+project's work, and its object folders buried the plate's shape. The layout is one pass, recomputed
+only when the tree changes (F122). Motion happens only on data change: ants walking, cells
+flashing, Palace arrivals, a growth light along new Roots branches, the Roots framing easing to a
+new extent. The Roots run long like the plate: a wider work-order axis, project trunks closer but
+apart, a fit to what the camera sees, dark mirror chrome on the sheet. An enlarged Palace module
+gives its scene at least 64% of the height.
+Send-back 3 rebuilt the Roots (chosen from three competing designs by three judges): one tube per
+recorded event, spaced by compressed time (ln(1+gap/0.5 s)^1.2, a longer gap always a longer bare
+stretch); a turn or call leaves the latest earlier sibling that followed a longer wait, files the
+call before them; width = hair + 6·√(dollars flowing), conserved at forks, so older roots never thin
+when a big spender arrives; near-black liquid chrome whose streaks move with the camera, blue on live
+work, red-pink where a branch leaves, deep navy matte when stopped. Swapping geometry under a live WebGPU mesh dropped its colour buffer and froze the
+Palace; a new geometry now gets a new mesh.
 
 ## M3OB — Repair the walked front door [P1.1, P4.1]
 

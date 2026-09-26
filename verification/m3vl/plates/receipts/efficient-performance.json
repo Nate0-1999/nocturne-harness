@@ -1,0 +1,76 @@
+{
+  "method": "real Roots renderer on the final recorded feed (receipts/final-feed.json) in a headless frame-rate fixture with a synthetic camera orbit; Palace from the live module's own meter in the render bench on the same feed; 12 one-second samples after 2 s warm-up",
+  "display_capped_60hz": {
+    "roots_efficient": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+    ],
+    "roots_full": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+    ]
+  },
+  "uncapped": {
+    "roots_efficient": {
+      "fps": [
+        833,
+        769,
+        764,
+        767,
+        760,
+        765,
+        763,
+        767,
+        763,
+        761,
+        764,
+        764
+      ],
+      "minimum": 760
+    },
+    "roots_full": {
+      "fps": [
+        816,
+        771,
+        762,
+        764,
+        757,
+        763,
+        758,
+        761,
+        760,
+        760,
+        761,
+        760
+      ],
+      "minimum": 757
+    },
+    "palace_efficient_meter": "1738 fps \u00b7 33,813 triangles (bloom on)",
+    "palace_full_meter": "1806 fps \u00b7 111,733 triangles (bloom on)"
+  },
+  "live_app_meter": {
+    "palace_efficient": "62 fps (display-capped)",
+    "palace_full": "62 fps (display-capped)"
+  },
+  "machine": "owner Mac, headless Chrome, WebGPU for Palace, WebGL2 for Roots"
+}
