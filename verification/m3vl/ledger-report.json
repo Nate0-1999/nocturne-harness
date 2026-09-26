@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "8a1b24aaef38d3577f6ed89911594a0e4cb41c14",
-      "head": "082299ea6891d151c6175e51b43dd3f91f9da687"
+      "head": "7924e7d4bba83c638a30a53ef2297ed140e4a24c"
     }
   ],
   "unmapped": {
@@ -284,7 +284,35 @@
     "harness/verification/m3vl/sendback2/roots-live.webm": "Send-back 2 walk evidence; no product behavior.",
     "harness/web/dist/assets/index-B7UPUPga.css": "Built bundle of the mapped web sources; no separate behavior.",
     "harness/web/dist/assets/index-BcKV02cz.js": "Built bundle of the mapped web sources; no separate behavior.",
-    "harness/verification/m3vl/sendback2/canon.log": "M3VL packet evidence; no product behavior."
+    "harness/verification/m3vl/sendback2/canon.log": "M3VL packet evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/FL-130.png": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/FL-132.png": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/FL-134.png": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/FL-142-stage.png": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/FL-142.png": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/context.png": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/cleanup.json": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/local-cleanup.json": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/queue-denied.json": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/rows-walk.json": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/tombstones.json": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback3/FL-129-plate.png": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback3/gallery.html": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback3/receipts/capture-efficient.json": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback3/receipts/capture-full.json": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback3/receipts/capture-roots.json": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback3/receipts/design-process.json": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback3/receipts/efficient-performance.json": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback3/receipts/recordings.json": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback3/receipts/roots-efficient-viewport.png": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback3/receipts/roots-full-viewport.png": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback3/receipts/symphony.json": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback3/receipts/walk.json": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback3/roots-efficient-sheet.png": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback3/roots-full-sheet.png": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback3/roots-live.webm": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback3/roots-stage-live.webm": "Send-back 3 walk evidence; no product behavior.",
+    "harness/web/dist/assets/index-x6-a9TNv.js": "Built bundle of the mapped web sources; no separate behavior."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -511,7 +539,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-129.png",
       "flag": "F115",
-      "observed": "Roots grow a branch per recorded turn and tool call with a growth light and dry to grey on stop, recorded for 60 s during a real Symphony (roots-live.webm). Look acceptance stays with the owner's eye."
+      "observed": "Send-back 3: the Roots rebuilt as the plate's liquid chrome river \u2014 one tube per recorded event spaced by time, width in dollars conserved at forks, blue live, red-pink junctions, navy matte stopped \u2014 recorded for 75 s (sheet) and 60 s (stage) while a real Symphony grew them (sendback3/). Look acceptance stays with the owner's eye."
     },
     "FL-130": {
       "label": "A tree-search view reached by rotating the farm.",
