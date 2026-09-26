@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "8a1b24aaef38d3577f6ed89911594a0e4cb41c14",
-      "head": "475614713be14903d77fd4d03bad4f9622ac244b"
+      "head": "082299ea6891d151c6175e51b43dd3f91f9da687"
     }
   ],
   "unmapped": {
@@ -237,7 +237,54 @@
     "harness/verification/m3vl/plates/receipts/cleanup.json": "Send-back 1 walk evidence; no product behavior.",
     "harness/verification/m3vl/plates/receipts/local-cleanup.json": "Send-back 1 walk evidence; no product behavior.",
     "harness/verification/m3vl/plates/receipts/queue-denied.json": "Send-back 1 walk evidence; no product behavior.",
-    "harness/verification/m3vl/plates/receipts/tombstones.json": "Send-back 1 walk evidence; no product behavior."
+    "harness/verification/m3vl/plates/receipts/tombstones.json": "Send-back 1 walk evidence; no product behavior.",
+    "harness/verification/m3vl/FL-009.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/FL-069.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/FL-170.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/FL-186.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/FL-187.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/FL-190.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/FL-191.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/FL-192.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/FL-193.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/FL-194.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/plates/send.mjs": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/FL-126-plate.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/FL-129-plate.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/FL-133-plate.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/farm-efficient.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/farm-full.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/farm-live.webm": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/gallery.html": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/palace-efficient.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/palace-full.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/palace-live.webm": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/capture-efficient.json": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/capture-farm.json": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/capture-full.json": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/capture-palace.json": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/capture-roots.json": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/curator-runs.json": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/efficient-performance.json": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/farm-efficient-viewport.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/farm-full-viewport.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/farm-large-tree.json": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/injections.json": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/memories-created.json": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/palace-efficient-viewport.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/palace-full-viewport.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/perf-fixture/perf.html": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/perf-fixture/perf.mjs": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/perf-fixture/perf.tsx": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/roots-efficient-viewport.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/roots-full-viewport.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/receipts/walk.json": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/roots-efficient-sheet.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/roots-full-sheet.png": "Send-back 2 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback2/roots-live.webm": "Send-back 2 walk evidence; no product behavior.",
+    "harness/web/dist/assets/index-B7UPUPga.css": "Built bundle of the mapped web sources; no separate behavior.",
+    "harness/web/dist/assets/index-BcKV02cz.js": "Built bundle of the mapped web sources; no separate behavior.",
+    "harness/verification/m3vl/sendback2/canon.log": "M3VL packet evidence; no product behavior."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -338,7 +385,7 @@
       "verdict": "PASS",
       "screenshot": "FL-141.png",
       "flag": "",
-      "observed": "Idle, the Palace and Roots canvases were pixel-identical across three captures 3 s apart (fps readout excluded); they changed only during real turns and a real curator pass (idle-stillness.json, recordings)."
+      "observed": "The three scenes move only when data changes: the ant walks only on a recorded move, cells flash only on a new touch, branches grow only on new turns and calls, memories ring only on arrival."
     },
     "FL-187": {
       "label": "Two repos, the spine (memory) and the Harness, not a mono repo.",
@@ -392,7 +439,7 @@
       "verdict": "PASS",
       "screenshot": "FL-046.png",
       "flag": "",
-      "observed": "A real curator pass ran while the Palace was open: finding.started events drew violet-to-red streams between the visited families and the ghost travelled them (palace-live.webm; curator-runs.json)."
+      "observed": "A real curator pass run while the Palace was open drew its streams and ghost (palace-live.webm)."
     },
     "FL-069": {
       "label": "The core tools every modern harness has: files, terminal, Chrome, skills, changing models, compaction (our own take), and interactions with common apps, taken from the most modular standard source.",
@@ -446,7 +493,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-123.png",
       "flag": "F115",
-      "observed": "Farm, Roots and Palace are three separate three.js modules on real data; send-back 1 lighting and the turn-by-turn river are in, and the look awaits the owner's eye under F115."
+      "observed": "Farm, Roots and Palace are three separate three.js modules on real data, each with a live-data video; look acceptance stays with the owner's eye."
     },
     "FL-126": {
       "label": "The ant farm: the whole directory tree as chambered burrows with files as cells, zoomable, floating on black with a faint grid, showing worktrees.",
@@ -454,8 +501,8 @@
       "protected": false,
       "verdict": "FAIL",
       "screenshot": "FL-126.png",
-      "flag": "F119",
-      "observed": "The unchanged Farm re-captured on the real project and Symphony worktrees (12 chambers, 33 file cells); plate density is not asserted. On a 31,878-entry tree it freezes the page (F122)."
+      "flag": "F115",
+      "observed": "Farm made in the plate's look on a real project (10 chambers): glass basins sized by files, lit cells, and an ant that walks the limbs chamber to chamber as its thread moves (farm-live.webm, 40 s during a real move-tool tour; worktrees appear as their own projects in the picker). Look acceptance stays with the owner's eye."
     },
     "FL-129": {
       "label": "Roots: every parallel agent across projects gets a root-like, naturally meandering flow growing horizontally from roughly its agent's location, with dead roots for active loops, tips seen end-on as grids of starts in the next rotation, clustered by project on the view opposite the ant farm.",
@@ -464,7 +511,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-129.png",
       "flag": "F115",
-      "observed": "Eight real roots branch at every recorded turn and tool call with file capillaries off their calls, in cool chrome on the sheet ground; the plate still reads as one wide dark trunk with finer, longer branching (F115, owner's eye)."
+      "observed": "Roots grow a branch per recorded turn and tool call with a growth light and dry to grey on stop, recorded for 60 s during a real Symphony (roots-live.webm). Look acceptance stays with the owner's eye."
     },
     "FL-130": {
       "label": "A tree-search view reached by rotating the farm.",
@@ -473,7 +520,7 @@
       "verdict": "PASS",
       "screenshot": "FL-130.png",
       "flag": "",
-      "observed": "Picking root.1 in the Roots table selected root.1 in the Farm too; the Farm readout followed it to its worktree (rows-walk.json)."
+      "observed": "Picking root.1 in Roots selected root.1 in the Farm too, which followed it into its worktree (sendback2/receipts/rows-walk.json)."
     },
     "FL-132": {
       "label": "A time-order control that highlights new roots and moves the panels to the longest-waiting response.",
@@ -482,7 +529,7 @@
       "verdict": "PASS",
       "screenshot": "FL-132.png",
       "flag": "",
-      "observed": "Time order pressed in Roots pressed it in the Farm as well and selected the longest-waiting thread (rows-walk.json)."
+      "observed": "Time order pressed in Roots pressed it in the Farm and selected the longest-waiting thread (rows-walk.json)."
     },
     "FL-133": {
       "label": "A corner palace view with curators as ghosts moving through the database.",
@@ -491,7 +538,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-133.png",
       "flag": "F115",
-      "observed": "Glass memories glow and rim by injection count with real reflections, bloom and live curator streams; the plate is denser, with more small lit nodes and brighter blue-white glass (F115, owner's eye)."
+      "observed": "Memories arrive with a ring of light and a real curator pass draws streams and moves the ghost (palace-live.webm, 55 s). Look acceptance stays with the owner's eye."
     },
     "FL-134": {
       "label": "A way to see things being added or removed over time, as SolidWorks does, the project growing like an organic object.",
@@ -500,7 +547,7 @@
       "verdict": "PASS",
       "screenshot": "FL-134.png",
       "flag": "",
-      "observed": "Scrubbing History to an early recorded state showed 2 roots and an empty Palace; Live restored 8 roots and 44 memories. The first recorded state was not walked with the Farm open: it freezes on the launch folder (F122)."
+      "observed": "Scrubbing History to an early state showed 2 roots and 42 memories; Live restored 8 roots and 56 memories within 0.8 s (rows-walk.json)."
     },
     "FL-138": {
       "label": "The palace nebula (the memory palace visualization module) looks super liquid and smooth, with the upper end amazing and lesser hardware considered, and its colors and shapes change quickly when the user changes the axis connecting the memories.",
@@ -515,10 +562,10 @@
       "label": "The 3D memory palace shows curation as it happens: curators combining and separating memories in real time, tied to live feeds.",
       "walk": "Trigger a curator pass with the nebula open; memories visibly combine or separate as it runs.",
       "protected": false,
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "screenshot": "FL-139.png",
-      "flag": "F086",
-      "observed": "Context capture only: this row's gesture was not repeated during this rendering walk; no new PASS is claimed."
+      "flag": "",
+      "observed": "The Palace shows curation as it happens: the curator pass's findings appear as streams between families and the ghost travels them (palace-live.webm)."
     },
     "FL-142": {
       "label": "Constitution: A sheet mode: an annotated layout of the same views. (chat 2026-08-31 21:38:35)",
@@ -527,7 +574,7 @@
       "verdict": "PASS",
       "screenshot": "FL-142.png",
       "flag": "",
-      "observed": "Sheet renders the three modules with their binding legends and the white Roots ground; Stage renders the same modules (FL-142-stage.png)."
+      "observed": "Sheet renders the three modules with their binding legends (Roots now names branch = turn, twig = tool call) and the white Roots ground; Stage renders the same modules."
     },
     "FL-170": {
       "label": "A fresh reinstall that reconnects to existing files and auto-finds the cloud palace.",

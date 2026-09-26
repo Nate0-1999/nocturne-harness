@@ -39,7 +39,7 @@ try {
   await page.getByRole('button', { name: 'Sheet', exact: true }).click()
   await page.waitForTimeout(3000)
   // FL-130: picking a root in the Roots module selects that agent in the Farm too.
-  const agent = roots.locator('.work-viz__data tbody tr button').filter({ hasText: 'root.1' }).first()
+  const agent = roots.locator('.work-viz__data tbody tr button').filter({ hasText: /root\.1$/ }).first()
   await agent.click()
   await page.waitForTimeout(3000)
   log.selection = {
