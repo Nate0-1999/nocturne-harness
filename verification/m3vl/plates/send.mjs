@@ -34,7 +34,7 @@ try {
   await composer.press('Enter')
   for (let i = 0; i < 20 && !left; i++) await page.waitForTimeout(250)
   if (!left) {
-    await page.screenshot({ path: '/private/tmp/m3vl24c-v2/send-failed.png' })
+    await page.screenshot({ path: '/tmp/m3vl-send-failed.png' })
     throw new Error('the prompt did not leave the app')
   }
   try {

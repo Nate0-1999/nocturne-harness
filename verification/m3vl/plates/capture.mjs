@@ -14,6 +14,7 @@ const args = process.argv.slice(2)
 const baseUrl = argument('--base-url')
 const evidenceDir = resolve(argument('--evidence-dir'))
 const record = args.includes('--record') ? argument('--record') : null
+const only = record ?? (args.includes('--only') ? argument('--only') : null)
 const tier = args.includes('--tier') ? argument('--tier') : 'full'
 const seconds = args.includes('--seconds') ? Number(argument('--seconds')) : 10
 // The data change is started on camera: the trigger runs when recording begins, after an optional lead.
@@ -24,10 +25,10 @@ const MODULES = { roots: ['Roots', 'roots', '.work-viz__viewport', 'FL-129', 'ro
   farm: ['Farm', 'farm', '.work-viz__viewport', 'FL-126', 'farm.png'] }
 // Farm and Palace fill a module resized to the whole Stage (black ground); Roots uses the Sheet, the plate's
 // white ground, with its agents table folded so the scene has the height.
-const VIEWS = { farm: 'stage', palace: 'stage', roots: 'sheet' }
+const VIEWS = { farm: 'stage', palace: 'stage', roots: args.includes('--roots-stage') ? 'stage' : 'sheet' }
 // The scene region of each viewport, as fractions [x, y, width, height]: the plate is framed on its subject,
 // so the capture is too. Palace: the centred square; Roots: the band above the readout; Farm: the scene centre.
-const CROPS = { palace: 'square', roots: [0.16, 0.08, 0.66, 0.7], farm: [0.1, 0, 0.8, 1] }
+const CROPS = { palace: 'square', roots: [0.21, 0.03, 0.54, 0.76], farm: [0.1, 0, 0.8, 1] }
 const videoDir = resolve(evidenceDir, 'receipts', 'video-raw')
 const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--enable-unsafe-webgpu', '--ignore-gpu-blocklist', '--force-device-scale-factor=2'] })
 const log = { base_url: baseUrl, tier, captures: [] }
@@ -36,7 +37,7 @@ let context, page, opened
 try {
   await mkdir(resolve(evidenceDir, 'receipts'), { recursive: true })
   for (const [key, [name, moduleId, selector, row, plate]] of Object.entries(MODULES)) {
-    if (record && record !== key) continue
+    if (only && only !== key) continue
     // Retina density, as on the owner's display (forced at the browser so it reaches the module frames).
     const viewport = VIEWS[key] === 'sheet' ? { width: 1000, height: 1000 } : { width: 1600, height: 1000 }
     context = await browser.newContext({ viewport, deviceScaleFactor: 2,
@@ -103,7 +104,7 @@ if (record) {
   const even = (value) => Math.max(2, Math.round(value / 2) * 2)
   execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', String(start), '-t', String(seconds), '-i', resolve(videoDir, video),
     '-vf', `crop=${even(crop.width * 2)}:${even(crop.height * 2)}:${Math.round(crop.x * 2)}:${Math.round(crop.y * 2)},fps=30`,
-    '-c:v', 'libvpx-vp9', '-b:v', '0', '-crf', '30', resolve(evidenceDir, `${record}-live.webm`)])
+    '-c:v', 'libvpx-vp9', '-b:v', '0', '-crf', '30', resolve(evidenceDir, `${record}${VIEWS[record] === 'stage' && record === 'roots' ? '-stage' : ''}-live.webm`)])
   await rm(videoDir, { recursive: true })
 }
 await writeFile(resolve(evidenceDir, 'receipts', `capture-${record ?? tier}.json`), `${JSON.stringify(log, null, 2)}\n`)

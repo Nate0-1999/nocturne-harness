@@ -3658,7 +3658,13 @@ only when the tree changes (F122). Motion happens only on data change: ants walk
 flashing, Palace arrivals, a growth light along new Roots branches, the Roots framing easing to a
 new extent. The Roots run long like the plate: a wider work-order axis, project trunks closer but
 apart, a fit to what the camera sees, dark mirror chrome on the sheet. An enlarged Palace module
-gives its scene at least 64% of the height. Swapping geometry under a live WebGPU mesh dropped its colour buffer and froze the
+gives its scene at least 64% of the height.
+Send-back 3 rebuilt the Roots (chosen from three competing designs by three judges): one tube per
+recorded event, spaced by compressed time (ln(1+gap/0.5 s)^1.2, a longer gap always a longer bare
+stretch); a turn or call leaves the latest earlier sibling that followed a longer wait, files the
+call before them; width = hair + 6·√(dollars flowing), conserved at forks, so older roots never thin
+when a big spender arrives; near-black liquid chrome whose streaks move with the camera, blue on live
+work, red-pink where a branch leaves, deep navy matte when stopped. Swapping geometry under a live WebGPU mesh dropped its colour buffer and froze the
 Palace; a new geometry now gets a new mesh.
 
 ## M3OB — Repair the walked front door [P1.1, P4.1]
