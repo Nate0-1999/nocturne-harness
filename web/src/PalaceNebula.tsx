@@ -383,15 +383,16 @@ function NebulaMemoryBody({ body, share, arriving, tier, onSelect }: {
   }, [])
   useEffect(() => () => ring.dispose(), [ring])
   const [sx, sy, sz] = body.scale
-  // A new memory grows in with an expanding ring of light over 1.4 s, then rests.
+  // A new memory grows in with an expanding ring of light over 1.8 s, then rests.
   useFrame(() => {
     const mesh = meshRef.current, halo = ringRef.current, start = arrival.current
     if (!mesh || !halo || start === null) return
-    const t = Math.min(1, (performance.now() - start) / 1400), grow = 1 + 2.2 * Math.pow(1 - t, 3) * Math.sin(t * Math.PI * 1.5)
+    const t = Math.min(1, (performance.now() - start) / 1800), grow = 1 + 2.2 * Math.pow(1 - t, 3) * Math.sin(t * Math.PI * 1.5)
     const size = t < 0.25 ? t / 0.25 : grow
     mesh.scale.set(sx * size, sy * size, sz * size)
     halo.visible = t < 1
-    halo.scale.setScalar(sx * (1 + t * 2.4))
+    // Even a point of light announces itself: the ring starts at least half a unit wide.
+    halo.scale.setScalar(Math.max(sx, 0.5) * (1 + t * 2.4))
     ;(halo.material as MeshBasicNodeMaterial).opacity = 0.9 * (1 - t)
     if (t >= 1) { arrival.current = null; mesh.scale.set(sx, sy, sz) }
   })
