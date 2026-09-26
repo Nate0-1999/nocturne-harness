@@ -1,0 +1,22 @@
+{
+  "base_url": "http://127.0.0.1:8765",
+  "tier": "full",
+  "captures": [
+    {
+      "module": "palace",
+      "view": "stage",
+      "record_start_s": 11.243,
+      "seconds": 55,
+      "trigger": "cd /private/tmp/m3vl24c-workspace/harness && M3VL_TAKE=t2 NOCTURNE_HOME=/private/tmp/m3vl24c-v2/home .venv/bin/python verification/m3vl/plates/palace_seed.py verification/m3vl/sendback2 arrive 2.5 > /private/tmp/m3vl24c-v2/arrive.log 2>&1",
+      "lead": 2,
+      "crop": {
+        "x": 68.419921875,
+        "y": 324.1421594299281,
+        "width": 1104.64013671875,
+        "height": 460.3900569814105
+      },
+      "camera": "slow orbit by mouse drag, 25 px over 55 s",
+      "trigger_still_running": true
+    }
+  ]
+}

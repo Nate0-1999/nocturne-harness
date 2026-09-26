@@ -39,7 +39,7 @@ try {
     for (const [index, prompts] of THREADS.entries()) {
       walk.threads[index] ??= { thread_id: argument(`--thread-${index}`, false) ?? await createThread(), prompts: [] }
       const thread = walk.threads[index]
-      sent.set(thread.thread_id, thread.prompts.length)
+      sent.set(thread.thread_id, await runsDone(thread.thread_id))
       await frame('threads').locator(`[data-thread-id="${thread.thread_id}"] button`).first().click()
       for (const prompt of prompts.slice(thread.prompts.length)) {
         await send(prompt)
@@ -54,7 +54,19 @@ try {
     const threadId = walk.symphony?.thread_id ?? argument('--thread', false) ?? await createThread()
     walk.symphony = { thread_id: threadId }
     await frame('threads').locator(`[data-thread-id="${threadId}"] button`).first().click()
-    await frame('conversation').getByLabel('Orchestration mode').selectOption('Symphony')
+    // A prompt is refused until the selected thread's authoritative snapshot arrives: wait for the history,
+    // then confirm a new deliberation card appeared.
+    const cards = frame('conversation').getByTestId('symphony-deliberation')
+    await page.waitForTimeout(4000)
+    const before = await cards.count()
+    let asked = false
+    for (let attempt = 0; attempt < 3 && !asked; attempt++) {
+      const mode = frame('conversation').getByLabel('Orchestration mode')
+      if (attempt) await mode.selectOption('Duet')
+      await mode.selectOption('Symphony')
+      asked = await waitUntil(async () => await cards.count() > before, 20_000).then(() => true, () => false)
+    }
+    if (!asked) throw new Error('the Symphony deliberation was not requested')
     const card = frame('conversation').getByTestId('symphony-deliberation').last()
     await card.waitFor({ state: 'visible', timeout: 120_000 })
     const fill = async (label, value) => card.getByLabel(label, { exact: true }).first().fill(String(value))
@@ -122,13 +134,16 @@ async function send(prompt) {
   }
 }
 
-async function settled(threadId, timeoutMs) {
+async function runsDone(threadId) {
   // The thread's own journal is authoritative: a turn is settled when its run.done is recorded.
   const journal = resolve(argument('--home'), 'transcripts', `${createHash('sha256').update(threadId).digest('hex')}.jsonl`)
-  const done = async () => (await readFile(journal, 'utf8').catch(() => '')).split('\n')
+  return (await readFile(journal, 'utf8').catch(() => '')).split('\n')
     .filter((line) => line.includes('"type":"run.done"') || line.includes('"type": "run.done"')).length
-  const target = (sent.get(threadId) ?? 0) + 1
-  await waitUntil(async () => await done() >= target, timeoutMs)
+}
+
+async function settled(threadId, timeoutMs) {
+  const target = sent.get(threadId) + 1
+  await waitUntil(async () => await runsDone(threadId) >= target, timeoutMs)
   sent.set(threadId, target)
 }
 

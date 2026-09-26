@@ -29,7 +29,7 @@ CONFIG = dict(line.split("=", 1) for line in (HOME / "env").read_text().splitlin
 CONFIG = {key: value.strip('"') for key, value in CONFIG.items()}
 PRINCIPAL, MACHINE = CONFIG["PRINCIPAL_ID"], CONFIG["MACHINE_ID"]
 assert PRINCIPAL.startswith("nocturne-verification-"), "disposable identities only"
-PROJECT = "/private/tmp/m3vl24c-verification/project"
+PROJECT = os.environ.get("M3VL_PROJECT", "/private/tmp/m3vl24c-v2/farm")
 
 # Six subject families: the active riverflow project, and five unrelated subjects a Palace holds.
 # Keywords are family-specific; a few notes carry one keyword, and two facts are filed twice under
@@ -187,6 +187,35 @@ def created_ids(evidence: Path) -> list[str]:
     )
 
 
+# Memories that arrive on camera: ordinary notes, some filed loosely, so the curator has real work.
+ARRIVALS = [
+    ("river", ["river"], "A weir raises the upstream water level"),
+    ("orchard", ["orchard", "pruning"], "Pear trees fruit on two-year-old spurs"),
+    ("telescope", ["Telescope"], "A Barlow lens doubles the effective focal length"),
+    ("sourdough", ["sourdough", "baking"], "Feed the starter one to one to one"),
+    ("harmony", ["harmony", "music"], "A plagal cadence moves IV to I"),
+    ("typesetting", ["typesetting"], "Widows and orphans break a paragraph badly"),
+    ("river", ["river", "discharge"], "Discharge is conserved where two rivers join"),
+    ("telescope", ["telescope", "optics"], "Collimate the reflector before you observe"),
+]
+
+
+async def arrive(evidence: Path, every: float) -> None:
+    """Create each arrival a few seconds apart, then run one curator pass over the Palace."""
+    created = []
+    async with client() as palace:
+        take = os.environ.get("M3VL_TAKE", "")
+        for family, keywords, fact in ARRIVALS:
+            label = f"{take} {fact}" if take else fact
+            created.append(await create(palace, keywords, FAMILIES[family][1], label))
+            await asyncio.sleep(every)
+    path = evidence / "receipts" / "memories-created.json"
+    previous = json.loads(path.read_text()) if path.exists() else []
+    path.write_text(json.dumps(previous + created, indent=2) + "\n")
+    print(f"{len(created)} memories arrived")
+    await curate(evidence)
+
+
 async def cleanup(evidence: Path) -> None:
     """Deny this principal's pending cards, then tombstone the recorded memories; report counts."""
     denied = []
@@ -330,6 +359,8 @@ if __name__ == "__main__":
         FAMILIES.clear()
         FAMILIES.update({"harmony": ([], None, []), "orchard": ([], None, [])})
         asyncio.run(memories(evidence))
+    elif action == "arrive":
+        asyncio.run(arrive(evidence, float(sys.argv[3]) if len(sys.argv) > 3 else 2.0))
     elif action == "cleanup":
         asyncio.run(cleanup(evidence))
     elif action == "tombstone":

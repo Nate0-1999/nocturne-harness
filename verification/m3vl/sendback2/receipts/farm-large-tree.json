@@ -1,0 +1,22 @@
+{
+  "tree": "this Harness worktree (.venv, node_modules): 32,129 entries, 3,155 chambers",
+  "before": {
+    "layout_ms_per_refresh": 3127,
+    "refresh_interval_ms": 2500,
+    "result": "page stopped painting (F122)"
+  },
+  "after": {
+    "layout_ms_once_per_tree_change": [
+      61,
+      64,
+      52
+    ],
+    "tree_key_ms_per_refresh": 2,
+    "farm_on_that_tree": {
+      "load_ms": 6396,
+      "animation_frames_in_10s": 561,
+      "longest_gap_ms": 183
+    }
+  },
+  "method": "buildChambers timed in node on the tree; the real Farm rendered it in the fixture bench and requestAnimationFrame ticks were counted over 10 s spanning four feed refreshes"
+}

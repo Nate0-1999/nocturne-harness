@@ -3647,8 +3647,19 @@ turn branches off its root at its recorded moment, each tool call off its turn, 
 the latest call before it. The feed projects only turn and tool-call times, never content: a
 thread's turns are its run starts, a worker's are its model responses. Root width follows spend so
 far; branch width and reach follow the recorded work beneath; dry roots are desaturated satin; the
-view centres and fits the river. Farm is unchanged. Side-by-sides and live recordings are the
-acceptance evidence, with the owner's eye at audit.
+view centres and fits the river. Side-by-sides and live recordings are the acceptance evidence,
+with the owner's eye at audit.
+Send-back 2 brought the Farm in: chrome-rimmed glass basins in a branching tree (size = files
+held, dim = empty), limbs as wide as the files beneath, glass cells sized by bytes that glow when
+touched (brighter when recent, a flash on a new touch), and blue-and-white ants that walk the limbs
+when their location changes. A `.git` store folds into one chamber: it is version control, not the
+project's work, and its object folders buried the plate's shape. The layout is one pass, recomputed
+only when the tree changes (F122). Motion happens only on data change: ants walking, cells
+flashing, Palace arrivals, a growth light along new Roots branches, the Roots framing easing to a
+new extent. The Roots run long like the plate: a wider work-order axis, project trunks closer but
+apart, a fit to what the camera sees, dark mirror chrome on the sheet. An enlarged Palace module
+gives its scene at least 64% of the height. Swapping geometry under a live WebGPU mesh dropped its colour buffer and froze the
+Palace; a new geometry now gets a new mesh.
 
 ## M3OB — Repair the walked front door [P1.1, P4.1]
 
