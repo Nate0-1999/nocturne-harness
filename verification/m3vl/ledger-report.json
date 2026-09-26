@@ -312,7 +312,8 @@
     "harness/verification/m3vl/sendback3/roots-full-sheet.png": "Send-back 3 walk evidence; no product behavior.",
     "harness/verification/m3vl/sendback3/roots-live.webm": "Send-back 3 walk evidence; no product behavior.",
     "harness/verification/m3vl/sendback3/roots-stage-live.webm": "Send-back 3 walk evidence; no product behavior.",
-    "harness/web/dist/assets/index-x6-a9TNv.js": "Built bundle of the mapped web sources; no separate behavior."
+    "harness/web/dist/assets/index-x6-a9TNv.js": "Built bundle of the mapped web sources; no separate behavior.",
+    "harness/verification/m3vl/sendback3/candidates-vs-plate.png": "Send-back 3 design comparison (bench renders of the recorded run); no product behavior."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
