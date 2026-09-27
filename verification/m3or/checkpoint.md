@@ -1,41 +1,30 @@
-# M3OR fresh-session verification checkpoint
+# M3OR verification
 
-Session `or27` claimed M3OR through Garden PR 54. **IN_PROGRESS, not DONE.**
-The fifteen-row browser walk and captures remain incomplete: both Chrome and
-the in-app browser block the scratch app with `ERR_BLOCKED_BY_CLIENT`.
-An explicit request to use Playwright, or restored local browser access, is pending.
+The fifteen charged browser walks passed on public 0.1.36 and the installed
+repair candidate, using a disposable home and real Palace/OpenRouter.
+The earlier browser blocker and failed model attempts remain as before evidence.
 
-![Browser access blocker](browser-blocked.png)
+Repairs: retain empty accepted commits; point judges at candidate directories
+and require grounded feedback with no candidates; archive only the latest
+snapshot per message ID. No other feature code changed.
 
-| Check | Before → observed result |
-|---|---|
-| Public baseline | Both packages installed from PyPI at 0.1.35; real Palace/OpenRouter heartbeat and queued/interjected turns succeeded. |
-| Retry commit | A real continuation stopped on an empty cherry-pick → retaining redundant commits replayed that exact commit successfully. |
-| Judge working directory | Checks ran from judge metadata → instructions now direct judges into the candidate directory. |
-| No surviving candidate | A terminated worker left judges selecting absent candidates or returning invalid feedback → instructions name the sealed brief as evidence and require FAIL without a selection. |
-| Final recovery | With installed candidate workers and GPT-4.1, one deliberate worker death produced judge feedback, a fresh round and unanimous completion; the accepted foundation commit remained unchanged. Recorded run spend: $0.12145. |
+`walk-observations.json` is the fifteen-row verdict table. `gallery.html` links
+each capture. `browser-runtime-traces.tar.gz` contains the real worker contexts,
+round plans, supervisor events and durable browser-thread transcripts.
+`receipts/browser/` contains complete stack records and archive before/after counts.
+`runtime-traces.tar.gz` retains the first discovery and candidate runs.
 
-The final Harness suite passed **1,798 tests** (4 skipped, 3 live contracts
-deselected); Memory ground passed **322** (3 skipped). Worker/round checks,
-Ruff and test motivations passed. Memory's first failure was stale editable
-distribution metadata and passed after refreshing it.
+`ledger-report.json` accounts for the final diff: 17 required rows, one PASS
+and 16 explicit context-only FAIL/F086. This coverage accounting does not erase
+unrepeated gestures outside the fifteen-row charge.
 
-Earlier GPT-4.1-mini runs and their failures remain in `runtime-traces.tar.gz`.
-The first candidate daemon still launched released workers because process
-isolation strips `PYTHONPATH`; it does not validate the worker instruction
-changes. Later runs used a separately installed candidate. A faulty verification
-command used unavailable `python`; the final recipe uses `python3`. No product
-change was made for that fixture error.
+The browser used the prior packets' Playwright pattern with persistent state.
+`walk.mjs` packages the executed launch/result/archive gestures as a replay;
+it requires an already running disposable app and a signed-launch JSON fixture.
+The death watcher additionally checks the exact worker command before SIGKILL.
 
-`walk-observations.json` records all fifteen charged rows without claiming UI
-acceptance. `ledger-report.json` is an unfinished generated report for the
-repair's three mapped rows; no coverage PASS, UI canon PASS, release, or DONE
-handoff is claimed. The source changes are five lines plus their decision note.
-
-Cleanup receipt: one active disposable memory and three pending cards became
-**zero active and zero pending**. Evidence excludes all credential files and
-passed an exact credential-content scan. No owner home or owner principal was used.
-
-Resume with the browser permission resolved, rewalk on a fresh disposable home,
-complete all fifteen captures and packet-aware canon, then use the standing
-release grant for the next unused paired version if the final repair stands.
+Validation: 1,798 Harness tests passed, 4 skipped, 3 live-contract tests deferred
+to hosted CI; 322 Memory tests passed, 3 skipped; 158 web unit tests passed.
+The first suite overlapped the version bump and failed only its metadata assertion;
+the complete rerun against the fixed pair passed. UI canon and release receipts
+are recorded separately when complete.

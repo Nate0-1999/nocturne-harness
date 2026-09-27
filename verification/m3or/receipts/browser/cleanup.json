@@ -1,0 +1,319 @@
+{
+  "principal_id": "nocturne-verification-e7f05f50-d3aa-4f68-b8c6-f064c9071e21",
+  "before_active": 1,
+  "before_pending": 2,
+  "queue": {
+    "cards": [
+      {
+        "item_uid": "01M3J9S6SQZPR1R9T6TMTZ9VP9",
+        "candidate": {
+          "memory_id": "e5df2dce-73a4-488e-8af0-38943cead54b",
+          "principal_id": "nocturne-verification-e7f05f50-d3aa-4f68-b8c6-f064c9071e21",
+          "label": "Atomic lesson on normalization",
+          "body": "Text normalization for slugs often involves trimming whitespace, lowercasing, splitting on whitespace, and joining with hyphens.",
+          "kind": "fact",
+          "keywords": [
+            "normalization",
+            "slug"
+          ],
+          "project_key": "/private/tmp/m3or-or27/browser/project",
+          "thread_origin": null,
+          "origin_thread_id": "369aee44-f3de-4468-8a02-a3548d595e64",
+          "origin_path": ".",
+          "origin_location": "/private/tmp/m3or-or27/browser/project",
+          "pin": false,
+          "status": "candidate",
+          "revision": 2,
+          "stats": {
+            "removals": 0,
+            "citations": 0,
+            "injections": 0,
+            "never_kills": 0,
+            "last_injected_at": null
+          },
+          "bias": 0.0,
+          "embedding_model": "openai/text-embedding-3-small",
+          "created_at": "2026-09-27T20:44:23.409525Z",
+          "updated_at": "2026-09-27T20:44:23.667168Z"
+        },
+        "birthplace": "symphony",
+        "birthplace_thread_id": null,
+        "batch_uid": "02696392-0578-4c1b-8957-45ddc7804c3e",
+        "source_name": null,
+        "source_sha256": null,
+        "birthplace_run_id": "01M3J9R137MJP04JFJ2NAKCX0C",
+        "birthplace_origin_agent": "01M3J9R137MJP04JFJ2NAKCX0C/root.1",
+        "judged_context": {
+          "summary": "python3 -c \"from marker import TOKEN; from slug import slug; assert TOKEN == 'OR27_FOUNDATION'; assert slug('  Copper   Orchid  ') == 'copper-orchid'; assert slug(' \\t ') == ''\" exits 0.",
+          "verdict": "unanimous_pass",
+          "judge_ids": [
+            "01M3J9S1JQWKX4JXAY9W58FNTV",
+            "01M3J9S1KAQ787FVNXBZ0KVAPV",
+            "01M3J9S1KW50ZKENNKF4EE44EC"
+          ],
+          "evidence_refs": [
+            "/private/tmp/m3or-or27/browser/home/symphonies/01M3J9QM4B3S6K1N7Y011MABTT/step-2-round-1/judge-motivation/result.json",
+            "/private/tmp/m3or-or27/browser/home/symphonies/01M3J9QM4B3S6K1N7Y011MABTT/step-2-round-1/judge-implementation/result.json",
+            "/private/tmp/m3or-or27/browser/home/symphonies/01M3J9QM4B3S6K1N7Y011MABTT/step-2-round-1/judge-performance/result.json"
+          ]
+        },
+        "candidate_revision": null,
+        "curator_run_uid": null,
+        "curator_finding_uid": null,
+        "proposal_payload": null,
+        "verdict": "new",
+        "neighbors": [],
+        "target_ids": [],
+        "state": "pending",
+        "created_at": "2026-09-27T20:44:23.667168Z"
+      },
+      {
+        "item_uid": "01M3J9ZBY096E44GAV78PC3WC8",
+        "candidate": {
+          "memory_id": "d1856984-5000-4226-ab20-0c297f1eb6c5",
+          "principal_id": "nocturne-verification-e7f05f50-d3aa-4f68-b8c6-f064c9071e21",
+          "label": "OR27 slug normalization principle",
+          "body": "Consistent normalization should lowercase input, split on all whitespace, and join with a single hyphen for each word, trimming the result. Empty input yields empty output.",
+          "kind": "fact",
+          "keywords": [
+            "slug",
+            "normalization",
+            "lowercase",
+            "whitespace",
+            "hyphen"
+          ],
+          "project_key": "/private/tmp/m3or-or27/browser/candidate-project",
+          "thread_origin": null,
+          "origin_thread_id": "7067272b-f4ba-4f1d-bf41-2e71ef915877",
+          "origin_path": ".",
+          "origin_location": "/private/tmp/m3or-or27/browser/candidate-project",
+          "pin": false,
+          "status": "candidate",
+          "revision": 2,
+          "stats": {
+            "removals": 0,
+            "citations": 0,
+            "injections": 0,
+            "never_kills": 0,
+            "last_injected_at": null
+          },
+          "bias": 0.0,
+          "embedding_model": "openai/text-embedding-3-small",
+          "created_at": "2026-09-27T20:47:45.352383Z",
+          "updated_at": "2026-09-27T20:47:45.531672Z"
+        },
+        "birthplace": "symphony",
+        "birthplace_thread_id": null,
+        "batch_uid": "895a9b87-3900-4263-971f-8ceb33f1fa11",
+        "source_name": null,
+        "source_sha256": null,
+        "birthplace_run_id": "01M3J9YXBAKJGJQKXA26E31CD7",
+        "birthplace_origin_agent": "01M3J9YXBAKJGJQKXA26E31CD7/root.1",
+        "judged_context": {
+          "summary": "python3 -c \"from marker import TOKEN; from slug import slug; assert TOKEN == 'OR27_FOUNDATION'; assert slug('  Copper   Orchid  ') == 'copper-orchid'; assert slug(' \\t ') == ''\" exits 0.",
+          "verdict": "unanimous_pass",
+          "judge_ids": [
+            "01M3J9Z7J7EW7HPK4WMR4BEPTV",
+            "01M3J9Z7JR0FNQKAMT0N92ZJWC",
+            "01M3J9Z7KAE27BEPKNSRP3NMT6"
+          ],
+          "evidence_refs": [
+            "/private/tmp/m3or-or27/browser/home/symphonies/01M3J9Y8RHVDPZ888TT7CZE503/step-2-round-2/judge-motivation/result.json",
+            "/private/tmp/m3or-or27/browser/home/symphonies/01M3J9Y8RHVDPZ888TT7CZE503/step-2-round-2/judge-implementation/result.json",
+            "/private/tmp/m3or-or27/browser/home/symphonies/01M3J9Y8RHVDPZ888TT7CZE503/step-2-round-2/judge-performance/result.json"
+          ]
+        },
+        "candidate_revision": null,
+        "curator_run_uid": null,
+        "curator_finding_uid": null,
+        "proposal_payload": null,
+        "verdict": "new",
+        "neighbors": [],
+        "target_ids": [],
+        "state": "pending",
+        "created_at": "2026-09-27T20:47:45.531672Z"
+      }
+    ]
+  },
+  "decisions": [
+    {
+      "card": {
+        "item_uid": "01M3J9S6SQZPR1R9T6TMTZ9VP9",
+        "candidate": {
+          "memory_id": "e5df2dce-73a4-488e-8af0-38943cead54b",
+          "principal_id": "nocturne-verification-e7f05f50-d3aa-4f68-b8c6-f064c9071e21",
+          "label": "Atomic lesson on normalization",
+          "body": "Text normalization for slugs often involves trimming whitespace, lowercasing, splitting on whitespace, and joining with hyphens.",
+          "kind": "fact",
+          "keywords": [
+            "normalization",
+            "slug"
+          ],
+          "project_key": "/private/tmp/m3or-or27/browser/project",
+          "thread_origin": null,
+          "origin_thread_id": "369aee44-f3de-4468-8a02-a3548d595e64",
+          "origin_path": ".",
+          "origin_location": "/private/tmp/m3or-or27/browser/project",
+          "pin": false,
+          "status": "tombstoned",
+          "revision": 3,
+          "stats": {
+            "removals": 0,
+            "citations": 0,
+            "injections": 0,
+            "never_kills": 0,
+            "last_injected_at": null
+          },
+          "bias": 0.0,
+          "embedding_model": "openai/text-embedding-3-small",
+          "created_at": "2026-09-27T20:44:23.409525Z",
+          "updated_at": "2026-09-27T20:55:08.568705Z"
+        },
+        "birthplace": "symphony",
+        "birthplace_thread_id": null,
+        "batch_uid": "02696392-0578-4c1b-8957-45ddc7804c3e",
+        "source_name": null,
+        "source_sha256": null,
+        "birthplace_run_id": "01M3J9R137MJP04JFJ2NAKCX0C",
+        "birthplace_origin_agent": "01M3J9R137MJP04JFJ2NAKCX0C/root.1",
+        "judged_context": {
+          "summary": "python3 -c \"from marker import TOKEN; from slug import slug; assert TOKEN == 'OR27_FOUNDATION'; assert slug('  Copper   Orchid  ') == 'copper-orchid'; assert slug(' \\t ') == ''\" exits 0.",
+          "verdict": "unanimous_pass",
+          "judge_ids": [
+            "01M3J9S1JQWKX4JXAY9W58FNTV",
+            "01M3J9S1KAQ787FVNXBZ0KVAPV",
+            "01M3J9S1KW50ZKENNKF4EE44EC"
+          ],
+          "evidence_refs": [
+            "/private/tmp/m3or-or27/browser/home/symphonies/01M3J9QM4B3S6K1N7Y011MABTT/step-2-round-1/judge-motivation/result.json",
+            "/private/tmp/m3or-or27/browser/home/symphonies/01M3J9QM4B3S6K1N7Y011MABTT/step-2-round-1/judge-implementation/result.json",
+            "/private/tmp/m3or-or27/browser/home/symphonies/01M3J9QM4B3S6K1N7Y011MABTT/step-2-round-1/judge-performance/result.json"
+          ]
+        },
+        "candidate_revision": null,
+        "curator_run_uid": null,
+        "curator_finding_uid": null,
+        "proposal_payload": null,
+        "verdict": "new",
+        "neighbors": [],
+        "target_ids": [],
+        "state": "rejected",
+        "created_at": "2026-09-27T20:44:23.667168Z"
+      },
+      "decision": "deny",
+      "approval_mode": "explicit",
+      "actor_class": "human",
+      "decision_uid": "01M3JACWQ2N96BF1RJV36MQHBN"
+    },
+    {
+      "card": {
+        "item_uid": "01M3J9ZBY096E44GAV78PC3WC8",
+        "candidate": {
+          "memory_id": "d1856984-5000-4226-ab20-0c297f1eb6c5",
+          "principal_id": "nocturne-verification-e7f05f50-d3aa-4f68-b8c6-f064c9071e21",
+          "label": "OR27 slug normalization principle",
+          "body": "Consistent normalization should lowercase input, split on all whitespace, and join with a single hyphen for each word, trimming the result. Empty input yields empty output.",
+          "kind": "fact",
+          "keywords": [
+            "slug",
+            "normalization",
+            "lowercase",
+            "whitespace",
+            "hyphen"
+          ],
+          "project_key": "/private/tmp/m3or-or27/browser/candidate-project",
+          "thread_origin": null,
+          "origin_thread_id": "7067272b-f4ba-4f1d-bf41-2e71ef915877",
+          "origin_path": ".",
+          "origin_location": "/private/tmp/m3or-or27/browser/candidate-project",
+          "pin": false,
+          "status": "tombstoned",
+          "revision": 3,
+          "stats": {
+            "removals": 0,
+            "citations": 0,
+            "injections": 0,
+            "never_kills": 0,
+            "last_injected_at": null
+          },
+          "bias": 0.0,
+          "embedding_model": "openai/text-embedding-3-small",
+          "created_at": "2026-09-27T20:47:45.352383Z",
+          "updated_at": "2026-09-27T20:55:08.973069Z"
+        },
+        "birthplace": "symphony",
+        "birthplace_thread_id": null,
+        "batch_uid": "895a9b87-3900-4263-971f-8ceb33f1fa11",
+        "source_name": null,
+        "source_sha256": null,
+        "birthplace_run_id": "01M3J9YXBAKJGJQKXA26E31CD7",
+        "birthplace_origin_agent": "01M3J9YXBAKJGJQKXA26E31CD7/root.1",
+        "judged_context": {
+          "summary": "python3 -c \"from marker import TOKEN; from slug import slug; assert TOKEN == 'OR27_FOUNDATION'; assert slug('  Copper   Orchid  ') == 'copper-orchid'; assert slug(' \\t ') == ''\" exits 0.",
+          "verdict": "unanimous_pass",
+          "judge_ids": [
+            "01M3J9Z7J7EW7HPK4WMR4BEPTV",
+            "01M3J9Z7JR0FNQKAMT0N92ZJWC",
+            "01M3J9Z7KAE27BEPKNSRP3NMT6"
+          ],
+          "evidence_refs": [
+            "/private/tmp/m3or-or27/browser/home/symphonies/01M3J9Y8RHVDPZ888TT7CZE503/step-2-round-2/judge-motivation/result.json",
+            "/private/tmp/m3or-or27/browser/home/symphonies/01M3J9Y8RHVDPZ888TT7CZE503/step-2-round-2/judge-implementation/result.json",
+            "/private/tmp/m3or-or27/browser/home/symphonies/01M3J9Y8RHVDPZ888TT7CZE503/step-2-round-2/judge-performance/result.json"
+          ]
+        },
+        "candidate_revision": null,
+        "curator_run_uid": null,
+        "curator_finding_uid": null,
+        "proposal_payload": null,
+        "verdict": "new",
+        "neighbors": [],
+        "target_ids": [],
+        "state": "rejected",
+        "created_at": "2026-09-27T20:47:45.531672Z"
+      },
+      "decision": "deny",
+      "approval_mode": "explicit",
+      "actor_class": "human",
+      "decision_uid": "01M3JACX0K3C45FQZF4WSJAVFZ"
+    }
+  ],
+  "tombstones": [
+    {
+      "memory_id": "d15cd49e-7690-4f01-8c0d-b30604812c0d",
+      "principal_id": "nocturne-verification-e7f05f50-d3aa-4f68-b8c6-f064c9071e21",
+      "label": "OR27 slug convention",
+      "body": "OR27 normalization: lowercase words, split whitespace, join with hyphens. Copper Orchid becomes copper-orchid.",
+      "kind": "fact",
+      "keywords": [
+        "OR27",
+        "slug",
+        "convention"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": true,
+      "status": "tombstoned",
+      "revision": 19,
+      "stats": {
+        "removals": 1,
+        "citations": 0,
+        "injections": 15,
+        "never_kills": 0,
+        "last_injected_at": "2026-09-27T20:47:36.347017+00:00"
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-27T20:41:03.615106Z",
+      "updated_at": "2026-09-27T20:55:09.387412Z"
+    }
+  ],
+  "after_active": 0,
+  "after_pending": 0,
+  "daemon_stopped": true,
+  "verification_processes_remaining": 0,
+  "scratch_home_removed": true
+}
