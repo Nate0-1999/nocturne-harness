@@ -26,5 +26,6 @@ The death watcher additionally checks the exact worker command before SIGKILL.
 Validation: 1,798 Harness tests passed, 4 skipped, 3 live-contract tests deferred
 to hosted CI; 322 Memory tests passed, 3 skipped; 158 web unit tests passed.
 The first suite overlapped the version bump and failed only its metadata assertion;
-the complete rerun against the fixed pair passed. UI canon and release receipts
-are recorded separately when complete.
+the complete rerun against the fixed pair passed. Both UI-only and packet-aware
+canon passed. Public release and clean-install/restart proof belong to the final
+Garden handoff, which follows package publication.

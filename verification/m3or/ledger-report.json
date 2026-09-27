@@ -108,7 +108,8 @@
     "harness/verification/m3or/receipts/browser/candidate-stack.json": "M3OR verification evidence only; no product behavior.",
     "harness/verification/m3or/gallery.html": "M3OR verification evidence only; no product behavior.",
     "harness/verification/m3or/receipts/browser/ui-canon.log": "M3OR verification evidence only; no product behavior.",
-    "harness/verification/m3or/receipts/browser/cleanup.json": "M3OR verification evidence only; no product behavior."
+    "harness/verification/m3or/receipts/browser/cleanup.json": "M3OR verification evidence only; no product behavior.",
+    "harness/verification/m3or/receipts/browser/packet-canon.log": "M3OR verification evidence only; no product behavior."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {

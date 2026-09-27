@@ -1,5 +1,5 @@
 {
-  "status": "Fifteen-row browser acceptance complete; paired release verification pending",
+  "status": "Fifteen-row browser acceptance complete",
   "released_baseline": "0.1.36",
   "candidate_source": "0eeda12 + paired 0.1.37 metadata",
   "acceptance_complete": true,
