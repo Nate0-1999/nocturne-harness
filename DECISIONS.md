@@ -3700,6 +3700,10 @@ direct them to move into the candidate before running its checks. When worker
 death leaves no candidates, judges cite the sealed brief and return repair
 feedback rather than selecting an attempt that is absent from the panel.
 
+The resumed browser walk found archive extraction sending every durable
+snapshot of a Symphony message (1.77M input tokens). Extract the latest
+snapshot per message ID; retain the append-only journal and its final evidence.
+
 ## M3IC — Recognizable controls from one icon set [P2.5]
 
 PRECEDENT: PLAN M3IC / SD-069; M3UI control kit; M3TM theme tokens.
