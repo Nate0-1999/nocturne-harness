@@ -313,7 +313,9 @@
     "harness/verification/m3vl/sendback3/roots-live.webm": "Send-back 3 walk evidence; no product behavior.",
     "harness/verification/m3vl/sendback3/roots-stage-live.webm": "Send-back 3 walk evidence; no product behavior.",
     "harness/web/dist/assets/index-x6-a9TNv.js": "Built bundle of the mapped web sources; no separate behavior.",
-    "harness/verification/m3vl/sendback3/candidates-vs-plate.png": "Send-back 3 design comparison (bench renders of the recorded run); no product behavior."
+    "harness/verification/m3vl/sendback3/candidates-vs-plate.png": "Send-back 3 design comparison (bench renders of the recorded run); no product behavior.",
+    "harness/verification/m3vl/sendback3/canon.log": "Send-back 3 walk evidence; no product behavior.",
+    "harness/verification/m3vl/sendback3/receipts/cleanup.json": "Send-back 3 walk evidence; no product behavior."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -519,28 +521,28 @@
       "label": "Each main cube view as its own module with its own 3D asset.",
       "walk": "Open the module library; the farm, the roots and the palace are three separate modules, each a three.js scene driven by real data, each looking the part (v2.119).",
       "protected": false,
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "screenshot": "FL-123.png",
-      "flag": "F115",
-      "observed": "Farm, Roots and Palace are three separate three.js modules on real data, each with a live-data video; look acceptance stays with the owner's eye."
+      "flag": "",
+      "observed": "Owner's eye accepted all three modules (Farm and Palace at send-back 2, Roots at send-back 3, 2026-09-26): three separate three.js modules on real data, each recorded while real work changed it (verification/m3vl/gallery.html)."
     },
     "FL-126": {
       "label": "The ant farm: the whole directory tree as chambered burrows with files as cells, zoomable, floating on black with a faint grid, showing worktrees.",
       "walk": "Open the ant farm; the whole directory's folders appear as chambers with files as cells, floating on black with a faint grid, and worktrees are visible. LOOK (v2.119): the module is judged beside its plate (farm.png) \u2014 same material, structure and density; the side-by-side capture is required.",
       "protected": false,
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "screenshot": "FL-126.png",
-      "flag": "F115",
-      "observed": "Farm made in the plate's look on a real project (10 chambers): glass basins sized by files, lit cells, and an ant that walks the limbs chamber to chamber as its thread moves (farm-live.webm, 40 s during a real move-tool tour; worktrees appear as their own projects in the picker). Look acceptance stays with the owner's eye."
+      "flag": "",
+      "observed": "Owner's eye accepted at send-back 2: glass chambers sized by files, lit cells, and ants walking chamber to chamber as a thread moves (sendback2/farm-live.webm, 40 s during a real move-tool tour)."
     },
     "FL-129": {
       "label": "Roots: every parallel agent across projects gets a root-like, naturally meandering flow growing horizontally from roughly its agent's location, with dead roots for active loops, tips seen end-on as grids of starts in the next rotation, clustered by project on the view opposite the ant farm.",
       "walk": "Run agents in parallel and open Roots; each has a meandering branch, width follows measured spend, depth follows time, forks join and stopped roots dry. Projects group together. The cube rotation was retired by v2.119. LOOK (v2.119): the module is judged beside its plate (roots.png) \u2014 same material, structure and density; the side-by-side capture is required.",
       "protected": false,
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "screenshot": "FL-129.png",
-      "flag": "F115",
-      "observed": "Send-back 3: the Roots rebuilt as the plate's liquid chrome river \u2014 one tube per recorded event spaced by time, width in dollars conserved at forks, blue live, red-pink junctions, navy matte stopped \u2014 recorded for 75 s (sheet) and 60 s (stage) while a real Symphony grew them (sendback3/). Look acceptance stays with the owner's eye."
+      "flag": "",
+      "observed": "Owner's eye accepted at send-back 3 ('i like a'): one tube per recorded event spaced by time, width in dollars conserved at forks, near-black chrome, blue live, red-pink junctions, navy matte stopped (sendback3/roots-live.webm, 75 s while a real Symphony grew them)."
     },
     "FL-130": {
       "label": "A tree-search view reached by rotating the farm.",
@@ -564,10 +566,10 @@
       "label": "A corner palace view with curators as ghosts moving through the database.",
       "walk": "Open the separate Palace module during a real curator pass; ghost-like curators move between the feed's actual finding targets before the pass finishes. LOOK (v2.119): the module is judged beside its plate (palace.png) \u2014 same material, structure and density; the side-by-side capture is required.",
       "protected": false,
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "screenshot": "FL-133.png",
-      "flag": "F115",
-      "observed": "Memories arrive with a ring of light and a real curator pass draws streams and moves the ghost (palace-live.webm, 55 s). Look acceptance stays with the owner's eye."
+      "flag": "",
+      "observed": "Owner's eye accepted at send-back 2: glass memories lit by injections, arrivals with a ring of light, a real curator pass drawing streams and moving the ghost (sendback2/palace-live.webm, 55 s)."
     },
     "FL-134": {
       "label": "A way to see things being added or removed over time, as SolidWorks does, the project growing like an organic object.",
