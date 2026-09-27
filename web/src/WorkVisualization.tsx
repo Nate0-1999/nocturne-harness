@@ -111,24 +111,24 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
     data-sheet={new URLSearchParams(globalThis.location.search).has('sheet') || undefined}>
     <header className="work-viz__header"><div><small>Work, made visible · {scope === 'GLOBAL' ? 'All projects' : rack.attunement?.name ?? 'Unattuned'}</small>
       <h1>{view === 'farm' ? 'The Farm' : 'The Roots'}</h1></div>
-      <nav aria-label="Work visualization"><button aria-pressed={view === 'farm'} onClick={() => setView('farm')}>Farm</button><button aria-pressed={view === 'roots'} onClick={() => setView('roots')}>Roots</button></nav>
+      <nav aria-label="Work visualization"><Button variant="bare" aria-pressed={view === 'farm'} onClick={() => setView('farm')}>Farm</Button><Button variant="bare" aria-pressed={view === 'roots'} onClick={() => setView('roots')}>Roots</Button></nav>
     </header>
     <VisualizationToolbar data={observation} moduleId={initialView} tier={tier} setTier={setTier} />
-    {project && <label className="work-viz__project">Project<select aria-label="Visualized project" value={project.root} onChange={(event) => setProjectRoot(event.target.value)}>
+    {project && <label className="work-viz__project">Project<Select aria-label="Visualized project" value={project.root} onChange={(event) => setProjectRoot(event.target.value)}>
       {data!.projects.map((p) => <option key={p.root}>{p.root}</option>)}
-    </select></label>}
+    </Select></label>}
     {view === 'farm' && project && <div className="work-viz__toolbar">
-      <Button disabled={focus === '.'} onClick={() => openFolder(parentPath(focus))}>Up one folder</Button>
+      <Button action="up" iconOnly disabled={focus === '.'} onClick={() => openFolder(parentPath(focus))}>Up one folder</Button>
       <span>{focus} · {layout ? `showing ${layout.depth} levels` : 'Laying out the tree…'}</span>
-      <Button onClick={() => setDirectoryOpen(!directoryOpen)} aria-expanded={directoryOpen}>Browse folder</Button>
+      <Button action="open" iconOnly onClick={() => setDirectoryOpen(!directoryOpen)} aria-expanded={directoryOpen}>Browse folder</Button>
     </div>}
     {view === 'farm' && directoryOpen && <div className="work-viz__data">
       <span>{directoryEntries.length} entries in {focus} · {directoryPage * 100 + 1}–{Math.min(directoryEntries.length, (directoryPage + 1) * 100)}</span>
-      <Button disabled={!directoryPage} onClick={() => setDirectoryPage(directoryPage - 1)}>Previous entries</Button>
-      <Button disabled={(directoryPage + 1) * 100 >= directoryEntries.length} onClick={() => setDirectoryPage(directoryPage + 1)}>Next entries</Button>
+      <Button action="back" iconOnly disabled={!directoryPage} onClick={() => setDirectoryPage(directoryPage - 1)}>Previous entries</Button>
+      <Button action="next" iconOnly disabled={(directoryPage + 1) * 100 >= directoryEntries.length} onClick={() => setDirectoryPage(directoryPage + 1)}>Next entries</Button>
       <ul>{directoryEntries.slice(directoryPage * 100, (directoryPage + 1) * 100).map((node) => <li key={node.path}>
-        <button onClick={() => node.kind === 'directory' ? openFolder(node.path)
-          : selection.select({ kind: 'path', id: `${project!.root}/${node.path}`, as_of: selected?.as_of ?? null })}>{node.path}</button> · {node.kind}
+        <Button variant="bare" action="open" onClick={() => node.kind === 'directory' ? openFolder(node.path)
+          : selection.select({ kind: 'path', id: `${project!.root}/${node.path}`, as_of: selected?.as_of ?? null })}>{node.path}</Button> · {node.kind}
       </li>)}</ul>
     </div>}
     <div className="work-viz__viewport">
@@ -156,13 +156,13 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
     <details className="work-viz__data" open><summary>Agents and measured work</summary>
       <table><thead><tr><th>Agent</th><th>Where</th><th>State</th><th>Spend</th></tr></thead><tbody>
         {agents.map((agent) => <tr key={agent.id} data-selected={agent.id === selectedId || undefined}>
-          <td><button onClick={() => pick(agent)} title={agent.label} style={{ color: agentColor(agent.id) }}>{agent.label}</button></td><td title={agent.location}>{agent.location.startsWith(agent.root) ? `.${agent.location.slice(agent.root.length)}` : agent.location}</td><td>{agent.state}</td>
+          <td><Button variant="bare" action="open" onClick={() => pick(agent)} title={agent.label} style={{ color: agentColor(agent.id) }}>{agent.label}</Button></td><td title={agent.location}>{agent.location.startsWith(agent.root) ? `.${agent.location.slice(agent.root.length)}` : agent.location}</td><td>{agent.state}</td>
           <td>{agent.cost_usd === null ? 'Not yet priced' : `$${Number(agent.cost_usd).toFixed(5)}`}</td>
         </tr>)}
       </tbody></table>
     </details>
     {view !== 'farm' && project && <details className="work-viz__data"><summary>Complete directory tree · {project.nodes.length} entries</summary>
-      <ul>{project.nodes.map((node) => <li key={node.path}><button onClick={() => selection.select({ kind: 'path', id: `${project.root}${node.path === '.' ? '' : '/' + node.path}`, as_of: selected?.as_of ?? null })}>{node.path}</button> · {node.kind}</li>)}</ul>
+      <ul>{project.nodes.map((node) => <li key={node.path}><Button variant="bare" action="open" onClick={() => selection.select({ kind: 'path', id: `${project.root}${node.path === '.' ? '' : '/' + node.path}`, as_of: selected?.as_of ?? null })}>{node.path}</Button> · {node.kind}</li>)}</ul>
     </details>}
   </section>
 }
