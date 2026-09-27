@@ -248,7 +248,7 @@ export function SymphonyDeliberationCard({ event }: { event: JsonObject }) {
             onChange={(event) => updateStep(index, { stratagems: event.target.value.split('\n') })}
           /></label>}
         </div>)}
-        <Button variant="bare" type="button" className="symphony-card__minor" disabled={recipe.length >= 12} onClick={() => setRecipe((current) => [...current, { step_id: `step-${current.length + 1}`, title: '', done_when: '', search: false }])}>Add recipe step</Button>
+        <Button action="add" variant="bare" type="button" className="symphony-card__minor" disabled={recipe.length >= 12} onClick={() => setRecipe((current) => [...current, { step_id: `step-${current.length + 1}`, title: '', done_when: '', search: false }])}>Add recipe step</Button>
       </fieldset>
       <fieldset><legend>Fixed judge charters</legend>
         {charters.map((charter, index) => <div className="symphony-judge" key={charter.seat}>
@@ -269,7 +269,7 @@ export function SymphonyDeliberationCard({ event }: { event: JsonObject }) {
         </div>
         <label className="symphony-check symphony-sign"><Toggle checked={authority.signed} onChange={(event) => setAuthority({ ...authority, signed: event.target.checked })} /> I authorize up to {authority.attempts} attempts, ${authority.spend_wall_usd}, {authority.max_rounds} rounds, depth {authority.depth_cap}, {authority.children_per_attempt} children per attempt, and {authority.duration_minutes} minutes.</label>
       </fieldset>
-      <footer className="symphony-card__footer"><span role="status">{status}</span><Button variant="primary" type="button" disabled={!complete || busy} onClick={() => void launch()}>{busy ? 'Launching…' : 'Sign & run Symphony'}</Button></footer>
+      <footer className="symphony-card__footer"><span role="status">{status}</span><Button action="run" variant="primary" type="button" disabled={!complete || busy} onClick={() => void launch()}>{busy ? 'Launching…' : 'Sign & run Symphony'}</Button></footer>
     </section>
   )
 }
