@@ -81,7 +81,7 @@ try{
  await capture('out-loud-card-fired')
  assert.ok(traces.stack.some(e=>e.kind==='result'&&e.results.some(r=>r.final&&/^send[.!?]?$/i.test(r.text.trim()))))
  await wait(async()=>!(await conversation().getByTestId('deck-undo').isVisible()))
- await conversation().getByRole('button',{name:'Typing',exact:true}).click({timeout:90000})
+ await conversation().getByRole('button',{name:'Out Loud',exact:true}).click({timeout:90000})
  await capture('out-loud-next-card')
  console.log('Native voice conversation PASS')
 }finally{

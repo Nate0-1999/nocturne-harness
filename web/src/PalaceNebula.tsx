@@ -21,6 +21,7 @@ import { bloom } from 'three/addons/tsl/display/BloomNode.js'
 import { MeshBasicNodeMaterial, MeshPhysicalNodeMaterial, PostProcessing, WebGPURenderer } from 'three/webgpu'
 import { useRackPlugin, useRackSelection, useRackSnapshot } from './rack'
 import { MemoryTrace, SelectedMemoryPanel } from './MemoryPanel'
+import { Button, Select } from './kit'
 import {
   buildNebulaBodies,
   buildNebulaCreatureFamilies,
@@ -157,9 +158,9 @@ export function PalaceNebula() {
         <p>Every point is a recorded memory event. The graph is the instrument.</p>
       </div>
       <div className="palace-nebula__controls">
-        <label>Render<select aria-label="Nebula hardware tier" value={tier} onChange={(event) => { setFps(0); setBackend('starting'); setTier(event.target.value as NebulaHardwareTier) }}>
+        <label>Render<Select aria-label="Nebula hardware tier" value={tier} onChange={(event) => { setFps(0); setBackend('starting'); setTier(event.target.value as NebulaHardwareTier) }}>
           <option value="full">Full</option><option value="efficient">Efficient</option>
-        </select></label>
+        </Select></label>
       </div>
     </header>
     <VisualizationToolbar data={visualization.data} moduleId="palace_nebula" tier={tier} setTier={setTier} />
@@ -207,7 +208,7 @@ export function PalaceNebula() {
       <section><h2>Kinds in view</h2><p>{kinds.length === 0 ? 'None' : kinds.join(' · ')}</p><p>Camera moves freely around the same recorded snapshot.</p></section>
     </aside>
     <details><summary>Memories in view</summary>
-      {bodies.map((body) => <button key={body.id} type="button" aria-pressed={body.in_current_context} onClick={() => selection.select({ kind: 'memory', id: body.id, as_of: selected?.as_of ?? null })}>{body.label}</button>)}
+      {bodies.map((body) => <Button variant="bare" key={body.id} type="button" aria-pressed={body.in_current_context} onClick={() => selection.select({ kind: 'memory', id: body.id, as_of: selected?.as_of ?? null })}>{body.label}</Button>)}
     </details>
     {selected?.kind === 'memory' && !selected.as_of && <SelectedMemoryPanel memoryId={selected.id} />}
     {!selected?.as_of && <MemoryTrace />}

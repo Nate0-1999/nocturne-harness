@@ -295,7 +295,7 @@ export function SymphonyDeck() {
       {undo !== null && (
         <aside className="deck-undo" role="status" data-testid="deck-undo">
           <span>Firing to {undo.card.thread_title} in 6 seconds.</span>
-          <Button type="button" onClick={recall}>Undo</Button>
+          <Button action="restore" type="button" onClick={recall}>Undo</Button>
         </aside>
       )}
       <p className="deck-status" role="status">{status}</p>
@@ -373,7 +373,7 @@ function ProposedResponseCardView({
           responseId={card.proposal_run_id} blocked={fireDisabled}
           replaceDraft={draft === card.primary} onDraft={onDraft} />}
         <small>Enter fires · Shift+Enter adds a line</small>
-        <Button variant="primary" type="button" disabled={fireDisabled || !draft.trim()} onClick={onFire}>
+        <Button action="send" variant="primary" type="button" disabled={fireDisabled || !draft.trim()} onClick={onFire}>
           Fire reply
         </Button>
       </footer>
@@ -450,7 +450,7 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
             <small>{attempt.partial_evidence.length} evidence mark(s) · {attempt.memories_admitted ? 'memories queued for review' : 'memories not admitted'}</small>
             {attempt.follow_ups.map((followUp, index) => <p key={index}>Follow-up: {followUp}</p>)}
             {stack.state === 'running' && attempt.state === 'running' && (
-              <Button variant="danger" type="button" disabled={busy} onClick={() => void intervene({
+              <Button action="stop" iconOnly variant="danger" type="button" disabled={busy} onClick={() => void intervene({
                 kind: 'cancel_attempt', symphony_id: stack.symphony_id,
                 attempt_id: attempt.attempt_id,
               }, `${attempt.attempt_id} cancelled after draining.`)}>Cancel attempt</Button>

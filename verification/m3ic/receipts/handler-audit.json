@@ -1,0 +1,90 @@
+{
+  "base": "df9eb2b",
+  "comparison": "Exact JSX event handler, disabled, value, checked, ref and test-id source equality. Shared kit manually reviewed: native elements retain props and refs; icons are aria-hidden and nonfocusable.",
+  "files": [
+    {
+      "file": "AgentPolicies.tsx",
+      "unchanged_attributes": 10
+    },
+    {
+      "file": "App.tsx",
+      "unchanged_attributes": 228
+    },
+    {
+      "file": "ContextBars.tsx",
+      "unchanged_attributes": 1
+    },
+    {
+      "file": "InjectionConsole.tsx",
+      "unchanged_attributes": 22
+    },
+    {
+      "file": "JobsModule.tsx",
+      "unchanged_attributes": 12
+    },
+    {
+      "file": "MemoryGate.tsx",
+      "unchanged_attributes": 68
+    },
+    {
+      "file": "MemoryPanel.tsx",
+      "unchanged_attributes": 50
+    },
+    {
+      "file": "MemoryRestore.tsx",
+      "unchanged_attributes": 8
+    },
+    {
+      "file": "OutLoud.tsx",
+      "unchanged_attributes": 8
+    },
+    {
+      "file": "PalaceNebula.tsx",
+      "unchanged_attributes": 14
+    },
+    {
+      "file": "PalaceStateModule.tsx",
+      "unchanged_attributes": 11
+    },
+    {
+      "file": "ProjectSelector.tsx",
+      "unchanged_attributes": 8
+    },
+    {
+      "file": "RackPluginUpload.tsx",
+      "unchanged_attributes": 5
+    },
+    {
+      "file": "RewindControl.tsx",
+      "unchanged_attributes": 8
+    },
+    {
+      "file": "SpendHistory.tsx",
+      "unchanged_attributes": 16
+    },
+    {
+      "file": "SpendWallSettings.tsx",
+      "unchanged_attributes": 8
+    },
+    {
+      "file": "SymphonyCards.tsx",
+      "unchanged_attributes": 38
+    },
+    {
+      "file": "SymphonyDeck.tsx",
+      "unchanged_attributes": 43
+    },
+    {
+      "file": "VitalsModule.tsx",
+      "unchanged_attributes": 9
+    },
+    {
+      "file": "WorkVisualization.tsx",
+      "unchanged_attributes": 24
+    },
+    {
+      "file": "WorkerContext.tsx",
+      "unchanged_attributes": 4
+    }
+  ]
+}

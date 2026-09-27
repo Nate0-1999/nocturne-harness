@@ -5,5 +5,4 @@
   gap: .35rem;
   min-width: 0;
 }
-.out-loud [role="group"] { display: flex; gap: .25rem; }
 .out-loud small { flex-basis: 100%; overflow-wrap: anywhere; }

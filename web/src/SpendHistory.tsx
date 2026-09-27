@@ -36,7 +36,7 @@ export function InfrastructureInvoiceForm({ onSaved }: { onSaved: () => void }) 
       <label>Amount · USD<TextField aria-label="Invoice amount USD" required type="number" min="0.000000000001" step="any" value={amount} onChange={(event) => setAmount(event.target.value)} /></label>
       <label>Invoice date · UTC<TextField aria-label="Invoice date" required type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
       <label>Invoice ID<TextField aria-label="Invoice ID" required value={invoice} onChange={(event) => setInvoice(event.target.value)} /></label>
-      <Button variant="primary" type="button" disabled={pending} onClick={(event) => {
+      <Button action="save" variant="primary" type="button" disabled={pending} onClick={(event) => {
         if (event.currentTarget.form?.reportValidity()) void save()
       }}>{pending ? 'Recording…' : 'Record invoice'}</Button>
     </form>

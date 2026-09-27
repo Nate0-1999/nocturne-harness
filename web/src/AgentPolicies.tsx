@@ -49,7 +49,7 @@ export function AgentPolicies({ level }: { level?: 'Duet' | 'Symphony' }) {
         {separator >= 0 && <label>{kind === 'pinned' ? 'Model' : kind === 'floor' ? 'Intelligence floor' : 'Price slope'}
           <TextArea rows={2} aria-label={`${label} policy value`} data-tooltip-detail="The model id, intelligence floor or price slope this policy uses." value={argument} onChange={(event) => setPolicies({ ...policies, [role]: `${kind}:${event.target.value}` })} />
         </label>}
-        <div className="app-settings-actions"><Button variant="primary" type="button" data-tooltip-detail="Save this role's policy for new threads." onClick={() => void save(role)}>Save {label.toLowerCase()} policy</Button></div>
+        <div className="app-settings-actions"><Button action="save" variant="primary" type="button" data-tooltip-detail="Save this role's policy for new threads." onClick={() => void save(role)}>Save {label.toLowerCase()} policy</Button></div>
       </fieldset>
     })}
     {level === 'Symphony'

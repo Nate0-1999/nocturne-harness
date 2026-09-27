@@ -313,7 +313,7 @@ export function MemoryPanel({
     >
       <header className="memory-panel__header">
         <h2 id="memory-panel-title">Memory</h2>
-        <Button
+        <Button action="close" iconOnly
           ref={closeRef}
           className="memory-panel__close"
           type="button"
@@ -330,7 +330,7 @@ export function MemoryPanel({
           <span>{activeCount === 1 ? ' active unit' : ' active units'}</span>
           {panel.items.length > activeCount && <span> · {panel.items.length - activeCount} retained in context</span>}
         </p>
-        <Button
+        <Button action="refresh"
           type="button"
           data-testid="memory-refresh"
           data-tooltip-detail="Read this thread's memories again."
@@ -419,7 +419,7 @@ export function MemoryPanel({
                   testId="principal-memory"
                   actions={<>
                     {inContext && (
-                      <Button
+                      <Button action="remove" iconOnly
                         className="memory-card__remove principal-memory__remove"
                         type="button"
                         data-tooltip="Remove"
@@ -432,7 +432,7 @@ export function MemoryPanel({
                       </Button>
                     )}
                     {(threadExcluded || nearMiss) && (
-                      <Button variant="primary"
+                      <Button action="add" iconOnly variant="primary"
                         className="memory-card__add principal-memory__primary"
                         type="button"
                         data-tooltip={nearMiss ? 'Add to context' : 'Re-add'}
@@ -444,7 +444,7 @@ export function MemoryPanel({
                         <span aria-hidden="true">+</span>
                       </Button>
                     )}
-                    <Button
+                    <Button action="edit" iconOnly
                       className="memory-card__remove"
                       type="button"
                       data-tooltip="Edit"
@@ -455,7 +455,7 @@ export function MemoryPanel({
                     >
                       <span aria-hidden="true">✎</span>
                     </Button>
-                    <Button
+                    <Button action={memory.pin ? "unpin" : "pin"} iconOnly
                       className="memory-card__remove"
                       type="button"
                       aria-pressed={memory.pin}
@@ -467,7 +467,7 @@ export function MemoryPanel({
                     >
                       <span aria-hidden="true">⚑</span>
                     </Button>
-                    <Button variant="danger"
+                    <Button action="delete" iconOnly variant="danger"
                       className="memory-card__delete"
                       type="button"
                       data-testid="memory-delete"
@@ -484,7 +484,7 @@ export function MemoryPanel({
                   </>}
                 >
                   {originThread !== undefined && (
-                    <Button variant="bare" className="memory-card__link" type="button"
+                    <Button action="open" iconOnly className="memory-card__link" type="button"
                       data-tooltip="Open the conversation" data-tooltip-detail="Go to the thread this memory was born in."
                       onClick={() => {
                         void events.dispatch({ type: 'thread.select', thread_id: originThread.thread_id })
@@ -558,14 +558,14 @@ export function MemoryPanel({
                         </p>
                       )}
                       <div className="principal-memory__editor-actions">
-                        <Button
+                        <Button action={editSaved ? "confirm" : "close"}
                           type="button"
                           onClick={() => setEditor(null)}
                         >
                           {editSaved ? 'Done' : 'Cancel'}
                         </Button>
                         {!editSaved && (
-                          <Button variant="bare"
+                          <Button action="save" variant="bare"
                             className="principal-memory__primary"
                             type="button"
                             disabled={
@@ -603,8 +603,8 @@ export function MemoryPanel({
           </Select>
         </label>
         <div className="app-settings-actions">
-          <Button variant="danger" type="button" data-tooltip-detail="Yes: delete it from the Palace." disabled={!connected || busy || deleting === null} onClick={() => void deleteMemory()}>Yes</Button>
-          <Button type="button" data-tooltip-detail="Keep the memory as it is." onClick={() => deleteDialog.current?.close()}>No</Button>
+          <Button action="confirm" variant="danger" type="button" data-tooltip-detail="Yes: delete it from the Palace." disabled={!connected || busy || deleting === null} onClick={() => void deleteMemory()}>Yes</Button>
+          <Button action="close" type="button" data-tooltip-detail="Keep the memory as it is." onClick={() => deleteDialog.current?.close()}>No</Button>
         </div>
       </dialog>
     </aside>
@@ -634,7 +634,7 @@ export function MemoryTrace() {
       body={item.memory.body} score={item.score} pin={item.memory.pin} testId="principal-memory"
       tone={item.in_context ? 'context' : item.near_miss ? 'near-miss' : 'removed'}
       status={item.in_context ? 'In context' : item.near_miss ? 'Near miss' : 'Removed'}
-      actions={<Button variant={item.in_context ? 'quiet' : 'primary'} className={item.in_context ? 'memory-card__remove' : 'memory-card__add'} type="button"
+      actions={<Button action={item.in_context ? "remove" : "add"} iconOnly variant={item.in_context ? 'quiet' : 'primary'} className={item.in_context ? 'memory-card__remove' : 'memory-card__add'} type="button"
         data-tooltip={item.in_context ? 'Pop off' : item.near_miss ? 'Add to context' : 'Re-add'}
         data-tooltip-detail={item.in_context ? 'Leave this memory out from the next request.' : 'Bring this memory in from the next request.'}
         aria-label={`${item.in_context ? 'Pop off' : item.near_miss ? 'Add' : 'Re-add'} ${item.memory.label}`}

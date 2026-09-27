@@ -1,0 +1,1047 @@
+[
+  {
+    "icons": [
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 14,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 14,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 14,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 14,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 14
+      },
+      {
+        "color": "rgb(124, 232, 255)",
+        "height": 14,
+        "stroke": "rgb(124, 232, 255)",
+        "width": 14
+      },
+      {
+        "color": "rgb(149, 173, 187)",
+        "height": 16,
+        "stroke": "rgb(149, 173, 187)",
+        "width": 16
+      },
+      {
+        "color": "rgb(232, 248, 255)",
+        "height": 16,
+        "stroke": "rgb(232, 248, 255)",
+        "width": 16
+      },
+      {
+        "color": "rgb(149, 173, 187)",
+        "height": 0,
+        "stroke": "rgb(149, 173, 187)",
+        "width": 0
+      },
+      {
+        "color": "rgb(149, 173, 187)",
+        "height": 0,
+        "stroke": "rgb(149, 173, 187)",
+        "width": 0
+      },
+      {
+        "color": "rgb(149, 173, 187)",
+        "height": 0,
+        "stroke": "rgb(149, 173, 187)",
+        "width": 0
+      },
+      {
+        "color": "rgb(149, 173, 187)",
+        "height": 14,
+        "stroke": "rgb(149, 173, 187)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 16,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 16
+      },
+      {
+        "color": "rgb(232, 248, 255)",
+        "height": 14,
+        "stroke": "rgb(232, 248, 255)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 14,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 16,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 16
+      },
+      {
+        "color": "rgb(232, 248, 255)",
+        "height": 16,
+        "stroke": "rgb(232, 248, 255)",
+        "width": 16
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 16,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 16
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 14,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 14,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 16,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 16
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 14,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 14,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 16,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 16
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 14,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 14,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 16,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 16
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 14,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 14,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 16,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 16
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 14,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 14,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 16,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 16
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 14,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 124, 139)",
+        "height": 14,
+        "stroke": "rgb(98, 124, 139)",
+        "width": 14
+      }
+    ],
+    "theme": "neo-noir"
+  },
+  {
+    "icons": [
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 14,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 14
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 14,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 14
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 14,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 14
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 14,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 14
+      },
+      {
+        "color": "rgb(165, 196, 255)",
+        "height": 14,
+        "stroke": "rgb(165, 196, 255)",
+        "width": 14
+      },
+      {
+        "color": "rgb(159, 176, 201)",
+        "height": 16,
+        "stroke": "rgb(159, 176, 201)",
+        "width": 16
+      },
+      {
+        "color": "rgb(238, 244, 251)",
+        "height": 16,
+        "stroke": "rgb(238, 244, 251)",
+        "width": 16
+      },
+      {
+        "color": "rgb(159, 176, 201)",
+        "height": 0,
+        "stroke": "rgb(159, 176, 201)",
+        "width": 0
+      },
+      {
+        "color": "rgb(159, 176, 201)",
+        "height": 0,
+        "stroke": "rgb(159, 176, 201)",
+        "width": 0
+      },
+      {
+        "color": "rgb(159, 176, 201)",
+        "height": 0,
+        "stroke": "rgb(159, 176, 201)",
+        "width": 0
+      },
+      {
+        "color": "rgb(159, 176, 201)",
+        "height": 14,
+        "stroke": "rgb(159, 176, 201)",
+        "width": 14
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 16,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 16
+      },
+      {
+        "color": "rgb(238, 244, 251)",
+        "height": 14,
+        "stroke": "rgb(238, 244, 251)",
+        "width": 14
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 14,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 14
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 16,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 16
+      },
+      {
+        "color": "rgb(238, 244, 251)",
+        "height": 16,
+        "stroke": "rgb(238, 244, 251)",
+        "width": 16
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 16,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 16
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 14,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 14
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 14,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 14
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 16,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 16
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 14,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 14
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 14,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 14
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 16,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 16
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 14,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 14
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 14,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 14
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 16,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 16
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 14,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 14
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 14,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 14
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 16,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 16
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 14,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 14
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 14,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 14
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 16,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 16
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 14,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 14
+      },
+      {
+        "color": "rgb(107, 122, 153)",
+        "height": 14,
+        "stroke": "rgb(107, 122, 153)",
+        "width": 14
+      }
+    ],
+    "theme": "seraph-dressed"
+  },
+  {
+    "icons": [
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 14,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 14
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 14,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 14
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 14,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 14
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 14,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 14
+      },
+      {
+        "color": "rgb(42, 84, 164)",
+        "height": 14,
+        "stroke": "rgb(42, 84, 164)",
+        "width": 14
+      },
+      {
+        "color": "rgb(62, 81, 112)",
+        "height": 16,
+        "stroke": "rgb(62, 81, 112)",
+        "width": 16
+      },
+      {
+        "color": "rgb(16, 28, 58)",
+        "height": 16,
+        "stroke": "rgb(16, 28, 58)",
+        "width": 16
+      },
+      {
+        "color": "rgb(62, 81, 112)",
+        "height": 0,
+        "stroke": "rgb(62, 81, 112)",
+        "width": 0
+      },
+      {
+        "color": "rgb(62, 81, 112)",
+        "height": 0,
+        "stroke": "rgb(62, 81, 112)",
+        "width": 0
+      },
+      {
+        "color": "rgb(62, 81, 112)",
+        "height": 0,
+        "stroke": "rgb(62, 81, 112)",
+        "width": 0
+      },
+      {
+        "color": "rgb(62, 81, 112)",
+        "height": 14,
+        "stroke": "rgb(62, 81, 112)",
+        "width": 14
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 16,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 16
+      },
+      {
+        "color": "rgb(16, 28, 58)",
+        "height": 14,
+        "stroke": "rgb(16, 28, 58)",
+        "width": 14
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 14,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 14
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 16,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 16
+      },
+      {
+        "color": "rgb(16, 28, 58)",
+        "height": 16,
+        "stroke": "rgb(16, 28, 58)",
+        "width": 16
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 16,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 16
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 14,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 14
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 14,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 14
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 16,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 16
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 14,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 14
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 14,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 14
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 16,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 16
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 14,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 14
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 14,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 14
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 16,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 16
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 14,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 14
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 14,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 14
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 16,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 16
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 14,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 14
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 14,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 14
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 16,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 16
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 14,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 14
+      },
+      {
+        "color": "rgb(90, 107, 138)",
+        "height": 14,
+        "stroke": "rgb(90, 107, 138)",
+        "width": 14
+      }
+    ],
+    "theme": "gold-lines"
+  },
+  {
+    "icons": [
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 14,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 14
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 14,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 14
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 14,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 14
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 14,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 14
+      },
+      {
+        "color": "rgb(245, 208, 134)",
+        "height": 14,
+        "stroke": "rgb(245, 208, 134)",
+        "width": 14
+      },
+      {
+        "color": "rgb(187, 174, 149)",
+        "height": 16,
+        "stroke": "rgb(187, 174, 149)",
+        "width": 16
+      },
+      {
+        "color": "rgb(248, 245, 239)",
+        "height": 16,
+        "stroke": "rgb(248, 245, 239)",
+        "width": 16
+      },
+      {
+        "color": "rgb(187, 174, 149)",
+        "height": 0,
+        "stroke": "rgb(187, 174, 149)",
+        "width": 0
+      },
+      {
+        "color": "rgb(187, 174, 149)",
+        "height": 0,
+        "stroke": "rgb(187, 174, 149)",
+        "width": 0
+      },
+      {
+        "color": "rgb(187, 174, 149)",
+        "height": 0,
+        "stroke": "rgb(187, 174, 149)",
+        "width": 0
+      },
+      {
+        "color": "rgb(187, 174, 149)",
+        "height": 14,
+        "stroke": "rgb(187, 174, 149)",
+        "width": 14
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 16,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 16
+      },
+      {
+        "color": "rgb(248, 245, 239)",
+        "height": 14,
+        "stroke": "rgb(248, 245, 239)",
+        "width": 14
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 14,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 14
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 16,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 16
+      },
+      {
+        "color": "rgb(248, 245, 239)",
+        "height": 16,
+        "stroke": "rgb(248, 245, 239)",
+        "width": 16
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 16,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 16
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 14,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 14
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 14,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 14
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 16,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 16
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 14,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 14
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 14,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 14
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 16,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 16
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 14,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 14
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 14,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 14
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 16,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 16
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 14,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 14
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 14,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 14
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 16,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 16
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 14,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 14
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 14,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 14
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 16,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 16
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 14,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 14
+      },
+      {
+        "color": "rgb(139, 125, 98)",
+        "height": 14,
+        "stroke": "rgb(139, 125, 98)",
+        "width": 14
+      }
+    ],
+    "theme": "wizard-mode"
+  },
+  {
+    "icons": [
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 14,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 14,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 14,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 14,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 14
+      },
+      {
+        "color": "rgb(127, 252, 169)",
+        "height": 14,
+        "stroke": "rgb(127, 252, 169)",
+        "width": 14
+      },
+      {
+        "color": "rgb(149, 187, 162)",
+        "height": 16,
+        "stroke": "rgb(149, 187, 162)",
+        "width": 16
+      },
+      {
+        "color": "rgb(240, 247, 242)",
+        "height": 16,
+        "stroke": "rgb(240, 247, 242)",
+        "width": 16
+      },
+      {
+        "color": "rgb(149, 187, 162)",
+        "height": 0,
+        "stroke": "rgb(149, 187, 162)",
+        "width": 0
+      },
+      {
+        "color": "rgb(149, 187, 162)",
+        "height": 0,
+        "stroke": "rgb(149, 187, 162)",
+        "width": 0
+      },
+      {
+        "color": "rgb(149, 187, 162)",
+        "height": 0,
+        "stroke": "rgb(149, 187, 162)",
+        "width": 0
+      },
+      {
+        "color": "rgb(149, 187, 162)",
+        "height": 14,
+        "stroke": "rgb(149, 187, 162)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 16,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 16
+      },
+      {
+        "color": "rgb(240, 247, 242)",
+        "height": 14,
+        "stroke": "rgb(240, 247, 242)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 14,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 16,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 16
+      },
+      {
+        "color": "rgb(240, 247, 242)",
+        "height": 16,
+        "stroke": "rgb(240, 247, 242)",
+        "width": 16
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 16,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 16
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 14,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 14,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 16,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 16
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 14,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 14,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 16,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 16
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 14,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 14,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 16,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 16
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 14,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 14,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 16,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 16
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 14,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 14,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 16,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 16
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 14,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 14
+      },
+      {
+        "color": "rgb(98, 139, 112)",
+        "height": 14,
+        "stroke": "rgb(98, 139, 112)",
+        "width": 14
+      }
+    ],
+    "theme": "technomancer"
+  }
+]
