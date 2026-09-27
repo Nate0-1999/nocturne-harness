@@ -1,0 +1,38 @@
+[
+  {
+    "row": "FL-129",
+    "source": "roots-full.png",
+    "crop_xyxy": [
+      430,
+      320,
+      1000,
+      580
+    ],
+    "plate": "../../m3vz/plates/roots.png",
+    "difference": "Six real agents and 184 file capillaries form a joined trunk, but the overlapping forks and five matte stopped branches are less fluid and less luminous than the plate."
+  },
+  {
+    "row": "FL-133",
+    "source": "palace-full.png",
+    "crop_xyxy": [
+      450,
+      310,
+      815,
+      666
+    ],
+    "plate": "../../m3vz/plates/palace.png",
+    "difference": "The most-injected memories form a central glass mass, but 24 memories leave a sparser radial outline and the reflections and curator streams remain more restrained than the plate."
+  },
+  {
+    "row": "FL-126",
+    "source": "farm-live.png",
+    "crop_xyxy": [
+      565,
+      292,
+      780,
+      510
+    ],
+    "plate": "../../m3vz/plates/farm.png",
+    "difference": "The unchanged renderer shows the real worker tree with three chambers and 50 file cells, much smaller and less intricate than the plate."
+  }
+]

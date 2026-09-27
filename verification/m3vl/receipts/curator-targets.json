@@ -1,0 +1,83 @@
+[
+  {
+    "memory_id": "d8411723-fe80-4da4-b0d1-2f5fc4299756",
+    "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+    "label": "M3VL Watershed",
+    "body": "A watershed directs rainfall downhill through tributaries to a common outlet.",
+    "kind": "fact",
+    "keywords": [],
+    "project_key": "/private/tmp/m3vl-verification/project",
+    "thread_origin": null,
+    "origin_thread_id": null,
+    "origin_path": ".",
+    "origin_location": "/private/tmp/m3vl-verification/project",
+    "pin": false,
+    "status": "active",
+    "revision": 2,
+    "stats": {
+      "removals": 0,
+      "citations": 0,
+      "injections": 0,
+      "never_kills": 0,
+      "last_injected_at": null
+    },
+    "bias": 0.0,
+    "embedding_model": "openai/text-embedding-3-small",
+    "created_at": "2026-09-17T00:04:46.388824Z",
+    "updated_at": "2026-09-17T00:11:06.569485Z"
+  },
+  {
+    "memory_id": "b2caa01f-1de5-4ff6-b428-43f382281c51",
+    "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+    "label": "M3VL Tributary",
+    "body": "A tributary joins a larger river at a confluence.",
+    "kind": "fact",
+    "keywords": [],
+    "project_key": "/private/tmp/m3vl-verification/project",
+    "thread_origin": null,
+    "origin_thread_id": null,
+    "origin_path": ".",
+    "origin_location": "/private/tmp/m3vl-verification/project",
+    "pin": false,
+    "status": "active",
+    "revision": 2,
+    "stats": {
+      "removals": 0,
+      "citations": 0,
+      "injections": 0,
+      "never_kills": 0,
+      "last_injected_at": null
+    },
+    "bias": 0.0,
+    "embedding_model": "openai/text-embedding-3-small",
+    "created_at": "2026-09-17T00:04:47.291552Z",
+    "updated_at": "2026-09-17T00:11:06.694895Z"
+  },
+  {
+    "memory_id": "2759ac41-2e1d-450d-95df-8ade019e02cf",
+    "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+    "label": "M3VL Discharge",
+    "body": "River discharge is water volume crossing a section per second.",
+    "kind": "fact",
+    "keywords": [],
+    "project_key": "/private/tmp/m3vl-verification/project",
+    "thread_origin": null,
+    "origin_thread_id": null,
+    "origin_path": ".",
+    "origin_location": "/private/tmp/m3vl-verification/project",
+    "pin": false,
+    "status": "active",
+    "revision": 3,
+    "stats": {
+      "removals": 0,
+      "citations": 0,
+      "injections": 1,
+      "never_kills": 0,
+      "last_injected_at": "2026-09-17T00:08:29.244464+00:00"
+    },
+    "bias": 0.0,
+    "embedding_model": "openai/text-embedding-3-small",
+    "created_at": "2026-09-17T00:04:47.850676Z",
+    "updated_at": "2026-09-17T00:11:06.801314Z"
+  }
+]

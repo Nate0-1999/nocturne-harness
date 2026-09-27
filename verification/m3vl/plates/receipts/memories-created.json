@@ -1,0 +1,1419 @@
+[
+  {
+    "created": {
+      "memory_id": "f59557e1-bf20-44a8-ae6e-b7f346fa0bfc",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C A confluence conserves discharge",
+      "body": "A confluence conserves discharge.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "discharge"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:28.651494Z",
+      "updated_at": "2026-09-25T04:32:28.651494Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "7e7b367a-73f0-48ad-9e46-db609c73e480",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C merge() sums incoming discharges",
+      "body": "merge() sums incoming discharges.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "discharge"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:29.047973Z",
+      "updated_at": "2026-09-25T04:32:29.047973Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "6f7108f0-878f-45fc-a2ae-97fbbc7b4f09",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Reach.discharge recurses through childre",
+      "body": "Reach.discharge recurses through children.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "discharge"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:29.570664Z",
+      "updated_at": "2026-09-25T04:32:29.570664Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "57ca3188-5221-41f3-9b27-de99b449dbcb",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Manning velocity uses slope and roughnes",
+      "body": "Manning velocity uses slope and roughness.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "discharge"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:29.949195Z",
+      "updated_at": "2026-09-25T04:32:29.949195Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "261776e6-7036-4312-a682-d512a17861a8",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Travel time is length over velocity",
+      "body": "Travel time is length over velocity.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "discharge"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:30.303572Z",
+      "updated_at": "2026-09-25T04:32:30.303572Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "c8f4a998-02b0-4e50-9b51-b0fb1ef59034",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Roughness 0.035 suits natural channels",
+      "body": "Roughness 0.035 suits natural channels.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "discharge"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:30.671265Z",
+      "updated_at": "2026-09-25T04:32:30.671265Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "578020d1-c3a3-42f4-b602-18d88210e1c9",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C read_stations loads flow per station",
+      "body": "read_stations loads flow per station.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "discharge"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:31.122467Z",
+      "updated_at": "2026-09-25T04:32:31.122467Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "27bbcf61-ad05-462b-b94d-0d5cc8c3b013",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Mouth flow should equal the fork sum",
+      "body": "Mouth flow should equal the fork sum.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "discharge"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:31.598506Z",
+      "updated_at": "2026-09-25T04:32:31.598506Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "6ee55f87-beb0-468f-b9b2-0bccf93f88e6",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Floodplains store peak flow",
+      "body": "Floodplains store peak flow.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "discharge"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:32.273229Z",
+      "updated_at": "2026-09-25T04:32:32.273229Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "e37dfe20-c287-4610-9280-98d94cf90c4e",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Sediment load rises with discharge",
+      "body": "Sediment load rises with discharge.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "discharge"
+      ],
+      "project_key": "/private/tmp/m3vl24c-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:32.659324Z",
+      "updated_at": "2026-09-25T04:32:32.659324Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "29a042f1-7b83-47ba-8cc9-2379f605ff8a",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Prune apple trees while dormant",
+      "body": "Prune apple trees while dormant.",
+      "kind": "fact",
+      "keywords": [
+        "orchard",
+        "pruning"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:33.039657Z",
+      "updated_at": "2026-09-25T04:32:33.039657Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "c980d9c6-e55a-45f5-bba5-f934b61ee629",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Open-center pruning lets light reach fru",
+      "body": "Open-center pruning lets light reach fruit.",
+      "kind": "fact",
+      "keywords": [
+        "orchard",
+        "pruning"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:33.431976Z",
+      "updated_at": "2026-09-25T04:32:33.431976Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "8d2b9d18-7dcf-4b8e-b637-a4ea6ef0178e",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Thin apples to one per cluster",
+      "body": "Thin apples to one per cluster.",
+      "kind": "fact",
+      "keywords": [
+        "orchard",
+        "pruning"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:34.004519Z",
+      "updated_at": "2026-09-25T04:32:34.004519Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "ef03540a-66b3-4a60-807a-677a8bafb9ce",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Water sprouts should be removed in summe",
+      "body": "Water sprouts should be removed in summer.",
+      "kind": "fact",
+      "keywords": [
+        "orchard",
+        "pruning"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:34.494103Z",
+      "updated_at": "2026-09-25T04:32:34.494103Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "d2326e8a-fd76-43fb-8143-d3b5b95d741f",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Grafted rootstock sets final tree size",
+      "body": "Grafted rootstock sets final tree size.",
+      "kind": "fact",
+      "keywords": [
+        "orchard",
+        "pruning"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:35.004299Z",
+      "updated_at": "2026-09-25T04:32:35.004299Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "bc7c56f5-0f56-424f-9632-71689416b028",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Mulch keeps orchard roots cool",
+      "body": "Mulch keeps orchard roots cool.",
+      "kind": "fact",
+      "keywords": [
+        "orchard",
+        "pruning"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:35.398560Z",
+      "updated_at": "2026-09-25T04:32:35.398560Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "17d90071-116a-4b9e-a2e1-6777ec898aa7",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Focal ratio sets field of view and brigh",
+      "body": "Focal ratio sets field of view and brightness.",
+      "kind": "fact",
+      "keywords": [
+        "telescope",
+        "optics"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:35.771763Z",
+      "updated_at": "2026-09-25T04:32:35.771763Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "8417cac2-686c-4ce0-ab5c-01f9e14198dc",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Collimate a reflector before observing",
+      "body": "Collimate a reflector before observing.",
+      "kind": "fact",
+      "keywords": [
+        "telescope",
+        "optics"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:36.178158Z",
+      "updated_at": "2026-09-25T04:32:36.178158Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "9ad6d7da-4214-4632-811d-cd97dfea63c2",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Aperture limits resolving power",
+      "body": "Aperture limits resolving power.",
+      "kind": "fact",
+      "keywords": [
+        "telescope",
+        "optics"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:36.629044Z",
+      "updated_at": "2026-09-25T04:32:36.629044Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "2dbbf6bb-426f-4490-b6dc-a4b03a3ecb15",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Dew heaters keep the corrector plate cle",
+      "body": "Dew heaters keep the corrector plate clear.",
+      "kind": "fact",
+      "keywords": [
+        "telescope",
+        "optics"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:37.108931Z",
+      "updated_at": "2026-09-25T04:32:37.108931Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "04c71e6a-1a23-4ce3-b04f-9411ed7b6317",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Eyepiece focal length sets magnification",
+      "body": "Eyepiece focal length sets magnification.",
+      "kind": "fact",
+      "keywords": [
+        "telescope",
+        "optics"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:37.499231Z",
+      "updated_at": "2026-09-25T04:32:37.499231Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "9be17e23-a756-46d3-8c9e-c23847e93f8c",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Let the mirror cool to ambient",
+      "body": "Let the mirror cool to ambient.",
+      "kind": "fact",
+      "keywords": [
+        "telescope",
+        "optics"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:37.851689Z",
+      "updated_at": "2026-09-25T04:32:37.851689Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "a3ebb8de-220b-4ad8-82f5-80150cf86b7b",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Feed the starter at one to one to one",
+      "body": "Feed the starter at one to one to one.",
+      "kind": "fact",
+      "keywords": [
+        "sourdough",
+        "baking"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:38.272943Z",
+      "updated_at": "2026-09-25T04:32:38.272943Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "2ac06f3f-6080-4b57-9610-004dbdfee8a0",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Autolyse flour and water before salt",
+      "body": "Autolyse flour and water before salt.",
+      "kind": "fact",
+      "keywords": [
+        "sourdough",
+        "baking"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:38.722248Z",
+      "updated_at": "2026-09-25T04:32:38.722248Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "bdb30659-181b-4d03-910f-674a5e9f6e6a",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Bulk ferment until the dough rises by ha",
+      "body": "Bulk ferment until the dough rises by half.",
+      "kind": "fact",
+      "keywords": [
+        "sourdough",
+        "baking"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:39.099424Z",
+      "updated_at": "2026-09-25T04:32:39.099424Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "1b687796-5d91-4321-b102-70e7b818a8bb",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Bake in a preheated dutch oven",
+      "body": "Bake in a preheated dutch oven.",
+      "kind": "fact",
+      "keywords": [
+        "sourdough",
+        "baking"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:39.587045Z",
+      "updated_at": "2026-09-25T04:32:39.587045Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "3a223809-fa1f-4da4-b247-e268eff79841",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Higher hydration gives a more open crumb",
+      "body": "Higher hydration gives a more open crumb.",
+      "kind": "fact",
+      "keywords": [
+        "sourdough",
+        "baking"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:40.138408Z",
+      "updated_at": "2026-09-25T04:32:40.138408Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "6319049c-5f9e-4b95-9736-a1536ad327cb",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Cold retard deepens sourdough flavor",
+      "body": "Cold retard deepens sourdough flavor.",
+      "kind": "fact",
+      "keywords": [
+        "sourdough",
+        "baking"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:41.659437Z",
+      "updated_at": "2026-09-25T04:32:41.659437Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "ca928a9f-2f85-4de4-991d-44f5b7aad21a",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Set body text between 45 and 75 characte",
+      "body": "Set body text between 45 and 75 characters per line.",
+      "kind": "fact",
+      "keywords": [
+        "typesetting",
+        "typography"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:42.038892Z",
+      "updated_at": "2026-09-25T04:32:42.038892Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "8174554b-1604-41d6-8b2a-c1d741c87927",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Leading near 1.4 suits body text",
+      "body": "Leading near 1.4 suits body text.",
+      "kind": "fact",
+      "keywords": [
+        "typesetting",
+        "typography"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:42.470388Z",
+      "updated_at": "2026-09-25T04:32:42.470388Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "c96ba4e5-49e5-43f6-9213-d97913c797ad",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Use true small caps not scaled capitals",
+      "body": "Use true small caps not scaled capitals.",
+      "kind": "fact",
+      "keywords": [
+        "typesetting",
+        "typography"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:42.896517Z",
+      "updated_at": "2026-09-25T04:32:42.896517Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "36879be3-2b74-46c3-b8d7-d81364afbe9c",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Hang punctuation into the margin",
+      "body": "Hang punctuation into the margin.",
+      "kind": "fact",
+      "keywords": [
+        "typesetting",
+        "typography"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:43.258353Z",
+      "updated_at": "2026-09-25T04:32:43.258353Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "b8d050ed-8103-4cf5-bf6d-29243588a67b",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Kerning adjusts single letter pairs",
+      "body": "Kerning adjusts single letter pairs.",
+      "kind": "fact",
+      "keywords": [
+        "typesetting",
+        "typography"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:43.628676Z",
+      "updated_at": "2026-09-25T04:32:43.628676Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "5006063c-8309-4006-929b-2ed0edaeeaa9",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C A dominant seventh resolves to the tonic",
+      "body": "A dominant seventh resolves to the tonic.",
+      "kind": "fact",
+      "keywords": [
+        "harmony",
+        "music"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:43.995855Z",
+      "updated_at": "2026-09-25T04:32:43.995855Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "a45c6104-9486-4def-8c9e-6a2c1394a35f",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Avoid parallel fifths in four-part writi",
+      "body": "Avoid parallel fifths in four-part writing.",
+      "kind": "fact",
+      "keywords": [
+        "harmony",
+        "music"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:44.370522Z",
+      "updated_at": "2026-09-25T04:32:44.370522Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "6c4d54c9-0a51-427f-b236-e02cb1f271b7",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C The circle of fifths orders the keys",
+      "body": "The circle of fifths orders the keys.",
+      "kind": "fact",
+      "keywords": [
+        "harmony",
+        "music"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:44.829476Z",
+      "updated_at": "2026-09-25T04:32:44.829476Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "f8ecd87c-698d-4c85-8ba2-8caef03da28b",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Secondary dominants tonicize other chord",
+      "body": "Secondary dominants tonicize other chords.",
+      "kind": "fact",
+      "keywords": [
+        "harmony",
+        "music"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:45.220487Z",
+      "updated_at": "2026-09-25T04:32:45.220487Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "e733d7f6-705a-421c-bca0-20998b53c93c",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C A deceptive cadence moves V to vi",
+      "body": "A deceptive cadence moves V to vi.",
+      "kind": "fact",
+      "keywords": [
+        "harmony",
+        "music"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:45.687280Z",
+      "updated_at": "2026-09-25T04:32:45.687280Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "5230718c-b128-459d-b850-0cdce0820e58",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Summer pruning slows vigorous growth",
+      "body": "Summer pruning slows vigorous growth.",
+      "kind": "fact",
+      "keywords": [
+        "orchard"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:46.071071Z",
+      "updated_at": "2026-09-25T04:32:46.071071Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "af5500c4-22f3-46a0-9faf-9ec5fc241b0f",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Seeing limits planetary detail more than",
+      "body": "Seeing limits planetary detail more than aperture.",
+      "kind": "fact",
+      "keywords": [
+        "Telescope"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:46.423875Z",
+      "updated_at": "2026-09-25T04:32:46.423875Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "d5b56548-c9e9-4311-bfc7-59b9487337bd",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Voice leading favors the smallest motion",
+      "body": "Voice leading favors the smallest motion.",
+      "kind": "fact",
+      "keywords": [
+        "harmony"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:46.874918Z",
+      "updated_at": "2026-09-25T04:32:46.874918Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "15c6202c-1bee-4416-9ba2-4620f0b15c02",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Floodplains store the flood peak",
+      "body": "Floodplains store the flood peak.",
+      "kind": "fact",
+      "keywords": [
+        "sourdough",
+        "baking"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T04:32:47.332970Z",
+      "updated_at": "2026-09-25T04:32:47.332970Z"
+    }
+  },
+  {
+    "existing": {
+      "duplicate_of": {
+        "memory_id": "f59557e1-bf20-44a8-ae6e-b7f346fa0bfc",
+        "label": "VL24C A confluence conserves discharge",
+        "body": "A confluence conserves discharge.",
+        "kind": "fact",
+        "pin": false,
+        "score": 0.9591683185719435,
+        "features": null,
+        "rank": null
+      }
+    }
+  },
+  {
+    "created": {
+      "memory_id": "74387e0d-5eb2-4454-93a7-73dd3234c6fd",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Modulation pivots on a shared chord",
+      "body": "Modulation pivots on a shared chord.",
+      "kind": "fact",
+      "keywords": [
+        "Harmony"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T05:43:41.633463Z",
+      "updated_at": "2026-09-25T05:43:41.633463Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "d4ff1a81-0c5c-4f2a-b341-a42ef14ff3c5",
+      "principal_id": "nocturne-verification-5dfb9775-1460-4402-bc2b-7a8cb85b9463",
+      "label": "VL24C Cross-pollination needs a compatible var",
+      "body": "Cross-pollination needs a compatible variety.",
+      "kind": "fact",
+      "keywords": [
+        "orchard"
+      ],
+      "project_key": null,
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": null,
+      "origin_location": null,
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-25T05:43:42.577151Z",
+      "updated_at": "2026-09-25T05:43:42.577151Z"
+    }
+  }
+]

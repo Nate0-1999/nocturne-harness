@@ -1,0 +1,375 @@
+[
+  {
+    "prompt": "How does riverflow conserve discharge where tributaries meet?",
+    "thread_id": "d3626bac-6cfd-4a43-ac27-417ca46b8a23",
+    "injection_id": "17d3c50f-2742-4dbb-ade0-65bae0ae12a8",
+    "injected": [
+      "f59557e1-bf20-44a8-ae6e-b7f346fa0bfc"
+    ]
+  },
+  {
+    "prompt": "Explain merge() and how Reach.discharge sums children.",
+    "thread_id": "55bd5bda-0345-412b-a792-6c465a5b5b45",
+    "injection_id": "814f53a0-a61b-47d0-a01c-67e4390e7d87",
+    "injected": [
+      "7e7b367a-73f0-48ad-9e46-db609c73e480",
+      "6f7108f0-878f-45fc-a2ae-97fbbc7b4f09"
+    ]
+  },
+  {
+    "prompt": "What sets the travel time of a flood wave in routing.py?",
+    "thread_id": "6f38f76d-9bd8-41af-975d-d1cfec61576c",
+    "injection_id": "b5e1d6fb-fca6-4868-a18c-10574acdd6a7",
+    "injected": []
+  },
+  {
+    "prompt": "How are gauge readings loaded and used for calibration?",
+    "thread_id": "0b0fa4fe-ca4f-49c7-afb1-25cf3ef41023",
+    "injection_id": "1a471025-7cb1-4cc0-844f-5d1264df0b98",
+    "injected": []
+  },
+  {
+    "prompt": "How does riverflow conserve discharge where tributaries meet?",
+    "thread_id": "14183164-a743-49f9-a7cf-9733962c5ac7",
+    "injection_id": "525b8202-3ce3-468a-92b7-03598233ac7a",
+    "injected": [
+      "f59557e1-bf20-44a8-ae6e-b7f346fa0bfc"
+    ]
+  },
+  {
+    "prompt": "Explain merge() and how Reach.discharge sums children.",
+    "thread_id": "57e041e2-a09d-4235-ad93-f6f68f28e1e1",
+    "injection_id": "0ccd7529-050a-4963-9a4e-6e9b783340db",
+    "injected": [
+      "7e7b367a-73f0-48ad-9e46-db609c73e480",
+      "6f7108f0-878f-45fc-a2ae-97fbbc7b4f09"
+    ]
+  },
+  {
+    "prompt": "What sets the travel time of a flood wave in routing.py?",
+    "thread_id": "cc91b9dc-9a50-4219-a57b-eaf2efcd35b5",
+    "injection_id": "0525aae6-79f3-445d-a238-92aef4cdb70f",
+    "injected": []
+  },
+  {
+    "prompt": "How are gauge readings loaded and used for calibration?",
+    "thread_id": "efbc4b85-0ad2-4282-9075-7b29b4d70e6f",
+    "injection_id": "c16a5ce5-9d7d-46f6-864c-b4da9625f2b9",
+    "injected": []
+  },
+  {
+    "prompt": "Why should the mouth flow equal the sum of the forks?",
+    "thread_id": "6241e8fd-c701-45c7-8486-f0cfc7768db7",
+    "injection_id": "a4ab1644-f7aa-4d98-9abb-f87e26ffe255",
+    "injected": [
+      "27bbcf61-ad05-462b-b94d-0d5cc8c3b013"
+    ]
+  },
+  {
+    "prompt": "Describe how a confluence changes discharge downstream.",
+    "thread_id": "b5062caa-29eb-41fb-810a-b9d83f99e86b",
+    "injection_id": "e8b589fe-e625-4f93-9491-7bb1c9907c9c",
+    "injected": [
+      "f59557e1-bf20-44a8-ae6e-b7f346fa0bfc"
+    ]
+  },
+  {
+    "prompt": "How does riverflow conserve discharge where tributaries meet?",
+    "thread_id": "2df1561f-0ba0-42ae-8672-fc09fc5948ec",
+    "injection_id": "cc0dbeaf-41c1-46bf-86e9-76a30dd1e412",
+    "injected": [
+      "f59557e1-bf20-44a8-ae6e-b7f346fa0bfc"
+    ]
+  },
+  {
+    "prompt": "Explain merge() and how Reach.discharge sums children.",
+    "thread_id": "73b5ede7-389f-4dab-9213-ba80ca4328fb",
+    "injection_id": "c34397f7-f29b-4ff2-aa47-69886e1e3753",
+    "injected": [
+      "7e7b367a-73f0-48ad-9e46-db609c73e480",
+      "6f7108f0-878f-45fc-a2ae-97fbbc7b4f09"
+    ]
+  },
+  {
+    "prompt": "What sets the travel time of a flood wave in routing.py?",
+    "thread_id": "d411f4ca-d265-4a71-81db-e7373c2c99f8",
+    "injection_id": "755f5f67-7615-42eb-8d18-25ff999e4fd1",
+    "injected": []
+  },
+  {
+    "prompt": "How are gauge readings loaded and used for calibration?",
+    "thread_id": "1927c6bc-98f4-4c3c-be06-32e1e5106ec4",
+    "injection_id": "8e5577f3-b504-4721-b172-8f9b0df1eefc",
+    "injected": []
+  },
+  {
+    "prompt": "Why should the mouth flow equal the sum of the forks?",
+    "thread_id": "c0bcec31-8ae2-4286-86ad-4a4dcf3c01c6",
+    "injection_id": "567ccb35-d528-46d4-b064-f8658b287b68",
+    "injected": [
+      "27bbcf61-ad05-462b-b94d-0d5cc8c3b013"
+    ]
+  },
+  {
+    "prompt": "Describe how a confluence changes discharge downstream.",
+    "thread_id": "0f2ca62c-53d3-4c43-8b4b-5bb1a17091d8",
+    "injection_id": "30553555-b5ce-4ea0-8b11-3cacf75acb5e",
+    "injected": [
+      "f59557e1-bf20-44a8-ae6e-b7f346fa0bfc"
+    ]
+  },
+  {
+    "prompt": "What roughness value does routing use and why?",
+    "thread_id": "d4cbe80b-af0e-4272-b4f8-b4ee8bee51fd",
+    "injection_id": "f6899954-9f4f-4630-b22d-2847c4cef89a",
+    "injected": []
+  },
+  {
+    "prompt": "How does the watershed outlet relate to catchment area?",
+    "thread_id": "472a6a8a-6a93-4945-aa75-097929edf89f",
+    "injection_id": "b58b106d-d598-4a7e-a348-b2f253dcf242",
+    "injected": []
+  },
+  {
+    "prompt": "How does riverflow conserve discharge where tributaries meet?",
+    "thread_id": "e37636d9-96a5-4578-972b-5d47b669c4c3",
+    "injection_id": "00270fe0-4598-4b81-b5c4-329cfcfe4e38",
+    "injected": [
+      "f59557e1-bf20-44a8-ae6e-b7f346fa0bfc"
+    ]
+  },
+  {
+    "prompt": "Explain merge() and how Reach.discharge sums children.",
+    "thread_id": "2cbc63dc-26bd-4f7a-b341-3c68768a9a3a",
+    "injection_id": "a02683ef-ab8e-42a2-bbd1-0de6ea39eeb0",
+    "injected": [
+      "7e7b367a-73f0-48ad-9e46-db609c73e480",
+      "6f7108f0-878f-45fc-a2ae-97fbbc7b4f09"
+    ]
+  },
+  {
+    "prompt": "What sets the travel time of a flood wave in routing.py?",
+    "thread_id": "a66c5a81-91a7-44ec-b6c8-0ce8b71ee3d2",
+    "injection_id": "2266fe9a-fc2d-4858-ba73-ce5e454c907a",
+    "injected": []
+  },
+  {
+    "prompt": "How are gauge readings loaded and used for calibration?",
+    "thread_id": "99760f63-d532-4842-ae50-45e21528247f",
+    "injection_id": "7bd51ff1-44af-4dfe-aa5b-2169ba3996c5",
+    "injected": []
+  },
+  {
+    "prompt": "Why should the mouth flow equal the sum of the forks?",
+    "thread_id": "c33b6f36-6ea8-4b6e-82a0-f7f9cea6901d",
+    "injection_id": "c1cb5e3b-64d6-441c-8b7f-54044dd6f0ea",
+    "injected": [
+      "27bbcf61-ad05-462b-b94d-0d5cc8c3b013"
+    ]
+  },
+  {
+    "prompt": "Describe how a confluence changes discharge downstream.",
+    "thread_id": "c7a16401-ab09-45b6-9063-cd84a41bc222",
+    "injection_id": "ed141ebf-810f-448a-80da-97029567dbe2",
+    "injected": [
+      "f59557e1-bf20-44a8-ae6e-b7f346fa0bfc"
+    ]
+  },
+  {
+    "prompt": "What roughness value does routing use and why?",
+    "thread_id": "82ac1d72-b2ed-4097-b844-22758eea533a",
+    "injection_id": "47766f76-7474-4ae7-acfa-33231b14a486",
+    "injected": []
+  },
+  {
+    "prompt": "How does the watershed outlet relate to catchment area?",
+    "thread_id": "810004c0-2f8f-4b12-9ed9-f7f86f4c4a08",
+    "injection_id": "399917aa-e2b6-467c-a6d6-85d408991015",
+    "injected": []
+  },
+  {
+    "prompt": "How do floodplains attenuate the flood peak?",
+    "thread_id": "cfa4dee0-ab18-41c6-9876-76cab6d4100c",
+    "injection_id": "1b9d81a3-bd35-4d19-b34e-79d4180eb6ec",
+    "injected": [
+      "6ee55f87-beb0-468f-b9b2-0bccf93f88e6",
+      "15c6202c-1bee-4416-9ba2-4620f0b15c02"
+    ]
+  },
+  {
+    "prompt": "Explain Manning velocity with slope and roughness.",
+    "thread_id": "15445f6c-5462-4bf2-bb66-97056f925a96",
+    "injection_id": "9f61cc23-01ec-4326-98c7-2b8cb84c95be",
+    "injected": [
+      "57ca3188-5221-41f3-9b27-de99b449dbcb"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: a confluence conserves discharge.",
+    "thread_id": "d26cfede-da79-494b-8ee0-dab1fb8dd50f",
+    "injection_id": "f872a9af-b58d-44cc-bb7f-84146de5b990",
+    "injected": [
+      "f59557e1-bf20-44a8-ae6e-b7f346fa0bfc"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: manning velocity uses slope and roughness.",
+    "thread_id": "637408f2-81f8-4cf6-8978-796ae91e1271",
+    "injection_id": "51dbf75a-0be0-43c1-812e-2bab22a8ae69",
+    "injected": [
+      "57ca3188-5221-41f3-9b27-de99b449dbcb"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: read_stations loads flow per station.",
+    "thread_id": "01b5e4c3-9359-41f2-bc96-c52f4b9fa432",
+    "injection_id": "0e48942e-20ad-4f90-bb85-b639fb9bf2ed",
+    "injected": [
+      "578020d1-c3a3-42f4-b602-18d88210e1c9"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: sediment load rises with discharge.",
+    "thread_id": "a2e665e0-58c0-45ad-98cd-4b500b39b250",
+    "injection_id": "2d6e8cd5-0395-4c6e-badb-76b18d7140d2",
+    "injected": [
+      "e37dfe20-c287-4610-9280-98d94cf90c4e"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: thin apples to one per cluster.",
+    "thread_id": "cc61470a-659a-4ab9-b078-e8b6394604c6",
+    "injection_id": "d84d3f6d-a9d2-4fea-8697-273427d24e2e",
+    "injected": [
+      "8d2b9d18-7dcf-4b8e-b637-a4ea6ef0178e"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: mulch keeps orchard roots cool.",
+    "thread_id": "961ca3a4-bdaa-43c8-ab3b-778f6722268a",
+    "injection_id": "2ef1496a-aae3-4180-b524-0250a08a8a0a",
+    "injected": [
+      "bc7c56f5-0f56-424f-9632-71689416b028"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: aperture limits resolving power.",
+    "thread_id": "34c952ca-77ba-4a6b-8eff-007df5208b29",
+    "injection_id": "76005644-1c88-4640-81c1-8bae1b60c965",
+    "injected": [
+      "9ad6d7da-4214-4632-811d-cd97dfea63c2"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: let the mirror cool to ambient.",
+    "thread_id": "32f0fa0a-7db7-4336-bdec-821cccff1b18",
+    "injection_id": "1fcc081b-05ad-4e94-bc28-5043e4fc859d",
+    "injected": [
+      "9be17e23-a756-46d3-8c9e-c23847e93f8c"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: bulk ferment until the dough rises by half.",
+    "thread_id": "3dd5a21f-3a93-4e00-99d3-c78529cfe97d",
+    "injection_id": "93fd3cbe-5cc2-4e04-984f-3ca1be0dcf20",
+    "injected": [
+      "bdb30659-181b-4d03-910f-674a5e9f6e6a"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: cold retard deepens sourdough flavor.",
+    "thread_id": "a2043f4b-8e71-4bf8-9eec-c067954a75e5",
+    "injection_id": "0711bab8-4d0e-4f3e-91c1-e9d21c6979b1",
+    "injected": [
+      "6319049c-5f9e-4b95-9736-a1536ad327cb"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: use true small caps not scaled capitals.",
+    "thread_id": "9900b3e7-160b-4c14-983e-e2f77d249a64",
+    "injection_id": "49c1e5aa-44a0-40f9-a578-6654ee38b33f",
+    "injected": [
+      "c96ba4e5-49e5-43f6-9213-d97913c797ad"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: a dominant seventh resolves to the tonic.",
+    "thread_id": "45e31bed-756e-41c9-b915-179a8c63e372",
+    "injection_id": "62eaddbb-7c48-4407-98a9-12801ac85f83",
+    "injected": [
+      "5006063c-8309-4006-929b-2ed0edaeeaa9"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: secondary dominants tonicize other chords.",
+    "thread_id": "0103b748-9860-4829-9605-39721ff41632",
+    "injection_id": "81a4fe70-5d9f-4256-b384-60de5ff7cf01",
+    "injected": [
+      "f8ecd87c-698d-4c85-8ba2-8caef03da28b"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: a confluence conserves discharge.",
+    "thread_id": "d8020761-7c88-4086-829b-3d28dc2c25ed",
+    "injection_id": "f2cb1f92-78a8-4483-88a8-b060aade8e62",
+    "injected": [
+      "f59557e1-bf20-44a8-ae6e-b7f346fa0bfc"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: roughness 0.035 suits natural channels.",
+    "thread_id": "f7e839a8-00e0-460d-b9f3-e63ff5d0fdd6",
+    "injection_id": "9f56bd1e-3e5d-4514-a3ce-ba6a0415985c",
+    "injected": [
+      "c8f4a998-02b0-4e50-9b51-b0fb1ef59034"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: prune apple trees while dormant.",
+    "thread_id": "52dc996e-7011-4bc6-ac1a-2b17cbe9d052",
+    "injection_id": "923d6fe6-91fe-42fd-883a-f6e8771f3ade",
+    "injected": [
+      "29a042f1-7b83-47ba-8cc9-2379f605ff8a"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: mulch keeps orchard roots cool.",
+    "thread_id": "f5167d4d-c655-45d9-bd02-9919bb50f810",
+    "injection_id": "f8a5a1c8-323f-4098-903a-9abae36a7a64",
+    "injected": [
+      "bc7c56f5-0f56-424f-9632-71689416b028"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: eyepiece focal length sets magnification.",
+    "thread_id": "f2244817-1c69-4926-a35a-66e4330b632e",
+    "injection_id": "09d8183c-a55a-466f-9aec-93921e7af98b",
+    "injected": [
+      "04c71e6a-1a23-4ce3-b04f-9411ed7b6317"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: bake in a preheated dutch oven.",
+    "thread_id": "d04dd8c8-8fa9-40e7-8e54-937efafa9575",
+    "injection_id": "c236ee65-45ea-4727-9be4-52f5a6a1264c",
+    "injected": [
+      "1b687796-5d91-4321-b102-70e7b818a8bb"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: use true small caps not scaled capitals.",
+    "thread_id": "4f2f646f-e150-41c6-a343-1bb6eedd1cc4",
+    "injection_id": "9c084c9f-d66b-4afb-ac26-42bf196d6b8e",
+    "injected": [
+      "c96ba4e5-49e5-43f6-9213-d97913c797ad"
+    ]
+  },
+  {
+    "prompt": "In riverflow, explain: the circle of fifths orders the keys.",
+    "thread_id": "927ad0f3-0700-4251-8e34-a960cff2be19",
+    "injection_id": "e604d1af-84e9-41d8-a2cc-f4c05f1e854e",
+    "injected": [
+      "6c4d54c9-0a51-427f-b236-e02cb1f271b7"
+    ]
+  }
+]

@@ -1,0 +1,45 @@
+{
+  "threads": [
+    {
+      "thread_id": "f1e3ca9c-0a60-4dd8-b49b-d201059e7423",
+      "prompts": [
+        "Reply with the single word ready.",
+        "Read every Markdown file in references one at a time with the read tool, then write notes/summary.md with one sentence per file.",
+        "Now read src/riverflow/basin.py and src/riverflow/routing.py, and add a short module docstring to each with the edit tool."
+      ]
+    },
+    {
+      "thread_id": "596fd784-073d-44dc-a119-1f9f35f1e1b4",
+      "prompts": [
+        "Read data/stations.csv and src/riverflow/gauge.py, then write notes/gauges.md explaining how the gauge readings are loaded.",
+        "Read tests/test_basin.py and src/riverflow/confluence.py, then add a test for merge() to tests/test_confluence.py."
+      ]
+    }
+  ],
+  "symphony": {
+    "thread_id": "a968605a-d4ff-4c0f-94d6-0a6b6beffd7f",
+    "symphony_id": "01M3DGW5N4E4355D4TD73C03H9",
+    "opened_by": "Orchestration mode \u2192 Symphony",
+    "authority": {
+      "attempts": 2,
+      "spend_wall_usd": 2,
+      "max_rounds": 1,
+      "depth_cap": 0,
+      "children_per_attempt": 0,
+      "duration_minutes": 10
+    },
+    "outcome": "blocked at its signed 10-minute time wall; spend $0.1226; judged-card return not reached"
+  },
+  "recordings": {
+    "farm": {
+      "what_changed": "thread f1e3ca9c toured the folders with the move tool (references \u2192 data \u2192 src/riverflow \u2192 tests \u2192 notes \u2192 docs \u2192 root), reading a file in each and writing docs/gauges-tour.md",
+      "sent_by": "send.mjs through the real composer"
+    },
+    "roots": {
+      "what_changed": "Symphony 01M3DGW5N4E4355D4TD73C03H9 (two attempts, three judges) signed through the real deliberation card; recorded while its workers ran: turns + tool calls across agents 269 \u2192 335"
+    },
+    "palace": {
+      "what_changed": "eight memories written to the Palace 2.5 s apart (labels 'VL24C t2 \u2026'), then a manual curator pass (18 verdicts) whose findings drew the streams and moved the ghost"
+    }
+  }
+}

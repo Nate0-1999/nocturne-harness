@@ -3,7 +3,7 @@ import { Farm } from './Farm'
 import { Roots } from './Roots'
 import { useRackPlugin, useRackSelection, useRackSnapshot, type RackModuleId } from './rack'
 import { VisualizationScene } from './VisualizationScene'
-import { agentColor, buildChambers, type DetailTier, type VisualizationSnapshot, type WorkAgent } from './visualization'
+import { agentColor, buildChambers, LEAF, WIDTH, type DetailTier, type VisualizationSnapshot, type WorkAgent } from './visualization'
 import './assets/work-visualization.css'
 import { Button, Select } from './kit'
 
@@ -75,20 +75,24 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
   const [scope, setScope] = useState<'GLOBAL' | 'ATTUNED'>('GLOBAL')
   useEffect(() => { void events.dispatch({ type: 'rack.scope.get', module_id: initialView }).then(setScope) }, [events, initialView])
   const agents = (data?.agents ?? []).filter((agent) => scope === 'GLOBAL' || agent.thread_id === rack.selectedThreadId)
+  // A top-level agent enters as a ringed root; a forked one leaves its parent as a limb.
+  const forked = agents.filter((agent) => agents.some((other) => other.id === agent.parent_id)).length
   const selectedMemory = selected?.kind === 'memory' ? data?.palace?.nodes.find((node) => node.memory.memory_id === selected.id)?.memory : undefined
   const selectedId = selected?.kind === 'agent' || selected?.kind === 'thread' ? selected.id : selectedMemory?.origin_thread_id ?? null
   const focused = agents.find((agent) => agent.id === selectedId)
   const project = data?.projects.find((candidate) => candidate.root === (projectRoot ?? focused?.root)) ?? data?.projects[0]
   const chambers = useMemo(() => project ? buildChambers(project) : [], [project])
-  const distance = view === 'farm' ? Math.max(15, ...chambers.map((c) => (Math.abs(c.position[1]) + 2) * 3)) : Math.max(12, agents.length * 2.8)
-  const width = view === 'farm' ? Math.max(10, ...chambers.map((c) => (Math.abs(c.position[0]) + 2) * 2)) : 22
+  const reach = Math.max(0, ...chambers.map((c) => Math.hypot(c.position[0], c.position[1]) + c.radius))
+  const distance = view === 'farm' ? Math.max(8, reach * 1.6 + 3.5) : 12
+  const width = view === 'farm' ? (reach + 1) * 2 : 20
   const pick = (agent: WorkAgent) => {
     setProjectRoot(agent.root)
     void events.dispatch({ type: 'thread.select', thread_id: agent.thread_id }).then(() => {
       selection.select({ kind: 'agent', id: agent.id, thread_id: agent.thread_id, as_of: selected?.as_of ?? null, time_order: false })
     })
   }
-  return <section className="work-viz" data-testid={`${initialView}-module`} data-tier={tier} data-view={view}>
+  return <section className="work-viz" data-testid={`${initialView}-module`} data-tier={tier} data-view={view}
+    data-sheet={new URLSearchParams(globalThis.location.search).has('sheet') || undefined}>
     <header className="work-viz__header"><div><small>Work, made visible · {scope === 'GLOBAL' ? 'All projects' : rack.attunement?.name ?? 'Unattuned'}</small>
       <h1>{view === 'farm' ? 'The Farm' : 'The Roots'}</h1></div>
       <nav aria-label="Work visualization"><button aria-pressed={view === 'farm'} onClick={() => setView('farm')}>Farm</button><button aria-pressed={view === 'roots'} onClick={() => setView('roots')}>Roots</button></nav>
@@ -98,19 +102,24 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
       {data!.projects.map((p) => <option key={p.root}>{p.root}</option>)}
     </select></label>}
     <div className="work-viz__viewport">
-      {data && project && <VisualizationScene tier={tier} distance={distance} width={width} label={view === 'farm' ? 'Directory chambers and live agents' : 'Agent roots: thickness is measured spend, depth is time'}>
-        {view === 'farm' ? <Farm project={project} agents={agents} selectedId={selectedId} selectedPath={selected?.kind === 'path' ? selected.id : null} tier={tier} pick={pick}
+      {data && project && <VisualizationScene tier={tier} distance={distance} width={width} label={view === 'farm' ? 'Directory chambers and live agents' : 'Agent roots: thickness is dollars flowing, spacing is time between events'}>
+        {view === 'farm' ? <Farm project={project} agents={agents} selectedId={selectedId} selectedPath={selected?.kind === 'path' ? selected.id : null} tier={tier} asOf={data.as_of} pick={pick}
           pickPath={(path) => selection.select({ kind: 'path', id: `${project.root}${path === '.' ? '' : '/' + path}`, as_of: selected?.as_of ?? null })} />
           : <Roots data={data} agents={agents} selectedId={selectedId} tier={tier} pick={pick} newest={selected?.time_order ?? false} />}
       </VisualizationScene>}
-      <aside className="work-viz__readout"><strong>{view === 'farm' ? `${chambers.length} chambers` : `${agents.length} roots`}</strong>
-        <span>{project?.nodes.filter((node) => node.kind !== 'directory').length ?? 0} file cells · {agents.length} agents</span>
-        <span>{view === 'farm' ? 'Drag or Ctrl+arrows to orbit · scroll or +/− to zoom · pick an ant' : 'Width = dollars · depth = time · junction = fork · dry = stopped'}</span>
+      <aside className="work-viz__readout"><strong>{view === 'farm' ? `${chambers.length} chambers` : `${agents.length - forked} roots · ${forked} forked limbs`}</strong>
+        <span>{view === 'farm' ? `${project?.nodes.filter((node) => node.kind !== 'directory').length ?? 0} file cells`
+          : `${agents.reduce((count, agent) => count + (agent.touched_files?.length ?? 0), 0)} touched-file capillaries`} · {agents.length} agents</span>
+        {view === 'farm' ? <span>Drag or Ctrl+arrows to orbit · scroll or +/− to zoom · pick an ant</span> : <>
+          <span title={`radius = hair + ${WIDTH}·√$ (a fork divides its cross-section by dollars; unpriced = hair; a parent whose trail rolled up less than a fork's price is drawn at its own spend plus its forks' prices) · across = ln(1 + gap / 0.5 s)^1.2 (a longer gap is always a longer bare stretch) · leaf = ${LEAF}·(compressed wait)^0.75 (or its own spend window, if longer), so a longer wait is always a longer reach`}>
+            width = dollars · across = time between events · blue = live · pink = a branch leaving · matte = stopped</span></>}
         {focused && <span style={{ color: agentColor(focused.id) }}>{focused.label} · {focused.location}</span>}
       </aside>
       {(!data || error) && <p className="work-viz__notice" role="status">{error ?? 'Recording the first real state…'}</p>}
     </div>
     <footer className="work-viz__foot">{data && <>Recorded since {new Date(data.recorded_since).toLocaleString()} · {data.timeline.length} states · {data.live ? 'Live observation' : 'Recorded history'}</>}
+      {view === 'roots' && <span>Trunk = project, its agents' roots fused · ringed source = a top-level agent, entering at the left edge in its own lane (the finest hair until it started, then it swells and converges at a shallow angle, fusing into the trunk once their bodies come within one diameter; its dollars move into the trunk as it fuses, so each is drawn once) · branch = turn · twig = tool call · capillary = recorded file touch · limb = forked agent, leaving where it started · a turn (a call, within its turn) leaves the latest earlier one that followed a longer wait than its own, so a burst sub-forks · spacing along every root and branch = time between its events (bare chrome = waiting); finer branches run on a finer time scale (×0.82 per level, a forked limb ×0.6) · a leaf reaches as long as the compressed wait for the agent's next event (a bare leaf: or its own spend window, if longer) · side, angle, curl and meander come from each branch's seed; forked limbs fan on the side away from their parent, and a heavy turn leaves away from the other roots · width = the dollars still to flow through it, on one fixed scale (radius = hair + {WIDTH}·√$; a branch carries the spend recorded in its window, a forked limb its own price), so at a junction the branches' cross-sections above the hair width add up to what the parent loses; four stretches are shaped, not priced: a junction's flare, a root's swell from its hair, a leaf too short for its dollars (never thicker than a twelfth of its length), and every tip, which closes to a point past its last recorded moment (a live tip too: still growing) · blue = live work (full while running, dimmer while waiting) · red-pink = a fine branch leaving: always marked, stronger and reaching further the larger its share of its parent's dollars, and carried into the fine branches that leave within that reach; a thicker branch's fork shows as a coral glow one diameter long on its parent's side; a stopped agent carries none but its fork on a live parent · depth = time · matte = stopped (pale on the sheet, deep blue on the stage; a stopped limb keeps its chrome for one diameter where it leaves a live parent)</span>}
+      {view === 'farm' && <span>Chamber = folder · size = files it holds · dim = empty · link = parent folder, width = files beneath · cell = file, size = bytes · lit = touched by an agent, brighter = more recent, flash = new touch · ant = agent in its current folder · walk = location changed</span>}
       {project?.errors.map((item) => <span key={item.path}>Cannot read {item.path}: {item.error}</span>)}
       {data?.errors.map((item) => <span key={item.feed}>{item.feed} feed unavailable</span>)}
     </footer>

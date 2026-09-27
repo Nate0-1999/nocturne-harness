@@ -1,0 +1,39 @@
+{
+  "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+  "machine_id": "nocturne-b079c3fd-b7e7-4814-9ab6-73fb9123af8e",
+  "tombstoned": [
+    "d8411723-fe80-4da4-b0d1-2f5fc4299756",
+    "b2caa01f-1de5-4ff6-b428-43f382281c51",
+    "2759ac41-2e1d-450d-95df-8ade019e02cf",
+    "d3980f62-937f-4498-9e44-7394f6a8b771",
+    "4ae851ff-f631-4708-928e-b732641e2e06",
+    "22146046-4ad6-4b9f-915f-7f560825845d",
+    "373b2aee-9365-413c-b752-63a685066a27",
+    "ac28079a-ce15-4156-b3da-ee22a56bb689",
+    "2c419f28-da97-4dc7-9455-511db07d03ef",
+    "4589bb38-f334-459d-9117-655938828e1d",
+    "5c05bca9-3c1e-457d-ade2-9d7ed629e017",
+    "81985251-826f-4b4d-93c7-f4f3c3b1fb67",
+    "49441618-29bb-4232-9ad2-724ef2d72dbd",
+    "97af8f8a-2c4d-4df9-ae3e-ce7001824857",
+    "5ff65859-d27e-419c-aa56-5fc5ec1cbf1b",
+    "9bd517a5-318c-46a0-b438-ca8525a9fbad",
+    "b5f4f81e-b230-4b72-9892-509f187a0545",
+    "9da22eb2-db1b-4fd2-b875-d7d3b0fbe679",
+    "d8c5edcd-c8a4-4e28-aeb7-c2352ed4047d",
+    "07f82c53-e24c-4398-bdb8-ef6cc0205740",
+    "f3b8c1a7-5a8e-4d0b-ad28-d66b74f72088",
+    "1dc31cd8-38b3-42bb-a84e-c3b5c4f6328a",
+    "9a13f9d4-ad48-4319-8dfc-ed841ef51302",
+    "50d28c81-ac69-46c9-add9-99acd4fc29f7"
+  ],
+  "denied": [],
+  "pending_after": 0,
+  "cleanup_list_scope_incident": {
+    "endpoint": "GET /v1/memories?principal_id=<disposable>&status=active",
+    "returned_total": 784,
+    "returned_count": 50,
+    "finding": "This list endpoint did not constrain results to the supplied principal_id. Returned memory contents were removed from the receipt without being used. No writes were made using those results.",
+    "next_check": "Use the already verified principal-scoped visualization feed only."
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "threads": [
+    {
+      "thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "prompts": [
+        "Read every Markdown file in references one at a time with the read tool, then write notes/summary.md with one sentence per file.",
+        "Now read src/riverflow/basin.py and src/riverflow/routing.py, and add a short module docstring to each with the edit tool."
+      ]
+    },
+    {
+      "thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "prompts": [
+        "Read data/stations.csv and src/riverflow/gauge.py, then write notes/gauges.md explaining how the gauge readings are loaded.",
+        "Read tests/test_basin.py and src/riverflow/confluence.py, then add a test for merge() to tests/test_confluence.py."
+      ]
+    }
+  ],
+  "symphony_attempts": [
+    {
+      "thread_id": "11091b16-a0f2-4898-971e-dd7e0991e8b9",
+      "opened_by": "Orchestration mode → Symphony",
+      "authority": {
+        "attempts": 2,
+        "spend_wall_usd": 2,
+        "max_rounds": 1,
+        "depth_cap": 0,
+        "children_per_attempt": 0,
+        "duration_minutes": 10
+      },
+      "launched_at": "2026-09-25T04:46:58.060Z",
+      "outcome": "blocked: Commit or save this folder's changes before launching a Symphony."
+    }
+  ],
+  "symphony": {
+    "thread_id": "11091b16-a0f2-4898-971e-dd7e0991e8b9",
+    "opened_by": "Orchestration mode → Symphony",
+    "authority": {
+      "attempts": 2,
+      "spend_wall_usd": 2,
+      "max_rounds": 1,
+      "depth_cap": 0,
+      "children_per_attempt": 0,
+      "duration_minutes": 10
+    },
+    "launched_at": "2026-09-25T04:58:24.804Z"
+  },
+  "live_turns": [
+    {
+      "thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "prompt": "Read src/riverflow/routing.py and every file under tests, one at a time with the read tool, then add a travel-time test to tests/test_routing.py.",
+      "sent_at": "2026-09-25T05:13:27.209Z"
+    },
+    {
+      "thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "prompt": "Read src/riverflow/routing.py and every file under tests, one at a time with the read tool, then add a travel-time test to tests/test_routing.py.",
+      "sent_at": "2026-09-25T05:21:30.944Z"
+    },
+    {
+      "thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "prompt": "Read each file in src/riverflow one at a time with the read tool, then add a one-line comment above each function explaining its units.",
+      "sent_at": "2026-09-25T05:24:28.211Z"
+    },
+    {
+      "thread_id": "11091b16-a0f2-4898-971e-dd7e0991e8b9",
+      "prompt": "Read notes/summary.md, notes/gauges.md and README.md one at a time with the read tool, then append a short Notes section to README.md linking both.",
+      "sent_at": "2026-09-25T05:27:06.928Z"
+    },
+    {
+      "thread_id": "0243982c-57b2-4c83-a9a9-74912bef2247",
+      "prompt": "Use the ls tool on every folder of this project, then read every file under src, tests, data, notes and references one at a time with the read tool, and finally write notes/inventory.md listing each file with one line about it.",
+      "sent_at": "2026-09-25T05:29:30.929Z"
+    },
+    {
+      "thread_id": "9bb7dda3-c89a-46f4-8fa4-dbb7723186eb",
+      "prompt": "Use the ls tool on src, tests, data and references, then read every file in them one at a time with the read tool, and write notes/review.md with one observation per file.",
+      "sent_at": "2026-09-25T05:41:49.250Z"
+    }
+  ]
+}

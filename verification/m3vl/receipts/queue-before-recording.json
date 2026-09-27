@@ -1,0 +1,177 @@
+{
+  "cards": [
+    {
+      "item_uid": "01M2PB8DYMYVEZ32RSBPA6WTGT",
+      "candidate": {
+        "memory_id": "2759ac41-2e1d-450d-95df-8ade019e02cf",
+        "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+        "label": "M3VL Discharge",
+        "body": "River discharge is water volume crossing a section per second.",
+        "kind": "fact",
+        "keywords": [],
+        "project_key": "/private/tmp/m3vl-verification/project",
+        "thread_origin": null,
+        "origin_thread_id": null,
+        "origin_path": ".",
+        "origin_location": "/private/tmp/m3vl-verification/project",
+        "pin": false,
+        "status": "active",
+        "revision": 3,
+        "stats": {
+          "removals": 0,
+          "citations": 0,
+          "injections": 1,
+          "never_kills": 0,
+          "last_injected_at": "2026-09-17T00:08:29.244464+00:00"
+        },
+        "bias": 0.0,
+        "embedding_model": "openai/text-embedding-3-small",
+        "created_at": "2026-09-17T00:04:47.850676Z",
+        "updated_at": "2026-09-17T00:11:06.801314Z"
+      },
+      "birthplace": "curator",
+      "birthplace_thread_id": null,
+      "batch_uid": null,
+      "source_name": null,
+      "source_sha256": null,
+      "birthplace_run_id": null,
+      "birthplace_origin_agent": null,
+      "judged_context": null,
+      "candidate_revision": 3,
+      "curator_run_uid": "01M2PB86Q9CMTPJQ5NKNZ2J814",
+      "curator_finding_uid": "01M2PB871AW3CMJNSKM6FNK85N",
+      "proposal_payload": {
+        "action": "keyword_repair",
+        "keywords": [
+          "river",
+          "discharge",
+          "water volume",
+          "flow",
+          "hydrology"
+        ],
+        "rationale": "The memory has no keywords despite containing clear semantic content. Adding 2-5 distinct lowercase keywords derived from the body: river discharge, water volume, flow measurement, and hydrology are all well-supported by the text.",
+        "finding_fingerprint": "dc57464069a727304de2c2a75fab98e9698eee3d22d3cbb5a2e720b772201ed3"
+      },
+      "verdict": "keyword_repair",
+      "neighbors": [],
+      "target_ids": [],
+      "state": "pending",
+      "created_at": "2026-09-17T00:11:27.074821Z"
+    },
+    {
+      "item_uid": "01M2PB8E1NQN0GY2AVQMGRT4R2",
+      "candidate": {
+        "memory_id": "b2caa01f-1de5-4ff6-b428-43f382281c51",
+        "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+        "label": "M3VL Tributary",
+        "body": "A tributary joins a larger river at a confluence.",
+        "kind": "fact",
+        "keywords": [],
+        "project_key": "/private/tmp/m3vl-verification/project",
+        "thread_origin": null,
+        "origin_thread_id": null,
+        "origin_path": ".",
+        "origin_location": "/private/tmp/m3vl-verification/project",
+        "pin": false,
+        "status": "active",
+        "revision": 2,
+        "stats": {
+          "removals": 0,
+          "citations": 0,
+          "injections": 0,
+          "never_kills": 0,
+          "last_injected_at": null
+        },
+        "bias": 0.0,
+        "embedding_model": "openai/text-embedding-3-small",
+        "created_at": "2026-09-17T00:04:47.291552Z",
+        "updated_at": "2026-09-17T00:11:06.694895Z"
+      },
+      "birthplace": "curator",
+      "birthplace_thread_id": null,
+      "batch_uid": null,
+      "source_name": null,
+      "source_sha256": null,
+      "birthplace_run_id": null,
+      "birthplace_origin_agent": null,
+      "judged_context": null,
+      "candidate_revision": 2,
+      "curator_run_uid": "01M2PB86Q9CMTPJQ5NKNZ2J814",
+      "curator_finding_uid": "01M2PB89P7RRF07PP0X4CPXRFN",
+      "proposal_payload": {
+        "action": "keyword_repair",
+        "keywords": [
+          "tributary",
+          "river",
+          "confluence",
+          "geography"
+        ],
+        "rationale": "The memory has no keywords, violating the 2-5 distinct lowercase keywords constraint. The body describes a tributary joining a larger river at a confluence, yielding clear semantic keywords: tributary, river, confluence, geography.",
+        "finding_fingerprint": "fba2b3fdb2d200502d7971ec8805e92443c24dc873245ac3eb3fbd9b3f519881"
+      },
+      "verdict": "keyword_repair",
+      "neighbors": [],
+      "target_ids": [],
+      "state": "pending",
+      "created_at": "2026-09-17T00:11:27.174767Z"
+    },
+    {
+      "item_uid": "01M2PB8E4AFZ791ZV47XT6KJPQ",
+      "candidate": {
+        "memory_id": "d8411723-fe80-4da4-b0d1-2f5fc4299756",
+        "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+        "label": "M3VL Watershed",
+        "body": "A watershed directs rainfall downhill through tributaries to a common outlet.",
+        "kind": "fact",
+        "keywords": [],
+        "project_key": "/private/tmp/m3vl-verification/project",
+        "thread_origin": null,
+        "origin_thread_id": null,
+        "origin_path": ".",
+        "origin_location": "/private/tmp/m3vl-verification/project",
+        "pin": false,
+        "status": "active",
+        "revision": 2,
+        "stats": {
+          "removals": 0,
+          "citations": 0,
+          "injections": 0,
+          "never_kills": 0,
+          "last_injected_at": null
+        },
+        "bias": 0.0,
+        "embedding_model": "openai/text-embedding-3-small",
+        "created_at": "2026-09-17T00:04:46.388824Z",
+        "updated_at": "2026-09-17T00:11:06.569485Z"
+      },
+      "birthplace": "curator",
+      "birthplace_thread_id": null,
+      "batch_uid": null,
+      "source_name": null,
+      "source_sha256": null,
+      "birthplace_run_id": null,
+      "birthplace_origin_agent": null,
+      "judged_context": null,
+      "candidate_revision": 2,
+      "curator_run_uid": "01M2PB86Q9CMTPJQ5NKNZ2J814",
+      "curator_finding_uid": "01M2PB8BVS1AT2STXPNKA4K5YJ",
+      "proposal_payload": {
+        "action": "keyword_repair",
+        "keywords": [
+          "watershed",
+          "rainfall",
+          "tributaries",
+          "drainage",
+          "hydrology"
+        ],
+        "rationale": "The memory lacks the required 2-5 distinct lowercase keywords. The body clearly describes a watershed directing rainfall through tributaries to a common outlet, yielding natural keywords: watershed, rainfall, tributaries, drainage, hydrology.",
+        "finding_fingerprint": "4891462fbba8dd0af0d473b8eea87ec9dfa4e1b033e5b6635c549cba62d934e7"
+      },
+      "verdict": "keyword_repair",
+      "neighbors": [],
+      "target_ids": [],
+      "state": "pending",
+      "created_at": "2026-09-17T00:11:27.259530Z"
+    }
+  ]
+}

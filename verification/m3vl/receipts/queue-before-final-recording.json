@@ -1,0 +1,192 @@
+[
+  {
+    "card": {
+      "item_uid": "01M2PBRYRXJ4BVD4A3H9GQ8HTM",
+      "candidate": {
+        "memory_id": "22146046-4ad6-4b9f-915f-7f560825845d",
+        "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+        "label": "M3VL Slope",
+        "body": "Channel slope affects the speed of flow and the energy available for erosion.",
+        "kind": "fact",
+        "keywords": [],
+        "project_key": "/private/tmp/m3vl-verification/project",
+        "thread_origin": null,
+        "origin_thread_id": null,
+        "origin_path": ".",
+        "origin_location": "/private/tmp/m3vl-verification/project",
+        "pin": false,
+        "status": "active",
+        "revision": 2,
+        "stats": {
+          "removals": 0,
+          "citations": 0,
+          "injections": 0,
+          "never_kills": 0,
+          "last_injected_at": null
+        },
+        "bias": 0.0,
+        "embedding_model": "openai/text-embedding-3-small",
+        "created_at": "2026-09-17T00:04:49.353410Z",
+        "updated_at": "2026-09-17T00:19:44.983866Z"
+      },
+      "birthplace": "curator",
+      "birthplace_thread_id": null,
+      "batch_uid": null,
+      "source_name": null,
+      "source_sha256": null,
+      "birthplace_run_id": null,
+      "birthplace_origin_agent": null,
+      "judged_context": null,
+      "candidate_revision": 2,
+      "curator_run_uid": "01M2PBREAC13JYQB0TP9MHSBS5",
+      "curator_finding_uid": "01M2PBREN1453PJ7FAT7GGPPQW",
+      "proposal_payload": {
+        "action": "keyword_repair",
+        "keywords": [
+          "channel slope",
+          "flow speed",
+          "energy",
+          "erosion"
+        ],
+        "rationale": "The memory has no keywords, violating the 2-5 distinct lowercase keywords constraint. The body discusses channel slope, flow speed, energy, and erosion \u2014 four clear semantic concepts that map directly to concise keywords.",
+        "finding_fingerprint": "3489d694d9b03d77b2dc3da6360837e1e79c7765bd2af8d9450dfe596e803740"
+      },
+      "verdict": "keyword_repair",
+      "neighbors": [],
+      "target_ids": [],
+      "state": "rejected",
+      "created_at": "2026-09-17T00:20:28.584935Z"
+    },
+    "decision": "deny",
+    "approval_mode": "explicit",
+    "actor_class": "human",
+    "decision_uid": "01M2PBWD8VV0MBN6GGF63NTBR3"
+  },
+  {
+    "card": {
+      "item_uid": "01M2PBRYTB8KE797GBBBJTM4GT",
+      "candidate": {
+        "memory_id": "4ae851ff-f631-4708-928e-b732641e2e06",
+        "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+        "label": "M3VL Velocity",
+        "body": "Water velocity increases when equal discharge passes through a narrower cross-section.",
+        "kind": "fact",
+        "keywords": [],
+        "project_key": "/private/tmp/m3vl-verification/project",
+        "thread_origin": null,
+        "origin_thread_id": null,
+        "origin_path": ".",
+        "origin_location": "/private/tmp/m3vl-verification/project",
+        "pin": false,
+        "status": "active",
+        "revision": 2,
+        "stats": {
+          "removals": 0,
+          "citations": 0,
+          "injections": 0,
+          "never_kills": 0,
+          "last_injected_at": null
+        },
+        "bias": 0.0,
+        "embedding_model": "openai/text-embedding-3-small",
+        "created_at": "2026-09-17T00:04:48.826095Z",
+        "updated_at": "2026-09-17T00:19:44.802537Z"
+      },
+      "birthplace": "curator",
+      "birthplace_thread_id": null,
+      "batch_uid": null,
+      "source_name": null,
+      "source_sha256": null,
+      "birthplace_run_id": null,
+      "birthplace_origin_agent": null,
+      "judged_context": null,
+      "candidate_revision": 2,
+      "curator_run_uid": "01M2PBREAC13JYQB0TP9MHSBS5",
+      "curator_finding_uid": "01M2PBRM8YKDNCGFD84WHRP64G",
+      "proposal_payload": {
+        "action": "keyword_repair",
+        "keywords": [
+          "velocity",
+          "discharge",
+          "cross-section",
+          "water",
+          "flow"
+        ],
+        "rationale": "The memory body describes a fluid dynamics principle \u2014 specifically that water velocity increases when equal discharge passes through a narrower cross-section (continuity equation / venturi effect). The keywords array is empty, violating the 2-5 distinct lowercase keywords constraint. Appropriate keywords drawn directly from the body's semantic content are: 'velocity', 'discharge', 'cross-section', 'water', 'flow'.",
+        "finding_fingerprint": "10bf36d948f22e9db4ee631ca9b0b5a8464a6e68a3a2b0d111fab3c47c3ab371"
+      },
+      "verdict": "keyword_repair",
+      "neighbors": [],
+      "target_ids": [],
+      "state": "rejected",
+      "created_at": "2026-09-17T00:20:28.632395Z"
+    },
+    "decision": "deny",
+    "approval_mode": "explicit",
+    "actor_class": "human",
+    "decision_uid": "01M2PBWDCH653W76BB23N0ZK5Q"
+  },
+  {
+    "card": {
+      "item_uid": "01M2PBRYVR9GKJSE6ZCSXTQK67",
+      "candidate": {
+        "memory_id": "d3980f62-937f-4498-9e44-7394f6a8b771",
+        "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+        "label": "M3VL Conservation",
+        "body": "At a confluence the outgoing discharge equals the incoming discharges without losses.",
+        "kind": "fact",
+        "keywords": [],
+        "project_key": "/private/tmp/m3vl-verification/project",
+        "thread_origin": null,
+        "origin_thread_id": null,
+        "origin_path": ".",
+        "origin_location": "/private/tmp/m3vl-verification/project",
+        "pin": false,
+        "status": "active",
+        "revision": 4,
+        "stats": {
+          "removals": 0,
+          "citations": 0,
+          "injections": 2,
+          "never_kills": 0,
+          "last_injected_at": "2026-09-17T00:08:28.418705+00:00"
+        },
+        "bias": 0.0,
+        "embedding_model": "openai/text-embedding-3-small",
+        "created_at": "2026-09-17T00:04:48.371671Z",
+        "updated_at": "2026-09-17T00:19:44.626595Z"
+      },
+      "birthplace": "curator",
+      "birthplace_thread_id": null,
+      "batch_uid": null,
+      "source_name": null,
+      "source_sha256": null,
+      "birthplace_run_id": null,
+      "birthplace_origin_agent": null,
+      "judged_context": null,
+      "candidate_revision": 4,
+      "curator_run_uid": "01M2PBREAC13JYQB0TP9MHSBS5",
+      "curator_finding_uid": "01M2PBRSFH5G7M89ZVE3YDRC8P",
+      "proposal_payload": {
+        "action": "keyword_repair",
+        "keywords": [
+          "confluence",
+          "discharge",
+          "conservation",
+          "flow"
+        ],
+        "rationale": "The memory has no keywords, violating the 2-5 distinct lowercase keywords constraint. The body describes conservation of discharge at a confluence (outgoing discharge equals sum of incoming discharges, without losses). Appropriate keywords derived from the content are: confluence, discharge, conservation, flow.",
+        "finding_fingerprint": "07b889da5a46b8fe875cf292a2279e803ab2c4aebffc6d71ab8aa9f0836e4c4d"
+      },
+      "verdict": "keyword_repair",
+      "neighbors": [],
+      "target_ids": [],
+      "state": "rejected",
+      "created_at": "2026-09-17T00:20:28.676067Z"
+    },
+    "decision": "deny",
+    "approval_mode": "explicit",
+    "actor_class": "human",
+    "decision_uid": "01M2PBWDGBK9VES81HMXZEKAWH"
+  }
+]

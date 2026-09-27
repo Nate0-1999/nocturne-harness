@@ -1,0 +1,25 @@
+{
+  "roots-live.webm": {
+    "ground": "sheet (white)",
+    "seconds": 75,
+    "what_changed": "a real Symphony launched from thread a31c946e through the app's deliberation card 20 s before recording; its two attempt workers forked from the thread and grew",
+    "turns_plus_tool_calls_all_agents": [
+      41,
+      176
+    ],
+    "agents": [
+      2,
+      4
+    ]
+  },
+  "roots-stage-live.webm": {
+    "ground": "stage (true black), module enlarged",
+    "seconds": 60,
+    "what_changed": "the same Symphony's workers still running",
+    "turns_plus_tool_calls_all_agents": [
+      224,
+      249
+    ]
+  },
+  "camera": "a slow 25 px mouse drag over the take so highlights can be seen moving; scenes move only when data changes"
+}

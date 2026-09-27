@@ -1,0 +1,21 @@
+{
+  "base_url": "http://127.0.0.1:8765",
+  "tier": "full",
+  "captures": [
+    {
+      "module": "roots",
+      "view": "sheet",
+      "record_start_s": 8.048,
+      "seconds": 60,
+      "trigger": null,
+      "lead": 0,
+      "crop": {
+        "x": 25,
+        "y": 330.34375,
+        "width": 950,
+        "height": 320
+      },
+      "camera": "slow orbit by mouse drag, 25 px over 60 s"
+    }
+  ]
+}

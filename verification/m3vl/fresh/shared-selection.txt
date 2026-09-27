@@ -1,0 +1,289 @@
+- iframe:
+  - banner:
+    - generic "Nocturne":
+      - img "Ouroboros around the moon"
+      - generic: Nocturne
+    - paragraph: Palace ready
+- button "App settings":
+  - generic: ⚙
+- generic "Stage controls":
+  - tablist "Stage layers":
+    - tab "Work"
+    - button "Remove Work layer": ×
+    - tab "Graph"
+    - button "Remove Graph layer": ×
+    - tab "Injection"
+    - button "Remove Injection layer": ×
+    - tab "Layer 1" [selected]
+    - button "Remove Layer 1 layer": ×
+  - button "Layer":
+    - generic: ＋
+    - text: Layer
+  - group "View layout":
+    - button "Stage"
+    - button "Sheet" [pressed]
+  - button "Library"
+- generic: ⠿
+- strong: Palace
+- generic: Global
+- button "Palace settings": ⚙
+- button "Remove Palace": ×
+- paragraph: Shows all accessible data · Live recorded view
+- iframe:
+  - generic: Palace current · Whole Palace
+  - heading "Living Memory" [level=1]
+  - paragraph: Every point is a recorded memory event. The graph is the instrument.
+  - text: Render
+  - combobox "Nebula hardware tier":
+    - option "Full"
+    - option "Efficient" [selected]
+  - text: Detail
+  - combobox "Visualization detail":
+    - option "Full"
+    - option "Efficient" [selected]
+  - button "Time order"
+  - text: History
+  - slider "Visualization history": "95"
+  - button "Live" [pressed]
+  - time: 8:59:44 PM
+  - 'generic "Living Memory: 24 active memories, 60 memory events, 36 relationships"'
+  - generic "Attuned Palace readouts":
+    - article:
+      - generic: Constellation
+      - strong: 24 bodies
+      - generic: 36 real filaments
+    - article:
+      - generic: Memory current
+      - strong: 60 events
+      - generic: modify · VL24 sensors 6
+    - article:
+      - generic: Creature
+      - strong: 4 families
+      - generic: 0 splits · 0 merges
+    - article "Curator progress":
+      - generic: Curator progress
+      - strong: 0 targets
+      - generic: run.completed · 8:59:43 PM
+    - article:
+      - generic: Optimization
+      - strong: m3tl-where-v1
+      - generic: 0 signals · 0 runs
+  - generic "Memory event hues":
+    - generic: add
+    - generic: delete
+    - generic: modify
+    - generic: merge
+    - generic: split
+  - strong: — fps
+  - status "Rendered triangles": 0 triangles · efficient
+  - generic: Three r182 · R3F + TSL · WebGPU · efficient
+  - generic: 2026-09-25T01:59:44.751438+00:00
+  - complementary "Living Memory data bindings":
+    - heading "Radial Palace" [level=2]
+    - paragraph: Radius · 8 / (1 + injections); most-injected memories gather centrally
+    - paragraph: Angle · related family, then creation order within that family
+    - paragraph: Depth · memory.revision (linear scale)
+    - paragraph: Color · memory.kind (deterministic palette)
+    - paragraph: Shape · memory.revision (vertical stretch)
+    - heading "Memory current" [level=2]
+    - paragraph: Particle · one memory revision event (never decorative)
+    - paragraph: Hue · add / delete / modify / merge / split
+    - paragraph: Curve around its memory · event timestamp; density · event rate
+    - paragraph: No revision event · no particle; replay · identical current
+    - heading "Creature + constellation" [level=2]
+    - paragraph: Size · memory.stats.injections (log scale)
+    - paragraph: Glow · memory.updated_at at snapshot time
+    - paragraph: Brightness · memory.pin or current-context membership
+    - paragraph: Filament · lineage; nearest links sharing an origin thread or keyword
+    - paragraph: Family · connected by similarity, thread or keyword; curator streams join visited families
+    - heading "Kinds in view" [level=2]
+    - paragraph: fact
+    - paragraph: Camera moves freely around the same recorded snapshot.
+  - generic "Memories in view"
+  - region "Selected conversation memory trace":
+    - heading "Memory trace" [level=2]
+    - region "Context usage":
+      - strong: 4.6K / 1M
+      - generic "0.5% of context used":
+        - generic "80.0% compaction threshold"
+      - table "Token breakdown":
+        - caption: Token breakdown
+        - rowgroup:
+          - row "System 304":
+            - cell "System": System
+            - cell "304"
+          - row "History 0":
+            - cell "History": History
+            - cell "0"
+          - row "Memory 33":
+            - cell "Memory": Memory
+            - cell "33"
+          - row "Tools 4.3K":
+            - cell "Tools": Tools
+            - cell "4.3K"
+      - paragraph: Memory block 33 / 100K share (10.0%) · 100K unused returns to chat
+      - paragraph: Provider total 0.5% · lanes estimated · Compaction at 80.0% of the main conversation
+    - paragraph: This conversation has no injected memories or near-miss suggestions.
+- generic: ⠿
+- strong: Farm
+- generic: Global
+- button "Farm settings": ⚙
+- button "Remove Farm": ×
+- paragraph: Shows all accessible data · Live recorded view
+- iframe:
+  - generic: Work, made visible · All projects
+  - heading "The Farm" [level=1]
+  - navigation "Work visualization":
+    - button "Farm" [pressed]
+    - button "Roots"
+  - text: Detail
+  - combobox "Visualization detail":
+    - option "Full" [selected]
+    - option "Efficient"
+  - button "Time order"
+  - text: History
+  - slider "Visualization history": "95"
+  - button "Live" [pressed]
+  - time: 8:59:44 PM
+  - text: Project
+  - combobox "Visualized project":
+    - option "/private/tmp/m3vl24-verification/project"
+    - option "/private/tmp/m3vl24-verification/project/.nocturne-worktrees/01M3B42F0TK0YB1PSGAW47CQY1/step-1-round-1"
+    - option "/private/tmp/m3vl24-verification/project/.nocturne-worktrees/01M3B42F0TK0YB1PSGAW47CQY1/step-1-round-1/round-1-attempt-1" [selected]
+    - option "/private/tmp/m3vl24-verification/project/.nocturne-worktrees/01M3B42F0TK0YB1PSGAW47CQY1/step-1-round-1/round-1-attempt-2"
+  - generic "Directory chambers and live agents"
+  - status "Rendered triangles": 591,568 triangles · full
+  - complementary:
+    - strong: 3 chambers
+    - generic: 50 file cells · 6 agents
+    - generic: Drag or Ctrl+arrows to orbit · scroll or +/− to zoom · pick an ant
+    - generic: root.1 · /private/tmp/m3vl24-verification/project/.nocturne-worktrees/01M3B42F0TK0YB1PSGAW47CQY1/step-1-round-1/round-1-attempt-1/cards
+  - generic: Recorded since 9/24/2026, 8:45:29 PM · 96 states · Live observation
+  - generic "Agents and measured work"
+  - table:
+    - rowgroup:
+      - row "Agent Where State Spend":
+        - columnheader "Agent"
+        - columnheader "Where"
+        - columnheader "State"
+        - columnheader "Spend"
+    - rowgroup:
+      - row "Read each Markdown file in references individually using the read tool, then wri . waiting $0.11534":
+        - cell "Read each Markdown file in references individually using the read tool, then wri":
+          - button "Read each Markdown file in references individually using the read tool, then wri"
+        - cell "."
+        - cell "waiting"
+        - cell "$0.11534"
+      - row "judge-implementation ./judge-implementation stopped $0.03174":
+        - cell "judge-implementation":
+          - button "judge-implementation"
+        - cell "./judge-implementation"
+        - cell "stopped"
+        - cell "$0.03174"
+      - row "judge-motivation ./judge-motivation stopped $0.02735":
+        - cell "judge-motivation":
+          - button "judge-motivation"
+        - cell "./judge-motivation"
+        - cell "stopped"
+        - cell "$0.02735"
+      - row "judge-performance ./judge-performance stopped $0.00912":
+        - cell "judge-performance":
+          - button "judge-performance"
+        - cell "./judge-performance"
+        - cell "stopped"
+        - cell "$0.00912"
+      - row "root.1 ./cards stopped $0.01269":
+        - cell "root.1":
+          - button "root.1"
+        - cell "./cards"
+        - cell "stopped"
+        - cell "$0.01269"
+      - row "root.2 ./cards stopped $0.02266":
+        - cell "root.2":
+          - button "root.2"
+        - cell "./cards"
+        - cell "stopped"
+        - cell "$0.02266"
+  - generic "Complete directory tree · 53 entries"
+- generic: ⠿
+- strong: Roots
+- generic: Global
+- button "Roots settings": ⚙
+- button "Remove Roots": ×
+- paragraph: Shows all accessible data · Live recorded view
+- iframe [active]:
+  - generic: Work, made visible · All projects
+  - heading "The Roots" [level=1]
+  - navigation "Work visualization":
+    - button "Farm"
+    - button "Roots" [pressed]
+  - text: Detail
+  - combobox "Visualization detail":
+    - option "Full"
+    - option "Efficient" [selected]
+  - button "Time order"
+  - text: History
+  - slider "Visualization history": "94"
+  - button "Live" [pressed]
+  - time: 8:59:41 PM
+  - text: Project
+  - combobox "Visualized project":
+    - option "/private/tmp/m3vl24-verification/project"
+    - option "/private/tmp/m3vl24-verification/project/.nocturne-worktrees/01M3B42F0TK0YB1PSGAW47CQY1/step-1-round-1"
+    - option "/private/tmp/m3vl24-verification/project/.nocturne-worktrees/01M3B42F0TK0YB1PSGAW47CQY1/step-1-round-1/round-1-attempt-1" [selected]
+    - option "/private/tmp/m3vl24-verification/project/.nocturne-worktrees/01M3B42F0TK0YB1PSGAW47CQY1/step-1-round-1/round-1-attempt-2"
+  - 'generic "Agent roots: thickness is measured spend, depth is time"'
+  - status "Rendered triangles": 14,944 triangles · efficient
+  - complementary:
+    - strong: 6 roots
+    - generic: 184 touched-file capillaries · 6 agents
+    - generic: Width = dollars · depth = time · junction = fork · dry = stopped
+    - generic: root.1 · /private/tmp/m3vl24-verification/project/.nocturne-worktrees/01M3B42F0TK0YB1PSGAW47CQY1/step-1-round-1/round-1-attempt-1/cards
+  - text: Recorded since 9/24/2026, 8:45:29 PM · 95 states · Live observation
+  - generic: Trunk = project (including its worker forks) · capillary = recorded file touch · across = work order · width = spend · depth = time · junction = fork · dry = stopped
+  - generic "Agents and measured work"
+  - table:
+    - rowgroup:
+      - row "Agent Where State Spend":
+        - columnheader "Agent"
+        - columnheader "Where"
+        - columnheader "State"
+        - columnheader "Spend"
+    - rowgroup:
+      - row "Read each Markdown file in references individually using the read tool, then wri . waiting $0.11534":
+        - cell "Read each Markdown file in references individually using the read tool, then wri":
+          - button "Read each Markdown file in references individually using the read tool, then wri"
+        - cell "."
+        - cell "waiting"
+        - cell "$0.11534"
+      - row "judge-implementation ./judge-implementation stopped $0.03174":
+        - cell "judge-implementation":
+          - button "judge-implementation"
+        - cell "./judge-implementation"
+        - cell "stopped"
+        - cell "$0.03174"
+      - row "judge-motivation ./judge-motivation stopped $0.02735":
+        - cell "judge-motivation":
+          - button "judge-motivation"
+        - cell "./judge-motivation"
+        - cell "stopped"
+        - cell "$0.02735"
+      - row "judge-performance ./judge-performance stopped $0.00912":
+        - cell "judge-performance":
+          - button "judge-performance"
+        - cell "./judge-performance"
+        - cell "stopped"
+        - cell "$0.00912"
+      - row "root.1 ./cards stopped $0.01269":
+        - cell "root.1":
+          - button "root.1" [active]
+        - cell "./cards"
+        - cell "stopped"
+        - cell "$0.01269"
+      - row "root.2 ./cards stopped $0.02266":
+        - cell "root.2":
+          - button "root.2"
+        - cell "./cards"
+        - cell "stopped"
+        - cell "$0.02266"
+  - generic "Complete directory tree · 53 entries"

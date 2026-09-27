@@ -1,0 +1,23 @@
+{
+  "base_url": "http://127.0.0.1:8765",
+  "tier": "efficient",
+  "captures": [
+    {
+      "module": "roots",
+      "view": "sheet",
+      "row": "FL-129",
+      "full": "roots-efficient-sheet.png",
+      "crop": {
+        "x": 25,
+        "y": 190.84375,
+        "width": 950,
+        "height": 320
+      },
+      "telemetry": [
+        "64,688 triangles · efficient",
+        "2 roots · 2 forked limbs\n49 touched-file capillaries · 4 agents\nwidth = dollars · across = time between events · blue = live · pink = a branch leaving · matte = stopped\nRead every Markdown file in references one at a time with the read tool, then wr · /private/tmp/m3vl24c-v3/river/src/riverflow"
+      ],
+      "at": "2026-09-26T08:11:23.409Z"
+    }
+  ]
+}

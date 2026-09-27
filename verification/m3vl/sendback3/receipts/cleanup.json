@@ -1,0 +1,18 @@
+{
+  "principal": "nocturne-verification-e0e4af89-9f63-49dc-8f80-72ff1cd70cf2",
+  "pending_cards_after": 0,
+  "active_memories_after": 0,
+  "daemon_and_workers_stopped": true,
+  "port_8765_free": true,
+  "scratch_removed": [
+    "/private/tmp/m3vl24c-v3 (home with copied credentials, project)",
+    "/private/tmp/m3vl24c-sb3/cand-a-live and cand-b-live (the builders' scratch homes with credential copies)"
+  ],
+  "builder_principals_audited": {
+    "nocturne-verification-b18a762a-e9a0-4494-8f96-cd5fa50a8909": "0 pending / 0 active",
+    "nocturne-verification-ce074181-416b-4a9a-b4ae-5f5699f2c9c9": "0 pending / 0 active",
+    "nocturne-verification-46663743-46e7-42d7-bdf8-a52182ca8436": "0 pending / 0 active"
+  },
+  "owner_home_modified": false,
+  "credentials_in_evidence": false
+}

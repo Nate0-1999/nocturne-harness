@@ -1,0 +1,17 @@
+{
+  "context": "Final renderer after shader startup; Palace visible; all three visualization modules efficient",
+  "samples": [
+    "61 fps",
+    "60 fps",
+    "62 fps",
+    "60 fps",
+    "62 fps",
+    "60 fps",
+    "60 fps",
+    "62 fps",
+    "60 fps",
+    "62 fps",
+    "60 fps",
+    "60 fps"
+  ]
+}

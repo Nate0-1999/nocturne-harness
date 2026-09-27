@@ -1,0 +1,23 @@
+{
+  "threads": [
+    {
+      "thread_id": "a31c946e-0e4c-4724-9074-192670a15720",
+      "prompts": [
+        "Read every Markdown file in references one at a time with the read tool, then write notes/summary.md with one sentence per file."
+      ]
+    }
+  ],
+  "symphony": {
+    "thread_id": "a31c946e-0e4c-4724-9074-192670a15720",
+    "opened_by": "Orchestration mode → Symphony",
+    "authority": {
+      "attempts": 2,
+      "spend_wall_usd": 2,
+      "max_rounds": 1,
+      "depth_cap": 0,
+      "children_per_attempt": 0,
+      "duration_minutes": 10
+    },
+    "launched_at": "2026-09-26T07:55:27.644Z"
+  }
+}

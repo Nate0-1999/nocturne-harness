@@ -1,0 +1,47 @@
+{
+  "design_process": "three competing redesigns in isolated worktrees (plate-first art direction; event-structure first; material-and-form first), each critiqued by an independent reviewer and refined once, then scored by three lens judges (plate likeness, owner compliance, data honesty)",
+  "judge_totals": {
+    "cand-a": 22,
+    "cand-c": 17,
+    "cand-b": 12.5
+  },
+  "winner": "cand-a (unanimous across the three lenses)",
+  "grafts_applied": [
+    "absolute width in dollars, conserved at forks (from cand-c's massing, cand-b's absolute scale)",
+    "blue edge light on live chrome only",
+    "red-pink wash at junctions and forks on the side the child leaves",
+    "material ripple so strip-light streaks break and move with the camera",
+    "stopped limbs faded matte, hairs thinner and curving forward",
+    "unit test: a longer gap always draws a longer bare stretch"
+  ],
+  "polish_rounds": {
+    "plate_likeness_scores": [
+      [
+        4,
+        3.5,
+        4
+      ],
+      [
+        3.5,
+        4,
+        4
+      ],
+      [
+        4,
+        4,
+        3.5
+      ]
+    ],
+    "blocker_or_major_per_round": [
+      15,
+      16,
+      18
+    ],
+    "note": "critics were asked for strict owner-eye scores; the loop stopped at three rounds"
+  },
+  "final_hand_tweaks": [
+    "stopped matte #1f2a52 (deep navy) shaded round with a cool edge on the sheet, #1b2146 on the stage \u2014 was a pale grey-lavender that read as grey",
+    "junction wash on thick chrome softer and shorter so it reads as a blush, not bands"
+  ],
+  "sub_agent_live_runs": "candidate A's builder also ran its own disposable identity and four Symphonies to test (about $0.34 in worker spend); its and candidate B's principals were audited at 0 pending cards / 0 active memories and their scratch folders deleted"
+}

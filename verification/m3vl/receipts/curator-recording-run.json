@@ -1,0 +1,205 @@
+{
+  "run_uid": "01M2PBREAC13JYQB0TP9MHSBS5",
+  "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+  "trigger": "manual",
+  "status": "completed",
+  "admitted_writes_snapshot": 24,
+  "pressure_snapshot": 0,
+  "verdict_count": 6,
+  "queued_count": 3,
+  "executed_count": 0,
+  "report": {
+    "format": "nocturne.palace-health",
+    "version": "1",
+    "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+    "as_of": "2026-09-17T00:20:11.742146Z",
+    "corpus_revision": "bb7c9be9126f1e1178caf8a6cacd9e97205b3a0dc5f216e4d6cf7a10465e96be",
+    "active_units": 24,
+    "clusters": [],
+    "findings": [
+      {
+        "ordinal": 0,
+        "kind": "keyword",
+        "memory_ids": [
+          "22146046-4ad6-4b9f-915f-7f560825845d"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "Channel slope affects the speed of flow and the energy available for erosion.",
+            "kind": "fact",
+            "label": "M3VL Slope",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "22146046-4ad6-4b9f-915f-7f560825845d",
+            "created_at": "2026-09-17T00:04:49.353410+00:00",
+            "updated_at": "2026-09-17T00:19:44.983866+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "3489d694d9b03d77b2dc3da6360837e1e79c7765bd2af8d9450dfe596e803740"
+      },
+      {
+        "ordinal": 1,
+        "kind": "keyword",
+        "memory_ids": [
+          "2759ac41-2e1d-450d-95df-8ade019e02cf"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "River discharge is water volume crossing a section per second.",
+            "kind": "fact",
+            "label": "M3VL Discharge",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 1,
+              "never_kills": 0,
+              "last_injected_at": "2026-09-17T00:08:29.244464+00:00"
+            },
+            "keywords": [],
+            "revision": 3,
+            "memory_id": "2759ac41-2e1d-450d-95df-8ade019e02cf",
+            "created_at": "2026-09-17T00:04:47.850676+00:00",
+            "updated_at": "2026-09-17T00:11:06.801314+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "dc57464069a727304de2c2a75fab98e9698eee3d22d3cbb5a2e720b772201ed3"
+      },
+      {
+        "ordinal": 2,
+        "kind": "keyword",
+        "memory_ids": [
+          "4ae851ff-f631-4708-928e-b732641e2e06"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "Water velocity increases when equal discharge passes through a narrower cross-section.",
+            "kind": "fact",
+            "label": "M3VL Velocity",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "4ae851ff-f631-4708-928e-b732641e2e06",
+            "created_at": "2026-09-17T00:04:48.826095+00:00",
+            "updated_at": "2026-09-17T00:19:44.802537+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "10bf36d948f22e9db4ee631ca9b0b5a8464a6e68a3a2b0d111fab3c47c3ab371"
+      },
+      {
+        "ordinal": 3,
+        "kind": "keyword",
+        "memory_ids": [
+          "b2caa01f-1de5-4ff6-b428-43f382281c51"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "A tributary joins a larger river at a confluence.",
+            "kind": "fact",
+            "label": "M3VL Tributary",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "b2caa01f-1de5-4ff6-b428-43f382281c51",
+            "created_at": "2026-09-17T00:04:47.291552+00:00",
+            "updated_at": "2026-09-17T00:11:06.694895+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "fba2b3fdb2d200502d7971ec8805e92443c24dc873245ac3eb3fbd9b3f519881"
+      },
+      {
+        "ordinal": 4,
+        "kind": "keyword",
+        "memory_ids": [
+          "d3980f62-937f-4498-9e44-7394f6a8b771"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "At a confluence the outgoing discharge equals the incoming discharges without losses.",
+            "kind": "fact",
+            "label": "M3VL Conservation",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 2,
+              "never_kills": 0,
+              "last_injected_at": "2026-09-17T00:08:28.418705+00:00"
+            },
+            "keywords": [],
+            "revision": 4,
+            "memory_id": "d3980f62-937f-4498-9e44-7394f6a8b771",
+            "created_at": "2026-09-17T00:04:48.371671+00:00",
+            "updated_at": "2026-09-17T00:19:44.626595+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "07b889da5a46b8fe875cf292a2279e803ab2c4aebffc6d71ab8aa9f0836e4c4d"
+      },
+      {
+        "ordinal": 5,
+        "kind": "keyword",
+        "memory_ids": [
+          "d8411723-fe80-4da4-b0d1-2f5fc4299756"
+        ],
+        "evidence": {
+          "memory": {
+            "pin": false,
+            "body": "A watershed directs rainfall downhill through tributaries to a common outlet.",
+            "kind": "fact",
+            "label": "M3VL Watershed",
+            "stats": {
+              "removals": 0,
+              "citations": 0,
+              "injections": 0,
+              "never_kills": 0,
+              "last_injected_at": null
+            },
+            "keywords": [],
+            "revision": 2,
+            "memory_id": "d8411723-fe80-4da4-b0d1-2f5fc4299756",
+            "created_at": "2026-09-17T00:04:46.388824+00:00",
+            "updated_at": "2026-09-17T00:11:06.569485+00:00"
+          },
+          "problem": "memory does not carry 2-5 distinct lowercase keywords"
+        },
+        "fingerprint": "4891462fbba8dd0af0d473b8eea87ec9dfa4e1b033e5b6635c549cba62d934e7"
+      }
+    ],
+    "keyword_coverage_percent": "75.000",
+    "stats_delta": {
+      "merges": 0,
+      "revisions": 3,
+      "retirements": 0,
+      "reinforcements": 0
+    }
+  },
+  "error": null,
+  "completed_at": "2026-09-17T00:20:28.700953Z"
+}

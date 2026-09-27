@@ -1,0 +1,80 @@
+{
+  "base_url": "http://127.0.0.1:8765",
+  "tier": "full",
+  "captures": [
+    {
+      "module": "roots",
+      "row": "FL-129",
+      "full": "roots-full-sheet.png",
+      "crop": {
+        "x": 25,
+        "y": 603.34375,
+        "width": 762,
+        "height": 320
+      },
+      "telemetry": [
+        "161,464 triangles · full",
+        "8 roots\n82 touched-file capillaries · 8 agents\nWidth = dollars · depth = time · junction = fork · dry = stopped\nRead every Markdown file in references one at a time with the read tool, then wr · /private/tmp/m3vl24c-verification/project/notes"
+      ],
+      "at": "2026-09-25T05:48:13.648Z",
+      "side_by_side": {
+        "file": "FL-129-plate.png",
+        "crop_px": {
+          "x": 0,
+          "y": 13,
+          "width": 1524,
+          "height": 475
+        }
+      }
+    },
+    {
+      "module": "palace",
+      "row": "FL-133",
+      "full": "palace-full.png",
+      "crop": {
+        "x": 25,
+        "y": 224.21875,
+        "width": 762,
+        "height": 352
+      },
+      "telemetry": [
+        "62 fps\n111,733 triangles · full\nThree r182 · R3F + TSL · WebGPU · full\n2026-09-25T05:47:26.354248+00:00"
+      ],
+      "at": "2026-09-25T05:48:20.732Z",
+      "side_by_side": {
+        "file": "FL-133-plate.png",
+        "crop_px": {
+          "x": 409,
+          "y": 0,
+          "width": 706,
+          "height": 706
+        }
+      }
+    },
+    {
+      "module": "farm",
+      "row": "FL-126",
+      "full": "farm-full.png",
+      "crop": {
+        "x": 813,
+        "y": 241.84375,
+        "width": 762,
+        "height": 320
+      },
+      "telemetry": [
+        "507,008 triangles · full",
+        "86 chambers\n164 file cells · 8 agents\nDrag or Ctrl+arrows to orbit · scroll or +/− to zoom · pick an ant\nRead every Markdown file in references one at a time with the read tool, then wr · /private/tmp/m3vl24c-verification/project/notes"
+      ],
+      "at": "2026-09-25T05:48:28.335Z",
+      "side_by_side": {
+        "file": "FL-126-plate.png",
+        "crop_px": {
+          "x": 46,
+          "y": 32,
+          "width": 1433,
+          "height": 398
+        }
+      }
+    }
+  ]
+}

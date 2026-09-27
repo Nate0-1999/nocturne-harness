@@ -1,0 +1,22 @@
+{
+  "method": "real app, Sheet, Palace + Roots on their own layer, system idle (no run, no curator pass); canvas region captured three times 3 s apart; Palace telemetry/readout/key overlays hidden because the live fps number is drawn over the canvas",
+  "palace_nebula": {
+    "hashes": [
+      "cfc80ecac01e8b07",
+      "cfc80ecac01e8b07",
+      "cfc80ecac01e8b07"
+    ],
+    "identical": true
+  },
+  "roots": {
+    "hashes": [
+      "93c220d7f2728724",
+      "93c220d7f2728724",
+      "93c220d7f2728724"
+    ],
+    "identical": true
+  },
+  "with_overlays_visible": {
+    "palace_nebula": "differs only by the fps readout drawn over the canvas"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "symphony_id": "01M3EBCH240KX8M8SZD39DTFP8",
+  "launched_at": "2026-09-26T07:55:27Z",
+  "authority": {
+    "attempts": 2,
+    "spend_wall_usd": 2,
+    "duration_minutes": 10
+  },
+  "observed_08_12Z": "still 'running' 17 minutes after launch, past its signed 10-minute wall; both workers last updated about 08:00; spend $0.0664. Observed, not diagnosed; outside the Roots send-back. Ended when the daemon was stopped."
+}

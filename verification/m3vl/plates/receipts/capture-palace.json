@@ -1,0 +1,17 @@
+{
+  "base_url": "http://127.0.0.1:8765",
+  "tier": "full",
+  "captures": [
+    {
+      "module": "palace",
+      "record_start_s": 9.568,
+      "crop": {
+        "x": 25,
+        "y": 312.71875,
+        "width": 762,
+        "height": 352
+      },
+      "camera": "slow orbit by mouse drag, 25 px (about 30 degrees) over 10 s"
+    }
+  ]
+}

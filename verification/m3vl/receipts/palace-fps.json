@@ -1,0 +1,17 @@
+{
+  "context": "All three visualization modules mounted; all on efficient tier; settled scene",
+  "samples": [
+    "61 fps",
+    "53 fps",
+    "48 fps",
+    "61 fps",
+    "51 fps",
+    "60 fps",
+    "52 fps",
+    "48 fps",
+    "51 fps",
+    "63 fps",
+    "60 fps",
+    "51 fps"
+  ]
+}

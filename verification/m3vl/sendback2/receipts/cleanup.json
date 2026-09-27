@@ -1,0 +1,14 @@
+{
+  "principal_id": "nocturne-verification-08fdf93d-bc25-445c-88e6-1a8af1895015",
+  "denied": 18,
+  "pending_after": 0,
+  "active_after": 0,
+  "recorded_ids": 56,
+  "after_feed_refresh": {
+    "graph_nodes_for_principal": 65,
+    "status_counts": {
+      "tombstoned": 65
+    },
+    "note": "65 includes memories the curator pass wrote from its findings; all tombstoned"
+  }
+}

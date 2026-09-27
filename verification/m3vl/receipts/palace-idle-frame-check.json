@@ -1,0 +1,35 @@
+{
+  "frames": 614,
+  "distinct_decoded_frames": 66,
+  "first_sha": "c517a00c5560346f34afa830b926c0a3",
+  "last_sha": "03b5bc4c70187fb0b9f57a09ddba1730",
+  "note": "Lossy video produces differing decoded hashes; the first/middle/last canvas frames are also compared by mean pixel difference. These are not exact pixel-equality claims.",
+  "decoded_differences": {
+    "middle": {
+      "mean_absolute_rgb": [
+        2.5336994452397996,
+        1.8994758112622285,
+        3.8667121510379383
+      ],
+      "bounding_box": [
+        0,
+        0,
+        762,
+        352
+      ]
+    },
+    "last": {
+      "mean_absolute_rgb": [
+        2.533729271057027,
+        1.8995205499880696,
+        3.866708422810785
+      ],
+      "bounding_box": [
+        0,
+        0,
+        762,
+        352
+      ]
+    }
+  }
+}

@@ -1,0 +1,794 @@
+[
+  {
+    "created": {
+      "memory_id": "d8411723-fe80-4da4-b0d1-2f5fc4299756",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Watershed",
+      "body": "A watershed directs rainfall downhill through tributaries to a common outlet.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:46.388824Z",
+      "updated_at": "2026-09-17T00:04:46.388824Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "b2caa01f-1de5-4ff6-b428-43f382281c51",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Tributary",
+      "body": "A tributary joins a larger river at a confluence.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:47.291552Z",
+      "updated_at": "2026-09-17T00:04:47.291552Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "2759ac41-2e1d-450d-95df-8ade019e02cf",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Discharge",
+      "body": "River discharge is water volume crossing a section per second.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:47.850676Z",
+      "updated_at": "2026-09-17T00:04:47.850676Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "d3980f62-937f-4498-9e44-7394f6a8b771",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Conservation",
+      "body": "At a confluence the outgoing discharge equals the incoming discharges without losses.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:48.371671Z",
+      "updated_at": "2026-09-17T00:04:48.371671Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "4ae851ff-f631-4708-928e-b732641e2e06",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Velocity",
+      "body": "Water velocity increases when equal discharge passes through a narrower cross-section.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:48.826095Z",
+      "updated_at": "2026-09-17T00:04:48.826095Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "22146046-4ad6-4b9f-915f-7f560825845d",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Slope",
+      "body": "Channel slope affects the speed of flow and the energy available for erosion.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:49.353410Z",
+      "updated_at": "2026-09-17T00:04:49.353410Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "373b2aee-9365-413c-b752-63a685066a27",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Sediment",
+      "body": "Suspended sediment travels with flowing water while coarse bedload rolls along the bed.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:49.761067Z",
+      "updated_at": "2026-09-17T00:04:49.761067Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "ac28079a-ce15-4156-b3da-ee22a56bb689",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Erosion",
+      "body": "Faster current at the outside of a river bend erodes its bank.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:50.322889Z",
+      "updated_at": "2026-09-17T00:04:50.322889Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "2c419f28-da97-4dc7-9455-511db07d03ef",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Deposition",
+      "body": "Slower current inside a river bend deposits transported sediment.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:50.713149Z",
+      "updated_at": "2026-09-17T00:04:50.713149Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "4589bb38-f334-459d-9117-655938828e1d",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Meander",
+      "body": "Meanders migrate as erosion and deposition reshape their banks.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:51.154880Z",
+      "updated_at": "2026-09-17T00:04:51.154880Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "5c05bca9-3c1e-457d-ade2-9d7ed629e017",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Floodplain",
+      "body": "A floodplain temporarily stores water that exceeds a river channel capacity.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:51.571764Z",
+      "updated_at": "2026-09-17T00:04:51.571764Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "81985251-826f-4b4d-93c7-f4f3c3b1fb67",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Delta",
+      "body": "A delta grows where a river deposits sediment near its mouth.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:52.165566Z",
+      "updated_at": "2026-09-17T00:04:52.165566Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "49441618-29bb-4232-9ad2-724ef2d72dbd",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Infiltration",
+      "body": "Infiltration transfers surface water into permeable soil.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:52.770223Z",
+      "updated_at": "2026-09-17T00:04:52.770223Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "97af8f8a-2c4d-4df9-ae3e-ce7001824857",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Aquifer",
+      "body": "An aquifer stores and transmits groundwater through connected pores.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:53.484427Z",
+      "updated_at": "2026-09-17T00:04:53.484427Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "5ff65859-d27e-419c-aa56-5fc5ec1cbf1b",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Spring",
+      "body": "A spring releases groundwater where the water table intersects the land surface.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:53.942800Z",
+      "updated_at": "2026-09-17T00:04:53.942800Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "9bd517a5-318c-46a0-b438-ca8525a9fbad",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Evaporation",
+      "body": "Evaporation converts surface water into atmospheric water vapor.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:54.346424Z",
+      "updated_at": "2026-09-17T00:04:54.346424Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "b5f4f81e-b230-4b72-9892-509f187a0545",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Rainfall",
+      "body": "Rainfall supplies water to the watershed and changes river discharge.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:54.778652Z",
+      "updated_at": "2026-09-17T00:04:54.778652Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "9da22eb2-db1b-4fd2-b875-d7d3b0fbe679",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Hydrograph",
+      "body": "A hydrograph plots discharge against time at a fixed river location.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:55.169118Z",
+      "updated_at": "2026-09-17T00:04:55.169118Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "d8c5edcd-c8a4-4e28-aeb7-c2352ed4047d",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Gauge",
+      "body": "A stream gauge records water stage so discharge can be estimated using a rating curve.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:55.626308Z",
+      "updated_at": "2026-09-17T00:04:55.626308Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "07f82c53-e24c-4398-bdb8-ef6cc0205740",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Basin model",
+      "body": "A basin simulation routes each tributary contribution into its downstream confluence.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:56.079148Z",
+      "updated_at": "2026-09-17T00:04:56.079148Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "f3b8c1a7-5a8e-4d0b-ad28-d66b74f72088",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Flow ledger",
+      "body": "The flow ledger records incoming water, outgoing water and retained storage.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:56.476526Z",
+      "updated_at": "2026-09-17T00:04:56.476526Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "1dc31cd8-38b3-42bb-a84e-c3b5c4f6328a",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Timestep",
+      "body": "A smaller simulation timestep resolves fast changes at a greater computation cost.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:56.908224Z",
+      "updated_at": "2026-09-17T00:04:56.908224Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "9a13f9d4-ad48-4319-8dfc-ed841ef51302",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL Confluence balance",
+      "body": "At a tributary junction downstream discharge is the sum of incoming discharge if storage is unchanged.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:57.404587Z",
+      "updated_at": "2026-09-17T00:04:57.404587Z"
+    }
+  },
+  {
+    "created": {
+      "memory_id": "50d28c81-ac69-46c9-add9-99acd4fc29f7",
+      "principal_id": "nocturne-verification-d0eedba2-df29-4efa-8327-d193570f9e11",
+      "label": "M3VL River junction",
+      "body": "A tributary junction connects a smaller channel to the receiving river.",
+      "kind": "fact",
+      "keywords": [
+        "river",
+        "water",
+        "simulation"
+      ],
+      "project_key": "/private/tmp/m3vl-verification/project",
+      "thread_origin": null,
+      "origin_thread_id": null,
+      "origin_path": ".",
+      "origin_location": "/private/tmp/m3vl-verification/project",
+      "pin": false,
+      "status": "active",
+      "revision": 1,
+      "stats": {
+        "removals": 0,
+        "citations": 0,
+        "injections": 0,
+        "never_kills": 0,
+        "last_injected_at": null
+      },
+      "bias": 0.0,
+      "embedding_model": "openai/text-embedding-3-small",
+      "created_at": "2026-09-17T00:04:57.816992Z",
+      "updated_at": "2026-09-17T00:04:57.816992Z"
+    }
+  }
+]

@@ -1,0 +1,1131 @@
+[
+  {
+    "status": 200,
+    "body": {
+      "run_uid": "01M3DHE6MNQ7M8GV6BB9TXED2E",
+      "principal_id": "nocturne-verification-08fdf93d-bc25-445c-88e6-1a8af1895015",
+      "trigger": "manual",
+      "status": "completed",
+      "admitted_writes_snapshot": 48,
+      "pressure_snapshot": 0,
+      "verdict_count": 7,
+      "queued_count": 7,
+      "executed_count": 0,
+      "report": {
+        "format": "nocturne.palace-health",
+        "version": "1",
+        "principal_id": "nocturne-verification-08fdf93d-bc25-445c-88e6-1a8af1895015",
+        "as_of": "2026-09-26T00:21:59.608791Z",
+        "corpus_revision": "8256cc111ba73ef6dbd5caca90a23d39917bccea28cc4f826ad213d64fbbf10c",
+        "active_units": 48,
+        "clusters": [
+          [
+            "18ff0310-8734-4fb1-b487-9418bc20e865",
+            "b9558ac0-dec8-4db2-a9d8-a35bbe0ac47a"
+          ]
+        ],
+        "findings": [
+          {
+            "ordinal": 0,
+            "kind": "duplicate",
+            "memory_ids": [
+              "18ff0310-8734-4fb1-b487-9418bc20e865",
+              "b9558ac0-dec8-4db2-a9d8-a35bbe0ac47a"
+            ],
+            "evidence": {
+              "cosine": "0.919829947",
+              "memories": [
+                {
+                  "pin": false,
+                  "body": "Floodplains store peak flow.",
+                  "kind": "fact",
+                  "label": "VL24C Floodplains store peak flow",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 1,
+                    "never_kills": 0,
+                    "last_injected_at": "2026-09-25T23:31:10.927043+00:00"
+                  },
+                  "keywords": [
+                    "river",
+                    "discharge"
+                  ],
+                  "revision": 2,
+                  "memory_id": "18ff0310-8734-4fb1-b487-9418bc20e865",
+                  "created_at": "2026-09-25T23:30:38.449280+00:00",
+                  "updated_at": "2026-09-25T23:31:10.922112+00:00"
+                },
+                {
+                  "pin": false,
+                  "body": "Floodplains store the flood peak.",
+                  "kind": "fact",
+                  "label": "VL24C Floodplains store the flood peak",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 1,
+                    "never_kills": 0,
+                    "last_injected_at": "2026-09-25T23:31:10.927043+00:00"
+                  },
+                  "keywords": [
+                    "sourdough",
+                    "baking"
+                  ],
+                  "revision": 2,
+                  "memory_id": "b9558ac0-dec8-4db2-a9d8-a35bbe0ac47a",
+                  "created_at": "2026-09-25T23:30:53.541417+00:00",
+                  "updated_at": "2026-09-25T23:31:10.922112+00:00"
+                }
+              ]
+            },
+            "fingerprint": "a88415e62ebd12a938d02089bb50d2c7e607cdb5becbec235a50f5817517ff4c"
+          },
+          {
+            "ordinal": 1,
+            "kind": "keyword",
+            "memory_ids": [
+              "5966fda6-75c7-4a0e-a50b-be25a9b56377"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Seeing limits planetary detail more than aperture.",
+                "kind": "fact",
+                "label": "VL24C Seeing limits planetary detail more than",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "Telescope"
+                ],
+                "revision": 1,
+                "memory_id": "5966fda6-75c7-4a0e-a50b-be25a9b56377",
+                "created_at": "2026-09-25T23:30:52.674734+00:00",
+                "updated_at": "2026-09-25T23:30:52.674734+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "3dad81e1041abfb15b8e5ec3ee222d7cb57d81c2db349e6d40388dcc2adbf97b"
+          },
+          {
+            "ordinal": 2,
+            "kind": "keyword",
+            "memory_ids": [
+              "8f46ab9c-c202-4bbf-830c-84b2fbddf86a"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Summer pruning slows vigorous growth.",
+                "kind": "fact",
+                "label": "VL24C Summer pruning slows vigorous growth",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "orchard"
+                ],
+                "revision": 1,
+                "memory_id": "8f46ab9c-c202-4bbf-830c-84b2fbddf86a",
+                "created_at": "2026-09-25T23:30:52.297452+00:00",
+                "updated_at": "2026-09-25T23:30:52.297452+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "2e7c971946b1c171cf3f891ae11288173040078c1e8600ee3b3fe555458e6860"
+          },
+          {
+            "ordinal": 3,
+            "kind": "keyword",
+            "memory_ids": [
+              "97fde207-164d-48dc-8685-440afda6532d"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "A Barlow lens doubles the effective focal length.",
+                "kind": "fact",
+                "label": "VL24C A Barlow lens doubles the effective foca",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "Telescope"
+                ],
+                "revision": 1,
+                "memory_id": "97fde207-164d-48dc-8685-440afda6532d",
+                "created_at": "2026-09-26T00:21:41.656282+00:00",
+                "updated_at": "2026-09-26T00:21:41.656282+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "647ad25a5afe570c1d57b2d22c3ae68f39c0ce5ad213d024537bbb1f2f2a4a8a"
+          },
+          {
+            "ordinal": 4,
+            "kind": "keyword",
+            "memory_ids": [
+              "a6febe42-bab8-4a89-86b8-0c411d8fe9ca"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Voice leading favors the smallest motion.",
+                "kind": "fact",
+                "label": "VL24C Voice leading favors the smallest motion",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "harmony"
+                ],
+                "revision": 1,
+                "memory_id": "a6febe42-bab8-4a89-86b8-0c411d8fe9ca",
+                "created_at": "2026-09-25T23:30:53.159666+00:00",
+                "updated_at": "2026-09-25T23:30:53.159666+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "caa8154662ce7611d2665de682bd7c73b32b2601bef01e3c8b87afece827272c"
+          },
+          {
+            "ordinal": 5,
+            "kind": "keyword",
+            "memory_ids": [
+              "a7322a97-53f0-47fe-a8d4-d8ab8072ee3d"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Widows and orphans break a paragraph badly.",
+                "kind": "fact",
+                "label": "VL24C Widows and orphans break a paragraph bad",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "typesetting"
+                ],
+                "revision": 1,
+                "memory_id": "a7322a97-53f0-47fe-a8d4-d8ab8072ee3d",
+                "created_at": "2026-09-26T00:21:50.884822+00:00",
+                "updated_at": "2026-09-26T00:21:50.884822+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "9b5b6d3117139b81fa912cf5191c04d98997aee541e6e75c1c87d20c96d1d7d1"
+          },
+          {
+            "ordinal": 6,
+            "kind": "keyword",
+            "memory_ids": [
+              "b47b453b-e57b-4526-a2a9-a54f20a73126"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "A weir raises the upstream water level.",
+                "kind": "fact",
+                "label": "VL24C A weir raises the upstream water level",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "river"
+                ],
+                "revision": 1,
+                "memory_id": "b47b453b-e57b-4526-a2a9-a54f20a73126",
+                "created_at": "2026-09-26T00:21:35.216934+00:00",
+                "updated_at": "2026-09-26T00:21:35.216934+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "f8fa734af4aab18baa1885fcce1e0068101298db9e6c19a6569e2fd344707b73"
+          }
+        ],
+        "keyword_coverage_percent": "87.500",
+        "stats_delta": {
+          "merges": 0,
+          "revisions": 64,
+          "retirements": 0,
+          "reinforcements": 0
+        }
+      },
+      "error": null,
+      "completed_at": "2026-09-26T00:22:25.589588Z"
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "run_uid": "01M3DHKD1ZK5CZWPJHFP2XYTX1",
+      "principal_id": "nocturne-verification-08fdf93d-bc25-445c-88e6-1a8af1895015",
+      "trigger": "manual",
+      "status": "completed",
+      "admitted_writes_snapshot": 56,
+      "pressure_snapshot": 0,
+      "verdict_count": 18,
+      "queued_count": 11,
+      "executed_count": 0,
+      "report": {
+        "format": "nocturne.palace-health",
+        "version": "1",
+        "principal_id": "nocturne-verification-08fdf93d-bc25-445c-88e6-1a8af1895015",
+        "as_of": "2026-09-26T00:24:49.999348Z",
+        "corpus_revision": "1952405c95732562b6196cae769cf8cfc851802d1f36ed8681451678e1f8e36e",
+        "active_units": 56,
+        "clusters": [
+          [
+            "1291afe6-f454-4729-a6ee-0a493fbdf030",
+            "94091055-cc90-4896-8aa8-df66cfee595e"
+          ],
+          [
+            "18ff0310-8734-4fb1-b487-9418bc20e865",
+            "b9558ac0-dec8-4db2-a9d8-a35bbe0ac47a"
+          ],
+          [
+            "3859bb8f-b3fc-41a1-859c-3ea4898ae33f",
+            "d9d71d8c-20c8-4028-a411-dfd63e3826c5"
+          ],
+          [
+            "39c09831-43ce-477a-b97a-80178ca372d0",
+            "9a6bfd1c-aa82-488d-b997-899925e19226"
+          ],
+          [
+            "58e3e3a0-b0e7-4078-81db-70c6fe27cb88",
+            "a9f6cd2d-6da5-4f8d-940e-fe30dd9d69a2"
+          ],
+          [
+            "5b92b26b-873f-460a-9ce3-c6292c0e5b94",
+            "8adcd3cd-6a7c-473f-814d-7113579b5ef1"
+          ],
+          [
+            "773a42f5-24d1-40ca-9fcd-6a7c8fae284d",
+            "a7322a97-53f0-47fe-a8d4-d8ab8072ee3d"
+          ],
+          [
+            "97fde207-164d-48dc-8685-440afda6532d",
+            "aa69b723-1770-4de6-b9aa-a769740388a8"
+          ],
+          [
+            "b47b453b-e57b-4526-a2a9-a54f20a73126",
+            "df1e0ad6-fd03-44ed-8702-4c384629dcc7"
+          ]
+        ],
+        "findings": [
+          {
+            "ordinal": 0,
+            "kind": "duplicate",
+            "memory_ids": [
+              "1291afe6-f454-4729-a6ee-0a493fbdf030",
+              "94091055-cc90-4896-8aa8-df66cfee595e"
+            ],
+            "evidence": {
+              "cosine": "0.844409595",
+              "memories": [
+                {
+                  "pin": false,
+                  "body": "t2 A plagal cadence moves IV to I.",
+                  "kind": "fact",
+                  "label": "VL24C t2 A plagal cadence moves IV to I",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 0,
+                    "never_kills": 0,
+                    "last_injected_at": null
+                  },
+                  "keywords": [
+                    "harmony",
+                    "music"
+                  ],
+                  "revision": 1,
+                  "memory_id": "1291afe6-f454-4729-a6ee-0a493fbdf030",
+                  "created_at": "2026-09-26T00:24:38.454286+00:00",
+                  "updated_at": "2026-09-26T00:24:38.454286+00:00"
+                },
+                {
+                  "pin": false,
+                  "body": "A plagal cadence moves IV to I.",
+                  "kind": "fact",
+                  "label": "VL24C A plagal cadence moves IV to I",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 0,
+                    "never_kills": 0,
+                    "last_injected_at": null
+                  },
+                  "keywords": [
+                    "harmony",
+                    "music"
+                  ],
+                  "revision": 1,
+                  "memory_id": "94091055-cc90-4896-8aa8-df66cfee595e",
+                  "created_at": "2026-09-26T00:21:47.762545+00:00",
+                  "updated_at": "2026-09-26T00:21:47.762545+00:00"
+                }
+              ]
+            },
+            "fingerprint": "c28428d52f11a8bb597c83a5c833ef005d0ec9606657db4717f6884ce9313071"
+          },
+          {
+            "ordinal": 1,
+            "kind": "duplicate",
+            "memory_ids": [
+              "18ff0310-8734-4fb1-b487-9418bc20e865",
+              "b9558ac0-dec8-4db2-a9d8-a35bbe0ac47a"
+            ],
+            "evidence": {
+              "cosine": "0.919829947",
+              "memories": [
+                {
+                  "pin": false,
+                  "body": "Floodplains store peak flow.",
+                  "kind": "fact",
+                  "label": "VL24C Floodplains store peak flow",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 1,
+                    "never_kills": 0,
+                    "last_injected_at": "2026-09-25T23:31:10.927043+00:00"
+                  },
+                  "keywords": [
+                    "river",
+                    "discharge"
+                  ],
+                  "revision": 2,
+                  "memory_id": "18ff0310-8734-4fb1-b487-9418bc20e865",
+                  "created_at": "2026-09-25T23:30:38.449280+00:00",
+                  "updated_at": "2026-09-25T23:31:10.922112+00:00"
+                },
+                {
+                  "pin": false,
+                  "body": "Floodplains store the flood peak.",
+                  "kind": "fact",
+                  "label": "VL24C Floodplains store the flood peak",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 1,
+                    "never_kills": 0,
+                    "last_injected_at": "2026-09-25T23:31:10.927043+00:00"
+                  },
+                  "keywords": [
+                    "sourdough",
+                    "baking"
+                  ],
+                  "revision": 2,
+                  "memory_id": "b9558ac0-dec8-4db2-a9d8-a35bbe0ac47a",
+                  "created_at": "2026-09-25T23:30:53.541417+00:00",
+                  "updated_at": "2026-09-25T23:31:10.922112+00:00"
+                }
+              ]
+            },
+            "fingerprint": "a88415e62ebd12a938d02089bb50d2c7e607cdb5becbec235a50f5817517ff4c"
+          },
+          {
+            "ordinal": 2,
+            "kind": "duplicate",
+            "memory_ids": [
+              "3859bb8f-b3fc-41a1-859c-3ea4898ae33f",
+              "d9d71d8c-20c8-4028-a411-dfd63e3826c5"
+            ],
+            "evidence": {
+              "cosine": "0.881462382",
+              "memories": [
+                {
+                  "pin": false,
+                  "body": "t2 Pear trees fruit on two-year-old spurs.",
+                  "kind": "fact",
+                  "label": "VL24C t2 Pear trees fruit on two-year-old spur",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 0,
+                    "never_kills": 0,
+                    "last_injected_at": null
+                  },
+                  "keywords": [
+                    "orchard",
+                    "pruning"
+                  ],
+                  "revision": 1,
+                  "memory_id": "3859bb8f-b3fc-41a1-859c-3ea4898ae33f",
+                  "created_at": "2026-09-26T00:24:29.617653+00:00",
+                  "updated_at": "2026-09-26T00:24:29.617653+00:00"
+                },
+                {
+                  "pin": false,
+                  "body": "Pear trees fruit on two-year-old spurs.",
+                  "kind": "fact",
+                  "label": "VL24C Pear trees fruit on two-year-old spurs",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 0,
+                    "never_kills": 0,
+                    "last_injected_at": null
+                  },
+                  "keywords": [
+                    "orchard",
+                    "pruning"
+                  ],
+                  "revision": 1,
+                  "memory_id": "d9d71d8c-20c8-4028-a411-dfd63e3826c5",
+                  "created_at": "2026-09-26T00:21:38.287938+00:00",
+                  "updated_at": "2026-09-26T00:21:38.287938+00:00"
+                }
+              ]
+            },
+            "fingerprint": "b7ef45d9de6ae6ebd5083e8dba4b202eb7a62a4ffab3afd761e30ec169272b31"
+          },
+          {
+            "ordinal": 3,
+            "kind": "duplicate",
+            "memory_ids": [
+              "39c09831-43ce-477a-b97a-80178ca372d0",
+              "9a6bfd1c-aa82-488d-b997-899925e19226"
+            ],
+            "evidence": {
+              "cosine": "0.840344703",
+              "memories": [
+                {
+                  "pin": false,
+                  "body": "t2 Discharge is conserved where two rivers join.",
+                  "kind": "fact",
+                  "label": "VL24C t2 Discharge is conserved where two rive",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 0,
+                    "never_kills": 0,
+                    "last_injected_at": null
+                  },
+                  "keywords": [
+                    "river",
+                    "discharge"
+                  ],
+                  "revision": 1,
+                  "memory_id": "39c09831-43ce-477a-b97a-80178ca372d0",
+                  "created_at": "2026-09-26T00:24:44.354988+00:00",
+                  "updated_at": "2026-09-26T00:24:44.354988+00:00"
+                },
+                {
+                  "pin": false,
+                  "body": "Discharge is conserved where two rivers join.",
+                  "kind": "fact",
+                  "label": "VL24C Discharge is conserved where two rivers ",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 0,
+                    "never_kills": 0,
+                    "last_injected_at": null
+                  },
+                  "keywords": [
+                    "river",
+                    "discharge"
+                  ],
+                  "revision": 1,
+                  "memory_id": "9a6bfd1c-aa82-488d-b997-899925e19226",
+                  "created_at": "2026-09-26T00:21:53.896460+00:00",
+                  "updated_at": "2026-09-26T00:21:53.896460+00:00"
+                }
+              ]
+            },
+            "fingerprint": "467086bc809fa7a311b6c9de58dcaa9d1c2c20e407ff682f13c96d954a96f6b7"
+          },
+          {
+            "ordinal": 4,
+            "kind": "duplicate",
+            "memory_ids": [
+              "58e3e3a0-b0e7-4078-81db-70c6fe27cb88",
+              "a9f6cd2d-6da5-4f8d-940e-fe30dd9d69a2"
+            ],
+            "evidence": {
+              "cosine": "0.831680350",
+              "memories": [
+                {
+                  "pin": false,
+                  "body": "t2 Collimate the reflector before you observe.",
+                  "kind": "fact",
+                  "label": "VL24C t2 Collimate the reflector before you ob",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 0,
+                    "never_kills": 0,
+                    "last_injected_at": null
+                  },
+                  "keywords": [
+                    "telescope",
+                    "optics"
+                  ],
+                  "revision": 1,
+                  "memory_id": "58e3e3a0-b0e7-4078-81db-70c6fe27cb88",
+                  "created_at": "2026-09-26T00:24:47.237602+00:00",
+                  "updated_at": "2026-09-26T00:24:47.237602+00:00"
+                },
+                {
+                  "pin": false,
+                  "body": "Collimate a reflector before observing.",
+                  "kind": "fact",
+                  "label": "VL24C Collimate a reflector before observing",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 0,
+                    "never_kills": 0,
+                    "last_injected_at": null
+                  },
+                  "keywords": [
+                    "telescope",
+                    "optics"
+                  ],
+                  "revision": 1,
+                  "memory_id": "a9f6cd2d-6da5-4f8d-940e-fe30dd9d69a2",
+                  "created_at": "2026-09-25T23:30:42.079846+00:00",
+                  "updated_at": "2026-09-25T23:30:42.079846+00:00"
+                }
+              ]
+            },
+            "fingerprint": "28181f5e78142c4bfc9aba60a1abe80157354b853e8280c85c6ebb165318f253"
+          },
+          {
+            "ordinal": 5,
+            "kind": "duplicate",
+            "memory_ids": [
+              "5b92b26b-873f-460a-9ce3-c6292c0e5b94",
+              "8adcd3cd-6a7c-473f-814d-7113579b5ef1"
+            ],
+            "evidence": {
+              "cosine": "0.850822711",
+              "memories": [
+                {
+                  "pin": false,
+                  "body": "t2 Feed the starter one to one to one.",
+                  "kind": "fact",
+                  "label": "VL24C t2 Feed the starter one to one to one",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 0,
+                    "never_kills": 0,
+                    "last_injected_at": null
+                  },
+                  "keywords": [
+                    "sourdough",
+                    "baking"
+                  ],
+                  "revision": 1,
+                  "memory_id": "5b92b26b-873f-460a-9ce3-c6292c0e5b94",
+                  "created_at": "2026-09-26T00:24:35.517433+00:00",
+                  "updated_at": "2026-09-26T00:24:35.517433+00:00"
+                },
+                {
+                  "pin": false,
+                  "body": "Feed the starter at one to one to one.",
+                  "kind": "fact",
+                  "label": "VL24C Feed the starter at one to one to one",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 0,
+                    "never_kills": 0,
+                    "last_injected_at": null
+                  },
+                  "keywords": [
+                    "sourdough",
+                    "baking"
+                  ],
+                  "revision": 1,
+                  "memory_id": "8adcd3cd-6a7c-473f-814d-7113579b5ef1",
+                  "created_at": "2026-09-25T23:30:44.053493+00:00",
+                  "updated_at": "2026-09-25T23:30:44.053493+00:00"
+                }
+              ]
+            },
+            "fingerprint": "d996f610ece8f5e5a437ffd1f55db94b021596db96eb783a85713b6745c3c67f"
+          },
+          {
+            "ordinal": 6,
+            "kind": "duplicate",
+            "memory_ids": [
+              "773a42f5-24d1-40ca-9fcd-6a7c8fae284d",
+              "a7322a97-53f0-47fe-a8d4-d8ab8072ee3d"
+            ],
+            "evidence": {
+              "cosine": "0.868063281",
+              "memories": [
+                {
+                  "pin": false,
+                  "body": "t2 Widows and orphans break a paragraph badly.",
+                  "kind": "fact",
+                  "label": "VL24C t2 Widows and orphans break a paragraph ",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 0,
+                    "never_kills": 0,
+                    "last_injected_at": null
+                  },
+                  "keywords": [
+                    "typesetting"
+                  ],
+                  "revision": 1,
+                  "memory_id": "773a42f5-24d1-40ca-9fcd-6a7c8fae284d",
+                  "created_at": "2026-09-26T00:24:41.375634+00:00",
+                  "updated_at": "2026-09-26T00:24:41.375634+00:00"
+                },
+                {
+                  "pin": false,
+                  "body": "Widows and orphans break a paragraph badly.",
+                  "kind": "fact",
+                  "label": "VL24C Widows and orphans break a paragraph bad",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 0,
+                    "never_kills": 0,
+                    "last_injected_at": null
+                  },
+                  "keywords": [
+                    "typesetting"
+                  ],
+                  "revision": 1,
+                  "memory_id": "a7322a97-53f0-47fe-a8d4-d8ab8072ee3d",
+                  "created_at": "2026-09-26T00:21:50.884822+00:00",
+                  "updated_at": "2026-09-26T00:21:50.884822+00:00"
+                }
+              ]
+            },
+            "fingerprint": "ad10ffaef37113e867467c6b9e891471cc68e1513590d97f5e6e2243a95fb608"
+          },
+          {
+            "ordinal": 7,
+            "kind": "duplicate",
+            "memory_ids": [
+              "97fde207-164d-48dc-8685-440afda6532d",
+              "aa69b723-1770-4de6-b9aa-a769740388a8"
+            ],
+            "evidence": {
+              "cosine": "0.883567637",
+              "memories": [
+                {
+                  "pin": false,
+                  "body": "A Barlow lens doubles the effective focal length.",
+                  "kind": "fact",
+                  "label": "VL24C A Barlow lens doubles the effective foca",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 0,
+                    "never_kills": 0,
+                    "last_injected_at": null
+                  },
+                  "keywords": [
+                    "Telescope"
+                  ],
+                  "revision": 1,
+                  "memory_id": "97fde207-164d-48dc-8685-440afda6532d",
+                  "created_at": "2026-09-26T00:21:41.656282+00:00",
+                  "updated_at": "2026-09-26T00:21:41.656282+00:00"
+                },
+                {
+                  "pin": false,
+                  "body": "t2 A Barlow lens doubles the effective focal length.",
+                  "kind": "fact",
+                  "label": "VL24C t2 A Barlow lens doubles the effective f",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 0,
+                    "never_kills": 0,
+                    "last_injected_at": null
+                  },
+                  "keywords": [
+                    "Telescope"
+                  ],
+                  "revision": 1,
+                  "memory_id": "aa69b723-1770-4de6-b9aa-a769740388a8",
+                  "created_at": "2026-09-26T00:24:32.564857+00:00",
+                  "updated_at": "2026-09-26T00:24:32.564857+00:00"
+                }
+              ]
+            },
+            "fingerprint": "4910894f1308357ac1a28e6969d22c120086d447dc03683f9bc92370957cce23"
+          },
+          {
+            "ordinal": 8,
+            "kind": "duplicate",
+            "memory_ids": [
+              "b47b453b-e57b-4526-a2a9-a54f20a73126",
+              "df1e0ad6-fd03-44ed-8702-4c384629dcc7"
+            ],
+            "evidence": {
+              "cosine": "0.851428923",
+              "memories": [
+                {
+                  "pin": false,
+                  "body": "A weir raises the upstream water level.",
+                  "kind": "fact",
+                  "label": "VL24C A weir raises the upstream water level",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 0,
+                    "never_kills": 0,
+                    "last_injected_at": null
+                  },
+                  "keywords": [
+                    "river"
+                  ],
+                  "revision": 1,
+                  "memory_id": "b47b453b-e57b-4526-a2a9-a54f20a73126",
+                  "created_at": "2026-09-26T00:21:35.216934+00:00",
+                  "updated_at": "2026-09-26T00:21:35.216934+00:00"
+                },
+                {
+                  "pin": false,
+                  "body": "t2 A weir raises the upstream water level.",
+                  "kind": "fact",
+                  "label": "VL24C t2 A weir raises the upstream water leve",
+                  "stats": {
+                    "removals": 0,
+                    "citations": 0,
+                    "injections": 0,
+                    "never_kills": 0,
+                    "last_injected_at": null
+                  },
+                  "keywords": [
+                    "river"
+                  ],
+                  "revision": 1,
+                  "memory_id": "df1e0ad6-fd03-44ed-8702-4c384629dcc7",
+                  "created_at": "2026-09-26T00:24:26.605265+00:00",
+                  "updated_at": "2026-09-26T00:24:26.605265+00:00"
+                }
+              ]
+            },
+            "fingerprint": "113079166d5727a5ac0d9832fec07f3a162b9665343a7e34f68ac564f8cd886c"
+          },
+          {
+            "ordinal": 9,
+            "kind": "keyword",
+            "memory_ids": [
+              "5966fda6-75c7-4a0e-a50b-be25a9b56377"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Seeing limits planetary detail more than aperture.",
+                "kind": "fact",
+                "label": "VL24C Seeing limits planetary detail more than",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "Telescope"
+                ],
+                "revision": 1,
+                "memory_id": "5966fda6-75c7-4a0e-a50b-be25a9b56377",
+                "created_at": "2026-09-25T23:30:52.674734+00:00",
+                "updated_at": "2026-09-25T23:30:52.674734+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "3dad81e1041abfb15b8e5ec3ee222d7cb57d81c2db349e6d40388dcc2adbf97b"
+          },
+          {
+            "ordinal": 10,
+            "kind": "keyword",
+            "memory_ids": [
+              "773a42f5-24d1-40ca-9fcd-6a7c8fae284d"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "t2 Widows and orphans break a paragraph badly.",
+                "kind": "fact",
+                "label": "VL24C t2 Widows and orphans break a paragraph ",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "typesetting"
+                ],
+                "revision": 1,
+                "memory_id": "773a42f5-24d1-40ca-9fcd-6a7c8fae284d",
+                "created_at": "2026-09-26T00:24:41.375634+00:00",
+                "updated_at": "2026-09-26T00:24:41.375634+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "7f34f2cc68e29ebc69f84bedecd215f8c3061f3543dfbc09971fddf9afadf683"
+          },
+          {
+            "ordinal": 11,
+            "kind": "keyword",
+            "memory_ids": [
+              "8f46ab9c-c202-4bbf-830c-84b2fbddf86a"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Summer pruning slows vigorous growth.",
+                "kind": "fact",
+                "label": "VL24C Summer pruning slows vigorous growth",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "orchard"
+                ],
+                "revision": 1,
+                "memory_id": "8f46ab9c-c202-4bbf-830c-84b2fbddf86a",
+                "created_at": "2026-09-25T23:30:52.297452+00:00",
+                "updated_at": "2026-09-25T23:30:52.297452+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "2e7c971946b1c171cf3f891ae11288173040078c1e8600ee3b3fe555458e6860"
+          },
+          {
+            "ordinal": 12,
+            "kind": "keyword",
+            "memory_ids": [
+              "97fde207-164d-48dc-8685-440afda6532d"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "A Barlow lens doubles the effective focal length.",
+                "kind": "fact",
+                "label": "VL24C A Barlow lens doubles the effective foca",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "Telescope"
+                ],
+                "revision": 1,
+                "memory_id": "97fde207-164d-48dc-8685-440afda6532d",
+                "created_at": "2026-09-26T00:21:41.656282+00:00",
+                "updated_at": "2026-09-26T00:21:41.656282+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "647ad25a5afe570c1d57b2d22c3ae68f39c0ce5ad213d024537bbb1f2f2a4a8a"
+          },
+          {
+            "ordinal": 13,
+            "kind": "keyword",
+            "memory_ids": [
+              "a6febe42-bab8-4a89-86b8-0c411d8fe9ca"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Voice leading favors the smallest motion.",
+                "kind": "fact",
+                "label": "VL24C Voice leading favors the smallest motion",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "harmony"
+                ],
+                "revision": 1,
+                "memory_id": "a6febe42-bab8-4a89-86b8-0c411d8fe9ca",
+                "created_at": "2026-09-25T23:30:53.159666+00:00",
+                "updated_at": "2026-09-25T23:30:53.159666+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "caa8154662ce7611d2665de682bd7c73b32b2601bef01e3c8b87afece827272c"
+          },
+          {
+            "ordinal": 14,
+            "kind": "keyword",
+            "memory_ids": [
+              "a7322a97-53f0-47fe-a8d4-d8ab8072ee3d"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "Widows and orphans break a paragraph badly.",
+                "kind": "fact",
+                "label": "VL24C Widows and orphans break a paragraph bad",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "typesetting"
+                ],
+                "revision": 1,
+                "memory_id": "a7322a97-53f0-47fe-a8d4-d8ab8072ee3d",
+                "created_at": "2026-09-26T00:21:50.884822+00:00",
+                "updated_at": "2026-09-26T00:21:50.884822+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "9b5b6d3117139b81fa912cf5191c04d98997aee541e6e75c1c87d20c96d1d7d1"
+          },
+          {
+            "ordinal": 15,
+            "kind": "keyword",
+            "memory_ids": [
+              "aa69b723-1770-4de6-b9aa-a769740388a8"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "t2 A Barlow lens doubles the effective focal length.",
+                "kind": "fact",
+                "label": "VL24C t2 A Barlow lens doubles the effective f",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "Telescope"
+                ],
+                "revision": 1,
+                "memory_id": "aa69b723-1770-4de6-b9aa-a769740388a8",
+                "created_at": "2026-09-26T00:24:32.564857+00:00",
+                "updated_at": "2026-09-26T00:24:32.564857+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "f8debf14556efa00c6e9d14888637dd1d1e11e401d3a73a55638827f69179ef2"
+          },
+          {
+            "ordinal": 16,
+            "kind": "keyword",
+            "memory_ids": [
+              "b47b453b-e57b-4526-a2a9-a54f20a73126"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "A weir raises the upstream water level.",
+                "kind": "fact",
+                "label": "VL24C A weir raises the upstream water level",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "river"
+                ],
+                "revision": 1,
+                "memory_id": "b47b453b-e57b-4526-a2a9-a54f20a73126",
+                "created_at": "2026-09-26T00:21:35.216934+00:00",
+                "updated_at": "2026-09-26T00:21:35.216934+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "f8fa734af4aab18baa1885fcce1e0068101298db9e6c19a6569e2fd344707b73"
+          },
+          {
+            "ordinal": 17,
+            "kind": "keyword",
+            "memory_ids": [
+              "df1e0ad6-fd03-44ed-8702-4c384629dcc7"
+            ],
+            "evidence": {
+              "memory": {
+                "pin": false,
+                "body": "t2 A weir raises the upstream water level.",
+                "kind": "fact",
+                "label": "VL24C t2 A weir raises the upstream water leve",
+                "stats": {
+                  "removals": 0,
+                  "citations": 0,
+                  "injections": 0,
+                  "never_kills": 0,
+                  "last_injected_at": null
+                },
+                "keywords": [
+                  "river"
+                ],
+                "revision": 1,
+                "memory_id": "df1e0ad6-fd03-44ed-8702-4c384629dcc7",
+                "created_at": "2026-09-26T00:24:26.605265+00:00",
+                "updated_at": "2026-09-26T00:24:26.605265+00:00"
+              },
+              "problem": "memory does not carry 2-5 distinct lowercase keywords"
+            },
+            "fingerprint": "c0b9fe7087ba325942ffc90f3931ff3077de059d0bf634f5534ca8fadd1d552a"
+          }
+        ],
+        "keyword_coverage_percent": "83.929",
+        "stats_delta": {
+          "merges": 0,
+          "revisions": 8,
+          "retirements": 0,
+          "reinforcements": 0
+        }
+      },
+      "error": null,
+      "completed_at": "2026-09-26T00:25:57.894576Z"
+    }
+  }
+]
