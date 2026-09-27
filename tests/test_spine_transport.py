@@ -537,8 +537,37 @@ async def test_retrain_uses_the_existing_bodyless_spine_trigger() -> None:
     assert len(seen) == 1
     assert seen[0].method == "POST"
     assert seen[0].url.path == "/prefix/retrain"
+    assert dict(seen[0].url.params) == {"principal_id": "local"}
     assert seen[0].content == b""
     assert "content-type" not in seen[0].headers
+
+
+@pytest.mark.asyncio
+async def test_retrain_preserves_principal_and_plain_ownership_refusal() -> None:
+    """SPEC D.2 144 / F126: the daemon's identity reaches the owner-only learner."""
+    from harness.spine_client import SpineOwnershipError
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.params["principal_id"] == "nocturne-verification-rx"
+        return httpx.Response(
+            403,
+            json={
+                "type": "about:blank",
+                "title": "Forbidden",
+                "status": 403,
+                "detail": "Only the Palace owner can retrain the scorer.",
+            },
+            headers={"Content-Type": "application/problem+json"},
+        )
+
+    async with SpineClient(
+        "https://spine.invalid",
+        "token",
+        principal_id="nocturne-verification-rx",
+        transport=httpx.MockTransport(handler),
+    ) as client:
+        with pytest.raises(SpineOwnershipError, match="Only the Palace owner"):
+            await client.retrain()
 
 
 def _measure_reinforced(payload: dict[str, Any]) -> None:

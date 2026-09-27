@@ -553,6 +553,8 @@ def create_app(
             raise HTTPException(status_code=503, detail="Scorer retraining is unavailable.")
         try:
             return await scorer_retrainer()
+        except SpineOwnershipError:
+            raise
         except SpineClientError:
             raise HTTPException(
                 status_code=503, detail="Scorer retraining is unavailable."

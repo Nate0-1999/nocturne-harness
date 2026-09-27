@@ -398,7 +398,9 @@ export function InjectionConsole() {
         <div className="console-learning-overview">
           <div className="console-learning-control">
             <LearningSummary learning={data.learning} scope={data.metrics_scope} />
-            <Button
+            {data.metrics_scope === 'principal' ? (
+              <p className="console-note">Only the Palace owner can retrain the scorer.</p>
+            ) : <Button
               className="retrain-control"
               type="button"
               data-tooltip-detail="Refit the scorer from your gate signals now."
@@ -406,7 +408,7 @@ export function InjectionConsole() {
               onClick={() => void forceRetrain()}
             >
               {FORCE_RETRAIN_LABEL}
-            </Button>
+            </Button>}
             {retrainNotice !== null && (
               <p className="console-note" role="status">{retrainNotice.copy}</p>
             )}
