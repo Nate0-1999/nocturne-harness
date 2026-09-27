@@ -194,15 +194,15 @@ export function OutLoud({ field, response, responseId, blocked, onDraft, onSend,
 
   return (
     <div className="out-loud" data-testid="out-loud">
-      <div role="group" aria-label="Input mode">
-        <Button action="typing" type="button" aria-pressed={!enabled} onClick={() => {
-          stop(); setPhase('idle'); setStatus(''); setEnabled(false)
-        }}>Typing</Button>
-        <Button action="listen" type="button" aria-pressed={enabled} disabled={!supported || preferenceKey === null}
-          onClick={() => {
-            setEnabled(true)
-          }}>Out Loud</Button>
-      </div>
+      <Button action="listen" iconOnly type="button" aria-label="Out Loud"
+        data-tooltip={enabled ? 'Switch to typing' : 'Speak and hear replies'}
+        aria-pressed={enabled} disabled={!supported || preferenceKey === null}
+        onClick={() => {
+          if (enabled) {
+            stop(); setPhase('idle'); setStatus('')
+          }
+          setEnabled(!enabled)
+        }}>Out Loud</Button>
       {!supported && <small>This browser does not support Out Loud. Typing is available.</small>}
       {enabled && <>
         <Button action={phase === "listening" ? "stop" : "listen"} type="button" disabled={blocked} onClick={() => {

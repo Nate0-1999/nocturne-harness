@@ -2440,12 +2440,7 @@
 
   .composer__utility {
     align-items: flex-start;
-    flex-direction: column;
     gap: 0.3rem;
-  }
-
-  .composer__attach {
-    min-width: 7.25rem;
   }
 
   .composer__hint span {
