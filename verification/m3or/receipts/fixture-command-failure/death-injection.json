@@ -1,0 +1,16 @@
+{
+  "event": {
+    "attempt_id": "01M3GAG1N8X873ECFB21DSBWZR",
+    "event": "process_started",
+    "event_id": "01M3GAG1P0G6R208M5MB350R3P",
+    "pid": 5312,
+    "process_identity": "posix:5312:5312:Sat Sep 26 21:18:23 2026",
+    "sequence": 134,
+    "ts": "2026-09-27T02:18:23.296652+00:00",
+    "version": 1,
+    "worker_id": "01M3GAFGCANWSP85ZMA0GJTF1S:step-2-round-1:round-1-attempt-1:completion"
+  },
+  "command": "/tmp/m3or-or27/candidate/bin/python -m harness.symphony_worker /private/tmp/m3or-or27/home/symphonies/01M3GAFGCANWSP85ZMA0GJTF1S/step-2-round-1/round-1-attempt-1/completion/assignment.json\n",
+  "signal": "SIGKILL",
+  "purpose": "Disposable worker death and claim recovery verification"
+}

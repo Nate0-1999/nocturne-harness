@@ -1,0 +1,83 @@
+{
+  "status": "IN_PROGRESS; browser authorization pending",
+  "released_baseline": "0.1.35",
+  "candidate_source": "9594c16",
+  "acceptance_complete": false,
+  "rows": {
+    "FL-075": {
+      "walk": "Queue a prompt during a run and interject once; the queued prompt runs after and the interjection steers the run.",
+      "verdict": "UNVERIFIED",
+      "observed": "Public 0.1.35 protocol: queued prompt runs after interjection steers the in-flight turn; STEERED_OR27 then QUEUED_OR27. Composer gesture not walked."
+    },
+    "FL-085": {
+      "walk": "Run a symphony; attempts run in worktrees, the judge's verdict against the spec appears, and the card returns to the human only after the judge says done.",
+      "verdict": "UNVERIFIED",
+      "observed": "Public 0.1.35 failed on an empty commit during a retry. Repaired runtime replay passed; installed candidate completed real supervised work and unanimous judging. Browser result-card walk pending."
+    },
+    "FL-086": {
+      "walk": "Run one piece of work as a plain turn-by-turn chat and another as a symphony; both work.",
+      "verdict": "UNVERIFIED",
+      "observed": "Real public chat and real candidate Symphony completed. Mode UI pending."
+    },
+    "FL-087": {
+      "walk": "Open the mode selector; Duet and Symphony are listed.",
+      "verdict": "UNVERIFIED",
+      "observed": "Mode selector not walked; browser access blocked."
+    },
+    "FL-088": {
+      "walk": "Start a symphony with more than one stratagem; separate attempts run from each at once.",
+      "verdict": "UNVERIFIED",
+      "observed": "Two distinct stratagem workers launched concurrently in separate worktrees. Browser observation pending."
+    },
+    "FL-089": {
+      "walk": "Open the config for Duet and for Symphony; each level has its own config.",
+      "verdict": "UNVERIFIED",
+      "observed": "Per-level configuration UI not walked; browser access blocked."
+    },
+    "FL-091": {
+      "walk": "Let a judge fail a round; new packets appear from the feedback and a fresh swarm runs, and the loop ends only when all judges pass.",
+      "verdict": "UNVERIFIED",
+      "observed": "Final installed-candidate run: worker death led to three FAIL verdicts, a persisted feedback packet and successful next-round judging. UI pending."
+    },
+    "FL-092": {
+      "walk": "Fire two agents at once and let one claim expire; both run together and the expired claim frees itself without a hand.",
+      "verdict": "UNVERIFIED",
+      "observed": "Own completion worker was SIGKILLed; supervisor recorded death and the failed step continued in fresh round worktrees. UI pending."
+    },
+    "FL-094": {
+      "walk": "Run a symphony; deliberation in chat, then the unattended run, then a judge review round that can send it round again.",
+      "verdict": "UNVERIFIED",
+      "observed": "Ratified launch, autonomous work and independent judge review recorded through the native protocol; browser deliberation gestures pending."
+    },
+    "FL-095": {
+      "walk": "Mark a step as hard at deliberation; a search swarm runs on that step and prunes weak branches.",
+      "verdict": "UNVERIFIED",
+      "observed": "Missing prerequisite stratagem failed smoke and was pruned while the direct attempt continued. UI pending."
+    },
+    "FL-096": {
+      "walk": "Run a symphony; its agents get injected memories and the run's extracted memories reach the Palace.",
+      "verdict": "UNVERIFIED",
+      "observed": "Pinned disposable memory injected into workers; extracted winner lessons reached three real Palace queue cards. Cleanup denied them. UI pending."
+    },
+    "FL-097": {
+      "walk": "Start an implementation agent; its start-up context carries the component registry, which stems from the motivation tree.",
+      "verdict": "UNVERIFIED",
+      "observed": "Saved worker context and messages include the SPEC problem-tree component registry. UI pending."
+    },
+    "FL-099": {
+      "walk": "Let a judge fail one packet; round two re-runs only that packet while the passed work stands.",
+      "verdict": "UNVERIFIED",
+      "observed": "Final round plan retains foundation commit 98120ba9b81d83796997ae887d946038f607b8e9 and only slug repeats. UI pending."
+    },
+    "FL-103": {
+      "walk": "Click one agent; a panel opens with its context visualizer, its injected memories each with a pop-off, and suggestions of more memories to add.",
+      "verdict": "UNVERIFIED",
+      "observed": "Worker context traces available; agent click, pop-off and add-back gestures not walked."
+    },
+    "FL-124": {
+      "walk": "Archive a thread, then open the memory graph and press the back control; the thread is gone from the list and the stage returns.",
+      "verdict": "UNVERIFIED",
+      "observed": "Archive/back-to-stage gestures not walked; browser access blocked."
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "thread_id": "2d70e2fc-d556-4e61-a741-bc604f02fcec",
+  "launch": {
+    "draft_id": "01M3G9XK83DR7G8JK5JCXZ4EP9",
+    "objective": "Build a tiny Python slug function with two ordered steps in this disposable verification project.",
+    "motivation": "Verify real Symphony workers, preserved accepted work, and judge feedback retries on public 0.1.35.",
+    "recipe": [
+      {
+        "step_id": "foundation",
+        "title": "Create marker.py with TOKEN = \"OR27_FOUNDATION\". Do not implement slug.py in this step.",
+        "done_when": "marker.py imports and TOKEN is OR27_FOUNDATION.",
+        "search": false
+      },
+      {
+        "step_id": "slug",
+        "title": "Create slug.py exporting slug(text), lowercase words separated by exactly one hyphen; trim all whitespace; empty or whitespace input returns empty. Keep marker.py unchanged. Return one atomic lesson about normalization in your memories.",
+        "done_when": "python -c \"from marker import TOKEN; from slug import slug; assert TOKEN == 'OR27_FOUNDATION'; assert slug('  Copper   Orchid  ') == 'copper-orchid'; assert slug(' \\t ') == ''\" exits 0.",
+        "search": true,
+        "stratagems": [
+          "Baseline fault injection for retry verification: on the first completion only use text.strip().lower(), intentionally omitting whitespace joining. When judge feedback exists, implement the full contract using split and hyphen join. Smoke readiness needs only the Python interpreter.",
+          "Weak approach requires the nonexistent or27_missing_slug_backend module. At smoke stage run python -c \"import or27_missing_slug_backend\" and fail readiness if absent. Do not install it."
+        ]
+      }
+    ],
+    "judge_charters": [
+      {
+        "seat": "motivation",
+        "rubric": [
+          "Judge only the current recipe step against its done_when. Verify actual files. Foundation does not require slug.py."
+        ],
+        "evidence_requirements": [
+          "Actual candidate paths and current-step validation output"
+        ],
+        "metrics": []
+      },
+      {
+        "seat": "implementation",
+        "rubric": [
+          "Judge only the current step. For foundation require the exact constant. For slug run the exact done_when command; wrong whitespace joining is FAIL and feedback must request split and hyphen join."
+        ],
+        "evidence_requirements": [
+          "Actual candidate files and test output"
+        ],
+        "metrics": []
+      },
+      {
+        "seat": "performance",
+        "rubric": [
+          "Execute current-step checks. Foundation: import marker and assert exact TOKEN. Slug: run its exact done_when command. Do not edit."
+        ],
+        "evidence_requirements": [
+          "Current-step command and exit status"
+        ],
+        "metrics": [
+          "Current step acceptance command exits 0"
+        ]
+      }
+    ],
+    "authority": {
+      "attempts": 2,
+      "spend_wall_usd": "2",
+      "max_rounds": 3,
+      "depth_cap": 2,
+      "children_per_attempt": 0,
+      "duration_minutes": 15,
+      "signed": true
+    },
+    "hold_for_steering": false
+  }
+}

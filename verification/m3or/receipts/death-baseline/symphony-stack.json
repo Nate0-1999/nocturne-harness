@@ -1,0 +1,270 @@
+{
+  "symphony_id": "01M3GA5QZ32P7BNSB3QCFRGHEX",
+  "thread_id": "9aefde56-7363-4646-939e-74861a2579ac",
+  "state": "blocked",
+  "execution_kind": "supervised",
+  "launch": {
+    "draft_id": "01M3GA5QTQHZRFZFHQBC3B54W9",
+    "objective": "Build a tiny Python slug function with two ordered steps in this disposable verification project.",
+    "motivation": "Verify real Symphony workers, preserved accepted work, and judge feedback retries on public 0.1.35.",
+    "recipe": [
+      {
+        "step_id": "foundation",
+        "title": "Create marker.py with TOKEN = \"OR27_FOUNDATION\". Do not implement slug.py in this step.",
+        "done_when": "marker.py imports and TOKEN is OR27_FOUNDATION.",
+        "search": false,
+        "stratagems": []
+      },
+      {
+        "step_id": "slug",
+        "title": "Create slug.py exporting slug(text), lowercase words separated by exactly one hyphen; trim all whitespace; empty or whitespace input returns empty. Keep marker.py unchanged. Return one atomic lesson about normalization in your memories.",
+        "done_when": "python -c \"from marker import TOKEN; from slug import slug; assert TOKEN == 'OR27_FOUNDATION'; assert slug('  Copper   Orchid  ') == 'copper-orchid'; assert slug(' \\t ') == ''\" exits 0.",
+        "search": true,
+        "stratagems": [
+          "Baseline fault injection for retry verification: on the first completion only use text.strip().lower(), intentionally omitting whitespace joining. When judge feedback exists, implement the full contract using split and hyphen join. Smoke readiness needs only the Python interpreter.",
+          "Weak approach requires the nonexistent or27_missing_slug_backend module. At smoke stage run python -c \"import or27_missing_slug_backend\" and fail readiness if absent. Do not install it."
+        ]
+      }
+    ],
+    "judge_charters": [
+      {
+        "seat": "motivation",
+        "rubric": [
+          "Judge only the current recipe step against its done_when. Verify actual files. Foundation does not require slug.py."
+        ],
+        "evidence_requirements": [
+          "Actual candidate paths and current-step validation output"
+        ],
+        "metrics": []
+      },
+      {
+        "seat": "implementation",
+        "rubric": [
+          "Judge only the current step. For foundation require the exact constant. For slug run the exact done_when command; wrong whitespace joining is FAIL and feedback must request split and hyphen join."
+        ],
+        "evidence_requirements": [
+          "Actual candidate files and test output"
+        ],
+        "metrics": []
+      },
+      {
+        "seat": "performance",
+        "rubric": [
+          "Execute current-step checks. Foundation: import marker and assert exact TOKEN. Slug: run its exact done_when command. Do not edit."
+        ],
+        "evidence_requirements": [
+          "Current-step command and exit status"
+        ],
+        "metrics": [
+          "Current step acceptance command exits 0"
+        ]
+      }
+    ],
+    "authority": {
+      "attempts": 2,
+      "spend_wall_usd": "2",
+      "max_rounds": 3,
+      "depth_cap": 2,
+      "children_per_attempt": 0,
+      "duration_minutes": 15,
+      "signed": true
+    },
+    "hold_for_steering": false
+  },
+  "search_step_ids": [
+    "slug"
+  ],
+  "charter_digests": [
+    "6943efd22053d91ffc6ad6f723bee1fd433d46bfd851d6da9e92a4dda6e5f4e7",
+    "6bac863e4f8308aeea832c0c63fad9f88bcecad03444a802e64d90548fb2cbec",
+    "260a18d4a5661b5aeca97992617c7aa12b3ddad6a723bf8c437fd68b75d8a8cc"
+  ],
+  "timeline": [
+    "deliberation_ratified",
+    "authority_signed",
+    "execution_requested",
+    "step-1-round-1:workers_started",
+    "step-1-round-1:judged",
+    "step-2-round-1:workers_started",
+    "blocked"
+  ],
+  "attempts": [
+    {
+      "attempt_id": "round-1-attempt-1",
+      "state": "stopped",
+      "cancellation": "none",
+      "follow_ups": [],
+      "partial_evidence": [
+        "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GA5QZ32P7BNSB3QCFRGHEX/step-2-round-1/round-1-attempt-1"
+      ],
+      "memories_admitted": false
+    },
+    {
+      "attempt_id": "round-1-attempt-2",
+      "state": "stopped",
+      "cancellation": "none",
+      "follow_ups": [],
+      "partial_evidence": [
+        "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GA5QZ32P7BNSB3QCFRGHEX/step-2-round-1/round-1-attempt-2"
+      ],
+      "memories_admitted": false
+    }
+  ],
+  "interventions": [],
+  "forked_from": null,
+  "forked_to": null,
+  "blocked_reason": "[Errno 2] No such file or directory: '/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GA5QZ32P7BNSB3QCFRGHEX/step-2-round-1/judge-motivation/judge-verdict.json'",
+  "result": null,
+  "completed_at": null,
+  "evidence": [
+    {
+      "packet_id": "01M3GA5QZ32P7BNSB3QCFRGHEX",
+      "child_id": "step-1-round-1.round-1-attempt-1.smoke",
+      "worker_id": "01M3GA5QZ32P7BNSB3QCFRGHEX:step-1-round-1:round-1-attempt-1:smoke",
+      "attempt_id": "01M3GA5R2PGVT4J1ETYWTCW2HE",
+      "accepted_commit": "254c1d16d063348b13ea9560be75ec22193825ef",
+      "location": "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GA5QZ32P7BNSB3QCFRGHEX/step-1-round-1/round-1-attempt-1",
+      "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+      "brief_sha256": "144ee3801a11d3794df8d0472544f2f6ee72b116088e800ca5abd51af0ccf7ce",
+      "pid": 1286,
+      "retry_number": 0
+    },
+    {
+      "schema_version": 1,
+      "packet_id": "01M3GA5QZ32P7BNSB3QCFRGHEX",
+      "search_child_id": "step-1-round-1",
+      "status": "unanimous_pass",
+      "winner_attempt_id": "round-1-attempt-1",
+      "evidence_sha256": "ebb75f1bba03928b722e97b0afe83faca67f5136061a8566f34b973d3f577ac4",
+      "verdicts": [
+        {
+          "schema_version": 1,
+          "seat": "motivation",
+          "judge_session_id": "01M3GA63A5VHA2BMRSMZ41873V",
+          "charter_sha256": "ab22af517b286343f3bc100c36440d6203460cf5992dbe4d7acf94df2f316e60",
+          "evidence_sha256": "d77402af8b1eba281281ccc5bd306ea65c700247c5cbd2629f1efb1acbd84374",
+          "outcome": "pass",
+          "selected_attempt_id": "round-1-attempt-1",
+          "rationale": "The candidate produced marker.py containing the exact TOKEN string 'OR27_FOUNDATION' as required. Validation by importing marker.py from the correct candidate directory and asserting TOKEN succeeded with no errors. Presence of slug.py noted but not required per the charter. All done_when criteria are met, so the work is accepted for this motivation seat step.",
+          "evidence_refs": [
+            "../round-1-attempt-1/marker.py",
+            "python3 import assertion command output"
+          ],
+          "feedback": [],
+          "metrics": []
+        },
+        {
+          "schema_version": 1,
+          "seat": "implementation",
+          "judge_session_id": "01M3GA63AXD2XVKKCFE3Y84531",
+          "charter_sha256": "1074916f721570330b73f54684359441b0b481333794d32d4743a07c0b90387a",
+          "evidence_sha256": "0bbd09f8552bde4767b6442f23ffd1115340e29dcffa42e4f2cace39cec3a504",
+          "outcome": "pass",
+          "selected_attempt_id": "round-1-attempt-1",
+          "rationale": "The candidate implemented marker.py with the exact TOKEN = \"OR27_FOUNDATION\" as required by the current step and charter rubric. The done_when command was run successfully by importing marker.py and asserting the TOKEN value, confirming the implementation is correct. The presence of marker.py was verified, and the slug.py presence was noted but is not required or disallowed for this step.",
+          "evidence_refs": [
+            "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GA5QZ32P7BNSB3QCFRGHEX/step-1-round-1/round-1-attempt-1/marker.py",
+            "python3 done_when import command"
+          ],
+          "feedback": [],
+          "metrics": []
+        },
+        {
+          "schema_version": 1,
+          "seat": "performance",
+          "judge_session_id": "01M3GA63BMGVFE6RTHJAXTKRN6",
+          "charter_sha256": "9f891f9048376afa3c904b6796b94184e3c55815bf63a8c9dd9095f9d29f5dfc",
+          "evidence_sha256": "436410efa55cc4ba750dd23907a7200bbac58999bce20d12ba03f1a1e0133136",
+          "outcome": "pass",
+          "selected_attempt_id": "round-1-attempt-1",
+          "rationale": "The candidate created marker.py with the exact constant TOKEN = 'OR27_FOUNDATION'. Running the performance seat check command to import marker.py and verify the constant exited with code 0, indicating success. The candidate's artifact matches the charter requirements exactly for this step.",
+          "evidence_refs": [
+            "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GA5QZ32P7BNSB3QCFRGHEX/step-1-round-1/round-1-attempt-1/marker.py",
+            "performance seat check command exit status"
+          ],
+          "feedback": [],
+          "metrics": [
+            {
+              "metric": "Current step acceptance command exits 0",
+              "observed": "Current step acceptance command exits 0",
+              "passed": true,
+              "evidence_ref": "performance seat check command exit status"
+            }
+          ]
+        }
+      ],
+      "attempt_lineage": [
+        {
+          "attempt_id": "round-1-attempt-1",
+          "approach": "Direct: implement the simplest solution from the acceptance criteria.",
+          "artifact_root": "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GA5QZ32P7BNSB3QCFRGHEX/step-1-round-1/round-1-attempt-1",
+          "accepted_commit": "254c1d16d063348b13ea9560be75ec22193825ef",
+          "status": "completed",
+          "smoke": {
+            "schema_version": 1,
+            "status": "pass",
+            "score": "1",
+            "checks": [
+              "Workspace is accessible and readable.",
+              "marker.py file is present, which is required for the step.",
+              "slug.py presence noted but not required for this step according to the proposal."
+            ],
+            "evidence_refs": [
+              "marker.py present in workspace",
+              "slug.py present in workspace"
+            ]
+          },
+          "distillate": {
+            "schema_version": 1,
+            "status": "completed",
+            "claims": [
+              "Created marker.py with TOKEN set to the exact string 'OR27_FOUNDATION'.",
+              "Verified by importing marker.py and asserting TOKEN equals 'OR27_FOUNDATION' without errors."
+            ],
+            "evidence_refs": [
+              "marker.py"
+            ],
+            "uncertainties": [],
+            "metrics_refs": [
+              "/private/tmp/m3or-or27/home/symphonies/01M3GA5QZ32P7BNSB3QCFRGHEX/step-1-round-1/round-1-attempt-1/completion/meter.json"
+            ],
+            "artifacts": [
+              "marker.py"
+            ],
+            "patch": null,
+            "product": {
+              "kind": "commit",
+              "commit": "b3226715737c8f1f688e38534ad3df09f5f7b44a"
+            }
+          }
+        }
+      ],
+      "feedback_packets": []
+    },
+    {
+      "packet_id": "01M3GA5QZ32P7BNSB3QCFRGHEX",
+      "child_id": "step-2-round-1.round-1-attempt-1.smoke",
+      "worker_id": "01M3GA5QZ32P7BNSB3QCFRGHEX:step-2-round-1:round-1-attempt-1:smoke",
+      "attempt_id": "01M3GA6BPS04R3DK2PRSVCHNBQ",
+      "accepted_commit": "b3226715737c8f1f688e38534ad3df09f5f7b44a",
+      "location": "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GA5QZ32P7BNSB3QCFRGHEX/step-2-round-1/round-1-attempt-1",
+      "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+      "brief_sha256": "2dcb3b55d35b632b80ae4f6aed42deb0a8eb253d00e5f707d27fecd08ffafcbf",
+      "pid": 1884,
+      "retry_number": 0
+    },
+    {
+      "packet_id": "01M3GA5QZ32P7BNSB3QCFRGHEX",
+      "child_id": "step-2-round-1.round-1-attempt-2.smoke",
+      "worker_id": "01M3GA5QZ32P7BNSB3QCFRGHEX:step-2-round-1:round-1-attempt-2:smoke",
+      "attempt_id": "01M3GA6BXAG8T9NYPR75FH9VT5",
+      "accepted_commit": "b3226715737c8f1f688e38534ad3df09f5f7b44a",
+      "location": "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GA5QZ32P7BNSB3QCFRGHEX/step-2-round-1/round-1-attempt-2",
+      "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+      "brief_sha256": "c19de68f682c477e5a074db2183bcbdf4c3e3821400095575d255e948459bbcd",
+      "pid": 1888,
+      "retry_number": 0
+    }
+  ],
+  "spend_usd": "0.037036000000"
+}
