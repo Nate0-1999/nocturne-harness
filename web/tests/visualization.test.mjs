@@ -43,7 +43,8 @@ test('farm folds the git store and spaces every other folder without overlap', (
   ...Array.from({ length: 30000 }, (_, i) => ({ path: `d${i % 60}/f${i}`, kind: 'file', bytes: 10 }))] }
   const started = performance.now()
   assert.equal(buildChambers(big).length, 3001)
-  assert.ok(performance.now() - started < 500)
+  // One pass: ~60 ms locally; the old per-refresh layout took 3.1 s on a tree this size (F122). Loose for slow CI.
+  assert.ok(performance.now() - started < 2000)
 })
 
 const at = (seconds) => new Date(Date.parse('2026-09-16T00:00:00Z') + seconds * 1000).toISOString()
