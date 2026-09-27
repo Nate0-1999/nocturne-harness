@@ -451,7 +451,7 @@ export function MemoryGate({
                           status={never ? 'Removed · never' : undefined}
                           action={
                             <>
-                              <Button variant="primary"
+                              <Button action={added ? "confirm" : "add"} iconOnly variant="primary"
                                 className="memory-card__add"
                                 type="button"
                                 data-testid="near-miss-toggle"
@@ -465,7 +465,7 @@ export function MemoryGate({
                               >
                                 <span aria-hidden="true">{added ? '✓' : '+'}</span>
                               </Button>
-                              <Button variant="danger"
+                              <Button action="delete" iconOnly variant="danger"
                                 className="memory-card__delete"
                                 type="button"
                                 data-testid="near-miss-never"
@@ -484,12 +484,12 @@ export function MemoryGate({
                               {confirmDeleteFor === card.memory_id && (
                                 <div className="memory-card__modifier" role="dialog" aria-label={`Permanently delete ${card.label}?`} data-testid="memory-delete-confirm">
                                   <span>Permanently delete?</span>
-                                  <Button variant="danger" type="button" autoFocus disabled={controlsDisabled}
+                                  <Button action="confirm" variant="danger" type="button" autoFocus disabled={controlsDisabled}
                                     data-tooltip-detail="Yes: this memory is never shown again."
                                     onClick={() => { toggleNearMissNever(card.memory_id); setConfirmDeleteFor(null) }}>
                                     Yes
                                   </Button>
-                                  <Button type="button" data-tooltip-detail="Keep the memory as it is." onClick={() => setConfirmDeleteFor(null)}>No</Button>
+                                  <Button action="close" type="button" data-tooltip-detail="Keep the memory as it is." onClick={() => setConfirmDeleteFor(null)}>No</Button>
                                 </div>
                               )}
                             </>
@@ -540,7 +540,7 @@ export function MemoryGate({
             </p>
           )}
           <div className="memory-gate__actions">
-            <Button variant="bare"
+            <Button action="stop" variant="bare"
               className="memory-gate__stop"
               type="button"
               data-testid="memory-gate-stop"
@@ -549,7 +549,7 @@ export function MemoryGate({
             >
               {cancelling ? 'Stopping…' : 'Stop run'}
             </Button>
-            <Button variant="bare"
+            <Button action={gate.stage === "review" ? "next" : resolutionAction === "edit" ? "save" : "remove"} variant="bare"
               className="memory-gate__continue"
               type="button"
               data-testid="memory-gate-continue"
@@ -565,7 +565,6 @@ export function MemoryGate({
                   : resolutionAction === 'edit'
                     ? 'Save correction'
                     : 'Expire memory'}
-              {!submitting && <span aria-hidden="true">↗</span>}
             </Button>
           </div>
         </footer>
@@ -618,7 +617,7 @@ function WrongResolutionEditor({
           role="group"
           aria-label="Choose how to resolve this wrong memory"
         >
-          <Button
+          <Button action="edit"
             type="button"
             data-testid="wrong-resolution-edit"
             aria-pressed={action === 'edit'}
@@ -726,7 +725,7 @@ function InjectedCard({
       status={removed ? `Removed · ${reason.replace('_', ' ')}` : undefined}
       action={
         <>
-          <Button
+          <Button action="remove" iconOnly
             ref={removeButtonRef}
             className="memory-card__remove"
             type="button"
@@ -754,7 +753,7 @@ function InjectedCard({
           >
             <span aria-hidden="true">×</span>
           </Button>
-          <Button variant="danger"
+          <Button action="delete" iconOnly variant="danger"
             className="memory-card__delete"
             type="button"
             data-testid="memory-delete"
@@ -777,12 +776,12 @@ function InjectedCard({
               data-testid="memory-delete-confirm"
             >
               <span>Permanently delete?</span>
-              <Button variant="danger" type="button" autoFocus disabled={disabled}
+              <Button action="confirm" variant="danger" type="button" autoFocus disabled={disabled}
                 data-tooltip-detail="Yes: this memory is never shown again."
                 onClick={() => onChooseReason(card.memory_id, 'never')}>
                 Yes
               </Button>
-              <Button type="button" disabled={disabled} data-tooltip-detail="Keep the memory as it is." onClick={onCloseConfirm}>
+              <Button action="close" type="button" disabled={disabled} data-tooltip-detail="Keep the memory as it is." onClick={onCloseConfirm}>
                 No
               </Button>
             </div>
@@ -811,7 +810,7 @@ function InjectedCard({
               >
                 Never
               </Button>
-              <Button type="button" disabled={disabled} onClick={onCloseModifier}>
+              <Button action="close" type="button" disabled={disabled} onClick={onCloseModifier}>
                 Cancel
               </Button>
             </div>
@@ -854,4 +853,3 @@ function MemoryCardFrame({ card, tone, status, action }: MemoryCardFrameProps) {
     </MemoryCard>
   )
 }
-
