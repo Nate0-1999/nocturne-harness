@@ -35,8 +35,10 @@ chart of the relevance features on hover; × and ×! with a confirmation.
    instruction a tip can carry, the status line that repeats the header.
    A label is one or two words in mono caps. Numbers are human
    (1.2K, $0.004, 3 min ago). Nothing explains itself twice.
-3. CONTROLS. One button style, three sizes (row, module, primary). EVERY
-   button carries an icon from the one set: icon + word on primary and
+3. CONTROLS. One button style, three sizes (row, module, primary). A
+   button whose meaning people already know (send, stop, add, remove,
+   delete, refresh, open, settings, play, pause) carries an icon from
+   the one set; an unusual action keeps its word, no invented icon: icon + word on primary and
    module buttons, icon alone with a tip on row and toolbar actions; the
    same meaning always gets the same icon (owner, 2026-09-26).
    Chamfered corners: `clip-path: polygon(...)` cutting 6px off two
