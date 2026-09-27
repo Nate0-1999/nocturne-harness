@@ -1,0 +1,12 @@
+Impact bell: M3OR -> /private/tmp/m3or-or27/spine/verification/m3or/impacted.json
+  FL-195: The feature ledger generates coverage reports and requires evidence for the rows affected by a build. [PROTECTED: flagged corner only]
+  FL-196: The rules machine checks citations, frozen law, product vocabulary, seed states and packet precedents. [PROTECTED: flagged corner only]
+  Unmapped: spine/openapi.json (add a row or declare no feature impact)
+  Unmapped: spine/src/spine/__init__.py (add a row or declare no feature impact)
+  Unmapped: spine/tests/test_packaging.py (add a row or declare no feature impact)
+  Unmapped: spine/verification/m3or/SHA256SUMS (add a row or declare no feature impact)
+  Unmapped: spine/verification/m3or/ledger-report.json (add a row or declare no feature impact)
+  Unmapped: spine/verification/m3or/memory-tests.log (add a row or declare no feature impact)
+FL-195: needs PASS, FAIL or UNCHANGED; missing screenshot FL-195.png
+FL-196: needs PASS, FAIL or UNCHANGED; missing screenshot FL-196.png
+Work in progress: evidence is required at the DONE handoff.

@@ -1,0 +1,647 @@
+{
+  "symphony_id": "01M3GAFGCANWSP85ZMA0GJTF1S",
+  "thread_id": "c1c144d4-d7a2-4d06-95e7-d98dcf928e2d",
+  "state": "blocked",
+  "execution_kind": "supervised",
+  "launch": {
+    "draft_id": "01M3GAFG8KEWSVSW51PQ7RS9G1",
+    "objective": "Build a tiny Python slug function with two ordered steps in this disposable verification project.",
+    "motivation": "Verify real Symphony workers, preserved accepted work, and judge feedback retries on public 0.1.35.",
+    "recipe": [
+      {
+        "step_id": "foundation",
+        "title": "Create marker.py with TOKEN = \"OR27_FOUNDATION\". Do not implement slug.py in this step.",
+        "done_when": "marker.py imports and TOKEN is OR27_FOUNDATION.",
+        "search": false,
+        "stratagems": []
+      },
+      {
+        "step_id": "slug",
+        "title": "Create slug.py exporting slug(text), lowercase words separated by exactly one hyphen; trim all whitespace; empty or whitespace input returns empty. Keep marker.py unchanged. Return one atomic lesson about normalization in your memories.",
+        "done_when": "python -c \"from marker import TOKEN; from slug import slug; assert TOKEN == 'OR27_FOUNDATION'; assert slug('  Copper   Orchid  ') == 'copper-orchid'; assert slug(' \\t ') == ''\" exits 0.",
+        "search": true,
+        "stratagems": [
+          "Baseline fault injection for retry verification: on the first completion only use text.strip().lower(), intentionally omitting whitespace joining. When judge feedback exists, implement the full contract using split and hyphen join. Smoke readiness needs only the Python interpreter.",
+          "Weak approach requires the nonexistent or27_missing_slug_backend module. At smoke stage run python -c \"import or27_missing_slug_backend\" and fail readiness if absent. Do not install it."
+        ]
+      }
+    ],
+    "judge_charters": [
+      {
+        "seat": "motivation",
+        "rubric": [
+          "Judge only the current recipe step against its done_when. Verify actual files. Foundation does not require slug.py."
+        ],
+        "evidence_requirements": [
+          "Actual candidate paths and current-step validation output"
+        ],
+        "metrics": []
+      },
+      {
+        "seat": "implementation",
+        "rubric": [
+          "Judge only the current step. For foundation require the exact constant. For slug run the exact done_when command; wrong whitespace joining is FAIL and feedback must request split and hyphen join."
+        ],
+        "evidence_requirements": [
+          "Actual candidate files and test output"
+        ],
+        "metrics": []
+      },
+      {
+        "seat": "performance",
+        "rubric": [
+          "Execute current-step checks. Foundation: import marker and assert exact TOKEN. Slug: run its exact done_when command. Do not edit."
+        ],
+        "evidence_requirements": [
+          "Current-step command and exit status"
+        ],
+        "metrics": [
+          "Current step acceptance command exits 0"
+        ]
+      }
+    ],
+    "authority": {
+      "attempts": 2,
+      "spend_wall_usd": "2",
+      "max_rounds": 3,
+      "depth_cap": 2,
+      "children_per_attempt": 0,
+      "duration_minutes": 15,
+      "signed": true
+    },
+    "hold_for_steering": false
+  },
+  "search_step_ids": [
+    "slug"
+  ],
+  "charter_digests": [
+    "6943efd22053d91ffc6ad6f723bee1fd433d46bfd851d6da9e92a4dda6e5f4e7",
+    "6bac863e4f8308aeea832c0c63fad9f88bcecad03444a802e64d90548fb2cbec",
+    "260a18d4a5661b5aeca97992617c7aa12b3ddad6a723bf8c437fd68b75d8a8cc"
+  ],
+  "timeline": [
+    "deliberation_ratified",
+    "authority_signed",
+    "execution_requested",
+    "step-1-round-1:workers_started",
+    "step-1-round-1:judged",
+    "step-2-round-1:workers_started",
+    "step-2-round-1:judged",
+    "step-2-round-2:workers_started",
+    "step-2-round-2:judged",
+    "step-2-round-3:workers_started",
+    "blocked"
+  ],
+  "attempts": [
+    {
+      "attempt_id": "round-3-attempt-1",
+      "state": "stopped",
+      "cancellation": "none",
+      "follow_ups": [],
+      "partial_evidence": [
+        "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GAFGCANWSP85ZMA0GJTF1S/step-2-round-3/round-3-attempt-1"
+      ],
+      "memories_admitted": false
+    },
+    {
+      "attempt_id": "round-3-attempt-2",
+      "state": "stopped",
+      "cancellation": "none",
+      "follow_ups": [],
+      "partial_evidence": [
+        "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GAFGCANWSP85ZMA0GJTF1S/step-2-round-3/round-3-attempt-2"
+      ],
+      "memories_admitted": false
+    }
+  ],
+  "interventions": [],
+  "forked_from": null,
+  "forked_to": null,
+  "blocked_reason": "[Errno 2] No such file or directory: '/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GAFGCANWSP85ZMA0GJTF1S/step-2-round-3/judge-performance/judge-verdict.json'",
+  "result": null,
+  "completed_at": null,
+  "evidence": [
+    {
+      "packet_id": "01M3GAFGCANWSP85ZMA0GJTF1S",
+      "child_id": "step-1-round-1.round-1-attempt-1.smoke",
+      "worker_id": "01M3GAFGCANWSP85ZMA0GJTF1S:step-1-round-1:round-1-attempt-1:smoke",
+      "attempt_id": "01M3GAFGF1P4FFWXSPZEQYJMJQ",
+      "accepted_commit": "254c1d16d063348b13ea9560be75ec22193825ef",
+      "location": "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GAFGCANWSP85ZMA0GJTF1S/step-1-round-1/round-1-attempt-1",
+      "model_policy": "pinned:openrouter:openai/gpt-4.1",
+      "brief_sha256": "f1b0130fb07fa701236cb8f8acbe3b8948a1deb85f215cd4bdbf96aecfa5eac4",
+      "pid": 5071,
+      "retry_number": 0
+    },
+    {
+      "schema_version": 1,
+      "packet_id": "01M3GAFGCANWSP85ZMA0GJTF1S",
+      "search_child_id": "step-1-round-1",
+      "status": "unanimous_pass",
+      "winner_attempt_id": "round-1-attempt-1",
+      "evidence_sha256": "f3f315a89edbeb94dd80d8b46ef58a5709aaf5f70e25fcd2f24227c4d9e227f4",
+      "verdicts": [
+        {
+          "schema_version": 1,
+          "seat": "motivation",
+          "judge_session_id": "01M3GAFS500DVEPC48PEYD2NJG",
+          "charter_sha256": "08ec5c81b7a4531b60e99fc98aa0018ab01163b93b115ae4d78c58683bb13342",
+          "evidence_sha256": "9074b65242331a46487a8e597e9b87096b14107c7c4d6df33a110cdf33afa7a1",
+          "outcome": "pass",
+          "selected_attempt_id": "round-1-attempt-1",
+          "rationale": "The judging charter for the motivation seat specifies to judge only the current recipe step (step 1) against its done_when, and to verify the actual candidate files. For this foundation step, 'slug.py' is not required, so its presence or absence is not relevant. The done_when requires marker.py to exist, define TOKEN exactly as 'OR27_FOUNDATION', and be importable with the correct TOKEN exposed. The claims for round-1-attempt-1 state that marker.py exists, defines TOKEN as required, and can be imported successfully. The smoke and distillate both align with these requirements and cite marker.py directly as evidence. There are no uncertainties, and actual candidate files are referenced. Thus, the submission meets all motivation charter requirements.",
+          "evidence_refs": [
+            "marker.py",
+            "Directory entries: __pycache__/, .git, marker.py, slug.py (marker.py is present, but editable, as output is to be created or replaced)."
+          ],
+          "feedback": [],
+          "metrics": []
+        },
+        {
+          "schema_version": 1,
+          "seat": "implementation",
+          "judge_session_id": "01M3GAFS6GH51RPN63R8AYX5G0",
+          "charter_sha256": "38c867fa04da2361986404b3f10f540490db5dee732c3b957489c8c54d5e4074",
+          "evidence_sha256": "cefd8749d4f61ee00f5984b1d0a658bf7989a3621173ff76792f85215db6db8d",
+          "outcome": "pass",
+          "selected_attempt_id": "round-1-attempt-1",
+          "rationale": "The candidate's marker.py file exists and defines TOKEN exactly as 'OR27_FOUNDATION', meeting the charter's implementation criterion for this foundation step. The distillate and smoke evidence confirm the correct file is present and importable, with the exact content required. No slug.py implementation is required in this step. No deviation from whitespace or content is evident in the implementation, matching the rubric\u2019s requirement for an exact constant value. The evidence provided is sufficient and relevant per the seat\u2019s evidence requirements. No metrics need to be returned for the implementation seat.",
+          "evidence_refs": [
+            "marker.py"
+          ],
+          "feedback": [],
+          "metrics": []
+        },
+        {
+          "schema_version": 1,
+          "seat": "performance",
+          "judge_session_id": "01M3GAFS7BQJQKCPSCGW5F4QJH",
+          "charter_sha256": "f0af59e8530f66f78ffce59af44bc5bb8497b8b07a61c7eb58ca35fb90667b4a",
+          "evidence_sha256": "3ca510fd1be7872f3afd3d4efff0e6ec5714f7a1d8f253f3a59d4f4633cf3f43",
+          "outcome": "pass",
+          "selected_attempt_id": "round-1-attempt-1",
+          "rationale": "The performance charter requires that the foundation step is checked by importing marker.py and asserting the TOKEN is exactly 'OR27_FOUNDATION'; the metric is that the acceptance command (import check) exits 0. Based on the provided candidate's artifact marker.py and supporting claims, marker.py defines the correct constant, is importable, and exposes TOKEN exactly. These results reflect correct execution with an exit status of 0, and meet all rubric and metric requirements for this step.",
+          "evidence_refs": [
+            "marker.py",
+            "/private/tmp/m3or-or27/home/symphonies/01M3GAFGCANWSP85ZMA0GJTF1S/step-1-round-1/round-1-attempt-1/completion/meter.json"
+          ],
+          "feedback": [],
+          "metrics": [
+            {
+              "metric": "Current step acceptance command exits 0",
+              "observed": "marker.py imports and exposes TOKEN = 'OR27_FOUNDATION' with no error, acceptance command exits 0.",
+              "passed": true,
+              "evidence_ref": "/private/tmp/m3or-or27/home/symphonies/01M3GAFGCANWSP85ZMA0GJTF1S/step-1-round-1/round-1-attempt-1/completion/meter.json"
+            }
+          ]
+        }
+      ],
+      "attempt_lineage": [
+        {
+          "attempt_id": "round-1-attempt-1",
+          "approach": "Direct: implement the simplest solution from the acceptance criteria.",
+          "artifact_root": "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GAFGCANWSP85ZMA0GJTF1S/step-1-round-1/round-1-attempt-1",
+          "accepted_commit": "254c1d16d063348b13ea9560be75ec22193825ef",
+          "status": "completed",
+          "smoke": {
+            "schema_version": 1,
+            "status": "pass",
+            "score": "1",
+            "checks": [
+              "Workspace directory is present and accessible.",
+              "marker.py is absent, but this is expected since it is to be created by the proposed work.",
+              "No dependencies or special environment requirements for creating a file with a constant and importability check.",
+              "No implementation of slug.py is required for this step."
+            ],
+            "evidence_refs": [
+              "Directory entries: __pycache__/, .git, marker.py, slug.py (marker.py is present, but editable, as output is to be created or replaced)."
+            ]
+          },
+          "distillate": {
+            "schema_version": 1,
+            "status": "completed",
+            "claims": [
+              "marker.py exists and defines TOKEN exactly as 'OR27_FOUNDATION'.",
+              "marker.py can be successfully imported and exposes the correct TOKEN."
+            ],
+            "evidence_refs": [
+              "marker.py"
+            ],
+            "uncertainties": [],
+            "metrics_refs": [
+              "/private/tmp/m3or-or27/home/symphonies/01M3GAFGCANWSP85ZMA0GJTF1S/step-1-round-1/round-1-attempt-1/completion/meter.json"
+            ],
+            "artifacts": [
+              "marker.py"
+            ],
+            "patch": null,
+            "product": {
+              "kind": "commit",
+              "commit": "5d76fe39c74ef6aaaebfa86140e68439d8be07d5"
+            }
+          }
+        }
+      ],
+      "feedback_packets": []
+    },
+    {
+      "packet_id": "01M3GAFGCANWSP85ZMA0GJTF1S",
+      "child_id": "step-2-round-1.round-1-attempt-1.smoke",
+      "worker_id": "01M3GAFGCANWSP85ZMA0GJTF1S:step-2-round-1:round-1-attempt-1:smoke",
+      "attempt_id": "01M3GAFXFHS8VWMMXT2AAHRS7C",
+      "accepted_commit": "5d76fe39c74ef6aaaebfa86140e68439d8be07d5",
+      "location": "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GAFGCANWSP85ZMA0GJTF1S/step-2-round-1/round-1-attempt-1",
+      "model_policy": "pinned:openrouter:openai/gpt-4.1",
+      "brief_sha256": "fdf09ac5e86db7bb8290b19cc12725ff43aa684249ed0e5fe163e44f4257663a",
+      "pid": 5276,
+      "retry_number": 0
+    },
+    {
+      "packet_id": "01M3GAFGCANWSP85ZMA0GJTF1S",
+      "child_id": "step-2-round-1.round-1-attempt-2.smoke",
+      "worker_id": "01M3GAFGCANWSP85ZMA0GJTF1S:step-2-round-1:round-1-attempt-2:smoke",
+      "attempt_id": "01M3GAFXK46D8XCPPPYMTG3Z7S",
+      "accepted_commit": "5d76fe39c74ef6aaaebfa86140e68439d8be07d5",
+      "location": "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GAFGCANWSP85ZMA0GJTF1S/step-2-round-1/round-1-attempt-2",
+      "model_policy": "pinned:openrouter:openai/gpt-4.1",
+      "brief_sha256": "4ff6a7800840e78ba2fbb9a4d8632a2eb45138089c087e6e512e31d53267f51d",
+      "pid": 5278,
+      "retry_number": 0
+    },
+    {
+      "schema_version": 1,
+      "packet_id": "01M3GAFGCANWSP85ZMA0GJTF1S",
+      "search_child_id": "step-2-round-1",
+      "status": "failed_judgment",
+      "winner_attempt_id": null,
+      "evidence_sha256": "66d5a68ee2eb2a58c5f0ffaf4a799aca5bb88a882afc5713f151e8b1adcdd28d",
+      "verdicts": [
+        {
+          "schema_version": 1,
+          "seat": "motivation",
+          "judge_session_id": "01M3GAG1TM863QBEH3R854Y7XP",
+          "charter_sha256": "08ec5c81b7a4531b60e99fc98aa0018ab01163b93b115ae4d78c58683bb13342",
+          "evidence_sha256": "525a6faeeea901e80b7fec13068765f46094523af49780a2168d4ef35bf0d06e",
+          "outcome": "fail",
+          "selected_attempt_id": null,
+          "rationale": "No candidates are listed for evaluation in this step. According to the charter's rubric and requirements, I must judge only the listed candidates; none are available to be verified against their done_when criteria or to examine actual files. Therefore, the assessment cannot proceed.",
+          "evidence_refs": [
+            "JUDGE_BRIEF.json"
+          ],
+          "feedback": [
+            {
+              "problem": "No candidate attempts are present for the judge to evaluate.",
+              "desired_observation": "Provide or properly reference at least one candidate attempt with its artifacts for evaluation.",
+              "evidence_refs": [
+                "JUDGE_BRIEF.json"
+              ]
+            }
+          ],
+          "metrics": []
+        },
+        {
+          "schema_version": 1,
+          "seat": "implementation",
+          "judge_session_id": "01M3GAG1VF8BS8Y9NK11DEQAXK",
+          "charter_sha256": "38c867fa04da2361986404b3f10f540490db5dee732c3b957489c8c54d5e4074",
+          "evidence_sha256": "70215815626d5dfbae4dcc649fd4c416c90e57bdbef955a66d28eed81b5c525e",
+          "outcome": "fail",
+          "selected_attempt_id": null,
+          "rationale": "There are no listed candidates available for evaluation in the current judging round. According to the provided instructions and rubric, candidates must be listed and their artifact roots must be inspected and judged. Since no candidates exist, the judge cannot proceed with inspection or validation, and must return FAIL. Repair feedback must cite the missing candidates using the evidence from JUDGE_BRIEF.json.",
+          "evidence_refs": [
+            "JUDGE_BRIEF.json"
+          ],
+          "feedback": [
+            {
+              "problem": "No candidate attempts are available for implementation judging in this round.",
+              "desired_observation": "Provide at least one listed candidate attempt with artifact_root for implementation seat inspection and validation.",
+              "evidence_refs": [
+                "JUDGE_BRIEF.json"
+              ]
+            }
+          ],
+          "metrics": []
+        },
+        {
+          "schema_version": 1,
+          "seat": "performance",
+          "judge_session_id": "01M3GAG1WA7VYKQYBVRPWX13S0",
+          "charter_sha256": "f0af59e8530f66f78ffce59af44bc5bb8497b8b07a61c7eb58ca35fb90667b4a",
+          "evidence_sha256": "0b1005a58eeedcb643a6ed11b11e9f9076b18c622d8f6f506d5ec14bcdfafae9",
+          "outcome": "fail",
+          "selected_attempt_id": null,
+          "rationale": "No remaining candidates are listed for assessment for the current judging round. According to the supplied charters and judge instructions, if no candidates remain, the correct judgment is FAIL with repair feedback, referencing the missing candidates as documented in JUDGE_BRIEF.json.",
+          "evidence_refs": [
+            "JUDGE_BRIEF.json"
+          ],
+          "feedback": [
+            {
+              "problem": "No artifact roots for candidate attempts are present for this round's review, so required performance checks cannot be run.",
+              "desired_observation": "Ensure candidate artifact roots are listed so the judge can inspect files and execute acceptance commands per the charter.",
+              "evidence_refs": [
+                "JUDGE_BRIEF.json"
+              ]
+            }
+          ],
+          "metrics": [
+            {
+              "metric": "Current step acceptance command exits 0",
+              "observed": "No candidate present\u2014current step acceptance command not run.",
+              "passed": false,
+              "evidence_ref": "JUDGE_BRIEF.json"
+            }
+          ]
+        }
+      ],
+      "attempt_lineage": [
+        {
+          "attempt_id": "round-1-attempt-1",
+          "approach": "Baseline fault injection for retry verification: on the first completion only use text.strip().lower(), intentionally omitting whitespace joining. When judge feedback exists, implement the full contract using split and hyphen join. Smoke readiness needs only the Python interpreter.",
+          "artifact_root": "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GAFGCANWSP85ZMA0GJTF1S/step-2-round-1/round-1-attempt-1",
+          "accepted_commit": "5d76fe39c74ef6aaaebfa86140e68439d8be07d5",
+          "status": "failed",
+          "smoke": {
+            "schema_version": 1,
+            "status": "pass",
+            "score": "1",
+            "checks": [
+              "Workspace is an isolated worktree as required.",
+              "Directory contains marker.py and slug.py as expected.",
+              "Python interpreter is required and implicitly available for running the specified python -c command.",
+              "No required input files or dependencies are missing for the baseline implementation\u2014the baseline can be completed with local resources.",
+              "Judge rubric and stratagem confirm no extra infrastructure or inputs are prerequisites."
+            ],
+            "evidence_refs": [
+              "marker.py",
+              "slug.py"
+            ]
+          },
+          "distillate": {
+            "schema_version": 1,
+            "status": "failed",
+            "claims": [],
+            "evidence_refs": [
+              "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GAFGCANWSP85ZMA0GJTF1S/step-2-round-1/round-1-attempt-1"
+            ],
+            "uncertainties": [
+              "Worker stopped without a completed result; partial files have not passed judges."
+            ],
+            "metrics_refs": [],
+            "artifacts": [],
+            "patch": null,
+            "product": {
+              "kind": "commit",
+              "commit": "5d76fe39c74ef6aaaebfa86140e68439d8be07d5"
+            }
+          }
+        },
+        {
+          "attempt_id": "round-1-attempt-2",
+          "approach": "Weak approach requires the nonexistent or27_missing_slug_backend module. At smoke stage run python -c \"import or27_missing_slug_backend\" and fail readiness if absent. Do not install it.",
+          "artifact_root": "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GAFGCANWSP85ZMA0GJTF1S/step-2-round-1/round-1-attempt-2",
+          "accepted_commit": "5d76fe39c74ef6aaaebfa86140e68439d8be07d5",
+          "status": "smoke_failed",
+          "smoke": {
+            "schema_version": 1,
+            "status": "fail",
+            "score": "0",
+            "checks": [
+              "Workspace is present and isolated",
+              "marker.py and slug.py are present, fulfilling required inputs",
+              "Stratagem names or27_missing_slug_backend as a prerequisite",
+              "Checked for importability of or27_missing_slug_backend module using python -c \"import or27_missing_slug_backend\"; module does not exist in workspace or environment"
+            ],
+            "evidence_refs": [
+              "ls:.",
+              "python -c \"import or27_missing_slug_backend\" (module not found error)"
+            ]
+          },
+          "distillate": null
+        }
+      ],
+      "feedback_packets": [
+        {
+          "packet_id": "FB9321EA5686520C3704C9",
+          "bead_id": "FB9321EA5686520C3704C9",
+          "charge_digest": "fe3b4a9a52c5fc8683e0cb4e0546a0a7a93da9d5b364e60f74ca5b931db94ed0",
+          "minter_role": "judge"
+        }
+      ]
+    },
+    {
+      "packet_id": "01M3GAFGCANWSP85ZMA0GJTF1S",
+      "child_id": "step-2-round-2.round-2-attempt-1.smoke",
+      "worker_id": "01M3GAFGCANWSP85ZMA0GJTF1S:step-2-round-2:round-2-attempt-1:smoke",
+      "attempt_id": "01M3GAG5T91QETEGC3RXK5JMJ5",
+      "accepted_commit": "5d76fe39c74ef6aaaebfa86140e68439d8be07d5",
+      "location": "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GAFGCANWSP85ZMA0GJTF1S/step-2-round-2/round-2-attempt-1",
+      "model_policy": "pinned:openrouter:openai/gpt-4.1",
+      "brief_sha256": "62f83a980094f9e83de9b5998295b0490d8f1da7d9d43e3ecc9fcac86f71318a",
+      "pid": 5385,
+      "retry_number": 0
+    },
+    {
+      "packet_id": "01M3GAFGCANWSP85ZMA0GJTF1S",
+      "child_id": "step-2-round-2.round-2-attempt-2.smoke",
+      "worker_id": "01M3GAFGCANWSP85ZMA0GJTF1S:step-2-round-2:round-2-attempt-2:smoke",
+      "attempt_id": "01M3GAG5V34RM89VT1VHGCQK31",
+      "accepted_commit": "5d76fe39c74ef6aaaebfa86140e68439d8be07d5",
+      "location": "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GAFGCANWSP85ZMA0GJTF1S/step-2-round-2/round-2-attempt-2",
+      "model_policy": "pinned:openrouter:openai/gpt-4.1",
+      "brief_sha256": "a8a397fd14b0a64e131f40fd50e2cd3cb2cbf9dfae82b3961c2f8386560fa144",
+      "pid": 5387,
+      "retry_number": 0
+    },
+    {
+      "schema_version": 1,
+      "packet_id": "01M3GAFGCANWSP85ZMA0GJTF1S",
+      "search_child_id": "step-2-round-2",
+      "status": "failed_judgment",
+      "winner_attempt_id": null,
+      "evidence_sha256": "930d145af1e8519b50f19efd8fbf91c8bd6111075ecf687a60da7df820756f4c",
+      "verdicts": [
+        {
+          "schema_version": 1,
+          "seat": "motivation",
+          "judge_session_id": "01M3GAGF86G0N1R4BT97GKJ20Y",
+          "charter_sha256": "08ec5c81b7a4531b60e99fc98aa0018ab01163b93b115ae4d78c58683bb13342",
+          "evidence_sha256": "67a8740022ed29fd80c9b2030924250898e8a037fd15fd65ff8d0cd47d940062",
+          "outcome": "fail",
+          "selected_attempt_id": null,
+          "rationale": "According to the provided charter for the motivation seat, the judge must evaluate at least one candidate attempt with its artifacts and validation output, verifying actual files. However, both listed candidate attempts have artifact roots, but neither is present for evaluation in this session. The motivation explicitly states that no candidate attempts are present for the judge to evaluate. As such, no actual candidate paths or validation output were available for review, in violation of the charter's evidence requirements. Therefore, the assessment is FAIL.",
+          "evidence_refs": [
+            "JUDGE_BRIEF.json"
+          ],
+          "feedback": [
+            {
+              "problem": "No candidate attempts with artifacts are present for evaluation.",
+              "desired_observation": "Provide or properly reference at least one candidate attempt with its artifacts and validation output, including candidate paths for step validation by the judge.",
+              "evidence_refs": [
+                "JUDGE_BRIEF.json"
+              ]
+            }
+          ],
+          "metrics": []
+        },
+        {
+          "schema_version": 1,
+          "seat": "implementation",
+          "judge_session_id": "01M3GAGF904X13ASR9KE5B67H4",
+          "charter_sha256": "38c867fa04da2361986404b3f10f540490db5dee732c3b957489c8c54d5e4074",
+          "evidence_sha256": "a1ad5297e25d3dda45233e3e2bbfebe27954ab8be4deb9cb8e499f0af2e6be89",
+          "outcome": "fail",
+          "selected_attempt_id": null,
+          "rationale": "No candidate attempts are available for implementation judging in this round. The charter requires that the judge only review listed candidates. According to JUDGE_BRIEF.json, no valid candidates remain for implementation review; one failed at smoke due to a missing module and one is not available for inspection. This is explicitly called out in the motivation and briefing, confirming that the judge is unable to proceed with evaluation.",
+          "evidence_refs": [
+            "JUDGE_BRIEF.json"
+          ],
+          "feedback": [
+            {
+              "problem": "No candidate attempt with artifacts is available for implementation judging in this round.",
+              "desired_observation": "Provide or properly reference at least one candidate attempt with its artifacts for evaluation. Ensure candidate artifact roots are listed so implementation judging can inspect files and execute acceptance commands per the charter.",
+              "evidence_refs": [
+                "JUDGE_BRIEF.json"
+              ]
+            }
+          ],
+          "metrics": []
+        },
+        {
+          "schema_version": 1,
+          "seat": "performance",
+          "judge_session_id": "01M3GAGF9W74X9DYTJ2435ZKMH",
+          "charter_sha256": "f0af59e8530f66f78ffce59af44bc5bb8497b8b07a61c7eb58ca35fb90667b4a",
+          "evidence_sha256": "095ad85bbf40be7abe3c0c2946a7f35246d36dece836d486d5cc30dbcaf9e24a",
+          "outcome": "fail",
+          "selected_attempt_id": null,
+          "rationale": "No candidate attempts with inspectable artifact roots are available for the performance judge, as listed in the current packet. Per the charter, at least one candidate attempt with available files must be provided for evaluation. The provided JUDGE_BRIEF.json indicates no suitable candidates are present for performance checks or for running the required step acceptance commands. This constitutes a failure due to missing evidence required by the charter.",
+          "evidence_refs": [
+            "JUDGE_BRIEF.json"
+          ],
+          "feedback": [
+            {
+              "problem": "No candidate attempt artifact roots are present for inspection and execution of performance criteria.",
+              "desired_observation": "Ensure at least one candidate artifact_root is properly listed and contains the necessary files for step acceptance checks. The performance judge must be able to enter the candidate workspace and execute the charter's acceptance command.",
+              "evidence_refs": [
+                "JUDGE_BRIEF.json"
+              ]
+            }
+          ],
+          "metrics": [
+            {
+              "metric": "Current step acceptance command exits 0",
+              "observed": "No command executed, as there are no candidate artifact roots available.",
+              "passed": false,
+              "evidence_ref": "JUDGE_BRIEF.json"
+            }
+          ]
+        }
+      ],
+      "attempt_lineage": [
+        {
+          "attempt_id": "round-2-attempt-1",
+          "approach": "Baseline fault injection for retry verification: on the first completion only use text.strip().lower(), intentionally omitting whitespace joining. When judge feedback exists, implement the full contract using split and hyphen join. Smoke readiness needs only the Python interpreter.",
+          "artifact_root": "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GAFGCANWSP85ZMA0GJTF1S/step-2-round-2/round-2-attempt-1",
+          "accepted_commit": "5d76fe39c74ef6aaaebfa86140e68439d8be07d5",
+          "status": "failed",
+          "smoke": {
+            "schema_version": 1,
+            "status": "pass",
+            "score": "1",
+            "checks": [
+              "Workspace is present and accessible in the correct isolated worktree directory.",
+              "Python interpreter is assumed available for running the test command.",
+              "Required input file marker.py exists in the directory.",
+              "No external dependencies or input files required for proposed work.",
+              "No forbidden files to exclude, per recipe directions.",
+              "Prior judge repair requests do not block readiness and are executed after readiness passes.",
+              "No missing prerequisites: slug.py is to be created by the proposal, not required a priori."
+            ],
+            "evidence_refs": [
+              "marker.py",
+              "slug.py (to be created)"
+            ]
+          },
+          "distillate": {
+            "schema_version": 1,
+            "status": "failed",
+            "claims": [
+              "Created slug.py with a minimal slug function using only strip and lower, intentionally omitting joining words by hyphens per stratagem."
+            ],
+            "evidence_refs": [
+              "slug.py"
+            ],
+            "uncertainties": [
+              "Test for slug() could not execute because python was not found in the environment. Unknown if the code would otherwise run."
+            ],
+            "metrics_refs": [
+              "/private/tmp/m3or-or27/home/symphonies/01M3GAFGCANWSP85ZMA0GJTF1S/step-2-round-2/round-2-attempt-1/completion/meter.json"
+            ],
+            "artifacts": [
+              "slug.py"
+            ],
+            "patch": null,
+            "product": {
+              "kind": "commit",
+              "commit": "40073c502bf1f9459eae6f2f9187bc54b0dd26e6"
+            }
+          }
+        },
+        {
+          "attempt_id": "round-2-attempt-2",
+          "approach": "Weak approach requires the nonexistent or27_missing_slug_backend module. At smoke stage run python -c \"import or27_missing_slug_backend\" and fail readiness if absent. Do not install it.",
+          "artifact_root": "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GAFGCANWSP85ZMA0GJTF1S/step-2-round-2/round-2-attempt-2",
+          "accepted_commit": "5d76fe39c74ef6aaaebfa86140e68439d8be07d5",
+          "status": "smoke_failed",
+          "smoke": {
+            "schema_version": 1,
+            "status": "fail",
+            "score": "0",
+            "checks": [
+              "Required workspace and input files found.",
+              "Proposed stratagem requires that the (likely nonexistent) or27_missing_slug_backend module be checked at smoke stage. Will attempt import."
+            ],
+            "evidence_refs": [
+              "marker.py",
+              "slug.py"
+            ]
+          },
+          "distillate": null
+        }
+      ],
+      "feedback_packets": [
+        {
+          "packet_id": "FBF4DD3542C3A90C929824",
+          "bead_id": "FBF4DD3542C3A90C929824",
+          "charge_digest": "fca33b221218c1c60f2e1018b6c7cc6a63d09d6e54f8c8669e4b6deead5dd39d",
+          "minter_role": "judge"
+        }
+      ]
+    },
+    {
+      "packet_id": "01M3GAFGCANWSP85ZMA0GJTF1S",
+      "child_id": "step-2-round-3.round-3-attempt-1.smoke",
+      "worker_id": "01M3GAFGCANWSP85ZMA0GJTF1S:step-2-round-3:round-3-attempt-1:smoke",
+      "attempt_id": "01M3GAGKA7GFZMGZMVNSJTAC08",
+      "accepted_commit": "5d76fe39c74ef6aaaebfa86140e68439d8be07d5",
+      "location": "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GAFGCANWSP85ZMA0GJTF1S/step-2-round-3/round-3-attempt-1",
+      "model_policy": "pinned:openrouter:openai/gpt-4.1",
+      "brief_sha256": "3f47d8a8b0b3638162d9a42f1ec767280f656005a8af047f404493ce14690019",
+      "pid": 5583,
+      "retry_number": 0
+    },
+    {
+      "packet_id": "01M3GAFGCANWSP85ZMA0GJTF1S",
+      "child_id": "step-2-round-3.round-3-attempt-2.smoke",
+      "worker_id": "01M3GAFGCANWSP85ZMA0GJTF1S:step-2-round-3:round-3-attempt-2:smoke",
+      "attempt_id": "01M3GAGKB1BZSK758BF315MADT",
+      "accepted_commit": "5d76fe39c74ef6aaaebfa86140e68439d8be07d5",
+      "location": "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GAFGCANWSP85ZMA0GJTF1S/step-2-round-3/round-3-attempt-2",
+      "model_policy": "pinned:openrouter:openai/gpt-4.1",
+      "brief_sha256": "b1f8d18833c93bb13142badcf7ca4a8afa82dccbce2fc91ec632ae486d45cb94",
+      "pid": 5585,
+      "retry_number": 0
+    }
+  ],
+  "spend_usd": "0.195480000000"
+}

@@ -3690,6 +3690,20 @@ renderer; collapsed chambers show exact file/folder counts and open on click.
 The folder browser pages all direct entries. This keeps the frame security
 policy intact and leaves Roots and Palace rendering unchanged.
 
+## M3OR — Continue after an unchanged attempt [P3, P4]
+
+The public 0.1.35 walk reached an empty-commit cherry-pick failure during
+judge feedback retries. Preserve redundant commits when grafting accepted
+attempts so their lineage survives without stopping continuation. The same
+walk found judges checking imports from their metadata directory; explicitly
+direct them to move into the candidate before running its checks. When worker
+death leaves no candidates, judges cite the sealed brief and return repair
+feedback rather than selecting an attempt that is absent from the panel.
+
+The resumed browser walk found archive extraction sending every durable
+snapshot of a Symphony message (1.77M input tokens). Extract the latest
+snapshot per message ID; retain the append-only journal and its final evidence.
+
 ## M3IC — Recognizable controls from one icon set [P2.5]
 
 PRECEDENT: PLAN M3IC / SD-069; M3UI control kit; M3TM theme tokens.

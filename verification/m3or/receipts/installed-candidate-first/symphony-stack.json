@@ -1,0 +1,122 @@
+{
+  "symphony_id": "01M3GAB1FHAGS9D3R51BVBHZBF",
+  "thread_id": "d58a068f-0575-4224-a528-3bb1a35af43a",
+  "state": "blocked",
+  "execution_kind": "supervised",
+  "launch": {
+    "draft_id": "01M3GAB1BY04GQSHJXA7287TCN",
+    "objective": "Build a tiny Python slug function with two ordered steps in this disposable verification project.",
+    "motivation": "Verify real Symphony workers, preserved accepted work, and judge feedback retries on public 0.1.35.",
+    "recipe": [
+      {
+        "step_id": "foundation",
+        "title": "Create marker.py with TOKEN = \"OR27_FOUNDATION\". Do not implement slug.py in this step.",
+        "done_when": "marker.py imports and TOKEN is OR27_FOUNDATION.",
+        "search": false,
+        "stratagems": []
+      },
+      {
+        "step_id": "slug",
+        "title": "Create slug.py exporting slug(text), lowercase words separated by exactly one hyphen; trim all whitespace; empty or whitespace input returns empty. Keep marker.py unchanged. Return one atomic lesson about normalization in your memories.",
+        "done_when": "python -c \"from marker import TOKEN; from slug import slug; assert TOKEN == 'OR27_FOUNDATION'; assert slug('  Copper   Orchid  ') == 'copper-orchid'; assert slug(' \\t ') == ''\" exits 0.",
+        "search": true,
+        "stratagems": [
+          "Baseline fault injection for retry verification: on the first completion only use text.strip().lower(), intentionally omitting whitespace joining. When judge feedback exists, implement the full contract using split and hyphen join. Smoke readiness needs only the Python interpreter.",
+          "Weak approach requires the nonexistent or27_missing_slug_backend module. At smoke stage run python -c \"import or27_missing_slug_backend\" and fail readiness if absent. Do not install it."
+        ]
+      }
+    ],
+    "judge_charters": [
+      {
+        "seat": "motivation",
+        "rubric": [
+          "Judge only the current recipe step against its done_when. Verify actual files. Foundation does not require slug.py."
+        ],
+        "evidence_requirements": [
+          "Actual candidate paths and current-step validation output"
+        ],
+        "metrics": []
+      },
+      {
+        "seat": "implementation",
+        "rubric": [
+          "Judge only the current step. For foundation require the exact constant. For slug run the exact done_when command; wrong whitespace joining is FAIL and feedback must request split and hyphen join."
+        ],
+        "evidence_requirements": [
+          "Actual candidate files and test output"
+        ],
+        "metrics": []
+      },
+      {
+        "seat": "performance",
+        "rubric": [
+          "Execute current-step checks. Foundation: import marker and assert exact TOKEN. Slug: run its exact done_when command. Do not edit."
+        ],
+        "evidence_requirements": [
+          "Current-step command and exit status"
+        ],
+        "metrics": [
+          "Current step acceptance command exits 0"
+        ]
+      }
+    ],
+    "authority": {
+      "attempts": 2,
+      "spend_wall_usd": "2",
+      "max_rounds": 3,
+      "depth_cap": 2,
+      "children_per_attempt": 0,
+      "duration_minutes": 15,
+      "signed": true
+    },
+    "hold_for_steering": false
+  },
+  "search_step_ids": [
+    "slug"
+  ],
+  "charter_digests": [
+    "6943efd22053d91ffc6ad6f723bee1fd433d46bfd851d6da9e92a4dda6e5f4e7",
+    "6bac863e4f8308aeea832c0c63fad9f88bcecad03444a802e64d90548fb2cbec",
+    "260a18d4a5661b5aeca97992617c7aa12b3ddad6a723bf8c437fd68b75d8a8cc"
+  ],
+  "timeline": [
+    "deliberation_ratified",
+    "authority_signed",
+    "execution_requested",
+    "step-1-round-1:workers_started",
+    "blocked"
+  ],
+  "attempts": [
+    {
+      "attempt_id": "round-1-attempt-1",
+      "state": "stopped",
+      "cancellation": "none",
+      "follow_ups": [],
+      "partial_evidence": [
+        "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GAB1FHAGS9D3R51BVBHZBF/step-1-round-1/round-1-attempt-1"
+      ],
+      "memories_admitted": false
+    }
+  ],
+  "interventions": [],
+  "forked_from": null,
+  "forked_to": null,
+  "blocked_reason": "[Errno 2] No such file or directory: '/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GAB1FHAGS9D3R51BVBHZBF/step-1-round-1/judge-performance/judge-verdict.json'",
+  "result": null,
+  "completed_at": null,
+  "evidence": [
+    {
+      "packet_id": "01M3GAB1FHAGS9D3R51BVBHZBF",
+      "child_id": "step-1-round-1.round-1-attempt-1.smoke",
+      "worker_id": "01M3GAB1FHAGS9D3R51BVBHZBF:step-1-round-1:round-1-attempt-1:smoke",
+      "attempt_id": "01M3GAB2M3EPSB9NE1364BRY3C",
+      "accepted_commit": "254c1d16d063348b13ea9560be75ec22193825ef",
+      "location": "/private/tmp/m3or-or27/project/.nocturne-worktrees/01M3GAB1FHAGS9D3R51BVBHZBF/step-1-round-1/round-1-attempt-1",
+      "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+      "brief_sha256": "e624a82e189aa3e8ae1c643402ec275d50996b9307393255b35aab521971e0e0",
+      "pid": 3883,
+      "retry_number": 0
+    }
+  ],
+  "spend_usd": "0.022235200000"
+}

@@ -1,0 +1,103 @@
+{
+  "status": "Fifteen-row browser acceptance complete",
+  "released_baseline": "0.1.36",
+  "candidate_source": "0eeda12 + paired 0.1.37 metadata",
+  "acceptance_complete": true,
+  "rows": {
+    "FL-075": {
+      "walk": "Queue a prompt during a run and interject once; the queued prompt runs after and the interjection steers the run.",
+      "verdict": "PASS",
+      "observed": "Public 0.1.36: Queue then Interject from the composer recorded one queued turn and accepted steering. The active response contains STEERED_OR27; the subsequent queued turn responded about QUEUED_OR27. Native transcript retained.",
+      "screenshot": "FL-075.png"
+    },
+    "FL-085": {
+      "walk": "Run a symphony; attempts run in worktrees, the judge's verdict against the spec appears, and the card returns to the human only after the judge says done.",
+      "verdict": "PASS",
+      "observed": "Browser-signed public 0.1.36 run 01M3J9QM4B3S6K1N7Y011MABTT completed. Candidate recovery run 01M3J9Y8RHVDPZ888TT7CZE503 returned to chat only after unanimous judges; result commit 9a62234cf586df57370137bfc1959bf626d8c743.",
+      "screenshot": "FL-085.png"
+    },
+    "FL-086": {
+      "walk": "Run one piece of work as a plain turn-by-turn chat and another as a symphony; both work.",
+      "verdict": "PASS",
+      "observed": "Real plain chat and real browser-signed Symphony both completed. Result card visible in the same conversation.",
+      "screenshot": "FL-086.png"
+    },
+    "FL-087": {
+      "walk": "Open the mode selector; Duet and Symphony are listed.",
+      "verdict": "PASS",
+      "observed": "Native Orchestration selector exposes Duet and Symphony; selecting Symphony opened the deliberation form.",
+      "screenshot": "FL-087.png"
+    },
+    "FL-088": {
+      "walk": "Start a symphony with more than one stratagem; separate attempts run from each at once.",
+      "verdict": "PASS",
+      "observed": "Two distinct strategy smoke workers launched in separate worktrees (PIDs 60224 and 60226 in recovery first round). Deck showed both attempts; supervisor receipts prove overlap.",
+      "screenshot": "FL-088.png"
+    },
+    "FL-089": {
+      "walk": "Open the config for Duet and for Symphony; each level has its own config.",
+      "verdict": "PASS",
+      "observed": "Opened Duet configuration (Agent policy) and Symphony configuration (Sub-agent and Judge policies), with the same pinned real GPT-4.1 model shown. Signed per-run authority fields were editable.",
+      "screenshot": "FL-089.png"
+    },
+    "FL-091": {
+      "walk": "Let a judge fail a round; new packets appear from the feedback and a fresh swarm runs, and the loop ends only when all judges pass.",
+      "verdict": "PASS",
+      "observed": "Intentional completion-worker death produced three FAIL judgments citing missing candidates, persisted repair feedback and fresh second-round attempts. All three seats then passed and released completion.",
+      "screenshot": "FL-091.png"
+    },
+    "FL-092": {
+      "walk": "Fire two agents at once and let one claim expire; both run together and the expired claim frees itself without a hand.",
+      "verdict": "PASS",
+      "observed": "Only identified disposable completion PID 60273 was SIGKILLed. Supervisor certified death and freed the process lease; a fresh round proceeded automatically while independent strategy work was supervised. See death-injection and supervisor events.",
+      "screenshot": "FL-092.png"
+    },
+    "FL-094": {
+      "walk": "Run a symphony; deliberation in chat, then the unattended run, then a judge review round that can send it round again.",
+      "verdict": "PASS",
+      "observed": "Selected Symphony in chat, entered two ordered steps, strategy lines, three charters, metric and authority, then signed via the browser. Autonomous work, judge rejection and next-round completion were visible in Deck.",
+      "screenshot": "FL-094.png"
+    },
+    "FL-095": {
+      "walk": "Mark a step as hard at deliberation; a search swarm runs on that step and prunes weak branches.",
+      "verdict": "PASS",
+      "observed": "Marked step 2 Search in the browser and entered direct and missing-backend strategies. Missing-backend smoke returned fail; that branch stopped and the direct branch proceeded.",
+      "screenshot": "FL-095.png"
+    },
+    "FL-096": {
+      "walk": "Run a symphony; its agents get injected memories and the run's extracted memories reach the Palace.",
+      "verdict": "PASS",
+      "observed": "Pinned disposable OR27 memory appears in worker context. Two judged winner lessons reached the real Palace approval queue and were visible in Memory Ingest. Pending approval is distinct from active admission.",
+      "screenshot": "FL-096.png"
+    },
+    "FL-097": {
+      "walk": "Start an implementation agent; its start-up context carries the component registry, which stems from the motivation tree.",
+      "verdict": "PASS",
+      "observed": "Implementation worker start-up messages include the component registry derived from SPEC problem nodes, alongside the memory injection. Context screenshot is the visible worker surface; raw messages are the registry proof.",
+      "screenshot": "FL-097.png"
+    },
+    "FL-099": {
+      "walk": "Let a judge fail one packet; round two re-runs only that packet while the passed work stands.",
+      "verdict": "PASS",
+      "observed": "Step-2-round-2 round-plan retains accepted foundation commit 2fc089b6af6f90e0881142c97e28a50bc4d92577 in passed_work and checkpoint_commit. Step 1 ran once; only step 2 retried.",
+      "screenshot": "FL-099.png"
+    },
+    "FL-103": {
+      "walk": "Click one agent; a panel opens with its context visualizer, its injected memories each with a pop-off, and suggestions of more memories to add.",
+      "verdict": "PASS",
+      "observed": "Clicked round-1-attempt-1 while its completion worker ran. The context visualizer showed system/history/memory/tool lanes and pinned memory. Pop off moved it to Suggestions and removed memories; Add saved add-back for the next request.",
+      "screenshot": "FL-103.png"
+    },
+    "FL-124": {
+      "walk": "Archive a thread, then open the memory graph and press the back control; the thread is gone from the list and the stage returns.",
+      "verdict": "PASS",
+      "observed": "Archive initially failed at 1.77M input tokens from 50 snapshots. Latest-per-message extraction reduced this to 4 messages, preserved final evidence and returned HTTP 200. Thread 7067272b disappeared. Back to stage closed the archive view; Graph opened and Work returned to the stage.",
+      "screenshot": "FL-124.png"
+    }
+  },
+  "browser": "Owner-authorized Playwright Chrome, disposable home only",
+  "runs": [
+    "01M3J9QM4B3S6K1N7Y011MABTT",
+    "01M3J9Y8RHVDPZ888TT7CZE503"
+  ]
+}

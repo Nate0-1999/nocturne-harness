@@ -234,6 +234,10 @@ async def run(assignment_path: Path) -> None:
         prompt += (
             f"\nYour current directory is {root}. Candidate artifact_root values are absolute "
             "paths; use them exactly as given. "
+            "Before running a candidate's checks, use move to enter its artifact_root. "
+            "Your starting directory contains judge metadata, not the candidate's files. "
+            "Judge only listed candidates. If none remain, return FAIL with repair feedback "
+            "citing JUDGE_BRIEF.json as evidence of the missing candidates; select no attempt. "
             "\nInspect the actual candidate files and run the charter's checks. "
             "Do not edit candidate work. Return your own assessment. "
             "A failed metric or missing evidence is FAIL."

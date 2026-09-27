@@ -137,6 +137,10 @@ async def test_archive_reads_durable_transcript_and_is_idempotent_per_tail(tmp_p
     journal = _journal(tmp_path / "transcripts", str(thread_id), datetime.now(UTC))
     agent = FakeAgent()
     spine = FakeSpine()
+    # Symphony progress appends snapshots of the same assistant message.
+    latest = journal.read_messages(str(thread_id))[-1]
+    latest["events"] = [{"event_kind": "symphony_result", "result": "accepted work"}]
+    journal.append_message(str(thread_id), latest, parent_id=latest.get("parentId"))
     service = ExtractionService(
         journal=journal,
         agent=agent,
@@ -153,6 +157,10 @@ async def test_archive_reads_durable_transcript_and_is_idempotent_per_tail(tmp_p
     assert first.already_extracted is False
     assert second.already_extracted is True
     assert len(agent.calls) == 1
+    extracted = json.loads(agent.calls[0])
+    assert len(extracted) == 2
+    assert extracted[-1]["events"] == latest["events"]
+    assert len(journal.read_messages(str(thread_id))) == 3
     assert len(spine.requests) == 1
     assert spine.requests[0].candidates[0].verdict == "new"
     assert journal.extracted_tail(str(thread_id)) == journal.transcript_tail(str(thread_id))

@@ -52,7 +52,11 @@ class ExtractionService:
 
     async def archive(self, thread_id: UUID) -> ThreadEndResult:
         text_id = str(thread_id)
-        messages = self._journal.read_messages(text_id)
+        messages = list(
+            {
+                message["message_id"]: message for message in self._journal.read_messages(text_id)
+            }.values()
+        )
         tail = self._journal.transcript_tail(text_id)
         if not messages or tail is None:
             return ThreadEndResult(thread_id, "", "", [], [], 0, False)

@@ -1,0 +1,31 @@
+{
+  "memory_id": "06d8e2c0-3dc0-4e34-b249-707b12191529",
+  "principal_id": "nocturne-verification-18ca7d93-7409-4103-a8cf-840b99dd75fb",
+  "label": "OR27 slug convention",
+  "body": "The OR27 slug convention lowercases words and joins whitespace-separated words with a hyphen. Copper Orchid becomes copper-orchid.",
+  "kind": "fact",
+  "keywords": [
+    "OR27",
+    "slug",
+    "convention"
+  ],
+  "project_key": null,
+  "thread_origin": null,
+  "origin_thread_id": null,
+  "origin_path": null,
+  "origin_location": null,
+  "pin": true,
+  "status": "active",
+  "revision": 2,
+  "stats": {
+    "removals": 0,
+    "citations": 0,
+    "injections": 0,
+    "never_kills": 0,
+    "last_injected_at": null
+  },
+  "bias": 0.0,
+  "embedding_model": "openai/text-embedding-3-small",
+  "created_at": "2026-09-27T02:08:18.205925Z",
+  "updated_at": "2026-09-27T02:08:18.668113Z"
+}

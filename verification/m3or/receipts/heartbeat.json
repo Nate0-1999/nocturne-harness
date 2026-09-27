@@ -1,0 +1,886 @@
+{
+  "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+  "events": [
+    {
+      "v": 1,
+      "id": "01M3G9T5CX3F7F3DWZJ0GM763D",
+      "ts": "2026-09-27T02:06:26.205140Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "thread.snapshot",
+      "payload": {
+        "messages": [],
+        "open_gate": null,
+        "active_run": null,
+        "project_key": "/private/tmp/m3or-or27/project",
+        "project_label": "project",
+        "workspace_root": "/private/tmp/m3or-or27/project",
+        "current_location": "/private/tmp/m3or-or27/project",
+        "request_id": "01M3G9T5CW003905JHBKB3SE21"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T5ENAK7DC8YF6Z97J07G",
+      "ts": "2026-09-27T02:06:26.261032Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.started",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "prompt_id": "01M3G9T5CXEJRYMPYCE80HNKJY",
+        "resolved_model": "openrouter:openai/gpt-4.1-mini",
+        "checkpoint": {
+          "commit": "929f6bf1cc97ba51e2041592c9685b60a5bf1f58",
+          "parent_id": null,
+          "location": "/private/tmp/m3or-or27/project"
+        }
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T5VT2VMJZWTANSSDSXVS",
+      "ts": "2026-09-27T02:06:26.682956Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "gate.open",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "memory_gate",
+        "stage": "review",
+        "injection_id": "aaca5c65-c3d2-4f61-8010-fd6ab352ed03",
+        "snapshot_ts": "2026-09-27T02:06:26.695776Z",
+        "scorer_version": "m3tl-where-v1",
+        "injected": [],
+        "near_misses": [],
+        "wrong_removed": [],
+        "resolution_error": null
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T5Y25MNDAW8404EB36FE",
+      "ts": "2026-09-27T02:06:26.754591Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "gate.dismiss",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T6WCCE6X0T98HRM0NYZ6",
+      "ts": "2026-09-27T02:06:27.724793Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "event",
+        "event": {
+          "index": 0,
+          "part": {
+            "tool_name": "bash",
+            "args": "",
+            "tool_call_id": "call_WVLgen6n1LFaHoVBN4jHnUDs",
+            "tool_kind": null,
+            "id": null,
+            "provider_name": null,
+            "provider_details": null,
+            "part_kind": "tool-call"
+          },
+          "previous_part_kind": null,
+          "event_kind": "part_start"
+        }
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T6WDATBBWX0TZN80MYQ8",
+      "ts": "2026-09-27T02:06:27.725301Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.usage",
+      "payload": {
+        "requests": 1,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T6WE6AF4794Q5VRZY6TJ",
+      "ts": "2026-09-27T02:06:27.726191Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "event",
+        "event": {
+          "index": 0,
+          "delta": {
+            "tool_name_delta": null,
+            "args_delta": "",
+            "tool_call_id": "call_WVLgen6n1LFaHoVBN4jHnUDs",
+            "provider_name": null,
+            "provider_details": null,
+            "part_delta_kind": "tool_call"
+          },
+          "event_kind": "part_delta"
+        }
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T6WEQCT8W7XSBTWP6KN5",
+      "ts": "2026-09-27T02:06:27.726837Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "event",
+        "event": {
+          "index": 0,
+          "delta": {
+            "tool_name_delta": null,
+            "args_delta": "{\"",
+            "tool_call_id": "call_WVLgen6n1LFaHoVBN4jHnUDs",
+            "provider_name": null,
+            "provider_details": null,
+            "part_delta_kind": "tool_call"
+          },
+          "event_kind": "part_delta"
+        }
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T6WFFX7FCEZYSCARPB83",
+      "ts": "2026-09-27T02:06:27.727375Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "event",
+        "event": {
+          "index": 0,
+          "delta": {
+            "tool_name_delta": null,
+            "args_delta": "command",
+            "tool_call_id": "call_WVLgen6n1LFaHoVBN4jHnUDs",
+            "provider_name": null,
+            "provider_details": null,
+            "part_delta_kind": "tool_call"
+          },
+          "event_kind": "part_delta"
+        }
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T6WF18QR6WF9FRH3P85S",
+      "ts": "2026-09-27T02:06:27.727882Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "event",
+        "event": {
+          "index": 0,
+          "delta": {
+            "tool_name_delta": null,
+            "args_delta": "\":\"",
+            "tool_call_id": "call_WVLgen6n1LFaHoVBN4jHnUDs",
+            "provider_name": null,
+            "provider_details": null,
+            "part_delta_kind": "tool_call"
+          },
+          "event_kind": "part_delta"
+        }
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T6WGH6Z5TB3CEXQ5FJ4D",
+      "ts": "2026-09-27T02:06:27.728368Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "event",
+        "event": {
+          "index": 0,
+          "delta": {
+            "tool_name_delta": null,
+            "args_delta": "pwd",
+            "tool_call_id": "call_WVLgen6n1LFaHoVBN4jHnUDs",
+            "provider_name": null,
+            "provider_details": null,
+            "part_delta_kind": "tool_call"
+          },
+          "event_kind": "part_delta"
+        }
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T6WGK227M4J61KD3541G",
+      "ts": "2026-09-27T02:06:27.728849Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "event",
+        "event": {
+          "index": 0,
+          "delta": {
+            "tool_name_delta": null,
+            "args_delta": "\",\"",
+            "tool_call_id": "call_WVLgen6n1LFaHoVBN4jHnUDs",
+            "provider_name": null,
+            "provider_details": null,
+            "part_delta_kind": "tool_call"
+          },
+          "event_kind": "part_delta"
+        }
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T6WHP0QEZTHFK23S6CJD",
+      "ts": "2026-09-27T02:06:27.729339Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "event",
+        "event": {
+          "index": 0,
+          "delta": {
+            "tool_name_delta": null,
+            "args_delta": "timeout",
+            "tool_call_id": "call_WVLgen6n1LFaHoVBN4jHnUDs",
+            "provider_name": null,
+            "provider_details": null,
+            "part_delta_kind": "tool_call"
+          },
+          "event_kind": "part_delta"
+        }
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T6WHNBA690Q6K4X3084M",
+      "ts": "2026-09-27T02:06:27.729812Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "event",
+        "event": {
+          "index": 0,
+          "delta": {
+            "tool_name_delta": null,
+            "args_delta": "\":",
+            "tool_call_id": "call_WVLgen6n1LFaHoVBN4jHnUDs",
+            "provider_name": null,
+            "provider_details": null,
+            "part_delta_kind": "tool_call"
+          },
+          "event_kind": "part_delta"
+        }
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T6X6QV0S5TG898V6RZQR",
+      "ts": "2026-09-27T02:06:27.750878Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "event",
+        "event": {
+          "index": 0,
+          "delta": {
+            "tool_name_delta": null,
+            "args_delta": "3",
+            "tool_call_id": "call_WVLgen6n1LFaHoVBN4jHnUDs",
+            "provider_name": null,
+            "provider_details": null,
+            "part_delta_kind": "tool_call"
+          },
+          "event_kind": "part_delta"
+        }
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T6X718A8T6M2RPGS5D0E",
+      "ts": "2026-09-27T02:06:27.751290Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "event",
+        "event": {
+          "index": 0,
+          "delta": {
+            "tool_name_delta": null,
+            "args_delta": "}",
+            "tool_call_id": "call_WVLgen6n1LFaHoVBN4jHnUDs",
+            "provider_name": null,
+            "provider_details": null,
+            "part_delta_kind": "tool_call"
+          },
+          "event_kind": "part_delta"
+        }
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T6ZBA1A68AVZ2700YDBQ",
+      "ts": "2026-09-27T02:06:27.819457Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "event",
+        "event": {
+          "index": 0,
+          "part": {
+            "tool_name": "bash",
+            "args": "{\"command\":\"pwd\",\"timeout\":3}",
+            "tool_call_id": "call_WVLgen6n1LFaHoVBN4jHnUDs",
+            "tool_kind": null,
+            "id": null,
+            "provider_name": null,
+            "provider_details": null,
+            "part_kind": "tool-call"
+          },
+          "next_part_kind": null,
+          "event_kind": "part_end"
+        }
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T6ZGRKZ98BYRNBSY5J6E",
+      "ts": "2026-09-27T02:06:27.824320Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "event",
+        "event": {
+          "part": {
+            "tool_name": "bash",
+            "args": "{\"command\":\"pwd\",\"timeout\":3}",
+            "tool_call_id": "call_WVLgen6n1LFaHoVBN4jHnUDs",
+            "tool_kind": null,
+            "id": null,
+            "provider_name": null,
+            "provider_details": null,
+            "part_kind": "tool-call"
+          },
+          "args_valid": true,
+          "event_kind": "function_tool_call"
+        }
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T6ZGDWK7JRCCDVDMYSX5",
+      "ts": "2026-09-27T02:06:27.824732Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.usage",
+      "payload": {
+        "requests": 1,
+        "input_tokens": 1211,
+        "output_tokens": 19,
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T71TMR28RYJ6TXVFA1X1",
+      "ts": "2026-09-27T02:06:27.898361Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "event",
+        "event": {
+          "part": {
+            "tool_name": "bash",
+            "content": "[stdout]\n/private/tmp/m3or-or27/project\n",
+            "tool_call_id": "call_WVLgen6n1LFaHoVBN4jHnUDs",
+            "tool_kind": null,
+            "metadata": null,
+            "timestamp": "2026-09-27T02:06:27.898230Z",
+            "outcome": "success",
+            "part_kind": "tool-return"
+          },
+          "content": null,
+          "event_kind": "function_tool_result"
+        }
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7RYHJ84HWXJ0F5SEXYN",
+      "ts": "2026-09-27T02:06:28.638827Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": "The"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7S0KY2A8MJ1DXHXJB8G",
+      "ts": "2026-09-27T02:06:28.640916Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.usage",
+      "payload": {
+        "requests": 2,
+        "input_tokens": 1211,
+        "output_tokens": 19,
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7S391GX1418QFV54PBG",
+      "ts": "2026-09-27T02:06:28.643134Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "event",
+        "event": {
+          "tool_name": null,
+          "tool_call_id": null,
+          "event_kind": "final_result"
+        }
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7S5SFZSH9GTPXZEVCTY",
+      "ts": "2026-09-27T02:06:28.645495Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": " current"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7S6M5MPR3SGPKYB3BXH",
+      "ts": "2026-09-27T02:06:28.646824Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": " directory"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7S7B3TRMTTA895H8XAQ",
+      "ts": "2026-09-27T02:06:28.647752Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": " is"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7S8YVEDAVB79RPP6BZ4",
+      "ts": "2026-09-27T02:06:28.648637Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": " /"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7S9Q63KEXV0CBKRJ4ZH",
+      "ts": "2026-09-27T02:06:28.649301Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": "private"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7SGMH98CTN896HTM8K1",
+      "ts": "2026-09-27T02:06:28.656528Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": "/tmp"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7SMRDSN4Z84REHN1HQS",
+      "ts": "2026-09-27T02:06:28.660957Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": "/m"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7SNJ35PQB5V0220SMDB",
+      "ts": "2026-09-27T02:06:28.661636Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": "3"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7SPRE6HYF877WMFTBAH",
+      "ts": "2026-09-27T02:06:28.662369Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": "or"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7TH99HV2482PW6A6T14",
+      "ts": "2026-09-27T02:06:28.689136Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": "-or"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7TKSAS1F59P03TFSE1B",
+      "ts": "2026-09-27T02:06:28.691460Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": "27"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7TMX8VMMSERWZNF1MZW",
+      "ts": "2026-09-27T02:06:28.692695Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": "/project"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7TNMTWFHNFWJZKQGV8Z",
+      "ts": "2026-09-27T02:06:28.693829Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": ".\n"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7VBZKM6ZYYJ2C16ZXX6",
+      "ts": "2026-09-27T02:06:28.715246Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": "OR"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7VC2T4NA9XPVGEMCS9X",
+      "ts": "2026-09-27T02:06:28.716138Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": "27"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7VCTN70N3ND15QEA5KT",
+      "ts": "2026-09-27T02:06:28.716864Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": "_HE"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7VDT7NGRZWSMM6M20VA",
+      "ts": "2026-09-27T02:06:28.717609Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": "ART"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7WDE5GPDPETPX78J3VF",
+      "ts": "2026-09-27T02:06:28.749978Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": "BE"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7WGX62SME3M1J6Y43EA",
+      "ts": "2026-09-27T02:06:28.752504Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": "AT"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7WJXK30HH6W22PJGY3V",
+      "ts": "2026-09-27T02:06:28.754145Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": "_OK"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T7WKMHZMAWDG4BRVPDH6",
+      "ts": "2026-09-27T02:06:28.755378Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "text",
+        "text": "\n\n"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T8RCDYANHDBNPCMFJC6T",
+      "ts": "2026-09-27T02:06:29.644507Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "event",
+        "event": {
+          "index": 0,
+          "part": {
+            "content": "The current directory is /private/tmp/m3or-or27/project.\nOR27_HEARTBEAT_OK\n\n<nocturne-proposed-response>\n{\"primary\":\"The current directory is /private/tmp/m3or-or27/project.\\nOR27_HEARTBEAT_OK\",\"alternatives\":[\"Directory: /private/tmp/m3or-or27/project\\nOR27_HEARTBEAT_OK\",\"Located at /private/tmp/m3or-or27/project\\nOR27_HEARTBEAT_OK\",\"Current path: /private/tmp/m3or-or27/project\\nOR27_HEARTBEAT_OK\"]}\n</nocturne-proposed-response>",
+            "id": null,
+            "provider_name": null,
+            "provider_details": null,
+            "part_kind": "text"
+          },
+          "next_part_kind": null,
+          "event_kind": "part_end"
+        }
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T8RG6KW2P9GKBT57GMWS",
+      "ts": "2026-09-27T02:06:29.648988Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.usage",
+      "payload": {
+        "requests": 2,
+        "input_tokens": 2459,
+        "output_tokens": 149,
+        "cache_read_tokens": 1152,
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3"
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T8RJHE8Y28MFWN7K04KK",
+      "ts": "2026-09-27T02:06:29.650820Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.delta",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "kind": "event",
+        "event": {
+          "event_kind": "proposed_response",
+          "proposal_run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+          "primary": "The current directory is /private/tmp/m3or-or27/project.\nOR27_HEARTBEAT_OK",
+          "alternatives": [
+            "Directory: /private/tmp/m3or-or27/project\nOR27_HEARTBEAT_OK",
+            "Located at /private/tmp/m3or-or27/project\nOR27_HEARTBEAT_OK",
+            "Current path: /private/tmp/m3or-or27/project\nOR27_HEARTBEAT_OK"
+          ],
+          "created_at": "2026-09-27T02:06:29.650669+00:00"
+        }
+      }
+    },
+    {
+      "v": 1,
+      "id": "01M3G9T8TW0RPFSGXC5NZSGZW2",
+      "ts": "2026-09-27T02:06:29.724718Z",
+      "machine_id": "nocturne-0674395c-3601-4421-9772-08b9dc6a9389",
+      "agent_id": "nocturne",
+      "thread_id": "e108ffb0-79d8-4246-b3e6-2899da5ecfeb",
+      "type": "run.done",
+      "payload": {
+        "run_id": "01M3G9T5CX2B2RH97Y77HH6MM3",
+        "stop_reason": "end_turn",
+        "partial": false
+      }
+    }
+  ]
+}
