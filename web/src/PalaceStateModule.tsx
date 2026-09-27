@@ -90,7 +90,7 @@ export function PalaceStateModule() {
         <p role={failed ? 'alert' : 'status'}>
           {failed ? 'Palace state couldn’t refresh. Chat is still available.' : 'Reading Palace state…'}
         </p>
-        {failed && <Button type="button" data-tooltip-detail="Read Palace state again." onClick={refresh}>Try again</Button>}
+        {failed && <Button action="refresh" type="button" data-tooltip-detail="Read Palace state again." onClick={refresh}>Try again</Button>}
       </section>
     )
   }
@@ -113,7 +113,7 @@ export function PalaceStateModule() {
         <div aria-live="polite">
           {failed && <span role="alert">Palace state couldn’t refresh.</span>}
           {refreshing && <span>Refreshing…</span>}
-          <Button type="button" data-tooltip-detail="Read the latest Palace state now." onClick={refresh}>Refresh</Button>
+          <Button action="refresh" type="button" data-tooltip-detail="Read the latest Palace state now." onClick={refresh}>Refresh</Button>
         </div>
       </div>
 

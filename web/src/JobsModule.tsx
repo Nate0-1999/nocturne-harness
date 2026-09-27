@@ -42,7 +42,7 @@ export function JobsModule() {
   const runs = snapshot?.runs.filter(run => run.job_id === selected).sort((a, b) => b.started_at.localeCompare(a.started_at)) ?? []
   return <section className="jobs-instrument" aria-label="Jobs monitor">
     <header><h1>Jobs</h1>
-      <Button type="button" data-tooltip-detail="Load a saved workflow from a JSON file." disabled={busy} onClick={() => file.current?.click()}>Import recipe</Button>
+      <Button action="import" type="button" data-tooltip-detail="Load a saved workflow from a JSON file." disabled={busy} onClick={() => file.current?.click()}>Import recipe</Button>
       <input hidden ref={file} type="file" accept=".json,application/json" onChange={async event => {
         const selectedFile = event.target.files?.[0]
         event.target.value = ''
@@ -62,18 +62,18 @@ export function JobsModule() {
           <td><Button type="button" data-tooltip-detail="Show this job's prompt, settings and run history." onClick={() => setSelected(job.job_id)}>{job.definition.name}</Button><small>{job.definition.cron ? `${job.definition.cron} UTC` : job.definition.trigger ? `On ${job.definition.trigger} change` : 'On demand'}{!job.enabled ? ' · paused' : ''}</small></td>
           <td>{time(job.next_run_at)}</td><td>{time(last?.started_at ?? null)}</td>
           <td data-state={last?.state}>{last?.state ?? 'Ready'}</td><td>{spend(history)}</td><td>{last?.verdict ?? '—'}</td>
-          <td><Button variant="primary" type="button" data-tooltip-detail="Start this job once, outside its schedule." disabled={busy || !!active} onClick={() => void act({ type: 'jobs.run', job_id: job.job_id })}>Run now</Button></td>
+          <td><Button action="run" variant="primary" type="button" data-tooltip-detail="Start this job once, outside its schedule." disabled={busy || !!active} onClick={() => void act({ type: 'jobs.run', job_id: job.job_id })}>Run now</Button></td>
         </tr>
       })}</tbody>
     </table></div>}
     {selectedJob && <aside>
-      <header><h2>{selectedJob.definition.name}</h2><Button type="button" data-tooltip-detail="Pause or resume this job's schedule; Run now still works." disabled={busy} onClick={() => void act({ type: 'jobs.save', job_id: selectedJob.job_id, definition: selectedJob.definition, expected_revision: selectedJob.revision, enabled: !selectedJob.enabled })}>{selectedJob.enabled ? 'Pause schedule' : 'Resume schedule'}</Button></header>
+      <header><h2>{selectedJob.definition.name}</h2><Button action={selectedJob.enabled ? "pause" : "run"} type="button" data-tooltip-detail="Pause or resume this job's schedule; Run now still works." disabled={busy} onClick={() => void act({ type: 'jobs.save', job_id: selectedJob.job_id, definition: selectedJob.definition, expected_revision: selectedJob.revision, enabled: !selectedJob.enabled })}>{selectedJob.enabled ? 'Pause schedule' : 'Resume schedule'}</Button></header>
       <p>{selectedJob.definition.prompt}</p>
       <dl>{Object.entries({ Folder: selectedJob.definition.folder, Model: selectedJob.definition.model_policy, Tools: selectedJob.definition.tools, Memory: selectedJob.definition.memory_scope, 'Run budget': `$${selectedJob.definition.budget_usd}`, 'Exit check': selectedJob.definition.exit_condition }).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
       <ol className="jobs-timeline" aria-label="Run history">{runs.map(run => <li key={run.run_id} data-state={run.state}>
         <time>{time(run.started_at)}</time><strong>{run.state}</strong><span>{spend([run])}</span><p>{run.verdict ?? 'In progress'}</p>
-        <Button type="button" data-tooltip-detail="Open the conversation this run wrote." onClick={() => void act({ type: 'thread.select', thread_id: run.thread_id })}>Open thread</Button>
-        {['running', 'waiting'].includes(run.state) && <Button variant="danger" type="button" data-tooltip-detail="Stop this run now; its work so far is kept." disabled={busy} onClick={() => void act({ type: 'jobs.stop', run_id: run.run_id })}>Stop run</Button>}
+        <Button action="open" iconOnly type="button" data-tooltip-detail="Open the conversation this run wrote." onClick={() => void act({ type: 'thread.select', thread_id: run.thread_id })}>Open thread</Button>
+        {['running', 'waiting'].includes(run.state) && <Button action="stop" iconOnly variant="danger" type="button" data-tooltip-detail="Stop this run now; its work so far is kept." disabled={busy} onClick={() => void act({ type: 'jobs.stop', run_id: run.run_id })}>Stop run</Button>}
       </li>)}</ol>
     </aside>}
   </section>

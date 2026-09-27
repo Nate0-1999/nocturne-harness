@@ -535,7 +535,7 @@ export function InjectionConsole() {
                 </Select>
               </label>
               <div className="simulation-actions">
-                <Button variant="bare"
+                <Button action="run" variant="bare"
                   className="console-secondary-action"
                   data-tooltip-detail="Back-test these values against your recorded gates."
                   disabled={!valid || busy}
