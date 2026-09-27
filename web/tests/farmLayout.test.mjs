@@ -5,7 +5,7 @@ import { FARM_CELLS, FARM_CHAMBERS, layoutFarm } from '../src/farmLayout.ts'
 const dir = (path) => ({ path, kind: 'directory', bytes: 0 })
 const file = (path) => ({ path, kind: 'file', bytes: 8 })
 
-/** PLAN M3FT / FL-126: the large-tree frontier must account for every file and empty folder. */
+/** F122 / PLAN M3FT: the large-tree frontier must account for every file and empty folder. */
 test('depth folding bounds geometry without losing files or folders, including git contents', () => {
   const project = { root: '/repo', nodes: [dir('.'), dir('.git'), dir('.git/objects'), file('.git/objects/hash'),
     ...Array.from({ length: 40 }, (_, n) => [dir(`pkg${n}`), dir(`pkg${n}/empty`),
@@ -22,7 +22,7 @@ test('depth folding bounds geometry without losing files or folders, including g
   assert.deepEqual(layoutFarm(structuredClone(project)), layout)
 })
 
-/** PLAN M3FT / FL-126: even a wide, shallow folder stays truthful; browsing can reach every entry. */
+/** F122 / PLAN M3FT: even a wide, shallow folder stays truthful; browsing can reach every entry. */
 test('a shallow oversized folder collapses to exact counts; a small tree stays fully visible', () => {
   const huge = { root: '/repo', nodes: [dir('.'), ...Array.from({ length: 5000 }, (_, n) => file(`f${n}`))], errors: [] }
   assert.equal(layoutFarm(huge).chambers[0].hiddenFiles, 5000)

@@ -59,7 +59,8 @@
     "harness/verification/m3ft/small/receipts/capture-efficient.json": "M3FT verification evidence only; no product behavior.",
     "harness/verification/m3ft/small/receipts/farm-efficient-viewport.png": "M3FT verification evidence only; no product behavior.",
     "harness/verification/m3ft/moving/receipts/capture-farm.json": "M3FT verification evidence only; no product behavior.",
-    "harness/verification/m3ft/SHA256SUMS": "Verification hash manifest; no product behavior."
+    "harness/verification/m3ft/SHA256SUMS": "Verification hash manifest; no product behavior.",
+    "harness/verification/m3ft/canon.txt": "Final packet-aware UI canon and packaged/reinstall heartbeat transcript; no product behavior."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
