@@ -3696,4 +3696,6 @@ The public 0.1.35 walk reached an empty-commit cherry-pick failure during
 judge feedback retries. Preserve redundant commits when grafting accepted
 attempts so their lineage survives without stopping continuation. The same
 walk found judges checking imports from their metadata directory; explicitly
-direct them to move into the candidate before running its checks.
+direct them to move into the candidate before running its checks. When worker
+death leaves no candidates, judges cite the sealed brief and return repair
+feedback rather than selecting an attempt that is absent from the panel.
