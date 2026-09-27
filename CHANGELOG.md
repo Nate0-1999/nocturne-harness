@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.38 - 2026-09-27
+
+- Retraining is restricted to the configured Palace owner, including compaction
+  triggers, learner evidence and unused-memory sweeps. Other users see a plain
+  ownership message in the console and a 403 from the trigger.
+- Re-saving an identical fact reinforces it before checking label collisions;
+  different facts sharing a label still refuse. Pair with Memory 0.1.38.
+
 ## 0.1.34 - 2026-09-25
 
 - Palace: glass memories glow from within with a bright rim scaled by how often

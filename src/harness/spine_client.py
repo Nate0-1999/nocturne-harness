@@ -1389,15 +1389,18 @@ class SpineClient:
         return _expect_metrics_success(response, adapter=_SCORER_CONSOLE_SNAPSHOT)
 
     async def retrain(self) -> RetrainResponse:
-        """Invoke A-051's existing bodyless manual learner trigger."""
+        """Invoke the owner-only manual learner trigger with this daemon's identity."""
 
-        response = await self._request("POST", "retrain")
-        return _expect_success(response, status=200, adapter=_RETRAIN_RESPONSE)
+        response = await self._request(
+            "POST", "retrain", params={"principal_id": self._principal_id or "local"}
+        )
+        return _expect_metrics_success(response, adapter=_RETRAIN_RESPONSE)
 
     async def notify_compaction(self, event_uid: str, thread_id: UUID) -> None:
         response = await self._request(
             "POST",
             "v1/compactions",
+            params={"principal_id": self._principal_id or "local"},
             json_body={"event_uid": event_uid, "thread_id": str(thread_id)},
         )
         if response.status_code != 202:

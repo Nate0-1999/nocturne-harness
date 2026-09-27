@@ -1088,6 +1088,19 @@ def test_dev_app_serves_the_real_symphony_recipe_through_the_live_rack_endpoint(
     }
 
 
+def test_retrain_preserves_ownership_refusal_at_the_rack() -> None:
+    """SPEC D.2 144 / F126: FORCE RETRAIN exposes the ownership wall as a plain 403."""
+    from harness.spine_client import SpineOwnershipError
+
+    async def refuse():
+        raise SpineOwnershipError("Only the Palace owner can retrain the scorer.")
+
+    with TestClient(create_app(scorer_retrainer=refuse)) as client:
+        response = client.post("/v1/rack/scorers/retrain")
+    assert response.status_code == 403
+    assert response.json() == {"detail": "Only the Palace owner can retrain the scorer."}
+
+
 def test_dev_app_retrains_bodylessly_and_owns_activation_provenance(tmp_path: Path) -> None:
     """A-051/P1.2.3 is defended by giving the owner one transparent retrain
     bridge while keeping proposal activation human-only and daemon-attributed.
