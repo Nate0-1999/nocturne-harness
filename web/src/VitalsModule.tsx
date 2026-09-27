@@ -85,7 +85,7 @@ export function VitalsModule() {
         {phase === 'failed'
           ? failure
           : 'Reading spend…'}
-        {phase === 'failed' && <Button type="button" data-tooltip-detail="Read spend again." onClick={refresh}>Try again</Button>}
+        {phase === 'failed' && <Button action="refresh" type="button" data-tooltip-detail="Read spend again." onClick={refresh}>Try again</Button>}
       </SpendNotice>
     )
   }
@@ -107,7 +107,7 @@ export function VitalsModule() {
         <div aria-live="polite">
           {phase === 'failed' && <span role="alert">Spend couldn’t refresh.</span>}
           {phase === 'refreshing' && <span>Refreshing…</span>}
-          <Button type="button" data-tooltip-detail="Read the latest spend now." onClick={refresh}>Refresh</Button>
+          <Button action="refresh" type="button" data-tooltip-detail="Read the latest spend now." onClick={refresh}>Refresh</Button>
         </div>
       </div>
       <SpendRates snapshot={snapshot} />
@@ -196,8 +196,7 @@ function SpendRow({
     <tr className={nested ? 'spend-table__model' : purpose ? 'spend-table__purpose' : undefined}>
       <th scope="row">
         {disclosure === undefined ? <span>{name}</span> : (
-          <Button variant="bare" type="button" data-tooltip-detail="Show or hide this conversation's models." aria-expanded={disclosure.expanded} onClick={disclosure.toggle}>
-            <span aria-hidden="true">{disclosure.expanded ? '−' : '+'}</span>
+          <Button action={disclosure.expanded ? "collapse" : "expand"} variant="bare" type="button" data-tooltip-detail="Show or hide this conversation's models." aria-expanded={disclosure.expanded} onClick={disclosure.toggle}>
             <span className="spend-table__name" title={name}>{name}</span>
             <small>{disclosure.count} {disclosure.count === 1 ? 'model' : 'models'}</small>
           </Button>
