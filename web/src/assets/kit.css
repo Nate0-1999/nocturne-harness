@@ -54,15 +54,9 @@ legend {
   text-transform: uppercase;
 }
 
-/* KEEP OUT (PLAN M3UI): the composer function was a live peer's (M3OR), so its two
-   undressed controls stay raw in the markup and the kit reaches them from here.
-   When the composer is next opened, they become kit parts and the `.chat-header` and
-   `.composer__actions` selectors in this file go. */
-
 /* A label that wraps its control: the words and the control never run together. */
 .kit-label,
-label:has(> .kit-select-wrap, > .kit-field),
-.chat-header > label:has(> select) {
+label:has(> .kit-select-wrap, > .kit-field) {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
@@ -75,8 +69,6 @@ label:has(> .kit-select-wrap, > .kit-field),
 .kit-label,
 label:has(> .kit-select-wrap, > .kit-field),
 .kit-button,
-.composer__actions > button:not([class]),
-.chat-header > label:has(> select),
 .kit-chip,
 .kit-empty__label {
   font-family: var(--data-font);
@@ -93,9 +85,7 @@ label:has(> .kit-select-wrap, > .kit-field),
 .memory-gate__stop,
 .composer__attach,
 .composer-attachment__remove,
-.archive-button,
-.composer__actions > button:not([class]),
-.chat-header > label > select {
+.archive-button {
   --kit-edge: var(--line-strong);
   --kit-fill: var(--surface-deep);
   --kit-cut: calc(var(--chamfer) * 0.7071);
@@ -111,8 +101,7 @@ label:has(> .kit-select-wrap, > .kit-field),
   );
 }
 
-.kit-button,
-.composer__actions > button:not([class]) {
+.kit-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -204,8 +193,7 @@ label:has(> .kit-select-wrap, > .kit-field),
 }
 
 .kit-select,
-.kit-field,
-.chat-header > label > select {
+.kit-field {
   min-height: var(--control-height);
   max-width: 100%;
   padding: 0 var(--space-3);
@@ -267,22 +255,28 @@ textarea.kit-field {
 :root svg.kit-icon { width: var(--kit-icon-size, 1rem); height: var(--kit-icon-size, 1rem); flex: none; color: inherit; stroke: currentColor; }
 .kit-button--icon { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); }
 .kit-button--primary { --kit-icon-size: 1.125rem; }
+.send-button, .memory-gate__continue { --kit-icon-size: 1.125rem; }
 .kit-button--icon-only { padding-inline: var(--space-2); min-width: 1.75rem; }
 .kit-button--icon-only { --kit-icon-size: 0.875rem; }
 .kit-select-wrap { display: inline-grid; align-items: center; max-width: 100%; color: var(--ink); }
 .kit-select-wrap > * { grid-area: 1 / 1; }
 .kit-select-wrap > .kit-select { appearance: none; padding-right: 1.75rem; width: 100%; }
-.kit-select-wrap > .kit-icon { justify-self: end; margin-right: var(--space-3); pointer-events: none; }
+.kit-select-wrap > .kit-icon { justify-self: end; margin-right: var(--space-3); pointer-events: none; position: relative; z-index: 1; }
 .kit-select-wrap:has(:disabled) > .kit-icon { opacity: 0.44; }
+details:not([open]) .kit-select-wrap { display: none; }
 .kit-toggle-wrap { display: inline-grid; align-items: center; color: var(--ink); vertical-align: middle; }
 .kit-toggle-wrap > * { grid-area: 1 / 1; }
-.kit-toggle-wrap > .kit-icon { pointer-events: none; }
+.kit-toggle-wrap > .kit-icon { pointer-events: none; position: relative; z-index: 1; }
 .kit-toggle-wrap > .kit-toggle { background: var(--surface-deep); box-shadow: none; }
 .kit-toggle-off { display: block; }
 .kit-toggle-on { display: none; }
 .kit-toggle:checked ~ .kit-toggle-off { display: none; }
 .kit-toggle:checked ~ .kit-toggle-on { display: block; color: var(--accent); }
 .kit-toggle:disabled ~ .kit-icon { opacity: 0.44; }
+.kit-file-wrap { display: inline-grid; align-items: center; color: var(--ink); max-width: 100%; }
+.kit-file-wrap > * { grid-area: 1 / 1; }
+.kit-file-wrap > .kit-icon { margin-left: var(--space-3); pointer-events: none; position: relative; z-index: 1; }
+.kit-file-wrap input::file-selector-button { padding-left: 1.75rem; }
 
 .kit-chip {
   display: inline-flex;
