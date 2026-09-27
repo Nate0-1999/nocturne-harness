@@ -228,6 +228,7 @@ class SymphonyExecution:
                                     "-c",
                                     "user.email=nocturne@localhost",
                                     "cherry-pick",
+                                    "--keep-redundant-commits",
                                     source.distillate.product.commit,
                                 )
                             next_checkpoint = _git(graft_root, "rev-parse", "HEAD")

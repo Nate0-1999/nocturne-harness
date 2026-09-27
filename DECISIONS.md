@@ -3689,3 +3689,11 @@ folding by depth. At most 64 chambers and 512 cells reach the existing
 renderer; collapsed chambers show exact file/folder counts and open on click.
 The folder browser pages all direct entries. This keeps the frame security
 policy intact and leaves Roots and Palace rendering unchanged.
+
+## M3OR — Continue after an unchanged attempt [P3, P4]
+
+The public 0.1.35 walk reached an empty-commit cherry-pick failure during
+judge feedback retries. Preserve redundant commits when grafting accepted
+attempts so their lineage survives without stopping continuation. The same
+walk found judges checking imports from their metadata directory; explicitly
+direct them to move into the candidate before running its checks.
