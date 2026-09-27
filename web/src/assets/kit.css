@@ -61,7 +61,7 @@ legend {
 
 /* A label that wraps its control: the words and the control never run together. */
 .kit-label,
-label:has(> .kit-select, > .kit-field),
+label:has(> .kit-select-wrap, > .kit-field),
 .chat-header > label:has(> select) {
   display: inline-flex;
   flex-wrap: wrap;
@@ -73,7 +73,7 @@ label:has(> .kit-select, > .kit-field),
 }
 
 .kit-label,
-label:has(> .kit-select, > .kit-field),
+label:has(> .kit-select-wrap, > .kit-field),
 .kit-button,
 .composer__actions > button:not([class]),
 .chat-header > label:has(> select),
@@ -262,6 +262,27 @@ textarea.kit-field {
   background: var(--accent);
   box-shadow: inset 0 0 0 3px var(--surface-deep);
 }
+
+/* Lucide follows each control's theme ink, including danger and disabled states. */
+:root svg.kit-icon { width: var(--kit-icon-size, 1rem); height: var(--kit-icon-size, 1rem); flex: none; color: inherit; stroke: currentColor; }
+.kit-button--icon { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); }
+.kit-button--primary { --kit-icon-size: 1.125rem; }
+.kit-button--icon-only { padding-inline: var(--space-2); min-width: 1.75rem; }
+.kit-button--icon-only { --kit-icon-size: 0.875rem; }
+.kit-select-wrap { display: inline-grid; align-items: center; max-width: 100%; color: var(--ink); }
+.kit-select-wrap > * { grid-area: 1 / 1; }
+.kit-select-wrap > .kit-select { appearance: none; padding-right: 1.75rem; width: 100%; }
+.kit-select-wrap > .kit-icon { justify-self: end; margin-right: var(--space-3); pointer-events: none; }
+.kit-select-wrap:has(:disabled) > .kit-icon { opacity: 0.44; }
+.kit-toggle-wrap { display: inline-grid; align-items: center; color: var(--ink); vertical-align: middle; }
+.kit-toggle-wrap > * { grid-area: 1 / 1; }
+.kit-toggle-wrap > .kit-icon { pointer-events: none; }
+.kit-toggle-wrap > .kit-toggle { background: var(--surface-deep); box-shadow: none; }
+.kit-toggle-off { display: block; }
+.kit-toggle-on { display: none; }
+.kit-toggle:checked ~ .kit-toggle-off { display: none; }
+.kit-toggle:checked ~ .kit-toggle-on { display: block; color: var(--accent); }
+.kit-toggle:disabled ~ .kit-icon { opacity: 0.44; }
 
 .kit-chip {
   display: inline-flex;

@@ -3689,3 +3689,13 @@ folding by depth. At most 64 chambers and 512 cells reach the existing
 renderer; collapsed chambers show exact file/folder counts and open on click.
 The folder browser pages all direct entries. This keeps the frame security
 policy intact and leaves Roots and Palace rendering unchanged.
+
+## M3IC — Recognizable controls from one icon set [P2.5]
+
+PRECEDENT: PLAN M3IC / SD-069; M3UI control kit; M3TM theme tokens.
+Adopt lucide-react 1.48.0 whole under its ISC/MIT licenses, retained in
+public/lucide-LICENSE.txt. The kit owns the meaning-to-icon table; callers
+name an action explicitly. Inline SVG inherits the control's token-based
+ink. Primary/module actions keep words; row/toolbar actions keep accessible
+names and hover tips. Unusual actions remain words. Native controls and
+their handlers remain the behavior boundary.
