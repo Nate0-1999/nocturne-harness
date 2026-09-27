@@ -138,7 +138,7 @@ export function ProjectSelector({
       <datalist id="known-project-paths">
         {projectPaths.map((path) => <option value={path} key={path} />)}
       </datalist>
-      <Button variant="bare" className="visually-hidden" type="submit">Open project</Button>
+      <Button action="open" variant="bare" className="visually-hidden" type="submit">Open project</Button>
       <span
         id="project-selector-status"
         className="project-selector__status"
