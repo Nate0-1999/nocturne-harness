@@ -152,7 +152,7 @@ import {
   type AttunementTarget,
   type StickyAttunementPick,
 } from './attunement'
-import { Button, Select, TextField, Toggle } from './kit'
+import { ActionIcon, Button, Select, TextField, Toggle } from './kit'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
 const SEAM_COLORS = (JSON.parse(seamColorsRaw) as { colors: SeamColorEntry[] }).colors
@@ -783,7 +783,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           theme={theme}
           isRegressionFixture={isRegressionFixture}
         />
-        <Button variant="bare"
+        <Button action="settings" iconOnly variant="bare"
           className="app-settings-toggle"
           type="button"
           data-testid="app-settings-toggle"
@@ -799,7 +799,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
         <aside className="app-settings-panel" data-testid="app-settings-panel" aria-label="App settings">
           <header>
             <strong>Settings</strong>
-            <Button type="button" aria-label="Close app settings" data-tooltip-detail="Hide the settings panel." onClick={() => setAppSettingsOpen(false)}>×</Button>
+            <Button action="close" iconOnly type="button" aria-label="Close app settings" data-tooltip-detail="Hide the settings panel." onClick={() => setAppSettingsOpen(false)}>×</Button>
           </header>
           <section>
             <h2>Appearance</h2>
@@ -839,7 +839,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                 {platePressBusy ? 'Pressing…' : 'Press image'}
               </Button>
               {selectedColorway !== null ? (
-                <Button variant="bare"
+                <Button action="remove" variant="bare"
                   className="plate-remove-button"
                   type="button"
                   data-testid="plate-remove-button"
@@ -878,8 +878,8 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             <h2>Stage layout</h2>
             <p data-testid="layout-status">{layoutStatus}</p>
             <div className="app-settings-actions">
-              <Button type="button" data-testid="layout-save" data-tooltip="Save layout" data-tooltip-detail="Keep the current stage layout as your saved set." onClick={saveCurrentSet}>Save</Button>
-              <Button
+              <Button action="save" type="button" data-testid="layout-save" data-tooltip="Save layout" data-tooltip-detail="Keep the current stage layout as your saved set." onClick={saveCurrentSet}>Save</Button>
+              <Button action="restore"
                 type="button"
                 data-testid="layout-restore"
                 data-tooltip="Restore layout"
@@ -889,7 +889,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               >
                 Restore
               </Button>
-              <Button type="button" data-testid="layout-reset" data-tooltip="Reset layout" data-tooltip-detail="Return the stage to the factory layout." onClick={resetFactorySet}>Reset</Button>
+              <Button action="refresh" type="button" data-testid="layout-reset" data-tooltip="Reset layout" data-tooltip-detail="Return the stage to the factory layout." onClick={resetFactorySet}>Reset</Button>
             </div>
           </section>
           <MemoryRestore />
@@ -913,7 +913,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               >
                 {candidate.name}
               </Button>
-              <Button variant="bare"
+              <Button action="remove" iconOnly variant="bare"
                 type="button"
                 aria-label={`Remove ${candidate.name} layer`}
                 data-tooltip-detail="Shelve this layer; the library can bring it back."
@@ -924,7 +924,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             </div>
           ))}
         </div>
-        <Button variant="bare"
+        <Button action="add" iconOnly aria-label="Create a layer" variant="bare"
           className="stage-layer-create"
           type="button"
           data-testid="stage-layer-create"
@@ -940,10 +940,10 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           <Button variant="bare" type="button" data-tooltip-detail="The same modules laid out full size in one scrolling sheet." aria-pressed={sheetMode} onClick={() => setSheetMode(true)}>Sheet</Button>
         </div>
         <div className="stage-camera-controls" aria-label="Stage camera" hidden={sheetMode}>
-          <Button variant="bare" type="button" aria-label="Zoom out" data-tooltip-detail="Show more of this layer without changing module sizes or positions." onClick={() => zoomAt(layer.camera.zoom - 0.1)}>−</Button>
+          <Button action="zoomOut" iconOnly variant="bare" type="button" aria-label="Zoom out" data-tooltip-detail="Show more of this layer without changing module sizes or positions." onClick={() => zoomAt(layer.camera.zoom - 0.1)}>−</Button>
           <output data-testid="stage-zoom">{Math.round(layer.camera.zoom * 100)}%</output>
-          <Button variant="bare" type="button" aria-label="Zoom in" data-tooltip-detail="Enlarge this layer on screen without changing its layout." onClick={() => zoomAt(layer.camera.zoom + 0.1)}>+</Button>
-          <Button variant="bare"
+          <Button action="zoomIn" iconOnly variant="bare" type="button" aria-label="Zoom in" data-tooltip-detail="Enlarge this layer on screen without changing its layout." onClick={() => zoomAt(layer.camera.zoom + 0.1)}>+</Button>
+          <Button action="fit" iconOnly variant="bare"
             type="button"
             data-testid="stage-fit"
             data-tooltip-detail="Fit every module on this layer into the visible Stage."
@@ -952,7 +952,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             Whole stage
           </Button>
         </div>
-        <Button variant="bare"
+        <Button action="open" iconOnly variant="bare"
           className="stage-library-toggle"
           type="button"
           data-testid="stage-library-toggle"
@@ -1058,7 +1058,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
         <aside className="stage-library" data-testid="stage-library" aria-label="Stage library">
           <header>
             <strong>Stage library</strong>
-            <Button variant="bare" type="button" aria-label="Close stage library" onClick={() => setLibraryOpen(false)}>×</Button>
+            <Button action="close" iconOnly variant="bare" type="button" aria-label="Close stage library" onClick={() => setLibraryOpen(false)}>×</Button>
           </header>
           <RackPluginUpload onInstalled={(id) => setLayout((current) => restoreStageModule(current, id))} />
           <ul>
@@ -1068,7 +1068,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               return (
                 <li key={moduleId}>
                   <span>{RACK_MANIFESTS[moduleId].name}</span>
-                  <Button variant="bare"
+                  <Button action="add" iconOnly aria-label={`Add ${RACK_MANIFESTS[moduleId].name}`} variant="bare"
                     type="button"
                     disabled={present && !multiInstance}
                     onClick={() => setLayout((current) => multiInstance && present
@@ -1088,7 +1088,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                 {layer.removed_modules.map((removed) => (
                   <li key={removed.instance_id}>
                     <span>{RACK_MANIFESTS[removed.module_id].name}</span>
-                    <Button variant="bare"
+                    <Button action="restore" iconOnly aria-label="Restore module" variant="bare"
                       type="button"
                       onClick={() => setLayout((current) => restoreStageModule(
                         current,
@@ -1109,7 +1109,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                 {layout.removed_layers.map((removed) => (
                   <li key={removed.layer_id}>
                     <span>{removed.name}</span>
-                    <Button variant="bare"
+                    <Button action="restore" iconOnly aria-label="Restore layer" variant="bare"
                       type="button"
                       onClick={() => setLayout((current) => restoreStageLayer(current, removed.layer_id))}
                     >
@@ -1182,13 +1182,12 @@ function DismissibleRackOverlay({
       data-rack-module={moduleId}
       data-stage-return="one-click"
     >
-      <Button variant="bare"
+      <Button action="back" variant="bare"
         className="rack-stage-back"
         type="button"
         data-testid="back-to-stage"
         onClick={clearRackSelection}
       >
-        <span aria-hidden="true">←</span>
         Back to stage
       </Button>
       <RackSettingsControl
@@ -1457,7 +1456,7 @@ function RackModuleFrame({
             onKeyDown={dockByKeyboard}
             onPointerDown={beginMove}
           >
-            <span aria-hidden="true">⠿</span>
+            <ActionIcon action="move" />
             <strong>{manifest.name}</strong>
             <span
               className="rack-module__attunement"
@@ -1490,7 +1489,7 @@ function RackModuleFrame({
             namedStackSelected={namedStackSelected}
           />
           {onRemove !== undefined && (
-            <Button variant="bare"
+            <Button action="remove" iconOnly variant="bare"
               className="rack-module__remove"
               type="button"
               aria-label={`Remove ${manifest.name}`}
@@ -1502,7 +1501,7 @@ function RackModuleFrame({
             </Button>
           )}
           {onCollapseToggle !== undefined && (
-            <Button variant="bare"
+            <Button action={collapsed ? "expand" : "collapse"} iconOnly variant="bare"
               className="rack-module__collapse"
               type="button"
               data-testid="vitals-collapse"
@@ -1629,7 +1628,7 @@ function RackSettingsControl({
 
   return (
     <div ref={rootRef} className="rack-module__settings" data-settings-open={open || undefined}>
-      <Button variant="bare"
+      <Button action="settings" iconOnly variant="bare"
         className="rack-module__settings-toggle"
         type="button"
         data-testid={`rack-settings-${manifest.id}`}
@@ -1647,7 +1646,7 @@ function RackSettingsControl({
             <>
               <header>
                 <strong>{manifest.name}</strong>
-                <Button
+                <Button action="close" iconOnly
                   type="button"
                   aria-label={`Close ${manifest.name} settings`}
                   onClick={toggle}
@@ -1899,7 +1898,7 @@ function ThreadsModule() {
     <aside className="thread-rail" aria-labelledby="thread-rail-title">
       <div className="thread-rail__header">
         <h2 id="thread-rail-title">Threads</h2>
-        <Button variant="bare"
+        <Button action="close" iconOnly variant="bare"
           className="rail-close"
           type="button"
           data-testid="mobile-close-threads"
@@ -1911,7 +1910,7 @@ function ThreadsModule() {
       </div>
 
       <div className="thread-rail__actions">
-        <Button variant="primary"
+        <Button action="add" variant="primary"
           className="new-thread"
           type="button"
           data-testid="new-thread"
@@ -1925,7 +1924,6 @@ function ThreadsModule() {
             setCreating((value) => !value)
           }}
         >
-          <span aria-hidden="true">＋</span>
           New thread
         </Button>
         {selectedEntry?.workspace_root === null && selectedEntry.project_key !== null && (
@@ -1944,7 +1942,7 @@ function ThreadsModule() {
             </Button>
         )}
         {fixtureThreadCount > 0 && (
-          <Button variant="danger"
+          <Button action="remove" variant="danger"
             className="fixture-catalog-cleanup"
             type="button"
             data-tooltip-detail="Remove threads left behind by verification fixtures."
@@ -1978,7 +1976,7 @@ function ThreadsModule() {
               autoFocus
               onChange={(event) => setWorkspaceDraft(event.currentTarget.value)}
             />
-            <Button variant="primary"
+            <Button action="add" variant="primary"
               type="submit"
               disabled={workspaceDraft.trim() === ''}
               onClick={(event) => {
@@ -2081,7 +2079,7 @@ function ThreadsModule() {
                   </span>
                 )}
               </Button>
-              <Button
+              <Button action="archive" iconOnly
                 className="thread-item__archive"
                 type="button"
                 aria-label={`Archive ${visibleThreadTitle(entry.title)}`}
@@ -2432,7 +2430,7 @@ function ChatModule() {
     <main className="chat-panel" aria-labelledby="thread-title">
       <header className="chat-header">
         <label>Orchestration
-          <select aria-label="Orchestration mode" value={orchestration} onChange={(event) => {
+          <Select aria-label="Orchestration mode" value={orchestration} onChange={(event) => {
             const next = event.target.value as 'Duet' | 'Symphony'
             setOrchestration(next)
             if (next === 'Symphony') {
@@ -2441,7 +2439,7 @@ function ChatModule() {
             }
           }}>
             <option>Duet</option><option>Symphony</option>
-          </select>
+          </Select>
         </label>
         <details><summary>{orchestration} configuration</summary>
           <AgentPolicies level={orchestration} />
@@ -2493,7 +2491,7 @@ function ChatModule() {
               })}
             />
           )}
-          <button
+          <Button variant="bare" action="open"
             type="button"
             className="chat-header__model"
             data-testid="active-model"
@@ -2506,8 +2504,8 @@ function ChatModule() {
             <span className="chat-header__model-value">
               {selectedThread?.resolvedModel ?? 'Choosing model'}
             </span>
-            <span className="chat-header__model-action" aria-hidden="true">Open ↗</span>
-          </button>
+          <span className="chat-header__model-action" aria-hidden="true">Open</span>
+          </Button>
           <ToolInventory key={selectedThreadId} threadId={selectedThreadId} />
         </div>
       </header>
@@ -2567,9 +2565,9 @@ function ChatModule() {
       </div>
 
       {hasUnread && (
-        <button className="new-response" type="button" data-testid="new-response" onClick={scrollToLatest}>
+        <Button variant="bare" action="latest" iconOnly className="new-response" type="button" data-testid="new-response" onClick={scrollToLatest}>
           New response ↓
-        </button>
+        </Button>
       )}
 
       <form className="composer" onSubmit={submitPrompt} aria-label="Prompt composer">
@@ -2591,7 +2589,7 @@ function ChatModule() {
                   {formatImageBytes(pendingImage.view.byte_count)}
                 </small>
               </span>
-              <button
+              <Button variant="bare" action="remove" iconOnly
                 className="composer-attachment__remove"
                 type="button"
                 aria-label={`Remove ${pendingImage.local_filename}`}
@@ -2599,7 +2597,7 @@ function ChatModule() {
                 onClick={removePendingImage}
               >
                 Remove
-              </button>
+              </Button>
             </div>
           )}
           <label className="visually-hidden" htmlFor="prompt-input">
@@ -2652,7 +2650,7 @@ function ChatModule() {
                 void attachImageFiles(files)
               }}
             />
-            <button
+            <Button variant="bare" action="attach"
               className="composer__attach"
               type="button"
               data-testid="attach-image"
@@ -2661,7 +2659,7 @@ function ChatModule() {
               onClick={() => imageInputRef.current?.click()}
             >
               {imageBusy ? 'Preparing…' : 'Attach image'}
-            </button>
+            </Button>
             <p
               id="composer-image-status"
               className="composer__image-status"
@@ -2682,7 +2680,7 @@ function ChatModule() {
         </div>
         <div className="composer__actions">
           {activeRun === null && messages.length > 0 && (
-            <button
+            <Button variant="bare" action="archive" iconOnly
               className="archive-button"
               type="button"
               data-testid="archive-thread"
@@ -2693,15 +2691,15 @@ function ChatModule() {
               onClick={archiveThread}
             >
               <span aria-hidden="true">{archiveBusy ? '…' : '⤓'}</span>
-            </button>
+            </Button>
           )}
           {activeRun !== null && (
-            <button type="button" disabled={!canSend || pendingImage !== null /* F104: interjections carry text into the active request. */}
+            <Button type="button" disabled={!canSend || pendingImage !== null /* F104: interjections carry text into the active request. */}
               title="Steer the next model request without queuing another run"
-              onClick={() => void interjectPrompt()}>Interject</button>
+              onClick={() => void interjectPrompt()}>Interject</Button>
           )}
           {activeRun !== null && (
-            <button
+            <Button variant="bare" action="stop"
               className="stop-button"
               type="button"
               data-testid="stop"
@@ -2712,9 +2710,9 @@ function ChatModule() {
               }}
             >
               {activeRun.state === 'cancelling' ? 'Stopping' : 'Stop'}
-            </button>
+            </Button>
           )}
-          <button
+          <Button variant="bare" action="send"
             className="send-button"
             type="button"
             data-testid="send"
@@ -2722,8 +2720,7 @@ function ChatModule() {
             onClick={transmitPrompt}
           >
             {activeRun === null ? 'Transmit' : 'Queue'}
-            <span aria-hidden="true">↗</span>
-          </button>
+          </Button>
         </div>
       </form>
     </main>
@@ -2884,7 +2881,7 @@ function ThreadEndCard({
         <span>Final post</span>
         <p>{view.final_post || 'No final assistant post was captured.'}</p>
       </div>}
-      <Button
+      <Button action={collapsed ? "expand" : "collapse"}
         className="thread-end-card__collapse"
         type="button"
         aria-expanded={!collapsed}
@@ -2968,8 +2965,8 @@ function VisibleQueueRow({
         <small>Neighbors: {card.neighbors.map((item) => item.label).join(', ')}</small>
       )}
       <div className="thread-end-row__actions">
-        <Button variant="danger" type="button" disabled={disabled} onClick={onDeny}>Deny</Button>
-        <Button variant="primary" type="button" disabled={disabled} onClick={onApprove}>Approve</Button>
+        <Button action="close" variant="danger" type="button" disabled={disabled} onClick={onDeny}>Deny</Button>
+        <Button action="confirm" variant="primary" type="button" disabled={disabled} onClick={onApprove}>Approve</Button>
       </div>
     </article>
   )
@@ -3214,7 +3211,7 @@ function PalaceQueueModule() {
                     : 'The curator supplied no readable rationale.'}</p>
                   <div>
                     <Button type="button" data-tooltip-detail="Leave this memory unchanged." disabled={busy} onClick={() => decideCurator(card.item_uid, 'deny')}>Keep as is</Button>
-                    <Button variant="primary" type="button" data-tooltip-detail="Apply the curator's repair to this memory." disabled={busy} onClick={() => decideCurator(card.item_uid, 'approve')}>Approve repair</Button>
+                    <Button action="confirm" variant="primary" type="button" data-tooltip-detail="Apply the curator's repair to this memory." disabled={busy} onClick={() => decideCurator(card.item_uid, 'approve')}>Approve repair</Button>
                   </div>
                 </article>
               ))}
@@ -3304,8 +3301,8 @@ function PalaceQueueModule() {
                     ) : null}
                   </div>
                   <div className="seed-batch__actions">
-                    <Button variant="danger" type="button" data-tooltip-detail="Discard every memory from this document." disabled={busy} onClick={() => decideBatch(batchUid, 'deny')}>Reject batch</Button>
-                    <Button variant="primary" type="button" data-tooltip-detail="Admit every memory from this document to your Palace." disabled={busy} onClick={() => decideBatch(batchUid, 'approve')}>Approve batch</Button>
+                    <Button action="close" variant="danger" type="button" data-tooltip-detail="Discard every memory from this document." disabled={busy} onClick={() => decideBatch(batchUid, 'deny')}>Reject batch</Button>
+                    <Button action="confirm" variant="primary" type="button" data-tooltip-detail="Admit every memory from this document to your Palace." disabled={busy} onClick={() => decideBatch(batchUid, 'approve')}>Approve batch</Button>
                   </div>
                 </header>
                 <div className="seed-batch__memories">
