@@ -31,7 +31,7 @@ export function SpendWallSettings() {
     <form onSubmit={(event) => { event.preventDefault(); void save() }}>
       <label>Per run · USD<TextField aria-label="Per-run spend wall USD" data-tooltip-detail="Pause a run when its reported spend reaches this. A request already underway can finish past it." type="number" min="0.000001" step="any" value={run} disabled={!loaded} onChange={(event) => setRun(event.target.value)} /></label>
       <label>Per UTC day · USD<TextField aria-label="Daily spend wall USD" data-tooltip-detail="Pause ordinary runs when the day's reported spend reaches this." type="number" min="0.000001" step="any" value={day} disabled={!loaded} onChange={(event) => setDay(event.target.value)} /></label>
-      <Button variant="primary" data-tooltip-detail="Save both limits; paused runs recheck them." disabled={!loaded} type="submit">Save spend walls</Button>
+      <Button action="save" variant="primary" data-tooltip-detail="Save both limits; paused runs recheck them." disabled={!loaded} type="submit">Save spend walls</Button>
     </form>
     <p role="status">{status}</p>
   </section>
