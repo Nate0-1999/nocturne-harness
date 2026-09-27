@@ -117,7 +117,7 @@ async def test_live_create_conflicts_and_dedup_bands(
             _create_request(
                 principal_id=hard_principal,
                 label=hard_source.created.label,
-                body="This body deliberately has no embedding fixture",
+                body="The Palace stores durable memories for the owner and retrieves them when relevant.",
                 project_key=project_key,
             )
         )
@@ -129,7 +129,7 @@ async def test_live_create_conflicts_and_dedup_bands(
         await spine_client.create_memory(
             _create_request(
                 principal_id=hard_principal,
-                label=f"Hard candidate {run_id}",
+                label=hard_source.created.label,
                 body=HARD_CANDIDATE,
                 project_key=project_key,
                 force=True,
