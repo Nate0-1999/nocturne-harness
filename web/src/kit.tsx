@@ -8,7 +8,7 @@ import type {
 } from 'react'
 import {
   Archive, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Check, ChevronDown, ChevronUp,
-  ChevronsUpDown, Eye, FolderOpen, GripVertical, Keyboard, Maximize, Mic, Minimize, Paperclip,
+  ChevronsUpDown, Eye, FolderOpen, GripVertical, Maximize, Mic, Minimize, Paperclip,
   Pause, Pencil, Pin, PinOff, Play, Plus, RotateCcw, Save, Search, Send, Settings,
   Square, SquareCheck, Trash2, Undo2, Upload, Volume2, X, ZoomIn, ZoomOut,
 } from 'lucide-react'
@@ -21,7 +21,7 @@ const ACTION_ICONS = {
   save: Save, restore: Undo2, back: ArrowLeft, next: ArrowRight, up: ArrowUp,
   latest: ArrowDown, edit: Pencil, pin: Pin, unpin: PinOff, archive: Archive,
   attach: Paperclip, import: Upload, preview: Eye, listen: Mic, speak: Volume2,
-  confirm: Check, move: GripVertical, zoomIn: ZoomIn, zoomOut: ZoomOut, typing: Keyboard,
+  confirm: Check, move: GripVertical, zoomIn: ZoomIn, zoomOut: ZoomOut,
 } as const
 
 export type ButtonAction = keyof typeof ACTION_ICONS

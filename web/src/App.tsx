@@ -2650,7 +2650,7 @@ function ChatModule() {
                 void attachImageFiles(files)
               }}
             />
-            <Button variant="bare" action="attach"
+            <Button variant="bare" action="attach" iconOnly
               className="composer__attach"
               type="button"
               data-testid="attach-image"
