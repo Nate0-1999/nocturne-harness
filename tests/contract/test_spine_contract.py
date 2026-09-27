@@ -117,7 +117,7 @@ async def test_live_create_conflicts_and_dedup_bands(
             _create_request(
                 principal_id=hard_principal,
                 label=hard_source.created.label,
-                body="The Palace stores durable memories for the owner and retrieves them when relevant.",
+                body=SIMILAR_SOURCE,
                 project_key=project_key,
             )
         )
