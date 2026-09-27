@@ -1,0 +1,353 @@
+[
+  {
+    "captured_at": "2026-09-27T02:17:11.325683+00:00",
+    "message": {
+      "content": "What does M3IC verification check? Answer in one sentence.",
+      "message_id": "01M3GADVCXG8GAGJ8ECKX1JF18",
+      "parentId": null,
+      "role": "user",
+      "run_id": "01M3GADVCXACBFNX2J9VD1475E",
+      "state": "queued"
+    },
+    "record_type": "message",
+    "tail_message_id": "01M3GADVCXG8GAGJ8ECKX1JF18",
+    "thread_id": "95035c8d-920f-4f62-9ae4-758bc4f96be1",
+    "version": 1
+  },
+  {
+    "captured_at": "2026-09-27T02:17:11.394606+00:00",
+    "message": {
+      "checkpoint": {
+        "commit": "ba37f6ee025d88264e27011de70219fb04cfb5ce",
+        "location": "/private/tmp/n8-ic26/project",
+        "parent_id": null
+      },
+      "content": "What does M3IC verification check? Answer in one sentence.",
+      "message_id": "01M3GADVCXG8GAGJ8ECKX1JF18",
+      "parentId": null,
+      "role": "user",
+      "run_id": "01M3GADVCXACBFNX2J9VD1475E",
+      "state": "running"
+    },
+    "record_type": "message",
+    "tail_message_id": "01M3GADVCXG8GAGJ8ECKX1JF18",
+    "thread_id": "95035c8d-920f-4f62-9ae4-758bc4f96be1",
+    "version": 1
+  },
+  {
+    "captured_at": "2026-09-27T02:17:11.394893+00:00",
+    "message": {
+      "content": "",
+      "events": [],
+      "message_id": "01M3GADVCXACBFNX2J9VD1475E",
+      "parentId": "01M3GADVCXG8GAGJ8ECKX1JF18",
+      "partial": true,
+      "role": "assistant",
+      "run_id": "01M3GADVCXACBFNX2J9VD1475E",
+      "thinking": ""
+    },
+    "record_type": "message",
+    "tail_message_id": "01M3GADVCXACBFNX2J9VD1475E",
+    "thread_id": "95035c8d-920f-4f62-9ae4-758bc4f96be1",
+    "version": 1
+  },
+  {
+    "captured_at": "2026-09-27T02:17:56.536207+00:00",
+    "message": {
+      "checkpoint": {
+        "commit": "ba37f6ee025d88264e27011de70219fb04cfb5ce",
+        "location": "/private/tmp/n8-ic26/project",
+        "parent_id": null
+      },
+      "content": "What does M3IC verification check? Answer in one sentence.",
+      "message_id": "01M3GADVCXG8GAGJ8ECKX1JF18",
+      "parentId": null,
+      "role": "user",
+      "run_id": "01M3GADVCXACBFNX2J9VD1475E",
+      "state": "end_turn"
+    },
+    "record_type": "message",
+    "tail_message_id": "01M3GADVCXACBFNX2J9VD1475E",
+    "thread_id": "95035c8d-920f-4f62-9ae4-758bc4f96be1",
+    "version": 1
+  },
+  {
+    "captured_at": "2026-09-27T02:17:56.536992+00:00",
+    "message": {
+      "content": "M3IC verification checks that recognizable icons render correctly across every theme.\n\n",
+      "events": [
+        {
+          "event_kind": "part_end",
+          "index": 0,
+          "next_part_kind": "text",
+          "part": {
+            "content": "The user is asking about M3IC verification. I have a memory about this: \"M3IC verification checks recognizable icons across every theme.\" I should answer in one sentence based on this fact.",
+            "id": null,
+            "part_kind": "thinking",
+            "provider_details": {
+              "format": "unknown",
+              "index": 0,
+              "type": "reasoning.text"
+            },
+            "provider_name": "openrouter",
+            "signature": null
+          }
+        },
+        {
+          "event_kind": "final_result",
+          "tool_call_id": null,
+          "tool_name": null
+        },
+        {
+          "event_kind": "part_end",
+          "index": 1,
+          "next_part_kind": null,
+          "part": {
+            "content": "M3IC verification checks that recognizable icons render correctly across every theme.\n\n<nocturne-proposed-response>\n{\"primary\":\"M3IC verification checks that recognizable icons render correctly across every theme.\"}\n</nocturne-proposed-response>",
+            "id": null,
+            "part_kind": "text",
+            "provider_details": null,
+            "provider_name": null
+          }
+        },
+        {
+          "alternatives": [],
+          "created_at": "2026-09-27T02:17:56.464171+00:00",
+          "event_kind": "proposed_response",
+          "primary": "M3IC verification checks that recognizable icons render correctly across every theme.",
+          "proposal_run_id": "01M3GADVCXACBFNX2J9VD1475E"
+        }
+      ],
+      "message_id": "01M3GADVCXACBFNX2J9VD1475E",
+      "parentId": "01M3GADVCXG8GAGJ8ECKX1JF18",
+      "partial": false,
+      "role": "assistant",
+      "run_id": "01M3GADVCXACBFNX2J9VD1475E",
+      "thinking": "The user is asking about M3IC verification. I have a memory about this: \"M3IC verification checks recognizable icons across every theme.\" I should answer in one sentence based on this fact."
+    },
+    "record_type": "message",
+    "tail_message_id": "01M3GADVCXACBFNX2J9VD1475E",
+    "thread_id": "95035c8d-920f-4f62-9ae4-758bc4f96be1",
+    "version": 1
+  },
+  {
+    "captured_at": "2026-09-27T02:00:02.074063+00:00",
+    "message": {
+      "content": "Reply with exactly: Icon baseline ready.",
+      "message_id": "01M3G9EE8S67YXA8M0AYPDWGNR",
+      "parentId": null,
+      "role": "user",
+      "run_id": "01M3G9EE8S6D3XA9G2TAQJRCXX",
+      "state": "queued"
+    },
+    "record_type": "message",
+    "tail_message_id": "01M3G9EE8S67YXA8M0AYPDWGNR",
+    "thread_id": "5a0383fd-4bd4-4ca0-bda8-8fa15bc62287",
+    "version": 1
+  },
+  {
+    "captured_at": "2026-09-27T02:00:02.145262+00:00",
+    "message": {
+      "checkpoint": {
+        "commit": "b6f020215c6af47a612cf2cfc8bb1dc5cc093880",
+        "location": "/private/tmp/n8-ic26/project",
+        "parent_id": null
+      },
+      "content": "Reply with exactly: Icon baseline ready.",
+      "message_id": "01M3G9EE8S67YXA8M0AYPDWGNR",
+      "parentId": null,
+      "role": "user",
+      "run_id": "01M3G9EE8S6D3XA9G2TAQJRCXX",
+      "state": "running"
+    },
+    "record_type": "message",
+    "tail_message_id": "01M3G9EE8S67YXA8M0AYPDWGNR",
+    "thread_id": "5a0383fd-4bd4-4ca0-bda8-8fa15bc62287",
+    "version": 1
+  },
+  {
+    "captured_at": "2026-09-27T02:00:02.145556+00:00",
+    "message": {
+      "content": "",
+      "events": [],
+      "message_id": "01M3G9EE8S6D3XA9G2TAQJRCXX",
+      "parentId": "01M3G9EE8S67YXA8M0AYPDWGNR",
+      "partial": true,
+      "role": "assistant",
+      "run_id": "01M3G9EE8S6D3XA9G2TAQJRCXX",
+      "thinking": ""
+    },
+    "record_type": "message",
+    "tail_message_id": "01M3G9EE8S6D3XA9G2TAQJRCXX",
+    "thread_id": "5a0383fd-4bd4-4ca0-bda8-8fa15bc62287",
+    "version": 1
+  },
+  {
+    "captured_at": "2026-09-27T02:01:27.680716+00:00",
+    "message": {
+      "checkpoint": {
+        "commit": "b6f020215c6af47a612cf2cfc8bb1dc5cc093880",
+        "location": "/private/tmp/n8-ic26/project",
+        "parent_id": null
+      },
+      "content": "Reply with exactly: Icon baseline ready.",
+      "message_id": "01M3G9EE8S67YXA8M0AYPDWGNR",
+      "parentId": null,
+      "role": "user",
+      "run_id": "01M3G9EE8S6D3XA9G2TAQJRCXX",
+      "state": "end_turn"
+    },
+    "record_type": "message",
+    "tail_message_id": "01M3G9EE8S6D3XA9G2TAQJRCXX",
+    "thread_id": "5a0383fd-4bd4-4ca0-bda8-8fa15bc62287",
+    "version": 1
+  },
+  {
+    "captured_at": "2026-09-27T02:01:27.681399+00:00",
+    "message": {
+      "content": "Icon baseline ready.\n\n",
+      "events": [
+        {
+          "event_kind": "part_end",
+          "index": 0,
+          "next_part_kind": "text",
+          "part": {
+            "content": "The user is asking me to reply with exactly: \"Icon baseline ready.\" This is a simple instruction. I should reply with that exact phrase. Per the developer policy, I need to finish with a structured proposed-response block. The primary should be the exact text requested.",
+            "id": null,
+            "part_kind": "thinking",
+            "provider_details": {
+              "format": "unknown",
+              "index": 0,
+              "type": "reasoning.text"
+            },
+            "provider_name": "openrouter",
+            "signature": null
+          }
+        },
+        {
+          "event_kind": "final_result",
+          "tool_call_id": null,
+          "tool_name": null
+        },
+        {
+          "event_kind": "part_end",
+          "index": 1,
+          "next_part_kind": null,
+          "part": {
+            "content": "Icon baseline ready.\n\n<nocturne-proposed-response>\n{\"primary\":\"Icon baseline ready.\",\"alternatives\":[]}\n</nocturne-proposed-response>",
+            "id": null,
+            "part_kind": "text",
+            "provider_details": null,
+            "provider_name": null
+          }
+        },
+        {
+          "alternatives": [],
+          "created_at": "2026-09-27T02:01:27.615972+00:00",
+          "event_kind": "proposed_response",
+          "primary": "Icon baseline ready.",
+          "proposal_run_id": "01M3G9EE8S6D3XA9G2TAQJRCXX"
+        }
+      ],
+      "message_id": "01M3G9EE8S6D3XA9G2TAQJRCXX",
+      "parentId": "01M3G9EE8S67YXA8M0AYPDWGNR",
+      "partial": false,
+      "role": "assistant",
+      "run_id": "01M3G9EE8S6D3XA9G2TAQJRCXX",
+      "thinking": "The user is asking me to reply with exactly: \"Icon baseline ready.\" This is a simple instruction. I should reply with that exact phrase. Per the developer policy, I need to finish with a structured proposed-response block. The primary should be the exact text requested."
+    },
+    "record_type": "message",
+    "tail_message_id": "01M3G9EE8S6D3XA9G2TAQJRCXX",
+    "thread_id": "5a0383fd-4bd4-4ca0-bda8-8fa15bc62287",
+    "version": 1
+  },
+  {
+    "captured_at": "2026-09-27T02:05:56.376644+00:00",
+    "message": {
+      "content": "/remember M3IC verification checks recognizable icons across every theme.",
+      "message_id": "01M3G9S88R0P1VN0NDDGDY63JG",
+      "parentId": "01M3G9EE8S6D3XA9G2TAQJRCXX",
+      "role": "user",
+      "run_id": "01M3G9S88R4H79ZHJ7G675AQ4Q",
+      "state": "queued"
+    },
+    "record_type": "message",
+    "tail_message_id": "01M3G9S88R0P1VN0NDDGDY63JG",
+    "thread_id": "5a0383fd-4bd4-4ca0-bda8-8fa15bc62287",
+    "version": 1
+  },
+  {
+    "captured_at": "2026-09-27T02:05:56.455189+00:00",
+    "message": {
+      "checkpoint": {
+        "commit": "e88f006b393569dfd0c328fce1d2961737009242",
+        "location": "/private/tmp/n8-ic26/project",
+        "parent_id": "01M3G9EE8S6D3XA9G2TAQJRCXX"
+      },
+      "content": "/remember M3IC verification checks recognizable icons across every theme.",
+      "message_id": "01M3G9S88R0P1VN0NDDGDY63JG",
+      "parentId": "01M3G9EE8S6D3XA9G2TAQJRCXX",
+      "role": "user",
+      "run_id": "01M3G9S88R4H79ZHJ7G675AQ4Q",
+      "state": "running"
+    },
+    "record_type": "message",
+    "tail_message_id": "01M3G9S88R0P1VN0NDDGDY63JG",
+    "thread_id": "5a0383fd-4bd4-4ca0-bda8-8fa15bc62287",
+    "version": 1
+  },
+  {
+    "captured_at": "2026-09-27T02:05:56.455531+00:00",
+    "message": {
+      "content": "",
+      "events": [],
+      "message_id": "01M3G9S88R4H79ZHJ7G675AQ4Q",
+      "parentId": "01M3G9S88R0P1VN0NDDGDY63JG",
+      "partial": true,
+      "role": "assistant",
+      "run_id": "01M3G9S88R4H79ZHJ7G675AQ4Q",
+      "thinking": ""
+    },
+    "record_type": "message",
+    "tail_message_id": "01M3G9S88R4H79ZHJ7G675AQ4Q",
+    "thread_id": "5a0383fd-4bd4-4ca0-bda8-8fa15bc62287",
+    "version": 1
+  },
+  {
+    "captured_at": "2026-09-27T02:05:58.194956+00:00",
+    "message": {
+      "checkpoint": {
+        "commit": "e88f006b393569dfd0c328fce1d2961737009242",
+        "location": "/private/tmp/n8-ic26/project",
+        "parent_id": "01M3G9EE8S6D3XA9G2TAQJRCXX"
+      },
+      "content": "/remember M3IC verification checks recognizable icons across every theme.",
+      "message_id": "01M3G9S88R0P1VN0NDDGDY63JG",
+      "parentId": "01M3G9EE8S6D3XA9G2TAQJRCXX",
+      "role": "user",
+      "run_id": "01M3G9S88R4H79ZHJ7G675AQ4Q",
+      "state": "end_turn"
+    },
+    "record_type": "message",
+    "tail_message_id": "01M3G9S88R4H79ZHJ7G675AQ4Q",
+    "thread_id": "5a0383fd-4bd4-4ca0-bda8-8fa15bc62287",
+    "version": 1
+  },
+  {
+    "captured_at": "2026-09-27T02:05:58.195121+00:00",
+    "message": {
+      "content": "Remembered 'M3IC verification checks recognizable icons across themes' (c279042e-bac8-41d9-be4f-459abf86e1b4).",
+      "events": [],
+      "message_id": "01M3G9S88R4H79ZHJ7G675AQ4Q",
+      "parentId": "01M3G9S88R0P1VN0NDDGDY63JG",
+      "partial": false,
+      "role": "assistant",
+      "run_id": "01M3G9S88R4H79ZHJ7G675AQ4Q",
+      "thinking": ""
+    },
+    "record_type": "message",
+    "tail_message_id": "01M3G9S88R4H79ZHJ7G675AQ4Q",
+    "thread_id": "5a0383fd-4bd4-4ca0-bda8-8fa15bc62287",
+    "version": 1
+  }
+]
