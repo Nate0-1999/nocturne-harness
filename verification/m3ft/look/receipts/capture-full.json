@@ -1,0 +1,32 @@
+{
+  "base_url": "http://127.0.0.1:18877",
+  "tier": "full",
+  "captures": [
+    {
+      "module": "farm",
+      "view": "stage",
+      "row": "FL-126",
+      "full": "farm-full.png",
+      "crop": {
+        "x": 0.139892578125,
+        "y": 359.26713638482477,
+        "width": 1104.639892578125,
+        "height": 457.81995547881405
+      },
+      "telemetry": [
+        "123,478 triangles · full",
+        "16 chambers\n34812 files · 34799 in counted chambers · 3 agents\nDrag or Ctrl+arrows to orbit · scroll or +/− to zoom · pick an ant\nVerification only. Reply with one sentence confirming you can help inspect this · /Users/nateoswalt/Developer/N8_Harness/harness"
+      ],
+      "at": "2026-09-27T01:19:43.028Z",
+      "side_by_side": {
+        "file": "FL-126-plate.png",
+        "crop_px": {
+          "x": 221,
+          "y": 0,
+          "width": 1766,
+          "height": 914
+        }
+      }
+    }
+  ]
+}

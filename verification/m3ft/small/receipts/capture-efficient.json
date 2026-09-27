@@ -1,0 +1,23 @@
+{
+  "base_url": "http://127.0.0.1:18877",
+  "tier": "efficient",
+  "captures": [
+    {
+      "module": "farm",
+      "view": "stage",
+      "row": "FL-126",
+      "full": "farm-efficient.png",
+      "crop": {
+        "x": 0.139892578125,
+        "y": 359.26713638482477,
+        "width": 1104.639892578125,
+        "height": 457.81995547881405
+      },
+      "telemetry": [
+        "4,272 triangles · efficient",
+        "3 chambers\n3 files · 0 in counted chambers · 3 agents\nDrag or Ctrl+arrows to orbit · scroll or +/− to zoom · pick an ant\nVerification only. Reply with one sentence confirming you can help inspect this · /Users/nateoswalt/Developer/N8_Harness/harness"
+      ],
+      "at": "2026-09-27T01:19:02.927Z"
+    }
+  ]
+}

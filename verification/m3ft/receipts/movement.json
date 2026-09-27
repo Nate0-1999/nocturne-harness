@@ -1,0 +1,60 @@
+{
+  "identity": {
+    "home": "/private/tmp/m3ft-verification/home",
+    "principal_id": "nocturne-verification-0be5da22-b84b-4774-be90-53e93d9b6e93",
+    "machine_id": "nocturne-778590d7-5325-4092-a28e-f309b7c31964"
+  },
+  "locations": [
+    {
+      "captured_at": "2026-09-27T01:17:39.141602+00:00",
+      "current_location": "/Users/nateoswalt/Developer/N8_Harness/harness/src",
+      "record_type": "thread_location",
+      "thread_id": "e7bb8f05-03c8-4228-a656-41f570b9546e",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-27T01:17:43.544957+00:00",
+      "current_location": "/Users/nateoswalt/Developer/N8_Harness/harness/tests",
+      "record_type": "thread_location",
+      "thread_id": "e7bb8f05-03c8-4228-a656-41f570b9546e",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-27T01:17:49.018531+00:00",
+      "current_location": "/Users/nateoswalt/Developer/N8_Harness/harness/web",
+      "record_type": "thread_location",
+      "thread_id": "e7bb8f05-03c8-4228-a656-41f570b9546e",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-27T01:17:54.660978+00:00",
+      "current_location": "/Users/nateoswalt/Developer/N8_Harness/harness/src",
+      "record_type": "thread_location",
+      "thread_id": "e7bb8f05-03c8-4228-a656-41f570b9546e",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-27T01:18:00.059145+00:00",
+      "current_location": "/Users/nateoswalt/Developer/N8_Harness/harness/tests",
+      "record_type": "thread_location",
+      "thread_id": "e7bb8f05-03c8-4228-a656-41f570b9546e",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-27T01:18:05.628722+00:00",
+      "current_location": "/Users/nateoswalt/Developer/N8_Harness/harness/web",
+      "record_type": "thread_location",
+      "thread_id": "e7bb8f05-03c8-4228-a656-41f570b9546e",
+      "version": 1
+    },
+    {
+      "captured_at": "2026-09-27T01:18:11.091571+00:00",
+      "current_location": "/Users/nateoswalt/Developer/N8_Harness/harness",
+      "record_type": "thread_location",
+      "thread_id": "e7bb8f05-03c8-4228-a656-41f570b9546e",
+      "version": 1
+    }
+  ],
+  "video": "../moving/farm-live.webm",
+  "duration_seconds": 10
+}

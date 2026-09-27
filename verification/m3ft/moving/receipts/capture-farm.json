@@ -1,0 +1,21 @@
+{
+  "base_url": "http://127.0.0.1:18877",
+  "tier": "efficient",
+  "captures": [
+    {
+      "module": "farm",
+      "view": "stage",
+      "record_start_s": 7.433,
+      "seconds": 10,
+      "trigger": null,
+      "lead": 0,
+      "crop": {
+        "x": 0.139892578125,
+        "y": 359.26713638482477,
+        "width": 1104.639892578125,
+        "height": 457.81995547881405
+      },
+      "camera": "slow orbit by mouse drag, 25 px over 10 s"
+    }
+  ]
+}

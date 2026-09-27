@@ -3680,3 +3680,12 @@ complete published pair. Agent-file review already worked and stays intact.
 The public 0.1.32 repeat with another identity exposed a deterministic seed-ID
 collision. Scope generated IDs to the principal; preserve legacy `local` IDs
 and explicit caller UUIDs. Same-user retries remain stable across machines.
+
+## M3FT — Bound the Farm without losing the tree [P2.5]
+
+PRECEDENT: PLAN M3FT; F122; M3VZ and M3VL/report 238. Hash tree entries in
+small batches, cache each project's layouts, and yield while counting and
+folding by depth. At most 64 chambers and 512 cells reach the existing
+renderer; collapsed chambers show exact file/folder counts and open on click.
+The folder browser pages all direct entries. This keeps the frame security
+policy intact and leaves Roots and Palace rendering unchanged.
