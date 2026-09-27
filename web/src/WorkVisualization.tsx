@@ -3,7 +3,8 @@ import { Farm } from './Farm'
 import { Roots } from './Roots'
 import { useRackPlugin, useRackSelection, useRackSnapshot, type RackModuleId } from './rack'
 import { VisualizationScene } from './VisualizationScene'
-import { agentColor, buildChambers, LEAF, WIDTH, type DetailTier, type VisualizationSnapshot, type WorkAgent } from './visualization'
+import { agentColor, parentPath, LEAF, WIDTH, type DetailTier, type VisualizationSnapshot, type WorkAgent } from './visualization'
+import { useFarmLayout } from './useFarmLayout'
 import './assets/work-visualization.css'
 import { Button, Select } from './kit'
 
@@ -81,9 +82,24 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
   const selectedId = selected?.kind === 'agent' || selected?.kind === 'thread' ? selected.id : selectedMemory?.origin_thread_id ?? null
   const focused = agents.find((agent) => agent.id === selectedId)
   const project = data?.projects.find((candidate) => candidate.root === (projectRoot ?? focused?.root)) ?? data?.projects[0]
-  const chambers = useMemo(() => project ? buildChambers(project) : [], [project])
+  const [folder, setFolder] = useState({ root: '', path: '.' })
+  const [directoryOpen, setDirectoryOpen] = useState(false)
+  const [directoryPage, setDirectoryPage] = useState(0)
+  const focus = folder.root === project?.root ? folder.path : '.'
+  const layout = useFarmLayout(view === 'farm' ? project : undefined, focus)
+  const chambers = layout?.chambers ?? []
+  const farmProject = useMemo(() => project && ({ ...project,
+    root: `${project.root}${focus === '.' ? '' : `/${focus}`}` }), [project, focus])
+  const openFolder = (path: string) => {
+    setFolder({ root: project!.root, path }); setDirectoryPage(0)
+  }
+  const expand = (path: string) => {
+    openFolder(path === '.' ? focus : `${focus === '.' ? '' : `${focus}/`}${path}`)
+    setDirectoryOpen(true)
+  }
+  const directoryEntries = directoryOpen ? project?.nodes.filter((node) => node.path !== '.' && parentPath(node.path) === focus) ?? [] : []
   const reach = Math.max(0, ...chambers.map((c) => Math.hypot(c.position[0], c.position[1]) + c.radius))
-  const distance = view === 'farm' ? Math.max(8, reach * 1.6 + 3.5) : 12
+  const distance = view === 'farm' ? Math.max(8, reach * 2.4 + 3.5) : 12
   const width = view === 'farm' ? (reach + 1) * 2 : 20
   const pick = (agent: WorkAgent) => {
     setProjectRoot(agent.root)
@@ -101,14 +117,28 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
     {project && <label className="work-viz__project">Project<select aria-label="Visualized project" value={project.root} onChange={(event) => setProjectRoot(event.target.value)}>
       {data!.projects.map((p) => <option key={p.root}>{p.root}</option>)}
     </select></label>}
+    {view === 'farm' && project && <div className="work-viz__toolbar">
+      <Button disabled={focus === '.'} onClick={() => openFolder(parentPath(focus))}>Up one folder</Button>
+      <span>{focus} · {layout ? `showing ${layout.depth} levels` : 'Laying out the tree…'}</span>
+      <Button onClick={() => setDirectoryOpen(!directoryOpen)} aria-expanded={directoryOpen}>Browse folder</Button>
+    </div>}
+    {view === 'farm' && directoryOpen && <div className="work-viz__data">
+      <span>{directoryEntries.length} entries in {focus} · {directoryPage * 100 + 1}–{Math.min(directoryEntries.length, (directoryPage + 1) * 100)}</span>
+      <Button disabled={!directoryPage} onClick={() => setDirectoryPage(directoryPage - 1)}>Previous entries</Button>
+      <Button disabled={(directoryPage + 1) * 100 >= directoryEntries.length} onClick={() => setDirectoryPage(directoryPage + 1)}>Next entries</Button>
+      <ul>{directoryEntries.slice(directoryPage * 100, (directoryPage + 1) * 100).map((node) => <li key={node.path}>
+        <button onClick={() => node.kind === 'directory' ? openFolder(node.path)
+          : selection.select({ kind: 'path', id: `${project!.root}/${node.path}`, as_of: selected?.as_of ?? null })}>{node.path}</button> · {node.kind}
+      </li>)}</ul>
+    </div>}
     <div className="work-viz__viewport">
       {data && project && <VisualizationScene tier={tier} distance={distance} width={width} label={view === 'farm' ? 'Directory chambers and live agents' : 'Agent roots: thickness is dollars flowing, spacing is time between events'}>
-        {view === 'farm' ? <Farm project={project} agents={agents} selectedId={selectedId} selectedPath={selected?.kind === 'path' ? selected.id : null} tier={tier} asOf={data.as_of} pick={pick}
-          pickPath={(path) => selection.select({ kind: 'path', id: `${project.root}${path === '.' ? '' : '/' + path}`, as_of: selected?.as_of ?? null })} />
+        {view === 'farm' ? layout && <Farm project={farmProject!} chambers={chambers} expand={expand} agents={agents} selectedId={selectedId} selectedPath={selected?.kind === 'path' ? selected.id : null} tier={tier} asOf={data.as_of} pick={pick}
+          pickPath={(path) => selection.select({ kind: 'path', id: `${farmProject!.root}${path === '.' ? '' : '/' + path}`, as_of: selected?.as_of ?? null })} />
           : <Roots data={data} agents={agents} selectedId={selectedId} tier={tier} pick={pick} newest={selected?.time_order ?? false} />}
       </VisualizationScene>}
       <aside className="work-viz__readout"><strong>{view === 'farm' ? `${chambers.length} chambers` : `${agents.length - forked} roots · ${forked} forked limbs`}</strong>
-        <span>{view === 'farm' ? `${project?.nodes.filter((node) => node.kind !== 'directory').length ?? 0} file cells`
+        <span>{view === 'farm' ? `${layout?.files ?? 0} files · ${chambers.reduce((sum, chamber) => sum + chamber.hiddenFiles, 0)} in counted chambers`
           : `${agents.reduce((count, agent) => count + (agent.touched_files?.length ?? 0), 0)} touched-file capillaries`} · {agents.length} agents</span>
         {view === 'farm' ? <span>Drag or Ctrl+arrows to orbit · scroll or +/− to zoom · pick an ant</span> : <>
           <span title={`radius = hair + ${WIDTH}·√$ (a fork divides its cross-section by dollars; unpriced = hair; a parent whose trail rolled up less than a fork's price is drawn at its own spend plus its forks' prices) · across = ln(1 + gap / 0.5 s)^1.2 (a longer gap is always a longer bare stretch) · leaf = ${LEAF}·(compressed wait)^0.75 (or its own spend window, if longer), so a longer wait is always a longer reach`}>
@@ -119,7 +149,7 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
     </div>
     <footer className="work-viz__foot">{data && <>Recorded since {new Date(data.recorded_since).toLocaleString()} · {data.timeline.length} states · {data.live ? 'Live observation' : 'Recorded history'}</>}
       {view === 'roots' && <span>Trunk = project, its agents' roots fused · ringed source = a top-level agent, entering at the left edge in its own lane (the finest hair until it started, then it swells and converges at a shallow angle, fusing into the trunk once their bodies come within one diameter; its dollars move into the trunk as it fuses, so each is drawn once) · branch = turn · twig = tool call · capillary = recorded file touch · limb = forked agent, leaving where it started · a turn (a call, within its turn) leaves the latest earlier one that followed a longer wait than its own, so a burst sub-forks · spacing along every root and branch = time between its events (bare chrome = waiting); finer branches run on a finer time scale (×0.82 per level, a forked limb ×0.6) · a leaf reaches as long as the compressed wait for the agent's next event (a bare leaf: or its own spend window, if longer) · side, angle, curl and meander come from each branch's seed; forked limbs fan on the side away from their parent, and a heavy turn leaves away from the other roots · width = the dollars still to flow through it, on one fixed scale (radius = hair + {WIDTH}·√$; a branch carries the spend recorded in its window, a forked limb its own price), so at a junction the branches' cross-sections above the hair width add up to what the parent loses; four stretches are shaped, not priced: a junction's flare, a root's swell from its hair, a leaf too short for its dollars (never thicker than a twelfth of its length), and every tip, which closes to a point past its last recorded moment (a live tip too: still growing) · blue = live work (full while running, dimmer while waiting) · red-pink = a fine branch leaving: always marked, stronger and reaching further the larger its share of its parent's dollars, and carried into the fine branches that leave within that reach; a thicker branch's fork shows as a coral glow one diameter long on its parent's side; a stopped agent carries none but its fork on a live parent · depth = time · matte = stopped (pale on the sheet, deep blue on the stage; a stopped limb keeps its chrome for one diameter where it leaves a live parent)</span>}
-      {view === 'farm' && <span>Chamber = folder · size = files it holds · dim = empty · link = parent folder, width = files beneath · cell = file, size = bytes · lit = touched by an agent, brighter = more recent, flash = new touch · ant = agent in its current folder · walk = location changed</span>}
+      {view === 'farm' && <span>Chamber = folder · counts = collapsed contents, click to open · size = files it holds · dim = empty · link = parent folder, width = files beneath · cell = file, size = bytes · lit = touched by an agent · ant = agent in its current folder or its counted ancestor · walk = location changed</span>}
       {project?.errors.map((item) => <span key={item.path}>Cannot read {item.path}: {item.error}</span>)}
       {data?.errors.map((item) => <span key={item.feed}>{item.feed} feed unavailable</span>)}
     </footer>
@@ -131,7 +161,7 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
         </tr>)}
       </tbody></table>
     </details>
-    {project && <details className="work-viz__data"><summary>Complete directory tree · {project.nodes.length} entries</summary>
+    {view !== 'farm' && project && <details className="work-viz__data"><summary>Complete directory tree · {project.nodes.length} entries</summary>
       <ul>{project.nodes.map((node) => <li key={node.path}><button onClick={() => selection.select({ kind: 'path', id: `${project.root}${node.path === '.' ? '' : '/' + node.path}`, as_of: selected?.as_of ?? null })}>{node.path}</button> · {node.kind}</li>)}</ul>
     </details>}
   </section>

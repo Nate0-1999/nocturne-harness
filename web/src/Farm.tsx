@@ -1,12 +1,13 @@
 import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import {
-  AdditiveBlending, BoxGeometry, CatmullRomCurve3, Color, DoubleSide, Group, InstancedMesh, LatheGeometry,
+  AdditiveBlending, BoxGeometry, CanvasTexture, CatmullRomCurve3, Color, DoubleSide, Group, InstancedMesh, LatheGeometry,
   Matrix4, Quaternion, TorusGeometry, TubeGeometry, Vector2, Vector3,
 } from 'three'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import { ChromeEnvironment } from './ChromeEnvironment'
-import { buildChambers, identitySeed, type Chamber, type DetailTier, type Point3, type WorkAgent, type WorkProject } from './visualization'
+import { identitySeed, parentPath, type Chamber, type DetailTier, type Point3, type WorkAgent, type WorkProject } from './visualization'
+import type { FarmChamber } from './farmLayout'
 
 // The plate's farm: liquid-glass basins with chrome rims on a tilted ground, linked by glass limbs.
 const TILT = -1.0
@@ -16,16 +17,13 @@ const TOUCH_HALF_LIFE_S = 600
 
 type Cell = { path: string; position: Point3; size: number }
 
-export function Farm({ project, agents, selectedId, selectedPath, tier, asOf, pick, pickPath }: {
+export function Farm({ project, chambers, agents, selectedId, selectedPath, tier, asOf, pick, pickPath, expand }: {
   project: WorkProject; agents: WorkAgent[]; selectedId: string | null; tier: DetailTier
+  chambers: FarmChamber[]; expand: (path: string) => void
   selectedPath: string | null; asOf: string
   pick: (agent: WorkAgent) => void; pickPath: (path: string) => void
 }) {
   const full = tier === 'full'
-  // Each feed refresh is a new object; lay the tree out again only when the tree itself changed (F122).
-  const tree = `${project.root}\n${project.nodes.map((node) => `${node.kind}:${node.path}:${node.bytes}`).join('\n')}`
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const chambers = useMemo(() => buildChambers(project), [tree])
   const byPath = useMemo(() => new Map(chambers.map((chamber) => [chamber.path, chamber])), [chambers])
   const cells = useMemo(() => chambers.flatMap((chamber) => {
     const count = chamber.files.length, floor = chamber.radius * 0.62
@@ -52,18 +50,43 @@ export function Farm({ project, agents, selectedId, selectedPath, tier, asOf, pi
     <ChromeEnvironment />
     <group rotation={[TILT, 0, 0]}>
       <gridHelper args={[60, 30, '#141c26', '#0b1119']} rotation={[Math.PI / 2, 0, 0]} position={[0, 0, -1.4]} />
-      <Basins chambers={chambers} full={full} selectedPath={selectedPath} root={project.root} pickPath={pickPath} />
+      <Basins chambers={chambers} full={full} selectedPath={selectedPath} root={project.root} pickPath={(path) => {
+        pickPath(path)
+        const chamber = byPath.get(path) as FarmChamber
+        if (chamber.hiddenFiles || chamber.hiddenFolders) expand(path)
+      }} />
+      {chambers.filter((chamber) => chamber.hiddenFiles || chamber.hiddenFolders).map((chamber) =>
+        <CollapsedCount key={chamber.path} chamber={chamber} expand={() => expand(chamber.path)} />)}
       <Links chambers={chambers} byPath={byPath} full={full} />
       <Cells cells={cells} lastTouch={lastTouch} asOf={Date.parse(asOf)} selectedPath={selectedPath} full={full}
         pickPath={(path) => pickPath(path.slice(project.root.length + 1))} />
       {resident.map((agent) => {
-        const relative = agent.location === project.root ? '.' : agent.location.slice(project.root.length + 1)
+        let relative = agent.location === project.root ? '.' : agent.location.slice(project.root.length + 1)
+        while (relative !== '.' && !byPath.has(relative)) relative = parentPath(relative)
         const peers = resident.filter((peer) => peer.location === agent.location)
         return byPath.has(relative) && <Ant key={agent.id} agent={agent} chamber={relative} byPath={byPath}
           slot={peers.indexOf(agent)} selected={selectedId === agent.id} full={full} pick={() => pick(agent)} />
       })}
     </group>
   </>
+}
+
+function CollapsedCount({ chamber, expand }: { chamber: FarmChamber; expand: () => void }) {
+  const texture = useMemo(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 512; canvas.height = 96
+    const context = canvas.getContext('2d')!
+    context.fillStyle = '#101827'; context.fillRect(0, 0, 512, 96)
+    context.fillStyle = '#ffffff'; context.font = '28px sans-serif'; context.textAlign = 'center'
+    context.fillText(chamber.path.split('/').at(-1)!, 256, 34)
+    context.fillText(`${chamber.hiddenFiles} files · ${chamber.hiddenFolders} folders`, 256, 74)
+    return new CanvasTexture(canvas)
+  }, [chamber.path, chamber.hiddenFiles, chamber.hiddenFolders])
+  useEffect(() => () => texture.dispose(), [texture])
+  return <sprite position={[chamber.position[0], chamber.position[1], chamber.position[2] + 1.3]} scale={[3.2, 0.6, 1]}
+    onClick={(event) => { event.stopPropagation(); expand() }}>
+    <spriteMaterial map={texture} depthTest={false} />
+  </sprite>
 }
 
 function Basins({ chambers, full, selectedPath, root, pickPath }: {
@@ -85,7 +108,7 @@ function Basins({ chambers, full, selectedPath, root, pickPath }: {
       rotation.setFromAxisAngle(new Vector3(0, 0, 1), seed * Math.PI * 2)
       matrix.compose(new Vector3(...chamber.position), rotation,
         new Vector3(r * (1 + (seed - 0.5) * 0.22), r * (1 - (seed - 0.5) * 0.22), 1.6 + Math.min(r, 1.7) * 0.6))
-      const empty = chamber.files.length === 0
+      const empty = chamber.beneath === 0
       const selected = selectedPath === `${root}${chamber.path === '.' ? '' : `/${chamber.path}`}`
       for (const [mesh, lit, dim] of [[walls, '#f2f6ff', '#4a5060'], [rims, '#f7f9ff', '#4d525e'], [floors, '#0a1430', '#020308']] as const) {
         mesh.current?.setMatrixAt(index, matrix)
