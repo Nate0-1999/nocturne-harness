@@ -8,7 +8,7 @@ import type {
 } from 'react'
 import {
   Archive, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Check, ChevronDown, ChevronUp,
-  ChevronsUpDown, Eye, FolderOpen, GripVertical, Maximize, Mic, Minimize, Paperclip,
+  ChevronsUpDown, Eye, FolderOpen, GripVertical, Keyboard, Maximize, Mic, Minimize, Paperclip,
   Pause, Pencil, Pin, PinOff, Play, Plus, RotateCcw, Save, Search, Send, Settings,
   Square, SquareCheck, Trash2, Undo2, Upload, Volume2, X, ZoomIn, ZoomOut,
 } from 'lucide-react'
@@ -21,7 +21,7 @@ const ACTION_ICONS = {
   save: Save, restore: Undo2, back: ArrowLeft, next: ArrowRight, up: ArrowUp,
   latest: ArrowDown, edit: Pencil, pin: Pin, unpin: PinOff, archive: Archive,
   attach: Paperclip, import: Upload, preview: Eye, listen: Mic, speak: Volume2,
-  confirm: Check, move: GripVertical, zoomIn: ZoomIn, zoomOut: ZoomOut,
+  confirm: Check, move: GripVertical, zoomIn: ZoomIn, zoomOut: ZoomOut, typing: Keyboard,
 } as const
 
 export type ButtonAction = keyof typeof ACTION_ICONS
@@ -46,13 +46,16 @@ export function Button({ variant = 'quiet', className, action, iconOnly = false,
   ref?: Ref<HTMLButtonElement>
 }) {
   // The caller's type (or the form default) is preserved: no behavior change.
+  const pressed = rest['aria-pressed']
+  const StateIcon = pressed === true || pressed === 'true' ? SquareCheck : Square
   return <button
     aria-label={iconOnly ? rest['data-tooltip'] : undefined}
     className={join(variant !== 'bare' && 'kit-button', variant !== 'bare' && `kit-button--${variant}`,
-      action && 'kit-button--icon', iconOnly && 'kit-button--icon-only', className)}
+      (action !== undefined || pressed !== undefined) && 'kit-button--icon', iconOnly && 'kit-button--icon-only', className) || undefined}
     {...rest}
   >
     {action && <ActionIcon action={action} />}
+    {!action && pressed !== undefined && <StateIcon className="kit-icon" aria-hidden="true" focusable="false" />}
     {iconOnly ? <span className="visually-hidden">{children}</span> : children}
   </button>
 }
@@ -85,6 +88,13 @@ export function TextField({ className, ...rest }: InputHTMLAttributes<HTMLInputE
   ref?: Ref<HTMLInputElement>
 }) {
   return <input className={join('kit-field', className)} {...rest} />
+}
+
+export function FileField(props: InputHTMLAttributes<HTMLInputElement> & { ref?: Ref<HTMLInputElement> }) {
+  return <span className="kit-file-wrap">
+    <input {...props} type="file" />
+    <ActionIcon action="open" />
+  </span>
 }
 
 export function TextArea({ className, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement> & {
