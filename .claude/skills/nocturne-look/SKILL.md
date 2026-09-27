@@ -35,7 +35,10 @@ chart of the relevance features on hover; × and ×! with a confirmation.
    instruction a tip can carry, the status line that repeats the header.
    A label is one or two words in mono caps. Numbers are human
    (1.2K, $0.004, 3 min ago). Nothing explains itself twice.
-3. CONTROLS. One button style, three sizes (row, module, primary).
+3. CONTROLS. One button style, three sizes (row, module, primary). EVERY
+   button carries an icon from the one set: icon + word on primary and
+   module buttons, icon alone with a tip on row and toolbar actions; the
+   same meaning always gets the same icon (owner, 2026-09-26).
    Chamfered corners: `clip-path: polygon(...)` cutting 6px off two
    opposite corners, never `border-radius`. Dark body, one-pixel rim
    from the seam tokens, text in the theme's ink. Quiet buttons have the
@@ -61,7 +64,9 @@ chart of the relevance features on hover; × and ×! with a confirmation.
 - Chrome as a fill (headers, chips, buttons). Chrome is an edge material.
 - Decoration on a data surface (the pure-render law). Motion belongs to
   the grimoire themes' glyphs, off data.
-- A new color, font, or icon set. Everything comes from the theme tokens.
+- A new color or font. Colors come from the theme tokens. Icons come from
+  the ONE adopted icon set (SD-069), drawn in the theme's ink — never a
+  second set, never hand-drawn glyphs on buttons.
 - Rounded corners. Chamfers.
 - A change inside the composer function or inside the 3D scenes; peers
   hold unmerged work there. Style around them.
