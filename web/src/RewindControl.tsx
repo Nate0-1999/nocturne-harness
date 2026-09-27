@@ -22,7 +22,7 @@ export function RewindControl({ threadId, promptId, disabled }: {
       onChange={(event) => setScope(event.target.value as typeof scope)}>
       <option value="both">Chat + files</option><option value="conversation">Chat</option><option value="files">Files</option>
     </Select>
-    <Button type="button" disabled={busy || disabled} onClick={() => void rewind()}
+    <Button action="restore" iconOnly type="button" disabled={busy || disabled} onClick={() => void rewind()}
       title="Return to before this turn. Ignored files and real Git history stay unchanged.">Rewind</Button>
     {status && <small role="status">{status}</small>}
   </span>
