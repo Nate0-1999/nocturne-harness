@@ -26,7 +26,7 @@ from harness.conductor import (
 )
 from harness.context_window import bounds_from
 from harness.envelope import generate_ulid
-from harness.judge_panel import FeedbackPacketReceipt, JudgeLaunch, JudgePanel
+from harness.judge_panel import FeedbackPacketReceipt, JudgeLaunch, JudgePanel, stopped_verdict
 from harness.memory_bridge import SymphonyMemoryBridge
 from harness.rounds import AcceptedWork, GraftReceipt, RoundAttemptPlan, SymphonyRounds
 from harness.spine_client import JudgedContext, MemoryKind, MemoryStatus, PatchMemoryRequest
@@ -483,6 +483,18 @@ class SymphonyExecution:
                     sessions = panel.dispatch(launches)
                     await wait(sessions)
                     for session in sessions:
+                        verdict_path = session.brief_path.with_name("judge-verdict.json")
+                        if not verdict_path.exists():
+                            # M3SF: a judge process that died still leaves a FAIL with its reason.
+                            _json(
+                                verdict_path,
+                                stopped_verdict(
+                                    session.model_dump(),
+                                    charter=next(c for c in charters if c.seat == session.seat),
+                                    reason="the judge process stopped before returning",
+                                    evidence_ref=str(judge_outputs[session.seat]),
+                                ).model_dump(mode="json"),
+                            )
                         panel.accept_verdict(session.seat)
                     decision = panel.resolve()
                     rounds.accept_panel_decision(decision)
@@ -578,7 +590,16 @@ class SymphonyExecution:
                         for packet in decision.feedback_packets
                     )
                 else:
-                    raise ValueError("The judges did not agree before the signed round limit.")
+                    # M3SF: the stop carries what the judges said, so the card states the reason.
+                    failures = " ".join(
+                        f"{v.seat.capitalize()} judge: {' '.join(v.rationale.split())}"
+                        for v in prior_decision.verdicts
+                        if v.outcome == "fail"
+                    )
+                    raise ValueError(
+                        "The judges did not pass the work within the signed round limit. "
+                        + (failures or "They chose different attempts.")
+                    )
             # WALL owner files / ADR-012: publish only the unanimously selected checkpoint.
             if _git(root, "status", "--porcelain"):
                 raise ValueError(

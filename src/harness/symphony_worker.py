@@ -11,8 +11,9 @@ from pathlib import Path
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, create_model
 from pydantic_ai import Agent, ModelRetry, PromptedOutput, capture_run_messages
+from pydantic_ai.exceptions import AgentRunError
 from pydantic_ai.messages import ModelMessagesTypeAdapter, ModelResponse
 from pydantic_ai.usage import UsageLimits
 
@@ -25,6 +26,7 @@ from harness.judge_panel import (
     JudgePanelError,
     JudgeVerdict,
     MetricAssessment,
+    stopped_verdict,
     validate_judge_verdict,
 )
 from harness.model_policy import ModelPolicyResolver
@@ -126,6 +128,20 @@ async def run(assignment_path: Path) -> None:
         "completion": WorkResult,
         "judge": JudgeAssessment,
     }[stage]
+    if stage == "judge":
+        # WALL attention / ADR-012: judges see sealed artifacts, never builder history.
+        while not (root / "JUDGE_SESSION.json").exists():
+            await asyncio.sleep(0.01)
+        sealed = JudgeEvidence.model_validate_json((root / "JUDGE_BRIEF.json").read_text())
+        session = json.loads((root / "JUDGE_SESSION.json").read_text())
+        candidates = tuple(candidate.attempt_id for candidate in sealed.candidates)
+        if candidates:
+            # M3SF: the schema names the only selectable attempts, so a judge cannot invent one.
+            output_type = create_model(
+                "JudgeAssessment",
+                __base__=JudgeAssessment,
+                selected_attempt_id=(Literal[candidates] | None, ...),
+            )
     agent = Agent(
         deps_type=MemoryToolContext,
         capabilities=[WorkspaceCapability(), *adopted_skill_capabilities(())],
@@ -215,13 +231,8 @@ async def run(assignment_path: Path) -> None:
     observe_worker(output, assignment, toolset.location(), "running")
     prompt = assignment["brief"]
     if stage == "judge":
-        # WALL attention / ADR-012: judges see sealed artifacts, never builder history.
-        while not (root / "JUDGE_SESSION.json").exists():
-            await asyncio.sleep(0.01)
         prompt += "\n" + (root / "JUDGE_BRIEF.json").read_text()
         prompt += "\n" + (root / "JUDGE_SESSION.json").read_text()
-        sealed = JudgeEvidence.model_validate_json((root / "JUDGE_BRIEF.json").read_text())
-        session = json.loads((root / "JUDGE_SESSION.json").read_text())
 
         @agent.output_validator
         def validate_return(_ctx, verdict):
@@ -268,19 +279,31 @@ async def run(assignment_path: Path) -> None:
     task = asyncio.current_task()
     asyncio.get_running_loop().add_signal_handler(signal.SIGTERM, task.cancel)
     try:
+        failed_verdict = None
         with capture_run_messages() as captured:
-            result = await agent.run(
-                prompt,
-                deps=context,
-                model=router.model_for(resolution.model),
-                model_settings=model_settings_for(resolution, assignment["thread_id"]),
-                usage_limits=UsageLimits(
-                    request_limit=settings.run_request_limit,
-                    total_tokens_limit=settings.run_total_tokens_limit,
-                ),
-                event_stream_handler=observe,
-                instructions=instructions,
-            )
+            try:
+                result = await agent.run(
+                    prompt,
+                    deps=context,
+                    model=router.model_for(resolution.model),
+                    model_settings=model_settings_for(resolution, assignment["thread_id"]),
+                    usage_limits=UsageLimits(
+                        request_limit=settings.run_request_limit,
+                        total_tokens_limit=settings.run_total_tokens_limit,
+                    ),
+                    event_stream_handler=observe,
+                    instructions=instructions,
+                )
+            except AgentRunError as exc:
+                if stage != "judge":
+                    raise
+                # M3SF: a judge that cannot return still returns a FAIL with its reason.
+                failed_verdict = stopped_verdict(
+                    session,
+                    charter=sealed.charter,
+                    reason=str(exc.__cause__ or exc),
+                    evidence_ref=str(output / "messages.json"),
+                )
         worker_context.publish(captured)
         if stage == "completion":
             subprocess.run(["git", "add", "-A"], check=True)
@@ -321,7 +344,7 @@ async def run(assignment_path: Path) -> None:
                 )
             )
         else:
-            value = result.output
+            value = failed_verdict or result.output
         _write(output / "result.json", value.model_dump_json(indent=2))
         if stage == "judge":
             _write(root / "judge-verdict.json", value.model_dump_json(indent=2))
