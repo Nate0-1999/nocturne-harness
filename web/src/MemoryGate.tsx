@@ -396,7 +396,7 @@ export function MemoryGate({
               >
                 <div className="memory-gate__section-heading">
                   <h3 id="injected-memories-title">Injected memories</h3>
-                  <p>{gate.injected.length} selected</p>
+                  <p>{gate.injected.length - injectedRemovedCount} selected</p>
                 </div>
                 {gate.injected.length === 0 ? (
                   <p className="memory-gate__empty">
