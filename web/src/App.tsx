@@ -1504,10 +1504,10 @@ function RackModuleFrame({
                   key={mode}
                   type="button"
                   aria-pressed={conversationMode === mode}
-                  data-tooltip-detail={mode === 'focused' ? 'One conversation fills the module.' : 'Every live conversation as a stack of cards.'}
+                  data-tooltip-detail={mode === 'focused' ? 'One conversation fills the module.' : 'The Deck: every live conversation as a stack of cards.'}
                   onClick={() => onConversationModeChange?.(instanceId, mode)}
                 >
-                  {mode === 'focused' ? 'Focused' : 'Stack'}
+                  {mode === 'focused' ? 'Focused' : 'Deck'}
                 </Button>
               ))}
             </div>
@@ -3593,7 +3593,7 @@ function MessageRow({
       )}
       {message.content ? (
         <AssistantMarkdown content={message.content} />
-      ) : (
+      ) : activeRunId === message.run_id && (
         <p className="message__content message__content--quiet">Working…</p>
       )}
       </div>
