@@ -438,7 +438,12 @@ def up_nocturne(
         _stop_processes(tuple(process for process in (harness, spine) if process is not None))
 
 
-def update_nocturne(*, prompt: Callable[[str], str] = input, stdout: TextIO = sys.stdout) -> bool:
+def update_nocturne(
+    *,
+    prompt: Callable[[str], str] = input,
+    stdout: TextIO = sys.stdout,
+    announce_current: bool = False,
+) -> bool:
     """Offer a complete published pair and update this installation together."""
     if load_config().local_model:
         return False
@@ -462,6 +467,8 @@ def update_nocturne(*, prompt: Callable[[str], str] = input, stdout: TextIO = sy
         latest = max(published[0] & published[1])
         installed = [Version(distribution_version(package)) for package in packages]
         if latest < max(installed) or all(latest == current for current in installed):
+            if announce_current:
+                print(f"Nocturne {max(installed)} is up to date.", file=stdout)
             return False
     except (OSError, ValueError, KeyError):
         print("The release check is unavailable; starting your installed version.", file=stdout)

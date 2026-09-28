@@ -34,8 +34,35 @@ def jobs_nocturne(args, *, stdout):
         method, path = "POST", f"/v1/jobs/{target}/run"
     elif action == "stop":
         method, path = "POST", f"/v1/job-runs/{target}/stop"
-    print(json.dumps(_request(args.daemon_url, method, path, body), indent=2), file=stdout)
+    result = _request(args.daemon_url, method, path, body)
+    if action == "list":
+        _print_jobs(result, stdout)
+        return 0
+    print(json.dumps(result, indent=2), file=stdout)
     return 0
+
+
+def _print_jobs(snapshot, stdout):
+    """One line per saved job: the ID to run it by, its name, schedule and last outcome."""
+    if not snapshot["jobs"]:
+        print("No saved jobs. Save one with `nocturne jobs save recipe.json`.", file=stdout)
+    for job in snapshot["jobs"]:
+        definition = job["definition"]
+        if definition.get("cron"):
+            schedule = f"{definition['cron']} UTC"
+        elif definition.get("trigger"):
+            schedule = f"on {definition['trigger']} change"
+        else:
+            schedule = "on demand"
+        runs = [run for run in snapshot["runs"] if run["job_id"] == job["job_id"]]
+        last = max(runs, key=lambda run: run["started_at"], default=None)
+        outcome = "ready" if last is None else last["state"]
+        if last is not None and last.get("verdict"):
+            outcome += f" — {last['verdict']}"
+        paused = "" if job["enabled"] else " (paused)"
+        print(f"{job['job_id']}  {definition['name']}  {schedule}{paused}  {outcome}", file=stdout)
+    if snapshot.get("scheduler_error"):
+        print(f"Scheduler: {snapshot['scheduler_error']}", file=stdout)
 
 
 def _request(url, method, path, body):

@@ -73,6 +73,10 @@ def test_update_selects_latest_complete_pair_and_repairs_a_partial_install(tmp_p
     monkeypatch.setattr(onboarding, "_run", commands.append)
     assert onboarding.update_nocturne(prompt=lambda _: "yes", stdout=io.StringIO())
     assert commands[0][-2:] == ["nocturne-memory==0.1.32", "nocturne-harness==0.1.32"]
+    monkeypatch.setattr(onboarding, "distribution_version", lambda name: "0.1.32")
+    current = io.StringIO()
+    assert onboarding.update_nocturne(stdout=current, announce_current=True) is False
+    assert current.getvalue() == "Nocturne 0.1.32 is up to date.\n"
     monkeypatch.setattr(onboarding, "load_config", lambda: replace(config, local_model="local"))
     assert onboarding.update_nocturne(prompt=lambda _: "yes", stdout=io.StringIO()) is False
     assert len(commands) == 1

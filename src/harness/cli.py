@@ -67,8 +67,12 @@ def build_parser() -> argparse.ArgumentParser:
     palace = commands.add_parser("palace", help="create, choose and remove named Palaces")
     palace_commands = palace.add_subparsers(dest="palace_action", required=True)
     palace_commands.add_parser("list", help="list your Palaces")
-    for action in ("new", "use", "drop"):
-        palace_commands.add_parser(action).add_argument("name")
+    for action, summary in (
+        ("new", "create a new Palace in your cloud project"),
+        ("use", "choose the Palace Nocturne uses next start"),
+        ("drop", "delete a Palace and all its memories"),
+    ):
+        palace_commands.add_parser(action, help=summary).add_argument("name", help="Palace name")
     commands.add_parser("update", help="update both packages to the latest published release")
     export = commands.add_parser("export", help="save every memory and its lineage in one file")
     export.add_argument("path", type=Path)
@@ -176,7 +180,7 @@ def main(
                 )
             up_nocturne(open_browser=not args.no_open, stdout=stdout)
         elif args.command == "update":
-            update_nocturne(stdout=stdout)
+            update_nocturne(stdout=stdout, announce_current=True)
         elif args.command == "open":
             open_nocturne(stdout=stdout)
         elif args.command == "backup":
@@ -219,6 +223,10 @@ def main(
 def memory_archive_nocturne(action: str, path: Path, *, stdout: TextIO = sys.stdout) -> int:
     """FL-172: one private portable file, using the configured Palace identity."""
     config = load_config()
+    if action == "export" and not path.parent.is_dir():
+        raise OnboardingError(f"There is no folder at {path.parent}; create it or choose another.")
+    if action == "export" and path.exists():
+        raise OnboardingError(f"{path} already exists; choose a new file name.")
     try:
         data = path.read_bytes() if action == "import" else None
     except OSError as exc:

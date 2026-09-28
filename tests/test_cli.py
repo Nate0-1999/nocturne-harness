@@ -190,3 +190,81 @@ def test_unknown_command_is_rejected_by_argparse() -> None:
     """
     with pytest.raises(SystemExit, match="2"):
         cli.main(["status"])
+
+
+def test_palace_subcommands_say_what_they_do(capsys: pytest.CaptureFixture[str]) -> None:
+    """M3EX-25: `palace --help` describes new, use and drop, not only list."""
+    with pytest.raises(SystemExit):
+        cli.main(["palace", "--help"])
+    help_text = capsys.readouterr().out
+    for summary in ("create a new Palace", "choose the Palace", "delete a Palace"):
+        assert summary in help_text
+
+
+def test_export_into_a_missing_folder_names_the_folder(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """M3EX-25 / FL-172: an export path that cannot be written says why before any Palace call."""
+    monkeypatch.setattr(cli, "load_config", lambda: None)
+    monkeypatch.setattr(
+        cli.urllib.request, "urlopen", lambda *_a, **_k: pytest.fail("reached the Palace")
+    )
+    error = io.StringIO()
+    target = tmp_path / "missing" / "memories.json"
+
+    assert cli.main(["export", str(target)], stdout=io.StringIO(), stderr=error) == 2
+    assert f"There is no folder at {target.parent}" in error.getvalue()
+    target = tmp_path / "taken.json"
+    target.write_text("{}")
+    assert cli.main(["export", str(target)], stdout=io.StringIO(), stderr=error) == 2
+    assert f"{target} already exists" in error.getvalue()
+
+
+def test_update_says_when_already_current(monkeypatch: pytest.MonkeyPatch) -> None:
+    """M3EX-25: `nocturne update` answers when nothing is newer; `up` stays quiet."""
+    calls = []
+    monkeypatch.setattr(cli, "update_nocturne", lambda **kwargs: calls.append(kwargs) or False)
+
+    assert cli.main(["update"], stdout=io.StringIO(), stderr=io.StringIO()) == 0
+    assert calls[0]["announce_current"] is True
+
+
+def test_jobs_list_prints_one_line_per_job(monkeypatch: pytest.MonkeyPatch) -> None:
+    """M3EX-25 / FL-184: `nocturne jobs list` reads like the Jobs module, not raw JSON."""
+    from harness import jobs_cli
+
+    snapshot = {
+        "jobs": [
+            {
+                "job_id": "01JOB",
+                "enabled": False,
+                "definition": {"name": "Nightly tests", "cron": "0 3 * * *", "trigger": None},
+            }
+        ],
+        "runs": [
+            {
+                "job_id": "01JOB",
+                "started_at": "2026-09-28T01:00:00Z",
+                "state": "done",
+                "verdict": "Run ended: error.",
+            },
+            {
+                "job_id": "01JOB",
+                "started_at": "2026-09-28T02:00:00Z",
+                "state": "done",
+                "verdict": "Run ended: complete.",
+            },
+        ],
+        "scheduler_error": None,
+    }
+    monkeypatch.setattr(jobs_cli, "_request", lambda *_args: snapshot)
+    output = io.StringIO()
+
+    assert cli.main(["jobs", "list"], stdout=output, stderr=io.StringIO()) == 0
+    assert output.getvalue() == (
+        "01JOB  Nightly tests  0 3 * * * UTC (paused)  done — Run ended: complete.\n"
+    )
+    snapshot["jobs"] = []
+    output = io.StringIO()
+    assert cli.main(["jobs", "list"], stdout=output, stderr=io.StringIO()) == 0
+    assert output.getvalue().startswith("No saved jobs.")
