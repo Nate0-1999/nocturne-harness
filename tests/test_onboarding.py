@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 import stat
 import urllib.error
 from dataclasses import asdict, replace
@@ -274,6 +275,64 @@ def test_a057_discovery_accepts_only_one_spine_service(
         "us-central1",
         "https://spine.example.test",
     )
+
+
+def test_remote_url_is_found_in_the_project_that_serves_it(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """M3EX-24: `init --remote` searches the URL's own project, not gcloud's active one."""
+
+    monkeypatch.setattr(onboarding.shutil, "which", lambda _: "/usr/bin/gcloud")
+    remote = "https://owner-spine-123456789.us-central1.run.app"
+    searched: list[str] = []
+
+    def result(arguments: list[str], environ) -> object:
+        del environ
+        if arguments[:2] == ["auth", "list"]:
+            return [{"account": "owner@example.test"}]
+        if arguments[:3] == ["config", "get", "project"]:
+            return "another-project"
+        if arguments[:2] == ["projects", "describe"]:
+            return {"projectId": "owner-project", "projectNumber": arguments[2]}
+        searched.append(arguments[arguments.index("--project") + 1])
+        return [
+            {
+                "metadata": {
+                    "name": name,
+                    "labels": {"cloud.googleapis.com/location": "us-central1"},
+                    "annotations": {"run.googleapis.com/urls": json.dumps(urls)},
+                },
+                "status": {"url": urls[-1]},
+            }
+            for name, urls in (
+                ("owner-spine", [remote, "https://owner-spine-hash-uc.a.run.app"]),
+                ("other-spine", ["https://other-spine-hash-uc.a.run.app"]),
+            )
+        ]
+
+    monkeypatch.setattr(onboarding, "_gcloud_json", result)
+    assert onboarding._discover_cloud_palace({}, remote) == ("owner-project", "us-central1", remote)
+    assert searched == ["owner-project"]
+
+
+def test_yes_no_questions_are_visible_and_no_terminal_answers_no(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """M3EX-24: y/N is typed in the open; a missing terminal is a no, never an EOFError."""
+
+    asked: list[str] = []
+    monkeypatch.setattr("builtins.input", lambda question: asked.append(question) or "y")
+    monkeypatch.setattr(onboarding.getpass, "getpass", lambda question: pytest.fail(question))
+    assert onboarding._terminal_prompt("Back up conversation transcripts? [y/N] ") == "y"
+    assert asked == ["Back up conversation transcripts? [y/N] "]
+
+    def closed(question: str) -> str:
+        raise EOFError
+
+    monkeypatch.setattr("builtins.input", closed)
+    monkeypatch.setattr(onboarding.getpass, "getpass", closed)
+    assert onboarding._terminal_prompt("Back up conversation transcripts? [y/N] ") == ""
+    assert onboarding._terminal_prompt("OpenRouter API key: ") == ""
 
 
 def test_a057_discovery_without_an_active_gcloud_session_stays_local(

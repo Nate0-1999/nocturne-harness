@@ -175,6 +175,16 @@ def nocturne_home(environ: Mapping[str, str] | None = None) -> Path:
     return Path(override).expanduser() if override else Path.home() / ".nocturne"
 
 
+def _terminal_prompt(question: str) -> str:
+    """M3EX-24: a y/N question is visible, a secret is hidden; no terminal answers blank."""
+    try:
+        if question.rstrip().endswith("[y/N]"):
+            return input(question)
+        return getpass.getpass(question)
+    except EOFError:
+        return ""
+
+
 def init_nocturne(
     *,
     remote: str | None = None,
@@ -185,7 +195,7 @@ def init_nocturne(
     model_url: str = "http://127.0.0.1:11434/v1",
     home: Path | None = None,
     environ: Mapping[str, str] | None = None,
-    prompt: Callable[[str], str] = getpass.getpass,
+    prompt: Callable[[str], str] = _terminal_prompt,
     stdout: TextIO = sys.stdout,
 ) -> Path:
     """Create one private config for a local or remote Palace."""
@@ -216,7 +226,7 @@ def init_nocturne(
     discovered = (
         None
         if offline or (remote and values.get("SPINE_TOKEN"))
-        else _discover_cloud_palace(values)
+        else _discover_cloud_palace(values, remote)
     )
     if discovered is not None:
         project, region, discovered_url = discovered
@@ -240,7 +250,8 @@ def init_nocturne(
         spine_token = discovered_token or values.get("SPINE_TOKEN", "").strip()
         if not spine_token:
             raise OnboardingError(
-                "Sign in with `gcloud auth login` so Nocturne can discover your Palace access."
+                "No access token for this Palace. Sign in to gcloud as its owner "
+                "(`gcloud auth login`) or set SPINE_TOKEN, then retry."
             )
     postgres_port = _parse_port(values.get("NOCTURNE_POSTGRES_PORT", "5432"))
     transcript_backup = not offline and prompt(
@@ -1089,7 +1100,9 @@ def _gcloud_json(arguments: list[str], environ: Mapping[str, str]) -> object:
         ) from exc
 
 
-def _discover_cloud_palace(environ: Mapping[str, str]) -> tuple[str, str, str] | None:
+def _discover_cloud_palace(
+    environ: Mapping[str, str], remote: str | None = None
+) -> tuple[str, str, str] | None:
     """Return one unambiguous owner Palace using read-only ambient gcloud state."""
 
     if shutil.which("gcloud") is None:
@@ -1122,7 +1135,18 @@ def _discover_cloud_palace(environ: Mapping[str, str]) -> tuple[str, str, str] |
             "Palace discovery requires a signed-in human owner, not a service account. "
             "Run `gcloud auth login`, select that account, then retry."
         )
-    project_result = _gcloud_json(["config", "get", "project"], environ)
+    # M3EX-24: a Cloud Run URL names the project number that serves it; search that
+    # project, not whatever project gcloud happens to have active.
+    wanted = _parse_remote_url(remote) if remote else None
+    served_by = re.fullmatch(r"https://[a-z0-9-]+-(\d+)\.[a-z0-9-]+\.run\.app", wanted or "")
+    if served_by:
+        try:
+            described = _gcloud_json(["projects", "describe", served_by.group(1)], environ)
+        except OnboardingError:
+            return None
+        project_result = described.get("projectId") if isinstance(described, dict) else None
+    else:
+        project_result = _gcloud_json(["config", "get", "project"], environ)
     project = project_result if isinstance(project_result, str) else None
     if project is None or not project.strip():
         raise OnboardingError(
@@ -1153,6 +1177,15 @@ def _discover_cloud_palace(environ: Mapping[str, str]) -> tuple[str, str, str] |
         region = labels.get("cloud.googleapis.com/location") if isinstance(labels, dict) else None
         if not isinstance(url, str) or not isinstance(region, str) or not region.strip():
             raise OnboardingError("Palace discovery found a malformed Cloud Run service.")
+        if wanted is not None:
+            annotations = metadata.get("annotations")
+            try:
+                aliases = json.loads(annotations.get("run.googleapis.com/urls", "[]"))
+            except (AttributeError, TypeError, ValueError):
+                aliases = []
+            if wanted not in {url.rstrip("/"), *(aliases if isinstance(aliases, list) else [])}:
+                continue
+            url = wanted
         try:
             matches.append((region, _parse_remote_url(url)))
         except OnboardingError as exc:
