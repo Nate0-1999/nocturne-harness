@@ -267,6 +267,7 @@ class GateSpine:
         self.retrain_requests = 0
         self.vitals_requests = 0
         self.closed = False
+        self.near_misses: list[ScoredMemoryCard] = []
 
     async def prepare_injection(self, request: InjectPrepareRequest) -> InjectPrepareResponse:
         self.prepare_requests.append(request)
@@ -275,7 +276,7 @@ class GateSpine:
             snapshot_ts=datetime(2026, 7, 21, 12, tzinfo=UTC),
             scorer_version="m1-v1",
             injected=[],
-            near_misses=[],
+            near_misses=self.near_misses,
             final_block=None,
             memory_allocation=memory_allocation(),
         )
@@ -1644,6 +1645,19 @@ def test_dev_gate_round_trip_blocks_validates_commits_and_injects_system_block(
     )
     agent = HarnessAgent(settings, model=FunctionModel(stream_function=answer))
     spine = GateSpine()
+    # M3EX-04: the first gate opens only when there is something to review.
+    spine.near_misses = [
+        ScoredMemoryCard(
+            memory_id=UUID("e2345678-1234-5678-1234-567812345678"),
+            label="Near miss",
+            body="A memory below the threshold.",
+            kind=MemoryKind.FACT,
+            pin=False,
+            score=0.4,
+            features=MemoryFeatures(sem=0.4, kw=0.0, time=0.5, proj=1.0, freq=0.0, hist=0.0),
+            rank=1,
+        )
+    ]
     transcript_journal = TranscriptJournal(tmp_path / "transcripts")
     app = create_dev_app(
         tmp_path,
@@ -1668,7 +1682,7 @@ def test_dev_gate_round_trip_blocks_validates_commits_and_injects_system_block(
             "scorer_version": "m1-v1",
             "stage": "review",
             "injected": [],
-            "near_misses": [],
+            "near_misses": [card.model_dump(mode="json") for card in spine.near_misses],
             "wrong_removed": [],
             "resolution_error": None,
         }
