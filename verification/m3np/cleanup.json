@@ -1,0 +1,7 @@
+{
+  "main_service_present": true,
+  "test_service_absent": true,
+  "test_database_absent": true,
+  "test_secrets_absent": true,
+  "test_local_state_absent": true
+}

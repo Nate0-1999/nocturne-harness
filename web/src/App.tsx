@@ -1768,6 +1768,7 @@ function HeaderModule() {
   const selection = useRackSelection()
   const { query, selection: selectionBus } = useRackPlugin()
   const [palaceStatus, setPalaceStatus] = useState<PalaceStatus>('checking')
+  const [palaceName, setPalaceName] = useState('')
   const selectedThread = snapshot.selectedThreadId === null
     ? null
     : snapshot.threads[snapshot.selectedThreadId]
@@ -1778,6 +1779,9 @@ function HeaderModule() {
   useEffect(() => {
     if (snapshot.connection !== 'connected') return
     let active = true
+    void query.query({ resource: 'palace' }).then(({ data }) => {
+      if (active && typeof data === 'string') setPalaceName(data)
+    }).catch(() => {})
     const probe = () => {
       void query.query({ resource: 'vitals', as_of: 'now' })
         .then((result) => {
@@ -1849,6 +1853,7 @@ function HeaderModule() {
         aria-live="polite"
       >
         <span className="connection__signal" aria-hidden="true" />
+        {palaceName && <span data-testid="palace-name">{palaceName} · </span>}
         {ownerConnectionCopy(snapshot.connection, palaceStatus)}
       </p>
     </header>

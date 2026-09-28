@@ -1,0 +1,15 @@
+{
+  "identity": {
+    "principal_id": "palace-agent-2c0e50c0-5914-42f3-9e5f-8d8047a44ce2",
+    "machine_id": "palace-agent-a5b208db-515a-4249-92f9-1913147f83e1",
+    "home": "/private/tmp/m3np-verification/home/palaces/test-m3np",
+    "palace_name": "test-m3np"
+  },
+  "selected_palace": "test-m3np",
+  "healthy": true,
+  "main_token_rejected": true,
+  "distinct_tokens": true,
+  "training_eligible": true,
+  "main_verification_hygiene_retained": true,
+  "memory_count": 1
+}

@@ -178,7 +178,7 @@ export interface RackModuleManifest {
 }
 
 export interface RackQueryRequest {
-  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'spend_table' | 'context_window' | 'parameters' | 'memory_graph' | 'scorer_console' | 'recipe_graph' | 'tools' | 'visualization' | 'jobs' | 'overwhelm'
+  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'spend_table' | 'context_window' | 'parameters' | 'memory_graph' | 'scorer_console' | 'recipe_graph' | 'tools' | 'visualization' | 'jobs' | 'overwhelm' | 'palace'
   as_of?: string | null
   thread_id?: string
   thread_ids?: string[]
@@ -806,6 +806,9 @@ async function fetchRackResponse(path: string | URL, init?: RequestInit): Promis
 export const rackQuerySurface: RackQuerySurface = {
   async query(request) {
     const asOf = request.as_of ?? null
+    if (request.resource === 'palace') {
+      return parseRackQueryResult(await fetchJson('/v1/rack/query?resource=palace'))
+    }
     if (request.resource === 'jobs') {
       if (asOf !== null && asOf !== 'now') return { status: 'historical_unavailable', as_of: asOf, data: null }
       return { status: 'live', as_of: null, data: await fetchJson('/v1/jobs', { cache: 'no-store' }) }

@@ -230,3 +230,7 @@ deployment-verification annotations remain a separate post-rollout data-plane op
 ### Upgrade note
 
 Remote Palace schema advances from `0009` to `0011` only after a verified backup.
+
+## 0.1.40
+
+- Create, list, select and drop named cloud Palaces with isolated memory and local history; protect the main Palace from deletion.

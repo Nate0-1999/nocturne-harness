@@ -320,6 +320,7 @@ def create_app(
     recipe_graph_reader: RecipeGraphReader | None = None,
     tool_inventory_reader: ToolInventoryReader | None = None,
     before_static_mount: Callable[[FastAPI], None] | None = None,
+    palace_name: str = "main",
 ) -> FastAPI:
     """Create the daemon with process-scoped H7 state and extensible routing."""
     app = FastAPI(title="NOCTURNE", version=__version__)
@@ -378,12 +379,16 @@ def create_app(
             "overwhelm",
             "recipe_graph",
             "tools",
+            "palace",
         ],
         as_of: str | None = None,
         thread_id: str | None = None,
         thread_ids: str | None = None,
     ) -> RackQueryResult:
         """Keep Spine credentials behind the public rack query surface."""
+
+        if resource == "palace":
+            return RackQueryResult(status="live", as_of=None, data=palace_name)
 
         if resource == "tools":
             if as_of not in {None, "now"}:
@@ -1233,7 +1238,12 @@ def create_dev_app(
 
         @app.get("/v1/identity")
         async def identity():
-            return {"principal_id": principal_id, "machine_id": machine_id, "home": str(home)}
+            return {
+                "principal_id": principal_id,
+                "machine_id": machine_id,
+                "home": str(home),
+                "palace_name": configured.nocturne_palace_name,
+            }
 
         @app.get("/v1/model-policies")
         async def agent_model_policies():
@@ -1512,6 +1522,7 @@ def create_dev_app(
         recipe_graph_reader=owned_symphony_experience.recipe_snapshot,
         tool_inventory_reader=lambda thread_id: inventory(context_factory(thread_id)),
         before_static_mount=configure_visualization_routes,
+        palace_name=configured.nocturne_palace_name,
     )
 
     app.router.add_event_handler("startup", transcript_sync.start)

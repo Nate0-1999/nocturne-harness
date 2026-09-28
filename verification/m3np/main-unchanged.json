@@ -1,0 +1,26 @@
+{
+  "checks": {
+    "memory_unit": false,
+    "memory_revision": false,
+    "memory_edge": true,
+    "alembic_version": true,
+    "service_spec": true,
+    "owner_env": true
+  },
+  "before": {
+    "memory_unit": "ab4e8ca78f7524626f28a4ee39d45aa9",
+    "memory_revision": "aba4eef2e76f1b1cc59ff7b68f4655d6",
+    "memory_edge": "306e0f417dbcc7d9d527f306c8e976de",
+    "alembic_version": "82c413598ee1bd0c4f8fd466efef82dc",
+    "service_spec": "836d0ec083d7208b3b153dc6833fee2cbf9febc3f0269a5c2102c79628226682",
+    "owner_env": "f95db8ca52d7d9d3e9dfbd9b371bf85bb0e8e05f0085749f4454fd11a27244e3"
+  },
+  "after": {
+    "memory_unit": "6d99f1a2cf3090d395c63d886349099e",
+    "memory_revision": "f93c046e3b9861a5260ae6c90983f5de",
+    "memory_edge": "306e0f417dbcc7d9d527f306c8e976de",
+    "alembic_version": "82c413598ee1bd0c4f8fd466efef82dc",
+    "service_spec": "836d0ec083d7208b3b153dc6833fee2cbf9febc3f0269a5c2102c79628226682",
+    "owner_env": "f95db8ca52d7d9d3e9dfbd9b371bf85bb0e8e05f0085749f4454fd11a27244e3"
+  }
+}
