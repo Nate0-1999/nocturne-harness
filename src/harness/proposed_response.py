@@ -68,8 +68,8 @@ def parse_proposed_response_output(value: str) -> tuple[str, ProposedResponse | 
     """Split structured blocks from one text part's visible answer.
 
     Every block is kept out of the owner surface; only a terminal one is a card. A part
-    whose only text is the block answered inside it, so its primary is the answer
-    (M3EX-01). An unclosed block is withheld; text after a block stays visible.
+    whose only text is the block keeps its primary as the answer too (F133, M3EX-01).
+    An unclosed block is withheld; text after a block stays visible.
     """
 
     visible, proposal, rest = "", None, value
@@ -83,7 +83,7 @@ def parse_proposed_response_output(value: str) -> tuple[str, ProposedResponse | 
     if rest.strip():
         proposal = None
     if proposal is not None and not visible.strip():
-        return visible + proposal.primary, None
+        return visible + proposal.primary, proposal
     return visible + rest, proposal
 
 

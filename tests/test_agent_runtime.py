@@ -532,7 +532,8 @@ async def test_m3fz_text_tool_text_keeps_the_whole_answer_and_terminal_proposal(
 
 @pytest.mark.asyncio
 async def test_m3cl_block_only_answer_reaches_chat_without_tags_and_with_breaks() -> None:
-    """F133 (M3EX-01/05/06): the answer is in chat, tag-free, one paragraph per step."""
+    """F133 (M3EX-01/05/06): the answer is in chat, tag-free, one paragraph per step;
+    the proposed-reply card (FL-104/117) is emitted exactly as built."""
 
     async def stream(messages, _info):
         if not any(
@@ -568,7 +569,8 @@ async def test_m3cl_block_only_answer_reaches_chat_without_tags_and_with_breaks(
 
     assert outcome.assistant_text == "I will write the note.\n\nRun npm test from web/."
     assert "".join(emitter.texts) == outcome.assistant_text
-    assert not [e for e in emitter.events if e["event_kind"] == "proposed_response"]
+    proposals = [e for e in emitter.events if e["event_kind"] == "proposed_response"]
+    assert [e["primary"] for e in proposals] == ["Run npm test from web/."]
 
 
 @pytest.mark.asyncio

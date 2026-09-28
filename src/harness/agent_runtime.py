@@ -973,9 +973,8 @@ class _EventBridge:
                 self._pending_text = self._pending_text[close + len(BLOCK_CLOSE) :]
                 self._proposal_started = False
                 if proposal is not None and not self._part_answered:
-                    # M3EX-01: a part whose only text is the block answered inside it.
+                    # F133 (M3EX-01): the answer lives in chat; the card stays as built.
                     await self._publish_visible(proposal.primary)
-                    proposal = None
                 self._proposal = proposal
             marker = self._pending_text.find(BLOCK_OPEN)
             if marker < 0:
