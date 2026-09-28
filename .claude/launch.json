@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "nocturne",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "NOCTURNE_HOME=/private/tmp/nocturne-preview/home",
+        "uv",
+        "run",
+        "nocturne",
+        "up",
+        "--no-open"
+      ],
+      "port": 8765
+    }
+  ]
+}

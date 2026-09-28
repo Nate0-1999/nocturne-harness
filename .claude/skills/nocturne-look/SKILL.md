@@ -30,6 +30,9 @@ chart of the relevance features on hover; × and ×! with a confirmation.
 
 ## Procedure, module by module
 
+0. LOOK, do not read: open the app in the desktop browser pane (preview_start
+   "nocturne") so every screenshot comes back to you as an image, or Read each
+   capture you take. No judgment on page text alone.
 1. Open the running app. Capture the module before you touch it.
 2. WORDS. Delete the sub-header sentence that narrates the module, the
    instruction a tip can carry, the status line that repeats the header.
