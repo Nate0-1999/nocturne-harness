@@ -7,14 +7,60 @@
     {
       "repo": "harness",
       "base": "de754371951d3646275b747b6b70fea71554514d",
-      "head": "f7f2a73f0a97129925bc9169139f14964e9c6265"
+      "head": "cb7dcada56348a22e6939e44a4487498d3ced895"
     }
   ],
   "unmapped": {
     "harness/CHANGELOG.md": "Release metadata, generated API contract, decision record, or focused regression proof for the charged repairs.",
     "harness/DECISIONS.md": "Release metadata, generated API contract, decision record, or focused regression proof for the charged repairs.",
     "harness/src/harness/__init__.py": "Release metadata, generated API contract, decision record, or focused regression proof for the charged repairs.",
-    "harness/tests/test_compaction.py": "Release metadata, generated API contract, decision record, or focused regression proof for the charged repairs."
+    "harness/tests/test_compaction.py": "Release metadata, generated API contract, decision record, or focused regression proof for the charged repairs.",
+    "harness/verification/m3rd/FL-002.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-006.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-007.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-009.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-010.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-014.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-038.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-042.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-069.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-080-ui.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-080.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-082-ui.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-170.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-186.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-187.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-190.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-191.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-192.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-193.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-194.png": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/SHA256SUMS": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/compaction-proof.json": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/ledger-report.json": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/merge-proof.json": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/receipts/cleanup.json": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/receipts/credential-scan.json": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/receipts/health-after.json": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/receipts/public-harness-wheel.log": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/receipts/public-install.json": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/receipts/public-memory-wheel.log": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/receipts/public/extraction-after.json": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/receipts/public/identity.json": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/receipts/public/runtime-proof.json": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/receipts/public/scope-after.json": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/receipts/public/setup.json": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/receipts/public/tail-walk.log": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/receipts/public/tail-wire.jsonl": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/receipts/public/thread-walk.log": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/receipts/public/thread-wire.jsonl": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/receipts/public/thread.json": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/receipts/release.json": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/receipts/rules-exit.log": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/scope-after.json": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/impacted.json": "Packet verification artifact; no additional product behavior.",
+    "harness/verification/m3rd/FL-195.png": "Rendered record of the explicit tooling-walk evidence limit; no additional product behavior.",
+    "harness/verification/m3rd/FL-196.png": "Rendered record of the explicit tooling-walk evidence limit; no additional product behavior."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -37,8 +83,8 @@
       "observed": "NOT REWALKED: this row is required by file-level impact, but its broader scenario was not exercised by the three-defect repair walk. Full product suites passed; that is not substituted for this scenario. F086 records the evidence limitation."
     },
     "FL-042": {
-      "label": "Constitution: 'Already known \u2014 reinforced' on re-saves; rejected candidates remembered and never re-proposed without material change (gate-day).",
-      "walk": "Re-save a known fact; the reply says 'already known \u2014 reinforced'; reject a candidate and re-save it unchanged; it is not proposed again.",
+      "label": "Constitution: 'Already known — reinforced' on re-saves; rejected candidates remembered and never re-proposed without material change (gate-day).",
+      "walk": "Re-save a known fact; the reply says 'already known — reinforced'; reject a candidate and re-save it unchanged; it is not proposed again.",
       "protected": true,
       "verdict": "FAIL",
       "screenshot": "FL-042.png",
@@ -71,6 +117,24 @@
       "screenshot": "FL-194.png",
       "flag": "F086",
       "observed": "NOT REWALKED: this row is required by file-level impact, but its broader scenario was not exercised by the three-defect repair walk. Full product suites passed; that is not substituted for this scenario. F086 records the evidence limitation."
+    },
+    "FL-195": {
+      "label": "The feature ledger generates coverage reports and requires evidence for the rows affected by a build.",
+      "walk": "Compute the composer fix's impact with --paths and see attunement rows; push a branch touching socket.ts and observe the hook print rows and write impacted.json; observe a DONE handoff without screenshots fail CI, then verify complete evidence passes.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-195.png",
+      "flag": "F086",
+      "observed": "NOT REWALKED: refreshed feature mapping and frozen metadata trigger this tooling row. Normal rules and coverage checks pass; the broader intentional-mutation scenario was not rerun. F086 records that evidence limit."
+    },
+    "FL-196": {
+      "label": "The rules machine checks citations, frozen law, product vocabulary, seed states and packet precedents.",
+      "walk": "Remove a guard citation on a disposable branch and observe CI fail; change a frozen axiom and observe the freeze step fail; restore both and observe Rules pass. The master ADR check remains red until the owner applies the citation patch.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-196.png",
+      "flag": "F086",
+      "observed": "NOT REWALKED: refreshed feature mapping and frozen metadata trigger this tooling row. Normal rules and coverage checks pass; the broader intentional-mutation scenario was not rerun. F086 records that evidence limit."
     },
     "FL-002": {
       "label": "Memory units have a length cap; a memory over the cap is shortened to fit as one memory, and it is split only when it holds more than one distinct fact, with the split logged.",
@@ -359,8 +423,6 @@
     "FL-185": "horizon",
     "FL-188": "unverified",
     "FL-189": "dropped",
-    "FL-195": "outside diff",
-    "FL-196": "outside diff",
     "FL-198": "outside diff",
     "FL-199": "outside diff",
     "FL-200": "not built"
