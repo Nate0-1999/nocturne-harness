@@ -1,0 +1,25 @@
+{
+  "since": "2026-09-28T03:18:21.074975+00:00",
+  "changed_memory_principals": [
+    {
+      "principal_id": "nocturne-verification-36604211-eae3-459a-8e49-5942c6e87425",
+      "changes": 4
+    },
+    {
+      "principal_id": "nocturne-verification-f6628f81-936e-48f7-a1c1-3a19dec4e88d",
+      "changes": 2
+    }
+  ],
+  "changed_revision_principals": [
+    {
+      "principal_id": "nocturne-verification-36604211-eae3-459a-8e49-5942c6e87425",
+      "changes": 4
+    },
+    {
+      "principal_id": "nocturne-verification-f6628f81-936e-48f7-a1c1-3a19dec4e88d",
+      "changes": 4
+    }
+  ],
+  "owner_changed": false,
+  "this_session_main_memory_count": 0
+}
