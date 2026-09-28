@@ -92,6 +92,7 @@ class NocturneConfig:
     local_model: str = ""
     local_embedding_model: str = "qwen3-embedding:4b"
     local_model_url: str = "http://127.0.0.1:11434/v1"
+    palace_name: str = "main"
 
     @property
     def path(self) -> Path:
@@ -118,6 +119,7 @@ class NocturneConfig:
                 "SPINE_OPENAI_API_KEY": self.openrouter_api_key,
                 "SPINE_TOKEN": self.spine_token,
                 "SPINE_URL": self.spine_url,
+                "NOCTURNE_PALACE_NAME": self.palace_name,
                 "NOCTURNE_HOME": str(self.home),
                 "PRINCIPAL_ID": self.principal_id,
                 "MACHINE_ID": self.machine_id,
@@ -280,6 +282,11 @@ def load_config(*, home: Path | None = None) -> NocturneConfig:
     """Load, preserve-upgrade, and validate the generated local config."""
 
     target_home = home or nocturne_home()
+    selection = target_home / "palace-selection"
+    if selection.is_file():
+        from harness.palaces import palace_home
+
+        target_home = palace_home(target_home, selection.read_text().strip())
     path = target_home / _CONFIG_FILE
     if not path.is_file():
         raise OnboardingError("Nocturne is not initialized. Run `nocturne init` first.")
@@ -342,6 +349,7 @@ def load_config(*, home: Path | None = None) -> NocturneConfig:
         postgres_volume=postgres_volume,
         transcript_backup=transcript_backup,
         principal_id=_config_principal(values),
+        palace_name=values.get("NOCTURNE_PALACE_NAME", "main"),
         local_model=values.get("NOCTURNE_LOCAL_MODEL", ""),
         local_embedding_model=values.get("NOCTURNE_LOCAL_EMBEDDING_MODEL", "qwen3-embedding:4b"),
         local_model_url=values.get("NOCTURNE_LOCAL_MODEL_URL", "http://127.0.0.1:11434/v1"),
@@ -488,9 +496,12 @@ def _up_remote(
     remote_contract, relation = _remote_palace_status(config, stdout=stdout)
     if relation == "newer":
         raise OnboardingError(_app_older_refusal())
-    if relation == "older" or (
-        remote_contract
-        and _api_contract_semver(remote_contract) < _api_contract_semver(API_CONTRACT_VERSION)
+    if config.palace_name == "main" and (
+        relation == "older"
+        or (
+            remote_contract
+            and _api_contract_semver(remote_contract) < _api_contract_semver(API_CONTRACT_VERSION)
+        )
     ):
         from harness.deploy import DeployError, preflight_release_guard
 
@@ -899,6 +910,7 @@ def _write_config(config: NocturneConfig) -> None:
         "NOCTURNE_HOME": str(config.home.resolve()),
         "PRINCIPAL_ID": config.principal_id,
         "NOCTURNE_PALACE_MODE": config.palace_mode,
+        "NOCTURNE_PALACE_NAME": config.palace_name,
         "SPINE_URL": config.spine_url,
         "OPENROUTER_API_KEY": config.openrouter_api_key,
         "SPINE_TOKEN": config.spine_token,

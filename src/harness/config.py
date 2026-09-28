@@ -19,6 +19,7 @@ class HarnessSettings(BaseSettings):
     )
 
     spine_url: str = "http://localhost:8000"
+    nocturne_palace_name: str = "main"
     spine_token: SecretStr | None = None
     principal_id: str = Field(default="local", min_length=1)
     machine_id: str = Field(default="local-machine", min_length=1)

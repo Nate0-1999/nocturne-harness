@@ -64,6 +64,11 @@ def build_parser() -> argparse.ArgumentParser:
     seed = commands.add_parser("seed", help="add Markdown documents to the Palace review queue")
     seed.add_argument("paths", nargs="+", help="Markdown files or glob patterns")
     commands.add_parser("doctor", help="inspect Palace health and startup readiness")
+    palace = commands.add_parser("palace", help="create, choose and remove named Palaces")
+    palace_commands = palace.add_subparsers(dest="palace_action", required=True)
+    palace_commands.add_parser("list", help="list your Palaces")
+    for action in ("new", "use", "drop"):
+        palace_commands.add_parser(action).add_argument("name")
     commands.add_parser("update", help="update both packages to the latest published release")
     export = commands.add_parser("export", help="save every memory and its lineage in one file")
     export.add_argument("path", type=Path)
@@ -182,6 +187,10 @@ def main(
             return seed_nocturne(args.paths, stdout=stdout)
         elif args.command == "doctor":
             return doctor_nocturne(stdout=stdout)
+        elif args.command == "palace":
+            from harness.palaces import palace_nocturne
+
+            return palace_nocturne(args.palace_action, getattr(args, "name", None), stdout=stdout)
         elif args.command in {"export", "import"}:
             return memory_archive_nocturne(args.command, args.path, stdout=stdout)
         elif args.command == "jobs":
@@ -190,6 +199,8 @@ def main(
             return jobs_nocturne(args, stdout=stdout)
         elif args.command == "deploy":
             config = load_config()
+            if config.palace_name != "main":
+                raise OnboardingError("Select your main Palace before running `nocturne deploy`.")
             _run_cloud_deploy(
                 dry_run=args.dry_run,
                 openrouter_key=config.openrouter_api_key,

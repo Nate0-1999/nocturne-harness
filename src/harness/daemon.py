@@ -1233,7 +1233,12 @@ def create_dev_app(
 
         @app.get("/v1/identity")
         async def identity():
-            return {"principal_id": principal_id, "machine_id": machine_id, "home": str(home)}
+            return {
+                "principal_id": principal_id,
+                "machine_id": machine_id,
+                "home": str(home),
+                "palace_name": configured.nocturne_palace_name,
+            }
 
         @app.get("/v1/model-policies")
         async def agent_model_policies():
