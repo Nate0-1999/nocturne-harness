@@ -14,9 +14,8 @@ from harness.symphony_context import COMPONENT_REGISTRY, WorkerContext, write_js
 from harness.toolset import AgentLocation
 
 
-@pytest.mark.asyncio
-async def test_judge_retries_missing_metrics_and_writes_the_panel_return(tmp_path, monkeypatch):
-    """M3SY / ADR-012: a real worker uses the panel contract before publishing PASS."""
+async def _run_judge(tmp_path, monkeypatch, respond):
+    """Run one performance judge worker against a scripted model."""
     session = {
         "schema_version": 1,
         "seat": "performance",
@@ -72,6 +71,32 @@ async def test_judge_retries_missing_metrics_and_writes_the_panel_return(tmp_pat
     }
     assignment_path = tmp_path / "assignment.json"
     assignment_path.write_text(json.dumps(assignment))
+
+    router = SimpleNamespace(
+        catalog=None, model_for=lambda _: FunctionModel(stream_function=respond), aclose=AsyncMock()
+    )
+    monkeypatch.setattr(symphony_worker, "CompletionRouter", lambda _: router)
+    resolver = SimpleNamespace(
+        resolve=AsyncMock(
+            return_value=SimpleNamespace(
+                model="test/model",
+                context_tokens=10000,
+            )
+        )
+    )
+    monkeypatch.setattr(symphony_worker, "ModelPolicyResolver", lambda **_: resolver)
+    monkeypatch.setattr(symphony_worker, "model_settings_for", lambda *_: {})
+    spine = SimpleNamespace(aclose=AsyncMock(), record_spend_events=AsyncMock())
+    monkeypatch.setattr(symphony_worker, "SpineClient", lambda *_, **__: spine)
+    monkeypatch.chdir(tmp_path)
+
+    await symphony_worker.run(assignment_path)
+    return json.loads((tmp_path / "judge-verdict.json").read_text())
+
+
+@pytest.mark.asyncio
+async def test_judge_retries_missing_metrics_and_writes_the_panel_return(tmp_path, monkeypatch):
+    """M3SY / ADR-012: a real worker uses the panel contract before publishing PASS."""
     calls = []
 
     async def respond(messages, info):
@@ -94,32 +119,64 @@ async def test_judge_retries_missing_metrics_and_writes_the_panel_return(tmp_pat
         }
         yield json.dumps(verdict)
 
-    router = SimpleNamespace(
-        catalog=None, model_for=lambda _: FunctionModel(stream_function=respond), aclose=AsyncMock()
-    )
-    monkeypatch.setattr(symphony_worker, "CompletionRouter", lambda _: router)
-    resolver = SimpleNamespace(
-        resolve=AsyncMock(
-            return_value=SimpleNamespace(
-                model="test/model",
-                context_tokens=10000,
-            )
-        )
-    )
-    monkeypatch.setattr(symphony_worker, "ModelPolicyResolver", lambda **_: resolver)
-    monkeypatch.setattr(symphony_worker, "model_settings_for", lambda *_: {})
-    spine = SimpleNamespace(aclose=AsyncMock(), record_spend_events=AsyncMock())
-    monkeypatch.setattr(symphony_worker, "SpineClient", lambda *_, **__: spine)
-    monkeypatch.chdir(tmp_path)
+    result = await _run_judge(tmp_path, monkeypatch, respond)
 
-    await symphony_worker.run(assignment_path)
-
-    result = json.loads((tmp_path / "judge-verdict.json").read_text())
     assert len(calls) == 2
     assert result["outcome"] == "pass"
     assert result["metrics"][0]["metric"] == "café checksum = 150"
-    assert result["charter_sha256"] == session["charter_sha256"]
+    assert result["charter_sha256"] == "a" * 64
     assert json.loads((tmp_path / "result.json").read_text()) == result
+
+
+def _verdict(selected, feedback=()):
+    return json.dumps(
+        {
+            "outcome": "pass",
+            "selected_attempt_id": selected,
+            "rationale": "Read and checked the exact file",
+            "evidence_refs": ["result.txt"],
+            "feedback": list(feedback),
+            "metrics": [{"observed": "150", "passed": True, "evidence_ref": "result.txt"}],
+        }
+    )
+
+
+@pytest.mark.asyncio
+async def test_judge_pass_may_carry_advisory_notes(tmp_path, monkeypatch):
+    """M3SF / M3EX-07: a PASS with notes is a PASS, not a validation failure."""
+    calls = []
+
+    async def respond(messages, info):
+        calls.append(messages)
+        note = {"problem": "Wording", "desired_observation": "Tighter", "evidence_refs": ["x"]}
+        yield _verdict("attempt-1", [note])
+
+    result = await _run_judge(tmp_path, monkeypatch, respond)
+
+    assert len(calls) == 1
+    assert result["outcome"] == "pass"
+    assert result["feedback"][0]["problem"] == "Wording"
+
+
+@pytest.mark.asyncio
+async def test_judge_that_cannot_return_writes_a_failed_verdict_with_its_reason(
+    tmp_path, monkeypatch
+):
+    """M3SF / M3EX-07: an invented attempt is refused by the schema; retries end in FAIL."""
+    calls = []
+
+    async def respond(messages, info):
+        calls.append(messages)
+        yield _verdict("round-1-attempt-9")
+
+    result = await _run_judge(tmp_path, monkeypatch, respond)
+
+    assert len(calls) == 2
+    assert result["outcome"] == "fail"
+    assert result["selected_attempt_id"] is None
+    assert "performance judge returned no valid verdict" in result["rationale"]
+    assert result["metrics"][0]["passed"] is False
+    assert result["feedback"][0]["evidence_refs"] == [str(tmp_path / "messages.json")]
 
 
 @pytest.mark.asyncio

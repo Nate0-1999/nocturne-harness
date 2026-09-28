@@ -106,8 +106,9 @@ class JudgeVerdict(BaseModel):
             if not _is_sha256(digest):
                 raise ValueError(f"{label} digest must be lowercase SHA-256")
         if self.outcome == JudgeOutcome.PASS:
-            if self.selected_attempt_id is None or self.feedback:
-                raise ValueError("a PASS selects one attempt and carries no repair feedback")
+            # M3SF: a PASS may carry advisory notes; only FAIL feedback forms the next round.
+            if self.selected_attempt_id is None:
+                raise ValueError("a PASS selects one attempt")
         elif self.selected_attempt_id is not None or not self.feedback:
             raise ValueError("a FAIL selects no attempt and carries repair feedback")
         return self
@@ -136,6 +137,37 @@ def validate_judge_verdict(verdict, *, session, charter, candidate_ids) -> None:
             raise JudgePanelError("performance cannot PASS a failed fixed metric")
     elif verdict.metrics:
         raise JudgePanelError("only the performance seat may return metric assessments")
+
+
+def stopped_verdict(session, *, charter, reason, evidence_ref) -> JudgeVerdict:
+    """M3SF: a judge that cannot return is a FAIL carrying its reason, never a missing file."""
+    problem = f"The {session['seat']} judge returned no valid verdict: {_one_line(reason)}"
+    return JudgeVerdict(
+        schema_version=1,
+        **{
+            key: session[key]
+            for key in ("seat", "judge_session_id", "charter_sha256", "evidence_sha256")
+        },
+        outcome="fail",
+        selected_attempt_id=None,
+        rationale=problem,
+        evidence_refs=(evidence_ref,),
+        feedback=(
+            JudgeFeedback(
+                problem=problem,
+                desired_observation="Every judge returns a verdict on the same work.",
+                evidence_refs=(evidence_ref,),
+            ),
+        ),
+        metrics=tuple(
+            MetricAssessment(
+                metric=metric, observed="not assessed", passed=False, evidence_ref=evidence_ref
+            )
+            for metric in charter.metrics
+        )
+        if session["seat"] == JudgeSeat.PERFORMANCE
+        else (),
+    )
 
 
 class JudgeEvidence(BaseModel):
