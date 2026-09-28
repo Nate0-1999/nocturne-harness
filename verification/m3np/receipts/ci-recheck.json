@@ -3,5 +3,7 @@
   "same_revision_full_ci_pass": "https://github.com/Nate0-1999/nocturne-harness/actions/runs/36374747952",
   "repeated_ui_failure": "https://github.com/Nate0-1999/nocturne-harness/actions/runs/36374751144/attempts/1",
   "failure": "POST /v1/rack/scorers/simulate returned 422 during human-numbers check",
-  "failed_job_rerun_requested": true
+  "failed_job_rerun_requested": true,
+  "failed_job_rerun_result": "PASS",
+  "rerun": "https://github.com/Nate0-1999/nocturne-harness/actions/runs/36374751144/attempts/2"
 }

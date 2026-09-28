@@ -113,7 +113,8 @@
     "harness/verification/m3np/receipts/public-main.log": "M3NP verification evidence; no runtime feature change.",
     "harness/verification/m3np/receipts/public-create.log": "M3NP verification evidence; no runtime feature change.",
     "harness/verification/m3np/receipts/ci-recheck.json": "M3NP verification evidence; no runtime feature change.",
-    "harness/verification/m3np/receipts/public-list.log": "M3NP verification evidence; no runtime feature change."
+    "harness/verification/m3np/receipts/public-list.log": "M3NP verification evidence; no runtime feature change.",
+    "harness/web/dist/assets/index-CNW87bC_.js": "Intermediate generated bundle replaced during the FL-200 header repair; no additional runtime feature."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
