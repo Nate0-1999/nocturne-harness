@@ -29,6 +29,9 @@ from harness.spine_client import (
     InjectPrepareRequest,
     InjectPrepareResponse,
     MemoryAllocation,
+    MemoryFeatures,
+    MemoryKind,
+    ScoredMemoryCard,
     SpendEventsRequest,
     SpendEventsResponse,
 )
@@ -119,7 +122,21 @@ class HeartbeatSpine(HonestDisplaySpine):
             snapshot_ts=datetime.now(UTC),
             scorer_version="m3fp-heartbeat-v1",
             injected=[],
-            near_misses=[],
+            # M3EX-04: the first gate opens only when there is something to review.
+            near_misses=[
+                ScoredMemoryCard(
+                    memory_id=uuid4(),
+                    label="Heartbeat near miss",
+                    body="A memory below the injection threshold.",
+                    kind=MemoryKind.FACT,
+                    pin=False,
+                    score=0.4,
+                    features=MemoryFeatures(
+                        sem=0.4, kw=0.0, time=0.5, proj=1.0, freq=0.0, hist=0.0
+                    ),
+                    rank=1,
+                )
+            ],
             final_block=None,
             memory_allocation=MemoryAllocation(
                 memory_context_share=0.10,

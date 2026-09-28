@@ -195,7 +195,15 @@ class RecordingSpine:
             snapshot_ts=datetime(2026, 7, 21, 12, tzinfo=UTC),
             scorer_version="m1-v1",
             injected=[],
-            near_misses=[],
+            # M3EX-04: the first gate opens only when there is something to review.
+            near_misses=[
+                scored_card(
+                    UUID("e2345678-1234-5678-1234-567812345678"),
+                    label="Near miss",
+                    body="A memory below the threshold.",
+                    rank=1,
+                )
+            ],
             final_block=None,
             memory_allocation=memory_allocation(),
         )
@@ -401,6 +409,22 @@ async def test_restart_recovers_context_before_autonomous_prepare() -> None:
     assert spine.commit_requests == []
     assert emitter.gate_values == []
     assert delegate.calls[-1][-2] == EMPTY_MEMORY_BLOCK
+
+
+@pytest.mark.asyncio
+async def test_first_chat_with_nothing_to_review_never_holds_the_run() -> None:
+    """Invariant 14 (M3EX-04): a first gate with no memories to review commits and runs."""
+    spine = RecordingSpine()
+    spine.prepare_response = spine.prepare_response.model_copy(update={"near_misses": []})
+    delegate = RecordingDelegate()
+    emitter = RecordingEmitter()
+    runner = MemoryGateTurnRunner(
+        delegate, spine, context_factory(spine), model_context_tokens=1_000_000
+    )
+    await runner.run(thread_id=THREAD_ID, prompt="hello", message_history=(), emit=emitter)
+    assert emitter.gate_values == []
+    assert [(r.removed, r.added_back) for r in spine.commit_requests] == [([], [])]
+    assert delegate.calls[-1][1] == "hello"
 
 
 @pytest.mark.asyncio

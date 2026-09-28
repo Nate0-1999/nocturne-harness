@@ -341,24 +341,28 @@ class MemoryGateTurnRunner:
                 image=image,
             )
 
-        decision = await emit.open_gate(
-            {
-                "injection_id": prepared.injection_id,
-                "snapshot_ts": prepared.snapshot_ts,
-                "scorer_version": prepared.scorer_version,
-                "injected": prepared.injected,
-                "near_misses": prepared.near_misses,
-            }
-        )
-        excluded_memory_ids = frozenset(item.memory_id for item in decision.removed)
+        removed, added_back = [], []
+        # M3EX-04: a gate with nothing to review never holds the first turn.
+        if prepared.injected or prepared.near_misses:
+            decision = await emit.open_gate(
+                {
+                    "injection_id": prepared.injection_id,
+                    "snapshot_ts": prepared.snapshot_ts,
+                    "scorer_version": prepared.scorer_version,
+                    "injected": prepared.injected,
+                    "near_misses": prepared.near_misses,
+                }
+            )
+            removed, added_back = decision.removed, decision.added_back
+        excluded_memory_ids = frozenset(item.memory_id for item in removed)
 
         try:
             committed = await self._spine.commit_injection(
                 InjectCommitRequest(
                     # Never trust the echoed browser ID at the C.4 boundary.
                     injection_id=prepared.injection_id,
-                    removed=decision.removed,
-                    added_back=decision.added_back,
+                    removed=removed,
+                    added_back=added_back,
                 )
             )
         except SpineClientError:
@@ -379,7 +383,7 @@ class MemoryGateTurnRunner:
                 thread_id,
                 prepared=prepared,
                 removed_memory_ids=excluded_memory_ids,
-                added_back=decision.added_back,
+                added_back=added_back,
                 final_block=committed.final_block,
             )
         except ValueError:
