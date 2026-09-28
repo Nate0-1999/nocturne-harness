@@ -471,7 +471,7 @@ async def test_m3rl_private_tags_never_enter_stream_or_final_answer(opening, clo
         bridge = _EventBridge(emitter)
         await bridge._accept_text(raw[:split])
         await bridge._accept_text(raw[split:])
-        answer = await bridge.finalize(raw, run_id="test", created_at=datetime.now(UTC))
+        answer = await bridge.finalize(run_id="test", created_at=datetime.now(UTC))
         assert answer == "Before.After."
         assert "".join(emitter.texts) == answer
         assert emitter.events[-1]["primary"] == "Continue."
@@ -479,12 +479,7 @@ async def test_m3rl_private_tags_never_enter_stream_or_final_answer(opening, clo
     bridge = _EventBridge(emitter)
     await bridge._accept_text(f"Answer.{opening}unfinished private work")
     assert "".join(emitter.texts) == "Answer."
-    assert (
-        await bridge.finalize(
-            f"Answer.{opening}unfinished private work", run_id="test", created_at=datetime.now(UTC)
-        )
-        == "Answer."
-    )
+    assert await bridge.finalize(run_id="test", created_at=datetime.now(UTC)) == "Answer."
 
 
 @pytest.mark.asyncio
@@ -533,6 +528,47 @@ async def test_m3fz_text_tool_text_keeps_the_whole_answer_and_terminal_proposal(
     assert len(proposals) == 1
     assert proposals[0]["primary"] == "Read it back."
     assert any(e["event_kind"] == "function_tool_result" for e in emitter.events)
+
+
+@pytest.mark.asyncio
+async def test_m3cl_block_only_answer_reaches_chat_without_tags_and_with_breaks() -> None:
+    """F133 (M3EX-01/05/06): the answer is in chat, tag-free, one paragraph per step."""
+
+    async def stream(messages, _info):
+        if not any(
+            isinstance(part, ToolReturnPart)
+            for message in messages
+            if isinstance(message, ModelRequest)
+            for part in message.parts
+        ):
+            yield "<Nocturne>I will write the note."
+            yield {
+                0: DeltaToolCall(
+                    name="write",
+                    json_args='{"path":"note.txt","content":"owner text\\n"}',
+                    tool_call_id="m3cl-write",
+                )
+            }
+        else:
+            yield "<Nocturne><nocturne-proposed-response>"
+            yield '{"primary":"Run npm test from web/.","alternatives":[]}'
+            yield "</nocturne-proposed-response>"
+
+    emitter = RecordingEmitter()
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(toolset=RecordingWorkspaceToolset()),
+    )
+    outcome = await runner.run(
+        thread_id=str(THREAD_UUID),
+        prompt="How do I run the web tests?",
+        message_history=(),
+        emit=emitter,
+    )
+
+    assert outcome.assistant_text == "I will write the note.\n\nRun npm test from web/."
+    assert "".join(emitter.texts) == outcome.assistant_text
+    assert not [e for e in emitter.events if e["event_kind"] == "proposed_response"]
 
 
 @pytest.mark.asyncio

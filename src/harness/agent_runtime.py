@@ -50,8 +50,11 @@ from harness.extraction import ExtractionService
 from harness.model_policy import ThreadModelResolution
 from harness.model_router import model_settings_for
 from harness.proposed_response import (
+    BLOCK_CLOSE,
     BLOCK_OPEN,
     PROPOSED_RESPONSE_INSTRUCTION,
+    ProposedResponse,
+    parse_proposal_block,
     parse_proposed_response_output,
     proposed_response_event,
 )
@@ -528,17 +531,7 @@ class PydanticAITurnRunner:
                     usage=run_usage,
                     event_stream_handler=bridge.handle,
                 )
-            visible_output = await bridge.finalize(
-                "".join(
-                    part.content
-                    for message in result.new_messages()
-                    if isinstance(message, ModelResponse)
-                    for part in message.parts
-                    if isinstance(part, TextPart)
-                ),
-                run_id=emit.run_id,
-                created_at=self._clock(),
-            )
+            visible_output = await bridge.finalize(run_id=emit.run_id, created_at=self._clock())
             usage = _usage_snapshot(result.usage)
             await bridge.publish_usage(usage)
             history = tuple(result.all_messages())
@@ -881,6 +874,8 @@ _THINKING_DELIMITERS = {
     "<think>": "</think>",
     "<thinking>": "</thinking>",
 }
+# M3EX-05: a speaker tag the model writes is not part of the answer.
+_STRAY_TAGS = ("<Nocturne>", "</Nocturne>")
 
 
 class _VisibleModelText:
@@ -894,14 +889,14 @@ class _VisibleModelText:
         self.pending += value
         visible = ""
         while self.pending:
-            markers = (self.closing,) if self.closing else tuple(_THINKING_DELIMITERS)
+            markers = (self.closing,) if self.closing else (*_THINKING_DELIMITERS, *_STRAY_TAGS)
             matches = [(self.pending.find(marker), marker) for marker in markers]
             matches = [(index, marker) for index, marker in matches if index >= 0]
             if matches:
                 index, marker = min(matches)
                 if self.closing is None:
                     visible += self.pending[:index]
-                    self.closing = _THINKING_DELIMITERS[marker]
+                    self.closing = _THINKING_DELIMITERS.get(marker)
                 else:
                     self.closing = None
                 self.pending = self.pending[index + len(marker) :]
@@ -924,6 +919,10 @@ class _EventBridge:
         self._pending_text = ""
         self._visible_text = ""
         self._proposal_started = False
+        self._proposal: ProposedResponse | None = None
+        self._part_answered = False
+        self._new_part = False
+        self._raw_tail = ""
         self._model_text = _VisibleModelText()
 
     async def handle(
@@ -933,11 +932,12 @@ class _EventBridge:
     ) -> None:
         async for event in events:
             if isinstance(event, PartStartEvent) and isinstance(event.part, TextPart):
+                self._new_part = True
                 if event.part.content:
-                    await self._accept_text(event.part.content)
+                    await self._accept_part_text(event.part.content)
             elif isinstance(event, PartDeltaEvent) and isinstance(event.delta, TextPartDelta):
                 if event.delta.content_delta:
-                    await self._accept_text(event.delta.content_delta)
+                    await self._accept_part_text(event.delta.content_delta)
             elif isinstance(event, PartStartEvent) and isinstance(event.part, ThinkingPart):
                 if event.part.content:
                     await self._emit.thinking(event.part.content)
@@ -949,18 +949,40 @@ class _EventBridge:
             await self.publish_usage(_usage_snapshot(context.usage))
         await self.publish_usage(_usage_snapshot(context.usage))
 
+    async def _accept_part_text(self, value: str) -> None:
+        if self._new_part:
+            # M3EX-06: text on either side of a tool step reads as two paragraphs.
+            if self._raw_tail and not self._raw_tail.isspace() and not value[0].isspace():
+                value = "\n\n" + value
+            self._new_part = False
+            self._part_answered = False
+        self._raw_tail = value[-1]
+        await self._accept_text(value)
+
     async def _accept_text(self, value: str) -> None:
-        value = self._model_text.feed(value)
-        if self._proposal_started:
-            self._pending_text += value
-            return
+        await self._accept_visible(self._model_text.feed(value))
+
+    async def _accept_visible(self, value: str) -> None:
         self._pending_text += value
-        marker = self._pending_text.find(BLOCK_OPEN)
-        if marker >= 0:
+        while True:
+            if self._proposal_started:
+                close = self._pending_text.find(BLOCK_CLOSE)
+                if close < 0:
+                    return
+                proposal = parse_proposal_block(self._pending_text[:close])
+                self._pending_text = self._pending_text[close + len(BLOCK_CLOSE) :]
+                self._proposal_started = False
+                if proposal is not None and not self._part_answered:
+                    # M3EX-01: a part whose only text is the block answered inside it.
+                    await self._publish_visible(proposal.primary)
+                    proposal = None
+                self._proposal = proposal
+            marker = self._pending_text.find(BLOCK_OPEN)
+            if marker < 0:
+                break
             await self._publish_visible(self._pending_text[:marker])
-            self._pending_text = self._pending_text[marker:]
+            self._pending_text = self._pending_text[marker + len(BLOCK_OPEN) :]
             self._proposal_started = True
-            return
         retained = _marker_prefix_suffix_length(self._pending_text, BLOCK_OPEN)
         safe_length = len(self._pending_text) - retained
         await self._publish_visible(self._pending_text[:safe_length])
@@ -969,28 +991,30 @@ class _EventBridge:
     async def _publish_visible(self, value: str) -> None:
         if not value:
             return
+        if value.strip():
+            self._part_answered = True
+            self._proposal = None
         self._visible_text += value
         await self._emit.text(value)
 
-    async def finalize(self, output: str, *, run_id: str, created_at: datetime) -> str:
-        """Reconcile all new assistant TextParts, in order, excluding prior history.
+    async def finalize(self, *, run_id: str, created_at: datetime) -> str:
+        """Flush what the stream still holds; the streamed text is the whole answer.
 
-        This is the same concatenation streamed by handle, including text before tools.
-        The terminal proposal is hidden from both projections.
+        The stream saw every TextPart of the run, including text before tools. A terminal
+        proposal becomes its card; an unclosed block stays hidden.
         """
 
-        terminal = _VisibleModelText()
-        clean_output = terminal.feed(output)
-        if terminal.closing is None:
-            clean_output += terminal.pending
-        visible, proposal = parse_proposed_response_output(clean_output)
-        await self._publish_visible(visible[len(self._visible_text) :])
+        if self._model_text.closing is None:
+            await self._accept_visible(self._model_text.pending)
+        self._model_text = _VisibleModelText()
+        if not self._proposal_started:
+            await self._publish_visible(self._pending_text)
         self._pending_text = ""
-        if proposal is not None:
+        if self._proposal is not None:
             await self._emit.event(
-                proposed_response_event(proposal, run_id=run_id, created_at=created_at)
+                proposed_response_event(self._proposal, run_id=run_id, created_at=created_at)
             )
-        return visible
+        return self._visible_text
 
     async def publish_usage(self, usage: UsageSnapshot) -> None:
         if usage == self._last_usage:

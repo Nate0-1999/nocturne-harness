@@ -65,27 +65,38 @@ class ProposedResponse:
 
 
 def parse_proposed_response_output(value: str) -> tuple[str, ProposedResponse | None]:
-    """Split one terminal structured block from the visible answer.
+    """Split structured blocks from one text part's visible answer.
 
-    A malformed block is kept out of the owner surface and yields no actionable card.
-    Missing blocks leave ordinary text unchanged, so provider failures stay readable.
+    Every block is kept out of the owner surface; only a terminal one is a card. A part
+    whose only text is the block answered inside it, so its primary is the answer
+    (M3EX-01). An unclosed block is withheld; text after a block stays visible.
     """
 
-    start = value.rfind(BLOCK_OPEN)
-    if start < 0:
-        return value, None
-    visible = value[:start]
-    close = value.find(BLOCK_CLOSE, start + len(BLOCK_OPEN))
-    if close < 0 or value[close + len(BLOCK_CLOSE) :].strip():
-        return visible, None
-    raw = value[start + len(BLOCK_OPEN) : close].strip()
+    visible, proposal, rest = "", None, value
+    while (start := rest.find(BLOCK_OPEN)) >= 0:
+        visible += rest[:start]
+        close = rest.find(BLOCK_CLOSE, start + len(BLOCK_OPEN))
+        if close < 0:
+            return visible, None
+        proposal = parse_proposal_block(rest[start + len(BLOCK_OPEN) : close])
+        rest = rest[close + len(BLOCK_CLOSE) :]
+    if rest.strip():
+        proposal = None
+    if proposal is not None and not visible.strip():
+        return visible + proposal.primary, None
+    return visible + rest, proposal
+
+
+def parse_proposal_block(raw: str) -> ProposedResponse | None:
+    """A malformed block yields no actionable card."""
+
     try:
-        block = _ProposalBlock.model_validate(json.loads(raw))
+        block = _ProposalBlock.model_validate(json.loads(raw.strip()))
     except (ValueError, TypeError, json.JSONDecodeError):
-        return visible, None
+        return None
     if block.primary in block.alternatives:
-        return visible, None
-    return visible, ProposedResponse(block.primary, block.alternatives)
+        return None
+    return ProposedResponse(block.primary, block.alternatives)
 
 
 def proposed_response_event(
