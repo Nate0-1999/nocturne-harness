@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -258,6 +259,28 @@ async def test_shell_is_one_shot_os_fenced_and_remote_state_walled(tmp_path: Pat
     assert outside.success and "exit code" in outside.content.lower()
     assert not outside_path.exists()
     assert not remote.success and "remote state" in remote.content
+
+
+@pytest.mark.asyncio
+async def test_shell_scratch_never_lands_in_the_repo(
+    tmp_path: Path,
+) -> None:
+    """M3SF / M3EX-09: tool scratch (pytest, uv locks) never lands in the repo."""
+    if not Path("/usr/bin/sandbox-exec").is_file():
+        pytest.skip("the standing hard shell fence is macOS sandbox-exec")
+    root = tmp_path / "attempt"
+    root.mkdir()
+    toolset = await open_standard_toolset(cwd=root, workspace_root=root, fence_reads=True)
+    try:
+        scratch = await toolset.execute(
+            "bash", {"command": 'printf x > "$TMPDIR/scratch.txt" && printf "%s" "$TMPDIR"'}
+        )
+    finally:
+        await toolset.close()
+
+    scratch_dir = Path(re.search(r"/\S*nocturne-shell-[^\s/]+", scratch.content).group())
+    assert scratch.success and list(root.iterdir()) == []
+    assert not scratch_dir.exists()
 
 
 def test_upstream_skills_gain_model_visible_bundled_resources(tmp_path: Path) -> None:
