@@ -164,6 +164,8 @@ async def run(assignment_path: Path) -> None:
         workspace_root=Path(assignment.get("workspace_root", str(root))),
         agent_id=assignment["origin_agent"],
         machine_id=settings.machine_id,
+        # M3SF / M3EX-10: a worker's tool calls stay inside its worktree.
+        fence_reads=True,
     )
     spine = SpineClient(
         settings.spine_url,

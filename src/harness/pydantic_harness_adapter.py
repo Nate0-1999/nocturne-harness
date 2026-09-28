@@ -551,6 +551,18 @@ class PydanticHarnessToolset:
             raise ToolsetError("No background shell with that ID in this thread.")
         return await shell.stop_command(command_id)
 
+    def _outside_directory(self, command: str) -> Path | None:
+        try:
+            tokens = shlex.split(command)
+        except ValueError:
+            return None
+        for token in tokens:
+            if token.startswith(("/", "~", ".")):
+                target = (self._location.cwd / Path(token).expanduser()).resolve()
+                if target.is_dir() and not _inside(self._location.workspace_root, target):
+                    return target
+        return None
+
     def _shell_command(self, arguments: Mapping[str, object]) -> tuple[ShellToolset, str]:
         command = arguments.get("command")
         if not isinstance(command, str) or not command.strip():
@@ -568,6 +580,13 @@ class PydanticHarnessToolset:
             raise WorkspaceBoundaryError(
                 "That command may expose credentials. Ask the owner before reading them.",
                 "credentials",
+            )
+        if self._location.fence_reads and (outside := self._outside_directory(command)):
+            # WALL owner files / M3SF: a fenced agent never walks directories beyond its root.
+            raise WorkspaceBoundaryError(
+                f"That command reaches outside this workspace: {outside}. "
+                f"Stay inside {self._location.workspace_root}.",
+                "location",
             )
         sandbox = Path("/usr/bin/sandbox-exec")
         if not sandbox.is_file():

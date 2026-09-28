@@ -46,6 +46,22 @@ def _json(path: Path, value) -> None:
     temporary.replace(path)
 
 
+def _carry_environment(root: Path, location: Path) -> None:
+    """M3SF / M3EX-10: an attempt gets the project's ignored .venv, pointed at itself."""
+    source = root / ".venv"
+    ignored = subprocess.run(["git", "-C", str(root), "check-ignore", "-q", ".venv"])
+    if not source.is_dir() or ignored.returncode != 0:
+        return
+    target = location / ".venv"
+    subprocess.run(["cp", "-c", "-R", str(source), str(target)], check=True)  # APFS clone
+    old, new = f"{root}/".encode(), f"{location}/".encode()
+    for path in (*target.glob("bin/*"), *target.glob("lib/python*/site-packages/*.pth")):
+        if path.is_file() and not path.is_symlink():
+            data = path.read_bytes()
+            if old in data and b"\0" not in data:
+                path.write_bytes(data.replace(old, new))
+
+
 class SymphonyExecution:
     """One execution seam; the existing conductor remains the search authority."""
 
@@ -248,6 +264,7 @@ class SymphonyExecution:
                         location = worktrees / child_id / attempt_id
                         location.parent.mkdir(parents=True, exist_ok=True)
                         _git(root, "worktree", "add", "--detach", str(location), checkpoint)
+                        _carry_environment(root, location)
                         briefs.append(
                             SearchAttemptBrief(
                                 attempt_id=attempt_id,
