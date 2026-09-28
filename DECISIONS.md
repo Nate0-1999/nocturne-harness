@@ -3713,3 +3713,10 @@ name an action explicitly. Inline SVG inherits the control's token-based
 ink. Primary/module actions keep words; row/toolbar actions keep accessible
 names and hover tips. Unusual actions remain words. Native controls and
 their handlers remain the behavior boundary.
+
+## M3RD — Retry invalid extraction labels before admission [P2.4]
+
+PRECEDENT: F130, C.4, the existing constrained split-draft label.
+The extraction output schema now enforces the same 64-code-point limit, so
+Pydantic AI's existing structured-output retry repairs the label before it
+reaches the Palace. The memory body and compaction strategy are unchanged.

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.39 - 2026-09-28
+
+- Curator merges retire their targets before activating the replacement, atomically.
+- Compaction retries overlong extraction labels before saving memories.
+- DEEP simulation uses the caller's evidence; whole-Palace simulation requires
+  the owner. Pair with Memory 0.1.39.
+
 ## 0.1.38 - 2026-09-27
 
 - Retraining is restricted to the configured Palace owner, including compaction

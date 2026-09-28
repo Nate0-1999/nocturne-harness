@@ -194,7 +194,8 @@ class RememberSplitDraft(BaseModel):
 
 class ExtractionCandidateDraft(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
-    label: StrictStr
+    # WALL Palace writes / C.4: model retries must enforce the stored label limit.
+    label: StrictStr = Field(min_length=1, max_length=64)
     body: StrictStr = Field(
         description="Exactly one independently editable fact. Two properties of the same "
         "subject are separate candidates: changing one must not require editing the other."
