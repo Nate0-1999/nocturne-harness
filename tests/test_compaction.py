@@ -35,6 +35,40 @@ from tests.test_agent_runtime import RecordingEmitter, context, settings
 
 
 @pytest.mark.asyncio
+async def test_extraction_retries_a_label_that_exceeds_the_palace_limit():
+    """SPEC C.4 / F130: structured-output retry repairs the label before admission."""
+    calls = []
+
+    def extract(messages, info):
+        calls.append(messages)
+        return ModelResponse(
+            [
+                TextPart(
+                    json.dumps(
+                        {
+                            "working_summary": "Finish the notebook.",
+                            "open_loops": [],
+                            "candidates": [
+                                {
+                                    "label": "x" * 74 if len(calls) == 1 else "Notebook",
+                                    "body": "The notebook is copper.",
+                                    "kind": "fact",
+                                    "keywords": ["notebook", "copper"],
+                                }
+                            ],
+                        }
+                    )
+                )
+            ]
+        )
+
+    agent = HarnessAgent(settings(), model=FunctionModel(function=extract))
+    draft = await agent.extract_thread("One notebook fact.")
+    assert draft.candidates[0].label == "Notebook"
+    assert len(calls) == 2
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("corrected", [True, False])
 async def test_over_cap_fact_is_shortened_once_or_refused(corrected):
     """SPEC D.2 / SD-062: shorten one fact atomically; failed shortening prevents admission."""
