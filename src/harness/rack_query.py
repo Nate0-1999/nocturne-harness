@@ -35,6 +35,7 @@ class RackQueryResult(BaseModel):
         | OverwhelmSnapshot
         | RecipeGraphSnapshot
         | ToolInventory
+        | str
         | None
     )
 

@@ -3720,3 +3720,14 @@ PRECEDENT: F130, C.4, the existing constrained split-draft label.
 The extraction output schema now enforces the same 64-code-point limit, so
 Pydantic AI's existing structured-output retry repairs the label before it
 reaches the Palace. The memory body and compaction strategy are unchanged.
+
+## M3NP — Separate palaces, separate local state [P1.3, P4.1]
+
+Named palaces reuse the existing SQL instance and managed SQL login, with a
+separate database, migrated schema, access token and scale-to-zero service.
+Private custody records identify only those resources. Selection keeps each
+palace's identity and journal in its own home; the original home remains main.
+Test palaces use ordinary fresh principals owned by that palace, so training
+works without weakening the owner's verification hygiene. Drop names the full
+memory count, refuses main, and closes only the target database's draining
+connections before deletion. The header gets its name through the rack API.

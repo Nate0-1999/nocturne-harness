@@ -1779,8 +1779,8 @@ function HeaderModule() {
   useEffect(() => {
     if (snapshot.connection !== 'connected') return
     let active = true
-    void fetch('/v1/identity').then((response) => response.json()).then((identity) => {
-      if (active && typeof identity.palace_name === 'string') setPalaceName(identity.palace_name)
+    void query.query({ resource: 'palace' }).then(({ data }) => {
+      if (active && typeof data === 'string') setPalaceName(data)
     }).catch(() => {})
     const probe = () => {
       void query.query({ resource: 'vitals', as_of: 'now' })

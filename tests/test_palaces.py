@@ -10,6 +10,20 @@ from harness.onboarding import NocturneConfig, OnboardingError, _write_config, l
 from harness.palaces import PalaceCloud, palace_home, palace_nocturne
 
 
+def test_palace_name_reaches_sandboxed_modules_without_credentials():
+    """SPEC D.2 166 / ADR-023: the public rack exposes only the selected Palace name."""
+    from fastapi.testclient import TestClient
+
+    from harness.daemon import create_app
+
+    with TestClient(create_app(palace_name="test-learning")) as client:
+        assert client.get("/v1/rack/query?resource=palace").json() == {
+            "status": "live",
+            "as_of": None,
+            "data": "test-learning",
+        }
+
+
 def test_selection_preserves_main_identity_and_separates_journals(tmp_path, monkeypatch):
     """SPEC D.2 166: selecting another Palace never reuses main's local journal or identity."""
     monkeypatch.setenv("NOCTURNE_HOME", str(tmp_path))

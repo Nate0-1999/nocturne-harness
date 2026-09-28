@@ -193,6 +193,7 @@ class PalaceCloud(GcloudDeployBackend):
                 spine_token=token,
                 principal_id=principal,
                 machine_id=f"palace-agent-{uuid.uuid4()}",
+                postgres_volume=None,
                 transcript_backup=False,
             )
         )
@@ -309,9 +310,27 @@ def palace_nocturne(
                     spine_token=cloud.token(name),
                     principal_id=principal,
                     machine_id=f"palace-agent-{uuid.uuid4()}",
+                    postgres_volume=None,
                     transcript_backup=False,
                 )
             )
+            if name != "main":
+                resource = cloud.resource(name)
+                _atomic_write_config(
+                    home / "custody.json",
+                    json.dumps(
+                        {
+                            "name": name,
+                            "project": PROJECT_ID,
+                            "instance": SQL_INSTANCE,
+                            "database": resource.replace("-", "_"),
+                            "service": resource,
+                            "state": "ready",
+                            "url": service["status"]["url"],
+                        }
+                    )
+                    + "\n",
+                )
         _atomic_write_config(root / "palace-selection", name + "\n")
         print(f"Selected Palace {name}. Restart `nocturne up` to use it.", file=stdout)
     elif action == "drop":
