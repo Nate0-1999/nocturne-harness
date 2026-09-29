@@ -7,7 +7,7 @@ import asyncio
 import json
 import signal
 import subprocess
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Literal
 from uuid import UUID
 
@@ -326,6 +326,8 @@ async def run(assignment_path: Path) -> None:
             )
             commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
             work = result.output
+            # M3SF: artifacts are worktree-relative; a model may cite them by absolute path.
+            artifacts = [ref.removeprefix(f"{root}/") for ref in work.evidence_refs]
             _write(
                 output / "memories.json",
                 json.dumps([memory.model_dump() for memory in work.memories]),
@@ -339,7 +341,11 @@ async def run(assignment_path: Path) -> None:
                         "evidence_refs": work.evidence_refs,
                         "uncertainties": work.uncertainties,
                         "metrics_refs": [str(output / "meter.json")],
-                        "artifacts": work.evidence_refs,
+                        "artifacts": [
+                            ref
+                            for ref in artifacts
+                            if not ref.startswith("/") and ".." not in PurePosixPath(ref).parts
+                        ],
                         "patch": None,
                         "product": ProductBaton(kind="commit", commit=commit).model_dump(),
                     }
