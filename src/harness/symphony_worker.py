@@ -146,6 +146,8 @@ async def run(assignment_path: Path) -> None:
         deps_type=MemoryToolContext,
         capabilities=[WorkspaceCapability(), *adopted_skill_capabilities(())],
         output_type=PromptedOutput(output_type),
+        # M3SF: a finished attempt that wraps its JSON in prose lost its work at one retry.
+        retries={"output": 3},
         name=f"symphony-{stage}",
         instructions=(
             "You are checking whether proposed work can START. Missing output files are "
