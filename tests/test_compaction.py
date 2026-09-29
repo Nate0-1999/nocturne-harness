@@ -115,7 +115,8 @@ async def test_over_cap_fact_is_shortened_once_or_refused(corrected):
             match="Compaction could not preserve a fact within the memory cap; history kept.",
         ):
             await agent.extract_thread("One notebook fact.", on_result=receipt)
-    assert len(calls) == len(receipts) == 2
+    # INCIDENT M3EX-22: up to three shortening passes before the history is kept.
+    assert len(calls) == len(receipts) == (2 if corrected else 4)
 
 
 @pytest.mark.asyncio

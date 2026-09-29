@@ -2756,7 +2756,9 @@ async def test_a_thread_started_in_a_subfolder_belongs_to_its_git_root(tmp_path:
 @pytest.mark.asyncio
 async def test_a_moved_repository_is_refound_or_asks_once_and_never_locks(tmp_path: Path) -> None:
     """F135 (M3EX-14): a renamed repository is re-found by its first commit; one that cannot
-    be found asks for its new folder, and the answer keeps the thread's project."""
+    be found asks for its new folder, and the answer keeps the thread's project. Exercised
+    refusal: "This thread's folder was moved or renamed. Choose its new folder first."
+    """
     import subprocess
 
     projects = tmp_path / "projects"

@@ -17,6 +17,7 @@ from harness.spine_client import (
     SearchRequest,
     SpineClient,
     SpineClientError,
+    SpineProblemError,
 )
 from harness.transcript import TranscriptJournal
 
@@ -169,7 +170,22 @@ class ExtractionService:
             candidates=candidates,
         )
         try:
-            response = await self._spine.create_extraction(request)
+            try:
+                response = await self._spine.create_extraction(request)
+            except SpineProblemError as exc:
+                if exc.status_code != 422 or "verdict targets" not in str(exc.problem.detail):
+                    raise
+                # INCIDENT M3EX-22: the Palace refused a machine-proposed target; every fact
+                # still reaches the owner, as a new card.
+                request = request.model_copy(
+                    update={
+                        "candidates": [
+                            candidate.model_copy(update={"verdict": "new", "target_ids": []})
+                            for candidate in request.candidates
+                        ]
+                    }
+                )
+                response = await self._spine.create_extraction(request)
         except SpineClientError:
             pending = await self._spine.approval_queue(
                 self._principal_id,

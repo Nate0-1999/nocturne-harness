@@ -779,7 +779,10 @@ class HarnessAgent:
         )
         if on_result is not None:
             await on_result(result.all_messages())
-        if any(cl100k_token_count(item.body) > 128 for item in result.output.candidates):
+        # INCIDENT M3EX-22: one shortening pass left a fact over the cap and failed the archive.
+        for _ in range(3):
+            if not any(cl100k_token_count(item.body) > 128 for item in result.output.candidates):
+                break
             result = await self._extraction_agent.run(
                 "Keep the working summary and open loops. Shorten each over-cap fact into "
                 "ONE memory of at most 128 cl100k_base tokens; split only independent facts. "
@@ -825,16 +828,14 @@ class HarnessAgent:
         if on_result is not None:
             await on_result(result.all_messages())
         allowed = {UUID(item["memory_id"]) for item in neighbors}
-        if any(target not in allowed for target in result.output.target_ids):
-            # WALL Palace writes / ADR-022: affect only fetched candidates.
-            raise ValueError("extraction verdict targeted a memory outside its fetched neighbors")
-        if result.output.verdict == "new" and result.output.target_ids:
-            # WALL Palace writes / ADR-022: affect only fetched candidates.
-            raise ValueError("new extraction verdict cannot have targets")
-        if result.output.verdict != "new" and not result.output.target_ids:
-            # WALL Palace writes / ADR-022: affect only fetched candidates.
-            raise ValueError("non-new extraction verdict requires a target")
-        return result.output
+        output = result.output
+        if any(target not in allowed for target in output.target_ids) or (
+            output.verdict == "new"
+        ) == bool(output.target_ids):
+            # WALL Palace writes / ADR-022: affect only fetched candidates. INCIDENT M3EX-22:
+            # an unusable verdict is the owner's new card, never a failed archive.
+            return ExtractionVerdictDraft(verdict="new", target_ids=[])
+        return output
 
     async def split_seed(
         self,

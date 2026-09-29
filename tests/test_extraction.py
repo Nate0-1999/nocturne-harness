@@ -294,3 +294,40 @@ async def test_archive_transport_failure_stays_loud_without_exact_candidate(
         await service.archive(thread_id)
 
     assert journal.extracted_tail(str(thread_id)) is None
+
+
+@pytest.mark.asyncio
+async def test_a_refused_merge_target_still_archives_every_fact_as_new(tmp_path: Path) -> None:
+    """ADR-022 (M3EX-22): when the Palace refuses a machine-proposed target, the archive
+    retries with every fact as a new card instead of answering 503."""
+    import httpx
+
+    from harness.spine_client import ProblemDetail, SpineProblemError
+
+    class MergingAgent(FakeAgent):
+        async def propose_extraction_verdict(self, candidate, neighbors):
+            return ExtractionVerdictDraft(verdict="merge", target_ids=[MEMORY_ID])
+
+    class RefusingSpine(FakeSpine):
+        async def create_extraction(self, request):
+            self.requests.append(request)
+            if len(self.requests) == 1:
+                response = httpx.Response(422, request=httpx.Request("POST", "http://p/x"))
+                detail = "verdict targets must be active machine-fetched neighbors"
+                raise SpineProblemError(response, ProblemDetail(status=422, detail=detail))
+            return ExtractionResponse(cards=[], duplicate_count=0)
+
+    thread_id = uuid4()
+    spine = RefusingSpine()
+    service = ExtractionService(
+        journal=_journal(tmp_path / "transcripts", str(thread_id), datetime.now(UTC)),
+        agent=MergingAgent(),
+        spine=spine,
+        principal_id="owner",
+        machine_id="mac",
+    )
+
+    await service.archive(thread_id)
+
+    assert [c.verdict for c in spine.requests[0].candidates] == ["merge"]
+    assert [(c.verdict, c.target_ids) for c in spine.requests[1].candidates] == [("new", [])]

@@ -1612,22 +1612,12 @@ async def test_near_miss_remember_commands_are_ordinary_chat(ordinary_text: str)
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "verdict,targets,message",
-    [
-        (
-            "merge",
-            [str(SPLIT_SOURCE_ID)],
-            "extraction verdict targeted a memory outside its fetched neighbors",
-        ),
-        ("new", [str(MEMORY_ID)], "new extraction verdict cannot have targets"),
-        ("merge", [], "non-new extraction verdict requires a target"),
-    ],
+    "verdict,targets",
+    [("merge", [str(SPLIT_SOURCE_ID)]), ("new", [str(MEMORY_ID)]), ("merge", [])],
 )
-async def test_extraction_cannot_invent_write_targets(verdict, targets, message: str) -> None:
+async def test_extraction_cannot_invent_write_targets(verdict, targets) -> None:
     """ADR-022: model-generated extraction decisions cannot write outside reviewed neighbors.
-    M3GD / SPEC B.6 r14: exercised refusals: "extraction verdict targeted a memory outside its
-    fetched neighbors"; "new extraction verdict cannot have targets"; "non-new extraction
-    verdict requires a target".
+    M3EX-22: an unusable verdict becomes the owner's new card instead of failing the archive.
     """
     agent = HarnessAgent(
         settings(),
@@ -1642,8 +1632,8 @@ async def test_extraction_cannot_invent_write_targets(verdict, targets, message:
         kind="fact",
         keywords=["fact", "test"],
     )
-    with pytest.raises(ValueError, match=message):
-        await agent.propose_extraction_verdict(candidate, [{"memory_id": str(MEMORY_ID)}])
+    result = await agent.propose_extraction_verdict(candidate, [{"memory_id": str(MEMORY_ID)}])
+    assert (result.verdict, result.target_ids) == ("new", [])
 
 
 @pytest.mark.asyncio
