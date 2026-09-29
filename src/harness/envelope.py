@@ -564,6 +564,15 @@ class MemoryPanelDeletePayload(_MemoryPanelPayload):
     reason: Literal["no_longer_needed", "should_never_have_been_saved"] = "no_longer_needed"
 
 
+class MemoryPanelRestorePayload(_MemoryPanelPayload):
+    """M3EX-18: a deleted memory is a tombstone; restoring it makes it active again."""
+
+    action: Literal["restore"]
+    memory_id: UUID
+    # WALL Palace writes / C.4: restores use compare-and-set revisions.
+    expected_revision: Annotated[StrictInt, Field(ge=1)]
+
+
 class MemoryPanelItem(_MemoryPanelPayload):
     memory: MemoryUnit
     in_context: StrictBool
@@ -576,7 +585,9 @@ class MemoryPanelItem(_MemoryPanelPayload):
 class MemoryPanelStatePayload(_MemoryPanelPayload):
     action: Literal["state"]
     request_id: ULID
-    result: Literal["refreshed", "added", "removed", "edited", "pin_changed", "rescored", "deleted"]
+    result: Literal[
+        "refreshed", "added", "removed", "edited", "pin_changed", "rescored", "deleted", "restored"
+    ]
     items: list[MemoryPanelItem]
     total: StrictInt
 
@@ -584,7 +595,7 @@ class MemoryPanelStatePayload(_MemoryPanelPayload):
 class MemoryPanelConflictPayload(_MemoryPanelPayload):
     action: Literal["conflict"]
     request_id: ULID
-    operation: Literal["edit", "pin", "delete"]
+    operation: Literal["edit", "pin", "delete", "restore"]
     memory: MemoryUnit
     message: NonBlankString
 
@@ -592,7 +603,7 @@ class MemoryPanelConflictPayload(_MemoryPanelPayload):
 class MemoryPanelErrorPayload(_MemoryPanelPayload):
     action: Literal["error"]
     request_id: ULID
-    operation: Literal["refresh", "add", "remove", "edit", "pin", "delete"]
+    operation: Literal["refresh", "add", "remove", "edit", "pin", "delete", "restore"]
     code: NonBlankString
     message: NonBlankString
 
@@ -604,6 +615,7 @@ type MemoryPanelPayload = Annotated[
     | MemoryPanelEditPayload
     | MemoryPanelPinPayload
     | MemoryPanelDeletePayload
+    | MemoryPanelRestorePayload
     | MemoryPanelStatePayload
     | MemoryPanelConflictPayload
     | MemoryPanelErrorPayload,

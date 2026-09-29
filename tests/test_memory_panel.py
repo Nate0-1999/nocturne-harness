@@ -19,6 +19,7 @@ from harness.envelope import (
     MemoryPanelPinPayload,
     MemoryPanelRefreshPayload,
     MemoryPanelRemovePayload,
+    MemoryPanelRestorePayload,
     MemoryPanelStatePayload,
 )
 from harness.memory_panel import (
@@ -762,6 +763,51 @@ async def test_delete_refuses_another_principals_memory() -> None:
             memory_id=MEMORY_A,
             expected_revision=1,
         ),
+    )
+    assert response.payload.code == "memory_not_found"
+    assert spine.patch_requests == []
+
+
+@pytest.mark.asyncio
+async def test_restore_makes_an_owned_deleted_memory_active_again() -> None:
+    """M3EX-18 / FL-013: "its history stays restorable" — the tombstone comes back active."""
+    deleted = memory_unit(MEMORY_A, status=MemoryStatus.TOMBSTONED, revision=8)
+    restored = deleted.model_copy(update={"status": MemoryStatus.ACTIVE, "revision": 9})
+    spine = FakeSpine([deleted], patch_outcomes=[restored])
+    response = await handle(
+        controller(spine),
+        MemoryPanelRestorePayload(action="restore", memory_id=MEMORY_A, expected_revision=8),
+    )
+    assert spine.patch_requests == [
+        (
+            MEMORY_A,
+            PatchMemoryRequest(
+                expected_revision=8,
+                status=MemoryStatus.ACTIVE,
+                editor="user",
+                reason="panel/restore",
+                machine_id="trusted-machine",
+            ),
+        )
+    ]
+    assert response.payload.result == "restored"
+    assert [item.memory.memory_id for item in response.payload.items] == [MEMORY_A]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "memory",
+    [
+        memory_unit(MEMORY_A, principal_id="peer", status=MemoryStatus.TOMBSTONED),
+        memory_unit(MEMORY_A),
+    ],
+)
+async def test_restore_refuses_a_peer_memory_or_one_that_is_not_deleted(memory) -> None:
+    """M3EX-18 / SPEC C.4: a forged restore never touches a peer's or a live memory."""
+    spine = FakeSpine([memory])
+    response = await handle(
+        controller(spine),
+        MemoryPanelRestorePayload(action="restore", memory_id=MEMORY_A, expected_revision=1),
     )
     assert response.payload.code == "memory_not_found"
     assert spine.patch_requests == []

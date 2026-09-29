@@ -473,7 +473,7 @@ export function MemoryPanel({
                       data-testid="memory-delete"
                       data-memory-id={memory.memory_id}
                       data-tooltip="Delete permanently"
-                      data-tooltip-detail="Remove this memory from your Palace. Asks first; its history stays restorable."
+                      data-tooltip-detail="Remove this memory from your Palace. Asks first; the Memory Graph can restore it."
                       aria-label={`Permanently delete ${memoryTitle(memory)}`}
                       aria-haspopup="dialog"
                       disabled={!connected || busy || unavailable}
@@ -595,7 +595,7 @@ export function MemoryPanel({
         onClose={() => setDeleting(null)}>
         <h2 id="delete-memory-title">Permanently delete?</h2>
         <p><strong>{deleting?.label}</strong></p>
-        <p>It will never be offered to a conversation again. Its history stays restorable; past conversations keep it.</p>
+        <p>It will not be offered to a conversation again unless you restore it from the Memory Graph. Past conversations keep it.</p>
         <label>Why
           <Select value={deletionReason} data-tooltip-detail="Your reason trains what gets saved in future." onChange={(event) => setDeletionReason(event.target.value as typeof deletionReason)}>
             <option value="no_longer_needed">No longer needed</option>

@@ -9,6 +9,7 @@ import {
 } from './memoryGraphSelection'
 import { declutterGraphLabels } from './memoryGraphLabels'
 import { SelectedMemoryPanel } from './MemoryPanel'
+import { Button } from './kit'
 import './assets/honest-display.css'
 
 type Node = { memory: { memory_id: string; label: string; body: string; kind: string; status: string; pin: boolean; revision: number; project_key: string | null; stats: { injections?: number } }; in_current_context: boolean; revisions: unknown[] }
@@ -26,6 +27,7 @@ export function MemoryGraph() {
   const [scope, setScope] = useState<'GLOBAL' | 'ATTUNED'>('GLOBAL')
   const [loadedSnapshot, setLoadedSnapshot] = useState<KeyedMemoryGraphSnapshot<Snapshot> | null>(null)
   const [selected, setSelected] = useState<Node | null>(null)
+  const [restoring, setRestoring] = useState<string | null>(null)
   const [parameters, setParameters] = useState<Record<string, unknown> | null>(null)
   const [failure, setFailure] = useState<{ requestKey: string; message: string } | null>(null)
   const threadId = scope === 'ATTUNED' ? rack.selectedThreadId : null
@@ -112,7 +114,13 @@ export function MemoryGraph() {
         </g>})}
       </svg>
       <aside>{selected === null ? <p>Select a node to inspect its complete memory.</p> : <>
-        <SelectedMemoryPanel memoryId={selected.memory.memory_id} />
+        {selected.memory.status === 'tombstoned' ? <div data-testid="graph-deleted-memory">
+          <p><strong>{selected.memory.label}</strong> · deleted</p>
+          <p>{selected.memory.body}</p>
+          <Button action="restore" type="button" data-testid="memory-restore" data-tooltip-detail="Make this memory active again."
+            disabled={restoring === selected.memory.memory_id}
+            onClick={() => { setRestoring(selected.memory.memory_id); void events.dispatch({ type: 'memory.restore', memory_id: selected.memory.memory_id, expected_revision: selected.memory.revision }).finally(() => setRestoring(null)) }}>Restore</Button>
+        </div> : <SelectedMemoryPanel memoryId={selected.memory.memory_id} />}
         <h3>Relationships</h3>
         <ul>{snapshot?.edges.filter((edge) => edge.from_memory_id === selected.memory.memory_id || edge.to_memory_id === selected.memory.memory_id).map((edge, index) => <li key={index}>
           {edge.edge_type ?? edge.kind} · {nodes.find((node) => node.memory.memory_id === (edge.from_memory_id === selected.memory.memory_id ? edge.to_memory_id : edge.from_memory_id))?.memory.label ?? 'Unavailable memory'}

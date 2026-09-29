@@ -23,6 +23,7 @@ from harness.envelope import (
     MemoryPanelPinPayload,
     MemoryPanelRefreshPayload,
     MemoryPanelRemovePayload,
+    MemoryPanelRestorePayload,
     MemoryPanelStatePayload,
     MessageType,
 )
@@ -50,9 +51,9 @@ from harness.spine_client import (
 )
 
 type EnvelopeSender = Callable[[Envelope], Awaitable[None]]
-type PanelOperation = Literal["refresh", "add", "remove", "edit", "pin", "delete"]
+type PanelOperation = Literal["refresh", "add", "remove", "edit", "pin", "delete", "restore"]
 type PanelResult = Literal[
-    "refreshed", "added", "removed", "edited", "pin_changed", "rescored", "deleted"
+    "refreshed", "added", "removed", "edited", "pin_changed", "rescored", "deleted", "restored"
 ]
 type PanelEnricher = Callable[[str, list[MemoryPanelItem]], Awaitable[list[MemoryPanelItem]]]
 
@@ -383,6 +384,15 @@ class MemoryPanelController:
                 result="deleted",
                 send=send,
             )
+        elif isinstance(payload, MemoryPanelRestorePayload):
+            await self._patch(
+                thread_id=message.thread_id,
+                request_id=message.id,
+                payload=payload,
+                operation="restore",
+                result="restored",
+                send=send,
+            )
         else:
             await self._send_error(
                 thread_id=message.thread_id,
@@ -535,24 +545,36 @@ class MemoryPanelController:
         *,
         thread_id: str,
         request_id: str,
-        payload: MemoryPanelEditPayload | MemoryPanelPinPayload | MemoryPanelDeletePayload,
-        operation: Literal["edit", "pin", "delete"],
-        result: Literal["edited", "pin_changed", "deleted"],
+        payload: MemoryPanelEditPayload
+        | MemoryPanelPinPayload
+        | MemoryPanelDeletePayload
+        | MemoryPanelRestorePayload,
+        operation: Literal["edit", "pin", "delete", "restore"],
+        result: Literal["edited", "pin_changed", "deleted", "restored"],
         send: EnvelopeSender,
     ) -> None:
+        # M3EX-18: a restore reads its own deleted memory too; ownership still filters it.
+        restoring = operation == "restore"
         try:
-            active = await self._active_principal_memories()
+            listed = await self._active_principal_memories(
+                include_memory_ids=frozenset({payload.memory_id}) if restoring else frozenset()
+            )
         except SpineClientError as exc:
             await self._send_spine_error(thread_id, request_id, operation, exc, send)
             return
-        current = next((item for item in active if item.memory_id == payload.memory_id), None)
-        if current is None:
+        current = next((item for item in listed if item.memory_id == payload.memory_id), None)
+        active = [item for item in listed if item.status is MemoryStatus.ACTIVE]
+        if current is None or (current.status is MemoryStatus.TOMBSTONED) != restoring:
             await self._send_error(
                 thread_id=thread_id,
                 request_id=request_id,
                 operation=operation,
                 code="memory_not_found",
-                message="This active memory is no longer available. Refresh and try again.",
+                message=(
+                    "This memory is not deleted. Refresh and try again."
+                    if restoring
+                    else "This active memory is no longer available. Refresh and try again."
+                ),
                 send=send,
             )
             return
@@ -574,6 +596,8 @@ class MemoryPanelController:
             pin=payload.pin if isinstance(payload, MemoryPanelPinPayload) else None,
             status=MemoryStatus.TOMBSTONED
             if isinstance(payload, MemoryPanelDeletePayload)
+            else MemoryStatus.ACTIVE
+            if isinstance(payload, MemoryPanelRestorePayload)
             else None,
             editor="user",
             reason=(
@@ -654,7 +678,7 @@ class MemoryPanelController:
             updated if memory.memory_id == updated.memory_id else memory
             for memory in active
             if operation != "delete" or memory.memory_id != updated.memory_id
-        ]
+        ] + ([updated] if operation == "restore" else [])
         self._contexts.update_memory(thread_id, updated)
         await self._send_state(
             thread_id=thread_id,

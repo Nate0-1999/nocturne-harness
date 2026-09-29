@@ -254,6 +254,12 @@ export class HarnessSocketClient {
     })
   }
 
+  restoreMemory(memoryId: string, expectedRevision: number): Ulid {
+    return this.sendMemoryPanelRequest('restore', {
+      action: 'restore', memory_id: memoryId, expected_revision: expectedRevision,
+    })
+  }
+
   private openSocket(reconnecting: boolean): void {
     const generation = ++this.generation
     useHarnessStore

@@ -25,3 +25,17 @@ test('the Memory module forwards the chosen delete reason', async () => {
 
   assert.match(source, /onDelete=\{\(memoryId, expectedRevision, reason\) => events\.dispatch\(\{\s*type: 'memory\.delete', memory_id: memoryId, expected_revision: expectedRevision, reason,/u)
 })
+
+/** M3EX-18 / FL-013: a deleted memory selected in the Memory Graph offers Restore,
+ * which reaches the daemon as the compare-and-set restore request.
+ */
+test('the Memory Graph restores a deleted memory', async () => {
+  const graph = await readFile(new URL('../src/MemoryGraph.tsx', import.meta.url), 'utf8')
+  const rack = await readFile(new URL('../src/rack.tsx', import.meta.url), 'utf8')
+  const socket = await readFile(new URL('../src/socket.ts', import.meta.url), 'utf8')
+
+  assert.match(graph, /selected\.memory\.status === 'tombstoned' \?[\s\S]*?type: 'memory\.restore', memory_id: selected\.memory\.memory_id, expected_revision: selected\.memory\.revision/u)
+  assert.match(rack, /memory_graph: \{[\s\S]*?'memory\.delete', 'memory\.restore'/u)
+  assert.match(rack, /case 'memory\.restore':\s*return harnessClient\.restoreMemory\(action\.memory_id, action\.expected_revision\)/u)
+  assert.match(socket, /action: 'restore', memory_id: memoryId, expected_revision: expectedRevision/u)
+})

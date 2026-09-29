@@ -11,6 +11,7 @@ const THREAD_ACTIONS = new Set<RackAction['type']>([
   'memory.edit',
   'memory.pin',
   'memory.delete',
+  'memory.restore',
   'parameter.write',
 ])
 
