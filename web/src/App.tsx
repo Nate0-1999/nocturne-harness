@@ -18,7 +18,7 @@ import {
 import { AssistantMarkdown } from './AssistantMarkdown'
 import { OutLoud } from './OutLoud'
 import { browserScreenshotDataUrl, elideBinaryPayload } from './runEventDisplay'
-import { SymphonyDeliberationCard, SymphonyResultCard } from './SymphonyCards'
+import { SymphonyDeliberationCard, SymphonyResultCard, SymphonyStatusCard } from './SymphonyCards'
 import { MemoryGate } from './MemoryGate'
 import { MemoryPanel } from './MemoryPanel'
 import { MemoryRestore } from './MemoryRestore'
@@ -34,7 +34,7 @@ import { InjectionConsole } from './InjectionConsole'
 import { RecipeModule } from './RecipeModule'
 import { JobsModule } from './JobsModule'
 import { SecurityModule } from './SecurityModule'
-import { SymphonyDeck } from './SymphonyDeck'
+import { SymphonyDeck, latestDeckStacks, type DeckStack } from './SymphonyDeck'
 import { ModelDevice } from './ModelDevice'
 import { VitalsModule } from './VitalsModule'
 import { PalaceStateModule } from './PalaceStateModule'
@@ -2310,21 +2310,10 @@ function ChatModule() {
     }
     return states
   }, [messages])
-  const completedSymphonyDraftIds = useMemo(() => {
-    const completed = new Set<string>()
-    for (const message of messages) {
-      if (message.role !== 'assistant') continue
-      for (const event of message.events) {
-        const launch = event.launch
-        if (
-          event.event_kind === 'symphony_result' &&
-          typeof launch === 'object' && launch !== null && !Array.isArray(launch) &&
-          typeof launch.draft_id === 'string'
-        ) completed.add(launch.draft_id)
-      }
-    }
-    return completed
-  }, [messages])
+  // M3SF: each draft's newest run, so its card re-renders signed and shows the live state.
+  const symphonyLaunches = useMemo(() => new Map(latestDeckStacks(
+    messages.filter((message): message is AssistantTranscriptMessage => message.role === 'assistant'),
+  ).reverse().map((stack) => [stack.launch.draft_id, stack])), [messages])
 
   useEffect(() => {
     followOutputRef.current = true
@@ -2631,7 +2620,7 @@ function ChatModule() {
                     runState={message.run_id === null ? undefined : runStates.get(message.run_id)}
                     activeRunId={activeRun?.run_id}
                     activeState={activeRun?.state}
-                    completedSymphonyDraftIds={completedSymphonyDraftIds}
+                    symphonyLaunches={symphonyLaunches}
                     rewindDisabled={activeRun !== null || queuedPrompts.length > 0}
                   />
                   {message.message_id === compactionPostId && <ThreadEndModule inline />}
@@ -3499,7 +3488,7 @@ interface MessageRowProps {
   runState: UserMessageState | undefined
   activeRunId: string | undefined
   activeState: string | undefined
-  completedSymphonyDraftIds: ReadonlySet<string>
+  symphonyLaunches: ReadonlyMap<string, DeckStack>
   rewindDisabled: boolean
 }
 
@@ -3510,7 +3499,7 @@ function MessageRow({
   runState,
   activeRunId,
   activeState,
-  completedSymphonyDraftIds,
+  symphonyLaunches,
   rewindDisabled,
 }: MessageRowProps) {
   if (message.role === 'user') {
@@ -3563,9 +3552,10 @@ function MessageRow({
     (
       event.event_kind === 'symphony_deliberation' &&
       typeof event.draft_id === 'string' &&
-      !completedSymphonyDraftIds.has(event.draft_id)
+      symphonyLaunches.get(event.draft_id)?.state !== 'completed'
     )
   )
+  const symphonyStack = latestDeckStacks([message]).at(0)
   const diagnosticEvents = message.events.filter((event) =>
     typeof event.event_kind !== 'string' || !event.event_kind.startsWith('symphony_')
   )
@@ -3612,8 +3602,11 @@ function MessageRow({
         </details>
       )}
       {symphonyEvents.map((event, index) => event.event_kind === 'symphony_deliberation'
-        ? <SymphonyDeliberationCard key={`deliberation-${index}`} event={event} />
+        ? <SymphonyDeliberationCard key={`deliberation-${index}`} event={event} launched={symphonyLaunches.get(String(event.draft_id))} />
         : <SymphonyResultCard key={`result-${index}`} event={event} />
+      )}
+      {symphonyStack !== undefined && symphonyStack.state !== 'completed' && (
+        <SymphonyStatusCard stack={symphonyStack} />
       )}
       {latestBrowserScreenshot !== null && (
         <figure className="browser-screenshot">

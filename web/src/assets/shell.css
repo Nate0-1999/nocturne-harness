@@ -331,6 +331,11 @@
   min-width: 0;
 }
 
+/* M3SF / M3EX-12: an open configuration takes its own row, never the mode select's width. */
+.chat-header > details[open] {
+  grid-column: 1 / -1;
+}
+
 .chat-header__context {
   grid-column: 1 / -1;
   display: flex;
@@ -1014,6 +1019,16 @@
   border-color: var(--line-strong);
   background: transparent;
   color: var(--muted);
+}
+
+/* M3SF: the signed form keeps its layout; the wrapper only carries `disabled`. */
+.symphony-card .symphony-card__form {
+  display: contents;
+}
+
+.symphony-status[data-state='blocked'] {
+  border-left-color: var(--danger);
+  background: color-mix(in srgb, var(--surface) 92%, var(--danger) 8%);
 }
 
 .symphony-card__footer {
