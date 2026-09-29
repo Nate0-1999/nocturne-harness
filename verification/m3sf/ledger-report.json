@@ -6,8 +6,8 @@
   "diffs": [
     {
       "repo": "harness",
-      "base": "60805c0e6fd4ad22a23b0da275ff5001c784590f",
-      "head": "86dcb8d3188986886a383a95a5f89bea7d1e421f"
+      "base": "598ec8a794804cbaacb5953f92fc86dca74d1c07",
+      "head": "2f0f687a469bb9910ee495fea1c85c3b327248d8"
     }
   ],
   "unmapped": {
@@ -18,13 +18,6 @@
     "harness/tests/test_pydantic_harness_toolset.py": "Regression proof for M3EX-09/10 (scratch outside the repo, fenced shell); test only.",
     "harness/tests/test_symphony_runtime.py": "Regression proof for M3EX-10 (.venv carried) and the vote-order graft; test only.",
     "harness/tests/test_symphony_worker.py": "Regression proof for F137 judge and worker returns; test only.",
-    "harness/web/dist/assets/index-CfbbFQ-q.js": "Generated web bundle rebuilt from the changed sources; no separate behavior.",
-    "harness/web/dist/assets/index-DAy00xtv.js": "Generated web bundle rebuilt from the changed sources; no separate behavior.",
-    "harness/web/dist/assets/index-UjTQfJ0z.css": "Generated web bundle rebuilt from the changed sources; no separate behavior.",
-    "harness/web/dist/assets/index-VnsJrUM_.css": "Generated web bundle rebuilt from the changed sources; no separate behavior.",
-    "harness/web/dist/index.html": "Generated web bundle rebuilt from the changed sources; no separate behavior.",
-    "harness/web/src/assets/shell.css": "Styles for the Symphony status card, the locked signed form and the chat header row; walked under FL-094, FL-098 and FL-089.",
-    "harness/web/tests/symphonyExperienceSource.test.mjs": "Source regression for M3EX-08/11/12; test only.",
     "harness/verification/m3sf/FL-009.png": "M3SF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3sf/FL-067.png": "M3SF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3sf/FL-068.png": "M3SF evidence: captures, receipts, coverage report and checksums.",
@@ -72,6 +65,7 @@
     "harness/verification/m3sf/FL-193.png": "M3SF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3sf/FL-194.png": "M3SF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3sf/FL-199.png": "M3SF evidence: captures, receipts, coverage report and checksums.",
+    "harness/verification/m3sf/SHA256SUMS": "M3SF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3sf/captures/00-app-open.png": "M3SF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3sf/captures/01-sheet.png": "M3SF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3sf/captures/02-project-harness-2.png": "M3SF evidence: captures, receipts, coverage report and checksums.",
@@ -127,7 +121,13 @@
     "harness/verification/m3sf/receipts/verdicts.py": "M3SF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3sf/receipts/wait.sh": "M3SF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3sf/receipts/walk-commit.txt": "M3SF evidence: captures, receipts, coverage report and checksums.",
-    "harness/verification/m3sf/SHA256SUMS": "M3SF evidence: captures, receipts, coverage report and checksums."
+    "harness/web/dist/assets/index-D1OM-Z_u.js": "Generated web bundle rebuilt from the changed sources; no separate behavior.",
+    "harness/web/dist/assets/index-DGIf0ilS.js": "Generated web bundle rebuilt from the changed sources; no separate behavior.",
+    "harness/web/dist/assets/index-UjTQfJ0z.css": "Generated web bundle rebuilt from the changed sources; no separate behavior.",
+    "harness/web/dist/assets/index-VnsJrUM_.css": "Generated web bundle rebuilt from the changed sources; no separate behavior.",
+    "harness/web/dist/index.html": "Generated web bundle rebuilt from the changed sources; no separate behavior.",
+    "harness/web/src/assets/shell.css": "Styles for the Symphony status card, the locked signed form and the chat header row; walked under FL-094, FL-098 and FL-089.",
+    "harness/web/tests/symphonyExperienceSource.test.mjs": "Source regression for M3EX-08/11/12; test only."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
