@@ -174,7 +174,7 @@ async def test_judge_that_cannot_return_writes_a_failed_verdict_with_its_reason(
     assert len(calls) == 2
     assert result["outcome"] == "fail"
     assert result["selected_attempt_id"] is None
-    assert "performance judge returned no valid verdict" in result["rationale"]
+    assert "The judge returned no valid verdict" in result["rationale"]
     assert result["metrics"][0]["passed"] is False
     assert result["feedback"][0]["evidence_refs"] == [str(tmp_path / "messages.json")]
 
