@@ -208,7 +208,7 @@ function terminalCopy(reason: UserMessageState): string | null {
     case 'cancelled':
       return 'Stopped · partial kept'
     case 'budget_exceeded':
-      return 'Budget limit reached · partial kept'
+      return 'Turn limit reached · partial kept'
     case 'error':
       return 'Run error · partial kept'
     default:
@@ -246,7 +246,22 @@ function messageStatus(
       return `Run error · ${failure.message} · partial kept`
     }
   }
+  if (state === 'budget_exceeded') {
+    // F134 (M3EX-03): name the per-turn ceiling that stopped the run and the way on.
+    const limit = turnLimit(message)
+    if (limit !== null) {
+      return `Stopped at this turn's ${limit} limit · partial kept · send "continue" to go on`
+    }
+  }
   return state === undefined ? (message.partial ? 'Partial' : null) : terminalCopy(state)
+}
+
+function turnLimit(message: AssistantTranscriptMessage | undefined): string | null {
+  const event = message?.events.filter((item) => item.event_kind === 'turn_limit').at(-1)
+  if (event?.reached === 'tokens' && typeof event.total_tokens_limit === 'number') {
+    return `${event.total_tokens_limit.toLocaleString('en-US')}-token`
+  }
+  return typeof event?.request_limit === 'number' ? `${event.request_limit}-request` : null
 }
 
 function initialRackLayout(): StageLayoutSet {
@@ -2286,6 +2301,10 @@ function ChatModule() {
       : [...selectedThread.messages, ...optimistic]
   }, [selectedThread])
   const activeRun = selectedThread?.activeRun ?? null
+  const lastAnswer = messages.filter((message) => message.role === 'assistant').at(-1)
+  const requestLimit = lastAnswer?.role === 'assistant'
+    ? lastAnswer.events.filter((event) => event.event_kind === 'turn_limit').map((event) => event.request_limit).find((value) => typeof value === 'number') ?? null
+    : null
   const compactionPostId = [...messages].reverse().find((message) =>
     message.role === 'assistant' &&
     message.events.some((event) => event.event_kind === 'compaction_completed')
@@ -2528,8 +2547,11 @@ function ChatModule() {
           )}
           {queuedPrompts.length > 0 && <span>{queuedPrompts.length} queued</span>}
           {selectedThread?.usage !== null && selectedThread?.usage !== undefined && (
-            <span data-testid="usage">
-              {selectedThread.usage.requests} req · {selectedThread.usage.input_tokens} in ·{' '}
+            <span
+              data-testid="usage"
+              data-tooltip-detail={requestLimit === null ? undefined : `Each turn stops after ${requestLimit} model requests; send "continue" to keep going.`}
+            >
+              {selectedThread.usage.requests}{requestLimit === null ? '' : ` / ${requestLimit}`} req · {selectedThread.usage.input_tokens} in ·{' '}
               {selectedThread.usage.output_tokens} out
             </span>
           )}

@@ -1811,7 +1811,8 @@ async def test_normalized_history_is_not_duplicated_or_receipted_again() -> None
 @pytest.mark.asyncio
 async def test_usage_limit_maps_to_budget_exceeded_with_partial_history() -> None:
     """ADR-013 is defended by verifying that usage limit maps to budget exceeded with partial
-    history; this prevents drift in the streaming model runtime and history boundary.
+    history; this prevents drift in the streaming model runtime and history boundary. F134
+    (M3EX-03): the turn states its ceilings and names the one that stopped it.
     """
     runner = PydanticAITurnRunner(
         HarnessAgent(
@@ -1835,6 +1836,9 @@ async def test_usage_limit_maps_to_budget_exceeded_with_partial_history() -> Non
     assert outcome.usage.input_tokens > 0
     assert outcome.usage.output_tokens == 0
     assert emitted.usages[-1] == outcome.usage
+    limits = [event for event in emitted.events if event["event_kind"] == "turn_limit"]
+    assert limits[0] == {"event_kind": "turn_limit", "request_limit": 40, "total_tokens_limit": 1}
+    assert limits[-1]["reached"] == "tokens"
 
 
 @pytest.mark.asyncio

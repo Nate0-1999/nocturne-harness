@@ -32,7 +32,7 @@ from pydantic_ai.messages import (
     UserPromptPart,
 )
 from pydantic_ai.settings import ModelSettings
-from pydantic_ai.usage import RunUsage
+from pydantic_ai.usage import RunUsage, UsageLimits
 from pydantic_core import to_jsonable_python
 
 from harness.agent import HarnessAgent
@@ -500,6 +500,8 @@ class PydanticAITurnRunner:
                     await emit.event({"event_kind": "human_interjection_applied"})
                 return "\n\n".join(block for block in blocks if block) or None
 
+            # F134 (M3EX-03): the per-turn ceiling is stated with the turn, never hidden.
+            await emit.event(_turn_limit_event(self._agent.usage_limits))
             instructions: list[object] = [PROPOSED_RESPONSE_INSTRUCTION]
             if system_instructions is not None:
                 instructions.append(system_instructions)
@@ -581,6 +583,9 @@ class PydanticAITurnRunner:
         except UsageLimitExceeded:
             usage = _failure_usage(run_usage, captured, prior_history)
             await bridge.publish_usage(usage)
+            limits = self._agent.usage_limits
+            reached = "requests" if run_usage.requests >= (limits.request_limit or 0) else "tokens"
+            await emit.event(_turn_limit_event(limits, reached=reached))
             return TurnOutcome(
                 StopReason("budget_exceeded"),
                 failed_history(),
@@ -877,6 +882,17 @@ def _provider_refusal_copy(error: ProviderErrorPayload) -> str:
         )
     punctuation = "" if error.message.endswith((".", "!", "?")) else "."
     return f"The provider refused: {error.message}{punctuation} Retry this turn or switch models."
+
+
+def _turn_limit_event(limits: UsageLimits, *, reached: str | None = None) -> dict[str, object]:
+    event: dict[str, object] = {
+        "event_kind": "turn_limit",
+        "request_limit": limits.request_limit,
+        "total_tokens_limit": limits.total_tokens_limit,
+    }
+    if reached is not None:
+        event["reached"] = reached
+    return event
 
 
 _THINKING_DELIMITERS = {
