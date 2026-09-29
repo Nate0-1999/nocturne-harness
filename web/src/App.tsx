@@ -1988,6 +1988,15 @@ function ThreadsModule() {
       )
     })
   }
+  const bindDraftFolder = (threadId: string) => {
+    const workspaceRoot = legacyWorkspaceDraft.trim()
+    if (workspaceRoot === '') return
+    void events.dispatch({
+      type: 'thread.bind_workspace',
+      thread_id: threadId,
+      workspace_root: workspaceRoot,
+    }).then(() => setBindingLegacy(false)).catch(() => undefined)
+  }
 
   return (
     <aside className="thread-rail" aria-labelledby="thread-rail-title">
@@ -2098,13 +2107,7 @@ function ThreadsModule() {
               data-testid="thread-bind-workspace"
               onSubmit={(event) => {
                 event.preventDefault()
-                const workspaceRoot = legacyWorkspaceDraft.trim()
-                if (workspaceRoot === '') return
-                void events.dispatch({
-                  type: 'thread.bind_workspace',
-                  thread_id: selectedEntry.thread_id,
-                  workspace_root: workspaceRoot,
-                }).then(() => setBindingLegacy(false)).catch(() => undefined)
+                bindDraftFolder(selectedEntry.thread_id)
               }}
             >
               <label htmlFor="legacy-thread-workspace-root">
@@ -2123,7 +2126,13 @@ function ThreadsModule() {
                   autoFocus
                   onChange={(event) => setLegacyWorkspaceDraft(event.currentTarget.value)}
                 />
-                <Button variant="primary" type="submit" disabled={legacyWorkspaceDraft.trim() === ''}>Bind</Button>
+                <Button variant="primary" type="submit" disabled={legacyWorkspaceDraft.trim() === ''}
+                  onClick={(event) => {
+                    // F135 (M3EX-14): module frames forbid form submission, so the button binds.
+                    event.preventDefault()
+                    bindDraftFolder(selectedEntry.thread_id)
+                  }}
+                >Bind</Button>
               </div>
             </form>
           )}
