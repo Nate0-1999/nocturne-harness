@@ -2867,3 +2867,49 @@ async def test_gate_waiter_and_disconnected_stream_cannot_steal_owner_attention(
         await emit.dismiss_gate()
     assert len(sink.messages) == before
     await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_symphony_updates_replace_the_stack_state_instead_of_piling_up(tmp_path) -> None:
+    """M3EX-37: each spend tick appended a full stack copy to the launch message, so every
+    snapshot grew and one journal reached 147 MB; the newest state now replaces the last,
+    and a settled state is never reopened as running."""
+    from harness.run_loop import _ThreadState
+
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    loop = RunLoop(NeverStartsRunner(), EnvelopeFactory(machine_id="m"), transcript_journal=journal)
+    thread_id = "12345678-1234-5678-1234-567812345678"
+    symphony_id = ulid(9)
+    launch = {"event_kind": "symphony_state", "symphony_id": symphony_id, "state": "running"}
+    loop._threads[thread_id] = _ThreadState(
+        messages=[
+            {
+                "message_id": ulid(1),
+                "run_id": ulid(1),
+                "role": "user",
+                "content": "go",
+                "state": "complete",
+            },
+            {
+                "message_id": ulid(2),
+                "run_id": ulid(1),
+                "role": "assistant",
+                "content": "ok",
+                "state": "complete",
+                "events": [dict(launch)],
+            },
+        ]
+    )
+    sizes = []
+    for tick in range(20):
+        await loop.publish_symphony_state(
+            thread_id, {**launch, "spend_usd": str(tick), "evidence": ["x" * 2000]}
+        )
+        sizes.append(journal.path_for_thread(thread_id).stat().st_size)
+    await loop.publish_symphony_state(thread_id, {**launch, "state": "completed"})
+    await loop.publish_symphony_state(thread_id, {**launch, "state": "running"})
+    events = loop._threads[thread_id].messages[1]["events"]
+    assert [event["state"] for event in events] == ["completed"]
+    growth = [after - before for before, after in zip(sizes, sizes[1:], strict=False)]
+    assert max(growth) - min(growth) < 200, growth
+    await loop.close()

@@ -84,6 +84,8 @@ class TranscriptJournal:
         self._clock = clock or (lambda: datetime.now(UTC))
         self._lock = threading.RLock()
         self._next_parent_ids: dict[str, str | None] = {}
+        # M3EX-37: a file's catalog entry is reused until its size or mtime changes.
+        self._catalog_cache: dict[str, tuple[tuple[int, int], TranscriptCatalogEntry | None]] = {}
         self._reject_git_ancestor()
         self._preflight()
 
@@ -416,47 +418,77 @@ class TranscriptJournal:
             return sum(len(rows) for rows in grouped.values())
 
     def catalog(self) -> tuple[TranscriptCatalogEntry, ...]:
-        """Derive browser navigation from journal rows, never a second history store."""
+        """Derive browser navigation from journal rows, never a second history store.
 
-        entries: list[TranscriptCatalogEntry] = []
-        for transcript in self.hydrate_threads():
-            filename = self._filename_for_thread(transcript.thread_id)
-            rows = [json.loads(raw) for raw in self._read_file_rows(filename)]
-            archived = False
-            for row in rows:
-                if row.get("record_type") == "thread_archive":
-                    archived = True
-                elif (
-                    row.get("record_type") == "message"
-                    and row.get("message", {}).get("role") == "user"
-                ):
-                    archived = False
-            times = [
-                row.get("captured_at") for row in rows if isinstance(row.get("captured_at"), str)
-            ]
-            title = "Restored conversation" if transcript.messages else "New thread"
-            for message in transcript.messages:
-                if message.get("role") != "user":
-                    continue
-                content = message.get("content")
-                if isinstance(content, str) and content.strip():
-                    title = " ".join(content.split())[:80]
-                    break
-            entries.append(
-                TranscriptCatalogEntry(
-                    thread_id=transcript.thread_id,
-                    title=title,
-                    created_at=self._browser_timestamp(times[0]),
-                    updated_at=self._browser_timestamp(times[-1]),
-                    project_key=transcript.project_key,
-                    project_label=transcript.project_label,
-                    workspace_root=transcript.workspace_root,
-                    current_location=transcript.current_location,
-                    proposed_response=self._outstanding_proposed_response(transcript.messages),
-                    archived=archived,
-                )
-            )
+        M3EX-37: the visualization samples this every 2 s; only files that changed since
+        the last call are read again.
+        """
+
+        with self._lock:
+            try:
+                root_descriptor = self._open_root_descriptor()
+                try:
+                    stamps = {}
+                    for filename in os.listdir(root_descriptor):
+                        if self._is_transcript_filename(filename):
+                            status = os.stat(
+                                filename, dir_fd=root_descriptor, follow_symlinks=False
+                            )
+                            stamps[filename] = (status.st_size, status.st_mtime_ns)
+                finally:
+                    os.close(root_descriptor)
+            except TranscriptJournalUnavailable:
+                raise
+            except OSError as exc:
+                # WALL files / D.2 082: reject an unsafe journal before appending.
+                raise TranscriptJournalUnavailable(
+                    f"Conversation journal cannot be read at {self._root}. "
+                    "Fix that directory, then run `nocturne up` again."
+                ) from exc
+            for filename in set(self._catalog_cache) - set(stamps):
+                del self._catalog_cache[filename]
+            for filename, stamp in sorted(stamps.items()):
+                cached = self._catalog_cache.get(filename)
+                if cached is None or cached[0] != stamp:
+                    self._catalog_cache[filename] = (stamp, self._catalog_entry(filename))
+        entries = [entry for _, entry in self._catalog_cache.values() if entry is not None]
         return tuple(sorted(entries, key=lambda item: item.updated_at, reverse=True))
+
+    def _catalog_entry(self, filename: str) -> TranscriptCatalogEntry | None:
+        raw_rows = self._read_file_rows(filename)
+        transcript = self._hydrate_rows(filename, raw_rows)
+        if transcript is None:
+            return None
+        rows = [json.loads(raw) for raw in raw_rows]
+        archived = False
+        for row in rows:
+            if row.get("record_type") == "thread_archive":
+                archived = True
+            elif (
+                row.get("record_type") == "message" and row.get("message", {}).get("role") == "user"
+            ):
+                archived = False
+        times = [row.get("captured_at") for row in rows if isinstance(row.get("captured_at"), str)]
+        title = "Restored conversation" if transcript.messages else "New thread"
+        for message in transcript.messages:
+            if message.get("role") != "user":
+                continue
+            content = message.get("content")
+            if isinstance(content, str) and content.strip():
+                title = " ".join(content.split())[:80]
+                break
+        return TranscriptCatalogEntry(
+            thread_id=transcript.thread_id,
+            title=title,
+            created_at=self._browser_timestamp(times[0]),
+            updated_at=self._browser_timestamp(times[-1]),
+            project_key=transcript.project_key,
+            project_label=transcript.project_label,
+            workspace_root=transcript.workspace_root,
+            current_location=transcript.current_location,
+            proposed_response=self._outstanding_proposed_response(transcript.messages),
+            archived=archived,
+        )
 
     def append_archive(self, thread_id: str) -> None:
         """M3FX / FL-124: archive navigation without deleting its source conversation."""

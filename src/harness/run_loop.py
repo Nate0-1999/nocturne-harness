@@ -572,7 +572,25 @@ class RunLoop:
                     for item in message.get("events", ())
                 ):
                     continue
-                message["events"].append(deepcopy(dict(event)))
+                # M3EX-37: the newest state replaces the stack's previous one; appending a
+                # full stack copy per spend tick grew one journal to 147 MB. Readers take
+                # the latest per stack, and a settled state is never reopened as running.
+                events = message["events"]
+                prior = next(
+                    (
+                        position
+                        for position in range(len(events) - 1, -1, -1)
+                        if events[position].get("event_kind") == "symphony_state"
+                        and events[position].get("symphony_id") == event["symphony_id"]
+                    ),
+                    None,
+                )
+                if event.get("event_kind") != "symphony_state" or prior is None:
+                    events.append(deepcopy(dict(event)))
+                elif events[prior].get("state") != "running" and event.get("state") == "running":
+                    return
+                else:
+                    events[prior] = deepcopy(dict(event))
                 self._capture_message(
                     thread_id,
                     message,

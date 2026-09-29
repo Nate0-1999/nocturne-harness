@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import sqlite3
+import threading
 import zlib
 from datetime import UTC, datetime
 from pathlib import Path
@@ -108,34 +109,62 @@ def _journal_file_touch(event: dict, cwd: str, ts: str, pending: dict, files: di
             files.setdefault(path, ts)
 
 
-def work_observation(journal, home: Path, default_root: Path) -> dict:
-    """Project durable thread events and the worker's own observations, never prompts."""
+def work_observation(journal, home: Path, default_root: Path, folds: dict | None = None) -> dict:
+    """Project durable thread events and the worker's own observations, never prompts.
+
+    M3EX-37: with `folds`, each append-only thread file is read from where the last
+    sample stopped; re-parsing every journal every 2 s held gigabytes.
+    """
     agents = []
     roots = {str(default_root.resolve())}
+    folds = {} if folds is None else folds
     for entry in journal.catalog():
         if entry.workspace_root is None:
             continue
         roots.add(entry.workspace_root)
-        state, waiting_since = "stopped", None
-        pending, files, turns, tool_calls = {}, {}, [], []
-        cwd = entry.workspace_root
-        for line in journal.path_for_thread(entry.thread_id).read_text().splitlines():
+        path = journal.path_for_thread(entry.thread_id)
+        fold = folds.get(entry.thread_id)
+        if fold is None or fold["offset"] > path.stat().st_size:
+            fold = {
+                "offset": 0,
+                "cwd": entry.workspace_root,
+                "state": "stopped",
+                "waiting_since": None,
+                "pending": {},
+                "files": {},
+                "turns": [],
+                "tool_calls": [],
+            }
+        with path.open("rb") as handle:
+            handle.seek(fold["offset"])
+            chunk = handle.read()
+        complete = chunk[: chunk.rfind(b"\n") + 1]
+        fold["offset"] += len(complete)
+        folds[entry.thread_id] = fold
+        pending, files, turns, tool_calls = (
+            fold["pending"],
+            fold["files"],
+            fold["turns"],
+            fold["tool_calls"],
+        )
+        for line in complete.splitlines():
             row = json.loads(line)
-            cwd = row.get("current_location") or cwd
+            fold["cwd"] = row.get("current_location") or fold["cwd"]
             event = row.get("event", {})
             stream = event.get("payload", {}).get("event", {})
-            _journal_file_touch(stream, cwd, row["captured_at"], pending, files)
+            _journal_file_touch(stream, fold["cwd"], row["captured_at"], pending, files)
             if stream.get("event_kind") == "function_tool_call":
                 tool_calls.append(row["captured_at"])
             if event.get("type") == "run.started":
                 turns.append(row["captured_at"])
-                state, waiting_since = "running", None
+                fold["state"], fold["waiting_since"] = "running", None
             elif event.get("type") == "gate.open":
-                state, waiting_since = "waiting", row["captured_at"]
+                fold["state"], fold["waiting_since"] = "waiting", row["captured_at"]
             elif event.get("type") == "gate.dismiss":
-                state, waiting_since = "running", None
+                fold["state"], fold["waiting_since"] = "running", None
             elif event.get("type") == "run.done":
-                state, waiting_since = "stopped", None
+                fold["state"], fold["waiting_since"] = "stopped", None
+        state, waiting_since = fold["state"], fold["waiting_since"]
         if entry.proposed_response is not None:
             state, waiting_since = "waiting", entry.updated_at
         agents.append(
@@ -152,8 +181,8 @@ def work_observation(journal, home: Path, default_root: Path) -> dict:
                 "waiting_since": waiting_since,
                 "cost_usd": None,
                 "touched_files": [{"path": path, "ts": ts} for path, ts in sorted(files.items())],
-                "turns": turns,
-                "tool_calls": tool_calls,
+                "turns": list(turns),
+                "tool_calls": list(tool_calls),
             }
         )
     workers = {}
@@ -223,6 +252,10 @@ class VisualizationHistory:
                 "(ts TEXT PRIMARY KEY, digest TEXT NOT NULL, payload BLOB NOT NULL)"
             )
         path.chmod(0o600)
+        # M3EX-37: a live read folds only rows newer than the last one; decompressing
+        # every recorded observation on each 2.5 s poll held gigabytes.
+        self._live_lock = threading.Lock()
+        self._live: dict = {"after": None, "timeline": [], "trails": {}, "last": None}
 
     def append(self, value: dict, ts: str) -> None:
         encoded = json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
@@ -235,6 +268,8 @@ class VisualizationHistory:
                 )
 
     def read(self, as_of: str | None = None) -> dict:
+        if as_of is None:
+            return self._read_live()
         with sqlite3.connect(self.path) as db:
             timeline = [r[0] for r in db.execute("SELECT ts FROM observation ORDER BY ts")]
             rows = db.execute(
@@ -246,18 +281,7 @@ class VisualizationHistory:
         trails = {}
         for ts, blob in rows:
             value = json.loads(zlib.decompress(blob))
-            for agent in value["agents"]:
-                point = {
-                    "ts": ts,
-                    "location": agent["location"],
-                    "cost_usd": agent["cost_usd"],
-                    "state": agent["state"],
-                }
-                points = trails.setdefault(agent["id"], [])
-                if not points or any(
-                    points[-1][key] != point[key] for key in ("location", "cost_usd", "state")
-                ):
-                    points.append(point)
+            _fold_trails(trails, ts, value)
         return {
             **value,
             "as_of": rows[-1][0],
@@ -266,6 +290,46 @@ class VisualizationHistory:
             "recorded_since": timeline[0],
             "trails": trails,
         }
+
+    def _read_live(self) -> dict:
+        with self._live_lock:
+            live = self._live
+            with sqlite3.connect(self.path) as db:
+                rows = db.execute(
+                    "SELECT ts, payload FROM observation WHERE (? IS NULL OR ts > ?) ORDER BY ts",
+                    (live["after"], live["after"]),
+                ).fetchall()
+            for ts, blob in rows:
+                live["last"] = (ts, json.loads(zlib.decompress(blob)))
+                live["timeline"].append(ts)
+                _fold_trails(live["trails"], ts, live["last"][1])
+                live["after"] = ts
+            if live["last"] is None:
+                raise HTTPException(404, "No recorded visualization state at this time.")
+            return {
+                **live["last"][1],
+                "errors": list(live["last"][1].get("errors", [])),  # callers append to it
+                "as_of": live["last"][0],
+                "live": True,
+                "timeline": list(live["timeline"]),
+                "recorded_since": live["timeline"][0],
+                "trails": {key: list(points) for key, points in live["trails"].items()},
+            }
+
+
+def _fold_trails(trails: dict, ts: str, value: dict) -> None:
+    for agent in value["agents"]:
+        point = {
+            "ts": ts,
+            "location": agent["location"],
+            "cost_usd": agent["cost_usd"],
+            "state": agent["state"],
+        }
+        points = trails.setdefault(agent["id"], [])
+        if not points or any(
+            points[-1][key] != point[key] for key in ("location", "cost_usd", "state")
+        ):
+            points.append(point)
 
 
 def mount_visualization_routes(
@@ -284,9 +348,10 @@ def mount_visualization_routes(
     task = None
     observed_at = None
     sampling_error = None
+    folds: dict = {}
 
     async def sample():
-        observation = await asyncio.to_thread(work_observation, journal, home, root)
+        observation = await asyncio.to_thread(work_observation, journal, home, root, folds)
         observation.update(palace=None, curation=None, errors=[])
         for field, reader in (
             ("palace", graph_reader),

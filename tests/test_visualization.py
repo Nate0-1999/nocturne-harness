@@ -205,3 +205,70 @@ def test_root_branches_project_turn_and_tool_call_times_without_content(tmp_path
     assert agents["run/root.1"]["tool_calls"] == [first.isoformat()]
     feed = json.dumps(agents)
     assert "PRIVATE" not in feed and "SECRET" not in feed
+
+
+def test_samples_read_only_what_the_journal_appended(tmp_path):
+    """M3EX-37: the 2 s sampler re-parsed every journal file each time and held gigabytes;
+    unchanged files are not read again and a growing file is read from where it stopped."""
+    import json
+
+    from harness.transcript import TranscriptJournal
+    from harness.visualization import work_observation
+
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    thread_id = "00000000-0000-0000-0000-000000003701"
+    journal.append_thread_context(
+        thread_id, str(tmp_path), workspace_root=str(tmp_path), current_location=str(tmp_path)
+    )
+    journal.append_message(
+        thread_id,
+        {
+            "message_id": "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+            "run_id": "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+            "role": "user",
+            "content": "first",
+            "state": "complete",
+        },
+        parent_id=None,
+    )
+    reads = []
+    original = journal._read_file_rows
+    journal._read_file_rows = lambda filename: reads.append(filename) or original(filename)
+    folds: dict = {}
+    first = work_observation(journal, tmp_path, tmp_path, folds)["agents"][0]
+    assert first["state"] == "stopped" and len(reads) == 1
+    offset = folds[thread_id]["offset"]
+    work_observation(journal, tmp_path, tmp_path, folds)
+    assert len(reads) == 1 and folds[thread_id]["offset"] == offset
+    journal._append(
+        thread_id,
+        {"version": 1, "record_type": "event", "event": {"type": "run.started", "payload": {}}},
+    )
+    grown = work_observation(journal, tmp_path, tmp_path, folds)["agents"][0]
+    assert grown["state"] == "running" and len(grown["turns"]) == 1 and len(reads) == 2
+    assert folds[thread_id]["offset"] == journal.path_for_thread(thread_id).stat().st_size
+    assert json.dumps(grown) == json.dumps(
+        work_observation(journal, tmp_path, tmp_path)["agents"][0]
+    )
+
+
+def test_live_history_reads_fold_only_new_rows(tmp_path):
+    """M3EX-37: a live poll decompressed every recorded observation; it now folds new rows
+    and returns what a full read returns."""
+    path = tmp_path / "history.sqlite3"
+    history = VisualizationHistory(path)
+    for index, state in enumerate(("running", "running", "stopped")):
+        history.append(
+            {
+                "agents": [{"id": "a", "location": "/x", "cost_usd": index, "state": state}],
+                "projects": [],
+                "errors": [],
+            },
+            f"2026-09-28T00:00:0{index}+00:00",
+        )
+        live = history.read()
+        assert live == {**VisualizationHistory(path).read(), "live": True}
+    assert live["timeline"] == [f"2026-09-28T00:00:0{index}+00:00" for index in range(3)]
+    assert [point["state"] for point in live["trails"]["a"]] == ["running", "running", "stopped"]
+    live["errors"].append("caller note")
+    assert history.read()["errors"] == []
