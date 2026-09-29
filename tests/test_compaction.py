@@ -121,7 +121,7 @@ async def test_over_cap_fact_is_shortened_once_or_refused(corrected):
 
 @pytest.mark.asyncio
 async def test_archive_names_a_fact_that_will_not_fit_instead_of_failing() -> None:
-    """D.2 153 / SD-062 (M3EX-22): archive keeps the journal whole, so a fact that stays over
+    """SPEC D.2 153 / SD-062 (M3EX-22): archive keeps the journal whole, so a fact that stays over
     the cap is left out and named; the facts that fit are still proposed."""
 
     def extract(messages, info):
