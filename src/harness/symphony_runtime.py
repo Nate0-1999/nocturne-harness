@@ -54,7 +54,8 @@ def _carry_environment(root: Path, location: Path) -> None:
     if not source.is_dir() or ignored.returncode != 0:
         return
     target = location / ".venv"
-    subprocess.run(["cp", "-c", "-R", str(source), str(target)], check=True)  # APFS clone
+    clone = ("-c",) if sys.platform == "darwin" else ()  # APFS clone where the disk has it
+    subprocess.run(["cp", *clone, "-R", str(source), str(target)], check=True)
     old, new = f"{root}/".encode(), f"{location}/".encode()
     for path in (*target.glob("bin/*"), *target.glob("lib/python*/site-packages/*.pth")):
         if path.is_file() and not path.is_symlink():
