@@ -62,7 +62,7 @@ from harness.parameter_registry import (
     ParameterValue,
     ParameterWriteViolation,
 )
-from harness.project_path import validate_artificial_project_path
+from harness.project_path import repository_root, validate_artificial_project_path
 from harness.proposed_response import (
     find_proposed_response,
     proposal_was_fired,
@@ -2064,19 +2064,21 @@ class RunLoop:
         if not root.is_dir():
             # WALL owner files / M3TL: bind an actual directory before granting tool writes.
             raise ValueError("thread workspace must be an existing directory")
-        canonical = str(root)
-        label = (project_label or root.name).strip()
+        # F136 (M3EX-15): the project is the git root; the folder picked is where it starts.
+        project = repository_root(root) or root
+        canonical = str(project)
+        label = (project_label or project.name).strip()
         if state.workspace_root is not None:
-            if state.workspace_root != canonical:
+            if state.workspace_root not in {canonical, str(root)}:
                 # WALL owner files / M3TL: an existing thread cannot switch workspace roots.
                 raise ProjectBindingConflict(canonical, state.project_key)
             if project_label is not None and label != state.project_label:
                 if self._transcript_journal is not None:
                     self._transcript_journal.append_thread_context(
                         thread_id,
-                        canonical,
+                        state.workspace_root,
                         project_label=label,
-                        workspace_root=canonical,
+                        workspace_root=state.workspace_root,
                         current_location=state.current_location,
                     )
                 state.project_label = label
@@ -2090,12 +2092,12 @@ class RunLoop:
                 canonical,
                 project_label=label,
                 workspace_root=canonical,
-                current_location=canonical,
+                current_location=str(root),
             )
         state.project_key = canonical
         state.project_label = label
         state.workspace_root = canonical
-        state.current_location = canonical
+        state.current_location = str(root)
 
     def _hydrate_threads(
         self,

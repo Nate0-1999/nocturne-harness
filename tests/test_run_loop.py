@@ -2733,6 +2733,27 @@ async def test_workspace_refusals_preserve_the_original_binding(tmp_path: Path) 
 
 
 @pytest.mark.asyncio
+async def test_a_thread_started_in_a_subfolder_belongs_to_its_git_root(tmp_path: Path) -> None:
+    """F136 (M3EX-15): the project is the git root and the subfolder is WHERE; a thread
+    already bound to a subfolder keeps that binding."""
+    repository = tmp_path / "harness"
+    web = repository / "web"
+    web.mkdir(parents=True)
+    (repository / ".git").mkdir()
+    loop = RunLoop(NeverStartsRunner(), factory(Ids()))
+    await loop.request_snapshot("thread", Sink(), workspace_root=str(web))
+    await loop.request_snapshot("thread", Sink(), workspace_root=str(web))
+    state = loop._threads["thread"]
+    assert (state.project_key, state.workspace_root) == (str(repository), str(repository))
+    assert (state.project_label, state.current_location) == ("harness", str(web))
+    legacy = loop._state_for_locked("legacy")
+    legacy.project_key = legacy.workspace_root = legacy.current_location = str(web)
+    await loop.request_snapshot("legacy", Sink(), workspace_root=str(web))
+    assert loop._threads["legacy"].workspace_root == str(web)
+    await loop.close()
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("failure", [False, True])
 async def test_unavailable_capture_cannot_accept_another_prompt(failure: bool) -> None:
     """SPEC D.2 082 quotes 'run loop is closed' and 'run loop is unavailable after transcript
