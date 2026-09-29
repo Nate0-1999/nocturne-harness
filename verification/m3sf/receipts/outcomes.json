@@ -1,0 +1,12 @@
+{
+  "01M3N820KWGDSTQZSCSCVP4WS4": "blocked $0.00: judges returned no valid verdict: Connection error (this Mac's DNS blocked openrouter.ai)",
+  "01M3NEXZNV4KH4994GK5K3T059": "completed $0.064: judges accepted; result commit 41973d4",
+  "01M3NF4MS166F3B1AJ9C22HCMN": "blocked $0.258: artifact references must stay relative to the worker location (fixed in 7779224)",
+  "01M3NFPWFZFMH8Z9039GWKDBW1": "blocked $0.273: no candidates; every attempt hit the chat's 500,000-token cap (fixed in 03b3970)",
+  "01M3NQD6RK4G3R9WETZ52BWRV6": "blocked $0.177: git cherry-pick conflict grafting two passing attempts (fixed in c1dfc26)",
+  "01M3NRKR41XKW33249FW9PZWQA": "blocked $0.440: The judges did not pass the work within the signed round limit. They chose different attempts.",
+  "01M3NSHGE2NRGC10QA3E6GEQNQ": "blocked $0.159: a judge that never looked claimed the candidate folders were missing (fixed in 567ac93)",
+  "01M3NT2B1P62MPNJH8280PTQSB": "completed $0.303: round 1 failed, round 2 unanimous; result commit fc20c30",
+  "01M3NTTMDF6280GW4J5Y02B79T": "completed $0.203: one round, unanimous; result commit 10a76cd",
+  "01M3NVAPCJX5AWKXHDD638TPBR": "completed $0.075: steered attempt accepted unanimously; result commit 23c5d03"
+}
