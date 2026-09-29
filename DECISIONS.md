@@ -3762,4 +3762,9 @@ project's own paths re-pointed at the worktree; a symlink would test the main
 checkout's code. Workers run with the delegated read fence, and a fenced shell
 command naming a directory outside its root is refused. The launch message
 says launched and carries the live state; a launched draft re-renders what was
-signed, locked until a block reopens signing.
+signed, locked until a block reopens signing. The walk added four: workers are
+bounded by the signed spend and time walls, not the chat's per-run caps; a
+judge must inspect a candidate before its verdict counts, because a blind
+claim became the next round's charge; workers get three output retries; and a
+graft applies passing attempts most-chosen first, keeping that attempt's lines
+where they overlap, so every survivor stays in lineage.
