@@ -28,7 +28,7 @@ test('Symphony deliberation is human-fixed, signed, separately identified, and r
   assert.match(shell, /@media \(max-width: 42rem\)[\s\S]*?\.symphony-authority\s*\{[^}]*grid-template-columns:\s*1fr/su)
 })
 
-/** M3SF / M3EX-08, -11, -12: the chat and the Deck show the live state; a launched draft
+/** F137 / M3SF / M3EX-08, -11, -12: the chat and the Deck show the live state; a launched draft
  * re-renders what was signed and cannot be signed again until its run is blocked.
  */
 test('Symphony cards show the signed charter and the live state, never a stale running', async () => {

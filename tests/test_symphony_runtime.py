@@ -24,7 +24,7 @@ def _repo(root: Path, ignore: str) -> None:
 
 
 def test_an_attempt_carries_the_project_environment_pointed_at_itself(tmp_path: Path) -> None:
-    """M3SF / M3EX-10: the attempt's tests import the attempt's code, from its own .venv."""
+    """F137 / M3SF / M3EX-10: the attempt's tests import the attempt's code, from its own .venv."""
     root = (tmp_path / "project").resolve()
     _repo(root, ".venv/\n")
     attempt = root / ".nocturne-worktrees" / "run" / "attempt-1"
@@ -43,7 +43,7 @@ def test_an_attempt_carries_the_project_environment_pointed_at_itself(tmp_path: 
 
 
 def test_an_environment_git_would_commit_is_never_carried(tmp_path: Path) -> None:
-    """M3SF: an unignored .venv would ride the attempt's commit into the owner's repo."""
+    """F137 / M3SF: an unignored .venv would ride the attempt's commit into the owner's repo."""
     root = (tmp_path / "project").resolve()
     _repo(root, "")
     attempt = root.parent / "attempt"
@@ -75,7 +75,7 @@ def _commit(repo: Path, message: str) -> str:
 
 
 def test_passing_alternatives_graft_with_the_most_chosen_lines(tmp_path: Path) -> None:
-    """M3SF: judges passing two attempts that edit the same line no longer block round two."""
+    """F137 / M3SF: judges passing two attempts that edit one line no longer block round two."""
     repo = tmp_path / "repo"
     repo.mkdir()
     subprocess.run(["git", "init", "-q", str(repo)], check=True)
