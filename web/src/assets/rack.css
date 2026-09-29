@@ -2577,7 +2577,23 @@ button.rack-module__resize-handle--nw {
     padding: 0 0.7rem;
   }
 
+  /* M3EX-34: at phone width the Palace and its state stay readable; the mark carries the brand. */
   .topbar .connection {
+    display: block;
+    min-width: 0;
+    max-width: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .topbar .connection__signal {
+    display: inline-block;
+    margin-right: 0.35rem;
+    vertical-align: middle;
+  }
+
+  .rack-remote--header .brand__word {
     display: none;
   }
 
@@ -3310,7 +3326,7 @@ button.rack-module__resize-handle--nw {
 
 @media (max-width: 48.9rem) {
   .rack-shell--stage {
-    grid-template-rows: 3.25rem 2.5rem auto minmax(0, 1fr);
+    grid-template-rows: 3.25rem auto auto minmax(0, 1fr);
   }
 
   .rack-stage-header {
@@ -3323,7 +3339,16 @@ button.rack-module__resize-handle--nw {
   }
 
   .app-settings-toggle {
-    left: 8.3rem;
+    left: 2.85rem;
+  }
+
+  .rack-remote--header .topbar {
+    justify-content: flex-start;
+    gap: 0.5rem;
+  }
+
+  .rack-remote--header .connection {
+    margin-left: auto;
   }
 
   .rack-remote--header .app-settings-reserve {
@@ -3337,14 +3362,19 @@ button.rack-module__resize-handle--nw {
     gap: 0.3rem;
   }
 
-  .rack-remote--header .mobile-navigation__label {
-    display: none;
+  .stage-toolbar {
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    padding: 0.3rem;
   }
 
-  .stage-toolbar {
-    gap: 0.3rem;
-    padding-inline: 0.3rem;
-    overflow-x: auto;
+  .stage-toolbar .stage-layers {
+    flex: 1 1 100%;
+  }
+
+  /* The module's status line already says what it follows; the title keeps the room. */
+  .rack-module__drag > .rack-module__attunement {
+    display: none;
   }
 
   .stage-toolbar .rack-set-controls {

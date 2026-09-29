@@ -67,3 +67,16 @@ test('slash commands are listed when the composer starts with a slash', async ()
   }
   assert.match(app, /document\.getElementById\('prompt-input'\)[\s\S]*?\/\^\\\/\\S\*\$\/u\.test\(input\.value\)/u)
 })
+
+/** M3EX-34 / FL-101: at phone width the header keeps the Palace and its state and labels
+ * its counts, the layer tabs get their own row, and module titles keep their room.
+ */
+test('phone width keeps the palace status, layer tabs and module titles readable', async () => {
+  const css = await readFile(new URL('../src/assets/rack.css', import.meta.url), 'utf8')
+  const phone = css.slice(css.indexOf('@media (max-width: 48.9rem) {'))
+  assert.match(phone, /\.topbar \.connection \{\s*display: block;[\s\S]*?text-overflow: ellipsis;/u)
+  assert.doesNotMatch(phone, /\.rack-remote--header \.mobile-navigation__label \{\s*display: none;/u)
+  assert.match(phone, /\.stage-toolbar \{\s*flex-wrap: wrap;/u)
+  assert.match(phone, /\.stage-toolbar \.stage-layers \{\s*flex: 1 1 100%;/u)
+  assert.match(phone, /\.rack-module__drag > \.rack-module__attunement \{\s*display: none;/u)
+})
