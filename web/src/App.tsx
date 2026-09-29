@@ -265,6 +265,17 @@ function initialSavedRackSet(): StageLayoutSet | null {
   }
 }
 
+// M3EX-27: Sheet or Stage is the owner's choice and survives a reload.
+const SHEET_MODE_STORAGE_KEY = 'nocturne.stage.sheet-mode.v1'
+
+function initialSheetMode(): boolean {
+  try {
+    return globalThis.localStorage.getItem(SHEET_MODE_STORAGE_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
 function initialTheme(): ThemeId {
   try {
     return loadTheme(globalThis.localStorage)
@@ -384,7 +395,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   const [transcriptBackupBusy, setTranscriptBackupBusy] = useState(false)
   const [pointerActive, setPointerActive] = useState(false)
   const [libraryOpen, setLibraryOpen] = useState(false)
-  const [sheetMode, setSheetMode] = useState(false)
+  const [sheetMode, setSheetMode] = useState(initialSheetMode)
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 })
   const viewportRef = useRef<HTMLDivElement>(null)
   const initialAttunementPicks = useMemo(() => initialStickyAttunements(), [])
@@ -574,6 +585,14 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
       // The rack remains usable when a hardened browser denies local storage.
     }
   }, [layout])
+
+  useEffect(() => {
+    try {
+      globalThis.localStorage.setItem(SHEET_MODE_STORAGE_KEY, String(sheetMode))
+    } catch {
+      // The rack remains usable when a hardened browser denies local storage.
+    }
+  }, [sheetMode])
 
   useEffect(() => {
     try {

@@ -146,7 +146,8 @@ export const FACTORY_STAGE_LAYOUT: StageLayoutSet = {
     {
       layer_id: 'work',
       name: 'Work',
-      camera: expandLegacyCamera({ x: 36, y: 30, zoom: 0.64 }),
+      // M3EX-27: the factory Work layer opens at full size; 64% was unreadable at 1440 wide.
+      camera: expandLegacyCamera({ x: 36, y: 30, zoom: 1 }),
       modules: ['threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state', 'palace_queue']
         .map((moduleId) => ({ ...DEFAULT_MODULES[moduleId as StageModuleId] })),
       removed_modules: [{ ...DEFAULT_MODULES.jobs }, { ...DEFAULT_MODULES.security }],

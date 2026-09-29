@@ -370,3 +370,12 @@ function memoryStorage() {
     },
   }
 }
+
+/** M3EX-27: the Stage opens readable (full size) and remembers Sheet or Stage across a reload. */
+test('the factory Work layer opens at full size and the view mode persists', async () => {
+  assert.equal(activeStageLayer(cloneFactoryStageLayout()).camera.zoom, 1)
+  const { readFile } = await import('node:fs/promises')
+  const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
+  assert.match(app, /useState\(initialSheetMode\)/u)
+  assert.match(app, /localStorage\.setItem\(SHEET_MODE_STORAGE_KEY, String\(sheetMode\)\)/u)
+})
