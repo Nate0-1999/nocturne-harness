@@ -840,12 +840,12 @@ async def test_two_short_facts_joined_by_a_semicolon_are_saved() -> None:
                 ],
                 "coverage": [
                     {
-                        "text": "Web tests run with npm test; ",
+                        "text": "Web tests run with npm test",
                         "classification": "durable",
                         "candidate_index": 0,
                     },
                     {
-                        "text": "Python tests run with pytest -q.",
+                        "text": "; Python tests run with pytest -q.",
                         "classification": "durable",
                         "candidate_index": 1,
                     },

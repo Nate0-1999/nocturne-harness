@@ -1001,9 +1001,10 @@ def _validated_remember_split(
         body = candidate.body.strip()
         keywords = _normalize_keywords(candidate.keywords)
         expected_body = "".join(assigned_text[index]).strip()
-        # M3EX-16: "a; b." splits into "a." and "b." — a child may end its sentence where
-        # the source used a separator; every other character must still match.
-        same_claim = body.rstrip(".;,") == expected_body.rstrip(".;,")
+        # M3EX-16: "a; b." splits into "a." and "b." — the separator may sit at either end
+        # of a segment and the child may end its sentence there; every other character
+        # must still match.
+        same_claim = body.strip(" .;,") == expected_body.strip(" .;,")
         invalid = (
             not label
             or "\n" in label
