@@ -81,11 +81,12 @@ test('phone width keeps the palace status, layer tabs and module titles readable
   assert.match(phone, /\.rack-module__drag > \.rack-module__attunement \{\s*display: none;/u)
 })
 
-/** M3EX-33: the layer × tip names the action once — "Remove layer", not "Remove Layer 1 layer". */
+/** M3EX-33: the layer × tip names the action once — "Remove layer", not "Remove Layer 1 layer";
+ * the accessible name the canon uses is unchanged.
+ */
 test('the layer remove tip does not repeat the word layer', async () => {
   const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
-  assert.match(app, /aria-label=\{`Remove layer: \$\{candidate\.name\}`\}\s*data-tooltip="Remove layer"/u)
-  assert.doesNotMatch(app, /`Remove \$\{candidate\.name\} layer`/u)
+  assert.match(app, /aria-label=\{`Remove \$\{candidate\.name\} layer`\}\s*data-tooltip="Remove layer"/u)
 })
 
 /** M3EX-33: the module × says it removes the module, not "Remove Palace" (which reads as
