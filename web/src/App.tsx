@@ -946,7 +946,8 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               </Button>
               <Button action="remove" iconOnly variant="bare"
                 type="button"
-                aria-label={`Remove ${candidate.name} layer`}
+                aria-label={`Remove layer: ${candidate.name}`}
+                data-tooltip="Remove layer"
                 data-tooltip-detail="Shelve this layer; the library can bring it back."
                 onClick={() => setLayout((current) => removeStageLayer(current, candidate.layer_id))}
               >
