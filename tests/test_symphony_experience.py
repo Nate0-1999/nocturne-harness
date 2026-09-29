@@ -283,6 +283,54 @@ async def test_signed_deliberation_waits_for_execution_before_releasing_result()
 
 
 @pytest.mark.asyncio
+async def test_a_restart_reshows_every_symphony_and_stops_the_interrupted_one() -> None:
+    """F135 (M3EX-13): after a restart no Symphony is forgotten; one that was running is
+    stopped with its reason on the card, and a finished one keeps its result."""
+
+    experience = SymphonyExperience(
+        id_factory=ids(), clock=lambda: datetime(2026, 8, 17, 12, tzinfo=UTC)
+    )
+    opening = RecordingEmitter()
+    await experience.run(
+        thread_id="thread-a",
+        prompt="take this to a symphony",
+        launch=None,
+        message_history=(),
+        emit=opening,
+    )
+    completed = RecordingEmitter()
+    execution = bind_execution(experience, completed)
+    await experience.run(
+        thread_id="thread-a",
+        prompt="Launch this symphony.",
+        launch=launch(str(opening.events[0]["draft_id"])),
+        message_history=(),
+        emit=completed,
+    )
+    running = completed.events[-1]
+    execution.release.set()
+    await asyncio.gather(*experience._tasks.values())
+    finished = completed.events[-1]
+    symphony_id = str(running["symphony_id"])
+
+    restarted = SymphonyExperience(id_factory=ids())
+    published = RecordingEmitter()
+    bind_execution(restarted, published)
+    await restarted.restore((running,))
+    stopped = await restarted.read(symphony_id)
+    assert stopped is not None and stopped.state == "blocked"
+    assert "Nocturne restarted while this ran" in str(stopped.blocked_reason)
+    assert published.events[-1]["state"] == "blocked"
+
+    again = SymphonyExperience(id_factory=ids())
+    bind_execution(again, RecordingEmitter())
+    await again.restore((finished,))
+    kept = await again.read(symphony_id)
+    assert finished["event_kind"] == "symphony_result"
+    assert kept is not None and kept.state == "completed"
+
+
+@pytest.mark.asyncio
 async def test_draft_cannot_be_launched_from_a_different_conversation() -> None:
     """SYM10 / ADR-012: a deliberation artifact remains bound to its source chat."""
 

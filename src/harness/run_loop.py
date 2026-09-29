@@ -2029,6 +2029,15 @@ class RunLoop:
                         completed.add(launch["draft_id"])
         return tuple(draft_id for draft_id in opened if draft_id not in completed)
 
+    def symphony_stack_events(self) -> tuple[Mapping[str, object], ...]:
+        """F135 (M3EX-13): every thread's latest Symphony rows, for a restart."""
+
+        return tuple(
+            event
+            for state in self._threads.values()
+            for event in self._symphony_stack_events(state.messages)
+        )
+
     @staticmethod
     def _symphony_stack_events(
         messages: Sequence[Mapping[str, Any]],

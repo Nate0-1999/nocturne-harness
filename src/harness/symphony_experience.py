@@ -112,6 +112,34 @@ class SymphonyExperience:
         self._execution = execution
         self._publisher = publisher
 
+    async def restore(self, events: Sequence[Mapping[str, object]]) -> None:
+        """F135 (M3EX-13): a restart re-shows every Symphony from its journaled rows; one that
+        was running when Nocturne stopped is stopped, with the reason on its card."""
+
+        async with self._lock:
+            self._hydrate(events)
+            interrupted = [
+                stack.model_copy(
+                    update={
+                        "state": "blocked",
+                        "blocked_reason": "Nocturne restarted while this ran; "
+                        "worktrees and evidence remain.",
+                        "attempts": tuple(
+                            attempt.model_copy(update={"state": "stopped"})
+                            if attempt.state == "running"
+                            else attempt
+                            for attempt in stack.attempts
+                        ),
+                    }
+                )
+                for stack in self._stacks.values()
+                if stack.state == "running" and stack.symphony_id not in self._tasks
+            ]
+            for stack in interrupted:
+                self._stacks[stack.symphony_id] = stack
+        for stack in interrupted:
+            await self._publisher(stack.thread_id, self._state_event(stack))
+
     async def close(self) -> None:
         for task in self._tasks.values():
             task.cancel()
@@ -503,7 +531,7 @@ class SymphonyExperience:
     def _hydrate(self, events: Sequence[Mapping[str, object]]) -> None:
         live_ids = set(self._tasks)
         for event in events:
-            if event.get("event_kind") != "symphony_state":
+            if event.get("event_kind") not in {"symphony_state", "symphony_result"}:
                 continue
             try:
                 stack = SymphonyStackRecord.model_validate(

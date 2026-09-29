@@ -5,6 +5,8 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import os
+import signal
 import subprocess
 import sys
 import time
@@ -655,7 +657,18 @@ class SymphonyExecution:
             for attempt in supervisor.attempts():
                 if supervisor.heartbeat(attempt.worker_id):
                     supervisor.request_termination(attempt.worker_id)
+            deadline = time.monotonic() + 10
             while any(supervisor.heartbeat(item.worker_id) for item in supervisor.attempts()):
+                if time.monotonic() > deadline:
+                    # INCIDENT F135 (M3EX-13): a worker that ignores its stop must not hold
+                    # Ctrl-C forever or outlive Nocturne.
+                    for item in supervisor.attempts():
+                        if item.pid is not None and supervisor.heartbeat(item.worker_id):
+                            try:
+                                os.killpg(item.pid, signal.SIGKILL)
+                            except OSError:
+                                pass
+                    break
                 await asyncio.sleep(0.1)
             supervisor.close()
             self.live.pop(stack.symphony_id, None)

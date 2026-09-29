@@ -1180,6 +1180,10 @@ def create_dev_app(
         SymphonyExecution(settings=configured, home=home, context_factory=context_factory),
         loop.publish_symphony_state,
     )
+
+    async def restore_symphonies() -> None:
+        await owned_symphony_experience.restore(loop.symphony_stack_events())
+
     seed_ingestion = SeedIngestionService(
         agent=owned_agent,
         spine=owned_spine,
@@ -1398,6 +1402,7 @@ def create_dev_app(
             await receipt_queue.flush(owned_spine)
 
         app.router.add_event_handler("startup", flush_receipt_queue)
+        app.router.add_event_handler("startup", restore_symphonies)
         if idle_extraction is not None:
             app.router.add_event_handler("startup", idle_extraction.start)
             app.router.add_event_handler("shutdown", idle_extraction.stop)

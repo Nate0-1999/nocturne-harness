@@ -9,6 +9,7 @@ import os
 import re
 import secrets
 import shutil
+import signal
 import socket
 import stat
 import subprocess
@@ -1583,7 +1584,13 @@ def _open_browser(url: str, *, stdout: TextIO) -> None:
         print(f"Open {url} in a browser.", file=stdout)
 
 
+def _interrupt(_signum: int, _frame: object) -> None:
+    raise KeyboardInterrupt
+
+
 def _supervise(processes: tuple[subprocess.Popen[str], ...]) -> None:
+    # F135 (M3EX-13): a SIGTERM stops Nocturne the way Ctrl-C does, children included.
+    signal.signal(signal.SIGTERM, _interrupt)
     try:
         while True:
             for process in processes:
@@ -1596,14 +1603,19 @@ def _supervise(processes: tuple[subprocess.Popen[str], ...]) -> None:
 
 
 def _stop_processes(processes: tuple[subprocess.Popen[str], ...]) -> None:
-    for process in processes:
-        if process.poll() is None:
-            process.terminate()
-    for process in processes:
-        if process.poll() is not None:
-            continue
-        try:
-            process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            process.wait(timeout=5)
+    # F135 (M3EX-13): a second Ctrl-C must not abandon the stop half-way.
+    previous = signal.signal(signal.SIGINT, signal.SIG_IGN)
+    try:
+        for process in processes:
+            if process.poll() is None:
+                process.terminate()
+        for process in processes:
+            if process.poll() is not None:
+                continue
+            try:
+                process.wait(timeout=15)  # longer than the Symphony stop bound
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=5)
+    finally:
+        signal.signal(signal.SIGINT, previous)
