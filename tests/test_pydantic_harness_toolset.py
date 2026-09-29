@@ -287,7 +287,9 @@ async def test_shell_scratch_leaves_the_repo_and_a_fenced_agent_stays_inside(
     assert scratch.success and list(root.iterdir()) == []
     assert not scratch_dir.exists()
     assert not walk.success and walk.boundary == "location"
-    assert "outside this workspace: /." in walk.content
+    assert f"That command reaches outside this workspace: /. Stay inside {root.resolve()}." in (
+        walk.content
+    )
     assert not home.success and home.boundary == "location"
     assert inside.success
 
