@@ -82,6 +82,25 @@ const scenes = {
     await shot(page, 'm3ex-32-second-conversation-gear')
     await context.close()
   },
+  async 'm3ex-32-follow'() {
+    const { context, page } = await open()
+    await sheet(page); await library(page, 'Conversation')
+    await page.getByRole('button', { name: 'Close stage library' }).click().catch(() => {})
+    const gears = page.getByTestId('rack-settings-conversation')
+    await gears.last().scrollIntoViewIfNeeded(); await gears.last().click(); await sleep(800)
+    const picker = page.getByRole('combobox', { name: 'Conversation thread' }).last()
+    const option = await picker.locator('option', { hasText: '/remember' }).first().getAttribute('value')
+    await picker.selectOption(option); await sleep(5000)
+    await page.keyboard.press('Escape'); await sleep(500)
+    const frames = page.locator('[data-testid="rack-plugin-frame-conversation"]')
+    await frames.last().scrollIntoViewIfNeeded(); await sleep(1500)
+    await shot(page, 'm3ex-32-second-follows-another-thread', { clip: await frames.last().boundingBox() })
+    for (const [name, index] of [['first', 0], ['second', 1]]) {
+      const text = await frames.nth(index).contentFrame().locator('body').innerText()
+      console.log(name, 'module shows:', text.split('\n').find((line) => /remember|List the files/.test(line)))
+    }
+    await context.close()
+  },
   async 'm3ex-33-tips'() {
     const { context, page } = await open()
     await layer(page, 'Graph'); await library(page, 'Palace')
@@ -110,6 +129,13 @@ const scenes = {
     await page.keyboard.press('Escape'); await page.getByRole('button', { name: 'Close stage library' }).click().catch(() => {})
     await layer(page, 'Graph'); await sleep(4000)
     await shot(page, 'm3ex-35-graph')
+    const canvas = frame(page, 'memory_graph').locator('.graph-canvas')
+    if (await canvas.count()) {
+      const scroll = await canvas.evaluate((node) => { node.scrollTop = node.scrollHeight; return [node.scrollHeight, node.clientHeight] })
+      console.log('graph canvas scroll/client height', scroll)
+      await sleep(800)
+      await shot(page, 'm3ex-35-graph-scrolled')
+    }
     await context.close()
   },
   async 'm3ex-36-roots'() {
