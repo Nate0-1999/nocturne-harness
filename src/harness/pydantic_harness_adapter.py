@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import os
 import re
 import shlex
 import shutil
+import signal
+import subprocess
 import tempfile
 import unicodedata
 from collections.abc import Mapping, Sequence
@@ -81,6 +84,21 @@ _SHELL_WRITE_REMEDY = (
     "The shell writes only inside {location}. Move to the folder you need to change and "
     "run the command there; git commands on this repository work from any folder inside it."
 )
+
+
+def _kill_command_group(marker: str) -> None:
+    """Kill the process group whose shell carries marker as its $0."""
+
+    listing = subprocess.run(
+        ["ps", "-axo", "pgid=,command="], capture_output=True, text=True, check=False
+    ).stdout
+    for line in listing.splitlines():
+        pgid, _, command = line.strip().partition(" ")
+        if command.endswith(f" {marker}") and int(pgid) != os.getpgrp():
+            try:
+                os.killpg(int(pgid), signal.SIGKILL)
+            except OSError:
+                pass
 
 
 def _inside(root: Path, target: Path) -> bool:
@@ -516,10 +534,19 @@ class PydanticHarnessToolset:
     async def _bash(self, arguments: Mapping[str, object]) -> str:
         shell, wrapped = self._shell_command(arguments)
         timeout = arguments.get("timeout")
-        try:
-            result = await shell.run_command(
+        run = asyncio.ensure_future(
+            shell.run_command(
                 wrapped, timeout_seconds=float(timeout) if timeout is not None else None
             )
+        )
+        try:
+            result = await asyncio.shield(run)
+        except asyncio.CancelledError:
+            # INCIDENT F135 (M3EX-13): a stopped turn takes its foreground command with it;
+            # upstream waits for the command's own session to exit on cancellation.
+            _kill_command_group(wrapped.rsplit(" ", 1)[1])
+            await asyncio.gather(run, return_exceptions=True)
+            raise
         finally:
             await shell.__aexit__()
         self._emit("write", self._location.cwd)
@@ -620,7 +647,11 @@ class PydanticHarnessToolset:
             '(literal "/dev/null"))'
             f" (allow file-write* (subpath {json.dumps(str(self._scratch))}))"
         )
-        wrapped = f"{sandbox} -p {shlex.quote(profile)} /bin/zsh -lc {shlex.quote(command)}"
+        # F135 (M3EX-13): the EXIT trap keeps zsh as the group's parent, named by its $0
+        # marker, so a cancelled turn can stop exactly this command.
+        marker = f"nocturne-command-{generate_ulid()}"
+        script = shlex.quote(f"trap : EXIT; {command}")
+        wrapped = f"{sandbox} -p {shlex.quote(profile)} /bin/zsh -lc {script} {marker}"
         environment = {
             "PATH": os.environ.get("PATH", "/usr/bin:/bin:/usr/sbin:/sbin"),
             "LANG": os.environ.get("LANG", "en_US.UTF-8"),

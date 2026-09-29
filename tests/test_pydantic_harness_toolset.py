@@ -465,3 +465,25 @@ async def test_shell_does_not_fall_through_a_wall(
         assert list(tmp_path.iterdir()) == []
     finally:
         await toolset.close()
+
+
+@pytest.mark.asyncio
+async def test_a_cancelled_turn_stops_its_foreground_command(tmp_path: Path) -> None:
+    """F135 (M3EX-13): Ctrl-C mid-turn must not wait on a stuck command, nor orphan it."""
+    if not Path("/usr/bin/sandbox-exec").is_file():
+        pytest.skip("the standing hard shell fence is macOS sandbox-exec")
+    import asyncio
+    import subprocess
+
+    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    try:
+        running = asyncio.create_task(toolset.execute("bash", {"command": "sleep 97531"}))
+        await asyncio.sleep(1.0)
+        running.cancel()
+        async with asyncio.timeout(5):
+            await asyncio.gather(running, return_exceptions=True)
+    finally:
+        await toolset.close()
+
+    listing = subprocess.run(["ps", "-axo", "command="], capture_output=True, text=True).stdout
+    assert "sleep 97531" not in listing
