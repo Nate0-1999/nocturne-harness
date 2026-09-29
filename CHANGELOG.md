@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.42 - 2026-09-29
+
+- A Symphony finishes or stops with its reason on the card: a judge that cannot
+  return, or never looks, becomes a failed verdict with feedback instead of a
+  raw error; judges passing different attempts no longer block the next round.
+- The chat and the Deck show a run's live state; a launched charter re-renders
+  as signed and can be signed again after a block.
+- Attempt worktrees carry the project's `.venv`; workers stay inside their
+  worktree and are bounded by the signed walls; tool scratch stays out of the
+  repository. Pair with Memory 0.1.42.
+
 ## 0.1.39 - 2026-09-28
 
 - Curator merges retire their targets before activating the replacement, atomically.

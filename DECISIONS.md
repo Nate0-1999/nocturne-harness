@@ -3747,3 +3747,24 @@ newest state replaces its previous one in the launch message. A job that fails
 says why; the Palace's refusal of an autonomous first prepare is F138, and a
 second conversation module following another thread needs a per-thread client
 store (F139, the picker reverted).
+
+## M3SF — A Symphony finishes or stops with its reason [P3]
+
+PRECEDENT: F137, M3EX-07..12, M3OR (the same judge seam), ADR-017.
+A judge's own failure is a verdict, never a missing file: a PASS may carry
+advisory notes (only FAIL feedback forms the next round), the judge's output
+schema lists the only selectable attempts, and a judge run that still fails —
+or a judge process that dies — leaves a FAIL whose feedback names the reason,
+so the rounds retry or the run stops with the judges' words. Tool scratch goes
+to a private temp folder the sandbox may write, never the owner's repo. Each
+attempt gets an APFS clone of the project's git-ignored `.venv` with the
+project's own paths re-pointed at the worktree; a symlink would test the main
+checkout's code. Workers run with the delegated read fence, and a fenced shell
+command naming a directory outside its root is refused. The launch message
+says launched and carries the live state; a launched draft re-renders what was
+signed, locked until a block reopens signing. The walk added four: workers are
+bounded by the signed spend and time walls, not the chat's per-run caps; a
+judge must inspect a candidate before its verdict counts, because a blind
+claim became the next round's charge; workers get three output retries; and a
+graft applies passing attempts most-chosen first, keeping that attempt's lines
+where they overlap, so every survivor stays in lineage.

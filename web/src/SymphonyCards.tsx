@@ -11,8 +11,14 @@ import type {
 } from './protocol'
 import { useRackPlugin } from './rack'
 import { Button, TextArea, TextField, Toggle } from './kit'
+import { formatHumanUsd } from './humanNumbers'
+import type { DeckStack } from './SymphonyDeck'
 
 type DraftAuthority = Omit<SymphonyAuthority, 'signed'> & { signed: boolean }
+
+function counted(count: number, one: string, many = `${one}s`): string {
+  return `${count} ${count === 1 ? one : many}`
+}
 
 interface SymphonyDraft {
   draft_id: string
@@ -159,16 +165,23 @@ function replaceAt<T>(items: T[], index: number, value: T): T[] {
   return items.map((item, candidate) => candidate === index ? value : item)
 }
 
-export function SymphonyDeliberationCard({ event }: { event: JsonObject }) {
+export function SymphonyDeliberationCard({ event, launched }: { event: JsonObject; launched?: DeckStack }) {
   const draft = useMemo(() => parseSymphonyDraft(event), [event])
   const { events } = useRackPlugin()
-  const [objective, setObjective] = useState(draft?.objective ?? '')
-  const [motivation, setMotivation] = useState(draft?.motivation ?? '')
-  const [recipe, setRecipe] = useState(draft?.recipe ?? [])
-  const [charters, setCharters] = useState(draft?.judge_charters ?? [])
-  const [authority, setAuthority] = useState<DraftAuthority | null>(draft?.authority ?? null)
+  // M3SF / M3EX-11: a launched draft re-renders what was signed, not the blank defaults.
+  const signedLaunch = launched?.launch
+  const [objective, setObjective] = useState(signedLaunch?.objective ?? draft?.objective ?? '')
+  const [motivation, setMotivation] = useState(signedLaunch?.motivation ?? draft?.motivation ?? '')
+  const [recipe, setRecipe] = useState(signedLaunch?.recipe ?? draft?.recipe ?? [])
+  const [charters, setCharters] = useState(signedLaunch?.judge_charters ?? draft?.judge_charters ?? [])
+  const [authority, setAuthority] = useState<DraftAuthority | null>(
+    signedLaunch === undefined ? draft?.authority ?? null : { ...signedLaunch.authority, signed: false },
+  )
   const [status, setStatus] = useState('Nothing launches until you sign.')
-  const [busy, setBusy] = useState(false)
+  // Launching lasts until a newer stack for this draft arrives; a block reopens signing.
+  const [sentFrom, setSentFrom] = useState<string | null | undefined>(undefined)
+  const busy = sentFrom !== undefined && sentFrom === (launched?.symphony_id ?? null)
+  const locked = launched !== undefined && launched.state !== 'blocked'
 
   if (draft === null || authority === null) return null
   const draftId = draft.draft_id
@@ -193,8 +206,8 @@ export function SymphonyDeliberationCard({ event }: { event: JsonObject }) {
   }
 
   async function launch() {
-    if (!complete || busy) return
-    setBusy(true)
+    if (!complete || busy || locked) return
+    setSentFrom(launched?.symphony_id ?? null)
     setStatus('Launching the separately identified proof stack…')
     const signed: SymphonyLaunch = {
       draft_id: draftId,
@@ -222,9 +235,10 @@ export function SymphonyDeliberationCard({ event }: { event: JsonObject }) {
         symphony: signed,
       })
       setStatus('Signed and launched. This chat remains live.')
+      setAuthority({ ...currentAuthority, signed: false })
     } catch {
       setStatus('Launch did not leave this chat. Review the connection and try again.')
-      setBusy(false)
+      setSentFrom(undefined)
     }
   }
 
@@ -234,6 +248,7 @@ export function SymphonyDeliberationCard({ event }: { event: JsonObject }) {
         <div><span className="symphony-card__eyebrow">Deliberation</span><h3>Compose the work here</h3></div>
         <span>Draft {draft.draft_id.slice(-6)}</span>
       </header>
+      <fieldset className="symphony-card__form" disabled={locked}>
       <p className="symphony-card__intro">Fix what good means before the conductor can fire.</p>
       <label>Desired outcome<TextArea value={objective} onChange={(event) => setObjective(event.target.value)} placeholder="What result should return to this conversation?" /></label>
       <label>Why this deserves a Symphony<TextArea value={motivation} onChange={(event) => setMotivation(event.target.value)} placeholder="What is difficult or valuable enough to justify parallel work?" /></label>
@@ -267,9 +282,10 @@ export function SymphonyDeliberationCard({ event }: { event: JsonObject }) {
           <label>Children / attempt<TextField type="number" min="0" value={authority.children_per_attempt} onChange={(event) => setAuthority({ ...authority, children_per_attempt: event.target.valueAsNumber })} /></label>
           <label>Minutes<TextField type="number" min="1" value={authority.duration_minutes} onChange={(event) => setAuthority({ ...authority, duration_minutes: event.target.valueAsNumber })} /></label>
         </div>
-        <label className="symphony-check symphony-sign"><Toggle checked={authority.signed} onChange={(event) => setAuthority({ ...authority, signed: event.target.checked })} /> I authorize up to {authority.attempts} attempts, ${authority.spend_wall_usd}, {authority.max_rounds} rounds, depth {authority.depth_cap}, {authority.children_per_attempt} children per attempt, and {authority.duration_minutes} minutes.</label>
+        <label className="symphony-check symphony-sign"><Toggle checked={locked || authority.signed} onChange={(event) => setAuthority({ ...authority, signed: event.target.checked })} /> I authorize up to {counted(authority.attempts, 'attempt')}, ${authority.spend_wall_usd}, {counted(authority.max_rounds, 'round')}, depth {authority.depth_cap}, {counted(authority.children_per_attempt, 'child', 'children')} per attempt, and {counted(authority.duration_minutes, 'minute')}.</label>
       </fieldset>
-      <footer className="symphony-card__footer"><span role="status">{status}</span><Button action="run" variant="primary" type="button" disabled={!complete || busy} onClick={() => void launch()}>{busy ? 'Launching…' : 'Sign & run Symphony'}</Button></footer>
+      </fieldset>
+      <footer className="symphony-card__footer"><span role="status">{launched === undefined || busy ? status : locked ? 'Signed and running. This chat remains live.' : 'Blocked · the reason is on the Symphony card below. Sign again to relaunch.'}</span><Button action="run" variant="primary" type="button" disabled={!complete || busy || locked} onClick={() => void launch()}>{locked ? 'Signed · running' : busy ? 'Launching…' : launched === undefined ? 'Sign & run Symphony' : 'Sign & run again'}</Button></footer>
     </section>
   )
 }
@@ -281,8 +297,24 @@ export function SymphonyResultCard({ event }: { event: JsonObject }) {
     <section className="symphony-card symphony-result" aria-label="Completed Symphony result" data-testid="symphony-result">
       <header className="symphony-card__header"><div><span className="symphony-card__eyebrow">Returned to chat</span><h3>Symphony complete</h3></div><span>{result.symphony_id.slice(-8)}</span></header>
       <p>{result.result}</p>
-      <dl><div><dt>Own stack</dt><dd>{result.symphony_id}</dd></div><div><dt>Outcome</dt><dd>{result.launch.objective}</dd></div><div><dt>Signed wall</dt><dd>${result.launch.authority.spend_wall_usd} · {result.launch.authority.duration_minutes} min · {result.launch.authority.attempts} attempts</dd></div><div><dt>Search nodes</dt><dd>{result.search_step_ids.length}</dd></div></dl>
+      <dl><div><dt>Own stack</dt><dd>{result.symphony_id}</dd></div><div><dt>Outcome</dt><dd>{result.launch.objective}</dd></div><div><dt>Signed wall</dt><dd>${result.launch.authority.spend_wall_usd} · {result.launch.authority.duration_minutes} min · {counted(result.launch.authority.attempts, 'attempt')}</dd></div><div><dt>Search nodes</dt><dd>{result.search_step_ids.length}</dd></div></dl>
       <p className="symphony-result__back">You are already back in the live conversation.</p>
+    </section>
+  )
+}
+
+export function SymphonyStatusCard({ stack }: { stack: DeckStack }) {
+  // M3SF / M3EX-08: the chat shows the run's live state, never a stale "running".
+  const blocked = stack.state === 'blocked'
+  return (
+    <section className="symphony-card symphony-status" data-state={stack.state} aria-label="Symphony status" data-testid="symphony-status">
+      <header className="symphony-card__header">
+        <div><span className="symphony-card__eyebrow">Symphony</span><h3>{blocked ? 'Blocked' : 'Running'}</h3></div>
+        <span>{formatHumanUsd(stack.spend_usd)} of {formatHumanUsd(stack.launch.authority.spend_wall_usd)}</span>
+      </header>
+      <p role={blocked ? 'alert' : 'status'}>{blocked
+        ? stack.blocked_reason ?? 'The run stopped.'
+        : 'Attempts and judges are working in their own worktrees. The judges release the result here.'}</p>
     </section>
   )
 }

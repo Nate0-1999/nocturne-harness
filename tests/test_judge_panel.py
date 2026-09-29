@@ -28,6 +28,7 @@ from harness.judge_panel import (
     JudgePanel,
     JudgePanelError,
     JudgeSession,
+    stopped_verdict,
 )
 from harness.supervisor import WorkerSupervisor
 
@@ -381,3 +382,59 @@ def test_two_of_three_never_passes_and_dissent_mints_scoped_feedback_with_lineag
     assert conductor.child_status("hard-step") is ChildStatus.FAILED_JUDGMENT
     resolved = next(event for event in events if event["event"] == "judge_panel_resolved")
     assert len(resolved["decision"]["attempt_lineage"]) == 3
+
+
+def test_a_judge_that_returns_nothing_is_a_failed_verdict_with_its_reason(
+    tmp_path: Path,
+) -> None:
+    """M3SF / F137: a silent judge fails the round with its reason; nothing is left missing."""
+
+    minted: list[FeedbackPacketDraft] = []
+    with WorkerSupervisor(tmp_path / "supervisor") as supervisor:
+        conductor = _settled_search(tmp_path, supervisor, [])
+
+        def mint_feedback(draft: FeedbackPacketDraft) -> FeedbackPacketReceipt:
+            minted.append(draft)
+            return FeedbackPacketReceipt(
+                packet_id=draft.packet_id,
+                bead_id=f"ng-{draft.packet_id.lower()}",
+                charge_digest=hashlib.sha256(draft.charge.encode()).hexdigest(),
+                minter_role="judge",
+            )
+
+        panel = JudgePanel(
+            conductor=conductor,
+            search_child_id="hard-step",
+            supervisor=supervisor,
+            event_sink=lambda _event: None,
+            feedback_minter=mint_feedback,
+        )
+        launches = _launches(tmp_path, {seat: ("pass", "a") for seat in JudgeSeat})
+        silent = launches[JudgeSeat.PERFORMANCE].location
+        launches[JudgeSeat.PERFORMANCE] = JudgeLaunch(
+            command=(sys.executable, "-c", "pass"), location=silent
+        )
+        sessions = panel.dispatch(launches)
+        deadline = time.monotonic() + 10
+        while any(supervisor.heartbeat(session.worker_id) for session in sessions):
+            assert time.monotonic() < deadline
+            time.sleep(0.01)
+        session = next(item for item in sessions if item.seat == JudgeSeat.PERFORMANCE)
+        (silent / "judge-verdict.json").write_text(
+            stopped_verdict(
+                session.model_dump(),
+                charter=_charters()[2],
+                reason="the judge process stopped before returning",
+                evidence_ref=str(silent),
+            ).model_dump_json()
+        )
+        _accept_all(panel, launches)
+        decision = panel.resolve()
+
+    performance = decision.verdicts[2]
+    assert decision.status is SearchJudgmentStatus.FAILED_JUDGMENT
+    assert performance.outcome == "fail"
+    assert [metric.passed for metric in performance.metrics] == [False] * len(
+        _charters()[2].metrics
+    )
+    assert "performance judge: The judge returned no valid verdict" in minted[0].charge

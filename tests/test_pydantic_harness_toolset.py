@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -258,6 +259,39 @@ async def test_shell_is_one_shot_os_fenced_and_remote_state_walled(tmp_path: Pat
     assert outside.success and "exit code" in outside.content.lower()
     assert not outside_path.exists()
     assert not remote.success and "remote state" in remote.content
+
+
+@pytest.mark.asyncio
+async def test_shell_scratch_leaves_the_repo_and_a_fenced_agent_stays_inside(
+    tmp_path: Path,
+) -> None:
+    """F137 / M3SF / M3EX-09, M3EX-10: tool scratch never lands in the repo; a fenced agent's
+    shell cannot walk directories beyond its workspace root.
+    """
+    if not Path("/usr/bin/sandbox-exec").is_file():
+        pytest.skip("the standing hard shell fence is macOS sandbox-exec")
+    root = tmp_path / "attempt"
+    root.mkdir()
+    toolset = await open_standard_toolset(cwd=root, workspace_root=root, fence_reads=True)
+    try:
+        scratch = await toolset.execute(
+            "bash", {"command": 'printf x > "$TMPDIR/scratch.txt" && printf "%s" "$TMPDIR"'}
+        )
+        walk = await toolset.execute("bash", {"command": "find / -path '*/.venv/bin/python'"})
+        home = await toolset.execute("bash", {"command": "ls ~"})
+        inside = await toolset.execute("bash", {"command": "ls ."})
+    finally:
+        await toolset.close()
+
+    scratch_dir = Path(re.search(r"/\S*nocturne-shell-[^\s/]+", scratch.content).group())
+    assert scratch.success and list(root.iterdir()) == []
+    assert not scratch_dir.exists()
+    assert not walk.success and walk.boundary == "location"
+    assert f"That command reaches outside this workspace: /. Stay inside {root.resolve()}." in (
+        walk.content
+    )
+    assert not home.success and home.boundary == "location"
+    assert inside.success
 
 
 def test_upstream_skills_gain_model_visible_bundled_resources(tmp_path: Path) -> None:

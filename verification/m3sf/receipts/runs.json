@@ -1,0 +1,467 @@
+[
+  {
+    "symphony_id": "01M3N820KWGDSTQZSCSCVP4WS4",
+    "label": "env run: README section (OpenRouter DNS-blocked)",
+    "build": "31d68ec~",
+    "proof_run": false,
+    "outcome": "blocked $0.00: judges returned no valid verdict: Connection error (this Mac's DNS blocked openrouter.ai)",
+    "rounds": [
+      {
+        "round": "step-1-round-1",
+        "status": "failed_judgment",
+        "winner": null,
+        "verdicts": [
+          {
+            "seat": "motivation",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "The motivation judge returned no valid verdict: Connection error."
+          },
+          {
+            "seat": "implementation",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "The implementation judge returned no valid verdict: Connection error."
+          },
+          {
+            "seat": "performance",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "The performance judge returned no valid verdict: Connection error."
+          }
+        ]
+      },
+      {
+        "round": "step-1-round-2",
+        "status": "failed_judgment",
+        "winner": null,
+        "verdicts": [
+          {
+            "seat": "motivation",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "The motivation judge returned no valid verdict: Connection error."
+          },
+          {
+            "seat": "implementation",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "The implementation judge returned no valid verdict: Connection error."
+          },
+          {
+            "seat": "performance",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "The performance judge returned no valid verdict: Connection error."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "symphony_id": "01M3NEXZNV4KH4994GK5K3T059",
+    "label": "run 1: README 'Named palaces' (relaunched from its card)",
+    "build": "31d68ec",
+    "proof_run": true,
+    "outcome": "completed $0.064: judges accepted; result commit 41973d4",
+    "rounds": [
+      {
+        "round": "step-1-round-1",
+        "status": "unanimous_pass",
+        "winner": "round-1-attempt-2",
+        "verdicts": [
+          {
+            "seat": "motivation",
+            "outcome": "pass",
+            "selected": "round-1-attempt-2",
+            "rationale": "The README.md diff adds a `## Named palaces` section that teaches an owner the full test-palace workflow. It leads with a copyable four-line command block (`list`, `new staging`, `use staging`, `drop staging`) and follows with one prose sentence per command: `list` shows every Palace with the active one starred; `new NAME` provisions a fresh Palace; `use NAME` switches the local daemon to it; `dro"
+          },
+          {
+            "seat": "implementation",
+            "outcome": "pass",
+            "selected": "round-1-attempt-2",
+            "rationale": "Only README.md changed (verified via `git diff eec55fc 41973d4 --name-only` showing only README.md) and every command named in the section exists in the CLI. `nocturne palace --help` lists the four subcommands {list, new, use, drop}. Each subcommand's own --help confirms the named positional `name` argument (used as `new staging`, `use staging`, `drop staging`). The `main` Palace cannot-be-dropped"
+          },
+          {
+            "seat": "performance",
+            "outcome": "pass",
+            "selected": "round-1-attempt-2",
+            "rationale": "The '## Named palaces' section spans README.md lines 136-145: header, blank, opening sh fence, four command lines, closing fence, blank, single prose paragraph. That is 10 lines from header through final prose line. The section is short and satisfies the rubric 'The section stays short.'"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "symphony_id": "01M3NF4MS166F3B1AJ9C22HCMN",
+    "label": "run 2 try 1: palace help text",
+    "build": "31d68ec",
+    "proof_run": false,
+    "outcome": "blocked $0.258: artifact references must stay relative to the worker location (fixed in 7779224)",
+    "rounds": [
+      {
+        "round": "step-1-round-1",
+        "status": "failed_judgment",
+        "winner": null,
+        "verdicts": [
+          {
+            "seat": "motivation",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "JUDGE_BRIEF.json lists an empty `candidates` array. The brief's `attempt_lineage` records two failed attempts (round-1-attempt-1, round-1-attempt-2), both with status \"failed\", `distillate.patch: null`, and the explicit uncertainty \"Worker stopped without a completed result; partial files have not passed judges.\" No candidate artifact is presented for this seat to judge, so the charter rubric (\"An"
+          },
+          {
+            "seat": "implementation",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "JUDGE_BRIEF.json shows `\"candidates\": []` \u2014 an empty list \u2014 while `attempt_lineage` lists two attempts (`round-1-attempt-1`, `round-1-attempt-2`). The system instructions say \"Judge only listed candidates. If none remain, return FAIL with repair feedback citing JUDGE_BRIEF.json as evidence of the missing candidates; select no attempt.\" No candidate is listed, so no candidate may be selected. Both "
+          },
+          {
+            "seat": "performance",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "The JUDGE_BRIEF.json at /private/tmp/m3sf-verification/projects/harness/.nocturne-worktrees/01M3NF4MS166F3B1AJ9C22HCMN/step-1-round-1/judge-performance/JUDGE_BRIEF.json declares an empty `candidates` array (line 26: `\"candidates\": []`). Both entries in `attempt_lineage` are recorded with `status: \"failed\"`, empty `claims`, null `patch`, and the explicit uncertainty \"Worker stopped without a comple"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "symphony_id": "01M3NFPWFZFMH8Z9039GWKDBW1",
+    "label": "run 2 try 2: palace help text",
+    "build": "7779224",
+    "proof_run": false,
+    "outcome": "blocked $0.273: no candidates; every attempt hit the chat's 500,000-token cap (fixed in 03b3970)",
+    "rounds": [
+      {
+        "round": "step-1-round-1",
+        "status": "failed_judgment",
+        "winner": null,
+        "verdicts": [
+          {
+            "seat": "motivation",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "No candidates are listed in JUDGE_BRIEF.json (line 24: `\"candidates\": []`). The charter instructs me to judge only listed candidates, and if none remain, return FAIL with repair feedback citing JUDGE_BRIEF.json. The two attempt_lineage entries (round-1-attempt-1, round-1-attempt-2) both have distillate.status \"failed\" with \"Worker stopped without a completed result; partial files have not passed j"
+          },
+          {
+            "seat": "implementation",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "No candidates are listed in JUDGE_BRIEF.json \u2014 the `candidates` array is empty (`\"candidates\": []`, JUDGE_BRIEF.json:24). The instruction requires me to judge only listed candidates and to return FAIL with no selection when none remain. The attempt_lineage entries (round-1-attempt-1, round-1-attempt-2) are not eligible to be selected as the chosen attempt because they are not in `candidates`. Both"
+          },
+          {
+            "seat": "performance",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "The packet's `candidates` array is empty (JUDGE_BRIEF.json:26). Both attempt_lineage entries (round-1-attempt-1 and round-1-attempt-2) carry `status: failed`, `distillate.patch: null`, and the uncertainty `Worker stopped without a completed result; partial files have not passed judges.` No candidate worktree advances to the judge stage, so the performance rubric ('CLI tests stay fast and green') a"
+          }
+        ]
+      },
+      {
+        "round": "step-1-round-2",
+        "status": "failed_judgment",
+        "winner": null,
+        "verdicts": [
+          {
+            "seat": "motivation",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "No candidates are available for evaluation. The `candidates` array in JUDGE_BRIEF.json:24 is empty, and both entries in `attempt_lineage` (JUDGE_BRIEF.json:25-90) carry terminal failure states \u2014 round-2-attempt-1 has status='smoke_failed' with distillate=null (worker exited without a readiness result, JUDGE_BRIEF.json:31-43), and round-2-attempt-2 has status='failed' with distillate.status='failed"
+          },
+          {
+            "seat": "implementation",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "JUDGE_BRIEF.json candidates array is empty (length 0). My charter (implementation seat) requires evaluating 'git diff of the attempt' against the rubric 'Only src/harness/cli.py and tests/test_cli.py change; no behavior other than help text.' With no candidate published, there is no artifact_root to enter and no diff to inspect. The two entries under attempt_lineage (round-2-attempt-1 status=smoke"
+          },
+          {
+            "seat": "performance",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "JUDGE_BRIEF.json candidates array is empty (judge-performance/JUDGE_BRIEF.json:26). Both attempts in attempt_lineage (round-2-attempt-1 status=smoke_failed, distillate=null; round-2-attempt-2 status=failed, distillate.status=failed, distillate.patch=null) never produced a committable artifact and were not promoted into candidates. Per the seat protocol (\"Judge only listed candidates. If none remai"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "symphony_id": "01M3NQD6RK4G3R9WETZ52BWRV6",
+    "label": "run 2 try 3: palace help text",
+    "build": "03b3970",
+    "proof_run": false,
+    "outcome": "blocked $0.177: git cherry-pick conflict grafting two passing attempts (fixed in c1dfc26)",
+    "rounds": [
+      {
+        "round": "step-1-round-1",
+        "status": "failed_judgment",
+        "winner": null,
+        "verdicts": [
+          {
+            "seat": "motivation",
+            "outcome": "pass",
+            "selected": "round-1-attempt-2",
+            "rationale": "Both candidates satisfy the motivation rubric 'An owner can learn each palace command from --help alone.' I inspected src/harness/cli.py in both worktrees and ran the evidence commands live. round-1-attempt-2 (HEAD b52681a) shows `palace --help` listing {list,new,use,drop} with one-line descriptions each (`list your Palaces` / `create a new Palace` / `switch to an existing Palace` / `remove an exi"
+          },
+          {
+            "seat": "implementation",
+            "outcome": "pass",
+            "selected": "round-1-attempt-1",
+            "rationale": "Both candidates' diffs are confined to src/harness/cli.py and tests/test_cli.py (verified via `git diff 41973d4..HEAD --stat`). In cli.py the only changes are adding `help=` strings to the palace subparsers (new, use, drop) and to the positional `name` argument \u2014 no behavioral change to argument parsing, names, types, defaults, required-ness, or surrounding logic. In tests/test_cli.py each candida"
+          },
+          {
+            "seat": "performance",
+            "outcome": "pass",
+            "selected": "round-1-attempt-1",
+            "rationale": "Both candidates satisfy the performance rubric (CLI tests stay fast and green) and the single charter metric (tests/test_cli.py passes in under 20 seconds). On attempt 1: 15 passed in 0.15s. On attempt 2: 15 passed in 0.16s. Both run in well under the 20s budget. I selected round-1-attempt-1 because it matches the charge's prescribed stratagem (Direct: add help= strings in src/harness/cli.py, then"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "symphony_id": "01M3NRKR41XKW33249FW9PZWQA",
+    "label": "run 2: palace help text",
+    "build": "c1dfc26",
+    "proof_run": true,
+    "outcome": "blocked $0.440: The judges did not pass the work within the signed round limit. They chose different attempts.",
+    "rounds": [
+      {
+        "round": "step-1-round-1",
+        "status": "failed_judgment",
+        "winner": null,
+        "verdicts": [
+          {
+            "seat": "motivation",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "The motivation charter requires evidence of the output of `nocturne palace --help` and `nocturne palace new --help` from each attempt. While both candidates' distillates claim those outputs were produced, the actual attempt artifacts (cli.py files, help outputs, test runs) are not present at the listed artifact_root paths. Both attempts share accepted_commit 41973d4c8dfb9835238f5124d53a7b68d558e0b"
+          },
+          {
+            "seat": "implementation",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "I cannot verify the candidate work because the artifact_root paths provided in the packet do not exist in this sandbox. Before I can render an implementation-seat judgment, I need to inspect the candidate files and run `git diff` on the commits claimed in each distillate. The worktrees at /private/tmp/m3sf-verification/projects/harness/.nocturne-worktrees/01M3NRKR41XKW33249FW9PZWQA/step-1-round-1/"
+          },
+          {
+            "seat": "performance",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "Cannot judge: candidate artifact directories for both round-1-attempt-1 and round-1-attempt-2 are not accessible from this judge-performance seat. The charter (performance seat) requires running `.venv/bin/python -m pytest tests/test_cli.py -q` in each candidate's artifact_root. Per instructions, I must inspect the actual candidate files and run the charter's checks, not rely solely on the candida"
+          }
+        ]
+      },
+      {
+        "round": "step-1-round-2",
+        "status": "failed_judgment",
+        "winner": null,
+        "verdicts": [
+          {
+            "seat": "motivation",
+            "outcome": "pass",
+            "selected": "round-2-attempt-1",
+            "rationale": "Both candidate worktrees are mounted and live `nocturne palace --help` / `palace new --help` runs in each confirm the motivation rubric: an owner sees one-line descriptions for new/use/drop and the `name` positional is documented. Round-2-attempt-1's diff is the minimal, surgical change: only `src/harness/cli.py` (argparse help= strings) and `tests/test_cli.py` (two new tests asserting the help te"
+          },
+          {
+            "seat": "implementation",
+            "outcome": "pass",
+            "selected": "round-2-attempt-1",
+            "rationale": "Both candidates' cli.py changes are exclusively argparse help= strings, so both satisfy the 'no behavior other than help text' clause. The deciding factor is the literal 'Only src/harness/cli.py and tests/test_cli.py change' clause. round-2-attempt-1's diff (41973d4..f550b97) touches exactly those two files. round-2-attempt-2's diff (41973d4..9c4ab44) additionally adds 4 new files under tests/_art"
+          },
+          {
+            "seat": "performance",
+            "outcome": "pass",
+            "selected": "round-2-attempt-2",
+            "rationale": "Both candidates satisfy the performance rubric: tests/test_cli.py passes in well under the 20s sealed metric (attempt-1: 16 passed in 0.13s; attempt-2: 21 passed in 0.16s). Attempt-2 is selected because its test suite is stricter (21 tests vs 16) and explicitly asserts help descriptions for all three subcommands (new/use/drop) plus the name argument, giving the implementation and motivation seats "
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "symphony_id": "01M3NSHGE2NRGC10QA3E6GEQNQ",
+    "label": "run 3 try 1: nocturne --version",
+    "build": "c1dfc26",
+    "proof_run": false,
+    "outcome": "blocked $0.159: a judge that never looked claimed the candidate folders were missing (fixed in 567ac93)",
+    "rounds": [
+      {
+        "round": "step-1-round-1",
+        "status": "failed_judgment",
+        "winner": null,
+        "verdicts": [
+          {
+            "seat": "motivation",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "The motivation seat's rubric and evidence_requirements are: (1) \"An owner can learn the installed version with one command,\" and (2) evidence requirement is \"Output of `.venv/bin/nocturne --version` in the attempt.\" I cannot verify the candidate's claims because the candidate's artifact_root directory does not exist. Per the conductor's instructions, I must inspect actual candidate files and run t"
+          },
+          {
+            "seat": "implementation",
+            "outcome": "pass",
+            "selected": "round-1-attempt-2",
+            "rationale": "git diff confirms only src/harness/cli.py (+6) and tests/test_cli.py (+10) changed. The version is sourced via `from harness import __version__ as _nocturne_version` and threaded into argparse's `version` action \u2014 not a hard-coded string. Both rubric criteria are met."
+          },
+          {
+            "seat": "performance",
+            "outcome": "pass",
+            "selected": "round-1-attempt-2",
+            "rationale": "Ran `.venv/bin/python -m pytest tests/test_cli.py -q` in the candidate worktree. Result: 15 passed in 0.15-0.18s (well under the 20-second metric budget). The CLI tests are fast and green, satisfying the performance rubric."
+          }
+        ]
+      },
+      {
+        "round": "step-1-round-2",
+        "status": "failed_judgment",
+        "winner": null,
+        "verdicts": [
+          {
+            "seat": "motivation",
+            "outcome": "pass",
+            "selected": "round-2-attempt-1",
+            "rationale": "Both candidates' artifact_roots exist with `.venv/bin/nocturne` executable, and both print `nocturne 0.1.40` and exit 0, satisfying the motivation rubric (one command reveals the installed version). Attempt 1 is selected because its stratagem (Direct: argparse version action on the top-level parser) matches the charge's stated stratagem exactly, while attempt 2 took a longer test-first path with n"
+          },
+          {
+            "seat": "implementation",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "Neither candidate's artifact_root directory is accessible from this judge's filesystem. The candidate worktrees at /private/tmp/m3sf-verification/projects/harness/.nocturne-worktrees/01M3NSHGE2NRGC10QA3E6GEQNQ/step-1-round-2/round-2-attempt-1 and round-2-attempt-2 are not present, so the charter's required evidence (git diff of the attempt showing only src/harness/cli.py and tests/test_cli.py chan"
+          },
+          {
+            "seat": "performance",
+            "outcome": "pass",
+            "selected": "round-2-attempt-2",
+            "rationale": "The performance charter requires that `tests/test_cli.py` passes in under 20 seconds. I inspected the candidate's worktree at the documented artifact_root and ran the charter's required evidence command. `.venv/bin/python -m pytest tests/test_cli.py -q` reports 15 passed in 0.16s, which is well under the 20-second threshold. The CLI tests are fast and green."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "symphony_id": "01M3NT2B1P62MPNJH8280PTQSB",
+    "label": "run 3: nocturne --version",
+    "build": "567ac93",
+    "proof_run": true,
+    "outcome": "completed $0.303: round 1 failed, round 2 unanimous; result commit fc20c30",
+    "rounds": [
+      {
+        "round": "step-1-round-1",
+        "status": "failed_judgment",
+        "winner": null,
+        "verdicts": [
+          {
+            "seat": "motivation",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "No candidates were listed in the packet (candidates array is empty), and both lineage attempts failed (round-1-attempt-1 smoke_failed; round-1-attempt-2 failed with no completed result). The motivation charter requires evidence from a candidate attempt (output of `.venv/bin/nocturne --version`); with no candidate artifacts there is nothing that satisfies 'An owner can learn the installed version w"
+          },
+          {
+            "seat": "implementation",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "The implementation-seat charter requires inspecting a candidate's git diff to verify that only src/harness/cli.py and tests/test_cli.py changed and that the version comes from the package (not a hard-coded string). The packet's candidates array is empty, and although attempt_lineage describes two prior attempts, neither is listed as a current candidate to judge. Without a candidate to inspect, the"
+          },
+          {
+            "seat": "performance",
+            "outcome": "fail",
+            "selected": null,
+            "rationale": "Both candidate attempts failed without producing passing artifacts. round-1-attempt-1 smoke_failed (score 0), and round-1-attempt-2 had smoke pass (score 1) but the worker stopped without completing; no commit/patch beyond the seed commit41973d4c was produced. There is therefore no candidate work to judge against the performance charter (tests/test_cli.py must pass in under 20 seconds). No valid a"
+          }
+        ]
+      },
+      {
+        "round": "step-1-round-2",
+        "status": "unanimous_pass",
+        "winner": "round-2-attempt-1",
+        "verdicts": [
+          {
+            "seat": "motivation",
+            "outcome": "pass",
+            "selected": "round-2-attempt-1",
+            "rationale": "The motivation rubric is satisfied. Running `.venv/bin/nocturne --version` from the candidate artifact root prints 'nocturne 0.1.40' (containing the value from `harness.__version__`) and exits 0. Inspection of src/harness/cli.py confirms the version is sourced from `harness.__version__` (imported on line 17, used in f'%(prog)s {__version__}' on line 44), not hard-coded. An owner can learn the inst"
+          },
+          {
+            "seat": "implementation",
+            "outcome": "pass",
+            "selected": "round-2-attempt-1",
+            "rationale": "The implementation seat charter requires that only src/harness/cli.py and tests/test_cli.py change and that the version comes from the package rather than a hard-coded string. The git diff against the seed commit shows exactly two files modified: src/harness/cli.py (+6) and tests/test_cli.py (+11/-1). src/harness/cli.py adds `from harness import __version__` at line 17 and uses `version=f\"%(prog)s"
+          },
+          {
+            "seat": "performance",
+            "outcome": "pass",
+            "selected": "round-2-attempt-1",
+            "rationale": "Performance rubric requires CLI tests stay fast and green. Running `.venv/bin/python -m pytest tests/test_cli.py -q` produced '15 passed in 0.16s', which is well under the 20-second budget. Tests are green and the suite executes quickly. The candidate's accepted commit (fc20c30) only modifies src/harness/cli.py and tests/test_cli.py as required by the implementation seat, and `.venv/bin/nocturne -"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "symphony_id": "01M3NTTMDF6280GW4J5Y02B79T",
+    "label": "run 4: README 'Tests' section",
+    "build": "6d97cc1",
+    "proof_run": true,
+    "outcome": "completed $0.203: one round, unanimous; result commit 10a76cd",
+    "rounds": [
+      {
+        "round": "step-1-round-1",
+        "status": "unanimous_pass",
+        "winner": "round-1-attempt-1",
+        "verdicts": [
+          {
+            "seat": "motivation",
+            "outcome": "pass",
+            "selected": "round-1-attempt-1",
+            "rationale": "Both attempts add a `## Tests` section to README.md giving `uv sync --extra dev` and a pytest command that skips the `contract` marker, so a new contributor can run the tests from the README alone in either case. Attempt 1 (commit 10a76cd) matches the project's conventional pattern: `pytest -m \"not contract\"` after `uv sync --extra dev`, mirroring `.github/workflows/ci.yml` line 91 and the pyproje"
+          },
+          {
+            "seat": "implementation",
+            "outcome": "pass",
+            "selected": "round-1-attempt-1",
+            "rationale": "Both candidates satisfy the implementation rubric \u2014 only README.md is modified, and both document `uv sync --extra dev` plus a pytest command that references the `contract` marker. pyproject.toml (identical across worktrees) declares the `dev` extra at lines 24-29 and the `contract` marker at lines 68-70, so both candidates' commands align with that contract. attempt-1 is the cleaner choice: its `"
+          },
+          {
+            "seat": "performance",
+            "outcome": "pass",
+            "selected": "round-1-attempt-1",
+            "rationale": "Both candidates document pytest commands that pass tests/test_cli.py in well under 30 seconds. Attempt-1 documents the plain `pytest -m \"not contract\"` (README.md line 178), which I ran via the existing .venv pytest and got 15 passed in 0.15s. Attempt-2 documents `uv run --no-sync pytest -m \"not contract\"` (README.md line 141), which fails in this sandbox due to `uv`'s cache dir permission but pas"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "symphony_id": "01M3NVAPCJX5AWKXHDD638TPBR",
+    "label": "run 5: confirmation on the rebased build, steered",
+    "build": "rebased",
+    "proof_run": false,
+    "outcome": "completed $0.075: steered attempt accepted unanimously; result commit 23c5d03",
+    "rounds": [
+      {
+        "round": "step-1-round-1",
+        "status": "unanimous_pass",
+        "winner": "round-1-attempt-1",
+        "verdicts": [
+          {
+            "seat": "motivation",
+            "outcome": "pass",
+            "selected": "round-1-attempt-1",
+            "rationale": "The README.md diff between the accepted baseline (10a76cd) and the attempt's product commit (23c5d03) is a single one-line edit on the Tests command: `pytest -m \"not contract\"` -> `.venv/bin/python -m pytest -m \"not contract\"`. The resulting documented command (README.md line 178) routes through the project's own venv interpreter (.venv/bin/python, a uv-managed cpython-3.12 symlink that resolves t"
+          },
+          {
+            "seat": "implementation",
+            "outcome": "pass",
+            "selected": "round-1-attempt-1",
+            "rationale": "The implementation charter requires 'Only README.md changes, one command line.' Both candidate attempts satisfy this, but I'm selecting round-1-attempt-1 because its approach ('Direct: edit the one command line') exactly matches the stratagem named in the child charge, and its product commit produces the identical single-line edit to README.md. Verification: `git diff 10a76cd HEAD --stat` shows `R"
+          },
+          {
+            "seat": "performance",
+            "outcome": "pass",
+            "selected": "round-1-attempt-1",
+            "rationale": "README.md Tests section shows .venv/bin/python -m pytest -m not contract at line 178. Only README.md changed (1 insertion, 1 deletion). The documented command .venv/bin/python -m pytest -m not contract tests/test_cli.py -q runs the project own .venv Python and passes 15 tests in 0.15s, well under the 30s threshold. Attempt-1 approach matches the stratagem Direct edit the one command line literally"
+          }
+        ]
+      }
+    ]
+  }
+]

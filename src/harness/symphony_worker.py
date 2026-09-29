@@ -7,13 +7,14 @@ import asyncio
 import json
 import signal
 import subprocess
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, create_model
 from pydantic_ai import Agent, ModelRetry, PromptedOutput, capture_run_messages
-from pydantic_ai.messages import ModelMessagesTypeAdapter, ModelResponse
+from pydantic_ai.exceptions import AgentRunError
+from pydantic_ai.messages import ModelMessagesTypeAdapter, ModelResponse, ToolCallPart
 from pydantic_ai.usage import UsageLimits
 
 from harness.agent import ExtractionCandidateDraft
@@ -25,6 +26,7 @@ from harness.judge_panel import (
     JudgePanelError,
     JudgeVerdict,
     MetricAssessment,
+    stopped_verdict,
     validate_judge_verdict,
 )
 from harness.model_policy import ModelPolicyResolver
@@ -126,10 +128,26 @@ async def run(assignment_path: Path) -> None:
         "completion": WorkResult,
         "judge": JudgeAssessment,
     }[stage]
+    if stage == "judge":
+        # WALL attention / ADR-012: judges see sealed artifacts, never builder history.
+        while not (root / "JUDGE_SESSION.json").exists():
+            await asyncio.sleep(0.01)
+        sealed = JudgeEvidence.model_validate_json((root / "JUDGE_BRIEF.json").read_text())
+        session = json.loads((root / "JUDGE_SESSION.json").read_text())
+        candidates = tuple(candidate.attempt_id for candidate in sealed.candidates)
+        if candidates:
+            # M3SF: the schema names the only selectable attempts, so a judge cannot invent one.
+            output_type = create_model(
+                "JudgeAssessment",
+                __base__=JudgeAssessment,
+                selected_attempt_id=(Literal[candidates] | None, ...),
+            )
     agent = Agent(
         deps_type=MemoryToolContext,
         capabilities=[WorkspaceCapability(), *adopted_skill_capabilities(())],
         output_type=PromptedOutput(output_type),
+        # M3SF: a finished attempt that wraps its JSON in prose lost its work at one retry.
+        retries={"output": 3},
         name=f"symphony-{stage}",
         instructions=(
             "You are checking whether proposed work can START. Missing output files are "
@@ -148,6 +166,8 @@ async def run(assignment_path: Path) -> None:
         workspace_root=Path(assignment.get("workspace_root", str(root))),
         agent_id=assignment["origin_agent"],
         machine_id=settings.machine_id,
+        # M3SF / M3EX-10: a worker's tool calls stay inside its worktree.
+        fence_reads=True,
     )
     spine = SpineClient(
         settings.spine_url,
@@ -215,16 +235,21 @@ async def run(assignment_path: Path) -> None:
     observe_worker(output, assignment, toolset.location(), "running")
     prompt = assignment["brief"]
     if stage == "judge":
-        # WALL attention / ADR-012: judges see sealed artifacts, never builder history.
-        while not (root / "JUDGE_SESSION.json").exists():
-            await asyncio.sleep(0.01)
         prompt += "\n" + (root / "JUDGE_BRIEF.json").read_text()
         prompt += "\n" + (root / "JUDGE_SESSION.json").read_text()
-        sealed = JudgeEvidence.model_validate_json((root / "JUDGE_BRIEF.json").read_text())
-        session = json.loads((root / "JUDGE_SESSION.json").read_text())
 
         @agent.output_validator
-        def validate_return(_ctx, verdict):
+        def validate_return(ctx, verdict):
+            # M3SF: a blind verdict is not a judgment; its claims fed the next round's charge.
+            if sealed.candidates and not any(
+                isinstance(part, ToolCallPart)
+                for message in ctx.messages
+                for part in getattr(message, "parts", ())
+            ):
+                raise ModelRetry(
+                    "You returned a verdict without inspecting any candidate. Every listed "
+                    "artifact_root exists: move into it, run the charter's checks, then return."
+                )
             try:
                 return verdict.bind(session, sealed)
             except (JudgePanelError, ValueError) as exc:
@@ -268,19 +293,30 @@ async def run(assignment_path: Path) -> None:
     task = asyncio.current_task()
     asyncio.get_running_loop().add_signal_handler(signal.SIGTERM, task.cancel)
     try:
+        failed_verdict = None
         with capture_run_messages() as captured:
-            result = await agent.run(
-                prompt,
-                deps=context,
-                model=router.model_for(resolution.model),
-                model_settings=model_settings_for(resolution, assignment["thread_id"]),
-                usage_limits=UsageLimits(
-                    request_limit=settings.run_request_limit,
-                    total_tokens_limit=settings.run_total_tokens_limit,
-                ),
-                event_stream_handler=observe,
-                instructions=instructions,
-            )
+            try:
+                result = await agent.run(
+                    prompt,
+                    deps=context,
+                    model=router.model_for(resolution.model),
+                    model_settings=model_settings_for(resolution, assignment["thread_id"]),
+                    # M3SF: the owner's signed spend and time walls bound a worker, which the
+                    # runtime meters; the chat's per-run caps once killed attempts below them.
+                    usage_limits=UsageLimits(request_limit=None),
+                    event_stream_handler=observe,
+                    instructions=instructions,
+                )
+            except AgentRunError as exc:
+                if stage != "judge":
+                    raise
+                # M3SF: a judge that cannot return still returns a FAIL with its reason.
+                failed_verdict = stopped_verdict(
+                    session,
+                    charter=sealed.charter,
+                    reason=str(exc.__cause__ or exc),
+                    evidence_ref=str(output / "messages.json"),
+                )
         worker_context.publish(captured)
         if stage == "completion":
             subprocess.run(["git", "add", "-A"], check=True)
@@ -301,6 +337,8 @@ async def run(assignment_path: Path) -> None:
             )
             commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
             work = result.output
+            # M3SF: artifacts are worktree-relative; a model may cite them by absolute path.
+            artifacts = [ref.removeprefix(f"{root}/") for ref in work.evidence_refs]
             _write(
                 output / "memories.json",
                 json.dumps([memory.model_dump() for memory in work.memories]),
@@ -314,14 +352,18 @@ async def run(assignment_path: Path) -> None:
                         "evidence_refs": work.evidence_refs,
                         "uncertainties": work.uncertainties,
                         "metrics_refs": [str(output / "meter.json")],
-                        "artifacts": work.evidence_refs,
+                        "artifacts": [
+                            ref
+                            for ref in artifacts
+                            if not ref.startswith("/") and ".." not in PurePosixPath(ref).parts
+                        ],
                         "patch": None,
                         "product": ProductBaton(kind="commit", commit=commit).model_dump(),
                     }
                 )
             )
         else:
-            value = result.output
+            value = failed_verdict or result.output
         _write(output / "result.json", value.model_dump_json(indent=2))
         if stage == "judge":
             _write(root / "judge-verdict.json", value.model_dump_json(indent=2))

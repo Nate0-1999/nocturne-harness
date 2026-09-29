@@ -1,0 +1,36 @@
+{
+  "round_number": 2,
+  "search_child_id": "step-1-round-2",
+  "prior_decision_sha256": "9d9da9c9312025223b864d70afcc3a337c417af0054604b358f2a2860156d698",
+  "checkpoint_commit": "41973d4c8dfb9835238f5124d53a7b68d558e0bd",
+  "delta_frontier": [
+    {
+      "packet_id": "FBD5AE6FE107E2E0A344DD",
+      "bead_id": "FBD5AE6FE107E2E0A344DD",
+      "charge_digest": "a8d7489534142337e268eb08cabb5d28df915f79a36de1f6b90d552710d23857",
+      "minter_role": "judge"
+    }
+  ],
+  "attempts": [
+    {
+      "attempt_id": "round-2-attempt-1",
+      "feedback_packet_ids": [
+        "FBD5AE6FE107E2E0A344DD"
+      ],
+      "parent_attempt_ids": [],
+      "accepted_commit": "41973d4c8dfb9835238f5124d53a7b68d558e0bd",
+      "location": "/private/tmp/m3sf-verification/projects/harness/.nocturne-worktrees/01M3NRKR41XKW33249FW9PZWQA/step-1-round-2/round-2-attempt-1"
+    },
+    {
+      "attempt_id": "round-2-attempt-2",
+      "feedback_packet_ids": [
+        "FBD5AE6FE107E2E0A344DD"
+      ],
+      "parent_attempt_ids": [],
+      "accepted_commit": "41973d4c8dfb9835238f5124d53a7b68d558e0bd",
+      "location": "/private/tmp/m3sf-verification/projects/harness/.nocturne-worktrees/01M3NRKR41XKW33249FW9PZWQA/step-1-round-2/round-2-attempt-2"
+    }
+  ],
+  "passed_work": [],
+  "graft_edges": []
+}

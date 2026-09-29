@@ -7,6 +7,8 @@ import json
 import os
 import re
 import shlex
+import shutil
+import tempfile
 import unicodedata
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
@@ -221,6 +223,7 @@ class PydanticHarnessToolset:
         self._presence_events: list[PresenceEvent] = []
         self._closed = False
         self._background_shells: dict[str, ShellToolset] = {}
+        self._scratch: Path | None = None
         self._emit("spawn", location.cwd)
 
     @classmethod
@@ -315,6 +318,8 @@ class PydanticHarnessToolset:
         for shell in self._background_shells.values():
             await shell.__aexit__()
         self._background_shells.clear()
+        if self._scratch is not None:
+            shutil.rmtree(self._scratch, ignore_errors=True)
         self._emit("exit", self._location.cwd)
         self._closed = True
 
@@ -546,6 +551,18 @@ class PydanticHarnessToolset:
             raise ToolsetError("No background shell with that ID in this thread.")
         return await shell.stop_command(command_id)
 
+    def _outside_directory(self, command: str) -> Path | None:
+        try:
+            tokens = shlex.split(command)
+        except ValueError:
+            return None
+        for token in tokens:
+            if token.startswith(("/", "~", ".")):
+                target = (self._location.cwd / Path(token).expanduser()).resolve()
+                if target.is_dir() and not _inside(self._location.workspace_root, target):
+                    return target
+        return None
+
     def _shell_command(self, arguments: Mapping[str, object]) -> tuple[ShellToolset, str]:
         command = arguments.get("command")
         if not isinstance(command, str) or not command.strip():
@@ -564,6 +581,13 @@ class PydanticHarnessToolset:
                 "That command may expose credentials. Ask the owner before reading them.",
                 "credentials",
             )
+        if self._location.fence_reads and (outside := self._outside_directory(command)):
+            # WALL owner files / M3SF: a fenced agent never walks directories beyond its root.
+            raise WorkspaceBoundaryError(
+                f"That command reaches outside this workspace: {outside}. "
+                f"Stay inside {self._location.workspace_root}.",
+                "location",
+            )
         sandbox = Path("/usr/bin/sandbox-exec")
         if not sandbox.is_file():
             # WALL owner files / ADR015: never run an unfenced shell when sandboxing is absent.
@@ -571,17 +595,21 @@ class PydanticHarnessToolset:
                 "Secure shell is unavailable on this host; use read, edit, and write instead."
             )
         quoted_location = json.dumps(str(self._location.cwd))
+        if self._scratch is None:
+            # M3SF / M3EX-09: tool scratch (pytest, uv locks) stays out of the owner's repo.
+            self._scratch = Path(tempfile.mkdtemp(prefix="nocturne-shell-")).resolve()
         profile = (
             "(version 1) (deny default) (allow process*) (allow file-read*) "
             "(allow sysctl-read) (allow mach-lookup) "
             f"(allow file-write* (literal {quoted_location}) (subpath {quoted_location}) "
             '(literal "/dev/null"))'
+            f" (allow file-write* (subpath {json.dumps(str(self._scratch))}))"
         )
         wrapped = f"{sandbox} -p {shlex.quote(profile)} /bin/zsh -lc {shlex.quote(command)}"
         environment = {
             "PATH": os.environ.get("PATH", "/usr/bin:/bin:/usr/sbin:/sbin"),
             "LANG": os.environ.get("LANG", "en_US.UTF-8"),
-            "TMPDIR": str(self._location.cwd),
+            "TMPDIR": str(self._scratch),
             "NO_COLOR": os.environ.get("NO_COLOR", "1"),
         }
         for optional in ("LC_ALL", "TERM"):

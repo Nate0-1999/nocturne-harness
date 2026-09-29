@@ -8,6 +8,7 @@ import json
 import subprocess
 import sys
 import time
+from collections import Counter
 from decimal import Decimal
 from pathlib import Path
 from uuid import UUID, uuid4
@@ -26,7 +27,7 @@ from harness.conductor import (
 )
 from harness.context_window import bounds_from
 from harness.envelope import generate_ulid
-from harness.judge_panel import FeedbackPacketReceipt, JudgeLaunch, JudgePanel
+from harness.judge_panel import FeedbackPacketReceipt, JudgeLaunch, JudgePanel, stopped_verdict
 from harness.memory_bridge import SymphonyMemoryBridge
 from harness.rounds import AcceptedWork, GraftReceipt, RoundAttemptPlan, SymphonyRounds
 from harness.spine_client import JudgedContext, MemoryKind, MemoryStatus, PatchMemoryRequest
@@ -44,6 +45,46 @@ def _json(path: Path, value) -> None:
     temporary.write_text(json.dumps(value, indent=2) + "\n")
     temporary.chmod(0o600)
     temporary.replace(path)
+
+
+def _carry_environment(root: Path, location: Path) -> None:
+    """M3SF / M3EX-10: an attempt gets the project's ignored .venv, pointed at itself."""
+    source = root / ".venv"
+    ignored = subprocess.run(["git", "-C", str(root), "check-ignore", "-q", ".venv"])
+    if not source.is_dir() or ignored.returncode != 0:
+        return
+    target = location / ".venv"
+    clone = ("-c",) if sys.platform == "darwin" else ()  # APFS clone where the disk has it
+    subprocess.run(["cp", *clone, "-R", str(source), str(target)], check=True)
+    old, new = f"{root}/".encode(), f"{location}/".encode()
+    for path in (*target.glob("bin/*"), *target.glob("lib/python*/site-packages/*.pth")):
+        if path.is_file() and not path.is_symlink():
+            data = path.read_bytes()
+            if old in data and b"\0" not in data:
+                path.write_bytes(data.replace(old, new))
+
+
+def _graft(graft_root: Path, commits: list[str]) -> str:
+    """M3SF: passing attempts combine; where they overlap, the earlier attempt's lines stand."""
+    for commit in commits:
+        try:
+            _git(
+                graft_root,
+                "-c",
+                "user.name=Nocturne",
+                "-c",
+                "user.email=nocturne@localhost",
+                "cherry-pick",
+                "--keep-redundant-commits",
+                "-X",
+                "ours",
+                commit,
+            )
+        except subprocess.CalledProcessError as exc:
+            raise ValueError(
+                "The judges passed different attempts whose changes cannot be combined."
+            ) from exc
+    return _git(graft_root, "rev-parse", "HEAD")
 
 
 class SymphonyExecution:
@@ -204,34 +245,28 @@ class SymphonyExecution:
                     graft = None
                     survivors = ()
                     if prior_decision is not None:
-                        survivors = tuple(
-                            dict.fromkeys(
-                                v.selected_attempt_id
-                                for v in prior_decision.verdicts
-                                if v.outcome == "pass"
-                            )
+                        # M3SF: the most-chosen passing attempt grafts first, so its lines stand.
+                        votes = Counter(
+                            v.selected_attempt_id
+                            for v in prior_decision.verdicts
+                            if v.outcome == "pass"
                         )
+                        survivors = tuple(attempt for attempt, _count in votes.most_common())
                         if survivors:
-                            sources = [
-                                r
-                                for r in prior_decision.attempt_lineage
-                                if r.attempt_id in survivors
-                            ]
+                            sources = sorted(
+                                (
+                                    r
+                                    for r in prior_decision.attempt_lineage
+                                    if r.attempt_id in survivors
+                                ),
+                                key=lambda r: survivors.index(r.attempt_id),
+                            )
                             graft_root = worktrees / child_id / "graft"
                             graft_root.parent.mkdir(parents=True, exist_ok=True)
                             _git(root, "worktree", "add", "--detach", str(graft_root), checkpoint)
-                            for source in sources:
-                                _git(
-                                    graft_root,
-                                    "-c",
-                                    "user.name=Nocturne",
-                                    "-c",
-                                    "user.email=nocturne@localhost",
-                                    "cherry-pick",
-                                    "--keep-redundant-commits",
-                                    source.distillate.product.commit,
-                                )
-                            next_checkpoint = _git(graft_root, "rev-parse", "HEAD")
+                            next_checkpoint = _graft(
+                                graft_root, [s.distillate.product.commit for s in sources]
+                            )
                             graft = GraftReceipt(
                                 base_commit=checkpoint,
                                 accepted_commit=next_checkpoint,
@@ -248,6 +283,7 @@ class SymphonyExecution:
                         location = worktrees / child_id / attempt_id
                         location.parent.mkdir(parents=True, exist_ok=True)
                         _git(root, "worktree", "add", "--detach", str(location), checkpoint)
+                        _carry_environment(root, location)
                         briefs.append(
                             SearchAttemptBrief(
                                 attempt_id=attempt_id,
@@ -483,6 +519,18 @@ class SymphonyExecution:
                     sessions = panel.dispatch(launches)
                     await wait(sessions)
                     for session in sessions:
+                        verdict_path = session.brief_path.with_name("judge-verdict.json")
+                        if not verdict_path.exists():
+                            # M3SF: a judge process that died still leaves a FAIL with its reason.
+                            _json(
+                                verdict_path,
+                                stopped_verdict(
+                                    session.model_dump(),
+                                    charter=next(c for c in charters if c.seat == session.seat),
+                                    reason="the judge process stopped before returning",
+                                    evidence_ref=str(judge_outputs[session.seat]),
+                                ).model_dump(mode="json"),
+                            )
                         panel.accept_verdict(session.seat)
                     decision = panel.resolve()
                     rounds.accept_panel_decision(decision)
@@ -578,7 +626,16 @@ class SymphonyExecution:
                         for packet in decision.feedback_packets
                     )
                 else:
-                    raise ValueError("The judges did not agree before the signed round limit.")
+                    # M3SF: the stop carries what the judges said, so the card states the reason.
+                    failures = " ".join(
+                        f"{v.seat.capitalize()} judge: {' '.join(v.rationale.split())}"
+                        for v in prior_decision.verdicts
+                        if v.outcome == "fail"
+                    )
+                    raise ValueError(
+                        "The judges did not pass the work within the signed round limit. "
+                        + (failures or "They chose different attempts.")
+                    )
             # WALL owner files / ADR-012: publish only the unanimously selected checkpoint.
             if _git(root, "status", "--porcelain"):
                 raise ValueError(
