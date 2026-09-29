@@ -36,9 +36,16 @@ export function ControlTooltip() {
       setTooltip(null)
     }
 
+    // M3EX-26: a tip never outlives the pointer. Over no control, leaving this
+    // document (a module frame) or this window losing focus all hide it.
     function onPointerOver(event: PointerEvent) {
       const control = closestControl(event.target)
-      if (control !== null && control !== activeControl) show(control)
+      if (control === null) hide(activeControl)
+      else if (control !== activeControl) show(control)
+    }
+
+    function onLeave() {
+      hide(activeControl)
     }
 
     function onPointerOut(event: PointerEvent) {
@@ -49,7 +56,8 @@ export function ControlTooltip() {
 
     function onFocusIn(event: FocusEvent) {
       const control = closestControl(event.target)
-      if (control !== null) show(control)
+      // A click or a window regaining focus raises no tip; keyboard focus does.
+      if (control !== null && control.matches(':focus-visible')) show(control)
     }
 
     function onFocusOut(event: FocusEvent) {
@@ -71,6 +79,8 @@ export function ControlTooltip() {
     document.addEventListener('focusin', onFocusIn)
     document.addEventListener('focusout', onFocusOut)
     document.addEventListener('click', onActivate, true)
+    document.documentElement.addEventListener('pointerleave', onLeave)
+    globalThis.addEventListener('blur', onLeave)
     globalThis.addEventListener('resize', reposition)
     globalThis.addEventListener('scroll', reposition, true)
     return () => {
@@ -79,6 +89,8 @@ export function ControlTooltip() {
       document.removeEventListener('focusin', onFocusIn)
       document.removeEventListener('focusout', onFocusOut)
       document.removeEventListener('click', onActivate, true)
+      document.documentElement.removeEventListener('pointerleave', onLeave)
+      globalThis.removeEventListener('blur', onLeave)
       globalThis.removeEventListener('resize', reposition)
       globalThis.removeEventListener('scroll', reposition, true)
     }
