@@ -185,7 +185,7 @@ async def test_judge_that_cannot_return_writes_a_failed_verdict_with_its_reason(
 
     result = await _run_judge(tmp_path, monkeypatch, respond)
 
-    assert len(calls) == 2
+    assert len(calls) == 4
     assert result["outcome"] == "fail"
     assert result["selected_attempt_id"] is None
     assert "The judge returned no valid verdict" in result["rationale"]
@@ -343,6 +343,24 @@ async def test_a_judge_that_never_looks_returns_a_failed_verdict(tmp_path, monke
 
     result = await _run_judge(tmp_path, monkeypatch, respond, inspect=False)
 
-    assert len(calls) == 2
+    assert len(calls) == 4
     assert result["outcome"] == "fail"
     assert "without inspecting any candidate" in result["rationale"]
+
+
+@pytest.mark.asyncio
+async def test_a_judge_answer_wrapped_in_prose_gets_more_than_one_retry(tmp_path, monkeypatch):
+    """M3SF: minimax wrapped finished answers in prose twice; the third clean answer counts."""
+    calls = []
+
+    async def respond(messages, info):
+        calls.append(messages)
+        prefix = (
+            "Evidence still holds. Re-emitting the result object:\n\n" if len(calls) < 3 else ""
+        )
+        yield prefix + _verdict("attempt-1")
+
+    result = await _run_judge(tmp_path, monkeypatch, respond)
+
+    assert len(calls) == 3
+    assert result["outcome"] == "pass"
