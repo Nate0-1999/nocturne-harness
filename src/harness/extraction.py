@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+import os
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Literal
@@ -71,7 +72,12 @@ class ExtractionService:
             return ThreadEndResult(thread_id, final_post, "", [], pending.cards, 0, True)
         transcript = json.dumps(messages, ensure_ascii=False, separators=(",", ":"))
         return await self.triage(
-            thread_id, transcript, tail=tail, final_post=final_post, leave_over_cap=True
+            thread_id,
+            transcript,
+            tail=tail,
+            final_post=final_post,
+            leave_over_cap=True,
+            locations={message["message_id"]: message.get("location") for message in messages},
         )
 
     async def triage(
@@ -88,6 +94,7 @@ class ExtractionService:
         model_settings=None,
         summary_prompt=None,
         leave_over_cap=False,
+        locations=None,
     ):
         """D.2 153: compaction and close run the same summarizer and admission path."""
         options = (
@@ -115,6 +122,7 @@ class ExtractionService:
             usage=usage,
             on_result=on_result,
             model_settings=model_settings,
+            locations=locations,
         )
 
     async def admit(
@@ -129,10 +137,12 @@ class ExtractionService:
         usage=None,
         on_result=None,
         model_settings=None,
+        locations=None,
     ) -> ThreadEndResult:
         """The shared compaction/close queue door; the summarizer already did triage."""
         text_id = str(thread_id)
-        candidates = []
+        fallback = self._journal.thread_location(text_id)
+        groups: dict[str | None, list[ExtractionCandidate]] = {}
         for item in draft.candidates:
             neighbors = await self._spine.search(
                 SearchRequest(
@@ -165,15 +175,44 @@ class ExtractionService:
                 neighbor_payload,
                 **options,
             )
-            candidates.append(_candidate(item, verdict.verdict, verdict.target_ids))
-        request = ExtractionRequest(
-            principal_id=self._principal_id,
-            thread_id=thread_id,
-            machine_id=self._machine_id,
-            editor=origin,
-            origin_location=self._journal.thread_location(text_id),
-            candidates=candidates,
+            location = _origin_location(item.source_message_ids, locations or {}, fallback)
+            groups.setdefault(location, []).append(
+                _candidate(item, verdict.verdict, verdict.target_ids)
+            )
+        cards: list[QueueCard] = []
+        duplicate_count = 0
+        # SD-072: the Palace stamps one location per request, so each birth folder sends its own.
+        for location, candidates in (groups or {fallback: []}).items():
+            response = await self._create_extraction(
+                ExtractionRequest(
+                    principal_id=self._principal_id,
+                    thread_id=thread_id,
+                    machine_id=self._machine_id,
+                    editor=origin,
+                    origin_location=location,
+                    candidates=candidates,
+                )
+            )
+            cards.extend(response.cards)
+            duplicate_count += response.duplicate_count
+        self._journal.append_extraction(
+            text_id,
+            tail_message_id=tail,
+            working_summary=draft.working_summary,
+            open_loops=list(draft.open_loops),
+            item_uids=[card.item_uid for card in cards],
         )
+        return ThreadEndResult(
+            thread_id,
+            final_post,
+            draft.working_summary,
+            list(draft.open_loops),
+            cards,
+            duplicate_count,
+            False,
+        )
+
+    async def _create_extraction(self, request: ExtractionRequest) -> ExtractionResponse:
         try:
             try:
                 response = await self._spine.create_extraction(request)
@@ -194,7 +233,7 @@ class ExtractionService:
         except SpineClientError:
             pending = await self._spine.approval_queue(
                 self._principal_id,
-                thread_id=thread_id,
+                thread_id=request.thread_id,
                 birthplace="thread",
             )
             cards = _matching_thread_cards(pending.cards, request)
@@ -204,22 +243,7 @@ class ExtractionService:
                 cards=cards,
                 duplicate_count=max(0, len(request.candidates) - len(cards)),
             )
-        self._journal.append_extraction(
-            text_id,
-            tail_message_id=tail,
-            working_summary=draft.working_summary,
-            open_loops=list(draft.open_loops),
-            item_uids=[card.item_uid for card in response.cards],
-        )
-        return ThreadEndResult(
-            thread_id,
-            final_post,
-            draft.working_summary,
-            list(draft.open_loops),
-            response.cards,
-            response.duplicate_count,
-            False,
-        )
+        return response
 
 
 class ExtractionIdleScheduler:
@@ -282,6 +306,14 @@ def _candidate(
         verdict=verdict,
         target_ids=target_ids,
     )
+
+
+def _origin_location(
+    source_ids: list[str], locations: dict[str, str | None], fallback: str | None
+) -> str | None:
+    """SD-072: where the fact was worked; several folders meet at their common ancestor."""
+    folders = sorted({location for source in source_ids if (location := locations.get(source))})
+    return os.path.commonpath(folders) if folders else fallback
 
 
 def _matching_thread_cards(cards: list[QueueCard], request: ExtractionRequest) -> list[QueueCard]:

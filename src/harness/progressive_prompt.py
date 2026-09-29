@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from harness.toolset import AgentLocation
@@ -12,6 +13,9 @@ _INSTRUCTION_NAMES = (
     "AGENTS.MD",
     "CLAUDE.md",
     "CLAUDE.MD",
+)
+_RENDERED_LOCATION = re.compile(
+    r"<workspace_context>\nWorkspace root: [^\n]*\nCurrent location: ([^\n]+)\n"
 )
 
 
@@ -55,6 +59,13 @@ def render_workspace_context(location: AgentLocation) -> str:
     return "\n".join(lines)
 
 
+def rendered_location(instructions: str | None) -> str | None:
+    """SD-072: read back the current location a rendered workspace context gave the model."""
+
+    match = None if instructions is None else _RENDERED_LOCATION.search(instructions)
+    return None if match is None else match.group(1)
+
+
 def _directory_entries(cwd: Path) -> tuple[str, ...]:
     try:
         children = sorted(cwd.iterdir(), key=lambda item: (not item.is_dir(), item.name.casefold()))
@@ -92,4 +103,4 @@ def _instruction_sections(root: Path, cwd: Path) -> tuple[str, ...]:
     return tuple(sections)
 
 
-__all__ = ["render_workspace_context", "workspace_location_path"]
+__all__ = ["render_workspace_context", "rendered_location", "workspace_location_path"]

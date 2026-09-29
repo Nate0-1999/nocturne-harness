@@ -54,6 +54,7 @@ from pydantic_core import to_jsonable_python
 from spine.tokens import cl100k_token_count
 
 from harness.envelope import generate_ulid
+from harness.progressive_prompt import rendered_location
 from harness.project_path import repository_root
 from harness.spine_client import SpineClientError
 from harness.toolset import (
@@ -692,6 +693,22 @@ def own_history(messages):
     ]
 
 
+def located_transcript(messages):
+    """SD-072: label each message with an id and the folder the agent stood in for it."""
+    lines, locations, location = [], {}, None
+    for index, message in enumerate(messages):
+        # A request records the location it was given; a restored turn carries its stamp.
+        location = (
+            rendered_location(getattr(message, "instructions", None))
+            or (message.metadata or {}).get("location")
+            or location
+        )
+        if text := _format_messages([message]):
+            lines.append(f"[m{index}]\n{text}")
+            locations[f"m{index}"] = location
+    return "\n".join(lines), locations
+
+
 class CompactionPolicy(BaseModel):
     """Per-thread strategy and model-portable fill policy, persisted in the journal."""
 
@@ -784,9 +801,10 @@ class _MemoryStrategy:
         await owner.emit.event(
             {"event_kind": "compaction_started", "before_tokens": before, "strategy": strategy}
         )
+        transcript, locations = located_transcript(own_history(messages))
         result = await owner.service.triage(
             ctx.deps.thread_id,
-            _format_messages(own_history(messages)),
+            transcript,
             tail=owner.emit.run_id,
             origin="compaction",
             model=ctx.model,
@@ -794,6 +812,7 @@ class _MemoryStrategy:
             on_result=owner.on_result,
             model_settings=owner.model_settings,
             summary_prompt=owner.policy.instructions,
+            locations=locations,
         )
         # Admission must finish before any drop; a failed queue write leaves history intact.
         if strategy == "summarize":

@@ -612,3 +612,116 @@ async def test_policy_commands_survive_restart_and_manual_compaction_bypasses_fi
         emit=RecordingEmitter(),
     )
     assert repeated.assistant_text == "No older context to compact yet."
+
+
+@pytest.mark.asyncio
+async def test_compaction_memories_are_born_in_the_folders_their_facts_were_worked(tmp_path):
+    """ADR-010 (SD-072): at compaction each memory carries the folder the agent stood in for
+    the messages it came from — read from each request's workspace context, or a restored
+    turn's stamp — never the one folder the thread happens to be in at compaction time."""
+    import re
+
+    from harness.progressive_prompt import render_workspace_context
+    from harness.spine_client import SearchResponse
+    from harness.toolset import AgentLocation
+
+    root = tmp_path / "repo"
+    web, docs, lib = root / "web", root / "docs", root / "lib"
+    for folder in (web, docs, lib):
+        folder.mkdir(parents=True)
+
+    def standing_in(folder):
+        return render_workspace_context(
+            AgentLocation("agent-1", "machine-1", "session-1", root, folder, False)
+        )
+
+    def summarize(messages, info):
+        prompt = messages[-1].parts[-1].content
+        if prompt.startswith("Candidate:"):
+            return ModelResponse(parts=[TextPart('{"verdict": "new", "target_ids": []}')])
+
+        def fact(label, said):
+            source = re.search(r"\[(m\d+)\]\nUser: " + said, prompt).group(1)
+            keywords = ["build", label.lower()]
+            return {"label": label, "body": said, "kind": "fact", "keywords": keywords,
+                    "source_message_ids": [source]}  # fmt: skip
+
+        draft = {
+            "working_summary": "## Intent\nFinish the notebook.",
+            "open_loops": [],
+            "candidates": [
+                fact("Lib", "The lib uses cffi."),
+                fact("Web", "The web build uses Vite."),
+                fact("Docs", "The docs build uses mkdocs."),
+            ],
+        }
+        return ModelResponse(parts=[TextPart(json.dumps(draft))])
+
+    async def answer(messages, info):
+        yield "Noted."
+
+    class Palace:
+        def __init__(self):
+            self.requests = []
+
+        async def notify_compaction(self, event_uid, thread_id):
+            pass
+
+        async def search(self, request):
+            return SearchResponse(results=[])
+
+        async def create_extraction(self, request):
+            self.requests.append(request)
+            return ExtractionResponse(cards=[], duplicate_count=0)
+
+    model = FunctionModel(function=summarize, stream_function=answer)
+    agent = HarnessAgent(settings(), model=model)
+    deps = context()
+    journal = TranscriptJournal(tmp_path / "journal")
+    journal.append_thread_context(
+        str(deps.thread_id), str(root), workspace_root=str(root), current_location=str(root)
+    )
+    palace = Palace()
+    service = ExtractionService(
+        journal=journal, agent=agent, spine=palace, principal_id="p", machine_id="m"
+    )
+    runner = PydanticAITurnRunner(agent, lambda _: deps, extraction=service)
+    filler = " old detail" * 100
+    history = (
+        # A turn restored after a restart carries its journal stamp, not instructions.
+        ModelRequest(
+            [UserPromptPart("The lib uses cffi." + filler)], metadata={"location": str(lib)}
+        ),
+        ModelResponse([TextPart("Noted.")]),
+        ModelRequest(
+            [UserPromptPart("The web build uses Vite." + filler)], instructions=standing_in(web)
+        ),
+        ModelResponse([TextPart("Noted.")]),
+        ModelRequest(
+            [UserPromptPart("The docs build uses mkdocs." + filler)], instructions=standing_in(docs)
+        ),
+        ModelResponse([TextPart("Noted.")]),
+        *(
+            message
+            for i in range(10)
+            for message in (
+                ModelRequest([UserPromptPart(f"Page {i}:" + filler)]),
+                ModelResponse([TextPart("Page checked.")]),
+            )
+        ),
+    )
+    outcome = await runner.run(
+        thread_id=str(deps.thread_id),
+        prompt="Check the final page.",
+        message_history=history,
+        emit=RecordingEmitter(),
+        model_resolution=ThreadModelResolution(
+            model=settings().chat_model, context_tokens=2000, policy="pinned"
+        ),
+    )
+
+    assert outcome.stop_reason.value == "end_turn", outcome.error_message
+    assert [
+        (request.origin_location, [candidate.label for candidate in request.candidates])
+        for request in palace.requests
+    ] == [(str(lib), ["Lib"]), (str(web), ["Web"]), (str(docs), ["Docs"])]

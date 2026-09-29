@@ -331,3 +331,61 @@ async def test_a_refused_merge_target_still_archives_every_fact_as_new(tmp_path:
 
     assert [c.verdict for c in spine.requests[0].candidates] == ["merge"]
     assert [(c.verdict, c.target_ids) for c in spine.requests[1].candidates] == [("new", [])]
+
+
+@pytest.mark.asyncio
+async def test_archive_gives_each_memory_the_folder_its_facts_came_from(tmp_path: Path) -> None:
+    """ADR-010 (SD-072): a memory is born where its fact was worked — the location of its
+    source messages, their common ancestor when they span folders, and the thread's location
+    only when the model names no source; each birth folder is its own Palace request."""
+    root = tmp_path / "repo"
+    web, docs = root / "web", root / "docs"
+    web.mkdir(parents=True)
+    docs.mkdir()
+    thread_id = uuid4()
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    journal.append_thread_context(
+        str(thread_id), str(root), workspace_root=str(root), current_location=str(root)
+    )
+    said = [
+        ("01K1M2A0000000000000000001", "user", "The web build uses Vite.", web),
+        ("01K1M2A0000000000000000002", "assistant", "Noted for web.", web),
+        ("01K1M2A0000000000000000003", "user", "The docs build uses mkdocs.", docs),
+        ("01K1M2A0000000000000000004", "assistant", "Noted for docs.", docs),
+    ]
+    for message_id, role, content, where in said:
+        journal.append_message(
+            str(thread_id),
+            {"message_id": message_id, "role": role, "content": content, "location": str(where)},
+            parent_id=None,
+        )
+    journal.append_thread_location(str(thread_id), str(docs))
+
+    def fact(label: str, *sources: int) -> ExtractionCandidateDraft:
+        return ExtractionCandidateDraft(
+            label=label,
+            body=f"{label} fact.",
+            kind="fact",
+            keywords=["build", label.lower()],
+            source_message_ids=[said[index][0] for index in sources],
+        )
+
+    class LocatingAgent(FakeAgent):
+        async def extract_thread(self, transcript: str, **_: object) -> ExtractionDraft:
+            return ExtractionDraft(
+                working_summary="",
+                open_loops=[],
+                candidates=[fact("Web", 0, 1), fact("Docs", 2), fact("Both", 0, 2), fact("None")],
+            )
+
+    spine = FakeSpine()
+    service = ExtractionService(
+        journal=journal, agent=LocatingAgent(), spine=spine, principal_id="owner", machine_id="mac"
+    )
+
+    await service.archive(thread_id)
+
+    assert [
+        (request.origin_location, [candidate.label for candidate in request.candidates])
+        for request in spine.requests
+    ] == [(str(web), ["Web"]), (str(docs), ["Docs", "None"]), (str(root), ["Both"])]

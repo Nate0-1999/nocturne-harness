@@ -122,6 +122,8 @@ EXTRACTION_INSTRUCTION = (
     "answer. Only user-established facts useful beyond this task belong in candidates. "
     "Separate independent specifications into separate memories, even when they fit together "
     "under the size cap. Active tasks and their answers belong only in working_summary."
+    " Every transcript message has an id (its message_id or its [mN] label); list in each "
+    "candidate's source_message_ids the ids of the messages its fact was drawn from."
 )
 SEED_SPLIT_INSTRUCTION = (
     "Semantically split the complete Markdown document into durable atomic memories. Preserve "
@@ -203,6 +205,11 @@ class ExtractionCandidateDraft(BaseModel):
     kind: Literal["fact", "preference", "procedure", "project_note", "persona"]
     # WALL Palace writes / ADR-022: extracted candidates retain the memory keyword contract.
     keywords: list[StrictStr] = Field(min_length=2, max_length=5)
+    # SD-072: the messages a fact came from decide the folder its memory is born in.
+    source_message_ids: list[StrictStr] = Field(
+        default_factory=list,
+        description="The ids of the transcript messages this fact was drawn from.",
+    )
 
 
 class ExtractionDraft(BaseModel):
