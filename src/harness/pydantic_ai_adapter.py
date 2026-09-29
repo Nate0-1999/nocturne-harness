@@ -22,7 +22,7 @@ from harness.toolset import ToolName, ToolsetError
 WORKSPACE_INSTRUCTIONS = (
     "To edit or write a file, you must use move in its own tool step to enter that file's "
     "directory first. Reads are free. Bash may modify files only within the current location's "
-    "subtree. "
+    "subtree; git commands on this repository work from any folder inside it. "
     "When the user names a discoverable skill, call load_capability with that skill's id "
     "before following its instructions or reading its bundled resources. "
     "Never ask a permission question in chat. The PermissionJudge handles outside-file requests. "

@@ -294,6 +294,39 @@ async def test_shell_scratch_leaves_the_repo_and_a_fenced_agent_stays_inside(
     assert inside.success
 
 
+@pytest.mark.asyncio
+async def test_git_on_the_enclosing_repository_works_from_a_subfolder(tmp_path: Path) -> None:
+    """v2.125 (D.2 168), F134: git is the one exception to the bash subtree sandbox; other
+    writes above the subtree stay refused and the refusal names the movement remedy."""
+    if not Path("/usr/bin/sandbox-exec").is_file():
+        pytest.skip("the standing hard shell fence is macOS sandbox-exec")
+    import subprocess
+
+    repository = tmp_path / "repo"
+    sub = repository / "docs"
+    sub.mkdir(parents=True)
+    for command in (["init", "-q"], ["config", "user.name", "t"], ["config", "user.email", "t@t"]):
+        subprocess.run(["git", "-C", str(repository), *command], check=True)
+    toolset = await open_standard_toolset(cwd=sub, workspace_root=repository)
+    try:
+        await toolset.execute("bash", {"command": "printf note > note.txt"})
+        added = await toolset.execute("bash", {"command": "git add note.txt"})
+        committed = await toolset.execute("bash", {"command": "git commit -q -m note"})
+        above = await toolset.execute("bash", {"command": "printf x > ../above.txt"})
+        trail = [(event.event, event.path) for event in toolset.presence_events()]
+    finally:
+        await toolset.close()
+
+    log = subprocess.run(
+        ["git", "-C", str(repository), "log", "--format=%s"], capture_output=True, text=True
+    )
+    assert added.success and "exit code" not in added.content.lower()
+    assert committed.success and log.stdout.strip() == "note"
+    assert not (repository / "above.txt").exists()
+    assert "Move to the folder you need to change" in above.content
+    assert trail.count(("write", sub.resolve())) == 4
+
+
 def test_upstream_skills_gain_model_visible_bundled_resources(tmp_path: Path) -> None:
     """D.2 136 closes M3PV's resource gap without patching the dependency. [ADR-013, ADR-015]"""
 

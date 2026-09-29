@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Annotated
 
 from pydantic import AfterValidator, StrictStr
@@ -36,3 +37,12 @@ def validate_artificial_project_path(value: str) -> str:
 
 
 ArtificialProjectPath = Annotated[StrictStr, AfterValidator(validate_artificial_project_path)]
+
+
+def repository_root(folder: Path) -> Path | None:
+    """The git root holding folder (v2.125, F136); None outside a repository."""
+
+    for candidate in (folder, *folder.parents):
+        if (candidate / ".git").exists():
+            return candidate
+    return None

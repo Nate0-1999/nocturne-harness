@@ -39,7 +39,9 @@ def render_workspace_context(location: AgentLocation) -> str:
         f"Workspace-relative location: {relative}",
         "Treat the workspace root as the hard file-operation boundary for this thread.",
         "To edit or write a file, first move to its exact directory. "
-        "Shell commands stay within the current location's subtree; reads are free.",
+        "Shell commands write only within the current location's subtree, except git "
+        "commands on this repository, which work from any folder inside it; reads are free. "
+        "If a write is refused, move to the folder it needs instead of probing the sandbox.",
         "Directory entries:",
         *(f"- {entry}" for entry in entries),
     ]

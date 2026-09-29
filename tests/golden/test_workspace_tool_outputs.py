@@ -84,12 +84,13 @@ async def test_seven_coding_tool_outputs_are_explicit(tmp_path: Path) -> None:
 
 
 def test_exact_movement_law_is_model_visible() -> None:
-    """P1 and D.2 141 sharpen the prompt without giving bash the file-tool fence."""
+    """P1, D.2 141 and v2.125 (D.2 168) sharpen the prompt: bash keeps its subtree except git."""
 
     assert WORKSPACE_INSTRUCTIONS == (
         "To edit or write a file, you must use move in its own tool step to enter that file's "
         "directory first. Reads are free. Bash may modify files only within the current "
-        "location's subtree. When the user names a discoverable skill, call load_capability "
+        "location's subtree; git commands on this repository work from any folder inside it. "
+        "When the user names a discoverable skill, call load_capability "
         "with that skill's id before following its instructions or reading its bundled resources. "
         "Never ask a permission question in chat. "
         "The PermissionJudge handles outside-file requests. "

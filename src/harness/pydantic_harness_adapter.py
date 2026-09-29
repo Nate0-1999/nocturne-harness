@@ -51,6 +51,7 @@ from pydantic_core import to_jsonable_python
 from spine.tokens import cl100k_token_count
 
 from harness.envelope import generate_ulid
+from harness.project_path import repository_root
 from harness.spine_client import SpineClientError
 from harness.toolset import (
     AgentLocation,
@@ -75,6 +76,11 @@ _CREDENTIAL_COMMAND = re.compile(
     re.IGNORECASE,
 )
 _CREDENTIAL_SEGMENTS = frozenset({".ssh", ".aws", ".gnupg", ".kube"})
+_GIT_COMMAND = re.compile(r"^\s*git(?:\s|$)")
+_SHELL_WRITE_REMEDY = (
+    "The shell writes only inside {location}. Move to the folder you need to change and "
+    "run the command there; git commands on this repository work from any folder inside it."
+)
 
 
 def _inside(root: Path, target: Path) -> bool:
@@ -517,6 +523,9 @@ class PydanticHarnessToolset:
         finally:
             await shell.__aexit__()
         self._emit("write", self._location.cwd)
+        if "operation not permitted" in result.lower():
+            # F134 (M3EX-02): the sandbox's refusal names the movement remedy.
+            result += "\n" + _SHELL_WRITE_REMEDY.format(location=self._location.cwd)
         return result
 
     async def _start_shell(self, arguments: Mapping[str, object]) -> str:
@@ -598,10 +607,16 @@ class PydanticHarnessToolset:
         if self._scratch is None:
             # M3SF / M3EX-09: tool scratch (pytest, uv locks) stays out of the owner's repo.
             self._scratch = Path(tempfile.mkdtemp(prefix="nocturne-shell-")).resolve()
+        repository = repository_root(self._location.cwd) if _GIT_COMMAND.match(command) else None
+        # v2.125: git on the enclosing repository works from any folder inside it; _bash
+        # logs it with WHERE like every action.
+        git_dir = None if repository is None else json.dumps(str(repository / ".git"))
+        git_writes = "" if git_dir is None else f"(subpath {git_dir}) "
         profile = (
             "(version 1) (deny default) (allow process*) (allow file-read*) "
             "(allow sysctl-read) (allow mach-lookup) "
             f"(allow file-write* (literal {quoted_location}) (subpath {quoted_location}) "
+            f"{git_writes}"
             '(literal "/dev/null"))'
             f" (allow file-write* (subpath {json.dumps(str(self._scratch))}))"
         )
