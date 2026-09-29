@@ -1,0 +1,2 @@
+{"name": "M3EXF walk job", "prompt": "List the files in this folder.", "folder": "/private/tmp/m3exf-work/base",
+ "model_policy": "elbow", "budget_usd": 0.05, "exit_condition": "true", "memory_scope": "workspace"}

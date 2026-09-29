@@ -1,0 +1,110 @@
+                 pydantic-ai v2.43.0 • pydantic-ai-harness v0.31.0 • Python 3.12.9
+
+      / \        agent: harness-memory-label • model: openrouter:minimax/minimax-m3
+     /   \         output: PromptedOutput(outputs=<class 'harness.… • tools: 0 • capabilities: 0
+   /___.___\
+  /    |    \    observability: off — see every model and tool call live, with cost
+/      |      \    set it up free with Logfire and a GitHub login: https://pydantic.dev/ai-setup.md
+`---.._|_..---'    or use any OpenTelemetry backend: https://pydantic.dev/docs/ai/logfire/#otel
+
+                 goes away once observability is on — or PYDANTIC_AI_NO_BANNER=1
+{
+ "attempt": 1,
+ "ok": false,
+ "message": "I couldn't preserve every fact within the memory limit, so I didn't save it. Please clarify the facts and try /remember ",
+ "drafts": []
+}
+{
+ "attempt": 2,
+ "ok": false,
+ "message": "I couldn't preserve every fact within the memory limit, so I didn't save it. Please clarify the facts and try /remember ",
+ "drafts": [
+  {
+   "draft": {
+    "candidates": [
+     {
+      "label": "Web UI tests location",
+      "body": "Web UI tests live in harness/web/tests and run with npm test.",
+       "web",
+       "ui",
+       "tests",
+       "npm",
+       "harness"
+      ]
+     },
+     {
+      "label": "Python tests command",
+      "body": "Python tests run with .venv/bin/python -m pytest -q.",
+       "python",
+       "tests",
+       "pytest",
+       "venv",
+       "command"
+      ]
+     }
+    ],
+    "whole_source": false,
+    "coverage": [
+     {
+      "text": "Web UI tests live in harness/web/tests and run with npm test; ",
+      "classification": "durable",
+      "candidate_index": 0
+     },
+     {
+      "text": "Python tests run with .venv/bin/python -m pytest -q.",
+      "classification": "durable",
+      "candidate_index": 1
+     }
+    ],
+    "safe_to_save": true
+   },
+   "accepted": false
+  }
+ ]
+}
+{
+ "attempt": 3,
+ "ok": false,
+ "message": "I couldn't preserve every fact within the memory limit, so I didn't save it. Please clarify the facts and try /remember ",
+ "drafts": [
+  {
+   "draft": {
+    "candidates": [
+     {
+      "label": "Web UI tests setup",
+      "body": "Web UI tests live in harness/web/tests and run with npm test.",
+       "web",
+       "tests",
+       "npm",
+       "harness"
+      ]
+     },
+     {
+      "label": "Python tests command",
+      "body": "Python tests run with .venv/bin/python -m pytest -q.",
+       "python",
+       "pytest",
+       "venv",
+       "tests"
+      ]
+     }
+    ],
+    "whole_source": false,
+    "coverage": [
+     {
+      "text": "Web UI tests live in harness/web/tests and run with npm test",
+      "classification": "durable",
+      "candidate_index": 0
+     },
+     {
+      "text": "; Python tests run with .venv/bin/python -m pytest -q.",
+      "classification": "durable",
+      "candidate_index": 1
+     }
+    ],
+    "safe_to_save": true
+   },
+   "accepted": false
+  }
+ ]
+}

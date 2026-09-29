@@ -1,0 +1,15 @@
+// M3EX-26 focus path: click a host toggle, click into a module, click back on empty host space.
+import { createRequire } from 'node:module'
+const require = createRequire('/private/tmp/m3exf-work/harness/web/package.json')
+const { chromium } = require('playwright-core')
+const [url, out] = process.argv.slice(2)
+const browser = await chromium.launch({ channel: 'chrome', headless: true })
+const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage()
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+await page.goto(url); await sleep(5000)
+await page.getByRole('button', { name: 'Sheet', exact: true }).click(); await sleep(1500)
+await page.frameLocator('[data-testid="rack-plugin-frame-conversation"]').locator('#prompt-input').click(); await sleep(800)
+await page.mouse.click(1000, 74, { steps: 20 }); await sleep(1000)
+await page.mouse.move(1000, 30, { steps: 10 }); await sleep(800)
+await page.screenshot({ path: out })
+await browser.close()

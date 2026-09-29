@@ -1,0 +1,7 @@
+$ gcloud config get project
+agentic-etf
+$ echo n | nocturne init --remote <SPINE_URL>    # base; no SPINE_TOKEN; answer n
+nocturne: Sign in with `gcloud auth login` so Nocturne can discover your Palace access.
+
+$ nocturne init --remote <SPINE_URL> < /dev/null    # base; no terminal
+nocturne: Sign in with `gcloud auth login` so Nocturne can discover your Palace access.

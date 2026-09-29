@@ -1,0 +1,106 @@
+{
+ "attempt": 1,
+ "ok": false,
+ "message": "I couldn't save this as separate facts without changing them, so I saved nothing. Try one fact per /remember.",
+ "drafts": []
+}
+{
+ "attempt": 2,
+ "ok": true,
+ "message": "Remembered 3 linked memories: 'Observatory ledger duty', 'Calibration lantern location', 'North-wind calibration pause'.",
+ "drafts": [
+  {
+   "draft": {
+    "candidates": [
+     {
+      "label": "Web UI test command",
+      "body": "Web UI tests live in harness/web/tests and run with npm test.",
+       "web",
+       "tests",
+       "npm",
+       "harness",
+       "ui"
+      ]
+     },
+     {
+      "label": "Python test command",
+      "body": "Python tests run with .venv/bin/python -m pytest -q.",
+       "python",
+       "tests",
+       "pytest",
+       "venv"
+      ]
+     }
+    ],
+    "whole_source": false,
+    "coverage": [
+     {
+      "text": "Web UI tests live in harness/web/tests and run with npm test",
+      "classification": "durable",
+      "candidate_index": 0
+     },
+     {
+      "text": "; Python tests run with .venv/bin/python -m pytest -q.",
+      "classification": "durable",
+      "candidate_index": 1
+     }
+    ],
+    "safe_to_save": true
+   },
+   "accepted": true
+  }
+ ]
+}
+{
+ "attempt": 3,
+ "ok": false,
+ "message": "I couldn't save this as separate facts without changing them, so I saved nothing. Try one fact per /remember.",
+ "drafts": []
+}
+{
+ "attempt": 4,
+ "ok": true,
+ "message": "Remembered 3 linked memories: 'Observatory ledger duty', 'Calibration lantern location', 'North-wind calibration pause'.",
+ "drafts": [
+  {
+   "draft": {
+    "candidates": [
+     {
+      "label": "Web UI test setup",
+      "body": "Web UI tests live in harness/web/tests and run with npm test.",
+       "web",
+       "tests",
+       "npm",
+       "harness"
+      ]
+     },
+     {
+      "label": "Python test command",
+      "body": "Python tests run with .venv/bin/python -m pytest -q.",
+       "python",
+       "pytest",
+       "venv",
+       "tests"
+      ]
+     }
+    ],
+    "whole_source": false,
+    "coverage": [
+     {
+      "text": "Web UI tests live in harness/web/tests and run with npm test",
+      "classification": "durable",
+      "candidate_index": 0
+     },
+     {
+      "text": "; Python tests run with .venv/bin/python -m pytest -q.",
+      "classification": "durable",
+      "candidate_index": 1
+     }
+    ],
+    "safe_to_save": true
+   },
+   "accepted": true
+  }
+ ]
+}
+Summary across the live runs on 2026-09-28 21:34: base code 0 of 3 saved (2 refused by the separator check, 1 before validation); fixed code 13 of 16 saved; the 3 refusals: 2 at the 30 s split bound, 1 other.

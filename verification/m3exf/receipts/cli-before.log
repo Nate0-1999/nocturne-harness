@@ -1,0 +1,33 @@
+$ nocturne palace --help
+usage: nocturne palace [-h] {list,new,use,drop} ...
+
+positional arguments:
+  {list,new,use,drop}
+    list               list your Palaces
+
+options:
+  -h, --help           show this help message and exit
+
+$ nocturne palace new --help
+usage: nocturne palace new [-h] name
+
+positional arguments:
+  name
+
+options:
+  -h, --help  show this help message and exit
+
+$ nocturne export /private/tmp/m3exf-work/missing-folder/memories.json
+nocturne: Memory export could not read or write its file or Palace.
+exit 2
+
+$ nocturne update
+exit 0
+
+$ nocturne jobs list --daemon-url http://127.0.0.1:8791
+{
+  "jobs": [],
+  "runs": [],
+  "scheduler_error": null
+}
+exit 0

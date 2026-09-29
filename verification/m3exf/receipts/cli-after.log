@@ -1,0 +1,33 @@
+$ nocturne palace --help
+usage: nocturne palace [-h] {list,new,use,drop} ...
+
+positional arguments:
+  {list,new,use,drop}
+    list               list your Palaces
+    new                create a new Palace in your cloud project
+    use                choose the Palace Nocturne uses next start
+    drop               delete a Palace and all its memories
+
+options:
+  -h, --help           show this help message and exit
+
+$ nocturne palace new --help
+usage: nocturne palace new [-h] name
+
+positional arguments:
+  name        Palace name
+
+options:
+  -h, --help  show this help message and exit
+
+$ nocturne export /private/tmp/m3exf-work/missing-folder/memories.json
+nocturne: There is no folder at /private/tmp/m3exf-work/missing-folder; create it or choose another.
+exit 2
+
+$ nocturne update
+Nocturne 0.1.40 is up to date.
+exit 0
+
+$ nocturne jobs list --daemon-url http://127.0.0.1:8792
+01M3NFRHEW5241WHA7R8CKPTFM  M3EXF walk job  on demand  failed — Run ended: error. Spine returned an RFC 7807 problem: autonomous mode requires an already prepared thread (HTTP 409)
+exit 0

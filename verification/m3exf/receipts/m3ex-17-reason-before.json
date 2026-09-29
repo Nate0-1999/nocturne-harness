@@ -1,0 +1,16 @@
+{
+ "label": "Commit style",
+ "status": "tombstoned",
+ "revisions": [
+  {
+   "revision": 1,
+   "reason": "",
+   "status": null
+  },
+  {
+   "revision": 2,
+   "reason": "panel/delete/no_longer_needed",
+   "status": null
+  }
+ ]
+}

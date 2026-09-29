@@ -1,0 +1,20 @@
+{
+ "memory_label": "Release order",
+ "steps": [
+  {
+   "step": "start",
+   "status": "active",
+   "revision": 1
+  },
+  {
+   "step": "delete",
+   "status": "tombstoned",
+   "revision": 2
+  },
+  {
+   "step": "restore",
+   "status": "active",
+   "revision": 3
+  }
+ ]
+}

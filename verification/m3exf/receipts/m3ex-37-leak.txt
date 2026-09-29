@@ -1,0 +1,9 @@
+M3EX-37 measurements, 2026-09-28 21:15 CDT. Synthetic journal shaped like the walk's (one thread with 210 x 480 KB snapshot rows + 20 small threads) and a 300-row visualization history of a 36k-entry project tree. Scripts: make_journal.py, measure.py, measure_after.py, history_measure.py (copied beside this file).
+
+journal:  96M
+== 2 s sampler, 10 samples back to back
+before (0.1.40 code): samples=10 first=1.42s later_avg=1.48s peak_rss=1570 MB agents=21
+after (folds, cached catalog): samples=10 first=1.41s later_avg=1.040s peak_rss=544 MB agents=21
+== live visualization poll (a mounted 3D module polls every 2.5 s), 10 polls
+before: rows=300 first=3.25s later_avg=3.403s peak_rss=834 MB
+after:  rows=300 first=3.26s later_avg=0.000s peak_rss=349 MB

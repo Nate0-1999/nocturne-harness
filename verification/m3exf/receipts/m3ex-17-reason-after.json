@@ -1,0 +1,31 @@
+{
+ "label": "Commit style",
+ "status": "active",
+ "revisions": [
+  {
+   "revision": 1,
+   "reason": "",
+   "status": null
+  },
+  {
+   "revision": 2,
+   "reason": "panel/delete/no_longer_needed",
+   "status": null
+  },
+  {
+   "revision": 3,
+   "reason": "panel/restore",
+   "status": null
+  },
+  {
+   "revision": 4,
+   "reason": "panel/delete/should_never_have_been_saved",
+   "status": null
+  },
+  {
+   "revision": 5,
+   "reason": "panel/restore",
+   "status": null
+  }
+ ]
+}

@@ -1,0 +1,7 @@
+$ gcloud config get project
+agentic-etf
+$ echo n | nocturne init --remote <SPINE_URL>    # harness; no SPINE_TOKEN; answer n
+Found your Palace (n8-memory-palace, us-central1) — reconnect? [y/N] nocturne: No access token for this Palace. Sign in to gcloud as its owner (`gcloud auth login`) or set SPINE_TOKEN, then retry.
+
+$ nocturne init --remote <SPINE_URL> < /dev/null    # harness; no terminal
+Found your Palace (n8-memory-palace, us-central1) — reconnect? [y/N] nocturne: No access token for this Palace. Sign in to gcloud as its owner (`gcloud auth login`) or set SPINE_TOKEN, then retry.
