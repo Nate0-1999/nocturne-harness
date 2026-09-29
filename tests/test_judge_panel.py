@@ -437,4 +437,4 @@ def test_a_judge_that_returns_nothing_is_a_failed_verdict_with_its_reason(
     assert [metric.passed for metric in performance.metrics] == [False] * len(
         _charters()[2].metrics
     )
-    assert "performance judge returned no valid verdict" in minted[0].charge
+    assert "performance judge: The judge returned no valid verdict" in minted[0].charge

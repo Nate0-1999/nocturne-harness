@@ -141,7 +141,7 @@ def validate_judge_verdict(verdict, *, session, charter, candidate_ids) -> None:
 
 def stopped_verdict(session, *, charter, reason, evidence_ref) -> JudgeVerdict:
     """M3SF: a judge that cannot return is a FAIL carrying its reason, never a missing file."""
-    problem = f"The {session['seat']} judge returned no valid verdict: {_one_line(reason)}"
+    problem = f"The judge returned no valid verdict: {_one_line(reason)}"
     return JudgeVerdict(
         schema_version=1,
         **{
