@@ -586,6 +586,18 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     }
   }, [layout])
 
+  // M3EX-29: Escape closes the Settings panel and the Library.
+  useEffect(() => {
+    if (!appSettingsOpen && !libraryOpen) return
+    const escape = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      setAppSettingsOpen(false)
+      setLibraryOpen(false)
+    }
+    document.addEventListener('keydown', escape)
+    return () => document.removeEventListener('keydown', escape)
+  }, [appSettingsOpen, libraryOpen])
+
   useEffect(() => {
     try {
       globalThis.localStorage.setItem(SHEET_MODE_STORAGE_KEY, String(sheetMode))

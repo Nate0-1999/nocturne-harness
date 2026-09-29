@@ -49,3 +49,9 @@ test('the Stage exposes a labelled one-click layer creator beside its tabs', asy
   assert.match(app, /onClick=\{\(\) => setLayout\(createStageLayer\)\}/u)
   assert.match(app, /<span aria-hidden="true">＋<\/span>\s*Layer/u)
 })
+
+/** M3EX-29: Escape closes the Settings panel and the Library, like the module gear dialog. */
+test('escape closes settings and the library', async () => {
+  const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
+  assert.match(app, /if \(!appSettingsOpen && !libraryOpen\) return[\s\S]*?event\.key !== 'Escape'[\s\S]*?setAppSettingsOpen\(false\)\s*setLibraryOpen\(false\)/u)
+})
