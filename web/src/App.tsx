@@ -1525,8 +1525,8 @@ function RackModuleFrame({
               className="rack-module__remove"
               type="button"
               aria-label={`Remove ${manifest.name}`}
-              data-tooltip={`Remove ${manifest.name}`}
-              data-tooltip-detail="Remove it from this layer. Restore it later from Library."
+              data-tooltip="Remove module"
+              data-tooltip-detail="Take it off this layer; the Library brings it back."
               onClick={() => onRemove(instanceId)}
             >
               ×
