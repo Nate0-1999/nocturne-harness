@@ -1276,6 +1276,13 @@ button.rack-module__resize-handle--nw {
   padding: .7rem .8rem;
 }
 
+.seed-memory__actions {
+  float: right;
+  display: flex;
+  gap: 4px;
+  margin-left: 8px;
+}
+
 .seed-memory strong {
   display: block;
   margin: .4rem 0 .25rem;

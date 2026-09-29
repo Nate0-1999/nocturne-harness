@@ -3175,6 +3175,17 @@ function PalaceQueueModule() {
       .finally(() => setBusy(false))
   }
 
+  // M3EX-21: a long document is reviewed memory by memory, not only all-or-nothing.
+  function decideCandidate(itemUid: string, decision: 'approve' | 'deny') {
+    if (busy) return
+    setBusy(true)
+    void events.dispatch({ type: 'queue.decide', item_uid: itemUid, decision, approval_mode: 'explicit', actor_class: 'human' })
+      .then(load)
+      .then(() => setStatusText(decision === 'approve' ? 'Memory admitted.' : 'Memory discarded.'))
+      .catch((error: unknown) => setStatusText(error instanceof Error ? error.message : 'The document changed before it could be decided.'))
+      .finally(() => setBusy(false))
+  }
+
   function decideCurator(itemUid: string, decision: 'approve' | 'deny') {
     if (busy) return
     setBusy(true)
@@ -3313,6 +3324,10 @@ function PalaceQueueModule() {
                 <div className="seed-batch__memories">
                   {batchCards.map((card) => (
                     <div key={card.item_uid} className="seed-memory" data-verdict={card.verdict}>
+                      <div className="seed-memory__actions">
+                        <Button action="remove" iconOnly type="button" data-testid="seed-memory-reject" data-tooltip-detail="Discard just this memory." aria-label={`Reject ${card.candidate.label}`} disabled={busy} onClick={() => decideCandidate(card.item_uid, 'deny')}>Reject</Button>
+                        <Button action="confirm" iconOnly type="button" data-testid="seed-memory-approve" data-tooltip-detail="Admit just this memory." aria-label={`Approve ${card.candidate.label}`} disabled={busy} onClick={() => decideCandidate(card.item_uid, 'approve')}>Approve</Button>
+                      </div>
                       <span>{card.verdict} · {card.candidate.keywords.join(' · ')}</span>
                       <strong>{card.candidate.label}</strong>
                       <p>{card.candidate.body}</p>

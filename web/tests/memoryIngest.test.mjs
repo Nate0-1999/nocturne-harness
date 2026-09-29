@@ -57,3 +57,15 @@ test('curator proposals expose Palace activity and use only explicit queue decis
   assert.match(app, /Keep as is/u)
   assert.match(app, /Approve repair/u)
 })
+
+/** M3EX-21 / FL-163: a split document is reviewable memory by memory — each
+ * candidate has its own approve and reject beside the batch buttons.
+ */
+test('each ingest candidate can be approved or rejected alone', async () => {
+  const source = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
+
+  assert.match(source, /function decideCandidate\(itemUid: string, decision: 'approve' \| 'deny'\)[\s\S]*?type: 'queue\.decide', item_uid: itemUid, decision, approval_mode: 'explicit', actor_class: 'human'/u)
+  assert.match(source, /data-testid="seed-memory-reject"[\s\S]*?decideCandidate\(card\.item_uid, 'deny'\)/u)
+  assert.match(source, /data-testid="seed-memory-approve"[\s\S]*?decideCandidate\(card\.item_uid, 'approve'\)/u)
+  assert.match(source, /queue\.batch\.decide/u)
+})
