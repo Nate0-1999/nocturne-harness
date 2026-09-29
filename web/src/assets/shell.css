@@ -1667,9 +1667,12 @@
 }
 
 .memory-card__history {
-  margin-top: var(--space-2);
+  max-width: 20rem;
+  margin: 0;
+  padding-left: var(--space-3);
   color: var(--muted);
   font-size: var(--text-sm);
+  overflow-wrap: anywhere;
 }
 
 .memory-card__editor,
