@@ -74,8 +74,13 @@ try {
   const initialMemory = await geometry(page, 'memory')
   await page.getByTestId('stage-fit').click()
   await page.waitForFunction(() => {
-    const output = document.querySelector('[data-testid="stage-zoom"]')
-    return output !== null && Number.parseInt(output.textContent ?? '100', 10) < 50
+    // M3EX-28: "Whole stage" fits every module on the layer (its own tip), not the empty canvas.
+    const viewport = document.querySelector('[data-testid="stage-viewport"]')?.getBoundingClientRect()
+    const modules = [...document.querySelectorAll('[data-testid^="rack-module-"]')]
+      .map((module) => module.getBoundingClientRect())
+    return viewport !== undefined && modules.length > 0 && modules.every((rect) =>
+      rect.left >= viewport.left - 1 && rect.right <= viewport.right + 1 &&
+      rect.top >= viewport.top - 1 && rect.bottom <= viewport.bottom + 1)
   })
   const wholeStageZoom = await page.getByTestId('stage-zoom').textContent()
   observations.push({ whole_stage_zoom: wholeStageZoom })
