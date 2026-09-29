@@ -900,6 +900,8 @@ _THINKING_DELIMITERS = {
     "<think>": "</think>",
     "<thinking>": "</thinking>",
 }
+# The M3CL walk: minimax-m3 sends text parts that are only a closing tag; it hides nothing.
+_ORPHAN_CLOSERS = tuple(_THINKING_DELIMITERS.values())
 
 
 class _VisibleModelText:
@@ -913,14 +915,14 @@ class _VisibleModelText:
         self.pending += value
         visible = ""
         while self.pending:
-            markers = (self.closing,) if self.closing else tuple(_THINKING_DELIMITERS)
+            markers = (self.closing,) if self.closing else (*_THINKING_DELIMITERS, *_ORPHAN_CLOSERS)
             matches = [(self.pending.find(marker), marker) for marker in markers]
             matches = [(index, marker) for index, marker in matches if index >= 0]
             if matches:
                 index, marker = min(matches)
                 if self.closing is None:
                     visible += self.pending[:index]
-                    self.closing = _THINKING_DELIMITERS[marker]
+                    self.closing = _THINKING_DELIMITERS.get(marker)
                 else:
                     self.closing = None
                 self.pending = self.pending[index + len(marker) :]

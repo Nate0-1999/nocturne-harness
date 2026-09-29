@@ -463,7 +463,8 @@ async def test_m3dk_same_turn_proposal_is_hidden_from_chat_and_emitted_as_one_ca
     ],
 )
 async def test_m3rl_private_tags_never_enter_stream_or_final_answer(opening, closing) -> None:
-    """F070 / SPEC C.7: every chunk boundary keeps tagged reasoning out of visible text."""
+    """F070 / SPEC C.7: every chunk boundary keeps tagged reasoning out of visible text; an
+    orphan closing tag (minimax-m3 in the M3CL walk) is dropped too."""
     raw = f"Before.{opening}private scratch work{closing}After."
     raw += '<nocturne-proposed-response>{"primary":"Continue."}</nocturne-proposed-response>'
     for split in range(len(raw) + 1):
@@ -475,6 +476,10 @@ async def test_m3rl_private_tags_never_enter_stream_or_final_answer(opening, clo
         assert answer == "Before.After."
         assert "".join(emitter.texts) == answer
         assert emitter.events[-1]["primary"] == "Continue."
+    emitter = RecordingEmitter()
+    bridge = _EventBridge(emitter)
+    await bridge._accept_text(f"{closing}Orphan closer.")
+    assert "".join(emitter.texts) == "Orphan closer."
     emitter = RecordingEmitter()
     bridge = _EventBridge(emitter)
     await bridge._accept_text(f"Answer.{opening}unfinished private work")
