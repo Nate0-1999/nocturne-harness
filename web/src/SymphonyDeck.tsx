@@ -15,6 +15,7 @@ import './assets/symphonyDeck.css'
 import { WorkerContext } from './WorkerContext'
 import { OutLoud } from './OutLoud'
 import { Button, Select, TextArea, TextField, Toggle } from './kit'
+import { formatHumanUsd } from './humanNumbers'
 
 interface DeckAttempt {
   attempt_id: string
@@ -195,6 +196,7 @@ export function SymphonyDeck() {
     ),
   ), [selected?.messages])
   const cards = useMemo(() => proposedResponseCards(snapshot), [snapshot])
+  const blockedCount = stacks.filter((stack) => stack.state === 'blocked').length
   const boundaries = (selected?.messages ?? []).flatMap((message) => (
     message.role === 'assistant' ? message.events.filter((event, index, all) => (
       event.event_kind === 'boundary_card' && event.decision === 'owner_action' &&
@@ -261,7 +263,7 @@ export function SymphonyDeck() {
     <section className="symphony-deck" data-testid="symphony-deck">
       <header className="symphony-deck__header">
         <div><p>Conductor channel</p><h1>The Deck</h1></div>
-        <span>{visibleCards.length} waiting · {stacks.filter((stack) => stack.state === 'running').length} live</span>
+        <span>{visibleCards.length} waiting · {stacks.filter((stack) => stack.state === 'running').length} live{blockedCount > 0 && ` · ${blockedCount} blocked`}</span>
       </header>
       <p className="symphony-deck__rule">The longest-waiting reply stays first. Browse freely. You steer the conductor here. Workers are never directly addressable.</p>
       {boundaries.map((card) => (
@@ -460,7 +462,7 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
       </div>
       {contextAttempt !== null && <WorkerContext
         symphonyId={stack.symphony_id} attemptId={contextAttempt} />}
-      <p>Measured spend: ${stack.spend_usd} / ${String(stack.launch.authority.spend_wall_usd)}</p>
+      <p>Measured spend: {formatHumanUsd(stack.spend_usd)} / {formatHumanUsd(String(stack.launch.authority.spend_wall_usd))}</p>
       {stack.evidence.map((entry, index) => (
         <details key={index}>
           <summary>{Array.isArray(entry.verdicts) ? 'Judge verdicts' : 'Worker evidence'}</summary>

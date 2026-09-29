@@ -256,8 +256,8 @@ class SymphonyExperience:
         )
         await emit.event(self._state_event(stack))
         text = (
-            f"Symphony {stack.symphony_id} is running in its own worktrees. "
-            "Steering stays on the Deck; the judges release the result."
+            f"Symphony {stack.symphony_id} launched in its own worktrees. "
+            "Its live state shows below and on the Deck; the judges release the result."
         )
         await emit.text(text)
         self._start(stack)
