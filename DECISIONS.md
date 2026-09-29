@@ -3731,3 +3731,19 @@ Test palaces use ordinary fresh principals owned by that palace, so training
 works without weakening the owner's verification hygiene. Drop names the full
 memory count, refuses main, and closes only the target database's draining
 connections before deletion. The header gets its name through the rack API.
+
+## M3EXF — The small list from the owner's messy path [P1.3, P2, P4.1]
+
+PRECEDENT: report 249 findings M3EX-16..37; SD-068; A-072; F138; F139.
+A split `/remember` child may end its sentence where the source used a
+separator (either end of the segment); every other character still matches the
+source. A deleted memory is restored only through its own compare-and-set
+PATCH to active, after the daemon confirms the tombstone is the principal's
+(A-072). `init --remote` searches the project that serves a Cloud Run URL; y/N
+questions are visible and a missing terminal answers no. The journal catalog
+reuses entries of unchanged files, the visualization sampler reads only
+appended journal lines, live history reads fold only new rows, and a Symphony's
+newest state replaces its previous one in the launch message. A job that fails
+says why; the Palace's refusal of an autonomous first prepare is F138, and a
+second conversation module following another thread needs a per-thread client
+store (F139, the picker reverted).
