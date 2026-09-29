@@ -2,12 +2,12 @@
   "packet": "M3EXF",
   "mode": "builder",
   "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
-  "ledger_sha256": "2d9f4f28545a979ebe7dd311e92563b1b8551e73489b7a9be6a1f7849db4694a",
+  "ledger_sha256": "879e79d26c82c549edce773f6fc377f71b9a5e93ba1ff3194c628a4fe4173cce",
   "diffs": [
     {
       "repo": "harness",
       "base": "eec55fc869113108c5479823e5d21b633e75aa6a",
-      "head": "c78e23bf60c2e4c5d388f2fd6e5ecbd4c2b5829b"
+      "head": "ef7391c872006a41f9c6bc19b51efa9976288328"
     }
   ],
   "unmapped": {
@@ -76,6 +76,7 @@
     "harness/verification/m3exf/FL-138.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/FL-141.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/FL-142.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
+    "harness/verification/m3exf/FL-144.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/FL-157.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/FL-162.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/FL-164.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
@@ -100,6 +101,7 @@
     "harness/verification/m3exf/FL-192.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/FL-193.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/FL-194.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
+    "harness/verification/m3exf/FL-195.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/FL-196.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/FL-197.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/FL-199.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
@@ -141,6 +143,9 @@
     "harness/verification/m3exf/after/m3ex-36-roots-sheet.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/after/m3ex-36-roots-stage-after-sheet.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/after/m3ex-36-roots-stage.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
+    "harness/verification/m3exf/after/sd-073-favicon.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
+    "harness/verification/m3exf/after/sd-073-header-desktop.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
+    "harness/verification/m3exf/after/sd-073-header-phone.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/after/taste-06-memory-card-hover.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/after/taste-06-memory-cards.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/before/app-first-look.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
@@ -172,6 +177,9 @@
     "harness/verification/m3exf/before/m3ex-36-roots-sheet.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/before/m3ex-36-roots-stage-after-sheet.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/before/m3ex-36-roots-stage.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
+    "harness/verification/m3exf/before/sd-073-favicon.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
+    "harness/verification/m3exf/before/sd-073-header-desktop.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
+    "harness/verification/m3exf/before/sd-073-header-phone.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/before/taste-06-memory-card-hover.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/before/taste-06-memory-cards.png": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/gallery.html": "M3EXF evidence: captures, receipts, coverage report and checksums.",
@@ -192,11 +200,14 @@
     "harness/verification/m3exf/receipts/make_journal.py": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/receipts/measure.py": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/receipts/measure_after.py": "M3EXF evidence: captures, receipts, coverage report and checksums.",
+    "harness/verification/m3exf/receipts/palace-drop.log": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/receipts/palace-new.log": "M3EXF evidence: captures, receipts, coverage report and checksums.",
+    "harness/verification/m3exf/receipts/public-wheel.log": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/receipts/reason_check.py": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/receipts/remember_diag.py": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/receipts/restore_check.py": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/receipts/restore_walk_memory.py": "M3EXF evidence: captures, receipts, coverage report and checksums.",
+    "harness/verification/m3exf/receipts/sd-073-make_mark.py": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/receipts/seed_memories.py": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/receipts/seed_more.py": "M3EXF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3exf/receipts/tipcheck.mjs": "M3EXF evidence: captures, receipts, coverage report and checksums.",
@@ -207,8 +218,10 @@
     "harness/web/dist/assets/index-BxDUV-um.css": "generated packaged web bundle of the M3EXF source changes.",
     "harness/web/dist/assets/index-CGTQLaO-.js": "generated packaged web bundle of the M3EXF source changes (an intermediate build, replaced in the same packet).",
     "harness/web/dist/assets/index-CfDEjyma.js": "generated packaged web bundle of the M3EXF source changes (an intermediate build, replaced in the same packet).",
-    "harness/web/dist/assets/index-DAy00xtv.js": "generated packaged web bundle of the M3EXF source changes.",
+    "harness/web/dist/assets/index-D1OM-Z_u.js": "generated packaged web bundle of the M3EXF source changes.",
+    "harness/web/dist/assets/index-DAy00xtv.js": "generated packaged web bundle of the M3EXF source changes (an intermediate build, replaced in the same packet).",
     "harness/web/dist/assets/index-VnsJrUM_.css": "generated packaged web bundle of the M3EXF source changes.",
+    "harness/web/dist/favicon.svg": "generated packaged web bundle of the M3EXF source changes.",
     "harness/web/dist/index.html": "generated packaged web bundle of the M3EXF source changes.",
     "harness/web/src/assets/shell.css": "M3EX-35 model chip on one line and TASTE-06 hover history width; captured in m3ex-35-model-chip and taste-06-memory-card-hover.",
     "harness/web/src/protocol.ts": "A-072 restore wire types for the browser; walked under FL-013.",
@@ -544,6 +557,15 @@
       "flag": "F086",
       "observed": "Context only: an M3EXF change touched a file this row maps, so the row is required. Its complete gesture was not repeated in this packet. No new feature PASS or regression is claimed; the screenshot is the current build on the test palace."
     },
+    "FL-195": {
+      "label": "The feature ledger generates coverage reports and requires evidence for the rows affected by a build.",
+      "walk": "Compute the composer fix's impact with --paths and see attunement rows; push a branch touching socket.ts and observe the hook print rows and write impacted.json; observe a DONE handoff without screenshots fail CI, then verify complete evidence passes.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-195.png",
+      "flag": "F086",
+      "observed": "Context only: an M3EXF change touched a file this row maps, so the row is required. Its complete gesture was not repeated in this packet. No new feature PASS or regression is claimed; the screenshot is the current build on the test palace."
+    },
     "FL-196": {
       "label": "The rules machine checks citations, frozen law, product vocabulary, seed states and packet precedents.",
       "walk": "Remove a guard citation on a disposable branch and observe CI fail; change a frozen axiom and observe the freeze step fail; restore both and observe Rules pass. The master ADR check remains red until the owner applies the citation patch.",
@@ -813,6 +835,15 @@
       "flag": "",
       "observed": "Switched to Sheet; the same modules laid out full size; a reload keeps Sheet (M3EX-27)."
     },
+    "FL-144": {
+      "label": "The name Nocturne and the mark: an ouroboros around the moon.",
+      "walk": "Look at the header mark and the favicon: a snake eating its tail around a moon — a head, the tail in its mouth, a tapering body — readable at both sizes, not a ring inside a ring (owner, 2026-09-29).",
+      "protected": false,
+      "verdict": "PASS",
+      "screenshot": "FL-144.png",
+      "flag": "",
+      "observed": "SD-073: the header mark and the packaged favicon now draw a snake eating its tail around the moon — a head with an eye, open jaws with the tail inside, a tapering body — at 16, 32 and 64 px (after/sd-073-favicon.png) and in the header (after/sd-073-header-*.png); before, a ring inside a ring. The owner's taste call on the drawing stays for the room."
+    },
     "FL-162": {
       "label": "Easy onboarding from a single splash repo, needing only two secrets: a GCP credential and an OpenRouter key.",
       "walk": "On a fresh machine, follow the splash repo's install steps; you are asked for a GCP credential and an OpenRouter key and nothing else before the app comes up.",
@@ -1048,7 +1079,6 @@
     "FL-139": "outside diff",
     "FL-140": "horizon",
     "FL-143": "outside diff",
-    "FL-144": "outside diff",
     "FL-145": "outside diff",
     "FL-146": "outside diff",
     "FL-147": "outside diff",
@@ -1075,7 +1105,6 @@
     "FL-185": "horizon",
     "FL-188": "unverified",
     "FL-189": "dropped",
-    "FL-195": "outside diff",
     "FL-198": "outside diff"
   }
 }
