@@ -70,7 +70,9 @@ class ExtractionService:
             )
             return ThreadEndResult(thread_id, final_post, "", [], pending.cards, 0, True)
         transcript = json.dumps(messages, ensure_ascii=False, separators=(",", ":"))
-        return await self.triage(thread_id, transcript, tail=tail, final_post=final_post)
+        return await self.triage(
+            thread_id, transcript, tail=tail, final_post=final_post, leave_over_cap=True
+        )
 
     async def triage(
         self,
@@ -85,6 +87,7 @@ class ExtractionService:
         on_result=None,
         model_settings=None,
         summary_prompt=None,
+        leave_over_cap=False,
     ):
         """D.2 153: compaction and close run the same summarizer and admission path."""
         options = (
@@ -99,6 +102,8 @@ class ExtractionService:
         )
         if summary_prompt is not None:
             options["summary_prompt"] = summary_prompt
+        if leave_over_cap:
+            options["leave_over_cap"] = True
         draft = await self._agent.extract_thread(transcript, **options)
         return await self.admit(
             thread_id,

@@ -29,7 +29,7 @@ class FakeAgent:
     def __init__(self) -> None:
         self.calls: list[str] = []
 
-    async def extract_thread(self, transcript: str) -> ExtractionDraft:
+    async def extract_thread(self, transcript: str, **_: object) -> ExtractionDraft:
         self.calls.append(transcript)
         return ExtractionDraft(
             working_summary="Queue law was settled.",

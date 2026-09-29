@@ -762,6 +762,7 @@ class HarnessAgent:
         model_settings: ModelSettings | None = None,
         on_result=None,
         summary_prompt: str = COMPACTION_SUMMARY_PROMPT,
+        leave_over_cap: bool = False,
     ) -> ExtractionDraft:
         """Run the tools-free cheap-model extraction pass over one durable transcript."""
 
@@ -795,7 +796,22 @@ class HarnessAgent:
             )
             if on_result is not None:
                 await on_result(result.all_messages())
-        if any(cl100k_token_count(item.body) > 128 for item in result.output.candidates):
+        over_cap = [
+            item for item in result.output.candidates if cl100k_token_count(item.body) > 128
+        ]
+        if over_cap and leave_over_cap:
+            # INCIDENT M3EX-22: archive keeps the journal whole, so a fact that will not fit
+            # is named for the owner instead of failing the archive.
+            return result.output.model_copy(
+                update={
+                    "candidates": [c for c in result.output.candidates if c not in over_cap],
+                    "open_loops": [
+                        *result.output.open_loops,
+                        *(f"Not proposed, over the memory cap: {c.label}" for c in over_cap),
+                    ],
+                }
+            )
+        if over_cap:
             # D.2 153 / SD-062: failed shortening must retain the uncompacted history.
             raise ValueError(
                 "Compaction could not preserve a fact within the memory cap; history kept."

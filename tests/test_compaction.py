@@ -120,6 +120,45 @@ async def test_over_cap_fact_is_shortened_once_or_refused(corrected):
 
 
 @pytest.mark.asyncio
+async def test_archive_names_a_fact_that_will_not_fit_instead_of_failing() -> None:
+    """D.2 153 / SD-062 (M3EX-22): archive keeps the journal whole, so a fact that stays over
+    the cap is left out and named; the facts that fit are still proposed."""
+
+    def extract(messages, info):
+        return ModelResponse(
+            [
+                TextPart(
+                    json.dumps(
+                        {
+                            "working_summary": "Finish the notebook.",
+                            "open_loops": [],
+                            "candidates": [
+                                {
+                                    "label": "Notebook",
+                                    "body": "copper " * 200,
+                                    "kind": "fact",
+                                    "keywords": ["notebook", "copper"],
+                                },
+                                {
+                                    "label": "Pen",
+                                    "body": "The pen is blue.",
+                                    "kind": "fact",
+                                    "keywords": ["pen", "blue"],
+                                },
+                            ],
+                        }
+                    )
+                )
+            ]
+        )
+
+    agent = HarnessAgent(settings(), model=FunctionModel(function=extract))
+    draft = await agent.extract_thread("Two facts.", leave_over_cap=True)
+    assert [candidate.label for candidate in draft.candidates] == ["Pen"]
+    assert draft.open_loops == ["Not proposed, over the memory cap: Notebook"]
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "strategy", ["truncate", "summarize", "memories-then-drop", "human-and-final-only"]
 )
