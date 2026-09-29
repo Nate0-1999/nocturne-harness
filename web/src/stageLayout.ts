@@ -432,19 +432,6 @@ export function setConversationMode(
   ))
 }
 
-/** M3EX-32: a conversation module follows one chosen thread, or the selected one (null). */
-export function setConversationSource(
-  layout: StageLayoutSet,
-  instanceId: string,
-  threadId: string | null,
-): StageLayoutSet {
-  return updateActiveModule(layout, instanceId, (module) => (
-    module.module_id === 'conversation'
-      ? { ...module, source_thread_id: threadId }
-      : module
-  ))
-}
-
 /** M3FX / F084: an explicit stack binding persists independently of geometry. */
 export function setStageAttunementSource(
   layout: StageLayoutSet, instanceId: string, sourceId: string | null,
