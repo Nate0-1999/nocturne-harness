@@ -900,8 +900,6 @@ _THINKING_DELIMITERS = {
     "<think>": "</think>",
     "<thinking>": "</thinking>",
 }
-# M3EX-05: a speaker tag the model writes is not part of the answer.
-_STRAY_TAGS = ("<Nocturne>", "</Nocturne>")
 
 
 class _VisibleModelText:
@@ -915,14 +913,14 @@ class _VisibleModelText:
         self.pending += value
         visible = ""
         while self.pending:
-            markers = (self.closing,) if self.closing else (*_THINKING_DELIMITERS, *_STRAY_TAGS)
+            markers = (self.closing,) if self.closing else tuple(_THINKING_DELIMITERS)
             matches = [(self.pending.find(marker), marker) for marker in markers]
             matches = [(index, marker) for index, marker in matches if index >= 0]
             if matches:
                 index, marker = min(matches)
                 if self.closing is None:
                     visible += self.pending[:index]
-                    self.closing = _THINKING_DELIMITERS.get(marker)
+                    self.closing = _THINKING_DELIMITERS[marker]
                 else:
                     self.closing = None
                 self.pending = self.pending[index + len(marker) :]

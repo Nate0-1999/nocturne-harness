@@ -538,8 +538,8 @@ async def test_m3fz_text_tool_text_keeps_the_whole_answer_and_terminal_proposal(
 
 
 @pytest.mark.asyncio
-async def test_m3cl_block_only_answer_reaches_chat_without_tags_and_with_breaks() -> None:
-    """F133 (M3EX-01/05/06): the answer is in chat, tag-free, one paragraph per step;
+async def test_m3cl_block_only_answer_reaches_chat_with_breaks() -> None:
+    """F133 (M3EX-01/06): the answer is in chat, one paragraph per step;
     the proposed-reply card (FL-104/117) is emitted exactly as built."""
 
     async def stream(messages, _info):
@@ -549,7 +549,7 @@ async def test_m3cl_block_only_answer_reaches_chat_without_tags_and_with_breaks(
             if isinstance(message, ModelRequest)
             for part in message.parts
         ):
-            yield "<Nocturne>I will write the note."
+            yield "I will write the note."
             yield {
                 0: DeltaToolCall(
                     name="write",
@@ -558,7 +558,7 @@ async def test_m3cl_block_only_answer_reaches_chat_without_tags_and_with_breaks(
                 )
             }
         else:
-            yield "<Nocturne><nocturne-proposed-response>"
+            yield "<nocturne-proposed-response>"
             yield '{"primary":"Run npm test from web/.","alternatives":[]}'
             yield "</nocturne-proposed-response>"
 
