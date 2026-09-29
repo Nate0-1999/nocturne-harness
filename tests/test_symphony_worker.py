@@ -7,7 +7,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-from pydantic_ai.models.function import FunctionModel
+from pydantic_ai.models.function import DeltaToolCall, FunctionModel
 
 from harness import symphony_worker
 from harness.spine_client import InjectPrepareResponse, MemoryAllocation
@@ -15,8 +15,19 @@ from harness.symphony_context import COMPONENT_REGISTRY, WorkerContext, write_js
 from harness.toolset import AgentLocation
 
 
-async def _run_judge(tmp_path, monkeypatch, respond):
-    """Run one performance judge worker against a scripted model."""
+async def _run_judge(tmp_path, monkeypatch, respond, *, inspect=True):
+    """Run one performance judge worker against a scripted model that first inspects."""
+    inspected = not inspect
+
+    async def inspecting(messages, info):
+        nonlocal inspected
+        if not inspected:
+            inspected = True
+            yield {0: DeltaToolCall(name="ls", json_args="{}")}
+            return
+        async for chunk in respond(messages, info):
+            yield chunk
+
     session = {
         "schema_version": 1,
         "seat": "performance",
@@ -74,7 +85,9 @@ async def _run_judge(tmp_path, monkeypatch, respond):
     assignment_path.write_text(json.dumps(assignment))
 
     router = SimpleNamespace(
-        catalog=None, model_for=lambda _: FunctionModel(stream_function=respond), aclose=AsyncMock()
+        catalog=None,
+        model_for=lambda _: FunctionModel(stream_function=inspecting),
+        aclose=AsyncMock(),
     )
     monkeypatch.setattr(symphony_worker, "CompletionRouter", lambda _: router)
     resolver = SimpleNamespace(
@@ -317,3 +330,19 @@ async def test_completion_artifacts_are_relative_to_the_worktree(tmp_path, monke
     result = json.loads((out / "result.json").read_text())
     assert result["artifacts"] == ["README.md", "README.md (line 1)"]
     assert result["evidence_refs"][2] == "/elsewhere/n.txt"
+
+
+@pytest.mark.asyncio
+async def test_a_judge_that_never_looks_returns_a_failed_verdict(tmp_path, monkeypatch):
+    """M3SF: a verdict with no inspection is sent back, then recorded as a FAIL with why."""
+    calls = []
+
+    async def respond(messages, info):
+        calls.append(messages)
+        yield _verdict("attempt-1")
+
+    result = await _run_judge(tmp_path, monkeypatch, respond, inspect=False)
+
+    assert len(calls) == 2
+    assert result["outcome"] == "fail"
+    assert "without inspecting any candidate" in result["rationale"]
