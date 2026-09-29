@@ -236,6 +236,26 @@ const scenes = {
     console.log('gate shown:', gated)
     await context.close()
   },
+  async 'fl-081-gate-card'() {
+    const { context, page } = await open()
+    await sheet(page)
+    await frame(page, 'threads').getByRole('button', { name: 'New thread' }).first().click(); await sleep(1500)
+    const create = frame(page, 'threads').getByRole('button', { name: 'Create', exact: true })
+    if (await create.count()) { await create.first().click() }
+    await sleep(3000)
+    const conversation = frame(page, 'conversation')
+    await conversation.locator('#prompt-input').fill('Where are the fictional steel anchors kept?')
+    await conversation.locator('#prompt-input').press('Enter')
+    const gate = frame(page, 'gate')
+    for (let i = 0; i < 60 && !(await gate.getByTestId('memory-gate-continue').count()); i += 1) await sleep(2000)
+    await sleep(1500)
+    await shot(page, 'fl-081-gate-cards')
+    await gate.locator('.memory-card__title').first().hover(); await sleep(1200)
+    await shot(page, 'fl-081-gate-card-hover')
+    await gate.getByTestId('memory-gate-continue').first().click(); await sleep(60000)
+    await shot(page, 'fl-081-gate-answer', { clip: await clip(page, 'conversation') })
+    await context.close()
+  },
   async 'taste-06-cards'() {
     const { context, page } = await open()
     await sheet(page)
