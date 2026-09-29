@@ -17,7 +17,7 @@ test('keeps the memory editor mounted for its authoritative save result', async 
   assert.match(source, /function submitEdit[\s\S]*?void saveEdit\(\)/u)
 })
 
-/** M3EX-17 / FL-013: the reason picked in the Memory module's delete dialog is the
+/** M3EX-17 / P1.2.1a: the reason picked in the Memory module's delete dialog is the
  * reason recorded; the module never drops it on the way to the rack action.
  */
 test('the Memory module forwards the chosen delete reason', async () => {
@@ -26,7 +26,7 @@ test('the Memory module forwards the chosen delete reason', async () => {
   assert.match(source, /onDelete=\{\(memoryId, expectedRevision, reason\) => events\.dispatch\(\{\s*type: 'memory\.delete', memory_id: memoryId, expected_revision: expectedRevision, reason,/u)
 })
 
-/** M3EX-18 / FL-013: a deleted memory selected in the Memory Graph offers Restore,
+/** M3EX-18 / A-072: a deleted memory selected in the Memory Graph offers Restore,
  * which reaches the daemon as the compare-and-set restore request.
  */
 test('the Memory Graph restores a deleted memory', async () => {
@@ -40,7 +40,7 @@ test('the Memory Graph restores a deleted memory', async () => {
   assert.match(socket, /action: 'restore', memory_id: memoryId, expected_revision: expectedRevision/u)
 })
 
-/** TASTE-06 / SD-068 / FL-081: the Memory module's card is score, name and memory;
+/** TASTE-06 / P1.2.1c: the Memory module's card is score, name and memory;
  * revision history sits in the hover panel and opening the origin conversation is a
  * small row action, not a line on the card.
  */

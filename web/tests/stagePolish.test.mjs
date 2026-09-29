@@ -50,13 +50,13 @@ test('the Stage exposes a labelled one-click layer creator beside its tabs', asy
   assert.match(app, /<span aria-hidden="true">＋<\/span>\s*Layer/u)
 })
 
-/** M3EX-29: Escape closes the Settings panel and the Library, like the module gear dialog. */
+/** M3EX-29 / P2.5: Escape closes the Settings panel and the Library, like the module gear dialog. */
 test('escape closes settings and the library', async () => {
   const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
   assert.match(app, /if \(!appSettingsOpen && !libraryOpen\) return[\s\S]*?event\.key !== 'Escape'[\s\S]*?setAppSettingsOpen\(false\)\s*setLibraryOpen\(false\)/u)
 })
 
-/** M3EX-30: typing "/" lists the daemon's commands beside the composer, without
+/** M3EX-30 / P2.5: typing "/" lists the daemon's commands beside the composer, without
  * touching the composer function itself.
  */
 test('slash commands are listed when the composer starts with a slash', async () => {
@@ -68,7 +68,7 @@ test('slash commands are listed when the composer starts with a slash', async ()
   assert.match(app, /document\.getElementById\('prompt-input'\)[\s\S]*?\/\^\\\/\\S\*\$\/u\.test\(input\.value\)/u)
 })
 
-/** M3EX-34 / FL-101: at phone width the header keeps the Palace and its state and labels
+/** M3EX-34 / P2.5: at phone width the header keeps the Palace and its state and labels
  * its counts, the layer tabs get their own row, and module titles keep their room.
  */
 test('phone width keeps the palace status, layer tabs and module titles readable', async () => {
@@ -81,7 +81,7 @@ test('phone width keeps the palace status, layer tabs and module titles readable
   assert.match(phone, /\.rack-module__drag > \.rack-module__attunement \{\s*display: none;/u)
 })
 
-/** M3EX-33: the layer × tip names the action once — "Remove layer", not "Remove Layer 1 layer";
+/** M3EX-33 / P2.5: the layer × tip names the action once — "Remove layer", not "Remove Layer 1 layer";
  * the accessible name the canon uses is unchanged.
  */
 test('the layer remove tip does not repeat the word layer', async () => {
@@ -89,7 +89,7 @@ test('the layer remove tip does not repeat the word layer', async () => {
   assert.match(app, /aria-label=\{`Remove \$\{candidate\.name\} layer`\}\s*data-tooltip="Remove layer"/u)
 })
 
-/** M3EX-33: the module × says it removes the module, not "Remove Palace" (which reads as
+/** M3EX-33 / P2.5: the module × says it removes the module, not "Remove Palace" (which reads as
  * destroying the Palace).
  */
 test('the module remove tip names the module, not its subject', async () => {

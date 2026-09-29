@@ -770,7 +770,7 @@ async def test_delete_refuses_another_principals_memory() -> None:
 
 @pytest.mark.asyncio
 async def test_restore_makes_an_owned_deleted_memory_active_again() -> None:
-    """M3EX-18 / FL-013: "its history stays restorable" — the tombstone comes back active."""
+    """M3EX-18 / A-072: "its history stays restorable" — the tombstone comes back active."""
     deleted = memory_unit(MEMORY_A, status=MemoryStatus.TOMBSTONED, revision=8)
     restored = deleted.model_copy(update={"status": MemoryStatus.ACTIVE, "revision": 9})
     spine = FakeSpine([deleted], patch_outcomes=[restored])

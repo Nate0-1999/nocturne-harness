@@ -58,7 +58,7 @@ test('curator proposals expose Palace activity and use only explicit queue decis
   assert.match(app, /Approve repair/u)
 })
 
-/** M3EX-21 / FL-163: a split document is reviewable memory by memory — each
+/** M3EX-21 / ADR-019: a split document is reviewable memory by memory — each
  * candidate has its own approve and reject beside the batch buttons.
  */
 test('each ingest candidate can be approved or rejected alone', async () => {

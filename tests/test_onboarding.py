@@ -280,7 +280,7 @@ def test_a057_discovery_accepts_only_one_spine_service(
 def test_remote_url_is_found_in_the_project_that_serves_it(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """M3EX-24: `init --remote` searches the URL's own project, not gcloud's active one."""
+    """M3EX-24 / P4: `init --remote` searches the URL's own project, not gcloud's active one."""
 
     monkeypatch.setattr(onboarding.shutil, "which", lambda _: "/usr/bin/gcloud")
     remote = "https://owner-spine-123456789.us-central1.run.app"
@@ -318,7 +318,7 @@ def test_remote_url_is_found_in_the_project_that_serves_it(
 def test_yes_no_questions_are_visible_and_no_terminal_answers_no(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """M3EX-24: y/N is typed in the open; a missing terminal is a no, never an EOFError."""
+    """M3EX-24 / P4: y/N is typed in the open; a missing terminal is a no, never an EOFError."""
 
     asked: list[str] = []
     monkeypatch.setattr("builtins.input", lambda question: asked.append(question) or "y")

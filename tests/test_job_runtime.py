@@ -110,7 +110,7 @@ async def test_workflow_receives_typed_events_and_finishes_exit_check(tmp_path):
 
 @pytest.mark.asyncio
 async def test_a_failed_run_says_why(tmp_path):
-    """M3EX-23 / FL-184: a failed job run records the turn's reason, not only 'error'."""
+    """M3EX-23 / A-069: a failed job run records the turn's reason, not only 'error'."""
 
     class Runner:
         async def run(self, **kwargs):
@@ -163,7 +163,7 @@ async def test_a_failed_run_says_why(tmp_path):
 
 
 def test_the_jobs_help_example_is_a_valid_recipe(capsys):
-    """M3EX-23: the recipe format `nocturne jobs --help` shows is one the Palace accepts."""
+    """M3EX-23 / A-069: the recipe format `nocturne jobs --help` shows is one the Palace accepts."""
     import json
 
     from harness import cli

@@ -193,7 +193,7 @@ def test_unknown_command_is_rejected_by_argparse() -> None:
 
 
 def test_palace_subcommands_say_what_they_do(capsys: pytest.CaptureFixture[str]) -> None:
-    """M3EX-25: `palace --help` describes new, use and drop, not only list."""
+    """M3EX-25 / P4: `palace --help` describes new, use and drop, not only list."""
     with pytest.raises(SystemExit):
         cli.main(["palace", "--help"])
     help_text = capsys.readouterr().out
@@ -204,7 +204,7 @@ def test_palace_subcommands_say_what_they_do(capsys: pytest.CaptureFixture[str])
 def test_export_into_a_missing_folder_names_the_folder(
     tmp_path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """M3EX-25 / FL-172: an export path that cannot be written says why before any Palace call."""
+    """M3EX-25 / A-071: an export path that cannot be written says why before any Palace call."""
     monkeypatch.setattr(cli, "load_config", lambda: None)
     monkeypatch.setattr(
         cli.urllib.request, "urlopen", lambda *_a, **_k: pytest.fail("reached the Palace")
@@ -221,7 +221,7 @@ def test_export_into_a_missing_folder_names_the_folder(
 
 
 def test_update_says_when_already_current(monkeypatch: pytest.MonkeyPatch) -> None:
-    """M3EX-25: `nocturne update` answers when nothing is newer; `up` stays quiet."""
+    """M3EX-25 / P4: `nocturne update` answers when nothing is newer; `up` stays quiet."""
     calls = []
     monkeypatch.setattr(cli, "update_nocturne", lambda **kwargs: calls.append(kwargs) or False)
 
@@ -230,7 +230,7 @@ def test_update_says_when_already_current(monkeypatch: pytest.MonkeyPatch) -> No
 
 
 def test_jobs_list_prints_one_line_per_job(monkeypatch: pytest.MonkeyPatch) -> None:
-    """M3EX-25 / FL-184: `nocturne jobs list` reads like the Jobs module, not raw JSON."""
+    """M3EX-25 / A-069: `nocturne jobs list` reads like the Jobs module, not raw JSON."""
     from harness import jobs_cli
 
     snapshot = {

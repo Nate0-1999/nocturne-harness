@@ -2871,7 +2871,7 @@ async def test_gate_waiter_and_disconnected_stream_cannot_steal_owner_attention(
 
 @pytest.mark.asyncio
 async def test_symphony_updates_replace_the_stack_state_instead_of_piling_up(tmp_path) -> None:
-    """M3EX-37: each spend tick appended a full stack copy to the launch message, so every
+    """M3EX-37 / P2.1: each spend tick appended a full stack copy to the launch message, so every
     snapshot grew and one journal reached 147 MB; the newest state now replaces the last,
     and a settled state is never reopened as running."""
     from harness.run_loop import _ThreadState

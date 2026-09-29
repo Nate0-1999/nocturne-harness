@@ -371,7 +371,7 @@ function memoryStorage() {
   }
 }
 
-/** M3EX-27: the Stage opens readable (full size) and remembers Sheet or Stage across a reload. */
+/** M3EX-27 / P2.5: the Stage opens readable (full size) and remembers Sheet or Stage across a reload. */
 test('the factory Work layer opens at full size and the view mode persists', async () => {
   assert.equal(activeStageLayer(cloneFactoryStageLayout()).camera.zoom, 1)
   const { readFile } = await import('node:fs/promises')
@@ -380,7 +380,7 @@ test('the factory Work layer opens at full size and the view mode persists', asy
   assert.match(app, /localStorage\.setItem\(SHEET_MODE_STORAGE_KEY, String\(sheetMode\)\)/u)
 })
 
-/** M3EX-28: "Whole stage" frames the layer's modules, not the empty canvas, and a
+/** M3EX-28 / P2.5: "Whole stage" frames the layer's modules, not the empty canvas, and a
  * module added from the Library never lands on top of one already there.
  */
 test('whole stage fits the modules and library adds land clear of others', () => {

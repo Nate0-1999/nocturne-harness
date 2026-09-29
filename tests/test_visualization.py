@@ -208,7 +208,7 @@ def test_root_branches_project_turn_and_tool_call_times_without_content(tmp_path
 
 
 def test_samples_read_only_what_the_journal_appended(tmp_path):
-    """M3EX-37: the 2 s sampler re-parsed every journal file each time and held gigabytes;
+    """M3EX-37 / P2.1: the 2 s sampler re-parsed every journal file each time and held gigabytes;
     unchanged files are not read again and a growing file is read from where it stopped."""
     import json
 
@@ -253,7 +253,7 @@ def test_samples_read_only_what_the_journal_appended(tmp_path):
 
 
 def test_live_history_reads_fold_only_new_rows(tmp_path):
-    """M3EX-37: a live poll decompressed every recorded observation; it now folds new rows
+    """M3EX-37 / P2.1: a live poll decompressed every recorded observation; it now folds new rows
     and returns what a full read returns."""
     path = tmp_path / "history.sqlite3"
     history = VisualizationHistory(path)
