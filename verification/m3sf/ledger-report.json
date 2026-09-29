@@ -2,12 +2,12 @@
   "packet": "M3SF",
   "mode": "builder",
   "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
-  "ledger_sha256": "879e79d26c82c549edce773f6fc377f71b9a5e93ba1ff3194c628a4fe4173cce",
+  "ledger_sha256": "49da7985eb33b71d853bc6e6f6f673ea60b7405d5c1e4c76547277565997e127",
   "diffs": [
     {
       "repo": "harness",
-      "base": "598ec8a794804cbaacb5953f92fc86dca74d1c07",
-      "head": "2f0f687a469bb9910ee495fea1c85c3b327248d8"
+      "base": "ccf2391620f002f32f9c6d2568d968bf14b01470",
+      "head": "198af760443f6a2f093d3fe4bbc504dcd1223f94"
     }
   ],
   "unmapped": {
@@ -121,8 +121,8 @@
     "harness/verification/m3sf/receipts/verdicts.py": "M3SF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3sf/receipts/wait.sh": "M3SF evidence: captures, receipts, coverage report and checksums.",
     "harness/verification/m3sf/receipts/walk-commit.txt": "M3SF evidence: captures, receipts, coverage report and checksums.",
-    "harness/web/dist/assets/index-D1OM-Z_u.js": "Generated web bundle rebuilt from the changed sources; no separate behavior.",
-    "harness/web/dist/assets/index-DGIf0ilS.js": "Generated web bundle rebuilt from the changed sources; no separate behavior.",
+    "harness/web/dist/assets/index-BVqf47eb.js": "Generated web bundle rebuilt from the changed sources; no separate behavior.",
+    "harness/web/dist/assets/index-Br6bAc07.js": "Generated web bundle rebuilt from the changed sources; no separate behavior.",
     "harness/web/dist/assets/index-UjTQfJ0z.css": "Generated web bundle rebuilt from the changed sources; no separate behavior.",
     "harness/web/dist/assets/index-VnsJrUM_.css": "Generated web bundle rebuilt from the changed sources; no separate behavior.",
     "harness/web/dist/index.html": "Generated web bundle rebuilt from the changed sources; no separate behavior.",
