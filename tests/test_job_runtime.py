@@ -106,3 +106,69 @@ async def test_workflow_receives_typed_events_and_finishes_exit_check(tmp_path):
     finally:
         await loop.close()
         await tools.close()
+
+
+@pytest.mark.asyncio
+async def test_a_failed_run_says_why(tmp_path):
+    """M3EX-23 / FL-184: a failed job run records the turn's reason, not only 'error'."""
+
+    class Runner:
+        async def run(self, **kwargs):
+            raise RuntimeError("The Palace refused this run's memory.")
+
+    class Palace:
+        finished = []
+
+        async def job_write(self, method, path, body):
+            self.finished.append(body)
+
+    thread_id, model = str(uuid4()), "openrouter:openai/gpt-4.1"
+    resolution = ThreadModelResolution(model=model, context_tokens=1000, policy=f"pinned:{model}")
+    loop = RunLoop(
+        Runner(),
+        EnvelopeFactory(machine_id="workflow-test"),
+        model_resolver=RecordingResolver({thread_id: resolution}, {model: resolution}),
+    )
+    palace = Palace()
+    scheduler = JobScheduler(
+        spine=palace,
+        settings=SimpleNamespace(machine_id="test", chat_model=model, model_context_tokens=1000),
+        loop=loop,
+        definitions={},
+        toolset_for=None,
+    )
+    recipe = WorkflowDefinition(
+        name="Check",
+        prompt="Check",
+        folder=str(tmp_path),
+        model_policy=f"pinned:{model}",
+        budget_usd="0.01",
+        memory_scope="none",
+        exit_condition="true",
+    )
+    try:
+        await asyncio.wait_for(
+            scheduler._execute({"run_id": generate_ulid(), "thread_id": thread_id}, recipe),
+            timeout=10,
+        )
+        assert palace.finished == [
+            {
+                "machine_id": "test",
+                "state": "failed",
+                "verdict": "Run ended: error. The Palace refused this run's memory.",
+            }
+        ]
+    finally:
+        await loop.close()
+
+
+def test_the_jobs_help_example_is_a_valid_recipe(capsys):
+    """M3EX-23: the recipe format `nocturne jobs --help` shows is one the Palace accepts."""
+    import json
+
+    from harness import cli
+
+    with pytest.raises(SystemExit):
+        cli.main(["jobs", "--help"])
+    example = capsys.readouterr().out.split("example:\n", 1)[1]
+    WorkflowDefinition.model_validate(json.loads(example))

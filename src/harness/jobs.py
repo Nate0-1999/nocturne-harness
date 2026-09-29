@@ -251,7 +251,8 @@ class JobScheduler:
                 )
             else:
                 state = "cancelled" if result["stop_reason"] == "cancelled" else "failed"
-                verdict = f"Run ended: {result['stop_reason']}."
+                reason = result.get("error_message")
+                verdict = f"Run ended: {result['stop_reason']}." + (f" {reason}" if reason else "")
         except asyncio.CancelledError:
             if loop_run_id is not None:
                 await self.loop.cancel(thread_id=thread_id, run_id=loop_run_id)

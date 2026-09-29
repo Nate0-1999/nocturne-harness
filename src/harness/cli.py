@@ -78,7 +78,24 @@ def build_parser() -> argparse.ArgumentParser:
     export.add_argument("path", type=Path)
     import_command = commands.add_parser("import", help="restore a memory file into another Palace")
     import_command.add_argument("path", type=Path)
-    jobs = commands.add_parser("jobs", help="save, monitor and run workflow recipes")
+    jobs = commands.add_parser(
+        "jobs",
+        help="save, monitor and run workflow recipes",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        # M3EX-23: the recipe format, where the owner looks for it.
+        epilog="""recipe JSON:
+  name, prompt, folder, model_policy   text, required (model_policy: e.g. elbow)
+  budget_usd                           dollars per run, above 0
+  exit_condition                       shell command that must succeed in folder
+  tools                                "pydantic" (default) or "none"
+  memory_scope                         "workspace" (default) or "none"
+  cron                                 five-field cron line in UTC, or omit
+  trigger, trigger_path                "file" + path, "queue" or "palace", or omit
+example:
+  {"name": "Nightly tests", "prompt": "Run the tests and fix what fails.",
+   "folder": "~/code/app", "model_policy": "elbow", "budget_usd": 0.5,
+   "exit_condition": "npm test", "cron": "0 3 * * *"}""",
+    )
     jobs.add_argument("action", choices=["list", "save", "run", "stop"])
     jobs.add_argument("target", nargs="?", help="recipe JSON file, job ID or run ID")
     jobs.add_argument("--job-id", help="update this saved recipe when using save")

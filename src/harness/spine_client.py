@@ -1029,7 +1029,8 @@ class SpineProblemError(SpineResponseError):
 
     def __init__(self, response: httpx.Response, problem: ProblemDetail) -> None:
         self.problem = problem
-        super().__init__(response, "Spine returned an RFC 7807 problem")
+        detail = f": {problem.detail}" if problem.detail else ""
+        super().__init__(response, f"Spine returned an RFC 7807 problem{detail}")
 
 
 class CreateMemoryConflictError(SpineResponseError):
