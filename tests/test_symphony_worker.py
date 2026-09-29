@@ -157,7 +157,7 @@ def _verdict(selected, feedback=()):
 
 @pytest.mark.asyncio
 async def test_judge_pass_may_carry_advisory_notes(tmp_path, monkeypatch):
-    """M3SF / M3EX-07: a PASS with notes is a PASS, not a validation failure."""
+    """F137 / M3SF / M3EX-07: a PASS with notes is a PASS, not a validation failure."""
     calls = []
 
     async def respond(messages, info):
@@ -176,7 +176,7 @@ async def test_judge_pass_may_carry_advisory_notes(tmp_path, monkeypatch):
 async def test_judge_that_cannot_return_writes_a_failed_verdict_with_its_reason(
     tmp_path, monkeypatch
 ):
-    """M3SF / M3EX-07: an invented attempt is refused by the schema; retries end in FAIL."""
+    """F137 / M3SF / M3EX-07: an invented attempt is refused by the schema; retries end in FAIL."""
     calls = []
 
     async def respond(messages, info):
@@ -254,7 +254,7 @@ async def test_worker_context_injects_without_a_gate_and_reacts_to_selection(tmp
 
 @pytest.mark.asyncio
 async def test_completion_artifacts_are_relative_to_the_worktree(tmp_path, monkeypatch):
-    """M3SF: an attempt citing its own files by absolute path is not refused after the work,
+    """F137 / M3SF: an attempt citing its own files by absolute path is not refused after the work,
     and only the signed walls, not the chat's per-run caps, bound the worker."""
     attempt = tmp_path / "attempt"
     attempt.mkdir()
@@ -334,7 +334,7 @@ async def test_completion_artifacts_are_relative_to_the_worktree(tmp_path, monke
 
 @pytest.mark.asyncio
 async def test_a_judge_that_never_looks_returns_a_failed_verdict(tmp_path, monkeypatch):
-    """M3SF: a verdict with no inspection is sent back, then recorded as a FAIL with why."""
+    """F137 / M3SF: a verdict with no inspection is sent back, then recorded as a FAIL with why."""
     calls = []
 
     async def respond(messages, info):
@@ -350,7 +350,7 @@ async def test_a_judge_that_never_looks_returns_a_failed_verdict(tmp_path, monke
 
 @pytest.mark.asyncio
 async def test_a_judge_answer_wrapped_in_prose_gets_more_than_one_retry(tmp_path, monkeypatch):
-    """M3SF: minimax wrapped finished answers in prose twice; the third clean answer counts."""
+    """F137 / M3SF: minimax wrapped finished answers in prose twice; a third clean one counts."""
     calls = []
 
     async def respond(messages, info):

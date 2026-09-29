@@ -265,7 +265,7 @@ async def test_shell_is_one_shot_os_fenced_and_remote_state_walled(tmp_path: Pat
 async def test_shell_scratch_leaves_the_repo_and_a_fenced_agent_stays_inside(
     tmp_path: Path,
 ) -> None:
-    """M3SF / M3EX-09, M3EX-10: tool scratch never lands in the repo; a fenced agent's
+    """F137 / M3SF / M3EX-09, M3EX-10: tool scratch never lands in the repo; a fenced agent's
     shell cannot walk directories beyond its workspace root.
     """
     if not Path("/usr/bin/sandbox-exec").is_file():
