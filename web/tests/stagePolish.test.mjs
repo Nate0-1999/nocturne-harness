@@ -96,3 +96,19 @@ test('the module remove tip names the module, not its subject', async () => {
   const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
   assert.match(app, /aria-label=\{`Remove \$\{manifest\.name\}`\}\s*data-tooltip="Remove module"/u)
 })
+
+/** SD-073 / SPEC D.2 (090, the mark): the ouroboros reads as a snake eating its tail —
+ * a tapering body, a head with an eye, open jaws with the tail inside — in the header and
+ * the packaged favicon alike.
+ */
+test('the mark is a snake eating its tail in the header and the favicon', async () => {
+  const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
+  const favicon = await readFile(new URL('../public/favicon.svg', import.meta.url), 'utf8')
+  const header = app.slice(app.indexOf('className="brand__mark"'), app.indexOf('className="brand__word"'))
+  for (const svg of [header, favicon]) {
+    assert.match(svg, /<ellipse [^>]*rx="9" ry="6.8"/u)
+    assert.match(svg, /<path d="M [\d. ]+ L [\d. ]+ L [\d. ]+ Z" fill="(?:var\(--ground\)|#03070c)"/u)
+    assert.match(svg, /A 21.5 21.5 0 0 1/u)
+    assert.equal((svg.match(/<circle /gu) ?? []).length, 4)
+  }
+})
