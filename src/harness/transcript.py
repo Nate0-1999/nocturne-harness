@@ -47,6 +47,7 @@ class HydratedTranscript:
     workspace_root: str | None = None
     current_location: str | None = None
     compaction_histories: Mapping[str, list[Any]] = field(default_factory=dict)
+    repository: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -212,6 +213,7 @@ class TranscriptJournal:
         project_label: str | None = None,
         workspace_root: str | None = None,
         current_location: str | None = None,
+        repository: str | None = None,
     ) -> None:
         """Append immutable thread feet before exposing the thread."""
 
@@ -226,6 +228,7 @@ class TranscriptJournal:
                     "project_label": project_label,
                     "workspace_root": workspace_root,
                     "current_location": current_location,
+                    "repository": repository,
                 },
             )
 
@@ -822,6 +825,7 @@ class TranscriptJournal:
         project_label: str | None = None
         workspace_root: str | None = None
         current_location: str | None = None
+        repository: str | None = None
         compaction_histories: dict[str, list[Any]] = {}
 
         for raw in rows:
@@ -920,6 +924,8 @@ class TranscriptJournal:
                 project_key = canonical_project
                 if raw_label is not None:
                     project_label = raw_label
+                if isinstance(row.get("repository"), str):
+                    repository = row["repository"]
                 if raw_root is not None or raw_location is not None:
                     if not isinstance(raw_root, str) or not isinstance(raw_location, str):
                         # WALL files / M3TL: restore the recorded workspace grant.
@@ -1001,6 +1007,7 @@ class TranscriptJournal:
                     workspace_root,
                     current_location,
                     compaction_histories,
+                    repository,
                 )
             # WALL files / D.2 082: reject an unsafe journal before appending.
             raise TranscriptJournalUnavailable(
@@ -1046,6 +1053,7 @@ class TranscriptJournal:
             workspace_root,
             current_location,
             compaction_histories,
+            repository,
         )
 
     def _existing_attachments(self, thread_id: str) -> Mapping[str, ImageAttachment]:

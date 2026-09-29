@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 from typing import Annotated
 
@@ -46,3 +47,30 @@ def repository_root(folder: Path) -> Path | None:
         if (candidate / ".git").exists():
             return candidate
     return None
+
+
+def repository_identity(root: Path) -> str | None:
+    """F135 (M3EX-14): a repository's first commit names it wherever it moves."""
+
+    try:
+        found = subprocess.run(
+            ["git", "-C", str(root), "rev-list", "--max-parents=0", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    roots = sorted(found.stdout.split())
+    return roots[0] if found.returncode == 0 and roots else None
+
+
+def find_moved_repository(missing: Path, identity: str) -> Path | None:
+    """Look beside a vanished repository root for the same repository, renamed or moved."""
+
+    try:
+        candidates = [path for path in missing.parent.iterdir() if (path / ".git").exists()]
+    except OSError:
+        return None
+    return next((path for path in candidates if repository_identity(path) == identity), None)

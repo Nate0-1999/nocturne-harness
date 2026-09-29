@@ -62,7 +62,12 @@ from harness.parameter_registry import (
     ParameterValue,
     ParameterWriteViolation,
 )
-from harness.project_path import repository_root, validate_artificial_project_path
+from harness.project_path import (
+    find_moved_repository,
+    repository_identity,
+    repository_root,
+    validate_artificial_project_path,
+)
 from harness.proposed_response import (
     find_proposed_response,
     proposal_was_fired,
@@ -134,6 +139,11 @@ class _ThreadState:
     project_label: str | None = None
     workspace_root: str | None = None
     current_location: str | None = None
+    repository: str | None = None
+
+
+class ThreadWorkspaceMoved(ValueError):
+    """F135 (M3EX-14): the thread's folder vanished and was not found beside it."""
 
 
 class ProjectBindingConflict(RuntimeError):
@@ -430,6 +440,8 @@ class RunLoop:
         async with self._lock:
             self._require_open()
             state = self._state_for_locked(thread_id)
+            if workspace_root is None:
+                self._workspace_missing_locked(thread_id, state)
             if workspace_root is not None:
                 self._bind_workspace_locked(
                     thread_id,
@@ -674,6 +686,11 @@ class RunLoop:
         )
         async with self._lock:
             self._require_open()
+            if self._workspace_missing_locked(thread_id, self._state_for_locked(thread_id)):
+                # INCIDENT F135 (M3EX-14): a moved folder asks for its new place, never hangs.
+                raise ThreadWorkspaceMoved(
+                    "This thread's folder was moved or renamed. Choose its new folder first."
+                )
             submission_lock = self._submission_locks.setdefault(thread_id, asyncio.Lock())
             if proposed_response is not None:
                 messages = self._state_for_locked(thread_id).messages
@@ -1845,6 +1862,9 @@ class RunLoop:
                 project_label=state.project_label,
                 workspace_root=state.workspace_root,
                 current_location=state.current_location,
+                workspace_missing=(
+                    state.workspace_root is not None and not Path(state.workspace_root).is_dir()
+                ),
                 request_id=request_id,
                 resolved_model=state.resolved_model,
             ),
@@ -2068,6 +2088,10 @@ class RunLoop:
         project = repository_root(root) or root
         canonical = str(project)
         label = (project_label or project.name).strip()
+        if state.workspace_root is not None and not Path(state.workspace_root).is_dir():
+            # F135 (M3EX-14): the owner's answer rebinds a vanished folder; memories follow.
+            self._relocate_locked(thread_id, state, project, root)
+            return
         if state.workspace_root is not None:
             if state.workspace_root not in {canonical, str(root)}:
                 # WALL owner files / M3TL: an existing thread cannot switch workspace roots.
@@ -2086,6 +2110,7 @@ class RunLoop:
         if state.project_key is not None and state.project_key.startswith("/"):
             # WALL owner files / M3TL: an existing thread cannot switch workspace roots.
             raise ProjectBindingConflict(canonical, state.project_key)
+        identity = repository_identity(project) if repository_root(root) else None
         if self._transcript_journal is not None:
             self._transcript_journal.append_thread_context(
                 thread_id,
@@ -2093,11 +2118,45 @@ class RunLoop:
                 project_label=label,
                 workspace_root=canonical,
                 current_location=str(root),
+                repository=identity,
             )
         state.project_key = canonical
         state.project_label = label
         state.workspace_root = canonical
         state.current_location = str(root)
+        state.repository = identity
+
+    def _workspace_missing_locked(self, thread_id: str, state: _ThreadState) -> bool:
+        """F135 (M3EX-14): re-find a moved repository by its first commit."""
+
+        if state.workspace_root is None or Path(state.workspace_root).is_dir():
+            return False
+        found = (
+            None
+            if state.repository is None
+            else find_moved_repository(Path(state.workspace_root), state.repository)
+        )
+        if found is None:
+            return True
+        where = Path(state.current_location or state.workspace_root)
+        moved = found / where.relative_to(state.workspace_root)
+        self._relocate_locked(thread_id, state, found, moved if moved.is_dir() else found)
+        return False
+
+    def _relocate_locked(
+        self, thread_id: str, state: _ThreadState, root: Path, location: Path
+    ) -> None:
+        if self._transcript_journal is not None:
+            self._transcript_journal.append_thread_context(
+                thread_id,
+                state.project_key or str(root),
+                project_label=state.project_label,
+                workspace_root=str(root),
+                current_location=str(location),
+                repository=state.repository,
+            )
+        state.workspace_root = str(root)
+        state.current_location = str(location)
 
     def _hydrate_threads(
         self,
@@ -2114,6 +2173,7 @@ class RunLoop:
                 project_label=transcript.project_label,
                 workspace_root=transcript.workspace_root,
                 current_location=transcript.current_location,
+                repository=transcript.repository,
             )
             for transcript in journal.hydrate_threads()
         }

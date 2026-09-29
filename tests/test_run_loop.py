@@ -34,7 +34,7 @@ from harness.model_policy import (
     ThreadModelResolution,
 )
 from harness.parameter_registry import ParameterWriteViolation
-from harness.run_loop import ProjectBindingConflict, RunLoop, _Subscription
+from harness.run_loop import ProjectBindingConflict, RunLoop, ThreadWorkspaceMoved, _Subscription
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.transcript import TranscriptJournal
 
@@ -2750,6 +2750,45 @@ async def test_a_thread_started_in_a_subfolder_belongs_to_its_git_root(tmp_path:
     legacy.project_key = legacy.workspace_root = legacy.current_location = str(web)
     await loop.request_snapshot("legacy", Sink(), workspace_root=str(web))
     assert loop._threads["legacy"].workspace_root == str(web)
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_a_moved_repository_is_refound_or_asks_once_and_never_locks(tmp_path: Path) -> None:
+    """F135 (M3EX-14): a renamed repository is re-found by its first commit; one that cannot
+    be found asks for its new folder, and the answer keeps the thread's project."""
+    import subprocess
+
+    projects = tmp_path / "projects"
+    web = projects / "harness" / "web"
+    web.mkdir(parents=True)
+    (web / "a.txt").write_text("a")
+    git = ["git", "-C", str(projects / "harness"), "-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run([*git, "init", "-q"], check=True)
+    subprocess.run([*git, "add", "."], check=True)
+    subprocess.run([*git, "commit", "-q", "-m", "first"], check=True)
+    loop = RunLoop(NeverStartsRunner(), factory(Ids()))
+    await loop.request_snapshot("thread", Sink(), workspace_root=str(web))
+    project = loop._threads["thread"].project_key
+
+    (projects / "harness").rename(projects / "harness moved")
+    await loop.request_snapshot("thread", Sink())
+    state = loop._threads["thread"]
+    assert (state.project_key, state.workspace_root) == (project, str(projects / "harness moved"))
+    assert state.current_location == str(projects / "harness moved" / "web")
+
+    elsewhere = tmp_path / "elsewhere"
+    (projects / "harness moved").rename(elsewhere)
+    sink = Sink()
+    await loop.request_snapshot("thread", sink)
+    assert sink.messages[-1].payload.workspace_missing is True
+    with pytest.raises(ThreadWorkspaceMoved):
+        await loop.submit(thread_id="thread", prompt_id=Ids().next(), prompt="hello")
+    await loop.request_snapshot("thread", Sink(), workspace_root=str(elsewhere))
+    assert (loop._threads["thread"].project_key, loop._threads["thread"].workspace_root) == (
+        project,
+        str(elsewhere),
+    )
     await loop.close()
 
 

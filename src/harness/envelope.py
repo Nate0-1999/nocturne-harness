@@ -513,6 +513,7 @@ class ThreadSnapshotResponsePayload(_ExtensiblePayload):
     current_location: NonBlankString | None = Field(
         default=None, exclude_if=lambda value: value is None
     )
+    workspace_missing: bool = Field(default=False, exclude_if=lambda value: not value)
     request_id: ULID | None = Field(default=None, exclude_if=lambda value: value is None)
     resolved_model: NonBlankString | None = Field(
         default=None,

@@ -2089,7 +2089,10 @@ function ThreadsModule() {
         </form>
       )}
 
-      {selectedEntry?.workspace_root === null && selectedEntry.project_key !== null && bindingLegacy && (
+      {selectedEntry !== undefined && (
+        (selectedEntry.workspace_root === null && selectedEntry.project_key !== null && bindingLegacy) ||
+        snapshot.threads[selectedEntry.thread_id]?.workspaceMissing === true
+      ) && (
             <form
               className="thread-create"
               data-testid="thread-bind-workspace"
@@ -2104,7 +2107,11 @@ function ThreadsModule() {
                 }).then(() => setBindingLegacy(false)).catch(() => undefined)
               }}
             >
-              <label htmlFor="legacy-thread-workspace-root">Folder for this thread</label>
+              <label htmlFor="legacy-thread-workspace-root">
+                {snapshot.threads[selectedEntry.thread_id]?.workspaceMissing === true
+                  ? "This thread's folder was moved or renamed. Where is it now?"
+                  : 'Folder for this thread'}
+              </label>
               <div className="thread-create__row">
                 <TextField
                   id="legacy-thread-workspace-root"
@@ -2315,7 +2322,8 @@ function ChatModule() {
   const projectSwitching = awaitingSnapshot && rackSelection?.kind === 'project'
   // WALL attention: C.6 / H7 holds sends at the reviewed gate and snapshot boundary.
   const composerDisabled =
-    snapshot.connection !== 'connected' || awaitingSnapshot || openGate !== null
+    snapshot.connection !== 'connected' || awaitingSnapshot || openGate !== null ||
+    selectedThread?.workspaceMissing === true
   const canSend =
     // WALL money / C.6; INCIDENT F077: one nonempty send, and keep its draft until acknowledgement.
     !composerDisabled &&
@@ -2700,7 +2708,9 @@ function ChatModule() {
             data-testid="composer"
             value={draft}
             rows={1}
-            placeholder={snapshot.connection === 'connected' ? 'Transmit to Nocturne' : 'Waiting for Nocturne'}
+            placeholder={selectedThread?.workspaceMissing === true
+              ? "This thread's folder moved; choose its new folder in Threads"
+              : snapshot.connection === 'connected' ? 'Transmit to Nocturne' : 'Waiting for Nocturne'}
             disabled={promptBusy /* WALL money / C.6: preserve the accepted turn while sending. */}
             onChange={(event) => {
               const value = event.target.value

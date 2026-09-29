@@ -864,6 +864,42 @@ def test_missing_web_build_is_explicit(tmp_path: Path) -> None:
     )
 
 
+def test_catalog_answers_after_the_launch_folder_moves(tmp_path, monkeypatch) -> None:
+    """F135 (M3EX-14): a renamed launch folder must not hide every thread."""
+
+    async def stream(_messages, _info):
+        yield "unused"
+
+    settings = HarnessSettings(
+        _env_file=None,
+        spine_token="test-token",
+        principal_id="principal-test",
+        machine_id="machine-test",
+        agent_id="agent-test",
+        anthropic_api_key=None,
+        openai_api_key=None,
+        openrouter_api_key=None,
+    )
+    monkeypatch.setenv("NOCTURNE_HOME", str(tmp_path))
+    launch = tmp_path / "project"
+    launch.mkdir()
+    app = create_dev_app(
+        tmp_path,
+        settings=settings,
+        agent=HarnessAgent(settings, model=FunctionModel(stream_function=stream)),
+        spine=GateSpine(),  # type: ignore[arg-type]
+        transcript_journal=TranscriptJournal(tmp_path / "transcripts"),
+        seed_discovery_root=launch,
+    )
+    launch.rename(tmp_path / "project moved")
+
+    with TestClient(app) as client:
+        response = client.get("/v1/transcripts/catalog")
+
+    assert response.status_code == 200
+    assert response.json()["default_workspace"] is None
+
+
 def test_dev_app_wires_the_owned_spine_into_the_public_rack_query(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

@@ -369,6 +369,7 @@ export interface ThreadSnapshotPayload {
   project_label: string | null
   workspace_root: string | null
   current_location: string | null
+  workspace_missing: boolean
   request_id: Ulid | null
 }
 
@@ -1148,6 +1149,7 @@ function parseSnapshot(value: unknown): ThreadSnapshotPayload | null {
     project_label: typeof value.project_label === 'string' ? value.project_label : null,
     workspace_root: typeof value.workspace_root === 'string' ? value.workspace_root : null,
     current_location: typeof value.current_location === 'string' ? value.current_location : null,
+    workspace_missing: value.workspace_missing === true,
     request_id: typeof value.request_id === 'string' ? value.request_id : null,
   }
 }

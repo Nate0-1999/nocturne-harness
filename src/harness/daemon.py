@@ -73,7 +73,7 @@ from harness.rack_query import RackQueryResult
 from harness.receipt_queue import SpendReceiptQueue
 from harness.recipe_graph import RecipeGraphSnapshot
 from harness.resources import ResourceWatch
-from harness.run_loop import ProjectBindingConflict, RunLoop
+from harness.run_loop import ProjectBindingConflict, RunLoop, ThreadWorkspaceMoved
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.seed import SeedIngestionService, SeedUploadRequest
 from harness.seed_jump_start import AgentFileOffers, discover_agent_files
@@ -697,16 +697,26 @@ def create_app(
                 if message.type is MessageType.PROMPT_SUBMIT:
                     assert isinstance(message.payload, PromptSubmitPayload)
                     assert message.thread_id is not None
-                    await loop.submit(
-                        thread_id=message.thread_id,
-                        prompt_id=message.id,
-                        prompt=message.payload.prompt,
-                        image=message.payload.image,
-                        symphony=message.payload.symphony,
-                        symphony_intervention=message.payload.symphony_intervention,
-                        proposed_response=message.payload.proposed_response,
-                        sink=send,
-                    )
+                    try:
+                        await loop.submit(
+                            thread_id=message.thread_id,
+                            prompt_id=message.id,
+                            prompt=message.payload.prompt,
+                            image=message.payload.image,
+                            symphony=message.payload.symphony,
+                            symphony_intervention=message.payload.symphony_intervention,
+                            proposed_response=message.payload.proposed_response,
+                            sink=send,
+                        )
+                    except ThreadWorkspaceMoved as exc:
+                        await loop.send_direct(
+                            send,
+                            factory.create(
+                                MessageType.ERROR,
+                                {"code": "workspace_moved", "message": str(exc)},
+                                thread_id=message.thread_id,
+                            ),
+                        )
                 elif message.type is MessageType.RUN_CANCEL:
                     assert isinstance(message.payload, RunCancelPayload)
                     await loop.cancel(
@@ -905,9 +915,14 @@ def create_dev_app(
 
     def workspace_toolset_for(thread_id: str) -> LazyStandardToolset:
         existing = workspace_toolsets.get(thread_id)
-        if existing is not None:
-            return existing
         workspace = loop.thread_workspace(thread_id)
+        if existing is not None and (
+            workspace is None or existing.location().workspace_root == Path(workspace[0])
+        ):
+            return existing
+        if existing is not None:
+            # F135 (M3EX-14): a re-found folder gets fresh feet.
+            asyncio.get_running_loop().create_task(existing.close())
         root, cwd = (
             (discovery_root, discovery_root)
             if workspace is None
@@ -1349,11 +1364,14 @@ def create_dev_app(
 
         @app.get("/v1/transcripts/catalog")
         async def transcript_catalog():
-            root = discovery_root.resolve(strict=True)
+            # F135 (M3EX-14): a moved launch folder must not hide every thread.
+            root = discovery_root if discovery_root.is_dir() else None
             return {
                 "threads": journal.catalog(),
                 "identity": {"principal_id": principal_id, "home": str(home)},
-                "default_workspace": {"path": str(root), "label": root.name},
+                "default_workspace": None
+                if root is None
+                else {"path": str(root.resolve()), "label": root.resolve().name},
             }
 
         @app.post("/v1/restore/{backup_id}/preview")

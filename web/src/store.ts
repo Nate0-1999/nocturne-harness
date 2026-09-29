@@ -96,6 +96,7 @@ export interface ThreadState {
   lastError: HarnessError | null
   projectConflictAwaitingSnapshot: boolean
   awaitingSnapshot: boolean
+  workspaceMissing: boolean
   memoryPanel: MemoryPanelState
 }
 
@@ -148,6 +149,7 @@ function emptyThreadState(): ThreadState {
     lastError: null,
     projectConflictAwaitingSnapshot: false,
     awaitingSnapshot: false,
+    workspaceMissing: false,
     memoryPanel: emptyMemoryPanelState(),
   }
 }
@@ -480,6 +482,7 @@ function replaceFromSnapshot(
     ),
     projectConflictAwaitingSnapshot: false,
     awaitingSnapshot: false,
+    workspaceMissing: payload.workspace_missing,
     memoryPanel: {
       ...emptyMemoryPanelState(),
       completedEditRequestId: previous.memoryPanel.completedEditRequestId,
