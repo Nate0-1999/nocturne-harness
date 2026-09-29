@@ -3,7 +3,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from harness.symphony_runtime import _carry_environment
+from harness.symphony_runtime import _carry_environment, _graft
 
 
 def _repo(root: Path, ignore: str) -> None:
@@ -52,3 +52,54 @@ def test_an_environment_git_would_commit_is_never_carried(tmp_path: Path) -> Non
     _carry_environment(root, attempt)
 
     assert not (attempt / ".venv").exists()
+
+
+def _commit(repo: Path, message: str) -> str:
+    subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repo),
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@t",
+            "commit",
+            "-qm",
+            message,
+        ],
+        check=True,
+    )
+    return subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
+
+
+def test_passing_alternatives_graft_with_the_most_chosen_lines(tmp_path: Path) -> None:
+    """M3SF: judges passing two attempts that edit the same line no longer block round two."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q", str(repo)], check=True)
+    (repo / "cli.py").write_text("help = None\n")
+    base = _commit(repo, "base")
+    (repo / "cli.py").write_text("help = 'from attempt one'\n")
+    first = _commit(repo, "attempt one")
+    subprocess.run(["git", "-C", str(repo), "checkout", "-q", base], check=True)
+    (repo / "cli.py").write_text("help = 'from attempt two'\n")
+    (repo / "test_cli.py").write_text("def test_help(): pass\n")
+    second = _commit(repo, "attempt two")
+    subprocess.run(["git", "-C", str(repo), "checkout", "-q", base], check=True)
+    (repo / "cli.py").write_text("help = 'only the line'\n")
+    same_line = _commit(repo, "attempt three")
+    graft = tmp_path / "graft"
+    subprocess.run(["git", "-C", str(repo), "worktree", "add", "-q", "--detach", str(graft), base])
+
+    head = _graft(graft, [first, second, same_line])
+
+    assert (graft / "cli.py").read_text() == "help = 'from attempt one'\n"
+    assert (graft / "test_cli.py").exists()
+    assert (
+        head
+        == subprocess.check_output(
+            ["git", "-C", str(graft), "rev-parse", "HEAD"], text=True
+        ).strip()
+    )
