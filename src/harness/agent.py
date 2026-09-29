@@ -105,8 +105,8 @@ REMEMBER_SPLIT_INSTRUCTION = (
     "Return one to 64 candidates and structured data only."
 )
 REMEMBER_SPLIT_GUIDANCE = (
-    "I couldn't preserve every fact within the memory limit, so I didn't save it. "
-    "Please clarify the facts and try /remember again."
+    "I couldn't save this as separate facts without changing them, so I saved nothing. "
+    "Try one fact per /remember."
 )
 EXTRACTION_INSTRUCTION = (
     "Triage the supplied conversation in ONE pass: still-live context goes in working_summary "
@@ -1001,6 +1001,9 @@ def _validated_remember_split(
         body = candidate.body.strip()
         keywords = _normalize_keywords(candidate.keywords)
         expected_body = "".join(assigned_text[index]).strip()
+        # M3EX-16: "a; b." splits into "a." and "b." — a child may end its sentence where
+        # the source used a separator; every other character must still match.
+        same_claim = body.rstrip(".;,") == expected_body.rstrip(".;,")
         invalid = (
             not label
             or "\n" in label
@@ -1008,7 +1011,7 @@ def _validated_remember_split(
             or len(label) > label_max
             or not body
             or not expected_body
-            or (body != expected_body and cl100k_token_count(expected_body) <= memory_max_tokens)
+            or (not same_claim and cl100k_token_count(expected_body) <= memory_max_tokens)
             or keywords is None
             or len(keywords) != len(candidate.keywords)
             or cl100k_token_count(body) > memory_max_tokens

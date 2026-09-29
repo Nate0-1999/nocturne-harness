@@ -818,6 +818,56 @@ async def test_m3fd_two_short_facts_split_even_below_body_cap() -> None:
 
 
 @pytest.mark.asyncio
+async def test_two_short_facts_joined_by_a_semicolon_are_saved() -> None:
+    """M3EX-16 / F080: "a; b." saves as "a." and "b."; the separator is not a changed fact."""
+    source = "Web tests run with npm test; Python tests run with pytest -q."
+    model = structured_sequence_model(
+        [
+            {"label": "Test commands", "keywords": ["tests", "npm"], "multiple_facts": True},
+            {
+                "safe_to_save": True,
+                "candidates": [
+                    {
+                        "label": "Web test command",
+                        "body": "Web tests run with npm test.",
+                        "keywords": ["web", "npm"],
+                    },
+                    {
+                        "label": "Python test command",
+                        "body": "Python tests run with pytest -q.",
+                        "keywords": ["python", "pytest"],
+                    },
+                ],
+                "coverage": [
+                    {
+                        "text": "Web tests run with npm test; ",
+                        "classification": "durable",
+                        "candidate_index": 0,
+                    },
+                    {
+                        "text": "Python tests run with pytest -q.",
+                        "classification": "durable",
+                        "candidate_index": 1,
+                    },
+                ],
+            },
+        ],
+        [],
+    )
+    spine = FakeSpine(
+        CreatedMemoryResponse(created=memory_unit()), split_outcome=split_response(source)
+    )
+
+    result = await HarnessAgent(settings(), model=model).remember(source, context=context(spine))
+
+    assert result.ok
+    assert [child.body for child in spine.split_requests[0].children] == [
+        "Web tests run with npm test.",
+        "Python tests run with pytest -q.",
+    ]
+
+
+@pytest.mark.asyncio
 async def test_a049_oversized_multi_claim_uses_one_atomic_split_with_exact_source() -> None:
     """F027, A-049, A-050, ADR-022, and SPEC B.6 rule 12 are defended here.
     An oversized multi-claim source must become one linked atomic request with exact provenance.
