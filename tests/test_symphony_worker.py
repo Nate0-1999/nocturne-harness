@@ -241,14 +241,18 @@ async def test_worker_context_injects_without_a_gate_and_reacts_to_selection(tmp
 
 @pytest.mark.asyncio
 async def test_completion_artifacts_are_relative_to_the_worktree(tmp_path, monkeypatch):
-    """M3SF: an attempt citing its own files by absolute path is not refused after the work."""
+    """M3SF: an attempt citing its own files by absolute path is not refused after the work,
+    and only the signed walls, not the chat's per-run caps, bound the worker."""
     attempt = tmp_path / "attempt"
     attempt.mkdir()
     subprocess.run(["git", "init", "-q", str(attempt)], check=True)
     (attempt / "README.md").write_text("done\n")
     out = tmp_path / "out"
     out.mkdir()
-    (out / "env").write_text("SPINE_TOKEN='test'\nPRINCIPAL_ID='verification-test'\n")
+    # The chat's per-run caps must not stop a worker below the signed walls.
+    (out / "env").write_text(
+        "SPINE_TOKEN='test'\nPRINCIPAL_ID='verification-test'\nRUN_TOTAL_TOKENS_LIMIT='1'\n"
+    )
     assignment = {
         "stage": "completion",
         "brief": "Write README.md",
