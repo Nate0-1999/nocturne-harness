@@ -3768,3 +3768,25 @@ judge must inspect a candidate before its verdict counts, because a blind
 claim became the next round's charge; workers get three output retries; and a
 graft applies passing attempts most-chosen first, keeping that attempt's lines
 where they overlap, so every survivor stays in lineage.
+
+## M3CL — The core loop after the owner's messy path [P1.3, P2, P4.1]
+
+PRECEDENT: report 249 M3EX-01..06, 13..15, 19, 20, 22; F133-F136; v2.125 (D.2 168);
+M3FZ; M3GD; M3TL. Each finding was reproduced on 0.1.40 before its fix; M3EX-05 and
+M3EX-19 did not reproduce and are flagged instead.
+The stream and finalize share one parser over the run's text parts (M3FZ's
+reconciliation stays). A part whose only text is the proposal block also shows its
+primary as the answer; the card is emitted as built (FL-104/117). Parts on either side
+of a tool step get a paragraph break; an orphan closing reasoning tag is dropped. A
+first gate with nothing to review is skipped and the empty decision committed. Under
+v2.125 a shell command that begins with `git` may write the enclosing repository's
+`.git`; any other refused write names the move. Each turn journals its limits; the
+header shows N / limit and a stop names the limit and "continue". A thread picked in a
+subfolder binds to the git root and starts in the subfolder, so it may move anywhere
+in its repository; threads already bound keep their binding. New threads record their
+repository's first commit: a vanished folder is looked for beside its old place, else
+the thread asks once and the answer keeps its project key. A cancelled shell call kills
+its own process group (an EXIT trap keeps zsh the named parent); Symphony shutdown
+hard-kills workers after 10 s; a restart restores every stack, a running one as stopped.
+Archive turns an unusable verdict into a new card, retries a refused target as new, and
+names a fact still over the cap after three passes; compaction keeps D.2 153.
