@@ -409,6 +409,15 @@ export function MemoryPanel({
                     <Provenance term="Project">{memory.project_key ?? 'No project'}</Provenance>
                     <Provenance term="Thread">{originThread?.title ?? origin ?? 'No origin thread'}</Provenance>
                     <Provenance term="Keywords">{memory.keywords.join(', ') || 'None recorded'}</Provenance>
+                    {/* TASTE-06 / SD-068: history lives behind the hover, not on the card. */}
+                    {(revisions?.length ?? 0) > 0 && <Provenance term="History">
+                      <ol className="memory-card__history">
+                        {revisions?.map((revision) => <li key={String(revision.rev_uid)}>
+                          r{String(revision.revision ?? '—')} · {String(revision.reason)} · {String(revision.ts)}
+                          {typeof revision.body === 'string' && <blockquote>{revision.body}</blockquote>}
+                        </li>)}
+                      </ol>
+                    </Provenance>}
                   </>}
                   status={unavailable
                     ? (inContext && revisions?.some((revision) => String(revision.reason).includes('supersede'))
@@ -467,6 +476,14 @@ export function MemoryPanel({
                     >
                       <span aria-hidden="true">⚑</span>
                     </Button>
+                    {originThread !== undefined && (
+                      <Button action="open" iconOnly className="memory-card__remove" type="button"
+                        data-tooltip="Open the conversation" data-tooltip-detail="Go to the thread this memory was born in."
+                        onClick={() => {
+                          void events.dispatch({ type: 'thread.select', thread_id: originThread.thread_id })
+                            .catch((error: unknown) => reportClientError(error, 'Origin conversation could not be opened'))
+                        }}>Open the conversation</Button>
+                    )}
                     <Button action="delete" iconOnly variant="danger"
                       className="memory-card__delete"
                       type="button"
@@ -483,22 +500,6 @@ export function MemoryPanel({
                     </Button>
                   </>}
                 >
-                  {originThread !== undefined && (
-                    <Button action="open" iconOnly className="memory-card__link" type="button"
-                      data-tooltip="Open the conversation" data-tooltip-detail="Go to the thread this memory was born in."
-                      onClick={() => {
-                        void events.dispatch({ type: 'thread.select', thread_id: originThread.thread_id })
-                          .catch((error: unknown) => reportClientError(error, 'Origin conversation could not be opened'))
-                      }}>Open the conversation ↗</Button>
-                  )}
-                  {(revisions?.length ?? 0) > 0 && <details className="memory-card__history"><summary>Revision history · r{memory.revision}</summary>
-                    <ol>
-                      {revisions?.map((revision) => <li key={String(revision.rev_uid)}>
-                        r{String(revision.revision ?? '—')} · {String(revision.reason)} · {String(revision.ts)}
-                        {typeof revision.body === 'string' && <blockquote>{revision.body}</blockquote>}
-                      </li>)}
-                    </ol>
-                  </details>}
                   {auditions[memory.memory_id] !== undefined && <p className="scorer-preview-mark">Audition: {formatHumanScore(auditions[memory.memory_id].preview_score)} · #{auditions[memory.memory_id].preview_rank} {auditions[memory.memory_id].disposition.replace('_', ' ')}</p>}
                   {editing && editor !== null && (
                     <form

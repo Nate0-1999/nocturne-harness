@@ -39,3 +39,16 @@ test('the Memory Graph restores a deleted memory', async () => {
   assert.match(rack, /case 'memory\.restore':\s*return harnessClient\.restoreMemory\(action\.memory_id, action\.expected_revision\)/u)
   assert.match(socket, /action: 'restore', memory_id: memoryId, expected_revision: expectedRevision/u)
 })
+
+/** TASTE-06 / SD-068 / FL-081: the Memory module's card is score, name and memory;
+ * revision history sits in the hover panel and opening the origin conversation is a
+ * small row action, not a line on the card.
+ */
+test('the memory card keeps history behind the hover and the link as a row action', async () => {
+  const source = await readFile(new URL('../src/MemoryPanel.tsx', import.meta.url), 'utf8')
+
+  assert.match(source, /<Provenance term="History">\s*<ol className="memory-card__history">/u)
+  assert.match(source, /<Button action="open" iconOnly className="memory-card__remove"[\s\S]*?Open the conversation<\/Button>\s*\)\}\s*<Button action="delete" iconOnly variant="danger"/u)
+  assert.doesNotMatch(source, /Revision history · r/u)
+  assert.doesNotMatch(source, /Open the conversation ↗/u)
+})

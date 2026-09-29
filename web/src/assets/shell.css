@@ -1664,27 +1664,10 @@
   opacity: 0.6;
 }
 
-.memory-card__link {
-  margin-top: var(--space-2);
-  color: var(--accent);
-  font-family: var(--data-font);
-  font-size: var(--text-xs);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
 .memory-card__history {
   margin-top: var(--space-2);
   color: var(--muted);
   font-size: var(--text-sm);
-}
-
-.memory-card__history summary {
-  cursor: pointer;
-  font-family: var(--data-font);
-  font-size: var(--text-xs);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .memory-card__editor,
