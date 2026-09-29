@@ -107,6 +107,7 @@ import {
   saveStageSet,
   selectStageLayer,
   setConversationMode,
+  setConversationSource,
   setStageAttunementSource,
   stageLayoutsEqual,
   updateStageCamera,
@@ -1039,7 +1040,24 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
               scope={scope}
               attunement={attunement}
               namedStackSelected={scope !== 'GLOBAL' && Boolean(module.attunement_source_id)}
-              attunementControl={!attunements.sources.some((source) => source.source_instance_id === module.instance_id) && (
+              attunementControl={attunements.sources.some((source) => source.source_instance_id === module.instance_id) ? (
+                module.module_id === 'conversation' && <label className="rack-stack-control"><span>Thread</span>
+                  <Select
+                    aria-label={`${RACK_MANIFESTS[module.module_id].name} thread`}
+                    data-tooltip-detail="Pin this module to one conversation, or follow the selected thread."
+                    value={module.source_thread_id ?? ''}
+                    onChange={(event) => {
+                      const threadId = event.currentTarget.value || null
+                      setLayout((current) => setConversationSource(current, module.instance_id, threadId))
+                    }}
+                  >
+                    <option value="">Selected thread</option>
+                    {snapshot.catalog.filter((thread) => !thread.archived || thread.thread_id === module.source_thread_id).map((thread) => (
+                      <option key={thread.thread_id} value={thread.thread_id}>{thread.title}</option>
+                    ))}
+                  </Select>
+                </label>
+              ) : (
                 <label className="rack-stack-control"><span>Named stack</span>
                   <Select
                     aria-label={`${RACK_MANIFESTS[module.module_id].name} named stack`}
@@ -1701,7 +1719,10 @@ function RackSettingsControl({
               {attunementControl}
             </>
           ) : (
-            <p>{fixedCopy}</p>
+            <>
+              <p>{fixedCopy}</p>
+              {attunementControl}
+            </>
           )}
         </dialog>
       )}

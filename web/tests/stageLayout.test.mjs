@@ -25,6 +25,7 @@ import {
   resizeStageModule,
   restoreStageLayer,
   restoreStageModule,
+  setConversationSource,
   selectStageLayer,
   setConversationMode,
   updateStageCamera,
@@ -406,4 +407,18 @@ test('whole stage fits the modules and library adds land clear of others', () =>
       }
     }
   }
+})
+
+/** M3EX-32: a second Conversation module can follow another thread, chosen in its gear. */
+test('a conversation module follows the thread picked for it', async () => {
+  let layout = addStageModuleInstance(cloneFactoryStageLayout(), 'conversation', 'thread-a')
+  layout = setConversationSource(layout, 'conversation:2', 'thread-b')
+  const second = activeStageLayer(layout).modules.find((module) => module.instance_id === 'conversation:2')
+  assert.equal(second.source_thread_id, 'thread-b')
+  layout = setConversationSource(layout, 'conversation:2', null)
+  assert.equal(activeStageLayer(layout).modules.find((module) => module.instance_id === 'conversation:2').source_thread_id, null)
+  const { readFile } = await import('node:fs/promises')
+  const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
+  assert.match(app, /module\.module_id === 'conversation' && <label className="rack-stack-control"><span>Thread<\/span>[\s\S]*?setConversationSource\(current, module\.instance_id, threadId\)/u)
+  assert.match(app, /<p>\{fixedCopy\}<\/p>\s*\{attunementControl\}/u)
 })
