@@ -14,7 +14,7 @@ from uuid import UUID
 from pydantic import BaseModel, create_model
 from pydantic_ai import Agent, ModelRetry, PromptedOutput, capture_run_messages
 from pydantic_ai.exceptions import AgentRunError
-from pydantic_ai.messages import ModelMessagesTypeAdapter, ModelResponse
+from pydantic_ai.messages import ModelMessagesTypeAdapter, ModelResponse, ToolCallPart
 from pydantic_ai.usage import UsageLimits
 
 from harness.agent import ExtractionCandidateDraft
@@ -237,7 +237,17 @@ async def run(assignment_path: Path) -> None:
         prompt += "\n" + (root / "JUDGE_SESSION.json").read_text()
 
         @agent.output_validator
-        def validate_return(_ctx, verdict):
+        def validate_return(ctx, verdict):
+            # M3SF: a blind verdict is not a judgment; its claims fed the next round's charge.
+            if sealed.candidates and not any(
+                isinstance(part, ToolCallPart)
+                for message in ctx.messages
+                for part in getattr(message, "parts", ())
+            ):
+                raise ModelRetry(
+                    "You returned a verdict without inspecting any candidate. Every listed "
+                    "artifact_root exists: move into it, run the charter's checks, then return."
+                )
             try:
                 return verdict.bind(session, sealed)
             except (JudgePanelError, ValueError) as exc:
