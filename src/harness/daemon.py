@@ -952,6 +952,18 @@ def create_dev_app(
         except ValueError as exc:
             raise ValueError("agent thread_id must be a UUID") from exc
         project_key = loop.project_key(thread_id)
+        workspace = loop.thread_workspace(thread_id)
+        if workspace is not None and not Path(workspace[0]).is_dir():
+            # F135 (M3EX-14): a vanished folder keeps its memories; tools wait for its answer.
+            return MemoryToolContext(
+                spine=owned_spine,
+                principal_id=principal_id,
+                machine_id=machine_id,
+                agent_id=agent_id,
+                thread_id=parsed_thread_id,
+                project_key=project_key,
+                toolset_enabled=False,
+            )
         workspace_toolset = workspace_toolset_for(thread_id)
         location = workspace_toolset.location()
         workflow = workflow_definitions.get(thread_id)
