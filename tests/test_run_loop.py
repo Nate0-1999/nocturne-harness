@@ -2975,3 +2975,42 @@ async def test_symphony_updates_replace_the_stack_state_instead_of_piling_up(tmp
     growth = [after - before for before, after in zip(sizes, sizes[1:], strict=False)]
     assert max(growth) - min(growth) < 200, growth
     await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_every_message_is_stamped_where_it_was_written_and_restart_keeps_it(
+    tmp_path: Path,
+) -> None:
+    """ADR-010 (SD-072): each journal message carries its thread's location — a prompt where
+    it was typed, an answer where its run finished after a move — and a restart keeps both
+    for the transcript and for the next compaction."""
+    from harness.pydantic_harness_adapter import located_transcript
+
+    root = tmp_path / "repo"
+    web = root / "web"
+    web.mkdir(parents=True)
+    journal = TranscriptJournal(tmp_path / "transcripts")
+
+    class MovingRunner(ImmediateHistoryRunner):
+        async def run(self, *, thread_id, prompt, message_history, emit, model_resolution=None):
+            loop.record_thread_location(thread_id, str(web))
+            return TurnOutcome(StopReason.END_TURN, (*message_history, prompt))
+
+    loop = RunLoop(MovingRunner(), factory(Ids()), transcript_journal=journal)
+    sink = Sink()
+    await loop.request_snapshot("thread-1", sink, workspace_root=str(root))
+    await loop.submit(thread_id="thread-1", prompt_id=ulid(1), prompt="Go to web.", sink=sink)
+    await _wait_for_done_count(sink, 1)
+    await loop.close()
+
+    restored = TranscriptJournal(journal.root).hydrate_threads()[0]
+    assert [(m["role"], m["location"]) for m in restored.messages] == [
+        ("user", str(root)),
+        ("assistant", str(web)),
+    ]
+    restarted = RunLoop(
+        ImmediateHistoryRunner(), factory(Ids()), transcript_journal=TranscriptJournal(journal.root)
+    )
+    history = restarted._threads["thread-1"].message_history
+    assert located_transcript(history)[1] == {"m0": str(root), "m1": str(web)}
+    await restarted.close()

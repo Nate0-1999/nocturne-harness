@@ -691,6 +691,8 @@ class RunLoop:
                 raise ThreadWorkspaceMoved(
                     "This thread's folder was moved or renamed. Choose its new folder first."
                 )
+            # SD-072: a message carries the folder its thread stood in when it was written.
+            user_message["location"] = self._state_for_locked(thread_id).current_location
             submission_lock = self._submission_locks.setdefault(thread_id, asyncio.Lock())
             if proposed_response is not None:
                 messages = self._state_for_locked(thread_id).messages
@@ -953,6 +955,7 @@ class RunLoop:
             "thinking": "",
             "events": [],
             "partial": True,
+            "location": state.current_location,
         }
         user_index = next(
             index for index, message in enumerate(state.messages) if message is turn.user_message
@@ -1280,6 +1283,8 @@ class RunLoop:
                     {"event_kind": "run_error", "message": error_message}
                 )
             active.assistant_message["partial"] = partial
+            # SD-072: the answer is written where the run finished, after any moves.
+            active.assistant_message["location"] = state.current_location
             active.turn.user_message["state"] = stop_reason.value
             self._capture_message(
                 thread_id,
@@ -2231,8 +2236,13 @@ class RunLoop:
                 ]
             history.extend(
                 (
-                    ModelRequest([UserPromptPart(user_content)]),
-                    ModelResponse([TextPart(answer)]),
+                    # SD-072: a restored turn keeps its folders for the next compaction.
+                    ModelRequest(
+                        [UserPromptPart(user_content)], metadata={"location": user.get("location")}
+                    ),
+                    ModelResponse(
+                        [TextPart(answer)], metadata={"location": assistant.get("location")}
+                    ),
                 )
             )
         return tuple(history)
