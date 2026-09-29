@@ -364,7 +364,7 @@ export function restoreStageModule(
     if (removed === undefined && fallback === undefined) return layer
     return {
       ...layer,
-      modules: [...layer.modules, { ...(removed ?? fallback!) }].sort(
+      modules: [...layer.modules, clearOfOthers({ ...(removed ?? fallback!) }, layer.modules)].sort(
         (left, right) => STAGE_MODULE_IDS.indexOf(left.module_id) - STAGE_MODULE_IDS.indexOf(right.module_id),
       ),
       removed_modules: layer.removed_modules.filter((item) => item.instance_id !== instanceId),
@@ -391,15 +391,32 @@ export function addStageModuleInstance(
   const fallback = DEFAULT_MODULES[moduleId]
   return updateActiveLayer(layout, (layer) => ({
     ...layer,
-    modules: [...layer.modules, {
+    modules: [...layer.modules, clearOfOthers({
       ...fallback,
       instance_id: instanceId,
       source_thread_id: moduleId === 'conversation' ? sourceThreadId : undefined,
       conversation_mode: moduleId === 'conversation' ? 'focused' : undefined,
       x: clamp(fallback.x + offset, 0, STAGE_COLUMNS - fallback.width),
       y: clamp(fallback.y + offset, 0, STAGE_ROWS - fallback.height),
-    }],
+    }, layer.modules)],
   }))
+}
+
+/** M3EX-28: a module added from the Library lands beside the layer's modules, never on top. */
+function clearOfOthers(module: StageModuleLayout, others: readonly StageModuleLayout[]): StageModuleLayout {
+  const overlaps = (other: StageModuleLayout) => module.x < other.x + other.width &&
+    other.x < module.x + module.width && module.y < other.y + other.height && other.y < module.y + module.height
+  if (!others.some(overlaps)) return module
+  const right = Math.max(...others.map((other) => other.x + other.width)) + 2
+  if (right + module.width <= STAGE_COLUMNS) {
+    return { ...module, x: right, y: Math.min(...others.map((other) => other.y)) }
+  }
+  const below = Math.max(...others.map((other) => other.y + other.height)) + 2
+  return {
+    ...module,
+    x: Math.min(...others.map((other) => other.x)),
+    y: clamp(below, 0, STAGE_ROWS - module.height),
+  }
 }
 
 /** PLAN M3OM / P2: posture is durable per conversation-module instance. */
@@ -470,18 +487,26 @@ export function restoreStageLayer(layout: StageLayoutSet, layerId: string): Stag
   }
 }
 
-export function fitStageCamera(viewportWidth: number, viewportHeight: number): StageCamera {
+export function fitStageCamera(
+  viewportWidth: number,
+  viewportHeight: number,
+  modules: readonly StageModuleLayout[] = [],
+): StageCamera {
+  // M3EX-28: "Whole stage" fits the layer's modules; only an empty layer fits the canvas.
+  const left = modules.length ? Math.min(...modules.map((module) => module.x)) : 0
+  const top = modules.length ? Math.min(...modules.map((module) => module.y)) : 0
+  const right = modules.length ? Math.max(...modules.map((module) => module.x + module.width)) : STAGE_COLUMNS
+  const bottom = modules.length ? Math.max(...modules.map((module) => module.y + module.height)) : STAGE_ROWS
+  const width = (right - left) * STAGE_UNIT_WIDTH
+  const height = (bottom - top) * STAGE_UNIT_HEIGHT
   const zoom = clamp(
-    Math.min(
-      (viewportWidth - 48) / (STAGE_COLUMNS * STAGE_UNIT_WIDTH),
-      (viewportHeight - 48) / (STAGE_ROWS * STAGE_UNIT_HEIGHT),
-    ),
+    Math.min((viewportWidth - 48) / width, (viewportHeight - 48) / height),
     STAGE_MIN_ZOOM,
     1,
   )
   return {
-    x: Math.round((viewportWidth - STAGE_COLUMNS * STAGE_UNIT_WIDTH * zoom) / 2),
-    y: Math.round((viewportHeight - STAGE_ROWS * STAGE_UNIT_HEIGHT * zoom) / 2),
+    x: Math.round((viewportWidth - width * zoom) / 2 - left * STAGE_UNIT_WIDTH * zoom),
+    y: Math.round((viewportHeight - height * zoom) / 2 - top * STAGE_UNIT_HEIGHT * zoom),
     zoom,
   }
 }

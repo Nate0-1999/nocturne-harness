@@ -379,3 +379,31 @@ test('the factory Work layer opens at full size and the view mode persists', asy
   assert.match(app, /useState\(initialSheetMode\)/u)
   assert.match(app, /localStorage\.setItem\(SHEET_MODE_STORAGE_KEY, String\(sheetMode\)\)/u)
 })
+
+/** M3EX-28: "Whole stage" frames the layer's modules, not the empty canvas, and a
+ * module added from the Library never lands on top of one already there.
+ */
+test('whole stage fits the modules and library adds land clear of others', () => {
+  const layer = activeStageLayer(cloneFactoryStageLayout())
+  const fitted = fitStageCamera(1440, 900, layer.modules)
+  assert.ok(fitted.zoom > 0.3, `fit zoom ${fitted.zoom}`)
+  for (const module of layer.modules) {
+    assert.ok(fitted.x + module.x * STAGE_UNIT_WIDTH * fitted.zoom >= 0)
+    assert.ok(fitted.x + (module.x + module.width) * STAGE_UNIT_WIDTH * fitted.zoom <= 1440)
+    assert.ok(fitted.y + (module.y + module.height) * STAGE_UNIT_HEIGHT * fitted.zoom <= 900)
+  }
+  assert.ok(fitStageCamera(1440, 900).zoom < 0.2)
+
+  const overlaps = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
+  for (const add of [
+    (layout) => restoreStageModule(layout, 'jobs'),
+    (layout) => addStageModuleInstance(layout, 'conversation', null),
+  ]) {
+    const modules = activeStageLayer(add(cloneFactoryStageLayout())).modules
+    for (const [index, module] of modules.entries()) {
+      for (const other of modules.slice(index + 1)) {
+        assert.ok(!overlaps(module, other), `${module.instance_id} overlaps ${other.instance_id}`)
+      }
+    }
+  }
+})

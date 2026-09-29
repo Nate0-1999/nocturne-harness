@@ -966,7 +966,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             type="button"
             data-testid="stage-fit"
             data-tooltip-detail="Fit every module on this layer into the visible Stage."
-            onClick={() => changeCamera(fitStageCamera(viewportSize.width, viewportSize.height))}
+            onClick={() => changeCamera(fitStageCamera(viewportSize.width, viewportSize.height, layer.modules))}
           >
             Whole stage
           </Button>
