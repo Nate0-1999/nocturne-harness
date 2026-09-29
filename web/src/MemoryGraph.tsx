@@ -98,10 +98,12 @@ export function MemoryGraph() {
       injections: Number(node.memory.stats.injections ?? 0),
     }
   })).map((label) => [label.id, label]))
+  // M3EX-35: the view box grows with the node rows; the canvas scrolls instead of spilling.
+  const viewHeight = Math.max(76, 18 + Math.ceil(nodes.length / 5) * 25)
   return <section className="instrument instrument--graph">
     <header><h1>Memory Graph</h1></header>
     {!requestIsQueryable ? <p role="status">{rack.attunement?.kind === 'stack' ? `${rack.attunement.name} graph is not available yet.` : 'No thread is attuned.'}</p> : visibleFailure !== null ? <p role="alert">{visibleFailure}</p> : snapshot === null ? <p role="status">Loading memory graph…</p> : <div className="graph-stage">
-      <svg viewBox="0 0 100 76" role="img" aria-label={`${nodes.length} memories and ${snapshot?.edges.length ?? 0} relationships`}>
+      <div className="graph-canvas"><svg viewBox={`0 0 100 ${viewHeight}`} role="img" aria-label={`${nodes.length} memories and ${snapshot?.edges.length ?? 0} relationships`}>
         {(snapshot?.edges ?? []).map((edge, index) => { const a = positions.get(edge.from_memory_id); const b = positions.get(edge.to_memory_id); return a && b ? <line key={`${edge.kind}-${index}`} x1={a.x} y1={a.y} x2={b.x + (a === b ? 2 : 0)} y2={b.y + (a === b ? 2 : 0)} data-kind={edge.kind} /> : null })}
         {nodes.map((node) => { const p = positions.get(node.memory.memory_id)!; const r = 3 + Math.min(Number(node.memory.stats.injections ?? 0), 12) / 8; const label = labels.get(node.memory.memory_id); return <g key={node.memory.memory_id}>
           <g className="graph-node" data-status={node.memory.status} data-current={node.in_current_context || undefined} onClick={() => inspectNode(node)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter') inspectNode(node) }}>
@@ -112,7 +114,7 @@ export function MemoryGraph() {
           </g>
           <text className="graph-node-label" x={label?.x ?? p.x} y={label?.y ?? p.y} data-priority={label?.priority} visibility={label === undefined ? 'hidden' : undefined}>{label?.text ?? ''}</text>
         </g>})}
-      </svg>
+      </svg></div>
       <aside>{selected === null ? <p>Select a node to inspect its complete memory.</p> : <>
         {selected.memory.status === 'tombstoned' ? <div data-testid="graph-deleted-memory">
           <p><strong>{selected.memory.label}</strong> · deleted</p>

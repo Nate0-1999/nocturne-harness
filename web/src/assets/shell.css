@@ -460,8 +460,10 @@
 
 .chat-header__model-value {
   min-width: 0;
+  overflow: hidden;
   color: var(--muted);
-  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .chat-header__model-action {
