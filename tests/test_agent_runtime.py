@@ -471,7 +471,7 @@ async def test_m3rl_private_tags_never_enter_stream_or_final_answer(opening, clo
         bridge = _EventBridge(emitter)
         await bridge._accept_text(raw[:split])
         await bridge._accept_text(raw[split:])
-        answer = await bridge.finalize(run_id="test", created_at=datetime.now(UTC))
+        answer = await bridge.finalize([raw], run_id="test", created_at=datetime.now(UTC))
         assert answer == "Before.After."
         assert "".join(emitter.texts) == answer
         assert emitter.events[-1]["primary"] == "Continue."
@@ -479,7 +479,14 @@ async def test_m3rl_private_tags_never_enter_stream_or_final_answer(opening, clo
     bridge = _EventBridge(emitter)
     await bridge._accept_text(f"Answer.{opening}unfinished private work")
     assert "".join(emitter.texts) == "Answer."
-    assert await bridge.finalize(run_id="test", created_at=datetime.now(UTC)) == "Answer."
+    assert (
+        await bridge.finalize(
+            [f"Answer.{opening}unfinished private work"],
+            run_id="test",
+            created_at=datetime.now(UTC),
+        )
+        == "Answer."
+    )
 
 
 @pytest.mark.asyncio

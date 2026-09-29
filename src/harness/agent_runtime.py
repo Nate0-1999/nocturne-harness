@@ -531,7 +531,17 @@ class PydanticAITurnRunner:
                     usage=run_usage,
                     event_stream_handler=bridge.handle,
                 )
-            visible_output = await bridge.finalize(run_id=emit.run_id, created_at=self._clock())
+            visible_output = await bridge.finalize(
+                [
+                    part.content
+                    for message in result.new_messages()
+                    if isinstance(message, ModelResponse)
+                    for part in message.parts
+                    if isinstance(part, TextPart)
+                ],
+                run_id=emit.run_id,
+                created_at=self._clock(),
+            )
             usage = _usage_snapshot(result.usage)
             await bridge.publish_usage(usage)
             history = tuple(result.all_messages())
@@ -910,20 +920,87 @@ class _VisibleModelText:
         return visible
 
 
+class _AnswerText:
+    """One run's visible answer and terminal proposal; the stream and finalize share it."""
+
+    def __init__(self) -> None:
+        self.visible = ""
+        self.proposal: ProposedResponse | None = None
+        self._model_text = _VisibleModelText()
+        self._pending = ""
+        self._in_block = False
+        self._part_answered = False
+        self._new_part = False
+        self._raw_tail = ""
+
+    def start_part(self) -> None:
+        self._new_part = True
+
+    def feed(self, value: str) -> str:
+        """Accept raw model text and return what became visible."""
+
+        if self._new_part and value:
+            # M3EX-06: text on either side of a tool step reads as two paragraphs.
+            if self._raw_tail and not self._raw_tail.isspace() and not value[0].isspace():
+                value = "\n\n" + value
+            self._new_part = False
+            self._part_answered = False
+        if value:
+            self._raw_tail = value[-1]
+        return self._accept(self._model_text.feed(value))
+
+    def flush(self) -> str:
+        """Release held text at the end of the run; an unclosed block stays hidden."""
+
+        tail = self._model_text.pending if self._model_text.closing is None else ""
+        self._model_text = _VisibleModelText()
+        shown = self._accept(tail)
+        if not self._in_block:
+            shown += self._show(self._pending)
+        self._pending = ""
+        return shown
+
+    def _accept(self, value: str) -> str:
+        self._pending += value
+        shown = ""
+        while True:
+            if self._in_block:
+                close = self._pending.find(BLOCK_CLOSE)
+                if close < 0:
+                    return shown
+                proposal = parse_proposal_block(self._pending[:close])
+                self._pending = self._pending[close + len(BLOCK_CLOSE) :]
+                self._in_block = False
+                if proposal is not None and not self._part_answered:
+                    # F133 (M3EX-01): the answer lives in chat; the card stays as built.
+                    shown += self._show(proposal.primary)
+                self.proposal = proposal
+            marker = self._pending.find(BLOCK_OPEN)
+            if marker < 0:
+                break
+            shown += self._show(self._pending[:marker])
+            self._pending = self._pending[marker + len(BLOCK_OPEN) :]
+            self._in_block = True
+        safe = len(self._pending) - _marker_prefix_suffix_length(self._pending, BLOCK_OPEN)
+        shown += self._show(self._pending[:safe])
+        self._pending = self._pending[safe:]
+        return shown
+
+    def _show(self, value: str) -> str:
+        if value.strip():
+            self._part_answered = True
+            self.proposal = None
+        self.visible += value
+        return value
+
+
 class _EventBridge:
     """Translate pydantic-ai events and mutable usage into owned run events."""
 
     def __init__(self, emit: RunEmitter) -> None:
         self._emit = emit
         self._last_usage = UsageSnapshot()
-        self._pending_text = ""
-        self._visible_text = ""
-        self._proposal_started = False
-        self._proposal: ProposedResponse | None = None
-        self._part_answered = False
-        self._new_part = False
-        self._raw_tail = ""
-        self._model_text = _VisibleModelText()
+        self._answer = _AnswerText()
 
     async def handle(
         self,
@@ -932,12 +1009,12 @@ class _EventBridge:
     ) -> None:
         async for event in events:
             if isinstance(event, PartStartEvent) and isinstance(event.part, TextPart):
-                self._new_part = True
+                self._answer.start_part()
                 if event.part.content:
-                    await self._accept_part_text(event.part.content)
+                    await self._accept_text(event.part.content)
             elif isinstance(event, PartDeltaEvent) and isinstance(event.delta, TextPartDelta):
                 if event.delta.content_delta:
-                    await self._accept_part_text(event.delta.content_delta)
+                    await self._accept_text(event.delta.content_delta)
             elif isinstance(event, PartStartEvent) and isinstance(event.part, ThinkingPart):
                 if event.part.content:
                     await self._emit.thinking(event.part.content)
@@ -949,71 +1026,31 @@ class _EventBridge:
             await self.publish_usage(_usage_snapshot(context.usage))
         await self.publish_usage(_usage_snapshot(context.usage))
 
-    async def _accept_part_text(self, value: str) -> None:
-        if self._new_part:
-            # M3EX-06: text on either side of a tool step reads as two paragraphs.
-            if self._raw_tail and not self._raw_tail.isspace() and not value[0].isspace():
-                value = "\n\n" + value
-            self._new_part = False
-            self._part_answered = False
-        self._raw_tail = value[-1]
-        await self._accept_text(value)
-
     async def _accept_text(self, value: str) -> None:
-        await self._accept_visible(self._model_text.feed(value))
-
-    async def _accept_visible(self, value: str) -> None:
-        self._pending_text += value
-        while True:
-            if self._proposal_started:
-                close = self._pending_text.find(BLOCK_CLOSE)
-                if close < 0:
-                    return
-                proposal = parse_proposal_block(self._pending_text[:close])
-                self._pending_text = self._pending_text[close + len(BLOCK_CLOSE) :]
-                self._proposal_started = False
-                if proposal is not None and not self._part_answered:
-                    # F133 (M3EX-01): the answer lives in chat; the card stays as built.
-                    await self._publish_visible(proposal.primary)
-                self._proposal = proposal
-            marker = self._pending_text.find(BLOCK_OPEN)
-            if marker < 0:
-                break
-            await self._publish_visible(self._pending_text[:marker])
-            self._pending_text = self._pending_text[marker + len(BLOCK_OPEN) :]
-            self._proposal_started = True
-        retained = _marker_prefix_suffix_length(self._pending_text, BLOCK_OPEN)
-        safe_length = len(self._pending_text) - retained
-        await self._publish_visible(self._pending_text[:safe_length])
-        self._pending_text = self._pending_text[safe_length:]
+        await self._publish_visible(self._answer.feed(value))
 
     async def _publish_visible(self, value: str) -> None:
-        if not value:
-            return
-        if value.strip():
-            self._part_answered = True
-            self._proposal = None
-        self._visible_text += value
-        await self._emit.text(value)
+        if value:
+            await self._emit.text(value)
 
-    async def finalize(self, *, run_id: str, created_at: datetime) -> str:
-        """Flush what the stream still holds; the streamed text is the whole answer.
+    async def finalize(self, parts: Sequence[str], *, run_id: str, created_at: datetime) -> str:
+        """Reconcile all new assistant TextParts, in order, excluding prior history.
 
-        The stream saw every TextPart of the run, including text before tools. A terminal
-        proposal becomes its card; an unclosed block stays hidden.
+        They replay through the same rules the stream used, including text before tools.
+        The terminal proposal is hidden from both projections and becomes its card.
         """
 
-        if self._model_text.closing is None:
-            await self._accept_visible(self._model_text.pending)
-        self._model_text = _VisibleModelText()
-        if not self._proposal_started:
-            await self._publish_visible(self._pending_text)
-        self._pending_text = ""
-        if self._proposal is not None:
+        final = _AnswerText()
+        for part in parts:
+            final.start_part()
+            final.feed(part)
+        final.flush()
+        await self._publish_visible(final.visible[len(self._answer.visible) :])
+        if final.proposal is not None:
             await self._emit.event(
-                proposed_response_event(self._proposal, run_id=run_id, created_at=created_at)
+                proposed_response_event(final.proposal, run_id=run_id, created_at=created_at)
             )
-        return self._visible_text
+        return final.visible
 
     async def publish_usage(self, usage: UsageSnapshot) -> None:
         if usage == self._last_usage:
