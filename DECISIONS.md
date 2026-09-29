@@ -3790,3 +3790,19 @@ its own process group (an EXIT trap keeps zsh the named parent); Symphony shutdo
 hard-kills workers after 10 s; a restart restores every stack, a running one as stopped.
 Archive turns an unusable verdict into a new card, retries a refused target as new, and
 names a fact still over the cap after three passes; compaction keeps D.2 153.
+
+## M3LT — The location trail [P1.2, P3]
+
+PRECEDENT: v2.125 and SD-072; M3TL (origin_location, the WHERE scorer); M3CM (D.2 153).
+Every message the run loop writes carries `location`: a prompt, the folder its thread
+stood in when it was typed; an answer, the folder its run finished in. A restart keeps
+both, in the transcript and in the rebuilt model history (as message metadata, which is
+never sent to the model). The extractor sees an id on every transcript message — the
+journal's message_id at archive, an [mN] label at compaction — and names, per candidate,
+the messages it drew from. Compaction triages the model history, not the journal, so a
+message's folder there is the current location its request was given (a restored turn's
+stamp otherwise; a reply inherits its request's). A memory is born in the folder of its
+source messages, their common ancestor when they span folders, and the thread's folder
+only when none is named. The Palace stamps one location per extraction request, so
+admission sends one request per birth folder and the Palace is unchanged. The folders of
+a memory that spans several are not listed; that needs a Palace field (F146).
