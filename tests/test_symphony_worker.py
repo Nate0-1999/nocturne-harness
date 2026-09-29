@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
@@ -236,3 +237,79 @@ async def test_worker_context_injects_without_a_gate_and_reacts_to_selection(tmp
     )
     assert "UTF-8 checksum" not in await judge.render([])
     assert spine.prepare_injection.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_completion_artifacts_are_relative_to_the_worktree(tmp_path, monkeypatch):
+    """M3SF: an attempt citing its own files by absolute path is not refused after the work."""
+    attempt = tmp_path / "attempt"
+    attempt.mkdir()
+    subprocess.run(["git", "init", "-q", str(attempt)], check=True)
+    (attempt / "README.md").write_text("done\n")
+    out = tmp_path / "out"
+    out.mkdir()
+    (out / "env").write_text("SPINE_TOKEN='test'\nPRINCIPAL_ID='verification-test'\n")
+    assignment = {
+        "stage": "completion",
+        "brief": "Write README.md",
+        "env_file": str(out / "env"),
+        "model_policy": "pinned:openrouter:test/model",
+        "origin_agent": "test/root.1",
+        "thread_id": "12345678-1234-5678-1234-567812345678",
+        "project_key": str(attempt),
+        "run_id": "01M2GX8AQXEFGES6DDHNB3N178",
+        "prompt_id": "01M2GX8AQXEFGES6DDHNB3N179",
+        "home": str(tmp_path),
+        "followups": str(out / "followups.json"),
+        "attempt_id": "round-1-attempt-1",
+    }
+    (out / "assignment.json").write_text(json.dumps(assignment))
+
+    async def respond(messages, info):
+        yield json.dumps(
+            {
+                "completed": True,
+                "claims": ["README.md written"],
+                "evidence_refs": [f"{attempt}/README.md", "README.md (line 1)", "/elsewhere/n.txt"],
+                "uncertainties": [],
+                "memories": [],
+            }
+        )
+
+    router = SimpleNamespace(
+        catalog=None, model_for=lambda _: FunctionModel(stream_function=respond), aclose=AsyncMock()
+    )
+    monkeypatch.setattr(symphony_worker, "CompletionRouter", lambda _: router)
+    resolution = SimpleNamespace(model="test/model", context_tokens=10000)
+    resolver = SimpleNamespace(resolve=AsyncMock(return_value=resolution))
+    monkeypatch.setattr(symphony_worker, "ModelPolicyResolver", lambda **_: resolver)
+    monkeypatch.setattr(symphony_worker, "model_settings_for", lambda *_: {})
+    prepared = InjectPrepareResponse(
+        injection_id="12345678-1234-5678-1234-567812345678",
+        snapshot_ts=datetime.now(UTC),
+        scorer_version="test",
+        injected=[],
+        near_misses=[],
+        final_block="",
+        memory_allocation=MemoryAllocation(
+            memory_context_share=0.05,
+            share_tokens=500,
+            regular_tokens=0,
+            pinned_tokens=0,
+            total_tokens=0,
+            pinned_overflow_tokens=0,
+        ),
+    )
+    spine = SimpleNamespace(
+        aclose=AsyncMock(),
+        record_spend_events=AsyncMock(),
+        prepare_injection=AsyncMock(return_value=prepared),
+    )
+    monkeypatch.setattr(symphony_worker, "SpineClient", lambda *_, **__: spine)
+    monkeypatch.chdir(attempt)
+
+    await symphony_worker.run(out / "assignment.json")
+
+    result = json.loads((out / "result.json").read_text())
+    assert result["artifacts"] == ["README.md", "README.md (line 1)"]
+    assert result["evidence_refs"][2] == "/elsewhere/n.txt"
