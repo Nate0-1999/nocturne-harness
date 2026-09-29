@@ -8,6 +8,7 @@ import json
 import subprocess
 import sys
 import time
+from collections import Counter
 from decimal import Decimal
 from pathlib import Path
 from uuid import UUID, uuid4
@@ -60,6 +61,29 @@ def _carry_environment(root: Path, location: Path) -> None:
             data = path.read_bytes()
             if old in data and b"\0" not in data:
                 path.write_bytes(data.replace(old, new))
+
+
+def _graft(graft_root: Path, commits: list[str]) -> str:
+    """M3SF: passing attempts combine; where they overlap, the earlier attempt's lines stand."""
+    for commit in commits:
+        try:
+            _git(
+                graft_root,
+                "-c",
+                "user.name=Nocturne",
+                "-c",
+                "user.email=nocturne@localhost",
+                "cherry-pick",
+                "--keep-redundant-commits",
+                "-X",
+                "ours",
+                commit,
+            )
+        except subprocess.CalledProcessError as exc:
+            raise ValueError(
+                "The judges passed different attempts whose changes cannot be combined."
+            ) from exc
+    return _git(graft_root, "rev-parse", "HEAD")
 
 
 class SymphonyExecution:
@@ -220,34 +244,28 @@ class SymphonyExecution:
                     graft = None
                     survivors = ()
                     if prior_decision is not None:
-                        survivors = tuple(
-                            dict.fromkeys(
-                                v.selected_attempt_id
-                                for v in prior_decision.verdicts
-                                if v.outcome == "pass"
-                            )
+                        # M3SF: the most-chosen passing attempt grafts first, so its lines stand.
+                        votes = Counter(
+                            v.selected_attempt_id
+                            for v in prior_decision.verdicts
+                            if v.outcome == "pass"
                         )
+                        survivors = tuple(attempt for attempt, _count in votes.most_common())
                         if survivors:
-                            sources = [
-                                r
-                                for r in prior_decision.attempt_lineage
-                                if r.attempt_id in survivors
-                            ]
+                            sources = sorted(
+                                (
+                                    r
+                                    for r in prior_decision.attempt_lineage
+                                    if r.attempt_id in survivors
+                                ),
+                                key=lambda r: survivors.index(r.attempt_id),
+                            )
                             graft_root = worktrees / child_id / "graft"
                             graft_root.parent.mkdir(parents=True, exist_ok=True)
                             _git(root, "worktree", "add", "--detach", str(graft_root), checkpoint)
-                            for source in sources:
-                                _git(
-                                    graft_root,
-                                    "-c",
-                                    "user.name=Nocturne",
-                                    "-c",
-                                    "user.email=nocturne@localhost",
-                                    "cherry-pick",
-                                    "--keep-redundant-commits",
-                                    source.distillate.product.commit,
-                                )
-                            next_checkpoint = _git(graft_root, "rev-parse", "HEAD")
+                            next_checkpoint = _graft(
+                                graft_root, [s.distillate.product.commit for s in sources]
+                            )
                             graft = GraftReceipt(
                                 base_commit=checkpoint,
                                 accepted_commit=next_checkpoint,
