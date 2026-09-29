@@ -289,10 +289,9 @@ async def run(assignment_path: Path) -> None:
                     deps=context,
                     model=router.model_for(resolution.model),
                     model_settings=model_settings_for(resolution, assignment["thread_id"]),
-                    usage_limits=UsageLimits(
-                        request_limit=settings.run_request_limit,
-                        total_tokens_limit=settings.run_total_tokens_limit,
-                    ),
+                    # M3SF: the owner's signed spend and time walls bound a worker, which the
+                    # runtime meters; the chat's per-run caps once killed attempts below them.
+                    usage_limits=UsageLimits(request_limit=None),
                     event_stream_handler=observe,
                     instructions=instructions,
                 )
