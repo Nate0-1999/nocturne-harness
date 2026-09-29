@@ -16,3 +16,12 @@ test('keeps the memory editor mounted for its authoritative save result', async 
   assert.match(source, /onClick=\{\(\) => \{ void saveEdit\(\) \}\}/u)
   assert.match(source, /function submitEdit[\s\S]*?void saveEdit\(\)/u)
 })
+
+/** M3EX-17 / FL-013: the reason picked in the Memory module's delete dialog is the
+ * reason recorded; the module never drops it on the way to the rack action.
+ */
+test('the Memory module forwards the chosen delete reason', async () => {
+  const source = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
+
+  assert.match(source, /onDelete=\{\(memoryId, expectedRevision, reason\) => events\.dispatch\(\{\s*type: 'memory\.delete', memory_id: memoryId, expected_revision: expectedRevision, reason,/u)
+})
