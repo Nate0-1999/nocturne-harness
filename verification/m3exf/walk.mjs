@@ -161,7 +161,10 @@ const scenes = {
   async 'm3ex-16-remember'() {
     const { context, page } = await open()
     await sheet(page)
-    await frame(page, 'threads').getByRole('button', { name: 'New thread' }).first().click(); await sleep(3000)
+    await frame(page, 'threads').getByRole('button', { name: 'New thread' }).first().click(); await sleep(1500)
+    const create = frame(page, 'threads').getByRole('button', { name: 'Create', exact: true })
+    if (await create.count()) { await create.first().click() }
+    await sleep(3000)
     const conversation = frame(page, 'conversation')
     await conversation.locator('#prompt-input').fill('/remember Web UI tests live in harness/web/tests and run with npm test; Python tests run with .venv/bin/python -m pytest -q.')
     await conversation.locator('#prompt-input').press('Enter')
@@ -205,6 +208,29 @@ const scenes = {
     await jobs.getByRole('button', { name: /Run now/i }).first().click(); await sleep(12000)
     await jobs.getByRole('button', { name: /M3EXF walk job/ }).first().click().catch(() => {}); await sleep(1500)
     await shot(page, 'm3ex-23-job-verdict', { clip: await clip(page, 'jobs') })
+    await context.close()
+  },
+  async 'heartbeat'() {
+    const { context, page } = await open()
+    await sheet(page)
+    await frame(page, 'threads').getByRole('button', { name: 'New thread' }).first().click(); await sleep(1500)
+    const create = frame(page, 'threads').getByRole('button', { name: 'Create', exact: true })
+    if (await create.count()) { await create.first().click() }
+    await sleep(3000)
+    const conversation = frame(page, 'conversation')
+    await conversation.locator('#prompt-input').fill('Reply with exactly: M3EXF heartbeat.')
+    await conversation.locator('#prompt-input').press('Enter')
+    let gated = false
+    for (let i = 0; i < 120; i += 1) {
+      await sleep(2000)
+      const gate = frame(page, 'gate').getByTestId('memory-gate-continue')
+      if (!gated && await gate.count()) { await shot(page, 'heartbeat-gate'); await gate.first().click(); gated = true }
+      const text = await conversation.locator('body').innerText()
+      if (/M3EXF heartbeat\.\s*$/m.test(text.split('Transmit to Nocturne')[0])) break
+    }
+    await sleep(1500)
+    await shot(page, 'heartbeat-answer', { clip: await clip(page, 'conversation') })
+    console.log('gate shown:', gated)
     await context.close()
   },
   async 'taste-06-cards'() {
