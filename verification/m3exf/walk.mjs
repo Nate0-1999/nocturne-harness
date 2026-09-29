@@ -182,17 +182,20 @@ const scenes = {
     await sheet(page)
     const ingest = frame(page, 'palace_queue')
     await page.locator('[data-testid="rack-plugin-frame-palace_queue"]').scrollIntoViewIfNeeded()
-    await ingest.getByRole('button', { name: /Queue for review/i }).first().click()
-    for (let i = 0; i < 80; i += 1) {
+    // FL-163's walk: a small fictional Markdown document through the drop/choose control.
+    await ingest.locator('input[type="file"]').first().setInputFiles('/private/tmp/m3exf-work/walk-facts.md')
+    for (let i = 0; i < 180; i += 1) {
       await sleep(5000)
       if (await ingest.locator('.seed-batch .seed-memory').count()) break
     }
     await sleep(2000)
+    await ingest.locator('.seed-batch').first().scrollIntoViewIfNeeded().catch(() => {}); await sleep(800)
     await shot(page, 'm3ex-21-ingest-candidates', { clip: await clip(page, 'palace_queue') })
     const approve = ingest.getByTestId('seed-memory-approve')
     if (await approve.count()) {
       const before = await ingest.locator('.seed-batch .seed-memory').count()
       await approve.first().click(); await sleep(6000)
+      await ingest.locator('.seed-batch').first().scrollIntoViewIfNeeded().catch(() => {}); await sleep(800)
       await shot(page, 'm3ex-21-ingest-one-approved', { clip: await clip(page, 'palace_queue') })
       console.log('candidates', before, '->', await ingest.locator('.seed-batch .seed-memory').count())
     }
