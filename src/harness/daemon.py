@@ -1018,7 +1018,9 @@ def create_dev_app(
                     principal_id=principal_id,
                     project_key=context.project_key,
                     location_path=context.origin_path,
-                    current_location=str(context.toolset.location().cwd),
+                    current_location=(
+                        None if context.toolset is None else str(context.toolset.location().cwd)
+                    ),
                     prompt=loop.latest_prompt(thread_id) or context.project_key or "",
                     model_context_tokens=configured.model_context_tokens,
                 ),
