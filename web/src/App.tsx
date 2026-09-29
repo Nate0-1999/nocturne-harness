@@ -1791,7 +1791,48 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
 
 function ChatModuleSlot() {
   const snapshot = useRackSnapshot()
-  return <ChatModule key={snapshot.selectedThreadId ?? 'empty'} />
+  return <>
+    <ChatModule key={snapshot.selectedThreadId ?? 'empty'} />
+    <SlashCommandHint />
+  </>
+}
+
+// M3EX-30: the commands the daemon understands, listed the moment "/" is typed.
+const SLASH_COMMANDS = [
+  ['/remember', 'Save a fact to your Palace.'],
+  ['/compact', 'Shorten this conversation; the journal keeps it all.'],
+  ['/model', 'Switch this thread to an OpenRouter model.'],
+  ['/browser allow-web', "Let this thread's browser open any site."],
+] as const
+
+/** Read-only beside the composer (peers hold the composer itself): follows #prompt-input. */
+function SlashCommandHint() {
+  const [hint, setHint] = useState<{ typed: string; x: number; y: number } | null>(null)
+  useEffect(() => {
+    const read = () => {
+      const input = document.getElementById('prompt-input')
+      if (!(input instanceof HTMLTextAreaElement) || !/^\/\S*$/u.test(input.value)) {
+        setHint(null)
+        return
+      }
+      const rect = input.getBoundingClientRect()
+      setHint({ typed: input.value, x: rect.left + rect.width / 2, y: rect.top - 8 })
+    }
+    document.addEventListener('input', read)
+    document.addEventListener('keyup', read)
+    document.addEventListener('focusout', read)
+    return () => {
+      document.removeEventListener('input', read)
+      document.removeEventListener('keyup', read)
+      document.removeEventListener('focusout', read)
+    }
+  }, [])
+  const matches = hint === null ? [] : SLASH_COMMANDS.filter(([command]) => command.startsWith(hint.typed))
+  if (hint === null || matches.length === 0) return null
+  return <aside className="control-tooltip" data-placement="above" data-testid="slash-commands"
+    aria-label="Commands" style={{ left: hint.x, top: hint.y }}>
+    {matches.map(([command, meaning]) => <Fragment key={command}><strong>{command}</strong><span>{meaning}</span></Fragment>)}
+  </aside>
 }
 
 function HeaderModule() {

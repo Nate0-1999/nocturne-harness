@@ -55,3 +55,15 @@ test('escape closes settings and the library', async () => {
   const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
   assert.match(app, /if \(!appSettingsOpen && !libraryOpen\) return[\s\S]*?event\.key !== 'Escape'[\s\S]*?setAppSettingsOpen\(false\)\s*setLibraryOpen\(false\)/u)
 })
+
+/** M3EX-30: typing "/" lists the daemon's commands beside the composer, without
+ * touching the composer function itself.
+ */
+test('slash commands are listed when the composer starts with a slash', async () => {
+  const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
+  assert.match(app, /<ChatModule key=\{snapshot\.selectedThreadId \?\? 'empty'\} \/>\s*<SlashCommandHint \/>/u)
+  for (const command of ['/remember', '/compact', '/model', '/browser allow-web']) {
+    assert.match(app, new RegExp(`\\['${command}', `, 'u'))
+  }
+  assert.match(app, /document\.getElementById\('prompt-input'\)[\s\S]*?\/\^\\\/\\S\*\$\/u\.test\(input\.value\)/u)
+})
