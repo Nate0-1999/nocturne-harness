@@ -108,6 +108,22 @@ def _inside(root: Path, target: Path) -> bool:
     return target == root or target.is_relative_to(root)
 
 
+def _located(cwd: Path, root: Path, supplied: Path) -> Path:
+    """INCIDENT M3W5B-04, walked again in M3CL2: standing in tests/ or docs/, the agent named
+    paths from the repository root (tests/test_onboarding.py, web) and was told they did not
+    exist. A path that names nothing where it stands, but names something from the workspace
+    root, means the latter."""
+
+    if supplied.is_absolute():
+        return supplied
+    here, there = cwd / supplied, root / supplied
+    if not here.exists() and (
+        there.exists() or (there.parent.is_dir() and not here.parent.is_dir())
+    ):
+        return there
+    return here
+
+
 def _positional_parameter(command: str) -> str | None:
     """The first $1-style parameter the shell would expand, outside single quotes."""
 
@@ -329,12 +345,7 @@ class PydanticHarnessToolset:
     async def move(self, path: Path) -> AgentLocation:
         self._require_open()
         root = self._location.workspace_root
-        target = path if path.is_absolute() else self._location.cwd / path
-        if not path.is_absolute() and not target.is_dir() and (root / path).is_dir():
-            # INCIDENT M3W5B-04 (walked again in M3CL2): from docs/, move('web') found no
-            # docs/web and the agent gave up; a folder named from the workspace root is there.
-            target = root / path
-        target = target.resolve(strict=True)
+        target = _located(self._location.cwd, root, path).resolve(strict=True)
         if root.is_relative_to(target) and target != root:
             # INCIDENT M3W5B-05: a miscounted '..' is not a crossing; name the way back.
             raise ToolsetError(
@@ -419,9 +430,8 @@ class PydanticHarnessToolset:
 
     def _target(self, raw_path: object, *, default: str | None = None) -> Path:
         supplied = Path(_clean_path(raw_path, default=default))
-        return (supplied if supplied.is_absolute() else self._location.cwd / supplied).resolve(
-            strict=False
-        )
+        location = self._location
+        return _located(location.cwd, location.workspace_root, supplied).resolve(strict=False)
 
     def _preflight(self, tool_name: str, raw_path: object, *, default: str | None = None) -> Path:
         target = self._target(raw_path, default=default)
@@ -507,9 +517,14 @@ class PydanticHarnessToolset:
             count = original.count(old_text)
             if count != 1:
                 # WALL owner files / ADR015: do not guess which occurrence the model meant to edit.
+                # M3CL2 walk: the plain refusal left gpt-4.1-mini retrying the same anchor.
+                starts = [match.start() for match in re.finditer(re.escape(old_text), original)]
+                lines = ", ".join(str(original.count("\n", 0, start) + 1) for start in starts[:5])
+                more = ", …" if count > 5 else ""
+                where = f" (lines {lines}{more}); include a neighboring line" if count else ""
                 raise ToolsetError(
                     f"oldText found {count} times; each replacement must be unique "
-                    "in the original file"
+                    f"in the original file{where}"
                 )
             start = original.index(old_text)
             spans.append((start, start + len(old_text), new_text))
@@ -531,6 +546,10 @@ class PydanticHarnessToolset:
 
     async def _grep(self, arguments: Mapping[str, object]) -> str:
         target = self._preflight("grep", arguments.get("path"), default=".")
+        if not target.exists():
+            # M3CL2 walk: a wrong path answered "No matches found." and the agent concluded
+            # the doctor tests did not exist (the M3W5B-06 false negative, by another road).
+            raise ToolsetError(f"No file or folder {target}.")
         pattern = arguments.get("pattern")
         if arguments.get("literal", False):
             pattern = re.escape(pattern)

@@ -646,3 +646,53 @@ def test_the_harness_repository_offers_its_own_skill_where_skills_are_found() ->
     libraries = discover_skill_libraries(ROOT)
     assert (ROOT / "skills").resolve() in libraries
     assert "nocturne-plugin-contributor" in {skill.id for skill in adopted_skills(libraries)}
+
+
+@pytest.mark.asyncio
+async def test_paths_named_from_the_root_work_from_a_subfolder_and_misses_say_so(
+    tmp_path: Path,
+) -> None:
+    """M3CL2 walk of M3W5B-01..04 on gpt-4.1-mini: standing in tests/, the agent named
+    tests/test_onboarding.py from the root; grep answered 'No matches found.' and edits were
+    sent to tests/tests/, so the new test never landed. Exercised refusals: "No file or folder
+    {target}."; "oldText found {count} times ... (lines ...); include a neighboring line"."""
+
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    (tests / "test_doctor.py").write_text("def test_a():\n    pass\n\n\ndef test_b():\n    pass\n")
+    toolset = await open_standard_toolset(cwd=tests, workspace_root=tmp_path)
+    try:
+        found = await toolset.execute(
+            "grep", {"pattern": "def test_", "path": "tests/test_doctor.py"}
+        )
+        missing = await toolset.execute("grep", {"pattern": "x", "path": "tests/nowhere.py"})
+        ambiguous = await toolset.execute(
+            "edit",
+            {"path": "tests/test_doctor.py", "edits": [{"oldText": "    pass\n", "newText": ""}]},
+        )
+        appended = await toolset.execute(
+            "edit",
+            {
+                "path": "tests/test_doctor.py",
+                "edits": [
+                    {
+                        "oldText": "def test_b():\n    pass\n",
+                        "newText": "def test_b():\n    pass\n\n\ndef test_c():\n    pass\n",
+                    }
+                ],
+            },
+        )
+        created = await toolset.execute(
+            "write", {"path": "tests/test_new.py", "content": "def test_new():\n    pass\n"}
+        )
+    finally:
+        await toolset.close()
+
+    assert found.success and "def test_b" in found.content
+    assert not missing.success
+    assert missing.content == f"No file or folder {(tests / 'nowhere.py').resolve()}."
+    assert not ambiguous.success and "found 2 times" in ambiguous.content
+    assert "(lines 2, 6); include a neighboring line" in ambiguous.content
+    assert appended.success and "def test_c" in (tests / "test_doctor.py").read_text()
+    assert created.success and (tests / "test_new.py").is_file()
+    assert not (tests / "tests").exists()
