@@ -9,7 +9,7 @@ export interface WorkAgent {
   touched_files?: { path: string; ts: string }[]; turns?: string[]; tool_calls?: string[]
 }
 export interface DirectoryEntry { path: string; kind: 'directory' | 'file' | 'link'; bytes: number }
-export interface WorkProject { root: string; nodes: DirectoryEntry[]; errors: { path: string; error: string }[] }
+export interface WorkProject { root: string; nodes: DirectoryEntry[]; errors: { path: string; error: string }[]; digest?: string }
 export interface RootPoint { ts: string; location: string; cost_usd: number | string | null; state: string }
 export interface CuratorProgressEvent {
   event_id: number; run_uid: string; phase: string; memory_ids: string[]
@@ -22,6 +22,17 @@ export interface VisualizationSnapshot {
   curation: { latest_run: Record<string, unknown> | null } | null
   progress?: { events: CuratorProgressEvent[]; cursor: number } | null
   errors: { feed: string; error: string }[]
+}
+
+/** On the wire a project whose tree the module already holds arrives as its digest alone (`nodes: null`, M3HW). */
+export type WireSnapshot = Omit<VisualizationSnapshot, 'projects'> & { projects: (Omit<WorkProject, 'nodes'> & { nodes: DirectoryEntry[] | null })[] }
+/** Fill each digest-only project from the trees held by digest; null when one is missing, so the caller re-reads the
+ * feed without naming any. The trees returned are exactly those now shown, so what is held never grows. */
+export function fillKnownTrees(wire: WireSnapshot, trees: Map<string, DirectoryEntry[]>) {
+  const projects = wire.projects.map((project) => ({ ...project, nodes: project.nodes ?? trees.get(project.digest ?? '') ?? null }))
+  if (projects.some((project) => project.nodes === null)) return null
+  const filled = projects as WorkProject[]
+  return { snapshot: { ...wire, projects: filled }, trees: new Map(filled.flatMap((project) => project.digest ? [[project.digest, project.nodes] as const] : [])) }
 }
 
 // ADR-018: stable identity determines the geometry and fleet color, never wall-clock randomness.

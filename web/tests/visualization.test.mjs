@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { readFile } from 'node:fs/promises'
-import { HAIR, buildChambers, buildRootTree, longestWaiting, rootGap, rootWidth } from '../src/visualization.ts'
+import { HAIR, buildChambers, buildRootTree, fillKnownTrees, longestWaiting, rootGap, rootWidth } from '../src/visualization.ts'
 
 /** ADR-018 / FL-126: a frozen tree has repeatable geometry, including empty chambers. */
 test('directory layout preserves every chamber and cell and replays identically', () => {
@@ -364,3 +364,14 @@ test('a selected root wears a halo in its fleet colour', async () => {
   assert.match(source, /color=\{agentColor\(name\)\}/u)
 })
 
+/** M3HW / F155 (M3LV): a tree the module already holds arrives as its digest alone and is filled from what is held; a
+ * digest no longer held asks for one full re-read, and only the trees now shown are kept. */
+test('digest-only projects fill from the trees on screen', () => {
+  const tree = [{ path: '.', kind: 'directory', bytes: 0 }]
+  const wire = (nodes) => ({ as_of: 'now', projects: [{ root: '/a', digest: 'd1', errors: [], nodes }, { root: '/b', errors: [], nodes: tree }] })
+  const first = fillKnownTrees(wire(tree), new Map())
+  assert.deepEqual([...first.trees.keys()], ['d1'])
+  const again = fillKnownTrees(wire(null), first.trees)
+  assert.equal(again.snapshot.projects[0].nodes, tree)
+  assert.equal(fillKnownTrees(wire(null), new Map()), null)
+})

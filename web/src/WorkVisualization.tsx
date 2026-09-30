@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Farm } from './Farm'
 import { Roots } from './Roots'
 import { useRackPlugin, useRackSelection, useRackSnapshot, type RackModuleId } from './rack'
 import { VisualizationScene } from './VisualizationScene'
-import { agentColor, longestWaiting, parentPath, LEAF, WIDTH, type DetailTier, type VisualizationSnapshot, type WorkAgent } from './visualization'
+import { agentColor, fillKnownTrees, longestWaiting, parentPath, LEAF, WIDTH, type DetailTier, type DirectoryEntry, type VisualizationSnapshot, type WireSnapshot, type WorkAgent } from './visualization'
 import { useFarmLayout } from './useFarmLayout'
 import './assets/work-visualization.css'
 import { Button, Select } from './kit'
@@ -16,14 +16,22 @@ export function useVisualization() {
   const asOf = selected?.as_of ?? null
   const [response, setResponse] = useState<{ data: VisualizationSnapshot; asOf: string | null } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // The directory trees on screen, by digest: the feed sends a tree only when its digest is new (M3HW).
+  const trees = useRef(new Map<string, DirectoryEntry[]>())
   useEffect(() => {
     let active = true, pending = false
+    const read = async (known: string[]) =>
+      (await query.query({ resource: 'visualization', as_of: asOf ?? 'now', known })).data as unknown as WireSnapshot
     const refresh = async () => {
       if (pending) return
       pending = true
       try {
-        const value = await query.query({ resource: 'visualization', as_of: asOf ?? 'now' })
-        if (active) { setResponse({ data: value.data as unknown as VisualizationSnapshot, asOf }); setError(null) }
+        const filled = fillKnownTrees(await read([...trees.current.keys()]), trees.current) ?? fillKnownTrees(await read([]), new Map())!
+        trees.current = filled.trees
+        // A poll whose recorded state and feed errors are unchanged re-renders nothing.
+        if (active) setResponse((current) => current?.asOf === asOf && current.data.as_of === filled.snapshot.as_of
+          && JSON.stringify(current.data.errors) === JSON.stringify(filled.snapshot.errors) ? current : { data: filled.snapshot, asOf })
+        if (active) setError(null)
       } catch { if (active) setError('The recorded visualization feed is unavailable.') }
       finally { pending = false }
     }
