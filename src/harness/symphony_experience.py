@@ -269,6 +269,8 @@ class SymphonyExperience:
                     message_history=message_history,
                     emit=emit,
                 )
+            if self._execution is not None:
+                self._execution.preflight(thread_id)
             draft_id = self._id_factory()
             async with self._lock:
                 self._draft_threads[draft_id] = thread_id
@@ -281,6 +283,8 @@ class SymphonyExperience:
             await emit.text(text)
             return self._local_outcome(message_history, text)
 
+        if self._execution is not None:
+            self._execution.preflight(thread_id)
         async with self._lock:
             live_thread = self._draft_threads.get(launch.draft_id)
             if live_thread != thread_id and launch.draft_id not in accepted_draft_ids:

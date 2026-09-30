@@ -61,6 +61,9 @@ class ControlledExecution:
         self.release = asyncio.Event()
         self.stopped_attempt_ids = ()
 
+    def preflight(self, _thread_id):
+        pass
+
     async def run(self, stack, update):
         await self.release.wait()
         if self.stopped_attempt_ids:

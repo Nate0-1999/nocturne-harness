@@ -269,8 +269,14 @@ def _wait_for_judges_to_stop(
     raise AssertionError("timed out waiting for judge sessions to stop")
 
 
+@pytest.mark.parametrize(
+    ("selections", "winner"),
+    [(("a", "a", "a"), "a"), (("b", "a", "b"), "b"), (("c", "b", "a"), "a")],
+)
 def test_three_fresh_chartered_judges_unanimously_release_exactly_one_attempt(
     tmp_path: Path,
+    selections,
+    winner,
 ) -> None:
     """SPEC B.6, ADR-012, ADR-017, and D.2 114 require fresh 3-of-3 judgment."""
 
@@ -297,7 +303,10 @@ def test_three_fresh_chartered_judges_unanimously_release_exactly_one_attempt(
         )
         launches = _launches(
             tmp_path,
-            {seat: ("pass", "a") for seat in JudgeSeat},
+            {
+                seat: ("pass", selected)
+                for seat, selected in zip(JudgeSeat, selections, strict=True)
+            },
         )
         sessions = panel.dispatch(launches)
         _wait_for_judges_to_stop(supervisor, sessions, launches)
@@ -324,7 +333,7 @@ def test_three_fresh_chartered_judges_unanimously_release_exactly_one_attempt(
     ]
     assert all(session.brief_path.stat().st_mode & 0o777 == 0o600 for session in sessions)
     assert decision.status is SearchJudgmentStatus.UNANIMOUS_PASS
-    assert decision.winner_attempt_id == "a"
+    assert decision.winner_attempt_id == winner
     assert len(decision.attempt_lineage) == 3
     assert minted == []
     assert conductor.child_status("hard-step") is ChildStatus.COMPLETED
