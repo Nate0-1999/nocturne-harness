@@ -107,6 +107,7 @@ def wrong_unit() -> dict[str, object]:
         "origin_thread_id": None,
         "origin_path": None,
         "origin_location": None,
+        "origin_locations": [],
         "pin": False,
         "status": "active",
         "revision": 2,

@@ -1417,6 +1417,7 @@ def create_dev_app(
 
         app.router.add_event_handler("startup", flush_receipt_queue)
         app.router.add_event_handler("startup", restore_symphonies)
+        app.router.add_event_handler("startup", extraction.backfill_projects)
         if idle_extraction is not None:
             app.router.add_event_handler("startup", idle_extraction.start)
             app.router.add_event_handler("shutdown", idle_extraction.stop)

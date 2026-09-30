@@ -298,12 +298,14 @@ class TranscriptJournal:
             assert transcript is not None
             return transcript
 
-    def thread_location(self, thread_id: str) -> str | None:
-        """Read the latest durable location for compaction provenance."""
+    def thread_feet(self, thread_id: str) -> tuple[str | None, str | None]:
+        """Read the durable project and latest location for compaction provenance."""
 
         filename = self._filename_for_thread(thread_id)
         transcript = self._hydrate_file(filename)
-        return None if transcript is None else transcript.current_location
+        if transcript is None:
+            return None, None
+        return transcript.project_key, transcript.current_location
 
     def hydrate_threads(self) -> tuple[HydratedTranscript, ...]:
         """Reconstruct every current transcript branch from durable journal rows."""

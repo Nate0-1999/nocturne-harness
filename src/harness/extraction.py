@@ -14,11 +14,13 @@ from harness.spine_client import (
     ExtractionCandidate,
     ExtractionRequest,
     ExtractionResponse,
+    ProjectBackfillRequest,
     QueueCard,
     SearchRequest,
     SpineClient,
     SpineClientError,
     SpineProblemError,
+    ThreadProject,
 )
 from harness.transcript import TranscriptJournal
 
@@ -141,7 +143,7 @@ class ExtractionService:
     ) -> ThreadEndResult:
         """The shared compaction/close queue door; the summarizer already did triage."""
         text_id = str(thread_id)
-        fallback = self._journal.thread_location(text_id)
+        project_key, fallback = self._journal.thread_feet(text_id)
         groups: dict[str | None, list[ExtractionCandidate]] = {}
         for item in draft.candidates:
             neighbors = await self._spine.search(
@@ -175,9 +177,9 @@ class ExtractionService:
                 neighbor_payload,
                 **options,
             )
-            location = _origin_location(item.source_message_ids, locations or {}, fallback)
+            location, folders = _origin_location(item.source_message_ids, locations or {}, fallback)
             groups.setdefault(location, []).append(
-                _candidate(item, verdict.verdict, verdict.target_ids)
+                _candidate(item, verdict.verdict, verdict.target_ids, project_key, folders)
             )
         cards: list[QueueCard] = []
         duplicate_count = 0
@@ -211,6 +213,28 @@ class ExtractionService:
             duplicate_count,
             False,
         )
+
+    async def backfill_projects(self) -> None:
+        """F147: memories born before their thread's project was recorded take it now."""
+        entries = await asyncio.to_thread(self._journal.catalog)
+        threads = []
+        for entry in entries:
+            try:
+                thread_id = UUID(entry.thread_id)
+            except ValueError:
+                continue
+            if entry.project_key is not None:
+                threads.append(ThreadProject(thread_id=thread_id, project_key=entry.project_key))
+        if not threads:
+            return
+        try:
+            result = await self._spine.backfill_projects(
+                ProjectBackfillRequest(principal_id=self._principal_id, threads=threads)
+            )
+        except SpineClientError:
+            logger.warning("memory project backfill skipped; retrying at next start", exc_info=True)
+            return
+        logger.info("memory project backfill: %d memories took their project", result.updated)
 
     async def _create_extraction(self, request: ExtractionRequest) -> ExtractionResponse:
         try:
@@ -297,12 +321,17 @@ def _candidate(
     item: ExtractionCandidateDraft,
     verdict: Literal["new", "merge", "supersede", "contradict"],
     target_ids: list[UUID],
+    project_key: str | None,
+    origin_locations: list[str],
 ) -> ExtractionCandidate:
     return ExtractionCandidate(
         label=item.label.strip(),
         body=item.body.strip(),
         kind=item.kind,
         keywords=[word.strip().lower() for word in item.keywords],
+        # F147: a memory belongs to its thread's project, exactly as /remember records it.
+        project_key=project_key,
+        origin_locations=origin_locations,
         verdict=verdict,
         target_ids=target_ids,
     )
@@ -310,10 +339,14 @@ def _candidate(
 
 def _origin_location(
     source_ids: list[str], locations: dict[str, str | None], fallback: str | None
-) -> str | None:
-    """SD-072: where the fact was worked; several folders meet at their common ancestor."""
+) -> tuple[str | None, list[str]]:
+    """SD-072: where the fact was worked; several folders meet at their common ancestor.
+
+    F146: the folders themselves are kept only when there are several."""
     folders = sorted({location for source in source_ids if (location := locations.get(source))})
-    return os.path.commonpath(folders) if folders else fallback
+    if not folders:
+        return fallback, []
+    return os.path.commonpath(folders), folders if len(folders) > 1 else []
 
 
 def _matching_thread_cards(cards: list[QueueCard], request: ExtractionRequest) -> list[QueueCard]:

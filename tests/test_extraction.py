@@ -337,7 +337,9 @@ async def test_a_refused_merge_target_still_archives_every_fact_as_new(tmp_path:
 async def test_archive_gives_each_memory_the_folder_its_facts_came_from(tmp_path: Path) -> None:
     """ADR-010 (SD-072): a memory is born where its fact was worked — the location of its
     source messages, their common ancestor when they span folders, and the thread's location
-    only when the model names no source; each birth folder is its own Palace request."""
+    only when the model names no source; each birth folder is its own Palace request.
+    F147 / F146: every memory carries its thread's project, and one spanning folders lists them.
+    """
     root = tmp_path / "repo"
     web, docs = root / "web", root / "docs"
     web.mkdir(parents=True)
@@ -389,3 +391,58 @@ async def test_archive_gives_each_memory_the_folder_its_facts_came_from(tmp_path
         (request.origin_location, [candidate.label for candidate in request.candidates])
         for request in spine.requests
     ] == [(str(web), ["Web"]), (str(docs), ["Docs", "None"]), (str(root), ["Both"])]
+    candidates = [candidate for request in spine.requests for candidate in request.candidates]
+    assert {candidate.project_key for candidate in candidates} == {str(root)}
+    assert {c.label: c.origin_locations for c in candidates} == {
+        "Web": [],
+        "Docs": [],
+        "None": [],
+        "Both": [str(docs), str(web)],
+    }
+
+
+@pytest.mark.asyncio
+async def test_startup_backfill_sends_each_thread_project_and_survives_an_older_palace(
+    tmp_path: Path,
+) -> None:
+    """F147: memories born before M3PL take their thread's project from this journal; a Palace
+    without the backfill leaves startup untouched and the next start tries again."""
+    from harness.spine_client import ProjectBackfillResponse
+
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    project_thread, typed_thread, bare_thread = uuid4(), uuid4(), uuid4()
+    root = tmp_path / "repo"
+    root.mkdir()
+    journal.append_thread_context(
+        str(project_thread), str(root), workspace_root=str(root), current_location=str(root)
+    )
+    journal.append_thread_context(str(typed_thread), "old/typed-project")
+    for thread in (project_thread, typed_thread, bare_thread):
+        journal.append_message(
+            str(thread), {"message_id": ITEM_UID, "role": "user", "content": "hi"}, parent_id=None
+        )
+
+    class BackfillSpine(FakeSpine):
+        async def backfill_projects(self, request):
+            self.requests.append(request)
+            if self.fail_create:
+                raise SpineTransportError
+            return ProjectBackfillResponse(updated=2)
+
+    spine = BackfillSpine()
+    service = ExtractionService(
+        journal=journal, agent=FakeAgent(), spine=spine, principal_id="owner", machine_id="mac"
+    )
+    await service.backfill_projects()
+    [request] = spine.requests
+    assert request.principal_id == "owner"
+    assert {(t.thread_id, t.project_key) for t in request.threads} == {
+        (project_thread, str(root)),
+        (typed_thread, "old/typed-project"),
+    }
+
+    older = BackfillSpine(fail_create=True)
+    await ExtractionService(
+        journal=journal, agent=FakeAgent(), spine=older, principal_id="owner", machine_id="mac"
+    ).backfill_projects()
+    assert len(older.requests) == 1

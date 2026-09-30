@@ -122,6 +122,7 @@ class MemoryUnit(ContractModel):
     origin_thread_id: UUID | None
     origin_path: str | None
     origin_location: str | None = None
+    origin_locations: list[str] = Field(default_factory=list)
     pin: bool
     status: MemoryStatus
     revision: int
@@ -389,6 +390,8 @@ class ExtractionCandidate(ContractModel):
     kind: MemoryKind
     keywords: list[str]
     project_key: str | None = None
+    # F146: sent only when a memory spans several folders, so an older Palace still accepts it.
+    origin_locations: list[str] = Field(default_factory=list, exclude_if=lambda value: not value)
     verdict: Literal["new", "merge", "supersede", "contradict"]
     target_ids: list[UUID] = Field(default_factory=list)
 
@@ -446,6 +449,20 @@ class QueueCard(ContractModel):
 class ExtractionResponse(ContractModel):
     cards: list[QueueCard]
     duplicate_count: int
+
+
+class ThreadProject(ContractModel):
+    thread_id: UUID
+    project_key: str
+
+
+class ProjectBackfillRequest(ContractModel):
+    principal_id: str
+    threads: list[ThreadProject]
+
+
+class ProjectBackfillResponse(ContractModel):
+    updated: int
 
 
 class SeedResponse(ExtractionResponse):
@@ -1074,6 +1091,7 @@ _SCORER_CONFIGURATION = TypeAdapter(ScorerConfigurationView)
 _SCORER_SIMULATION = TypeAdapter(ScorerSimulationResponse)
 _SCORER_AUDITION = TypeAdapter(ScorerAuditionResponse)
 _EXTRACTION_RESPONSE = TypeAdapter(ExtractionResponse)
+_PROJECT_BACKFILL_RESPONSE = TypeAdapter(ProjectBackfillResponse)
 _SEED_RESPONSE = TypeAdapter(SeedResponse)
 _QUEUE_RESPONSE = TypeAdapter(QueueResponse)
 _CURATOR_ACTIVITY = TypeAdapter(CuratorActivity)
@@ -1442,6 +1460,12 @@ class SpineClient:
     async def create_extraction(self, request: ExtractionRequest) -> ExtractionResponse:
         response = await self._request("POST", "v1/extractions", json_body=_request_body(request))
         return _expect_success(response, status=200, adapter=_EXTRACTION_RESPONSE)
+
+    async def backfill_projects(self, request: ProjectBackfillRequest) -> ProjectBackfillResponse:
+        response = await self._request(
+            "POST", "v1/memories/projects", json_body=_request_body(request)
+        )
+        return _expect_success(response, status=200, adapter=_PROJECT_BACKFILL_RESPONSE)
 
     async def create_seed(self, request: SeedRequest) -> SeedResponse:
         response = await self._request("POST", "v1/seeds", json_body=_request_body(request))
