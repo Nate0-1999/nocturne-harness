@@ -161,6 +161,7 @@ test('the live Palace draws its own reading and a past moment its recording', as
   assert.match(component, /if \(!selected\?\.as_of\) return load\.kind === 'ready' \? load\.snapshot : null/u)
   assert.doesNotMatch(component, /visualization\.loading \? undefined/u)
   assert.match(component, /No Palace reading was recorded at this moment\./u)
+  assert.match(component, /setLoad\(\(current\) => current\.kind === 'ready' \? current : \{ kind: 'error' \}\)/u)
 })
 
 function node(id, overrides = {}, revisions = []) {

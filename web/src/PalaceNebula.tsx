@@ -99,7 +99,9 @@ export function PalaceNebula() {
           scorer: scorerSnapshot,
         })
       }).catch(() => {
-        if (active) setLoad({ kind: 'error' })
+        // A failed refresh keeps the last reading drawn (its time shows its age): the Palace answers a read with a
+        // transient 503 now and then, which must not blank the live scene. Only a Palace never read is unavailable.
+        if (active) setLoad((current) => current.kind === 'ready' ? current : { kind: 'error' })
       }).finally(() => { pending = false })
     }
     refresh()
