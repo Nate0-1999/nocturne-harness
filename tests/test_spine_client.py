@@ -401,6 +401,7 @@ def test_a049_memory_split_models_send_the_c4_fields() -> None:
     assert set(request.model_dump()) == {
         "principal_id",
         "source_body",
+        "project_key",
         "children",
         "thread_origin",
         "origin_thread_id",

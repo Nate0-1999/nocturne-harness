@@ -3274,8 +3274,12 @@ function PalaceQueueModule() {
     setBusy(true)
     setStatusText(decision === 'approve' ? 'Approving the batch…' : 'Rejecting the batch…')
     void events.dispatch({ type: 'queue.batch.decide', batch_uid: batchUid, decision })
-      .then(() => load())
-      .then(() => setStatusText(decision === 'approve' ? 'Batch approved.' : 'Batch rejected.'))
+      .then(async (result) => {
+        await load()
+        const alreadyDecided = (result as { already_decided?: number }).already_decided ?? 0
+        setStatusText((decision === 'approve' ? 'Pending memories approved.' : 'Pending memories rejected.')
+          + (alreadyDecided ? ` ${alreadyDecided} already decided; earlier decisions kept.` : ''))
+      })
       .catch((error: unknown) => setStatusText(error instanceof Error ? error.message : 'The document changed before it could be decided.'))
       .finally(() => setBusy(false))
   }

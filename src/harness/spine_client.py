@@ -301,6 +301,7 @@ class MemorySplitChild(ContractModel):
 class MemorySplitRequest(ContractModel):
     principal_id: str
     source_body: str
+    project_key: str | None = None
     children: list[MemorySplitChild]
     thread_origin: str | None = None
     origin_thread_id: UUID | None = None
@@ -607,6 +608,7 @@ class BatchDecisionResponse(ContractModel):
     batch_uid: UUID
     decision: Literal["approve", "deny"]
     cards: list[QueueCard]
+    already_decided: int = 0
 
 
 class SpendEvent(ContractModel):

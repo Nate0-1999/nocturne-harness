@@ -801,7 +801,8 @@ class _MemoryStrategy:
         await owner.emit.event(
             {"event_kind": "compaction_started", "before_tokens": before, "strategy": strategy}
         )
-        transcript, locations = located_transcript(own_history(messages))
+        history = own_history(messages)
+        transcript, locations = located_transcript(history)
         result = await owner.service.triage(
             ctx.deps.thread_id,
             transcript,
@@ -813,6 +814,12 @@ class _MemoryStrategy:
             model_settings=owner.model_settings,
             summary_prompt=owner.policy.instructions,
             locations=locations,
+            user_message_ids={
+                f"m{index}"
+                for index, message in enumerate(history)
+                if isinstance(message, ModelRequest)
+                and any(isinstance(part, UserPromptPart) for part in message.parts)
+            },
         )
         # Admission must finish before any drop; a failed queue write leaves history intact.
         if strategy == "summarize":
