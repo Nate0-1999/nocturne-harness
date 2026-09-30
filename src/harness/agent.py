@@ -231,7 +231,10 @@ class SeedSplitDraft(BaseModel):
 class ExtractionVerdictDraft(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     verdict: Literal["new", "already_known", "merge", "supersede", "contradict"]
-    target_ids: list[UUID]
+    target_ids: list[UUID] = Field(
+        description="For already_known, cite the existing memory containing the fact. "
+        "For merge/supersede/contradict, cite affected neighbors. Only new has no targets."
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -351,14 +354,16 @@ class HarnessAgent:
             instructions=(
                 "Compare one extracted candidate with machine-fetched corpus neighbors. "
                 "Propose exactly one verdict: new, already_known, merge, supersede, or contradict. "
-                "Target IDs "
-                "must be selected only from the supplied neighbors. Use new with no targets when "
-                "the candidate stands alone. Shared subject words do not make two facts the "
-                "same: different attributes of one object remain independent new memories. "
-                "Use already_known when an existing memory already contains the entire fact, "
-                "including a rephrase; it needs no new decision. Merge only when the candidate "
-                "adds information to the same fact; supersede or contradict only when "
+                "First check whether any neighbor already contains the candidate's fact. "
+                "If so, use already_known and cite that neighbor's ID. This includes a rephrase "
+                "or just one clause of a memory containing several facts: extracting one clause "
+                "does not add information. Words like 'settled' do not make a fact new. "
+                "Otherwise, use new with no targets for an independent fact. Shared subject "
+                "words do not make different attributes the same fact. Merge only when the "
+                "candidate adds information absent from the existing fact; "
+                "supersede or contradict only when "
                 "both statements give incompatible values for the same attribute. "
+                "All target IDs must be selected from the supplied neighbors. "
                 "Return structured data only."
             ),
             name="harness-extraction-verdict",
