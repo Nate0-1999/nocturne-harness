@@ -1960,7 +1960,7 @@ function HeaderModule() {
 
 function ThreadsModule() {
   const snapshot = useRackSnapshot()
-  const { events, selection } = useRackPlugin()
+  const { events, selection, query } = useRackPlugin()
   const [archiveBusyThreadId, setArchiveBusyThreadId] = useState<string | null>(null)
   const [archiveFailure, setArchiveFailure] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
@@ -1978,9 +1978,18 @@ function ThreadsModule() {
     ]).filter((value): value is string => value !== null))),
     [snapshot.catalog],
   )
+  // TASTE-07 / M3W5B-34: a scheduled job's runs belong to the Jobs module, which opens them.
+  const [jobThreadIds, setJobThreadIds] = useState<ReadonlySet<string>>(() => new Set())
+  useEffect(() => {
+    query.query({ resource: 'jobs', as_of: 'now' }).then((result) => {
+      const runs = (result.data as { runs?: { thread_id?: unknown }[] } | null)?.runs ?? []
+      setJobThreadIds(new Set(runs.flatMap((run) => typeof run.thread_id === 'string' ? [run.thread_id] : [])))
+    }).catch(() => undefined)
+  }, [query, snapshot.catalog.length])
   const sortedCatalog = useMemo(
-    () => snapshot.catalog.filter((entry) => !entry.archived).sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
-    [snapshot.catalog],
+    () => snapshot.catalog.filter((entry) => !entry.archived && !jobThreadIds.has(entry.thread_id))
+      .sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
+    [snapshot.catalog, jobThreadIds],
   )
   const fixtureThreadCount = snapshot.catalog.filter((entry) => isLegacyFixtureTitle(entry.title)).length
   const createThreadAtDraft = () => {
