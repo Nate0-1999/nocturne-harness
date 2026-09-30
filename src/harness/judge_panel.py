@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any, Literal, Protocol
@@ -289,6 +290,7 @@ class PanelDecision(BaseModel):
     verdicts: tuple[JudgeVerdict, ...]
     attempt_lineage: tuple[SearchAttemptRecord, ...]
     feedback_packets: tuple[FeedbackPacketReceipt, ...]
+    selection_rule: str | None = None
 
     @property
     def digest(self) -> str:
@@ -433,7 +435,7 @@ class JudgePanel:
         return verdict
 
     def resolve(self) -> PanelDecision:
-        """Pass one shared candidate only on 3/3; otherwise mint feedback and fail."""
+        """Require every seat to pass; select by votes, then stable attempt identity."""
 
         if self._decision is not None:
             raise JudgePanelError("a panel decision is immutable once resolved")
@@ -443,12 +445,11 @@ class JudgePanel:
         selections = {verdict.selected_attempt_id for verdict in verdicts}
         unanimous = (
             all(verdict.outcome == JudgeOutcome.PASS for verdict in verdicts)
-            and len(selections) == 1
             and None not in selections
         )
         if unanimous:
-            winner = next(iter(selections))
-            assert winner is not None
+            votes = Counter(verdict.selected_attempt_id for verdict in verdicts)
+            winner = min(votes, key=lambda attempt: (-votes[attempt], attempt))
             status = SearchJudgmentStatus.UNANIMOUS_PASS
             receipts: tuple[FeedbackPacketReceipt, ...] = ()
         else:
@@ -476,6 +477,9 @@ class JudgePanel:
             verdicts=verdicts,
             attempt_lineage=self._lineage,
             feedback_packets=receipts,
+            selection_rule=(
+                "Most judge votes; equal votes use the lowest attempt ID." if unanimous else None
+            ),
         )
         self._conductor.record_search_judgment(
             self._search_child_id,
@@ -511,35 +515,20 @@ class JudgePanel:
 
     def _feedback_drafts(self, verdicts: Sequence[JudgeVerdict]) -> tuple[FeedbackPacketDraft, ...]:
         failed = [verdict for verdict in verdicts if verdict.outcome == JudgeOutcome.FAIL]
-        if failed:
-            feedback_items = [
-                (verdict.seat, feedback) for verdict in failed for feedback in verdict.feedback
-            ]
-            feedback = JudgeFeedback(
-                problem=" ".join(
-                    f"{seat} judge: {_one_line(item.problem)}" for seat, item in feedback_items
-                ),
-                desired_observation=" ".join(
-                    _one_line(item.desired_observation) for _seat, item in feedback_items
-                ),
-                evidence_refs=tuple(
-                    reference for _seat, item in feedback_items for reference in item.evidence_refs
-                ),
-            )
-        else:
-            selection_text = "; ".join(
-                f"{verdict.seat} selected {verdict.selected_attempt_id}: "
-                f"{_one_line(verdict.rationale)}"
-                for verdict in verdicts
-            )
-            panel_feedback = JudgeFeedback(
-                problem=f"The three passing seats selected different attempts. {selection_text}",
-                desired_observation="One revised attempt earns all three fixed charter passes.",
-                evidence_refs=tuple(
-                    reference for verdict in verdicts for reference in verdict.evidence_refs
-                ),
-            )
-            feedback = panel_feedback
+        feedback_items = [
+            (verdict.seat, feedback) for verdict in failed for feedback in verdict.feedback
+        ]
+        feedback = JudgeFeedback(
+            problem=" ".join(
+                f"{seat} judge: {_one_line(item.problem)}" for seat, item in feedback_items
+            ),
+            desired_observation=" ".join(
+                _one_line(item.desired_observation) for _seat, item in feedback_items
+            ),
+            evidence_refs=tuple(
+                reference for _seat, item in feedback_items for reference in item.evidence_refs
+            ),
+        )
         source_digest = hashlib.sha256(
             "|".join(verdict.digest for verdict in verdicts).encode()
         ).hexdigest()
@@ -562,6 +551,9 @@ class JudgePanel:
             f"MOTIVATION: P3 — {_one_line(feedback.problem)}\n"
             f"RECIPE: deps —; surfaces {surfaces}; excl none; parallel: OPEN\n"
             "AUTHORITY: none beyond CONTRACTS\n"
+            f"ORIGINAL CHARGE (still binding): {self._child_charge}\n"
+            "Repair guidance never overrides the original task's prohibitions. "
+            "A request to inspect evidence does not authorize creating an evidence file.\n"
             f"DELIVER: {_one_line(feedback.desired_observation)} Evidence: {_one_line(evidence)}. "
             f"Source verdict: {source_digest}.\n"
             f"EXIT: The {source} judge's failed observation is directly re-proved."

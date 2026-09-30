@@ -286,7 +286,11 @@ async def run(assignment_path: Path) -> None:
             "\nDo the requested work using your workspace tools. Verify the actual files. "
             "Your current directory IS the isolated attempt; do not invent another folder. "
             "Return concise claims and direct evidence paths; name any unfinished work. "
-            "Do not commit: the supervisor captures your exact patch. You have no memory tools. "
+            "Create missing directories with bash mkdir before moving into them to write files. "
+            "Commit when the task asks; otherwise the supervisor captures your exact patch. "
+            "The original task's prohibitions govern every stratagem and retry. Evidence can "
+            "be a tool observation; never create a file the task forbids. "
+            "You have no memory tools. "
             "Return any durable lessons as atomic memories of at most 128 tokens each, "
             "or an empty memories list when nothing was learned."
         )
@@ -318,7 +322,10 @@ async def run(assignment_path: Path) -> None:
                     evidence_ref=str(output / "messages.json"),
                 )
         worker_context.publish(captured)
-        if stage == "completion":
+        if (
+            stage == "completion"
+            and subprocess.check_output(["git", "status", "--porcelain"], text=True).strip()
+        ):
             subprocess.run(["git", "add", "-A"], check=True)
             subprocess.run(
                 [
@@ -328,13 +335,13 @@ async def run(assignment_path: Path) -> None:
                     "-c",
                     "user.email=nocturne@localhost",
                     "commit",
-                    "--allow-empty",
                     "-m",
-                    "Symphony: capture verified attempt",
+                    assignment.get("step_title", "Symphony result"),
                 ],
                 check=True,
                 capture_output=True,
             )
+        if stage == "completion":
             commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
             work = result.output
             # M3SF: artifacts are worktree-relative; a model may cite them by absolute path.

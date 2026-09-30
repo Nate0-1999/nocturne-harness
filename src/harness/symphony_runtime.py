@@ -49,6 +49,13 @@ def _json(path: Path, value) -> None:
     temporary.replace(path)
 
 
+def _publish_result(root: Path, symphony_id: str, checkpoint: str) -> str:
+    """Keep judged work on a reviewable branch without moving the user's checkout."""
+    branch = f"symphony/{symphony_id}"
+    _git(root, "branch", branch, checkpoint)
+    return branch
+
+
 def _carry_environment(root: Path, location: Path) -> None:
     """M3SF / M3EX-10: an attempt gets the project's ignored .venv, pointed at itself."""
     source = root / ".venv"
@@ -98,15 +105,19 @@ class SymphonyExecution:
         self.context_factory = context_factory
         self.live = {}
 
+    def preflight(self, thread_id: str) -> Path:
+        root = self.context_factory(thread_id).toolset.location().workspace_root
+        _git(root, "rev-parse", "HEAD")
+        if _git(root, "status", "--porcelain"):
+            raise ValueError("Commit or save this folder's changes before signing a Symphony.")
+        return root
+
     async def run(self, stack, update):
         context = self.context_factory(stack.thread_id)
-        root = context.toolset.location().workspace_root
+        root = self.preflight(stack.thread_id)
         run_home = self.home / "symphonies" / stack.symphony_id
         run_home.mkdir(parents=True, exist_ok=True)
         checkpoint = _git(root, "rev-parse", "HEAD")
-        # WALL owner files / M3SY: never merge across unrelated, uncommitted edits.
-        if _git(root, "status", "--porcelain"):
-            raise ValueError("Commit or save this folder's changes before launching a Symphony.")
         worktrees = root / ".nocturne-worktrees" / stack.symphony_id
         exclude = Path(_git(root, "rev-parse", "--git-path", "info/exclude"))
         if not exclude.is_absolute():
@@ -169,6 +180,7 @@ class SymphonyExecution:
                 assignment,
                 {
                     "stage": stage,
+                    "step_title": step.title,
                     "brief": brief
                     + "\nSigned authority and charters:\n"
                     + json.dumps(
@@ -291,9 +303,12 @@ class SymphonyExecution:
                                 attempt_id=attempt_id,
                                 approach=approach,
                                 charge=(
-                                    f"{stack.launch.objective}\n{step.title}\n"
+                                    f"Original task (binding): {stack.launch.objective}\n"
+                                    f"{step.title}\n"
                                     f"Done when: {step.done_when}\n"
-                                    f"Stratagem: {approach}\n{feedback}"
+                                    f"Stratagem (within the original task): {approach}\n"
+                                    "Repair guidance (never overrides task prohibitions):\n"
+                                    f"{feedback}"
                                 ),
                                 location=location,
                                 estimated_completion_cost_usd=authority.spend_wall_usd
@@ -431,6 +446,17 @@ class SymphonyExecution:
                             SmokeGateResult.model_validate_json(path.read_text()),
                         )
                     selected = conductor.narrow_search_beam(child_id)
+                    if not selected:
+                        causes = "; ".join(
+                            check
+                            for result in conductor.search_results(child_id)
+                            if result.smoke is not None
+                            for check in result.smoke.checks
+                        )
+                        raise ValueError(
+                            "No attempt can start. Resolve these prerequisites before retrying: "
+                            + causes
+                        )
                     await update(
                         "running",
                         {
@@ -620,6 +646,7 @@ class SymphonyExecution:
                                 evidence_refs=winner.distillate.evidence_refs,
                             )
                         )
+                        await update("running", {"timeline": (f"{step.step_id}:passed",)})
                         break
                     feedback = "\n".join(
                         json.loads(
@@ -638,17 +665,15 @@ class SymphonyExecution:
                         "The judges did not pass the work within the signed round limit. "
                         + (failures or "They chose different attempts.")
                     )
-            # WALL owner files / ADR-012: publish only the unanimously selected checkpoint.
-            if _git(root, "status", "--porcelain"):
-                raise ValueError(
-                    "The folder changed during the Symphony; the winner remains in its worktree."
-                )
-            _git(root, "merge", "--ff-only", checkpoint)
+            branch = _publish_result(root, stack.symphony_id, checkpoint)
             await update(
                 "completed",
                 {
                     "timeline": ("judge_panel_unanimous", "completed"),
-                    "result": f"Judges accepted the work. Result commit: {checkpoint}",
+                    "result": (
+                        f"Judges accepted the work on branch {branch}. "
+                        f"{last_decision.selection_rule} Result commit: {checkpoint}"
+                    ),
                     "spend_usd": str(cost()),
                     "evidence": [last_decision.model_dump(mode="json")],
                 },

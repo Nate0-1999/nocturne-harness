@@ -251,6 +251,8 @@ class SymphonyExperience:
         if launch is None:
             if not self.is_trigger(prompt):
                 raise ValueError("a Symphony turn requires the explicit trigger or launch artifact")
+            if self._execution is not None:
+                self._execution.preflight(thread_id)
             draft_id = self._id_factory()
             async with self._lock:
                 self._draft_threads[draft_id] = thread_id
@@ -263,6 +265,8 @@ class SymphonyExperience:
             await emit.text(text)
             return self._local_outcome(message_history, text)
 
+        if self._execution is not None:
+            self._execution.preflight(thread_id)
         async with self._lock:
             live_thread = self._draft_threads.get(launch.draft_id)
             if live_thread != thread_id and launch.draft_id not in accepted_draft_ids:

@@ -999,6 +999,9 @@ def test_dev_app_serves_the_real_symphony_recipe_through_the_live_rack_endpoint(
         await asyncio.Event().wait()
 
     monkeypatch.setattr("harness.symphony_runtime.SymphonyExecution.run", pending_execution)
+    monkeypatch.setattr(
+        "harness.symphony_runtime.SymphonyExecution.preflight", lambda self, thread_id: tmp_path
+    )
 
     settings = HarnessSettings(
         _env_file=None,

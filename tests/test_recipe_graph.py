@@ -108,13 +108,21 @@ def test_projection_refuses_unversioned_or_repeated_authority() -> None:
         projection.record(_event("claim_accepted", packet_id="OTHER", bead_id="ng-other"))
 
 
-def test_signed_symphony_stack_projects_current_work_without_inventing_parallelism() -> None:
+@pytest.mark.parametrize("first_passed", [False, True])
+def test_signed_symphony_stack_projects_current_work_without_inventing_parallelism(
+    first_passed,
+) -> None:
     """F054/P2.3/B.6 r7: signed order drives real Recipe dimming and judge gates."""
 
     snapshot = snapshot_from_symphony_stack(
         {
             "symphony_id": "01M0JZZ3VAHCH0E13A5DQYWQQJ",
             "state": "running",
+            "timeline": (
+                ["step-1-round-1:workers_started", "scout:passed", "step-2-round-1:workers_started"]
+                if first_passed
+                else ["step-1-round-1:workers_started"]
+            ),
             "launch": {
                 "motivation": "The owner needs to see the live plan.",
                 "recipe": [
@@ -151,8 +159,13 @@ def test_signed_symphony_stack_projects_current_work_without_inventing_paralleli
     nodes = {node.node_id: node for node in snapshot.nodes}
     assert snapshot.packet_id == "01M0JZZ3VAHCH0E13A5DQYWQQJ"
     assert nodes["scout"].kind is RecipeNodeKind.SEARCH
-    assert nodes["scout"].state is RecipeNodeState.RUNNING
-    assert nodes["wire"].state is RecipeNodeState.BLOCKED
+    assert nodes["scout"].state is (
+        RecipeNodeState.PASSED if first_passed else RecipeNodeState.RUNNING
+    )
+    assert nodes["wire"].state is (
+        RecipeNodeState.RUNNING if first_passed else RecipeNodeState.BLOCKED
+    )
+    assert snapshot.bead_id == ("step-2-round-1" if first_passed else "step-1-round-1")
     assert nodes["prove"].state is RecipeNodeState.BLOCKED
     assert [edge.model_dump() for edge in snapshot.edges] == [
         {"source": "scout", "target": "scout:judge:motivation", "kind": "judged_by"},
