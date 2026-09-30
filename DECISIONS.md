@@ -3806,3 +3806,15 @@ source messages, their common ancestor when they span folders, and the thread's 
 only when none is named. The Palace stamps one location per extraction request, so
 admission sends one request per birth folder and the Palace is unchanged. The folders of
 a memory that spans several are not listed; that needs a Palace field (F146).
+
+## M3PL — Provenance completes [P1.2]
+
+PRECEDENT: M3LT (report 252), F146, F147, v2.126, A-073.
+A compaction- or archive-born memory carries its thread's project, the key /remember
+records. One drawn from several folders also sends them (origin_locations), omitted when
+empty so an older Palace still accepts single-folder extractions. Memories born before
+this take their thread's project at each daemon start: the journal's thread projects go to
+the Palace in one call that fills only null projects; a Palace without the call is skipped
+until the next start. The card's hover lists the folders beneath WHERE, one per line, and
+its panel is capped at the width its placement assumes. The gate card keeps rank, kind and
+id: its C.4 card carries no provenance.
