@@ -1703,6 +1703,8 @@
 .memory-card__provenance {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
+  /* HoverReveal centres the panel assuming it fits in 27.5rem; long paths wrap instead. */
+  max-width: 27rem;
   gap: var(--space-1) var(--space-3);
   margin: 0;
   padding: var(--space-3);

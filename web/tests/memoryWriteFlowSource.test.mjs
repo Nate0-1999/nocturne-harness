@@ -58,7 +58,7 @@ test('the memory card keeps history behind the hover and the link as a row actio
  */
 test('the memory card lists a spanning memory\'s folders behind the hover', async () => {
   const source = await readFile(new URL('../src/MemoryPanel.tsx', import.meta.url), 'utf8')
-  assert.match(source, /<Provenance term="Where">[\s\S]*?<\/Provenance>\s*\{\/\*[^*]*\*\/\}\s*\{memory\.origin_locations\.length > 0 && <Provenance term="Folders">\{memory\.origin_locations\.join\(', '\)\}<\/Provenance>\}/u)
+  assert.match(source, /<Provenance term="Where">[\s\S]*?<\/Provenance>\s*\{\/\*[^*]*\*\/\}\s*\{memory\.origin_locations\.length > 0 && <Provenance term="Folders">\{memory\.origin_locations\.map\(\(folder\) => <div key=\{folder\}>\{folder\}<\/div>\)\}<\/Provenance>\}/u)
   const protocol = await readFile(new URL('../src/protocol.ts', import.meta.url), 'utf8')
   assert.match(protocol, /'origin_location',\n\s*'origin_locations',/u)
 })
