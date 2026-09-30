@@ -1113,17 +1113,25 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             {STAGE_MODULE_IDS.map((moduleId) => {
               const present = layer.modules.some((module) => module.module_id === moduleId)
               const multiInstance = MULTI_INSTANCE_MODULE_IDS.includes(moduleId)
+              // M3W5B-31: say which layer holds a module; adding a copyable one never takes it from there.
+              const elsewhere = present ? undefined : layout.layers.find((candidate) => (
+                candidate.modules.some((module) => module.module_id === moduleId)))
+              const moves = elsewhere !== undefined && !multiInstance
               return (
                 <li key={moduleId}>
-                  <span>{RACK_MANIFESTS[moduleId].name}</span>
+                  <span>
+                    {RACK_MANIFESTS[moduleId].name}
+                    {elsewhere !== undefined && <small className="stage-library__where"> · on {elsewhere.name}</small>}
+                  </span>
                   <Button action="add" iconOnly aria-label={`Add ${RACK_MANIFESTS[moduleId].name}`} variant="bare"
                     type="button"
                     disabled={present && !multiInstance}
-                    onClick={() => setLayout((current) => multiInstance && present
+                    data-tooltip-detail={moves ? `Moves it here from ${elsewhere.name}.` : undefined}
+                    onClick={() => setLayout((current) => multiInstance && (present || elsewhere !== undefined)
                       ? addStageModuleInstance(current, moduleId, snapshot.selectedThreadId)
                       : restoreStageModule(current, moduleId))}
                   >
-                    {present ? multiInstance ? 'Add another' : 'On stage' : 'Add'}
+                    {present ? multiInstance ? 'Add another' : 'On stage' : moves ? 'Move here' : 'Add'}
                   </Button>
                 </li>
               )

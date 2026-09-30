@@ -3294,6 +3294,10 @@ button.rack-module__resize-handle--nw {
   font-size: var(--text-md);
 }
 
+.stage-library__where {
+  color: var(--dim);
+}
+
 .stage-library ul {
   display: grid;
   gap: 0.25rem;
