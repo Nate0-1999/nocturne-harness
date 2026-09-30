@@ -170,8 +170,26 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
         </tr>)}
       </tbody></table>
     </details>
-    {view !== 'farm' && project && <details className="work-viz__data"><summary>Complete directory tree · {project.nodes.length} entries</summary>
-      <ul>{project.nodes.map((node) => <li key={node.path}><Button variant="bare" action="open" onClick={() => selection.select({ kind: 'path', id: `${project.root}${node.path === '.' ? '' : '/' + node.path}`, as_of: selected?.as_of ?? null })}>{node.path}</Button> · {node.kind}</li>)}</ul>
-    </details>}
+    {view !== 'farm' && project && <DirectoryTree nodes={project.nodes} select={(path) => selection.select({ kind: 'path', id: `${project.root}${path === '.' ? '' : '/' + path}`, as_of: selected?.as_of ?? null })} />}
   </section>
+}
+
+/** M3HW: the whole tree, listed a hundred entries at a time and only while open; every poll
+ * re-rendered all 31,789 entries (127,240 elements) inside the closed list. */
+function DirectoryTree({ nodes, select }: { nodes: readonly { path: string; kind: string }[]; select: (path: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [page, setPage] = useState(0)
+  const last = Math.max(0, Math.ceil(nodes.length / 100) - 1)
+  const shown = Math.min(page, last)
+  return <details className="work-viz__data" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
+    <summary>Complete directory tree · {nodes.length} entries</summary>
+    {open && <>
+      <span>{shown * 100 + 1}–{Math.min(nodes.length, (shown + 1) * 100)} of {nodes.length}</span>
+      <Button action="back" iconOnly disabled={!shown} onClick={() => setPage(shown - 1)}>Previous entries</Button>
+      <Button action="next" iconOnly disabled={shown === last} onClick={() => setPage(shown + 1)}>Next entries</Button>
+      <ul>{nodes.slice(shown * 100, (shown + 1) * 100).map((node) => <li key={node.path}>
+        <Button variant="bare" action="open" onClick={() => select(node.path)}>{node.path}</Button> · {node.kind}
+      </li>)}</ul>
+    </>}
+  </details>
 }
