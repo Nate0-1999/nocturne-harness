@@ -1201,19 +1201,25 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
         />
       )}
 
-      {openGate !== null && (
-        <div className="rack-overlay-module" data-rack-module="gate">
-          <RackSettingsControl
-            manifest={RACK_MANIFESTS.gate}
-            scope={layout.scopes.gate ?? RACK_MANIFESTS.gate.default_scope}
-          />
-          <RackPluginIframe
-            manifest={RACK_MANIFESTS.gate}
-            theme={theme}
-            isRegressionFixture={isRegressionFixture}
-          />
-        </div>
-      )}
+      {/* M3W5B-18: a gate frame inserted mid-run was never painted by the desktop pane, an
+          invisible layer over "Working…" that took every click; the frame stays mounted and
+          rendered, and opening a gate only makes it visible. */}
+      <div
+        className="rack-overlay-module"
+        data-rack-module="gate"
+        data-open={openGate !== null || undefined}
+        aria-hidden={openGate === null || undefined}
+      >
+        <RackSettingsControl
+          manifest={RACK_MANIFESTS.gate}
+          scope={layout.scopes.gate ?? RACK_MANIFESTS.gate.default_scope}
+        />
+        <RackPluginIframe
+          manifest={RACK_MANIFESTS.gate}
+          theme={theme}
+          isRegressionFixture={isRegressionFixture}
+        />
+      </div>
       {dismissibleOverlay !== null && openGate === null && (
         <DismissibleRackOverlay
           moduleId={dismissibleOverlay}

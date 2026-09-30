@@ -214,6 +214,7 @@ export function SymphonyDeck() {
   const [locallyFired, setLocallyFired] = useState<Set<string>>(() => new Set())
   const [undo, setUndo] = useState<{ card: ProposedResponseCard; text: string } | null>(null)
   const [status, setStatus] = useState('')
+  const [opening, setOpening] = useState(false)
   const timer = useRef<number | null>(null)
   const visibleCards = cards.filter((card) => !locallyFired.has(card.proposal_run_id))
 
@@ -234,10 +235,37 @@ export function SymphonyDeck() {
     setUndo(null)
   }
 
-  function fire(card: ProposedResponseCard) {
+  // Codex M3W5A-04: the queue advanced, then "Nothing sent" came back. Enter now opens the
+  // card's conversation and waits for it before advancing; any failure says why.
+  async function threadReady(threadId: string) {
+    if (events.getSnapshot().selectedThreadId !== threadId) {
+      await events.dispatch({ type: 'thread.select', thread_id: threadId })
+    }
+    for (let waited = 0; ; waited += 100) {
+      const current = events.getSnapshot()
+      if (current.connection !== 'connected') {
+        throw new Error('Nocturne is not connected; it reconnects on its own')
+      }
+      if (current.selectedThreadId === threadId && current.threads[threadId]?.awaitingSnapshot === false) return
+      if (waited >= 15_000) throw new Error('its conversation did not finish opening')
+      await new Promise((resolve) => globalThis.setTimeout(resolve, 100))
+    }
+  }
+
+  async function fire(card: ProposedResponseCard) {
     const text = (drafts[card.proposal_run_id] ?? card.primary).trim()
-    if (!text || undo !== null) return
-    void events.dispatch({ type: 'thread.select', thread_id: card.thread_id })
+    if (!text || undo !== null || opening) return
+    const why = (error: unknown) => error instanceof Error && error.message ? error.message : 'the send failed'
+    setOpening(true)
+    setStatus(`Opening ${card.thread_title}…`)
+    try {
+      await threadReady(card.thread_id)
+    } catch (error) {
+      setStatus(`Nothing sent to ${card.thread_title}: ${why(error)}.`)
+      return
+    } finally {
+      setOpening(false)
+    }
     setLocallyFired((current) => new Set(current).add(card.proposal_run_id))
     setStatus(`Next up: ${visibleCards.find((candidate) => (
       candidate.proposal_run_id !== card.proposal_run_id
@@ -245,20 +273,20 @@ export function SymphonyDeck() {
     setUndo({ card, text })
     timer.current = globalThis.setTimeout(() => {
       timer.current = null
-      void events.dispatch({
+      void threadReady(card.thread_id).then(() => events.dispatch({
         type: 'prompt.submit',
         prompt: text,
         proposed_response: { proposal_run_id: card.proposal_run_id },
-      }).then(() => {
+      })).then(() => {
         setStatus(`Fired to ${card.thread_title}.`)
         setUndo(null)
-      }).catch(() => {
+      }).catch((error: unknown) => {
         setLocallyFired((current) => {
           const next = new Set(current)
           next.delete(card.proposal_run_id)
           return next
         })
-        setStatus(`Nothing sent to ${card.thread_title}. Check the connection and try again.`)
+        setStatus(`Nothing sent to ${card.thread_title}: ${why(error)}.`)
         setUndo(null)
       })
     }, 6_000)
@@ -289,12 +317,12 @@ export function SymphonyDeck() {
               card={card}
               primary={index === 0}
               draft={drafts[card.proposal_run_id] ?? card.primary}
-              fireDisabled={undo !== null}
+              fireDisabled={undo !== null || opening}
               onDraft={(value) => setDrafts((current) => ({
                 ...current,
                 [card.proposal_run_id]: value,
               }))}
-              onFire={() => fire(card)}
+              onFire={() => void fire(card)}
             />
           ))}
         </div>
