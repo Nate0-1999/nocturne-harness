@@ -1504,8 +1504,11 @@ class SpineClient:
         response = await self._request(
             "GET" if policy is None else "PUT",
             "v1/curation/model-policy",
-            **({"params": {"principal_id": principal_id}} if policy is None else
-               {"json_body": {"principal_id": principal_id, "policy": policy}}),
+            **(
+                {"params": {"principal_id": principal_id}}
+                if policy is None
+                else {"json_body": {"principal_id": principal_id, "policy": policy}}
+            ),
         )
         return _expect_success(response, status=200, adapter=TypeAdapter(dict[str, str]))["policy"]
 

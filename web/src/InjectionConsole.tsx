@@ -172,7 +172,7 @@ export function InjectionConsole() {
     const resetPolicy = consoleRefreshResetPolicy(
       dataRef.current?.active_version ?? null,
       next.active_version,
-      explicitReset,
+      explicitReset || dataRef.current === null,
     )
     dataRef.current = next
     setData(next)

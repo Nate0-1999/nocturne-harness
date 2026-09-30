@@ -356,7 +356,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     id: 'gate',
     name: 'Memory Gate',
     version: '1.0.0',
-    class: 'visualizer',
+    class: 'control',
     slot: 'overlay',
     streams: ['gate.open', 'gate.dismiss', 'error'],
     actions: ['gate.commit', 'run.cancel', 'scorer.audition'],

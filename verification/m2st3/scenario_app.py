@@ -35,6 +35,7 @@ class HonestDisplaySpine(LayoutSpine):
     def __init__(self) -> None:
         super().__init__()
         self.palace_available = True
+        self.curator_policy = "pinned:local:fixture"
         item_uid = _uid(301)
         self.cards[item_uid] = QueueCard(
             item_uid=item_uid,
@@ -70,6 +71,12 @@ class HonestDisplaySpine(LayoutSpine):
     def _require_palace(self) -> None:
         if not self.palace_available:
             raise SpineTransportError
+
+    async def curator_model_policy(self, _principal_id: str, policy: str | None = None) -> str:
+        self._require_palace()
+        if policy is not None:
+            self.curator_policy = policy
+        return self.curator_policy
 
     async def vitals_snapshot(self) -> VitalsSnapshot:
         self._require_palace()
