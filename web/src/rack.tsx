@@ -619,7 +619,11 @@ function dispatchRackAction<Action extends RackAction>(
           useHarnessStore.getState().hydrateCatalog(getRackSnapshot().catalog.map((entry) => (
             entry.thread_id === threadId ? { ...entry, archived: true } : entry
           )))
-          rackSelectionSurface.select({ kind: 'module', id: 'thread_end' })
+          // M3W5B-34: the review opens only when the archive left something to review.
+          const cards = (result as { cards?: unknown } | null)?.cards
+          if (Array.isArray(cards) && cards.length > 0) {
+            rackSelectionSurface.select({ kind: 'module', id: 'thread_end' })
+          }
           return result as RackActionResult<Action>
         })
       }
