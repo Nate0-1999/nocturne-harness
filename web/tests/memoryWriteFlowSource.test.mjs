@@ -52,3 +52,13 @@ test('the memory card keeps history behind the hover and the link as a row actio
   assert.doesNotMatch(source, /Revision history · r/u)
   assert.doesNotMatch(source, /Open the conversation ↗/u)
 })
+
+/** F146 / SD-068: a memory drawn from several folders lists them behind the hover, beneath
+ * WHERE (their shared parent); a single-folder memory shows WHERE alone.
+ */
+test('the memory card lists a spanning memory\'s folders behind the hover', async () => {
+  const source = await readFile(new URL('../src/MemoryPanel.tsx', import.meta.url), 'utf8')
+  assert.match(source, /<Provenance term="Where">[\s\S]*?<\/Provenance>\s*\{\/\*[^*]*\*\/\}\s*\{memory\.origin_locations\.length > 0 && <Provenance term="Folders">\{memory\.origin_locations\.join\(', '\)\}<\/Provenance>\}/u)
+  const protocol = await readFile(new URL('../src/protocol.ts', import.meta.url), 'utf8')
+  assert.match(protocol, /'origin_location',\n\s*'origin_locations',/u)
+})

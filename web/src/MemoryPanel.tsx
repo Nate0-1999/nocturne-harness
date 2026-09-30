@@ -406,6 +406,8 @@ export function MemoryPanel({
                   provenance={<>
                     <Provenance term="Kind">{memory.kind} · r{memory.revision}</Provenance>
                     <Provenance term="Where">{memory.origin_location ?? 'Older memory · location unavailable'}</Provenance>
+                    {/* F146: a memory drawn from several folders names each one beneath their shared parent. */}
+                    {memory.origin_locations.length > 0 && <Provenance term="Folders">{memory.origin_locations.join(', ')}</Provenance>}
                     <Provenance term="Project">{memory.project_key ?? 'No project'}</Provenance>
                     <Provenance term="Thread">{originThread?.title ?? origin ?? 'No origin thread'}</Provenance>
                     <Provenance term="Keywords">{memory.keywords.join(', ') || 'None recorded'}</Provenance>

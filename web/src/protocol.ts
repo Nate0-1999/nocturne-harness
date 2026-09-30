@@ -221,6 +221,7 @@ export type MemoryUnit = JsonObject & {
   origin_thread_id: string | null
   origin_path: string | null
   origin_location: string | null
+  origin_locations: string[]
   pin: boolean
   status: MemoryStatus
   revision: number
@@ -739,6 +740,7 @@ const MEMORY_UNIT_KEYS = [
   'origin_thread_id',
   'origin_path',
   'origin_location',
+  'origin_locations',
   'pin',
   'status',
   'revision',
@@ -840,6 +842,8 @@ function parseMemoryUnit(value: unknown): MemoryUnit | null {
     (value.origin_thread_id !== null && !isUuid(value.origin_thread_id)) ||
     (value.origin_path !== null && typeof value.origin_path !== 'string') ||
     (value.origin_location !== null && typeof value.origin_location !== 'string') ||
+    !Array.isArray(value.origin_locations) ||
+    !value.origin_locations.every((folder) => typeof folder === 'string') ||
     typeof value.pin !== 'boolean' ||
     !MEMORY_STATUSES.includes(value.status as MemoryStatus) ||
     !Number.isInteger(value.revision) ||
@@ -865,6 +869,7 @@ function parseMemoryUnit(value: unknown): MemoryUnit | null {
     origin_thread_id: value.origin_thread_id as string | null,
     origin_path: value.origin_path as string | null,
     origin_location: value.origin_location as string | null,
+    origin_locations: value.origin_locations as string[],
     pin: value.pin,
     status: value.status as MemoryStatus,
     revision: value.revision as number,
