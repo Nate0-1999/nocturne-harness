@@ -3973,3 +3973,13 @@ destructive-write refusal names the shortest unique ending as the anchor for add
 as does a non-unique anchor that ends the file. An edit or write that would stop a Python file
 that parsed from parsing is refused with the error and its line: an anchor ending inside a call
 had put a new test in the middle of an existing one.
+
+## M3SF2 — Proposed worktree repair, blocked verification [P3]
+
+PRECEDENT: F154/F158, PLAN M3SF2, ADR-017, D.2 103; Garden report 255.
+All passing judges choose by most votes, then lowest attempt ID on equal votes;
+the result names that rule. Judged work stays on `symphony/<id>` for review.
+Workers may write their own Git metadata and shared objects, not the user's
+branch refs. Live verification exposed repeated named-ref failures, so this
+repair is unaccepted and unreleased pending the M3CL2 ownership ruling and
+three fresh passing runs.
