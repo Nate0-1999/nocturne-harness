@@ -2030,8 +2030,9 @@ function ThreadsModule() {
           data-tooltip-detail="Start a conversation in a folder you choose."
           onClick={() => {
             setCreateFailure(null)
+            // M3W5B-34: a new thread starts where the selected one started, not where its agent wandered.
             setWorkspaceDraft(
-              selectedEntry?.current_location ?? selectedEntry?.workspace_root ?? '',
+              selectedEntry?.workspace_root ?? selectedEntry?.current_location ?? '',
             )
             setCreating((value) => !value)
           }}
