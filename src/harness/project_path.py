@@ -49,6 +49,17 @@ def repository_root(folder: Path) -> Path | None:
     return None
 
 
+def project_environment(folder: Path, workspace_root: Path) -> Path | None:
+    """M3W5B-02: the nearest .venv from folder up to the workspace root, for the shell."""
+
+    for candidate in (folder, *folder.parents):
+        if (candidate / ".venv" / "bin").is_dir():
+            return candidate / ".venv"
+        if candidate == workspace_root:
+            return None
+    return None
+
+
 def repository_identity(root: Path) -> str | None:
     """F135 (M3EX-14): a repository's first commit names it wherever it moves."""
 

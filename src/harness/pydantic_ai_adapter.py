@@ -1,5 +1,6 @@
 """The single adapter from harness capabilities to pydantic-ai v2."""
 
+import re
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
@@ -8,7 +9,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict
 from pydantic_ai import BinaryContent, ModelRetry, RunContext, ToolReturn
 from pydantic_ai.capabilities import AbstractCapability, Capability
-from pydantic_ai.messages import ToolCallPart
+from pydantic_ai.messages import ToolCallPart, UserPromptPart
 from pydantic_ai.tools import Tool, ToolDefinition
 from spine.tokens import cl100k_token_count
 
@@ -30,7 +31,30 @@ WORKSPACE_INSTRUCTIONS = (
     " Browser tools are headless and default to localhost or files beneath the current location."
     " Never ask the owner for consent inside a tool call; a refused open-web request must wait"
     " for the owner's exact `/browser allow-web` command."
+    # M3W5B-06, Codex M3W5A-03 and -13: no invented results, no plan in place of a change.
+    " Report only what tool results showed: never say you moved, changed or ran something"
+    " without its tool result, and when a search finds nothing, say so instead of naming"
+    " files you have not seen. When the user asks for a change, make it with the tools;"
+    " do not stop at a plan unless the user asked for one."
 )
+
+
+def _replace_flag(ctx: RunContext[MemoryToolContext]) -> dict[str, bool]:
+    """M3W5B-01: the user's own words, never the model's, allow replacing most of a file."""
+
+    latest = next(
+        (
+            part.content
+            for message in reversed(ctx.messages)
+            for part in reversed(getattr(message, "parts", ()))
+            if isinstance(part, UserPromptPart) and isinstance(part.content, str)
+        ),
+        "",
+    )
+    prompt = [ctx.prompt] if isinstance(ctx.prompt, str) else list(ctx.prompt or ())
+    request = "\n".join([*(item for item in prompt if isinstance(item, str)), latest])
+    said = re.search(r"\b(?:replace|rewrite|overwrite)", request, re.IGNORECASE) is not None
+    return {"replace": True} if said else {}
 
 
 class PendingSteering(Capability[MemoryToolContext]):
@@ -187,13 +211,18 @@ async def edit(ctx: RunContext[MemoryToolContext], path: str, edits: list[EditRe
                 {"oldText": replacement.old_text, "newText": replacement.new_text}
                 for replacement in edits
             ],
+            **_replace_flag(ctx),
         },
     )
 
 
 async def write(ctx: RunContext[MemoryToolContext], path: str, content: str) -> str:
     """Create or replace a file in the current directory."""
-    return await _execute_workspace_tool(ctx, "write", {"path": path, "content": content})
+    return await _execute_workspace_tool(
+        ctx,
+        "write",
+        {"path": path, "content": content, **_replace_flag(ctx)},
+    )
 
 
 async def grep(
@@ -237,7 +266,11 @@ async def ls(ctx: RunContext[MemoryToolContext], path: str = ".", limit: int = 5
 async def bash(
     ctx: RunContext[MemoryToolContext], command: str, timeout: float | None = None
 ) -> str:
-    """Run a shell command inside the current location's OS sandbox."""
+    """Run a shell command inside the current location's OS sandbox and wait for it to finish.
+
+    The turn waits for it, so never use it for anything meant to keep running; use start_shell.
+    """
+    # M3W5B-08: "start a background shell" in plain words ran here and blocked the turn.
     arguments: dict[str, object] = {"command": command}
     if timeout is not None:
         arguments["timeout"] = timeout
@@ -250,7 +283,11 @@ async def move(ctx: RunContext[MemoryToolContext], path: str) -> str:
 
 
 async def start_shell(ctx: RunContext[MemoryToolContext], command: str) -> str:
-    """Start a fenced shell that keeps running across turns until stopped or daemon exit."""
+    """Start a background shell and return at once with its ID; it keeps running across turns.
+
+    Use it whenever the user asks for a background shell, a server, a watcher or a loop that
+    keeps running. It stops with stop_shell or when Nocturne exits.
+    """
     return await _execute_workspace_tool(ctx, "start_shell", {"command": command})
 
 

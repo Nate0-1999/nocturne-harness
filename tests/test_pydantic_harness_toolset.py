@@ -390,10 +390,14 @@ async def test_presence_grant_cannot_be_widened_or_reused_after_close(tmp_path: 
     """
     root = tmp_path / "workspace"
     root.mkdir()
+    (tmp_path / "sibling").mkdir()
     with pytest.raises(ValueError, match="cwd must be inside workspace_root"):
         await open_standard_toolset(cwd=tmp_path, workspace_root=root)
     toolset = await open_standard_toolset(cwd=root, workspace_root=root)
     with pytest.raises(ValueError, match="Cannot move outside the workspace"):
+        await toolset.move(tmp_path / "sibling")
+    # M3W5B-05: a miscounted '..' above the root is refused plainly with the way back.
+    with pytest.raises(ToolsetError, match=f"above this thread's workspace. Its root is {root}"):
         await toolset.move(tmp_path)
     assert toolset.location().cwd == root.resolve()
     await toolset.close()
@@ -487,3 +491,123 @@ async def test_a_cancelled_turn_stops_its_foreground_command(tmp_path: Path) -> 
 
     listing = subprocess.run(["ps", "-axo", "command="], capture_output=True, text=True).stdout
     assert "sleep 97531" not in listing
+
+
+@pytest.mark.asyncio
+async def test_a_change_that_removes_most_of_a_file_needs_the_word_replace(tmp_path: Path) -> None:
+    """INCIDENT M3W5B-01: a one-test request rewrote a 1,300-line file to 16 lines. M3GD /
+    SPEC B.6 r14: exercised refusal: "Refused: this would remove {n}% of {name} ({lines}
+    lines)."; small files and ordinary edits still just work."""
+
+    body = "".join(f"def test_{number}():\n    assert {number}\n\n" for number in range(40))
+    (tmp_path / "test_big.py").write_text(body)
+    (tmp_path / ".nvmrc").write_text("18\n")
+    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    try:
+        rewrite = await toolset.execute(
+            "write", {"path": "test_big.py", "content": "def test_new():\n    assert 1\n"}
+        )
+        gutted = await toolset.execute(
+            "edit", {"path": "test_big.py", "edits": [{"oldText": body[20:], "newText": ""}]}
+        )
+        added = await toolset.execute(
+            "edit",
+            {"path": "test_big.py", "edits": [{"oldText": "assert 39\n", "newText": "assert 3\n"}]},
+        )
+        bumped = await toolset.execute("write", {"path": ".nvmrc", "content": "20\n"})
+        replaced = await toolset.execute(
+            "write", {"path": "test_big.py", "content": "# replaced\n", "replace": True}
+        )
+    finally:
+        await toolset.close()
+
+    assert not rewrite.success and "Refused: this would remove 9" in rewrite.content
+    assert "test_big.py (120 lines)" in rewrite.content and "says replace" in rewrite.content
+    assert not gutted.success and "Refused: this would remove" in gutted.content
+    assert added.success and bumped.success and replaced.success
+    assert (tmp_path / "test_big.py").read_text() == "# replaced\n"
+
+
+@pytest.mark.asyncio
+async def test_a_deep_glob_finds_files_directly_in_the_searched_folder(tmp_path: Path) -> None:
+    """INCIDENT M3W5B-06: grep with glob '**/*' in web/src answered 'No matches found' for a
+    word 17 files held; the upstream fnmatch needs a folder before '**/'."""
+
+    source = tmp_path / "web" / "src"
+    (source / "deep").mkdir(parents=True)
+    (source / "App.tsx").write_text("data-tooltip-detail\n")
+    (source / "deep" / "Tip.tsx").write_text("data-tooltip-detail\n")
+    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    try:
+        results = [
+            await toolset.execute(
+                "grep", {"pattern": "data-tooltip-detail", "path": "web/src", "glob": glob}
+            )
+            for glob in ("**/*", "**/*.tsx", "*.tsx")
+        ]
+    finally:
+        await toolset.close()
+
+    for result in results:
+        assert result.success and "App.tsx" in result.content
+        assert "deep/Tip.tsx" in result.content
+
+
+@pytest.mark.asyncio
+async def test_repository_commands_find_the_project_environment_from_a_subfolder(
+    tmp_path: Path,
+) -> None:
+    """INCIDENT M3W5B-02: from tests/, '.venv/bin/python' was not found and the agent said
+    pytest was missing; the project's .venv now comes first on PATH wherever the agent stands."""
+    if not Path("/usr/bin/sandbox-exec").is_file():
+        pytest.skip("the standing hard shell fence is macOS sandbox-exec")
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    binary = tmp_path / ".venv" / "bin"
+    binary.mkdir(parents=True)
+    (binary / "pytest").write_text("#!/bin/sh\necho project-pytest\n")
+    (binary / "pytest").chmod(0o755)
+    toolset = await open_standard_toolset(cwd=tests, workspace_root=tmp_path)
+    try:
+        ran = await toolset.execute("bash", {"command": 'pytest; printf "%s" "$VIRTUAL_ENV"'})
+        context = render_workspace_context(toolset.location())
+    finally:
+        await toolset.close()
+
+    assert ran.success and "project-pytest" in ran.content
+    assert str((tmp_path / ".venv").resolve()) in ran.content
+    assert f"Project environment: {(tmp_path / '.venv').resolve()} comes first" in context
+
+
+@pytest.mark.asyncio
+async def test_a_commit_message_keeps_its_dollar_signs(tmp_path: Path) -> None:
+    """INCIDENT M3W5B-07: "$100" in a double-quoted commit message reached git as nothing.
+    M3GD / SPEC B.6 r14: exercised refusal: "Refused: the shell would turn {parameter} in this
+    commit message into nothing. Put the message in single quotes so it reaches git as typed."
+    """
+    if not Path("/usr/bin/sandbox-exec").is_file():
+        pytest.skip("the standing hard shell fence is macOS sandbox-exec")
+    import subprocess
+
+    for command in (["init", "-q"], ["config", "user.name", "t"], ["config", "user.email", "t@t"]):
+        subprocess.run(["git", "-C", str(tmp_path), *command], check=True)
+    (tmp_path / "note.txt").write_text("note\n")
+    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    try:
+        await toolset.execute("bash", {"command": "git add note.txt"})
+        refused = await toolset.execute(
+            "bash", {"command": 'git commit -q -m "a $100 monthly breaker"'}
+        )
+        committed = await toolset.execute(
+            "bash", {"command": "git commit -q -m 'a $100 monthly breaker'"}
+        )
+    finally:
+        await toolset.close()
+
+    log = subprocess.run(
+        ["git", "-C", str(tmp_path), "log", "--format=%s"], capture_output=True, text=True
+    )
+    assert not refused.success and "turn $100 in this commit message into nothing" in (
+        refused.content
+    )
+    assert committed.success and log.stdout.strip() == "a $100 monthly breaker"

@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from harness.project_path import project_environment
 from harness.toolset import AgentLocation
 
 _INSTRUCTION_NAMES = (
@@ -36,6 +37,7 @@ def render_workspace_context(location: AgentLocation) -> str:
     relative = workspace_location_path(location)
     entries = _directory_entries(cwd)
     instruction_sections = _instruction_sections(root, cwd)
+    environment = project_environment(cwd, root)
     lines = [
         "<workspace_context>",
         f"Workspace root: {root}",
@@ -46,6 +48,15 @@ def render_workspace_context(location: AgentLocation) -> str:
         "Shell commands write only within the current location's subtree, except git "
         "commands on this repository, which work from any folder inside it; reads are free. "
         "If a write is refused, move to the folder it needs instead of probing the sandbox.",
+        # M3W5B-02/03: run the project's tools where you stand instead of moving to run them.
+        *(
+            ()
+            if environment is None
+            else (
+                f"Project environment: {environment} comes first on the shell's PATH, so "
+                "python, pytest and its other tools run from any folder here without moving.",
+            )
+        ),
         "Directory entries:",
         *(f"- {entry}" for entry in entries),
     ]

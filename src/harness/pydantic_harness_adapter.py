@@ -16,6 +16,7 @@ import unicodedata
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
+from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any, Literal, Self
 
@@ -55,7 +56,7 @@ from spine.tokens import cl100k_token_count
 
 from harness.envelope import generate_ulid
 from harness.progressive_prompt import rendered_location
-from harness.project_path import repository_root
+from harness.project_path import project_environment, repository_root
 from harness.spine_client import SpineClientError
 from harness.toolset import (
     AgentLocation,
@@ -81,6 +82,7 @@ _CREDENTIAL_COMMAND = re.compile(
 )
 _CREDENTIAL_SEGMENTS = frozenset({".ssh", ".aws", ".gnupg", ".kube"})
 _GIT_COMMAND = re.compile(r"^\s*git(?:\s|$)")
+_GIT_COMMIT = re.compile(r"\bgit\s+commit\b")
 _SHELL_WRITE_REMEDY = (
     "The shell writes only inside {location}. Move to the folder you need to change and "
     "run the command there; git commands on this repository work from any folder inside it."
@@ -104,6 +106,44 @@ def _kill_command_group(marker: str) -> None:
 
 def _inside(root: Path, target: Path) -> bool:
     return target == root or target.is_relative_to(root)
+
+
+def _positional_parameter(command: str) -> str | None:
+    """The first $1-style parameter the shell would expand, outside single quotes."""
+
+    quote = None
+    index = 0
+    while index < len(command):
+        character = command[index]
+        if character == "\\" and quote != "'":
+            index += 2
+            continue
+        if character in "'\"" and quote in (None, character):
+            quote = None if quote == character else character
+        elif character == "$" and quote != "'" and (found := re.match(r"\$\d+", command[index:])):
+            return found.group()
+        index += 1
+    return None
+
+
+def _refuse_destruction(target: Path, original: str, revised: str, said_replace: object) -> None:
+    """INCIDENT M3W5B-01: a one-test request rewrote a 1,300-line test file down to 16 lines.
+    A change that removes more of a file than it keeps needs the request to say replace;
+    files under 20 lines are exempt, so a one-line version bump still just works."""
+
+    lines = len(original.splitlines())
+    if said_replace or lines < 20:
+        return
+    old, new = (re.findall(r"\s+|\S+", text) for text in (original, revised))
+    blocks = SequenceMatcher(None, old, new).get_matching_blocks()
+    kept = sum(len("".join(old[start : start + size])) for start, _, size in blocks)
+    if len(original) - kept <= kept:
+        return
+    raise ToolsetError(
+        f"Refused: this would remove {100 - kept * 100 // len(original)}% of {target.name} "
+        f"({lines} lines). Change only what the request needs with edit; "
+        "the whole file is replaced only when the user's request says replace."
+    )
 
 
 def _credential_path(target: Path) -> bool:
@@ -290,7 +330,14 @@ class PydanticHarnessToolset:
         self._require_open()
         target = path if path.is_absolute() else self._location.cwd / path
         target = target.resolve(strict=True)
-        if not _inside(self._location.workspace_root, target):
+        root = self._location.workspace_root
+        if root.is_relative_to(target) and target != root:
+            # INCIDENT M3W5B-05: a miscounted '..' is not a crossing; name the way back.
+            raise ToolsetError(
+                f"{target} is above this thread's workspace. Its root is {root}; "
+                f"move('{root}') goes there."
+            )
+        if not _inside(root, target):
             # WALL owner files / ADR015: movement cannot enlarge the write grant.
             raise WorkspaceBoundaryError(
                 f"Cannot move outside the workspace {self._location.workspace_root}.", "workspace"
@@ -434,6 +481,9 @@ class PydanticHarnessToolset:
     async def _write(self, arguments: Mapping[str, object]) -> str:
         target = self._preflight("write", arguments.get("path"))
         content = arguments.get("content")
+        if target.is_file():
+            original = target.read_text(encoding="utf-8", errors="replace")
+            _refuse_destruction(target, original, content, arguments.get("replace"))
         relative = target.relative_to(self._location.cwd)
         result = await self._filesystem(self._location.cwd).write_file(str(relative), content)
         self._emit("write", target)
@@ -466,6 +516,7 @@ class PydanticHarnessToolset:
         revised = original
         for start, end, replacement in reversed(ordered):
             revised = revised[:start] + replacement + revised[end:]
+        _refuse_destruction(target, original, revised, arguments.get("replace"))
         expected_hash = hashlib.sha256(original.encode()).hexdigest()[:12]
         relative = target.relative_to(self._location.cwd)
         result = await self._filesystem(self._location.cwd).edit_file(
@@ -482,6 +533,11 @@ class PydanticHarnessToolset:
         if arguments.get("ignoreCase", False):
             pattern = f"(?i:{pattern})"
         glob = arguments.get("glob")
+        if isinstance(glob, str):
+            # INCIDENT M3W5B-06: upstream matches globs with fnmatch, where '**/' needs a folder,
+            # so '**/*' missed every file directly in the searched folder; fnmatch's '*' already
+            # crosses folders, so '*' is the zero-or-more-folders prefix.
+            glob = glob.replace("**/", "*")
         context = arguments.get("context", 0)
         limit = arguments.get("limit", 100)
         filesystem = self._filesystem(target, search_limit=limit)
@@ -618,6 +674,12 @@ class PydanticHarnessToolset:
                 "That command may expose credentials. Ask the owner before reading them.",
                 "credentials",
             )
+        if _GIT_COMMIT.search(command) and (parameter := _positional_parameter(command)):
+            # INCIDENT M3W5B-07: "$100" in a double-quoted message reached git as nothing.
+            raise ToolsetError(
+                f"Refused: the shell would turn {parameter} in this commit message into nothing. "
+                "Put the message in single quotes so it reaches git as typed."
+            )
         if self._location.fence_reads and (outside := self._outside_directory(command)):
             # WALL owner files / M3SF: a fenced agent never walks directories beyond its root.
             raise WorkspaceBoundaryError(
@@ -651,7 +713,16 @@ class PydanticHarnessToolset:
         # F135 (M3EX-13): the EXIT trap keeps zsh as the group's parent, named by its $0
         # marker, so a cancelled turn can stop exactly this command.
         marker = f"nocturne-command-{generate_ulid()}"
-        script = shlex.quote(f"trap : EXIT; {command}")
+        environment_dir = project_environment(self._location.cwd, self._location.workspace_root)
+        # M3W5B-02: from a subfolder, python and pytest still resolve to the project's .venv;
+        # set after the login profile, which reorders PATH on macOS.
+        activate = (
+            ""
+            if environment_dir is None
+            else f"export VIRTUAL_ENV={shlex.quote(str(environment_dir))} "
+            f'PATH={shlex.quote(str(environment_dir / "bin"))}:"$PATH"; '
+        )
+        script = shlex.quote(f"trap : EXIT; {activate}{command}")
         wrapped = f"{sandbox} -p {shlex.quote(profile)} /bin/zsh -lc {script} {marker}"
         environment = {
             "PATH": os.environ.get("PATH", "/usr/bin:/bin:/usr/sbin:/sbin"),
