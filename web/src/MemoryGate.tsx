@@ -371,6 +371,7 @@ export function MemoryGate({
                 ? 'The model has not started. Keep, remove, or add memories, then continue.'
                 : 'The model is still stopped. Edit the current body or expire the memory before continuing.'}
             </p>
+            {gate.stage === 'review' && <GateAudition injectionId={gate.injection_id} />}
           </div>
           <div className="memory-gate__identity" aria-label="Injection details">
             <span>
@@ -387,7 +388,6 @@ export function MemoryGate({
             </span>
           </div>
         </header>
-        {gate.stage === 'review' && <GateAudition injectionId={gate.injection_id} />}
         <div className="memory-gate__content">
           {gate.stage === 'review' ? (
             <>
