@@ -511,6 +511,32 @@ export function fitStageCamera(
   }
 }
 
+/** M3W5B-33 / Codex 16: a fresh Work layer opens readable in this window: the widest of
+ * Threads + Conversation + Memory, Threads + Conversation, or Conversation alone that fits
+ * at 75% or more, centered; when none does, the Conversation fills the width. */
+export function openingStageCamera(
+  viewportWidth: number,
+  viewportHeight: number,
+  modules: readonly StageModuleLayout[],
+): StageCamera {
+  const byId = (ids: readonly string[]) => modules.filter((module) => ids.includes(module.module_id))
+  const sets = [['threads', 'conversation', 'memory'], ['threads', 'conversation'], ['conversation']]
+    .map(byId)
+    .filter((set) => set.some((module) => module.module_id === 'conversation'))
+  if (sets.length === 0) return fitStageCamera(viewportWidth, viewportHeight, modules)
+  const frame = (set: readonly StageModuleLayout[], fitHeight: boolean) => {
+    const left = Math.min(...set.map((module) => module.x)) * STAGE_UNIT_WIDTH
+    const right = Math.max(...set.map((module) => module.x + module.width)) * STAGE_UNIT_WIDTH
+    const top = Math.min(...set.map((module) => module.y)) * STAGE_UNIT_HEIGHT
+    const bottom = Math.max(...set.map((module) => module.y + module.height)) * STAGE_UNIT_HEIGHT
+    const zoom = Math.min(1, (viewportWidth - 48) / (right - left),
+      fitHeight ? (viewportHeight - 48) / (bottom - top) : 1)
+    return { x: Math.round((viewportWidth - (right - left) * zoom) / 2 - left * zoom), y: Math.round(24 - top * zoom), zoom }
+  }
+  return sets.map((set) => frame(set, true)).find((camera) => camera.zoom >= 0.75) ??
+    frame(sets[sets.length - 1]!, false)
+}
+
 export function focusStageModule(
   module: StageModuleLayout,
   viewportWidth: number,

@@ -93,6 +93,7 @@ import {
   cloneStageLayout,
   createStageLayer,
   fitStageCamera,
+  openingStageCamera,
   focusStageModule,
   loadSavedStageSet,
   loadStageLayout,
@@ -414,6 +415,9 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   const [sheetMode, setSheetMode] = useState(initialSheetMode)
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 })
   const viewportRef = useRef<HTMLDivElement>(null)
+  // M3W5B-33 / Codex 16: a factory layout opens on its Work layer framed for this window.
+  const [factoryAtOpen] = useState(() => JSON.stringify(layout) === JSON.stringify(cloneFactoryStageLayout()))
+  const opensFresh = useRef(factoryAtOpen)
   const initialAttunementPicks = useMemo(() => initialStickyAttunements(), [])
   const stickyAttunements = useRef<Record<string, StickyAttunementPick>>(
     initialAttunementPicks,
@@ -519,6 +523,13 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
       setTranscriptBackupBusy(false)
     }
   }
+
+  useEffect(() => {
+    if (!opensFresh.current || viewportSize.width === 0) return
+    opensFresh.current = false
+    setLayout((current) => current.active_layer_id !== 'work' ? current : updateStageCamera(current,
+      openingStageCamera(viewportSize.width, viewportSize.height, activeStageLayer(current).modules)))
+  }, [viewportSize])
 
   useEffect(() => {
     const viewport = viewportRef.current
@@ -665,8 +676,10 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   }, [savedSet])
 
   const resetFactorySet = useCallback(() => {
-    setLayout(cloneFactoryStageLayout())
-  }, [])
+    const factory = cloneFactoryStageLayout()
+    setLayout(viewportSize.width === 0 ? factory : updateStageCamera(factory,
+      openingStageCamera(viewportSize.width, viewportSize.height, activeStageLayer(factory).modules)))
+  }, [viewportSize])
 
   const changeModuleScope = useCallback((
     instanceId: string,
