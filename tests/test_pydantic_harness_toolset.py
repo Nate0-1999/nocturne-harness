@@ -7,7 +7,7 @@ import pytest
 
 from harness.progressive_prompt import render_workspace_context
 from harness.pydantic_ai_adapter import adopted_skill_capabilities
-from harness.pydantic_harness_adapter import discover_skill_libraries
+from harness.pydantic_harness_adapter import adopted_skills, discover_skill_libraries
 from harness.toolset import AgentLocation, ToolsetError, open_standard_toolset
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -636,3 +636,13 @@ async def test_a_folder_named_from_the_workspace_root_is_found_from_a_sibling(
     assert nearest.success
     assert nearest.content == f"Moved to {(tmp_path / 'docs' / 'src').resolve()}."
     assert not missing.success
+
+
+def test_the_harness_repository_offers_its_own_skill_where_skills_are_found() -> None:
+    """M3W5B FL-069/FL-190 FAIL (F158): asked for the nocturne-plugin-contributor skill in the
+    harness repository, the agent could not load it; skills/ is not an upstream library path,
+    so .agents/skills points at it (the adopted capability's path, whole)."""
+
+    libraries = discover_skill_libraries(ROOT)
+    assert (ROOT / "skills").resolve() in libraries
+    assert "nocturne-plugin-contributor" in {skill.id for skill in adopted_skills(libraries)}
