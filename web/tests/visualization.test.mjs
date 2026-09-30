@@ -337,6 +337,15 @@ test('roots draw every longer gap between events as a longer bare stretch', () =
   assert.ok(walk(buildRootTree([lone], {}, Date.parse(at(0))).tubes, 'trunk:/project', (i) => `thread:turn:${i}`) >= 8)
 })
 
+/** F155 / FL-134 (M3LV): a history scrub never blanks — the last state read stays drawn while the next one loads, and a
+ * recorded moment is read once, since it never changes; only the present is polled. */
+test('work modules keep the drawn state while a scrubbed state loads', async () => {
+  const source = await readFile(new URL('../src/WorkVisualization.tsx', import.meta.url), 'utf8')
+  assert.doesNotMatch(source, /loading \? null :/u)
+  assert.match(source, /asOf === null \? globalThis\.setInterval/u)
+  assert.match(source, /Loading \{selected\?\.as_of/u)
+})
+
 /** FL-130 (M3LV): a selection is visible in Roots on live chrome and stopped matte alike; nothing is drawn unselected. */
 test('a selected root wears a halo in its fleet colour', async () => {
   const source = await readFile(new URL('../src/Roots.tsx', import.meta.url), 'utf8')

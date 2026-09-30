@@ -153,6 +153,16 @@ test('production source uses the ruled Three stack and forbids random geometry',
   assert.doesNotMatch(`${component}\n${bindings}`, /Math\.random/u)
 })
 
+/** F155 / FL-133 (M3LV): the present is the Palace's own live reading, so a memory arrives within one poll however
+ * slowly the recorder samples; a past moment is its recorded state. One source each: a scene that mounts on the
+ * recording and swaps to the live reading while its WebGPU renderer starts draws nothing. */
+test('the live Palace draws its own reading and a past moment its recording', async () => {
+  const component = await readFile(new URL('src/PalaceNebula.tsx', webRoot), 'utf8')
+  assert.match(component, /if \(!selected\?\.as_of\) return load\.kind === 'ready' \? load\.snapshot : null/u)
+  assert.doesNotMatch(component, /visualization\.loading \? undefined/u)
+  assert.match(component, /No Palace reading was recorded at this moment\./u)
+})
+
 function node(id, overrides = {}, revisions = []) {
   const { injections = 1, ...memoryOverrides } = overrides
   return {
