@@ -116,7 +116,7 @@ export function ControlTooltip() {
       style={{ left: tooltip.x, top: tooltip.y }}
     >
       <strong>{tooltip.title}</strong>
-      <span>{tooltip.detail}</span>
+      {tooltip.detail !== '' && <span>{tooltip.detail}</span>}
     </aside>
   )
 }
@@ -173,15 +173,8 @@ function controlDetail(control: HTMLElement): string {
   const title = normalize(control.getAttribute('title'))
   if (title !== '' && title !== controlTitle(control)) return title
   if (control.getAttribute('role') === 'tab') return 'Switch to this stage layer.'
-  if (control instanceof HTMLSelectElement) return 'Choose one of the available options.'
-  if (control instanceof HTMLTextAreaElement) return 'Enter text for this action.'
-  if (control instanceof HTMLInputElement) {
-    if (control.type === 'range') return 'Adjust this value; the current value remains visible.'
-    if (control.type === 'file') return 'Choose a local file for this action.'
-    return 'Enter or change this value.'
-  }
-  if (control.getAttribute('role') === 'button') return 'Activate it here or with the keyboard.'
-  return 'Activate this control.'
+  // M3W5B-36: no filler; a control without its own explanation shows its name alone.
+  return ''
 }
 
 function normalize(value: string | null | undefined): string {

@@ -1947,6 +1947,7 @@ function HeaderModule() {
           type="button"
           data-testid="mobile-threads"
           aria-label={`Threads ${snapshot.catalog.length.toString().padStart(2, '0')}`}
+          data-tooltip-detail="Open the list of conversations."
           aria-expanded={threadsOpen}
           onClick={() => toggleModule('threads')}
         >
@@ -1958,6 +1959,7 @@ function HeaderModule() {
           type="button"
           data-testid="mobile-memories"
           aria-label={`Memory ${memoryTotal}`}
+          data-tooltip-detail="Open the memories this thread uses."
           aria-expanded={memoriesOpen}
           onClick={() => toggleModule('memory')}
         >
@@ -2045,6 +2047,7 @@ function ThreadsModule() {
           type="button"
           data-testid="mobile-close-threads"
           aria-label="Close threads"
+          data-tooltip-detail="Return to the conversation."
           onClick={() => selection.select(null)}
         >
           Back
@@ -2112,6 +2115,7 @@ function ThreadsModule() {
             <TextField
               id="thread-workspace-root"
               data-testid="thread-workspace-root"
+              data-tooltip-detail="The folder this thread works in; type a path or pick one used before."
               type="text"
               list="known-thread-locations"
               value={workspaceDraft}
@@ -3114,8 +3118,8 @@ function VisibleQueueRow({
         <small>Neighbors: {card.neighbors.map((item) => item.label).join(', ')}</small>
       )}
       <div className="thread-end-row__actions">
-        <Button action="close" variant="danger" type="button" disabled={disabled} onClick={onDeny}>Deny</Button>
-        <Button action="confirm" variant="primary" type="button" disabled={disabled} onClick={onApprove}>Approve</Button>
+        <Button action="close" variant="danger" type="button" disabled={disabled} data-tooltip-detail="Leave it out of your Palace." onClick={onDeny}>Deny</Button>
+        <Button action="confirm" variant="primary" type="button" disabled={disabled} data-tooltip-detail="Save it to your Palace as a memory." onClick={onApprove}>Approve</Button>
       </div>
     </article>
   )

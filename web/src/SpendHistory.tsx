@@ -33,10 +33,10 @@ export function InfrastructureInvoiceForm({ onSaved }: { onSaved: () => void }) 
   return <details className="spend-history">
     <summary>Record a cloud invoice · owner only</summary>
     <form onSubmit={(event) => { event.preventDefault(); void save() }}>
-      <label>Amount · USD<TextField aria-label="Invoice amount USD" required type="number" min="0.000000000001" step="any" value={amount} onChange={(event) => setAmount(event.target.value)} /></label>
-      <label>Invoice date · UTC<TextField aria-label="Invoice date" required type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
-      <label>Invoice ID<TextField aria-label="Invoice ID" required value={invoice} onChange={(event) => setInvoice(event.target.value)} /></label>
-      <Button action="save" variant="primary" type="button" disabled={pending} onClick={(event) => {
+      <label>Amount · USD<TextField aria-label="Invoice amount USD" data-tooltip-detail="The invoice total in US dollars." required type="number" min="0.000000000001" step="any" value={amount} onChange={(event) => setAmount(event.target.value)} /></label>
+      <label>Invoice date · UTC<TextField aria-label="Invoice date" data-tooltip-detail="The date on the invoice, in UTC." required type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
+      <label>Invoice ID<TextField aria-label="Invoice ID" data-tooltip-detail="The invoice number from your cloud bill." required value={invoice} onChange={(event) => setInvoice(event.target.value)} /></label>
+      <Button action="save" variant="primary" type="button" disabled={pending} data-tooltip-detail="Add this invoice to the spend ledger." onClick={(event) => {
         if (event.currentTarget.form?.reportValidity()) void save()
       }}>{pending ? 'Recording…' : 'Record invoice'}</Button>
     </form>
@@ -113,7 +113,7 @@ export function CacheHistory({ snapshot, threadNames }: { snapshot: SpendTableSn
   return <section className="spend-history" aria-label="Cache efficiency">
     <h3>Cache efficiency by message</h3>
     {threads.length === 0 ? <p>No message receipts recorded.</p> : <>
-      <Select aria-label="Cache conversation" value={thread} onChange={(event) => setSelected(event.target.value)}>
+      <Select aria-label="Cache conversation" data-tooltip-detail="Pick the conversation whose cache reads and writes to show." value={thread} onChange={(event) => setSelected(event.target.value)}>
         {threads.map((id) => <option key={id} value={id}>{threadNames.get(id) ?? `Conversation ${id.slice(0, 8)}`}</option>)}
       </Select>
       <table><thead><tr><th>Message</th><th>Fresh</th><th>Cached</th><th>Cache writes</th><th>Reuse</th></tr></thead>

@@ -20,7 +20,7 @@ export function RewindControl({ threadId, promptId, disabled }: {
     finally { setBusy(false) }
   }
   return <span className="rewind-control">
-    <Select aria-label="Rewind scope" value={scope} disabled={busy || disabled}
+    <Select aria-label="Rewind scope" data-tooltip-detail="What a rewind restores: the chat, the files, or both." value={scope} disabled={busy || disabled}
       onChange={(event) => setScope(event.target.value as typeof scope)}>
       <option value="both">Chat + files</option><option value="conversation">Chat</option><option value="files">Files</option>
     </Select>
