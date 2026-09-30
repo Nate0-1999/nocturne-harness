@@ -258,6 +258,7 @@ def init_nocturne(
     transcript_backup = not offline and prompt(
         "Back up conversation transcripts to your cloud Palace? [y/N] "
     ).strip().lower() in {"y", "yes"}
+    from harness.palaces import palace_for_url
 
     config = NocturneConfig(
         home=target_home,
@@ -273,6 +274,8 @@ def init_nocturne(
         local_model=local_model if offline else "",
         local_embedding_model=embedding_model,
         local_model_url=model_url,
+        # M3W5B-29: a test Palace's URL names that Palace; only main's (or a foreign) URL is main.
+        palace_name=(palace_for_url(spine_url) if palace_mode == "remote" else None) or "main",
     )
     _write_config(config)
     if not offline:

@@ -94,3 +94,42 @@ def test_drop_names_count_and_cancel_preserves_everything(tmp_path, monkeypatch)
     )
     assert "test-learning and its 7 memories" in prompts[0]
     assert (home / "custody.json").exists()
+
+
+def test_palace_for_url_names_owner_services_and_nothing_else():
+    """SPEC D.2 166: a Palace URL is main, a named Palace, or not one of the owner's."""
+    from harness.palaces import palace_for_url
+
+    main = "https://n8-memory-palace-spine-713925718873.us-central1.run.app"
+    assert palace_for_url(main) == "main"
+    assert palace_for_url("https://n8-memory-palace-spine-7wq3wmgcoq-uc.a.run.app") == "main"
+    assert palace_for_url("https://nocturne-palace-test-m3exf2-7wq3wmgcoq-uc.a.run.app") == (
+        "test-m3exf2"
+    )
+    assert palace_for_url("https://nocturne-palace-test-a-713925718873.us-central1.run.app") == (
+        "test-a"
+    )
+    for foreign in ("https://spine.example.test", "https://other-service-abc-uc.a.run.app", ""):
+        assert palace_for_url(foreign) is None
+
+
+def test_remote_init_against_a_named_palace_carries_its_name(tmp_path, monkeypatch):
+    """SPEC D.2 166: an identity pointed at a test Palace never reports itself as main."""
+    from harness import onboarding
+
+    monkeypatch.setattr(onboarding, "_ensure_tool_runtimes", lambda home, stdout: None)
+    for url, name in (
+        ("https://nocturne-palace-test-m3exf2-7wq3wmgcoq-uc.a.run.app", "test-m3exf2"),
+        ("https://spine.example.test", "main"),
+    ):
+        home = tmp_path / name
+        onboarding.init_nocturne(
+            home=home,
+            remote=url,
+            environ={"OPENROUTER_API_KEY": "broker", "SPINE_TOKEN": "bearer"},
+            prompt=lambda message: "n",
+            stdout=io.StringIO(),
+        )
+        config = load_config(home=home)
+        assert config.palace_name == name
+        assert config.process_environment({})["NOCTURNE_PALACE_NAME"] == name
