@@ -486,8 +486,9 @@
 .rack-module__drag > .rack-module__attunement {
   overflow: hidden;
   margin-left: auto;
-  border: 1px solid color-mix(in srgb, var(--accent) 48%, transparent);
-  border-radius: 999px;
+  --kit-edge: color-mix(in srgb, var(--accent) 48%, transparent);
+  --kit-fill: transparent;
+  --chamfer: 0.25rem;
   padding: 0.12rem 0.36rem;
   color: var(--ink);
   font-size: var(--text-xs);
@@ -503,17 +504,18 @@
   gap: 0.12rem;
   margin-inline: 0.18rem;
   padding: 0.12rem;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ground) 82%, transparent);
+  --kit-edge: var(--line);
+  --kit-fill: color-mix(in srgb, var(--ground) 82%, transparent);
+  --chamfer: 0.3rem;
 }
 
 .conversation-mode button {
   min-height: 1.25rem;
   padding: 0.16rem 0.42rem;
   border: 0;
-  border-radius: 999px;
-  background: transparent;
+  --kit-edge: transparent;
+  --kit-fill: transparent;
+  --chamfer: 0.25rem;
   color: var(--dim);
   font: 600 var(--text-xs)/1 var(--data-font);
   letter-spacing: 0.05em;
@@ -521,7 +523,7 @@
 }
 
 .conversation-mode button[aria-pressed="true"] {
-  background: var(--accent-soft);
+  --kit-fill: var(--accent-soft);
   color: var(--ink);
 }
 
@@ -541,9 +543,9 @@
   width: 1.35rem;
   height: 1.35rem;
   padding: 0;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  background: transparent;
+  --kit-edge: var(--line);
+  --kit-fill: transparent;
+  --chamfer: 0.3rem;
   color: var(--dim);
   font: inherit;
 }
@@ -551,7 +553,7 @@
 .rack-module__settings-toggle:hover,
 .rack-module__settings-toggle:focus-visible,
 .rack-module__settings-toggle[aria-expanded="true"] {
-  background: var(--accent-soft);
+  --kit-fill: var(--accent-soft);
   color: var(--ink);
 }
 

@@ -85,7 +85,19 @@ label:has(> .kit-select-wrap, > .kit-field),
 .memory-gate__stop,
 .composer__attach,
 .composer-attachment__remove,
-.archive-button {
+.archive-button,
+.rack-module__drag > .rack-module__attunement,
+.conversation-mode,
+.conversation-mode button,
+.rack-module__settings-toggle,
+.symphony-deck__header > span,
+.symphony-deck__empty,
+.deck-stack,
+.deck-demand,
+.deck-attempt,
+.deck-controls fieldset,
+.deck-proposal,
+.deck-undo {
   --kit-edge: var(--line-strong);
   --kit-fill: var(--surface-deep);
   --kit-cut: calc(var(--chamfer) * 0.7071);
