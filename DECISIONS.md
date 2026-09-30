@@ -3818,3 +3818,13 @@ the Palace in one call that fills only null projects; a Palace without the call 
 until the next start. The card's hover lists the folders beneath WHERE, one per line, and
 its panel is capped at the width its placement assumes. The gate card keeps rank, kind and
 id: its C.4 card carries no provenance.
+
+## M3SF2 — Proposed worktree repair, blocked verification [P3]
+
+PRECEDENT: F154/F158, PLAN M3SF2, ADR-017, D.2 103; Garden report 255.
+All passing judges choose by most votes, then lowest attempt ID on equal votes;
+the result names that rule. Judged work stays on `symphony/<id>` for review.
+Workers may write their own Git metadata and shared objects, not the user's
+branch refs. Live verification exposed repeated named-ref failures, so this
+repair is unaccepted and unreleased pending the M3CL2 ownership ruling and
+three fresh passing runs.
