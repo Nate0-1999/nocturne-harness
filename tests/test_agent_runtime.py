@@ -2142,3 +2142,41 @@ async def test_tool_cleanup_exception_cannot_mask_cancelled_history_repair() -> 
     assert returns[0].tool_call_id == "call-cleanup"
     assert returns[0].outcome == "interrupted"
     assert returns[0].metadata == {"harness_state": "cancelled"}
+
+
+@pytest.mark.asyncio
+async def test_a_bare_move_command_moves_or_says_why_without_the_model(tmp_path: Path) -> None:
+    """Codex M3W5A-03: two bare /move requests got 'Moved' prose while WHERE stayed put. The
+    command now moves through the tool layer, or says why it cannot; no model request runs."""
+
+    workspace = tmp_path / "workspace"
+    (workspace / "docs").mkdir(parents=True)
+
+    async def model_must_not_run(_messages, _info):
+        raise AssertionError("a /move command never reaches the model")
+
+    toolset = await open_standard_toolset(cwd=workspace, workspace_root=workspace)
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(model_must_not_run)),
+        lambda _: context(toolset=toolset),
+    )
+    try:
+        outcomes = [
+            await runner.run(
+                thread_id=str(THREAD_UUID),
+                prompt=prompt,
+                message_history=(),
+                emit=RecordingEmitter(),
+            )
+            for prompt in ("/move docs", "/move ../..", "/move")
+        ]
+        where = toolset.location().cwd
+    finally:
+        await toolset.close()
+
+    moved, above, bare = (outcome.assistant_text for outcome in outcomes)
+    assert moved == f"Moved to {(workspace / 'docs').resolve()}."
+    assert above.startswith("Did not move.") and "above this thread's workspace" in above
+    assert bare == "Use /move <folder> with a folder inside this thread's workspace."
+    assert where == (workspace / "docs").resolve()
+    assert all(outcome.usage.requests == 0 for outcome in outcomes)

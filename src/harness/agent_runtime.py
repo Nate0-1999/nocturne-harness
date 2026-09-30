@@ -36,7 +36,11 @@ from pydantic_ai.usage import RunUsage, UsageLimits
 from pydantic_core import to_jsonable_python
 
 from harness.agent import HarnessAgent
-from harness.commands import browser_open_web_command, remember_command_text
+from harness.commands import (
+    browser_open_web_command,
+    move_command_text,
+    remember_command_text,
+)
 from harness.context_window import (
     ContextCut,
     ContextWindowTracker,
@@ -253,6 +257,26 @@ class PydanticAITurnRunner:
                 excluded_memory_ids=frozenset(excluded_memory_ids),
                 boundary_review=review_boundary,
             )
+            if (target := move_command_text(prompt)) is not None:
+                # Codex M3W5A-03: a bare /move moves, or says why it cannot; the model never
+                # narrates a move it did not make.
+                if context.toolset is None or not context.toolset_enabled:
+                    message = "Moving needs the workspace tools, which are off for this thread."
+                elif not target:
+                    message = "Use /move <folder> with a folder inside this thread's workspace."
+                else:
+                    moved = await context.toolset.execute("move", {"path": target})
+                    message = moved.content if moved.success else f"Did not move. {moved.content}"
+                await emit.text(message)
+                usage = _usage_snapshot(run_usage)
+                await bridge.publish_usage(usage)
+                return TurnOutcome(
+                    StopReason("end_turn"),
+                    prior_history,
+                    usage,
+                    assistant_text=message,
+                    model_visible=False,
+                )
             if prompt == "/compact" or prompt.startswith("/compact "):
                 if compaction is None:
                     message = "Compaction is unavailable without the conversation journal."

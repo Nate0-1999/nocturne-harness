@@ -1857,6 +1857,7 @@ const SLASH_COMMANDS = [
   ['/remember', 'Save a fact to your Palace.'],
   ['/compact', 'Shorten this conversation; the journal keeps it all.'],
   ['/model', 'Switch this thread to an OpenRouter model.'],
+  ['/move', 'Move this thread to another folder in its workspace.'],
   ['/browser allow-web', "Let this thread's browser open any site."],
 ] as const
 
