@@ -35,6 +35,7 @@ import {
   snapshotErrorAfterReconciliation,
   snapshotRequestError,
 } from './snapshotBarrier'
+import { retainEvents } from './storeRetention'
 import { isLegacyFixtureTitle, normalizedThreadTitle } from './threadTitles'
 
 export const THREAD_CATALOG_STORAGE_KEY = 'harness.thread-catalog.v1'
@@ -401,7 +402,7 @@ function applyDelta(thread: ThreadState, payload: RunDeltaPayload): ThreadState 
     if (payload.kind === 'thinking') {
       return { ...message, thinking: message.thinking + payload.text }
     }
-    return { ...message, events: [...message.events, payload.event] }
+    return { ...message, events: retainEvents(message.events, [payload.event]) }
   })
   if (!found) {
     const assistant = assistantForRun(payload.run_id)
@@ -410,7 +411,7 @@ function applyDelta(thread: ThreadState, payload: RunDeltaPayload): ThreadState 
     } else if (payload.kind === 'thinking') {
       assistant.thinking = payload.text
     } else {
-      assistant.events = [payload.event]
+      assistant.events = retainEvents([], [payload.event])
     }
     messages.push(assistant)
   }
@@ -460,7 +461,9 @@ function replaceFromSnapshot(
       .map((message) => message.message_id),
   )
   return {
-    messages: payload.messages,
+    messages: payload.messages.map((message) => message.role === 'assistant'
+      ? { ...message, events: retainEvents([], message.events) }
+      : message),
     outboundPrompts: previous.outboundPrompts.filter(
       (prompt) => !representedPromptIds.has(prompt.prompt_id),
     ),
