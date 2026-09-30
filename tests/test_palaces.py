@@ -95,6 +95,17 @@ def test_drop_names_count_and_cancel_preserves_everything(tmp_path, monkeypatch)
     assert "test-learning and its 7 memories" in prompts[0]
     assert (home / "custody.json").exists()
 
+    def no_terminal(message):
+        raise EOFError
+
+    output = io.StringIO()
+    assert (
+        palace_nocturne("drop", "test-learning", cloud=Cloud(), stdout=output, prompt=no_terminal)
+        == 0
+    )
+    assert output.getvalue() == "Palace kept.\n"
+    assert (home / "custody.json").exists()
+
 
 def test_palace_for_url_names_owner_services_and_nothing_else():
     """SPEC D.2 166: a Palace URL is main, a named Palace, or not one of the owner's."""

@@ -365,12 +365,13 @@ def palace_nocturne(
         if record["database"] != resource.replace("-", "_") or record["service"] != resource:
             raise OnboardingError("Palace custody record does not match its name.")
         count = cloud.memory_count(record)
-        if (
-            prompt(
+        try:
+            answer = prompt(
                 f"Drop Palace {name} and its {count} memories permanently? Type {name}: "
-            ).strip()
-            != name
-        ):
+            )
+        except EOFError:  # M3W5B-40: no terminal is no confirmation, not a traceback.
+            answer = ""
+        if answer.strip() != name:
             print("Palace kept.", file=stdout)
             return 0
         cloud.drop(name, record)
