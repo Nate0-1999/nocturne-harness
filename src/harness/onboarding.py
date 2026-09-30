@@ -765,10 +765,11 @@ def doctor_nocturne(*, home: Path | None = None, stdout: TextIO = sys.stdout) ->
 def _print_cloud_breaker(config: NocturneConfig, *, stdout: TextIO) -> None:
     """FL-149: report the managed project's observed budget and D2 breaker."""
 
-    from harness.deploy import CLOUD_RUN_SERVICE, PROJECT_ID, DeployError, GcloudDeployBackend
+    from harness.deploy import PROJECT_ID, DeployError, GcloudDeployBackend
+    from harness.palaces import palace_for_url
 
-    hostname = urlsplit(config.spine_url).hostname or ""
-    if not (hostname.startswith(f"{CLOUD_RUN_SERVICE}-") and hostname.endswith(".run.app")):
+    # M3W5B-30: named Palaces run in main's project, under the same budget and breaker.
+    if palace_for_url(config.spine_url) is None:
         return
     print(f"GCP project: {PROJECT_ID}", file=stdout)
     try:

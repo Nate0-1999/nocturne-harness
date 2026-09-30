@@ -731,6 +731,12 @@ def test_doctor_reports_observed_breaker_or_unverified(
     assert ("not verified" in output.getvalue()) is not available
     if available:
         assert BreakerState.PARTIAL_OR_DRIFTED.value in output.getvalue()
+    named = io.StringIO()
+    onboarding._print_cloud_breaker(
+        replace(config, spine_url="https://nocturne-palace-test-a-7wq3wmgcoq-uc.a.run.app"),
+        stdout=named,
+    )
+    assert "GCP project: n8-memory-palace" in named.getvalue()
     unrelated = io.StringIO()
     onboarding._print_cloud_breaker(
         replace(config, spine_url="https://other.example"), stdout=unrelated
