@@ -46,7 +46,13 @@ from harness.lifecycle import (
     inspect_local_palace,
     prepare_local_restore,
 )
-from harness.resources import local_storage_snapshot
+from harness.resources import (
+    MEMORY_THRESHOLD_SHARE,
+    current_rss_bytes,
+    local_storage_snapshot,
+    memory_threshold_bytes,
+    system_memory_bytes,
+)
 from harness.transcript import JournalCloudRecord, TranscriptJournal, TranscriptJournalUnavailable
 
 LOCAL_URL = "http://127.0.0.1:8765"
@@ -166,6 +172,7 @@ class DaemonPreflight:
     port: str
     toolchain: str
     failures: tuple[str, ...]
+    memory_bytes: int | None = None  # FL-166 (M3HW): the running daemon's resident memory
 
 
 def nocturne_home(environ: Mapping[str, str] | None = None) -> Path:
@@ -1342,12 +1349,14 @@ def _daemon_preflight(config: NocturneConfig) -> DaemonPreflight:
                     "Use that daemon's home or a separate port for verification.",
                 ),
             )
+        pid = identity.get("pid")
         return DaemonPreflight(
             existing=True,
             web_assets=f"served by {config.principal_id} at {config.home}",
             port="8765 is owned by the running Nocturne daemon",
             toolchain="already running",
             failures=(),
+            memory_bytes=current_rss_bytes(pid) if isinstance(pid, int) else None,
         )
 
     from harness.packaged import inspect_runtime_web_assets
@@ -1408,8 +1417,25 @@ def _print_daemon_preflight(preflight: DaemonPreflight, *, stdout: TextIO) -> No
     print(f"Web app: {preflight.web_assets}", file=stdout)
     print(f"Port: {preflight.port}", file=stdout)
     print(f"Startup toolchain: {preflight.toolchain}", file=stdout)
+    used = "not running" if preflight.memory_bytes is None else _human_bytes(preflight.memory_bytes)
+    print(f"Nocturne memory: {used}; {_memory_threshold_text()}", file=stdout)
+    if preflight.memory_bytes is not None and preflight.memory_bytes > memory_threshold_bytes():
+        print(f"Warning: {_MEMORY_WARNING}", file=stdout)
     for failure in preflight.failures:
         print(f"Problem: {failure}", file=stdout)
+
+
+_MEMORY_WARNING = (
+    "Nocturne is using more memory than its threshold. Stop it with Ctrl-C and run "
+    "`nocturne up` again to release it."
+)
+
+
+def _memory_threshold_text() -> str:
+    return (
+        f"warning above {_human_bytes(memory_threshold_bytes())} "
+        f"({MEMORY_THRESHOLD_SHARE:.0%} of this machine's {_human_bytes(system_memory_bytes())})"
+    )
 
 
 def _port_available(port: int) -> bool:
@@ -1595,12 +1621,25 @@ def _interrupt(_signum: int, _frame: object) -> None:
 def _supervise(processes: tuple[subprocess.Popen[str], ...]) -> None:
     # F135 (M3EX-13): a SIGTERM stops Nocturne the way Ctrl-C does, children included.
     signal.signal(signal.SIGTERM, _interrupt)
+    checked, warned = time.monotonic(), False
     try:
         while True:
             for process in processes:
                 return_code = process.poll()
                 if return_code is not None:
                     raise OnboardingError(f"Nocturne service exited with status {return_code}.")
+            if time.monotonic() - checked >= 60:
+                # FL-166 (M3HW): say once when the daemon (always last) passes its threshold.
+                checked = time.monotonic()
+                used = current_rss_bytes(processes[-1].pid)
+                over = used is not None and used > memory_threshold_bytes()
+                if over and not warned:
+                    print(
+                        f"Warning: Nocturne is using {_human_bytes(used)}; "
+                        f"{_memory_threshold_text()}. {_MEMORY_WARNING}",
+                        file=sys.stdout,
+                    )
+                warned = over
             time.sleep(0.25)
     except KeyboardInterrupt:
         return

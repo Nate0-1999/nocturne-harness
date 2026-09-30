@@ -3,6 +3,7 @@
 import argparse
 import asyncio
 import json
+import os
 import subprocess
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from contextlib import suppress
@@ -1313,6 +1314,7 @@ def create_dev_app(
                 "machine_id": machine_id,
                 "home": str(home),
                 "palace_name": configured.nocturne_palace_name,
+                "pid": os.getpid(),  # M3HW / FL-166: doctor reads this daemon's memory
             }
 
         @app.get("/v1/model-policies")
