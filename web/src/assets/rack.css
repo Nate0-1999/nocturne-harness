@@ -756,6 +756,12 @@ button.rack-module__resize-handle--nw {
   background: var(--surface-deep);
 }
 
+/* M3W5B-37: in a full view the gear sits in its own top row beside Back, not over the header. */
+.rack-overlay-module--dismissible > .rack-module__settings {
+  position: absolute;
+  top: 0.275rem;
+}
+
 .rack-overlay-module--dismissible > .rack-module__settings .rack-module__settings-dialog,
 .rack-overlay-module[data-rack-module="gate"] > .rack-module__settings .rack-module__settings-dialog {
   width: min(14rem, calc(100vw - 1.3rem));
