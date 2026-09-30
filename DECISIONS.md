@@ -3933,3 +3933,25 @@ bars (the 3D scenes are peers'), Inter as the body font (no new font). Farm and 
 a fixed dark surround in every theme, so kit parts inside take that surround's inks; in
 GOLD LINES their title and pressed buttons were dark on dark. Seventeen seam colours the
 removed washes alone used are deleted from the seam.
+
+
+## M3CL2 — The code-change loop, round two [P3, P4, P2.1, P1.2.1c]
+
+PRECEDENT: M3CL (report 251); report 254 (M3W5B-01..10, 18) and M3W5A-03, -04, -13; v2.125;
+v2.127; M3GD. A write or edit that would remove more of a file (20+ lines, counted in
+whitespace-split words) than it keeps is refused unless the user's words for the run say
+replace, rewrite or overwrite; the tool reads them, never the model's. A relative path that
+names nothing where the agent stands but names something from the workspace root means the
+latter, for move and every file tool; grep on a missing path says so. The shell puts the
+nearest project .venv first on PATH inside the script, after the login profile (macOS
+reorders PATH there), and the workspace context names it. A move above the workspace root is
+a plain refusal naming the root; other outside moves stay boundary cards. A git commit whose
+message would expand a $1-style parameter is refused with the single-quote remedy (zsh makes
+"$100" empty). grep's '**/' reads as zero or more folders (upstream fnmatch needs one); a
+non-unique edit anchor lists its lines. /move is a direct command. The Symphony phrase is
+found anywhere in a message; while a Symphony launched in a thread runs, plain text typed
+there clarifies each running attempt (slash commands stay commands). The harness repository
+links skills/ from .agents/skills, the adopted capability's library path, rather than adding
+a search path. The gate frame stays mounted and only its visibility follows the gate: the
+desktop pane did not paint a frame inserted mid-run. The Deck opens a card's conversation and
+waits for it before advancing, and a failure names its reason.
