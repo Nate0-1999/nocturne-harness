@@ -611,3 +611,28 @@ async def test_a_commit_message_keeps_its_dollar_signs(tmp_path: Path) -> None:
         refused.content
     )
     assert committed.success and log.stdout.strip() == "a $100 monthly breaker"
+
+
+@pytest.mark.asyncio
+async def test_a_folder_named_from_the_workspace_root_is_found_from_a_sibling(
+    tmp_path: Path,
+) -> None:
+    """INCIDENT M3W5B-04, walked again in M3CL2: from docs/, move('web') found no docs/web and
+    gpt-4.1-mini gave up twice in three runs; the folder named from the root is taken."""
+
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "web" / "src").mkdir(parents=True)
+    (tmp_path / "docs" / "src").mkdir()
+    toolset = await open_standard_toolset(cwd=tmp_path / "docs", workspace_root=tmp_path)
+    try:
+        sibling = await toolset.execute("move", {"path": "web"})
+        await toolset.execute("move", {"path": str(tmp_path / "docs")})
+        nearest = await toolset.execute("move", {"path": "src"})
+        missing = await toolset.execute("move", {"path": "nowhere"})
+    finally:
+        await toolset.close()
+
+    assert sibling.success and sibling.content == f"Moved to {(tmp_path / 'web').resolve()}."
+    assert nearest.success
+    assert nearest.content == f"Moved to {(tmp_path / 'docs' / 'src').resolve()}."
+    assert not missing.success

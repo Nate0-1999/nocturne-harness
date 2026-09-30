@@ -328,9 +328,13 @@ class PydanticHarnessToolset:
 
     async def move(self, path: Path) -> AgentLocation:
         self._require_open()
-        target = path if path.is_absolute() else self._location.cwd / path
-        target = target.resolve(strict=True)
         root = self._location.workspace_root
+        target = path if path.is_absolute() else self._location.cwd / path
+        if not path.is_absolute() and not target.is_dir() and (root / path).is_dir():
+            # INCIDENT M3W5B-04 (walked again in M3CL2): from docs/, move('web') found no
+            # docs/web and the agent gave up; a folder named from the workspace root is there.
+            target = root / path
+        target = target.resolve(strict=True)
         if root.is_relative_to(target) and target != root:
             # INCIDENT M3W5B-05: a miscounted '..' is not a crossing; name the way back.
             raise ToolsetError(
