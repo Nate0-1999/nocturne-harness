@@ -1133,6 +1133,12 @@ button.rack-module__resize-handle--nw {
   gap: .7rem;
   margin-top: .9rem;
 }
+.curator-comparison { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; }
+.curator-growth { margin: 1rem 0; }
+.curator-growth svg { display: block; width: 100%; max-height: 12rem; }
+.curator-growth th, .curator-growth td { padding: .35rem .75rem .35rem 0; text-align: left; }
+.curator-comparison blockquote { margin: 0 0 1rem; padding: .75rem; border-left: 1px solid var(--accent); }
+.curator-proposals textarea { display: block; width: 100%; min-height: 6rem; margin: .5rem 0; }
 
 .curator-proposals article {
   border-left: 1px solid var(--seam-8ebafc96bf26);

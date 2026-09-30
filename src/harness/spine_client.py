@@ -486,6 +486,7 @@ class CuratorActivity(ContractModel):
     pressure_until_run: int
     latest_run: JsonObject | None
     pending_cards: int
+    growth: list[JsonObject] = Field(default_factory=list)
 
 
 class CuratorProgressEvent(ContractModel):
@@ -588,6 +589,18 @@ class QueueDecisionIntent(ContractModel):
     decision: Literal["approve", "deny"]
     approval_mode: Literal["explicit", "passive"]
     actor_class: Literal["human", "passive"]
+    amended_body: str | None = Field(default=None, min_length=1)
+
+
+class QueueFeedbackIntent(ContractModel):
+    model_config = ConfigDict(extra="forbid")
+
+    feedback: str = Field(min_length=1)
+    actor_class: Literal["human"]
+
+
+class QueueFeedbackRequest(QueueFeedbackIntent):
+    machine_id: str
 
 
 class QueueDecisionRequest(QueueDecisionIntent):
@@ -1541,6 +1554,13 @@ class SpineClient:
             "POST", f"v1/approval-queue/{item_uid}/decisions", json_body=_request_body(request)
         )
         return _expect_success(response, status=200, adapter=_QUEUE_DECISION_RESPONSE)
+
+    async def queue_feedback(self, item_uid: str, request: QueueFeedbackRequest) -> dict[str, str]:
+        await self._require_owned_queue(item_uid=item_uid)
+        response = await self._request(
+            "POST", f"v1/approval-queue/{item_uid}/feedback", json_body=_request_body(request)
+        )
+        return _expect_success(response, status=200, adapter=TypeAdapter(dict[str, str]))
 
     async def decide_queue_batch(
         self, batch_uid: UUID, request: QueueDecisionRequest

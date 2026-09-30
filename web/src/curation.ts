@@ -7,6 +7,7 @@ export interface CuratorActivityView {
   pressure_until_run: number
   pending_cards: number
   latest_run: { status: 'completed' | 'failed'; completed_at: string } | null
+  growth: Array<{ at: string; active_units: number; curator_removals: number }>
 }
 
 export function curatorActivityFrom(value: JsonValue): CuratorActivityView | null {
@@ -28,6 +29,10 @@ export function curatorActivityFrom(value: JsonValue): CuratorActivityView | nul
     pressure_until_run: value.pressure_until_run,
     pending_cards: value.pending_cards,
     latest_run: normalizedLatest,
+    growth: Array.isArray(value.growth) ? value.growth.filter((point) =>
+      isObject(point) && typeof point.at === 'string' && typeof point.active_units === 'number' &&
+      typeof point.curator_removals === 'number'
+    ) as CuratorActivityView['growth'] : [],
   }
 }
 

@@ -38,6 +38,7 @@ import { SymphonyDeck, latestDeckStacks, type DeckStack } from './SymphonyDeck'
 import { ModelDevice } from './ModelDevice'
 import { VitalsModule } from './VitalsModule'
 import { PalaceStateModule } from './PalaceStateModule'
+import { CuratorProposal } from './CuratorProposal'
 import { ContextBars } from './ContextBars'
 import {
   IMAGE_ACCEPT,
@@ -3295,23 +3296,6 @@ function PalaceQueueModule() {
       .finally(() => setBusy(false))
   }
 
-  function decideCurator(itemUid: string, decision: 'approve' | 'deny') {
-    if (busy) return
-    setBusy(true)
-    setStatusText(decision === 'approve' ? 'Applying the approved repair…' : 'Leaving the Palace unchanged…')
-    void events.dispatch({
-      type: 'queue.decide',
-      item_uid: itemUid,
-      decision,
-      approval_mode: 'explicit',
-      actor_class: 'human',
-    })
-      .then(load)
-      .then(() => setStatusText(decision === 'approve' ? 'Repair applied and journaled.' : 'Proposal rejected. The Palace was not changed.'))
-      .catch((error: unknown) => setStatusText(error instanceof Error ? error.message : 'That memory changed after diagnosis. Run the curators again.'))
-      .finally(() => setBusy(false))
-  }
-
   return (
     <div className="palace-queue-module" data-testid="memory-ingest">
       <section className="palace-queue-card" aria-label="Memory Ingest">
@@ -3328,17 +3312,7 @@ function PalaceQueueModule() {
           ) : (
             <div className="curator-proposals">
               {curatorCards.map((card) => (
-                <article key={card.item_uid} data-verdict={card.verdict}>
-                  <span>{card.verdict.replace('_', ' ')} · finding {card.curator_finding_uid?.slice(-8)}</span>
-                  <strong>{card.candidate.label}</strong>
-                  <p>{typeof card.proposal_payload?.rationale === 'string'
-                    ? card.proposal_payload.rationale
-                    : 'The curator supplied no readable rationale.'}</p>
-                  <div>
-                    <Button type="button" data-tooltip-detail="Leave this memory unchanged." disabled={busy} onClick={() => decideCurator(card.item_uid, 'deny')}>Keep as is</Button>
-                    <Button action="confirm" variant="primary" type="button" data-tooltip-detail="Apply the curator's repair to this memory." disabled={busy} onClick={() => decideCurator(card.item_uid, 'approve')}>Approve repair</Button>
-                  </div>
-                </article>
+                <CuratorProposal key={card.item_uid} card={card} onChanged={load} />
               ))}
             </div>
           )}

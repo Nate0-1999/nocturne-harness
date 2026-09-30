@@ -154,6 +154,7 @@ def test_client_exposes_all_spine_routes() -> None:
         "visible_symphony_memories",
         "resolve_symphony_run",
         "decide_queue_item",
+        "queue_feedback",
         "decide_queue_batch",
         "append_transcripts",
         "transcripts",

@@ -89,6 +89,8 @@ from harness.spine_client import (
     QueueDecisionIntent,
     QueueDecisionRequest,
     QueueDecisionResponse,
+    QueueFeedbackIntent,
+    QueueFeedbackRequest,
     RackScorerActivateRequest,
     RackScorerAuditionRequest,
     RackScorerForceRequest,
@@ -1488,6 +1490,12 @@ def create_dev_app(
         ) -> BatchDecisionResponse:
             request = QueueDecisionRequest(machine_id=machine_id, **body.model_dump())
             return await owned_spine.decide_queue_batch(batch_uid, request)
+
+        @app.post("/v1/approval-queue/{item_uid}/feedback")
+        async def record_queue_feedback(item_uid: str, body: QueueFeedbackIntent) -> dict[str, str]:
+            return await owned_spine.queue_feedback(
+                item_uid, QueueFeedbackRequest(machine_id=machine_id, **body.model_dump())
+            )
 
         @app.get("/v1/approval-queue")
         async def read_queue(

@@ -217,7 +217,10 @@ def test_owner_api_publishes_choice_fields_without_machine_identity(
     schema_name = request_ref.rsplit("/", 1)[-1]
     properties = document["components"]["schemas"][schema_name]["properties"]
 
-    assert set(properties) == {"decision", "approval_mode", "actor_class"}
+    assert set(properties) == {"decision", "approval_mode", "actor_class", "amended_body"}
+    feedback = document["components"]["schemas"]["QueueFeedbackIntent"]
+    assert set(feedback["properties"]) == {"feedback", "actor_class"}
+    assert feedback["additionalProperties"] is False
 
 
 def test_jump_start_route_only_offers_workspace_agent_files(
