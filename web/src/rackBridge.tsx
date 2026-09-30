@@ -38,6 +38,7 @@ import type { ConversationMode } from './stageLayout'
 import { installedRackPlugins, rackPluginDocument } from './rackPlugins'
 
 const BRIDGE_VERSION = 1
+const SNAPSHOT_INTERVAL_MS = 100
 const READY_MESSAGE = 'nocturne.rack.ready'
 const CONNECT_MESSAGE = 'nocturne.rack.connect'
 
@@ -172,13 +173,26 @@ export function RackPluginIframe({
       }
       port.start()
 
+      // M3HW: every store change (each streamed token, each keystroke) posted the whole rack to
+      // every frame; a frame now gets the latest snapshot at once when idle, else within 100 ms.
+      let lastSnapshotAt = -Infinity
+      let snapshotTimer: ReturnType<typeof setTimeout> | undefined
+      const pushSnapshot = () => {
+        snapshotTimer = undefined
+        lastSnapshotAt = performance.now()
+        send({
+          type: 'snapshot',
+          snapshot: rackSnapshotForIframe(api.events.getSnapshot()),
+        })
+      }
       unsubscribe = [
         api.events.subscribeState(() => {
-          send({
-            type: 'snapshot',
-            snapshot: rackSnapshotForIframe(api.events.getSnapshot()),
-          })
+          if (snapshotTimer !== undefined) return
+          const wait = SNAPSHOT_INTERVAL_MS - (performance.now() - lastSnapshotAt)
+          if (wait <= 0) pushSnapshot()
+          else snapshotTimer = setTimeout(pushSnapshot, wait)
         }),
+        () => clearTimeout(snapshotTimer),
         api.events.subscribe((event) => send({ type: 'envelope', event })),
         api.events.subscribeResize((event) => send({ type: 'resize', event })),
         api.selection.subscribe(() => {
@@ -205,7 +219,8 @@ export function RackPluginIframe({
     }
 
     const send = (message: HostMessage) => {
-      port?.postMessage(rackValueForIframe(message))
+      // A snapshot is projected once by rackSnapshotForIframe; walking it again cost the rack.
+      port?.postMessage(message.type === 'snapshot' ? message : rackValueForIframe(message))
     }
 
     const sendError = (requestId: string, error: unknown) => {

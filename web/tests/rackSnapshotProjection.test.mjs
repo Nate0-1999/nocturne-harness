@@ -68,3 +68,22 @@ test('rack iframe boundary strips private image material without mutating the ho
   assert.doesNotMatch(JSON.stringify(projectedEnvelope), /data_base64|\/9j\//u)
   assert.equal(projectedEnvelope.event.envelope.payload.prompt, 'What is shown?')
 })
+
+/** M3HW: every store change re-copied the whole rack once per module frame; an unchanged value
+ * keeps its one projection, and only what the change replaced is walked again. */
+test('a snapshot change projects only the values it replaced', () => {
+  const quiet = { messages: [{ role: 'assistant', content: 'done', events: [{ event_kind: 'part_end' }] }] }
+  const busy = { messages: [{ role: 'assistant', content: 'wor', events: [] }] }
+  const before = { selectedThreadId: 'busy', threads: { quiet, busy } }
+  const after = {
+    ...before,
+    threads: { quiet, busy: { messages: [{ ...busy.messages[0], content: 'working', image_input: { data_base64: '/9j/' } }] } },
+  }
+  const first = rackSnapshotForIframe(before)
+  const second = rackSnapshotForIframe(after)
+  assert.equal(second.threads.quiet, first.threads.quiet)
+  assert.notEqual(second.threads.busy, first.threads.busy)
+  assert.equal(second.threads.busy.messages[0].content, 'working')
+  assert.doesNotMatch(JSON.stringify(second), /data_base64|\/9j\//u)
+  assert.deepEqual(first, { selectedThreadId: 'busy', threads: { quiet, busy } })
+})
