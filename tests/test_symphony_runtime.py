@@ -75,7 +75,7 @@ def _commit(repo: Path, message: str) -> str:
 
 
 def test_result_branch_preserves_the_users_checkout_and_new_uncommitted_work(tmp_path):
-    """M3SF2 / M3W5B-14: publishing a result never merges or overwrites the user's work."""
+    """F154 / P3 / M3SF2: publishing a result never merges or overwrites the user's work."""
     root = tmp_path / "repo"
     _repo(root, ".venv/\n")
     base = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()

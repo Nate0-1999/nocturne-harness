@@ -385,12 +385,12 @@ class PydanticHarnessToolset:
                 f"That path is outside this workspace: {target}.", "workspace"
             )
         if tool_name in _WRITE_TOOLS and target.parent != self._location.cwd:
-            # WALL owner files / ADR015: require presence in the exact directory being written.
             create = (
                 "Create the missing directory with bash mkdir, then "
                 if not target.parent.exists()
                 else ""
             )
+            # WALL owner files / ADR015: require presence in the exact directory being written.
             raise ToolsetError(
                 "Modification requires presence in the file's directory. "
                 f"{create}Move to {target.parent} first."
