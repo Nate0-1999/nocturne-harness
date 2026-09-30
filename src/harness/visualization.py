@@ -8,31 +8,61 @@ import json
 import os
 import sqlite3
 import threading
+import time
 import zlib
 from datetime import UTC, datetime
 from pathlib import Path
+from stat import S_ISDIR, S_ISLNK
 
 from fastapi import FastAPI, HTTPException
 
+# M3HW: re-walking project trees may use at most this share of one core.
+_WALK_SHARE = 0.02
+
 
 def directory_tree(root: Path) -> dict:
-    """Enumerate every entry, including empty/hidden folders; never follow links."""
+    """Enumerate every entry, including empty/hidden folders; never follow links.
+
+    M3HW: one lstat per entry through scandir; the pathlib walk took ~1 s per 30,000 entries.
+    """
     nodes = []
     errors = []
-    pending = [root]
+    pending = [(str(root), ".", None)]
     while pending:
-        path = pending.pop()
-        relative = path.relative_to(root).as_posix()
+        path, relative, entry = pending.pop()
         try:
-            stat = path.lstat()
-            kind = "link" if path.is_symlink() else "directory" if path.is_dir() else "file"
-            nodes.append({"path": relative, "kind": kind, "bytes": stat.st_size})
+            status = os.lstat(path) if entry is None else entry.stat(follow_symlinks=False)
+            mode = status.st_mode
+            kind = "link" if S_ISLNK(mode) else "directory" if S_ISDIR(mode) else "file"
+            nodes.append({"path": relative, "kind": kind, "bytes": status.st_size})
             if kind == "directory":
+                prefix = "" if relative == "." else f"{relative}/"
                 with os.scandir(path) as entries:
-                    pending.extend(Path(entry.path) for entry in entries)
+                    pending.extend((item.path, prefix + item.name, item) for item in entries)
         except OSError as exc:
             errors.append({"path": relative, "error": str(exc)})
     return {"root": str(root), "nodes": sorted(nodes, key=lambda n: n["path"]), "errors": errors}
+
+
+def _project_trees(roots: set[str], cache: dict) -> list[dict]:
+    """M3HW: a tree is walked when its root first appears, then again only within the budget.
+
+    Walking every root on every 2 s sample held a core at ~30% for one 30,000-entry repository
+    and at 100% once seven Symphonies' worktrees (290,000 entries) outlasted the interval.
+    """
+    trees = cache.setdefault("trees", {})
+    for root in set(trees) - roots:
+        del trees[root]
+    due = time.monotonic() >= cache.get("next_walk", 0.0)
+    spent = 0.0
+    for root in sorted(roots):
+        if due or root not in trees:
+            started = time.monotonic()
+            trees[root] = directory_tree(Path(root))
+            spent += time.monotonic() - started
+    if spent:
+        cache["next_walk"] = time.monotonic() + spent / _WALK_SHARE
+    return [trees[root] for root in sorted(roots)]
 
 
 def observe_worker(
@@ -109,7 +139,9 @@ def _journal_file_touch(event: dict, cwd: str, ts: str, pending: dict, files: di
             files.setdefault(path, ts)
 
 
-def work_observation(journal, home: Path, default_root: Path, folds: dict | None = None) -> dict:
+def work_observation(
+    journal, home: Path, default_root: Path, folds: dict | None = None, trees: dict | None = None
+) -> dict:
     """Project durable thread events and the worker's own observations, never prompts.
 
     M3EX-37: with `folds`, each append-only thread file is read from where the last
@@ -237,7 +269,7 @@ def work_observation(journal, home: Path, default_root: Path, folds: dict | None
                 "waiting_since": None,
             }
         )
-    return {"agents": agents, "projects": [directory_tree(Path(root)) for root in sorted(roots)]}
+    return {"agents": agents, "projects": _project_trees(roots, {} if trees is None else trees)}
 
 
 class VisualizationHistory:
@@ -349,9 +381,10 @@ def mount_visualization_routes(
     observed_at = None
     sampling_error = None
     folds: dict = {}
+    trees: dict = {}
 
     async def sample():
-        observation = await asyncio.to_thread(work_observation, journal, home, root, folds)
+        observation = await asyncio.to_thread(work_observation, journal, home, root, folds, trees)
         observation.update(palace=None, curation=None, errors=[])
         for field, reader in (
             ("palace", graph_reader),

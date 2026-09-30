@@ -22,6 +22,35 @@ def test_tree_preserves_empty_hidden_and_untracked_entries_without_following_lin
     assert not tree["errors"]
 
 
+def test_trees_rewalk_only_within_the_walk_budget(tmp_path, monkeypatch):
+    """M3HW / FL-166: walking every tree every 2 s held a core; a known tree waits its budget,
+    a new root is walked at once, and a root that left is forgotten."""
+    from harness import visualization
+
+    clock = {"now": 100.0}
+    walks = []
+
+    def walk(root):
+        walks.append(root.name)
+        clock["now"] += 0.1  # each walk costs 0.1 s
+        return {"root": str(root), "nodes": [], "errors": []}
+
+    monkeypatch.setattr(visualization.time, "monotonic", lambda: clock["now"])
+    monkeypatch.setattr(visualization, "directory_tree", walk)
+    one, two = str(tmp_path / "one"), str(tmp_path / "two")
+    cache: dict = {}
+    visualization._project_trees({one}, cache)
+    clock["now"] += 2
+    visualization._project_trees({one, two}, cache)
+    assert walks == ["one", "two"]
+    clock["now"] += 0.1 / visualization._WALK_SHARE - 0.1
+    assert [tree["root"] for tree in visualization._project_trees({one}, cache)] == [one]
+    assert walks == ["one", "two"] and set(cache["trees"]) == {one}
+    clock["now"] += 0.2
+    visualization._project_trees({one}, cache)
+    assert walks == ["one", "two", "one"]
+
+
 def test_recorded_history_survives_restart_and_replays_deletion_exactly(tmp_path):
     """ADR-018 / FL-134: past observations are immutable, never reconstructed from today's tree."""
     root = tmp_path / "work"
