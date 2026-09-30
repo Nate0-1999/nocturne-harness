@@ -15,6 +15,7 @@ from pathlib import Path
 from stat import S_ISDIR, S_ISLNK
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 
 # M3HW: re-walking project trees may use at most this share of one core.
 _WALK_SHARE = 0.02
@@ -617,7 +618,7 @@ def mount_visualization_routes(
             await asyncio.gather(task, return_exceptions=True)
 
     @app.get("/v1/visualization")
-    async def visualization_snapshot(as_of: str | None = None):
+    async def visualization_snapshot(as_of: str | None = None, known: str | None = None):
         if as_of not in {None, "now"}:
             try:
                 instant = datetime.fromisoformat(as_of.replace("Z", "+00:00"))
@@ -633,7 +634,14 @@ def mount_visualization_routes(
             result["observed_at"] = observed_at
             if sampling_error:
                 result["errors"].append({"feed": "observation", "error": sampling_error})
-        return result
+        # M3HW: a client that already holds a tree names its digest and receives no nodes for
+        # it; three modules re-parsing a 3 MB tree every 2.5 s swung the tab's heap by 500 MB.
+        held = set(known.split(",")) if known else set()
+        result["projects"] = [
+            {**project, "nodes": None} if project.get("digest") in held else project
+            for project in result["projects"]
+        ]
+        return JSONResponse(result)  # already JSON: skip the per-node encoder on the loop
 
     app.router.add_event_handler("startup", start)
     app.router.add_event_handler("shutdown", stop)

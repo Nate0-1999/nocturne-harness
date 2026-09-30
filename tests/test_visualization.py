@@ -381,3 +381,48 @@ def test_live_history_reads_fold_only_new_rows(tmp_path):
     assert [point["state"] for point in live["trails"]["a"]] == ["running", "running", "stopped"]
     live["errors"].append("caller note")
     assert history.read()["errors"] == []
+
+
+def test_a_held_tree_is_not_sent_again(tmp_path):
+    """M3HW / FL-166: every module re-parsed the whole tree on every 2.5 s poll; a client that
+    names a tree's digest receives no nodes for it, and everything else is unchanged."""
+    import time
+    from types import SimpleNamespace
+
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from harness.visualization import mount_visualization_routes
+
+    (tmp_path / "work").mkdir()
+    (tmp_path / "work" / "one.txt").write_text("one")
+
+    async def nothing():
+        return None
+
+    app = FastAPI()
+    mount_visualization_routes(
+        app,
+        home=tmp_path / "home",
+        journal=SimpleNamespace(catalog=lambda: []),
+        root=tmp_path / "work",
+        graph_reader=nothing,
+        curator_reader=nothing,
+        spend_reader=nothing,
+        progress_reader=nothing,
+    )
+    with TestClient(app) as client:
+        deadline = time.monotonic() + 10
+        while (response := client.get("/v1/visualization")).status_code == 404:
+            assert time.monotonic() < deadline
+            time.sleep(0.05)
+        full = response.json()
+        (project,) = full["projects"]
+        assert [node["path"] for node in project["nodes"]] == [".", "one.txt"]
+        held = client.get("/v1/visualization", params={"known": project["digest"]}).json()
+    assert held["projects"] == [{**project, "nodes": None}]
+    assert {**held, "projects": None, "observed_at": None} == {
+        **full,
+        "projects": None,
+        "observed_at": None,
+    }
