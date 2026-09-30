@@ -74,6 +74,86 @@ def test_recorded_history_survives_restart_and_replays_deletion_exactly(tmp_path
         history.read("2026-09-15T00:00:00+00:00")
 
 
+def test_trees_are_stored_once_then_as_changes_and_replay_exactly(tmp_path):
+    """M3HW / FL-134: each changed sample stored whole trees (1 GB in a day); a tree is now
+    written once, then as its changed entries, and every past state still replays exactly."""
+    import json
+    import sqlite3
+    import zlib
+
+    root = tmp_path / "work"
+    root.mkdir()
+    for index in range(20):
+        (root / f"f{index}.txt").write_text("x")
+    path = tmp_path / "history.sqlite3"
+    history = VisualizationHistory(path)
+    trees = []
+    for second, change in enumerate(
+        (lambda: None, lambda: (root / "f1.txt").write_text("longer"), (root / "f2.txt").unlink)
+    ):
+        change()
+        trees.append(directory_tree(root))
+        agent = {"id": "a", "location": str(root), "cost_usd": None, "state": "running"}
+        history.append(
+            {"agents": [agent], "projects": [trees[-1]]}, f"2026-09-30T00:00:0{second}+00:00"
+        )
+    history.append(
+        {"agents": [{**agent, "state": "stopped"}], "projects": [trees[-1]]},
+        "2026-09-30T00:00:03+00:00",
+    )
+    restarted = VisualizationHistory(path)
+    for second, tree in enumerate([*trees, trees[-1]]):
+        assert restarted.read(f"2026-09-30T00:00:0{second}+00:00")["projects"] == [tree]
+    assert restarted.read()["projects"] == [trees[-1]]
+    with sqlite3.connect(path) as db:
+        stored = db.execute("SELECT base IS NULL, payload FROM tree ORDER BY depth").fetchall()
+    assert [keyframe for keyframe, _payload in stored] == [1, 0, 0]
+    changed, removed = (json.loads(zlib.decompress(payload)) for _, payload in stored[1:])
+    assert "f1.txt" in [node["path"] for node in changed["set"]] and not changed["drop"]
+    assert removed["drop"] == ["f2.txt"] and len(removed["set"]) <= 1  # the folder's own size
+
+
+def test_retention_drops_old_rows_keeps_needed_trees_and_reads_the_old_format(tmp_path):
+    """M3HW: the store is bounded by a retention window; a tree a kept row builds on survives,
+    and rows written before M3HW (whole trees, no trail) are read until they age out."""
+    import json
+    import sqlite3
+    import zlib
+    from datetime import timedelta
+
+    root = tmp_path / "work"
+    root.mkdir()
+    for index in range(20):
+        (root / f"f{index}.txt").write_text("x")
+    path = tmp_path / "history.sqlite3"
+    old_tree = directory_tree(root)
+    legacy = {"agents": [{"id": "a", "location": "/x", "cost_usd": None, "state": "stopped"}]}
+    with sqlite3.connect(path) as db:
+        db.execute(
+            "CREATE TABLE observation "
+            "(ts TEXT PRIMARY KEY, digest TEXT NOT NULL, payload BLOB NOT NULL)"
+        )
+        for ts in ("2026-09-28T00:00:00+00:00", "2026-09-29T23:00:00+00:00"):
+            payload = zlib.compress(json.dumps({**legacy, "projects": [old_tree]}).encode())
+            db.execute("INSERT INTO observation VALUES (?, ?, ?)", (ts, ts, payload))
+    history = VisualizationHistory(path, retention=timedelta(hours=24))
+    assert history.read()["projects"] == [old_tree]
+    assert history.read()["trails"]["a"][0]["state"] == "stopped"
+    running = {"id": "a", "location": "/x", "cost_usd": None, "state": "running"}
+    first = directory_tree(root)
+    history.append({"agents": [running], "projects": [first]}, "2026-09-30T00:00:00+00:00")
+    assert history.read()["timeline"] == ["2026-09-29T23:00:00+00:00", "2026-09-30T00:00:00+00:00"]
+    (root / "f1.txt").write_text("longer")
+    second = directory_tree(root)
+    history.append({"agents": [running], "projects": [second]}, "2026-10-01T01:00:00+00:00")
+    assert history.read()["timeline"] == ["2026-10-01T01:00:00+00:00"]
+    assert history.read()["projects"] == [second]
+    assert VisualizationHistory(path).read("2026-10-01T01:00:00+00:00")["projects"] == [second]
+    with sqlite3.connect(path) as db:
+        assert db.execute("SELECT count(*) FROM tree").fetchone() == (2,)  # the base stays
+        assert db.execute("PRAGMA auto_vacuum").fetchone() == (2,)
+
+
 def test_worker_observation_uses_actual_location_without_assignment_secrets(tmp_path):
     """ADR-018 / FL-126/129: ants follow real feet; feeds never serialize private assignments."""
     from types import SimpleNamespace

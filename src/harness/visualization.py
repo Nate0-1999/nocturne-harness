@@ -10,7 +10,7 @@ import sqlite3
 import threading
 import time
 import zlib
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from stat import S_ISDIR, S_ISLNK
 
@@ -18,6 +18,8 @@ from fastapi import FastAPI, HTTPException
 
 # M3HW: re-walking project trees may use at most this share of one core.
 _WALK_SHARE = 0.02
+# M3HW: a stored tree is a delta on its root's previous one, with a whole tree after this many.
+_TREE_KEYFRAME_AFTER = 64
 
 
 def directory_tree(root: Path) -> dict:
@@ -41,7 +43,14 @@ def directory_tree(root: Path) -> dict:
                     pending.extend((item.path, prefix + item.name, item) for item in entries)
         except OSError as exc:
             errors.append({"path": relative, "error": str(exc)})
-    return {"root": str(root), "nodes": sorted(nodes, key=lambda n: n["path"]), "errors": errors}
+    tree = {"root": str(root), "nodes": sorted(nodes, key=lambda n: n["path"]), "errors": errors}
+    return {**tree, "digest": _tree_digest(tree)}
+
+
+def _tree_digest(tree: dict) -> str:
+    """M3HW: a tree's identity is its content, so one stored copy serves every row that has it."""
+    content = json.dumps([tree["nodes"], tree["errors"]], separators=(",", ":")).encode()
+    return hashlib.sha256(content).hexdigest()
 
 
 def _project_trees(roots: set[str], cache: dict) -> list[dict]:
@@ -272,52 +281,201 @@ def work_observation(
     return {"agents": agents, "projects": _project_trees(roots, {} if trees is None else trees)}
 
 
-class VisualizationHistory:
-    """Append-only observations; history before the first sample is explicitly absent."""
+def _encode(value) -> bytes:
+    return zlib.compress(json.dumps(value, sort_keys=True, separators=(",", ":")).encode())
 
-    def __init__(self, path: Path):
+
+def _decode(blob: bytes):
+    return json.loads(zlib.decompress(blob))
+
+
+def _tree_delta(before: list[dict], after: list[dict]) -> dict:
+    old = {node["path"]: node for node in before}
+    kept = {node["path"] for node in after}
+    return {
+        "set": [node for node in after if old.get(node["path"]) != node],
+        "drop": [path for path in old if path not in kept],
+    }
+
+
+class VisualizationHistory:
+    """Append-only observations; history before the first sample is explicitly absent.
+
+    M3HW: every changed sample stored every whole tree (1 GB in a day). A row now names its
+    trees by digest; a tree is written once, then as the entries that changed against its
+    root's previous tree (a keyframe every 64), and each row keeps its trail points beside
+    its payload, so a scrub folds trails without decompressing every earlier row. Rows older
+    than the retention window leave with the trees only they needed. Rows written before
+    M3HW carry whole trees and no trail; they are read as they are and age out the same way.
+    """
+
+    def __init__(self, path: Path, retention: timedelta | None = None):
         self.path = path
+        self.retention = retention
         path.parent.mkdir(parents=True, exist_ok=True)
         with sqlite3.connect(path) as db:
+            db.execute("PRAGMA auto_vacuum = INCREMENTAL")  # a new file only; see _prune
             db.execute(
                 "CREATE TABLE IF NOT EXISTS observation "
                 "(ts TEXT PRIMARY KEY, digest TEXT NOT NULL, payload BLOB NOT NULL)"
+            )
+            columns = {row[1] for row in db.execute("PRAGMA table_info(observation)")}
+            for column in ("trail", "trees"):
+                if column not in columns:
+                    db.execute(f"ALTER TABLE observation ADD COLUMN {column}")
+            db.execute(
+                "CREATE TABLE IF NOT EXISTS tree (digest TEXT PRIMARY KEY, base TEXT, "
+                "depth INTEGER NOT NULL, payload BLOB NOT NULL)"
             )
         path.chmod(0o600)
         # M3EX-37: a live read folds only rows newer than the last one; decompressing
         # every recorded observation on each 2.5 s poll held gigabytes.
         self._live_lock = threading.Lock()
         self._live: dict = {"after": None, "timeline": [], "trails": {}, "last": None}
+        self._bases: dict[str, tuple[str, dict, int]] = {}  # root -> its last stored tree
+        self._trees: dict[str, dict] = {}  # digest -> tree, the few most recently rebuilt
+        self._tree_lock = threading.Lock()  # the sampler writes trees while polls read them
+        self._pruned_at: datetime | None = None
+
+    def _connect(self) -> sqlite3.Connection:
+        return sqlite3.connect(self.path, timeout=30)  # a one-time VACUUM may hold the file
 
     def append(self, value: dict, ts: str) -> None:
-        encoded = json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+        refs = [
+            {"root": project["root"], "tree": project.get("digest") or _tree_digest(project)}
+            for project in value["projects"]
+        ]
+        encoded = json.dumps(
+            {**value, "projects": refs}, sort_keys=True, separators=(",", ":")
+        ).encode()
         digest = hashlib.sha256(encoded).hexdigest()
-        with sqlite3.connect(self.path) as db:
+        with self._connect() as db:
             last = db.execute("SELECT digest FROM observation ORDER BY ts DESC LIMIT 1").fetchone()
-            if last is None or last[0] != digest:
-                db.execute(
-                    "INSERT INTO observation VALUES (?, ?, ?)", (ts, digest, zlib.compress(encoded))
-                )
+            if last is not None and last[0] == digest:
+                return
+            with self._tree_lock:
+                for project, ref in zip(value["projects"], refs, strict=True):
+                    self._store_tree(db, project, ref["tree"])
+                # A root that left keeps no tree in memory (M3HW: a leak guard).
+                self._bases = {ref["root"]: self._bases[ref["root"]] for ref in refs}
+            trail = [
+                [agent["id"], agent["location"], agent["cost_usd"], agent["state"]]
+                for agent in value["agents"]
+            ]
+            db.execute(
+                "INSERT INTO observation (ts, digest, payload, trail, trees) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (
+                    ts,
+                    digest,
+                    zlib.compress(encoded),
+                    _encode(trail),
+                    ",".join(sorted({ref["tree"] for ref in refs})),
+                ),
+            )
+        self._prune(ts)
+
+    def _store_tree(self, db: sqlite3.Connection, tree: dict, digest: str) -> None:
+        stored = db.execute("SELECT depth FROM tree WHERE digest = ?", (digest,)).fetchone()
+        if stored is None:
+            payload, base, depth = {"nodes": tree["nodes"], "errors": tree["errors"]}, None, 0
+            previous = self._bases.get(tree["root"])
+            if previous is not None and previous[2] < _TREE_KEYFRAME_AFTER:
+                delta = _tree_delta(previous[1]["nodes"], tree["nodes"])
+                if len(delta["set"]) + len(delta["drop"]) < len(tree["nodes"]) // 4:
+                    payload = {**delta, "errors": tree["errors"]}
+                    base, depth = previous[0], previous[2] + 1
+            db.execute(
+                "INSERT INTO tree VALUES (?, ?, ?, ?)", (digest, base, depth, _encode(payload))
+            )
+        else:
+            depth = stored[0]
+        self._bases[tree["root"]] = (digest, tree, depth)
+
+    def _tree(self, db: sqlite3.Connection, digest: str) -> dict:
+        for stored, tree, _depth in self._bases.values():
+            if stored == digest:  # the tree this process just wrote: no second copy
+                return {"nodes": tree["nodes"], "errors": tree["errors"]}
+        chain = []
+        cursor = digest
+        while cursor is not None and cursor not in self._trees:
+            base, payload = db.execute(
+                "SELECT base, payload FROM tree WHERE digest = ?", (cursor,)
+            ).fetchone()
+            chain.append(_decode(payload))
+            cursor = base
+        tree = self._trees.get(cursor, {"nodes": [], "errors": []})
+        if chain:
+            nodes = {node["path"]: node for node in tree["nodes"]}
+            for part in reversed(chain):
+                if "nodes" in part:
+                    nodes = {node["path"]: node for node in part["nodes"]}
+                    continue
+                for path in part["drop"]:
+                    nodes.pop(path, None)
+                nodes.update((node["path"], node) for node in part["set"])
+            tree = {
+                "nodes": sorted(nodes.values(), key=lambda n: n["path"]),
+                "errors": part["errors"],
+            }
+            self._trees[digest] = tree
+            while len(self._trees) > 4:
+                self._trees.pop(next(iter(self._trees)))
+        return tree
+
+    def _observation(self, db: sqlite3.Connection, blob: bytes) -> dict:
+        value = _decode(blob)
+        with self._tree_lock:
+            value["projects"] = [
+                project
+                if "nodes" in project
+                else {
+                    "root": project["root"],
+                    "digest": project["tree"],
+                    **self._tree(db, project["tree"]),
+                }
+                for project in value["projects"]
+            ]
+        return value
+
+    def _trails(self, db: sqlite3.Connection, trails: dict, after: str | None, until: str | None):
+        rows = db.execute(
+            "SELECT ts, trail, CASE WHEN trail IS NULL THEN payload END FROM observation "
+            "WHERE (? IS NULL OR ts > ?) AND (? IS NULL OR ts <= ?) ORDER BY ts",
+            (after, after, until, until),
+        )
+        timeline = []
+        for ts, trail, payload in rows:
+            points = (
+                _decode(trail)
+                if trail is not None
+                else [
+                    [agent["id"], agent["location"], agent["cost_usd"], agent["state"]]
+                    for agent in _decode(payload)["agents"]
+                ]
+            )
+            _fold_trails(trails, ts, points)
+            timeline.append(ts)
+        return timeline
 
     def read(self, as_of: str | None = None) -> dict:
         if as_of is None:
             return self._read_live()
-        with sqlite3.connect(self.path) as db:
+        with self._connect() as db:
             timeline = [r[0] for r in db.execute("SELECT ts FROM observation ORDER BY ts")]
-            rows = db.execute(
-                "SELECT ts, payload FROM observation WHERE (? IS NULL OR ts <= ?) ORDER BY ts",
-                (as_of, as_of),
-            ).fetchall()
-        if not rows:
-            raise HTTPException(404, "No recorded visualization state at this time.")
-        trails = {}
-        for ts, blob in rows:
-            value = json.loads(zlib.decompress(blob))
-            _fold_trails(trails, ts, value)
+            last = db.execute(
+                "SELECT ts, payload FROM observation WHERE ts <= ? ORDER BY ts DESC LIMIT 1",
+                (as_of,),
+            ).fetchone()
+            if last is None:
+                raise HTTPException(404, "No recorded visualization state at this time.")
+            trails: dict = {}
+            self._trails(db, trails, None, as_of)
+            value = self._observation(db, last[1])
         return {
             **value,
-            "as_of": rows[-1][0],
-            "live": as_of is None,
+            "as_of": last[0],
+            "live": False,
             "timeline": timeline,
             "recorded_since": timeline[0],
             "trails": trails,
@@ -326,16 +484,15 @@ class VisualizationHistory:
     def _read_live(self) -> dict:
         with self._live_lock:
             live = self._live
-            with sqlite3.connect(self.path) as db:
-                rows = db.execute(
-                    "SELECT ts, payload FROM observation WHERE (? IS NULL OR ts > ?) ORDER BY ts",
-                    (live["after"], live["after"]),
-                ).fetchall()
-            for ts, blob in rows:
-                live["last"] = (ts, json.loads(zlib.decompress(blob)))
-                live["timeline"].append(ts)
-                _fold_trails(live["trails"], ts, live["last"][1])
-                live["after"] = ts
+            with self._connect() as db:
+                timeline = self._trails(db, live["trails"], live["after"], None)
+                if timeline:
+                    live["timeline"].extend(timeline)
+                    live["after"] = timeline[-1]
+                    (blob,) = db.execute(
+                        "SELECT payload FROM observation WHERE ts = ?", (live["after"],)
+                    ).fetchone()
+                    live["last"] = (live["after"], self._observation(db, blob))
             if live["last"] is None:
                 raise HTTPException(404, "No recorded visualization state at this time.")
             return {
@@ -348,20 +505,49 @@ class VisualizationHistory:
                 "trails": {key: list(points) for key, points in live["trails"].items()},
             }
 
-
-def _fold_trails(trails: dict, ts: str, value: dict) -> None:
-    for agent in value["agents"]:
-        point = {
-            "ts": ts,
-            "location": agent["location"],
-            "cost_usd": agent["cost_usd"],
-            "state": agent["state"],
-        }
-        points = trails.setdefault(agent["id"], [])
-        if not points or any(
-            points[-1][key] != point[key] for key in ("location", "cost_usd", "state")
+    def _prune(self, ts: str) -> None:
+        """Keep the retention window: at most every ten minutes, drop older rows and the trees
+        only they needed, then return the space (a store from before M3HW is vacuumed once)."""
+        now = datetime.fromisoformat(ts)
+        if self.retention is None or (
+            self._pruned_at is not None and now - self._pruned_at < timedelta(minutes=10)
         ):
-            points.append(point)
+            return
+        self._pruned_at = now
+        with self._connect() as db:
+            cutoff = (now - self.retention).isoformat()
+            if not db.execute("DELETE FROM observation WHERE ts < ?", (cutoff,)).rowcount:
+                return
+            needed = set()
+            for (trees,) in db.execute("SELECT trees FROM observation WHERE trees IS NOT NULL"):
+                needed.update(filter(None, trees.split(",")))
+            bases = dict(db.execute("SELECT digest, base FROM tree"))
+            kept = set()
+            for digest in needed:
+                while digest is not None and digest not in kept:
+                    kept.add(digest)
+                    digest = bases.get(digest)
+            db.executemany(
+                "DELETE FROM tree WHERE digest = ?", [(d,) for d in bases if d not in kept]
+            )
+            db.commit()
+            if db.execute("PRAGMA auto_vacuum").fetchone()[0] == 2:
+                db.execute("PRAGMA incremental_vacuum").fetchall()  # one page per step
+            else:
+                db.execute("PRAGMA auto_vacuum = INCREMENTAL")
+                db.execute("VACUUM")
+        with self._live_lock:
+            self._live = {"after": None, "timeline": [], "trails": {}, "last": None}
+
+
+def _fold_trails(trails: dict, ts: str, points: list) -> None:
+    for agent_id, location, cost_usd, state in points:
+        point = {"ts": ts, "location": location, "cost_usd": cost_usd, "state": state}
+        trail = trails.setdefault(agent_id, [])
+        if not trail or any(
+            trail[-1][key] != point[key] for key in ("location", "cost_usd", "state")
+        ):
+            trail.append(point)
 
 
 def mount_visualization_routes(
@@ -374,9 +560,10 @@ def mount_visualization_routes(
     curator_reader,
     spend_reader,
     progress_reader,
+    retention: timedelta | None = None,
 ) -> None:
     """New M3VZ route family; existing rack/rewind/tool functions stay independent."""
-    history = VisualizationHistory(home / "visualization.sqlite3")
+    history = VisualizationHistory(home / "visualization.sqlite3", retention)
     task = None
     observed_at = None
     sampling_error = None

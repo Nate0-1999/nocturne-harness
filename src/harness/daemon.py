@@ -7,7 +7,7 @@ import subprocess
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from contextlib import suppress
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Literal
 from uuid import UUID
@@ -1618,6 +1618,7 @@ def create_dev_app(
             curator_reader=lambda: owned_spine.curator_activity(principal_id),
             progress_reader=lambda: owned_spine.curator_progress(principal_id),
             spend_reader=lambda: read_spend_table_snapshot(None),
+            retention=timedelta(hours=configured.visualization_retention_hours),
         )
 
     app = create_app(
