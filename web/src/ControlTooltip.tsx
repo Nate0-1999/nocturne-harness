@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 const CONTROL_SELECTOR = [
   'button',
@@ -21,6 +21,7 @@ interface TooltipState {
 /** PLAN M2TC / P2 gives every approached control one calm, formatted explanation. */
 export function ControlTooltip() {
   const [tooltip, setTooltip] = useState<TooltipState | null>(null)
+  const tipRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     let activeControl: HTMLElement | null = null
@@ -96,9 +97,19 @@ export function ControlTooltip() {
     }
   }, [])
 
+  useLayoutEffect(() => {
+    const tip = tipRef.current
+    if (tip === null || tooltip === null) return
+    // M3W5B-37: a wide tip beside an edge slides inward instead of being cut off.
+    const rect = tip.getBoundingClientRect()
+    const shift = Math.max(12 - rect.left, 0) - Math.max(rect.right - (globalThis.innerWidth - 12), 0)
+    if (shift !== 0) tip.style.left = `${tooltip.x + shift}px`
+  }, [tooltip])
+
   if (tooltip === null) return null
   return (
     <aside
+      ref={tipRef}
       className="control-tooltip"
       data-placement={tooltip.above ? 'above' : 'below'}
       role="tooltip"
