@@ -65,7 +65,8 @@
     "harness/verification/m3pl/FL-190.png": "M3PL evidence: coverage report, captures and checksums.",
     "harness/verification/m3pl/FL-192.png": "M3PL evidence: coverage report, captures and checksums.",
     "harness/verification/m3pl/FL-193.png": "M3PL evidence: coverage report, captures and checksums.",
-    "harness/verification/m3pl/FL-199.png": "M3PL evidence: coverage report, captures and checksums."
+    "harness/verification/m3pl/FL-199.png": "M3PL evidence: coverage report, captures and checksums.",
+    "harness/web/dist/assets/index-zvcVI-X8.js": "packaged web build: an intermediate bundle of the M3PL hover change, replaced later in this packet (FL-081)."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
