@@ -999,7 +999,7 @@ def create_dev_app(
 
     memory_contexts = ThreadMemoryContextRegistry()
     context_windows = ContextWindowTracker()
-    overwhelm = OverwhelmTracker(owned_agent.return_share_bounds)
+    overwhelm = OverwhelmTracker(owned_agent.return_share_bounds, home / "overwhelm-cuts.jsonl")
     receipt_queue = SpendReceiptQueue(home / "receipt-queue")
     spend_walls = SpendWalls(
         home / "spend-walls.json", owned_spine, lambda: owned_spine.spend_table()

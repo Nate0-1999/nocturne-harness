@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Sequence
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -86,7 +87,7 @@ class ContextCut(BaseModel):
 
 
 class OverwhelmSnapshot(BaseModel):
-    """The Security module's truthful daemon-lifetime view of shares, cuts and send-backs."""
+    """The Security module's truthful view of shares, cuts and send-backs; cuts survive restarts."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
     scope: Literal["GLOBAL", "CURRENT"]
@@ -136,12 +137,23 @@ def send_back_instruction(cut: ContextCut) -> str:
 
 
 class OverwhelmTracker:
-    """Retain every cut and send-back this daemon made, and the share in force per thread."""
+    """Retain every cut and send-back, and the share in force per thread.
 
-    def __init__(self, bounds: ReturnShareBounds) -> None:
+    M3HW (M3W5B-28): the cuts lived only in memory, so the Security module read 0 after a
+    restart; with a path each cut is appended as one JSON line and read back at start.
+    """
+
+    def __init__(self, bounds: ReturnShareBounds, path: Path | None = None) -> None:
         self.bounds = bounds
         self._shares: dict[str, ReturnShare] = {}
         self._cuts: list[ContextCut] = []
+        self._path = path
+        if path is not None and path.exists():
+            for line in path.read_text().splitlines():
+                try:
+                    self._cuts.append(ContextCut.model_validate_json(line))
+                except ValueError:
+                    continue  # a line torn by a crash mid-write is skipped, never fatal
 
     def share_for(
         self, thread_id: str, limit_tokens: int, percent: float | None = None
@@ -152,6 +164,10 @@ class OverwhelmTracker:
 
     def record(self, cut: ContextCut) -> None:
         self._cuts.append(cut)
+        if self._path is not None:
+            with self._path.open("a") as stream:
+                stream.write(cut.model_dump_json() + "\n")
+            self._path.chmod(0o600)
 
     def snapshot(self, thread_id: str | None) -> OverwhelmSnapshot:
         if thread_id is not None:
