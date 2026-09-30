@@ -3,7 +3,7 @@ import { Farm } from './Farm'
 import { Roots } from './Roots'
 import { useRackPlugin, useRackSelection, useRackSnapshot, type RackModuleId } from './rack'
 import { VisualizationScene } from './VisualizationScene'
-import { agentColor, parentPath, LEAF, WIDTH, type DetailTier, type VisualizationSnapshot, type WorkAgent } from './visualization'
+import { agentColor, longestWaiting, parentPath, LEAF, WIDTH, type DetailTier, type VisualizationSnapshot, type WorkAgent } from './visualization'
 import { useFarmLayout } from './useFarmLayout'
 import './assets/work-visualization.css'
 import { Button, Select } from './kit'
@@ -42,8 +42,7 @@ export function VisualizationToolbar({ data, loading, moduleId, tier, setTier }:
   const { selection, events } = useRackPlugin()
   const selected = useRackSelection()
   const timeline = data?.timeline ?? []
-  const oldest = data?.agents.filter((agent) => agent.waiting_since !== null)
-    .sort((a, b) => a.waiting_since!.localeCompare(b.waiting_since!))[0]
+  const oldest = data ? longestWaiting(data.agents) : undefined
   const timeOrdered = selected?.time_order ?? false
   useEffect(() => {
     if (!timeOrdered || !oldest || selected?.id === oldest.id) return

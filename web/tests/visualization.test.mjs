@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { readFile } from 'node:fs/promises'
-import { HAIR, buildChambers, buildRootTree, rootGap, rootWidth } from '../src/visualization.ts'
+import { HAIR, buildChambers, buildRootTree, longestWaiting, rootGap, rootWidth } from '../src/visualization.ts'
 
 /** ADR-018 / FL-126: a frozen tree has repeatable geometry, including empty chambers. */
 test('directory layout preserves every chamber and cell and replays identically', () => {
@@ -335,6 +335,16 @@ test('roots draw every longer gap between events as a longer bare stretch', () =
   // The trunk: a thread's turns leave it at their moments, across.
   const lone = { ...thread, started_at: at(305), turns: times.map(at), tool_calls: [], touched_files: [], cost_usd: null, updated_at: at(times.at(-1) + 60) }
   assert.ok(walk(buildRootTree([lone], {}, Date.parse(at(0))).tubes, 'trunk:/project', (i) => `thread:turn:${i}`) >= 8)
+})
+
+/** FL-132 (M3LV): time order moves to the longest-waiting response, compared as instants — a waiting reply's time
+ * (Z) and a gate's (+00:00) are different ISO spellings that sort wrongly as text within one second. */
+test('time order finds the longest wait across ISO spellings', () => {
+  const agent = (id, waiting_since) => ({ id, waiting_since })
+  // Python drops a zero fraction, so a whole second sorts after any later instant of that second as text ('Z' > '.').
+  const agents = [agent('later', '2026-09-30T21:26:30.500000+00:00'), agent('idle', null), agent('earlier', '2026-09-30T21:26:30Z')]
+  assert.equal(longestWaiting(agents).id, 'earlier')
+  assert.equal(longestWaiting([agent('idle', null)]), undefined)
 })
 
 /** F155 / FL-134 (M3LV): a history scrub never blanks — the last state read stays drawn while the next one loads, and a

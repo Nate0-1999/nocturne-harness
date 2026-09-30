@@ -33,6 +33,12 @@ export function identitySeed(id: string): number {
 export function agentColor(id: string): string {
   return ['#89dbef', '#e8b29f', '#bec6fc', '#94dfbf', '#efcadf', '#d6df96'][Math.floor(identitySeed(id) * 6)]
 }
+/** The agent whose response has waited longest (time order, FL-132), compared as instants: a gate's wait and a waiting
+ * reply arrive in different ISO spellings (Z vs +00:00), which do not sort as text within one second. */
+export function longestWaiting(agents: WorkAgent[]): WorkAgent | undefined {
+  return agents.filter((agent) => agent.waiting_since !== null)
+    .sort((a, b) => Date.parse(a.waiting_since!) - Date.parse(b.waiting_since!))[0]
+}
 export function parentPath(path: string): string {
   return path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '.'
 }
