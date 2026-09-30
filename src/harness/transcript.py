@@ -480,6 +480,9 @@ class TranscriptJournal:
                 continue
             content = message.get("content")
             if isinstance(content, str) and content.strip():
+                if content.lstrip().startswith("/"):
+                    title = "New thread"  # M3W5B-34: a slash command never names the thread.
+                    continue
                 title = " ".join(content.split())[:80]
                 break
         return TranscriptCatalogEntry(

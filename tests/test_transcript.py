@@ -730,6 +730,24 @@ def test_explicit_archive_survives_restart_without_hiding_idle_extractions(tmp_p
     assert len(restored.read_messages("thread-1")) == 2
 
 
+def test_catalog_title_skips_slash_commands(tmp_path: Path) -> None:
+    """SPEC D.2 082: a thread is named by its first ordinary prompt, never a command line."""
+
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    journal.append_message(
+        "thread-titled",
+        {"message_id": ulid(1), "role": "user", "content": "/model openai/gpt-4.1-mini"},
+        parent_id=None,
+    )
+    assert journal.catalog()[0].title == "New thread"
+    journal.append_message(
+        "thread-titled",
+        {"message_id": ulid(2), "role": "user", "content": "Fix the flaky test."},
+        parent_id=ulid(1),
+    )
+    assert journal.catalog()[0].title == "Fix the flaky test."
+
+
 def test_catalog_projects_one_unresolved_proposal_for_the_global_deck(tmp_path: Path) -> None:
     """M3DK keeps the Deck global after restart without inventing a second proposal store. [SPEC
     D.2 082]
