@@ -60,6 +60,7 @@ def _project_trees(roots: set[str], cache: dict) -> list[dict]:
     Walking every root on every 2 s sample held a core at ~30% for one 30,000-entry repository
     and at 100% once seven Symphonies' worktrees (290,000 entries) outlasted the interval.
     """
+    roots = {root for root in roots if os.path.isdir(root)}  # a removed worktree is no project
     trees = cache.setdefault("trees", {})
     for root in set(trees) - roots:
         del trees[root]

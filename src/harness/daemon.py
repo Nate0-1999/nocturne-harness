@@ -114,7 +114,7 @@ from harness.spine_client import (
     VitalsSnapshot,
 )
 from harness.symphony_experience import SymphonyExperience
-from harness.symphony_runtime import SymphonyExecution
+from harness.symphony_runtime import SymphonyExecution, remove_kept_worktrees
 from harness.tool_inventory import ToolInventory, ToolsetSelection, inventory
 from harness.tools_memory import MemoryToolContext
 from harness.toolset_runtime import LazyStandardToolset
@@ -1204,13 +1204,36 @@ def create_dev_app(
         spend_walls=spend_walls,
         checkpoints=WorkspaceCheckpoints(home / "checkpoints"),
     )
-    owned_symphony_experience.bind(
-        SymphonyExecution(settings=configured, home=home, context_factory=context_factory),
-        loop.publish_symphony_state,
-    )
+
+    execution = SymphonyExecution(settings=configured, home=home, context_factory=context_factory)
+    worktree_removals: set[asyncio.Task] = set()
+
+    async def remove_finished_worktrees(symphony_id: str | None = None) -> None:
+        while symphony_id in execution.live:  # its workers stop after the completed update
+            await asyncio.sleep(0.5)
+        completed = sorted(
+            (event for event in loop.symphony_stack_events() if event.get("state") == "completed"),
+            key=lambda event: str(event.get("completed_at")),
+        )
+        await asyncio.to_thread(
+            remove_kept_worktrees,
+            home,
+            [str(event["symphony_id"]) for event in completed],
+            configured.symphony_worktrees_kept,
+        )
+
+    async def publish_symphony_state(thread_id: str, event: Mapping[str, object]) -> None:
+        await loop.publish_symphony_state(thread_id, event)
+        if event.get("state") == "completed":  # M3HW: its result is kept, so its worktrees go
+            task = asyncio.create_task(remove_finished_worktrees(str(event["symphony_id"])))
+            worktree_removals.add(task)
+            task.add_done_callback(worktree_removals.discard)
+
+    owned_symphony_experience.bind(execution, publish_symphony_state)
 
     async def restore_symphonies() -> None:
         await owned_symphony_experience.restore(loop.symphony_stack_events())
+        await remove_finished_worktrees()
 
     seed_ingestion = SeedIngestionService(
         agent=owned_agent,

@@ -38,6 +38,8 @@ def test_trees_rewalk_only_within_the_walk_budget(tmp_path, monkeypatch):
     monkeypatch.setattr(visualization.time, "monotonic", lambda: clock["now"])
     monkeypatch.setattr(visualization, "directory_tree", walk)
     one, two = str(tmp_path / "one"), str(tmp_path / "two")
+    (tmp_path / "one").mkdir()
+    (tmp_path / "two").mkdir()
     cache: dict = {}
     visualization._project_trees({one}, cache)
     clock["now"] += 2
@@ -49,6 +51,8 @@ def test_trees_rewalk_only_within_the_walk_budget(tmp_path, monkeypatch):
     clock["now"] += 0.2
     visualization._project_trees({one}, cache)
     assert walks == ["one", "two", "one"]
+    (tmp_path / "two").rmdir()  # a removed worktree is no longer a project
+    assert visualization._project_trees({one, two}, cache) == [cache["trees"][one]]
 
 
 def test_recorded_history_survives_restart_and_replays_deletion_exactly(tmp_path):

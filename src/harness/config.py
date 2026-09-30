@@ -45,6 +45,8 @@ class HarnessSettings(BaseSettings):
     extraction_idle_hours: float | None = Field(default=24.0, gt=0)
     # M3HW: the visualization recording keeps this many hours of history.
     visualization_retention_hours: float = Field(default=24.0, gt=0)
+    # M3HW: completed Symphonies whose worktrees stay on disk, newest first.
+    symphony_worktrees_kept: int = Field(default=0, ge=0)
     nocturne_transcript_backup: bool = False
     nocturne_home: Path | None = None
     toolset_fence_reads: bool = False
