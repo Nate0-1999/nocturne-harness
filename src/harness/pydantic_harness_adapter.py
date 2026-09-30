@@ -16,7 +16,7 @@ import unicodedata
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
-from difflib import SequenceMatcher
+from difflib import SequenceMatcher, get_close_matches
 from pathlib import Path
 from typing import Any, Literal, Self
 
@@ -522,6 +522,17 @@ class PydanticHarnessToolset:
                 lines = ", ".join(str(original.count("\n", 0, start) + 1) for start in starts[:5])
                 more = ", …" if count > 5 else ""
                 where = f" (lines {lines}{more}); include a neighboring line" if count else ""
+                if not count:
+                    # M3CL2 walk: after "found 0 times" the agent wrote a second test file and
+                    # reported the edit as made; name the nearest line to copy instead.
+                    first = next((line for line in old_text.splitlines() if line.strip()), "")
+                    lines_of = original.splitlines()
+                    near = get_close_matches(first, lines_of, n=1, cutoff=0.6)
+                    where = (
+                        f"; the closest line is {lines_of.index(near[0]) + 1}: {near[0].strip()!r}"
+                        if near
+                        else ""
+                    ) + ". Read the lines you mean to change and copy them exactly"
                 raise ToolsetError(
                     f"oldText found {count} times; each replacement must be unique "
                     f"in the original file{where}"
@@ -555,7 +566,7 @@ class PydanticHarnessToolset:
             pattern = re.escape(pattern)
         if arguments.get("ignoreCase", False):
             pattern = f"(?i:{pattern})"
-        glob = arguments.get("glob")
+        glob = arguments.get("glob") if target.is_dir() else None
         if isinstance(glob, str):
             # INCIDENT M3W5B-06: upstream matches globs with fnmatch, where '**/' needs a folder,
             # so '**/*' missed every file directly in the searched folder; fnmatch's '*' already

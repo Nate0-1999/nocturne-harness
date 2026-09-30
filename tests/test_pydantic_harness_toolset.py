@@ -696,3 +696,34 @@ async def test_paths_named_from_the_root_work_from_a_subfolder_and_misses_say_so
     assert appended.success and "def test_c" in (tests / "test_doctor.py").read_text()
     assert created.success and (tests / "test_new.py").is_file()
     assert not (tests / "tests").exists()
+
+
+@pytest.mark.asyncio
+async def test_a_file_search_ignores_its_glob_and_a_missed_anchor_names_the_closest_line(
+    tmp_path: Path,
+) -> None:
+    """M3CL2 walk (gpt-4.1-mini): grep of one file with glob '*.py' answered 'No matches found.'
+    and an anchor recalled with one word wrong answered 'found 0 times', after which the agent
+    wrote a second test file and reported the edit made. Exercised refusal: "...; the closest
+    line is {n}: {line!r}. Read the lines you mean to change and copy them exactly"."""
+
+    (tmp_path / "doctor.py").write_text("def test_doctor_reports_breaker():\n    pass\n")
+    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    try:
+        found = await toolset.execute(
+            "grep", {"pattern": "def test_doctor", "path": "doctor.py", "glob": "*.py"}
+        )
+        missed = await toolset.execute(
+            "edit",
+            {
+                "path": "doctor.py",
+                "edits": [{"oldText": "def test_doctor_reports_breakers():", "newText": "x"}],
+            },
+        )
+    finally:
+        await toolset.close()
+
+    assert found.success and "def test_doctor_reports_breaker" in found.content
+    assert not missed.success
+    assert "the closest line is 1: 'def test_doctor_reports_breaker():'" in missed.content
+    assert missed.content.endswith("Read the lines you mean to change and copy them exactly")
