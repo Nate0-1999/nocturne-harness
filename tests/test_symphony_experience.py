@@ -378,6 +378,63 @@ async def test_durable_thread_event_reopens_launch_after_daemon_restart() -> Non
 
 
 @pytest.mark.asyncio
+async def test_the_phrase_anywhere_opens_and_the_launching_chat_steers_the_run() -> None:
+    """M3W5B-09/10: the phrase inside a longer message opens the deliberation; while the
+    Symphony runs, chat typed in its thread clarifies every running attempt; slash commands
+    and other threads stay ordinary chat."""
+
+    experience = SymphonyExperience(id_factory=ids())
+    assert not experience.is_trigger("What would a symphony cost here?")
+    opening = RecordingEmitter()
+    await experience.run(
+        thread_id="thread-a",
+        prompt="Keep scratch/README.md to one line, and take this to a Symphony please.",
+        launch=None,
+        message_history=(),
+        emit=opening,
+    )
+    assert opening.events[0]["event_kind"] == "symphony_deliberation"
+    assert not experience.handles("thread-a", "Steer: one line only")
+    launched = RecordingEmitter()
+    execution = bind_execution(experience, launched)
+    clarified: list[tuple[object, ...]] = []
+    execution.clarify = lambda *args: clarified.append(args)
+    await experience.run(
+        thread_id="thread-a",
+        prompt="Launch this symphony.",
+        launch=launch(str(opening.events[0]["draft_id"])),
+        message_history=(),
+        emit=launched,
+    )
+    symphony_id = str(launched.events[-1]["symphony_id"])
+    assert experience.handles("thread-a", "Steer: one line only")
+    assert not experience.handles("thread-a", "/remember the README stays short")
+    assert not experience.handles("thread-b", "Steer: one line only")
+
+    steered = RecordingEmitter()
+    outcome = await experience.run(
+        thread_id="thread-a",
+        prompt="Steer: one line only",
+        launch=None,
+        message_history=(),
+        emit=steered,
+    )
+
+    assert clarified == [
+        (symphony_id, f"attempt-{number}", "Steer: one line only") for number in (1, 2, 3)
+    ]
+    assert [attempt["follow_ups"] for attempt in steered.events[-1]["attempts"]] == [  # type: ignore[index]
+        ["Steer: one line only"]
+    ] * 3
+    assert steered.texts[-1].startswith("Steering sent to the running Symphony")
+    assert outcome.model_visible is False
+    execution.release.set()
+    await asyncio.gather(*experience._tasks.values())
+    assert not experience.handles("thread-a", "Steer: one line only")
+    await experience.close()
+
+
+@pytest.mark.asyncio
 async def test_live_stack_exercises_steering_without_manufacturing_completion() -> None:
     """ADR-014 and G19-G20 require typed, append-only steering classes."""
 
@@ -615,6 +672,19 @@ async def test_run_loop_routes_both_symphony_turns_locally_and_keeps_fifo_events
         ),
     )
     await asyncio.wait_for(sink.done.wait(), 1)
+    # M3W5B-10: plain typing in the launching chat steers it; the model runner never runs.
+    sink.done.clear()
+    await loop.submit(
+        thread_id=thread_id,
+        prompt_id="00000000000000000000000093",
+        prompt="Steer: keep it to one line.",
+        sink=sink,
+    )
+    await asyncio.wait_for(sink.done.wait(), 1)
+    steered = await experience.read(result_event["symphony_id"])
+    assert [attempt.follow_ups[-1] for attempt in steered.attempts] == [
+        "Steer: keep it to one line."
+    ] * 3
     execution.release.set()
     await asyncio.gather(*experience._tasks.values())
     assert (await experience.read(result_event["symphony_id"])).state == "completed"

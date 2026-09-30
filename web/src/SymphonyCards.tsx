@@ -234,7 +234,7 @@ export function SymphonyDeliberationCard({ event, launched }: { event: JsonObjec
         prompt: 'Launch this symphony.',
         symphony: signed,
       })
-      setStatus('Signed and launched. This chat remains live.')
+      setStatus('Signed and launched. Type in this chat to steer it.')
       setAuthority({ ...currentAuthority, signed: false })
     } catch {
       setStatus('Launch did not leave this chat. Review the connection and try again.')
@@ -285,7 +285,7 @@ export function SymphonyDeliberationCard({ event, launched }: { event: JsonObjec
         <label className="symphony-check symphony-sign"><Toggle checked={locked || authority.signed} onChange={(event) => setAuthority({ ...authority, signed: event.target.checked })} /> I authorize up to {counted(authority.attempts, 'attempt')}, ${authority.spend_wall_usd}, {counted(authority.max_rounds, 'round')}, depth {authority.depth_cap}, {counted(authority.children_per_attempt, 'child', 'children')} per attempt, and {counted(authority.duration_minutes, 'minute')}.</label>
       </fieldset>
       </fieldset>
-      <footer className="symphony-card__footer"><span role="status">{launched === undefined || busy ? status : locked ? 'Signed and running. This chat remains live.' : 'Blocked · the reason is on the Symphony card below. Sign again to relaunch.'}</span><Button action="run" variant="primary" type="button" disabled={!complete || busy || locked} onClick={() => void launch()}>{locked ? 'Signed · running' : busy ? 'Launching…' : launched === undefined ? 'Sign & run Symphony' : 'Sign & run again'}</Button></footer>
+      <footer className="symphony-card__footer"><span role="status">{launched === undefined || busy ? status : locked ? 'Signed and running. Type in this chat to steer it.' : 'Blocked · the reason is on the Symphony card below. Sign again to relaunch.'}</span><Button action="run" variant="primary" type="button" disabled={!complete || busy || locked} onClick={() => void launch()}>{locked ? 'Signed · running' : busy ? 'Launching…' : launched === undefined ? 'Sign & run Symphony' : 'Sign & run again'}</Button></footer>
     </section>
   )
 }

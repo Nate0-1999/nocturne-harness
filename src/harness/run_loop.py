@@ -1036,7 +1036,7 @@ class RunLoop:
             if self._symphony_experience is not None and (
                 active.turn.symphony is not None
                 or active.turn.symphony_intervention is not None
-                or self._symphony_experience.is_trigger(active.turn.prompt)
+                or self._symphony_experience.handles(thread_id, active.turn.prompt)
             ):
                 outcome = await self._symphony_experience.run(
                     thread_id=thread_id,

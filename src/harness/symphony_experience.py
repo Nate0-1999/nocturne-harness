@@ -25,7 +25,8 @@ from harness.envelope import (
 from harness.recipe_graph import RecipeGraphSnapshot, snapshot_from_symphony_stack
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 
-_TRIGGER = re.compile(r"^take this to a symphony[.!]?\s*$", re.IGNORECASE)
+# M3W5B-09: the phrase opens the deliberation anywhere in a message, not only alone.
+_TRIGGER = re.compile(r"\btake this to a symphony\b", re.IGNORECASE)
 
 
 class SymphonyAttemptRecord(BaseModel):
@@ -221,7 +222,19 @@ class SymphonyExperience:
     def is_trigger(prompt: str) -> bool:
         """Recognize the explicit owner phrase without stealing ordinary conversation."""
 
-        return _TRIGGER.fullmatch(prompt.strip()) is not None
+        return _TRIGGER.search(prompt) is not None
+
+    def handles(self, thread_id: str, prompt: str) -> bool:
+        """The trigger, or chat typed while a Symphony launched in this thread runs
+        (M3W5B-10); slash commands stay commands."""
+
+        return self.is_trigger(prompt) or (
+            not prompt.lstrip().startswith("/")
+            and any(
+                stack.thread_id == thread_id and stack.state == "running"
+                for stack in self._stacks.values()
+            )
+        )
 
     async def run(
         self,
@@ -250,7 +263,12 @@ class SymphonyExperience:
 
         if launch is None:
             if not self.is_trigger(prompt):
-                raise ValueError("a Symphony turn requires the explicit trigger or launch artifact")
+                return await self._steer(
+                    thread_id=thread_id,
+                    instruction=prompt.strip(),
+                    message_history=message_history,
+                    emit=emit,
+                )
             draft_id = self._id_factory()
             async with self._lock:
                 self._draft_threads[draft_id] = thread_id
@@ -416,6 +434,51 @@ class SymphonyExperience:
 
         for event in events:
             await emit.event(event)
+        await emit.text(text)
+        return self._local_outcome(message_history, text)
+
+    async def _steer(
+        self,
+        *,
+        thread_id: str,
+        instruction: str,
+        message_history: Sequence[object],
+        emit: RunEmitter,
+    ) -> TurnOutcome:
+        """M3W5B-10: typing in the launching chat is a clarification to every running attempt."""
+
+        events = []
+        async with self._lock:
+            stacks = [
+                stack
+                for stack in self._stacks.values()
+                if stack.thread_id == thread_id and stack.state == "running"
+            ]
+            if not stacks:
+                raise ValueError("a Symphony turn requires the explicit trigger or launch artifact")
+            for stack in stacks:
+                for attempt in stack.attempts:
+                    if attempt.state != "running":
+                        continue
+                    self._execution.clarify(stack.symphony_id, attempt.attempt_id, instruction)
+                    stack = self._clarify(
+                        stack,
+                        SymphonyClarificationPayload(
+                            kind="clarification",
+                            symphony_id=stack.symphony_id,
+                            attempt_id=attempt.attempt_id,
+                            instruction=instruction,
+                        ),
+                    )
+                self._stacks[stack.symphony_id] = stack
+                self._publish_recipe(stack)
+                events.append(self._state_event(stack))
+        for event in events:
+            await emit.event(event)
+        text = (
+            "Steering sent to the running Symphony inside its signed charge; "
+            "each worker reads it on its next step."
+        )
         await emit.text(text)
         return self._local_outcome(message_history, text)
 
