@@ -1825,16 +1825,23 @@ const SLASH_COMMANDS = [
 /** Read-only beside the composer (peers hold the composer itself): follows #prompt-input. */
 function SlashCommandHint() {
   const [hint, setHint] = useState<{ typed: string; x: number; y: number } | null>(null)
-  useEffect(() => {
-    const read = () => {
-      const input = document.getElementById('prompt-input')
-      if (!(input instanceof HTMLTextAreaElement) || !/^\/\S*$/u.test(input.value)) {
-        setHint(null)
-        return
-      }
-      const rect = input.getBoundingClientRect()
-      setHint({ typed: input.value, x: rect.left + rect.width / 2, y: rect.top - 8 })
+  const read = useCallback(() => {
+    const input = document.getElementById('prompt-input')
+    if (!(input instanceof HTMLTextAreaElement) || !/^\/\S*$/u.test(input.value)) {
+      setHint(null)
+      return
     }
+    const rect = input.getBoundingClientRect()
+    setHint((current) => current?.typed === input.value && current.x === rect.left + rect.width / 2 &&
+      current.y === rect.top - 8 ? current : { typed: input.value, x: rect.left + rect.width / 2, y: rect.top - 8 })
+  }, [])
+  // M3W5B-37: sending clears the composer without an input event, so a shown hint re-checks it.
+  useEffect(() => {
+    if (hint === null) return
+    const timer = globalThis.setInterval(read, 400)
+    return () => globalThis.clearInterval(timer)
+  }, [hint, read])
+  useEffect(() => {
     document.addEventListener('input', read)
     document.addEventListener('keyup', read)
     document.addEventListener('focusout', read)
@@ -1843,7 +1850,7 @@ function SlashCommandHint() {
       document.removeEventListener('keyup', read)
       document.removeEventListener('focusout', read)
     }
-  }, [])
+  }, [read])
   const matches = hint === null ? [] : SLASH_COMMANDS.filter(([command]) => command.startsWith(hint.typed))
   if (hint === null || matches.length === 0) return null
   return <aside className="control-tooltip" data-placement="above" data-testid="slash-commands"
