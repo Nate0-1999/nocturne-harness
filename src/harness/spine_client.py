@@ -1500,6 +1500,15 @@ class SpineClient:
             return None
         return _expect_success(response, status=200, adapter=_CURATOR_ACTIVITY)
 
+    async def curator_model_policy(self, principal_id: str, policy: str | None = None) -> str:
+        response = await self._request(
+            "GET" if policy is None else "PUT",
+            "v1/curation/model-policy",
+            **({"params": {"principal_id": principal_id}} if policy is None else
+               {"json_body": {"principal_id": principal_id, "policy": policy}}),
+        )
+        return _expect_success(response, status=200, adapter=TypeAdapter(dict[str, str]))["policy"]
+
     async def curator_progress(self, principal_id: str, after: int = 0) -> CuratorProgress:
         """M3VZ / A-068: read real, principal-scoped transitions before a pass completes."""
         response = await self._request(

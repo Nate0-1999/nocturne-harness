@@ -21,6 +21,7 @@ import { useContributionMap, useScorerAuditionMap } from './ContributionBars'
 import { MemoryCard, Provenance } from './MemoryCard'
 import { formatHumanScore } from './humanNumbers.ts'
 import { Button, TextArea } from './kit'
+import { useRackPlugin, useRackSnapshot } from './rack'
 
 const LONG_PRESS_MS = 550
 const LONG_PRESS_MOVE_TOLERANCE_PX = 10
@@ -386,7 +387,7 @@ export function MemoryGate({
             </span>
           </div>
         </header>
-
+        {gate.stage === 'review' && <GateAudition injectionId={gate.injection_id} />}
         <div className="memory-gate__content">
           {gate.stage === 'review' ? (
             <>
@@ -849,7 +850,31 @@ function MemoryCardFrame({ card, tone, status, action }: MemoryCardFrameProps) {
       actions={action}
       tone={tone}
     >
-      {audition !== undefined && <p className="scorer-preview-mark">Audition: {formatHumanScore(audition.preview_score)} · #{audition.preview_rank} {audition.disposition.replace('_', ' ')}</p>}
+      {audition !== undefined && <p className="scorer-preview-mark">Current {formatHumanScore(audition.incumbent_score)} · Proposed {formatHumanScore(audition.preview_score)} · #{audition.preview_rank} {audition.disposition.replaceAll('_', ' ')}</p>}
     </MemoryCard>
   )
+}
+
+function GateAudition({ injectionId }: { injectionId: string }) {
+  const { query, events } = useRackPlugin()
+  const rack = useRackSnapshot()
+  const [proposals, setProposals] = useState<{ version: string }[]>([])
+  const [status, setStatus] = useState('')
+  useEffect(() => {
+    globalThis.dispatchEvent(new CustomEvent('nocturne:scorer-audition', { detail: {} }))
+    void query.query({ resource: 'scorer_console', as_of: 'now', thread_id: rack.selectedThreadId ?? undefined })
+      .then((result) => setProposals((result.data as unknown as { proposed_versions: { version: string }[] }).proposed_versions))
+      .catch(() => setStatus('Proposals are temporarily unavailable.'))
+  }, [query, injectionId, rack.selectedThreadId])
+  async function audition(version: string) {
+    try {
+      const result = await events.dispatch({ type: 'scorer.audition', injection_id: injectionId, proposal_version: version })
+      globalThis.dispatchEvent(new CustomEvent('nocturne:scorer-audition', { detail: result }))
+      setStatus(`Auditioning ${version}. Current scores still govern.`)
+    } catch { setStatus('This proposal could not be auditioned.') }
+  }
+  return <section aria-label="Scorer audition">
+    {proposals.map((proposal) => <Button key={proposal.version} data-tooltip-detail="Compare proposed and current scores without changing this gate." onClick={() => void audition(proposal.version)}>Audition {proposal.version}</Button>)}
+    {status && <p role="status">{status}</p>}
+  </section>
 }

@@ -3818,3 +3818,13 @@ the Palace in one call that fills only null projects; a Palace without the call 
 until the next start. The card's hover lists the folders beneath WHERE, one per line, and
 its panel is capped at the width its placement assumes. The gate card keeps rank, kind and
 id: its C.4 card carries no provenance.
+
+## M3LF — Make learning decisions visible [P2.4]
+
+PRECEDENT: M3LL, M3LW, report 254, F152/F157; A-074.
+The gate and console compare proposed and current scores. Held-out agreement
+compares both recipes on the same decisions; fewer than the 25-signal training
+floor warns before activation, as do newly zeroed influences. Logged injection
+outcomes expose removals separately from creation outcomes. The console retains
+its chosen conversation per attuned stack. Curator policy lives in the Palace;
+its selector moves into Memory so all four roles use the same implementation.

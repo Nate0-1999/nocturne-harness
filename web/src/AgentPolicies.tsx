@@ -4,7 +4,7 @@ import { Button, Select, TextArea } from './kit'
 
 const hostPolicies = createHostPluginApi(RACK_MANIFESTS.conversation)
 
-const ROLES = { chat: 'Agent', subagent: 'Sub-agent', judge: 'Judge' } as const
+const ROLES = { chat: 'Agent', subagent: 'Sub-agent', judge: 'Judge', curator: 'Curator' } as const
 
 /** A-021 / FL-154: the same token-cost policy type, independently bound to each role. */
 export function AgentPolicies({ level }: { level?: 'Duet' | 'Symphony' }) {
@@ -15,13 +15,13 @@ export function AgentPolicies({ level }: { level?: 'Duet' | 'Symphony' }) {
   useEffect(() => {
     events.dispatch({ type: 'policies.load' }).then((value) => {
       setPolicies((value as { policies: Record<string, string> }).policies)
-      setStatus('')
+      setStatus((value as { curator_error?: string }).curator_error ?? '')
     }).catch((error: Error) => setStatus(error.message))
   }, [events])
   async function save(role: string) {
     try {
       await events.dispatch({ type: 'policies.save', role, policy: policies[role]! })
-      setStatus(`${ROLES[role as keyof typeof ROLES]} policy saved. Existing thread choices stay fixed.`)
+      setStatus(role === 'curator' ? 'Curator policy saved in the Palace. Applies to future passes.' : `${ROLES[role as keyof typeof ROLES]} policy saved. Existing thread choices stay fixed.`)
     } catch (error) { setStatus(error instanceof Error ? error.message : 'Policy unavailable') }
   }
   return <section className="agent-policy-settings">
@@ -29,7 +29,7 @@ export function AgentPolicies({ level }: { level?: 'Duet' | 'Symphony' }) {
     <p role="status">{status}</p>
     {Object.entries(ROLES).map(([role, label]) => {
       if (level === 'Duet' && role !== 'chat') return null
-      if (level === 'Symphony' && role === 'chat') return null
+      if (level === 'Symphony' && (role === 'chat' || role === 'curator')) return null
       const value = policies[role]
       if (value === undefined) return null
       const separator = value.indexOf(':')
@@ -38,7 +38,7 @@ export function AgentPolicies({ level }: { level?: 'Duet' | 'Symphony' }) {
       return <fieldset key={role}>
         <legend>{label}</legend>
         <label className="theme-control">Token-cost policy
-          <Select aria-label={`${label} token-cost policy`} data-tooltip-detail="How this role's model is chosen. Applies to new threads and future rounds; existing choices stay fixed." value={kind} onChange={(event) => {
+          <Select aria-label={`${label} token-cost policy`} data-tooltip-detail={role === 'curator' ? 'How the Palace chooses its curator model. Applies to future passes.' : 'How this role\'s model is chosen. Applies to new threads and future rounds; existing choices stay fixed.'} value={kind} onChange={(event) => {
             const next = event.target.value
             setPolicies({ ...policies, [role]: next === 'pinned' ? 'pinned:' : next === 'floor' || next === 'slope' ? `${next}:1` : next })
           }}>
@@ -49,11 +49,11 @@ export function AgentPolicies({ level }: { level?: 'Duet' | 'Symphony' }) {
         {separator >= 0 && <label>{kind === 'pinned' ? 'Model' : kind === 'floor' ? 'Intelligence floor' : 'Price slope'}
           <TextArea rows={2} aria-label={`${label} policy value`} data-tooltip-detail="The model id, intelligence floor or price slope this policy uses." value={argument} onChange={(event) => setPolicies({ ...policies, [role]: `${kind}:${event.target.value}` })} />
         </label>}
-        <div className="app-settings-actions"><Button action="save" variant="primary" type="button" data-tooltip-detail="Save this role's policy for new threads." onClick={() => void save(role)}>Save {label.toLowerCase()} policy</Button></div>
+        <div className="app-settings-actions"><Button action="save" variant="primary" type="button" data-tooltip-detail={role === 'curator' ? 'Save the curator policy in the Palace for future passes.' : 'Save this role\'s policy for new threads.'} onClick={() => void save(role)}>Save {label.toLowerCase()} policy</Button></div>
       </fieldset>
     })}
     {level === 'Symphony'
       ? <p>Attempts, rounds, spend and time limits are fixed in each signed deliberation.</p>
-      : !level && <p>Curator policy is managed by the Palace and is unavailable here.</p>}
+      : null}
   </section>
 }

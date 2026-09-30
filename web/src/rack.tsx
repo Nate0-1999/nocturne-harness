@@ -359,7 +359,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'visualizer',
     slot: 'overlay',
     streams: ['gate.open', 'gate.dismiss', 'error'],
-    actions: ['gate.commit', 'run.cancel'],
+    actions: ['gate.commit', 'run.cancel', 'scorer.audition'],
     bounds: commonPanelBounds,
     movable: false,
     law_bound: true,

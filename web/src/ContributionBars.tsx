@@ -41,6 +41,7 @@ export function useContributionMap(): Record<string, Record<string, string | nul
 }
 
 export interface ScorerPreviewMark {
+  incumbent_score: string
   preview_score: string
   preview_rank: number
   disposition: 'also_shown' | 'would_add' | 'would_drop' | 'still_out'
