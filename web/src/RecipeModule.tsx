@@ -78,10 +78,11 @@ export function RecipeModule() {
         )}
       </header>
       <aside className="recipe-sheet-key" aria-label="Annotated sheet data bindings">
-        <span><b>Row</b> packet identity</span>
-        <span><b>Column</b> dependency depth</span>
-        <span><b>Ink</b> live node state</span>
-        <span><b>Rule</b> blocks or judged-by edge</span>
+        {/* TASTE-05: the legend law keeps every binding labeled, in plain words. */}
+        <span><b>Row</b> one packet</span>
+        <span><b>Column</b> run order</span>
+        <span><b>Color</b> state now</span>
+        <span><b>Line</b> blocks or judges</span>
       </aside>
       {failure !== null ? (
         <p className="recipe-instrument__message" role="alert">{failure}</p>
@@ -208,7 +209,7 @@ export function RecipeModule() {
               <>
                 <strong>{snapshot.packet_id ?? 'Current recipe'}</strong>
                 <p>Select a step to see why it exists.</p>
-                <small>{snapshot.bead_id ?? 'Waiting for an authoritative bead identity'}</small>
+                {snapshot.bead_id !== null && <small>{snapshot.bead_id}</small>}
               </>
             ) : (
               <>
