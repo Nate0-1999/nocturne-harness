@@ -81,3 +81,5 @@ chart of the relevance features on hover; × and ×! with a confirmation.
 
 Every module's before/after pair in the evidence folder, one full-app
 capture per theme, the suites and the rendered UI canon green.
+
+- A fresh NOCTURNE_HOME does not reset the pane: the app remembers the last project folder in the browser's storage, so a new home inherits a peer's folder (seen 2026-10-01: threads created in the rescout's folder). Clear the pane's site data for localhost:8765 before a fresh walk, or use a fresh port.
