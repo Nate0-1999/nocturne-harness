@@ -2287,6 +2287,7 @@ async def test_an_answer_ending_in_a_promise_is_sent_back_once_to_finish() -> No
     from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart
     from pydantic_ai.models import ModelRequestParameters
     from pydantic_ai.tools import ToolDefinition
+    from pydantic_ai.usage import RunUsage
 
     from harness.pydantic_ai_adapter import FinishWhatWasAsked
 
@@ -2302,7 +2303,7 @@ async def test_an_answer_ending_in_a_promise_is_sent_back_once_to_finish() -> No
     done = ModelResponse(parts=[TextPart("Committed abc123; 52 tests pass.")])
 
     check = FinishWhatWasAsked()
-    ctx = SimpleNamespace()
+    ctx = SimpleNamespace(usage=RunUsage())
     assert await check.after_model_request(ctx, request_context=early, response=done) is done
     assert await check.after_model_request(ctx, request_context=early, response=working) is working
     with pytest.raises(ModelRetry, match="Do it now with the tools"):
@@ -2310,6 +2311,15 @@ async def test_an_answer_ending_in_a_promise_is_sent_back_once_to_finish() -> No
     assert await check.after_model_request(ctx, request_context=early, response=asking) is asking
     last = FinishWhatWasAsked()
     assert await last.after_model_request(ctx, request_context=late, response=asking) is asking
+
+    # The M3CL2 walk: "I cannot open the URL ... because it is a local address", no tool tried.
+    refusal = ModelResponse(parts=[TextPart("I cannot open the URL; it is a local address.")])
+    with pytest.raises(ModelRetry, match="this turn has not tried a tool"):
+        await FinishWhatWasAsked().after_model_request(ctx, request_context=early, response=refusal)
+    tried = SimpleNamespace(usage=RunUsage(tool_calls=1))
+    honest = FinishWhatWasAsked()
+    answered = await honest.after_model_request(tried, request_context=early, response=refusal)
+    assert answered is refusal
 
 
 @pytest.mark.asyncio

@@ -75,13 +75,21 @@ _PROMISED_WORK = re.compile(
     r"\b(?:I will|I'll|I am going to|I'm going to|would you like me to|shall I|should I)\b",
     re.IGNORECASE,
 )
+# M3CL2 walk: asked to open the app's own page, gpt-4.1-mini answered "I cannot open the URL …
+# because it is a local address" without calling navigate, which had opened it a run before.
+_UNTRIED_REFUSAL = re.compile(
+    r"\b(?:I cannot|I can't|I can not|I am unable to|I'm unable to"
+    r"|I do not have access|I don't have access)\b",
+    re.IGNORECASE,
+)
 
 
 class FinishWhatWasAsked(Capability[MemoryToolContext]):
     """Codex M3W5A-13; the M3CL2 walk on gpt-4.1-mini: answers ending "To fix this, I will…"
     and "Would you like me to proceed with committing?" ended the turn with the asked-for work
     undone. Once per run, such an ending is sent back: finish it, or say plainly why not; never
-    on the budget's last, tool-less request."""
+    on the budget's last, tool-less request. "I cannot" before any tool call goes back the
+    same way."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -89,14 +97,20 @@ class FinishWhatWasAsked(Capability[MemoryToolContext]):
 
     async def after_model_request(self, ctx, *, request_context, response):
         last = not request_context.model_request_parameters.function_tools
+        untried = not ctx.usage.tool_calls and _UNTRIED_REFUSAL.search(response.text or "")
         if (
             self.sent
             or last
             or response.tool_calls
-            or not _PROMISED_WORK.search(response.text[-400:])
+            or not (untried or _PROMISED_WORK.search(response.text[-400:]))
         ):
             return response
         self.sent = True
+        if untried:
+            raise ModelRetry(
+                "Your answer says you cannot, but this turn has not tried a tool. Try it with "
+                "your tools now; if a tool refuses or fails, report what it said."
+            )
         raise ModelRetry(
             "Your answer ends by promising or asking about work the user already asked for. "
             "Do it now with the tools; if you cannot, say plainly what is not done and why."
