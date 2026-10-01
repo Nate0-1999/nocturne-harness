@@ -3818,3 +3818,17 @@ the Palace in one call that fills only null projects; a Palace without the call 
 until the next start. The card's hover lists the folders beneath WHERE, one per line, and
 its panel is capped at the width its placement assumes. The gate card keeps rank, kind and
 id: its C.4 card carries no provenance.
+
+## M3LV — The modules go live [P2.1, P2.5]
+
+PRECEDENT: F155, M3VZ, M3VL, v2.104 (the pure render), v2.119 (roots opacity is a look).
+The recorder's cost on a large tree (each sample walked every project; each poll re-sent every
+tree) is M3HW's; this is the modules' side. A module keeps the state it last drew until the next
+one arrives, so a scrub never blanks; a recorded moment never changes, so it is read once and only
+the present is polled. The live Palace draws the Palace's own 5 s reading, a past moment its
+recording — one source each, because a scene mounted on one and swapped to the other while its
+WebGPU renderer started drew nothing — and a failed refresh keeps the last reading (the Palace
+answers some reads with a transient 503). A selected agent's tubes in Roots wear a halo in its
+fleet colour: selection only raised the reflection strength, which the stopped matte never reads;
+nothing changes while nothing is selected. Time order compares waits as instants. The modules name
+the trees they hold by digest (`known=`), and a poll whose recorded state is unchanged sets nothing.
