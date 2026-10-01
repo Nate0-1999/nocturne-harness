@@ -1,0 +1,22 @@
+{
+  "run": "1",
+  "base_url": "http://127.0.0.1:8786",
+  "steps": [
+    {
+      "at": "2026-10-01T07:08:09.689Z",
+      "name": "the source's own list",
+      "models": 455,
+      "chat_policy": "pinned:openai:openai/gpt-4.1-mini"
+    },
+    {
+      "at": "2026-10-01T07:08:50.442Z",
+      "name": "/model on the single key",
+      "spend_models": [
+        "openai/gpt-4.1",
+        "openai/gpt-4.1-mini",
+        "text-embedding-3-small"
+      ]
+    }
+  ],
+  "thread_id": "72e91f14-cedf-441c-ae74-d8aa09181f45"
+}
