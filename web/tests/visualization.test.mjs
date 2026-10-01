@@ -337,7 +337,7 @@ test('roots draw every longer gap between events as a longer bare stretch', () =
   assert.ok(walk(buildRootTree([lone], {}, Date.parse(at(0))).tubes, 'trunk:/project', (i) => `thread:turn:${i}`) >= 8)
 })
 
-/** FL-132 (M3LV): time order moves to the longest-waiting response, compared as instants — a waiting reply's time
+/** ADR-018 / F158 (M3LV, FL-132): time order moves to the longest-waiting response, compared as instants — a waiting reply's time
  * (Z) and a gate's (+00:00) are different ISO spellings that sort wrongly as text within one second. */
 test('time order finds the longest wait across ISO spellings', () => {
   const agent = (id, waiting_since) => ({ id, waiting_since })
@@ -356,7 +356,7 @@ test('work modules keep the drawn state while a scrubbed state loads', async () 
   assert.match(source, /Loading \{selected\?\.as_of/u)
 })
 
-/** FL-130 (M3LV): a selection is visible in Roots on live chrome and stopped matte alike; nothing is drawn unselected. */
+/** ADR-018 / F158 (M3LV, FL-130): a selection is visible in Roots on live chrome and stopped matte alike; nothing is drawn unselected. */
 test('a selected root wears a halo in its fleet colour', async () => {
   const source = await readFile(new URL('../src/Roots.tsx', import.meta.url), 'utf8')
   assert.match(source, /if \(!selected \|\| !tubes\.length\) return null/u)
