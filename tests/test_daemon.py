@@ -2452,3 +2452,77 @@ def test_built_static_mode_rejects_unknown_websocket_path(tmp_path: Path, path: 
 
     assert caught.value.code == 1008
     assert caught.value.reason == "unknown WebSocket route"
+
+
+def test_model_browser_lists_the_source_and_pins_persist_in_the_home(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """P4 is defended by serving FL-202's model browser from the source the daemon already
+    routes through, with the owner's pins kept in the home beside the role policies.
+    """
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"data": [{"id": "gpt-4.1-mini"}, {"id": "gpt-4.1"}]})
+
+    real_client = httpx.AsyncClient
+    monkeypatch.setattr(
+        "harness.model_router.httpx.AsyncClient",
+        lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs),
+    )
+    settings = HarnessSettings(
+        _env_file=None,
+        spine_token="test-token",
+        nocturne_home=tmp_path / "home",
+        chat_model="openai:gpt-4.1-mini",
+        anthropic_api_key=None,
+        openai_api_key="direct-key",
+        openrouter_api_key=None,
+    )
+    app = create_dev_app(
+        tmp_path,
+        settings=settings,
+        spine=FailingPrepareSpine(),  # type: ignore[arg-type]
+        transcript_journal=TranscriptJournal(tmp_path / "transcripts"),
+    )
+
+    with TestClient(app) as client:
+        pinned = client.put("/v1/model-pins", json={"model": "openai:gpt-4.1", "pinned": True})
+        browser = client.get("/v1/models").json()
+
+    assert pinned.json() == {"pins": ["openai:gpt-4.1"]}
+    assert [item["model"] for item in browser["models"]] == [
+        "openai:gpt-4.1-mini",
+        "openai:gpt-4.1",
+    ]
+    assert browser["pins"] == ["openai:gpt-4.1"]
+    assert browser["configurations"] == []
+    assert browser["chat_policy"] == "pinned:openai:gpt-4.1-mini"
+    assert json.loads((tmp_path / "home" / "model-pins.json").read_text()) == ["openai:gpt-4.1"]
+
+
+def test_model_browser_without_a_listing_source_is_a_plain_empty_state(tmp_path: Path) -> None:
+    """Invariant 14 is defended by answering a source with no model list with a plain empty
+    browser, never a failing request every time the conversation chip renders (FL-202).
+    """
+    settings = HarnessSettings(
+        _env_file=None,
+        spine_token="test-token",
+        nocturne_home=tmp_path / "home",
+        chat_model="anthropic:claude-sonnet-4-6",
+        anthropic_api_key="direct-key",
+        openai_api_key=None,
+        openrouter_api_key=None,
+    )
+    app = create_dev_app(
+        tmp_path,
+        settings=settings,
+        spine=FailingPrepareSpine(),  # type: ignore[arg-type]
+        transcript_journal=TranscriptJournal(tmp_path / "transcripts"),
+    )
+
+    with TestClient(app) as client:
+        response = client.get("/v1/models")
+
+    assert response.status_code == 200
+    assert response.json()["models"] == []
+    assert response.json()["unavailable"] == "This model source publishes no model list."

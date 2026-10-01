@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 from decimal import Decimal
 
+import httpx
 import pytest
 from pydantic import SecretStr
 
@@ -11,6 +12,7 @@ from harness.model_policy import (
     ModelPolicyResolver,
     ModelRequestParameters,
     ModelRoute,
+    NamedModelResolutionError,
     ThreadModelResolution,
 )
 from harness.model_router import (
@@ -31,8 +33,10 @@ def settings(**overrides: object) -> HarnessSettings:
     return HarnessSettings(_env_file=None, **values)
 
 
-def test_pinned_direct_mode_uses_one_adapter_key_and_no_catalog() -> None:
-    """P4 is defended by keeping policy-off direct mode independent of broker catalog state."""
+def test_pinned_direct_mode_uses_one_adapter_key_and_no_broker_catalog() -> None:
+    """P4 is defended by keeping policy-off direct mode independent of broker catalog state;
+    its only catalog is the source's own model list (FL-202).
+    """
 
     configured = settings(
         chat_model="openai:gpt-4o-mini",
@@ -44,7 +48,7 @@ def test_pinned_direct_mode_uses_one_adapter_key_and_no_catalog() -> None:
 
     assert configured.effective_model_policy_chat == "pinned:openai:gpt-4o-mini"
     assert configured.model_policy_optimization_enabled is False
-    assert router.catalog is None
+    assert router.catalog is router._direct
     assert model.provider is not None
     assert model.provider.name == "openai"
 
@@ -147,3 +151,56 @@ async def test_policy_resolver_uses_adapter_qualification_instead_of_openrouter_
     assert selected.context_tokens == 128_000
     assert named.model == "custom:owner-choice"
     assert named.context_tokens == 96_000
+
+
+@pytest.mark.asyncio
+async def test_single_key_mode_lists_its_sources_own_models_and_switches_among_them(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """P4 is defended by giving M3G's one-key OFF mode the source's own model list (FL-202):
+    no benchmarks, so policies stay dormant, but /model and the browser switch within it.
+    """
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(
+            200,
+            json={
+                "object": "list",
+                "data": [
+                    {"id": "gpt-4.1-mini", "object": "model"},
+                    {"id": "gpt-4.1", "object": "model"},
+                ],
+            },
+        )
+
+    real_client = httpx.AsyncClient
+    monkeypatch.setattr(
+        "harness.model_router.httpx.AsyncClient",
+        lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs),
+    )
+    configured = settings(
+        chat_model="openai:gpt-4.1-mini",
+        openai_api_key=SecretStr("direct-key"),
+        openai_base_url="https://compatible.example/v1/",
+        model_context_tokens=64_000,
+    )
+    router = CompletionRouter(configured)
+    resolver = ModelPolicyResolver(
+        policy=configured.effective_model_policy_chat,
+        static_model=configured.chat_model,
+        static_context_tokens=configured.model_context_tokens,
+        catalog=router.catalog,
+    )
+
+    catalog = await router.catalog.load()  # type: ignore[union-attr]
+    switched = await resolver.resolve_named("thread", "openai:gpt-4.1")
+
+    assert catalog.rows == ()
+    assert [entry.model_id for entry in catalog.listing] == ["gpt-4.1-mini", "gpt-4.1"]
+    assert (switched.model, switched.context_tokens) == ("openai:gpt-4.1", 64_000)
+    assert str(seen[0].url) == "https://compatible.example/v1/models"
+    assert seen[0].headers["Authorization"] == "Bearer direct-key"
+    with pytest.raises(NamedModelResolutionError):
+        await resolver.resolve_named("thread", "openai:not-listed")

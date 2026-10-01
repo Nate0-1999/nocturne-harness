@@ -20,10 +20,13 @@ from harness.model_policy import (
     OpenRouterCatalogClient,
     ThreadModelResolution,
     _parse_model_routes,
+    browse_models,
     lower_convex_hull,
     pareto_frontier,
+    parse_model_listing,
     parse_model_policy,
     select_model,
+    standard_configurations,
 )
 
 
@@ -765,3 +768,135 @@ async def test_every_degenerate_nonpinned_resolution_fails_open_to_static_pair(
     assert resolved.context_tokens == 99
     assert resolved.price_sorted is True
     assert "model policy failed open" in caplog.text
+
+
+def browser_catalog() -> ModelCatalog:
+    rows = (
+        row("free/small-1", "25", "0"),
+        row("cheap/mid-1", "30", "0.2"),
+        row("dear/top-1", "57", "4"),
+    )
+    payload = {
+        "data": [
+            {
+                "id": "free/small",
+                "canonical_slug": "free/small-1",
+                "name": "Free Small",
+                "context_length": 32_000,
+                "pricing": {"prompt": "0", "completion": "0"},
+            },
+            {
+                "id": "cheap/mid",
+                "canonical_slug": "cheap/mid-1",
+                "name": "Cheap Mid",
+                "context_length": 1_048_576,
+                "supported_parameters": ["tools", "reasoning"],
+                "pricing": {"prompt": "0.0000002", "completion": "0.0000012"},
+            },
+            {
+                "id": "dear/top",
+                "canonical_slug": "dear/top-1",
+                "name": "Dear Top",
+                "context_length": 200_000,
+                "pricing": {"prompt": "0.000004", "completion": "0.00002"},
+            },
+            {
+                "id": "openrouter/auto",
+                "canonical_slug": "openrouter/auto",
+                "context_length": 2_000_000,
+                "pricing": {"prompt": "-1", "completion": "-1"},
+            },
+            {
+                "id": "someone/router",
+                "canonical_slug": "someone/router",
+                "context_length": 9,
+                "pricing": {"prompt": "-1", "completion": "-1"},
+            },
+            {"id": "unpriced/model", "canonical_slug": "unpriced/model"},
+        ]
+    }
+    return ModelCatalog(
+        rows=rows,
+        model_routes=_parse_model_routes(payload),
+        fetched_at=datetime(2026, 10, 1, tzinfo=UTC),
+        listing=parse_model_listing(payload, rows),
+    )
+
+
+def test_listing_shows_priced_models_with_scores_and_never_routers() -> None:
+    """A-020 is defended by never offering per-prompt classifier routers in the FL-202 browser,
+    while every priced model carries its price, context window, reasoning and benchmark score.
+    """
+    listing = {entry.model_id: entry for entry in browser_catalog().listing}
+
+    assert set(listing) == {"free/small", "cheap/mid", "dear/top", "unpriced/model"}
+    mid = listing["cheap/mid"]
+    assert (mid.name, mid.context_tokens, mid.reasoning) == ("Cheap Mid", 1_048_576, True)
+    assert (mid.prompt_price, mid.completion_price) == (Decimal("0.2"), Decimal("1.2"))
+    assert mid.intelligence_index == Decimal(30)
+    unpriced = listing["unpriced/model"]
+    assert (unpriced.name, unpriced.prompt_price, unpriced.context_tokens) == (
+        "unpriced/model",
+        None,
+        None,
+    )
+    assert unpriced.intelligence_index is None
+
+
+def test_standard_configurations_say_what_each_policy_selects_now() -> None:
+    """A-021 and A-025 are defended by resolving the four one-click policies from the same table
+    the resolver uses, and showing the static model a degenerate elbow falls back to.
+    """
+    configurations = standard_configurations(
+        browser_catalog(),
+        chat_policy="pinned:openrouter:cheap/mid",
+        current_model_id="cheap/mid",
+        fallback_model="openrouter:fallback/model",
+        qualify=lambda model_id: f"openrouter:{model_id}",
+    )
+
+    assert [(item.policy, item.model) for item in configurations] == [
+        ("pinned:openrouter:cheap/mid", "openrouter:cheap/mid"),
+        ("max", "openrouter:dear/top"),
+        ("elbow", "openrouter:fallback/model"),
+        ("floor:30", "openrouter:cheap/mid"),
+    ]
+    assert configurations[2].reason == (
+        "falls back to the configured model: a free model is on the price curve"
+    )
+    unscored = standard_configurations(
+        browser_catalog(),
+        chat_policy="max",
+        current_model_id="unpriced/model",
+        fallback_model="openrouter:cheap/mid",
+        qualify=lambda model_id: f"openrouter:{model_id}",
+    )
+    assert unscored[-1].policy == "floor:30"
+
+
+@pytest.mark.asyncio
+async def test_browse_models_qualifies_ids_and_reads_the_configured_floor() -> None:
+    """FL-154 and A-021 are defended by keeping a configured floor and adapter-qualified ids in
+    the browser read path, so one click switches through the same route /model uses.
+    """
+
+    class Loader:
+        async def load(self) -> ModelCatalog:
+            return browser_catalog()
+
+    browser = await browse_models(
+        Loader(),  # type: ignore[arg-type]
+        chat_policy="floor:50",
+        current_model=None,
+        fallback_model="openrouter:fallback/model",
+    )
+
+    models = {item["model"]: item for item in browser["models"]}  # type: ignore[union-attr]
+    assert models["openrouter:cheap/mid"]["prompt_price"] == "0.2"
+    assert models["openrouter:cheap/mid"]["score"] == "30"
+    assert browser["configurations"][-1] == {  # type: ignore[index]
+        "policy": "floor:50",
+        "model": "openrouter:dear/top",
+        "reason": "score 57",
+    }
+    assert browser["configurations"][0]["model"] == "openrouter:fallback/model"  # type: ignore[index]

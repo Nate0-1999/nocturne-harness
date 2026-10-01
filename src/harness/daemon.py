@@ -55,9 +55,11 @@ from harness.lifecycle import discard_prepared_restore, prepare_local_restore
 from harness.memory_gate import MemoryGateTurnRunner
 from harness.memory_panel import MemoryPanelController, ThreadMemoryContextRegistry
 from harness.model_policy import (
+    ModelCatalogUnavailable,
     ModelPolicyResolver,
     ThreadModelResolution,
     ThreadModelResolver,
+    browse_models,
     parse_model_policy,
 )
 from harness.model_router import CompletionRouter
@@ -158,6 +160,11 @@ class TranscriptBackupUpdate(BaseModel):
 
 class AgentPolicyUpdate(BaseModel):
     policy: str
+
+
+class ModelPinUpdate(BaseModel):
+    model: str = Field(min_length=1)
+    pinned: bool
 
 
 class InterjectionRequest(BaseModel):
@@ -850,6 +857,11 @@ def create_dev_app(
     configured = settings or HarnessSettings()
     home = (configured.nocturne_home or nocturne_home()).expanduser().resolve()
     role_policy_path = home / "model-policies.json"
+    model_pin_path = home / "model-pins.json"
+
+    def model_pins() -> list[str]:
+        return json.loads(model_pin_path.read_text()) if model_pin_path.exists() else []
+
     toolset_path = home / "toolset.json"
     toolset_selection = (
         ToolsetSelection.model_validate_json(toolset_path.read_text())
@@ -1316,6 +1328,54 @@ def create_dev_app(
             if role == "chat" and isinstance(model_resolver, ModelPolicyResolver):
                 model_resolver.set_policy(body.policy)
             return {"policies": role_policies}
+
+        @app.get("/v1/models")
+        async def model_browser(thread_id: str | None = None):
+            """FL-202: the token source's models, the owner's pins, the four policies now."""
+            catalog = completion_router.catalog
+            current = None
+            if thread_id is not None:
+                try:
+                    snapshot = await loop.parameter_snapshot(thread_id)
+                    current = {
+                        "model": snapshot.resolved_model,
+                        "effort": snapshot.values.get("model.effort"),
+                    }
+                except ParameterWriteViolation:
+                    pass
+            # A source with no list (e.g. a direct Anthropic key) is a state, not a failure.
+            browser: dict[str, object] = {
+                "models": [],
+                "configurations": [],
+                "unavailable": "This model source publishes no model list.",
+            }
+            if catalog is not None:
+                try:
+                    browser = await browse_models(
+                        catalog,
+                        chat_policy=role_policies["chat"],
+                        current_model=None if current is None else current["model"],
+                        fallback_model=configured.chat_model,
+                    )
+                except ModelCatalogUnavailable as exc:
+                    raise HTTPException(503, f"The model list is unavailable: {exc}.") from None
+            return {
+                **browser,
+                "pins": model_pins(),
+                "chat_policy": role_policies["chat"],
+                "current": current,
+            }
+
+        @app.put("/v1/model-pins")
+        async def pin_model(body: ModelPinUpdate):
+            pins = [pin for pin in model_pins() if pin != body.model]
+            if body.pinned:
+                pins.append(body.model)
+            home.mkdir(parents=True, exist_ok=True)
+            temporary = model_pin_path.with_suffix(".tmp")
+            temporary.write_text(json.dumps(pins, indent=2) + "\n")
+            temporary.replace(model_pin_path)
+            return {"pins": pins}
 
         @app.get("/v1/symphonies/{symphony_id}")
         async def read_symphony(symphony_id: str):

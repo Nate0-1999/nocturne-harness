@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Protocol, cast
 
+import httpx
 from pydantic_ai.exceptions import UserError
 from pydantic_ai.models import Model, infer_model
 from pydantic_ai.models.openrouter import OpenRouterModelSettings
@@ -23,6 +24,7 @@ from harness.model_policy import (
     NamedModelResolutionError,
     OpenRouterCatalogClient,
     ThreadModelResolution,
+    parse_model_listing,
 )
 from harness.openrouter_runtime import PreservingOpenRouterModel
 from harness.spend_walls import SpendWallModel
@@ -125,6 +127,15 @@ class DirectCompletionAdapter:
     def __init__(self, settings: HarnessSettings) -> None:
         self._settings = settings
 
+    @property
+    def catalog_available(self) -> bool:
+        """M3G single-key mode: an OpenAI-compatible source lists its own models (FL-202)."""
+
+        return (
+            self._settings.chat_model.split(":", 1)[0] in _OPENAI_PROVIDERS
+            and self._settings.openai_api_key is not None
+        )
+
     def accepts(self, model: str) -> bool:
         return not model.startswith("openrouter:")
 
@@ -152,6 +163,42 @@ class DirectCompletionAdapter:
             )
         return infer_provider(name)
 
+    async def load(self) -> ModelCatalog:
+        """The source's own list; no benchmarks, so token-cost policies stay dormant."""
+
+        api_key = _required_secret(self._settings.openai_api_key, "OPENAI_API_KEY")
+        base_url = (self._settings.openai_base_url or "https://api.openai.com/v1").rstrip("/")
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(10.0)) as client:
+                response = await client.get(
+                    f"{base_url}/models", headers={"Authorization": f"Bearer {api_key}"}
+                )
+            response.raise_for_status()
+            listing = parse_model_listing(response.json())
+        except (httpx.HTTPError, ValueError, ModelCatalogUnavailable) as exc:
+            raise ModelCatalogUnavailable("the model source's list is unavailable") from exc
+        return ModelCatalog(rows=(), model_routes={}, fetched_at=datetime.now(UTC), listing=listing)
+
+    async def load_named_route(self, model_id: str) -> tuple[ModelRoute, datetime]:
+        catalog = await self.load()
+        for entry in catalog.listing:
+            if entry.model_id == model_id:
+                context = entry.context_tokens or self._settings.model_context_tokens
+                return ModelRoute(model_id=model_id, context_tokens=context), catalog.fetched_at
+        raise NamedModelResolutionError(f"unknown model: {model_id}")
+
+    def qualify_model(self, model_id: str) -> str:
+        return f"{self._settings.chat_model.split(':', 1)[0]}:{model_id}"
+
+    def parse_named_model(self, model: str) -> str:
+        provider = self._settings.chat_model.split(":", 1)[0]
+        if not isinstance(model, str) or not model.startswith(f"{provider}:"):
+            raise NamedModelResolutionError(f"model must be a {provider}:<model-id> string")
+        return model.removeprefix(f"{provider}:")
+
+
+_OPENAI_PROVIDERS = frozenset({"openai", "openai-chat", "openai-responses"})
+
 
 class CompletionRouter:
     """Own adapter selection while callers depend on one stable internal interface."""
@@ -170,7 +217,9 @@ class CompletionRouter:
     def catalog(self) -> ModelCatalogLoader | None:
         """Expose catalog capability only when its adapter has a key."""
 
-        return self._openrouter if self._openrouter.catalog_available else None
+        if self._openrouter.catalog_available:
+            return self._openrouter
+        return self._direct if self._direct.catalog_available else None
 
     def model_for(self, model: str) -> Model:
         """Build a model through the first adapter that owns its route."""
