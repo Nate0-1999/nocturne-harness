@@ -1,0 +1,10 @@
+{
+  "row": "FL-133",
+  "run": 2,
+  "started": "2026-10-01T10:07:15.747Z",
+  "base": "http://127.0.0.1:8793",
+  "bodies_at_start": "11",
+  "arrivals": [],
+  "error": "Error: a new body in the open Palace module did not happen within 180 s\n    at waitUntil (file:///private/tmp/m3hw-final/harness/verification/m3hw/walk.mjs:33:9)\n    at async file:///private/tmp/m3hw-final/harness/verification/m3hw/walk.mjs:154:7",
+  "finished": "2026-10-01T10:11:04.828Z"
+}

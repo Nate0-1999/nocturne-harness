@@ -1,0 +1,43 @@
+{
+  "row": "FL-133",
+  "run": 8,
+  "started": "2026-10-01T10:39:47.977Z",
+  "base": "http://127.0.0.1:8793",
+  "bodies_at_start": "19",
+  "arrivals": [
+    {
+      "fact": "The Palace module counts bodies in its status line.",
+      "seconds": 25,
+      "bodies": "20"
+    },
+    {
+      "fact": "Each walk writes one receipt per run into the receipts folder.",
+      "seconds": 25,
+      "bodies": "21"
+    },
+    {
+      "fact": "The capture profile for jobs is separate from the walk profile.",
+      "seconds": 25,
+      "bodies": "22"
+    }
+  ],
+  "curation": {
+    "admitted_writes": 22,
+    "growth": [],
+    "last_run_pressure": 0,
+    "last_run_writes": 0,
+    "latest_run": null,
+    "pending_cards": 0,
+    "pressure_events": 0,
+    "pressure_trigger_every": 3,
+    "pressure_until_run": 3,
+    "principal_id": "nocturne-verification-d59ccda2-a9f6-46d5-b38d-d7547cd9d41e",
+    "trigger_every": 25,
+    "writes_until_run": 3
+  },
+  "progress": {
+    "cursor": 0,
+    "events": []
+  },
+  "finished": "2026-10-01T10:41:33.972Z"
+}

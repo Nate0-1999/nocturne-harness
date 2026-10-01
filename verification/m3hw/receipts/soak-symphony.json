@@ -1,0 +1,75 @@
+{
+ "rows": [
+  "FL-085",
+  "FL-086",
+  "FL-088",
+  "M3W5B-13 (recipe 4)"
+ ],
+ "build": "harness 7e8acaf (final), test-m3hw, the four-hour soak's minute-60 Symphony",
+ "symphony_id": "01M3VFT3FMYV65RQRTK0S7064T",
+ "attempts": [
+  {
+   "attempt_id": "round-1-attempt-1",
+   "approach": "Direct: edit README.md",
+   "planned_children": 0
+  },
+  {
+   "attempt_id": "round-1-attempt-2",
+   "approach": "Check first: read README.md, then edit",
+   "planned_children": 0
+  }
+ ],
+ "admitted": [
+  [
+   "round-1-attempt-1",
+   "smoke",
+   "01M3VFT923A6BPR9743J14CMPG"
+  ],
+  [
+   "round-1-attempt-2",
+   "smoke",
+   "01M3VFT92D25XDT2KZJGCDDBBV"
+  ],
+  [
+   "round-1-attempt-1",
+   "completion",
+   "01M3VFVW139R1DX63G9DH9A5FY"
+  ],
+  [
+   "round-1-attempt-2",
+   "completion",
+   "01M3VFVW1DV8P72B5SX3AXTGK8"
+  ]
+ ],
+ "judges": [
+  [
+   "motivation",
+   "pass"
+  ],
+  [
+   "implementation",
+   "pass"
+  ],
+  [
+   "performance",
+   "pass"
+  ]
+ ],
+ "converged": [
+  {
+   "schema_version": 1,
+   "event": "rounds_converged",
+   "packet_id": "01M3VFT3FMYV65RQRTK0S7064T",
+   "round_number": 1,
+   "winner_attempt_id": "round-1-attempt-1",
+   "early_exit": true
+  }
+ ],
+ "refs_kept": [
+  "refs/nocturne/symphonies/01M3VFT3FMYV65RQRTK0S7064T/step-1-round-1/round-1-attempt-1 ec1af38",
+  "refs/nocturne/symphonies/01M3VFT3FMYV65RQRTK0S7064T/step-1-round-1/round-1-attempt-2 4d03483"
+ ],
+ "result_commit": "ec1af38 Symphony: capture verified attempt",
+ "worktrees_left": [],
+ "git_worktree_list": "/private/tmp/m3hw-final-soak/project/harness  ec1af38 [claude/m3hw-final]"
+}

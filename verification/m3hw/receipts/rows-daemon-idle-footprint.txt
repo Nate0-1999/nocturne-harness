@@ -1,0 +1,3 @@
+67456 04:12:36 Physical footprint:         313.2M
+67456 04:18:23 Physical footprint:         313.2M
+67456 04:31:23 Physical footprint:         313.7M

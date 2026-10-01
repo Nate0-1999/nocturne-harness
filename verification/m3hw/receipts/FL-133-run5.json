@@ -1,0 +1,21 @@
+{
+  "row": "FL-133",
+  "run": 5,
+  "started": "2026-10-01T10:30:23.881Z",
+  "base": "http://127.0.0.1:8793",
+  "bodies_at_start": "11",
+  "arrivals": [
+    {
+      "fact": "Frozen law copies sit in each product docs folder.",
+      "seconds": 25,
+      "bodies": "12"
+    },
+    {
+      "fact": "The garden flag file numbers each entry in square brackets.",
+      "seconds": 25,
+      "bodies": "13"
+    }
+  ],
+  "error": "Error: a new body in the open Palace module did not happen within 180 s\n    at waitUntil (file:///private/tmp/m3hw-final/harness/verification/m3hw/walk.mjs:33:9)\n    at async file:///private/tmp/m3hw-final/harness/verification/m3hw/walk.mjs:166:7",
+  "finished": "2026-10-01T10:35:08.878Z"
+}

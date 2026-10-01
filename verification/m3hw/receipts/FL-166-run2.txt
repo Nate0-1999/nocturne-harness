@@ -1,0 +1,13 @@
+# FL-166 run 2 — 2026-10-01 04:43:55 CDT, scratch home run2, harness 7e8acaf
+$ echo n | nocturne init --verification --remote <test palace URL>
+Initialized Nocturne at /private/tmp/m3hw-fl166/run2/home. Run `nocturne up`.
+$ chmod 0500 <home>/transcripts; echo n | nocturne up --no-open
+nocturne: Conversation journal is not writable at /private/tmp/m3hw-fl166/run2/home/transcripts. Fix that directory's permissions, then run `nocturne up` again.
+(exit 2)
+$ chmod 0700 <home>/transcripts; nocturne up --no-open &   (then wait for the app)
+$ nocturne doctor
+Identity: nocturne-verification-23852744-858f-4450-b331-d0373d39f285; home: /private/tmp/m3hw-fl166/run2/home
+Conversation transcript backup: off
+GCP project: n8-memory-palace
+(daemon rss by ps: 235.8 MiB)
+(stopped; 8765 free)
