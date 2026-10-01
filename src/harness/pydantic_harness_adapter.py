@@ -84,6 +84,9 @@ _CREDENTIAL_SEGMENTS = frozenset({".ssh", ".aws", ".gnupg", ".kube"})
 # M3CL2 walk: the default model wrote `cd <repo> && git add …`, which the exception missed.
 _GIT_COMMAND = re.compile(r"(?:^\s*|[;&|]\s*)git(?:\s|$)")
 _GIT_COMMIT = re.compile(r"\bgit\s+commit\b")
+_MISSING_PATH = re.compile(
+    r"(?:no such file or directory|file or directory not found): ([^\s:]+)", re.IGNORECASE
+)
 _SHELL_WRITE_REMEDY = (
     "The shell writes only inside {location}. Move to the folder you need to change and "
     "run the command there; git commands on this repository work from any folder inside it."
@@ -645,6 +648,17 @@ class PydanticHarnessToolset:
         if "operation not permitted" in result.lower():
             # F134 (M3EX-02): the sandbox's refusal names the movement remedy.
             result += "\n" + _SHELL_WRITE_REMEDY.format(location=self._location.cwd)
+        root = self._location.workspace_root
+        for missing in _MISSING_PATH.findall(result):
+            if self._location.cwd != root and (root / missing).exists():
+                # INCIDENT M3W5B-02, walked again in M3CL2: from tests/, the user's
+                # `.venv/bin/python -m pytest tests/...` was "no such file", and the agent built a
+                # venv in tests/ and reported pytest missing. Name where the path is.
+                result += (
+                    f"\n{missing} is in the repository root {root}; run a command written from "
+                    f"the root as: cd {root} && {arguments.get('command')}"
+                )
+                break
         return result
 
     async def _start_shell(self, arguments: Mapping[str, object]) -> str:

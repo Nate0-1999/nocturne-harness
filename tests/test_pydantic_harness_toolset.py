@@ -759,3 +759,29 @@ async def test_a_chained_git_commit_works_and_the_context_states_the_repository(
     assert chained.success and "exit code" not in chained.content.lower()
     assert "Repository now: last commit " in context
     assert " add (tests/test_a.py); uncommitted: ?? tests/stray.py." in context
+
+
+@pytest.mark.asyncio
+async def test_a_command_written_from_the_root_names_where_its_path_is(tmp_path: Path) -> None:
+    """INCIDENT M3W5B-02, walked again in M3CL2: from tests/, the user's
+    `.venv/bin/python -m pytest tests/...` answered 'no such file', and gpt-4.1-mini built a venv
+    in tests/ and reported pytest missing; the result now names the root and the command."""
+    if not Path("/usr/bin/sandbox-exec").is_file():
+        pytest.skip("the standing hard shell fence is macOS sandbox-exec")
+    binary = tmp_path / ".venv" / "bin"
+    binary.mkdir(parents=True)
+    (binary / "python").write_text("#!/bin/sh\necho project-python\n")
+    (binary / "python").chmod(0o755)
+    (tmp_path / "tests").mkdir()
+    toolset = await open_standard_toolset(cwd=tmp_path / "tests", workspace_root=tmp_path)
+    try:
+        missed = await toolset.execute("bash", {"command": ".venv/bin/python -m pytest"})
+        rerun = await toolset.execute(
+            "bash", {"command": f"cd {tmp_path.resolve()} && .venv/bin/python -m pytest"}
+        )
+    finally:
+        await toolset.close()
+
+    assert f".venv/bin/python is in the repository root {tmp_path.resolve()}" in missed.content
+    assert f"cd {tmp_path.resolve()} && .venv/bin/python -m pytest" in missed.content
+    assert rerun.success and "project-python" in rerun.content
