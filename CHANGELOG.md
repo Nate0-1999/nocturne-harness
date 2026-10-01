@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.49 - 2026-10-01
+
+- One scale in every module: an icon is one size wherever it appears, and text
+  of one role (header, column head, label, value, caption, tip) is one size and
+  font. Unstyled text no longer falls back to the browser's sizes.
+- Flat ruled surfaces replace gradient washes, blurred panels, rounded stat
+  cards and accent bars; Palace State lists its gauges as a ledger. Farm and
+  Roots are readable in the light theme. Pair with Memory 0.1.49 (version only).
+
 ## 0.1.48 - 2026-10-01
 
 - Compare current and proposed scores on a live memory gate, retain the previous

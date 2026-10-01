@@ -3862,3 +3862,27 @@ answers some reads with a transient 503). A selected agent's tubes in Roots wear
 fleet colour: selection only raised the reflection strength, which the stopped matte never reads;
 nothing changes while nothing is selected. Time order compares waits as instants. The modules name
 the trees they hold by digest (`known=`), and a poll whose recorded state is unchanged sets nothing.
+
+## M3UI2 — The look holds together: one scale, flat ruled surfaces [P2.2]
+
+PRECEDENT: PLAN M3UI2 (owner, 2026-10-01: 'Icons reused across modules should be the same
+size, similarly text should be the same size and font. Not every icon needs a box around
+it'; 'I don't want this to look like pure ai website'), M3UI (the kit and the six type
+tokens), SD-069 (one icon set), D.2 108/115 (the theme washes are theme material).
+`verification/m3ui2/measure.mjs` measures every module's rendered icons and text; the scale
+is whatever it reports. One icon size (`--icon-size`, 1rem): the kit's three sizes are
+gone. Text with no class of its own lands on a role through element defaults in `kit.css`
+(body, caption, section head, column head and stat label, value, disclosure, code), written
+with `:where()` so every existing class rule still wins. Column heads and field labels are
+the mono-caps xs the majority already wore; a value is mono md; a disclosure is a control.
+The stage-chrome buttons stay one step smaller than module buttons (FL-113 keeps the chrome
+small), and the transcript keeps its reading size. No icon outside a button wore a box, so
+the box rule removed nothing. The tells removed: radial gradient washes behind modules and
+the shell, backdrop blur on module panels and sticky headers, the rounded Palace State
+cards (now a ruled ledger, label left, value right), two accent bars, centered notices,
+the round connection dot (a diamond). Kept, with the reason: the grimoire themes' sky
+washes (D.2 115), the gate's dialog scrim, the Palace scene's backdrop and its legend
+bars (the 3D scenes are peers'), Inter as the body font (no new font). Farm and Roots keep
+a fixed dark surround in every theme, so kit parts inside take that surround's inks; in
+GOLD LINES their title and pressed buttons were dark on dark. Seventeen seam colours the
+removed washes alone used are deleted from the seam.
