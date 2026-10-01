@@ -2358,8 +2358,9 @@ async def test_a_turn_that_changed_the_repository_is_checked_against_the_loops_a
     """Gate ruling 2026-10-01 (M3CL2): gpt-4.1-mini claimed a test it never added and answered
     "Checked." to a plain list of facts. The loop's own account names each file the answer
     mentions that the turn did not change; the answer goes back once with it (once more after
-    new tool work), and the account ends the turn. M3GD / SPEC B.6 r14: exercised retry: "... make your answer match this
-    account ... If your answer already matches, reply only: Checked."."""
+    new tool work), and the account ends the turn. M3GD / SPEC B.6 r14: exercised retry:
+    "... make your answer match this account ... If your answer already matches, reply only:
+    Checked."."""
 
     import subprocess
     from types import SimpleNamespace
