@@ -1,4 +1,4 @@
-# FL-196 — 2026-10-01 05:59:00 CDT, a throwaway checkout of harness 3d3eb69 (M3HW release head), the script CI runs (scripts/check_rules.py)
+# FL-196 — 2026-10-01 09:03:14 CDT, a throwaway checkout of harness d7417c7 (M3HW's last code head, after F170 was frozen), the script CI runs (scripts/check_rules.py)
 $ python3 scripts/check_rules.py   (as committed)
 Product rules: PASS
 (exit 0)
