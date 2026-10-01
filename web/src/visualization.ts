@@ -9,7 +9,7 @@ export interface WorkAgent {
   touched_files?: { path: string; ts: string }[]; turns?: string[]; tool_calls?: string[]
 }
 export interface DirectoryEntry { path: string; kind: 'directory' | 'file' | 'link'; bytes: number }
-export interface WorkProject { root: string; nodes: DirectoryEntry[]; errors: { path: string; error: string }[] }
+export interface WorkProject { root: string; nodes: DirectoryEntry[]; errors: { path: string; error: string }[]; digest?: string }
 export interface RootPoint { ts: string; location: string; cost_usd: number | string | null; state: string }
 export interface CuratorProgressEvent {
   event_id: number; run_uid: string; phase: string; memory_ids: string[]
@@ -24,6 +24,17 @@ export interface VisualizationSnapshot {
   errors: { feed: string; error: string }[]
 }
 
+/** On the wire a project whose tree the module already holds arrives as its digest alone (`nodes: null`, M3HW). */
+export type WireSnapshot = Omit<VisualizationSnapshot, 'projects'> & { projects: (Omit<WorkProject, 'nodes'> & { nodes: DirectoryEntry[] | null })[] }
+/** Fill each digest-only project from the trees held by digest; null when one is missing, so the caller re-reads the
+ * feed without naming any. The trees returned are exactly those now shown, so what is held never grows. */
+export function fillKnownTrees(wire: WireSnapshot, trees: Map<string, DirectoryEntry[]>) {
+  const projects = wire.projects.map((project) => ({ ...project, nodes: project.nodes ?? trees.get(project.digest ?? '') ?? null }))
+  if (projects.some((project) => project.nodes === null)) return null
+  const filled = projects as WorkProject[]
+  return { snapshot: { ...wire, projects: filled }, trees: new Map(filled.flatMap((project) => project.digest ? [[project.digest, project.nodes] as const] : [])) }
+}
+
 // ADR-018: stable identity determines the geometry and fleet color, never wall-clock randomness.
 export function identitySeed(id: string): number {
   let value = 2166136261
@@ -32,6 +43,12 @@ export function identitySeed(id: string): number {
 }
 export function agentColor(id: string): string {
   return ['#89dbef', '#e8b29f', '#bec6fc', '#94dfbf', '#efcadf', '#d6df96'][Math.floor(identitySeed(id) * 6)]
+}
+/** The agent whose response has waited longest (time order, FL-132), compared as instants: a gate's wait and a waiting
+ * reply arrive in different ISO spellings (Z vs +00:00), which do not sort as text within one second. */
+export function longestWaiting(agents: WorkAgent[]): WorkAgent | undefined {
+  return agents.filter((agent) => agent.waiting_since !== null)
+    .sort((a, b) => Date.parse(a.waiting_since!) - Date.parse(b.waiting_since!))[0]
 }
 export function parentPath(path: string): string {
   return path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '.'

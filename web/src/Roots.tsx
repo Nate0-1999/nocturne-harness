@@ -164,6 +164,16 @@ function AgentRoots({ name, tubes, studio, tier, state, joins = 0, selected, pic
     return { chrome: build(tubes.filter(thick), true), fine: build(tubes.filter((tube) => !thick(tube)), false) }
   }, [tubes, tier, live, joins])
   useEffect(() => () => { geometry.chrome?.dispose(); geometry.fine?.dispose() }, [geometry])
+  // A selected agent wears a halo in its fleet colour around every tube it owns (the growth light's shape, held), so
+  // the selection reads on live chrome and stopped matte alike (FL-130); nothing changes while nothing is selected.
+  const halo = useMemo(() => {
+    if (!selected || !tubes.length) return null
+    const parts = tubes.map((tube) => tube3(tube.points, tube.radii.map((radius) => radius * 1.9 + 0.04), null, 24, 6))
+    const merged = mergeGeometries(parts)
+    parts.forEach((part) => part.dispose())
+    return merged
+  }, [selected, tubes])
+  useEffect(() => () => halo?.dispose(), [halo])
   // A tube that appears while you watch grows: light runs from its junction to its tip, then fades.
   const growth = useRef<Group>(null), born = useRef<Set<string> | null>(null)
   const invalidate = useThree((state) => state.invalidate)
@@ -209,6 +219,10 @@ function AgentRoots({ name, tubes, studio, tier, state, joins = 0, selected, pic
     {geometry.fine && <mesh geometry={geometry.fine} onClick={click}>
       {stopped ? <meshPhysicalMaterial vertexColors clearcoat={1} toneMapped={false} {...chromeSurface(0)} />
         : <meshStandardMaterial envMap={studio} vertexColors metalness={0.4} roughness={0.3} envMapIntensity={selected ? 1.8 : 1.2} />}
+    </mesh>}
+    {halo && <mesh geometry={halo} onClick={click}>
+      <meshBasicMaterial color={agentColor(name)} transparent opacity={SHEET ? 0.4 : 0.35} depthWrite={false} toneMapped={false}
+        blending={SHEET ? NormalBlending : AdditiveBlending} />
     </mesh>}
   </group>
 }

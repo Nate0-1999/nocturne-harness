@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Farm } from './Farm'
 import { Roots } from './Roots'
 import { useRackPlugin, useRackSelection, useRackSnapshot, type RackModuleId } from './rack'
 import { VisualizationScene } from './VisualizationScene'
-import { agentColor, parentPath, LEAF, WIDTH, type DetailTier, type VisualizationSnapshot, type WorkAgent } from './visualization'
+import { agentColor, fillKnownTrees, longestWaiting, parentPath, LEAF, WIDTH, type DetailTier, type DirectoryEntry, type VisualizationSnapshot, type WireSnapshot, type WorkAgent } from './visualization'
 import { useFarmLayout } from './useFarmLayout'
 import './assets/work-visualization.css'
 import { Button, Select } from './kit'
@@ -16,32 +16,41 @@ export function useVisualization() {
   const asOf = selected?.as_of ?? null
   const [response, setResponse] = useState<{ data: VisualizationSnapshot; asOf: string | null } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // The directory trees on screen, by digest: the feed sends a tree only when its digest is new (M3HW).
+  const trees = useRef(new Map<string, DirectoryEntry[]>())
   useEffect(() => {
     let active = true, pending = false
+    const read = async (known: string[]) =>
+      (await query.query({ resource: 'visualization', as_of: asOf ?? 'now', known })).data as unknown as WireSnapshot
     const refresh = async () => {
       if (pending) return
       pending = true
       try {
-        const value = await query.query({ resource: 'visualization', as_of: asOf ?? 'now' })
-        if (active) { setResponse({ data: value.data as unknown as VisualizationSnapshot, asOf }); setError(null) }
+        const filled = fillKnownTrees(await read([...trees.current.keys()]), trees.current) ?? fillKnownTrees(await read([]), new Map())!
+        trees.current = filled.trees
+        // A poll whose recorded state and feed errors are unchanged re-renders nothing.
+        if (active) setResponse((current) => current?.asOf === asOf && current.data.as_of === filled.snapshot.as_of
+          && JSON.stringify(current.data.errors) === JSON.stringify(filled.snapshot.errors) ? current : { data: filled.snapshot, asOf })
+        if (active) setError(null)
       } catch { if (active) setError('The recorded visualization feed is unavailable.') }
       finally { pending = false }
     }
     void refresh()
-    const timer = globalThis.setInterval(() => { void refresh() }, 2500)
+    // A recorded moment never changes, so it is read once; only the present is polled.
+    const timer = asOf === null ? globalThis.setInterval(() => { void refresh() }, 2500) : undefined
     return () => { active = false; globalThis.clearInterval(timer) }
   }, [query, asOf])
+  // The last state read stays drawn while the next one loads (F155: a scrub never blanks the scene).
   return { data: response?.data ?? null, loading: response?.asOf !== asOf, error }
 }
 
-export function VisualizationToolbar({ data, moduleId, tier, setTier }: {
-  data: VisualizationSnapshot | null; moduleId: RackModuleId; tier: DetailTier; setTier: (tier: DetailTier) => void
+export function VisualizationToolbar({ data, loading, moduleId, tier, setTier }: {
+  data: VisualizationSnapshot | null; loading: boolean; moduleId: RackModuleId; tier: DetailTier; setTier: (tier: DetailTier) => void
 }) {
   const { selection, events } = useRackPlugin()
   const selected = useRackSelection()
   const timeline = data?.timeline ?? []
-  const oldest = data?.agents.filter((agent) => agent.waiting_since !== null)
-    .sort((a, b) => a.waiting_since!.localeCompare(b.waiting_since!))[0]
+  const oldest = data ? longestWaiting(data.agents) : undefined
   const timeOrdered = selected?.time_order ?? false
   useEffect(() => {
     if (!timeOrdered || !oldest || selected?.id === oldest.id) return
@@ -61,12 +70,12 @@ export function VisualizationToolbar({ data, moduleId, tier, setTier }: {
       value={index} disabled={!timeline.length} onChange={(event) => scrub(timeline[Number(event.target.value)])} /></label>
     <Button type="button" data-tooltip-detail="Return to the present." aria-pressed={!selected?.as_of} onClick={() => scrub(null)}>Live</Button>
     <time>{data ? new Date(data.as_of).toLocaleTimeString() : 'Waiting for first observation'}</time>
+    {loading && data && <span role="status">Loading {selected?.as_of ? new Date(selected.as_of).toLocaleTimeString() : 'the present'}…</span>}
   </div>
 }
 
 export function WorkVisualization({ initialView }: { initialView: 'farm' | 'roots' }) {
-  const { data: observation, loading, error } = useVisualization()
-  const data = loading ? null : observation
+  const { data, loading, error } = useVisualization()
   const { selection, events } = useRackPlugin()
   const rack = useRackSnapshot()
   const selected = useRackSelection()
@@ -113,7 +122,7 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
       <h1>{view === 'farm' ? 'The Farm' : 'The Roots'}</h1></div>
       <nav aria-label="Work visualization"><Button variant="bare" aria-pressed={view === 'farm'} onClick={() => setView('farm')}>Farm</Button><Button variant="bare" aria-pressed={view === 'roots'} onClick={() => setView('roots')}>Roots</Button></nav>
     </header>
-    <VisualizationToolbar data={observation} moduleId={initialView} tier={tier} setTier={setTier} />
+    <VisualizationToolbar data={data} loading={loading} moduleId={initialView} tier={tier} setTier={setTier} />
     {project && <label className="work-viz__project">Project<Select aria-label="Visualized project" value={project.root} onChange={(event) => setProjectRoot(event.target.value)}>
       {data!.projects.map((p) => <option key={p.root}>{p.root}</option>)}
     </Select></label>}

@@ -1,0 +1,11 @@
+Identity: palace-agent-2a2041c3-8e38-48b3-8bd6-349da19d43be; home: /private/tmp/m3lv-verification/home/palaces/test-m3lv
+Conversation transcript backup: off
+Palace doctor: healthy
+Remote Palace: healthy at https://nocturne-palace-test-m3lv-7wq3wmgcoq-uc.a.run.app
+Conversation journal: 3.6 MiB
+Disk: 479.7 GiB free of 926.4 GiB
+Web app: ready at /private/tmp/m3lv-work/harness/web/dist
+Port: 8765 is available
+Startup toolchain: no local Palace toolchain is required
+Local database and backup checks are skipped for a remote Palace.
+Palace API contract: 0.1.45 (app supports >=0.1.0,<0.2.0)

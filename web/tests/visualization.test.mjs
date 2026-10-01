@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { HAIR, buildChambers, buildRootTree, rootGap, rootWidth } from '../src/visualization.ts'
+import { readFile } from 'node:fs/promises'
+import { HAIR, buildChambers, buildRootTree, fillKnownTrees, longestWaiting, rootGap, rootWidth } from '../src/visualization.ts'
 
 /** ADR-018 / FL-126: a frozen tree has repeatable geometry, including empty chambers. */
 test('directory layout preserves every chamber and cell and replays identically', () => {
@@ -334,4 +335,43 @@ test('roots draw every longer gap between events as a longer bare stretch', () =
   // The trunk: a thread's turns leave it at their moments, across.
   const lone = { ...thread, started_at: at(305), turns: times.map(at), tool_calls: [], touched_files: [], cost_usd: null, updated_at: at(times.at(-1) + 60) }
   assert.ok(walk(buildRootTree([lone], {}, Date.parse(at(0))).tubes, 'trunk:/project', (i) => `thread:turn:${i}`) >= 8)
+})
+
+/** ADR-018 / F158 (M3LV, FL-132): time order moves to the longest-waiting response, compared as instants — a waiting reply's time
+ * (Z) and a gate's (+00:00) are different ISO spellings that sort wrongly as text within one second. */
+test('time order finds the longest wait across ISO spellings', () => {
+  const agent = (id, waiting_since) => ({ id, waiting_since })
+  // Python drops a zero fraction, so a whole second sorts after any later instant of that second as text ('Z' > '.').
+  const agents = [agent('later', '2026-09-30T21:26:30.500000+00:00'), agent('idle', null), agent('earlier', '2026-09-30T21:26:30Z')]
+  assert.equal(longestWaiting(agents).id, 'earlier')
+  assert.equal(longestWaiting([agent('idle', null)]), undefined)
+})
+
+/** F155 / FL-134 (M3LV): a history scrub never blanks — the last state read stays drawn while the next one loads, and a
+ * recorded moment is read once, since it never changes; only the present is polled. */
+test('work modules keep the drawn state while a scrubbed state loads', async () => {
+  const source = await readFile(new URL('../src/WorkVisualization.tsx', import.meta.url), 'utf8')
+  assert.doesNotMatch(source, /loading \? null :/u)
+  assert.match(source, /asOf === null \? globalThis\.setInterval/u)
+  assert.match(source, /Loading \{selected\?\.as_of/u)
+})
+
+/** ADR-018 / F158 (M3LV, FL-130): a selection is visible in Roots on live chrome and stopped matte alike; nothing is drawn unselected. */
+test('a selected root wears a halo in its fleet colour', async () => {
+  const source = await readFile(new URL('../src/Roots.tsx', import.meta.url), 'utf8')
+  assert.match(source, /if \(!selected \|\| !tubes\.length\) return null/u)
+  assert.match(source, /\{halo && <mesh geometry=\{halo\}/u)
+  assert.match(source, /color=\{agentColor\(name\)\}/u)
+})
+
+/** M3HW / F155 (M3LV): a tree the module already holds arrives as its digest alone and is filled from what is held; a
+ * digest no longer held asks for one full re-read, and only the trees now shown are kept. */
+test('digest-only projects fill from the trees on screen', () => {
+  const tree = [{ path: '.', kind: 'directory', bytes: 0 }]
+  const wire = (nodes) => ({ as_of: 'now', projects: [{ root: '/a', digest: 'd1', errors: [], nodes }, { root: '/b', errors: [], nodes: tree }] })
+  const first = fillKnownTrees(wire(tree), new Map())
+  assert.deepEqual([...first.trees.keys()], ['d1'])
+  const again = fillKnownTrees(wire(null), first.trees)
+  assert.equal(again.snapshot.projects[0].nodes, tree)
+  assert.equal(fillKnownTrees(wire(null), new Map()), null)
 })
