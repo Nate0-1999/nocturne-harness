@@ -130,8 +130,8 @@ export function ModelDevice() {
     }
   }, [events, load])
 
-  async function write(parameterId: string, value: ParameterValue) {
-    if (threadId === null || scope !== 'ATTUNED') return
+  async function write(parameterId: string, value: ParameterValue): Promise<boolean> {
+    if (threadId === null || scope !== 'ATTUNED') return false
     setStatus('Applying…')
     try {
       await events.dispatch({
@@ -141,8 +141,12 @@ export function ModelDevice() {
         value,
       })
       await load()
+      return true
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Control write was refused')
+      // ADR-023: a running turn keeps its model; until run.done (receipts included) a switch waits.
+      const message = error instanceof Error ? error.message : 'Control write was refused'
+      setStatus(message.includes('busy') ? 'Still finishing the last answer — try again in a moment.' : message)
+      return false
     }
   }
 
@@ -189,9 +193,10 @@ export function ModelDevice() {
 
   async function configure(configuration: Configuration) {
     if (threadId === null || !editable || configuration.model === null) return
+    // Switch first: a refused switch leaves both this conversation and the agent policy as they were.
+    if (configuration.model !== resolved && !(await write('model.slug', configuration.model))) return
     try {
       await events.dispatch({ type: 'policies.save', role: 'chat', policy: configuration.policy })
-      if (configuration.model !== resolved) await write('model.slug', configuration.model)
       await loadBrowser()
       setStatus(`${policyName(configuration.policy)} · new conversations start here too`)
     } catch (error) {
