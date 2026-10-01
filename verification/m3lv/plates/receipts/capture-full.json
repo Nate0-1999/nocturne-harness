@@ -1,0 +1,83 @@
+{
+  "base_url": "http://127.0.0.1:8779",
+  "tier": "full",
+  "captures": [
+    {
+      "module": "roots",
+      "view": "sheet",
+      "row": "FL-129",
+      "full": "roots-full-sheet.png",
+      "crop": {
+        "x": 25,
+        "y": 169.84375,
+        "width": 950,
+        "height": 320
+      },
+      "telemetry": [
+        "311,852 triangles · full",
+        "40 roots · 0 forked limbs\n18 touched-file capillaries · 40 agents\nwidth = dollars · across = time between events · blue = live · pink = a branch leaving · matte = stopped\nM3LV run 1.t1vmg: reply with exactly: first reply of run 1. · /private/tmp/m3lv-verification/project/src/harness"
+      ],
+      "at": "2026-10-01T01:27:37.442Z",
+      "side_by_side": {
+        "file": "FL-129-plate.png",
+        "crop_px": {
+          "x": 399,
+          "y": 19,
+          "width": 1026,
+          "height": 486
+        }
+      }
+    },
+    {
+      "module": "palace",
+      "view": "stage",
+      "row": "FL-133",
+      "full": "palace-full.png",
+      "crop": {
+        "x": -126,
+        "y": 234.6640625,
+        "width": 1726,
+        "height": 719.359375
+      },
+      "telemetry": [
+        "58 fps\n73,381 triangles · full\nThree r182 · R3F + TSL · WebGPU · full\n2026-10-01T01:27:40.588907+00:00"
+      ],
+      "at": "2026-10-01T01:28:15.798Z",
+      "side_by_side": {
+        "file": "FL-133-plate.png",
+        "crop_px": {
+          "x": 881,
+          "y": 0,
+          "width": 1438,
+          "height": 1438
+        }
+      }
+    },
+    {
+      "module": "farm",
+      "view": "stage",
+      "row": "FL-126",
+      "full": "farm-full.png",
+      "crop": {
+        "x": -17.5,
+        "y": 294.546875,
+        "width": 1726,
+        "height": 705.34375
+      },
+      "telemetry": [
+        "173,752 triangles · full",
+        "13 chambers\n6549 files · 6537 in counted chambers · 40 agents\nDrag or Ctrl+arrows to orbit · scroll or +/− to zoom · pick an ant\nM3LV run 1.t1vmg: reply with exactly: first reply of run 1. · /private/tmp/m3lv-verification/project/src/harness"
+      ],
+      "at": "2026-10-01T01:28:56.245Z",
+      "side_by_side": {
+        "file": "FL-126-plate.png",
+        "crop_px": {
+          "x": 320,
+          "y": 0,
+          "width": 2560,
+          "height": 1410
+        }
+      }
+    }
+  ]
+}

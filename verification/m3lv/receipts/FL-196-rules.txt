@@ -1,0 +1,14 @@
+--- 1. as handed off
+Product rules: PASS
+Guard citations: PASS
+--- 2. one guard citation removed (memory_gate.py line 236)
+src/harness/memory_gate.py:236: guard lacks adjacent WALL/incident citation
+Guard citations: FAIL
+--- 3. a frozen axiom changed (CLAUDE.md)
+CLAUDE.md: frozen axioms differ from the master fingerprint
+Product rules: FAIL
+--- 4. both restored
+Product rules: PASS
+Product rules: PASS
+Guard citations: PASS
+test motivation check passed: 898 tests, 0 grandfathered
