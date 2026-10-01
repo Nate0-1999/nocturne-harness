@@ -96,6 +96,57 @@ def repository_state(folder: Path) -> str | None:
     return f"Repository now: {commit}; uncommitted: {pending or 'none'}."
 
 
+def repository_mark(folder: Path) -> tuple[Path, str, frozenset[str]] | None:
+    """M3CL2: where a turn began — the repository, its HEAD and its uncommitted entries."""
+
+    root = repository_root(folder)
+    if root is None:
+        return None
+    try:
+        head = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+        status = subprocess.run(
+            ["git", "-C", str(root), "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if status.returncode:
+        return None
+    entries = frozenset(line for line in status.stdout.splitlines() if line.strip())
+    return root, head.stdout.strip() if head.returncode == 0 else "", entries
+
+
+def repository_turn(start: tuple[Path, str, frozenset[str]]) -> tuple[list[str], list[str]] | None:
+    """M3CL2 (the gate's 2026-10-01 ruling): files committed since the turn began, and the
+    uncommitted entries the turn added — the loop's own account of what changed."""
+
+    root, head, entries = start
+    now = repository_mark(root)
+    if now is None:
+        return None
+    _, new_head, new_entries = now
+    committed: list[str] = []
+    if head and new_head and new_head != head:
+        changed = subprocess.run(
+            ["git", "-C", str(root), "diff", "--name-only", head, new_head],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+        committed = [line for line in changed.stdout.splitlines() if line.strip()]
+    return committed, sorted(line.strip() for line in new_entries - entries)
+
+
 def repository_identity(root: Path) -> str | None:
     """F135 (M3EX-14): a repository's first commit names it wherever it moves."""
 

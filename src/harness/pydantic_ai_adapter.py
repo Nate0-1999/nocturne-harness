@@ -104,25 +104,29 @@ class FinishWhatWasAsked(Capability[MemoryToolContext]):
 
 
 class FinishFactCheck(Capability[MemoryToolContext]):
-    """Gate ruling 2026-10-01 (M3CL2): gpt-4.1-mini told the user it had added a test it had
-    only written into a memory edit. Once per turn that changed the repository, the final
-    answer is checked against the repository as it is, by the loop, before the turn ends."""
+    """Gate ruling 2026-10-01 (M3CL2): gpt-4.1-mini claimed a test it never added, and answered
+    "Checked." to a plain list of repository facts. Once per turn that changed the repository,
+    the final answer goes back with the loop's own account, naming each file it mentions that
+    the turn did not change."""
 
-    def __init__(self, facts: Callable[[], str | None]) -> None:
+    def __init__(self, account: Callable[[str], str | None]) -> None:
         super().__init__()
-        self.facts = facts
+        self.account = account
         self.sent = False
 
     async def after_model_request(self, ctx, *, request_context, response):
         last = not request_context.model_request_parameters.function_tools
-        if self.sent or last or response.tool_calls or (facts := self.facts()) is None:
+        if self.sent or last or response.tool_calls:
+            return response
+        account = self.account(response.text)
+        if account is None:
             return response
         self.sent = True
         raise ModelRetry(
-            f"Before you finish, check your answer against the repository as it is now. {facts} "
-            "Correct anything your answer claims that these facts do not show; if something "
-            "asked for is not done, do it now or say plainly why not. If your answer already "
-            "matches, reply only: Checked."
+            f"{account} Before you finish, make your answer match this account: never say a file "
+            "was changed, added or committed unless the account lists it as committed or not "
+            "committed. If something asked for is not done, do it now or say plainly that it is "
+            "not done. If your answer already matches, reply only: Checked."
         )
 
 

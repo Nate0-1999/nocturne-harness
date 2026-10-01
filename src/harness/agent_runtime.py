@@ -53,7 +53,7 @@ from harness.envelope import ProviderErrorPayload, StopReason, generate_ulid
 from harness.extraction import ExtractionService
 from harness.model_policy import ThreadModelResolution
 from harness.model_router import model_settings_for
-from harness.project_path import repository_state
+from harness.project_path import repository_mark, repository_turn
 from harness.proposed_response import (
     BLOCK_CLOSE,
     BLOCK_OPEN,
@@ -191,6 +191,7 @@ class PydanticAITurnRunner:
         is_remember = remember_command_text(prompt) is not None
         is_browser_consent = browser_open_web_command(prompt)
         context: MemoryToolContext | None = None
+        account: Callable[[str], str | None] = _no_account
         remembered_memory_id: UUID | None = None
         selected_model = self._agent.model_for(
             model_resolution.model if model_resolution is not None else None
@@ -533,6 +534,7 @@ class PydanticAITurnRunner:
 
             # F134 (M3EX-03): the per-turn ceiling is stated with the turn, never hidden.
             await emit.event(_turn_limit_event(self._agent.usage_limits))
+            account = turn_account(context)
             instructions: list[object] = [PROPOSED_RESPONSE_INSTRUCTION]
             if system_instructions is not None:
                 instructions.append(system_instructions)
@@ -551,7 +553,7 @@ class PydanticAITurnRunner:
                         ),
                         TurnBudgetNotice(),
                         FinishWhatWasAsked(),
-                        FinishFactCheck(repository_change(context)),
+                        FinishFactCheck(account),
                         *self._agent.tool_capabilities(context),
                         *(
                             [DelegateCapability()]
@@ -578,6 +580,10 @@ class PydanticAITurnRunner:
                 run_id=emit.run_id,
                 created_at=self._clock(),
             )
+            if (receipt := account(visible_output)) is not None:
+                # The gate's 2026-10-01 ruling: the turn ends on an account the loop checked.
+                await emit.text(f"\n\n{receipt}")
+                visible_output = f"{visible_output}\n\n{receipt}"
             usage = _usage_snapshot(result.usage)
             await bridge.publish_usage(usage)
             history = tuple(result.all_messages())
@@ -641,6 +647,9 @@ class PydanticAITurnRunner:
                     run_id=emit.run_id,
                     created_at=self._clock(),
                 )
+                if (receipt := account(visible)) is not None:
+                    await emit.text(f"\n\n{receipt}")
+                    visible = f"{visible}\n\n{receipt}"
                 return TurnOutcome(
                     StopReason("end_turn"), tuple(captured), usage, assistant_text=visible
                 )
@@ -1232,19 +1241,48 @@ def _new_captured_messages(
     ]
 
 
-def repository_change(context: MemoryToolContext) -> Callable[[], str | None]:
-    """The repository facts a final answer is checked against, once the turn changed them."""
+def _no_account(_answer: str) -> None:
+    return None
+
+
+_MENTIONED_PATH = re.compile(r"[\w.-]+(?:/[\w.-]+)*\.[A-Za-z0-9]{1,8}")
+
+
+def turn_account(context: MemoryToolContext) -> Callable[[str], str | None]:
+    """M3CL2 (the gate's 2026-10-01 ruling, never a claim the loop did not check): the loop's
+    account of what this turn changed in the repository, naming files an answer mentions that
+    it did not change; None when the turn changed nothing."""
 
     toolset = context.toolset if context.toolset_enabled else None
-    if toolset is None:
-        return lambda: None
-    started = repository_state(toolset.location().cwd)
+    start = None if toolset is None else repository_mark(toolset.location().cwd)
+    if start is None:
+        return _no_account
+    root = start[0]
 
-    def facts() -> str | None:
-        now = repository_state(toolset.location().cwd)
-        return None if now is None or now == started else now
+    def account(answer: str) -> str | None:
+        turn = repository_turn(start)
+        if turn is None or not any(turn):
+            return None
+        committed, uncommitted = turn
+        changed = {*committed, *(entry[3:] for entry in uncommitted)}
+        named = {
+            path
+            for path in _MENTIONED_PATH.findall(answer)
+            if (root / path).is_file() or any(item.endswith(f"/{path}") for item in changed)
+        }
+        unchanged = sorted(
+            path
+            for path in named
+            if path not in changed and not any(item.endswith(f"/{path}") for item in changed)
+        )
+        parts = [
+            *([f"committed {', '.join(committed)}"] if committed else []),
+            *([f"not committed: {', '.join(uncommitted)}"] if uncommitted else []),
+            *([f"not changed: {', '.join(unchanged)}"] if unchanged else []),
+        ]
+        return "Checked by Nocturne, this turn: " + "; ".join(parts) + "."
 
-    return facts
+    return account
 
 
 def _captured_history(

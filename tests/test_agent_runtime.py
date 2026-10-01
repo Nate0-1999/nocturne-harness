@@ -2313,12 +2313,16 @@ async def test_an_answer_ending_in_a_promise_is_sent_back_once_to_finish() -> No
 
 
 @pytest.mark.asyncio
-async def test_a_turn_that_changed_the_repository_is_checked_against_it_once() -> None:
-    """Gate ruling 2026-10-01 (M3CL2): gpt-4.1-mini reported a test it had only tried to write
-    into a memory. M3GD / SPEC B.6 r14: exercised retry: "Before you finish, check your answer
-    against the repository as it is now. {facts} ... If your answer already matches, reply
-    only: Checked."."""
+async def test_a_turn_that_changed_the_repository_is_checked_against_the_loops_account(
+    tmp_path: Path,
+) -> None:
+    """Gate ruling 2026-10-01 (M3CL2): gpt-4.1-mini claimed a test it never added and answered
+    "Checked." to a plain list of facts. The loop's own account names each file the answer
+    mentions that the turn did not change; the answer goes back once with it, and the account
+    ends the turn. M3GD / SPEC B.6 r14: exercised retry: "... make your answer match this
+    account ... If your answer already matches, reply only: Checked."."""
 
+    import subprocess
     from types import SimpleNamespace
 
     from pydantic_ai import ModelRetry
@@ -2326,20 +2330,45 @@ async def test_a_turn_that_changed_the_repository_is_checked_against_it_once() -
     from pydantic_ai.models import ModelRequestParameters
     from pydantic_ai.tools import ToolDefinition
 
+    from harness.agent_runtime import turn_account
     from harness.pydantic_ai_adapter import FinishFactCheck
 
+    repository = tmp_path / "repo"
+    (repository / "src").mkdir(parents=True)
+    (repository / "tests").mkdir()
+    (repository / "src" / "a.py").write_text("x = 1\n")
+    (repository / "tests" / "test_a.py").write_text("def test_a():\n    pass\n")
+    for command in (
+        ["init", "-q"],
+        ["config", "user.name", "t"],
+        ["config", "user.email", "t@t"],
+        ["add", "."],
+        ["commit", "-qm", "start"],
+    ):
+        subprocess.run(["git", "-C", str(repository), *command], check=True)
+    toolset = await open_standard_toolset(cwd=repository, workspace_root=repository)
+    try:
+        account = turn_account(context(toolset=toolset))
+        claim = "I changed src/a.py, added a test to tests/test_a.py and committed both."
+        assert account(claim) is None
+        (repository / "src" / "a.py").write_text("x = 2\n")
+        subprocess.run(["git", "-C", str(repository), "commit", "-qam", "change"], check=True)
+        (repository / "notes.txt").write_text("draft\n")
+        said = account(claim)
+    finally:
+        await toolset.close()
+
+    assert said == (
+        "Checked by Nocturne, this turn: committed src/a.py; not committed: ?? notes.txt; "
+        "not changed: tests/test_a.py."
+    )
     tools = SimpleNamespace(
         model_request_parameters=ModelRequestParameters(
             function_tools=[ToolDefinition(name="bash")]
         )
     )
-    answer = ModelResponse(parts=[TextPart("I added the test and committed.")])
-    facts = "Repository now: last commit abc123 x (a.py); uncommitted: M b.py."
-    unchanged = FinishFactCheck(lambda: None)
-    assert (
-        await unchanged.after_model_request(None, request_context=tools, response=answer) is answer
-    )
-    check = FinishFactCheck(lambda: facts)
-    with pytest.raises(ModelRetry, match="uncommitted: M b.py. Correct anything"):
+    answer = ModelResponse(parts=[TextPart(claim)])
+    check = FinishFactCheck(lambda text: said if "tests/test_a.py" in text else None)
+    with pytest.raises(ModelRetry, match="not changed: tests/test_a.py. Before you finish"):
         await check.after_model_request(None, request_context=tools, response=answer)
     assert await check.after_model_request(None, request_context=tools, response=answer) is answer
