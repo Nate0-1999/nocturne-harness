@@ -22,12 +22,12 @@ const shots = args.includes('--shots') ? argument('--shots') : null
 
 const browser = await chromium.launch({ channel: 'chrome', headless: true })
 const page = await (await browser.newContext({ viewport: { width: 1600, height: 1000 } })).newPage()
-const url = `${baseUrl}/?fixture=${encodeURIComponent(fixture)}${theme === null ? '' : `&theme=${theme}`}`
-await page.goto(url, { waitUntil: 'domcontentloaded' })
+await page.goto(`${baseUrl}/?fixture=${encodeURIComponent(fixture)}`, { waitUntil: 'domcontentloaded' })
 await page.getByTestId('rack-plugin-frame-conversation').first().waitFor({ state: 'attached' })
 await page.waitForTimeout(1500)
 // Every module on a layer, in the Sheet (unscaled): shelved modules return to their layer, the Recipe joins Graph.
-await page.evaluate(() => {
+await page.evaluate((chosen) => {
+  if (chosen !== null) localStorage.setItem('nocturne.theme.v1', chosen)
   const key = Object.keys(localStorage).find((name) => {
     try { return Array.isArray(JSON.parse(localStorage.getItem(name)).layers) } catch { return false }
   })
@@ -40,7 +40,7 @@ await page.evaluate(() => {
   graph.modules.push({ ...graph.modules[0], instance_id: 'recipe', module_id: 'recipe' })
   localStorage.setItem(key, JSON.stringify(layout))
   localStorage.setItem('nocturne.stage.sheet-mode.v1', 'true')
-})
+}, theme)
 await page.reload({ waitUntil: 'domcontentloaded' })
 await page.getByRole('tab').first().waitFor({ state: 'visible' })
 // The fixture curtain is not product surface: out of the photos and the table.
@@ -94,7 +94,29 @@ function census() {
       transform: style.textTransform, spacing: style.letterSpacing, sample: own.slice(0, 40),
     })
   }
-  return { icons, texts }
+  // The tells (charge step 3) and the boxes (step 2), as things a script can see.
+  const tells = []
+  const rootSize = parseFloat(getComputedStyle(document.documentElement).fontSize)
+  for (const element of document.querySelectorAll('body *')) {
+    if (element.closest('svg') !== null || !visible(element)) continue
+    const style = getComputedStyle(element)
+    const box = element.getBoundingClientRect()
+    const bordered = ['Top', 'Right', 'Bottom', 'Left'].filter((side) => parseFloat(style[`border${side}Width`]) > 0 && style[`border${side}Style`] !== 'none')
+    const painted = bordered.length > 0 || (style.backgroundColor !== 'rgba(0, 0, 0, 0)' && style.backgroundColor !== 'transparent') || style.backgroundImage !== 'none'
+    const radius = parseFloat(style.borderTopLeftRadius)
+    const tell = (kind) => tells.push({ kind, where: path(element), sample: (element.innerText ?? '').trim().slice(0, 30) })
+    if (radius > 0 && painted) tell(radius >= Math.min(box.width, box.height) / 2 - 1 ? 'pill-or-round' : 'rounded')
+    if (style.backdropFilter !== 'none' && style.backdropFilter !== '') tell('glass')
+    if (bordered.length === 1 && bordered[0] === 'Left' && parseFloat(style.borderLeftWidth) >= 2) tell('accent-bar')
+    if (style.textAlign === 'center' && [...element.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim() !== '') && element.closest('button, th, td') === null) tell('centered-text')
+    if (/radial-gradient/.test(style.backgroundImage)) tell('gradient-blob')
+    if (/\p{Extended_Pictographic}/u.test([...element.childNodes].filter((node) => node.nodeType === 3).map((node) => node.textContent).join(''))) tell('emoji')
+    const interactive = element.closest('button, a, summary, select, input, textarea, label, [role="button"], [role="tab"]') !== null
+    const glyphOnly = element.children.length <= 1 && (element.innerText ?? '').trim().length <= 2
+      && (element.querySelector('svg') !== null || (element.innerText ?? '').trim().length > 0)
+    if (!interactive && bordered.length === 4 && glyphOnly && box.width <= 2.5 * rootSize && box.height <= 2.5 * rootSize) tell('boxed-marker')
+  }
+  return { icons, texts, tells }
 }
 
 const result = { base: baseUrl, theme: await page.evaluate(() => document.documentElement.dataset.theme ?? null), layers: {} }
