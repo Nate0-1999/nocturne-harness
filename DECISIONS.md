@@ -3862,3 +3862,23 @@ answers some reads with a transient 503). A selected agent's tubes in Roots wear
 fleet colour: selection only raised the reflection strength, which the stopped matte never reads;
 nothing changes while nothing is selected. Time order compares waits as instants. The modules name
 the trees they hold by digest (`known=`), and a poll whose recorded state is unchanged sets nothing.
+
+## M3MD — The model browser [P4]
+
+PRECEDENT: SD-076, FL-106/107/154/158, A-020, A-021, A-025, v2.26, M3G.
+The catalog fetch the policies already make also keeps every priced model of the source
+(name, prices, context window, whether it takes a reasoning effort, the benchmark score the
+policies use). `GET /v1/models` serves it with the owner's pins (`model-pins.json` beside the
+role policies) and what pinned, max, elbow and floor each select now from the same snapshot.
+Rank is that score, a display order only; router pseudo-models (variable price, or
+OpenRouter's own routers) are left out, since A-020 rejects classifier routing. A policy the
+table cannot resolve shows the static model it falls back to, marked "fallback" — today the
+elbow, whose frontier holds a free model (A-025). Floor's one-click number is the configured
+floor, else the score of the conversation's model, else of the configured model, else the
+elbow's. Choosing a configuration saves it as the agent policy for new conversations and
+switches this one through the model control, which shares /model's resolver, journal entry
+and new cache epoch. Single-key mode (M3G) lists its OpenAI-compatible endpoint's own
+/models: no prices or scores, no configurations, switching within it; a source with no list
+is an empty state, not an error. The typed slug field is gone: search covers every listed id
+and /model stays for the rest. The thinking level sits beside the model only when the
+source says the model takes one; the chip drops the source's "Provider:" prefix and wraps.
