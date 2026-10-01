@@ -26,6 +26,7 @@ import { AgentPolicies } from './AgentPolicies'
 import { SpendWallSettings } from './SpendWallSettings'
 import { ToolInventory, ToolsetSettings } from './ToolControls'
 import { RewindControl } from './RewindControl'
+import { markProposalSeen } from './deckSeen'
 import { RackPluginUpload } from './RackPluginUpload'
 import { MemoryGraph } from './MemoryGraph'
 import { PalaceNebula } from './PalaceNebula'
@@ -1832,7 +1833,25 @@ function ChatModuleSlot() {
   return <>
     <ChatModule key={snapshot.selectedThreadId ?? 'empty'} />
     <SlashCommandHint />
+    <DeckSeenMarker />
   </>
+}
+
+/** M3W5B-38: the answer this Focused conversation shows is seen, so it leaves the Deck. */
+function DeckSeenMarker() {
+  const snapshot = useRackSnapshot()
+  const messages = snapshot.selectedThreadId === null ? [] : snapshot.threads[snapshot.selectedThreadId]?.messages ?? []
+  let latest: string | null = null
+  for (let index = messages.length - 1; index >= 0 && latest === null; index -= 1) {
+    const message = messages[index]!
+    if (message.role === 'assistant' && !message.partial && message.events.some((event) => (
+      event.event_kind === 'proposed_response' && event.proposal_run_id === message.run_id
+    ))) latest = message.run_id
+  }
+  useEffect(() => {
+    if (latest !== null && document.visibilityState === 'visible') markProposalSeen(latest)
+  }, [latest])
+  return null
 }
 
 // M3EX-30: the commands the daemon understands, listed the moment "/" is typed.
