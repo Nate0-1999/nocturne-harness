@@ -20,6 +20,7 @@ import {
   moveStageModule,
   openingStageCamera,
   persistStageLayout,
+  reframeUntouchedWork,
   recoverStageModule,
   removeStageLayer,
   removeStageModule,
@@ -428,4 +429,16 @@ test('a fresh work layer opens readable at laptop sizes', () => {
   }
   const small = openingStageCamera(800, 500, modules)
   assert.ok(inView(small, conversation, 800) && small.zoom > 0.7, `800: zoom ${small.zoom}`)
+})
+
+/** P2.5 (M3W5B-33): the Work layer is framed for the window until the owner moves its camera. */
+test('an untouched work camera follows the window; a moved one is kept', () => {
+  const storage = memoryStorage()
+  const framed = reframeUntouchedWork(cloneFactoryStageLayout(), 1440, 800, storage)
+  const camera = activeStageLayer(framed).camera
+  assert.notDeepEqual(camera, activeStageLayer(cloneFactoryStageLayout()).camera)
+  const reframed = reframeUntouchedWork(framed, 1200, 700, storage)
+  assert.notDeepEqual(activeStageLayer(reframed).camera, camera)
+  const moved = updateStageCamera(reframed, { ...activeStageLayer(reframed).camera, x: 10 })
+  assert.equal(reframeUntouchedWork(moved, 800, 500, storage), moved)
 })

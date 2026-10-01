@@ -112,7 +112,7 @@ import {
   setStageAttunementSource,
   stageLayoutsEqual,
   updateStageCamera,
-  withOpeningCamera,
+  reframeUntouchedWork,
   type StageCamera,
   type ConversationMode,
   type StageLayoutSet,
@@ -265,6 +265,14 @@ function turnLimit(message: AssistantTranscriptMessage | undefined): string | nu
     return `${event.total_tokens_limit.toLocaleString('en-US')}-token`
   }
   return typeof event?.request_limit === 'number' ? `${event.request_limit}-request` : null
+}
+
+function reframeWork(layout: StageLayoutSet, size: { width: number, height: number }): StageLayoutSet {
+  try {
+    return reframeUntouchedWork(layout, size.width, size.height, globalThis.localStorage)
+  } catch {
+    return layout
+  }
 }
 
 function initialRackLayout(): StageLayoutSet {
@@ -421,7 +429,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     initialAttunementPicks,
   )
   const journaledAttunementPicks = useRef(new Set<string>())
-  const layer = withOpeningCamera(activeStageLayer(layout), viewportSize.width, viewportSize.height)
+  const layer = activeStageLayer(layout)
   const frameAddresses = useMemo(
     () => spatialAddresses(layer.layer_id, layer.modules.map((module) => ({
       ...module,
@@ -526,10 +534,12 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     const viewport = viewportRef.current
     if (viewport === null || typeof ResizeObserver === 'undefined') return
     const observer = new ResizeObserver(([entry]) => {
-      setViewportSize({
+      const size = {
         width: Math.round(entry.contentRect.width),
         height: Math.round(entry.contentRect.height),
-      })
+      }
+      setViewportSize(size)
+      setLayout((current) => reframeWork(current, size))
     })
     observer.observe(viewport)
     return () => observer.disconnect()
@@ -541,7 +551,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     const handleWheel = (event: WheelEvent) => {
       event.preventDefault()
       setLayout((current) => {
-        const currentLayer = withOpeningCamera(activeStageLayer(current), viewport.clientWidth, viewport.clientHeight)
+        const currentLayer = activeStageLayer(current)
         if (event.ctrlKey || event.metaKey) {
           const rect = viewport.getBoundingClientRect()
           const focusX = event.clientX - rect.left
@@ -667,8 +677,8 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   }, [savedSet])
 
   const resetFactorySet = useCallback(() => {
-    setLayout(cloneFactoryStageLayout())
-  }, [])
+    setLayout(reframeWork(cloneFactoryStageLayout(), viewportSize))
+  }, [viewportSize])
 
   const changeModuleScope = useCallback((
     instanceId: string,

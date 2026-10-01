@@ -544,15 +544,39 @@ export function openingStageCamera(
     frame(sets[sets.length - 1]!, false)
 }
 
-/** M3W5B-33: while the Work layer keeps the factory camera, it shows the opening frame for
- * this window; the owner's first pan or zoom saves a camera of their own. */
-export function withOpeningCamera(layer: StageLayer, viewportWidth: number, viewportHeight: number): StageLayer {
-  const factory = FACTORY_STAGE_LAYOUT.layers[0]!.camera
-  const untouched = layer.layer_id === 'work' && layer.camera.x === factory.x &&
-    layer.camera.y === factory.y && layer.camera.zoom === factory.zoom
-  return untouched && viewportWidth > 0 && viewportHeight > 0
-    ? { ...layer, camera: openingStageCamera(viewportWidth, viewportHeight, layer.modules) }
-    : layer
+const OPENING_CAMERA_STORAGE_KEY = 'nocturne.stage.opening-camera.v1'
+
+/** M3W5B-33: the Work layer is framed for this window until the owner moves its camera. A
+ * camera still equal to the factory one, or to the last automatic frame, is re-framed for the
+ * current window (load, resize, Reset); the first pan or zoom makes the camera the owner's. */
+export function reframeUntouchedWork(
+  layout: StageLayoutSet,
+  viewportWidth: number,
+  viewportHeight: number,
+  storage: Storage,
+): StageLayoutSet {
+  if (layout.active_layer_id !== 'work' || viewportWidth <= 0 || viewportHeight <= 0) return layout
+  const layer = activeStageLayer(layout)
+  const same = (left: StageCamera, right: StageCamera | null) => right !== null &&
+    left.x === right.x && left.y === right.y && left.zoom === right.zoom
+  const automatic = readAutomaticCamera(storage)
+  if (!same(layer.camera, FACTORY_STAGE_LAYOUT.layers[0]!.camera) && !same(layer.camera, automatic)) return layout
+  const camera = openingStageCamera(viewportWidth, viewportHeight, layer.modules)
+  if (same(layer.camera, camera)) return layout
+  try {
+    storage.setItem(OPENING_CAMERA_STORAGE_KEY, JSON.stringify(camera))
+  } catch {
+    // Without storage the frame is still applied; a reload frames it again from the factory camera.
+  }
+  return updateStageCamera(layout, camera)
+}
+
+function readAutomaticCamera(storage: Storage): StageCamera | null {
+  try {
+    return JSON.parse(storage.getItem(OPENING_CAMERA_STORAGE_KEY) ?? 'null') as StageCamera | null
+  } catch {
+    return null
+  }
 }
 
 export function focusStageModule(
