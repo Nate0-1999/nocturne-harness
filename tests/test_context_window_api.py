@@ -62,8 +62,8 @@ def test_context_history_is_not_fabricated() -> None:
 
 
 def test_cuts_survive_a_restart(tmp_path) -> None:
-    """M3HW / FL-198 (M3W5B-28): the Security module read 0 cuts after a restart; recorded cuts
-    are read back by the next daemon, and a line torn by a crash is skipped."""
+    """P4 / M3HW / FL-198 (M3W5B-28): the Security module read 0 cuts after a restart; recorded
+    cuts are read back by the next daemon, and a line torn by a crash is skipped."""
     bounds = ReturnShareBounds(default_percent=10, min_percent=1, max_percent=25)
     path = tmp_path / "overwhelm-cuts.jsonl"
     before = OverwhelmTracker(bounds, path)

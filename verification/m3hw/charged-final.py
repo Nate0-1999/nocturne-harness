@@ -7,14 +7,17 @@ import sys
 
 lane = sys.argv[1]
 OUT = "/private/tmp/m3hw-final/harness/verification/m3hw"
-values = {k: json.loads(v) for k, v in (l.split("=", 1) for l in open(
-    "/private/tmp/m3hw-verification/home/palaces/test-m3hw/env").read().splitlines() if "=" in l)}
+ENV = "/private/tmp/m3hw-verification/home/palaces/test-m3hw/env"
+lines = open(ENV).read().splitlines()
+values = {k: json.loads(v) for k, v in (line.split("=", 1) for line in lines if "=" in line)}
 env = {**os.environ, **{k: values[k] for k in ("SPINE_URL", "SPINE_TOKEN", "OPENROUTER_API_KEY")}}
 log = open(f"/private/tmp/m3hw-work/logs/charged-final-{lane}.log", "a")
 def run(command, **extra):
-    log.write(f"\n$ {' '.join(command)}\n"); log.flush()
+    log.write(f"\n$ {' '.join(command)}\n")
+    log.flush()
     code = subprocess.call(command, env={**env, **extra}, stdout=log, stderr=subprocess.STDOUT)
-    log.write(f"(exit {code})\n"); log.flush()
+    log.write(f"(exit {code})\n")
+    log.flush()
 if lane == "fl166":
     for i in (sys.argv[2:] or (1, 2, 3)):
         run(["/bin/zsh", f"{OUT}/fl166-walk.sh", str(i), f"{OUT}/receipts/FL-166-run{i}.txt"])

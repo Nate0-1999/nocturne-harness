@@ -3,7 +3,7 @@ import test from 'node:test'
 
 import { RETAINED_EVENT_CHARS, RETAINED_STREAM_EVENTS, retainEvents } from '../src/storeRetention.ts'
 
-/** M3HW (Codex 05): a long turn kept every tool result whole in the page and re-encoded all of
+/** P3 / M3HW (Codex 05): a long turn kept every tool result whole in the page and re-encoded all of
  * them on every token, freezing the tab for 37 s. An answer keeps its last 100 stream events,
  * each string cut to 2,000 characters, and every control event whole. */
 test('an answer retains a bounded tail of stream events and every control event', () => {

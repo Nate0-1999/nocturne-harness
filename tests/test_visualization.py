@@ -23,8 +23,8 @@ def test_tree_preserves_empty_hidden_and_untracked_entries_without_following_lin
 
 
 def test_trees_rewalk_only_within_the_walk_budget(tmp_path, monkeypatch):
-    """M3HW / FL-166: walking every tree every 2 s held a core; a known tree waits its budget,
-    a new root is walked at once, and a root that left is forgotten."""
+    """P2.1 / M3HW / FL-166: walking every tree every 2 s held a core; a known tree waits its
+    budget, a new root is walked at once, and a root that left is forgotten."""
     from harness import visualization
 
     clock = {"now": 100.0}
@@ -79,7 +79,7 @@ def test_recorded_history_survives_restart_and_replays_deletion_exactly(tmp_path
 
 
 def test_trees_are_stored_once_then_as_changes_and_replay_exactly(tmp_path):
-    """M3HW / FL-134: each changed sample stored whole trees (1 GB in a day); a tree is now
+    """P2.1 / M3HW / FL-134: each changed sample stored whole trees (1 GB in a day); a tree is now
     written once, then as its changed entries, and every past state still replays exactly."""
     import json
     import sqlite3
@@ -118,8 +118,8 @@ def test_trees_are_stored_once_then_as_changes_and_replay_exactly(tmp_path):
 
 
 def test_retention_drops_old_rows_keeps_needed_trees_and_reads_the_old_format(tmp_path):
-    """M3HW: the store is bounded by a retention window; a tree a kept row builds on survives,
-    and rows written before M3HW (whole trees, no trail) are read until they age out."""
+    """P2.1 / M3HW: the store is bounded by a retention window; a tree a kept row builds on
+    survives, and rows written before M3HW (whole trees, no trail) are read until they age out."""
     import json
     import sqlite3
     import zlib
@@ -388,8 +388,8 @@ def test_live_history_reads_fold_only_new_rows(tmp_path):
 
 
 def test_a_held_tree_is_not_sent_again(tmp_path):
-    """M3HW / FL-166: every module re-parsed the whole tree on every 2.5 s poll; a client that
-    names a tree's digest receives no nodes for it, and everything else is unchanged."""
+    """P2.1 / M3HW / FL-166: every module re-parsed the whole tree on every 2.5 s poll; a client
+    that names a tree's digest receives no nodes for it, and everything else is unchanged."""
     import time
     from types import SimpleNamespace
 
@@ -433,7 +433,7 @@ def test_a_held_tree_is_not_sent_again(tmp_path):
 
 
 def test_a_slow_palace_read_never_holds_the_local_observation(tmp_path):
-    """M3HW (found by M3LV): four Palace reads awaited in a row froze the Farm and Roots for
+    """F159 / M3HW (found by M3LV): four Palace reads awaited in a row froze the Farm and Roots for
     90 s on a slow Palace; a read still running leaves the sample on its 2 s cadence, and its
     value arrives with a later sample."""
     import asyncio

@@ -69,7 +69,7 @@ test('rack iframe boundary strips private image material without mutating the ho
   assert.equal(projectedEnvelope.event.envelope.payload.prompt, 'What is shown?')
 })
 
-/** M3HW: every store change re-copied the whole rack once per module frame; an unchanged value
+/** P3 / M3HW: every store change re-copied the whole rack once per module frame; an unchanged value
  * keeps its one projection, and only what the change replaced is walked again. */
 test('a snapshot change projects only the values it replaced', () => {
   const quiet = { messages: [{ role: 'assistant', content: 'done', events: [{ event_kind: 'part_end' }] }] }

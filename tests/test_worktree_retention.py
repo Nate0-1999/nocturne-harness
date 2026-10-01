@@ -10,7 +10,7 @@ def _git(root: Path, *args: str) -> str:
 
 
 def test_completed_symphony_worktrees_leave_and_their_commits_stay_reachable(tmp_path):
-    """M3HW (M3W5B-13): seven small Symphonies left 17 GB of worktrees; a completed one's
+    """P3 / M3HW (M3W5B-13): seven small Symphonies left 17 GB of worktrees; a completed one's
     worktrees are removed beyond the newest `keep`, each attempt's commit kept under a ref."""
     root, home = tmp_path / "project", tmp_path / "home"
     root.mkdir()

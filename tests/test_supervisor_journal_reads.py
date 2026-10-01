@@ -8,7 +8,7 @@ from harness.supervisor import WorkerStatus, WorkerSupervisor
 
 
 def test_a_heartbeat_reads_only_what_was_appended(tmp_path: Path, monkeypatch) -> None:
-    """M3HW: each heartbeat re-parsed the whole journal three times, so a 15-minute Symphony's
+    """P3 / M3HW: each heartbeat re-parsed the whole journal three times, so a 15-minute Symphony's
     6,319 heartbeats held the event loop near 40%; a heartbeat now parses only new rows, and a
     restarted supervisor still rebuilds the same registry from the whole journal."""
     supervisor = WorkerSupervisor(tmp_path / "state")

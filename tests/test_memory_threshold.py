@@ -24,7 +24,7 @@ def _preflight(memory_bytes):
 
 
 def test_doctor_shows_the_daemon_memory_against_its_threshold(threshold):
-    """FL-166 (M3HW): doctor showed no app-memory line; it now names the daemon's memory and
+    """P4 / FL-166 (M3HW): doctor showed no app-memory line; it now names the daemon's memory and
     the threshold (10% of this machine's memory), and warns past it."""
     lines = []
     for used in (None, 1024**3, 3 * 1024**3):
@@ -39,7 +39,7 @@ def test_doctor_shows_the_daemon_memory_against_its_threshold(threshold):
 
 
 def test_up_says_once_when_the_daemon_passes_its_threshold(threshold, monkeypatch, capsys):
-    """FL-166 (M3HW): the daemon reached 4 GB with no prompt; `nocturne up` now says so once
+    """P4 / FL-166 (M3HW): the daemon reached 4 GB with no prompt; `nocturne up` now says so once
     per crossing, checking the daemon's memory every minute."""
     clock = {"now": 0.0}
     readings = iter([3, 3, 1, 3])  # GiB at each minute's check
