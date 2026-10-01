@@ -27,6 +27,8 @@ chart of the relevance features on hover; × and ×! with a confirmation.
 - "chrome for the borders not buttons" (the rim law)
 - "the chrome needs to be liquid and shiny and white" (the shine floor)
 - neo-noir stays the default; every theme keeps working (the three-theme ruling)
+- "Icons reused across modules should be the same size, similarly text should be the same size and font. Not every icon needs a box around it" (2026-10-01: one scale; boxes only on icon buttons)
+- "I don't want this to look like pure ai website" (2026-10-01: the tells law, M3UI2)
 
 ## Procedure, module by module
 
@@ -73,6 +75,9 @@ chart of the relevance features on hover; × and ×! with a confirmation.
   the ONE adopted icon set (SD-069), drawn in the theme's ink — never a
   second set, never hand-drawn glyphs on buttons.
 - Rounded corners. Chamfers.
+- A second size for the same icon, or a second size or font for the same
+  text role, in any module. One scale, in the tokens.
+- A box around an icon that is not a button.
 - A change inside the composer function or inside the 3D scenes; peers
   hold unmerged work there. Style around them.
 - A behavior change of any kind.
