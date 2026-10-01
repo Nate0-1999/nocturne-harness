@@ -796,6 +796,11 @@ class PydanticHarnessToolset:
         return shell, wrapped
 
 
+def message_tokens(messages) -> int:
+    """The cl100k size of a request's messages, for the turn budget (M3CL2)."""
+    return estimate_token_count(messages, cl100k_token_count)
+
+
 def own_history(messages):
     """D.2 153: worker returns do not contribute to the main thread's fill."""
     return [

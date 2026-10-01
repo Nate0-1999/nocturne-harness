@@ -2,6 +2,7 @@
 
 import re
 from collections.abc import Callable, Sequence
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -16,7 +17,7 @@ from spine.tokens import cl100k_token_count
 from harness.capability import CapabilityHandler, CapabilityTool, HarnessCapability
 from harness.context_window import ContextCut, cut_notice
 from harness.memory_capability import DEFAULT_MEMORY_FEATURE
-from harness.pydantic_harness_adapter import adopted_skills
+from harness.pydantic_harness_adapter import adopted_skills, message_tokens
 from harness.tools_memory import MemoryToolContext
 from harness.toolset import ToolName, ToolsetError
 
@@ -107,31 +108,37 @@ class FinishWhatWasAsked(Capability[MemoryToolContext]):
 
 
 class TurnBudgetNotice(Capability[MemoryToolContext]):
-    """Gate ruling 2026-10-01 (M3CL2): a run that spins into the turn's request or token wall
-    fails; at three quarters of either, the agent is told once to stop and report plainly."""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.sent = False
+    """Gate ruling 2026-10-01 (M3CL2): runs that spun into the 500,000-token wall fail, and a
+    soft notice did not stop gpt-4.1-mini. When this request and one more of its size would
+    cross the turn's token limit, or it is the last request the count allows, it goes out with
+    no tools and asks for a plain account, so the turn ends inside its budget."""
 
     async def before_model_request(self, ctx, request_context):
         limits, usage, latest = ctx.usage_limits, ctx.usage, request_context.messages[-1]
-        if self.sent or limits is None or not isinstance(latest, ModelRequest):
+        if limits is None or not isinstance(latest, ModelRequest):
             return request_context
         requests, tokens = limits.request_limit, limits.total_tokens_limit
-        if (requests and usage.requests >= requests * 3 // 4) or (
-            tokens and usage.total_tokens >= tokens * 3 // 4
-        ):
-            self.sent = True
-            latest.parts.append(
-                UserPromptPart(
-                    f"This turn has used {usage.requests} model requests and "
-                    f"{usage.total_tokens:,} tokens; it stops at {requests or 'no'} requests or "
-                    f"{tokens or 'no'} tokens. If the work is not done, stop now: tell the user "
-                    "plainly what is done, what is not, and why. Start nothing new."
-                )
+        size = message_tokens(request_context.messages)
+        last = (requests and usage.requests + 1 >= requests) or (
+            tokens and usage.total_tokens + 2 * size >= tokens
+        )
+        if not last:
+            return request_context
+        latest.parts.append(
+            UserPromptPart(
+                f"This is the last model request this turn's budget allows ({usage.requests} "
+                f"requests and {usage.total_tokens:,} tokens used; the turn stops at "
+                f"{requests or 'no'} requests or {tokens or 'no'} tokens), so tools are off for "
+                "it. Tell the user plainly what is done, what is not, and why; they can send "
+                '"continue" to go on.'
             )
-        return request_context
+        )
+        return replace(
+            request_context,
+            model_request_parameters=replace(
+                request_context.model_request_parameters, function_tools=[]
+            ),
+        )
 
 
 def _adapt_search(handler: CapabilityHandler) -> Tool[MemoryToolContext]:
