@@ -567,6 +567,10 @@ class PydanticAITurnRunner:
                     model_settings=model_settings,
                     usage_limits=self._agent.usage_limits,
                     usage=run_usage,
+                    # M3CL2 walk: a run's one output retry went to the account's send-back, a
+                    # second ended the turn "Exceeded maximum output retries (1)"; each
+                    # once-per-run check carries its own.
+                    retries={"output": 3},
                     event_stream_handler=bridge.handle,
                 )
             visible_output = await bridge.finalize(

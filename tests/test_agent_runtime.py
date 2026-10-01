@@ -1895,6 +1895,34 @@ async def test_a_finished_answer_that_crosses_the_token_wall_is_delivered_finish
 
 
 @pytest.mark.asyncio
+async def test_a_checked_answer_and_an_empty_one_do_not_end_the_turn_in_a_run_error() -> None:
+    """M3CL2 walk: in one rewind turn the loop's account sent the answer back, a second retry
+    followed, and the turn ended "Exceeded maximum output retries (1)" with its answer kept as
+    partial. Each once-per-run check now carries its own output retry. [ADR-013]"""
+
+    answers = iter(["I will check the file now.", "", "The file holds one; nothing was committed."])
+
+    async def stream(_messages, _info):
+        text = next(answers)
+        # A thinking-only response is not output; it also spends an output retry.
+        yield text or {0: DeltaThinkingPart(content="Thinking.")}
+
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(),
+    )
+    emitted = RecordingEmitter()
+
+    outcome = await runner.run(
+        thread_id="thread-1", prompt="check the file", message_history=(), emit=emitted
+    )
+
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert outcome.assistant_text.endswith("The file holds one; nothing was committed.")
+    assert not [e for e in emitted.events if e["event_kind"] == "run_error"]
+
+
+@pytest.mark.asyncio
 async def test_provider_failure_maps_to_error_and_preserves_capture_without_cancel_repair() -> None:
     """ADR-013 is defended by verifying that provider failure maps to error and preserves
     capture without cancel repair; this prevents drift in the streaming model runtime and
