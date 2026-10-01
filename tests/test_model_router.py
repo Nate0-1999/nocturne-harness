@@ -170,7 +170,7 @@ async def test_single_key_mode_lists_its_sources_own_models_and_switches_among_t
                 "object": "list",
                 "data": [
                     {"id": "gpt-4.1-mini", "object": "model"},
-                    {"id": "gpt-4.1", "object": "model"},
+                    {"id": "gpt-4.1", "object": "model", "supported_parameters": ["reasoning"]},
                 ],
             },
         )
@@ -199,6 +199,7 @@ async def test_single_key_mode_lists_its_sources_own_models_and_switches_among_t
 
     assert catalog.rows == ()
     assert [entry.model_id for entry in catalog.listing] == ["gpt-4.1-mini", "gpt-4.1"]
+    assert not any(entry.reasoning for entry in catalog.listing)
     assert (switched.model, switched.context_tokens) == ("openai:gpt-4.1", 64_000)
     assert str(seen[0].url) == "https://compatible.example/v1/models"
     assert seen[0].headers["Authorization"] == "Bearer direct-key"

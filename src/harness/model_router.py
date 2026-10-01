@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Any, Protocol, cast
 
@@ -174,7 +175,10 @@ class DirectCompletionAdapter:
                     f"{base_url}/models", headers={"Authorization": f"Bearer {api_key}"}
                 )
             response.raise_for_status()
-            listing = parse_model_listing(response.json())
+            # This adapter sends no reasoning effort, so no model here offers a thinking level.
+            listing = tuple(
+                replace(entry, reasoning=False) for entry in parse_model_listing(response.json())
+            )
         except (httpx.HTTPError, ValueError, ModelCatalogUnavailable) as exc:
             raise ModelCatalogUnavailable("the model source's list is unavailable") from exc
         return ModelCatalog(rows=(), model_routes={}, fetched_at=datetime.now(UTC), listing=listing)
