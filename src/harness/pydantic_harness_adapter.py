@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import asyncio
 import hashlib
 import json
@@ -13,6 +14,7 @@ import signal
 import subprocess
 import tempfile
 import unicodedata
+import warnings
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
@@ -175,6 +177,28 @@ def _refuse_destruction(target: Path, original: str, revised: str, said_replace:
         f"end, edit with oldText set to its last lines, {tail!r}, and newText set to those "
         "lines followed by what you add."
     )
+
+
+def _refuse_broken_python(target: Path, original: str, revised: str) -> None:
+    """M3CL2 walk: an anchor that ended inside a call put gpt-4.1-mini's new test in the middle
+    of an existing one; the file stopped parsing and the agent blamed "leftover code" for it."""
+
+    if target.suffix != ".py":
+        return
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            ast.parse(original)
+        except (SyntaxError, ValueError):
+            return
+        try:
+            ast.parse(revised)
+        except SyntaxError as error:
+            raise ToolsetError(
+                f"Refused: after this change {target.name} would not parse as Python "
+                f"({error.msg}, line {error.lineno}); the file is unchanged. Make oldText whole "
+                "lines that end a statement, so newText does not land inside one."
+            ) from None
 
 
 def _unique_ending(original: str) -> str:
@@ -527,6 +551,7 @@ class PydanticHarnessToolset:
         if target.is_file():
             original = target.read_text(encoding="utf-8", errors="replace")
             _refuse_destruction(target, original, content, arguments.get("replace"))
+            _refuse_broken_python(target, original, content)
         relative = target.relative_to(self._location.cwd)
         result = await self._filesystem(self._location.cwd).write_file(str(relative), content)
         self._emit("write", target)
@@ -579,6 +604,7 @@ class PydanticHarnessToolset:
         for start, end, replacement in reversed(ordered):
             revised = revised[:start] + replacement + revised[end:]
         _refuse_destruction(target, original, revised, arguments.get("replace"))
+        _refuse_broken_python(target, original, revised)
         expected_hash = hashlib.sha256(original.encode()).hexdigest()[:12]
         relative = target.relative_to(self._location.cwd)
         result = await self._filesystem(self._location.cwd).edit_file(

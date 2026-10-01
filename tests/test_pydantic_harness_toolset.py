@@ -704,6 +704,34 @@ async def test_paths_named_from_the_root_work_from_a_subfolder_and_misses_say_so
 
 
 @pytest.mark.asyncio
+async def test_an_edit_that_stops_a_python_file_parsing_is_refused(tmp_path: Path) -> None:
+    """M3CL2 walk on gpt-4.1-mini: an anchor ending inside a call put the new test in the middle
+    of an existing one, and the agent then blamed "leftover code" for the break."""
+
+    source = "def test_a():\n    assert run(\n        1,\n    ) == 2\n"
+    (tmp_path / "test_a.py").write_text(source)
+    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    try:
+        inside = await toolset.execute(
+            "edit",
+            {
+                "path": "test_a.py",
+                "edits": [
+                    {"oldText": "        1,\n", "newText": "        1,\n\n\ndef test_b():\n"}
+                ],
+            },
+        )
+        written = await toolset.execute("write", {"path": "test_a.py", "content": source[:-9]})
+    finally:
+        await toolset.close()
+
+    assert not inside.success and not written.success
+    assert inside.content.startswith("Refused: after this change test_a.py would not parse")
+    assert "the file is unchanged" in inside.content
+    assert (tmp_path / "test_a.py").read_text() == source
+
+
+@pytest.mark.asyncio
 async def test_a_file_search_ignores_its_glob_and_a_missed_anchor_names_the_closest_line(
     tmp_path: Path,
 ) -> None:
