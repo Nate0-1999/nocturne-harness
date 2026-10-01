@@ -523,6 +523,7 @@ async def test_a_change_that_removes_most_of_a_file_needs_the_word_replace(tmp_p
 
     assert not rewrite.success and "Refused: this would remove 9" in rewrite.content
     assert "test_big.py (120 lines)" in rewrite.content and "says replace" in rewrite.content
+    assert "oldText set to its last line, '    assert 39'," in rewrite.content
     assert not gutted.success and "Refused: this would remove" in gutted.content
     assert added.success and bumped.success and replaced.success
     assert (tmp_path / "test_big.py").read_text() == "# replaced\n"
