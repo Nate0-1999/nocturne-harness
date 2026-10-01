@@ -71,6 +71,10 @@ export function PalaceNebula() {
   const [tier, setTier] = useState<NebulaHardwareTier>('full')
   const [scope, setScope] = useState<'GLOBAL' | 'ATTUNED'>('GLOBAL')
   const [load, setLoad] = useState<LoadState>({ kind: 'loading' })
+  // A first live reading slower than 3 s (or failed) lets the recording stand in, so a slow Palace still draws its last
+  // recorded state; the swap to the live reading then lands long after the renderer has started.
+  const [patient, setPatient] = useState(true)
+  useEffect(() => { const timer = globalThis.setTimeout(() => setPatient(false), 3000); return () => globalThis.clearTimeout(timer) }, [])
   const [fps, setFps] = useState(0)
   const [triangles, setTriangles] = useState(0)
   const [backend, setBackend] = useState<ThreeBackend>('starting')
@@ -114,13 +118,14 @@ export function PalaceNebula() {
   // One source each: a scene that mounts on the recording and swaps to the live reading while its WebGPU renderer is
   // still starting draws nothing.
   const sceneSnapshot = useMemo(() => {
-    if (!selected?.as_of) return load.kind === 'ready' ? load.snapshot : null
+    if (!selected?.as_of && load.kind === 'ready') return load.snapshot
+    if (!selected?.as_of && load.kind === 'loading' && patient) return null
     const recorded = visualization.data
     if (!recorded?.palace) return null
     const palace = { ...recorded.palace, as_of: recorded.as_of }
     if (scope === 'ATTUNED') palace.nodes = palace.nodes.filter((node) => node.memory.origin_thread_id === threadId)
     return palace
-  }, [visualization.data, selected?.as_of, scope, threadId, load])
+  }, [visualization.data, selected?.as_of, scope, threadId, load, patient])
   const bodies = useMemo(() => sceneSnapshot ? buildNebulaBodies(sceneSnapshot).map((body) => {
     const memory = sceneSnapshot.nodes.find((node) => node.memory.memory_id === body.id)?.memory
     const focused = selected?.kind === 'memory' ? selected.id === body.id
