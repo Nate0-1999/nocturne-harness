@@ -1282,16 +1282,30 @@ def create_dev_app(
 
         @app.get("/v1/model-policies")
         async def agent_model_policies():
-            return {"policies": role_policies}
+            policies = dict(role_policies)
+            curator_error = None
+            try:
+                policies["curator"] = await owned_spine.curator_model_policy(principal_id)
+            except SpineClientError:
+                curator_error = "Curator settings are unavailable from this Palace."
+            return {"policies": policies, "curator_error": curator_error}
 
         @app.put("/v1/model-policies/{role}")
         async def update_agent_model_policy(
-            role: Literal["chat", "subagent", "judge"], body: AgentPolicyUpdate
+            role: Literal["chat", "subagent", "judge", "curator"], body: AgentPolicyUpdate
         ):
             try:
                 parse_model_policy(body.policy)
             except ValueError as exc:
                 raise HTTPException(422, str(exc)) from exc
+            if role == "curator":
+                try:
+                    await owned_spine.curator_model_policy(principal_id, body.policy)
+                except SpineClientError as exc:
+                    raise HTTPException(
+                        502, "The Palace could not save the curator policy."
+                    ) from exc
+                return await agent_model_policies()
             updated = {**role_policies, role: body.policy}
             home.mkdir(parents=True, exist_ok=True)
             temporary = role_policy_path.with_suffix(".tmp")

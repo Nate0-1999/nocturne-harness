@@ -360,10 +360,10 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     id: 'gate',
     name: 'Memory Gate',
     version: '1.0.0',
-    class: 'visualizer',
+    class: 'control',
     slot: 'overlay',
     streams: ['gate.open', 'gate.dismiss', 'error'],
-    actions: ['gate.commit', 'run.cancel'],
+    actions: ['gate.commit', 'run.cancel', 'scorer.audition'],
     bounds: commonPanelBounds,
     movable: false,
     law_bound: true,
@@ -1032,6 +1032,9 @@ export function createHostPluginApi(
         if (manifest.id.startsWith('plugin:') && action.type === 'parameter.write'
             && !manifest.bindings?.includes(action.parameter_id)) {
           throw new Error(`${manifest.id} is not bound to ${action.parameter_id}`)
+        }
+        if (action.type === 'rack.scope.get' && spatialContext !== null) {
+          return spatialContext.scope as RackActionResult<Action>
         }
         return runRackAction(
           () => dispatchRackAction(contextualRackAction(action, instanceId, attunement)),

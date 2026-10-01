@@ -149,6 +149,7 @@ def test_client_exposes_all_spine_routes() -> None:
         "create_seed",
         "approval_queue",
         "curator_activity",
+        "curator_model_policy",
         "curator_progress",
         "stage_symphony_memory",
         "visible_symphony_memories",

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.48 - 2026-10-01
+
+- Compare current and proposed scores on a live memory gate, retain the previous
+  generation's agreement, and inspect removal history and project offsets.
+  Thin proposals and invalid memory shares explain their limits.
+- Configure the curator's model policy in App settings. Pair with Memory 0.1.48,
+  which stores the policy and shares the selector used by the other agent roles.
+
 ## 0.1.46 - 2026-10-01
 
 - Re-saves reinforce complete memories; rejected candidates stay rejected and

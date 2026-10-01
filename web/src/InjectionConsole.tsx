@@ -36,6 +36,8 @@ type Config = {
   replay: Record<string, unknown> | null
 }
 type Point = {
+  event_uid: string
+  outcome: string | null
   axis_contributions?: Record<string, string>
   injection_id: string
   ts: string
@@ -47,6 +49,7 @@ type Point = {
 type Candidate = { memory_id: string; label: string; points: Point[] }
 type Comparison = {
   memory_id: string
+  incumbent_score: string
   preview_score: string
   preview_rank: number
   disposition: 'also_shown' | 'would_add' | 'would_drop' | 'still_out'
@@ -132,10 +135,19 @@ function latestInjection(candidates: Candidate[]): string | undefined {
     .at(-1)?.injection_id
 }
 
+function previousAccuracy(config: Config, point: ScorerAccuracyPoint | undefined): number | null {
+  const previous = config.replay?.incumbent as { weighted_disagreements: string; weighted_share_disagreements?: string } | undefined
+  const denominator = Number(point?.weighted_dispositions)
+  return previous && denominator > 0
+    ? 100 * (1 - (Number(previous.weighted_disagreements) - Number(previous.weighted_share_disagreements ?? 0)) / denominator) : null
+}
+
 export function InjectionConsole() {
   const { query, events } = useRackPlugin()
   const rack = useRackSnapshot()
-  const [contextThread, setContextThread] = useState<string | null>(null)
+  const contextKey = `nocturne.injection.thread.${rack.attunement?.source_instance_id ?? 'current'}`
+  const [contextThreads, setContextThreads] = useState<Record<string, string>>({})
+  const contextThread = contextThreads[contextKey] ?? sessionStorage.getItem(contextKey)
   const contextIds = rack.attunement?.thread_ids ?? []
   const consoleThreadId = rack.selectedThreadId ??
     (contextThread !== null && contextIds.includes(contextThread) ? contextThread :
@@ -160,7 +172,7 @@ export function InjectionConsole() {
     const resetPolicy = consoleRefreshResetPolicy(
       dataRef.current?.active_version ?? null,
       next.active_version,
-      explicitReset,
+      explicitReset || dataRef.current === null,
     )
     dataRef.current = next
     setData(next)
@@ -227,12 +239,16 @@ export function InjectionConsole() {
   const weightSum = draft === null
     ? 0
     : Object.values(draft.weights).reduce((sum, value) => sum + value, 0)
-  const valid = draft !== null && Math.abs(weightSum - 1) < 0.000001
+  const invalidShare = draft !== null && (!Number.isFinite(draft.memory_context_share) ||
+    draft.memory_context_share < 0.01 || draft.memory_context_share > 0.5)
+  const valid = draft !== null && Math.abs(weightSum - 1) < 0.000001 && !invalidShare
   const injectionId = useMemo(
     () => scope === 'ATTUNED' && data !== null ? latestInjection(data.candidates) : undefined,
     [data, scope],
   )
   const activeVersion = data?.active_version
+  const activeConfig = data?.configurations.find((config) => config.version === activeVersion)
+  const activeAccuracy = data?.accuracy.find((point) => point.version === activeVersion)
 
   useEffect(() => {
     if (activeVersion === undefined || draft === null || !valid) return
@@ -381,7 +397,10 @@ export function InjectionConsole() {
         <h1>Injection Console</h1>
         {scope === 'ATTUNED' && rack.attunement?.kind === 'stack' && (
           <label>Conversation for preview
-            <Select data-tooltip-detail="Choose the thread whose gate the console reads." value={consoleThreadId ?? ''} onChange={(event) => setContextThread(event.target.value || null)}>
+            <Select aria-label="Conversation for preview" data-tooltip-detail="Choose the thread whose gate the console reads." value={consoleThreadId ?? ''} onChange={(event) => {
+              sessionStorage.setItem(contextKey, event.target.value)
+              setContextThreads((current) => ({ ...current, [contextKey]: event.target.value }))
+            }}>
               <option value="">Choose a conversation</option>
               {rack.catalog.filter((entry) => contextIds.includes(entry.thread_id)).map((entry) => (
                 <option key={entry.thread_id} value={entry.thread_id}>{entry.title || entry.thread_id}</option>
@@ -421,6 +440,9 @@ export function InjectionConsole() {
       <div className="console-grid">
         <section>
           <p className="console-active">Current recipe <strong>{data?.active_version}</strong></p>
+          {activeConfig && activeAccuracy?.status === 'measured' && <p>
+            Current {generationAccuracyCopy(activeAccuracy)} · Previous {previousAccuracy(activeConfig, activeAccuracy) === null ? 'not recorded' : formatHumanPercent(previousAccuracy(activeConfig, activeAccuracy)!)} · same held-out decisions
+          </p>}
           <details><summary>Trainable parameter registry</summary>
             <table><thead><tr><th>Parameter</th><th>Loop</th><th>Authentic floor</th><th>Status</th></tr></thead><tbody>
               {(data?.trainables ?? []).map((item) => <tr key={item.parameter}><td>{item.parameter}</td><td>{item.loop}</td><td>{item.floor ?? '—'}</td><td>{item.status.replaceAll('_', ' ')}</td></tr>)}
@@ -432,7 +454,10 @@ export function InjectionConsole() {
               {Object.values(config.axes ?? {}).length === 0 && <p>No curator-grown axes in this generation.</p>}
               {Object.entries(config.axes ?? {}).map(([name, axis]) => <div key={name}><strong>{axis.label}</strong><p>{axis.inputs.join(' × ')} · weight {axis.weight.toFixed(4)} · {axis.action.replaceAll('_', ' ')}</p><p>{axis.rationale}</p><details><summary>Provenance</summary><pre>{JSON.stringify(axis.provenance, null, 2)}</pre></details></div>)}
               <p>Unseen projects start with zero offsets from global weights.</p>
-              <pre>{JSON.stringify(config.project_offsets ?? {}, null, 2)}</pre>
+              {Object.keys(config.project_offsets ?? {}).length === 0 ? <p>No project offsets learned yet.</p> :
+                <table aria-label={`Project offsets for ${config.version}`}><thead><tr><th>Project</th>{Object.values(WEIGHT_LABELS).map((label) => <th key={label}>{label}</th>)}</tr></thead>
+                  <tbody>{Object.entries(config.project_offsets ?? {}).map(([project, offsets]) => <tr key={project}><th>{project}</th>{Object.keys(WEIGHT_LABELS).map((key) => <td key={key}>{(offsets[key] ?? 0).toPrecision(4)}</td>)}</tr>)}</tbody>
+                </table>}
             </article>)}
           </details>
           {data?.learning && data.metrics_scope !== 'principal' && (
@@ -444,17 +469,25 @@ export function InjectionConsole() {
           )}
           {(data?.proposed_versions ?? []).map((proposal) => {
             const point = data?.accuracy.find((candidate) => candidate.version === proposal.version)
+            const previous = previousAccuracy(proposal, point)
+            const incumbent = data?.configurations.find((config) => config.version === data.active_version)
+            const zeroed = Object.keys(WEIGHT_LABELS).filter((key) => proposal.values.weights[key] === 0 && (incumbent?.values.weights[key] ?? 0) > 0)
             return (
               <article className="proposal-card" key={proposal.version}>
                 <header>
                   <div><small>BACKGROUND PROPOSAL</small><h2>{proposal.version}</h2></div>
-                  <strong>{generationAccuracyCopy(point)}</strong>
+                  <strong>Proposed {generationAccuracyCopy(point)}</strong>
                 </header>
+                <p>Previous {previous === null ? 'not recorded' : formatHumanPercent(previous)} · same held-out decisions</p>
                 <p>
                   {point?.weighted_dispositions === null || point?.weighted_dispositions === undefined
                     ? 'Exact held-out weight is not recorded.'
                     : `${point.weighted_dispositions} weighted held-out dispositions.`}
                 </p>
+                {point?.holdout_dispositions !== null && point?.holdout_dispositions !== undefined &&
+                  point.holdout_dispositions < (data?.learning.minimum_dispositions ?? 25) &&
+                  <p role="note">Limited evidence: only {point.holdout_dispositions} held-out decisions. Review the audition before activating.</p>}
+                {zeroed.length > 0 && <p role="note">This proposal removes the influence of {zeroed.map((key) => WEIGHT_LABELS[key]).join(', ')}.</p>}
                 <div className="proposal-actions">
                   <Button variant="bare"
                     className="console-secondary-action"
@@ -513,6 +546,7 @@ export function InjectionConsole() {
               <p className={valid ? 'weight-ok' : 'weight-bad'}>
                 Influence total {weightSum.toFixed(2)} / 1.00
               </p>
+              {invalidShare && <p role="alert">Memory share must be between 0.01 and 0.50 (1–50% of the context window).</p>}
               <label>
                 <span>Accuracy slice</span>
                 <Select
@@ -589,7 +623,7 @@ export function InjectionConsole() {
                   <strong>{candidate.label}</strong>
                   <span>
                     {comparison
-                      ? `${formatHumanScore(comparison.preview_score)} · #${comparison.preview_rank} ${comparison.disposition.replace('_', ' ')}`
+                      ? `Current ${formatHumanScore(comparison.incumbent_score)} · Proposed ${formatHumanScore(comparison.preview_score)} · #${comparison.preview_rank} ${comparison.disposition.replaceAll('_', ' ')}`
                       : point
                         ? `${formatHumanScore(point.score)} · #${point.rank} ${point.shown_as}`
                         : 'Not measured yet'}
@@ -602,7 +636,13 @@ export function InjectionConsole() {
           {data?.candidates.length === 0 && <p>Nothing measured yet.</p>}
         </section>
       </div>
-      <CreationScoreboard data={data?.creation?.sources ? data.creation : undefined} />
+      <details><summary>Injection back-test history</summary>
+        <table aria-label="Injection back-test history"><thead><tr><th>Time</th><th>Memory</th><th>Decision</th><th>Score</th></tr></thead>
+          <tbody>{(data?.candidates ?? []).flatMap((candidate) => candidate.points.filter((point) => point.outcome !== null).map((point) =>
+            <tr key={point.event_uid}><td>{point.ts}</td><th>{candidate.label}</th><td>{point.outcome?.replaceAll('_', ' ').replace(':', ' · ')}</td><td>{formatHumanScore(point.score)}</td></tr>))}</tbody>
+        </table>
+      </details>
+      {data && <CreationScoreboard data={data.creation?.sources ? data.creation : undefined} />}
     </section>
   )
 }

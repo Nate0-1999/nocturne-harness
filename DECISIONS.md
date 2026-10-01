@@ -3819,6 +3819,16 @@ until the next start. The card's hover lists the folders beneath WHERE, one per 
 its panel is capped at the width its placement assumes. The gate card keeps rank, kind and
 id: its C.4 card carries no provenance.
 
+## M3LF — Make learning decisions visible [P2.4]
+
+PRECEDENT: M3LL, M3LW, report 254, F152/F157; A-074.
+The gate and console compare proposed and current scores. Held-out agreement
+compares both recipes on the same decisions; fewer than the 25-signal training
+floor warns before activation, as do newly zeroed influences. Logged injection
+outcomes expose removals separately from creation outcomes. The console retains
+its chosen conversation per attuned stack. Curator policy lives in the Palace;
+its selector moves into Memory so all four roles use the same implementation.
+
 ## M3EXF2 — The small list, round two [P2, P2.3, P2.5, P3]
 
 PRECEDENT: M3EXF, report 254 (M3W5B-29..40, TASTE-04..07; Codex 07, 08, 12, 16, 19), F140,
