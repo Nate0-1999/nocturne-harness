@@ -3,12 +3,12 @@
   "base_url": "http://127.0.0.1:8785",
   "steps": [
     {
-      "at": "2026-10-01T06:50:34.943Z",
+      "at": "2026-10-01T07:36:33.857Z",
       "name": "chip after the first turn",
       "chip": "MiniMax M3 · default thinking · 1M context · $0.30/$1.20 per M"
     },
     {
-      "at": "2026-10-01T06:50:35.780Z",
+      "at": "2026-10-01T07:36:34.679Z",
       "name": "browser opened from the chip",
       "listed": 455,
       "top_scores": [
@@ -20,7 +20,7 @@
       ]
     },
     {
-      "at": "2026-10-01T06:50:36.380Z",
+      "at": "2026-10-01T07:36:35.280Z",
       "name": "pinned to the top",
       "first_row": "openrouter:openai/gpt-4.1-mini",
       "pins": [
@@ -28,12 +28,17 @@
       ]
     },
     {
-      "at": "2026-10-01T06:50:38.211Z",
+      "at": "2026-10-01T07:36:36.347Z",
+      "name": "a row click switched the conversation",
+      "model": "openrouter:openai/gpt-4.1-mini"
+    },
+    {
+      "at": "2026-10-01T07:36:37.762Z",
       "name": "Max selected",
       "configurations": [
         {
-          "policy": "pinned:openrouter:minimax/minimax-m3",
-          "model": "openrouter:minimax/minimax-m3",
+          "policy": "pinned:openrouter:openai/gpt-4.1-mini",
+          "model": "openrouter:openai/gpt-4.1-mini",
           "reason": "keeps this model"
         },
         {
@@ -55,32 +60,32 @@
       "chat_policy": "max"
     },
     {
-      "at": "2026-10-01T06:50:59.024Z",
+      "at": "2026-10-01T07:36:58.559Z",
       "name": "answered on the strong model",
       "chip": "Claude Opus 5.5 · low thinking · 1M context · $4.00/$20.00 per M",
       "model": "openrouter:anthropic/claude-opus-5.5"
     },
     {
-      "at": "2026-10-01T06:51:39.572Z",
+      "at": "2026-10-01T07:37:39.109Z",
       "name": "/model then a table",
       "chip": "GPT-4.1 Mini · 1M context · $0.40/$1.60 per M"
     },
     {
-      "at": "2026-10-01T06:52:00.555Z",
+      "at": "2026-10-01T07:38:00.082Z",
       "name": "temperature journaled",
       "last": {
-        "event_id": "01M3V3Q9TBPGMQTGZDTAQABGGA",
+        "event_id": "01M3V6BGNZPCGE71QTGD3YN76P",
         "parameter_id": "model.temperature",
         "scope": "thread",
-        "thread_id": "e71dca62-0c43-4cdf-9f9d-7465b701ad9d",
+        "thread_id": "69809d26-6cad-4f43-ba3a-a5bf5d298e7b",
         "actor": "human",
-        "timestamp": "2026-10-01T06:51:39.723458Z",
+        "timestamp": "2026-10-01T07:37:39.263640Z",
         "old_value": null,
         "new_value": 0.3
       }
     },
     {
-      "at": "2026-10-01T06:52:01.175Z",
+      "at": "2026-10-01T07:38:00.697Z",
       "name": "role policies",
       "policies": {
         "chat": "max",
@@ -90,5 +95,5 @@
       "curator_error": "Curator settings are unavailable from this Palace."
     }
   ],
-  "thread_id": "e71dca62-0c43-4cdf-9f9d-7465b701ad9d"
+  "thread_id": "69809d26-6cad-4f43-ba3a-a5bf5d298e7b"
 }

@@ -78,6 +78,13 @@ try {
   await capture('FL-202-pin.png')
   step('pinned to the top', { first_row: await firstRowModel(device), pins })
 
+  // Pick another: one click on a row switches this conversation (the pinned one, on top).
+  await retryUntil(() => row(device, pinTarget).locator('.model-row__pick').click(),
+    async () => (await parameters()).resolved_model === pinTarget)
+  await device.getByTestId('model-device-resolved').getByText(pinTarget, { exact: true }).waitFor()
+  await capture('FL-202-row.png')
+  step('a row click switched the conversation', { model: pinTarget })
+
   // 4. Max, one click: this thread switches to the strong model mid-thread and new threads start there.
   const browserBefore = await fetchJson(`${baseUrl}/v1/models?thread_id=${threadId}`)
   const max = browserBefore.configurations.find((item) => item.policy === 'max')

@@ -23,6 +23,8 @@
     "harness/web/dist/assets/index-ihEAodT8.css": "the packaged web app rebuilt for the 0.1.49 pair; built from the walked source.",
     "harness/web/dist/index.html": "the packaged web app rebuilt for the 0.1.49 pair; built from the walked source.",
     "harness/web/tests/modelBrowser.test.mjs": "unit tests for the browser order and the chip text (FL-202); test only.",
+    "harness/web/dist/assets/index-BjouZ7bu.js": "an intermediate packaged web build within this packet, replaced by the final one; built from the walked source.",
+    "harness/web/dist/assets/index-CZNGDNP5.css": "an intermediate packaged web build within this packet, replaced by the final one; built from the walked source.",
     "harness/verification/m3md/FL-009.png": "the row capture this report cites; verification only.",
     "harness/verification/m3md/FL-067.png": "the row capture this report cites; verification only.",
     "harness/verification/m3md/FL-069.png": "the row capture this report cites; verification only.",
@@ -77,6 +79,7 @@
     "harness/verification/m3md/run-1/FL-202-chip.png": "a walk run capture or receipt; verification only.",
     "harness/verification/m3md/run-1/FL-202-max.png": "a walk run capture or receipt; verification only.",
     "harness/verification/m3md/run-1/FL-202-pin.png": "a walk run capture or receipt; verification only.",
+    "harness/verification/m3md/run-1/FL-202-row.png": "a walk run capture or receipt; verification only.",
     "harness/verification/m3md/run-1/FL-202-strong.png": "a walk run capture or receipt; verification only.",
     "harness/verification/m3md/run-1/FL-202.png": "a walk run capture or receipt; verification only.",
     "harness/verification/m3md/run-1/walk.json": "a walk run capture or receipt; verification only.",
@@ -86,6 +89,7 @@
     "harness/verification/m3md/run-2/FL-202-chip.png": "a walk run capture or receipt; verification only.",
     "harness/verification/m3md/run-2/FL-202-max.png": "a walk run capture or receipt; verification only.",
     "harness/verification/m3md/run-2/FL-202-pin.png": "a walk run capture or receipt; verification only.",
+    "harness/verification/m3md/run-2/FL-202-row.png": "a walk run capture or receipt; verification only.",
     "harness/verification/m3md/run-2/FL-202-strong.png": "a walk run capture or receipt; verification only.",
     "harness/verification/m3md/run-2/FL-202.png": "a walk run capture or receipt; verification only.",
     "harness/verification/m3md/run-2/walk.json": "a walk run capture or receipt; verification only.",
@@ -95,6 +99,7 @@
     "harness/verification/m3md/run-3/FL-202-chip.png": "a walk run capture or receipt; verification only.",
     "harness/verification/m3md/run-3/FL-202-max.png": "a walk run capture or receipt; verification only.",
     "harness/verification/m3md/run-3/FL-202-pin.png": "a walk run capture or receipt; verification only.",
+    "harness/verification/m3md/run-3/FL-202-row.png": "a walk run capture or receipt; verification only.",
     "harness/verification/m3md/run-3/FL-202-strong.png": "a walk run capture or receipt; verification only.",
     "harness/verification/m3md/run-3/FL-202.png": "a walk run capture or receipt; verification only.",
     "harness/verification/m3md/run-3/walk.json": "a walk run capture or receipt; verification only.",
@@ -116,9 +121,7 @@
     "harness/verification/m3md/themes/model-browser-seraph-dressed.png": "the model browser in each built-in theme (look law); verification only.",
     "harness/verification/m3md/themes/model-browser-technomancer.png": "the model browser in each built-in theme (look law); verification only.",
     "harness/verification/m3md/themes/model-browser-wizard-mode.png": "the model browser in each built-in theme (look law); verification only.",
-    "harness/verification/m3md/walk.mjs": "the M3MD walk driver; verification only.",
-    "harness/web/dist/assets/index-BjouZ7bu.js": "an intermediate packaged web build within this packet, replaced by the final one; built from the walked source.",
-    "harness/web/dist/assets/index-CZNGDNP5.css": "an intermediate packaged web build within this packet, replaced by the final one; built from the walked source."
+    "harness/verification/m3md/walk.mjs": "the M3MD walk driver; verification only."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -183,7 +186,7 @@
       "verdict": "PASS",
       "screenshot": "FL-106.png",
       "flag": "",
-      "observed": "Three fresh runs (run-1..3/walk.json): mid-thread '/model openrouter:openai/gpt-4.1-mini' answered 'Model changed from openrouter:anthropic/claude-opus-5.5 to openrouter:openai/gpt-4.1-mini'; the chip then read 'GPT-4.1 Mini \u00b7 1M context \u00b7 $0.40/$1.60 per M' and the next reply's Planet | Order table rendered as a table (FL-106.png, run 3)."
+      "observed": "Three fresh runs (run-1..3/walk.json, each after a row click and the Max switch): mid-thread '/model openrouter:openai/gpt-4.1-mini' answered 'Model changed from openrouter:anthropic/claude-opus-5.5 to openrouter:openai/gpt-4.1-mini'; the chip then read 'GPT-4.1 Mini \u00b7 1M context \u00b7 $0.40/$1.60 per M' and the next reply's Planet | Order table rendered as a table (FL-106.png, run 3)."
     },
     "FL-110": {
       "label": "Global or current on every module; current modules switch together with the work.",
