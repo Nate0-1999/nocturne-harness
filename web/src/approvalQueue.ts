@@ -6,6 +6,7 @@ export interface QueueDecisionIntent {
   decision: QueueDecision
   approval_mode: QueueApprovalMode
   actor_class: QueueActorClass
+  amended_body?: string
 }
 
 export function queueDecisionPayload(intent: QueueDecisionIntent): QueueDecisionIntent {

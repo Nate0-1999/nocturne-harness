@@ -80,6 +80,9 @@ class ExtractionService:
             final_post=final_post,
             leave_over_cap=True,
             locations={message["message_id"]: message.get("location") for message in messages},
+            user_message_ids={
+                message["message_id"] for message in messages if message["role"] == "user"
+            },
         )
 
     async def triage(
@@ -97,6 +100,7 @@ class ExtractionService:
         summary_prompt=None,
         leave_over_cap=False,
         locations=None,
+        user_message_ids=None,
     ):
         """D.2 153: compaction and close run the same summarizer and admission path."""
         options = (
@@ -125,6 +129,7 @@ class ExtractionService:
             on_result=on_result,
             model_settings=model_settings,
             locations=locations,
+            user_message_ids=user_message_ids,
         )
 
     async def admit(
@@ -140,12 +145,18 @@ class ExtractionService:
         on_result=None,
         model_settings=None,
         locations=None,
+        user_message_ids=None,
     ) -> ThreadEndResult:
         """The shared compaction/close queue door; the summarizer already did triage."""
         text_id = str(thread_id)
         project_key, fallback = self._journal.thread_feet(text_id)
         groups: dict[str | None, list[ExtractionCandidate]] = {}
+        duplicate_count = 0
         for item in draft.candidates:
+            if user_message_ids is not None and not user_message_ids.intersection(
+                item.source_message_ids
+            ):
+                continue
             neighbors = await self._spine.search(
                 SearchRequest(
                     principal_id=self._principal_id,
@@ -177,12 +188,14 @@ class ExtractionService:
                 neighbor_payload,
                 **options,
             )
+            if verdict.verdict == "already_known":
+                duplicate_count += 1
+                continue
             location, folders = _origin_location(item.source_message_ids, locations or {}, fallback)
             groups.setdefault(location, []).append(
                 _candidate(item, verdict.verdict, verdict.target_ids, project_key, folders)
             )
         cards: list[QueueCard] = []
-        duplicate_count = 0
         # SD-072: the Palace stamps one location per request, so each birth folder sends its own.
         for location, candidates in (groups or {fallback: []}).items():
             response = await self._create_extraction(
