@@ -84,8 +84,14 @@ _CREDENTIAL_SEGMENTS = frozenset({".ssh", ".aws", ".gnupg", ".kube"})
 # M3CL2 walk: the default model wrote `cd <repo> && git add …`, which the exception missed.
 _GIT_COMMAND = re.compile(r"(?:^\s*|[;&|]\s*)git(?:\s|$)")
 _GIT_COMMIT = re.compile(r"\bgit\s+commit\b")
-_MISSING_PATH = re.compile(
-    r"(?:no such file or directory|file or directory not found): ([^\s:]+)", re.IGNORECASE
+# The forms a shell or tool uses to name a path it could not find (zsh, ls, pytest, git).
+_MISSING_PATHS = tuple(
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in (
+        r"(?:no such file or directory|file or directory not found): ([^\s:]+)",
+        r"([^\s:'\"]*[A-Za-z./][^\s:'\"]*): no such file or directory",
+        r"pathspec '([^']+)' did not match",
+    )
 )
 _SHELL_WRITE_REMEDY = (
     "The shell writes only inside {location}. Move to the folder you need to change and "
@@ -649,7 +655,9 @@ class PydanticHarnessToolset:
             # F134 (M3EX-02): the sandbox's refusal names the movement remedy.
             result += "\n" + _SHELL_WRITE_REMEDY.format(location=self._location.cwd)
         root = self._location.workspace_root
-        for missing in _MISSING_PATH.findall(result):
+        for missing in (
+            found.group(1) for pattern in _MISSING_PATHS for found in pattern.finditer(result)
+        ):
             if self._location.cwd != root and (root / missing).exists():
                 # INCIDENT M3W5B-02, walked again in M3CL2: from tests/, the user's
                 # `.venv/bin/python -m pytest tests/...` was "no such file", and the agent built a

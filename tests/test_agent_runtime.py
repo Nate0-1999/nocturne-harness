@@ -52,7 +52,7 @@ from harness.spine_client import (
     SpendEventsResponse,
 )
 from harness.tools_memory import MemoryToolContext
-from harness.toolset import ToolExecutionResult, ToolName, open_standard_toolset
+from harness.toolset import AgentLocation, ToolExecutionResult, ToolName, open_standard_toolset
 
 THREAD_UUID = UUID("22345678-1234-5678-1234-567812345678")
 REMOVED_MEMORY_UUID = UUID("32345678-1234-5678-1234-567812345678")
@@ -289,6 +289,18 @@ class RecordingSpend:
 @dataclass
 class RecordingWorkspaceToolset:
     calls: list[tuple[ToolName, Mapping[str, object]]] = field(default_factory=list)
+
+    def location(self) -> AgentLocation:
+        # The StandardToolset seam; a folder outside any repository, so no fact check runs.
+        folder = Path("/").resolve()
+        return AgentLocation(
+            agent_id="agent-1",
+            machine_id="machine-1",
+            session_id="session-1",
+            workspace_root=folder,
+            cwd=folder,
+            fence_reads=False,
+        )
 
     async def execute(
         self, tool_name: ToolName, arguments: Mapping[str, object]
@@ -2273,23 +2285,61 @@ async def test_an_answer_ending_in_a_promise_is_sent_back_once_to_finish() -> No
 
     from pydantic_ai import ModelRetry
     from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart
-    from pydantic_ai.usage import RunUsage, UsageLimits
+    from pydantic_ai.models import ModelRequestParameters
+    from pydantic_ai.tools import ToolDefinition
 
     from harness.pydantic_ai_adapter import FinishWhatWasAsked
 
-    limits = UsageLimits(request_limit=40)
-    early = SimpleNamespace(usage_limits=limits, usage=RunUsage(requests=5))
-    late = SimpleNamespace(usage_limits=limits, usage=RunUsage(requests=31))
+    early = SimpleNamespace(
+        model_request_parameters=ModelRequestParameters(
+            function_tools=[ToolDefinition(name="bash")]
+        )
+    )
+    late = SimpleNamespace(model_request_parameters=ModelRequestParameters(function_tools=[]))
     promise = ModelResponse(parts=[TextPart("The test fails. To fix this, I will patch it.")])
     asking = ModelResponse(parts=[TextPart("Would you like me to proceed with committing?")])
     working = ModelResponse(parts=[ToolCallPart("bash", {"command": "pytest"})])
     done = ModelResponse(parts=[TextPart("Committed abc123; 52 tests pass.")])
 
     check = FinishWhatWasAsked()
-    assert await check.after_model_request(early, request_context=None, response=done) is done
-    assert await check.after_model_request(early, request_context=None, response=working) is working
+    ctx = SimpleNamespace()
+    assert await check.after_model_request(ctx, request_context=early, response=done) is done
+    assert await check.after_model_request(ctx, request_context=early, response=working) is working
     with pytest.raises(ModelRetry, match="Do it now with the tools"):
-        await check.after_model_request(early, request_context=None, response=promise)
-    assert await check.after_model_request(early, request_context=None, response=asking) is asking
-    spent = FinishWhatWasAsked()
-    assert await spent.after_model_request(late, request_context=None, response=asking) is asking
+        await check.after_model_request(ctx, request_context=early, response=promise)
+    assert await check.after_model_request(ctx, request_context=early, response=asking) is asking
+    last = FinishWhatWasAsked()
+    assert await last.after_model_request(ctx, request_context=late, response=asking) is asking
+
+
+@pytest.mark.asyncio
+async def test_a_turn_that_changed_the_repository_is_checked_against_it_once() -> None:
+    """Gate ruling 2026-10-01 (M3CL2): gpt-4.1-mini reported a test it had only tried to write
+    into a memory. M3GD / SPEC B.6 r14: exercised retry: "Before you finish, check your answer
+    against the repository as it is now. {facts} ... If your answer already matches, reply
+    only: Checked."."""
+
+    from types import SimpleNamespace
+
+    from pydantic_ai import ModelRetry
+    from pydantic_ai.messages import ModelResponse, TextPart
+    from pydantic_ai.models import ModelRequestParameters
+    from pydantic_ai.tools import ToolDefinition
+
+    from harness.pydantic_ai_adapter import FinishFactCheck
+
+    tools = SimpleNamespace(
+        model_request_parameters=ModelRequestParameters(
+            function_tools=[ToolDefinition(name="bash")]
+        )
+    )
+    answer = ModelResponse(parts=[TextPart("I added the test and committed.")])
+    facts = "Repository now: last commit abc123 x (a.py); uncommitted: M b.py."
+    unchanged = FinishFactCheck(lambda: None)
+    assert (
+        await unchanged.after_model_request(None, request_context=tools, response=answer) is answer
+    )
+    check = FinishFactCheck(lambda: facts)
+    with pytest.raises(ModelRetry, match="uncommitted: M b.py. Correct anything"):
+        await check.after_model_request(None, request_context=tools, response=answer)
+    assert await check.after_model_request(None, request_context=tools, response=answer) is answer

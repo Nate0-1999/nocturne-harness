@@ -80,22 +80,18 @@ _PROMISED_WORK = re.compile(
 class FinishWhatWasAsked(Capability[MemoryToolContext]):
     """Codex M3W5A-13; the M3CL2 walk on gpt-4.1-mini: answers ending "To fix this, I will…"
     and "Would you like me to proceed with committing?" ended the turn with the asked-for work
-    undone. Once per run, such an ending is sent back: finish it, or say plainly why not."""
+    undone. Once per run, such an ending is sent back: finish it, or say plainly why not; never
+    on the budget's last, tool-less request."""
 
     def __init__(self) -> None:
         super().__init__()
         self.sent = False
 
     async def after_model_request(self, ctx, *, request_context, response):
-        limits = ctx.usage_limits
-        spent = (
-            limits is not None
-            and bool(limits.request_limit)
-            and (ctx.usage.requests >= limits.request_limit * 3 // 4)
-        )
+        last = not request_context.model_request_parameters.function_tools
         if (
             self.sent
-            or spent
+            or last
             or response.tool_calls
             or not _PROMISED_WORK.search(response.text[-400:])
         ):
@@ -104,6 +100,29 @@ class FinishWhatWasAsked(Capability[MemoryToolContext]):
         raise ModelRetry(
             "Your answer ends by promising or asking about work the user already asked for. "
             "Do it now with the tools; if you cannot, say plainly what is not done and why."
+        )
+
+
+class FinishFactCheck(Capability[MemoryToolContext]):
+    """Gate ruling 2026-10-01 (M3CL2): gpt-4.1-mini told the user it had added a test it had
+    only written into a memory edit. Once per turn that changed the repository, the final
+    answer is checked against the repository as it is, by the loop, before the turn ends."""
+
+    def __init__(self, facts: Callable[[], str | None]) -> None:
+        super().__init__()
+        self.facts = facts
+        self.sent = False
+
+    async def after_model_request(self, ctx, *, request_context, response):
+        last = not request_context.model_request_parameters.function_tools
+        if self.sent or last or response.tool_calls or (facts := self.facts()) is None:
+            return response
+        self.sent = True
+        raise ModelRetry(
+            f"Before you finish, check your answer against the repository as it is now. {facts} "
+            "Correct anything your answer claims that these facts do not show; if something "
+            "asked for is not done, do it now or say plainly why not. If your answer already "
+            "matches, reply only: Checked."
         )
 
 

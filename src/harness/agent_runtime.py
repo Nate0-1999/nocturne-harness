@@ -53,6 +53,7 @@ from harness.envelope import ProviderErrorPayload, StopReason, generate_ulid
 from harness.extraction import ExtractionService
 from harness.model_policy import ThreadModelResolution
 from harness.model_router import model_settings_for
+from harness.project_path import repository_state
 from harness.proposed_response import (
     BLOCK_CLOSE,
     BLOCK_OPEN,
@@ -64,6 +65,7 @@ from harness.proposed_response import (
 )
 from harness.pydantic_ai_adapter import (
     DelegateCapability,
+    FinishFactCheck,
     FinishWhatWasAsked,
     PendingSteering,
     TurnBudgetNotice,
@@ -549,6 +551,7 @@ class PydanticAITurnRunner:
                         ),
                         TurnBudgetNotice(),
                         FinishWhatWasAsked(),
+                        FinishFactCheck(repository_change(context)),
                         *self._agent.tool_capabilities(context),
                         *(
                             [DelegateCapability()]
@@ -1227,6 +1230,21 @@ def _new_captured_messages(
             or not any(message is old or message == old for old in prior_history)
         )
     ]
+
+
+def repository_change(context: MemoryToolContext) -> Callable[[], str | None]:
+    """The repository facts a final answer is checked against, once the turn changed them."""
+
+    toolset = context.toolset if context.toolset_enabled else None
+    if toolset is None:
+        return lambda: None
+    started = repository_state(toolset.location().cwd)
+
+    def facts() -> str | None:
+        now = repository_state(toolset.location().cwd)
+        return None if now is None or now == started else now
+
+    return facts
 
 
 def _captured_history(

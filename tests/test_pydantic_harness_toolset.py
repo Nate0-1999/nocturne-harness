@@ -751,12 +751,14 @@ async def test_a_chained_git_commit_works_and_the_context_states_the_repository(
         chained = await toolset.execute(
             "bash", {"command": f"cd {repository} && git add tests/test_a.py && git commit -qm add"}
         )
+        pathspec = await toolset.execute("bash", {"command": "git add tests/test_a.py"})
         (sub / "stray.py").write_text("y = 2\n")
         context = render_workspace_context(toolset.location())
     finally:
         await toolset.close()
 
     assert chained.success and "exit code" not in chained.content.lower()
+    assert f"tests/test_a.py is in the repository root {repository.resolve()}" in pathspec.content
     assert "Repository now: last commit " in context
     assert " add (tests/test_a.py); uncommitted: ?? tests/stray.py." in context
 
@@ -776,6 +778,7 @@ async def test_a_command_written_from_the_root_names_where_its_path_is(tmp_path:
     toolset = await open_standard_toolset(cwd=tmp_path / "tests", workspace_root=tmp_path)
     try:
         missed = await toolset.execute("bash", {"command": ".venv/bin/python -m pytest"})
+        probed = await toolset.execute("bash", {"command": "ls -d .venv"})
         rerun = await toolset.execute(
             "bash", {"command": f"cd {tmp_path.resolve()} && .venv/bin/python -m pytest"}
         )
@@ -785,3 +788,5 @@ async def test_a_command_written_from_the_root_names_where_its_path_is(tmp_path:
     assert f".venv/bin/python is in the repository root {tmp_path.resolve()}" in missed.content
     assert f"cd {tmp_path.resolve()} && .venv/bin/python -m pytest" in missed.content
     assert rerun.success and "project-python" in rerun.content
+    # The M3CL2 move re-walk: `ls -d web` from docs/ prints the path before the error.
+    assert f".venv is in the repository root {tmp_path.resolve()}" in probed.content
