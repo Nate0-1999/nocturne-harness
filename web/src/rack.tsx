@@ -185,6 +185,8 @@ export interface RackQueryRequest {
   as_of?: string | null
   thread_id?: string
   thread_ids?: string[]
+  /** visualization: digests of the directory trees the module already holds; those arrive without their nodes. */
+  known?: string[]
 }
 
 export interface RackQueryResult {
@@ -832,6 +834,7 @@ export const rackQuerySurface: RackQuerySurface = {
     if (request.resource === 'visualization') {
       const url = new URL('/v1/visualization', globalThis.location.origin)
       if (asOf !== null) url.searchParams.set('as_of', asOf)
+      if (request.known?.length) url.searchParams.set('known', request.known.join(','))
       const response = await fetchRackResponse(url, { cache: 'no-store' })
       if (!response.ok) throw await rackResponseError(response)
       return { status: 'live', as_of: asOf, data: await response.json() as JsonValue }

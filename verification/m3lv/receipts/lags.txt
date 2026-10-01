@@ -1,0 +1,29 @@
+== run-1/run1.json
+  farm    folder web/src                           feed 02:00:19.878  shown 02:00:21.720  lag 1.84
+  farm    folder project-big/docs                  feed 02:01:02.423  shown 02:01:04.187  lag 1.76
+  farm    folder src/harness                       feed 02:01:06.186  shown 02:01:06.730  lag 0.54
+  roots   1 file(s) touched                        feed 02:01:14.913  shown 02:01:16.721  lag 1.81
+  palace  4 memories                               feed 02:01:35.097  shown 02:01:35.109  lag 0.01
+  palace  5 memories                               feed 02:01:41.558  shown 02:01:41.681  lag 0.12
+  palace  6 memories                               feed 02:01:44.074  shown —             lag None
+  ghosts  1 target(s) 02:01:48                     feed 02:01:51.356  shown 02:01:51.771  lag 0.41
+== run-2/run2.json
+  farm    folder src/harness                       feed 02:04:10.951  shown 02:04:12.814  lag 1.86
+  farm    folder m3lv-verification/project-big     feed 02:04:15.266  shown —             lag None
+  farm    folder project-big/docs                  feed 02:04:19.842  shown 02:04:20.322  lag 0.48
+  farm    folder web/src                           feed 02:04:24.445  shown 02:04:25.385  lag 0.94
+  roots   1 file(s) touched                        feed 02:04:28.894  shown 02:04:30.229  lag 1.33
+  palace  6 memories                               feed 02:04:49.271  shown 02:04:49.286  lag 0.01
+  palace  7 memories                               feed 02:04:50.552  shown 02:04:52.597  lag 2.04
+  ghosts  2 target(s) 02:04:59                     feed 02:05:01.526  shown 02:05:02.849  lag 1.32
+  ghosts  1 target(s) 02:05:03                     feed 02:05:06.154  shown 02:05:07.616  lag 1.46
+  ghosts  1 target(s) 02:05:06                     feed 02:05:10.197  shown 02:05:12.354  lag 2.16
+== run-3/run3.json
+  farm    folder web/src                           feed 02:09:59.496  shown 02:10:00.460  lag 0.96
+  farm    folder project-big/docs                  feed 02:10:04.238  shown 02:10:05.454  lag 1.22
+  farm    folder src/harness                       feed 02:10:07.990  shown 02:10:10.396  lag 2.41
+  roots   1 file(s) touched                        feed 02:10:12.894  shown 02:10:15.503  lag 2.61
+  palace  8 memories                               feed 02:10:29.744  shown 02:10:29.756  lag 0.01
+  palace  9 memories                               feed 02:10:32.253  shown 02:10:35.231  lag 2.98
+  ghosts  2 target(s) 02:10:43                     feed 02:10:46.347  shown 02:10:47.486  lag 1.14
+  ghosts  1 target(s) 02:10:47                     feed 02:10:50.625  shown 02:10:52.506  lag 1.88

@@ -1,0 +1,83 @@
+{
+  "base_url": "http://127.0.0.1:8779",
+  "tier": "full",
+  "captures": [
+    {
+      "module": "roots",
+      "view": "sheet",
+      "row": "FL-129",
+      "full": "roots-full-sheet.png",
+      "crop": {
+        "x": 25,
+        "y": 190.84375,
+        "width": 950,
+        "height": 320
+      },
+      "telemetry": [
+        "121,896 triangles · full",
+        "14 roots · 0 forked limbs\n4 touched-file capillaries · 14 agents\nwidth = dollars · across = time between events · blue = live · pink = a branch leaving · matte = stopped\n/remember In the M3LV walk, the bell foundry casts its bells in late autumn. · /private/tmp/m3lv-verification/project-big/src/harness"
+      ],
+      "at": "2026-10-01T02:13:27.940Z",
+      "side_by_side": {
+        "file": "FL-129-plate.png",
+        "crop_px": {
+          "x": 399,
+          "y": 19,
+          "width": 1026,
+          "height": 486
+        }
+      }
+    },
+    {
+      "module": "palace",
+      "view": "stage",
+      "row": "FL-133",
+      "full": "palace-full.png",
+      "crop": {
+        "x": -126,
+        "y": 234.6640625,
+        "width": 1726,
+        "height": 719.359375
+      },
+      "telemetry": [
+        "60 fps\n22,885 triangles · full\nThree r182 · R3F + TSL · WebGPU · full\n2026-10-01T02:13:34.385672Z"
+      ],
+      "at": "2026-10-01T02:13:36.405Z",
+      "side_by_side": {
+        "file": "FL-133-plate.png",
+        "crop_px": {
+          "x": 881,
+          "y": 0,
+          "width": 1438,
+          "height": 1438
+        }
+      }
+    },
+    {
+      "module": "farm",
+      "view": "stage",
+      "row": "FL-126",
+      "full": "farm-full.png",
+      "crop": {
+        "x": -17.5,
+        "y": 294.546875,
+        "width": 1726,
+        "height": 705.34375
+      },
+      "telemetry": [
+        "131,386 triangles · full",
+        "14 chambers\n31602 files · 31590 in counted chambers · 14 agents\nDrag or Ctrl+arrows to orbit · scroll or +/− to zoom · pick an ant\n/remember In the M3LV walk, the bell foundry casts its bells in late autumn. · /private/tmp/m3lv-verification/project-big/src/harness"
+      ],
+      "at": "2026-10-01T02:13:46.533Z",
+      "side_by_side": {
+        "file": "FL-126-plate.png",
+        "crop_px": {
+          "x": 320,
+          "y": 0,
+          "width": 2560,
+          "height": 1410
+        }
+      }
+    }
+  ]
+}

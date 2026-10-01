@@ -71,6 +71,10 @@ export function PalaceNebula() {
   const [tier, setTier] = useState<NebulaHardwareTier>('full')
   const [scope, setScope] = useState<'GLOBAL' | 'ATTUNED'>('GLOBAL')
   const [load, setLoad] = useState<LoadState>({ kind: 'loading' })
+  // A first live reading slower than 3 s (or failed) lets the recording stand in, so a slow Palace still draws its last
+  // recorded state; the swap to the live reading then lands long after the renderer has started.
+  const [patient, setPatient] = useState(true)
+  useEffect(() => { const timer = globalThis.setTimeout(() => setPatient(false), 3000); return () => globalThis.clearTimeout(timer) }, [])
   const [fps, setFps] = useState(0)
   const [triangles, setTriangles] = useState(0)
   const [backend, setBackend] = useState<ThreeBackend>('starting')
@@ -99,7 +103,9 @@ export function PalaceNebula() {
           scorer: scorerSnapshot,
         })
       }).catch(() => {
-        if (active) setLoad({ kind: 'error' })
+        // A failed refresh keeps the last reading drawn (its time shows its age): the Palace answers a read with a
+        // transient 503 now and then, which must not blank the live scene. Only a Palace never read is unavailable.
+        if (active) setLoad((current) => current.kind === 'ready' ? current : { kind: 'error' })
       }).finally(() => { pending = false })
     }
     refresh()
@@ -107,15 +113,19 @@ export function PalaceNebula() {
     return () => { active = false; globalThis.clearInterval(timer) }
   }, [query, threadId])
 
+  // F155: the present is the Palace's own live reading, so a new memory arrives within one poll however slowly the
+  // recorder samples; a past moment is its recorded state, and the last state drawn stays while the next one loads.
+  // One source each: a scene that mounts on the recording and swaps to the live reading while its WebGPU renderer is
+  // still starting draws nothing.
   const sceneSnapshot = useMemo(() => {
+    if (!selected?.as_of && load.kind === 'ready') return load.snapshot
+    if (!selected?.as_of && load.kind === 'loading' && patient) return null
     const recorded = visualization.data
-    if (!visualization.loading && recorded?.palace && (!selected?.as_of || recorded.as_of === selected.as_of)) {
-      const palace = { ...recorded.palace, as_of: recorded.as_of }
-      if (scope === 'ATTUNED') palace.nodes = palace.nodes.filter((node) => node.memory.origin_thread_id === threadId)
-      return palace
-    }
-    return selected?.as_of ? null : load.kind === 'ready' ? load.snapshot : null
-  }, [visualization.data, visualization.loading, selected?.as_of, scope, threadId, load])
+    if (!recorded?.palace) return null
+    const palace = { ...recorded.palace, as_of: recorded.as_of }
+    if (scope === 'ATTUNED') palace.nodes = palace.nodes.filter((node) => node.memory.origin_thread_id === threadId)
+    return palace
+  }, [visualization.data, selected?.as_of, scope, threadId, load, patient])
   const bodies = useMemo(() => sceneSnapshot ? buildNebulaBodies(sceneSnapshot).map((body) => {
     const memory = sceneSnapshot.nodes.find((node) => node.memory.memory_id === body.id)?.memory
     const focused = selected?.kind === 'memory' ? selected.id === body.id
@@ -127,7 +137,7 @@ export function PalaceNebula() {
   const memoryEvents = useMemo(() => sceneSnapshot ? buildNebulaEvents(sceneSnapshot) : [], [sceneSnapshot])
   const filaments = useMemo(() => sceneSnapshot ? buildNebulaFilaments(sceneSnapshot, bodies) : [], [sceneSnapshot, bodies])
   const families = useMemo(() => sceneSnapshot ? buildNebulaCreatureFamilies(sceneSnapshot, bodies, memoryEvents) : [], [sceneSnapshot, bodies, memoryEvents])
-  const curatorProgress = visualization.loading ? undefined : visualization.data?.progress?.events.at(-1)
+  const curatorProgress = visualization.data?.progress?.events.at(-1)
   const curatorTargets = new Set(curatorProgress?.memory_ids ?? [])
   const ghosts = bodies.filter((body) => curatorTargets.has(body.id))
   const curatorRoute = useMemo(() => {
@@ -163,7 +173,7 @@ export function PalaceNebula() {
         </Select></label>
       </div>
     </header>
-    <VisualizationToolbar data={visualization.data} moduleId="palace_nebula" tier={tier} setTier={setTier} />
+    <VisualizationToolbar data={visualization.data} loading={visualization.loading} moduleId="palace_nebula" tier={tier} setTier={setTier} />
     <div className="palace-nebula__viewport">
       {(bodies.length > 0 || memoryEvents.length > 0) && <ThreeNebula
         bodies={bodies}
@@ -196,10 +206,11 @@ export function PalaceNebula() {
         <span>Three r{REVISION} · R3F + TSL · {backend} · {tier}</span>
         <span>{sceneSnapshot?.as_of ?? 'Reading current reality'}</span>
       </div>
-      {load.kind === 'loading' && <p role="status" className="palace-nebula__notice">Reading Palace reality…</p>}
-      {load.kind === 'error' && <p role="alert" className="palace-nebula__notice">The live Palace current is unavailable.</p>}
-      {selected?.as_of && !sceneSnapshot && <p role="status" className="palace-nebula__notice">Loading the recorded Palace state…</p>}
-      {load.kind === 'ready' && bodies.length === 0 && memoryEvents.length === 0 && <p role="status" className="palace-nebula__notice">No memories or memory events exist in this Palace snapshot.</p>}
+      {/* The live reading's notices belong to the present; a scrubbed moment draws its recording. */}
+      {!selected?.as_of && load.kind === 'loading' && <p role="status" className="palace-nebula__notice">Reading Palace reality…</p>}
+      {!selected?.as_of && load.kind === 'error' && <p role="alert" className="palace-nebula__notice">The live Palace current is unavailable.</p>}
+      {selected?.as_of && !sceneSnapshot && <p role="status" className="palace-nebula__notice">{visualization.loading ? 'Loading the recorded Palace state…' : 'No Palace reading was recorded at this moment.'}</p>}
+      {sceneSnapshot && bodies.length === 0 && memoryEvents.length === 0 && <p role="status" className="palace-nebula__notice">No memories or memory events exist in this Palace snapshot.</p>}
     </div>
     <aside className="palace-nebula__legend" aria-label="Living Memory data bindings">
       <section><h2>Radial Palace</h2>{NEBULA_BINDINGS.radial.map((binding) => <p key={binding}>{binding}</p>)}</section>

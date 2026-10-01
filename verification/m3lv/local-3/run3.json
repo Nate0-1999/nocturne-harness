@@ -1,0 +1,661 @@
+{
+  "run": "3",
+  "base": "http://127.0.0.1:8779",
+  "started": "2026-10-01T01:39:50.677Z",
+  "events": [
+    {
+      "t": "2026-10-01T01:40:08.328Z",
+      "source": "stage",
+      "value": "Palace, Farm, Roots and Conversation on a new Sheet layer"
+    },
+    {
+      "t": "2026-10-01T01:40:08.486Z",
+      "source": "local",
+      "value": {
+        "newestWaiting": "M3LV run 1.t1vmg: reply with exactly: first reply of run 1."
+      }
+    },
+    {
+      "t": "2026-10-01T01:40:12.686Z",
+      "source": "scrub",
+      "value": {
+        "index": 0,
+        "early": [],
+        "settled": "7:35:37 PM"
+      }
+    },
+    {
+      "t": "2026-10-01T01:40:16.099Z",
+      "source": "scrub",
+      "value": {
+        "index": 41,
+        "early": [],
+        "settled": "7:51:24 PM"
+      }
+    },
+    {
+      "t": "2026-10-01T01:40:20.016Z",
+      "source": "scrub",
+      "value": {
+        "index": 80,
+        "early": [],
+        "settled": "8:39:21 PM"
+      }
+    },
+    {
+      "t": "2026-10-01T01:40:25.901Z",
+      "source": "scrub.slow",
+      "value": {
+        "notice": [],
+        "farmCanvas": 1,
+        "clock": "8:39:21 PM",
+        "status": [
+          "Loading 7:39:12 PM…"
+        ],
+        "chambers": "13 chambers",
+        "roots": "41 roots · 0 forked limbs",
+        "palace": "CONSTELLATION 33 bodies 82 real filaments",
+        "palaceNotice": []
+      }
+    },
+    {
+      "t": "2026-10-01T01:40:32.569Z",
+      "source": "farm.antPick",
+      "value": {
+        "picked": "/remember The M3LV walk palace keeps its lantern key under the blue stone.",
+        "clicks": 3
+      }
+    },
+    {
+      "t": "2026-10-01T01:40:36.026Z",
+      "source": "selection",
+      "value": [
+        "/remember The M3LV walk palace keeps its lantern key under the blue stone."
+      ]
+    },
+    {
+      "t": "2026-10-01T01:40:37.736Z",
+      "source": "pick",
+      "value": {
+        "prompt": "M3LV run 1.t1vmg: reply with exactly: fi",
+        "attempt": 1,
+        "hit": {
+          "onButton": true,
+          "top": "BUTTON.kit-button--icon",
+          "y": 510,
+          "viewport": 542
+        },
+        "selected": "M3LV run 1.t1vmg: reply with exactly: fi"
+      }
+    },
+    {
+      "t": "2026-10-01T01:40:44.705Z",
+      "source": "time_order",
+      "value": {
+        "expected": "/remember The M3LV walk palace keeps its lantern k",
+        "after": [
+          "/remember The M3LV walk palace keeps its lantern key under the blue stone."
+        ],
+        "conversation": true
+      }
+    }
+  ],
+  "checks": {
+    "live_seconds": [
+      17.558
+    ],
+    "scrub": [
+      {
+        "index": 0,
+        "of": 83,
+        "early": {
+          "notice": [],
+          "farmCanvas": 1,
+          "clock": "7:35:37 PM",
+          "status": [],
+          "chambers": "13 chambers",
+          "roots": "41 roots · 0 forked limbs",
+          "palace": "CONSTELLATION 26 bodies 58 real filaments",
+          "palaceNotice": []
+        },
+        "settled": {
+          "notice": [],
+          "farmCanvas": 1,
+          "clock": "7:35:37 PM",
+          "status": [],
+          "chambers": "13 chambers",
+          "roots": "31 roots · 0 forked limbs",
+          "palace": "CONSTELLATION 26 bodies 58 real filaments",
+          "palaceNotice": []
+        }
+      },
+      {
+        "index": 41,
+        "of": 83,
+        "early": {
+          "notice": [],
+          "farmCanvas": 1,
+          "clock": "7:35:37 PM",
+          "status": [
+            "Loading 7:51:24 PM…"
+          ],
+          "chambers": "13 chambers",
+          "roots": "31 roots · 0 forked limbs",
+          "palace": "CONSTELLATION 26 bodies 58 real filaments",
+          "palaceNotice": []
+        },
+        "settled": {
+          "notice": [],
+          "farmCanvas": 1,
+          "clock": "7:51:24 PM",
+          "status": [],
+          "chambers": "13 chambers",
+          "roots": "40 roots · 0 forked limbs",
+          "palace": "CONSTELLATION 30 bodies 72 real filaments",
+          "palaceNotice": []
+        }
+      },
+      {
+        "index": 80,
+        "of": 83,
+        "early": {
+          "notice": [],
+          "farmCanvas": 1,
+          "clock": "7:51:24 PM",
+          "status": [
+            "Loading 8:39:21 PM…"
+          ],
+          "chambers": "13 chambers",
+          "roots": "40 roots · 0 forked limbs",
+          "palace": "CONSTELLATION 30 bodies 72 real filaments",
+          "palaceNotice": []
+        },
+        "settled": {
+          "notice": [],
+          "farmCanvas": 1,
+          "clock": "8:39:21 PM",
+          "status": [],
+          "chambers": "13 chambers",
+          "roots": "40 roots · 0 forked limbs",
+          "palace": "CONSTELLATION 33 bodies 82 real filaments",
+          "palaceNotice": []
+        }
+      }
+    ],
+    "slow_read": {
+      "notice": [],
+      "farmCanvas": 1,
+      "clock": "8:39:21 PM",
+      "status": [
+        "Loading 7:39:12 PM…"
+      ],
+      "chambers": "13 chambers",
+      "roots": "41 roots · 0 forked limbs",
+      "palace": "CONSTELLATION 33 bodies 82 real filaments",
+      "palaceNotice": []
+    },
+    "slow_read_after": {
+      "notice": [],
+      "farmCanvas": 1,
+      "clock": "7:39:12 PM",
+      "status": [],
+      "chambers": "13 chambers",
+      "roots": "37 roots · 0 forked limbs",
+      "palace": "CONSTELLATION 30 bodies 72 real filaments",
+      "palaceNotice": []
+    },
+    "ant": {
+      "predicted": [
+        {
+          "id": "02951adc-8502-4ef4-a659-625ca02b5429",
+          "label": "M3LV run 1.o7wa2: reply with exactly: first reply of run 1.",
+          "chamber": "web",
+          "x": 398.10268044132266,
+          "y": 97.24516736638645
+        },
+        {
+          "id": "0508247f-d8a7-4ba3-ac2d-151db854a8ec",
+          "label": "M3LV run 1: reply with exactly: first reply of run 1.",
+          "chamber": "web",
+          "x": 398.37400536990503,
+          "y": 103.131433799866
+        },
+        {
+          "id": "06bf4fd2-fb72-4b3e-a744-aef2bba2e543",
+          "label": "M3LV run 1: use the move tool to go to the web/src folder, then read web/src/vis",
+          "chamber": "web",
+          "x": 399.5350558936041,
+          "y": 103.88040553280182
+        },
+        {
+          "id": "08fea31c-3d39-4e60-b60d-ebb3d2405fbe",
+          "label": "M3LV run 4.sqh3l: use the move tool to go to the docs folder, then use it again ",
+          "chamber": "src",
+          "x": 517.472428822346,
+          "y": 170.65361566498794
+        },
+        {
+          "id": "0bee677d-28a5-4bda-9454-dcbe1f0bc4c2",
+          "label": "M3LV run 3.oq15l: use the move tool to go to the docs folder, then use it again ",
+          "chamber": "src",
+          "x": 502.4520627758612,
+          "y": 181.6113309764637
+        },
+        {
+          "id": "135fedb3-34bf-45e9-b380-32604f72137d",
+          "label": "M3LV run 4.sqh3l: reply with exactly: first reply of run 4.",
+          "chamber": "src",
+          "x": 508.71095201328336,
+          "y": 165.96672766330448
+        },
+        {
+          "id": "1fcf6ebd-1e0b-4ba5-8bc7-4ff2ea118bc0",
+          "label": "/remember In the M3LV walk, the bell foundry casts its bells in late autumn.",
+          "chamber": "src",
+          "x": 498.17048903587147,
+          "y": 166.11984796844342
+        },
+        {
+          "id": "2222ad02-53c0-4192-bf96-239d81cdebf5",
+          "label": "/remember The M3LV walk palace keeps its lantern key under the blue stone.",
+          "chamber": ".",
+          "x": 369.3741677132751,
+          "y": 156.85617015088238
+        },
+        {
+          "id": "2c47543c-a0e2-41a8-a6d0-394dac582f57",
+          "label": "M3LV run 1.o09q9: reply with exactly: first reply of run 1.",
+          "chamber": "web",
+          "x": 400.0350003495814,
+          "y": 104.13498972550337
+        },
+        {
+          "id": "2d6af910-fbe3-46c5-88dd-5eeadee91cba",
+          "label": "M3LV run 5.suc0a: use the move tool to go to the docs folder, then use it again ",
+          "chamber": "src",
+          "x": 516.5191175313046,
+          "y": 181.30297225606725
+        },
+        {
+          "id": "33c53bcc-7da2-4e1a-bcd4-339a65333bdc",
+          "label": "M3LV run 1.szmyd: reply with exactly: first reply of run 1.",
+          "chamber": "src",
+          "x": 510.3938154570437,
+          "y": 182.81981649181336
+        },
+        {
+          "id": "3d68195d-e4e4-4e45-bce5-74e275a90e22",
+          "label": "New thread",
+          "chamber": "src",
+          "x": 518.4597101819976,
+          "y": 171.78862214325127
+        },
+        {
+          "id": "40a6716d-4429-46a6-89b0-0441e7782811",
+          "label": "Reply with exactly: second waiting reply.",
+          "chamber": ".",
+          "x": 371.7164300684449,
+          "y": 152.24715783982043
+        },
+        {
+          "id": "43ae8ff2-2945-46cb-8eb2-ab363eb47a43",
+          "label": "/remember In the M3LV walk, the violin maker tunes every string with a brass for",
+          "chamber": "src",
+          "x": 493.75542417638655,
+          "y": 175.03882479178586
+        },
+        {
+          "id": "4a2003db-b4b1-4645-a2ed-86d116836f49",
+          "label": "/remember In the M3LV walk, the violin maker tunes every string with a brass for",
+          "chamber": "src",
+          "x": 517.8632877777716,
+          "y": 171.06784057049023
+        },
+        {
+          "id": "50b9bd82-fce7-45c2-9ee8-cfd2734761be",
+          "label": "/remember In the M3LV walk, the violin maker tunes every string with a brass for",
+          "chamber": "web",
+          "x": 397.7292029695906,
+          "y": 97.57207971622925
+        },
+        {
+          "id": "62b5f505-4461-4a95-94f0-38c56c3e9fbc",
+          "label": "/remember M3LV walk 1.o09q9: the signal buoy numbered 1.o09q9 at the harbour mou",
+          "chamber": "web",
+          "x": 409.7928660664175,
+          "y": 95.36225142451704
+        },
+        {
+          "id": "63b4c47d-3544-498c-8e6a-380c9c3cfa6a",
+          "label": "M3LV run 3.oq15l: reply with exactly: first reply of run 3.",
+          "chamber": "src",
+          "x": 506.30699239317374,
+          "y": 182.5726782797014
+        },
+        {
+          "id": "66281913-dc5c-4948-9240-81af17d608e2",
+          "label": "M3LV run 2.t2qtl: reply with exactly: first reply of run 2.",
+          "chamber": "web",
+          "x": 410.94166591856947,
+          "y": 105.1626558191395
+        },
+        {
+          "id": "66e2c319-4cd8-491c-b8bd-27ebf5fa98a5",
+          "label": "/remember In the M3LV walk, the canal lock opens with a bronze crank.",
+          "chamber": "src",
+          "x": 493.7367361144911,
+          "y": 175.00259258230705
+        },
+        {
+          "id": "6966ab74-59e8-4fe4-a03b-1afefd41af4f",
+          "label": "M3LV run 1.t3kvc: use the move tool to go to the docs folder and list the files ",
+          "chamber": "src",
+          "x": 507.99302061871845,
+          "y": 182.7716962082408
+        },
+        {
+          "id": "6c74cefd-1c34-4335-8299-ae6cf4a7ccb6",
+          "label": "M3LV run 1.odppb: reply with exactly: first reply of run 1.",
+          "chamber": "web",
+          "x": 406.11559288927197,
+          "y": 94.99902963617502
+        },
+        {
+          "id": "6fea9556-d068-4a76-8247-045f44e9a0aa",
+          "label": "M3LV run 1.o09q9: use the move tool to go to the web/src folder, then read web/s",
+          "chamber": "web",
+          "x": 400.41146727745354,
+          "y": 104.30652170742798
+        },
+        {
+          "id": "7ab50d8c-f746-4987-aa8e-92fdb181d6f3",
+          "label": "M3LV run 1.szmyd: use the move tool to go to the docs folder, then use it again ",
+          "chamber": "src",
+          "x": 494.2781723079006,
+          "y": 175.91500399265465
+        },
+        {
+          "id": "7cb54323-7568-494b-821d-e11f34406ad4",
+          "label": "M3LV run 2.ojyz2: reply with exactly: first reply of run 2.",
+          "chamber": "src",
+          "x": 501.3255959810888,
+          "y": 165.42137722047795
+        },
+        {
+          "id": "7f1b947a-59f7-4077-848c-74aa15b949a2",
+          "label": "M3LV run 1: reply with exactly: first reply of run 1.",
+          "chamber": "web",
+          "x": 414.7968988603034,
+          "y": 97.45212435721875
+        },
+        {
+          "id": "8374349b-d9e1-47e2-b7f0-1c3894b95a9a",
+          "label": "M3LV run 1.odppb: use the move tool to go to the docs folder, then use it again ",
+          "chamber": "src",
+          "x": 495.3887816225218,
+          "y": 167.5695747031221
+        },
+        {
+          "id": "8ad99c52-5458-4bdd-aae7-4992f18021d5",
+          "label": "M3LV run 5.suc0a: reply with exactly: first reply of run 5.",
+          "chamber": "src",
+          "x": 517.9794582748906,
+          "y": 171.19889782353343
+        },
+        {
+          "id": "8e2e084b-189d-46b5-bbc0-beebe283b44c",
+          "label": "New thread",
+          "chamber": ".",
+          "x": 387.2097153938791,
+          "y": 150.45882800582316
+        },
+        {
+          "id": "920d4c1b-9acd-4c4a-a9b0-585bf43700c5",
+          "label": "/remember M3LV run 1: the signal buoy at the harbour mouth blinks green 1 times.",
+          "chamber": "web",
+          "x": 410.9114555264236,
+          "y": 95.62888984933562
+        },
+        {
+          "id": "b25b72bf-ba5e-4816-8d0b-f5a996290503",
+          "label": "M3LV run 1: use the move tool to go to the web/src folder, then read web/src/vis",
+          "chamber": "web",
+          "x": 414.0903106757446,
+          "y": 103.99211424924691
+        },
+        {
+          "id": "b613a9ea-b626-408c-aee2-3be10baafaa5",
+          "label": "M3LV run 2.ojyz2: use the move tool to go to the docs folder, then use it again ",
+          "chamber": "src",
+          "x": 495.8351204392666,
+          "y": 177.73908066456832
+        },
+        {
+          "id": "c38d03a4-49ef-4943-bd56-1a7840eb083a",
+          "label": "/remember In the M3LV walk, the violin maker tunes every string with a brass for",
+          "chamber": "src",
+          "x": 493.06627800750306,
+          "y": 171.11839639537124
+        },
+        {
+          "id": "c86e8a35-3c6f-4f40-8342-7db853fa6729",
+          "label": "M3LV run 1.t1vmg: reply with exactly: first reply of run 1.",
+          "chamber": "src",
+          "x": 519.122545547019,
+          "y": 179.06184250481616
+        },
+        {
+          "id": "cddcee07-b25c-46ca-a2b4-ebccfa03ffd2",
+          "label": "M3LV run 1.o7wa2: use the move tool to go to the web/src folder, then read web/s",
+          "chamber": "web",
+          "x": 402.93609250814603,
+          "y": 105.12436343954668
+        },
+        {
+          "id": "d41bbcb9-9760-4d5a-bd82-8fc6015a910d",
+          "label": "Reply with exactly: TEMP-CHECK m3lv.",
+          "chamber": "src",
+          "x": 519.3973235779453,
+          "y": 178.6227878022917
+        },
+        {
+          "id": "db4ae803-7c74-4a63-831a-e1fc7532f791",
+          "label": "/remember M3LV run 1: the signal buoy at the harbour mouth blinks green 1 times.",
+          "chamber": "web",
+          "x": 409.98225689770965,
+          "y": 105.3501548281889
+        },
+        {
+          "id": "e11d7848-94f2-4bcb-8867-3446fead91a2",
+          "label": "/remember In the M3LV walk, the night baker proofs rye dough in the cellar.",
+          "chamber": "src",
+          "x": 510.5675885963118,
+          "y": 166.5171896388535
+        },
+        {
+          "id": "e8e8f630-a638-444f-a88b-e3690a71b7b0",
+          "label": "M3LV run 1.t3kvc: reply with exactly: first reply of run 1.",
+          "chamber": "web",
+          "x": 406.23629353033124,
+          "y": 94.99947112998676
+        },
+        {
+          "id": "f4f42904-ec82-4b9e-bdfa-379c92c75e1b",
+          "label": "M3LV run 1: reply with exactly: first reply of run 1.",
+          "chamber": ".",
+          "x": 392.57292258816074,
+          "y": 155.95197328776004
+        },
+        {
+          "id": "f726a903-0de5-4ef2-8021-d434c0965b37",
+          "label": "M3LV run 1.t1vmg: use the move tool to go to the docs folder and list the files ",
+          "chamber": "web",
+          "x": 397.72738141823635,
+          "y": 97.57382313368947
+        }
+      ],
+      "target": {
+        "id": "2222ad02-53c0-4192-bf96-239d81cdebf5",
+        "label": "/remember The M3LV walk palace keeps its lantern key under the blue stone.",
+        "chamber": ".",
+        "x": 369.3741677132751,
+        "y": 156.85617015088238
+      },
+      "clicks": 3
+    },
+    "selection": {
+      "picked": "/remember The M3LV walk palace keeps its lantern key under the blue stone.",
+      "byAnt": true,
+      "antLabel": "/remember The M3LV walk palace keeps its lantern key under the blue stone.",
+      "farmReadout": "13 chambers 6549 files · 6537 in counted chambers · 41 agents Drag or Ctrl+arrows to orbit · scroll or +/− to zoom · pick an ant /remember The M3LV walk palace keeps its lantern key under the blue stone. · /private/tmp/m3lv-verification/project",
+      "afterSwitch": {
+        "rows": [
+          "/remember The M3LV walk palace keeps its lantern key under the blue stone."
+        ],
+        "readout": "41 roots · 0 forked limbs 18 touched-file capillaries · 41 agents width = dollars · across = time between events · blue = live · pink = a branch leaving · matte = stopped /remember The M3LV walk palace keeps its lantern key under the blue stone. · /private/tmp/m3lv-verification/project",
+        "rootsModule": "41 roots · 0 forked limbs 18 touched-file capillaries · 41 agents width = dollars · across = time between events · blue = live · pink = a branch leaving · matte = stopped /remember The M3LV walk palace keeps its lantern key under the blue stone. · /private/tmp/m3lv-verification/project"
+      }
+    },
+    "t2_pick_attempts": 1,
+    "time_order": {
+      "expected": {
+        "label": "/remember The M3LV walk palace keeps its lantern key under the blue stone.",
+        "waiting_since": "2026-09-30T21:26:30.110Z"
+      },
+      "waiting": [
+        [
+          "/remember The M3LV walk palace keeps its lantern k",
+          "2026-09-30T21:26:30.110Z"
+        ],
+        [
+          "Reply with exactly: second waiting reply.",
+          "2026-09-30T21:51:40.094Z"
+        ],
+        [
+          "M3LV run 1: reply with exactly: first reply of run",
+          "2026-09-30T22:02:40.800Z"
+        ],
+        [
+          "M3LV run 1: use the move tool to go to the web/src",
+          "2026-09-30T22:03:44.987Z"
+        ],
+        [
+          "M3LV run 1: reply with exactly: first reply of run",
+          "2026-09-30T22:08:58.808Z"
+        ],
+        [
+          "M3LV run 1: reply with exactly: first reply of run",
+          "2026-09-30T22:09:15.099Z"
+        ],
+        [
+          "M3LV run 1: use the move tool to go to the web/src",
+          "2026-09-30T22:10:09.897Z"
+        ],
+        [
+          "M3LV run 1.o09q9: reply with exactly: first reply ",
+          "2026-09-30T22:16:58.405Z"
+        ],
+        [
+          "M3LV run 1.o09q9: use the move tool to go to the w",
+          "2026-09-30T22:17:38.849Z"
+        ],
+        [
+          "M3LV run 1.o7wa2: reply with exactly: first reply ",
+          "2026-09-30T22:22:54.163Z"
+        ],
+        [
+          "M3LV run 1.o7wa2: use the move tool to go to the w",
+          "2026-09-30T22:23:19.293Z"
+        ],
+        [
+          "M3LV run 1.odppb: reply with exactly: first reply ",
+          "2026-09-30T22:27:24.824Z"
+        ],
+        [
+          "M3LV run 1.odppb: use the move tool to go to the d",
+          "2026-09-30T22:27:55.037Z"
+        ],
+        [
+          "M3LV run 2.ojyz2: reply with exactly: first reply ",
+          "2026-09-30T22:32:16.318Z"
+        ],
+        [
+          "M3LV run 2.ojyz2: use the move tool to go to the d",
+          "2026-09-30T22:32:56.630Z"
+        ],
+        [
+          "M3LV run 3.oq15l: reply with exactly: first reply ",
+          "2026-09-30T22:37:00.935Z"
+        ],
+        [
+          "M3LV run 4.sqh3l: reply with exactly: first reply ",
+          "2026-10-01T00:29:19.447Z"
+        ],
+        [
+          "M3LV run 4.sqh3l: use the move tool to go to the d",
+          "2026-10-01T00:29:42.432Z"
+        ],
+        [
+          "M3LV run 5.suc0a: reply with exactly: first reply ",
+          "2026-10-01T00:32:18.684Z"
+        ],
+        [
+          "M3LV run 5.suc0a: use the move tool to go to the d",
+          "2026-10-01T00:32:44.887Z"
+        ],
+        [
+          "M3LV run 1.szmyd: reply with exactly: first reply ",
+          "2026-10-01T00:36:28.198Z"
+        ],
+        [
+          "M3LV run 1.szmyd: use the move tool to go to the d",
+          "2026-10-01T00:36:46.723Z"
+        ],
+        [
+          "M3LV run 1.t1vmg: use the move tool to go to the d",
+          "2026-10-01T00:38:42.483Z"
+        ],
+        [
+          "M3LV run 2.t2qtl: reply with exactly: first reply ",
+          "2026-10-01T00:39:11.205Z"
+        ],
+        [
+          "M3LV run 1.t3kvc: reply with exactly: first reply ",
+          "2026-10-01T00:39:32.166Z"
+        ],
+        [
+          "M3LV run 1.t3kvc: use the move tool to go to the d",
+          "2026-10-01T00:41:39.886Z"
+        ],
+        [
+          "M3LV run 3.oq15l: use the move tool to go to the d",
+          "2026-10-01T01:03:26.181Z"
+        ],
+        [
+          "M3LV run 1.t1vmg: reply with exactly: first reply ",
+          "2026-10-01T01:06:33.713Z"
+        ],
+        [
+          "Reply with exactly: TEMP-CHECK m3lv.",
+          "2026-10-01T01:33:54.268Z"
+        ]
+      ],
+      "before": {
+        "rows": [
+          "M3LV run 1.t1vmg: reply with exactly: first reply of run 1."
+        ],
+        "conversation": "ORCHESTRATION Duet Symphony Duet configuration M3LV run 1.t1vmg: reply with exactly: first reply of run 1. PROJECT WHERE · /private/tmp/m3lv-verification/project/src/harness Model openrouter:minimax/minimax-m3 OPEN TOOLS & SKILLS YOU Chat + files Chat Files REWIND M3LV run 1.t1vmg: reply with exactly: first reply of run 1. NOCTURNE first reply of run 1. TOOLS · 4 RUN EVENTS Message Nocturne OUT LO"
+      },
+      "trace": [
+        {
+          "t": "2026-10-01T01:40:38.328Z",
+          "rows": [
+            "/remember The M3LV walk palace keeps its lantern key under the blue stone."
+          ]
+        }
+      ],
+      "conversationShowsExpected": true
+    }
+  },
+  "finished": "2026-10-01T01:40:44.705Z"
+}
