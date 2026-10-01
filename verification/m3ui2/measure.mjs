@@ -43,8 +43,9 @@ await page.evaluate((chosen) => {
 }, theme)
 await page.reload({ waitUntil: 'domcontentloaded' })
 await page.getByRole('tab').first().waitFor({ state: 'visible' })
-// The fixture curtain is not product surface: out of the photos and the table.
-await page.addStyleTag({ content: 'body > aside, .fixture-curtain { display: none !important }' })
+// The fixture curtain is not product surface: out of the photos (and, by selector, out of the table).
+const CURTAIN = '.m2c-regression-fixture, #nocturne-fixture-curtain { display: none !important }'
+await page.addStyleTag({ content: CURTAIN })
 
 /** Runs inside one document: every icon and every element that directly holds text. */
 function census() {
@@ -84,7 +85,7 @@ function census() {
   })
   const texts = []
   for (const element of document.querySelectorAll('body *')) {
-    if (element.closest('svg') !== null || !visible(element)) continue
+    if (element.closest('svg, .m2c-regression-fixture, #nocturne-fixture-curtain') !== null || !visible(element)) continue
     const own = [...element.childNodes].filter((node) => node.nodeType === 3).map((node) => node.textContent.trim()).join(' ').trim()
     if (own === '') continue
     const style = getComputedStyle(element)
@@ -111,7 +112,7 @@ function census() {
   const tells = []
   const rootSize = parseFloat(getComputedStyle(document.documentElement).fontSize)
   for (const element of document.querySelectorAll('body *')) {
-    if (element.closest('svg, .visually-hidden') !== null || !visible(element)) continue
+    if (element.closest('svg, .visually-hidden, .m2c-regression-fixture, #nocturne-fixture-curtain') !== null || !visible(element)) continue
     const style = getComputedStyle(element)
     const box = element.getBoundingClientRect()
     const bordered = ['Top', 'Right', 'Bottom', 'Left'].filter((side) => parseFloat(style[`border${side}Width`]) > 0 && style[`border${side}Style`] !== 'none')
@@ -192,6 +193,7 @@ for (let index = 0; index < layerCount; index += 1) {
     const element = await frame.frameElement()
     if (!(await element.isVisible())) continue
     await element.scrollIntoViewIfNeeded()
+    if (fixture !== null) await frame.addStyleTag({ content: CURTAIN })
     if (shots !== null) {
       const framed = page.getByTestId(`rack-module-${moduleId}`)
       await page.mouse.move(0, 0)
