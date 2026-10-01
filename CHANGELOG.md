@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.50 - 2026-10-01
+
+- Nocturne stays cool and light over long sessions: an idle app no longer keeps a CPU core
+  busy re-walking project folders, the visualization history keeps 24 hours
+  (`VISUALIZATION_RETENTION_HOURS`) and stores each folder tree once, and long answers no
+  longer freeze the page. A finished Symphony removes its worktrees once its result is kept,
+  saving each attempt's commit under `refs/nocturne/symphonies/` (`SYMPHONY_WORKTREES_KEPT`
+  keeps more). The Security module's cuts survive a restart, and `nocturne doctor` shows the
+  app's memory against a warning at 10% of the machine's. Pair with Memory 0.1.50; its API
+  contract is unchanged.
+
 ## 0.1.49 - 2026-10-01
 
 - Browse every model your token source offers from the Model Device: search, sort by
