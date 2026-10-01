@@ -69,6 +69,7 @@ label:has(> .kit-select-wrap, > .kit-field) {
 .kit-label,
 label:has(> .kit-select-wrap, > .kit-field),
 .kit-button,
+.principal-memory__primary,
 .kit-chip,
 .kit-empty__label {
   font-family: var(--data-font);
@@ -113,7 +114,8 @@ label:has(> .kit-select-wrap, > .kit-field),
   );
 }
 
-.kit-button {
+.kit-button,
+.principal-memory__primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;

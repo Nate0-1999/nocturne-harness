@@ -3692,3 +3692,13 @@ details > .agent-policy-settings > h2 { display: none; } /* its summary already 
 .agent-policy-settings textarea { display: block; width: 100%; resize: vertical }
 .rack-plugin-upload label:not(.kit-label) { display: block; margin: .5rem 0; }
 .rack-plugin-upload textarea { display: block; width: 100%; min-height: 5rem }
+
+/* Codex 07 / M3W5B-21: the selected memory keeps a readable column; a narrow graph stacks it below. */
+.graph-stage { grid-template-columns: minmax(0, 3fr) minmax(20rem, 1fr); }
+@media (max-width: 60rem) {
+  .graph-stage { grid-template-columns: 1fr; }
+  .graph-canvas { max-height: 48vh; }
+  .graph-stage svg { height: calc(48vh * var(--graph-rows, 1)); }
+  .graph-stage aside { border-left: 0; border-top: 1px solid var(--line); }
+}
+
