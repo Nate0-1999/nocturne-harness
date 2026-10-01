@@ -3687,6 +3687,7 @@ button.rack-module__resize-handle--nw {
 .memory-restore-dialog input { width: 28ch; max-width: 100%; }
 .memory-restore-dialog li { overflow-wrap: anywhere; }
 details > .agent-policy-settings > h2 { display: none; } /* its summary already names it */
+details:not([open]) > .agent-policy-settings { display: none; } /* closed means not laid out */
 .agent-policy-settings fieldset { min-width: 0; border: 1px solid var(--muted); margin: .75rem 0; padding: .6rem; }
 .agent-policy-settings input { width: 100% }
 .agent-policy-settings textarea { display: block; width: 100%; resize: vertical }
