@@ -1,4 +1,4 @@
-.work-viz{height:100%;min-height:480px;display:flex;flex-direction:column;background:#030509;color:#eaecec;font-family:var(--font-body, sans-serif)}
+.work-viz{height:100%;min-height:480px;display:flex;flex-direction:column;background:#030509;color:#eaecec;font-family:var(--body-font)}
 .work-viz__header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 20px 8px}
 .work-viz h1{font-size:var(--text-xl);font-weight:400;letter-spacing:.12em;margin:4px 0}
 .work-viz small,.work-viz__foot{color:#98a1b5;font-size:var(--text-md)}
