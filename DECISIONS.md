@@ -3967,4 +3967,7 @@ fact list; the request that would leave no room for another goes out without too
 for a plain account. A final answer that crosses the token wall after it streamed (usage
 arrives at the end of the stream) is delivered finished; mid-work, the wall still stops the
 turn. A read at offset 0 starts at the first line (it read from the last), and the
-destructive-write refusal names the shortest unique ending as the anchor for adding to a file.
+destructive-write refusal names the shortest unique ending as the anchor for adding to a file,
+as does a non-unique anchor that ends the file. An edit or write that would stop a Python file
+that parsed from parsing is refused with the error and its line: an anchor ending inside a call
+had put a new test in the middle of an existing one.
