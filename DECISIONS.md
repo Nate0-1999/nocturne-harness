@@ -3955,3 +3955,13 @@ links skills/ from .agents/skills, the adopted capability's library path, rather
 a search path. The gate frame stays mounted and only its visibility follows the gate: the
 desktop pane did not paint a frame inserted mid-run. The Deck opens a card's conversation and
 waits for it before advancing, and a failure names its reason.
+After the gate's 2026-10-01 ruling (a run passes on a verified success or an honest stop
+within budget, on gpt-4.1-mini): git after `cd …&&` counts as git; a shell miss whose path
+exists from the root (zsh, ls, pytest, git pathspec) names `cd <root> && <command>`; every
+request's workspace context states the last commit with its files and what is uncommitted.
+Three once-per-run checks keep claims honest: an answer ending in a promise or a request for
+leave is sent back; a turn that changed the repository is checked against it before it ends
+("reply only: Checked" when right); the request that would leave no room for another goes out
+without tools and asks for a plain account. A final answer that crosses the token wall after
+it streamed (usage arrives at the end of the stream) is delivered finished; mid-work, the
+wall still stops the turn.

@@ -69,9 +69,15 @@ const h = {
   },
   async send(prompt, { gate = 'continue' } = {}) {
     const composer = frame('conversation').getByTestId('composer')
-    await waitUntil(async () => await composer.isEnabled() && (await composer.inputValue()) === '', 120_000)
+    await waitUntil(async () => await composer.isEnabled(), 180_000)
+    h.answers = await frame('conversation').locator('article[data-role="assistant"]').count()
     await composer.fill(prompt)
     await composer.press('Enter')
+    // A new thread's composer can remount right after it opens and swallow the first Enter.
+    for (let retry = 0; retry < 3 && (await composer.inputValue().catch(() => '')) === prompt; retry++) {
+      await sleep(2000)
+      if ((await composer.inputValue().catch(() => '')) === prompt) await composer.press('Enter')
+    }
     if (gate === 'continue') {
       try {
         await frame('gate').getByTestId('memory-gate-continue').waitFor({ state: 'visible', timeout: 25_000 })
@@ -84,6 +90,9 @@ const h = {
   },
   async settled(timeoutMs = 600_000) {
     const composer = frame('conversation').getByTestId('composer')
+    const answers = frame('conversation').locator('article[data-role="assistant"]')
+    // A reply is read only after a new answer exists (the M3CL2 move re-walk read a stale one).
+    await waitUntil(async () => (await answers.count()) > (h.answers ?? -1), timeoutMs)
     await sleep(1500)
     await waitUntil(async () => {
       const text = await frame('conversation').locator('body').innerText()
