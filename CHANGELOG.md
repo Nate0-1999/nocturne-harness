@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.49 - 2026-10-01
+
+- Browse every model your token source offers from the Model Device: search, sort by
+  rank, price or context window, pin favourites to the top, and switch the conversation
+  in one click. The thinking level sits beside the model when the model takes one, and
+  Pinned, Max, Elbow and Floor show what each would pick right now. The conversation's
+  model chip reads model, thinking level, context window and price. Pair with Memory
+  0.1.49, which lists the source's models.
+
 ## 0.1.48 - 2026-10-01
 
 - Compare current and proposed scores on a live memory gate, retain the previous
