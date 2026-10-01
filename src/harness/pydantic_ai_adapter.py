@@ -70,6 +70,42 @@ class PendingSteering(Capability[MemoryToolContext]):
         return response
 
 
+_PROMISED_WORK = re.compile(
+    r"\b(?:I will|I'll|I am going to|I'm going to|would you like me to|shall I|should I)\b",
+    re.IGNORECASE,
+)
+
+
+class FinishWhatWasAsked(Capability[MemoryToolContext]):
+    """Codex M3W5A-13; the M3CL2 walk on gpt-4.1-mini: answers ending "To fix this, I will…"
+    and "Would you like me to proceed with committing?" ended the turn with the asked-for work
+    undone. Once per run, such an ending is sent back: finish it, or say plainly why not."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.sent = False
+
+    async def after_model_request(self, ctx, *, request_context, response):
+        limits = ctx.usage_limits
+        spent = (
+            limits is not None
+            and bool(limits.request_limit)
+            and (ctx.usage.requests >= limits.request_limit * 3 // 4)
+        )
+        if (
+            self.sent
+            or spent
+            or response.tool_calls
+            or not _PROMISED_WORK.search(response.text[-400:])
+        ):
+            return response
+        self.sent = True
+        raise ModelRetry(
+            "Your answer ends by promising or asking about work the user already asked for. "
+            "Do it now with the tools; if you cannot, say plainly what is not done and why."
+        )
+
+
 class TurnBudgetNotice(Capability[MemoryToolContext]):
     """Gate ruling 2026-10-01 (M3CL2): a run that spins into the turn's request or token wall
     fails; at three quarters of either, the agent is told once to stop and report plainly."""

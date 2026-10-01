@@ -62,7 +62,12 @@ from harness.proposed_response import (
     parse_proposed_response_output,
     proposed_response_event,
 )
-from harness.pydantic_ai_adapter import DelegateCapability, PendingSteering, TurnBudgetNotice
+from harness.pydantic_ai_adapter import (
+    DelegateCapability,
+    FinishWhatWasAsked,
+    PendingSteering,
+    TurnBudgetNotice,
+)
 from harness.pydantic_harness_adapter import CompactionPolicy, MemoryCompaction
 from harness.receipt_queue import SpendReceiptQueue
 from harness.run_protocol import (
@@ -543,6 +548,7 @@ class PydanticAITurnRunner:
                             )
                         ),
                         TurnBudgetNotice(),
+                        FinishWhatWasAsked(),
                         *self._agent.tool_capabilities(context),
                         *(
                             [DelegateCapability()]

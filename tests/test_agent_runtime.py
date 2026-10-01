@@ -2211,3 +2211,36 @@ async def test_three_quarters_of_the_turn_budget_asks_once_for_an_honest_stop() 
         "500000 tokens. If the work is not done, stop now: tell the user plainly what is done, "
         "what is not, and why. Start nothing new."
     ]
+
+
+@pytest.mark.asyncio
+async def test_an_answer_ending_in_a_promise_is_sent_back_once_to_finish() -> None:
+    """Codex M3W5A-13 and the M3CL2 walk: "To fix this, I will…" and "Would you like me to
+    proceed with committing?" ended turns with the asked-for work undone. M3GD / SPEC B.6 r14:
+    exercised retry: "Your answer ends by promising or asking about work the user already asked
+    for. Do it now with the tools; if you cannot, say plainly what is not done and why."."""
+
+    from types import SimpleNamespace
+
+    from pydantic_ai import ModelRetry
+    from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart
+    from pydantic_ai.usage import RunUsage, UsageLimits
+
+    from harness.pydantic_ai_adapter import FinishWhatWasAsked
+
+    limits = UsageLimits(request_limit=40)
+    early = SimpleNamespace(usage_limits=limits, usage=RunUsage(requests=5))
+    late = SimpleNamespace(usage_limits=limits, usage=RunUsage(requests=31))
+    promise = ModelResponse(parts=[TextPart("The test fails. To fix this, I will patch it.")])
+    asking = ModelResponse(parts=[TextPart("Would you like me to proceed with committing?")])
+    working = ModelResponse(parts=[ToolCallPart("bash", {"command": "pytest"})])
+    done = ModelResponse(parts=[TextPart("Committed abc123; 52 tests pass.")])
+
+    check = FinishWhatWasAsked()
+    assert await check.after_model_request(early, request_context=None, response=done) is done
+    assert await check.after_model_request(early, request_context=None, response=working) is working
+    with pytest.raises(ModelRetry, match="Do it now with the tools"):
+        await check.after_model_request(early, request_context=None, response=promise)
+    assert await check.after_model_request(early, request_context=None, response=asking) is asking
+    spent = FinishWhatWasAsked()
+    assert await spent.after_model_request(late, request_context=None, response=asking) is asking
