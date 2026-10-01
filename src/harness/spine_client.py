@@ -589,15 +589,15 @@ class QueueDecisionIntent(ContractModel):
     decision: Literal["approve", "deny"]
     approval_mode: Literal["explicit", "passive"]
     actor_class: Literal["human", "passive"]
-    # WALL Palace writes / A-075: a replacement amendment must contain text.
+    # WALL Palace writes / A-076: a replacement amendment must contain text.
     amended_body: str | None = Field(default=None, min_length=1)
 
 
 class QueueFeedbackIntent(ContractModel):
-    # WALL Palace writes / A-075: provenance is server-owned.
+    # WALL Palace writes / A-076: provenance is server-owned.
     model_config = ConfigDict(extra="forbid")
 
-    # A-075: curator tuning feedback must contain text.
+    # A-076: curator tuning feedback must contain text.
     feedback: str = Field(min_length=1)
     actor_class: Literal["human"]
 
