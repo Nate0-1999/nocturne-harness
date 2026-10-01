@@ -617,6 +617,30 @@ class PydanticAITurnRunner:
             limits = self._agent.usage_limits
             reached = "requests" if run_usage.requests >= (limits.request_limit or 0) else "tokens"
             await emit.event(_turn_limit_event(limits, reached=reached))
+            final = captured[-1] if captured else None
+            if (
+                isinstance(final, ModelResponse)
+                and final.text
+                and not final.tool_calls
+                and not (compaction is not None and compaction.completed)
+            ):
+                # M3CL2 walk: gpt-4.1-mini committed, ran the tests green and answered; that
+                # answer took the turn past 500,000 tokens, and the limit is checked after
+                # every response, so a finished turn read "Stopped at this turn's limit".
+                visible = await bridge.finalize(
+                    [
+                        part.content
+                        for message in captured[len(prior_history) :]
+                        if isinstance(message, ModelResponse)
+                        for part in message.parts
+                        if isinstance(part, TextPart)
+                    ],
+                    run_id=emit.run_id,
+                    created_at=self._clock(),
+                )
+                return TurnOutcome(
+                    StopReason("end_turn"), tuple(captured), usage, assistant_text=visible
+                )
             return TurnOutcome(
                 StopReason("budget_exceeded"),
                 failed_history(),

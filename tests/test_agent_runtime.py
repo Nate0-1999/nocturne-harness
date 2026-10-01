@@ -1825,10 +1825,13 @@ async def test_usage_limit_maps_to_budget_exceeded_with_partial_history() -> Non
     history; this prevents drift in the streaming model runtime and history boundary. F134
     (M3EX-03): the turn states its ceilings and names the one that stopped it.
     """
+
+    async def mid_work(_messages, _info):
+        yield {0: DeltaToolCall(name="search_memory", json_args='{"query":"budget"}')}
+
     runner = PydanticAITurnRunner(
         HarnessAgent(
-            settings(run_total_tokens_limit=1),
-            model=TestModel(call_tools=[], custom_output_text="over the tiny token budget"),
+            settings(run_total_tokens_limit=1), model=FunctionModel(stream_function=mid_work)
         ),
         lambda _: context(),
     )
@@ -1845,11 +1848,37 @@ async def test_usage_limit_maps_to_budget_exceeded_with_partial_history() -> Non
     assert outcome.message_history
     assert outcome.usage.requests == 1
     assert outcome.usage.input_tokens > 0
-    assert outcome.usage.output_tokens == 0
     assert emitted.usages[-1] == outcome.usage
     limits = [event for event in emitted.events if event["event_kind"] == "turn_limit"]
     assert limits[0] == {"event_kind": "turn_limit", "request_limit": 40, "total_tokens_limit": 1}
     assert limits[-1]["reached"] == "tokens"
+
+
+@pytest.mark.asyncio
+async def test_a_finished_answer_that_crosses_the_token_wall_is_delivered_finished() -> None:
+    """M3CL2 walk: gpt-4.1-mini committed, ran the tests green and answered; that last answer
+    took the turn past 500,000 tokens and the turn read "Stopped at this turn's limit". The
+    limit still stops a turn mid-work (above); a final answer already paid for is delivered."""
+
+    async def finished(_messages, _info):
+        yield "Committed abc123; tests pass."
+
+    runner = PydanticAITurnRunner(
+        HarnessAgent(
+            settings(run_total_tokens_limit=1), model=FunctionModel(stream_function=finished)
+        ),
+        lambda _: context(),
+    )
+    emitted = RecordingEmitter()
+
+    outcome = await runner.run(
+        thread_id="thread-1", prompt="finish", message_history=(), emit=emitted
+    )
+
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert outcome.assistant_text == "Committed abc123; tests pass."
+    assert "Committed abc123; tests pass." in "".join(emitted.texts)
+    assert [e for e in emitted.events if e["event_kind"] == "turn_limit"][-1]["reached"] == "tokens"
 
 
 @pytest.mark.asyncio
