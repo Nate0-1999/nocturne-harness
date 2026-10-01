@@ -531,10 +531,28 @@ export function openingStageCamera(
     const bottom = Math.max(...set.map((module) => module.y + module.height)) * STAGE_UNIT_HEIGHT
     const zoom = Math.min(1, (viewportWidth - 48) / (right - left),
       fitHeight ? (viewportHeight - 48) / (bottom - top) : 1)
-    return { x: Math.round((viewportWidth - (right - left) * zoom) / 2 - left * zoom), y: Math.round(24 - top * zoom), zoom }
+    // The rows below either fit whole or start under the window, never half under the recall bar.
+    const below = modules.filter((module) => module.y * STAGE_UNIT_HEIGHT >= bottom)
+    const nextTop = Math.min(...below.map((module) => module.y)) * STAGE_UNIT_HEIGHT
+    const nextBottom = Math.max(...below.map((module) => module.y + module.height)) * STAGE_UNIT_HEIGHT
+    const screenTop = below.length === 0 || 24 + (nextBottom - top) * zoom <= viewportHeight
+      ? 24
+      : Math.max(24, viewportHeight + 4 - (nextTop - top) * zoom)
+    return { x: Math.round((viewportWidth - (right - left) * zoom) / 2 - left * zoom), y: Math.round(screenTop - top * zoom), zoom }
   }
   return sets.map((set) => frame(set, true)).find((camera) => camera.zoom >= 0.75) ??
     frame(sets[sets.length - 1]!, false)
+}
+
+/** M3W5B-33: while the Work layer keeps the factory camera, it shows the opening frame for
+ * this window; the owner's first pan or zoom saves a camera of their own. */
+export function withOpeningCamera(layer: StageLayer, viewportWidth: number, viewportHeight: number): StageLayer {
+  const factory = FACTORY_STAGE_LAYOUT.layers[0]!.camera
+  const untouched = layer.layer_id === 'work' && layer.camera.x === factory.x &&
+    layer.camera.y === factory.y && layer.camera.zoom === factory.zoom
+  return untouched && viewportWidth > 0 && viewportHeight > 0
+    ? { ...layer, camera: openingStageCamera(viewportWidth, viewportHeight, layer.modules) }
+    : layer
 }
 
 export function focusStageModule(

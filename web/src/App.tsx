@@ -94,7 +94,6 @@ import {
   cloneStageLayout,
   createStageLayer,
   fitStageCamera,
-  openingStageCamera,
   focusStageModule,
   loadSavedStageSet,
   loadStageLayout,
@@ -113,6 +112,7 @@ import {
   setStageAttunementSource,
   stageLayoutsEqual,
   updateStageCamera,
+  withOpeningCamera,
   type StageCamera,
   type ConversationMode,
   type StageLayoutSet,
@@ -416,15 +416,12 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   const [sheetMode, setSheetMode] = useState(initialSheetMode)
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 })
   const viewportRef = useRef<HTMLDivElement>(null)
-  // M3W5B-33 / Codex 16: a factory layout opens on its Work layer framed for this window.
-  const [factoryAtOpen] = useState(() => JSON.stringify(layout) === JSON.stringify(cloneFactoryStageLayout()))
-  const opensFresh = useRef(factoryAtOpen)
   const initialAttunementPicks = useMemo(() => initialStickyAttunements(), [])
   const stickyAttunements = useRef<Record<string, StickyAttunementPick>>(
     initialAttunementPicks,
   )
   const journaledAttunementPicks = useRef(new Set<string>())
-  const layer = activeStageLayer(layout)
+  const layer = withOpeningCamera(activeStageLayer(layout), viewportSize.width, viewportSize.height)
   const frameAddresses = useMemo(
     () => spatialAddresses(layer.layer_id, layer.modules.map((module) => ({
       ...module,
@@ -526,13 +523,6 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   }
 
   useEffect(() => {
-    if (!opensFresh.current || viewportSize.width === 0) return
-    opensFresh.current = false
-    setLayout((current) => current.active_layer_id !== 'work' ? current : updateStageCamera(current,
-      openingStageCamera(viewportSize.width, viewportSize.height, activeStageLayer(current).modules)))
-  }, [viewportSize])
-
-  useEffect(() => {
     const viewport = viewportRef.current
     if (viewport === null || typeof ResizeObserver === 'undefined') return
     const observer = new ResizeObserver(([entry]) => {
@@ -551,7 +541,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     const handleWheel = (event: WheelEvent) => {
       event.preventDefault()
       setLayout((current) => {
-        const currentLayer = activeStageLayer(current)
+        const currentLayer = withOpeningCamera(activeStageLayer(current), viewport.clientWidth, viewport.clientHeight)
         if (event.ctrlKey || event.metaKey) {
           const rect = viewport.getBoundingClientRect()
           const focusX = event.clientX - rect.left
@@ -677,10 +667,8 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   }, [savedSet])
 
   const resetFactorySet = useCallback(() => {
-    const factory = cloneFactoryStageLayout()
-    setLayout(viewportSize.width === 0 ? factory : updateStageCamera(factory,
-      openingStageCamera(viewportSize.width, viewportSize.height, activeStageLayer(factory).modules)))
-  }, [viewportSize])
+    setLayout(cloneFactoryStageLayout())
+  }, [])
 
   const changeModuleScope = useCallback((
     instanceId: string,
