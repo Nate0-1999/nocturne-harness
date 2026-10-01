@@ -1264,7 +1264,7 @@ def turn_account(context: MemoryToolContext) -> Callable[[str], str | None]:
         if turn is None or not any(turn):
             return None
         committed, uncommitted = turn
-        changed = {*committed, *(entry[3:] for entry in uncommitted)}
+        changed = {*committed, *(entry.split(maxsplit=1)[-1] for entry in uncommitted)}
         named = {
             path
             for path in _MENTIONED_PATH.findall(answer)

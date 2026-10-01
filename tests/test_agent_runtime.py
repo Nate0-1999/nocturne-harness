@@ -2337,6 +2337,7 @@ async def test_a_turn_that_changed_the_repository_is_checked_against_the_loops_a
     (repository / "src").mkdir(parents=True)
     (repository / "tests").mkdir()
     (repository / "src" / "a.py").write_text("x = 1\n")
+    (repository / "src" / "b.py").write_text("y = 1\n")
     (repository / "tests" / "test_a.py").write_text("def test_a():\n    pass\n")
     for command in (
         ["init", "-q"],
@@ -2354,12 +2355,14 @@ async def test_a_turn_that_changed_the_repository_is_checked_against_the_loops_a
         (repository / "src" / "a.py").write_text("x = 2\n")
         subprocess.run(["git", "-C", str(repository), "commit", "-qam", "change"], check=True)
         (repository / "notes.txt").write_text("draft\n")
-        said = account(claim)
+        (repository / "src" / "b.py").write_text("y = 2\n")
+        said = account(f"{claim} I also changed src/b.py.")
     finally:
         await toolset.close()
 
     assert said == (
-        "Checked by Nocturne, this turn: committed src/a.py; not committed: ?? notes.txt; "
+        "Checked by Nocturne, this turn: committed src/a.py; "
+        "not committed: ?? notes.txt, M src/b.py; "
         "not changed: tests/test_a.py."
     )
     tools = SimpleNamespace(
