@@ -165,14 +165,23 @@ def _refuse_destruction(target: Path, original: str, revised: str, said_replace:
     kept = sum(len("".join(old[start : start + size])) for start, _, size in blocks)
     if len(original) - kept <= kept:
         return
-    # M3CL2 walk: after this refusal gpt-4.1-mini never found an anchor to add its test; name one.
-    last = next((line for line in reversed(original.splitlines()) if line.strip()), "")
+    # M3CL2 walk: after this refusal gpt-4.1-mini never found an anchor to add its test, and the
+    # last line alone ("    )") appeared 94 times; name the shortest unique ending.
+    ending = original.rstrip("\n").splitlines()
+    tail = next(
+        (
+            "\n".join(ending[-count:])
+            for count in range(1, min(len(ending), 12) + 1)
+            if original.count("\n".join(ending[-count:])) == 1
+        ),
+        ending[-1] if ending else "",
+    )
     raise ToolsetError(
         f"Refused: this would remove {100 - kept * 100 // len(original)}% of {target.name} "
         f"({lines} lines). Change only what the request needs with edit; "
         "the whole file is replaced only when the user's request says replace. To add to the "
-        f"end, edit with oldText set to its last line, {last!r}, and newText set to that line "
-        "followed by what you add."
+        f"end, edit with oldText set to its last lines, {tail!r}, and newText set to those "
+        "lines followed by what you add."
     )
 
 

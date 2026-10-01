@@ -523,7 +523,7 @@ async def test_a_change_that_removes_most_of_a_file_needs_the_word_replace(tmp_p
 
     assert not rewrite.success and "Refused: this would remove 9" in rewrite.content
     assert "test_big.py (120 lines)" in rewrite.content and "says replace" in rewrite.content
-    assert "oldText set to its last line, '    assert 39'," in rewrite.content
+    assert "oldText set to its last lines, '    assert 39'," in rewrite.content
     assert not gutted.success and "Refused: this would remove" in gutted.content
     assert added.success and bumped.success and replaced.success
     assert (tmp_path / "test_big.py").read_text() == "# replaced\n"
@@ -807,3 +807,30 @@ async def test_a_read_from_offset_zero_starts_at_the_first_line(tmp_path: Path) 
 
     assert read.success and "1\tfirst" in read.content and "2\tsecond" in read.content
     assert "offset=-1" not in read.content
+
+
+@pytest.mark.asyncio
+async def test_the_refusal_names_a_unique_ending_to_add_after(tmp_path: Path) -> None:
+    """M3CL2 walk: the refusal named the last line, "    )", which appeared 94 times in the
+    test file, and the next edit was refused as ambiguous; the anchor is now unique."""
+
+    body = "".join(f"def test_{n}():\n    call(\n        {n},\n    )\n\n\n" for n in range(30))
+    (tmp_path / "test_many.py").write_text(body)
+    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    try:
+        refused = await toolset.execute("write", {"path": "test_many.py", "content": "x = 1\n"})
+        anchor = "        29,\n    )"
+        appended = await toolset.execute(
+            "edit",
+            {
+                "path": "test_many.py",
+                "edits": [
+                    {"oldText": anchor, "newText": anchor + "\n\n\ndef test_new():\n    pass"}
+                ],
+            },
+        )
+    finally:
+        await toolset.close()
+
+    assert f"oldText set to its last lines, {anchor!r}," in refused.content
+    assert appended.success and (tmp_path / "test_many.py").read_text().count("def test_") == 31
