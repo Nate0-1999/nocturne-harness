@@ -572,23 +572,39 @@ def mount_visualization_routes(
     folds: dict = {}
     trees: dict = {}
 
+    feeds = (
+        ("palace", graph_reader),
+        ("curation", curator_reader),
+        ("spend", spend_reader),
+        ("progress", progress_reader),
+    )
+    reads: dict = {}  # feed -> its Palace read in flight
+    held: dict = {}  # feed -> its last good value
+
     async def sample():
         observation = await asyncio.to_thread(work_observation, journal, home, root, folds, trees)
         observation.update(palace=None, curation=None, errors=[])
-        for field, reader in (
-            ("palace", graph_reader),
-            ("curation", curator_reader),
-            ("spend", spend_reader),
-            ("progress", progress_reader),
-        ):
-            try:
-                result = await reader()
-                result = None if result is None else result.model_dump(mode="json")
-                if result is not None:
-                    result.pop("as_of", None)
-                observation[field] = result
-            except Exception as exc:
-                observation["errors"].append({"feed": field, "error": type(exc).__name__})
+        # M3HW (found by M3LV): four Palace reads in a row held the local observation for the sum
+        # of their latencies (90 s on a slow Palace). Each read runs on its own, a sample waits at
+        # most a second, and a read still running leaves its feed's last good value in place.
+        for field, reader in feeds:
+            if field not in reads:
+                reads[field] = asyncio.create_task(reader())
+        await asyncio.wait(reads.values(), timeout=1)
+        for field, _reader in feeds:
+            if reads[field].done():
+                read = reads.pop(field)
+                try:
+                    result = read.result()
+                    result = None if result is None else result.model_dump(mode="json")
+                    if result is not None:
+                        result.pop("as_of", None)
+                    held[field] = result
+                except Exception as exc:
+                    held.pop(field, None)
+                    observation["errors"].append({"feed": field, "error": type(exc).__name__})
+            if field in held:
+                observation[field] = held[field]
         costs = {
             str(row["thread_id"]): row.get("total_usd")
             for row in (observation.get("spend") or {}).get("threads", [])
@@ -614,9 +630,10 @@ def mount_visualization_routes(
         task = asyncio.create_task(observe())
 
     async def stop():
-        if task is not None:
-            task.cancel()
-            await asyncio.gather(task, return_exceptions=True)
+        for pending in (task, *reads.values()):
+            if pending is not None:
+                pending.cancel()
+        await asyncio.gather(*(t for t in (task, *reads.values()) if t), return_exceptions=True)
 
     @app.get("/v1/visualization")
     async def visualization_snapshot(as_of: str | None = None, known: str | None = None):

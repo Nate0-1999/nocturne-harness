@@ -430,3 +430,60 @@ def test_a_held_tree_is_not_sent_again(tmp_path):
         "projects": None,
         "observed_at": None,
     }
+
+
+def test_a_slow_palace_read_never_holds_the_local_observation(tmp_path):
+    """M3HW (found by M3LV): four Palace reads awaited in a row froze the Farm and Roots for
+    90 s on a slow Palace; a read still running leaves the sample on its 2 s cadence, and its
+    value arrives with a later sample."""
+    import asyncio
+    import threading
+    import time
+    from types import SimpleNamespace
+
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from harness.visualization import mount_visualization_routes
+
+    (tmp_path / "work").mkdir()
+    release = threading.Event()
+
+    def value(payload):
+        return SimpleNamespace(model_dump=lambda mode: dict(payload))
+
+    async def slow_graph():
+        await asyncio.to_thread(release.wait, 30)
+        return value({"nodes": ["arrived"]})
+
+    async def curation():
+        return value({"admitted_writes": 1})
+
+    async def nothing():
+        return None
+
+    app = FastAPI()
+    mount_visualization_routes(
+        app,
+        home=tmp_path / "home",
+        journal=SimpleNamespace(catalog=lambda: []),
+        root=tmp_path / "work",
+        graph_reader=slow_graph,
+        curator_reader=curation,
+        spend_reader=nothing,
+        progress_reader=nothing,
+    )
+    with TestClient(app) as client:
+        started = time.monotonic()
+        while (response := client.get("/v1/visualization")).status_code == 404:
+            time.sleep(0.05)
+        first = response.json()
+        assert time.monotonic() - started < 4
+        assert first["palace"] is None and first["curation"] == {"admitted_writes": 1}
+        assert first["errors"] == []
+        release.set()
+        deadline = time.monotonic() + 10
+        while client.get("/v1/visualization").json()["palace"] is None:
+            assert time.monotonic() < deadline
+            time.sleep(0.1)
+        assert client.get("/v1/visualization").json()["palace"] == {"nodes": ["arrived"]}
