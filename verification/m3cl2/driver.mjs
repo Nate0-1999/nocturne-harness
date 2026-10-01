@@ -76,7 +76,9 @@ const h = {
     // A new thread's composer can remount right after it opens and swallow the first Enter.
     for (let retry = 0; retry < 3 && (await composer.inputValue().catch(() => '')) === prompt; retry++) {
       await sleep(2000)
-      if ((await composer.inputValue().catch(() => '')) === prompt) await composer.press('Enter')
+      if ((await composer.inputValue().catch(() => '')) === prompt) {
+        await frame('conversation').getByTestId('send').click()
+      }
     }
     if (gate === 'continue') {
       try {

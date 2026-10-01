@@ -3960,8 +3960,11 @@ within budget, on gpt-4.1-mini): git after `cd …&&` counts as git; a shell mis
 exists from the root (zsh, ls, pytest, git pathspec) names `cd <root> && <command>`; every
 request's workspace context states the last commit with its files and what is uncommitted.
 Three once-per-run checks keep claims honest: an answer ending in a promise or a request for
-leave is sent back; a turn that changed the repository is checked against it before it ends
-("reply only: Checked" when right); the request that would leave no room for another goes out
-without tools and asks for a plain account. A final answer that crosses the token wall after
-it streamed (usage arrives at the end of the stream) is delivered finished; mid-work, the
-wall still stops the turn.
+leave is sent back; a turn that changed the repository goes back once with the loop's own
+account (committed, not committed, and each file the answer names that the turn did not
+change) and ends with that account appended, since gpt-4.1-mini answered "Checked." to a plain
+fact list; the request that would leave no room for another goes out without tools and asks
+for a plain account. A final answer that crosses the token wall after it streamed (usage
+arrives at the end of the stream) is delivered finished; mid-work, the wall still stops the
+turn. A read at offset 0 starts at the first line (it read from the last), and the
+destructive-write refusal names the shortest unique ending as the anchor for adding to a file.
