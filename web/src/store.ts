@@ -896,7 +896,10 @@ export const useHarnessStore = create<HarnessStoreState>()(
       },
 
       clearTransportError: (source) => {
-        if (get().globalError?.source === source) set({ globalError: null })
+        const current = get().globalError
+        // FL-173: any request that reaches the Palace again clears a stale "Palace is unavailable/busy",
+        // even when the request that failed (a one-time load at startup) is never repeated.
+        if (current?.source === source || current?.message.startsWith('The Palace is ')) set({ globalError: null })
       },
 
       clearError: (threadId) => {
