@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Any, Protocol, cast
@@ -127,6 +128,7 @@ class DirectCompletionAdapter:
 
     def __init__(self, settings: HarnessSettings) -> None:
         self._settings = settings
+        self._listing: tuple[float, ModelCatalog] | None = None
 
     @property
     def catalog_available(self) -> bool:
@@ -167,6 +169,9 @@ class DirectCompletionAdapter:
     async def load(self) -> ModelCatalog:
         """The source's own list; no benchmarks, so token-cost policies stay dormant."""
 
+        # Fresh for a day, like the broker catalog: the chip and browser ask on every render.
+        if self._listing is not None and time.monotonic() - self._listing[0] < 24 * 60 * 60:
+            return self._listing[1]
         api_key = _required_secret(self._settings.openai_api_key, "OPENAI_API_KEY")
         base_url = (self._settings.openai_base_url or "https://api.openai.com/v1").rstrip("/")
         try:
@@ -181,14 +186,20 @@ class DirectCompletionAdapter:
             )
         except (httpx.HTTPError, ValueError, ModelCatalogUnavailable) as exc:
             raise ModelCatalogUnavailable("the model source's list is unavailable") from exc
-        return ModelCatalog(rows=(), model_routes={}, fetched_at=datetime.now(UTC), listing=listing)
+        catalog = ModelCatalog(
+            rows=(), model_routes={}, fetched_at=datetime.now(UTC), listing=listing
+        )
+        self._listing = (time.monotonic(), catalog)
+        return catalog
 
     async def load_named_route(self, model_id: str) -> tuple[ModelRoute, datetime]:
-        catalog = await self.load()
-        for entry in catalog.listing:
-            if entry.model_id == model_id:
-                context = entry.context_tokens or self._settings.model_context_tokens
-                return ModelRoute(model_id=model_id, context_tokens=context), catalog.fetched_at
+        for _ in range(2):  # a miss refetches once, as the broker's /model lookup does
+            catalog = await self.load()
+            for entry in catalog.listing:
+                if entry.model_id == model_id:
+                    context = entry.context_tokens or self._settings.model_context_tokens
+                    return ModelRoute(model_id=model_id, context_tokens=context), catalog.fetched_at
+            self._listing = None
         raise NamedModelResolutionError(f"unknown model: {model_id}")
 
     def qualify_model(self, model_id: str) -> str:
