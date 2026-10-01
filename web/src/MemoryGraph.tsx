@@ -27,6 +27,7 @@ export function MemoryGraph() {
   const [scope, setScope] = useState<'GLOBAL' | 'ATTUNED'>('GLOBAL')
   const [loadedSnapshot, setLoadedSnapshot] = useState<KeyedMemoryGraphSnapshot<Snapshot> | null>(null)
   const [selected, setSelected] = useState<Node | null>(null)
+  const [search, setSearch] = useState('')
   const [restoring, setRestoring] = useState<string | null>(null)
   const [parameters, setParameters] = useState<Record<string, unknown> | null>(null)
   const [failure, setFailure] = useState<{ requestKey: string; message: string } | null>(null)
@@ -81,6 +82,7 @@ export function MemoryGraph() {
   }
 
   const nodes = snapshot?.nodes ?? []
+  const matches = search.trim() ? nodes.filter((node) => node.memory.label.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())) : []
   const positions = new Map(nodes.map((node, index) => [node.memory.memory_id, {
     x: 14 + (index % 5) * 18, y: 18 + Math.floor(index / 5) * 25,
   }]))
@@ -102,6 +104,14 @@ export function MemoryGraph() {
   const viewHeight = Math.max(76, 18 + Math.ceil(nodes.length / 5) * 25)
   return <section className="instrument instrument--graph">
     <header><h1>Memory Graph</h1></header>
+    <label className="graph-search">Find a memory by name
+      <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Memory name" />
+    </label>
+    {search.trim() && <ul className="graph-search-results" aria-label="Matching memories">
+      {matches.length === 0 ? <li>No matching memories.</li> : matches.map((node) => <li key={node.memory.memory_id}>
+        <Button type="button" aria-pressed={selected?.memory.memory_id === node.memory.memory_id} onClick={() => inspectNode(node)}>{node.memory.label}</Button>
+      </li>)}
+    </ul>}
     {!requestIsQueryable ? <p role="status">{rack.attunement?.kind === 'stack' ? `${rack.attunement.name} graph is not available yet.` : 'No thread is attuned.'}</p> : visibleFailure !== null ? <p role="alert">{visibleFailure}</p> : snapshot === null ? <p role="status">Loading memory graph…</p> : <div className="graph-stage">
       <div className="graph-canvas"><svg viewBox={`0 0 100 ${viewHeight}`} style={{ '--graph-rows': viewHeight / 76 } as CSSProperties} role="img" aria-label={`${nodes.length} memories and ${snapshot?.edges.length ?? 0} relationships`}>
         {(snapshot?.edges ?? []).map((edge, index) => { const a = positions.get(edge.from_memory_id); const b = positions.get(edge.to_memory_id); return a && b ? <line key={`${edge.kind}-${index}`} x1={a.x} y1={a.y} x2={b.x + (a === b ? 2 : 0)} y2={b.y + (a === b ? 2 : 0)} data-kind={edge.kind} /> : null })}

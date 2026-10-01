@@ -205,7 +205,12 @@ async def edit_memory(
     new_body: str,
     reason: str,
 ) -> str:
-    """Replace one memory body by exact label or ID; explain why the correction is needed."""
+    """Correct a durable fact in the Palace by its exact memory label or ID.
+
+    This does not edit files. Use filesystem edit/write to change code or documents.
+    Preserve saved lessons while performing a task; never replace them with file-edit
+    instructions or task progress. Explain the new evidence requiring a factual correction.
+    """
 
     try:
         target, resolution_error = await _resolve_active_memory(context, label_or_id)
@@ -267,12 +272,13 @@ async def create_remembered_memory_split(
     source_body: str,
     children: list[MemorySplitChild],
 ) -> CreateMemorySplitResponse:
-    """Atomically create one global, user-authored A-049 split family."""
+    """Atomically create one user-authored split family in the thread's project."""
 
     return await context.spine.create_memory_split(
         MemorySplitRequest(
             principal_id=context.principal_id,
             source_body=source_body,
+            project_key=context.project_key,
             children=children,
             thread_origin=str(context.thread_id) if context.thread_id is not None else None,
             origin_thread_id=context.thread_id,

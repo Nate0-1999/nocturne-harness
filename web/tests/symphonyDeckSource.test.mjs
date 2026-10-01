@@ -22,3 +22,20 @@ test('The Deck exposes all three conductor interventions and an owner demand lin
   assert.match(stage, /conversation_mode: 'focused'/u)
   assert.match(daemon, /"conversation"/u)
 })
+
+/** F140 and Invariant 14 (owner ruling 2026-09-30, "seen clears it"): the Deck keeps only
+ * answers still waiting; one read in a Focused conversation, or a closed thread, leaves it.
+ */
+test('the Deck drops answers already seen in Focused and answers of archived threads', async () => {
+  const [deck, seen, app] = await Promise.all([
+    readFile(new URL('../src/SymphonyDeck.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/deckSeen.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
+  ])
+  assert.match(deck, /proposedResponseCards\(snapshot\)\.filter\(\(card\) => !seen\.has\(card\.proposal_run_id\)\)/u)
+  assert.match(deck, /proposal === undefined \|\| entry\.archived\) return \[\]/u)
+  assert.match(deck, /if \(archived\.has\(threadId\)\) continue/u)
+  assert.match(seen, /addEventListener\('storage'/u)
+  assert.match(app, /<SlashCommandHint \/>\s*<DeckSeenMarker \/>/u)
+  assert.match(app, /markProposalSeen\(latest\)/u)
+})

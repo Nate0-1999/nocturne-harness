@@ -69,6 +69,7 @@ label:has(> .kit-select-wrap, > .kit-field) {
 .kit-label,
 label:has(> .kit-select-wrap, > .kit-field),
 .kit-button,
+.principal-memory__primary,
 .kit-chip,
 .kit-empty__label {
   font-family: var(--data-font);
@@ -85,7 +86,19 @@ label:has(> .kit-select-wrap, > .kit-field),
 .memory-gate__stop,
 .composer__attach,
 .composer-attachment__remove,
-.archive-button {
+.archive-button,
+.rack-module__drag > .rack-module__attunement,
+.conversation-mode,
+.conversation-mode button,
+.rack-module__settings-toggle,
+.symphony-deck__header > span,
+.symphony-deck__empty,
+.deck-stack,
+.deck-demand,
+.deck-attempt,
+.deck-controls fieldset,
+.deck-proposal,
+.deck-undo {
   --kit-edge: var(--line-strong);
   --kit-fill: var(--surface-deep);
   --kit-cut: calc(var(--chamfer) * 0.7071);
@@ -101,7 +114,8 @@ label:has(> .kit-select-wrap, > .kit-field),
   );
 }
 
-.kit-button {
+.kit-button,
+.principal-memory__primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -314,7 +328,6 @@ header.recipe-instrument__header h1,
 .instrument section > h2,
 .instrument aside h2,
 .jobs-instrument aside h2,
-details .agent-policy-settings h2,
 .spend-history > h3,
 .palace-queue-card h3 {
   margin: 0;

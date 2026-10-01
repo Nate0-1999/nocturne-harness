@@ -37,3 +37,11 @@ test('module host wall rejects external origins and accepts a local port', () =>
   context.location.href = 'http://localhost:4000/?rack_host=http://127.0.0.1:4000'
   assert.equal(context.remoteHostOrigin(), 'http://127.0.0.1:4000')
 })
+
+/** SPEC C.4 / F158 (FL-173): the Palace banner clears on recovery, not only when the one
+ * request that failed is repeated.
+ */
+test('a stale Palace availability banner clears when any later request succeeds', () => {
+  const store = readFileSync(new URL('../src/store.ts', import.meta.url), 'utf8')
+  assert.match(store, /current\?\.source === source \|\| current\?\.message\.startsWith\('The Palace is '\)/u)
+})

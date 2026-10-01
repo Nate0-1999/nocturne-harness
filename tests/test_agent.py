@@ -130,6 +130,26 @@ class FakeSpine:
             offset=params.offset,
         )
 
+    async def search(self, request):
+        from harness.spine_client import SearchResponse, SimilarityMemoryCard
+
+        return SearchResponse(
+            results=[
+                SimilarityMemoryCard(
+                    memory_id=item.memory_id,
+                    label=item.label,
+                    body=item.body,
+                    kind=item.kind,
+                    pin=item.pin,
+                    score=1.0,
+                    features=None,
+                    rank=None,
+                )
+                for item in self.memories
+                if item.body == request.query
+            ]
+        )
+
     async def patch_memory(
         self,
         memory_id: UUID,
@@ -1542,6 +1562,26 @@ async def test_remember_hard_duplicate_records_plain_reinforcement() -> None:
             ),
         )
     ]
+
+
+@pytest.mark.asyncio
+async def test_two_clause_resave_reinforces_whole_before_splitting() -> None:
+    """M3MQ / F158: metadata must not split a fact that already exists whole."""
+    body = "Use tabs. Run the checks before committing."
+    existing = memory_unit(body=body)
+    reinforced = memory_unit(body=body, revision=2, reinforcements=1)
+    spine = FakeSpine(duplicate_conflict(), memories=[existing], patch_outcome=reinforced)
+    calls = []
+    model = structured_sequence_model(
+        [{"label": "Workflow", "keywords": ["tabs", "checks"], "multiple_facts": True}], calls
+    )
+
+    result = await HarnessAgent(settings(), model=model).remember(body, context=context(spine))
+
+    assert result.ok and "reinforced" in result.message
+    assert len(calls) == 1
+    assert spine.create_requests == spine.split_requests == []
+    assert spine.patch_requests[0][1].body == body
 
 
 @pytest.mark.asyncio

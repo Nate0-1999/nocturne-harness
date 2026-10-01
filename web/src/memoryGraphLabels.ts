@@ -35,24 +35,23 @@ export function declutterGraphLabels(
     priority(right) - priority(left) || left.id.localeCompare(right.id)
   ))
 
+  // The graph grows a row at a time; the lowest row's labels still fit below their nodes.
+  const bottom = Math.max(VIEWBOX_HEIGHT, ...candidates.map((candidate) => candidate.y + candidate.radius + 6))
   for (const candidate of ordered) {
     const text = compactLabel(candidate.label)
     const width = Math.min(18, Math.max(4, text.length * CHARACTER_WIDTH))
     const below = candidate.y + candidate.radius + 4
-    const y = below + 1 > VIEWBOX_HEIGHT
-      ? candidate.y - candidate.radius - 2
-      : below
+    const above = candidate.y - candidate.radius - 2
     const x = clamp(candidate.x, width / 2 + 1, VIEWBOX_WIDTH - width / 2 - 1)
-    const box = {
-      left: x - width / 2,
-      right: x + width / 2,
-      top: y - LABEL_HEIGHT,
-      bottom: y + 0.6,
-    }
-    if (accepted.some((label) => boxesOverlap(box, label.box))) {
+    // TASTE-06: a label that collides below its node tries above before it stays hidden.
+    const placed = (below + 1 > bottom ? [above] : [below, above]).map((y) => ({
+      y,
+      box: { left: x - width / 2, right: x + width / 2, top: y - LABEL_HEIGHT, bottom: y + 0.6 },
+    })).find(({ box }) => box.top >= 0 && !accepted.some((label) => boxesOverlap(box, label.box)))
+    if (placed === undefined) {
       continue
     }
-    accepted.push({ id: candidate.id, text, x, y, priority: priority(candidate), box })
+    accepted.push({ id: candidate.id, text, x, y: placed.y, priority: priority(candidate), box: placed.box })
   }
 
   return accepted.sort((left, right) => left.id.localeCompare(right.id))

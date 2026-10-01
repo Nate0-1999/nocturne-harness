@@ -128,7 +128,9 @@ try {
       collisions,
     }
   })
-  if (graphAudit.node_count !== 10 || graphAudit.visible_label_count >= graphAudit.node_count) {
+  // TASTE-06: a label tries above its node before it hides, so this grid now names every node;
+  // the law stays: no two labels overlap, and the fixture's selected, current and pinned labels show.
+  if (graphAudit.node_count !== 10 || graphAudit.priorities.filter((priority) => priority >= 2000).length < 3) {
     throw new Error(`graph labels were not priority-decluttered: ${JSON.stringify(graphAudit)}`)
   }
   if (graphAudit.collisions.length !== 0) {

@@ -802,9 +802,11 @@ export const useHarnessStore = create<HarnessStoreState>()(
               return entry
             }
             const firstPrompt = entry.created_at === entry.updated_at
+            // M3W5B-34: a slash command never names the thread; the first ordinary prompt does.
+            const names = !prompt.trimStart().startsWith('/') && (firstPrompt || entry.title === 'New thread')
             return {
               ...entry,
-              title: firstPrompt ? title : entry.title,
+              title: names ? title : entry.title,
               ...(entry.archived ? { archived: false } : {}),
               updated_at: nextIsoTimestamp(entry.updated_at),
             }
@@ -894,7 +896,10 @@ export const useHarnessStore = create<HarnessStoreState>()(
       },
 
       clearTransportError: (source) => {
-        if (get().globalError?.source === source) set({ globalError: null })
+        const current = get().globalError
+        // FL-173: any request that reaches the Palace again clears a stale "Palace is unavailable/busy",
+        // even when the request that failed (a one-time load at startup) is never repeated.
+        if (current?.source === source || current?.message.startsWith('The Palace is ')) set({ globalError: null })
       },
 
       clearError: (threadId) => {

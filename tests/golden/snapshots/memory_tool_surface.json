@@ -19,7 +19,7 @@
     },
     {
       "capability_id": "memory",
-      "description": "Replace one memory body by exact label or ID; explain why the correction is needed.",
+      "description": "Correct a durable fact in the Palace by its exact memory label or ID.\n\n    This does not edit files. Use filesystem edit/write to change code or documents.\n    Preserve saved lessons while performing a task; never replace them with file-edit\n    instructions or task progress. Explain the new evidence requiring a factual correction.",
       "name": "edit_memory",
       "parameters_json_schema": {
         "additionalProperties": false,

@@ -258,6 +258,7 @@ def init_nocturne(
     transcript_backup = not offline and prompt(
         "Back up conversation transcripts to your cloud Palace? [y/N] "
     ).strip().lower() in {"y", "yes"}
+    from harness.palaces import palace_for_url
 
     config = NocturneConfig(
         home=target_home,
@@ -273,6 +274,8 @@ def init_nocturne(
         local_model=local_model if offline else "",
         local_embedding_model=embedding_model,
         local_model_url=model_url,
+        # M3W5B-29: a test Palace's URL names that Palace; only main's (or a foreign) URL is main.
+        palace_name=(palace_for_url(spine_url) if palace_mode == "remote" else None) or "main",
     )
     _write_config(config)
     if not offline:
@@ -762,10 +765,11 @@ def doctor_nocturne(*, home: Path | None = None, stdout: TextIO = sys.stdout) ->
 def _print_cloud_breaker(config: NocturneConfig, *, stdout: TextIO) -> None:
     """FL-149: report the managed project's observed budget and D2 breaker."""
 
-    from harness.deploy import CLOUD_RUN_SERVICE, PROJECT_ID, DeployError, GcloudDeployBackend
+    from harness.deploy import PROJECT_ID, DeployError, GcloudDeployBackend
+    from harness.palaces import palace_for_url
 
-    hostname = urlsplit(config.spine_url).hostname or ""
-    if not (hostname.startswith(f"{CLOUD_RUN_SERVICE}-") and hostname.endswith(".run.app")):
+    # M3W5B-30: named Palaces run in main's project, under the same budget and breaker.
+    if palace_for_url(config.spine_url) is None:
         return
     print(f"GCP project: {PROJECT_ID}", file=stdout)
     try:

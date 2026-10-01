@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.46 - 2026-10-01
+
+- Re-saves reinforce complete memories; rejected candidates stay rejected and
+  split memories retain their project. Extraction excludes known facts and the
+  assistant's own answers.
+- Curator review shows sources, accepts amendments and feedback, and plots
+  actual memory growth and removals. Memory Graph adds name search and a wider
+  inspector. Pair with Memory 0.1.46, including its separate 0.70 curator review
+  setting and configurable database pool bound of 2 + 3.
+
 ## 0.1.42 - 2026-09-29
 
 - A Symphony finishes or stops with its reason on the card: a judge that cannot

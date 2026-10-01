@@ -192,6 +192,7 @@
 
 .thread-item {
   position: relative;
+  flex: none; /* M3W5B-33: a row in the scrolling list never shrinks under its wrapped title */
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;

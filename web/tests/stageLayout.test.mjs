@@ -18,7 +18,9 @@ import {
   moduleFitsViewport,
   moduleIsOffscreen,
   moveStageModule,
+  openingStageCamera,
   persistStageLayout,
+  reframeUntouchedWork,
   recoverStageModule,
   removeStageLayer,
   removeStageModule,
@@ -406,4 +408,38 @@ test('whole stage fits the modules and library adds land clear of others', () =>
       }
     }
   }
+})
+
+/** P2.5 / F158: a fresh Stage opens with its conversation whole at a readable size, whatever
+ * the window: the widest core set that fits at 75% or more, else the conversation's width. */
+test('a fresh work layer opens readable at laptop sizes', () => {
+  const modules = activeStageLayer(cloneFactoryStageLayout()).modules
+  const conversation = modules.find((module) => module.module_id === 'conversation')
+  const inView = (camera, module, width) => camera.x + module.x * STAGE_UNIT_WIDTH * camera.zoom >= 0 &&
+    camera.x + (module.x + module.width) * STAGE_UNIT_WIDTH * camera.zoom <= width
+  for (const [width, height] of [[1440, 800], [1280, 620], [1200, 700]]) {
+    const camera = openingStageCamera(width, height, modules)
+    assert.ok(camera.zoom >= 0.75 && camera.zoom <= 1, `${width}: zoom ${camera.zoom}`)
+    assert.ok(inView(camera, conversation, width), `${width}: conversation in view`)
+    assert.ok(camera.y + (conversation.y + conversation.height) * STAGE_UNIT_HEIGHT * camera.zoom <= height)
+  }
+  const wide = openingStageCamera(1440, 800, modules)
+  for (const module of modules.filter((item) => ['threads', 'memory'].includes(item.module_id))) {
+    assert.ok(inView(wide, module, 1440), `1440: ${module.module_id} in view`)
+  }
+  const small = openingStageCamera(800, 500, modules)
+  assert.ok(inView(small, conversation, 800) && small.zoom > 0.7, `800: zoom ${small.zoom}`)
+  assert.deepEqual(openingStageCamera(390, 700, modules), activeStageLayer(cloneFactoryStageLayout()).camera)
+})
+
+/** P2.5 (M3W5B-33): the Work layer is framed for the window until the owner moves its camera. */
+test('an untouched work camera follows the window; a moved one is kept', () => {
+  const storage = memoryStorage()
+  const framed = reframeUntouchedWork(cloneFactoryStageLayout(), 1440, 800, storage)
+  const camera = activeStageLayer(framed).camera
+  assert.notDeepEqual(camera, activeStageLayer(cloneFactoryStageLayout()).camera)
+  const reframed = reframeUntouchedWork(framed, 1200, 700, storage)
+  assert.notDeepEqual(activeStageLayer(reframed).camera, camera)
+  const moved = updateStageCamera(reframed, { ...activeStageLayer(reframed).camera, x: 10 })
+  assert.equal(reframeUntouchedWork(moved, 800, 500, storage), moved)
 })

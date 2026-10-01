@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { LearningSummary, LearningTimeline } from './LearningTelemetry'
 import { type CuratorActivityView, curatorActivityFrom } from './curation'
+import { CuratorGrowth } from './CuratorGrowth'
 import { scorerConsoleTelemetry, type ScorerConsoleTelemetry } from './learning'
 import { formatHumanQuantity } from './humanNumbers'
 import { useRackPlugin } from './rack'
@@ -150,6 +151,8 @@ export function PalaceStateModule() {
           )}
         </div>
       )}
+
+      {curatorActivity !== null && <CuratorGrowth points={curatorActivity.growth} />}
 
       <div className="palace-state__gauges" aria-label="Palace gauges">
         <StateGauge label="Disk free" value={formatBytes(snapshot.resources.disk_free_bytes)} warning={snapshot.resources.warning === 'low_disk'} />
