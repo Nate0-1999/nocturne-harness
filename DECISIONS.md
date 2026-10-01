@@ -3965,7 +3965,8 @@ the repository goes back once with the loop's own
 account (committed, not committed, and each file the answer names that the turn did not
 change) and ends with that account appended, since gpt-4.1-mini answered "Checked." to a plain
 fact list; the request that would leave no room for another goes out without tools and asks
-for a plain account. A final answer that crosses the token wall after it streamed (usage
+for a plain account; the run's output retries cover each check, so a check never ends a turn in
+a run error. A final answer that crosses the token wall after it streamed (usage
 arrives at the end of the stream) is delivered finished; mid-work, the wall still stops the
 turn. A read at offset 0 starts at the first line (it read from the last), and the
 destructive-write refusal names the shortest unique ending as the anchor for adding to a file,
