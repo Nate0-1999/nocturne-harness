@@ -3960,7 +3960,8 @@ within budget, on gpt-4.1-mini): git after `cd …&&` counts as git; a shell mis
 exists from the root (zsh, ls, pytest, git pathspec) names `cd <root> && <command>`; every
 request's workspace context states the last commit with its files and what is uncommitted.
 Three once-per-run checks keep claims honest: an answer ending in a promise or a request for
-leave is sent back; a turn that changed the repository goes back once with the loop's own
+leave is sent back, as is an "I cannot" before the turn tried any tool; a turn that changed
+the repository goes back once with the loop's own
 account (committed, not committed, and each file the answer names that the turn did not
 change) and ends with that account appended, since gpt-4.1-mini answered "Checked." to a plain
 fact list; the request that would leave no room for another goes out without tools and asks
