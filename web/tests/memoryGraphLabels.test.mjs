@@ -11,9 +11,25 @@ test('keeps the highest-signal label when graph labels collide', () => {
     candidate('selected', 'Selected memory label', 50, { selected: true }),
   ])
 
-  assert.deepEqual(labels.map((label) => label.id), ['selected'])
-  assert.equal(labels[0].text, 'Selected memory…')
-  assert.ok(labels[0].priority >= 10_000)
+  // TASTE-06: the winner keeps the place below its node, the next tries above, the third hides.
+  assert.deepEqual(labels.map((label) => label.id), ['current', 'selected'])
+  const selected = labels.find((label) => label.id === 'selected')
+  assert.equal(selected.text, 'Selected memory…')
+  assert.ok(selected.priority >= 10_000)
+  assert.ok(selected.y > 18 && labels.find((label) => label.id === 'current').y < 18)
+  assert.equal(overlap(labels[0].box, labels[1].box), false)
+})
+
+/** SPEC P2.3 (TASTE-06): neighbors in the graph's grid all keep their names; none overlap. */
+test('a row of grid neighbors is labelled above and below instead of hidden', () => {
+  const row = [0, 1, 2, 3, 4].map((index) => candidate(`n${index}`, `Neighbor memory number ${index}`, 14 + index * 18))
+  const labels = declutterGraphLabels(row)
+  assert.equal(labels.length, 5)
+  for (let index = 0; index < labels.length; index += 1) {
+    for (let other = index + 1; other < labels.length; other += 1) {
+      assert.equal(overlap(labels[index].box, labels[other].box), false)
+    }
+  }
 })
 
 /** SPEC P2.3 and PLAN M2ST3 require the declutter result itself to be mechanically non-overlapping. */

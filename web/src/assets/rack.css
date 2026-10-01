@@ -3702,3 +3702,8 @@ details > .agent-policy-settings > h2 { display: none; } /* its summary already 
   .graph-stage aside { border-left: 0; border-top: 1px solid var(--line); }
 }
 
+/* TASTE-06: the scoring list reads as label and value, like every module's data list. */
+.instrument--graph details dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-2) var(--space-5); margin: var(--space-3) 0; }
+.instrument--graph details dl > div { display: contents; }
+.instrument--graph details dt { color: var(--muted); font: var(--text-sm) var(--data-font); letter-spacing: 0.08em; text-transform: uppercase; }
+.instrument--graph details dd { margin: 0; color: var(--ink); font: var(--text-base) var(--data-font); }
