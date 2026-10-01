@@ -293,11 +293,15 @@ try {
   await shot(`FL-130-run${run}.png`)
   note('selection', log.checks.selection.afterSwitch.rows)
 
-  // FL-132 — time order: from the newest waiting reply, the panels move to the longest-waiting one.
-  log.checks.t2_pick_attempts = await pickRow(second)
-  const waiting = (await feed()).agents.filter((agent) => agent.waiting_since !== null)
+  // FL-132 — time order: from another thread, the panels move to the longest-waiting reply. A reply stops waiting once
+  // its thread is viewed, so the start is any other thread of this walk (the newest waiting one when several wait).
+  const agentsNow = (await feed()).agents
+  const waiting = agentsNow.filter((agent) => agent.waiting_since !== null)
     .sort((a, b) => Date.parse(a.waiting_since) - Date.parse(b.waiting_since))
   const expected = waiting[0]
+  const start = expected?.label.startsWith(second.slice(0, 40)) ? agentsNow.find((agent) => agent.id !== expected.id && agent.label.startsWith('M3LV run'))?.label ?? second : second
+  note('time_order.start', { start: start.slice(0, 50), expected: expected?.label.slice(0, 50) })
+  log.checks.t2_pick_attempts = await pickRow(start)
   const beforeOrder = { rows: await selected(), conversation: (await text(frame(page, 'conversation').locator('body'))).slice(0, 400) }
   await farm.getByRole('button', { name: 'Time order' }).click()
   const trace = []

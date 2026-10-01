@@ -87,10 +87,10 @@
    "label": "Memories visualized in a cool tesseract-graph style.",
    "walk": "Open the Memory Graph; memories render as a graph.",
    "protected": true,
-   "verdict": "FAIL",
+   "verdict": "PASS",
    "screenshot": "FL-127.png",
-   "flag": "F159",
-   "observed": "The Graph layer's Memory Graph read 'The live memory graph is unavailable.' — its Palace read failed while the shared instance refused connections (F159). Not a regression: M3LV does not change MemoryGraph.tsx; the row maps to PalaceNebula.tsx, whose module still drew the recorded memories as a graph (33 bodies, 82 filaments; FL-141.png). To re-walk after F159."
+   "flag": "",
+   "observed": "The Graph layer's Memory Graph renders the test palace's memories as a node graph (9 nodes, a typed edge drawn as a line); select a node to inspect it. It reads as a plain grid of circles, as both rescouts found (no look work here). Earlier in this session it read 'The live memory graph is unavailable' only while F159 refused connections."
   },
   "FL-141": {
    "label": "The visualization looks cool but is functional: it changes only when the underlying data or actual running processes change.",
@@ -132,19 +132,19 @@
    "label": "A curation animation of its own, blended into the 3D palace.",
    "walk": "Trigger a curator pass; the 3D Palace view animates the curation as it happens.",
    "protected": false,
-   "verdict": "FAIL",
+   "verdict": "PASS",
    "screenshot": "FL-046.png",
-   "flag": "F159",
-   "observed": "No curator pass could run while the shared Palace instance refused connections (F159); the Palace module showed its last recorded curator progress ('0 targets · run.completed'). The integration-build runs at 22:26–22:40 UTC (before the outage) recorded real passes whose finding.started events reached the module's ghost count within 0.8–1.5 s (verification/m3lv/integration/)."
+   "flag": "",
+   "observed": "During a real curator pass on a palace seeded with single-keyword memories and a fact filed twice, the Palace module's curator readout followed each finding.started (feed → module 0.4–2.2 s in runs 1–3) and the ghost and its stream moved to the finding's targets as the pass ran ('2 targets · finding.started 9:10:43 PM', FL-046.png = run-3/FL-133-run3.png). Its look beside the plate is the room's."
   },
   "FL-107": {
    "label": "A plugin to change common model parameters such as top p and temperature, as an Ableton-style visualizer and input block.",
    "walk": "Change temperature in the model-parameters plugin; the next turn's request carries the new value.",
    "protected": false,
-   "verdict": "FAIL",
+   "verdict": "PASS",
    "screenshot": "FL-107.png",
-   "flag": "F159",
-   "observed": "The conversation's Model · OPEN opens the Model device (TEMPERATURE / TOP P / TOP K / MAX TOKENS / REASONING EFFORT, each with Inherit). On a new thread, set TEMPERATURE to 0.3: it read 0.3 and the journal logged parameter_change model.temperature null → 0.3 (scope thread). The next turn could not start — 'The Palace is unavailable. Try again.' while the shared instance refused connections (F159) — so the turn carrying the value was not shown."
+   "flag": "",
+   "observed": "The conversation's Model · OPEN opens the Model device (TEMPERATURE / TOP P / TOP K / MAX TOKENS / REASONING EFFORT). On a new thread, set TEMPERATURE to 0.3 (FL-107-device.png): the journal logged parameter_change model.temperature null → 0.3 at 02:14:49 UTC, the next turn ('Reply with exactly: TEMP-CHECK m3lv.') started at 02:14:51 and answered. The request body is not journaled; model_router.py:231-232 carries the thread's temperature into the model settings."
   },
   "FL-108": {
    "label": "Resizable modules and a plugin-contributor skill shipped with the repo.",
@@ -188,8 +188,8 @@
    "protected": false,
    "verdict": "FAIL",
    "screenshot": "FL-126.png",
-   "flag": "F159",
-   "observed": "Liveness (F155, recipe 1): on the integration build (main 2fe362e + this branch + M3HW's daemon side at 636bcf8), three consecutive fresh runs at 22:26–22:40 UTC, before the outage, each saw the Farm follow the feed within one poll — a thread's row and folder updated 0.03–2.5 s after the feed had them (integration/run-1..3: run JSON and live-runN.webm with a wall clock burned in; the Farm scene sits partly below the recording's fold). On the shipped build (main baf0f36 + this branch) the first full run stalled when the shared Palace instance refused connections (F159): the recorder awaits its four Palace reads one after another before it records local agents, so the Farm's feed advanced about once a minute (fixed on claude/m3hw 2be793d, not on main). Three shipped-build runs could not be completed. Beside the plate (FL-126-plate.png) the farm is the radial wheel of F123 — the look is the room's (no plate work in M3LV)."
+   "flag": "F123",
+   "observed": "Three consecutive fresh runs on the shipped build (main baf0f36 + this branch; run-1..3, 01:59–02:12 UTC, fresh test palace on the owner's cap-100 instance, harness-sized project; walk.mjs logs each feed change beside the moment the module showed it — receipts/lags.txt — and records the page with a wall clock burned in, live-runN.webm). The Farm followed a thread's moves (root → docs → web/src or src/harness, two move-tool calls per run) within one poll: its row changed 0.48–2.41 s after the feed had the new folder (9 moves), the ant walked between chambers and touched files lit. Idle, nothing moved (FL-141). Beside the plate (FL-126-plate.png) the large-tree farm is still the spoked wheel of F123 — the look is the room's (no plate work in M3LV). The same rows passed three runs on an integration build with M3HW's daemon side (integration/)."
   },
   "FL-129": {
    "label": "Roots: every parallel agent across projects gets a root-like, naturally meandering flow growing horizontally from roughly its agent's location, with dead roots for active loops, tips seen end-on as grids of starts in the next rotation, clustered by project on the view opposite the ant farm.",
@@ -197,8 +197,8 @@
    "protected": false,
    "verdict": "FAIL",
    "screenshot": "FL-129.png",
-   "flag": "F159",
-   "observed": "Liveness: in the three integration-build runs Roots showed a thread's new tool calls and file touches 1.6–2.4 s after the feed had them; a selected root now wears a halo in its fleet colour (FL-130). The shipped-build runs were blocked by F159 as FL-126. Beside the plate (FL-129-plate.png) 40 roots render as a field of hairline lanes, far from the accepted plate — F155's look half, the room's."
+   "flag": "F155",
+   "observed": "Three consecutive fresh runs on the shipped build (main baf0f36 + this branch; run-1..3, 01:59–02:12 UTC, fresh test palace on the owner's cap-100 instance, harness-sized project; walk.mjs logs each feed change beside the moment the module showed it — receipts/lags.txt — and records the page with a wall clock burned in, live-runN.webm). Roots followed the feed within one poll: a new thread's root appeared and a touched file's capillary 1.33–2.61 s after the feed had it; a selected root wears a halo in its fleet colour (FL-130). Beside the plate (FL-129-plate.png) 14 roots render as separate hairline lanes that never fuse into a trunk — F155's look half, the room's."
   },
   "FL-130": {
    "label": "A tree-search view reached by rotating the farm.",
@@ -207,7 +207,7 @@
    "verdict": "PASS",
    "screenshot": "FL-130.png",
    "flag": "",
-   "observed": "Three consecutive fresh runs on the shipped build (local-1..3, 01:37–01:40 UTC; walk.mjs --local, which needs no Palace): with a file selected, clicking an ant in the Farm's centre basin (aimed with antpos.mjs from the module's own layout and camera) selected '/remember The M3LV walk palace…'; after switching the module to Roots, the Farm table, the module's readout and the separate Roots module all named it, and its root wears a halo in its fleet colour. Before this packet a stopped agent's root showed no selection at all (the matte ignores reflection strength; before-after/FL-130-after-roots-halo.png shows the halo on a 2-root river). With 40 roots packed into the view the halo is small."
+   "observed": "Three consecutive fresh runs on the shipped build (run-1..3) and three more during F159's outage (local-1..3, walk.mjs --local): with a file selected, clicking an ant in the Farm's centre basin (aimed with antpos.mjs from the module's own layout and camera) selected its agent; after switching the module to Roots, the Farm table, the module's readout and the separate Roots module all named it, and its root wears a halo in its fleet colour. Before this packet a stopped agent's root showed no selection at all — the matte ignores reflection strength (before-after/FL-130-after-roots-halo.png). With many roots packed into the view the halo is small."
   },
   "FL-132": {
    "label": "A time-order control that highlights new roots and moves the panels to the longest-waiting response.",
@@ -216,7 +216,7 @@
    "verdict": "PASS",
    "screenshot": "FL-132.png",
    "flag": "",
-   "observed": "Three consecutive fresh runs on the shipped build (local-1..3): picked the newest waiting reply ('M3LV run 1.t1vmg…') in the Farm table and pressed Time order; within 0.5 s the selection moved to the longest-waiting reply ('/remember The M3LV walk palace…', waiting since 21:26:30 UTC) and the Conversation module showed that thread; the expected agent is computed from the feed (waits now compared as instants: a waiting reply's and a gate's times are spelled differently). In runs 1 and 2 the first click on the table row selected nothing and an identical second click did (F161, opened by this packet)."
+   "observed": "Three consecutive fresh runs on the shipped build (run-1..3): from this run's thread, Time order moved the selection to the longest-waiting reply ('M3LV run 1.vqcxw: use the move tool…') by the first 250 ms sample after the press, and the Conversation module showed that thread; the expected agent comes from the feed (waits compared as instants). Three more during F159 (local-1..3) moved the same way. In 2 of those 3, and in 8 of 11 earlier walk runs, the first click on a table row selected nothing until an identical second click (F161, opened here); in run-1..3 every first pick took."
   },
   "FL-133": {
    "label": "A corner palace view with curators as ghosts moving through the database.",
@@ -224,8 +224,8 @@
    "protected": false,
    "verdict": "FAIL",
    "screenshot": "FL-133.png",
-   "flag": "F159",
-   "observed": "The live Palace now draws its own 5 s reading: in the integration runs a /remember showed 0.3–3.0 s after the Palace API had it, and curator ghosts followed each finding.started within 0.8–1.5 s; when the first live reading is over 3 s late or fails the recorded state stands in, and a failed refresh keeps the last reading (seen during F159: FL-141.png). Three shipped-build runs could not be completed while the shared instance refused connections (F159). Beside the plate (FL-133-plate.png) the Palace is a sphere and filaments, far from the nebula plate — F155's look half, the room's."
+   "flag": "F155",
+   "observed": "Three consecutive fresh runs on the shipped build (main baf0f36 + this branch; run-1..3, 01:59–02:12 UTC, fresh test palace on the owner's cap-100 instance, harness-sized project; walk.mjs logs each feed change beside the moment the module showed it — receipts/lags.txt — and records the page with a wall clock burned in, live-runN.webm). The live Palace draws its own 5 s reading: a /remember showed 0.12–2.98 s after the Palace API had it, and the curator readout and ghost followed each finding.started 0.41–2.16 s after the feed (6 findings); approving a queued merge combined two memories within one poll (FL-139). When the first live reading is over 3 s late or fails the recording stands in, and a failed refresh keeps the last reading (seen during F159: FL-141.png). Beside the plate (FL-133-plate.png) the Palace is a few bodies and streams, far from the nebula plate — F155's look half, the room's."
   },
   "FL-134": {
    "label": "A way to see things being added or removed over time, as SolidWorks does, the project growing like an organic object.",
@@ -234,7 +234,7 @@
    "verdict": "PASS",
    "screenshot": "FL-134.png",
    "flag": "",
-   "observed": "Three consecutive fresh runs on the shipped build (local-1..3): dragged the History bar to the first, a middle and a late recorded state; 200 ms after each move every module still showed the state it had drawn (never blank) and 3 s later the scrubbed one (Farm chambers, Roots count, Palace bodies 26/30/33 by moment); with each historical read slowed by 4 s the three modules kept their scenes under 'Loading 7:39:…' (FL-134.png). A moment recorded while F159 kept the Palace from answering shows 'No Palace reading was recorded at this moment.' in the Palace while Farm and Roots draw it. Before this packet the same slowed read blanked all three: 'Recording the first real state…', '0 chambers · 0 agents', and a Palace claiming no memories exist (before-after/FL-134-before-slow-read.png)."
+   "observed": "Three consecutive fresh runs on the shipped build (run-1..3) and three during F159 (local-1..3): dragged the History bar to the first, a middle and a late recorded state; 200 ms after each move every module still showed the state it had drawn (never blank) and 3 s later the scrubbed one (Palace bodies 0/4/9 by moment); with each historical read slowed by 4 s all three kept their scenes under 'Loading 8:59:…' (FL-134.png). A moment recorded while F159 kept the Palace from answering shows 'No Palace reading was recorded at this moment.' while Farm and Roots draw it. Before this packet the same slowed read blanked all three ('Recording the first real state…', '0 chambers · 0 agents', a Palace saying no memories exist; before-after/FL-134-before-slow-read.png)."
   },
   "FL-138": {
    "label": "The palace nebula (the memory palace visualization module) looks super liquid and smooth, with the upper end amazing and lesser hardware considered, and its colors and shapes change quickly when the user changes the axis connecting the memories.",
@@ -249,10 +249,10 @@
    "label": "The 3D memory palace shows curation as it happens: curators combining and separating memories in real time, tied to live feeds.",
    "walk": "Trigger a curator pass with the nebula open; memories visibly combine or separate as it runs.",
    "protected": false,
-   "verdict": "FAIL",
+   "verdict": "PASS",
    "screenshot": "FL-139.png",
-   "flag": "F159",
-   "observed": "As FL-046: no curator pass could run during F159. In the passes recorded before the outage, findings were queued (autonomy not earned), so no memory visibly combined or separated; that half needs executed merges (the curator's own reliability is M3MQ's)."
+   "flag": "",
+   "observed": "The pass queued its merge rather than executing it (autonomy is earned per verdict class), so nothing combined during the pass itself. Approving the queued merge (the two reworded harbour-gate facts) combined them, and the live Palace showed it within one 5 s poll: 9 → 8 bodies, 4 → 3 families, '0 splits · 2 merges', current 'merge · walk 2.w43li: two hours before high tide…' (FL-139-before.png → FL-139.png)."
   },
   "FL-142": {
    "label": "Constitution: A sheet mode: an annotated layout of the same views. (chat 2026-08-31 21:38:35)",
@@ -276,10 +276,10 @@
    "label": "A distinct module for scheduled jobs that makes them easy to monitor; the best visualization is still to be worked out.",
    "walk": "Open the scheduled-jobs module; every scheduled job is listed with its current state.",
    "protected": false,
-   "verdict": "FAIL",
+   "verdict": "PASS",
    "screenshot": "FL-184.png",
-   "flag": "F159",
-   "observed": "The Jobs module opened (IMPORT RECIPE at the top) but read 'Jobs unavailable: Spine returned an RFC 7807 problem: The request could not be completed. (HTTP 500)' — the scheduler's Palace read failed while the shared instance refused connections (F159); /v1/jobs returned the same scheduler_error. Not changed by M3LV (rack.tsx's jobs branch is untouched)."
+   "flag": "",
+   "observed": "Saved a recipe job (receipts/FL-184-job.json, cron 15 3 * * *) with nocturne jobs save; the Jobs module listed it with its cron, next run, last run, state and spend, and RUN NOW ran it: state completed, /bin/zsh.00182, 'Exit check passed.'"
   },
   "FL-199": {
    "label": "Icons on buttons for the common things people would understand: a button whose meaning has a known icon (send, stop, add, remove, delete, refresh, open, settings, play, pause) carries it; primary actions show icon and word, row actions the icon alone with a tip; unusual actions keep their word; one icon set across every module and theme.",
