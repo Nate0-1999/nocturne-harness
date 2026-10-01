@@ -1030,6 +1030,9 @@ export function createHostPluginApi(
             && !manifest.bindings?.includes(action.parameter_id)) {
           throw new Error(`${manifest.id} is not bound to ${action.parameter_id}`)
         }
+        if (action.type === 'rack.scope.get' && spatialContext !== null) {
+          return spatialContext.scope as RackActionResult<Action>
+        }
         return runRackAction(
           () => dispatchRackAction(contextualRackAction(action, instanceId, attunement)),
           (message) => useHarnessStore.getState().setTransportError(message, `${instanceId}:${action.type}`),

@@ -397,7 +397,7 @@ export function InjectionConsole() {
         <h1>Injection Console</h1>
         {scope === 'ATTUNED' && rack.attunement?.kind === 'stack' && (
           <label>Conversation for preview
-            <Select data-tooltip-detail="Choose the thread whose gate the console reads." value={consoleThreadId ?? ''} onChange={(event) => {
+            <Select aria-label="Conversation for preview" data-tooltip-detail="Choose the thread whose gate the console reads." value={consoleThreadId ?? ''} onChange={(event) => {
               sessionStorage.setItem(contextKey, event.target.value)
               setContextThreads((current) => ({ ...current, [contextKey]: event.target.value }))
             }}>
