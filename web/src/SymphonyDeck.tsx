@@ -16,6 +16,7 @@ import { WorkerContext } from './WorkerContext'
 import { OutLoud } from './OutLoud'
 import { Button, Select, TextArea, TextField, Toggle } from './kit'
 import { formatHumanUsd } from './humanNumbers'
+import { useSeenProposals } from './deckSeen'
 
 interface DeckAttempt {
   attempt_id: string
@@ -132,7 +133,8 @@ export function proposedResponseCards(
   const titles = new Map(snapshot.catalog.map((entry) => [entry.thread_id, entry.title]))
   const latest = new Map(snapshot.catalog.flatMap((entry): [string, ProposedResponseCard][] => {
     const proposal = entry.proposed_response
-    if (proposal === null || proposal === undefined) return []
+    // M3W5B-38: an archived thread is closed; its last answer no longer waits on the Deck.
+    if (proposal === null || proposal === undefined || entry.archived) return []
     return [[entry.thread_id, {
       thread_id: entry.thread_id,
       thread_title: entry.title,
@@ -143,9 +145,11 @@ export function proposedResponseCards(
       assistant_text: proposal.assistant_text,
     }]]
   }))
+  const archived = new Set(snapshot.catalog.filter((entry) => entry.archived).map((entry) => entry.thread_id))
   for (const [threadId, thread] of Object.entries(snapshot.threads)) {
     if (thread.awaitingSnapshot) continue
     latest.delete(threadId)
+    if (archived.has(threadId)) continue
     const fired = new Set(
       thread.messages
         .filter((message): message is UserTranscriptMessage => (
@@ -195,7 +199,8 @@ export function SymphonyDeck() {
       (message): message is AssistantTranscriptMessage => message.role === 'assistant',
     ),
   ), [selected?.messages])
-  const cards = useMemo(() => proposedResponseCards(snapshot), [snapshot])
+  const seen = useSeenProposals()
+  const cards = useMemo(() => proposedResponseCards(snapshot).filter((card) => !seen.has(card.proposal_run_id)), [snapshot, seen])
   const blockedCount = stacks.filter((stack) => stack.state === 'blocked').length
   const boundaries = (selected?.messages ?? []).flatMap((message) => (
     message.role === 'assistant' ? message.events.filter((event, index, all) => (

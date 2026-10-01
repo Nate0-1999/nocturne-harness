@@ -26,6 +26,7 @@ import { AgentPolicies } from './AgentPolicies'
 import { SpendWallSettings } from './SpendWallSettings'
 import { ToolInventory, ToolsetSettings } from './ToolControls'
 import { RewindControl } from './RewindControl'
+import { markProposalSeen } from './deckSeen'
 import { RackPluginUpload } from './RackPluginUpload'
 import { MemoryGraph } from './MemoryGraph'
 import { PalaceNebula } from './PalaceNebula'
@@ -38,6 +39,7 @@ import { SymphonyDeck, latestDeckStacks, type DeckStack } from './SymphonyDeck'
 import { ModelDevice } from './ModelDevice'
 import { VitalsModule } from './VitalsModule'
 import { PalaceStateModule } from './PalaceStateModule'
+import { CuratorProposal } from './CuratorProposal'
 import { ContextBars } from './ContextBars'
 import {
   IMAGE_ACCEPT,
@@ -110,6 +112,7 @@ import {
   setStageAttunementSource,
   stageLayoutsEqual,
   updateStageCamera,
+  reframeUntouchedWork,
   type StageCamera,
   type ConversationMode,
   type StageLayoutSet,
@@ -262,6 +265,14 @@ function turnLimit(message: AssistantTranscriptMessage | undefined): string | nu
     return `${event.total_tokens_limit.toLocaleString('en-US')}-token`
   }
   return typeof event?.request_limit === 'number' ? `${event.request_limit}-request` : null
+}
+
+function reframeWork(layout: StageLayoutSet, size: { width: number, height: number }): StageLayoutSet {
+  try {
+    return reframeUntouchedWork(layout, size.width, size.height, globalThis.localStorage)
+  } catch {
+    return layout
+  }
 }
 
 function initialRackLayout(): StageLayoutSet {
@@ -523,10 +534,12 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     const viewport = viewportRef.current
     if (viewport === null || typeof ResizeObserver === 'undefined') return
     const observer = new ResizeObserver(([entry]) => {
-      setViewportSize({
+      const size = {
         width: Math.round(entry.contentRect.width),
         height: Math.round(entry.contentRect.height),
-      })
+      }
+      setViewportSize(size)
+      setLayout((current) => reframeWork(current, size))
     })
     observer.observe(viewport)
     return () => observer.disconnect()
@@ -664,8 +677,8 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   }, [savedSet])
 
   const resetFactorySet = useCallback(() => {
-    setLayout(cloneFactoryStageLayout())
-  }, [])
+    setLayout(reframeWork(cloneFactoryStageLayout(), viewportSize))
+  }, [viewportSize])
 
   const changeModuleScope = useCallback((
     instanceId: string,
@@ -1112,17 +1125,25 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             {STAGE_MODULE_IDS.map((moduleId) => {
               const present = layer.modules.some((module) => module.module_id === moduleId)
               const multiInstance = MULTI_INSTANCE_MODULE_IDS.includes(moduleId)
+              // M3W5B-31: say which layer holds a module; adding a copyable one never takes it from there.
+              const elsewhere = present ? undefined : layout.layers.find((candidate) => (
+                candidate.modules.some((module) => module.module_id === moduleId)))
+              const moves = elsewhere !== undefined && !multiInstance
               return (
                 <li key={moduleId}>
-                  <span>{RACK_MANIFESTS[moduleId].name}</span>
+                  <span>
+                    {RACK_MANIFESTS[moduleId].name}
+                    {elsewhere !== undefined && <small className="stage-library__where"> · on {elsewhere.name}</small>}
+                  </span>
                   <Button action="add" iconOnly aria-label={`Add ${RACK_MANIFESTS[moduleId].name}`} variant="bare"
                     type="button"
                     disabled={present && !multiInstance}
-                    onClick={() => setLayout((current) => multiInstance && present
+                    data-tooltip-detail={moves ? `Moves it here from ${elsewhere.name}.` : undefined}
+                    onClick={() => setLayout((current) => multiInstance && (present || elsewhere !== undefined)
                       ? addStageModuleInstance(current, moduleId, snapshot.selectedThreadId)
                       : restoreStageModule(current, moduleId))}
                   >
-                    {present ? multiInstance ? 'Add another' : 'On stage' : 'Add'}
+                    {present ? multiInstance ? 'Add another' : 'On stage' : moves ? 'Move here' : 'Add'}
                   </Button>
                 </li>
               )
@@ -1810,7 +1831,25 @@ function ChatModuleSlot() {
   return <>
     <ChatModule key={snapshot.selectedThreadId ?? 'empty'} />
     <SlashCommandHint />
+    <DeckSeenMarker />
   </>
+}
+
+/** M3W5B-38: the answer this Focused conversation shows is seen, so it leaves the Deck. */
+function DeckSeenMarker() {
+  const snapshot = useRackSnapshot()
+  const messages = snapshot.selectedThreadId === null ? [] : snapshot.threads[snapshot.selectedThreadId]?.messages ?? []
+  let latest: string | null = null
+  for (let index = messages.length - 1; index >= 0 && latest === null; index -= 1) {
+    const message = messages[index]!
+    if (message.role === 'assistant' && !message.partial && message.events.some((event) => (
+      event.event_kind === 'proposed_response' && event.proposal_run_id === message.run_id
+    ))) latest = message.run_id
+  }
+  useEffect(() => {
+    if (latest !== null && document.visibilityState === 'visible') markProposalSeen(latest)
+  }, [latest])
+  return null
 }
 
 // M3EX-30: the commands the daemon understands, listed the moment "/" is typed.
@@ -1824,16 +1863,23 @@ const SLASH_COMMANDS = [
 /** Read-only beside the composer (peers hold the composer itself): follows #prompt-input. */
 function SlashCommandHint() {
   const [hint, setHint] = useState<{ typed: string; x: number; y: number } | null>(null)
-  useEffect(() => {
-    const read = () => {
-      const input = document.getElementById('prompt-input')
-      if (!(input instanceof HTMLTextAreaElement) || !/^\/\S*$/u.test(input.value)) {
-        setHint(null)
-        return
-      }
-      const rect = input.getBoundingClientRect()
-      setHint({ typed: input.value, x: rect.left + rect.width / 2, y: rect.top - 8 })
+  const read = useCallback(() => {
+    const input = document.getElementById('prompt-input')
+    if (!(input instanceof HTMLTextAreaElement) || !/^\/\S*$/u.test(input.value)) {
+      setHint(null)
+      return
     }
+    const rect = input.getBoundingClientRect()
+    setHint((current) => current?.typed === input.value && current.x === rect.left + rect.width / 2 &&
+      current.y === rect.top - 8 ? current : { typed: input.value, x: rect.left + rect.width / 2, y: rect.top - 8 })
+  }, [])
+  // M3W5B-37: sending clears the composer without an input event, so a shown hint re-checks it.
+  useEffect(() => {
+    if (hint === null) return
+    const timer = globalThis.setInterval(read, 400)
+    return () => globalThis.clearInterval(timer)
+  }, [hint, read])
+  useEffect(() => {
     document.addEventListener('input', read)
     document.addEventListener('keyup', read)
     document.addEventListener('focusout', read)
@@ -1842,7 +1888,7 @@ function SlashCommandHint() {
       document.removeEventListener('keyup', read)
       document.removeEventListener('focusout', read)
     }
-  }, [])
+  }, [read])
   const matches = hint === null ? [] : SLASH_COMMANDS.filter(([command]) => command.startsWith(hint.typed))
   if (hint === null || matches.length === 0) return null
   return <aside className="control-tooltip" data-placement="above" data-testid="slash-commands"
@@ -1918,6 +1964,7 @@ function HeaderModule() {
           type="button"
           data-testid="mobile-threads"
           aria-label={`Threads ${snapshot.catalog.length.toString().padStart(2, '0')}`}
+          data-tooltip-detail="Open the list of conversations."
           aria-expanded={threadsOpen}
           onClick={() => toggleModule('threads')}
         >
@@ -1929,6 +1976,7 @@ function HeaderModule() {
           type="button"
           data-testid="mobile-memories"
           aria-label={`Memory ${memoryTotal}`}
+          data-tooltip-detail="Open the memories this thread uses."
           aria-expanded={memoriesOpen}
           onClick={() => toggleModule('memory')}
         >
@@ -1952,7 +2000,7 @@ function HeaderModule() {
 
 function ThreadsModule() {
   const snapshot = useRackSnapshot()
-  const { events, selection } = useRackPlugin()
+  const { events, selection, query } = useRackPlugin()
   const [archiveBusyThreadId, setArchiveBusyThreadId] = useState<string | null>(null)
   const [archiveFailure, setArchiveFailure] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
@@ -1970,9 +2018,18 @@ function ThreadsModule() {
     ]).filter((value): value is string => value !== null))),
     [snapshot.catalog],
   )
+  // TASTE-07 / M3W5B-34: a scheduled job's runs belong to the Jobs module, which opens them.
+  const [jobThreadIds, setJobThreadIds] = useState<ReadonlySet<string>>(() => new Set())
+  useEffect(() => {
+    query.query({ resource: 'jobs', as_of: 'now' }).then((result) => {
+      const runs = (result.data as { runs?: { thread_id?: unknown }[] } | null)?.runs ?? []
+      setJobThreadIds(new Set(runs.flatMap((run) => typeof run.thread_id === 'string' ? [run.thread_id] : [])))
+    }).catch(() => undefined)
+  }, [query, snapshot.catalog.length])
   const sortedCatalog = useMemo(
-    () => snapshot.catalog.filter((entry) => !entry.archived).sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
-    [snapshot.catalog],
+    () => snapshot.catalog.filter((entry) => !entry.archived && !jobThreadIds.has(entry.thread_id))
+      .sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
+    [snapshot.catalog, jobThreadIds],
   )
   const fixtureThreadCount = snapshot.catalog.filter((entry) => isLegacyFixtureTitle(entry.title)).length
   const createThreadAtDraft = () => {
@@ -2007,6 +2064,7 @@ function ThreadsModule() {
           type="button"
           data-testid="mobile-close-threads"
           aria-label="Close threads"
+          data-tooltip-detail="Return to the conversation."
           onClick={() => selection.select(null)}
         >
           Back
@@ -2022,8 +2080,9 @@ function ThreadsModule() {
           data-tooltip-detail="Start a conversation in a folder you choose."
           onClick={() => {
             setCreateFailure(null)
+            // M3W5B-34: a new thread starts where the selected one started, not where its agent wandered.
             setWorkspaceDraft(
-              selectedEntry?.current_location ?? selectedEntry?.workspace_root ?? '',
+              selectedEntry?.workspace_root ?? selectedEntry?.current_location ?? '',
             )
             setCreating((value) => !value)
           }}
@@ -2073,6 +2132,7 @@ function ThreadsModule() {
             <TextField
               id="thread-workspace-root"
               data-testid="thread-workspace-root"
+              data-tooltip-detail="The folder this thread works in; type a path or pick one used before."
               type="text"
               list="known-thread-locations"
               value={workspaceDraft}
@@ -3075,8 +3135,8 @@ function VisibleQueueRow({
         <small>Neighbors: {card.neighbors.map((item) => item.label).join(', ')}</small>
       )}
       <div className="thread-end-row__actions">
-        <Button action="close" variant="danger" type="button" disabled={disabled} onClick={onDeny}>Deny</Button>
-        <Button action="confirm" variant="primary" type="button" disabled={disabled} onClick={onApprove}>Approve</Button>
+        <Button action="close" variant="danger" type="button" disabled={disabled} data-tooltip-detail="Leave it out of your Palace." onClick={onDeny}>Deny</Button>
+        <Button action="confirm" variant="primary" type="button" disabled={disabled} data-tooltip-detail="Save it to your Palace as a memory." onClick={onApprove}>Approve</Button>
       </div>
     </article>
   )
@@ -3274,8 +3334,12 @@ function PalaceQueueModule() {
     setBusy(true)
     setStatusText(decision === 'approve' ? 'Approving the batch…' : 'Rejecting the batch…')
     void events.dispatch({ type: 'queue.batch.decide', batch_uid: batchUid, decision })
-      .then(() => load())
-      .then(() => setStatusText(decision === 'approve' ? 'Batch approved.' : 'Batch rejected.'))
+      .then(async (result) => {
+        await load()
+        const alreadyDecided = (result as { already_decided?: number }).already_decided ?? 0
+        setStatusText((decision === 'approve' ? 'Pending memories approved.' : 'Pending memories rejected.')
+          + (alreadyDecided ? ` ${alreadyDecided} already decided; earlier decisions kept.` : ''))
+      })
       .catch((error: unknown) => setStatusText(error instanceof Error ? error.message : 'The document changed before it could be decided.'))
       .finally(() => setBusy(false))
   }
@@ -3288,23 +3352,6 @@ function PalaceQueueModule() {
       .then(load)
       .then(() => setStatusText(decision === 'approve' ? 'Memory admitted.' : 'Memory discarded.'))
       .catch((error: unknown) => setStatusText(error instanceof Error ? error.message : 'The document changed before it could be decided.'))
-      .finally(() => setBusy(false))
-  }
-
-  function decideCurator(itemUid: string, decision: 'approve' | 'deny') {
-    if (busy) return
-    setBusy(true)
-    setStatusText(decision === 'approve' ? 'Applying the approved repair…' : 'Leaving the Palace unchanged…')
-    void events.dispatch({
-      type: 'queue.decide',
-      item_uid: itemUid,
-      decision,
-      approval_mode: 'explicit',
-      actor_class: 'human',
-    })
-      .then(load)
-      .then(() => setStatusText(decision === 'approve' ? 'Repair applied and journaled.' : 'Proposal rejected. The Palace was not changed.'))
-      .catch((error: unknown) => setStatusText(error instanceof Error ? error.message : 'That memory changed after diagnosis. Run the curators again.'))
       .finally(() => setBusy(false))
   }
 
@@ -3324,17 +3371,7 @@ function PalaceQueueModule() {
           ) : (
             <div className="curator-proposals">
               {curatorCards.map((card) => (
-                <article key={card.item_uid} data-verdict={card.verdict}>
-                  <span>{card.verdict.replace('_', ' ')} · finding {card.curator_finding_uid?.slice(-8)}</span>
-                  <strong>{card.candidate.label}</strong>
-                  <p>{typeof card.proposal_payload?.rationale === 'string'
-                    ? card.proposal_payload.rationale
-                    : 'The curator supplied no readable rationale.'}</p>
-                  <div>
-                    <Button type="button" data-tooltip-detail="Leave this memory unchanged." disabled={busy} onClick={() => decideCurator(card.item_uid, 'deny')}>Keep as is</Button>
-                    <Button action="confirm" variant="primary" type="button" data-tooltip-detail="Apply the curator's repair to this memory." disabled={busy} onClick={() => decideCurator(card.item_uid, 'approve')}>Approve repair</Button>
-                  </div>
-                </article>
+                <CuratorProposal key={card.item_uid} card={card} onChanged={load} />
               ))}
             </div>
           )}

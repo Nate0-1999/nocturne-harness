@@ -318,6 +318,7 @@ export function MemoryPanel({
           className="memory-panel__close"
           type="button"
           aria-label="Close memory drawer"
+          data-tooltip-detail="Return to the conversation."
           onClick={onClose}
         >
           Back

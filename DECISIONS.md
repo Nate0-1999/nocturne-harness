@@ -3819,6 +3819,26 @@ until the next start. The card's hover lists the folders beneath WHERE, one per 
 its panel is capped at the width its placement assumes. The gate card keeps rank, kind and
 id: its C.4 card carries no provenance.
 
+## M3EXF2 — The small list, round two [P2, P2.3, P2.5, P3]
+
+PRECEDENT: M3EXF, report 254 (M3W5B-29..40, TASTE-04..07; Codex 07, 08, 12, 16, 19), F140,
+F158, the nocturne-look skill. A Cloud Run URL names its Palace: main's service is main,
+`nocturne-palace-<name>` is that name, any other URL stays main; doctor reports the
+project's breaker for every owner Palace. The Deck keeps only answers still waiting (owner
+ruling 2026-09-30 on F140, "seen clears it"): an answer shown in a Focused conversation is
+remembered as seen in this browser, and an archived thread's answer leaves too. While the
+Work layer keeps the factory camera it shows, for the current window, Threads + Conversation
++ Memory, else Threads + Conversation, else the Conversation, whichever fits at 75% or more,
+with the rows below whole or under the window; the first pan or zoom saves the owner's
+camera, and Whole stage still fits every module. A control without its own words shows its name alone,
+never a filler sentence. Copyable modules add a copy from the Library instead of moving the
+original; a single one says where it lives and Move here. A slash command never names a
+thread; a new thread starts in the selected thread's start folder; job runs are listed by
+the Jobs module only; an empty thread (no answer, no candidates) archives without a review. A graph label
+tries above its node before hiding; the selected memory keeps a 20rem column and stacks
+below a narrow graph. The Recipe keeps its legend (legend law) in plain words. Any request
+that reaches the Palace clears a stale Palace availability banner (FL-173).
+
 ## M3LV — The modules go live [P2.1, P2.5]
 
 PRECEDENT: F155, M3VZ, M3VL, v2.104 (the pure render), v2.119 (roots opacity is a look).

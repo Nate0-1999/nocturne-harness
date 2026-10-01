@@ -201,9 +201,9 @@ def patch_conflict(conflict: RevisionConflict | LabelConflict) -> PatchMemoryCon
 
 
 @pytest.mark.asyncio
-async def test_a049_remember_split_maps_exact_source_and_trusted_global_provenance() -> None:
+async def test_remember_split_maps_exact_source_and_trusted_project_provenance() -> None:
     """A-049, ADR-022, and SPEC B.6 rule 12 are defended here.
-    The split mapper sends exact source and trusted user/global lineage through one operation.
+    The split mapper sends exact source and trusted user/project lineage through one operation.
     """
     spine = FakeSpineGateway()
     source = memory_unit(
@@ -230,6 +230,7 @@ async def test_a049_remember_split_maps_exact_source_and_trusted_global_provenan
     assert spine.split_requests[0].model_dump(mode="json", exclude_none=True) == {
         "principal_id": "principal-1",
         "source_body": "Fact one. Fact two.",
+        "project_key": "garden",
         "children": [child.model_dump() for child in children],
         "thread_origin": str(THREAD_ID),
         "origin_thread_id": str(THREAD_ID),

@@ -81,6 +81,9 @@ def settings(**overrides: Any) -> HarnessSettings:
 
 
 class UnusedSpine:
+    async def search(self, request):
+        return SearchResponse(results=[])
+
     def __getattr__(self, name: str) -> Any:
         raise AssertionError(f"unexpected Spine call: {name}")
 
@@ -1505,6 +1508,9 @@ async def test_a049_label_and_split_share_one_two_request_runtime_usage_wall() -
     class SplitSpine:
         def __init__(self) -> None:
             self.requests: list[MemorySplitRequest] = []
+
+        async def search(self, request):
+            return SearchResponse(results=[])
 
         async def create_memory_split(self, request: MemorySplitRequest) -> MemorySplitResponse:
             self.requests.append(request)

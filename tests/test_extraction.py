@@ -40,6 +40,7 @@ class FakeAgent:
                     body="Thread-born memory candidates require owner consent.",
                     kind="procedure",
                     keywords=["queue", "consent"],
+                    source_message_ids=["01K1M2A0000000000000000001"],
                 )
             ],
         )
@@ -217,6 +218,49 @@ async def test_archive_exposes_only_compact_image_metadata_to_extraction(tmp_pat
 
 
 @pytest.mark.asyncio
+async def test_extraction_skips_assistant_answers_and_already_known_facts(tmp_path: Path) -> None:
+    """ADR-022 / M3MQ: an answer is not evidence; a rephrase needs no new approval card."""
+    thread_id = uuid4()
+    journal = _journal(tmp_path / "transcripts", str(thread_id), datetime.now(UTC))
+    user_id, assistant_id = [m["message_id"] for m in journal.read_messages(str(thread_id))]
+    checked = []
+
+    class Agent(FakeAgent):
+        async def extract_thread(self, transcript, **options):
+            draft = await super().extract_thread(transcript, **options)
+            item = draft.candidates[0]
+            return draft.model_copy(
+                update={
+                    "candidates": [
+                        item.model_copy(update={"source_message_ids": [assistant_id]}),
+                        item.model_copy(update={"source_message_ids": [user_id]}),
+                    ]
+                }
+            )
+
+        async def propose_extraction_verdict(self, candidate, neighbors):
+            checked.append(candidate)
+            return ExtractionVerdictDraft(verdict="already_known", target_ids=[MEMORY_ID])
+
+    spine = FakeSpine()
+
+    async def create(request):
+        spine.requests.append(request)
+        return ExtractionResponse(cards=[], duplicate_count=0)
+
+    spine.create_extraction = create
+    service = ExtractionService(
+        journal=journal, agent=Agent(), spine=spine, principal_id="owner", machine_id="mac"
+    )
+
+    result = await service.archive(thread_id)
+
+    assert len(checked) == 1 and checked[0].source_message_ids == [user_id]
+    assert result.cards == [] and result.duplicate_count == 1
+    assert spine.requests[0].candidates == []
+
+
+@pytest.mark.asyncio
 async def test_idle_scheduler_uses_same_archive_path(tmp_path: Path) -> None:
     """A-033 is defended by verifying that idle scheduler uses same archive path; this prevents
     drift in the thread extraction trigger and idempotency contract.
@@ -390,13 +434,12 @@ async def test_archive_gives_each_memory_the_folder_its_facts_came_from(tmp_path
     assert [
         (request.origin_location, [candidate.label for candidate in request.candidates])
         for request in spine.requests
-    ] == [(str(web), ["Web"]), (str(docs), ["Docs", "None"]), (str(root), ["Both"])]
+    ] == [(str(web), ["Web"]), (str(docs), ["Docs"]), (str(root), ["Both"])]
     candidates = [candidate for request in spine.requests for candidate in request.candidates]
     assert {candidate.project_key for candidate in candidates} == {str(root)}
     assert {c.label: c.origin_locations for c in candidates} == {
         "Web": [],
         "Docs": [],
-        "None": [],
         "Both": [str(docs), str(web)],
     }
 

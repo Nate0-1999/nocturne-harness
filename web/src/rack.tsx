@@ -141,7 +141,9 @@ export type RackAction =
       decision: 'approve' | 'deny'
       approval_mode: 'explicit' | 'passive'
       actor_class: 'human' | 'passive'
+      amended_body?: string
     }
+  | { type: 'queue.feedback'; item_uid: string; feedback: string; actor_class: 'human' }
   | { type: 'gate.commit'; decision: GateCommitPayload }
   | { type: 'memory.refresh' }
   | { type: 'memory.add'; memory_id: string }
@@ -240,7 +242,7 @@ export type RackActionResult<Action extends RackAction> =
       ? number
     : Action['type'] extends 'thread.select' | 'thread.rename_project' | 'thread.bind_workspace' | 'draft.update'
       ? void
-      : Action['type'] extends 'policies.load' | 'policies.save' | 'prompt.interject' | 'symphony.context' | 'symphony.memory' | 'spend.invoice' | 'thread.archive' | 'thread.rewind' | 'queue.load' | 'curation.load' | 'queue.decide' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
+      : Action['type'] extends 'policies.load' | 'policies.save' | 'prompt.interject' | 'symphony.context' | 'symphony.memory' | 'spend.invoice' | 'thread.archive' | 'thread.rewind' | 'queue.load' | 'curation.load' | 'queue.decide' | 'queue.feedback' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
         ? JsonValue
         : Action['type'] extends 'rack.scope.get' | 'rack.scope.set'
           ? RackScope
@@ -387,7 +389,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'visualizer',
     slot: 'panel',
     streams: [],
-    actions: ['queue.load', 'queue.decide', 'seed.jump-start.load', 'seed.upload', 'queue.batch.decide'],
+    actions: ['queue.load', 'queue.decide', 'queue.feedback', 'seed.jump-start.load', 'seed.upload', 'queue.batch.decide'],
     bounds: stageGridBounds({ w: 10, h: 20 }),
     movable: true,
     law_bound: true,
@@ -619,7 +621,12 @@ function dispatchRackAction<Action extends RackAction>(
           useHarnessStore.getState().hydrateCatalog(getRackSnapshot().catalog.map((entry) => (
             entry.thread_id === threadId ? { ...entry, archived: true } : entry
           )))
-          rackSelectionSurface.select({ kind: 'module', id: 'thread_end' })
+          // M3W5B-34: an empty thread (no answer, nothing to review) archives without the review.
+          const view = result as { cards?: unknown, final_post?: unknown } | null
+          if ((Array.isArray(view?.cards) && view.cards.length > 0) ||
+            (typeof view?.final_post === 'string' && view.final_post.trim() !== '')) {
+            rackSelectionSurface.select({ kind: 'module', id: 'thread_end' })
+          }
           return result as RackActionResult<Action>
         })
       }
@@ -633,9 +640,15 @@ function dispatchRackAction<Action extends RackAction>(
               decision: action.decision,
               approval_mode: action.approval_mode,
               actor_class: action.actor_class,
+              ...(action.amended_body === undefined ? {} : { amended_body: action.amended_body }),
             })),
           },
         ) as Promise<RackActionResult<Action>>
+      case 'queue.feedback':
+        return fetchJson(`/v1/approval-queue/${encodeURIComponent(action.item_uid)}/feedback`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ feedback: action.feedback, actor_class: action.actor_class }),
+        }) as Promise<RackActionResult<Action>>
       case 'queue.load': {
         const params = new URLSearchParams()
         if (action.thread_id !== undefined) params.set('thread_id', action.thread_id)

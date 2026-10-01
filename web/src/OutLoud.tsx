@@ -196,6 +196,7 @@ export function OutLoud({ field, response, responseId, blocked, onDraft, onSend,
     <div className="out-loud" data-testid="out-loud">
       <Button action="listen" iconOnly type="button" aria-label="Out Loud"
         data-tooltip={enabled ? 'Switch to typing' : 'Speak and hear replies'}
+        data-tooltip-detail={enabled ? 'Stop listening and type prompts again.' : 'Talk to Nocturne and hear its replies aloud.'}
         aria-pressed={enabled} disabled={!supported || preferenceKey === null}
         onClick={() => {
           if (enabled) {

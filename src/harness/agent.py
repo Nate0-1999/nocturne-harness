@@ -45,6 +45,7 @@ from harness.spine_client import (
     PatchMemoryConflictError,
     PatchMemoryRequest,
     RevisionConflict,
+    SearchRequest,
     SimilarMemoriesResponse,
     SpineClientError,
 )
@@ -124,6 +125,8 @@ EXTRACTION_INSTRUCTION = (
     "under the size cap. Active tasks and their answers belong only in working_summary."
     " Every transcript message has an id (its message_id or its [mN] label); list in each "
     "candidate's source_message_ids the ids of the messages its fact was drawn from."
+    " Include the user message that states or endorses the fact. A question does not "
+    "establish its answer, and the assistant's own answer is never a source of user facts."
 )
 SEED_SPLIT_INSTRUCTION = (
     "Semantically split the complete Markdown document into durable atomic memories. Preserve "
@@ -227,8 +230,11 @@ class SeedSplitDraft(BaseModel):
 
 class ExtractionVerdictDraft(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
-    verdict: Literal["new", "merge", "supersede", "contradict"]
-    target_ids: list[UUID]
+    verdict: Literal["new", "already_known", "merge", "supersede", "contradict"]
+    target_ids: list[UUID] = Field(
+        description="For already_known, cite the existing memory containing the fact. "
+        "For merge/supersede/contradict, cite affected neighbors. Only new has no targets."
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -347,12 +353,17 @@ class HarnessAgent:
             output_type=PromptedOutput(ExtractionVerdictDraft),
             instructions=(
                 "Compare one extracted candidate with machine-fetched corpus neighbors. "
-                "Propose exactly one verdict: new, merge, supersede, or contradict. Target IDs "
-                "must be selected only from the supplied neighbors. Use new with no targets when "
-                "the candidate stands alone. Shared subject words do not make two facts the "
-                "same: different attributes of one object remain independent new memories. "
-                "Merge only statements of the same fact; supersede or contradict only when "
+                "Propose exactly one verdict: new, already_known, merge, supersede, or contradict. "
+                "First check whether any neighbor already contains the candidate's fact. "
+                "If so, use already_known and cite that neighbor's ID. This includes a rephrase "
+                "or just one clause of a memory containing several facts: extracting one clause "
+                "does not add information. Words like 'settled' do not make a fact new. "
+                "Otherwise, use new with no targets for an independent fact. Shared subject "
+                "words do not make different attributes the same fact. Merge only when the "
+                "candidate adds information absent from the existing fact; "
+                "supersede or contradict only when "
                 "both statements give incompatible values for the same attribute. "
+                "All target IDs must be selected from the supplied neighbors. "
                 "Return structured data only."
             ),
             name="harness-extraction-verdict",
@@ -531,6 +542,20 @@ class HarnessAgent:
         captured_messages: list[ModelMessage] | None,
     ) -> RememberResult:
         """Plan one semantic family, then write all children or guide without a write."""
+
+        # M3MQ: a whole fact saved earlier must reinforce before a new splitter changes it.
+        if cl100k_token_count(body) <= self._settings.memory_max_tokens:
+            try:
+                neighbors = await context.spine.search(
+                    SearchRequest(principal_id=context.principal_id, query=body, k=5)
+                )
+            except SpineClientError as exc:
+                return RememberResult(
+                    False, f"Could not remember: {render_spine_error('search', exc)}"
+                )
+            for neighbor in neighbors.results:
+                if neighbor.body == body:
+                    return await self._reinforce_duplicate_remember(context, neighbor.memory_id)
 
         try:
             # INCIDENT F047: bound the splitter that previously stranded oversized /remember.

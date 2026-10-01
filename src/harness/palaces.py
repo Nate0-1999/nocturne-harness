@@ -14,6 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from pathlib import Path
 from typing import TextIO
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -40,11 +41,30 @@ from harness.onboarding import (
     nocturne_home,
 )
 
+_SERVICE_PREFIX = "nocturne-palace-"
+
 
 def palace_home(home: Path, name: str) -> Path:
     if not re.fullmatch(r"[a-z][a-z0-9-]{0,29}", name):
         raise OnboardingError("Use a Palace name of 1–30 lowercase letters, digits or hyphens.")
     return home if name == "main" else home / "palaces" / name
+
+
+def palace_for_url(url: str) -> str | None:
+    """The owner Palace a Cloud Run URL serves: main, a named Palace, or None when not ours."""
+
+    host = urlsplit(url).hostname or ""
+    if not host.endswith(".run.app"):
+        return None
+    label, zone = host.split(".", 1)
+    # SERVICE-PROJECTNUMBER.REGION.run.app, or the older SERVICE-HASH-REGIONCODE.a.run.app.
+    service = label.rsplit("-", 2 if zone == "a.run.app" else 1)[0]
+    if service == CLOUD_RUN_SERVICE:
+        return "main"
+    name = service.removeprefix(_SERVICE_PREFIX)
+    if name != service and re.fullmatch(r"[a-z][a-z0-9-]{0,29}", name):
+        return name
+    return None
 
 
 class PalaceCloud(GcloudDeployBackend):
@@ -83,7 +103,7 @@ class PalaceCloud(GcloudDeployBackend):
         palace_home(Path("."), name)
         if name == "main":
             raise OnboardingError("The main Palace cannot be dropped or replaced.")
-        return f"nocturne-palace-{name}"
+        return f"{_SERVICE_PREFIX}{name}"
 
     def token(self, name: str) -> str:
         return self._access_secret(
@@ -345,12 +365,13 @@ def palace_nocturne(
         if record["database"] != resource.replace("-", "_") or record["service"] != resource:
             raise OnboardingError("Palace custody record does not match its name.")
         count = cloud.memory_count(record)
-        if (
-            prompt(
+        try:
+            answer = prompt(
                 f"Drop Palace {name} and its {count} memories permanently? Type {name}: "
-            ).strip()
-            != name
-        ):
+            )
+        except EOFError:  # M3W5B-40: no terminal is no confirmation, not a traceback.
+            answer = ""
+        if answer.strip() != name:
             print("Palace kept.", file=stdout)
             return 0
         cloud.drop(name, record)

@@ -27,7 +27,9 @@ test('shared settings and descriptive hover tips have no strip-specific chrome e
   assert.match(tooltip, /<strong>\{tooltip\.title\}<\/strong>/u)
   assert.match(tooltip, /<span>\{tooltip\.detail\}<\/span>/u)
   assert.match(css, /\.control-tooltip\s*\{/u)
-  assert.match(css, /\.rack-module__settings-toggle\s*\{[^}]*border-radius:\s*50%/su)
+  // TASTE-04: the gear is chamfered like every control, never round.
+  assert.match(css, /\.rack-module__settings-toggle\s*\{[^}]*--chamfer:/su)
+  assert.doesNotMatch(css, /\.rack-module__settings-toggle\s*\{[^}]*border-radius:\s*50%/su)
 })
 
 /** PLAN M2TC findings 22-23 / P2 make archive quiet and Model Device visibly actionable. */
