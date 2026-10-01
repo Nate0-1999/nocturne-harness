@@ -191,6 +191,11 @@ class WorkerSupervisor:
         self._prepare_root()
         self._lock_descriptor = self._acquire_authority_lock()
         self._journal_path = self._root / "events.jsonl"
+        # M3HW: each heartbeat re-read and re-parsed the whole journal three times; a 15-minute
+        # Symphony's 6,319 heartbeats held the event loop at ~40%. Reads now take only the
+        # bytes appended since the last one and fold only the new events.
+        self._journal_cache: dict[str, Any] | None = None
+        self._fold_cache: dict[str, Any] | None = None
         try:
             self._load_attempts()
         except Exception:
@@ -547,8 +552,12 @@ class WorkerSupervisor:
         include_events: bool = False,
     ) -> dict[str, _MutableAttempt] | tuple[dict[str, _MutableAttempt], list[dict[str, Any]]]:
         events = self._read_events()
-        attempts: dict[str, _MutableAttempt] = {}
-        for event in events:
+        fold = self._fold_cache
+        if fold is None or fold["count"] > len(events):
+            fold = {"count": 0, "attempts": {}}
+        self._fold_cache = None  # restored below only if every new event folds
+        attempts: dict[str, _MutableAttempt] = fold["attempts"]
+        for event in events[fold["count"] :]:
             event_type = event["event"]
             attempt_id = event.get("attempt_id")
             if event_type == "spawn_intent":
@@ -614,20 +623,29 @@ class WorkerSupervisor:
                 if attempt.status is not WorkerStatus.CERTIFIED_DEAD:
                     raise SupervisorJournalUnavailable("quarantine lacks a death certificate")
                 attempt.status = WorkerStatus.QUARANTINED
+        fold["count"] = len(events)
+        self._fold_cache = fold
         if include_events:
             return attempts, events
         return attempts
 
     def _read_events(self) -> list[dict[str, Any]]:
+        cache = self._journal_cache
         try:
-            rows = self._journal_path.read_bytes().splitlines()
+            with self._journal_path.open("rb") as handle:
+                if cache is None or os.fstat(handle.fileno()).st_size < cache["offset"]:
+                    cache = {"offset": 0, "events": [], "ids": set()}
+                handle.seek(cache["offset"])
+                chunk = handle.read()
         except FileNotFoundError:
+            self._journal_cache = None
             return []
         except OSError as exc:
             raise SupervisorJournalUnavailable("supervisor journal cannot be read") from exc
-        events: list[dict[str, Any]] = []
-        ids: set[str] = set()
-        for sequence, raw in enumerate(rows, start=1):
+        self._journal_cache = None  # restored below only if every new row validates
+        events: list[dict[str, Any]] = cache["events"]
+        ids: set[str] = cache["ids"]
+        for sequence, raw in enumerate(chunk.splitlines(), start=len(events) + 1):
             try:
                 event = json.loads(raw, parse_constant=_reject_json_constant)
             except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
@@ -647,6 +665,8 @@ class WorkerSupervisor:
                 raise SupervisorJournalUnavailable("supervisor journal sequence is invalid")
             ids.add(event_id)
             events.append(event)
+        cache["offset"] += len(chunk)
+        self._journal_cache = cache
         return events
 
     def _death_event(self, attempt_id: str) -> dict[str, Any]:
