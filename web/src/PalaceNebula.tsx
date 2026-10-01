@@ -206,8 +206,9 @@ export function PalaceNebula() {
         <span>Three r{REVISION} · R3F + TSL · {backend} · {tier}</span>
         <span>{sceneSnapshot?.as_of ?? 'Reading current reality'}</span>
       </div>
-      {load.kind === 'loading' && <p role="status" className="palace-nebula__notice">Reading Palace reality…</p>}
-      {load.kind === 'error' && <p role="alert" className="palace-nebula__notice">The live Palace current is unavailable.</p>}
+      {/* The live reading's notices belong to the present; a scrubbed moment draws its recording. */}
+      {!selected?.as_of && load.kind === 'loading' && <p role="status" className="palace-nebula__notice">Reading Palace reality…</p>}
+      {!selected?.as_of && load.kind === 'error' && <p role="alert" className="palace-nebula__notice">The live Palace current is unavailable.</p>}
       {selected?.as_of && !sceneSnapshot && <p role="status" className="palace-nebula__notice">{visualization.loading ? 'Loading the recorded Palace state…' : 'No Palace reading was recorded at this moment.'}</p>}
       {sceneSnapshot && bodies.length === 0 && memoryEvents.length === 0 && <p role="status" className="palace-nebula__notice">No memories or memory events exist in this Palace snapshot.</p>}
     </div>
