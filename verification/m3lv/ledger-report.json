@@ -174,7 +174,10 @@
   "harness/web/dist/assets/index-D7maXAVc.js": "a built bundle of the web sources above (added or removed by a rebuild); walked as those rows.",
   "harness/web/dist/index.html": "the bundle's entry page, pointing at the rebuilt bundle; walked as the rows above.",
   "harness/web/tests/palaceNebula.test.mjs": "tests for this packet; no product behavior.",
-  "harness/web/tests/visualization.test.mjs": "tests for this packet; no product behavior."
+  "harness/web/tests/visualization.test.mjs": "tests for this packet; no product behavior.",
+  "garden/BOARD.md": "M3LV's claim and DONE board row; no product behavior.",
+  "garden/FLAGS.md": "F161 opened (a module's first table pick is sometimes lost); a finding, no product behavior.",
+  "garden/reports/259-M3LV.md": "this packet's handoff report; no product behavior."
  },
  "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
  "rows": {
