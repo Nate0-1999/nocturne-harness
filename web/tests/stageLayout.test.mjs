@@ -429,6 +429,7 @@ test('a fresh work layer opens readable at laptop sizes', () => {
   }
   const small = openingStageCamera(800, 500, modules)
   assert.ok(inView(small, conversation, 800) && small.zoom > 0.7, `800: zoom ${small.zoom}`)
+  assert.deepEqual(openingStageCamera(390, 700, modules), activeStageLayer(cloneFactoryStageLayout()).camera)
 })
 
 /** P2.5 (M3W5B-33): the Work layer is framed for the window until the owner moves its camera. */

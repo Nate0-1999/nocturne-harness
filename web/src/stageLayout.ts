@@ -513,7 +513,7 @@ export function fitStageCamera(
 
 /** M3W5B-33 / Codex 16: a fresh Work layer opens readable in this window: the widest of
  * Threads + Conversation + Memory, Threads + Conversation, or Conversation alone that fits
- * at 75% or more, centered; when none does, the Conversation fills the width. */
+ * at 75% or more, centered; else the Conversation fills the width if that reads at 75%. */
 export function openingStageCamera(
   viewportWidth: number,
   viewportHeight: number,
@@ -540,8 +540,10 @@ export function openingStageCamera(
       : Math.max(24, viewportHeight + 4 - (nextTop - top) * zoom)
     return { x: Math.round((viewportWidth - (right - left) * zoom) / 2 - left * zoom), y: Math.round(screenTop - top * zoom), zoom }
   }
-  return sets.map((set) => frame(set, true)).find((camera) => camera.zoom >= 0.75) ??
+  const readable = sets.map((set) => frame(set, true)).find((camera) => camera.zoom >= 0.75) ??
     frame(sets[sets.length - 1]!, false)
+  // A phone-width window has no readable Stage frame; it keeps the factory camera (the Sheet reads).
+  return readable.zoom >= 0.75 ? readable : FACTORY_STAGE_LAYOUT.layers[0]!.camera
 }
 
 const OPENING_CAMERA_STORAGE_KEY = 'nocturne.stage.opening-camera.v1'
