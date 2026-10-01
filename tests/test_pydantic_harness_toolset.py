@@ -727,3 +727,35 @@ async def test_a_file_search_ignores_its_glob_and_a_missed_anchor_names_the_clos
     assert not missed.success
     assert "the closest line is 1: 'def test_doctor_reports_breaker():'" in missed.content
     assert missed.content.endswith("Read the lines you mean to change and copy them exactly")
+
+
+@pytest.mark.asyncio
+async def test_a_chained_git_commit_works_and_the_context_states_the_repository(
+    tmp_path: Path,
+) -> None:
+    """M3CL2 walk: the default model ran `cd <repo> && git add … && git commit` from tests/ and
+    the exception, which matched only commands starting with git, refused .git/index.lock; the
+    workspace context now also states the last commit and what is uncommitted."""
+    if not Path("/usr/bin/sandbox-exec").is_file():
+        pytest.skip("the standing hard shell fence is macOS sandbox-exec")
+    import subprocess
+
+    repository = tmp_path / "repo"
+    sub = repository / "tests"
+    sub.mkdir(parents=True)
+    for command in (["init", "-q"], ["config", "user.name", "t"], ["config", "user.email", "t@t"]):
+        subprocess.run(["git", "-C", str(repository), *command], check=True)
+    (sub / "test_a.py").write_text("x = 1\n")
+    toolset = await open_standard_toolset(cwd=sub, workspace_root=repository)
+    try:
+        chained = await toolset.execute(
+            "bash", {"command": f"cd {repository} && git add tests/test_a.py && git commit -qm add"}
+        )
+        (sub / "stray.py").write_text("y = 2\n")
+        context = render_workspace_context(toolset.location())
+    finally:
+        await toolset.close()
+
+    assert chained.success and "exit code" not in chained.content.lower()
+    assert "Repository now: last commit " in context
+    assert " add (tests/test_a.py); uncommitted: ?? tests/stray.py." in context

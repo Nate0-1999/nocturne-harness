@@ -9,7 +9,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict
 from pydantic_ai import BinaryContent, ModelRetry, RunContext, ToolReturn
 from pydantic_ai.capabilities import AbstractCapability, Capability
-from pydantic_ai.messages import ToolCallPart, UserPromptPart
+from pydantic_ai.messages import ModelRequest, ToolCallPart, UserPromptPart
 from pydantic_ai.tools import Tool, ToolDefinition
 from spine.tokens import cl100k_token_count
 
@@ -68,6 +68,34 @@ class PendingSteering(Capability[MemoryToolContext]):
         if not response.tool_calls and self.pending():
             raise ModelRetry("Apply the new human instruction before finishing.")
         return response
+
+
+class TurnBudgetNotice(Capability[MemoryToolContext]):
+    """Gate ruling 2026-10-01 (M3CL2): a run that spins into the turn's request or token wall
+    fails; at three quarters of either, the agent is told once to stop and report plainly."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.sent = False
+
+    async def before_model_request(self, ctx, request_context):
+        limits, usage, latest = ctx.usage_limits, ctx.usage, request_context.messages[-1]
+        if self.sent or limits is None or not isinstance(latest, ModelRequest):
+            return request_context
+        requests, tokens = limits.request_limit, limits.total_tokens_limit
+        if (requests and usage.requests >= requests * 3 // 4) or (
+            tokens and usage.total_tokens >= tokens * 3 // 4
+        ):
+            self.sent = True
+            latest.parts.append(
+                UserPromptPart(
+                    f"This turn has used {usage.requests} model requests and "
+                    f"{usage.total_tokens:,} tokens; it stops at {requests or 'no'} requests or "
+                    f"{tokens or 'no'} tokens. If the work is not done, stop now: tell the user "
+                    "plainly what is done, what is not, and why. Start nothing new."
+                )
+            )
+        return request_context
 
 
 def _adapt_search(handler: CapabilityHandler) -> Tool[MemoryToolContext]:

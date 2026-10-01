@@ -2180,3 +2180,34 @@ async def test_a_bare_move_command_moves_or_says_why_without_the_model(tmp_path:
     assert bare == "Use /move <folder> with a folder inside this thread's workspace."
     assert where == (workspace / "docs").resolve()
     assert all(outcome.usage.requests == 0 for outcome in outcomes)
+
+
+@pytest.mark.asyncio
+async def test_three_quarters_of_the_turn_budget_asks_once_for_an_honest_stop() -> None:
+    """Gate ruling 2026-10-01 (M3CL2): a spin into the 40-request or 500,000-token wall fails
+    the code-change loop; at three quarters the agent is told once to stop and report."""
+
+    from types import SimpleNamespace
+
+    from pydantic_ai.messages import ModelRequest, UserPromptPart
+    from pydantic_ai.usage import RunUsage, UsageLimits
+
+    from harness.pydantic_ai_adapter import TurnBudgetNotice
+
+    notice = TurnBudgetNotice()
+    limits = UsageLimits(request_limit=40, total_tokens_limit=500_000)
+    seen = []
+    for requests, tokens in ((29, 1_000), (30, 1_000), (31, 1_000), (32, 400_000)):
+        request = ModelRequest(parts=[UserPromptPart("work")])
+        context = SimpleNamespace(
+            usage_limits=limits, usage=RunUsage(requests=requests, input_tokens=tokens)
+        )
+        await notice.before_model_request(context, SimpleNamespace(messages=[request]))
+        seen.append([part.content for part in request.parts[1:]])
+
+    assert seen[0] == [] and seen[2] == [] and seen[3] == []
+    assert seen[1] == [
+        "This turn has used 30 model requests and 1,000 tokens; it stops at 40 requests or "
+        "500000 tokens. If the work is not done, stop now: tell the user plainly what is done, "
+        "what is not, and why. Start nothing new."
+    ]

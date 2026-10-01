@@ -81,7 +81,8 @@ _CREDENTIAL_COMMAND = re.compile(
     re.IGNORECASE,
 )
 _CREDENTIAL_SEGMENTS = frozenset({".ssh", ".aws", ".gnupg", ".kube"})
-_GIT_COMMAND = re.compile(r"^\s*git(?:\s|$)")
+# M3CL2 walk: the default model wrote `cd <repo> && git add …`, which the exception missed.
+_GIT_COMMAND = re.compile(r"(?:^\s*|[;&|]\s*)git(?:\s|$)")
 _GIT_COMMIT = re.compile(r"\bgit\s+commit\b")
 _SHELL_WRITE_REMEDY = (
     "The shell writes only inside {location}. Move to the folder you need to change and "
@@ -731,7 +732,7 @@ class PydanticHarnessToolset:
         if self._scratch is None:
             # M3SF / M3EX-09: tool scratch (pytest, uv locks) stays out of the owner's repo.
             self._scratch = Path(tempfile.mkdtemp(prefix="nocturne-shell-")).resolve()
-        repository = repository_root(self._location.cwd) if _GIT_COMMAND.match(command) else None
+        repository = repository_root(self._location.cwd) if _GIT_COMMAND.search(command) else None
         # v2.125: git on the enclosing repository works from any folder inside it; _bash
         # logs it with WHERE like every action.
         git_dir = None if repository is None else json.dumps(str(repository / ".git"))

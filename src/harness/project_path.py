@@ -60,6 +60,42 @@ def project_environment(folder: Path, workspace_root: Path) -> Path | None:
     return None
 
 
+def repository_state(folder: Path) -> str | None:
+    """M3CL2 (Codex M3W5A-13; gate ruling 2026-10-01): an agent wrote a test into a stray file
+    and reported it added; every request now carries the facts a final answer must match."""
+
+    root = repository_root(folder)
+    if root is None:
+        return None
+
+    def git(*arguments: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            ["git", "-C", str(root), *arguments],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+
+    try:
+        head = git("log", "-1", "--name-only", "--format=%h %s")
+        status = git("status", "--porcelain")
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if head.returncode or status.returncode:
+        return None
+    commit_lines = [line for line in head.stdout.splitlines() if line.strip()]
+    files = commit_lines[1:]
+    commit = (
+        f"last commit {commit_lines[0]} ({', '.join(files[:6])}{', …' if len(files) > 6 else ''})"
+        if commit_lines
+        else "no commits yet"
+    )
+    changes = [line.strip() for line in status.stdout.splitlines() if line.strip()]
+    pending = ", ".join(changes[:8]) + (", …" if len(changes) > 8 else "")
+    return f"Repository now: {commit}; uncommitted: {pending or 'none'}."
+
+
 def repository_identity(root: Path) -> str | None:
     """F135 (M3EX-14): a repository's first commit names it wherever it moves."""
 

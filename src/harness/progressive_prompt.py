@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from harness.project_path import project_environment
+from harness.project_path import project_environment, repository_state
 from harness.toolset import AgentLocation
 
 _INSTRUCTION_NAMES = (
@@ -38,6 +38,7 @@ def render_workspace_context(location: AgentLocation) -> str:
     entries = _directory_entries(cwd)
     instruction_sections = _instruction_sections(root, cwd)
     environment = project_environment(cwd, root)
+    state = repository_state(cwd)
     lines = [
         "<workspace_context>",
         f"Workspace root: {root}",
@@ -57,6 +58,8 @@ def render_workspace_context(location: AgentLocation) -> str:
                 "python, pytest and its other tools run from any folder here without moving.",
             )
         ),
+        # Codex M3W5A-13 / the gate's 2026-10-01 ruling: answers match these facts.
+        *(() if state is None else (state,)),
         "Directory entries:",
         *(f"- {entry}" for entry in entries),
     ]
