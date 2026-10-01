@@ -790,3 +790,19 @@ async def test_a_command_written_from_the_root_names_where_its_path_is(tmp_path:
     assert rerun.success and "project-python" in rerun.content
     # The M3CL2 move re-walk: `ls -d web` from docs/ prints the path before the error.
     assert f".venv is in the repository root {tmp_path.resolve()}" in probed.content
+
+
+@pytest.mark.asyncio
+async def test_a_read_from_offset_zero_starts_at_the_first_line(tmp_path: Path) -> None:
+    """M3CL2 walk: offset 0 became upstream offset -1 and returned only the file's last line
+    with 'Use offset=-1 to continue', and gpt-4.1-mini read one file 27 times."""
+
+    (tmp_path / "note.txt").write_text("first\nsecond\nthird\n")
+    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    try:
+        read = await toolset.execute("read", {"path": "note.txt", "offset": 0, "limit": 2})
+    finally:
+        await toolset.close()
+
+    assert read.success and "1\tfirst" in read.content and "2\tsecond" in read.content
+    assert "offset=-1" not in read.content

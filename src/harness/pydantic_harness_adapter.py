@@ -494,7 +494,9 @@ class PydanticHarnessToolset:
 
     async def _read(self, arguments: Mapping[str, object]) -> str:
         target = self._preflight("read", arguments.get("path"))
-        offset = arguments.get("offset", 1)
+        # M3CL2 walk: models send offset 0 by habit; 0 - 1 read from the last line, so a "read
+        # from the top" showed one line and gpt-4.1-mini wandered the file for 27 reads.
+        offset = max(1, arguments.get("offset", 1))
         limit = arguments.get("limit", 2000)
         result = await self._filesystem(target.parent).read_file(
             target.name, offset=offset - 1, limit=limit
