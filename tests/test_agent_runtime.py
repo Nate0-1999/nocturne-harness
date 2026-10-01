@@ -2357,8 +2357,8 @@ async def test_a_turn_that_changed_the_repository_is_checked_against_the_loops_a
 ) -> None:
     """Gate ruling 2026-10-01 (M3CL2): gpt-4.1-mini claimed a test it never added and answered
     "Checked." to a plain list of facts. The loop's own account names each file the answer
-    mentions that the turn did not change; the answer goes back once with it, and the account
-    ends the turn. M3GD / SPEC B.6 r14: exercised retry: "... make your answer match this
+    mentions that the turn did not change; the answer goes back once with it (once more after
+    new tool work), and the account ends the turn. M3GD / SPEC B.6 r14: exercised retry: "... make your answer match this
     account ... If your answer already matches, reply only: Checked."."""
 
     import subprocess
@@ -2368,6 +2368,7 @@ async def test_a_turn_that_changed_the_repository_is_checked_against_the_loops_a
     from pydantic_ai.messages import ModelResponse, TextPart
     from pydantic_ai.models import ModelRequestParameters
     from pydantic_ai.tools import ToolDefinition
+    from pydantic_ai.usage import RunUsage
 
     from harness.agent_runtime import turn_account
     from harness.pydantic_ai_adapter import FinishFactCheck
@@ -2411,6 +2412,13 @@ async def test_a_turn_that_changed_the_repository_is_checked_against_the_loops_a
     )
     answer = ModelResponse(parts=[TextPart(claim)])
     check = FinishFactCheck(lambda text: said if "tests/test_a.py" in text else None)
+    ctx = SimpleNamespace(usage=RunUsage(tool_calls=3))
     with pytest.raises(ModelRetry, match="not changed: tests/test_a.py. Before you finish"):
-        await check.after_model_request(None, request_context=tools, response=answer)
-    assert await check.after_model_request(None, request_context=tools, response=answer) is answer
+        await check.after_model_request(ctx, request_context=tools, response=answer)
+    assert await check.after_model_request(ctx, request_context=tools, response=answer) is answer
+    # The M3CL2 walk: after the account, the agent ran the tests and claimed the test again.
+    ctx.usage.tool_calls += 1
+    with pytest.raises(ModelRetry, match="not changed: tests/test_a.py"):
+        await check.after_model_request(ctx, request_context=tools, response=answer)
+    ctx.usage.tool_calls += 1
+    assert await check.after_model_request(ctx, request_context=tools, response=answer) is answer

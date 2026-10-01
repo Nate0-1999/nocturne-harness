@@ -121,21 +121,26 @@ class FinishFactCheck(Capability[MemoryToolContext]):
     """Gate ruling 2026-10-01 (M3CL2): gpt-4.1-mini claimed a test it never added, and answered
     "Checked." to a plain list of repository facts. Once per turn that changed the repository,
     the final answer goes back with the loop's own account, naming each file it mentions that
-    the turn did not change."""
+    the turn did not change; once more if the agent used tools again before its next answer."""
 
     def __init__(self, account: Callable[[str], str | None]) -> None:
         super().__init__()
         self.account = account
-        self.sent = False
+        self.sent = 0
+        self.tool_calls = -1
 
     async def after_model_request(self, ctx, *, request_context, response):
         last = not request_context.model_request_parameters.function_tools
-        if self.sent or last or response.tool_calls:
+        # M3CL2 walk: after the account went back, gpt-4.1-mini ran the tests and then claimed
+        # a test and a commit the account had just denied; an answer after new tool work is new.
+        fresh = ctx.usage.tool_calls > self.tool_calls
+        if self.sent >= 2 or not fresh or last or response.tool_calls:
             return response
         account = self.account(response.text)
         if account is None:
             return response
-        self.sent = True
+        self.sent += 1
+        self.tool_calls = ctx.usage.tool_calls
         raise ModelRetry(
             f"{account} Before you finish, make your answer match this account: never say a file "
             "was changed, added or committed unless the account lists it as committed or not "
