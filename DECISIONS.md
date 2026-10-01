@@ -3882,3 +3882,31 @@ and new cache epoch. Single-key mode (M3G) lists its OpenAI-compatible endpoint'
 is an empty state, not an error. The typed slug field is gone: search covers every listed id
 and /model stays for the rest. The thinking level sits beside the model only when the
 source says the model takes one; the chip drops the source's "Provider:" prefix and wraps.
+
+## M3HW — Heat and weight [P2.1, P3, P4]
+
+PRECEDENT: report 254 (M3W5B-13, 25–28; Codex 05), M3FT, M3CO, R10.
+Causes, measured on the harness repository (31,789 entries): the visualization sampler walked
+every project root every 2 s (0.94 s a walk: 27% of a core idle, 100% once seven Symphonies'
+worktrees made one walk outlast the interval); every changed sample stored every whole tree;
+each module re-fetched and re-parsed the 3.2 MB tree every 2.5 s; every store change (each
+token, each keystroke) deep-copied the whole rack, full tool results included, into every
+module frame. The Python heap itself did not leak; the walks' and copies' peaks stayed resident.
+- A tree is walked when its root appears, then again only once walking has used at most 2% of
+  the elapsed time; one lstat per entry through scandir.
+- The store names a tree by its content digest and writes it once, then as its changed entries
+  on its root's previous tree (a keyframe every 64, or when a quarter changed); each row keeps
+  its trail points, so a scrub stops decompressing history. Rows older than
+  VISUALIZATION_RETENTION_HOURS (24) leave with the trees only they needed; rows in the old
+  format are read until they age out, and an old file is vacuumed once.
+- `/v1/visualization?known=<digests>` sends no nodes for trees the client holds (M3LV's client).
+- A module frame gets the latest rack snapshot at once when idle, else within 100 ms; a store
+  value is projected once and reused, since the store never edits a value in place.
+- An answer keeps its last 100 stream events, strings cut at 2,000 characters; control events
+  stay whole; the journal keeps everything.
+- A completed Symphony's worktrees beyond SYMPHONY_WORKTREES_KEPT (0) are removed once its
+  workers stop; each attempt's commit stays under refs/nocturne/symphonies/ so pruned work stays
+  auditable (NATES_VISION §6). A removed folder leaves the Farm's project list.
+- Cuts persist in overwhelm-cuts.jsonl. FL-166's threshold is 10% of the machine's memory;
+  doctor and `nocturne up` say it. An in-app warning needs a field in the Palace's vitals
+  contract, outside this packet's harness-only authority.
