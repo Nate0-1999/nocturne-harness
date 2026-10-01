@@ -93,10 +93,14 @@ const h = {
   async settled(timeoutMs = 600_000) {
     const composer = frame('conversation').getByTestId('composer')
     const answers = frame('conversation').locator('article[data-role="assistant"]')
+    // A Palace slower than send()'s wait opens the gate late; review it instead of waiting it out.
+    const proceed = frame('gate').getByTestId('memory-gate-continue')
+    const review = async () => { if (await proceed.isVisible().catch(() => false)) await proceed.click() }
     // A reply is read only after a new answer exists (the M3CL2 move re-walk read a stale one).
-    await waitUntil(async () => (await answers.count()) > (h.answers ?? -1), timeoutMs)
+    await waitUntil(async () => { await review(); return (await answers.count()) > (h.answers ?? -1) }, timeoutMs)
     await sleep(1500)
     await waitUntil(async () => {
+      await review()
       const text = await frame('conversation').locator('body').innerText()
       return !/Streaming|Working…|Waiting for memory review|Stopping/u.test(text.slice(-4000)) &&
         await composer.isEnabled()
