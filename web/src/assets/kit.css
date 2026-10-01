@@ -34,7 +34,7 @@ body {
   font-size: var(--text-md);
 }
 
-:where(h3, h4) {
+:where(h2, h3, h4) {
   margin: 0;
   font-family: var(--body-font);
   font-size: var(--text-base);
@@ -51,11 +51,19 @@ body {
   text-transform: uppercase;
 }
 
+/* A disclosure is a control: the button's size. */
+:where(summary) {
+  font-size: var(--text-sm);
+}
+
+:where(dd, td) {
+  font-family: var(--data-font);
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
+}
+
 :where(dd) {
   margin: 0;
-  font-family: var(--data-font);
-  font-size: var(--text-base);
-  font-variant-numeric: tabular-nums;
 }
 
 :where(pre, code, kbd, output) {

@@ -7,9 +7,9 @@
 .work-viz button:not(.kit-button),.work-viz select:not(.kit-select){background:#080d16;color:#bcc2cd;border:1px solid #394050;padding:5px 9px;font:inherit}
 .work-viz button:not(.kit-button)[aria-pressed=true]{color:#eff8fa;border-color:#bcc2cd}
 .work-viz button:focus-visible,.work-viz select:focus-visible{outline:2px solid #89dbef;outline-offset:2px}
-.work-viz__header nav{display:flex;gap:5px}.work-viz__header nav button{font:var(--text-sm) var(--data-font);letter-spacing:.08em;text-transform:uppercase}
+.work-viz__header nav{display:flex;gap:5px}.work-viz .work-viz__header nav button:not(.kit-button){font:var(--text-sm) var(--data-font);letter-spacing:.08em;text-transform:uppercase}
 .work-viz__toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 20px;color:#bcc2cd;font-size:var(--text-md);background:#05080e}
-.work-viz__toolbar label{display:flex;gap:7px;align-items:center}
+.work-viz__toolbar label{display:flex;gap:7px;align-items:center;color:var(--dim);font:var(--text-xs) var(--data-font);letter-spacing:.08em;text-transform:uppercase}
 .work-viz__scrub{flex:1;min-width:150px}.work-viz__scrub input{width:100%;accent-color:#bcc2cd}
 .work-viz__project{display:flex;align-items:center;gap:8px;padding:4px 20px;font-size:var(--text-md);color:#98a1b5}.work-viz__project select{max-width:85%}
 .work-viz__viewport{position:relative;min-height:320px;flex:1;border-block:1px solid #122039}
@@ -20,5 +20,5 @@
 .work-viz__data th,.work-viz__data td{padding:6px;border-bottom:1px solid #122039;overflow-wrap:anywhere}.work-viz__data tr[data-selected]{background:#122039}
 .work-viz__data button{border:0;background:transparent;padding:2px}.work-viz__data summary{cursor:pointer;color:#bcc2cd}.work-viz__data ul{list-style:none;padding:0}
 .work-viz__data td:first-child button{max-width:28ch;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.work-viz__primitives{position:absolute;right:14px;top:12px;color:#98a1b5;font-size:10px;pointer-events:none}
+.work-viz__primitives{position:absolute;right:14px;top:12px;color:#98a1b5;font-size:var(--text-sm);pointer-events:none}
 .work-viz[data-sheet] .work-viz__readout,.work-viz[data-sheet] .work-viz__readout strong,.work-viz[data-sheet] .work-viz__primitives{color:#303747}

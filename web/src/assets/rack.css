@@ -38,7 +38,7 @@
 .graph-stage { display:grid; grid-template-columns:minmax(0,3fr) minmax(15rem,1fr); min-height:70vh; }.graph-canvas{max-height:70vh;overflow:auto}.graph-stage svg{display:block;width:100%;height:calc(70vh * var(--graph-rows, 1))}.graph-stage svg>line{stroke:var(--seam-a2554ec1f8a2);stroke-width:.25}.graph-stage svg>line[data-kind="lineage"]{stroke:var(--seam-4f41763edadb);stroke-dasharray:1 1}.graph-node{cursor:pointer;outline:none}.graph-node circle:not(.graph-pin){fill:var(--seam-e6b985626daa);stroke:var(--seam-bfd7ec77a10a);stroke-width:.35}.graph-node circle[data-kind="preference"]{fill:var(--seam-5f909758d42a)}.graph-node circle[data-kind="procedure"]{fill:var(--seam-2be7a20de69e)}.graph-node[data-status="quarantined"]{opacity:.42}.graph-node[data-current="true"] circle:not(.graph-pin){stroke:var(--seam-e08de713877c);stroke-width:.8}.graph-pin{fill:none;stroke:var(--seam-74334a559f1f);stroke-width:.4}.graph-node-label{font-size:2.1px;fill:var(--seam-476d40b9450f);text-anchor:middle;pointer-events:none}.graph-stage aside{border-left:1px solid var(--seam-663a186d018f);padding:1rem;overflow:auto}.graph-stage aside em{color:var(--seam-1cc748f7f308)}
 .graph-stage { grid-template-columns: minmax(0, 1fr) minmax(24rem, 1fr); }
 .graph-stage aside { min-width: 0; }
-.graph-search { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; padding: .75rem 0; }
+.graph-search { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; padding: .75rem 0; color: var(--dim); font: var(--text-xs) var(--data-font); letter-spacing: .08em; text-transform: uppercase; }
 .graph-search input { flex: 1; min-width: 12rem; padding: .5rem; color: var(--seam-476d40b9450f); background: var(--seam-298373638a4c); border: 1px solid var(--seam-516f10054966); }
 .graph-search-results { display: flex; flex-wrap: wrap; gap: .5rem; padding: 0; list-style: none; }
 @media (max-width: 900px) { .graph-stage { grid-template-columns: minmax(0, 1fr); } }
@@ -84,7 +84,6 @@
 .learning-summary__metric--wrong > strong { color: var(--seam-6c56aa245be4); }
 .learning-summary__metric > small {
   color: var(--seam-1ee7d93665a5);
-  font-size: var(--text-xs);
   letter-spacing: 0;
   overflow-wrap: anywhere;
 }
@@ -94,7 +93,7 @@
   margin: 0;
   padding: .45rem .65rem;
   color: var(--seam-8aa96e18faa6);
-  font-size: var(--text-sm);
+  font-size: var(--text-md);
 }
 .learning-summary__cadence { border-top: 1px solid var(--seam-2a7b3c8c7c5c); }
 .learning-summary__hygiene {
@@ -1442,7 +1441,6 @@ button.rack-module__resize-handle--nw {
 .vitals-strip--empty {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 0.75rem;
   padding: 0.45rem 0.8rem;
 }
@@ -3538,7 +3536,6 @@ button.rack-module__resize-handle--nw {
 .palace-state--notice {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 0.65rem;
   min-height: 100%;
   margin: 0;
@@ -3689,5 +3686,5 @@ details:not([open]) > .agent-policy-settings { display: none; } /* closed means 
 /* TASTE-06: the scoring list reads as label and value, like every module's data list. */
 .instrument--graph details dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-2) var(--space-5); margin: var(--space-3) 0; }
 .instrument--graph details dl > div { display: contents; }
-.instrument--graph details dt { color: var(--muted); font: var(--text-sm) var(--data-font); letter-spacing: 0.08em; text-transform: uppercase; }
+
 .instrument--graph details dd { margin: 0; color: var(--ink); font: var(--text-base) var(--data-font); }

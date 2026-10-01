@@ -4,8 +4,7 @@
 .jobs-instrument h2 { font: 500 var(--text-xl) var(--display-font); }
 .jobs-instrument small, .jobs-instrument dt { display: block; color: var(--muted); font: var(--text-md) var(--data-font); }
 .jobs-scroll { overflow: auto; }
-.jobs-instrument table { width: 100%; border-collapse: collapse; text-align: left; font: var(--text-base) var(--data-font); }
-.jobs-instrument th { color: var(--muted); font-weight: normal; }
+.jobs-instrument table { width: 100%; border-collapse: collapse; text-align: left; }
 .jobs-instrument td, .jobs-instrument th { padding: .8rem .5rem; border-bottom: 1px solid var(--line); min-width: 5rem; }
 .jobs-instrument td:first-child { min-width: 10rem; }
 .jobs-instrument td small { margin-top: .5rem; }
@@ -13,7 +12,7 @@
 .jobs-instrument [role=alert], .jobs-instrument [data-state=failed] { color: var(--accent-secondary, var(--accent)); }
 .jobs-instrument aside { margin-top: 1rem; border-top: 1px solid var(--line); }
 .jobs-instrument dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .8rem; }
-.jobs-instrument dd { margin: .2rem 0; overflow-wrap: anywhere; font: var(--text-base) var(--data-font); }
+.jobs-instrument dd { margin: .2rem 0; overflow-wrap: anywhere; }
 .jobs-timeline { list-style: none; padding: 0 0 0 1rem; border-left: 1px solid var(--accent); }
 .jobs-timeline li { border-bottom: 1px solid var(--line); padding: .8rem 0; }
 .jobs-timeline time, .jobs-timeline strong, .jobs-timeline span { margin-right: 1rem; font: var(--text-base) var(--data-font); }
