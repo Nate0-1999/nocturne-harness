@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import re
 from pathlib import Path
 
@@ -397,8 +398,13 @@ async def test_presence_grant_cannot_be_widened_or_reused_after_close(tmp_path: 
     with pytest.raises(ValueError, match="Cannot move outside the workspace"):
         await toolset.move(tmp_path / "sibling")
     # M3W5B-05: a miscounted '..' above the root is refused plainly with the way back.
-    with pytest.raises(ToolsetError, match=f"above this thread's workspace. Its root is {root}"):
+    with pytest.raises(ToolsetError) as above:
         await toolset.move(tmp_path)
+    home = root.resolve()
+    assert str(above.value) == (
+        f"{tmp_path.resolve()} is above this thread's workspace. Its root is {home}; "
+        f"move('{home}') goes there."
+    )
     assert toolset.location().cwd == root.resolve()
     await toolset.close()
     with pytest.raises(ToolsetError, match="The workspace toolset is closed."):
@@ -532,7 +538,7 @@ async def test_a_change_that_removes_most_of_a_file_needs_the_word_replace(tmp_p
 @pytest.mark.asyncio
 async def test_a_deep_glob_finds_files_directly_in_the_searched_folder(tmp_path: Path) -> None:
     """INCIDENT M3W5B-06: grep with glob '**/*' in web/src answered 'No matches found' for a
-    word 17 files held; the upstream fnmatch needs a folder before '**/'."""
+    word 17 files held; the upstream fnmatch needs a folder before '**/'. [ADR-013]"""
 
     source = tmp_path / "web" / "src"
     (source / "deep").mkdir(parents=True)
@@ -559,7 +565,8 @@ async def test_repository_commands_find_the_project_environment_from_a_subfolder
     tmp_path: Path,
 ) -> None:
     """INCIDENT M3W5B-02: from tests/, '.venv/bin/python' was not found and the agent said
-    pytest was missing; the project's .venv now comes first on PATH wherever the agent stands."""
+    pytest was missing; the project's .venv now comes first on PATH wherever the agent stands.
+    [ADR-013, P3]"""
     if not Path("/usr/bin/sandbox-exec").is_file():
         pytest.skip("the standing hard shell fence is macOS sandbox-exec")
     tests = tmp_path / "tests"
@@ -619,7 +626,8 @@ async def test_a_folder_named_from_the_workspace_root_is_found_from_a_sibling(
     tmp_path: Path,
 ) -> None:
     """INCIDENT M3W5B-04, walked again in M3CL2: from docs/, move('web') found no docs/web and
-    gpt-4.1-mini gave up twice in three runs; the folder named from the root is taken."""
+    gpt-4.1-mini gave up twice in three runs; the folder named from the root is taken.
+    [ADR-013, P3]"""
 
     (tmp_path / "docs").mkdir()
     (tmp_path / "web" / "src").mkdir(parents=True)
@@ -657,7 +665,7 @@ async def test_paths_named_from_the_root_work_from_a_subfolder_and_misses_say_so
     tests/test_onboarding.py from the root; grep answered 'No matches found.' and edits were
     sent to tests/tests/, so the new test never landed. Exercised refusals: "No file or folder
     {target}."; "oldText found {count} times ... (lines ...); include a neighboring line, or to
-    add to the end use {ending!r}"."""
+    add to the end use {ending!r}". [ADR-013, P3]"""
 
     tests = tmp_path / "tests"
     tests.mkdir()
@@ -706,7 +714,7 @@ async def test_paths_named_from_the_root_work_from_a_subfolder_and_misses_say_so
 @pytest.mark.asyncio
 async def test_an_edit_that_stops_a_python_file_parsing_is_refused(tmp_path: Path) -> None:
     """M3CL2 walk on gpt-4.1-mini: an anchor ending inside a call put the new test in the middle
-    of an existing one, and the agent then blamed "leftover code" for the break."""
+    of an existing one, and the agent then blamed "leftover code" for the break. [ADR-015]"""
 
     source = "def test_a():\n    assert run(\n        1,\n    ) == 2\n"
     (tmp_path / "test_a.py").write_text(source)
@@ -726,8 +734,13 @@ async def test_an_edit_that_stops_a_python_file_parsing_is_refused(tmp_path: Pat
         await toolset.close()
 
     assert not inside.success and not written.success
-    assert inside.content.startswith("Refused: after this change test_a.py would not parse")
-    assert "the file is unchanged" in inside.content
+    with pytest.raises(SyntaxError) as broken:
+        ast.parse(source.replace("        1,\n", "        1,\n\n\ndef test_b():\n"))
+    assert inside.content == (
+        f"Refused: after this change test_a.py would not parse as Python ({broken.value.msg}, "
+        f"line {broken.value.lineno}); the file is unchanged. Make oldText whole lines that end "
+        "a statement, so newText does not land inside one."
+    )
     assert (tmp_path / "test_a.py").read_text() == source
 
 
@@ -738,7 +751,8 @@ async def test_a_file_search_ignores_its_glob_and_a_missed_anchor_names_the_clos
     """M3CL2 walk (gpt-4.1-mini): grep of one file with glob '*.py' answered 'No matches found.'
     and an anchor recalled with one word wrong answered 'found 0 times', after which the agent
     wrote a second test file and reported the edit made. Exercised refusal: "...; the closest
-    line is {n}: {line!r}. Read the lines you mean to change and copy them exactly"."""
+    line is {n}: {line!r}. Read the lines you mean to change and copy them exactly".
+    [ADR-013, ADR-015]"""
 
     (tmp_path / "doctor.py").write_text("def test_doctor_reports_breaker():\n    pass\n")
     toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
@@ -768,7 +782,7 @@ async def test_a_chained_git_commit_works_and_the_context_states_the_repository(
 ) -> None:
     """M3CL2 walk: the default model ran `cd <repo> && git add … && git commit` from tests/ and
     the exception, which matched only commands starting with git, refused .git/index.lock; the
-    workspace context now also states the last commit and what is uncommitted."""
+    workspace context now also states the last commit and what is uncommitted. [ADR-013, P3]"""
     if not Path("/usr/bin/sandbox-exec").is_file():
         pytest.skip("the standing hard shell fence is macOS sandbox-exec")
     import subprocess
@@ -800,7 +814,8 @@ async def test_a_chained_git_commit_works_and_the_context_states_the_repository(
 async def test_a_command_written_from_the_root_names_where_its_path_is(tmp_path: Path) -> None:
     """INCIDENT M3W5B-02, walked again in M3CL2: from tests/, the user's
     `.venv/bin/python -m pytest tests/...` answered 'no such file', and gpt-4.1-mini built a venv
-    in tests/ and reported pytest missing; the result now names the root and the command."""
+    in tests/ and reported pytest missing; the result now names the root and the command.
+    [ADR-013, P3]"""
     if not Path("/usr/bin/sandbox-exec").is_file():
         pytest.skip("the standing hard shell fence is macOS sandbox-exec")
     binary = tmp_path / ".venv" / "bin"
@@ -828,7 +843,7 @@ async def test_a_command_written_from_the_root_names_where_its_path_is(tmp_path:
 @pytest.mark.asyncio
 async def test_a_read_from_offset_zero_starts_at_the_first_line(tmp_path: Path) -> None:
     """M3CL2 walk: offset 0 became upstream offset -1 and returned only the file's last line
-    with 'Use offset=-1 to continue', and gpt-4.1-mini read one file 27 times."""
+    with 'Use offset=-1 to continue', and gpt-4.1-mini read one file 27 times. [ADR-013]"""
 
     (tmp_path / "note.txt").write_text("first\nsecond\nthird\n")
     toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
@@ -844,7 +859,7 @@ async def test_a_read_from_offset_zero_starts_at_the_first_line(tmp_path: Path) 
 @pytest.mark.asyncio
 async def test_the_refusal_names_a_unique_ending_to_add_after(tmp_path: Path) -> None:
     """M3CL2 walk: the refusal named the last line, "    )", which appeared 94 times in the
-    test file, and the next edit was refused as ambiguous; the anchor is now unique."""
+    test file, and the next edit was refused as ambiguous; the anchor is now unique. [ADR-015]"""
 
     body = "".join(f"def test_{n}():\n    call(\n        {n},\n    )\n\n\n" for n in range(30))
     (tmp_path / "test_many.py").write_text(body)
@@ -864,5 +879,10 @@ async def test_the_refusal_names_a_unique_ending_to_add_after(tmp_path: Path) ->
     finally:
         await toolset.close()
 
-    assert f"oldText set to its last lines, {anchor!r}," in refused.content
+    assert refused.content.endswith(
+        f"% of test_many.py ({body.count(chr(10))} lines). Change only what the request needs "
+        "with edit; the whole file is replaced only when the user's request says replace. To add "
+        f"to the end, edit with oldText set to its last lines, {anchor!r}, and newText set to "
+        "those lines followed by what you add."
+    )
     assert appended.success and (tmp_path / "test_many.py").read_text().count("def test_") == 31

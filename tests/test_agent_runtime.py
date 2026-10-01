@@ -1870,7 +1870,8 @@ async def test_usage_limit_maps_to_budget_exceeded_with_partial_history() -> Non
 async def test_a_finished_answer_that_crosses_the_token_wall_is_delivered_finished() -> None:
     """M3CL2 walk: gpt-4.1-mini committed, ran the tests green and answered; that last answer
     took the turn past 500,000 tokens and the turn read "Stopped at this turn's limit". The
-    limit still stops a turn mid-work (above); a final answer already paid for is delivered."""
+    limit still stops a turn mid-work (above); a final answer already paid for is delivered.
+    [P4.2]"""
 
     async def finished(_messages, _info):
         yield "Committed abc123; tests pass."
@@ -2188,7 +2189,7 @@ async def test_tool_cleanup_exception_cannot_mask_cancelled_history_repair() -> 
 @pytest.mark.asyncio
 async def test_a_bare_move_command_moves_or_says_why_without_the_model(tmp_path: Path) -> None:
     """Codex M3W5A-03: two bare /move requests got 'Moved' prose while WHERE stayed put. The
-    command now moves through the tool layer, or says why it cannot; no model request runs."""
+    command now moves through the tool layer, or says why it cannot; no model request runs. [P3]"""
 
     workspace = tmp_path / "workspace"
     (workspace / "docs").mkdir(parents=True)
@@ -2227,7 +2228,7 @@ async def test_a_bare_move_command_moves_or_says_why_without_the_model(tmp_path:
 async def test_the_last_request_a_turn_budget_allows_has_no_tools_and_asks_for_an_account() -> None:
     """Gate ruling 2026-10-01 (M3CL2): runs that spun into the 500,000-token wall fail; a soft
     notice did not stop gpt-4.1-mini. The request that would leave no room for another goes
-    out without tools and asks for a plain account, so the turn ends inside its budget."""
+    out without tools and asks for a plain account, so the turn ends inside its budget. [P4.2]"""
 
     from types import SimpleNamespace
 

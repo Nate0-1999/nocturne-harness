@@ -381,7 +381,7 @@ async def test_durable_thread_event_reopens_launch_after_daemon_restart() -> Non
 async def test_the_phrase_anywhere_opens_and_the_launching_chat_steers_the_run() -> None:
     """M3W5B-09/10: the phrase inside a longer message opens the deliberation; while the
     Symphony runs, chat typed in its thread clarifies every running attempt; slash commands
-    and other threads stay ordinary chat."""
+    and other threads stay ordinary chat. [ADR-012, ADR-014]"""
 
     experience = SymphonyExperience(id_factory=ids())
     assert not experience.is_trigger("What would a symphony cost here?")

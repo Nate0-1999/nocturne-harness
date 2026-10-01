@@ -170,6 +170,7 @@ def _refuse_destruction(target: Path, original: str, revised: str, said_replace:
     # M3CL2 walk: after this refusal gpt-4.1-mini never found an anchor to add its test, and the
     # last line alone ("    )") appeared 94 times; name the shortest unique ending.
     tail = _unique_ending(original)
+    # INCIDENT M3W5B-01: a one-test request rewrote a 1,300-line test file down to 16 lines.
     raise ToolsetError(
         f"Refused: this would remove {100 - kept * 100 // len(original)}% of {target.name} "
         f"({lines} lines). Change only what the request needs with edit; "
@@ -194,6 +195,7 @@ def _refuse_broken_python(target: Path, original: str, revised: str) -> None:
         try:
             ast.parse(revised)
         except SyntaxError as error:
+            # INCIDENT M3CL2-walk: a new test landed inside an existing one and broke the file.
             raise ToolsetError(
                 f"Refused: after this change {target.name} would not parse as Python "
                 f"({error.msg}, line {error.lineno}); the file is unchanged. Make oldText whole "
@@ -590,6 +592,7 @@ class PydanticHarnessToolset:
                         if near
                         else ""
                     ) + ". Read the lines you mean to change and copy them exactly"
+                # WALL owner files / ADR015: never guess which occurrence was meant.
                 raise ToolsetError(
                     f"oldText found {count} times; each replacement must be unique "
                     f"in the original file{where}"
@@ -616,8 +619,8 @@ class PydanticHarnessToolset:
     async def _grep(self, arguments: Mapping[str, object]) -> str:
         target = self._preflight("grep", arguments.get("path"), default=".")
         if not target.exists():
-            # M3CL2 walk: a wrong path answered "No matches found." and the agent concluded
-            # the doctor tests did not exist (the M3W5B-06 false negative, by another road).
+            # M3CL2 walk: a wrong path answered "No matches found." and the agent concluded the
+            # doctor tests did not exist: INCIDENT M3W5B-06's false negative, by another road.
             raise ToolsetError(f"No file or folder {target}.")
         pattern = arguments.get("pattern")
         if arguments.get("literal", False):
