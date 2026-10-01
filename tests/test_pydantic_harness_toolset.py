@@ -656,7 +656,8 @@ async def test_paths_named_from_the_root_work_from_a_subfolder_and_misses_say_so
     """M3CL2 walk of M3W5B-01..04 on gpt-4.1-mini: standing in tests/, the agent named
     tests/test_onboarding.py from the root; grep answered 'No matches found.' and edits were
     sent to tests/tests/, so the new test never landed. Exercised refusals: "No file or folder
-    {target}."; "oldText found {count} times ... (lines ...); include a neighboring line"."""
+    {target}."; "oldText found {count} times ... (lines ...); include a neighboring line, or to
+    add to the end use {ending!r}"."""
 
     tests = tmp_path / "tests"
     tests.mkdir()
@@ -693,7 +694,10 @@ async def test_paths_named_from_the_root_work_from_a_subfolder_and_misses_say_so
     assert not missing.success
     assert missing.content == f"No file or folder {(tests / 'nowhere.py').resolve()}."
     assert not ambiguous.success and "found 2 times" in ambiguous.content
-    assert "(lines 2, 6); include a neighboring line" in ambiguous.content
+    assert (
+        "(lines 2, 6); include a neighboring line, or to add to the end use "
+        "'def test_b():\\n    pass'" in ambiguous.content
+    )
     assert appended.success and "def test_c" in (tests / "test_doctor.py").read_text()
     assert created.success and (tests / "test_new.py").is_file()
     assert not (tests / "tests").exists()

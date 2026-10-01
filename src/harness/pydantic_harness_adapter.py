@@ -167,21 +167,25 @@ def _refuse_destruction(target: Path, original: str, revised: str, said_replace:
         return
     # M3CL2 walk: after this refusal gpt-4.1-mini never found an anchor to add its test, and the
     # last line alone ("    )") appeared 94 times; name the shortest unique ending.
-    ending = original.rstrip("\n").splitlines()
-    tail = next(
-        (
-            "\n".join(ending[-count:])
-            for count in range(1, min(len(ending), 12) + 1)
-            if original.count("\n".join(ending[-count:])) == 1
-        ),
-        ending[-1] if ending else "",
-    )
+    tail = _unique_ending(original)
     raise ToolsetError(
         f"Refused: this would remove {100 - kept * 100 // len(original)}% of {target.name} "
         f"({lines} lines). Change only what the request needs with edit; "
         "the whole file is replaced only when the user's request says replace. To add to the "
         f"end, edit with oldText set to its last lines, {tail!r}, and newText set to those "
         "lines followed by what you add."
+    )
+
+
+def _unique_ending(original: str) -> str:
+    ending = original.rstrip("\n").splitlines()
+    return next(
+        (
+            "\n".join(ending[-count:])
+            for count in range(1, min(len(ending), 12) + 1)
+            if original.count("\n".join(ending[-count:])) == 1
+        ),
+        ending[-1] if ending else "",
     )
 
 
@@ -547,6 +551,9 @@ class PydanticHarnessToolset:
                 lines = ", ".join(str(original.count("\n", 0, start) + 1) for start in starts[:5])
                 more = ", …" if count > 5 else ""
                 where = f" (lines {lines}{more}); include a neighboring line" if count else ""
+                if count and original.rstrip().endswith(old_text.rstrip()):
+                    # M3CL2 walk: to add after the last line gpt-4.1-mini sent "    )" twice.
+                    where += f", or to add to the end use {_unique_ending(original)!r}"
                 if not count:
                     # M3CL2 walk: after "found 0 times" the agent wrote a second test file and
                     # reported the edit as made; name the nearest line to copy instead.
