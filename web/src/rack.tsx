@@ -99,6 +99,8 @@ export type RackAction =
   | { type: 'jobs.run'; job_id: string }
   | { type: 'jobs.stop'; run_id: string }
   | { type: 'policies.load' }
+  | { type: 'models.load'; thread_id: string | null }
+  | { type: 'models.pin'; model: string; pinned: boolean }
   | { type: 'policies.save'; role: string; policy: string }
   | { type: 'prompt.interject'; run_id: string; prompt: string }
   | { type: 'symphony.context'; symphony_id: string }
@@ -242,7 +244,7 @@ export type RackActionResult<Action extends RackAction> =
       ? number
     : Action['type'] extends 'thread.select' | 'thread.rename_project' | 'thread.bind_workspace' | 'draft.update'
       ? void
-      : Action['type'] extends 'policies.load' | 'policies.save' | 'prompt.interject' | 'symphony.context' | 'symphony.memory' | 'spend.invoice' | 'thread.archive' | 'thread.rewind' | 'queue.load' | 'curation.load' | 'queue.decide' | 'queue.feedback' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
+      : Action['type'] extends 'policies.load' | 'policies.save' | 'models.load' | 'models.pin' | 'prompt.interject' | 'symphony.context' | 'symphony.memory' | 'spend.invoice' | 'thread.archive' | 'thread.rewind' | 'queue.load' | 'curation.load' | 'queue.decide' | 'queue.feedback' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
         ? JsonValue
         : Action['type'] extends 'rack.scope.get' | 'rack.scope.set'
           ? RackScope
@@ -298,13 +300,13 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     version: '1.0.0',
     class: 'control',
     slot: 'panel',
-    streams: ['thread.snapshot', 'run.*', 'error'],
+    streams: ['thread.snapshot', 'run.*', 'error', 'parameter.change', 'model.change'],
     actions: [
       'project.select', 'prompt.submit', 'prompt.interject', 'draft.update', 'run.cancel', 'thread.archive',
       'queue.load', 'queue.decide', 'thread.select', 'symphony.intervene', 'thread.rename_project',
       'thread.rewind',
       'symphony.context', 'symphony.memory',
-      'policies.load', 'policies.save',
+      'policies.load', 'policies.save', 'models.load',
     ],
     bounds: stageGridBounds({ w: 20, h: 20 }),
     movable: true,
@@ -402,7 +404,8 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'control',
     slot: 'overlay',
     streams: ['parameter.change', 'parameter.refused', 'model.change'],
-    actions: ['parameter.write', 'rack.scope.get', 'rack.scope.set'],
+    actions: ['parameter.write', 'rack.scope.get', 'rack.scope.set', 'models.load', 'models.pin',
+      'policies.save'],
     bindings: [
       'model.slug', 'model.temperature', 'model.top_p', 'model.top_k',
       'model.max_tokens', 'model.effort',
@@ -586,6 +589,15 @@ function dispatchRackAction<Action extends RackAction>(
       }
       case 'policies.load':
         return fetchJson('/v1/model-policies') as Promise<RackActionResult<Action>>
+      case 'models.load':
+        return fetchJson(action.thread_id === null
+          ? '/v1/models'
+          : `/v1/models?thread_id=${encodeURIComponent(action.thread_id)}`) as Promise<RackActionResult<Action>>
+      case 'models.pin':
+        return fetchJson('/v1/model-pins', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: action.model, pinned: action.pinned }),
+        }) as Promise<RackActionResult<Action>>
       case 'policies.save':
         return fetchJson(`/v1/model-policies/${encodeURIComponent(action.role)}`, {
           method: 'PUT', headers: { 'Content-Type': 'application/json' },

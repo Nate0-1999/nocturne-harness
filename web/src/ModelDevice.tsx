@@ -1,8 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { JsonValue } from './protocol'
 import { RACK_MANIFESTS, useRackPlugin, useRackSnapshot } from './rack'
 import { Button, Select, TextField } from './kit'
+import { formatHumanCount } from './humanNumbers'
+import {
+  browseOrder, chipParts, formatPrice, modelLabel, parseBrowser, policyName,
+  type Configuration, type ModelBrowser, type SortKey,
+} from './modelBrowser'
 
 type ParameterValue = string | number | null
 
@@ -35,6 +40,27 @@ interface ParameterSnapshot {
   changes: Change[]
 }
 
+/** FL-202: the conversation's model chip; it opens the browser (the Model Device). */
+export function ModelChip({ threadId, model }: { threadId: string | null, model: string | null }) {
+  const { events } = useRackPlugin()
+  const [browser, setBrowser] = useState<ModelBrowser | null>(null)
+  const [refresh, setRefresh] = useState(0)
+  useEffect(() => events.subscribe((event) => {
+    const type = String(event.envelope.type)
+    if (type === 'parameter.change' || type === 'model.change') setRefresh((value) => value + 1)
+  }), [events])
+  useEffect(() => {
+    let live = true
+    events.dispatch({ type: 'models.load', thread_id: threadId })
+      .then((value) => { if (live) setBrowser(parseBrowser(value)) })
+      .catch(() => { if (live) setBrowser(null) })
+    return () => { live = false }
+  }, [events, threadId, model, refresh])
+  const entry = browser?.models.find((item) => item.model === model)
+  const effort = browser?.current?.model === model ? browser.current.effort : null
+  return chipParts(model, entry, effort).join(' · ')
+}
+
 export function ModelDevice() {
   const snapshot = useRackSnapshot()
   const { events, query } = useRackPlugin()
@@ -46,9 +72,11 @@ export function ModelDevice() {
   const [view, setView] = useState<ParameterSnapshot | null>(null)
   const [historyIndex, setHistoryIndex] = useState(0)
   const [drafts, setDrafts] = useState<Record<string, number>>({})
-  const [slug, setSlug] = useState('')
   const [status, setStatus] = useState('Ready')
-  const slugDirty = useRef(false)
+  const [browser, setBrowser] = useState<ModelBrowser | null>(null)
+  const [browserError, setBrowserError] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [sort, setSort] = useState<SortKey>('rank')
 
   const load = useCallback(async (asOf: string | null = null) => {
     if (threadId === null) {
@@ -64,7 +92,6 @@ export function ModelDevice() {
       })
       const parsed = parseSnapshot(result.data)
       setView(parsed)
-      if (asOf !== null || !slugDirty.current) setSlug(parsed.resolved_model)
       if (asOf === null) {
         setLive(parsed)
         setHistoryIndex(parsed.changes.length)
@@ -78,6 +105,21 @@ export function ModelDevice() {
   useEffect(() => {
     void events.dispatch({ type: 'rack.scope.get', module_id: 'model_device' }).then(setScope)
   }, [events])
+
+  const liveModel = live?.resolved_model ?? null
+  const loadBrowser = useCallback(async () => {
+    try {
+      setBrowser(parseBrowser(await events.dispatch({ type: 'models.load', thread_id: threadId })))
+      setBrowserError(null)
+    } catch (error) {
+      setBrowserError(error instanceof Error ? error.message : 'The model list is unavailable.')
+    }
+  }, [events, threadId])
+
+  useEffect(() => {
+    const timer = globalThis.setTimeout(() => { void loadBrowser() }, 0)
+    return () => globalThis.clearTimeout(timer)
+  }, [loadBrowser, liveModel])
 
   useEffect(() => {
     const initial = globalThis.setTimeout(() => { void load() }, 0)
@@ -98,7 +140,6 @@ export function ModelDevice() {
         parameter_id: parameterId,
         value,
       })
-      if (parameterId === 'model.slug') slugDirty.current = false
       await load()
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Control write was refused')
@@ -109,8 +150,6 @@ export function ModelDevice() {
     setHistoryIndex(index)
     if (live === null || index >= live.changes.length) {
       setView(live)
-      if (live !== null) setSlug(live.resolved_model)
-      slugDirty.current = false
       setStatus('Live')
       return
     }
@@ -131,6 +170,34 @@ export function ModelDevice() {
     [descriptors],
   )
   const effort = descriptors.find((item) => item.id === 'model.effort')
+  const resolved = view?.resolved_model ?? null
+  const inUse = browser?.models.find((item) => item.model === resolved)
+  const pins = useMemo(() => browser?.pins ?? [], [browser?.pins])
+  const listed = useMemo(
+    () => browseOrder(browser?.models ?? [], pins, search, sort),
+    [browser?.models, pins, search, sort],
+  )
+
+  async function pin(model: string, pinned: boolean) {
+    try {
+      const result = await events.dispatch({ type: 'models.pin', model, pinned }) as { pins: string[] }
+      setBrowser((current) => current === null ? current : { ...current, pins: result.pins })
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Pin was not saved')
+    }
+  }
+
+  async function configure(configuration: Configuration) {
+    if (threadId === null || !editable || configuration.model === null) return
+    try {
+      await events.dispatch({ type: 'policies.save', role: 'chat', policy: configuration.policy })
+      if (configuration.model !== resolved) await write('model.slug', configuration.model)
+      await loadBrowser()
+      setStatus(`${policyName(configuration.policy)} · new conversations start here too`)
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Configuration was not saved')
+    }
+  }
 
   return (
     <section className="model-device" aria-labelledby="model-device-title">
@@ -143,38 +210,117 @@ export function ModelDevice() {
       <div className="model-device__truth">
         <span>Model in use</span>
         <strong data-testid="model-device-resolved">{view?.resolved_model ?? 'Waiting for thread'}</strong>
+        {effort !== undefined && inUse?.reasoning === true && (
+          <label className="model-effort" htmlFor="model-device-effort">
+            <span>Thinking</span>
+            <Select
+              id="model-device-effort"
+              data-tooltip-detail="How long the model may think before answering."
+              disabled={!editable}
+              value={String(scope === 'GLOBAL' ? effort.default ?? '' : view?.values[effort.id] ?? '')}
+              onChange={(event) => { void write(effort.id, event.target.value || null) }}
+            >
+              <option value="">Default</option>
+              {effort.options.map((option) => <option key={option} value={option}>{option}</option>)}
+            </Select>
+          </label>
+        )}
         {view?.policy_explanation && <p>{view.policy_explanation}</p>}
         <small>{scope === 'GLOBAL' ? 'Provider defaults · read only' : status}</small>
       </div>
 
-      <form
-        className="model-device__selector"
-        onSubmit={(event) => {
-          event.preventDefault()
-          void write('model.slug', slug)
-        }}
-      >
-        <label htmlFor="model-device-slug">OpenRouter model</label>
-        <TextField
-          id="model-device-slug"
-          data-tooltip-detail="Any OpenRouter model id, such as provider/model."
-          value={slug}
-          disabled={!editable}
-          onChange={(event) => {
-            slugDirty.current = true
-            setSlug(event.target.value)
-          }}
-          spellCheck={false}
-        />
-        <Button variant="primary"
-          type="button"
-          data-tooltip-detail="Switch this conversation to the typed model from the next turn."
-          disabled={!editable || slug.trim().length === 0}
-          onClick={() => { void write('model.slug', slug) }}
-        >
-          Resolve
-        </Button>
-      </form>
+      {browser !== null && browser.configurations.length > 0 && (
+        <div className="model-configs" role="group" aria-label="Standard configurations">
+          {browser.configurations.map((configuration) => {
+            const entry = browser.models.find((item) => item.model === configuration.model)
+            return (
+              <Button
+                variant="bare"
+                type="button"
+                key={configuration.policy}
+                className="model-config"
+                aria-pressed={configuration.policy === browser.chat_policy}
+                data-testid={`model-config-${configuration.policy.split(':')[0]}`}
+                data-tooltip={policyName(configuration.policy)}
+                data-tooltip-detail={`Use it here and for new conversations; ${configuration.reason}.`}
+                disabled={!editable || configuration.model === null}
+                onClick={() => { void configure(configuration) }}
+              >
+                <span className="model-config__name">{policyName(configuration.policy)}</span>
+                <span className="model-config__model">{entry?.name ?? modelLabel(configuration.model)}</span>
+                <span className="model-config__price">
+                  {configuration.reason.startsWith('falls back') ? 'fallback · ' : ''}
+                  {entry === undefined ? '—' : formatPrice(entry)}
+                </span>
+              </Button>
+            )
+          })}
+        </div>
+      )}
+
+      <section className="model-browser" aria-label="Models">
+        <div className="model-browser__tools">
+          <TextField
+            type="search"
+            aria-label="Search models"
+            data-tooltip-detail="Filter by name or id."
+            placeholder="Search models"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            spellCheck={false}
+          />
+          <Select
+            aria-label="Sort models"
+            data-tooltip-detail="Rank is the benchmark score the policies use; it orders the list, it never picks for you."
+            value={sort}
+            onChange={(event) => setSort(event.target.value as SortKey)}
+          >
+            <option value="rank">Rank</option>
+            <option value="price">Price</option>
+            <option value="context">Context</option>
+          </Select>
+          <span>{browserError ?? browser?.unavailable ?? `${listed.length} models`}</span>
+        </div>
+        <div className="model-row model-row--head" aria-hidden="true">
+          <span>Model</span><span>Score</span><span>$/M in · out</span><span>Context</span><span />
+        </div>
+        <ul data-testid="model-browser-list">
+          {listed.map((item) => {
+            const pinned = pins.includes(item.model)
+            const current = item.model === resolved
+            return (
+              <li key={item.model} className={current ? 'model-row model-row--current' : 'model-row'}>
+                <Button
+                  variant="bare"
+                  type="button"
+                  className="model-row__pick"
+                  data-model={item.model}
+                  data-tooltip={item.model}
+                  data-tooltip-detail={current ? 'This conversation uses it now.' : 'Switch this conversation to it from the next turn.'}
+                  disabled={!editable || current}
+                  onClick={() => { void write('model.slug', item.model) }}
+                >
+                  <span className="model-row__name">{item.name}{item.reasoning && <small> · thinks</small>}</span>
+                  <span>{item.score ?? '—'}</span>
+                  <span>{formatPrice(item)}</span>
+                  <span>{item.context_tokens === null ? '—' : formatHumanCount(item.context_tokens)}</span>
+                </Button>
+                <Button
+                  type="button"
+                  iconOnly
+                  action={pinned ? 'unpin' : 'pin'}
+                  aria-pressed={pinned}
+                  data-tooltip={pinned ? 'Unpin' : 'Pin to top'}
+                  data-tooltip-detail={pinned ? 'Return it to its ranked place.' : 'Keep it at the top of this list.'}
+                  onClick={() => { void pin(item.model, !pinned) }}
+                >
+                  {pinned ? 'Unpin' : 'Pin'}
+                </Button>
+              </li>
+            )
+          })}
+        </ul>
+      </section>
 
       <div className="model-device__controls">
         {numeric.map((descriptor) => {
@@ -209,21 +355,6 @@ export function ModelDevice() {
           )
         })}
 
-        {effort !== undefined && (
-          <label className="model-effort" htmlFor="model-device-effort">
-            <span>Reasoning effort</span>
-            <Select
-              id="model-device-effort"
-              data-tooltip-detail="How long the model may think before answering."
-              disabled={!editable}
-              value={String(scope === 'GLOBAL' ? effort.default ?? '' : view?.values[effort.id] ?? '')}
-              onChange={(event) => { void write(effort.id, event.target.value || null) }}
-            >
-              <option value="">Inherit</option>
-              {effort.options.map((option) => <option key={option} value={option}>{option}</option>)}
-            </Select>
-          </label>
-        )}
       </div>
 
       <div className="model-device__history">

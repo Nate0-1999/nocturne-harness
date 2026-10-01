@@ -1,0 +1,84 @@
+import { formatHumanCount, formatHumanUsd } from './humanNumbers.ts'
+
+/** FL-202: one source model as the browser lists it; prices are USD per million tokens. */
+export interface ListedModel {
+  model: string
+  name: string
+  context_tokens: number | null
+  prompt_price: string | null
+  completion_price: string | null
+  score: string | null
+  reasoning: boolean
+}
+
+export interface Configuration {
+  policy: string
+  model: string | null
+  reason: string
+}
+
+export interface ModelBrowser {
+  models: ListedModel[]
+  configurations: Configuration[]
+  pins: string[]
+  chat_policy: string
+  current: { model: string, effort: string | null } | null
+  unavailable?: string
+}
+
+export type SortKey = 'rank' | 'price' | 'context'
+
+export function parseBrowser(value: unknown): ModelBrowser {
+  if (!isRecord(value) || !Array.isArray(value.models) || !Array.isArray(value.configurations) || !Array.isArray(value.pins)) {
+    throw new TypeError('The model list returned an invalid shape')
+  }
+  return value as unknown as ModelBrowser
+}
+
+/** FL-202: pins on top, then the chosen order; rank is a display order, never routing (A-020). */
+export function browseOrder(models: ListedModel[], pins: string[], search: string, sort: SortKey): ListedModel[] {
+  const needle = search.trim().toLowerCase()
+  const number = (value: string | null, missing: number) => value === null ? missing : Number(value)
+  const key = (item: ListedModel) => sort === 'price'
+    ? number(item.prompt_price, Infinity)
+    : sort === 'context' ? -(item.context_tokens ?? -1) : -number(item.score, -Infinity)
+  return models
+    .filter((item) => needle === '' || item.name.toLowerCase().includes(needle) || item.model.toLowerCase().includes(needle))
+    .sort((left, right) => Number(pins.includes(right.model)) - Number(pins.includes(left.model))
+      || key(left) - key(right) || left.name.localeCompare(right.name))
+}
+
+export function formatPrice(item: Pick<ListedModel, 'prompt_price' | 'completion_price'>): string {
+  if (item.prompt_price === null || item.completion_price === null) return '—'
+  if (Number(item.prompt_price) === 0 && Number(item.completion_price) === 0) return 'free'
+  return `${formatHumanUsd(item.prompt_price)} · ${formatHumanUsd(item.completion_price)}`
+}
+
+export function policyName(policy: string): string {
+  const [kind, value] = [policy.split(':')[0], policy.slice(policy.indexOf(':') + 1)]
+  const name = kind.charAt(0).toUpperCase() + kind.slice(1)
+  return kind === 'floor' ? `${name} ${value}` : name
+}
+
+export function modelLabel(model: string | null): string {
+  return model === null ? '—' : model.slice(model.indexOf(':') + 1)
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+/** FL-202: the conversation chip reads model · thinking level · context window · price. */
+export function chipParts(model: string | null, entry: ListedModel | undefined, effort: string | null): string[] {
+  if (model === null) return ['Choosing model']
+  // The source's "Provider: Model" names lose the provider here; the tip carries the full id.
+  const parts = [entry?.name.replace(/^[^:]+:\s*/u, '') ?? modelLabel(model)]
+  if (entry === undefined) return parts
+  if (entry.reasoning) parts.push(`${effort ?? 'default'} thinking`)
+  if (entry.context_tokens !== null) parts.push(`${formatHumanCount(entry.context_tokens)} context`)
+  if (entry.prompt_price !== null && entry.completion_price !== null) {
+    parts.push(formatPrice(entry) === 'free' ? 'free'
+      : `${formatHumanUsd(entry.prompt_price)}/${formatHumanUsd(entry.completion_price)} per M`)
+  }
+  return parts
+}
