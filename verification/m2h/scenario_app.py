@@ -101,6 +101,10 @@ class FixtureSpine:
     async def aclose(self) -> None:
         return None
 
+    async def jobs(self, machine_id: str) -> dict[str, list[object]]:
+        """The Threads list asks which threads job runs wrote; this Palace has no jobs."""
+        return {"jobs": [], "runs": []}
+
     async def prepare_injection(self, request: InjectPrepareRequest) -> InjectPrepareResponse:
         return InjectPrepareResponse(
             injection_id=uuid4(),
