@@ -23,6 +23,7 @@ from spine.model_policy import (  # noqa: F401
     _parse_model_routes,
     _parse_named_model,
     _qualify_model,
+    elbow_price_floor,
     lower_convex_hull,
     pareto_frontier,
     parse_model_listing,
@@ -53,7 +54,7 @@ def standard_configurations(
     Pinned keeps the conversation's model. Floor uses the configured floor, else the score of
     the current model (as smart as this, cheapest), else of the configured model, else the
     elbow's. A policy the table cannot resolve shows the static model it fails open to
-    (A-020(f), A-025).
+    (A-020(f)); elbow names the price floor it gave a free model (SPEC C.5, v2.129).
     """
 
     if not catalog.rows:
@@ -68,12 +69,7 @@ def standard_configurations(
             if route is None:
                 raise ModelCatalogUnavailable("the selected model has no unambiguous route")
         except ModelCatalogUnavailable as exc:
-            reason = (
-                "a free model is on the price curve"
-                if "non-positive prompt price" in str(exc)
-                else str(exc)
-            )
-            return fallback_model, f"falls back to the configured model: {reason}", None
+            return fallback_model, f"falls back to the configured model: {exc}", None
         return (
             qualify(route.model_id),
             f"score {selected.intelligence_index}",
@@ -81,6 +77,11 @@ def standard_configurations(
         )
 
     elbow_model, elbow_reason, elbow_score = pick(ModelPolicy("elbow"))
+    price_floor = elbow_price_floor(pareto_frontier(catalog.rows), catalog.rows)
+    if elbow_score is not None and price_floor is not None:
+        elbow_reason += (
+            f"; free models count at the ${format(price_floor.normalize(), 'f')}/M price floor"
+        )
     floor = configured.value if configured.kind == "floor" else None
     if floor is None and current_model_id is not None:
         floor = scores.get(current_model_id)

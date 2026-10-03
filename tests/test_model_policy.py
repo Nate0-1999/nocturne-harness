@@ -130,9 +130,10 @@ def test_elbow_matches_the_a021_worked_example_and_small_frontier_max_rule() -> 
     assert select_model(ModelPolicy("elbow"), two_points).permaslug == "smart"
 
 
-def test_elbow_ties_fall_to_lower_prompt_price_and_zero_price_is_degenerate() -> None:
-    """A-021 is defended by verifying that elbow ties fall to lower prompt price and zero price
-    is degenerate; this prevents drift in the deterministic model policy contract.
+def test_elbow_ties_fall_to_lower_prompt_price_and_a_free_model_sits_at_the_price_floor() -> None:
+    """A-021 and SPEC C.5 (v2.129) are defended by verifying that elbow ties fall to lower prompt
+    price and a free frontier model is priced at the table's lowest nonzero prompt price, so
+    elbow picks a model instead of failing open.
     """
     tied = (
         row("start", "10", "1"),
@@ -142,12 +143,17 @@ def test_elbow_ties_fall_to_lower_prompt_price_and_zero_price_is_degenerate() ->
     )
     assert select_model(ModelPolicy("elbow"), tied).permaslug == "early"
 
-    zero_price = (
+    # "tiny" is off the frontier ("free" dominates it) but sets the floor: prices 0.1, 1, 10, 100
+    # give y 0, 1/3, 2/3, 1 against x 0, .25, .75, 1, so "mid" (+1/12). A floor of 1, the
+    # frontier's own cheapest paid price, would pick "cheap" instead.
+    with_free = (
+        row("tiny", "5", "0.1"),
         row("free", "10", "0"),
-        row("top", "30", "2"),
+        row("cheap", "20", "1"),
+        row("mid", "40", "10"),
+        row("top", "50", "100"),
     )
-    with pytest.raises(ModelCatalogUnavailable, match="non-positive"):
-        select_model(ModelPolicy("elbow"), zero_price)
+    assert select_model(ModelPolicy("elbow"), with_free).permaslug == "mid"
 
 
 def test_lower_hull_retains_collinear_vertices_and_slope_equality_is_inclusive() -> None:
@@ -735,15 +741,6 @@ async def test_named_resolution_requires_exact_broker_id_not_canonical_alias() -
     [
         ("max", (row("vendor/model", "52", "1"),), {}),
         ("floor:60", (row("vendor/model", "52", "1"),), {"vendor/model": 10}),
-        (
-            "elbow",
-            (
-                row("free", "10", "0"),
-                row("middle", "20", "1"),
-                row("top", "30", "2"),
-            ),
-            {"free": 10, "middle": 10, "top": 10},
-        ),
     ],
 )
 async def test_every_degenerate_nonpinned_resolution_fails_open_to_static_pair(
@@ -844,8 +841,9 @@ def test_listing_shows_priced_models_with_scores_and_never_routers() -> None:
 
 
 def test_standard_configurations_say_what_each_policy_selects_now() -> None:
-    """A-021 and A-025 are defended by resolving the four one-click policies from the same table
-    the resolver uses, and showing the static model a degenerate elbow falls back to.
+    """A-021 and SPEC C.5 (v2.129) are defended by resolving the four one-click policies from the
+    same table the resolver uses; with a free model on the curve, elbow shows a real pick and
+    names the price floor it gave the free model.
     """
     configurations = standard_configurations(
         browser_catalog(),
@@ -858,12 +856,11 @@ def test_standard_configurations_say_what_each_policy_selects_now() -> None:
     assert [(item.policy, item.model) for item in configurations] == [
         ("pinned:openrouter:cheap/mid", "openrouter:cheap/mid"),
         ("max", "openrouter:dear/top"),
-        ("elbow", "openrouter:fallback/model"),
+        ("elbow", "openrouter:cheap/mid"),
         ("floor:30", "openrouter:cheap/mid"),
     ]
-    assert configurations[2].reason == (
-        "falls back to the configured model: a free model is on the price curve"
-    )
+    assert configurations[2].reason == "score 30; free models count at the $0.2/M price floor"
+    assert configurations[1].reason == "score 57"
     unscored = standard_configurations(
         browser_catalog(),
         chat_policy="max",

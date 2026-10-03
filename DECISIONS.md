@@ -4008,3 +4008,11 @@ PRECEDENT: F169 (M3HW, M3CL2 evidence), F165 (M3UI2), F080, Invariant 14.
   then the first five distinct terms are kept, the label's words (then the fact's) filling a
   list shorter than two; only a fact without two distinct words is refused, with how to fix it.
   A refused /remember marks its run, and its text returns to the composer if that is empty.
+
+## M3EL — Elbow sees the free models [P4]
+
+PRECEDENT: SPEC C.5 v2.129, A-021, M3MD (report 261), FL-154.
+The rule lives in the Memory package; this shim no longer words a free model as a fallback.
+The Elbow configuration's reason names the floor when elbow used it ("score 33.7; free models
+count at the $0.021/M price floor"). The "fallback" mark stays for a table that cannot resolve
+a policy (no route, nothing meets a floor); M3MD's "today the elbow" above no longer holds.
