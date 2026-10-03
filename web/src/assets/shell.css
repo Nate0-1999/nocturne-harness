@@ -84,8 +84,8 @@
 .connection__signal {
   width: 0.42rem;
   height: 0.42rem;
-  border-radius: 50%;
   background: var(--dim);
+  transform: rotate(45deg);
 }
 
 .connection--connected .connection__signal {
