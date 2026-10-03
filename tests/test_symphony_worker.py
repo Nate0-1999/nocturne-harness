@@ -10,6 +10,7 @@ import pytest
 from pydantic_ai.models.function import DeltaToolCall, FunctionModel
 
 from harness import symphony_worker
+from harness.pydantic_harness_adapter import PydanticHarnessToolset
 from harness.spine_client import InjectPrepareResponse, MemoryAllocation
 from harness.symphony_context import COMPONENT_REGISTRY, WorkerContext, write_json
 from harness.toolset import AgentLocation
@@ -140,6 +141,34 @@ async def test_judge_retries_missing_metrics_and_writes_the_panel_return(tmp_pat
     assert result["metrics"][0]["metric"] == "café checksum = 150"
     assert result["charter_sha256"] == "a" * 64
     assert json.loads((tmp_path / "result.json").read_text()) == result
+
+
+@pytest.mark.asyncio
+async def test_worker_stops_after_two_sandbox_denials(tmp_path, monkeypatch):
+    """D.2 102 / F154: changing shell syntax cannot buy more turns against the same fence."""
+    denied = AsyncMock(return_value="fatal: cannot lock ref: Operation not permitted")
+    monkeypatch.setattr(PydanticHarnessToolset, "_bash", denied)
+
+    async def respond(messages, info):
+        yield {
+            0: DeltaToolCall(
+                name="bash",
+                json_args=json.dumps(
+                    {
+                        "command": "git commit -m retry"
+                        if denied.call_count
+                        else "git checkout -b outside"
+                    }
+                ),
+            )
+        }
+
+    result = await _run_judge(tmp_path, monkeypatch, respond)
+
+    assert denied.call_count == 2
+    assert result["outcome"] == "fail"
+    assert "Repeated workspace denial" in result["rationale"]
+    assert (tmp_path / "blocked.json").is_file()
 
 
 def _verdict(selected, feedback=()):

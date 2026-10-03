@@ -351,6 +351,15 @@ async def test_worktree_worker_creates_a_folder_and_commits_without_touching_par
     )
     toolset = await open_standard_toolset(cwd=attempt, workspace_root=attempt, fence_reads=True)
     try:
+        namespace = "nocturne-worktrees/attempt"
+        # F154: provision the namespace as the supervisor does before sandboxed tools start.
+        subprocess.run(
+            ["git", "-C", str(attempt), "checkout", "-qb", f"{namespace}/work"], check=True
+        )
+        named = await toolset.execute(
+            "bash", {"command": f"git checkout -b {namespace}/named-result"}
+        )
+        assert named.success and "Operation not permitted" not in named.content, named.content
         made = await toolset.execute("bash", {"command": "mkdir scratch"})
         assert made.success and (attempt / "scratch").is_dir(), made.content
         await toolset.move(Path("scratch"))
@@ -358,6 +367,13 @@ async def test_worktree_worker_creates_a_folder_and_commits_without_touching_par
         assert written.success, written.content
         added = await toolset.execute("bash", {"command": "git add note.txt"})
         committed = await toolset.execute("bash", {"command": "git commit -q -m worker"})
+        owner_branch = subprocess.check_output(
+            ["git", "-C", str(root), "symbolic-ref", "HEAD"], text=True
+        ).strip()
+        refused = await toolset.execute(
+            "bash", {"command": f"git update-ref {owner_branch} HEAD"}
+        )
+        assert "Operation not permitted" in refused.content, refused.content
     finally:
         await toolset.close()
     log = subprocess.check_output(

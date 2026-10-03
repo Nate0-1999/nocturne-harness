@@ -14,7 +14,12 @@ from uuid import UUID
 from pydantic import BaseModel, create_model
 from pydantic_ai import Agent, ModelRetry, PromptedOutput, capture_run_messages
 from pydantic_ai.exceptions import AgentRunError
-from pydantic_ai.messages import ModelMessagesTypeAdapter, ModelResponse, ToolCallPart
+from pydantic_ai.messages import (
+    FunctionToolResultEvent,
+    ModelMessagesTypeAdapter,
+    ModelResponse,
+    ToolCallPart,
+)
 from pydantic_ai.usage import UsageLimits
 
 from harness.agent import ExtractionCandidateDraft
@@ -209,7 +214,10 @@ async def run(assignment_path: Path) -> None:
             purpose="judge" if stage == "judge" else "building",
         )
 
+    denied_writes = 0
+
     async def observe(_context, events):
+        nonlocal denied_writes
         async for _event in events:
             observe_worker(
                 output,
@@ -220,6 +228,21 @@ async def run(assignment_path: Path) -> None:
                 captured,
             )
             worker_context.publish(captured)
+            if isinstance(_event, FunctionToolResultEvent) and _event.part.tool_name in (
+                "bash",
+                "read_shell",
+            ):
+                content = str(_event.part.content)
+                if "operation not permitted" in content.lower():
+                    denied_writes += 1
+                    if denied_writes == 2:
+                        # WALL money / D.2 102: another model turn cannot widen the sandbox.
+                        reason = (
+                            "Repeated workspace denial; "
+                            "change the task or location before retrying."
+                        )
+                        _write(output / "blocked.json", json.dumps({"reason": reason}))
+                        raise AgentRunError(reason)
             request = receipt()
             if request is not None:
                 _write(
@@ -324,6 +347,7 @@ async def run(assignment_path: Path) -> None:
         worker_context.publish(captured)
         if (
             stage == "completion"
+            and result.output.completed
             and subprocess.check_output(["git", "status", "--porcelain"], text=True).strip()
         ):
             subprocess.run(["git", "add", "-A"], check=True)

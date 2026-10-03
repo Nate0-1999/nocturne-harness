@@ -3974,12 +3974,15 @@ as does a non-unique anchor that ends the file. An edit or write that would stop
 that parsed from parsing is refused with the error and its line: an anchor ending inside a call
 had put a new test in the middle of an existing one.
 
-## M3SF2 — Proposed worktree repair, blocked verification [P3]
+## M3SF2 — Reviewable results and private worktree branches [P3]
 
-PRECEDENT: F154/F158, PLAN M3SF2, ADR-017, D.2 103; Garden report 255.
+PRECEDENT: F154/F158, PLAN M3SF2, ADR-017, D.2 102–103; Garden report 256.
 All passing judges choose by most votes, then lowest attempt ID on equal votes;
 the result names that rule. Judged work stays on `symphony/<id>` for review.
-Workers may write their own Git metadata and shared objects, not the user's
-branch refs. Live verification exposed repeated named-ref failures, so this
-repair is unaccepted and unreleased pending the M3CL2 ownership ruling and
-three fresh passing runs.
+After the owner's resume ruling and M3CL2's 0.1.52 release, workers start on
+`nocturne-worktrees/<git-worktree-id>/work`; the sandbox permits that private
+branch namespace, its reflogs, the worker's index and shared objects. Named
+branches within that namespace commit without granting writes to user refs.
+Two shell sandbox denials stop the worker and the Symphony before another
+round; a failed worker's dirty files are not auto-committed. M3HW's cleanup
+retains attempt commits and removes their temporary branch namespaces.

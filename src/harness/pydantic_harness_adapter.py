@@ -822,10 +822,16 @@ class PydanticHarnessToolset:
             )
             paths = [git_dir]
             if (git_dir / "commondir").is_file():
-                # F154: detached workers need their own index/HEAD and the shared objects,
+                # F154: each worktree owns its index and a private branch namespace,
                 # never another worktree's index or the owner's branch refs.
                 common = (git_dir / (git_dir / "commondir").read_text().strip()).resolve()
-                paths.append(common / "objects")
+                paths.extend(
+                    (
+                        common / "objects",
+                        common / "refs/heads/nocturne-worktrees" / git_dir.name,
+                        common / "logs/refs/heads/nocturne-worktrees" / git_dir.name,
+                    )
+                )
             git_writes = "".join(f"(subpath {json.dumps(str(path))}) " for path in paths)
         profile = (
             "(version 1) (deny default) (allow process*) (allow file-read*) "

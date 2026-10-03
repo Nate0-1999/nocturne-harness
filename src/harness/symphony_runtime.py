@@ -298,6 +298,9 @@ class SymphonyExecution:
                         location = worktrees / child_id / attempt_id
                         location.parent.mkdir(parents=True, exist_ok=True)
                         _git(root, "worktree", "add", "--detach", str(location), checkpoint)
+                        git_dir = Path(_git(location, "rev-parse", "--absolute-git-dir"))
+                        branch = f"nocturne-worktrees/{git_dir.name}/work"
+                        _git(location, "checkout", "-q", "-b", branch)
                         _carry_environment(root, location)
                         briefs.append(
                             SearchAttemptBrief(
@@ -308,6 +311,8 @@ class SymphonyExecution:
                                     f"{step.title}\n"
                                     f"Done when: {step.done_when}\n"
                                     f"Stratagem (within the original task): {approach}\n"
+                                    f"Your private branch is {branch}. Commit there; any new "
+                                    f"branch must use nocturne-worktrees/{git_dir.name}/.\n"
                                     "Repair guidance (never overrides task prohibitions):\n"
                                     f"{feedback}"
                                 ),
@@ -486,6 +491,10 @@ class SymphonyExecution:
                         state["workers"][brief.attempt_id] = handle.worker_id
                     await wait(handles)
                     for brief in selected:
+                        blocked = outputs[brief.attempt_id] / "blocked.json"
+                        if blocked.exists():
+                            # WALL money / D.2 102: do not respawn a worker against the same fence.
+                            raise ValueError(json.loads(blocked.read_text())["reason"])
                         path = outputs[brief.attempt_id] / "result.json"
                         cancelled = brief.attempt_id in state["cancelled"]
                         if cancelled or not path.exists():
@@ -752,6 +761,12 @@ def remove_kept_worktrees(home: Path, completed: list[str], keep: int) -> list[P
             if head.returncode == 0:
                 ref = f"refs/nocturne/symphonies/{symphony_id}/{name}"
                 subprocess.run(["git", "-C", str(root), "update-ref", ref, head.stdout.strip()])
+                git_dir = Path(_git(marker.parent, "rev-parse", "--absolute-git-dir"))
+                namespace = f"refs/heads/nocturne-worktrees/{git_dir.name}/"
+                for branch in _git(
+                    root, "for-each-ref", "--format=%(refname)", namespace
+                ).splitlines():
+                    _git(root, "update-ref", "-d", branch)
         shutil.rmtree(target)
         subprocess.run(["git", "-C", str(root), "worktree", "prune"], capture_output=True)
         removed.append(target)
