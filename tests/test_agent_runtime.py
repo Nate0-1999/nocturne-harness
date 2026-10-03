@@ -1461,7 +1461,8 @@ async def test_turn_exclusions_are_applied_to_model_visible_search_results() -> 
 @pytest.mark.asyncio
 async def test_remember_uses_dispatch_and_emits_its_visible_result() -> None:
     """ADR-013 is defended by verifying that remember uses dispatch and emits its visible
-    result; this prevents drift in the streaming model runtime and history boundary.
+    result; this prevents drift in the streaming model runtime and history boundary. F165: a
+    result that saved nothing is marked, so the composer gets the text back.
     """
     model = TestModel(call_tools=[], custom_output_text="must not run")
     runner = PydanticAITurnRunner(HarnessAgent(settings(), model=model), lambda _: context())
@@ -1480,7 +1481,7 @@ async def test_remember_uses_dispatch_and_emits_its_visible_result() -> None:
     assert outcome.usage == UsageSnapshot()
     assert emitted.texts == ["Nothing to remember; add text after /remember."]
     assert emitted.thoughts == []
-    assert emitted.events == []
+    assert emitted.events == [{"event_kind": "remember_refused"}]
     assert emitted.usages == []
     assert model.last_model_request_parameters is None
 

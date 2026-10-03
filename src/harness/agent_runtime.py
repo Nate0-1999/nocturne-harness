@@ -483,6 +483,9 @@ class PydanticAITurnRunner:
                         captured_messages=captured,
                     )
                 remembered_memory_id = dispatched.memory_id
+                if not dispatched.ok:
+                    # F165: a refused /remember hands its text back to the composer.
+                    await emit.event({"event_kind": "remember_refused"})
                 await emit.text(dispatched.message)
                 usage = _failure_usage(run_usage, captured, ())
                 await bridge.publish_usage(usage)

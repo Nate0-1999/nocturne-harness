@@ -2430,6 +2430,23 @@ function ChatModule() {
     })
   }, [selectedThreadId])
 
+  // F165: a refused /remember hands its text back to an empty composer when its run ends.
+  const runningRef = useRef(activeRun?.run_id ?? null)
+  useEffect(() => {
+    const finished = runningRef.current
+    runningRef.current = activeRun?.run_id ?? null
+    if (finished === null || finished === activeRun?.run_id || draft.trim() !== '' || selectedThreadId === null) {
+      return
+    }
+    const refused = messages.some((message) => message.role === 'assistant' && message.run_id === finished &&
+      message.events.some((event) => event.event_kind === 'remember_refused'))
+    const prompt = messages.find((message) => message.role === 'user' && message.run_id === finished)
+    if (refused && prompt !== undefined) {
+      setDraft(prompt.content)
+      void events.dispatch({ type: 'draft.update', thread_id: selectedThreadId, draft: prompt.content })
+    }
+  }, [activeRun?.run_id, draft, events, messages, selectedThreadId])
+
   function archiveThread() {
     // WALL Palace writes / ADR022: one archive extraction per owner action.
     if (selectedThreadId === null || archiveBusy) {
