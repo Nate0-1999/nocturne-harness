@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "5a28aa61b6682b2b8a0ba4f6a4b50080ade0480c",
-      "head": "04c5c2c8f195b335b3c0a24b8eb578e1a3a41098"
+      "head": "bcf11b88d432c20bef70697c86733e02ffb2a7a5"
     }
   ],
   "unmapped": {
@@ -164,7 +164,7 @@
       "verdict": "PASS",
       "screenshot": "FL-122.png",
       "flag": "",
-      "observed": "PASS x3: each run-5/6/7 live retry Recipe shows one completed/dim step and active step 2. Returning to an older thread after the later diagnostic can show the newest Recipe (F158), retained separately; these live-run captures are not that stale selection."
+      "observed": "PASS x3: each run-8/9/10 live retry Recipe shows one completed/dim step and active step 2. Returning to an older thread after the later diagnostic can show the newest Recipe (F158), retained separately; these live-run captures are not that stale selection."
     },
     "FL-175": {
       "label": "Constitution: a sandbox whose boundary crossings are surfaced as cards on the Deck (Invariant 14).",
@@ -281,7 +281,7 @@
       "verdict": "PASS",
       "screenshot": "FL-085.png",
       "flag": "",
-      "observed": "PASS x3, runs 5/6/7. Real workers ran in distinct worktrees and private named branches; three final judges passed before each result card. Results have exact step titles on symphony/<id>; user main never moved. Dirty signing preflight and separate two-denial stop probe also passed."
+      "observed": "PASS x3, runs 8/9/10. Real workers ran in distinct worktrees and private named branches; three final judges passed before each result card. Results have exact step titles on symphony/<id>; user main never moved. Dirty signing preflight and separate two-denial stop probe also passed."
     },
     "FL-086": {
       "label": "Both modes supported: a hands-off default with loops, judges and parallel agents, and a traditional chat mode of agent turn then human turn.",
@@ -290,7 +290,7 @@
       "verdict": "PASS",
       "screenshot": "FL-086.png",
       "flag": "",
-      "observed": "PASS x3: a fresh ordinary real-model read-only counter chat preceded each complete Symphony (5/6/7). No mocks for Palace, OpenRouter, workers or judges."
+      "observed": "PASS x3: a fresh ordinary real-model read-only counter chat preceded each complete Symphony (8/9/10). No mocks for Palace, OpenRouter, workers or judges."
     },
     "FL-088": {
       "label": "Symphony search starts from a variety of stratagems and works forward in parallel, combining breadth and depth, auto-research style but multi-agent and coordinated.",
