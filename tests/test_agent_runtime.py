@@ -38,7 +38,7 @@ from harness.config import HarnessSettings
 from harness.context_window import ContextWindowTracker
 from harness.envelope import GateCommitPayload, StopReason
 from harness.model_policy import ThreadModelResolution
-from harness.openrouter_runtime import PreservingOpenRouterModel
+from harness.openrouter_runtime import ModelStalled, PreservingOpenRouterModel
 from harness.pydantic_harness_adapter import discover_skill_libraries
 from harness.receipt_queue import SpendReceiptQueue
 from harness.run_protocol import DynamicSystemInstructions, UsageSnapshot
@@ -2064,6 +2064,35 @@ async def test_f034_unknown_provider_http_failure_keeps_its_words_without_guessi
     assert emitter.texts[-1].strip() == (
         "The provider refused: Capacity is briefly full. Retry this turn or switch models."
     )
+
+
+@pytest.mark.asyncio
+async def test_f169_a_stalled_model_ends_the_turn_with_a_plain_word() -> None:
+    """F169 is defended by verifying that a model request that stopped answering ends the turn
+    with one plain sentence in the conversation naming the model, the wait and the way on.
+    """
+
+    async def stalled(_messages, _info):
+        raise ModelStalled("openai/gpt-4.1-mini", quiet_seconds=60, waited_seconds=185)
+        yield  # pragma: no cover - keeps this an async generator
+
+    emitter = RecordingEmitter()
+    outcome = await PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stalled)),
+        lambda _: context(),
+    ).run(
+        thread_id=str(THREAD_UUID),
+        prompt="hello",
+        message_history=(),
+        emit=emitter,
+    )
+
+    assert outcome.stop_reason is StopReason.ERROR
+    assert emitter.texts[-1].strip() == (
+        "openai/gpt-4.1-mini stopped answering: nothing arrived for 1 min (3 min 5 s since the "
+        'request began), so this turn stopped. Send "continue" to try again.'
+    )
+    assert outcome.error_message == "The model stopped answering."
 
 
 @dataclass

@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+import time
+from collections.abc import AsyncIterator, Mapping
+from contextlib import asynccontextmanager
 from typing import Any, override
 
-from openai import APIError
-from pydantic_ai.exceptions import ModelHTTPError
+from openai import APIError, APITimeoutError
+from pydantic_ai.exceptions import ModelAPIError, ModelHTTPError
+from pydantic_ai.models import DEFAULT_HTTP_TIMEOUT
 from pydantic_ai.models.openrouter import (
     OpenRouterModel,
     OpenRouterStreamedResponse,
@@ -25,8 +28,23 @@ class PreservingOpenRouterStreamedResponse(OpenRouterStreamedResponse):
                 if details := _usage_only_provider_details(validated):
                     self.provider_details = {**(self.provider_details or {}), **details}
                 yield validated
+        except APITimeoutError:
+            raise  # F169: a silent stream is a stall, not an HTTP 500.
         except APIError as exc:
             raise _preserved_model_error(exc, self._model_name) from exc
+
+
+class ModelStalled(ModelAPIError):
+    """A model request that sent nothing for its quiet bound. [F169]"""
+
+    def __init__(self, model_name: str, *, quiet_seconds: float, waited_seconds: float) -> None:
+        self.quiet_seconds = quiet_seconds
+        self.waited_seconds = waited_seconds
+        super().__init__(
+            model_name,
+            f"{model_name} stopped answering: nothing arrived for {_duration(quiet_seconds)} "
+            f"({_duration(waited_seconds)} since the request began)",
+        )
 
 
 class PreservingOpenRouterModel(OpenRouterModel):
@@ -36,6 +54,45 @@ class PreservingOpenRouterModel(OpenRouterModel):
     @override
     def _streamed_response_cls(self):  # type: ignore[no-untyped-def]
         return PreservingOpenRouterStreamedResponse
+
+    @override
+    async def request(self, *args: Any, **kwargs: Any):  # type: ignore[no-untyped-def]
+        started = time.monotonic()
+        try:
+            return await super().request(*args, **kwargs)
+        except ModelAPIError as exc:
+            if not isinstance(exc.__cause__, APITimeoutError):
+                raise
+            raise self._stalled(started) from exc
+
+    @override
+    @asynccontextmanager
+    async def request_stream(self, *args: Any, **kwargs: Any) -> AsyncIterator[Any]:
+        started = time.monotonic()
+        try:
+            async with super().request_stream(*args, **kwargs) as response:
+                yield response
+        except (APITimeoutError, ModelAPIError) as exc:
+            if not isinstance(exc, APITimeoutError) and not isinstance(
+                exc.__cause__, APITimeoutError
+            ):
+                raise
+            raise self._stalled(started) from exc
+
+    def _stalled(self, started: float) -> ModelStalled:
+        quiet = (self.settings or {}).get("timeout", DEFAULT_HTTP_TIMEOUT)
+        return ModelStalled(
+            self.model_name,
+            quiet_seconds=quiet if isinstance(quiet, int | float) else DEFAULT_HTTP_TIMEOUT,
+            waited_seconds=time.monotonic() - started,
+        )
+
+
+def _duration(seconds: float) -> str:
+    if seconds < 60:
+        return f"{seconds:.3g} s"
+    minutes, rest = divmod(round(seconds), 60)
+    return f"{minutes} min {rest} s" if rest else f"{minutes} min"
 
 
 def _preserved_model_error(exc: APIError, model_name: str) -> ModelHTTPError:

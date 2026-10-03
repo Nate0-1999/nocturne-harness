@@ -53,6 +53,7 @@ from harness.envelope import ProviderErrorPayload, StopReason, generate_ulid
 from harness.extraction import ExtractionService
 from harness.model_policy import ThreadModelResolution
 from harness.model_router import model_settings_for
+from harness.openrouter_runtime import ModelStalled
 from harness.project_path import repository_mark, repository_turn
 from harness.proposed_response import (
     BLOCK_CLOSE,
@@ -672,6 +673,17 @@ class PydanticAITurnRunner:
                     StopReason("cancelled"),
                     _repair_cancelled_tool_calls(history),
                     usage,
+                )
+            if isinstance(exc, ModelStalled):
+                # F169: a silent provider held runs at Working… for 10-26 minutes, unexplained.
+                message = f'{exc.message}, so this turn stopped. Send "continue" to try again.'
+                await emit.text(f"\n\n{message}")
+                return TurnOutcome(
+                    StopReason("error"),
+                    failed_history(),
+                    usage,
+                    assistant_text=message,
+                    error_message="The model stopped answering.",
                 )
             provider_error = _provider_error(exc, selected_model.model_name)
             if provider_error is not None:
