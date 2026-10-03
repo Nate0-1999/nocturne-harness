@@ -370,9 +370,7 @@ async def test_worktree_worker_creates_a_folder_and_commits_without_touching_par
         owner_branch = subprocess.check_output(
             ["git", "-C", str(root), "symbolic-ref", "HEAD"], text=True
         ).strip()
-        refused = await toolset.execute(
-            "bash", {"command": f"git update-ref {owner_branch} HEAD"}
-        )
+        refused = await toolset.execute("bash", {"command": f"git update-ref {owner_branch} HEAD"})
         assert "Operation not permitted" in refused.content, refused.content
     finally:
         await toolset.close()
