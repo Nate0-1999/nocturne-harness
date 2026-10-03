@@ -2430,22 +2430,23 @@ function ChatModule() {
     })
   }, [selectedThreadId])
 
-  // F165: a refused /remember hands its text back to an empty composer when its run ends.
-  const runningRef = useRef(activeRun?.run_id ?? null)
+  // F165: a refused /remember hands its text back to an empty composer. Keyed on the prompt
+  // this composer sent: a refusal can end before the frame ever sees its run as active.
+  const sentRememberRef = useRef<string | null>(null)
   useEffect(() => {
-    const finished = runningRef.current
-    runningRef.current = activeRun?.run_id ?? null
-    if (finished === null || finished === activeRun?.run_id || draft.trim() !== '' || selectedThreadId === null) {
+    const sent = sentRememberRef.current
+    if (sent === null || draft.trim() !== '' || selectedThreadId === null) {
       return
     }
-    const refused = messages.some((message) => message.role === 'assistant' && message.run_id === finished &&
-      message.events.some((event) => event.event_kind === 'remember_refused'))
-    const prompt = messages.find((message) => message.role === 'user' && message.run_id === finished)
-    if (refused && prompt !== undefined) {
-      setDraft(prompt.content)
-      void events.dispatch({ type: 'draft.update', thread_id: selectedThreadId, draft: prompt.content })
+    const prompt = [...messages].reverse().find((message) => message.role === 'user' && message.content === sent)
+    const refused = prompt !== undefined && messages.some((message) => message.role === 'assistant' &&
+      message.run_id === prompt.run_id && message.events.some((event) => event.event_kind === 'remember_refused'))
+    if (refused) {
+      sentRememberRef.current = null
+      setDraft(sent)
+      void events.dispatch({ type: 'draft.update', thread_id: selectedThreadId, draft: sent })
     }
-  }, [activeRun?.run_id, draft, events, messages, selectedThreadId])
+  }, [draft, events, messages, selectedThreadId])
 
   function archiveThread() {
     // WALL Palace writes / ADR022: one archive extraction per owner action.
@@ -2487,6 +2488,7 @@ function ChatModule() {
     }
     const prompt = draft.trim()
     const image = pendingImage
+    sentRememberRef.current = /^\/remember(?:\s|$)/u.test(prompt) ? prompt : null
     setPromptBusy(true)
     const action = image === null
       ? { type: 'prompt.submit' as const, prompt }
