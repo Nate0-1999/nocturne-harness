@@ -744,7 +744,8 @@ def remove_kept_worktrees(home: Path, completed: list[str], keep: int) -> list[P
     refs/nocturne/symphonies/ so pruned work remains auditable. Evidence under home stays."""
     removed = []
     for symphony_id in completed[: max(0, len(completed) - keep)]:
-        assignments = sorted((home / "symphonies" / symphony_id).glob("*/*/assignment.json"))
+        run_home = home / "symphonies" / symphony_id
+        assignments = sorted(run_home.rglob("assignment.json"))
         if not assignments:
             continue
         root = Path(json.loads(assignments[0].read_text())["project_key"])
@@ -760,7 +761,13 @@ def remove_kept_worktrees(home: Path, completed: list[str], keep: int) -> list[P
             )
             if head.returncode == 0:
                 ref = f"refs/nocturne/symphonies/{symphony_id}/{name}"
-                subprocess.run(["git", "-C", str(root), "update-ref", ref, head.stdout.strip()])
+                result = run_home / name / "completion/result.json"
+                commit = (
+                    json.loads(result.read_text())["product"]["commit"]
+                    if result.is_file()
+                    else head.stdout.strip()
+                )
+                _git(root, "update-ref", ref, commit)
                 git_dir = Path(_git(marker.parent, "rev-parse", "--absolute-git-dir"))
                 namespace = f"refs/heads/nocturne-worktrees/{git_dir.name}/"
                 for branch in _git(

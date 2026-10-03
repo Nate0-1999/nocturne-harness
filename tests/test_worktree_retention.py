@@ -42,7 +42,9 @@ def test_completed_symphony_worktrees_leave_and_their_commits_stay_reachable(tmp
         )
         commits[symphony_id] = _git(attempt, "rev-parse", "HEAD")
         (attempt.parent / "judge-motivation").mkdir()
-        assignment = home / "symphonies" / symphony_id / "step-1-round-1" / "attempt-1"
+        assignment = (
+            home / "symphonies" / symphony_id / "step-1-round-1" / "attempt-1" / "completion"
+        )
         assignment.mkdir(parents=True)
         (assignment / "assignment.json").write_text(json.dumps({"project_key": str(root)}))
 
@@ -59,5 +61,5 @@ def test_completed_symphony_worktrees_leave_and_their_commits_stay_reachable(tmp
     remaining = _git(root, "for-each-ref", "--format=%(refname)", "refs/heads/nocturne-worktrees/")
     assert f"refs/heads/{branches['older']}" not in remaining
     assert f"refs/heads/{branches['running']}" in remaining
-    assert (home / "symphonies" / "older" / "step-1-round-1" / "attempt-1").exists()
+    assert (home / "symphonies" / "older" / "step-1-round-1" / "attempt-1" / "completion").exists()
     assert remove_kept_worktrees(home, ["older", "newer"], keep=0) == [worktrees / "newer"]
