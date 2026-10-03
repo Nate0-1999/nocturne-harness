@@ -3973,3 +3973,20 @@ destructive-write refusal names the shortest unique ending as the anchor for add
 as does a non-unique anchor that ends the file. An edit or write that would stop a Python file
 that parsed from parsing is refused with the error and its line: an anchor ending inside a call
 had put a new test in the middle of an existing one.
+## M3P1 — The two P1s before the room [P1, P4]
+
+PRECEDENT: F169 (M3HW, M3CL2 evidence), F165 (M3UI2), F080, Invariant 14.
+- A stall (F169): MODEL_REQUEST_TIMEOUT_SECONDS (60), beside the turn budget, is the longest an
+  OpenRouter request may send nothing. It is an idle limit, not a total: OpenRouter sends a
+  keep-alive byte every <1 s on streams and every <3 s on whole answers (2026-10-03 probes,
+  including 83 s of hidden reasoning), and F169's stalls were 600 s of no byte at all. A stall
+  before the answer starts is asked again by the OpenAI client (its two retries, unchanged), so
+  a run either continues or ends within about three bounds; one mid-answer ends at the bound.
+  Either way the turn ends with one sentence naming the model, the quiet time and the whole
+  wait, and "send continue". A silent stream had been relabeled HTTP 500 by the OpenRouter
+  stream wrapper; it is now the stall it was. Direct (single-key) providers keep their SDK
+  defaults: a local model may send nothing while it reads a long prompt.
+- A plain /remember (F165): keywords that break the 2-5 distinct rule are generated once more,
+  then the first five distinct terms are kept, the label's words (then the fact's) filling a
+  list shorter than two; only a fact without two distinct words is refused, with how to fix it.
+  A refused /remember marks its run, and its text returns to the composer if that is empty.
