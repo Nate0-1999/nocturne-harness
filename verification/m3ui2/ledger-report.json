@@ -7,21 +7,13 @@
     {
       "repo": "harness",
       "base": "d51cb65602382282bf68e4c95c78977e32ca629d",
-      "head": "ecf42d6379168d3a200f580436e515e4782571bb"
+      "head": "43d7aa6b6cf2bc92984ae0763541a8b9feb4f530"
     }
   ],
   "unmapped": {
     "harness/CHANGELOG.md": "0.1.49 release notes; no feature behavior.",
     "harness/DECISIONS.md": "M3UI2 decision journal; no feature behavior.",
     "harness/src/harness/__init__.py": "paired release version 0.1.51; no feature behavior.",
-    "harness/verification/m3ui2/measure.mjs": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
-    "harness/verification/m3ui2/receipts/serve.py": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
-    "harness/verification/m3ui2/walk.mjs": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
-    "harness/web/dist/assets/index-DqGq51MG.js": "the packaged web app rebuilt once for the 0.1.51 pair; built from the walked source.",
-    "harness/web/dist/assets/index-d5I-ZZQ4.css": "the packaged web app rebuilt once for the 0.1.51 pair; built from the walked source.",
-    "harness/web/dist/index.html": "the packaged web app rebuilt once for the 0.1.51 pair; built from the walked source.",
-    "harness/verification/m3ui2/ledger-report.json": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
-    "harness/verification/m3ui2/SHA256SUMS": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
     "harness/verification/m3ui2/FL-009.png": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
     "harness/verification/m3ui2/FL-069.png": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
     "harness/verification/m3ui2/FL-111.png": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
@@ -46,7 +38,18 @@
     "harness/verification/m3ui2/FL-193.png": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
     "harness/verification/m3ui2/FL-194.png": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
     "harness/verification/m3ui2/FL-198.png": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
-    "harness/verification/m3ui2/FL-199.png": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums."
+    "harness/verification/m3ui2/FL-199.png": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
+    "harness/verification/m3ui2/SHA256SUMS": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
+    "harness/verification/m3ui2/ledger-report.json": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
+    "harness/verification/m3ui2/measure.mjs": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
+    "harness/verification/m3ui2/receipts/serve.py": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
+    "harness/verification/m3ui2/walk.mjs": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
+    "harness/web/dist/assets/index-D_iBBAfF.js": "the packaged web app rebuilt once for the 0.1.51 pair; built from the walked source.",
+    "harness/web/dist/assets/index-DqGq51MG.js": "the packaged web app rebuilt once for the 0.1.51 pair; built from the walked source.",
+    "harness/web/dist/assets/index-d5I-ZZQ4.css": "the packaged web app rebuilt once for the 0.1.51 pair; built from the walked source.",
+    "harness/web/dist/assets/index-ihEAodT8.css": "the packaged web app rebuilt once for the 0.1.51 pair; built from the walked source.",
+    "harness/web/dist/index.html": "the packaged web app rebuilt once for the 0.1.51 pair; built from the walked source.",
+    "harness/verification/m3ui2/impacted.json": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
