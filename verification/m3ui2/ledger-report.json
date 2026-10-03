@@ -2,28 +2,18 @@
   "packet": "M3UI2",
   "mode": "builder",
   "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
-  "ledger_sha256": "00dc55bc6104c1b8c2d5a257f19e0069b23050633563cae62988a17c901609a4",
+  "ledger_sha256": "04c978d0a37a7166a8fdd297b086314f45f39b2740a63b02758b7b669f5a46ee",
   "diffs": [
     {
       "repo": "harness",
-      "base": "858c347505dd2345361e73fe0905ccc4b23bf27e",
-      "head": "383612566d65e37865802ffec1d6d8b11c6161d3"
+      "base": "d51cb65602382282bf68e4c95c78977e32ca629d",
+      "head": "7ee2eacee82fc9717ddeb6429934db24528fcbfd"
     }
   ],
   "unmapped": {
     "harness/CHANGELOG.md": "0.1.49 release notes; no feature behavior.",
     "harness/DECISIONS.md": "M3UI2 decision journal; no feature behavior.",
-    "harness/src/harness/__init__.py": "paired release version 0.1.49; no feature behavior.",
-    "harness/verification/m3ui2/measure.mjs": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
-    "harness/verification/m3ui2/receipts/serve.py": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
-    "harness/verification/m3ui2/walk.mjs": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
-    "harness/web/dist/assets/index-B39IrD9y.js": "the packaged web app rebuilt once for the 0.1.49 pair; built from the walked source.",
-    "harness/web/dist/assets/index-BG5tg9l9.js": "the packaged web app rebuilt once for the 0.1.49 pair; built from the walked source.",
-    "harness/web/dist/assets/index-CzGelCJU.css": "the packaged web app rebuilt once for the 0.1.49 pair; built from the walked source.",
-    "harness/web/dist/assets/index-D9B_GIRk.css": "the packaged web app rebuilt once for the 0.1.49 pair; built from the walked source.",
-    "harness/web/dist/index.html": "the packaged web app rebuilt once for the 0.1.49 pair; built from the walked source.",
-    "harness/verification/m3ui2/ledger-report.json": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
-    "harness/verification/m3ui2/SHA256SUMS": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
+    "harness/src/harness/__init__.py": "paired release version 0.1.51; no feature behavior.",
     "harness/verification/m3ui2/FL-009.png": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
     "harness/verification/m3ui2/FL-069.png": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
     "harness/verification/m3ui2/FL-111.png": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
@@ -49,7 +39,18 @@
     "harness/verification/m3ui2/FL-194.png": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
     "harness/verification/m3ui2/FL-196.png": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
     "harness/verification/m3ui2/FL-198.png": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
-    "harness/verification/m3ui2/FL-199.png": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums."
+    "harness/verification/m3ui2/FL-199.png": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
+    "harness/verification/m3ui2/SHA256SUMS": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
+    "harness/verification/m3ui2/ledger-report.json": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
+    "harness/verification/m3ui2/measure.mjs": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
+    "harness/verification/m3ui2/receipts/serve.py": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
+    "harness/verification/m3ui2/walk.mjs": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums.",
+    "harness/web/dist/assets/index-D_iBBAfF.js": "the packaged web app rebuilt once for the 0.1.51 pair; built from the walked source.",
+    "harness/web/dist/assets/index-DqGq51MG.js": "the packaged web app rebuilt once for the 0.1.51 pair; built from the walked source.",
+    "harness/web/dist/assets/index-d5I-ZZQ4.css": "the packaged web app rebuilt once for the 0.1.51 pair; built from the walked source.",
+    "harness/web/dist/assets/index-ihEAodT8.css": "the packaged web app rebuilt once for the 0.1.51 pair; built from the walked source.",
+    "harness/web/dist/index.html": "the packaged web app rebuilt once for the 0.1.51 pair; built from the walked source.",
+    "harness/verification/m3ui2/impacted.json": "M3UI2 evidence: the measurement and walk scripts, coverage report, captures and checksums."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -78,7 +79,7 @@
       "verdict": "PASS",
       "screenshot": "FL-113.png",
       "flag": "",
-      "observed": "Three fresh runs on the real app (test-m3ui2, OpenRouter), a new browser and a new thread each: hovering Whole stage showed a two-line tip (name, then what it does); the stage grid is a 12 px dotted lattice; one click on Create a layer added a tab (FL-113-tab.png) and its remove took it away; the archive button is under 32 px; the model device shows the open icon, the word OPEN and a pointer."
+      "observed": "Three fresh runs on the real app (test-m3ui2-r2, OpenRouter, 2026-10-03 13:19\u201313:28 CDT, the merged build), a new browser and a new thread each: hovering Whole stage showed a two-line tip (name, then what it does); the stage grid is a 12 px dotted lattice; one click on Create a layer added a tab (FL-113-tab.png) and its remove took it away; the archive button is under 32 px; the model device shows the open icon, the word OPEN and a pointer."
     },
     "FL-124": {
       "label": "Threads removable or archivable; a back-to-the-stage control on every view.",
@@ -152,12 +153,12 @@
       "flag": "F086",
       "observed": "Context only: an M3UI2 stylesheet change touched a file this row maps, so the row is required. Its complete gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the final build."
     },
-    "FL-196": {
-      "label": "The rules machine checks citations, frozen law, product vocabulary, seed states and packet precedents.",
-      "walk": "Remove a guard citation on a disposable branch and observe CI fail; change a frozen axiom and observe the freeze step fail; restore both and observe Rules pass. The master ADR check remains red until the owner applies the citation patch.",
+    "FL-198": {
+      "label": "Context overwhelm protections: a query or a sub-agent return may take up at most n% of the compaction limit, the share chosen by the sending agent within bounds that are system parameters; a security module shows it.",
+      "walk": "Make a query return more than its share of the compaction limit; the agent gets an error naming the size and a very brief head of the response. Make a sub-agent return more than its share; it is sent back the exact amount to shorten by and returns under the share. The security module shows both.",
       "protected": true,
       "verdict": "FAIL",
-      "screenshot": "FL-196.png",
+      "screenshot": "FL-198.png",
       "flag": "F086",
       "observed": "Context only: an M3UI2 stylesheet change touched a file this row maps, so the row is required. Its complete gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the final build."
     },
@@ -269,15 +270,6 @@
       "flag": "F086",
       "observed": "Context only: an M3UI2 stylesheet change touched a file this row maps, so the row is required. Its complete gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the final build."
     },
-    "FL-198": {
-      "label": "Context overwhelm protections: a query or a sub-agent return may take up at most n% of the compaction limit, the share chosen by the sending agent within bounds that are system parameters; a security module shows it.",
-      "walk": "Make a query return more than its share of the compaction limit; the agent gets an error naming the size and a very brief head of the response. Make a sub-agent return more than its share; it is sent back the exact amount to shorten by and returns under the share. The security module shows both.",
-      "protected": false,
-      "verdict": "FAIL",
-      "screenshot": "FL-198.png",
-      "flag": "F086",
-      "observed": "Context only: an M3UI2 stylesheet change touched a file this row maps, so the row is required. Its complete gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the final build."
-    },
     "FL-199": {
       "label": "Icons on buttons for the common things people would understand: a button whose meaning has a known icon (send, stop, add, remove, delete, refresh, open, settings, play, pause) carries it; primary actions show icon and word, row actions the icon alone with a tip; unusual actions keep their word; one icon set across every module and theme.",
       "walk": "Open any module; every common action (send, stop, add, remove, delete, refresh, open, settings, play, pause) has its icon from the one set in the theme's ink; primary buttons pair it with a word; row actions show the icon alone with a tip; an unusual action still reads as a word.",
@@ -285,7 +277,7 @@
       "verdict": "PASS",
       "screenshot": "FL-199.png",
       "flag": "",
-      "observed": "Three fresh runs on the real app (test-m3ui2, OpenRouter), a new browser and a new thread each: send, new thread, archive, refresh, settings, create layer and delete each carry their icon from the one set; primary buttons pair it with a word, row actions show the icon alone with a tip, Tools & skills keeps its word, and no button holds an icon from outside the set."
+      "observed": "Three fresh runs on the real app (test-m3ui2-r2, OpenRouter, 2026-10-03 13:19\u201313:28 CDT, the merged build), a new browser and a new thread each: send, new thread, archive, refresh, settings, create layer and delete each carry their icon from the one set; primary buttons pair it with a word, row actions show the icon alone with a tip, Tools & skills keeps its word, and no button holds an icon from outside the set."
     }
   },
   "not_run": {
@@ -462,8 +454,9 @@
     "FL-188": "unverified",
     "FL-189": "dropped",
     "FL-195": "outside diff",
+    "FL-196": "outside diff",
     "FL-200": "outside diff",
     "FL-201": "not built",
-    "FL-202": "not built"
+    "FL-202": "outside diff"
   }
 }
