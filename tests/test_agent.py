@@ -1426,20 +1426,21 @@ async def test_invalid_generated_label_is_rejected_without_calling_spine(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "keywords",
+    ("keywords", "saved"),
     [
-        [],
-        ["only"],
-        ["same", "SAME"],
-        ["one", "two", "three", "four", "five", "six"],
-        ["one", "   "],
+        ([], ["editor", "preference"]),
+        (["only"], ["only", "editor"]),
+        (["same", "SAME"], ["same", "editor"]),
+        (["one", "two", "three", "four", "five", "six"], ["one", "two", "three", "four", "five"]),
+        (["one", "   "], ["one", "editor"]),
     ],
 )
-async def test_invalid_generated_keywords_are_rejected_without_calling_spine(
-    keywords: list[str],
+async def test_f165_generated_keywords_that_break_the_rule_are_retried_then_trimmed(
+    keywords: list[str], saved: list[str]
 ) -> None:
-    """ADR-013 is defended by verifying that invalid generated keywords are rejected without
-    calling spine; this prevents drift in the agent composition and explicit model boundary.
+    """F165 is defended by verifying that generated keywords outside the 2-5 distinct rule are
+    generated once more, then cut to the first five distinct terms, with the label's words
+    filling a short list, so the fact is saved rather than refused.
     """
     calls: list[tuple[list[ModelMessage], AgentInfo]] = []
     spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
@@ -1450,9 +1451,55 @@ async def test_invalid_generated_keywords_are_rejected_without_calling_spine(
 
     result = await agent.remember("Use tabs.", context=context(spine))
 
-    assert result.ok is False
-    assert "2-5 distinct nonblank terms" in result.message
-    assert len(calls) == 1
+    assert result.ok is True
+    assert len(calls) == 2
+    assert [request.keywords for request in spine.create_requests] == [saved]
+
+
+@pytest.mark.asyncio
+async def test_f165_the_flags_refused_sentence_is_remembered() -> None:
+    """F165 is defended by verifying that the exact /remember the walk saw refused is saved when
+    both generations break the keyword rule: the first five distinct terms are kept.
+    """
+    sentence = "The M3UI2 walk project keeps one icon size of 16 pixels in every module."
+    calls: list[tuple[list[ModelMessage], AgentInfo]] = []
+    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit(body=sentence)))
+    agent = HarnessAgent(
+        settings(),
+        model=structured_sequence_model(
+            [
+                {
+                    "label": "M3UI2 icon size",
+                    "keywords": ["m3ui2", "icon", "size", "16", "pixels", "module"],
+                },
+                {"label": "M3UI2 icon size", "keywords": ["icon"]},
+            ],
+            calls,
+        ),
+    )
+
+    result = await agent.dispatch(f"/remember {sentence}", context=context(spine))
+
+    assert result.ok is True
+    assert len(calls) == 2
+    assert [
+        (request.label, request.body, request.keywords) for request in spine.create_requests
+    ] == [("M3UI2 icon size", sentence, ["icon", "m3ui2", "size", "16", "pixels"])]
+
+
+@pytest.mark.asyncio
+async def test_f165_a_fact_too_short_to_file_is_refused_with_a_way_on() -> None:
+    """F165 is defended by verifying that a one-word fact, which cannot carry two distinct
+    keywords (A-049), is refused with words the person can act on and nothing is saved.
+    """
+    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
+    agent = HarnessAgent(settings(), model=remember_model("Tabs", ["tabs"], []))
+
+    result = await agent.remember("tabs", context=context(spine))
+
+    assert result == RememberResult(
+        False, "Could not remember: add a few words to the fact so it can be found again."
+    )
     assert spine.create_requests == []
 
 
