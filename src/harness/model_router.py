@@ -53,8 +53,9 @@ class CompletionAdapter(Protocol):
 class OpenRouterCompletionAdapter:
     """OpenRouter adapter #1: model construction, catalog, and request metadata."""
 
-    def __init__(self, api_key: str | None) -> None:
+    def __init__(self, api_key: str | None, request_timeout_seconds: float = 60.0) -> None:
         self._api_key = api_key.strip() if api_key is not None else None
+        self._request_timeout_seconds = request_timeout_seconds
         self._catalog: ModelCatalogLoader | None = (
             OpenRouterCatalogClient(self._api_key) if self._api_key else None
         )
@@ -71,6 +72,9 @@ class OpenRouterCompletionAdapter:
         return PreservingOpenRouterModel(
             model.removeprefix("openrouter:"),
             provider=OpenRouterProvider(api_key=api_key),
+            # F169: OpenRouter sends a byte at least every few seconds while it works (2026-10-03
+            # probe), so this many silent seconds means the request stalled.
+            settings={"timeout": self._request_timeout_seconds},
         )
 
     def request_settings(
@@ -224,7 +228,9 @@ class CompletionRouter:
             if settings.openrouter_api_key is not None
             else None
         )
-        self._openrouter = OpenRouterCompletionAdapter(openrouter_key)
+        self._openrouter = OpenRouterCompletionAdapter(
+            openrouter_key, settings.model_request_timeout_seconds
+        )
         self._direct = DirectCompletionAdapter(settings)
         self._adapters: tuple[CompletionAdapter, ...] = (self._openrouter, self._direct)
 

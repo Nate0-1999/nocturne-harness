@@ -45,3 +45,16 @@ test('a stale Palace availability banner clears when any later request succeeds'
   const store = readFileSync(new URL('../src/store.ts', import.meta.url), 'utf8')
   assert.match(store, /current\?\.source === source \|\| current\?\.message\.startsWith\('The Palace is '\)/u)
 })
+
+/** F165: a refused /remember emptied the composer and lost the fact; the text this composer
+ * sent comes back to an empty composer once its answer is marked refused. */
+test('a refused /remember hands its text back to an empty composer', () => {
+  const app = readFileSync(new URL('../src/App.tsx', import.meta.url), 'utf8')
+  const effect = app.slice(app.indexOf('const sentRememberRef = useRef'), app.indexOf('function archiveThread()'))
+
+  assert.ok(app.includes(String.raw`sentRememberRef.current = /^\/remember(?:\s|$)/u.test(prompt) ? prompt : null`))
+  assert.match(effect, /event\.event_kind === 'remember_refused'/u)
+  assert.match(effect, /draft\.trim\(\) !== ''/u)
+  assert.match(effect, /setDraft\(sent\)/u)
+  assert.match(effect, /type: 'draft\.update', thread_id: selectedThreadId, draft: sent/u)
+})

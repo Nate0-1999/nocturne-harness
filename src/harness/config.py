@@ -35,6 +35,8 @@ class HarnessSettings(BaseSettings):
     model_context_tokens: int = Field(default=1_000_000, ge=1)
     run_request_limit: int = Field(default=40, ge=1)
     run_total_tokens_limit: int = Field(default=500_000, ge=1)
+    # F169: a model request that sends nothing this long (not even OpenRouter's keep-alive) ends.
+    model_request_timeout_seconds: float = Field(default=60.0, gt=0)
     label_max: int = Field(default=64, ge=1)
     memory_max_tokens: int = Field(default=128, ge=1)
     # FL-198: one query or sub-agent return may take this share of the compaction limit.

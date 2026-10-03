@@ -2430,6 +2430,24 @@ function ChatModule() {
     })
   }, [selectedThreadId])
 
+  // F165: a refused /remember hands its text back to an empty composer. Keyed on the prompt
+  // this composer sent: a refusal can end before the frame ever sees its run as active.
+  const sentRememberRef = useRef<string | null>(null)
+  useEffect(() => {
+    const sent = sentRememberRef.current
+    if (sent === null || draft.trim() !== '' || selectedThreadId === null) {
+      return
+    }
+    const prompt = [...messages].reverse().find((message) => message.role === 'user' && message.content === sent)
+    const refused = prompt !== undefined && messages.some((message) => message.role === 'assistant' &&
+      message.run_id === prompt.run_id && message.events.some((event) => event.event_kind === 'remember_refused'))
+    if (refused) {
+      sentRememberRef.current = null
+      setDraft(sent)
+      void events.dispatch({ type: 'draft.update', thread_id: selectedThreadId, draft: sent })
+    }
+  }, [draft, events, messages, selectedThreadId])
+
   function archiveThread() {
     // WALL Palace writes / ADR022: one archive extraction per owner action.
     if (selectedThreadId === null || archiveBusy) {
@@ -2470,6 +2488,7 @@ function ChatModule() {
     }
     const prompt = draft.trim()
     const image = pendingImage
+    sentRememberRef.current = /^\/remember(?:\s|$)/u.test(prompt) ? prompt : null
     setPromptBusy(true)
     const action = image === null
       ? { type: 'prompt.submit' as const, prompt }

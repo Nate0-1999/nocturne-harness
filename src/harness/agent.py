@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -518,10 +519,32 @@ class HarnessAgent:
             )
         keywords = _normalize_keywords(draft.keywords)
         if keywords is None:
-            return RememberResult(
-                False,
-                "Could not remember: generated keywords must contain 2-5 distinct nonblank terms.",
+            # F165: a /remember lost its fact to keywords the person never sees. Generate them
+            # once more, then keep the first five distinct terms; the label's words fill a short
+            # list. Only a fact too short for two distinct terms is refused.
+            retried: Sequence[str] = ()
+            try:
+                retry = await _run_structured_agent(
+                    self._label_agent,
+                    f"Memory:\n{body}\n\nThe last keywords {list(draft.keywords)!r} broke the "
+                    "rule; give 2-5 distinct nonblank lowercase keywords.",
+                    model=selected_model,
+                    model_settings=model_settings,
+                    usage_limits=self._usage_limits,
+                    usage=remember_usage,
+                    captured_messages=captured_messages,
+                )
+                retried = retry.output.keywords
+            except Exception:
+                pass  # the first draft's terms still save the fact
+            keywords = _normalize_keywords(retried) or _repaired_keywords(
+                [*retried, *draft.keywords], label, body
             )
+            if keywords is None:
+                return RememberResult(
+                    False,
+                    "Could not remember: add a few words to the fact so it can be found again.",
+                )
 
         return await self._create_single_remember(
             body,
@@ -1088,6 +1111,21 @@ def _normalize_keywords(values: Sequence[str]) -> list[str] | None:
             keywords.append(normalized)
             seen.add(normalized)
     return keywords if 2 <= len(keywords) <= 5 else None
+
+
+def _repaired_keywords(generated: Sequence[str], *fallbacks: str) -> list[str] | None:
+    # F165: the first five distinct generated terms; words of the fallbacks fill to two.
+    keywords: list[str] = []
+    for value in generated:
+        term = value.strip().lower()
+        if term and term not in keywords and len(keywords) < 5:
+            keywords.append(term)
+    for word in (word for text in fallbacks for word in re.findall(r"\w+", text.lower())):
+        if len(keywords) >= 2:
+            break
+        if word not in keywords:
+            keywords.append(word)
+    return keywords if len(keywords) >= 2 else None
 
 
 def _reinforcement_count(memory: MemoryUnit) -> int | None:
