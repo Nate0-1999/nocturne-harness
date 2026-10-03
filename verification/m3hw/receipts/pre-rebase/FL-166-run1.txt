@@ -1,0 +1,25 @@
+# FL-166 run 1 — 2026-10-01 02:14:34 CDT, scratch home run1, harness ba917d5
+$ echo n | nocturne init --verification --remote <test palace URL>
+Initialized Nocturne at /private/tmp/m3hw-fl166/run1/home. Run `nocturne up`.
+$ chmod 0500 <home>/transcripts; echo n | nocturne up --no-open
+Nocturne 0.1.48 is available. Update the app and Memory Palace together? [y/N] nocturne: Conversation journal is not writable at /private/tmp/m3hw-fl166/run1/home/transcripts. Fix that directory's permissions, then run `nocturne up` again.
+(exit 2)
+$ chmod 0700 <home>/transcripts; nocturne up --no-open &   (then wait for the app)
+$ nocturne doctor
+Identity: nocturne-verification-0ed410f9-aeb8-4646-985e-3046d0e218f7; home: /private/tmp/m3hw-fl166/run1/home
+Conversation transcript backup: off
+GCP project: n8-memory-palace
+Monthly cost circuit breaker: not verified (subprocess failed without changing scope: gcloud projects describe)
+Palace doctor: warning
+Remote Palace: healthy at https://nocturne-palace-test-m3hw-7wq3wmgcoq-uc.a.run.app
+Conversation journal: 0.0 B
+Disk: 478.7 GiB free of 926.4 GiB
+Web app: served by nocturne-verification-0ed410f9-aeb8-4646-985e-3046d0e218f7 at /private/tmp/m3hw-fl166/run1/home
+Port: 8765 is owned by the running Nocturne daemon
+Startup toolchain: already running
+Nocturne memory: 232.9 MiB; warning above 3.6 GiB (10% of this machine's 36.0 GiB)
+Local database and backup checks are skipped for a remote Palace.
+Palace API contract: 0.1.45 (app supports >=0.1.0,<0.2.0)
+Warning: Remote Palace API contract 0.1.45 is older than this app's supported range >=0.1.0,<0.2.0; run `nocturne up` and complete the automatic update.
+(daemon rss by ps: 233.6 MiB)
+(stopped; 8765 free)

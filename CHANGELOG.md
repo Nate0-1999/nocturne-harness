@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.49 - 2026-10-01
+## Unreleased
 
 - One scale in every module: an icon is one size wherever it appears, and text
   of one role (header, column head, label, value, caption, tip) is one size and
@@ -8,6 +8,25 @@
 - Flat ruled surfaces replace gradient washes, blurred panels, rounded stat
   cards and accent bars; Palace State lists its gauges as a ledger. Farm and
   Roots are readable in the light theme. Pair with Memory 0.1.49 (version only).
+## 0.1.50 - 2026-10-01
+
+- Nocturne stays cool and light over long sessions: an idle app no longer keeps a CPU core
+  busy re-walking project folders, the visualization history keeps 24 hours
+  (`VISUALIZATION_RETENTION_HOURS`) and stores each folder tree once, and long answers no
+  longer freeze the page. A finished Symphony removes its worktrees once its result is kept,
+  saving each attempt's commit under `refs/nocturne/symphonies/` (`SYMPHONY_WORKTREES_KEPT`
+  keeps more). The Security module's cuts survive a restart, and `nocturne doctor` shows the
+  app's memory against a warning at 10% of the machine's. Pair with Memory 0.1.50; its API
+  contract is unchanged.
+
+## 0.1.49 - 2026-10-01
+
+- Browse every model your token source offers from the Model Device: search, sort by
+  rank, price or context window, pin favourites to the top, and switch the conversation
+  in one click. The thinking level sits beside the model when the model takes one, and
+  Pinned, Max, Elbow and Floor show what each would pick right now. The conversation's
+  model chip reads model, thinking level, context window and price. Pair with Memory
+  0.1.49, which lists the source's models.
 
 ## 0.1.48 - 2026-10-01
 

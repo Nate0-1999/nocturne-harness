@@ -1,0 +1,24 @@
+# FL-200 — the M3HW test palace's life, new to drop
+
+## created 2026-09-30 ~16:03 CDT (harness M3HW worktree on main, the soak's scratch home)
+$ nocturne palace new test-m3hw; nocturne palace use test-m3hw; nocturne palace list
+Created Palace test-m3hw in 61.4s. Run `nocturne palace use test-m3hw`.
+Selected Palace test-m3hw. Restart `nocturne up` to use it.
+* test-m3hw  https://nocturne-palace-test-m3hw-7wq3wmgcoq-uc.a.run.app   (main and the peers' palaces listed beside it)
+
+## used: every M3HW walk and both soaks pointed their app at test-m3hw by name and saved memories there (FL-133 receipts; the soaks' /remember steps)
+
+main Palace /health at 2026-10-01T11:07Z (before the drop): ok=True version=0.1.45 api_contract_version=0.1.45 schema_version=0026
+
+## FL-200 drop — 2026-10-01 08:23:34 CDT, the scratch home that created test-m3hw, harness 3d3eb69 (0.1.50 release head)
+$ nocturne palace use main
+Selected Palace main. Restart `nocturne up` to use it.
+$ printf 'test-m3hw\n' | nocturne palace drop test-m3hw
+Drop Palace test-m3hw and its 26 memories permanently? Type test-m3hw: Dropped Palace test-m3hw and its 26 memories.
+(exit 0)
+$ nocturne palace list
+* main  https://n8-memory-palace-spine-7wq3wmgcoq-uc.a.run.app
+  test-m3cl2  https://nocturne-palace-test-m3cl2-7wq3wmgcoq-uc.a.run.app
+
+## after the drop (read-only listings, project n8-memory-palace): Cloud Run services matching m3hw 0; secrets 0; databases on n8-memory-palace-db 0; database users 0
+main Palace /health at 2026-10-01T13:29Z (after the drop): ok=True version=0.1.45 api_contract_version=0.1.45 schema_version=0026

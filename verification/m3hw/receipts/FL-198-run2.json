@@ -1,0 +1,51 @@
+{
+  "row": "FL-198",
+  "run": 2,
+  "started": "2026-10-01T09:54:04.501Z",
+  "base": "http://127.0.0.1:8793",
+  "cuts_before": 21,
+  "new_cuts": [
+    {
+      "thread_id": "42ad31d7-06b9-4175-92df-e420cfa204cb",
+      "agent_id": "nocturne",
+      "at": "2026-10-01T09:55:03.660971Z",
+      "kind": "query",
+      "source": "bash",
+      "size_tokens": 162791,
+      "share": {
+        "percent": 10,
+        "limit_tokens": 800000,
+        "tokens": 80000
+      },
+      "action": "cut",
+      "shorten_by": null,
+      "attempt": 1
+    },
+    {
+      "thread_id": "e7ef25a6-8f3f-4842-bfd3-4592ca852a3d",
+      "agent_id": "nocturne/01M3VE7YTVNH2C2SNJ49R5RG07",
+      "at": "2026-10-01T09:55:49.997252Z",
+      "kind": "sub_agent",
+      "source": "01M3VE7YTVNH2C2SNJ49R5RG07",
+      "size_tokens": 1412,
+      "share": {
+        "percent": 0.1,
+        "limit_tokens": 800000,
+        "tokens": 800
+      },
+      "action": "send_back",
+      "shorten_by": 659,
+      "attempt": 1
+    }
+  ],
+  "cuts_after": 23,
+  "bounds": {
+    "default_percent": 10,
+    "min_percent": 0.1,
+    "max_percent": 25
+  },
+  "delegated_thread_cuts": 1,
+  "security_rows": 1,
+  "pass": true,
+  "finished": "2026-10-01T09:56:03.234Z"
+}

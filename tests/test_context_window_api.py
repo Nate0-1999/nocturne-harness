@@ -61,6 +61,33 @@ def test_context_history_is_not_fabricated() -> None:
     }
 
 
+def test_cuts_survive_a_restart(tmp_path) -> None:
+    """P4 / M3HW / FL-198 (M3W5B-28): the Security module read 0 cuts after a restart; recorded
+    cuts are read back by the next daemon, and a line torn by a crash is skipped."""
+    bounds = ReturnShareBounds(default_percent=10, min_percent=1, max_percent=25)
+    path = tmp_path / "overwhelm-cuts.jsonl"
+    before = OverwhelmTracker(bounds, path)
+    share = before.share_for("thread-a", 1600)
+    cut = ContextCut(
+        thread_id="thread-a",
+        agent_id="agent",
+        at=datetime(2026, 9, 30, tzinfo=UTC),
+        kind="query",
+        source="bash",
+        size_tokens=300,
+        share=share,
+        action="cut",
+    )
+    before.record(cut)
+    before.record(cut.model_copy(update={"thread_id": "thread-b"}))
+    with path.open("a") as stream:
+        stream.write('{"thread_id": "torn')
+    after = OverwhelmTracker(bounds, path)
+    assert after.snapshot(None).cuts == before.snapshot(None).cuts
+    assert [item.thread_id for item in after.snapshot("thread-b").cuts] == ["thread-b"]
+    assert oct(path.stat().st_mode & 0o777) == "0o600"
+
+
 def test_public_rack_query_returns_the_shares_and_cuts_in_force() -> None:
     """SPEC D.2 153 / FL-198: the Security module reads the shares, bounds, cuts and
     send-backs live, so the protection is watchable without demanding attention."""

@@ -6,6 +6,7 @@ import asyncio
 import hashlib
 import json
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -700,3 +701,33 @@ class SymphonyExecution:
         state = self.live[symphony_id]
         state["followups"].setdefault(attempt_id, []).append(instruction)
         _json(self.home / "symphonies" / symphony_id / "followups.json", state["followups"])
+
+
+def remove_kept_worktrees(home: Path, completed: list[str], keep: int) -> list[Path]:
+    """M3HW (M3W5B-13): seven small Symphonies left 17 GB of worktrees, each with its own
+    environment. A completed Symphony's result is already on the branch, so its worktrees go,
+    oldest first, leaving the newest `keep`; each attempt's last commit stays reachable under
+    refs/nocturne/symphonies/ so pruned work remains auditable. Evidence under home stays."""
+    removed = []
+    for symphony_id in completed[: max(0, len(completed) - keep)]:
+        assignments = sorted((home / "symphonies" / symphony_id).glob("*/*/assignment.json"))
+        if not assignments:
+            continue
+        root = Path(json.loads(assignments[0].read_text())["project_key"])
+        target = root / ".nocturne-worktrees" / symphony_id
+        if target.is_symlink() or not target.is_dir():
+            continue
+        for marker in sorted(target.glob("*/*/.git")):
+            name = marker.parent.relative_to(target).as_posix()
+            head = subprocess.run(
+                ["git", "-C", str(marker.parent), "rev-parse", "HEAD"],
+                capture_output=True,
+                text=True,
+            )
+            if head.returncode == 0:
+                ref = f"refs/nocturne/symphonies/{symphony_id}/{name}"
+                subprocess.run(["git", "-C", str(root), "update-ref", ref, head.stdout.strip()])
+        shutil.rmtree(target)
+        subprocess.run(["git", "-C", str(root), "worktree", "prune"], capture_output=True)
+        removed.append(target)
+    return removed

@@ -22,6 +22,39 @@ def test_tree_preserves_empty_hidden_and_untracked_entries_without_following_lin
     assert not tree["errors"]
 
 
+def test_trees_rewalk_only_within_the_walk_budget(tmp_path, monkeypatch):
+    """P2.1 / M3HW / FL-166: walking every tree every 2 s held a core; a known tree waits its
+    budget, a new root is walked at once, and a root that left is forgotten."""
+    from harness import visualization
+
+    clock = {"now": 100.0}
+    walks = []
+
+    def walk(root):
+        walks.append(root.name)
+        clock["now"] += 0.1  # each walk costs 0.1 s
+        return {"root": str(root), "nodes": [], "errors": []}
+
+    monkeypatch.setattr(visualization.time, "monotonic", lambda: clock["now"])
+    monkeypatch.setattr(visualization, "directory_tree", walk)
+    one, two = str(tmp_path / "one"), str(tmp_path / "two")
+    (tmp_path / "one").mkdir()
+    (tmp_path / "two").mkdir()
+    cache: dict = {}
+    visualization._project_trees({one}, cache)
+    clock["now"] += 2
+    visualization._project_trees({one, two}, cache)
+    assert walks == ["one", "two"]
+    clock["now"] += 0.1 / visualization._WALK_SHARE - 0.1
+    assert [tree["root"] for tree in visualization._project_trees({one}, cache)] == [one]
+    assert walks == ["one", "two"] and set(cache["trees"]) == {one}
+    clock["now"] += 0.2
+    visualization._project_trees({one}, cache)
+    assert walks == ["one", "two", "one"]
+    (tmp_path / "two").rmdir()  # a removed worktree is no longer a project
+    assert visualization._project_trees({one, two}, cache) == [cache["trees"][one]]
+
+
 def test_recorded_history_survives_restart_and_replays_deletion_exactly(tmp_path):
     """ADR-018 / FL-134: past observations are immutable, never reconstructed from today's tree."""
     root = tmp_path / "work"
@@ -43,6 +76,86 @@ def test_recorded_history_survives_restart_and_replays_deletion_exactly(tmp_path
     assert len(past["timeline"]) == 2
     with pytest.raises(HTTPException, match="No recorded"):
         history.read("2026-09-15T00:00:00+00:00")
+
+
+def test_trees_are_stored_once_then_as_changes_and_replay_exactly(tmp_path):
+    """P2.1 / M3HW / FL-134: each changed sample stored whole trees (1 GB in a day); a tree is now
+    written once, then as its changed entries, and every past state still replays exactly."""
+    import json
+    import sqlite3
+    import zlib
+
+    root = tmp_path / "work"
+    root.mkdir()
+    for index in range(20):
+        (root / f"f{index}.txt").write_text("x")
+    path = tmp_path / "history.sqlite3"
+    history = VisualizationHistory(path)
+    trees = []
+    for second, change in enumerate(
+        (lambda: None, lambda: (root / "f1.txt").write_text("longer"), (root / "f2.txt").unlink)
+    ):
+        change()
+        trees.append(directory_tree(root))
+        agent = {"id": "a", "location": str(root), "cost_usd": None, "state": "running"}
+        history.append(
+            {"agents": [agent], "projects": [trees[-1]]}, f"2026-09-30T00:00:0{second}+00:00"
+        )
+    history.append(
+        {"agents": [{**agent, "state": "stopped"}], "projects": [trees[-1]]},
+        "2026-09-30T00:00:03+00:00",
+    )
+    restarted = VisualizationHistory(path)
+    for second, tree in enumerate([*trees, trees[-1]]):
+        assert restarted.read(f"2026-09-30T00:00:0{second}+00:00")["projects"] == [tree]
+    assert restarted.read()["projects"] == [trees[-1]]
+    with sqlite3.connect(path) as db:
+        stored = db.execute("SELECT base IS NULL, payload FROM tree ORDER BY depth").fetchall()
+    assert [keyframe for keyframe, _payload in stored] == [1, 0, 0]
+    changed, removed = (json.loads(zlib.decompress(payload)) for _, payload in stored[1:])
+    assert "f1.txt" in [node["path"] for node in changed["set"]] and not changed["drop"]
+    assert removed["drop"] == ["f2.txt"] and len(removed["set"]) <= 1  # the folder's own size
+
+
+def test_retention_drops_old_rows_keeps_needed_trees_and_reads_the_old_format(tmp_path):
+    """P2.1 / M3HW: the store is bounded by a retention window; a tree a kept row builds on
+    survives, and rows written before M3HW (whole trees, no trail) are read until they age out."""
+    import json
+    import sqlite3
+    import zlib
+    from datetime import timedelta
+
+    root = tmp_path / "work"
+    root.mkdir()
+    for index in range(20):
+        (root / f"f{index}.txt").write_text("x")
+    path = tmp_path / "history.sqlite3"
+    old_tree = directory_tree(root)
+    legacy = {"agents": [{"id": "a", "location": "/x", "cost_usd": None, "state": "stopped"}]}
+    with sqlite3.connect(path) as db:
+        db.execute(
+            "CREATE TABLE observation "
+            "(ts TEXT PRIMARY KEY, digest TEXT NOT NULL, payload BLOB NOT NULL)"
+        )
+        for ts in ("2026-09-28T00:00:00+00:00", "2026-09-29T23:00:00+00:00"):
+            payload = zlib.compress(json.dumps({**legacy, "projects": [old_tree]}).encode())
+            db.execute("INSERT INTO observation VALUES (?, ?, ?)", (ts, ts, payload))
+    history = VisualizationHistory(path, retention=timedelta(hours=24))
+    assert history.read()["projects"] == [old_tree]
+    assert history.read()["trails"]["a"][0]["state"] == "stopped"
+    running = {"id": "a", "location": "/x", "cost_usd": None, "state": "running"}
+    first = directory_tree(root)
+    history.append({"agents": [running], "projects": [first]}, "2026-09-30T00:00:00+00:00")
+    assert history.read()["timeline"] == ["2026-09-29T23:00:00+00:00", "2026-09-30T00:00:00+00:00"]
+    (root / "f1.txt").write_text("longer")
+    second = directory_tree(root)
+    history.append({"agents": [running], "projects": [second]}, "2026-10-01T01:00:00+00:00")
+    assert history.read()["timeline"] == ["2026-10-01T01:00:00+00:00"]
+    assert history.read()["projects"] == [second]
+    assert VisualizationHistory(path).read("2026-10-01T01:00:00+00:00")["projects"] == [second]
+    with sqlite3.connect(path) as db:
+        assert db.execute("SELECT count(*) FROM tree").fetchone() == (2,)  # the base stays
+        assert db.execute("PRAGMA auto_vacuum").fetchone() == (2,)
 
 
 def test_worker_observation_uses_actual_location_without_assignment_secrets(tmp_path):
@@ -272,3 +385,105 @@ def test_live_history_reads_fold_only_new_rows(tmp_path):
     assert [point["state"] for point in live["trails"]["a"]] == ["running", "running", "stopped"]
     live["errors"].append("caller note")
     assert history.read()["errors"] == []
+
+
+def test_a_held_tree_is_not_sent_again(tmp_path):
+    """P2.1 / M3HW / FL-166: every module re-parsed the whole tree on every 2.5 s poll; a client
+    that names a tree's digest receives no nodes for it, and everything else is unchanged."""
+    import time
+    from types import SimpleNamespace
+
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from harness.visualization import mount_visualization_routes
+
+    (tmp_path / "work").mkdir()
+    (tmp_path / "work" / "one.txt").write_text("one")
+
+    async def nothing():
+        return None
+
+    app = FastAPI()
+    mount_visualization_routes(
+        app,
+        home=tmp_path / "home",
+        journal=SimpleNamespace(catalog=lambda: []),
+        root=tmp_path / "work",
+        graph_reader=nothing,
+        curator_reader=nothing,
+        spend_reader=nothing,
+        progress_reader=nothing,
+    )
+    with TestClient(app) as client:
+        deadline = time.monotonic() + 10
+        while (response := client.get("/v1/visualization")).status_code == 404:
+            assert time.monotonic() < deadline
+            time.sleep(0.05)
+        full = response.json()
+        (project,) = full["projects"]
+        assert [node["path"] for node in project["nodes"]] == [".", "one.txt"]
+        held = client.get("/v1/visualization", params={"known": project["digest"]}).json()
+    assert held["projects"] == [{**project, "nodes": None}]
+    assert {**held, "projects": None, "observed_at": None} == {
+        **full,
+        "projects": None,
+        "observed_at": None,
+    }
+
+
+def test_a_slow_palace_read_never_holds_the_local_observation(tmp_path):
+    """F159 / M3HW (found by M3LV): four Palace reads awaited in a row froze the Farm and Roots for
+    90 s on a slow Palace; a read still running leaves the sample on its 2 s cadence, and its
+    value arrives with a later sample."""
+    import asyncio
+    import threading
+    import time
+    from types import SimpleNamespace
+
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from harness.visualization import mount_visualization_routes
+
+    (tmp_path / "work").mkdir()
+    release = threading.Event()
+
+    def value(payload):
+        return SimpleNamespace(model_dump=lambda mode: dict(payload))
+
+    async def slow_graph():
+        await asyncio.to_thread(release.wait, 30)
+        return value({"nodes": ["arrived"]})
+
+    async def curation():
+        return value({"admitted_writes": 1})
+
+    async def nothing():
+        return None
+
+    app = FastAPI()
+    mount_visualization_routes(
+        app,
+        home=tmp_path / "home",
+        journal=SimpleNamespace(catalog=lambda: []),
+        root=tmp_path / "work",
+        graph_reader=slow_graph,
+        curator_reader=curation,
+        spend_reader=nothing,
+        progress_reader=nothing,
+    )
+    with TestClient(app) as client:
+        started = time.monotonic()
+        while (response := client.get("/v1/visualization")).status_code == 404:
+            time.sleep(0.05)
+        first = response.json()
+        assert time.monotonic() - started < 4
+        assert first["palace"] is None and first["curation"] == {"admitted_writes": 1}
+        assert first["errors"] == []
+        release.set()
+        deadline = time.monotonic() + 10
+        while client.get("/v1/visualization").json()["palace"] is None:
+            assert time.monotonic() < deadline
+            time.sleep(0.1)
+        assert client.get("/v1/visualization").json()["palace"] == {"nodes": ["arrived"]}

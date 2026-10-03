@@ -1,0 +1,43 @@
+{
+  "row": "FL-133",
+  "run": 1,
+  "started": "2026-10-01T08:37:56.656Z",
+  "base": "http://127.0.0.1:8793",
+  "bodies_at_start": "2",
+  "arrivals": [
+    {
+      "fact": "The Nocturne soak sampled CPU every ten minutes for four hours.",
+      "seconds": 25,
+      "bodies": "3"
+    },
+    {
+      "fact": "Test palaces are made with nocturne palace new and dropped whole afterwards.",
+      "seconds": 25,
+      "bodies": "4"
+    },
+    {
+      "fact": "The Farm draws folders as chambers and files as cells.",
+      "seconds": 25,
+      "bodies": "5"
+    }
+  ],
+  "curation": {
+    "admitted_writes": 4,
+    "growth": [],
+    "last_run_pressure": 0,
+    "last_run_writes": 0,
+    "latest_run": null,
+    "pending_cards": 0,
+    "pressure_events": 0,
+    "pressure_trigger_every": 3,
+    "pressure_until_run": 3,
+    "principal_id": "nocturne-verification-d59ccda2-a9f6-46d5-b38d-d7547cd9d41e",
+    "trigger_every": 25,
+    "writes_until_run": 21
+  },
+  "progress": {
+    "cursor": 0,
+    "events": []
+  },
+  "finished": "2026-10-01T08:39:42.635Z"
+}

@@ -1,0 +1,18 @@
+{
+  "row": "M3W5B-13",
+  "run": 1,
+  "started": "2026-10-01T08:31:47.370Z",
+  "base": "http://127.0.0.1:8795",
+  "dirty_before": "",
+  "launched": "2026-10-01T08:32:20.898Z",
+  "result_text": "RETURNED TO CHAT\nSymphony complete\nB29T81H5\n\nJudges accepted the work. Result commit: 255925c96d8f272866292963756f85bd88181de1\n\nOWN STACK\n01M3V9FNHGC6AJ1BT2B29T81H5\nOUTCOME\nREADME.md gains one line under its first heading: \"Soak note: measured by M3HW.\"\nSIGNED WALL\n$0.8 · 45 min · 2 attempts\nSEARCH NODES\n1\n\nYou are already back in the live conversation.",
+  "blocked_text": false,
+  "worktrees_peak_kb": 6207864,
+  "worktrees_after": "01M3V7QJB4EAQCVCCYSWYNTJ0Q",
+  "refs": "refs/nocturne/symphonies/01M3V9FNHGC6AJ1BT2B29T81H5/step-1-round-1/round-1-attempt-1 12f1759\nrefs/nocturne/symphonies/01M3V9FNHGC6AJ1BT2B29T81H5/step-1-round-1/round-1-attempt-2 f6da841\nrefs/nocturne/symphonies/01M3V9FNHGC6AJ1BT2B29T81H5/step-1-round-2/graft 711ce29\nrefs/nocturne/symphonies/01M3V9FNHGC6AJ1BT2B29T81H5/step-1-round-2/round-2-attempt-1 711ce29\nrefs/nocturne/symphonies/01M3V9FNHGC6AJ1BT2B29T81H5/step-1-round-2/round-2-attempt-2 255925c",
+  "git_worktrees": "/private/tmp/m3hw-rows/project/harness                                                                                  255925c [main]\n/private/tmp/m3hw-rows/project/harness/.nocturne-worktrees/01M3V7QJB4EAQCVCCYSWYNTJ0Q/step-1-round-1/round-1-attempt-1  4d1e730 (detached HEAD)\n/private/tmp/m3hw-rows/project/harness/.nocturne-worktrees/01M3V7QJB4EAQCVCCYSWYNTJ0Q/step-1-round-1/round-1-attempt-2  44e4cec (detached HEAD)",
+  "readme_head": "255925c Symphony: capture verified attempt",
+  "symphony_id": "01M3V9FNHGC6AJ1BT2B29T81H5",
+  "pass": true,
+  "finished": "2026-10-01T09:08:28.620Z"
+}

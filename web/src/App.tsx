@@ -36,7 +36,7 @@ import { RecipeModule } from './RecipeModule'
 import { JobsModule } from './JobsModule'
 import { SecurityModule } from './SecurityModule'
 import { SymphonyDeck, latestDeckStacks, type DeckStack } from './SymphonyDeck'
-import { ModelDevice } from './ModelDevice'
+import { ModelChip, ModelDevice } from './ModelDevice'
 import { VitalsModule } from './VitalsModule'
 import { PalaceStateModule } from './PalaceStateModule'
 import { CuratorProposal } from './CuratorProposal'
@@ -2665,12 +2665,12 @@ function ChatModule() {
             data-testid="active-model"
             aria-label={`Active model: ${selectedThread?.resolvedModel ?? 'being chosen'}`}
             data-tooltip="Open Model Device"
-            data-tooltip-detail="Choose the model and tune this thread’s request controls."
+            data-tooltip-detail="Browse, pin and switch models; set the thinking level."
             onClick={() => selection.select({ kind: 'module', id: 'model_device' })}
           >
             <span aria-hidden="true">Model</span>
-            <span className="chat-header__model-value">
-              {selectedThread?.resolvedModel ?? 'Choosing model'}
+            <span className="chat-header__model-value" data-testid="active-model-detail">
+              <ModelChip threadId={selectedThreadId} model={selectedThread?.resolvedModel ?? null} />
             </span>
           <span className="chat-header__model-action" aria-hidden="true">Open</span>
           </Button>

@@ -1,0 +1,11 @@
+{
+  "name": "FL-184-run1-095716 scheduled",
+  "prompt": "Run `python3 -c \"print(6*7)\"` with the bash tool and answer with its output only.",
+  "folder": "/private/tmp/m3hw-walk/project/harness",
+  "model_policy": "pinned:openrouter:minimax/minimax-m3",
+  "budget_usd": 0.05,
+  "exit_condition": "true",
+  "tools": "pydantic",
+  "memory_scope": "none",
+  "cron": "59 9 * * *"
+}

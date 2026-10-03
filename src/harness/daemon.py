@@ -3,11 +3,12 @@
 import argparse
 import asyncio
 import json
+import os
 import subprocess
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from contextlib import suppress
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Literal
 from uuid import UUID
@@ -55,9 +56,11 @@ from harness.lifecycle import discard_prepared_restore, prepare_local_restore
 from harness.memory_gate import MemoryGateTurnRunner
 from harness.memory_panel import MemoryPanelController, ThreadMemoryContextRegistry
 from harness.model_policy import (
+    ModelCatalogUnavailable,
     ModelPolicyResolver,
     ThreadModelResolution,
     ThreadModelResolver,
+    browse_models,
     parse_model_policy,
 )
 from harness.model_router import CompletionRouter
@@ -112,7 +115,7 @@ from harness.spine_client import (
     VitalsSnapshot,
 )
 from harness.symphony_experience import SymphonyExperience
-from harness.symphony_runtime import SymphonyExecution
+from harness.symphony_runtime import SymphonyExecution, remove_kept_worktrees
 from harness.tool_inventory import ToolInventory, ToolsetSelection, inventory
 from harness.tools_memory import MemoryToolContext
 from harness.toolset_runtime import LazyStandardToolset
@@ -158,6 +161,11 @@ class TranscriptBackupUpdate(BaseModel):
 
 class AgentPolicyUpdate(BaseModel):
     policy: str
+
+
+class ModelPinUpdate(BaseModel):
+    model: str = Field(min_length=1)
+    pinned: bool
 
 
 class InterjectionRequest(BaseModel):
@@ -850,6 +858,11 @@ def create_dev_app(
     configured = settings or HarnessSettings()
     home = (configured.nocturne_home or nocturne_home()).expanduser().resolve()
     role_policy_path = home / "model-policies.json"
+    model_pin_path = home / "model-pins.json"
+
+    def model_pins() -> list[str]:
+        return json.loads(model_pin_path.read_text()) if model_pin_path.exists() else []
+
     toolset_path = home / "toolset.json"
     toolset_selection = (
         ToolsetSelection.model_validate_json(toolset_path.read_text())
@@ -987,7 +1000,7 @@ def create_dev_app(
 
     memory_contexts = ThreadMemoryContextRegistry()
     context_windows = ContextWindowTracker()
-    overwhelm = OverwhelmTracker(owned_agent.return_share_bounds)
+    overwhelm = OverwhelmTracker(owned_agent.return_share_bounds, home / "overwhelm-cuts.jsonl")
     receipt_queue = SpendReceiptQueue(home / "receipt-queue")
     spend_walls = SpendWalls(
         home / "spend-walls.json", owned_spine, lambda: owned_spine.spend_table()
@@ -1192,13 +1205,36 @@ def create_dev_app(
         spend_walls=spend_walls,
         checkpoints=WorkspaceCheckpoints(home / "checkpoints"),
     )
-    owned_symphony_experience.bind(
-        SymphonyExecution(settings=configured, home=home, context_factory=context_factory),
-        loop.publish_symphony_state,
-    )
+
+    execution = SymphonyExecution(settings=configured, home=home, context_factory=context_factory)
+    worktree_removals: set[asyncio.Task] = set()
+
+    async def remove_finished_worktrees(symphony_id: str | None = None) -> None:
+        while symphony_id in execution.live:  # its workers stop after the completed update
+            await asyncio.sleep(0.5)
+        completed = sorted(
+            (event for event in loop.symphony_stack_events() if event.get("state") == "completed"),
+            key=lambda event: str(event.get("completed_at")),
+        )
+        await asyncio.to_thread(
+            remove_kept_worktrees,
+            home,
+            [str(event["symphony_id"]) for event in completed],
+            configured.symphony_worktrees_kept,
+        )
+
+    async def publish_symphony_state(thread_id: str, event: Mapping[str, object]) -> None:
+        await loop.publish_symphony_state(thread_id, event)
+        if event.get("state") == "completed":  # M3HW: its result is kept, so its worktrees go
+            task = asyncio.create_task(remove_finished_worktrees(str(event["symphony_id"])))
+            worktree_removals.add(task)
+            task.add_done_callback(worktree_removals.discard)
+
+    owned_symphony_experience.bind(execution, publish_symphony_state)
 
     async def restore_symphonies() -> None:
         await owned_symphony_experience.restore(loop.symphony_stack_events())
+        await remove_finished_worktrees()
 
     seed_ingestion = SeedIngestionService(
         agent=owned_agent,
@@ -1278,6 +1314,7 @@ def create_dev_app(
                 "machine_id": machine_id,
                 "home": str(home),
                 "palace_name": configured.nocturne_palace_name,
+                "pid": os.getpid(),  # M3HW / FL-166: doctor reads this daemon's memory
             }
 
         @app.get("/v1/model-policies")
@@ -1316,6 +1353,54 @@ def create_dev_app(
             if role == "chat" and isinstance(model_resolver, ModelPolicyResolver):
                 model_resolver.set_policy(body.policy)
             return {"policies": role_policies}
+
+        @app.get("/v1/models")
+        async def model_browser(thread_id: str | None = None):
+            """FL-202: the token source's models, the owner's pins, the four policies now."""
+            catalog = completion_router.catalog
+            current = None
+            if thread_id is not None:
+                try:
+                    snapshot = await loop.parameter_snapshot(thread_id)
+                    current = {
+                        "model": snapshot.resolved_model,
+                        "effort": snapshot.values.get("model.effort"),
+                    }
+                except ParameterWriteViolation:
+                    pass
+            # A source with no list (e.g. a direct Anthropic key) is a state, not a failure.
+            browser: dict[str, object] = {
+                "models": [],
+                "configurations": [],
+                "unavailable": "This model source publishes no model list.",
+            }
+            if catalog is not None:
+                try:
+                    browser = await browse_models(
+                        catalog,
+                        chat_policy=role_policies["chat"],
+                        current_model=None if current is None else current["model"],
+                        fallback_model=configured.chat_model,
+                    )
+                except ModelCatalogUnavailable as exc:
+                    raise HTTPException(503, f"The model list is unavailable: {exc}.") from None
+            return {
+                **browser,
+                "pins": model_pins(),
+                "chat_policy": role_policies["chat"],
+                "current": current,
+            }
+
+        @app.put("/v1/model-pins")
+        async def pin_model(body: ModelPinUpdate):
+            pins = [pin for pin in model_pins() if pin != body.model]
+            if body.pinned:
+                pins.append(body.model)
+            home.mkdir(parents=True, exist_ok=True)
+            temporary = model_pin_path.with_suffix(".tmp")
+            temporary.write_text(json.dumps(pins, indent=2) + "\n")
+            temporary.replace(model_pin_path)
+            return {"pins": pins}
 
         @app.get("/v1/symphonies/{symphony_id}")
         async def read_symphony(symphony_id: str):
@@ -1558,6 +1643,7 @@ def create_dev_app(
             curator_reader=lambda: owned_spine.curator_activity(principal_id),
             progress_reader=lambda: owned_spine.curator_progress(principal_id),
             spend_reader=lambda: read_spend_table_snapshot(None),
+            retention=timedelta(hours=configured.visualization_retention_hours),
         )
 
     app = create_app(

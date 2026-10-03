@@ -12,6 +12,7 @@ from pathlib import Path
 from harness.spine_client import VitalsResources
 
 _EARLY_WARNING_BYTES = 5 * 1024**3
+MEMORY_THRESHOLD_SHARE = 0.10
 
 
 @dataclass(frozen=True)
@@ -79,12 +80,12 @@ class ResourceWatch:
         )
 
 
-def current_rss_bytes() -> int | None:
-    """Read current resident memory from the host process table."""
+def current_rss_bytes(pid: int | None = None) -> int | None:
+    """Read a process's resident memory (this one by default) from the host process table."""
 
     try:
         completed = subprocess.run(
-            ["ps", "-o", "rss=", "-p", str(os.getpid())],
+            ["ps", "-o", "rss=", "-p", str(os.getpid() if pid is None else pid)],
             check=True,
             capture_output=True,
             text=True,
@@ -95,10 +96,22 @@ def current_rss_bytes() -> int | None:
     return kibibytes * 1024 if kibibytes >= 0 else None
 
 
+def system_memory_bytes() -> int:
+    return os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")
+
+
+def memory_threshold_bytes() -> int:
+    """FL-166: the app's memory past this share of the machine's is worth a warning (M3HW)."""
+    return int(system_memory_bytes() * MEMORY_THRESHOLD_SHARE)
+
+
 __all__ = [
+    "MEMORY_THRESHOLD_SHARE",
     "LocalStorageSnapshot",
     "ResourceWatch",
     "current_rss_bytes",
     "directory_size",
     "local_storage_snapshot",
+    "memory_threshold_bytes",
+    "system_memory_bytes",
 ]

@@ -1,0 +1,172 @@
+
+=== 05:52:25 gc objects 412747
+dict=64342 function=58528 tuple=55113 list=33545 set=19942 cell=18533 ReferenceType=15420 FieldInfo=14047 frozenset=13198 getset_descriptor=10710 ForwardRef=7832 type=5833 builtin_function_or_method=5391 MockValSer=5310 module=5081 ModuleSpec=5075 _abc_data=4463 BeartypeSourceFileLoader=3414 DecoratorInfos=3261 ModelMetaclass=3254 Field=2922 UnionType=2761 property=2756 MockCoreSchema=2655 _UnionGenericAlias=2492
+Small block threshold = 512, in 32 size classes.
+
+class   size   num pools   blocks in use  avail blocks
+-----   ----   ---------   -------------  ------------
+    0     16           6            5404           722
+    1     32         355          153525         27525
+    2     48         945          299673         21627
+    3     64        1998          441994         67496
+    4     80         802          147832         15776
+    5     96         407           62932          6258
+    6    112         252           34566          1974
+    7    128         860           99006         10214
+    8    144          89            9540           517
+    9    160         681           68888           574
+   10    176         116            8294          2378
+   11    192          71            5701           334
+   12    208         296           22424           664
+   13    224         586           41952           240
+   14    240          93            6225            99
+   15    256         111            6916            77
+   16    272         335           19997           103
+   17    288          70            3883            37
+   18    304          70            3681            29
+   19    320          53            2663            40
+   20    336          47            2241            15
+   21    352          47            2148            14
+   22    368          41            1780            24
+   23    384          38            1555            41
+   24    400         286           11293           147
+   25    416          32            1216            32
+   26    432          32            1152            32
+   27    448          28             998            10
+   28    464          25             871             4
+   29    480          27             881            37
+   30    496          24             740            28
+   31    512          51            1545            36
+
+# arenas allocated total           =                  170
+# arenas reclaimed                 =                    4
+# arenas highwater mark            =                  166
+# arenas allocated current         =                  166
+166 arenas * 1048576 bytes/arena   =          174,063,616
+
+# bytes in allocated blocks        =          133,602,320
+# bytes in available blocks        =           10,762,992
+1750 unused pools * 16384 bytes    =           28,672,000
+# bytes lost to pool headers       =              425,952
+# bytes lost to quantization       =              600,352
+# bytes lost to arena alignment    =                    0
+Total                              =          174,063,616
+
+arena map counts
+# arena map mid nodes              =                    1
+# arena map bot nodes              =                    1
+
+# bytes lost to arena map root     =              262,144
+# bytes lost to arena map mid      =              262,144
+# bytes lost to arena map bot      =              131,072
+Total                              =              655,360
+
+           50 free PyDictObjects * 48 bytes each =                2,400
+          94 free PyFloatObjects * 24 bytes each =                2,256
+           69 free PyListObjects * 40 bytes each =                2,760
+  22 free 1-sized PyTupleObjects * 32 bytes each =                  704
+  61 free 2-sized PyTupleObjects * 40 bytes each =                2,440
+ 279 free 3-sized PyTupleObjects * 48 bytes each =               13,392
+  29 free 4-sized PyTupleObjects * 56 bytes each =                1,624
+  48 free 5-sized PyTupleObjects * 64 bytes each =                3,072
+   7 free 6-sized PyTupleObjects * 72 bytes each =                  504
+   3 free 7-sized PyTupleObjects * 80 bytes each =                  240
+  14 free 8-sized PyTupleObjects * 88 bytes each =                1,232
+   7 free 9-sized PyTupleObjects * 96 bytes each =                  672
+ 0 free 10-sized PyTupleObjects * 104 bytes each =                    0
+ 1 free 11-sized PyTupleObjects * 112 bytes each =                  112
+ 0 free 12-sized PyTupleObjects * 120 bytes each =                    0
+ 0 free 13-sized PyTupleObjects * 128 bytes each =                    0
+12 free 14-sized PyTupleObjects * 136 bytes each =                1,632
+ 0 free 15-sized PyTupleObjects * 144 bytes each =                    0
+ 0 free 16-sized PyTupleObjects * 152 bytes each =                    0
+ 0 free 17-sized PyTupleObjects * 160 bytes each =                    0
+ 0 free 18-sized PyTupleObjects * 168 bytes each =                    0
+ 0 free 19-sized PyTupleObjects * 176 bytes each =                    0
+ 0 free 20-sized PyTupleObjects * 184 bytes each =                    0
+
+=== 08:13:10 gc objects 412428
+dict=64334 function=58520 tuple=55044 list=33387 set=19999 cell=18551 ReferenceType=15488 FieldInfo=14077 frozenset=13198 getset_descriptor=10710 ForwardRef=7832 type=5833 builtin_function_or_method=5453 MockValSer=5310 module=5081 ModuleSpec=5075 _abc_data=4463 BeartypeSourceFileLoader=3414 DecoratorInfos=3261 ModelMetaclass=3254 Field=2922 UnionType=2761 property=2756 MockCoreSchema=2655 _UnionGenericAlias=2492
+Small block threshold = 512, in 32 size classes.
+
+class   size   num pools   blocks in use  avail blocks
+-----   ----   ---------   -------------  ------------
+    0     16           6            5297           829
+    1     32         338          153537         18843
+    2     48         929          298991         16869
+    3     64        1972          441814         61046
+    4     80         792          147914         13654
+    5     96         403           63118          5392
+    6    112         251           34557          1838
+    7    128         858           99022          9944
+    8    144          89            9542           515
+    9    160         681           68854           608
+   10    176         116            8250          2422
+   11    192          71            5704           331
+   12    208         293           22485           369
+   13    224         588           41978           358
+   14    240          93            6131           193
+   15    256         111            6910            83
+   16    272         335           20025            75
+   17    288          70            3882            38
+   18    304          70            3678            32
+   19    320          53            2665            38
+   20    336          47            2241            15
+   21    352          47            2150            12
+   22    368          41            1778            26
+   23    384          38            1554            42
+   24    400         286           11277           163
+   25    416          32            1216            32
+   26    432          32            1154            30
+   27    448          28             998            10
+   28    464          25             872             3
+   29    480          27             881            37
+   30    496          24             740            28
+   31    512          52            1553            59
+
+# arenas allocated total           =                  170
+# arenas reclaimed                 =                    4
+# arenas highwater mark            =                  166
+# arenas allocated current         =                  166
+166 arenas * 1048576 bytes/arena   =          174,063,616
+
+# bytes in allocated blocks        =          133,569,952
+# bytes in available blocks        =            9,554,704
+1826 unused pools * 16384 bytes    =           29,917,184
+# bytes lost to pool headers       =              422,304
+# bytes lost to quantization       =              599,472
+# bytes lost to arena alignment    =                    0
+Total                              =          174,063,616
+
+arena map counts
+# arena map mid nodes              =                    1
+# arena map bot nodes              =                    1
+
+# bytes lost to arena map root     =              262,144
+# bytes lost to arena map mid      =              262,144
+# bytes lost to arena map bot      =              131,072
+Total                              =              655,360
+
+           77 free PyDictObjects * 48 bytes each =                3,696
+          99 free PyFloatObjects * 24 bytes each =                2,376
+           80 free PyListObjects * 40 bytes each =                3,200
+  24 free 1-sized PyTupleObjects * 32 bytes each =                  768
+ 176 free 2-sized PyTupleObjects * 40 bytes each =                7,040
+ 370 free 3-sized PyTupleObjects * 48 bytes each =               17,760
+  33 free 4-sized PyTupleObjects * 56 bytes each =                1,848
+  49 free 5-sized PyTupleObjects * 64 bytes each =                3,136
+   8 free 6-sized PyTupleObjects * 72 bytes each =                  576
+   3 free 7-sized PyTupleObjects * 80 bytes each =                  240
+  14 free 8-sized PyTupleObjects * 88 bytes each =                1,232
+   8 free 9-sized PyTupleObjects * 96 bytes each =                  768
+ 1 free 10-sized PyTupleObjects * 104 bytes each =                  104
+ 1 free 11-sized PyTupleObjects * 112 bytes each =                  112
+ 0 free 12-sized PyTupleObjects * 120 bytes each =                    0
+ 0 free 13-sized PyTupleObjects * 128 bytes each =                    0
+15 free 14-sized PyTupleObjects * 136 bytes each =                2,040
+ 0 free 15-sized PyTupleObjects * 144 bytes each =                    0
+ 0 free 16-sized PyTupleObjects * 152 bytes each =                    0
+ 0 free 17-sized PyTupleObjects * 160 bytes each =                    0
+ 0 free 18-sized PyTupleObjects * 168 bytes each =                    0
+ 0 free 19-sized PyTupleObjects * 176 bytes each =                    0
+ 0 free 20-sized PyTupleObjects * 184 bytes each =                    0
