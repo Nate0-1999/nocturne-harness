@@ -64,7 +64,8 @@
     "harness/verification/m3p1/FL-198.png": "M3P1 evidence: coverage report, captures and checksums.",
     "harness/verification/m3p1/FL-199.png": "M3P1 evidence: coverage report, captures and checksums.",
     "harness/verification/m3p1/FL-201.png": "M3P1 evidence: coverage report, captures and checksums.",
-    "harness/verification/m3p1/FL-202.png": "M3P1 evidence: coverage report, captures and checksums."
+    "harness/verification/m3p1/FL-202.png": "M3P1 evidence: coverage report, captures and checksums.",
+    "harness/web/dist/assets/index-BLR-6doo.js": "an intermediate packaged web bundle, built for the composer restore and replaced within this packet; built from the walked source."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
