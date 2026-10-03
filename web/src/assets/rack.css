@@ -537,8 +537,6 @@
   width: 1.35rem;
   height: 1.35rem;
   padding: 0;
-  --kit-edge: var(--line);
-  --kit-fill: transparent;
   --chamfer: 0.3rem;
   color: var(--dim);
   font: inherit;

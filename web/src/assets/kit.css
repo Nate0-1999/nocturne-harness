@@ -327,6 +327,13 @@ textarea.kit-field {
 :root svg.kit-icon { width: var(--icon-size); height: var(--icon-size); flex: none; color: inherit; stroke: currentColor; }
 .kit-button--icon { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); }
 .kit-button--icon-only { padding-inline: var(--space-2); min-width: 1.75rem; }
+/* Owner, 2026-10-03: a memory card's row actions and the module gear stand as bare glyphs; the box
+   appears on hover and focus (the kit's hover and danger-hover rules restore the edge). */
+.memory-card__decision > .kit-button--icon-only:not(.kit-button--primary),
+.rack-module__settings-toggle { --kit-edge: transparent; --kit-fill: transparent; border-color: transparent; }
+.memory-card__decision > .kit-button--icon-only:focus-visible,
+.rack-module__settings-toggle:focus-visible,
+.rack-module__settings-toggle[aria-expanded="true"] { --kit-edge: var(--accent); border-color: var(--accent); }
 .kit-select-wrap { display: inline-grid; align-items: center; max-width: 100%; color: var(--ink); }
 .kit-select-wrap > * { grid-area: 1 / 1; }
 .kit-select-wrap > .kit-select { appearance: none; padding-right: 1.75rem; width: 100%; }
