@@ -3986,3 +3986,7 @@ branches within that namespace commit without granting writes to user refs.
 Two shell sandbox denials stop the worker and the Symphony before another
 round; a failed worker's dirty files are not auto-committed. M3HW's cleanup
 retains attempt commits and removes their temporary branch namespaces.
+Result capture uses `commit-tree` against the step's starting commit: even if
+the worker chose another commit message, the judged product uses the signed
+step title. Capturing it never updates a branch ref; a read-only step retains
+its starting commit without an empty commit.

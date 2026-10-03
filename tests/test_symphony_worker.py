@@ -184,6 +184,31 @@ def _verdict(selected, feedback=()):
     )
 
 
+def test_product_capture_uses_step_title_without_moving_named_branch(tmp_path):
+    """F154 / M3SF2: a worker's own commit cannot rename the step or move the reviewer's branch."""
+
+    def git(*args):
+        return subprocess.check_output(["git", "-C", str(tmp_path), *args], text=True).strip()
+
+    git("init", "-q", "-b", "worker")
+    git("config", "user.name", "test")
+    git("config", "user.email", "test@test")
+    git("commit", "--allow-empty", "-qm", "base")
+    base = git("rev-parse", "HEAD")
+    assert symphony_worker._capture_product(tmp_path, base, "Read only") == base
+    (tmp_path / "result.txt").write_text("result")
+    git("add", "result.txt")
+    git("commit", "-qm", "worker chose another title")
+    worker = git("rev-parse", "HEAD")
+
+    result = symphony_worker._capture_product(tmp_path, base, "The signed step title")
+
+    assert git("log", "-1", "--format=%s", result) == "The signed step title"
+    assert git("rev-parse", f"{result}^") == base
+    assert git("rev-parse", "HEAD") == worker
+    assert git("diff", worker, result) == ""
+
+
 @pytest.mark.asyncio
 async def test_judge_pass_may_carry_advisory_notes(tmp_path, monkeypatch):
     """F137 / M3SF / M3EX-07: a PASS with notes is a PASS, not a validation failure."""
@@ -288,6 +313,22 @@ async def test_completion_artifacts_are_relative_to_the_worktree(tmp_path, monke
     attempt = tmp_path / "attempt"
     attempt.mkdir()
     subprocess.run(["git", "init", "-q", str(attempt)], check=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(attempt),
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@t",
+            "commit",
+            "--allow-empty",
+            "-qm",
+            "base",
+        ],
+        check=True,
+    )
     (attempt / "README.md").write_text("done\n")
     out = tmp_path / "out"
     out.mkdir()

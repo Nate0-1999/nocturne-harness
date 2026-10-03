@@ -112,6 +112,30 @@ def _write(path: Path, value: str) -> None:
     temporary.replace(path)
 
 
+def _capture_product(root: Path, base: str, title: str) -> str:
+    """F154 / M3SF2: snapshot a step under its title without updating any branch ref."""
+
+    def git(*args):
+        return subprocess.check_output(["git", "-C", str(root), *args], text=True).strip()
+
+    git("add", "-A")
+    tree = git("write-tree")
+    if tree == git("rev-parse", f"{base}^{{tree}}"):
+        return base
+    return git(
+        "-c",
+        "user.name=Nocturne",
+        "-c",
+        "user.email=nocturne@localhost",
+        "commit-tree",
+        tree,
+        "-p",
+        base,
+        "-m",
+        title,
+    )
+
+
 async def run(assignment_path: Path) -> None:
     """Keep credentials outside worktrees and meter real responses at every event."""
 
@@ -120,6 +144,11 @@ async def run(assignment_path: Path) -> None:
     settings = HarnessSettings(_env_file=assignment["env_file"])
     root = Path.cwd()
     stage = assignment["stage"]
+    base = (
+        subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+        if stage == "completion"
+        else None
+    )
     router = CompletionRouter(settings)
     resolver = ModelPolicyResolver(
         policy=assignment["model_policy"],
@@ -345,29 +374,13 @@ async def run(assignment_path: Path) -> None:
                     evidence_ref=str(output / "messages.json"),
                 )
         worker_context.publish(captured)
-        if (
-            stage == "completion"
-            and result.output.completed
-            and subprocess.check_output(["git", "status", "--porcelain"], text=True).strip()
-        ):
-            subprocess.run(["git", "add", "-A"], check=True)
-            subprocess.run(
-                [
-                    "git",
-                    "-c",
-                    "user.name=Nocturne",
-                    "-c",
-                    "user.email=nocturne@localhost",
-                    "commit",
-                    "-m",
-                    assignment.get("step_title", "Symphony result"),
-                ],
-                check=True,
-                capture_output=True,
-            )
         if stage == "completion":
-            commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
             work = result.output
+            commit = (
+                _capture_product(root, base, assignment.get("step_title", "Symphony result"))
+                if work.completed
+                else base
+            )
             # M3SF: artifacts are worktree-relative; a model may cite them by absolute path.
             artifacts = [ref.removeprefix(f"{root}/") for ref in work.evidence_refs]
             _write(
