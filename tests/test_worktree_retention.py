@@ -28,6 +28,7 @@ def test_completed_symphony_worktrees_leave_and_their_commits_stay_reachable(tmp
         "base",
     )
     commits = {}
+    products = {}
     branches = {}
     for symphony_id in ("older", "newer", "running"):
         attempt = root / ".nocturne-worktrees" / symphony_id / "step-1-round-1" / "attempt-1"
@@ -47,6 +48,22 @@ def test_completed_symphony_worktrees_leave_and_their_commits_stay_reachable(tmp
         )
         assignment.mkdir(parents=True)
         (assignment / "assignment.json").write_text(json.dumps({"project_key": str(root)}))
+        products[symphony_id] = _git(
+            root,
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@t",
+            "commit-tree",
+            _git(attempt, "rev-parse", "HEAD^{tree}"),
+            "-p",
+            commits[symphony_id],
+            "-m",
+            "Step title",
+        )
+        (assignment / "result.json").write_text(
+            json.dumps({"product": {"kind": "commit", "commit": products[symphony_id]}})
+        )
 
     removed = remove_kept_worktrees(home, ["older", "newer"], keep=1)
 
@@ -58,6 +75,7 @@ def test_completed_symphony_worktrees_leave_and_their_commits_stay_reachable(tmp
     assert "/.nocturne-worktrees/older/" not in _git(root, "worktree", "list")
     ref = "refs/nocturne/symphonies/older/step-1-round-1/attempt-1"
     assert _git(root, "rev-parse", ref) == commits["older"]
+    assert _git(root, "rev-parse", f"{ref}-product") == products["older"]
     remaining = _git(root, "for-each-ref", "--format=%(refname)", "refs/heads/nocturne-worktrees/")
     assert f"refs/heads/{branches['older']}" not in remaining
     assert f"refs/heads/{branches['running']}" in remaining

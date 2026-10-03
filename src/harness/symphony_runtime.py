@@ -761,13 +761,11 @@ def remove_kept_worktrees(home: Path, completed: list[str], keep: int) -> list[P
             )
             if head.returncode == 0:
                 ref = f"refs/nocturne/symphonies/{symphony_id}/{name}"
+                _git(root, "update-ref", ref, head.stdout.strip())
                 result = run_home / name / "completion/result.json"
-                commit = (
-                    json.loads(result.read_text())["product"]["commit"]
-                    if result.is_file()
-                    else head.stdout.strip()
-                )
-                _git(root, "update-ref", ref, commit)
+                if result.is_file():
+                    commit = json.loads(result.read_text())["product"]["commit"]
+                    _git(root, "update-ref", f"{ref}-product", commit)
                 git_dir = Path(_git(marker.parent, "rev-parse", "--absolute-git-dir"))
                 namespace = f"refs/heads/nocturne-worktrees/{git_dir.name}/"
                 for branch in _git(
