@@ -328,6 +328,60 @@ async def test_git_on_the_enclosing_repository_works_from_a_subfolder(tmp_path: 
     assert trail.count(("write", sub.resolve())) == 4
 
 
+@pytest.mark.asyncio
+async def test_worktree_worker_creates_a_folder_and_commits_without_touching_parent(tmp_path):
+    """F154 / M3SF2: a real worktree owns its index and can commit behind the shell fence."""
+    if not Path("/usr/bin/sandbox-exec").is_file():
+        pytest.skip("the standing hard shell fence is macOS sandbox-exec")
+    import subprocess
+
+    root = tmp_path / "repo"
+    root.mkdir()
+    for args in (
+        ("init", "-q"),
+        ("config", "user.name", "t"),
+        ("config", "user.email", "t@t"),
+        ("commit", "--allow-empty", "-qm", "base"),
+    ):
+        subprocess.run(["git", "-C", str(root), *args], check=True)
+    base = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"])
+    attempt = tmp_path / "attempt"
+    subprocess.run(
+        ["git", "-C", str(root), "worktree", "add", "-q", "--detach", str(attempt)], check=True
+    )
+    toolset = await open_standard_toolset(cwd=attempt, workspace_root=attempt, fence_reads=True)
+    try:
+        namespace = "nocturne-worktrees/attempt"
+        # F154: provision the namespace as the supervisor does before sandboxed tools start.
+        subprocess.run(
+            ["git", "-C", str(attempt), "checkout", "-qb", f"{namespace}/work"], check=True
+        )
+        named = await toolset.execute(
+            "bash", {"command": f"git checkout -b {namespace}/named-result"}
+        )
+        assert named.success and "Operation not permitted" not in named.content, named.content
+        made = await toolset.execute("bash", {"command": "mkdir scratch"})
+        assert made.success and (attempt / "scratch").is_dir(), made.content
+        await toolset.move(Path("scratch"))
+        written = await toolset.execute("write", {"path": "note.txt", "content": "worker\n"})
+        assert written.success, written.content
+        added = await toolset.execute("bash", {"command": "git add note.txt"})
+        committed = await toolset.execute("bash", {"command": "git commit -q -m worker"})
+        owner_branch = subprocess.check_output(
+            ["git", "-C", str(root), "symbolic-ref", "HEAD"], text=True
+        ).strip()
+        refused = await toolset.execute("bash", {"command": f"git update-ref {owner_branch} HEAD"})
+        assert "Operation not permitted" in refused.content, refused.content
+    finally:
+        await toolset.close()
+    log = subprocess.check_output(
+        ["git", "-C", str(attempt), "log", "-1", "--format=%s"], text=True
+    )
+    assert log.strip() == "worker", (added.content, committed.content)
+    assert subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"]) == base
+    assert not (root / "scratch").exists()
+
+
 def test_upstream_skills_gain_model_visible_bundled_resources(tmp_path: Path) -> None:
     """D.2 136 closes M3PV's resource gap without patching the dependency. [ADR-013, ADR-015]"""
 

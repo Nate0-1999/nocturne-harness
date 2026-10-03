@@ -3,7 +3,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from harness.symphony_runtime import _carry_environment, _graft
+from harness.symphony_runtime import _carry_environment, _graft, _publish_result
 
 
 def _repo(root: Path, ignore: str) -> None:
@@ -72,6 +72,33 @@ def _commit(repo: Path, message: str) -> str:
         check=True,
     )
     return subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
+
+
+def test_result_branch_preserves_the_users_checkout_and_new_uncommitted_work(tmp_path):
+    """F154 / P3 / M3SF2: publishing a result never merges or overwrites the user's work."""
+    root = tmp_path / "repo"
+    _repo(root, ".venv/\n")
+    base = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
+    attempt = tmp_path / "attempt"
+    subprocess.run(
+        ["git", "-C", str(root), "worktree", "add", "-q", "--detach", str(attempt)], check=True
+    )
+    (attempt / "result.txt").write_text("judged result")
+    result = _commit(attempt, "Add the requested result")
+    (root / "owner.txt").write_text("work started during the Symphony")
+
+    branch = _publish_result(root, "test-run", result)
+
+    assert (
+        subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
+        == base
+    )
+    assert (
+        subprocess.check_output(["git", "-C", str(root), "rev-parse", branch], text=True).strip()
+        == result
+    )
+    assert (root / "owner.txt").read_text() == "work started during the Symphony"
+    assert not (root / "result.txt").exists()
 
 
 def test_passing_alternatives_graft_with_the_most_chosen_lines(tmp_path: Path) -> None:

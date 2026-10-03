@@ -499,10 +499,15 @@ class PydanticHarnessToolset:
                 f"That path is outside this workspace: {target}.", "workspace"
             )
         if tool_name in _WRITE_TOOLS and target.parent != self._location.cwd:
+            create = (
+                "Create the missing directory with bash mkdir, then "
+                if not target.parent.exists()
+                else ""
+            )
             # WALL owner files / ADR015: require presence in the exact directory being written.
             raise ToolsetError(
                 "Modification requires presence in the file's directory. "
-                f"Move to {target.parent} first."
+                f"{create}Move to {target.parent} first."
             )
         if (
             self._location.fence_reads
@@ -808,8 +813,26 @@ class PydanticHarnessToolset:
         repository = repository_root(self._location.cwd) if _GIT_COMMAND.search(command) else None
         # v2.125: git on the enclosing repository works from any folder inside it; _bash
         # logs it with WHERE like every action.
-        git_dir = None if repository is None else json.dumps(str(repository / ".git"))
-        git_writes = "" if git_dir is None else f"(subpath {git_dir}) "
+        git_writes = ""
+        if repository is not None:
+            git_dir = Path(
+                subprocess.check_output(
+                    ["git", "-C", str(repository), "rev-parse", "--absolute-git-dir"], text=True
+                ).strip()
+            )
+            paths = [git_dir]
+            if (git_dir / "commondir").is_file():
+                # F154: each worktree owns its index and a private branch namespace,
+                # never another worktree's index or the owner's branch refs.
+                common = (git_dir / (git_dir / "commondir").read_text().strip()).resolve()
+                paths.extend(
+                    (
+                        common / "objects",
+                        common / "refs/heads/nocturne-worktrees" / git_dir.name,
+                        common / "logs/refs/heads/nocturne-worktrees" / git_dir.name,
+                    )
+                )
+            git_writes = "".join(f"(subpath {json.dumps(str(path))}) " for path in paths)
         profile = (
             "(version 1) (deny default) (allow process*) (allow file-read*) "
             "(allow sysctl-read) (allow mach-lookup) "

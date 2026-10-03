@@ -386,10 +386,8 @@ class SymphonyRounds:
         }
         if None in pass_selections or not pass_selections <= completed:
             raise RoundError("a passing judge may select only a completed attempt")
-        unanimous = (
-            bool(decision.verdicts)
-            and all(verdict.outcome == JudgeOutcome.PASS for verdict in decision.verdicts)
-            and len(pass_selections) == 1
+        unanimous = bool(decision.verdicts) and all(
+            verdict.outcome == JudgeOutcome.PASS for verdict in decision.verdicts
         )
         if decision.status.value == "unanimous_pass":
             if (

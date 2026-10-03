@@ -487,6 +487,15 @@ def snapshot_from_symphony_stack(
     edges: list[RecipeGraphEdge] = []
     prior_step_id: str | None = None
     seen_step_ids: set[str] = set()
+    timeline = raw.get("timeline", ())
+    bead_id = next(
+        (
+            event.rsplit(":", 1)[0]
+            for event in reversed(timeline)
+            if event.endswith(":workers_started")
+        ),
+        None,
+    )
     for index, value in enumerate(recipe):
         if not isinstance(value, Mapping):
             raise ValueError("recipe source steps must be objects")
@@ -497,7 +506,16 @@ def snapshot_from_symphony_stack(
         search = value.get("search")
         if not isinstance(search, bool):
             raise ValueError("recipe source steps require an explicit search mark")
-        step_state = _symphony_step_state(str(state), index)
+        if state == "completed" or f"{step_id}:passed" in timeline:
+            step_state = RecipeNodeState.PASSED
+        elif bead_id is not None:
+            step_state = (
+                RecipeNodeState.RUNNING
+                if state == "running" and bead_id.startswith(f"step-{index + 1}-round-")
+                else RecipeNodeState.BLOCKED
+            )
+        else:
+            step_state = _symphony_step_state(str(state), index)
         nodes.append(
             RecipeGraphNode(
                 node_id=step_id,
@@ -523,7 +541,7 @@ def snapshot_from_symphony_stack(
                         kind=RecipeNodeKind.JUDGE,
                         state=(
                             RecipeNodeState.PASSED
-                            if state == "completed"
+                            if step_state is RecipeNodeState.PASSED
                             else RecipeNodeState.BLOCKED
                         ),
                     )
@@ -535,7 +553,7 @@ def snapshot_from_symphony_stack(
         revision=revision,
         as_of=as_of,
         packet_id=symphony_id,
-        bead_id=None,
+        bead_id=bead_id,
         nodes=tuple(nodes),
         edges=tuple(edges),
         ready_node_ids=ready,

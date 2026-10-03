@@ -10,6 +10,7 @@ import pytest
 from pydantic_ai.models.function import DeltaToolCall, FunctionModel
 
 from harness import symphony_worker
+from harness.pydantic_harness_adapter import PydanticHarnessToolset
 from harness.spine_client import InjectPrepareResponse, MemoryAllocation
 from harness.symphony_context import COMPONENT_REGISTRY, WorkerContext, write_json
 from harness.toolset import AgentLocation
@@ -142,6 +143,34 @@ async def test_judge_retries_missing_metrics_and_writes_the_panel_return(tmp_pat
     assert json.loads((tmp_path / "result.json").read_text()) == result
 
 
+@pytest.mark.asyncio
+async def test_worker_stops_after_two_sandbox_denials(tmp_path, monkeypatch):
+    """D.2 102 / F154: changing shell syntax cannot buy more turns against the same fence."""
+    denied = AsyncMock(return_value="fatal: cannot lock ref: Operation not permitted")
+    monkeypatch.setattr(PydanticHarnessToolset, "_bash", denied)
+
+    async def respond(messages, info):
+        yield {
+            0: DeltaToolCall(
+                name="bash",
+                json_args=json.dumps(
+                    {
+                        "command": "git commit -m retry"
+                        if denied.call_count
+                        else "git checkout -b outside"
+                    }
+                ),
+            )
+        }
+
+    result = await _run_judge(tmp_path, monkeypatch, respond)
+
+    assert denied.call_count == 2
+    assert result["outcome"] == "fail"
+    assert "Repeated workspace denial" in result["rationale"]
+    assert (tmp_path / "blocked.json").is_file()
+
+
 def _verdict(selected, feedback=()):
     return json.dumps(
         {
@@ -153,6 +182,31 @@ def _verdict(selected, feedback=()):
             "metrics": [{"observed": "150", "passed": True, "evidence_ref": "result.txt"}],
         }
     )
+
+
+def test_product_capture_uses_step_title_without_moving_named_branch(tmp_path):
+    """F154 / M3SF2: a worker's own commit cannot rename the step or move the reviewer's branch."""
+
+    def git(*args):
+        return subprocess.check_output(["git", "-C", str(tmp_path), *args], text=True).strip()
+
+    git("init", "-q", "-b", "worker")
+    git("config", "user.name", "test")
+    git("config", "user.email", "test@test")
+    git("commit", "--allow-empty", "-qm", "base")
+    base = git("rev-parse", "HEAD")
+    assert symphony_worker._capture_product(tmp_path, base, "Read only") == base
+    (tmp_path / "result.txt").write_text("result")
+    git("add", "result.txt")
+    git("commit", "-qm", "worker chose another title")
+    worker = git("rev-parse", "HEAD")
+
+    result = symphony_worker._capture_product(tmp_path, base, "The signed step title")
+
+    assert git("log", "-1", "--format=%s", result) == "The signed step title"
+    assert git("rev-parse", f"{result}^") == base
+    assert git("rev-parse", "HEAD") == worker
+    assert git("diff", worker, result) == ""
 
 
 @pytest.mark.asyncio
@@ -259,6 +313,22 @@ async def test_completion_artifacts_are_relative_to_the_worktree(tmp_path, monke
     attempt = tmp_path / "attempt"
     attempt.mkdir()
     subprocess.run(["git", "init", "-q", str(attempt)], check=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(attempt),
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@t",
+            "commit",
+            "--allow-empty",
+            "-qm",
+            "base",
+        ],
+        check=True,
+    )
     (attempt / "README.md").write_text("done\n")
     out = tmp_path / "out"
     out.mkdir()

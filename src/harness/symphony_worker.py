@@ -14,7 +14,12 @@ from uuid import UUID
 from pydantic import BaseModel, create_model
 from pydantic_ai import Agent, ModelRetry, PromptedOutput, capture_run_messages
 from pydantic_ai.exceptions import AgentRunError
-from pydantic_ai.messages import ModelMessagesTypeAdapter, ModelResponse, ToolCallPart
+from pydantic_ai.messages import (
+    FunctionToolResultEvent,
+    ModelMessagesTypeAdapter,
+    ModelResponse,
+    ToolCallPart,
+)
 from pydantic_ai.usage import UsageLimits
 
 from harness.agent import ExtractionCandidateDraft
@@ -107,6 +112,30 @@ def _write(path: Path, value: str) -> None:
     temporary.replace(path)
 
 
+def _capture_product(root: Path, base: str, title: str) -> str:
+    """F154 / M3SF2: snapshot a step under its title without updating any branch ref."""
+
+    def git(*args):
+        return subprocess.check_output(["git", "-C", str(root), *args], text=True).strip()
+
+    git("add", "-A")
+    tree = git("write-tree")
+    if tree == git("rev-parse", f"{base}^{{tree}}"):
+        return base
+    return git(
+        "-c",
+        "user.name=Nocturne",
+        "-c",
+        "user.email=nocturne@localhost",
+        "commit-tree",
+        tree,
+        "-p",
+        base,
+        "-m",
+        title,
+    )
+
+
 async def run(assignment_path: Path) -> None:
     """Keep credentials outside worktrees and meter real responses at every event."""
 
@@ -115,6 +144,11 @@ async def run(assignment_path: Path) -> None:
     settings = HarnessSettings(_env_file=assignment["env_file"])
     root = Path.cwd()
     stage = assignment["stage"]
+    base = (
+        subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+        if stage == "completion"
+        else None
+    )
     router = CompletionRouter(settings)
     resolver = ModelPolicyResolver(
         policy=assignment["model_policy"],
@@ -209,7 +243,10 @@ async def run(assignment_path: Path) -> None:
             purpose="judge" if stage == "judge" else "building",
         )
 
+    denied_writes = 0
+
     async def observe(_context, events):
+        nonlocal denied_writes
         async for _event in events:
             observe_worker(
                 output,
@@ -220,6 +257,21 @@ async def run(assignment_path: Path) -> None:
                 captured,
             )
             worker_context.publish(captured)
+            if isinstance(_event, FunctionToolResultEvent) and _event.part.tool_name in (
+                "bash",
+                "read_shell",
+            ):
+                content = str(_event.part.content)
+                if "operation not permitted" in content.lower():
+                    denied_writes += 1
+                    if denied_writes == 2:
+                        # WALL money / D.2 102: another model turn cannot widen the sandbox.
+                        reason = (
+                            "Repeated workspace denial; "
+                            "change the task or location before retrying."
+                        )
+                        _write(output / "blocked.json", json.dumps({"reason": reason}))
+                        raise AgentRunError(reason)
             request = receipt()
             if request is not None:
                 _write(
@@ -286,7 +338,11 @@ async def run(assignment_path: Path) -> None:
             "\nDo the requested work using your workspace tools. Verify the actual files. "
             "Your current directory IS the isolated attempt; do not invent another folder. "
             "Return concise claims and direct evidence paths; name any unfinished work. "
-            "Do not commit: the supervisor captures your exact patch. You have no memory tools. "
+            "Create missing directories with bash mkdir before moving into them to write files. "
+            "Commit when the task asks; otherwise the supervisor captures your exact patch. "
+            "The original task's prohibitions govern every stratagem and retry. Evidence can "
+            "be a tool observation; never create a file the task forbids. "
+            "You have no memory tools. "
             "Return any durable lessons as atomic memories of at most 128 tokens each, "
             "or an empty memories list when nothing was learned."
         )
@@ -319,24 +375,12 @@ async def run(assignment_path: Path) -> None:
                 )
         worker_context.publish(captured)
         if stage == "completion":
-            subprocess.run(["git", "add", "-A"], check=True)
-            subprocess.run(
-                [
-                    "git",
-                    "-c",
-                    "user.name=Nocturne",
-                    "-c",
-                    "user.email=nocturne@localhost",
-                    "commit",
-                    "--allow-empty",
-                    "-m",
-                    "Symphony: capture verified attempt",
-                ],
-                check=True,
-                capture_output=True,
-            )
-            commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
             work = result.output
+            commit = (
+                _capture_product(root, base, assignment.get("step_title", "Symphony result"))
+                if work.completed
+                else base
+            )
             # M3SF: artifacts are worktree-relative; a model may cite them by absolute path.
             artifacts = [ref.removeprefix(f"{root}/") for ref in work.evidence_refs]
             _write(
