@@ -3,9 +3,7 @@
   min-height: 100%;
   padding: clamp(0.8rem, 2.2vw, 1.4rem);
   color: var(--ink);
-  background:
-    radial-gradient(circle at 18% 18%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 35%),
-    var(--surface-deep);
+  background: var(--surface-deep);
 }
 
 .recipe-instrument__header {
@@ -316,9 +314,8 @@
   background:
     linear-gradient(color-mix(in srgb, var(--line) 26%, transparent) 1px, transparent 1px),
     linear-gradient(90deg, color-mix(in srgb, var(--line) 22%, transparent) 1px, transparent 1px),
-    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--earned) 9%, transparent), transparent 28%),
     var(--surface-deep);
-  background-size: 1.15rem 1.15rem, 1.15rem 1.15rem, auto, auto;
+  background-size: 1.15rem 1.15rem, 1.15rem 1.15rem, auto;
 }
 
 :root[data-theme='gold-lines'] .recipe-instrument[data-grammar='annotated-sheet']::before {

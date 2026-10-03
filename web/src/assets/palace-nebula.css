@@ -30,8 +30,10 @@
 .palace-nebula h2,
 .palace-nebula p { margin: 0; }
 .palace-nebula h1 {
-  font: 500 var(--text-xl)/1 var(--display-font, sans-serif);
-  letter-spacing: -.025em;
+  font: 760 var(--text-lg)/1.2 var(--display-font);
+  font-stretch: condensed;
+  letter-spacing: .04em;
+  text-transform: uppercase;
 }
 .palace-nebula__title { display: grid; gap: .2rem; }
 .palace-nebula__title small,
