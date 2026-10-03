@@ -589,7 +589,7 @@
       "protected": false,
       "verdict": "PASS",
       "screenshot": "FL-086.png",
-      "observed": "On the final build in one four-hour soak: plain turn-by-turn threads (two long reads, three remembers, two oversized queries) and a Symphony each completed (soak/soak.jsonl activities, receipts/soak-symphony.json)."
+      "observed": "On the final build in one four-hour soak: plain turn-by-turn threads (three long reads, three remembers, two oversized queries) and a Symphony each completed (soak/soak.jsonl activities, receipts/soak-symphony.json)."
     },
     "FL-088": {
       "label": "Symphony search starts from a variety of stratagems and works forward in parallel, combining breadth and depth, auto-research style but multi-agent and coordinated.",
