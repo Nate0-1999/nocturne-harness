@@ -152,7 +152,8 @@ def test_broker_request_shapes_keep_routing_stickiness_and_overrides() -> None:
             "top_p": 0.8,
             "top_k": 40,
             "max_tokens": 2048,
-            "extra_body": {"session_id": "thread-golden:epoch:2"},
+            # M3SK / FL-107: the OpenAI-compatible client drops a top_k setting; the body has it.
+            "extra_body": {"session_id": "thread-golden:epoch:2", "top_k": 40},
             "openrouter_usage": {"include": True},
             "openrouter_reasoning": {"effort": "high"},
             "openrouter_provider": {"sort": "price"},
