@@ -9,6 +9,8 @@ export interface ListedModel {
   completion_price: string | null
   score: string | null
   reasoning: boolean
+  /** SD-079: the request parameters the source says it takes; null when unpublished. */
+  parameters?: string[] | null
 }
 
 export interface Configuration {
@@ -68,6 +70,16 @@ export function policyInForce(
   return configuration !== undefined && (model === null || configuration.model === model) ? configuration : null
 }
 
+/** SD-079: a parameter descriptor (model.top_k) is offered when the model takes it, or nobody says. */
+export function takesParameter(parameters: string[] | null | undefined, descriptorId: string): boolean {
+  return parameters == null || parameters.includes(descriptorId.replace(/^model\./u, ''))
+}
+
+/** The source's "Provider: Model" names lose the provider; the tip carries the full id. */
+export function shortName(name: string): string {
+  return name.replace(/^[^:]+:\s*/u, '')
+}
+
 export function modelLabel(model: string | null): string {
   return model === null ? '—' : model.slice(model.indexOf(':') + 1)
 }
@@ -79,8 +91,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 /** FL-202: the conversation chip reads model · thinking level · context window · price. */
 export function chipParts(model: string | null, entry: ListedModel | undefined, effort: string | null): string[] {
   if (model === null) return ['Choosing model']
-  // The source's "Provider: Model" names lose the provider here; the tip carries the full id.
-  const parts = [entry?.name.replace(/^[^:]+:\s*/u, '') ?? modelLabel(model)]
+  const parts = [entry === undefined ? modelLabel(model) : shortName(entry.name)]
   if (entry === undefined) return parts
   if (entry.reasoning) parts.push(`${effort ?? 'default'} thinking`)
   if (entry.context_tokens !== null) parts.push(`${formatHumanCount(entry.context_tokens)} context`)

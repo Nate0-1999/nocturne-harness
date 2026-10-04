@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { JsonValue } from './protocol'
 import { RACK_MANIFESTS, useRackPlugin, useRackSnapshot } from './rack'
 import { Button, Select, TextField } from './kit'
 import { formatHumanCount } from './humanNumbers'
 import {
-  browseOrder, chipParts, formatPrice, modelLabel, parseBrowser, policyInForce, policyName,
+  browseOrder, chipParts, formatPrice, modelLabel, parseBrowser, policyInForce, policyName, shortName, takesParameter,
   type Configuration, type ModelBrowser, type SortKey,
 } from './modelBrowser'
 
@@ -81,6 +81,7 @@ export function ModelDevice() {
   const [browserError, setBrowserError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortKey>('rank')
+  const parameterDialog = useRef<HTMLDialogElement>(null)
 
   const load = useCallback(async (asOf: string | null = null) => {
     if (threadId === null) {
@@ -173,13 +174,15 @@ export function ModelDevice() {
     () => view?.descriptors ?? live?.descriptors ?? [],
     [live?.descriptors, view?.descriptors],
   )
-  const numeric = useMemo(
-    () => descriptors.filter((item) => item.type === 'number' || item.type === 'integer'),
-    [descriptors],
-  )
   const effort = descriptors.find((item) => item.id === 'model.effort')
   const resolved = view?.resolved_model ?? null
   const inUse = browser?.models.find((item) => item.model === resolved)
+  // SD-079: only the parameters the model in use takes, per the source's catalog.
+  const numeric = useMemo(
+    () => descriptors.filter((item) => (item.type === 'number' || item.type === 'integer')
+      && takesParameter(inUse?.parameters, item.id)),
+    [descriptors, inUse?.parameters],
+  )
   const pins = useMemo(() => browser?.pins ?? [], [browser?.pins])
   const listed = useMemo(
     () => browseOrder(browser?.models ?? [], pins, search, sort),
@@ -233,6 +236,17 @@ export function ModelDevice() {
               {effort.options.map((option) => <option key={option} value={option}>{option}</option>)}
             </Select>
           </label>
+        )}
+        {numeric.length > 0 && (
+          <Button
+            type="button"
+            action="settings"
+            data-testid="model-parameters-open"
+            data-tooltip-detail="Temperature and the other request settings this model takes."
+            onClick={() => parameterDialog.current?.showModal()}
+          >
+            Parameters
+          </Button>
         )}
         {view?.policy_explanation && <p>{view.policy_explanation}</p>}
         <small>{scope === 'GLOBAL' ? 'Provider defaults · read only' : status}</small>
@@ -331,7 +345,13 @@ export function ModelDevice() {
         </ul>
       </section>
 
-      <div className="model-device__controls">
+      <dialog
+        ref={parameterDialog}
+        className="memory-restore-dialog model-parameters"
+        aria-labelledby="model-parameters-title"
+        data-testid="model-parameters"
+      >
+        <h2 id="model-parameters-title">Parameters · {inUse === undefined ? modelLabel(resolved) : shortName(inUse.name)}</h2>
         {numeric.map((descriptor) => {
           const current = scope === 'GLOBAL' ? descriptor.default : view?.values[descriptor.id] ?? null
           const range = descriptor.range!
@@ -363,8 +383,10 @@ export function ModelDevice() {
             </div>
           )
         })}
-
-      </div>
+        <Button action="close" type="button" data-tooltip-detail="Changes are already applied." onClick={() => parameterDialog.current?.close()}>
+          Close
+        </Button>
+      </dialog>
 
       <div className="model-device__history">
         <label htmlFor="model-device-history">Control history</label>

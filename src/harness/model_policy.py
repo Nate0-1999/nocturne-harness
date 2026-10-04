@@ -140,6 +140,9 @@ async def browse_models(
                 "completion_price": number(entry.completion_price),
                 "score": number(entry.intelligence_index),
                 "reasoning": entry.reasoning,
+                "parameters": None
+                if entry.supported_parameters is None
+                else sorted(entry.supported_parameters),
             }
             for entry in catalog.listing
         ],

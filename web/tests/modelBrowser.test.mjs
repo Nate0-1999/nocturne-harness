@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { browseOrder, chipParts, policyInForce } from '../src/modelBrowser.ts'
+import { browseOrder, chipParts, policyInForce, takesParameter } from '../src/modelBrowser.ts'
 
 const model = (id, score, prompt, context, reasoning = false) => ({
   model: `openrouter:${id}`, name: `Vendor: ${id}`, context_tokens: context,
@@ -42,4 +42,13 @@ test('the chip names the policy in force, never one this conversation left', () 
   assert.equal(policyInForce(browser, null), pinned)
   assert.equal(policyInForce({ ...browser, chat_policy: 'elbow' }, 'openrouter:mid'), elbow)
   assert.equal(policyInForce({ ...browser, chat_policy: 'elbow' }, 'openrouter:top'), null)
+})
+
+/** ADR-023 clause 3: the dialog offers only what the model takes; an unpublished list hides nothing. */
+test('the parameter dialog shows only the parameters the model takes', () => {
+  const gpt = ['max_tokens', 'temperature', 'top_p']
+  assert.equal(takesParameter(gpt, 'model.top_p'), true)
+  assert.equal(takesParameter(gpt, 'model.top_k'), false)
+  assert.equal(takesParameter(null, 'model.top_k'), true)
+  assert.equal(takesParameter(undefined, 'model.top_k'), true)
 })

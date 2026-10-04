@@ -916,6 +916,9 @@ async def test_browse_models_qualifies_ids_and_reads_the_configured_floor() -> N
     models = {item["model"]: item for item in browser["models"]}  # type: ignore[union-attr]
     assert models["openrouter:cheap/mid"]["prompt_price"] == "0.2"
     assert models["openrouter:cheap/mid"]["score"] == "30"
+    # SD-079: the parameter dialog reads what each model takes; null when the source is silent.
+    assert models["openrouter:cheap/mid"]["parameters"] == ["reasoning", "tools"]
+    assert models["openrouter:dear/top"]["parameters"] is None
     assert browser["configurations"][-1] == {  # type: ignore[index]
         "policy": "floor:50",
         "model": "openrouter:dear/top",

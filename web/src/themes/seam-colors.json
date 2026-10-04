@@ -905,14 +905,6 @@
       "wizard_mode": "rgb(56 215 255 / 5%)"
     },
     {
-      "gold_lines": "rgb(215 224 238 / 70%)",
-      "neo_noir": "rgb(1 5 8 / 70%)",
-      "seraph_dressed": "rgb(5 6 15 / 70%)",
-      "technomancer": "rgb(1 5 8 / 70%)",
-      "variable": "--seam-997a0fddcb0d",
-      "wizard_mode": "rgb(1 5 8 / 70%)"
-    },
-    {
       "gold_lines": "rgb(150 104 44 / 3%)",
       "neo_noir": "rgb(56 215 255 / 3%)",
       "seraph_dressed": "rgb(93 140 242 / 3%)",

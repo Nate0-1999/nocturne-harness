@@ -4025,3 +4025,8 @@ then the agent policy is saved as pinned:<model> (model-policies.json, so a rest
 The chip leads with the agent policy only while the conversation runs on that policy's pick, or
 has no model yet; a conversation the owner moved elsewhere (/model, or started under an older
 policy) shows its model alone. /model stays a thread resolution point and its reply says so.
+The parameter block (SD-079) is a dialog opened from the Model Device, one row per numeric
+parameter the model in use lists in the source's supported_parameters; a model whose source
+publishes no list (single-key endpoints) keeps all four. A value journaled while one model was
+in use stays journaled when the thread moves to a model that does not take it; the request
+still carries it, and OpenRouter ignores what a model does not support.

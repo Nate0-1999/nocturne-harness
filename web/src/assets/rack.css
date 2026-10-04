@@ -983,25 +983,21 @@ button.rack-module__resize-handle--nw {
   overflow-wrap: anywhere;
 }
 
-.model-device__controls {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(8rem, 1fr));
-  gap: .75rem;
-  margin: 1.5rem 0;
-}
+/* SD-079: one row per parameter the model takes, in a dialog opened from the device. */
+.model-parameters { width: min(36rem, 90vw); }
+.model-parameters h2 { margin: 0 0 .75rem; font-size: var(--text-md); }
+.model-parameters .model-knob button { margin: 0; }
 
 .model-knob {
   display: grid;
-  align-content: start;
-  gap: .55rem;
-  min-height: 10rem;
-  padding: .85rem;
-  border-top: 1px solid var(--line-strong);
-  background: linear-gradient(180deg, var(--seam-407b4d300acc), var(--seam-997a0fddcb0d));
+  grid-template-columns: minmax(7rem, auto) 4.5rem minmax(6rem, 1fr) auto;
+  align-items: center;
+  gap: .75rem;
+  padding: .4rem 0;
+  border-top: 1px solid var(--line);
 }
 
 .model-knob label {
-  min-height: 2rem;
   color: var(--muted);
   font-size: var(--text-md);
   letter-spacing: .06em;
@@ -1171,14 +1167,11 @@ button.rack-module__resize-handle--nw {
 
   .model-row__pick > span:nth-child(2),
   .model-row__pick > span:nth-child(4) { display: none; }
-
-  .model-device__controls {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 28rem) {
-  .model-device__controls { grid-template-columns: 1fr; }
+  .model-knob { grid-template-columns: minmax(0, 1fr) auto; }
+  .model-knob input[type="range"] { grid-column: 1 / -1; }
 }
 
 .palace-queue-module {
