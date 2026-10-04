@@ -970,6 +970,8 @@ async def test_model_command_commits_one_journaled_epoch_without_calling_runner(
     )
     assert command_assistant["events"] == command_events
     assert "Context window: 262144 tokens" in command_assistant["content"]
+    # A-021: /model is a thread resolution point; the agent policy for new threads is untouched.
+    assert "This conversation only" in command_assistant["content"]
 
     await loop.submit(
         thread_id="thread-1",

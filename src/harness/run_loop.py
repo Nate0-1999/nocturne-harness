@@ -1426,6 +1426,8 @@ class RunLoop:
             else:
                 message = (
                     f"Model changed from {previous.model} to {resolution.model}. "
+                    "This conversation only; pick it in the model browser to keep it for "
+                    "new conversations too. "
                     f"Context window: {resolution.context_tokens} tokens."
                 )
 
