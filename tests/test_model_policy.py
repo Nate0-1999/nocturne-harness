@@ -486,6 +486,28 @@ async def test_pinned_resolution_bypasses_catalog_and_is_stable_per_thread() -> 
 
 
 @pytest.mark.asyncio
+async def test_a_pinned_pick_other_than_the_configured_model_takes_its_own_context_window() -> None:
+    """A-021: a new thread under pinned:<model> runs that model, so it takes that model's
+    window — the configured model's 1,000,000 tokens once overstated gpt-4o-mini's 128,000.
+    The benchmark table is still never consulted; only the pick's own route is read.
+    """
+    table = FakeCatalog(catalog((), {"openai/gpt-4o-mini": 128_000}))
+    resolver = ModelPolicyResolver(
+        policy="pinned:openrouter:openai/gpt-4o-mini",
+        static_model="openrouter:minimax/minimax-m3",
+        static_context_tokens=1_000_000,
+        catalog=table,
+    )
+
+    resolved = await resolver.resolve("new-thread")
+
+    assert resolved.model == "openrouter:openai/gpt-4o-mini"
+    assert resolved.context_tokens == 128_000
+    assert table.calls == 0
+    assert table.named_calls == ["openai/gpt-4o-mini"]
+
+
+@pytest.mark.asyncio
 async def test_role_policy_change_preserves_existing_thread_choice() -> None:
     """A-021 / FL-154: a role default change affects new work, not a running thread."""
     resolver = ModelPolicyResolver(
@@ -831,6 +853,9 @@ def test_listing_shows_priced_models_with_scores_and_never_routers() -> None:
     assert (mid.name, mid.context_tokens, mid.reasoning) == ("Cheap Mid", 1_048_576, True)
     assert (mid.prompt_price, mid.completion_price) == (Decimal("0.2"), Decimal("1.2"))
     assert mid.intelligence_index == Decimal(30)
+    # The parameter dialog shows what a model takes; a model that publishes no list is unknown.
+    assert mid.supported_parameters == frozenset({"tools", "reasoning"})
+    assert listing["dear/top"].supported_parameters is None
     unpriced = listing["unpriced/model"]
     assert (unpriced.name, unpriced.prompt_price, unpriced.context_tokens) == (
         "unpriced/model",
