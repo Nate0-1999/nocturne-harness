@@ -86,9 +86,13 @@ class OpenRouterCompletionAdapter:
         session_id = thread_id
         if resolution.stickiness_epoch:
             session_id = f"{thread_id}:epoch:{resolution.stickiness_epoch}"
+        extra_body: dict[str, object] = {"session_id": session_id}
+        if resolution.request_parameters.top_k is not None:
+            # The OpenAI-compatible client drops a top_k setting; OpenRouter reads it in the body.
+            extra_body["top_k"] = resolution.request_parameters.top_k
         settings: OpenRouterModelSettings = {
             **common,
-            "extra_body": {"session_id": session_id},
+            "extra_body": extra_body,
             "openrouter_usage": {"include": True},
         }
         if resolution.request_parameters.effort is not None:

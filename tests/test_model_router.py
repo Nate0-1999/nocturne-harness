@@ -104,6 +104,24 @@ def test_each_adapter_owns_its_request_shape_without_behavior_drift() -> None:
     }
 
 
+def test_top_k_reaches_openrouter_in_the_request_body() -> None:
+    """A-034: model.top_k must ride the request; the OpenAI-compatible client drops a top_k
+    setting, so OpenRouter receives it in the body beside the session id (FL-107's walk saw
+    a journaled 40 sent as null)."""
+
+    brokered = CompletionRouter(settings()).request_settings(
+        ThreadModelResolution(
+            model="openrouter:minimax/minimax-m3",
+            context_tokens=1_000_000,
+            policy="pinned:openrouter:minimax/minimax-m3",
+            request_parameters=ModelRequestParameters(top_k=40),
+        ),
+        "thread-one",
+    )
+
+    assert brokered["extra_body"] == {"session_id": "thread-one", "top_k": 40}
+
+
 @pytest.mark.asyncio
 async def test_policy_resolver_uses_adapter_qualification_instead_of_openrouter_architecture() -> (
     None

@@ -4030,3 +4030,6 @@ parameter the model in use lists in the source's supported_parameters; a model w
 publishes no list (single-key endpoints) keeps all four. A value journaled while one model was
 in use stays journaled when the thread moves to a model that does not take it; the request
 still carries it, and OpenRouter ignores what a model does not support.
+Top K never reached OpenRouter: the OpenAI-compatible client sends only the settings OpenAI
+defines, so a journaled top_k left as null. The OpenRouter adapter now puts it in the request
+body beside the session id; direct providers keep the plain setting.
