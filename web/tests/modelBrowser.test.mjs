@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { browseOrder, chipParts } from '../src/modelBrowser.ts'
+import { browseOrder, chipParts, policyInForce } from '../src/modelBrowser.ts'
 
 const model = (id, score, prompt, context, reasoning = false) => ({
   model: `openrouter:${id}`, name: `Vendor: ${id}`, context_tokens: context,
@@ -31,4 +31,15 @@ test('the chip names the thinking level only for a model that takes one', () => 
   assert.deepEqual(chipParts('openrouter:top', models[1], null), ['top', '200K context', '$4.00/$16.00 per M'])
   assert.deepEqual(chipParts('openrouter:unknown/model', undefined, null), ['unknown/model'])
   assert.deepEqual(chipParts(null, undefined, null), ['Choosing model'])
+})
+
+/** A-021: the chip names the agent policy only while this conversation runs on its pick. */
+test('the chip names the policy in force, never one this conversation left', () => {
+  const pinned = { policy: 'pinned:openrouter:top', model: 'openrouter:top', reason: 'keeps this model' }
+  const elbow = { policy: 'elbow', model: 'openrouter:mid', reason: 'score 30' }
+  const browser = { chat_policy: pinned.policy, configurations: [pinned, elbow] }
+  assert.equal(policyInForce(browser, 'openrouter:top'), pinned)
+  assert.equal(policyInForce(browser, null), pinned)
+  assert.equal(policyInForce({ ...browser, chat_policy: 'elbow' }, 'openrouter:mid'), elbow)
+  assert.equal(policyInForce({ ...browser, chat_policy: 'elbow' }, 'openrouter:top'), null)
 })

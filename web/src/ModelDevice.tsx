@@ -5,7 +5,7 @@ import { RACK_MANIFESTS, useRackPlugin, useRackSnapshot } from './rack'
 import { Button, Select, TextField } from './kit'
 import { formatHumanCount } from './humanNumbers'
 import {
-  browseOrder, chipParts, formatPrice, modelLabel, parseBrowser, policyName,
+  browseOrder, chipParts, formatPrice, modelLabel, parseBrowser, policyInForce, policyName,
   type Configuration, type ModelBrowser, type SortKey,
 } from './modelBrowser'
 
@@ -56,9 +56,13 @@ export function ModelChip({ threadId, model }: { threadId: string | null, model:
       .catch(() => { if (live) setBrowser(null) })
     return () => { live = false }
   }, [events, threadId, model, refresh])
-  const entry = browser?.models.find((item) => item.model === model)
-  const effort = browser?.current?.model === model ? browser.current.effort : null
-  return chipParts(model, entry, effort).join(' · ')
+  // SD-077: before the first answer the chip names what this conversation will start on.
+  const policy = browser === null ? null : policyInForce(browser, model)
+  const shown = model ?? policy?.model ?? null
+  const entry = browser?.models.find((item) => item.model === shown)
+  const effort = browser?.current?.model === shown ? browser.current.effort : null
+  const parts = chipParts(shown, entry, effort)
+  return (policy === null ? parts : [policyName(policy.policy), ...parts]).join(' · ')
 }
 
 export function ModelDevice() {
@@ -301,9 +305,9 @@ export function ModelDevice() {
                   className="model-row__pick"
                   data-model={item.model}
                   data-tooltip={item.model}
-                  data-tooltip-detail={current ? 'This conversation uses it now.' : 'Switch this conversation to it from the next turn.'}
+                  data-tooltip-detail={current ? 'This conversation uses it now.' : 'Use it here and for new conversations, until you change it.'}
                   disabled={!editable || current}
-                  onClick={() => { void write('model.slug', item.model) }}
+                  onClick={() => { void configure({ policy: `pinned:${item.model}`, model: item.model, reason: 'keeps this model' }) }}
                 >
                   <span className="model-row__name">{item.name}{item.reasoning && <small> · thinks</small>}</span>
                   <span>{item.score ?? '—'}</span>

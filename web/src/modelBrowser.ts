@@ -60,6 +60,14 @@ export function policyName(policy: string): string {
   return kind === 'floor' ? `${name} ${value}` : name
 }
 
+/** SD-077: the agent policy is in force here while this conversation runs on its pick (or has none yet). */
+export function policyInForce(
+  browser: Pick<ModelBrowser, 'chat_policy' | 'configurations'>, model: string | null,
+): Configuration | null {
+  const configuration = browser.configurations.find((item) => item.policy === browser.chat_policy)
+  return configuration !== undefined && (model === null || configuration.model === model) ? configuration : null
+}
+
 export function modelLabel(model: string | null): string {
   return model === null ? '—' : model.slice(model.indexOf(':') + 1)
 }

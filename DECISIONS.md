@@ -4016,3 +4016,12 @@ The rule lives in the Memory package; this shim no longer words a free model as 
 The Elbow configuration's reason names the floor when elbow used it ("score 33.7; free models
 count at the $0.021/M price floor"). The "fallback" mark stays for a table that cannot resolve
 a policy (no route, nothing meets a floor); M3MD's "today the elbow" above no longer holds.
+
+## M3SK — A picked model sticks [P4]
+
+PRECEDENT: SD-077, A-021, M3MD (report 261), FL-202, FL-106.
+A model row click is the Pinned configuration for that model: the conversation switches first,
+then the agent policy is saved as pinned:<model> (model-policies.json, so a restart keeps it).
+The chip leads with the agent policy only while the conversation runs on that policy's pick, or
+has no model yet; a conversation the owner moved elsewhere (/model, or started under an older
+policy) shows its model alone. /model stays a thread resolution point and its reply says so.
