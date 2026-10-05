@@ -632,21 +632,16 @@ function dispatchRackAction<Action extends RackAction>(
         return fetchJson(`/v1/threads/${encodeURIComponent(threadId)}/archive`, {
           method: 'POST',
         }).then((result) => {
-          const archived = getRackSnapshot().catalog.find((entry) => entry.thread_id === threadId)
           useHarnessStore.getState().hydrateCatalog(getRackSnapshot().catalog.map((entry) => (
             entry.thread_id === threadId ? { ...entry, archived: true } : entry
           )))
-          // M3W6B-36: the archived thread leaves the Conversation module for the next open one.
-          const next = useHarnessStore.getState().selectedThreadId
-          if (next !== null && next !== threadId) harnessClient.selectThread(next)
-          else if (next === null && archived?.workspace_root) {
-            harnessClient.createThread({ workspaceRoot: archived.workspace_root, projectLabel: archived.project_label })
-          }
           // M3W5B-34: an empty thread (no answer, nothing to review) archives without the review.
           const view = result as { cards?: unknown, final_post?: unknown } | null
           if ((Array.isArray(view?.cards) && view.cards.length > 0) ||
             (typeof view?.final_post === 'string' && view.final_post.trim() !== '')) {
             rackSelectionSurface.select({ kind: 'module', id: 'thread_end' })
+          } else {
+            leaveArchivedThread()
           }
           return result as RackActionResult<Action>
         })
@@ -1188,6 +1183,22 @@ export function useRackHostSelection(): RackSelection {
 
 export function clearRackSelection(): void {
   rackSelectionSurface.select(null)
+  leaveArchivedThread()
+}
+
+// M3W6B-36: an archived thread leaves the Conversation module for the newest open one, or a fresh
+// thread in its folder. Its review reads the selected thread, so it keeps it until Back to stage.
+function leaveArchivedThread(): boolean {
+  const { catalog, selectedThreadId } = useHarnessStore.getState()
+  const current = catalog.find((entry) => entry.thread_id === selectedThreadId)
+  if (current === undefined || !current.archived) return false
+  const next = catalog.filter((entry) => !entry.archived)
+    .sort((left, right) => right.updated_at.localeCompare(left.updated_at))[0]
+  if (next !== undefined) harnessClient.selectThread(next.thread_id)
+  else if (current.workspace_root) {
+    harnessClient.createThread({ workspaceRoot: current.workspace_root, projectLabel: current.project_label })
+  }
+  return true
 }
 
 export function RackRuntime({ children }: { children: ReactNode }) {
@@ -1246,7 +1257,7 @@ export function RackRuntime({ children }: { children: ReactNode }) {
         }
       } else if (state.selectedThreadId === null) {
         harnessClient.selectThread(open[0].thread_id)
-      } else {
+      } else if (!leaveArchivedThread()) {
         harnessClient.requestSnapshot(state.selectedThreadId)
       }
     })
@@ -1262,6 +1273,8 @@ export function RackRuntime({ children }: { children: ReactNode }) {
           store.hydrateCatalog(payload.threads.filter((entry) => entry.thread_id !== before), payload.running)
           const after = useHarnessStore.getState().selectedThreadId
           if (after !== null && after !== before) harnessClient.selectThread(after)
+          const review = rackSelectionSurface.getSnapshot()
+          if (review?.kind !== 'module' || review.id !== 'thread_end') leaveArchivedThread()
         })
         .catch(() => undefined)
     }, 2_000)

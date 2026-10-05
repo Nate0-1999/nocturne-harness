@@ -757,12 +757,10 @@ export const useHarnessStore = create<HarnessStoreState>()(
             ...restored,
             ...state.catalog.filter((entry) => !restoredIds.has(entry.thread_id)),
           ]
-          // M3W6B-36: an archived thread is never the one the Conversation module opens on.
           const selectedThreadId = state.selectedThreadId !== null &&
-            catalog.some((entry) => entry.thread_id === state.selectedThreadId && !entry.archived)
+            catalog.some((entry) => entry.thread_id === state.selectedThreadId)
             ? state.selectedThreadId
-            : catalog.filter((entry) => !entry.archived)
-              .sort((left, right) => right.updated_at.localeCompare(left.updated_at))[0]?.thread_id ?? null
+            : catalog[0]?.thread_id ?? null
           // F179: only the selected thread's events reach this page (H7), so a thread left
           // mid-run keeps its last run until the daemon says it stopped; then it reads as after
           // a reload, and its card comes from the catalog.

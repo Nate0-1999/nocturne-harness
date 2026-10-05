@@ -1248,6 +1248,11 @@
   overflow-wrap: anywhere;
 }
 
+/* M3W6B-21: a long status line (a rewind's) wraps; the buttons beside it keep their size. */
+.composer__utility > :not(.composer__image-status) {
+  flex: none;
+}
+
 .composer textarea {
   display: block;
   width: 100%;
