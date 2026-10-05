@@ -403,6 +403,31 @@ class MemoryPanelController:
                 send=send,
             )
 
+    async def delete_from_gate(
+        self, thread_id: str, memory_id: UUID, send: EnvelopeSender
+    ) -> None:
+        """A-077 (F175): the gate's ×! is this panel's delete, at the current revision."""
+
+        request_id = self._factory.new_id()
+        try:
+            listed = await self._active_principal_memories()
+        except SpineClientError as exc:
+            await self._send_spine_error(thread_id, request_id, "delete", exc, send)
+            return
+        current = next((item for item in listed if item.memory_id == memory_id), None)
+        await self._patch(
+            thread_id=thread_id,
+            request_id=request_id,
+            payload=MemoryPanelDeletePayload(
+                action="delete",
+                memory_id=memory_id,
+                expected_revision=current.revision if current is not None else 1,
+            ),
+            operation="delete",
+            result="deleted",
+            send=send,
+        )
+
     async def publish_ambient(self, thread_id: str, send: EnvelopeSender) -> None:
         """Publish an unsolicited authoritative panel refresh after re-scoring."""
 

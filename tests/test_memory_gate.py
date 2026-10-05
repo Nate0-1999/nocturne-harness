@@ -964,6 +964,58 @@ async def test_near_miss_never_preserves_committed_context_and_exclusion() -> No
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("commit_fails", [False, True])
+async def test_gate_delete_runs_the_panel_delete_after_a_successful_commit(
+    commit_fails: bool,
+) -> None:
+    """F175 / A-077: Yes on the gate's ×! deletes like the memory panel, once the commit holds;
+    it was a never veto, so the memory stayed active and the next gate offered it again.
+    """
+    injected_id = UUID("72345678-1234-5678-1234-567812345678")
+    near_id = UUID("82345678-1234-5678-1234-567812345678")
+    spine = RecordingSpine(fail_commit=commit_fails)
+    spine.prepare_response = spine.prepare_response.model_copy(
+        update={
+            "injected": [scored_card(injected_id, label="Wrong", body="Delete me.", rank=1)],
+            "near_misses": [scored_card(near_id, label="Old", body="Delete me too.", rank=2)],
+        }
+    )
+    deletes: list[tuple[str, UUID]] = []
+
+    async def delete_memory(thread_id: str, memory_id: UUID) -> None:
+        deletes.append((thread_id, memory_id))
+
+    runner = MemoryGateTurnRunner(
+        RecordingDelegate(),
+        spine,
+        context_factory(spine),
+        model_context_tokens=1_000_000,
+        delete_memory=delete_memory,
+    )
+    emitted = RecordingEmitter()
+    turn = asyncio.create_task(
+        runner.run(thread_id=THREAD_ID, prompt="hello", message_history=(), emit=emitted)
+    )
+    await asyncio.wait_for(emitted.opened.wait(), 1)
+    assert emitted.decision is not None
+    emitted.decision.set_result(
+        GateCommitPayload(
+            run_id=RUN_ID,
+            injection_id=INJECTION_ID,
+            removed=[
+                {"memory_id": injected_id, "reason": "never"},
+                {"memory_id": near_id, "reason": "never"},
+            ],
+            added_back=[],
+            deleted=[injected_id, near_id],
+        )
+    )
+    await asyncio.wait_for(turn, 1)
+
+    assert deletes == ([] if commit_fails else [(THREAD_ID, injected_id), (THREAD_ID, near_id)])
+
+
+@pytest.mark.asyncio
 async def test_wrong_removal_stays_paused_until_current_unit_is_edited() -> None:
     """A-030 is defended by verifying that wrong removal stays paused until current unit is
     edited; this prevents drift in the first-gate and per-message memory selection contract.

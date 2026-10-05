@@ -471,6 +471,8 @@ class GateCommitPayload(_ExtensiblePayload):
     removed: list[RemovedMemory]
     added_back: list[UUID]
     wrong_resolution: WrongResolution | None = None
+    # A-077 (F175): ×! answered Yes; the daemon runs the memory panel's delete for each.
+    deleted: list[UUID] = Field(default_factory=list, exclude_if=lambda value: not value)
 
 
 class GateDismissPayload(_ExtensiblePayload):

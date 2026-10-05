@@ -41,6 +41,7 @@ from harness.tools_memory import MemoryToolContext, render_spine_error
 
 type ContextFactory = Callable[[str], MemoryToolContext]
 type ContextChanged = Callable[[str], Awaitable[None]]
+type DeleteMemory = Callable[[str, UUID], Awaitable[None]]
 
 _MEMORY_UNAVAILABLE_MESSAGE = "Memory is unavailable; continuing without injected context."
 
@@ -194,6 +195,7 @@ class MemoryGateTurnRunner:
         model_context_tokens: int,
         contexts: ThreadMemoryContextRegistry | None = None,
         on_context_changed: ContextChanged | None = None,
+        delete_memory: DeleteMemory | None = None,
     ) -> None:
         self._delegate = delegate
         self._spine = spine
@@ -201,6 +203,7 @@ class MemoryGateTurnRunner:
         self._model_context_tokens = model_context_tokens
         self._contexts = contexts or ThreadMemoryContextRegistry()
         self._on_context_changed = on_context_changed
+        self._delete_memory = delete_memory
         self._attempted_threads: set[str] = set()
 
     async def run_workflow(self, *, memory_scope: str, **kwargs) -> TurnOutcome:
@@ -341,7 +344,7 @@ class MemoryGateTurnRunner:
                 image=image,
             )
 
-        removed, added_back = [], []
+        removed, added_back, deleted = [], [], []
         # M3EX-04: a gate with nothing to review never holds the first turn.
         if prepared.injected or prepared.near_misses:
             decision = await emit.open_gate(
@@ -354,6 +357,7 @@ class MemoryGateTurnRunner:
                 }
             )
             removed, added_back = decision.removed, decision.added_back
+            deleted = decision.deleted
         excluded_memory_ids = frozenset(item.memory_id for item in removed)
 
         try:
@@ -398,6 +402,11 @@ class MemoryGateTurnRunner:
                 model_resolution=model_resolution,
                 image=image,
             )
+
+        # A-077 (F175): ×! deletes through the memory panel's own path, after the commit.
+        if self._delete_memory is not None:
+            for memory_id in deleted:
+                await self._delete_memory(thread_id, memory_id)
 
         for wrong in committed.wrong_removed:
             await self._resolve_wrong_memory(

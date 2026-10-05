@@ -1068,6 +1068,13 @@ def create_dev_app(
             lambda envelope: loop.publish(thread_id, envelope),
         )
 
+    async def delete_memory_from_gate(thread_id: str, memory_id: UUID) -> None:
+        await panel.delete_from_gate(
+            thread_id,
+            memory_id,
+            lambda envelope: loop.publish(thread_id, envelope),
+        )
+
     extraction = ExtractionService(
         journal=journal,
         agent=owned_agent,
@@ -1090,6 +1097,7 @@ def create_dev_app(
         model_context_tokens=configured.model_context_tokens,
         contexts=memory_contexts,
         on_context_changed=publish_ambient_memory_panel,
+        delete_memory=delete_memory_from_gate,
     )
 
     def browser_consent_was_journaled(thread_id: str) -> bool:

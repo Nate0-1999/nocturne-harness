@@ -1796,7 +1796,12 @@ class RunLoop:
     ) -> bool:
         # WALL Palace writes / A-023: commit only cards/revisions presented in this owner gate.
         if gate.stage == "wrong_resolution":
-            if decision.removed or decision.added_back or decision.wrong_resolution is None:
+            if (
+                decision.removed
+                or decision.added_back
+                or decision.deleted
+                or decision.wrong_resolution is None
+            ):
                 return False
             current = gate.wrong_removed[0]
             resolution = decision.wrong_resolution
@@ -1816,6 +1821,12 @@ class RunLoop:
         injected = {card.memory_id for card in gate.injected}
         near_misses = {card.memory_id for card in gate.near_misses}
         if not set(added_back).issubset(near_misses):
+            return False
+        # A-077: a deleted memory also leaves this thread, so it is a never removal here.
+        never = {item.memory_id for item in decision.removed if item.reason.value == "never"}
+        if len(set(decision.deleted)) != len(decision.deleted) or not never.issuperset(
+            decision.deleted
+        ):
             return False
         return all(
             item.memory_id in injected
