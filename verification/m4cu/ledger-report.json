@@ -1,0 +1,498 @@
+{
+  "packet": "M4CU",
+  "mode": "builder",
+  "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
+  "ledger_sha256": "8dd95b630fceef27b198347a6cada65973dcb97d432450649850be52b9548e88",
+  "diffs": [
+    {
+      "repo": "harness",
+      "base": "8a8967c318ace8d41b5858083dfcfd9f0f3186c0",
+      "head": "6c3e0b0e4f11b60b732752278716a9004664e708"
+    }
+  ],
+  "unmapped": {
+    "harness/DECISIONS.md": "Concise rationale for the scoped curator changes; no runtime behavior.",
+    "harness/src/harness/__init__.py": "Paired package or additive API-contract metadata for the curator report summary; no separate feature.",
+    "harness/web/dist/assets/index-BLhyLuTq.js": "Generated browser bundle for the mapped source changes; no separate feature.",
+    "harness/web/dist/assets/index-DYpA5U50.js": "Generated browser bundle for the mapped source changes; no separate feature.",
+    "harness/web/dist/index.html": "Generated browser bundle for the mapped curator UI changes; source paths carry the feature impact.",
+    "harness/verification/m4cu/FL-116.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-117.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-115.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-110.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-104.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-138.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-139.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-105.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-111.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-107.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-113.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-112.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-015.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-201.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-173.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-199.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-170.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-171.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-168.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-197.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-034.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-035.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-009.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-141.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-194.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-037.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-036.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-142.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-191.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-184.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-190.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-186.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-192.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-193.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-187.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-123.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-108.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-120.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-041.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-069.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-119.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-118.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-124.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-130.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-132.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-046.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/FL-127.png": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/ledger-report.json": "Frozen packet evidence; no runtime behavior.",
+    "harness/verification/m4cu/SHA256SUMS": "Frozen packet evidence; no runtime behavior.",
+    "harness/docs/feature-ledger.yaml": "Refreshed frozen feature ledger from Garden; no runtime behavior.",
+    "harness/docs/frozen-law.json": "Refreshed frozen feature ledger from Garden; no runtime behavior."
+  },
+  "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
+  "rows": {
+    "FL-015": {
+      "label": "Constitution: Typed edges between memories (merged from, supersedes, contradicts, and richer kinds at creation and curation) with a depth-limited traversal for the graph and the scorer (SD-057).",
+      "walk": "Open the Memory Graph on a curated memory; typed edges (merged from, supersedes, contradicts) are drawn to its relatives.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-015.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-034": {
+      "label": "The curators deconflict, dedupe and remove slop, triggered by every n memory writes rather than by the clock, and run at the Palace's own location.",
+      "walk": "Add 25 memories to a palace holding near-duplicates; a curator pass runs on its own (every 25 admitted writes or 3 gate removals), finds the pair by near-identical relevance scores on the standard probe set as well as by embedding, and proposes one lossless combined memory; Palace State shows the pass and the palace's growth curve bending.",
+      "protected": true,
+      "verdict": "PASS",
+      "screenshot": "FL-034.png",
+      "flag": "",
+      "observed": "Three original browser cases automatically complete at 25 admitted writes, nominate the intended merge, record the actual model and refresh after approval. Three original API corpora prove identical four-probe pair evidence on repeated unchanged passes."
+    },
+    "FL-035": {
+      "label": "Constitution: A scripted pre-pass that writes a versioned Palace Health Report the curator must read before acting (v2.8\u20132.9 curator law).",
+      "walk": "Run a curator pass; its record shows the Palace Health Report it read first.",
+      "protected": true,
+      "verdict": "PASS",
+      "screenshot": "FL-035.png",
+      "flag": "",
+      "observed": "The versioned health report is read for each pass; release-original-9 through 11 prove identical probes and nominations, persisted keeps, a 25-pair cap and source-revision invalidation. Charged diagnostic corner only."
+    },
+    "FL-036": {
+      "label": "The curators have the right tools and standard procedures for their work, and act as surgeons: minimally invasive, targeting the root problem and letting the system sort out the symptoms.",
+      "walk": "Run a curator pass on a Palace with one duplicate pair; the pass touches only that pair and nothing else.",
+      "protected": true,
+      "verdict": "PASS",
+      "screenshot": "FL-036.png",
+      "flag": "",
+      "observed": "Three original browser corpora each queue only the intended pair; inspected final pool and ferry proposals retain their qualifiers. Three fee corpora produce contradict cards. Prior failed attempts remain recorded."
+    },
+    "FL-037": {
+      "label": "Constitution: Typed consolidation decisions: merge, new, contradict, supersede (curator spec).",
+      "walk": "Open a curator merge card: it shows the lossless combined memory beside its sources; approve, amend the text, or give feedback (which is recorded as a tuning signal); a typed merge / new / contradict / supersede verdict is visible on the card (owner, 2026-09-30).",
+      "protected": true,
+      "verdict": "PASS",
+      "screenshot": "FL-037.png",
+      "flag": "",
+      "observed": "Merge/contradiction corner: three final merge cards preserve sources, feedback records with an icon, owner amendment is saved and both sources retire. Three plain-fee corpora show contradict. Other verdict classes are not claimed."
+    },
+    "FL-041": {
+      "label": "Constitution: Curator autonomy earned per verdict class from your own approval record, with contradiction never graduating (gate-day).",
+      "walk": "Open Palace State; each verdict class shows whether it has graduated to auto-execute, and contradiction never does.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-041.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-069": {
+      "label": "The core tools every modern harness has: files, terminal, Chrome, skills, changing models, compaction (our own take), and interactions with common apps, taken from the most modular standard source.",
+      "walk": "Ask the agent to read a file, run a terminal command, open a page in the browser and use a skill; each works.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-069.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-104": {
+      "label": "A draft response to the final synthesis that you tweak and fire, after which the stack switches to the agent that has waited longest for your attention.",
+      "walk": "Tweak the draft on the top card and fire it; the stack moves to the agent that has waited longest.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-104.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-105": {
+      "label": "An Ableton-like rack: the shipped layout is only version one of the default opinion, and people can easily roll and add their own plugins and visualizers to the views from the ground up.",
+      "walk": "Add a self-authored plugin to the rack; it appears among the modules and works.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-105.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-107": {
+      "label": "A plugin to change common model parameters such as top p and temperature, as an Ableton-style visualizer and input block.",
+      "walk": "Open the parameters dialog from the Model Device: it is compact and shows only the parameters the model in use supports (from the source's catalog); change temperature and the next turn's request carries the new value; switch to a model without top k and that control is gone.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-107.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-110": {
+      "label": "Global or current on every module; current modules switch together with the work.",
+      "walk": "Set two modules to current and select a different project; both switch together while a global one stays.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-110.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-111": {
+      "label": "One standard module template that can be dragged and grown or shrunk as much as you want, with a dialogue box for its internal settings, on a very large canvas you can pan and zoom while modules stay the same size.",
+      "walk": "Grow a module far past its starting size, open its settings dialogue, then zoom the canvas out; the module grew without a cap and keeps its size as the canvas zooms.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-111.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-112": {
+      "label": "Tabs as layers of the same stage; Injection and Graph as ordinary modules; a gear beside the title for rarely changed options.",
+      "walk": "Add a tab, place the Injection module on it, and open the gear beside the title; the tab is a layer of the same stage and the gear holds the rarely changed options.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-112.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-113": {
+      "label": "A finer, near-continuous background grid, more descriptive well-formatted hover tips, an easy way to create tabs, a much smaller archive button, a model device that is obviously clickable.",
+      "walk": "Hover a control on the stage; a well-formatted descriptive tip appears, the grid behind is near-continuous, a tab can be created easily, the archive button is small, and the model device looks clickable.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-113.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-115": {
+      "label": "Attunement to a specific stack beyond global and current.",
+      "walk": "Set a module to a specific stack; it shows it is aligned to that stack, not global or current.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-115.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-116": {
+      "label": "A module not set to global attunes by proximity, measured across tabs (a tab counting one unit) and grid position, ties picked at random, and it shows which thread or stack it is attuned to.",
+      "walk": "Drag a non-global module next to a different thread; its label changes to that thread's name.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-116.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-117": {
+      "label": "A proposed reply prefilled and editable; queued prompts advance on Enter with a scrollable queue.",
+      "walk": "Press Enter in the prefilled proposed reply; the next queued prompt comes up and the queue scrolls.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-117.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-119": {
+      "label": "A Palace State module holding the general state stats.",
+      "walk": "Open the Palace State module; the general state stats are there, not in the Spend table.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-119.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-120": {
+      "label": "One conversation module with stack and focused modes.",
+      "walk": "Toggle the conversation module between stack and focused; the one module shows the stack or a single thread.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-120.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-124": {
+      "label": "Threads removable or archivable; a back-to-the-stage control on every view.",
+      "walk": "Archive a thread: it leaves the list and the Conversation module, and a review opens with 'Back to stage'. Views that leave the stage carry a back control; the Memory Graph is a layer tab and needs none (gate, 2026-10-05, after both scouts).",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-124.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-127": {
+      "label": "Memories visualized in a cool tesseract-graph style.",
+      "walk": "Open the Memory Graph; memories render as a graph.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-127.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-130": {
+      "label": "A tree-search view reached by rotating the farm.",
+      "walk": "Select an agent in Farm and switch to Roots; the same selection survives. The switch replaces cube rotation under v2.119.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-130.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-132": {
+      "label": "A time-order control that highlights new roots and moves the panels to the longest-waiting response.",
+      "walk": "Click the time-order control; new roots highlight and the side panels move to the longest-waiting response.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-132.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-141": {
+      "label": "The visualization looks cool but is functional: it changes only when the underlying data or actual running processes change.",
+      "walk": "Leave the visualization open with the system idle; nothing moves until a real process such as a curator pass runs.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-141.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-197": {
+      "label": "Spend and Palace state reads use the calling principal; only the configured owner can request the whole Palace.",
+      "walk": "In a verification daemon, open Spend and Palace State and see only that principal's receipts and counts. In a local fixture, compare the configured owner's whole-Palace view. Request scope=palace as the verification principal and see a plain 403. Keep owner-rack captures out of evidence.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-197.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-171": {
+      "label": "A startup and settings option: \"Back up conversation transcripts to cloud?\"",
+      "walk": "Toggle \"Back up conversation transcripts to cloud?\" in the settings menu; the backup line changes, and the same question is asked at first startup.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-171.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-173": {
+      "label": "Constitution: a warming retry when the Palace is asleep, a \"busy, retrying\" banner on rate limits, and the banner clears on recovery (gate-day).",
+      "walk": "Start the Harness against a sleeping Palace; a warming line shows, then clears when the Palace answers.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-173.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-184": {
+      "label": "A distinct module for scheduled jobs that makes them easy to monitor; the best visualization is still to be worked out.",
+      "walk": "Open the scheduled-jobs module; every scheduled job is listed with its current state.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-184.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-187": {
+      "label": "Two repos, the spine (memory) and the Harness, not a mono repo.",
+      "walk": "List the repositories; the spine and the Harness are two separate git repos.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-187.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-190": {
+      "label": "The Harness can use skills and has the best and most common tools available, compiled from a list.",
+      "walk": "Ask the agent to use a skill in a thread; it loads the skill and follows it.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-190.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-191": {
+      "label": "The tools and skills Claude Code and Codex use on this machine, pinned to versioned open-source sources.",
+      "walk": "Open the tool inventory; each tool or skill lists the versioned open-source source it is pinned to.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-191.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-194": {
+      "label": "The Pydantic toolset and skills as the tool layer.",
+      "walk": "Open the agent's tool list in a thread; the tools come from the Pydantic toolset plus skills, not from pi.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-194.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-199": {
+      "label": "Icons on buttons for the common things people would understand: a button whose meaning has a known icon (send, stop, add, remove, delete, refresh, open, settings, play, pause) carries it; primary actions show icon and word, row actions the icon alone with a tip; unusual actions keep their word; one icon set across every module and theme.",
+      "walk": "Open any module; every common action (send, stop, add, remove, delete, refresh, open, settings, play, pause) has its icon from the one set in the theme's ink; primary buttons pair it with a word; row actions show the icon alone with a tip; an unusual action still reads as a word.",
+      "protected": true,
+      "verdict": "PASS",
+      "screenshot": "FL-199.png",
+      "flag": "",
+      "observed": "Three original browser cases show the approved amendment before manual Refresh, no active source cards, updated Palace State and Graph. Three further combined-build approval checks are recorded separately."
+    },
+    "FL-201": {
+      "label": "One scale across modules: an icon reused anywhere is one size, text of one role is one size and one font, and a box belongs only to an icon that is a button.",
+      "walk": "Measure every module: each reused icon renders at one size, each text role (module header, row label, body, caption, tip) at one size and font; markers and status glyphs stand bare, only icon buttons are boxed.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-201.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-009": {
+      "label": "Record files (history, transcripts) live apart from code so code can be deleted and re-downloaded without losing history.",
+      "walk": "Delete the code folder, reinstall, `nocturne up`; every thread is still there.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-009.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-046": {
+      "label": "A curation animation of its own, blended into the 3D palace.",
+      "walk": "Trigger a curator pass; the 3D Palace view animates the curation as it happens.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-046.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-108": {
+      "label": "Resizable modules and a plugin-contributor skill shipped with the repo.",
+      "walk": "Drag a module edge to resize it; it resizes, and the nocturne-plugin-contributor skill file is in the repo.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-108.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-118": {
+      "label": "Out Loud mode: responses are read aloud and listen-triggered dictation is a primary way in, equal to typing, not an add-on.",
+      "walk": "Toggle Out Loud; the answer is spoken; dictation fills the composer and sends on the trigger word.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-118.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-123": {
+      "label": "Each main cube view as its own module with its own 3D asset.",
+      "walk": "Open the module library; the farm, the roots and the palace are three separate modules, each a three.js scene driven by real data, each looking the part (v2.119).",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-123.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-138": {
+      "label": "The palace nebula (the memory palace visualization module) looks super liquid and smooth, with the upper end amazing and lesser hardware considered, and its colors and shapes change quickly when the user changes the axis connecting the memories.",
+      "walk": "Open the nebula on a palace with memories and change the axis; the colors and shapes change quickly.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-138.png",
+      "flag": "F131",
+      "observed": "Original scout confirms no axis control; time-order toggle is not the prescribed axis control. Retained outside this repair."
+    },
+    "FL-139": {
+      "label": "The 3D memory palace shows curation as it happens: curators combining and separating memories in real time, tied to live feeds.",
+      "walk": "Trigger a curator pass with the nebula open; memories visibly combine or separate as it runs.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-139.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-142": {
+      "label": "Constitution: A sheet mode: an annotated layout of the same views. (chat 2026-08-31 21:38:35)",
+      "walk": "Stage is the default face; switch to Sheet and the same views appear laid out with annotations on the plate's white ground; the choice is remembered (owner 2026-10-04: both stay, Stage the default).",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-142.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-168": {
+      "label": "A restore popup that asks whether to roll back these memories and lists them.",
+      "walk": "Press restore; a popup asks whether to roll back and lists the memories that would come back.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-168.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-170": {
+      "label": "A fresh reinstall that reconnects to existing files and auto-finds the cloud palace.",
+      "walk": "Reinstall on the same machine and run the start command; it finds the existing cloud Palace and the old threads without being told where they are.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-170.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-186": {
+      "label": "Build on Pydantic AI in a way that lets us modify and extend without waiting on them, passing features back and forth with their library.",
+      "walk": "Upgrade the Pydantic AI dependency; the Harness's own additions keep working and the new upstream features are usable.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-186.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-192": {
+      "label": "Swappable seams: router, model policy with an off-switch, toolset as a unit, memory system.",
+      "walk": "Change the toolset in config to a different one as a unit; the next thread's agent has that toolset's tools.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-192.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    },
+    "FL-193": {
+      "label": "The common core of terminal-agent tools (skills, progressive prompting, model switching, compaction, app interactions) in one piece that pulls upstream updates.",
+      "walk": "Update the shared core-tools piece to its newest upstream version; skills, model switching and the rest keep working in the Harness.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-193.png",
+      "flag": "F086",
+      "observed": "Outside the charged curator corner: the full prescribed feature was not independently walked. The image is module context only, not feature proof."
+    }
+  },
+  "not_run": []
+}
