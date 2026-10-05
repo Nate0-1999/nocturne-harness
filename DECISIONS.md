@@ -4033,3 +4033,17 @@ still carries it, and OpenRouter ignores what a model does not support.
 Top K never reached OpenRouter: the OpenAI-compatible client sends only the settings OpenAI
 defines, so a journaled top_k left as null. The OpenRouter adapter now puts it in the request
 body beside the session id; direct providers keep the plain setting.
+
+## M4GA — The gate deletes what it says [P1.2.1a]
+
+PRECEDENT: F175, FL-013, FL-033, A-019, A-072, A-077; M3UI's gate entry above.
+No commit between 0.1.45 and 0.1.56 broke the gate's delete: replaying the scouts' scripts on
+both releases left the memory active. M3UI (e35cc26, 0.1.30) wired ×! to the never veto because
+a scored card carries no revision; the 0.1.45 PASS checked the buttons, not the result. M3UI's
+"on the gate … it records the never veto" above no longer holds: Yes now puts the memory in
+gate.commit's `deleted`, and after the commit the daemon runs the memory panel's own delete at
+the current revision (A-077), so the gate and the panel share one delete and one reason.
+Near-miss cards carry ×, + and ×!. A confirm and the Wrong/Never chooser are a row under the
+card's buttons (MemoryCard `prompt`), never a popover over the memory text.
+With the Palace down the first turn opens no gate (A-019) and says "Memory is unavailable";
+the same run's spend notice used to replace that line within seconds, so it now keeps it.
