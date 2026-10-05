@@ -85,7 +85,8 @@ async def test_seven_coding_tool_outputs_are_explicit(tmp_path: Path) -> None:
 
 def test_exact_movement_law_is_model_visible() -> None:
     """P1, D.2 141 and v2.125 (D.2 168) sharpen the prompt: bash keeps its subtree except git.
-    M3CL2 (M3W5B-06, Codex M3W5A-03/-13) adds: no invented results, a change is made."""
+    M3CL2 (M3W5B-06, Codex M3W5A-03/-13) adds: no invented results, a change is made.
+    M4AH (M3W6A, M3W6B-16) adds: the browser tools are always loaded, not a capability."""
 
     assert WORKSPACE_INSTRUCTIONS == (
         "To edit or write a file, you must use move in its own tool step to enter that file's "
@@ -96,8 +97,9 @@ def test_exact_movement_law_is_model_visible() -> None:
         "Never ask a permission question in chat. "
         "The PermissionJudge handles outside-file requests. "
         "Reserved owner decisions go to the Deck. Never retry around a refused wall. "
-        "Browser tools are headless and default to localhost or files "
-        "beneath the current location. Never ask the owner for consent inside a tool call; a "
+        "The browser tools (navigate, read_page, type, click, screenshot) are always loaded, "
+        "not a capability to load. They are headless and default to localhost or files beneath "
+        "the current location. Never ask the owner for consent inside a tool call; a "
         "refused open-web request must wait for the owner's exact `/browser allow-web` command. "
         "Report only what tool results showed: never say you moved, changed or ran something "
         "without its tool result, and when a search finds nothing, say so instead of naming "

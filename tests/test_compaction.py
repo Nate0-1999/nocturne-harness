@@ -268,9 +268,9 @@ def _delegating_parent(parent_returns, json_args='{"task":"Report evidence"}'):
     return parent
 
 
-async def _delegate_turn(tmp_path, model, *, context_tokens=2000):
+async def _delegate_turn(tmp_path, model, *, context_tokens=2000, deps=None):
     agent = HarnessAgent(settings(), model=model)
-    deps = context()
+    deps = deps or context()
     journal = TranscriptJournal(tmp_path / "journal")
     journal.append_thread_context(str(deps.thread_id), "project-1")
     service = ExtractionService(
@@ -298,6 +298,37 @@ async def _delegate_turn(tmp_path, model, *, context_tokens=2000):
         for line in journal.path_for_thread(str(deps.thread_id)).read_text().splitlines()
     ]
     return emit, rows, tracker.snapshot(str(deps.thread_id))
+
+
+@pytest.mark.asyncio
+async def test_a_sent_back_worker_cannot_write(tmp_path):
+    """M3W6B-18: a sub-agent sent back to shorten wrote a new file into the project although
+    told not to; a send-back runs with the worker's tools off. [SPEC D.2 153]"""
+    from harness.toolset import open_standard_toolset
+
+    project = tmp_path / "project"
+    project.mkdir()
+    toolset = await open_standard_toolset(cwd=project, workspace_root=project)
+
+    def worker(messages, info):
+        if isinstance(messages[-1].parts[-1], ToolReturnPart):
+            return ModelResponse([TextPart("short")])
+        if _last_prompt(messages).startswith("Your return is"):
+            write = {"path": "bulk.txt", "content": "bulk"}
+            return ModelResponse([ToolCallPart("write", write, tool_call_id="bulk")])
+        return ModelResponse([TextPart("worker evidence " * 6000)])
+
+    try:
+        model = FunctionModel(function=worker, stream_function=_delegating_parent([]))
+        emit, _rows, _snapshot = await _delegate_turn(
+            tmp_path, model, deps=context(toolset=toolset)
+        )
+    finally:
+        await toolset.close()
+
+    worker_event = next(event for event in emit.events if event["event_kind"] == "worker_return")
+    assert worker_event["send_backs"] == 1
+    assert not (project / "bulk.txt").exists()
 
 
 def _last_prompt(messages):
@@ -344,11 +375,12 @@ async def test_large_worker_return_is_sent_back_twice_then_cut_with_a_head(tmp_p
     assert len(parent_returns) == 1
     delivered = parent_returns[0].content
     assert delivered.startswith(
-        f"Not delivered: this sub-agent return is {size:,} tokens; its share is 160 tokens "
+        f"Not delivered for its size: this sub-agent return is {size:,} tokens; its share is "
+        "160 tokens "
         "(10% of the 1,600-token compaction limit). The full text is in the conversation "
         "journal.\nHead:\n"
     )
-    assert delivered.endswith("[... page text truncated at 240 characters]")
+    assert delivered.endswith("\n[the rest was not delivered for its size]")
     assert cl100k_token_count(delivered) < 160
     assert not any(event["event_kind"].startswith("compaction") for event in emit.events)
     worker_event = next(event for event in emit.events if event["event_kind"] == "worker_return")
@@ -446,11 +478,11 @@ async def test_query_result_over_its_share_is_refused_with_a_brief_head():
     )
     assert seen[0].content == cut_notice(recorded[0][0], "page text " * 2000, journaled=True)
     assert seen[0].content.startswith(
-        "Not delivered: this result is 4,001 tokens; its share is 160 tokens "
+        "Not delivered for its size: this result is 4,001 tokens; its share is 160 tokens "
         "(10% of the 1,600-token compaction limit). The full text is in the conversation "
         "journal.\nHead:\npage text page text"
     )
-    assert seen[0].content.endswith("[... page text truncated at 240 characters]")
+    assert seen[0].content.endswith("\n[the rest was not delivered for its size]")
     assert (recorded[0][0].kind, recorded[0][0].source, recorded[0][1]) == (
         "query",
         "probe",

@@ -23,7 +23,8 @@ from harness.model_policy import parse_model_policy
 from harness.supervisor import SupervisorError, WorkerSupervisor
 
 _IDENTITY = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}\Z")
-_SAFE_ENVIRONMENT = ("PATH", "LANG", "LC_ALL", "TMPDIR")
+# F177 (M4AH): workers and judges keep the app's home; it names a folder, not a secret.
+_SAFE_ENVIRONMENT = ("PATH", "LANG", "LC_ALL", "TMPDIR", "NOCTURNE_HOME")
 
 
 class ConductorError(RuntimeError):

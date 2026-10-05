@@ -29,7 +29,10 @@ WORKSPACE_INSTRUCTIONS = (
     "before following its instructions or reading its bundled resources. "
     "Never ask a permission question in chat. The PermissionJudge handles outside-file requests. "
     "Reserved owner decisions go to the Deck. Never retry around a refused wall."
-    " Browser tools are headless and default to localhost or files beneath the current location."
+    # M4AH walk: gpt-4.1-mini looked for a "browser" capability to load and ended the turn.
+    " The browser tools (navigate, read_page, type, click, screenshot) are always loaded, not a"
+    " capability to load. They are headless and default to localhost or files beneath the"
+    " current location."
     " Never ask the owner for consent inside a tool call; a refused open-web request must wait"
     " for the owner's exact `/browser allow-web` command."
     # M3W5B-06, Codex M3W5A-03 and -13: no invented results, no plan in place of a change.
@@ -102,7 +105,8 @@ class FinishWhatWasAsked(Capability[MemoryToolContext]):
             self.sent
             or last
             or response.tool_calls
-            or not (untried or _PROMISED_WORK.search(response.text[-400:]))
+            # M4AH walk: claude-opus-5.5 sent a response with no text; the turn crashed here.
+            or not (untried or _PROMISED_WORK.search((response.text or "")[-400:]))
         ):
             return response
         self.sent = True
@@ -136,7 +140,7 @@ class FinishFactCheck(Capability[MemoryToolContext]):
         fresh = ctx.usage.tool_calls > self.tool_calls
         if self.sent >= 2 or not fresh or last or response.tool_calls:
             return response
-        account = self.account(response.text)
+        account = self.account(response.text or "")
         if account is None:
             return response
         self.sent += 1
@@ -441,22 +445,27 @@ async def _execute_browser_tool(
 
 
 async def navigate(ctx: RunContext[MemoryToolContext], url: str) -> str | ToolReturn:
-    """Open an allowed URL in this thread's headless browser."""
+    """Open a page in this thread's headless browser: an allowed URL, or a file in the current
+    folder by its path (page.html). When the user asks to open or view something in the
+    browser, use this; reading the file with the file tool is not opening it."""
     return await _execute_browser_tool(ctx, "navigate", {"url": url})
 
 
 async def click(ctx: RunContext[MemoryToolContext], selector: str) -> str | ToolReturn:
-    """Click one element selected with a Playwright locator string."""
+    """Click one element: a selector from read_page's fields and buttons, or any Playwright
+    locator string."""
     return await _execute_browser_tool(ctx, "click", {"selector": selector})
 
 
 async def type(ctx: RunContext[MemoryToolContext], selector: str, text: str) -> str | ToolReturn:
-    """Replace the value of one selected form field."""
+    """Replace the value of one form field: a selector from read_page's fields and buttons, or
+    any Playwright locator string."""
     return await _execute_browser_tool(ctx, "type", {"selector": selector, "text": text})
 
 
 async def read_page(ctx: RunContext[MemoryToolContext]) -> str | ToolReturn:
-    """Read the current page URL, title, and visible body text."""
+    """Read the current page URL, title, visible body text, and its fields and buttons with the
+    selectors type and click take."""
     return await _execute_browser_tool(ctx, "read_page", {})
 
 
@@ -465,6 +474,7 @@ async def screenshot(ctx: RunContext[MemoryToolContext]) -> str | ToolReturn:
     return await _execute_browser_tool(ctx, "screenshot", {})
 
 
+BROWSER_TOOLS = (navigate, click, type, read_page, screenshot)
 WORKSPACE_TOOLS = (
     read,
     edit,
@@ -477,11 +487,7 @@ WORKSPACE_TOOLS = (
     read_shell,
     stop_shell,
     move,
-    navigate,
-    click,
-    type,
-    read_page,
-    screenshot,
+    *BROWSER_TOOLS,
 )
 
 
@@ -493,7 +499,11 @@ class WorkspaceCapability(Capability[MemoryToolContext]):
             id="workspace",
             defer_loading=False,
             instructions=[WORKSPACE_INSTRUCTIONS],
-            tools=[Tool(function) for function in WORKSPACE_TOOLS],
+            # M4AH walk: type, click, read_page and screenshot sent in one response ran at once,
+            # so the read finished before the click; browser steps run one at a time, in order.
+            tools=[
+                Tool(function, sequential=function in BROWSER_TOOLS) for function in WORKSPACE_TOOLS
+            ],
         )
 
 

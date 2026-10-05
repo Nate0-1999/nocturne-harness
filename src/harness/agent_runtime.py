@@ -116,6 +116,7 @@ logger = logging.getLogger(__name__)
 
 _INTERRUPTED_TOOL_CONTENT = "Tool execution interrupted by run cancellation."
 _MEMORY_BLOCK_OPEN = "<memory_system>\n"
+_FACT_CHECK_ACK = "Checked"
 _MEMORY_BLOCK_CLOSE = "\n</memory_system>"
 _MAX_PROVIDER_MESSAGE = 1_000
 
@@ -279,12 +280,17 @@ class PydanticAITurnRunner:
                 await emit.text(message)
                 usage = _usage_snapshot(run_usage)
                 await bridge.publish_usage(usage)
+                # M3W6B-13: after a typed /move the agent answered from its earlier folder four
+                # times in four; the move and its result stay in what the model reads next.
                 return TurnOutcome(
                     StopReason("end_turn"),
-                    prior_history,
+                    (
+                        *prior_history,
+                        ModelRequest(parts=[UserPromptPart(prompt)]),
+                        ModelResponse(parts=[TextPart(message)]),
+                    ),
                     usage,
                     assistant_text=message,
-                    model_visible=False,
                 )
             if prompt == "/compact" or prompt.startswith("/compact "):
                 if compaction is None:
@@ -388,7 +394,13 @@ class PydanticAITurnRunner:
                     for attempt in range(1, 4):
                         result = await self._agent.worker_agent.run(
                             prompt,
-                            deps=worker_context,
+                            # M3W6B-18: a sent-back worker wrote a new file though told not to;
+                            # it only shortens its return, with its tools off.
+                            deps=(
+                                worker_context
+                                if attempt == 1
+                                else replace(worker_context, toolset=None)
+                            ),
                             model=selected_model,
                             model_settings=model_settings,
                             usage=run_usage,
@@ -589,9 +601,9 @@ class PydanticAITurnRunner:
                 created_at=self._clock(),
             )
             if (receipt := account(visible_output)) is not None:
-                # The gate's 2026-10-01 ruling: the turn ends on an account the loop checked.
-                await emit.text(f"\n\n{receipt}")
-                visible_output = f"{visible_output}\n\n{receipt}"
+                # The gate's 2026-10-01 ruling: the turn ends on an account the loop checked;
+                # M3W6B-22: it is a status line under the answer, not words in it.
+                await emit.event({"event_kind": "fact_check", "account": receipt})
             usage = _usage_snapshot(result.usage)
             await bridge.publish_usage(usage)
             history = tuple(result.all_messages())
@@ -656,8 +668,7 @@ class PydanticAITurnRunner:
                     created_at=self._clock(),
                 )
                 if (receipt := account(visible)) is not None:
-                    await emit.text(f"\n\n{receipt}")
-                    visible = f"{visible}\n\n{receipt}"
+                    await emit.event({"event_kind": "fact_check", "account": receipt})
                 return TurnOutcome(
                     StopReason("end_turn"), tuple(captured), usage, assistant_text=visible
                 )
@@ -1034,13 +1045,33 @@ class _AnswerText:
         self._part_answered = False
         self._new_part = False
         self._raw_tail = ""
+        self._ack: str | None = None
 
-    def start_part(self) -> None:
+    def start_part(self) -> str:
+        shown = self._settle_ack()
         self._new_part = True
+        # M3W6B-22: answers ended "Checked." — the fact check's acknowledgement, not an answer.
+        # A part after shown text is held while it could still be that bare word.
+        self._ack = "" if self.visible.strip() else None
+        return shown
+
+    def _settle_ack(self) -> str:
+        held, self._ack = self._ack, None
+        if held is None or held.split(BLOCK_OPEN, 1)[0].strip().rstrip(".") == _FACT_CHECK_ACK:
+            return ""
+        return self.feed(held)
 
     def feed(self, value: str) -> str:
         """Accept raw model text and return what became visible."""
 
+        if self._ack is not None:
+            self._ack += value
+            head = self._ack.split(BLOCK_OPEN, 1)[0]
+            if BLOCK_OPEN not in self._ack:
+                head = head[: len(head) - _marker_prefix_suffix_length(head, BLOCK_OPEN)]
+            if f"{_FACT_CHECK_ACK}.".startswith(head.strip()):
+                return ""
+            value, self._ack = self._ack, None
         if self._new_part and value:
             # M3EX-06: text on either side of a tool step reads as two paragraphs.
             if self._raw_tail and not self._raw_tail.isspace() and not value[0].isspace():
@@ -1054,9 +1085,10 @@ class _AnswerText:
     def flush(self) -> str:
         """Release held text at the end of the run; an unclosed block stays hidden."""
 
+        acknowledged = self._settle_ack()
         tail = self._model_text.pending if self._model_text.closing is None else ""
         self._model_text = _VisibleModelText()
-        shown = self._accept(tail)
+        shown = acknowledged + self._accept(tail)
         if not self._in_block:
             shown += self._show(self._pending)
         self._pending = ""
@@ -1111,7 +1143,7 @@ class _EventBridge:
     ) -> None:
         async for event in events:
             if isinstance(event, PartStartEvent) and isinstance(event.part, TextPart):
-                self._answer.start_part()
+                await self._publish_visible(self._answer.start_part())
                 if event.part.content:
                     await self._accept_text(event.part.content)
             elif isinstance(event, PartDeltaEvent) and isinstance(event.delta, TextPartDelta):

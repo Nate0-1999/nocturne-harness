@@ -60,6 +60,14 @@ from harness.spine_client import (
 )
 from harness.transcript import TranscriptJournal
 
+
+@pytest.fixture(autouse=True)
+def scratch_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """F170: six dev-app tests opened the owner's ~/.nocturne/visualization.sqlite3; every
+    test here starts in a scratch home unless it names its own."""
+    monkeypatch.setenv("NOCTURNE_HOME", str(tmp_path / "scratch-home"))
+
+
 PROMPT_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV"
 SECOND_PROMPT_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAW"
 CANCEL_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAX"
@@ -1330,6 +1338,9 @@ def test_dev_app_wires_the_real_streaming_agent_adapter(
     async def stream(_messages, _info):
         yield "wired response"
 
+    # M3W6B-60: set before the settings read it, so an outer NOCTURNE_HOME never wins.
+    state_home = tmp_path / "state"
+    monkeypatch.setenv("NOCTURNE_HOME", str(state_home))
     settings = HarnessSettings(
         _env_file=None,
         spine_token="test-token",
@@ -1342,9 +1353,6 @@ def test_dev_app_wires_the_real_streaming_agent_adapter(
         openrouter_api_key=None,
     )
     agent = HarnessAgent(settings, model=FunctionModel(stream_function=stream))
-    state_home = tmp_path / "state"
-    monkeypatch.setenv("NOCTURNE_HOME", str(state_home))
-    settings.nocturne_home = state_home
     app = create_dev_app(
         tmp_path,
         settings=settings,

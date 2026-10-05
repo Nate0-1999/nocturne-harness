@@ -510,6 +510,109 @@ async def test_m3rl_private_tags_never_enter_stream_or_final_answer(opening, clo
 
 
 @pytest.mark.asyncio
+async def test_the_checkers_account_is_a_status_line_and_its_acknowledgement_is_not_shown(
+    tmp_path: Path,
+) -> None:
+    """M3W6B-22: answers ended with checker talk, "Checked." and "Checked by Nocturne, this
+    turn: not committed: ?? file". The account is an event the conversation shows under the
+    answer; the model's bare acknowledgement of it never enters the answer. [P3]"""
+    import subprocess
+
+    from pydantic_ai.messages import RetryPromptPart
+
+    for command in (["init", "-q"], ["config", "user.name", "t"], ["config", "user.email", "t@t"]):
+        subprocess.run(["git", "-C", str(tmp_path), *command], check=True)
+
+    async def stream(messages, _info):
+        latest = messages[-1].parts
+        if any(isinstance(part, RetryPromptPart) for part in latest):
+            yield "Check"
+            yield "ed."
+        elif any(isinstance(part, ToolReturnPart) for part in latest):
+            yield "I wrote note.txt."
+        else:
+            yield {
+                0: DeltaToolCall(
+                    name="write",
+                    json_args='{"path":"note.txt","content":"owner text\\n"}',
+                    tool_call_id="note",
+                )
+            }
+
+    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    emitter = RecordingEmitter()
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(toolset=toolset),
+    )
+    try:
+        outcome = await runner.run(
+            thread_id=str(THREAD_UUID),
+            prompt="Write my note.",
+            message_history=(),
+            emit=emitter,
+        )
+    finally:
+        await toolset.close()
+
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert outcome.assistant_text == "I wrote note.txt."
+    assert "".join(emitter.texts) == "I wrote note.txt."
+    assert [e for e in emitter.events if e["event_kind"] == "fact_check"] == [
+        {
+            "event_kind": "fact_check",
+            "account": "Checked by Nocturne, this turn: not committed: ?? note.txt.",
+        }
+    ]
+    now = datetime.now(UTC)
+    block = '<nocturne-proposed-response>{"primary":"Ok"}'
+    acknowledgements = ("Checked.", "Checked", f"Checked.\n{block}")
+    for answer in acknowledgements:
+        bridge = _EventBridge(RecordingEmitter())
+        assert await bridge.finalize(["Done.", answer], run_id="t", created_at=now) == "Done."
+    bridge = _EventBridge(RecordingEmitter())
+    assert (
+        await bridge.finalize(["Done.", "Checkout works."], run_id="t", created_at=now)
+        == "Done.\n\nCheckout works."
+    )
+
+
+@pytest.mark.asyncio
+async def test_browser_steps_sent_together_run_in_the_order_given() -> None:
+    """M3W6A: no scout could fill a form. On the walk of the fix, type, click, read_page and
+    screenshot sent in one response ran at once and the read finished before the click; browser
+    steps now run one at a time, in order. [SPEC C.7]"""
+
+    @dataclass
+    class SlowTypingToolset(RecordingWorkspaceToolset):
+        async def execute(self, tool_name, arguments):
+            if tool_name == "type":
+                await asyncio.sleep(0.2)
+            return await super().execute(tool_name, arguments)
+
+    async def stream(messages, _info):
+        if any(isinstance(part, ToolReturnPart) for part in messages[-1].parts):
+            yield "Filled."
+        else:
+            yield {
+                0: DeltaToolCall("type", '{"selector":"#marker","text":"CEDAR"}', tool_call_id="t"),
+                1: DeltaToolCall("click", '{"selector":"#reveal"}', tool_call_id="c"),
+                2: DeltaToolCall("read_page", "{}", tool_call_id="r"),
+            }
+
+    toolset = SlowTypingToolset()
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(toolset=toolset),
+    )
+    await runner.run(
+        thread_id=str(THREAD_UUID), prompt="Fill it.", message_history=(), emit=RecordingEmitter()
+    )
+
+    assert [name for name, _arguments in toolset.calls] == ["type", "click", "read_page"]
+
+
+@pytest.mark.asyncio
 async def test_m3fz_text_tool_text_keeps_the_whole_answer_and_terminal_proposal() -> None:
     """PLAN M3FZ / F068: text before a tool and its closing answer form one complete turn."""
 
@@ -2259,7 +2362,9 @@ async def test_tool_cleanup_exception_cannot_mask_cancelled_history_repair() -> 
 @pytest.mark.asyncio
 async def test_a_bare_move_command_moves_or_says_why_without_the_model(tmp_path: Path) -> None:
     """Codex M3W5A-03: two bare /move requests got 'Moved' prose while WHERE stayed put. The
-    command now moves through the tool layer, or says why it cannot; no model request runs. [P3]"""
+    command now moves through the tool layer, or says why it cannot; no model request runs.
+    M3W6B-13: after a typed /move the agent still answered its earlier folder; the move and its
+    result now stay in the history the model reads next. [P3]"""
 
     workspace = tmp_path / "workspace"
     (workspace / "docs").mkdir(parents=True)
@@ -2292,6 +2397,10 @@ async def test_a_bare_move_command_moves_or_says_why_without_the_model(tmp_path:
     assert bare == "Use /move <folder> with a folder inside this thread's workspace."
     assert where == (workspace / "docs").resolve()
     assert all(outcome.usage.requests == 0 for outcome in outcomes)
+    assert [part.content for message in outcomes[0].message_history for part in message.parts] == [
+        "/move docs",
+        moved,
+    ]
 
 
 @pytest.mark.asyncio
@@ -2391,6 +2500,14 @@ async def test_an_answer_ending_in_a_promise_is_sent_back_once_to_finish() -> No
     honest = FinishWhatWasAsked()
     answered = await honest.after_model_request(tried, request_context=early, response=refusal)
     assert answered is refusal
+    # M4AH walk: claude-opus-5.5 sent a response with no text; the check passes it through.
+    silent = ModelResponse(parts=[])
+    assert (
+        await FinishWhatWasAsked().after_model_request(
+            tried, request_context=early, response=silent
+        )
+        is silent
+    )
 
 
 @pytest.mark.asyncio

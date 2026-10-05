@@ -21,7 +21,6 @@ from spine.tokens import cl100k_token_count
 
 from harness.memory_capability import DEFAULT_MEMORY_FEATURE
 from harness.model_policy import ThreadModelResolution
-from harness.pydantic_harness_adapter import truncate_head
 from harness.spine_client import MemoryAllocation
 
 _THRESHOLD_RATIO = 0.8
@@ -100,12 +99,14 @@ class OverwhelmSnapshot(BaseModel):
 def cut_notice(cut: ContextCut, text: str, *, journaled: bool) -> str:
     """The error a sender receives instead of an oversized return: size, share, brief head."""
     what = "sub-agent return" if cut.kind == "sub_agent" else "result"
+    # M3W6B-17: the head's "truncated" marker became "truncated" in the answer; Security says
+    # the result was refused for its size, and so does this notice, start to end.
     return (
-        f"Not delivered: this {what} is {cut.size_tokens:,} tokens; its share is "
+        f"Not delivered for its size: this {what} is {cut.size_tokens:,} tokens; its share is "
         f"{cut.share.tokens:,} tokens ({cut.share.percent:g}% of the "
         f"{cut.share.limit_tokens:,}-token compaction limit)."
         + (" The full text is in the conversation journal." if journaled else "")
-        + f"\nHead:\n{truncate_head(text, _HEAD_CHARS)}"
+        + f"\nHead:\n{text[:_HEAD_CHARS]}\n[the rest was not delivered for its size]"
     )
 
 
@@ -132,7 +133,7 @@ def send_back_instruction(cut: ContextCut) -> str:
         f"({cut.share.percent:g}% of the {cut.share.limit_tokens:,}-token compaction limit). "
         f"Return it again shortened by exactly {cut.shorten_by:,} tokens "
         f"(about {cut.shorten_by * 4:,} characters). Keep findings, evidence paths and open "
-        "questions; move bulk to files."
+        "questions; your tools are off while you shorten it."
     )
 
 

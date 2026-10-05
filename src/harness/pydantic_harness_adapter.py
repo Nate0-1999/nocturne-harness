@@ -861,7 +861,8 @@ class PydanticHarnessToolset:
             "TMPDIR": str(self._scratch),
             "NO_COLOR": os.environ.get("NO_COLOR", "1"),
         }
-        for optional in ("LC_ALL", "TERM"):
+        # F177 (M4AH): code the agent runs reads the app's home, never the owner's ~/.nocturne.
+        for optional in ("LC_ALL", "TERM", "NOCTURNE_HOME"):
             if value := os.environ.get(optional):
                 environment[optional] = value
         shell = ShellToolset(

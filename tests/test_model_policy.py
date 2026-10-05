@@ -432,6 +432,7 @@ class FakeCatalog:
     calls: int = 0
     named_routes: dict[str, ModelRoute] | None = None
     named_calls: list[str] | None = None
+    unreachable: bool = False
 
     async def load(self) -> ModelCatalog:
         self.calls += 1
@@ -441,6 +442,8 @@ class FakeCatalog:
         if self.named_calls is None:
             self.named_calls = []
         self.named_calls.append(model_id)
+        if self.unreachable:
+            raise ModelCatalogUnavailable("OpenRouter model-list request failed")
         routes = self.value.model_routes if self.named_routes is None else self.named_routes
         route = routes.get(model_id)
         if route is None:
@@ -490,8 +493,16 @@ async def test_a_pinned_pick_other_than_the_configured_model_takes_its_own_conte
     """A-021: a new thread under pinned:<model> runs that model, so it takes that model's
     window — the configured model's 1,000,000 tokens once overstated gpt-4o-mini's 128,000.
     The benchmark table is still never consulted; only the pick's own route is read.
+    M3W6A: the route's image input is kept, so an image turn needs no second catalog fetch.
     """
-    table = FakeCatalog(catalog((), {"openai/gpt-4o-mini": 128_000}))
+    table = FakeCatalog(
+        catalog((), {}),
+        named_routes={
+            "openai/gpt-4o-mini": ModelRoute(
+                "openai/gpt-4o-mini", 128_000, frozenset({"text", "image"})
+            )
+        },
+    )
     resolver = ModelPolicyResolver(
         policy="pinned:openrouter:openai/gpt-4o-mini",
         static_model="openrouter:minimax/minimax-m3",
@@ -503,8 +514,40 @@ async def test_a_pinned_pick_other_than_the_configured_model_takes_its_own_conte
 
     assert resolved.model == "openrouter:openai/gpt-4o-mini"
     assert resolved.context_tokens == 128_000
+    assert await resolver.resolve_image_capability("new-thread", resolved) is resolved
+    assert resolved.input_modalities == frozenset({"text", "image"})
     assert table.calls == 0
     assert table.named_calls == ["openai/gpt-4o-mini"]
+
+
+@pytest.mark.asyncio
+async def test_image_input_the_catalog_confirmed_survives_an_unreachable_catalog() -> None:
+    """M3W6A: one failed model-list request refused an image for gpt-4.1-mini, which takes
+    images. A thread first resolved while the catalog is unreachable takes the catalog's
+    earlier word for the same model, with no new request. [A-052]"""
+    table = FakeCatalog(
+        catalog((), {}),
+        named_routes={
+            "openai/gpt-4.1-mini": ModelRoute(
+                "openai/gpt-4.1-mini", 1_047_576, frozenset({"text", "image"})
+            )
+        },
+    )
+    resolver = ModelPolicyResolver(
+        policy="pinned:openrouter:openai/gpt-4.1-mini",
+        static_model="openrouter:minimax/minimax-m3",
+        static_context_tokens=1_000_000,
+        catalog=table,
+    )
+    await resolver.resolve("first-thread")
+    table.unreachable = True
+
+    later = await resolver.resolve("later-thread")
+    checked = await resolver.resolve_image_capability("later-thread", later)
+
+    assert later.input_modalities is None
+    assert checked.input_modalities == frozenset({"text", "image"})
+    assert table.named_calls == ["openai/gpt-4.1-mini", "openai/gpt-4.1-mini"]
 
 
 @pytest.mark.asyncio

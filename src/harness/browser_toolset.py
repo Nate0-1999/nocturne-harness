@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import ipaddress
 from collections.abc import Callable, Mapping
+from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import unquote, urlparse
@@ -22,6 +23,23 @@ from harness.toolset import AgentLocation, ToolExecutionResult, ToolName, Toolse
 
 _BROWSER_TOOLS = frozenset({"navigate", "click", "type", "read_page", "screenshot"})
 _MAX_PAGE_TEXT = 20_000
+# M3W6A (three of three): asked to fill a form, the agent guessed input[name='Marker'] for a field
+# read_page showed only as "Marker"; the page's fields and buttons now come with selectors.
+_CONTROLS = """() => [...document.querySelectorAll(
+  'input:not([type=hidden]), textarea, select, button, a[href], [role=button]'
+)].filter(el => el.getClientRects().length).slice(0, 50).map(el => {
+  const tag = el.tagName.toLowerCase(), type = (el.getAttribute('type') || '').toLowerCase()
+  const button = tag === 'button' || el.getAttribute('role') === 'button'
+    || ['button', 'submit'].includes(type)
+  const kind = tag === 'a' ? 'link' : tag === 'select' ? 'choice' : button ? 'button'
+    : ['checkbox', 'radio'].includes(type) ? type : 'text field'
+  const name = (el.labels?.[0]?.innerText || el.getAttribute('aria-label') || el.placeholder
+    || el.innerText || el.value || '').trim().slice(0, 60)
+  const selector = el.id ? '#' + CSS.escape(el.id)
+    : el.name ? `${tag}[name="${el.name}"]`
+      : `${tag} >> nth=${[...document.querySelectorAll(tag)].indexOf(el)}`
+  return `- ${kind} "${name}": ${selector}`
+})"""
 
 
 @dataclass(slots=True)
@@ -75,14 +93,18 @@ class BrowserToolset:
         if not self.owns(tool_name):
             raise ValueError(f"unsupported browser tool: {tool_name}")
         thread_id = _required_string(arguments, "_thread_id")
+        url = None
         if tool_name == "navigate":
-            self._require_allowed_url(_required_string(arguments, "url"), thread_id)
+            url = _required_string(arguments, "url")
+            if not urlparse(url).scheme:
+                # M3W6B-16: "open page.html in your browser" names a file in the current folder.
+                url = (self._location().cwd / url).resolve().as_uri()
+            self._require_allowed_url(url, thread_id)
         owned = await self._thread(thread_id)
         if tool_name != "navigate":
             self._require_allowed_url(owned.page.url, thread_id)
         try:
-            if tool_name == "navigate":
-                url = _required_string(arguments, "url")
+            if url is not None:
                 response = await owned.page.goto(url, wait_until="domcontentloaded")
                 status = None if response is None else response.status
                 suffix = "" if status is None else f" ({status})"
@@ -103,7 +125,8 @@ class BrowserToolset:
                 suffix = "\n[page text clipped]" if len(body) > len(clipped) else ""
                 return ToolExecutionResult(
                     tool_name,
-                    f"URL: {owned.page.url}\nTitle: {title}\n\n{clipped}{suffix}",
+                    f"URL: {owned.page.url}\nTitle: {title}\n\n{clipped}{suffix}"
+                    + await _controls(owned.page),
                     True,
                 )
             image = await owned.page.screenshot(type="png")
@@ -117,11 +140,11 @@ class BrowserToolset:
         except ToolsetError:
             raise
         except Exception as exc:
-            return ToolExecutionResult(
-                tool_name,
-                str(exc).strip() or type(exc).__name__,
-                False,
-            )
+            detail = str(exc).strip() or type(exc).__name__
+            if tool_name in {"click", "type"}:
+                with suppress(Exception):
+                    detail += await _controls(owned.page)
+            return ToolExecutionResult(tool_name, detail, False)
 
     async def close(self) -> None:
         self._threads.clear()
@@ -194,6 +217,13 @@ class BrowserToolset:
                 "`/browser allow-web` once, then retry"
             )
         raise ToolsetError(f"browser URL scheme is not allowed: {scheme or '(missing)'}")
+
+
+async def _controls(page: Page) -> str:
+    lines = await page.evaluate(_CONTROLS)
+    if not lines:
+        return ""
+    return "\n\nFields and buttons (selectors for type and click):\n" + "\n".join(lines)
 
 
 def _required_string(

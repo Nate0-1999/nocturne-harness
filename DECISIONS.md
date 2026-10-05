@@ -4073,3 +4073,19 @@ Every time in the Jobs module reads in UTC, the zone its crons are written in; R
 row's icon button with its tip.
 The Farm module is handed the sheet ground like the Roots module, so its Roots view matches;
 the readouts sit under the drawing. The selection halo is a quarter lane wide on the sheet.
+
+
+## M4AH — The agent's hands stay inside the app's home [P3]
+
+PRECEDENT: F177, F170, M3W6A (form, image), M3W6B findings 13, 16–18, 22, 60.
+- What the agent starts (terminal, background shells, Symphony workers, judges) gets the
+  daemon's NOCTURNE_HOME, which `nocturne up` sets to the selected palace's home; nothing else
+  of the daemon's environment crosses.
+- read_page and a missed type or click list the page's fields and buttons, each with a selector
+  the tools take (id, then name, then `tag >> nth=i`); navigate opens a file in the current
+  folder by its path. Label matching was not added: the list puts the selector in view.
+- A typed /move stays in the model's history as the user's line and its result.
+- The fact check's account is a `fact_check` event, a chip under the answer; a later answer part
+  that is only "Checked." is not shown.
+- A sent-back worker runs with its tools off; the oversized-result notice ends "[the rest was
+  not delivered for its size]" instead of upstream's "truncated" marker.
