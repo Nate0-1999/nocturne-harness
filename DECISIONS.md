@@ -4104,7 +4104,8 @@ PRECEDENT: F179, F162, M3W6B findings 14, 19–23, 36, 37, 49, 53 and TASTE-3..5
 M3EXF2, M3UI2. A page hears only its selected thread (H7), so it re-reads the catalog every
 2 s and the catalog names the threads with a run in flight or queued; a thread left mid-run
 that has stopped reads as after a reload, and its card comes from the catalog. A Deck card
-wears its agent's colour from the work views. An archived thread leaves the Conversation
+wears its agent's colour from the work views; an answer that came without a proposed reply
+still raises its card, with an empty reply for the owner to write. An archived thread leaves the Conversation
 module for the newest open thread (a fresh one in its folder if none); its review reads the
 selected thread, so the move waits for Back to stage. Rewind keeps real Git history
 (ADR-016): each turn's checkpoint records the repository's HEAD and a rewind names the
