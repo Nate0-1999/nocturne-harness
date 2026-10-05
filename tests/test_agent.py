@@ -788,11 +788,11 @@ async def test_m3fd_long_single_fact_shortens_without_splitting(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("invalid_coverage", [False, True])
+@pytest.mark.parametrize("invalid_draft", ["over-cap", "coverage", "malformed"])
 async def test_over_cap_single_fact_uses_remaining_request_to_finish_shortening(
-    invalid_coverage: bool,
+    invalid_draft: str,
 ) -> None:
-    """M4MW / FL-002: repair an over-cap or unaccounted first draft within two requests."""
+    """M4MW / FL-002: repair the three observed invalid drafts within two requests."""
     source = ("The verification release color is amber. " * 30).strip()
     body = "The verification release color is amber."
     calls = []
@@ -807,9 +807,11 @@ async def test_over_cap_single_fact_uses_remaining_request_to_finish_shortening(
         }
         for text in (source, body)
     ]
-    if invalid_coverage:
+    if invalid_draft == "coverage":
         drafts[0]["whole_source"] = False
         drafts[0]["candidates"] *= 3
+    elif invalid_draft == "malformed":
+        drafts[0] = {}
     spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
     agent = HarnessAgent(settings(), model=structured_sequence_model(drafts, calls))
     result = await agent.remember(source, context=context(spine))

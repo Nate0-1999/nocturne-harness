@@ -588,25 +588,29 @@ class HarnessAgent:
         try:
             # INCIDENT F047: bound the splitter that previously stranded oversized /remember.
             async with asyncio.timeout(self._settings.remember_split_timeout_seconds):
-                draft_result = await _run_structured_agent(
-                    self._remember_splitter_agent,
-                    (
-                        f"Label limit: {self._settings.label_max} Unicode code points\n"
-                        f"Body limit: {self._settings.memory_max_tokens} cl100k_base tokens\n"
-                        f"Source length: {cl100k_token_count(body)} cl100k_base tokens\n"
-                        f"Memory source:\n{body}"
-                    ),
-                    model=model,
-                    model_settings=model_settings,
-                    usage_limits=self._remember_split_usage_limits,
-                    usage=usage,
-                    captured_messages=captured_messages,
-                )
-                draft = draft_result.output
-                if (
-                    usage.requests < 2
-                    and _validated_remember_split(
-                        draft,
+                try:
+                    draft_result = await _run_structured_agent(
+                        self._remember_splitter_agent,
+                        (
+                            f"Label limit: {self._settings.label_max} Unicode code points\n"
+                            f"Body limit: {self._settings.memory_max_tokens} cl100k_base tokens\n"
+                            f"Source length: {cl100k_token_count(body)} cl100k_base tokens\n"
+                            f"Memory source:\n{body}"
+                        ),
+                        model=model,
+                        model_settings=model_settings,
+                        usage_limits=self._remember_split_usage_limits,
+                        usage=usage,
+                        captured_messages=captured_messages,
+                    )
+                except UnexpectedModelBehavior:
+                    if usage.requests >= 2:
+                        raise
+                    draft_result = None
+                if usage.requests < 2 and (
+                    draft_result is None
+                    or _validated_remember_split(
+                        draft_result.output,
                         source_body=body,
                         label_max=self._settings.label_max,
                         memory_max_tokens=self._settings.memory_max_tokens,
@@ -615,7 +619,7 @@ class HarnessAgent:
                 ):
                     draft_result = await _run_structured_agent(
                         self._remember_splitter_agent,
-                        "Your draft failed length or exact source-coverage validation. "
+                        "Your draft failed structured-output, length or source-coverage validation. "
                         "Re-read the source. Repeated wording and qualifiers of one fact are "
                         "not independent facts: shorten them to one candidate with "
                         "whole_source=true, coverage=[]. Split only independent facts and "

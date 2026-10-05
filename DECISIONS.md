@@ -4037,7 +4037,7 @@ body beside the session id; direct providers keep the plain setting.
 ## M4MW — Memory refusals keep a usable next step [P1.5]
 
 PRECEDENT: F178, F153, M3P1/F165, A-033, SPEC C.4, PLAN M4MW.
-An invalid length or source-coverage draft may use the remaining request in the existing
+An invalid structured output, length or source-coverage draft may use the remaining request in the existing
 two-request budget for repair; the default deadline is 60 seconds. Refusal explains that the
 draft could not be verified, without claiming a single fact contains several. Similarity refusals show the score
 and an explicit `/remember --save-anyway` command; only that command sends force. A generated
