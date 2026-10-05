@@ -611,7 +611,8 @@ class HarnessAgent:
                             self._remember_splitter_agent,
                             (
                                 f"Label limit: {self._settings.label_max} Unicode code points\n"
-                                f"Body limit: {self._settings.memory_max_tokens} cl100k_base tokens\n"
+                                f"Body limit: {self._settings.memory_max_tokens} "
+                                "cl100k_base tokens\n"
                                 f"Source length: {cl100k_token_count(body)} cl100k_base tokens\n"
                                 f"Memory source:\n{body}"
                             ),
@@ -640,7 +641,8 @@ class HarnessAgent:
                 ):
                     draft_result = await _run_structured_agent(
                         self._remember_splitter_agent,
-                        "Your draft did not finish or failed structured-output, length or source-coverage "
+                        "Your draft did not finish or failed structured-output, length "
+                        "or source-coverage "
                         "validation. "
                         "Re-read the source. Repeated wording and qualifiers of one fact are "
                         "not independent facts: shorten them to one candidate with "
