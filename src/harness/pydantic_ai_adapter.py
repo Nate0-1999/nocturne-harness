@@ -102,7 +102,8 @@ class FinishWhatWasAsked(Capability[MemoryToolContext]):
             self.sent
             or last
             or response.tool_calls
-            or not (untried or _PROMISED_WORK.search(response.text[-400:]))
+            # M4AH walk: claude-opus-5.5 sent a response with no text; the turn crashed here.
+            or not (untried or _PROMISED_WORK.search((response.text or "")[-400:]))
         ):
             return response
         self.sent = True
@@ -136,7 +137,7 @@ class FinishFactCheck(Capability[MemoryToolContext]):
         fresh = ctx.usage.tool_calls > self.tool_calls
         if self.sent >= 2 or not fresh or last or response.tool_calls:
             return response
-        account = self.account(response.text)
+        account = self.account(response.text or "")
         if account is None:
             return response
         self.sent += 1

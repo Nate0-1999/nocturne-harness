@@ -116,7 +116,7 @@ logger = logging.getLogger(__name__)
 
 _INTERRUPTED_TOOL_CONTENT = "Tool execution interrupted by run cancellation."
 _MEMORY_BLOCK_OPEN = "<memory_system>\n"
-_FACT_CHECK_ACK = "Checked."
+_FACT_CHECK_ACK = "Checked"
 _MEMORY_BLOCK_CLOSE = "\n</memory_system>"
 _MAX_PROVIDER_MESSAGE = 1_000
 
@@ -1057,7 +1057,7 @@ class _AnswerText:
 
     def _settle_ack(self) -> str:
         held, self._ack = self._ack, None
-        if held is None or held.split(BLOCK_OPEN, 1)[0].strip() == _FACT_CHECK_ACK:
+        if held is None or held.split(BLOCK_OPEN, 1)[0].strip().rstrip(".") == _FACT_CHECK_ACK:
             return ""
         return self.feed(held)
 
@@ -1069,7 +1069,7 @@ class _AnswerText:
             head = self._ack.split(BLOCK_OPEN, 1)[0]
             if BLOCK_OPEN not in self._ack:
                 head = head[: len(head) - _marker_prefix_suffix_length(head, BLOCK_OPEN)]
-            if _FACT_CHECK_ACK.startswith(head.strip()):
+            if f"{_FACT_CHECK_ACK}.".startswith(head.strip()):
                 return ""
             value, self._ack = self._ack, None
         if self._new_part and value:

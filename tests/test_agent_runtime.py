@@ -565,7 +565,9 @@ async def test_the_checkers_account_is_a_status_line_and_its_acknowledgement_is_
         }
     ]
     now = datetime.now(UTC)
-    for answer in ("Checked.", 'Checked.\n<nocturne-proposed-response>{"primary":"Checked."}'):
+    block = '<nocturne-proposed-response>{"primary":"Ok"}'
+    acknowledgements = ("Checked.", "Checked", f"Checked.\n{block}")
+    for answer in acknowledgements:
         bridge = _EventBridge(RecordingEmitter())
         assert await bridge.finalize(["Done.", answer], run_id="t", created_at=now) == "Done."
     bridge = _EventBridge(RecordingEmitter())
@@ -2486,6 +2488,14 @@ async def test_an_answer_ending_in_a_promise_is_sent_back_once_to_finish() -> No
     honest = FinishWhatWasAsked()
     answered = await honest.after_model_request(tried, request_context=early, response=refusal)
     assert answered is refusal
+    # M4AH walk: claude-opus-5.5 sent a response with no text; the check passes it through.
+    silent = ModelResponse(parts=[])
+    assert (
+        await FinishWhatWasAsked().after_model_request(
+            tried, request_context=early, response=silent
+        )
+        is silent
+    )
 
 
 @pytest.mark.asyncio
