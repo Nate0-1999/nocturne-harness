@@ -267,7 +267,10 @@ async def test_a_judge_retries_an_unusable_return_then_inspects_and_passes(tmp_p
 
 
 @pytest.mark.asyncio
-async def test_worker_context_injects_without_a_gate_and_reacts_to_selection(tmp_path):
+@pytest.mark.parametrize("response_lost", [False, True])
+async def test_worker_context_injects_without_a_gate_and_reacts_to_selection(
+    tmp_path, response_lost
+):
     """A-059 / FL-096/097: leaf startup carries real memory selection and tree context."""
     prepared = InjectPrepareResponse(
         injection_id="12345678-1234-5678-1234-567812345678",
@@ -289,7 +292,10 @@ async def test_worker_context_injects_without_a_gate_and_reacts_to_selection(tmp
         prepare_injection=AsyncMock(
             side_effect=[SpineTransportError(), prepared, prepared],
             __name__="prepare_injection",
-        )
+        ),
+        restore_injection=AsyncMock(
+            return_value=SimpleNamespace(prepared=prepared) if response_lost else None
+        ),
     )
     location = AgentLocation("worker", "machine", "session", tmp_path, tmp_path, False)
     context = SimpleNamespace(
@@ -317,7 +323,8 @@ async def test_worker_context_injects_without_a_gate_and_reacts_to_selection(tmp
     assert COMPONENT_REGISTRY in rendered and "UTF-8 checksum" in rendered
     assert spine.prepare_injection.call_args.args[0].mode == "gate"
     await worker.render([])
-    assert spine.prepare_injection.call_count == 2
+    assert spine.prepare_injection.call_count == (1 if response_lost else 2)
+    spine.restore_injection.assert_awaited_once()
     assert (tmp_path / "palace-retry.json").is_file()
     removed = "22345678-1234-5678-1234-567812345678"
     write_json(tmp_path / "memory-selection.json", {"removed": [removed], "added": []})
@@ -328,7 +335,7 @@ async def test_worker_context_injects_without_a_gate_and_reacts_to_selection(tmp
         assignment=assignment, output=tmp_path, context=context, resolution=worker.resolution
     )
     assert "UTF-8 checksum" not in await judge.render([])
-    assert spine.prepare_injection.call_count == 3
+    assert spine.prepare_injection.call_count == (2 if response_lost else 3)
 
 
 @pytest.mark.asyncio

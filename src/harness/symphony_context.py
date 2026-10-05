@@ -79,6 +79,12 @@ class WorkerContext:
         except SpineTransportError:
             write_json(self.output / "palace-retry.json", {"request": call.__name__})
             try:
+                if isinstance(request, InjectPrepareRequest) and request.mode == "gate":
+                    restored = await self.context.spine.restore_injection(
+                        request.thread_id, request.principal_id
+                    )
+                    if restored is not None:
+                        return restored.prepared
                 return await call(request)
             except SpineTransportError as exc:
                 raise RuntimeError(

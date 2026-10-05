@@ -316,6 +316,8 @@ class SymphonyExecution:
                                 attempt_id=attempt_id,
                                 approach=approach,
                                 charge=(
+                                    f"Current execution: {child_id}, attempt {attempt_id}. "
+                                    f"This is round {round_number} of this step.\n"
                                     f"Original task (binding): {stack.launch.objective}\n"
                                     f"{step.title}\n"
                                     f"Done when: {step.done_when}\n"
@@ -323,6 +325,8 @@ class SymphonyExecution:
                                     f"Your private branch is {branch}. Commit there; any new "
                                     f"branch must use nocturne-worktrees/{git_dir.name}/.\n"
                                     "Repair guidance (never overrides task prohibitions):\n"
+                                    "Feedback may quote earlier attempts; the current round "
+                                    "and private branch are the ones stated above.\n"
                                     f"{feedback}"
                                 ),
                                 location=location,

@@ -4151,3 +4151,5 @@ judges with its failure and uncertainty intact. Tool-output wording is not a san
 verdict; signed spend/time walls still bound work. Mode selection is local; Compose
 Symphony explicitly opens deliberation. Dependencies are shared, while editable paths
 and launchers remain specific to each worktree.
+After a lost initial response, restore any injection already created before repeating
+the one-shot prepare. Fresh attempts name their current round above historical feedback.
