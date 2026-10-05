@@ -166,10 +166,11 @@ function AgentRoots({ name, tubes, studio, tier, state, joins = 0, selected, pic
   useEffect(() => () => { geometry.chrome?.dispose(); geometry.fine?.dispose() }, [geometry])
   // A selected agent wears a halo in its fleet colour around every tube it owns (the growth light's shape, held), so
   // the selection reads on live chrome and stopped matte alike (FL-130); nothing changes while nothing is selected.
-  // M4VW: a hair-thin root's halo was a pixel wide, so the time-order tint went unseen; it now has a visible width.
+  // M4VW: a hair-thin root's halo was a pixel wide, so the time-order tint went unseen; it now has a visible width
+  // (a quarter lane on the sheet, where the whole river is drawn small).
   const halo = useMemo(() => {
     if (!selected || !tubes.length) return null
-    const parts = tubes.map((tube) => tube3(tube.points, tube.radii.map((radius) => radius * 1.9 + 0.12), null, 24, 6))
+    const parts = tubes.map((tube) => tube3(tube.points, tube.radii.map((radius) => radius * 1.9 + (SHEET ? 0.5 : 0.12)), null, 24, 6))
     const merged = mergeGeometries(parts)
     parts.forEach((part) => part.dispose())
     return merged
