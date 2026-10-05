@@ -470,6 +470,7 @@ async def screenshot(ctx: RunContext[MemoryToolContext]) -> str | ToolReturn:
     return await _execute_browser_tool(ctx, "screenshot", {})
 
 
+BROWSER_TOOLS = (navigate, click, type, read_page, screenshot)
 WORKSPACE_TOOLS = (
     read,
     edit,
@@ -482,11 +483,7 @@ WORKSPACE_TOOLS = (
     read_shell,
     stop_shell,
     move,
-    navigate,
-    click,
-    type,
-    read_page,
-    screenshot,
+    *BROWSER_TOOLS,
 )
 
 
@@ -498,7 +495,11 @@ class WorkspaceCapability(Capability[MemoryToolContext]):
             id="workspace",
             defer_loading=False,
             instructions=[WORKSPACE_INSTRUCTIONS],
-            tools=[Tool(function) for function in WORKSPACE_TOOLS],
+            # M4AH walk: type, click, read_page and screenshot sent in one response ran at once,
+            # so the read finished before the click; browser steps run one at a time, in order.
+            tools=[
+                Tool(function, sequential=function in BROWSER_TOOLS) for function in WORKSPACE_TOOLS
+            ],
         )
 
 

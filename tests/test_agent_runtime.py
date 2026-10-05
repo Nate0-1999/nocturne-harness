@@ -576,6 +576,41 @@ async def test_the_checkers_account_is_a_status_line_and_its_acknowledgement_is_
 
 
 @pytest.mark.asyncio
+async def test_browser_steps_sent_together_run_in_the_order_given() -> None:
+    """M3W6A: no scout could fill a form. On the walk of the fix, type, click, read_page and
+    screenshot sent in one response ran at once and the read finished before the click; browser
+    steps now run one at a time, in order. [SPEC C.7]"""
+
+    @dataclass
+    class SlowTypingToolset(RecordingWorkspaceToolset):
+        async def execute(self, tool_name, arguments):
+            if tool_name == "type":
+                await asyncio.sleep(0.2)
+            return await super().execute(tool_name, arguments)
+
+    async def stream(messages, _info):
+        if any(isinstance(part, ToolReturnPart) for part in messages[-1].parts):
+            yield "Filled."
+        else:
+            yield {
+                0: DeltaToolCall("type", '{"selector":"#marker","text":"CEDAR"}', tool_call_id="t"),
+                1: DeltaToolCall("click", '{"selector":"#reveal"}', tool_call_id="c"),
+                2: DeltaToolCall("read_page", "{}", tool_call_id="r"),
+            }
+
+    toolset = SlowTypingToolset()
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(toolset=toolset),
+    )
+    await runner.run(
+        thread_id=str(THREAD_UUID), prompt="Fill it.", message_history=(), emit=RecordingEmitter()
+    )
+
+    assert [name for name, _arguments in toolset.calls] == ["type", "click", "read_page"]
+
+
+@pytest.mark.asyncio
 async def test_m3fz_text_tool_text_keeps_the_whole_answer_and_terminal_proposal() -> None:
     """PLAN M3FZ / F068: text before a tool and its closing answer form one complete turn."""
 
