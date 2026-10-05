@@ -8,7 +8,8 @@ type Definition = { name: string; prompt: string; folder: string; model_policy: 
 type Job = { job_id: string; definition: Definition; revision: number; enabled: boolean; next_run_at: string | null }
 type Run = { run_id: string; job_id: string; thread_id: string; started_at: string; finished_at: string | null; state: string; verdict: string | null; spend_usd: string; unpriced_lines: number }
 type Snapshot = { jobs: Job[]; runs: Run[]; scheduler_error: string | null }
-const time = (value: string | null) => value ? new Date(value).toLocaleString() : '—'
+// M4VW: every time in the module reads in UTC, the zone its cron schedules are written in.
+const time = (value: string | null) => value ? `${new Date(value).toLocaleString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })} UTC` : '—'
 const spend = (runs: Run[]) => `$${runs.reduce((sum, run) => sum + Number(run.spend_usd), 0).toFixed(5)}${runs.some(run => run.unpriced_lines > 0) ? ' + unpriced' : ''}`
 
 export function JobsModule() {
@@ -62,7 +63,7 @@ export function JobsModule() {
           <td><Button type="button" data-tooltip-detail="Show this job's prompt, settings and run history." onClick={() => setSelected(job.job_id)}>{job.definition.name}</Button><small>{job.definition.cron ? `${job.definition.cron} UTC` : job.definition.trigger ? `On ${job.definition.trigger} change` : 'On demand'}{!job.enabled ? ' · paused' : ''}</small></td>
           <td>{time(job.next_run_at)}</td><td>{time(last?.started_at ?? null)}</td>
           <td data-state={last?.state}>{last?.state ?? 'Ready'}</td><td>{spend(history)}</td><td>{last?.verdict ?? '—'}</td>
-          <td><Button action="run" variant="primary" type="button" data-tooltip-detail="Start this job once, outside its schedule." disabled={busy || !!active} onClick={() => void act({ type: 'jobs.run', job_id: job.job_id })}>Run now</Button></td>
+          <td><Button action="run" iconOnly variant="primary" type="button" data-tooltip-detail="Start this job once, outside its schedule." disabled={busy || !!active} onClick={() => void act({ type: 'jobs.run', job_id: job.job_id })}>Run now</Button></td>
         </tr>
       })}</tbody>
     </table></div>}
