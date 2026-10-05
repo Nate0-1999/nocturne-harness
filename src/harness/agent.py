@@ -62,6 +62,10 @@ REMEMBER_DRAFT_INSTRUCTION = (
     "Generate one short label and 2-5 lowercase searchable keywords for the "
     "supplied memory. Identify whether it contains multiple distinct durable facts; set "
     "multiple_facts true only for independent facts, never merely because the text is long. "
+    "A single rule can list several dates, alternatives or exceptions; these are values of "
+    "the same rule, not separate facts. For example, a service being closed on two holidays "
+    "is one closure schedule. Different subjects or independently stated properties are "
+    "separate facts. "
     "Keywords must be distinct nouns or terms. Return only "
     "the requested structured result with no commentary."
 )
