@@ -2659,7 +2659,7 @@ function ChatModule() {
             </Select>
           </label>
           {orchestration === 'Symphony' && (
-            <Button type="button" disabled={composerDisabled} onClick={() => {
+            <Button type="button" disabled={composerDisabled /* WALL attention / C.6, H7: respect the current gate and snapshot. */} onClick={() => {
               void events.dispatch({ type: 'prompt.submit', prompt: 'Take this to a Symphony.' })
                 .catch(() => setImageStatus('The deliberation could not be opened.'))
             }}>Compose Symphony</Button>
