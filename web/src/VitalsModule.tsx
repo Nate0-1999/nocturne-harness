@@ -111,7 +111,7 @@ export function VitalsModule() {
         </div>
       </div>
       <SpendRates snapshot={snapshot} />
-      <SpendReconciliation value={reconciliation} />
+      <SpendReconciliation value={reconciliation} snapshot={snapshot} />
       {scope === 'GLOBAL' && snapshot.can_record_invoice && <InfrastructureInvoiceForm onSaved={refresh} />}
       {rowCount === 0 ? (
         <p className="spend-table__empty">
@@ -207,8 +207,8 @@ function SpendRow({
       <Metric value={metrics.kv_cache_tokens} />
       <Metric value={metrics.reasoning_tokens} />
       <Metric value={metrics.output_tokens} />
-      <td title={partial ?? undefined}>{money(metrics.total_usd)}</td>
-      <td title={partial ?? undefined}>{money(metrics.spend_per_hour_usd)}</td>
+      <td title={partial ?? undefined}>{money(metrics.total_usd, metrics.total_receipt_lines)}{metrics.total_usd !== null && metrics.total_unpriced_lines > 0 && ' + unpriced'}</td>
+      <td title={metrics.hourly_unpriced_lines > 0 ? 'The provider did not report a price. No later price is pending.' : undefined}>{money(metrics.spend_per_hour_usd, metrics.hourly_receipt_lines)}{metrics.spend_per_hour_usd !== null && metrics.hourly_unpriced_lines > 0 && ' + unpriced'}</td>
     </tr>
   )
 }
@@ -217,8 +217,8 @@ function Metric({ value }: { value: string }) {
   return <td>{formatHumanQuantity(value)}</td>
 }
 
-function money(value: string | null): string {
-  return value === null ? 'Awaiting price' : formatHumanUsd(value)
+function money(value: string | null, receiptLines: number): string {
+  return value === null ? (receiptLines === 0 ? formatHumanUsd('0') : 'Price not reported') : formatHumanUsd(value)
 }
 
 function formatTime(value: string): string {

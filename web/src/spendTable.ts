@@ -130,7 +130,7 @@ function nonblank(value: unknown, path: string): string {
 
 export function partialSpendCopy(row: SpendMetrics): string | null {
   const lines = row.total_unpriced_lines || row.hourly_unpriced_lines
-  return lines === 0 ? null : `${lines} ${lines === 1 ? 'line' : 'lines'} awaiting a price`
+  return lines === 0 ? null : `${lines} ${lines === 1 ? 'line has' : 'lines have'} no provider-reported price. No later price is pending.`
 }
 
 function parseThreadRow(value: unknown, index: number): ThreadSpendRow {

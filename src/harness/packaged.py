@@ -7,6 +7,7 @@ from pathlib import Path
 from fastapi import FastAPI
 
 from harness.daemon import _build_web, create_dev_app
+from harness.onboarding import require_writable_working_folder
 
 BUNDLED_WEB_DIST = Path(__file__).with_name("_web")
 _CANONICAL_WEB_ROOT = Path(__file__).resolve().parents[2] / "web"
@@ -71,6 +72,7 @@ def _runtime_web_assets() -> tuple[Path, str | None]:
 def create_app() -> FastAPI:
     """Compose the owner app from installed or canonical source assets."""
 
+    require_writable_working_folder()
     web_dist, missing_web_message = _runtime_web_assets()
     return create_dev_app(
         web_dist,

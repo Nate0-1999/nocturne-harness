@@ -214,7 +214,7 @@ def test_init_prompts_once_and_generates_private_config(
 
     assert prompts == [
         "OpenRouter API key: ",
-        "Back up conversation transcripts to your cloud Palace? [y/N] ",
+        "Back up conversation transcripts to cloud? [y/N] ",
     ]
     assert config.openrouter_api_key == "one-owner-secret"
     assert config.spine_token != config.database_password
@@ -429,7 +429,7 @@ def test_init_uses_environment_secret_and_existing_config_is_inert(
     )
 
     assert second == first
-    assert prompts == ["Back up conversation transcripts to your cloud Palace? [y/N] "]
+    assert prompts == ["Back up conversation transcripts to cloud? [y/N] "]
     assert first.read_bytes() == original
 
 
@@ -453,7 +453,7 @@ def test_remote_init_uses_supplied_access_without_a_third_secret_prompt(
     config = onboarding.load_config(home=tmp_path)
 
     assert prompts == [
-        "Back up conversation transcripts to your cloud Palace? [y/N] ",
+        "Back up conversation transcripts to cloud? [y/N] ",
     ]
     assert config.palace_mode == "remote"
     assert config.spine_url == "https://spine.example.test"
@@ -1277,26 +1277,54 @@ def test_remote_backup_uses_the_verified_owner_cloud_path(
     assert "Cloud SQL backup verified" in output.getvalue()
 
 
-def test_open_requires_reachability_before_launching_browser(monkeypatch) -> None:
+def test_start_refuses_read_only_working_folder(tmp_path, monkeypatch) -> None:
+    """FL-166: a writable home does not make a read-only working folder usable."""
+    folder = tmp_path / "project"
+    folder.mkdir()
+    folder.chmod(0o500)
+    monkeypatch.chdir(folder)
+    try:
+        with pytest.raises(onboarding.OnboardingError, match="Working folder is not writable"):
+            onboarding.require_writable_working_folder()
+    finally:
+        folder.chmod(0o700)
+
+
+def test_open_requires_reachability_before_launching_browser(tmp_path, monkeypatch) -> None:
     """SPEC D.2 099 opens only a daemon identified as Nocturne."""
     events: list[str] = []
-    monkeypatch.setattr(onboarding, "_existing_nocturne", lambda: True)
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    monkeypatch.setenv("NOCTURNE_PORT", "8837")
+    onboarding.init_nocturne(home=tmp_path, prompt=lambda _: "n", stdout=io.StringIO())
+    config = onboarding.load_config(home=tmp_path)
+    checked = []
+    monkeypatch.setattr(onboarding, "_existing_nocturne", lambda url: checked.append(url) or True)
+    monkeypatch.setattr(
+        onboarding.urllib.request,
+        "urlopen",
+        lambda *args, **kwargs: io.BytesIO(
+            json.dumps({"principal_id": config.principal_id, "home": str(tmp_path)}).encode()
+        ),
+    )
     monkeypatch.setattr(
         onboarding,
         "_open_browser",
         lambda url, *, stdout: events.append(f"open:{url}"),
     )
 
-    assert onboarding.open_nocturne(stdout=io.StringIO()) == 0
-    assert events == [f"open:{onboarding.LOCAL_URL}"]
+    assert onboarding.open_nocturne(home=tmp_path, stdout=io.StringIO()) == 0
+    assert checked == ["http://127.0.0.1:8837"]
+    assert events == ["open:http://127.0.0.1:8837"]
 
 
-def test_open_on_a_down_daemon_names_the_one_startup_remedy(monkeypatch) -> None:
+def test_open_on_a_down_daemon_names_the_one_startup_remedy(tmp_path, monkeypatch) -> None:
     """SPEC D.2 099 and 095 require the down-daemon refusal to name its next action."""
 
-    monkeypatch.setattr(onboarding, "_existing_nocturne", lambda: False)
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    onboarding.init_nocturne(home=tmp_path, prompt=lambda _: "n", stdout=io.StringIO())
+    monkeypatch.setattr(onboarding, "_existing_nocturne", lambda _url: False)
     with pytest.raises(onboarding.OnboardingError) as error:
-        onboarding.open_nocturne(stdout=io.StringIO())
+        onboarding.open_nocturne(home=tmp_path, stdout=io.StringIO())
 
     assert str(error.value) == "Nocturne isn't running — run `nocturne up`."
 

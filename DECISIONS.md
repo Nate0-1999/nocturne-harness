@@ -4033,3 +4033,14 @@ still carries it, and OpenRouter ignores what a model does not support.
 Top K never reached OpenRouter: the OpenAI-compatible client sends only the settings OpenAI
 defines, so a journaled top_k left as null. The OpenRouter adapter now puts it in the request
 body beside the session id; direct providers keep the plain setting.
+
+## M4MS — Requests and spend displays use the evidence available [P4.1, P2.4]
+
+PRECEDENT: PLAN M4MS, F174, A-020; released-0.1.56 scout replays.
+Superseding M3SK's final parameter choice above, retained knobs are filtered by the selected
+route's published capabilities. OpenRouter's native cache settings mark instructions, tools
+and message prefixes. Unavailable saved provider pins use the configured policy with a visible
+explanation; new unavailable pins are refused before persistence. Spend totals use the current
+view; unreported prices are named, and shared-key usage is not presented as Palace-only drift.
+The selected home's stored NOCTURNE_PORT drives startup, doctor and open; startup proves that
+the working folder accepts a file before proceeding.

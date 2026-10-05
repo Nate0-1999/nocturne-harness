@@ -727,6 +727,37 @@ async def test_named_resolution_refetches_models_without_benchmark_dependency() 
 
 
 @pytest.mark.asyncio
+async def test_known_named_model_survives_catalog_outage_without_inventing_unknown_routes() -> None:
+    """M4MS: a failed refresh retains a known exact route and its capability metadata."""
+    offline = False
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if offline:
+            raise httpx.ConnectError("offline", request=request)
+        return httpx.Response(
+            200,
+            json={
+                "data": [
+                    {
+                        "id": "vendor/model",
+                        "context_length": 64_000,
+                        "supported_parameters": ["temperature"],
+                    }
+                ]
+            },
+        )
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+        client = OpenRouterCatalogClient("test-key", http_client=http_client)
+        original = await client.load_named_route("vendor/model")
+        offline = True
+        assert await client.load_named_route("vendor/model") == original
+        assert original[0].supported_parameters == frozenset({"temperature"})
+        with pytest.raises(ModelCatalogUnavailable):
+            await client.load_named_route("vendor/unknown")
+
+
+@pytest.mark.asyncio
 async def test_named_resolution_requires_exact_broker_id_not_canonical_alias() -> None:
     """A-021 is defended by verifying that named resolution requires exact broker id not
     canonical alias; this prevents drift in the deterministic model policy contract.

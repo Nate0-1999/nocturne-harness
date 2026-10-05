@@ -63,7 +63,7 @@ from harness.model_policy import (
     browse_models,
     parse_model_policy,
 )
-from harness.model_router import CompletionRouter
+from harness.model_router import CompletionRouter, ModelConfigurationError
 from harness.onboarding import load_config, nocturne_home, set_transcript_backup
 from harness.parameter_registry import (
     ParameterSnapshot,
@@ -856,6 +856,7 @@ def create_dev_app(
     """Compose the real H3 agent loop with trusted local M1 run context."""
 
     configured = settings or HarnessSettings()
+    completion_router = CompletionRouter(configured)
     home = (configured.nocturne_home or nocturne_home()).expanduser().resolve()
     role_policy_path = home / "model-policies.json"
     model_pin_path = home / "model-pins.json"
@@ -874,11 +875,21 @@ def create_dev_app(
         "subagent": configured.model_policy_subagent or configured.effective_model_policy_chat,
         "judge": configured.model_policy_judge or configured.effective_model_policy_chat,
     }
+    policy_errors: dict[str, str] = {}
     if role_policy_path.exists():
         saved_policies = json.loads(role_policy_path.read_text())
         for role in role_policies:
             if role in saved_policies:
-                parse_model_policy(saved_policies[role])
+                parsed = parse_model_policy(saved_policies[role])
+                if parsed.kind == "pinned":
+                    try:
+                        completion_router.model_for(str(parsed.value))
+                    except ModelConfigurationError as exc:
+                        policy_errors[role] = (
+                            f"Saved {role} policy is unavailable: {exc}. "
+                            f"Using {role_policies[role]}."
+                        )
+                        continue
                 role_policies[role] = saved_policies[role]
     for role, policy in role_policies.items():
         setattr(configured, f"model_policy_{role}", policy)
@@ -899,7 +910,6 @@ def create_dev_app(
         owned_spine = SpineClient(
             configured.spine_url, token.get_secret_value(), principal_id=principal_id
         )
-    completion_router = CompletionRouter(configured)
     owned_agent = agent or HarnessAgent(
         configured,
         router=completion_router,
@@ -1325,14 +1335,20 @@ def create_dev_app(
                 policies["curator"] = await owned_spine.curator_model_policy(principal_id)
             except SpineClientError:
                 curator_error = "Curator settings are unavailable from this Palace."
-            return {"policies": policies, "curator_error": curator_error}
+            return {
+                "policies": policies,
+                "curator_error": curator_error,
+                "policy_errors": policy_errors,
+            }
 
         @app.put("/v1/model-policies/{role}")
         async def update_agent_model_policy(
             role: Literal["chat", "subagent", "judge", "curator"], body: AgentPolicyUpdate
         ):
             try:
-                parse_model_policy(body.policy)
+                parsed = parse_model_policy(body.policy)
+                if role != "curator" and parsed.kind == "pinned":
+                    completion_router.model_for(str(parsed.value))
             except ValueError as exc:
                 raise HTTPException(422, str(exc)) from exc
             if role == "curator":
@@ -1349,6 +1365,7 @@ def create_dev_app(
             temporary.write_text(json.dumps(updated, indent=2) + "\n")
             temporary.replace(role_policy_path)
             role_policies.update(updated)
+            policy_errors.pop(role, None)
             setattr(configured, f"model_policy_{role}", body.policy)
             if role == "chat" and isinstance(model_resolver, ModelPolicyResolver):
                 model_resolver.set_policy(body.policy)

@@ -920,7 +920,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                 disabled={transcriptBackup === null || transcriptBackupBusy}
                 onChange={(event) => void changeTranscriptBackup(event.currentTarget.checked)}
               />
-              <span>Back up transcripts to your Palace</span>
+              <span>Back up conversation transcripts to cloud?</span>
             </label>
             <p data-testid="transcript-backup-status">
               {transcriptBackup === null

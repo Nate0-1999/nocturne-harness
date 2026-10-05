@@ -1026,11 +1026,17 @@ async def test_openrouter_route_settings_are_fresh_sticky_and_price_sorted() -> 
         {
             "extra_body": {"session_id": "thread-sticky"},
             "openrouter_usage": {"include": True},
+            "openrouter_cache_instructions": True,
+            "openrouter_cache_messages": True,
+            "openrouter_cache_tool_definitions": True,
             "openrouter_provider": {"sort": "price"},
         },
         {
             "extra_body": {"session_id": "thread-sticky"},
             "openrouter_usage": {"include": True},
+            "openrouter_cache_instructions": True,
+            "openrouter_cache_messages": True,
+            "openrouter_cache_tool_definitions": True,
             "openrouter_provider": {"sort": "price"},
         },
     ]
@@ -1084,6 +1090,9 @@ async def test_resolution_epochs_break_and_then_repin_openrouter_session_stickin
             {
                 "extra_body": {"session_id": "thread-1"},
                 "openrouter_usage": {"include": True},
+                "openrouter_cache_instructions": True,
+                "openrouter_cache_messages": True,
+                "openrouter_cache_tool_definitions": True,
             },
         ),
         ("anthropic:claude-sonnet-4-6", False, None),
@@ -1214,6 +1223,9 @@ async def test_remember_dispatch_receives_the_same_thread_model_and_routing_sett
     assert spy.dispatch_calls[0]["model_settings"] == {
         "extra_body": {"session_id": "thread-remember"},
         "openrouter_usage": {"include": True},
+        "openrouter_cache_instructions": True,
+        "openrouter_cache_messages": True,
+        "openrouter_cache_tool_definitions": True,
         "openrouter_provider": {"sort": "price"},
     }
 
