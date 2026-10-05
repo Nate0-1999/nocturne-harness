@@ -600,22 +600,31 @@ class HarnessAgent:
         try:
             # INCIDENT F047: bound the splitter that previously stranded oversized /remember.
             async with asyncio.timeout(self._settings.remember_split_timeout_seconds):
+                requests_before = usage.requests
                 try:
-                    draft_result = await _run_structured_agent(
-                        self._remember_splitter_agent,
-                        (
-                            f"Label limit: {self._settings.label_max} Unicode code points\n"
-                            f"Body limit: {self._settings.memory_max_tokens} cl100k_base tokens\n"
-                            f"Source length: {cl100k_token_count(body)} cl100k_base tokens\n"
-                            f"Memory source:\n{body}"
-                        ),
-                        model=model,
-                        model_settings=model_settings,
-                        usage_limits=self._remember_split_usage_limits,
-                        usage=usage,
-                        captured_messages=captured_messages,
+                    # F178: a stalled first request must leave time for the permitted second.
+                    first_timeout = self._settings.remember_split_timeout_seconds / (
+                        2 if requests_before == 0 else 1
                     )
-                except UnexpectedModelBehavior:
+                    async with asyncio.timeout(first_timeout):
+                        draft_result = await _run_structured_agent(
+                            self._remember_splitter_agent,
+                            (
+                                f"Label limit: {self._settings.label_max} Unicode code points\n"
+                                f"Body limit: {self._settings.memory_max_tokens} cl100k_base tokens\n"
+                                f"Source length: {cl100k_token_count(body)} cl100k_base tokens\n"
+                                f"Memory source:\n{body}"
+                            ),
+                            model=model,
+                            model_settings=model_settings,
+                            usage_limits=self._remember_split_usage_limits,
+                            usage=usage,
+                            captured_messages=captured_messages,
+                        )
+                except (UnexpectedModelBehavior, TimeoutError) as exc:
+                    if isinstance(exc, TimeoutError):
+                        # The SDK counts completed responses; the cancelled attempt still counts.
+                        usage.requests = max(usage.requests, requests_before + 1)
                     if usage.requests >= 2:
                         raise
                     draft_result = None
@@ -631,7 +640,7 @@ class HarnessAgent:
                 ):
                     draft_result = await _run_structured_agent(
                         self._remember_splitter_agent,
-                        "Your draft failed structured-output, length or source-coverage "
+                        "Your draft did not finish or failed structured-output, length or source-coverage "
                         "validation. "
                         "Re-read the source. Repeated wording and qualifiers of one fact are "
                         "not independent facts: shorten them to one candidate with "

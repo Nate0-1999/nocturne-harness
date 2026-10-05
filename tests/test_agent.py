@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from copy import deepcopy
 from dataclasses import dataclass, field, replace
@@ -819,6 +820,58 @@ async def test_over_cap_single_fact_uses_remaining_request_to_finish_shortening(
     assert len(calls) == 2
     assert [request.body for request in spine.create_requests] == [body]
     assert spine.split_requests == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("stalled_requests", [1, 2])
+async def test_long_remember_retries_a_stall_without_exceeding_its_budget(
+    stalled_requests: int,
+) -> None:
+    """SPEC B.6 / F178: a live first-request stall must not consume both permitted attempts."""
+    body = "The verification release color is amber."
+    calls = []
+
+    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        calls.append((messages, info))
+        if len(calls) <= stalled_requests:
+            await asyncio.Event().wait()
+        return ModelResponse(
+            parts=[
+                TextPart(
+                    json.dumps(
+                        {
+                            "safe_to_save": True,
+                            "whole_source": True,
+                            "coverage": [],
+                            "candidates": [
+                                {
+                                    "label": "Release color",
+                                    "body": body,
+                                    "keywords": ["release", "amber"],
+                                }
+                            ],
+                        }
+                    )
+                )
+            ]
+        )
+
+    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
+    usage = RunUsage()
+    agent = HarnessAgent(settings(remember_split_timeout_seconds=0.2), model=FunctionModel(respond))
+    result = await asyncio.wait_for(
+        agent.remember((body + " ") * 30, context=context(spine), usage=usage),
+        timeout=1,
+    )
+    assert len(calls) == 2
+    assert result.ok == (stalled_requests == 1)
+    assert [request.body for request in spine.create_requests] == (
+        [body] if stalled_requests == 1 else []
+    )
+    if stalled_requests == 1:
+        assert usage.requests == 2
+    else:
+        assert "took too long" in result.message
 
 
 @pytest.mark.asyncio
