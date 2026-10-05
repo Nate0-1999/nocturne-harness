@@ -139,6 +139,9 @@ EXTRACTION_INSTRUCTION = (
 )
 SEED_SPLIT_INSTRUCTION = (
     "Semantically split the complete Markdown document into durable atomic memories. Preserve "
+    "a stated correction as one change: keep its old and replacement values together, with "
+    "the update relationship intact, rather than separating them into historical and current "
+    "claims. The reviewer must see what changed. Preserve "
     "every durable claim without summarizing or mechanical token chopping. Every child must "
     "stand alone with no unresolved references, contain one claim, use at most 128 cl100k_base "
     "tokens, and include its own short label, kind, and 2-5 distinct lowercase searchable "
