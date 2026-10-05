@@ -2491,33 +2491,9 @@ function ChatModule() {
 
   function transmitPrompt() {
     if (!canSend) {
-      if (opening) void transmitOnceOpen()
-      return
-    }
-    submitDraft()
-  }
-
-  // F162: Enter in a thread that is still opening is held, said so, and sent once it opens.
-  async function transmitOnceOpen() {
-    const threadId = selectedThreadId
-    setPromptBusy(true)
-    setImageStatus('Sends as soon as this thread finishes opening.')
-    let why = 'the thread did not finish opening'
-    for (let waited = 0; waited < 120_000; waited += 250) {
-      const current = events.getSnapshot()
-      const thread = threadId === null ? undefined : current.threads[threadId]
-      if (current.selectedThreadId !== threadId) { why = 'another thread was opened'; break }
-      if (current.connection !== 'connected') { why = 'Nocturne is not connected'; break }
-      if (thread?.awaitingSnapshot === false) {
-        why = thread.workspaceMissing ? "this thread's folder moved" : thread.openGate !== null ? 'a memory review is open' : ''
-        break
-      }
-      await new Promise((resolve) => globalThis.setTimeout(resolve, 250))
-    }
-    setPromptBusy(false)
-    if (why !== '') {
-      setImageStatus(`Not sent: ${why}. Your prompt is still here.`)
-      return
+      if (!opening) return
+      // F162: Enter in a thread still opening is said so; the host sends it once the thread opens.
+      setImageStatus('Sends as soon as this thread finishes opening.')
     }
     submitDraft()
   }
@@ -2546,8 +2522,10 @@ function ChatModule() {
         setImageStatus('')
         if (imageInputRef.current !== null) imageInputRef.current.value = ''
       })
-      .catch(() => {
-        setImageStatus('The prompt was not sent. Check the link and try again.')
+      .catch((error: unknown) => {
+        setImageStatus(error instanceof Error && ['another thread was opened', 'a memory review is open', 'the thread did not finish opening', 'a prompt is already waiting for it'].includes(error.message)
+          ? `The prompt was not sent: ${error.message}. It is still in the message box.`
+          : 'The prompt was not sent. Check the link and try again.')
       })
       .finally(() => setPromptBusy(false))
     followOutputRef.current = true

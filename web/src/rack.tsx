@@ -574,13 +574,15 @@ function dispatchRackAction<Action extends RackAction>(
       case 'catalog.cleanup-fixtures':
         return useHarnessStore.getState().removeFixtureThreads() as RackActionResult<Action>
       case 'prompt.submit':
-        return harnessClient.submitPrompt(
+        // F162: a prompt sent while its new thread is still opening waits here, in the host, so
+        // it survives the conversation frame reloading (a switch to the Deck).
+        return threadOpened(getRackSnapshot().selectedThreadId).then(() => harnessClient.submitPrompt(
           action.prompt,
           action.image,
           action.symphony,
           undefined,
           action.proposed_response,
-        ) as RackActionResult<Action>
+        )) as Promise<RackActionResult<Action>>
       case 'prompt.interject': {
         const threadId = getRackSnapshot().selectedThreadId
         if (threadId === null) throw new Error('Select a thread first.')
@@ -1179,6 +1181,28 @@ export function useRackHostSelection(): RackSelection {
     rackSelectionSurface.getSnapshot,
     rackSelectionSurface.getSnapshot,
   )
+}
+
+const heldPrompts = new Set<string>()
+
+async function threadOpened(threadId: string | null): Promise<void> {
+  if (threadId !== null && heldPrompts.has(threadId)) throw new Error('a prompt is already waiting for it')
+  try {
+    for (let waited = 0; ; waited += 250) {
+      const state = useHarnessStore.getState()
+      if (threadId === null || state.selectedThreadId !== threadId) throw new Error('another thread was opened')
+      const thread = state.threads[threadId]
+      if (thread !== undefined && !thread.awaitingSnapshot) {
+        if (thread.openGate !== null) throw new Error('a memory review is open')
+        return
+      }
+      if (waited >= 120_000) throw new Error('the thread did not finish opening')
+      heldPrompts.add(threadId)
+      await new Promise((resolve) => globalThis.setTimeout(resolve, 250))
+    }
+  } finally {
+    if (threadId !== null) heldPrompts.delete(threadId)
+  }
 }
 
 export function clearRackSelection(): void {
