@@ -84,7 +84,7 @@ export function SpendReconciliation({ value, snapshot }: { value: Reconciliation
     const known = rows.filter((row) => row.total_usd !== null)
     const unpriced = rows.some((row) => row.total_unpriced_lines > 0)
     const amount = known.reduce((sum, row) => sum + Number(row.total_usd), 0)
-    return `${known.length === 0 && unpriced ? 'Price not reported' : formatHumanUsd(String(amount))}${known.length > 0 && unpriced ? ' + unpriced receipts' : ''}`
+    return `${known.length === 0 && unpriced ? 'Price not reported' : formatHumanUsd(amount.toFixed(12))}${known.length > 0 && unpriced ? ' + unpriced receipts' : ''}`
   }
   return <section className="spend-history" aria-label="Spend totals">
     <h3>Spend totals</h3>
