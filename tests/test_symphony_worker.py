@@ -248,6 +248,7 @@ async def test_judge_that_cannot_return_writes_a_failed_verdict_with_its_reason(
 
 @pytest.mark.asyncio
 async def test_a_judge_retries_an_unusable_return_then_inspects_and_passes(tmp_path, monkeypatch):
+    """PLAN M4SY / F176: an unusable judge return gets one fresh inspection attempt."""
     calls = 0
 
     async def respond(messages, info):
