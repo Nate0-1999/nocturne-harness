@@ -3806,6 +3806,8 @@ details:not([open]) > .agent-policy-settings { display: none; } /* closed means 
 .instrument--graph > * { flex-shrink: 0; }
 /* M4VW: the stage takes what the frame has left, so the drawing fits and the side panel scrolls. */
 .instrument--graph > .graph-stage { flex: 1 1 0; }
+/* The selected memory's panel passes the wheel on, so Relationships below it can be scrolled to. */
+.graph-stage > aside .memory-panel__content { overscroll-behavior: auto; }
 .instrument--graph details dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-2) var(--space-5); margin: var(--space-3) 0; }
 .instrument--graph details dl > div { display: contents; }
 
