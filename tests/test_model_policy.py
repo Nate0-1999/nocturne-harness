@@ -490,8 +490,16 @@ async def test_a_pinned_pick_other_than_the_configured_model_takes_its_own_conte
     """A-021: a new thread under pinned:<model> runs that model, so it takes that model's
     window — the configured model's 1,000,000 tokens once overstated gpt-4o-mini's 128,000.
     The benchmark table is still never consulted; only the pick's own route is read.
+    M3W6A: the route's image input is kept, so an image turn needs no second catalog fetch.
     """
-    table = FakeCatalog(catalog((), {"openai/gpt-4o-mini": 128_000}))
+    table = FakeCatalog(
+        catalog((), {}),
+        named_routes={
+            "openai/gpt-4o-mini": ModelRoute(
+                "openai/gpt-4o-mini", 128_000, frozenset({"text", "image"})
+            )
+        },
+    )
     resolver = ModelPolicyResolver(
         policy="pinned:openrouter:openai/gpt-4o-mini",
         static_model="openrouter:minimax/minimax-m3",
@@ -503,6 +511,8 @@ async def test_a_pinned_pick_other_than_the_configured_model_takes_its_own_conte
 
     assert resolved.model == "openrouter:openai/gpt-4o-mini"
     assert resolved.context_tokens == 128_000
+    assert await resolver.resolve_image_capability("new-thread", resolved) is resolved
+    assert resolved.input_modalities == frozenset({"text", "image"})
     assert table.calls == 0
     assert table.named_calls == ["openai/gpt-4o-mini"]
 
