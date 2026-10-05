@@ -1703,7 +1703,7 @@
 .memory-card__provenance {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
-  /* HoverReveal centres the panel assuming it fits in 27.5rem; long paths wrap instead. */
+  /* Long paths wrap instead of widening the hover panel. */
   max-width: 27rem;
   gap: var(--space-1) var(--space-3);
   margin: 0;
@@ -1893,11 +1893,26 @@
   position: fixed;
   z-index: 60;
   transform: translate(-50%, 0);
+  box-sizing: border-box;
+  /* The gap to the title is the panel's own padding, so the pointer can cross it to scroll. */
+  padding-top: var(--space-2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   pointer-events: none;
+}
+
+.hover-reveal[data-scroll] {
+  pointer-events: auto;
+}
+
+.hover-reveal:not([data-placement]) {
+  visibility: hidden;
 }
 
 .hover-reveal[data-placement="above"] {
   transform: translate(-50%, -100%);
+  padding-top: 0;
+  padding-bottom: var(--space-2);
 }
 
 .feature-radar {
