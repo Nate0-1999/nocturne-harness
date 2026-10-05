@@ -1,0 +1,21 @@
+{
+  "run": 13,
+  "symphony_id": "01M46RCHMA23GHTFWCK65FSHAC",
+  "branch": "symphony/01M46RCHMA23GHTFWCK65FSHAC",
+  "test_exit": 0,
+  "test_output": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK\n",
+  "changed_paths": [
+    "wc13/counter.py",
+    "wc13/test_counter.py"
+  ],
+  "response_models": [
+    "openai/gpt-4.1-mini"
+  ],
+  "fault": {
+    "pid": 69819,
+    "agent_id": "01M46RCHPQXQCN327ST4GWYREP/root.1",
+    "path": "v1/inject/prepare",
+    "mode": "request lost before transport",
+    "injection_id": null
+  }
+}

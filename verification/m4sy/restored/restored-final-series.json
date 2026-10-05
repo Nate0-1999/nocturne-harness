@@ -1,0 +1,162 @@
+{
+  "runs": [
+    {
+      "run": 12,
+      "mark": "M4SY-12",
+      "started": "2026-10-05T19:20:05Z",
+      "S": "fd725560-5577-4680-9fbb-dadfbc5eb5ec",
+      "symphony_id": "01M46R4ZRYDDTTQ0BAJXJQSZXP",
+      "launched": "2026-10-05T19:20:19Z",
+      "step1_started": "2026-10-05T19:20:19Z",
+      "step2_round1_started": "2026-10-05T19:20:47Z",
+      "beam_narrowed_seen": "2026-10-05T19:20:56Z",
+      "steered": "2026-10-05T19:21:18Z",
+      "clips": "2026-10-05T19:22:07Z",
+      "step2_round2_started": "2026-10-05T19:22:10Z",
+      "ended": "2026-10-05T19:22:41Z",
+      "final_state": "completed",
+      "done": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "chat_started": "2026-10-05T19:23:22Z",
+      "W": "922883fa-cf37-4274-8d23-8c6b7314a925",
+      "finished": "2026-10-05T19:24:09Z"
+    },
+    {
+      "run": 13,
+      "mark": "M4SY-13",
+      "started": "2026-10-05T19:24:09Z",
+      "S": "3453e70f-dd71-411c-bd92-7aba83e43fea",
+      "symphony_id": "01M46RCHMA23GHTFWCK65FSHAC",
+      "launched": "2026-10-05T19:24:26Z",
+      "step1_started": "2026-10-05T19:24:26Z",
+      "step2_round1_started": "2026-10-05T19:24:54Z",
+      "beam_narrowed_seen": "2026-10-05T19:25:09Z",
+      "steered": "2026-10-05T19:25:32Z",
+      "clips": "2026-10-05T19:26:21Z",
+      "step2_round2_started": "2026-10-05T19:26:24Z",
+      "ended": "2026-10-05T19:27:05Z",
+      "final_state": "completed",
+      "done": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "chat_started": "2026-10-05T19:27:46Z",
+      "W": "353187f5-fa97-4a2e-8308-6d105482daf3",
+      "finished": "2026-10-05T19:28:31Z"
+    },
+    {
+      "run": 14,
+      "mark": "M4SY-14",
+      "started": "2026-10-05T19:29:07Z",
+      "S": "89a42db1-8005-4467-8ee8-476d7665477c",
+      "symphony_id": "01M46RNQB7XJMQDBM14WHYM6SM",
+      "launched": "2026-10-05T19:29:27Z",
+      "step1_started": "2026-10-05T19:29:27Z",
+      "step2_round1_started": "2026-10-05T19:29:55Z",
+      "beam_narrowed_seen": "2026-10-05T19:30:01Z",
+      "steered": "2026-10-05T19:30:23Z",
+      "clips": "2026-10-05T19:31:13Z",
+      "step2_round2_started": "2026-10-05T19:31:16Z",
+      "ended": "2026-10-05T19:31:59Z",
+      "final_state": "completed",
+      "done": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "chat_started": "2026-10-05T19:32:40Z",
+      "W": "053d7c3e-1a51-4a5b-8b67-40e81cb33f19",
+      "finished": "2026-10-05T19:33:26Z"
+    }
+  ],
+  "script_errors": [
+    {
+      "run": 14,
+      "t": "2026-10-05T19:31:53Z",
+      "script": "feedback.js",
+      "pre": "",
+      "out": {
+        "ok": false,
+        "error": "locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"rack-plugin-frame-conversation\"]').contentFrame().getByTestId('symphony-status').last().locator('details').filter({ hasText: 'Judge feedback' }).first().locator('summary')\u001b[22m\n\n    at eval (<anonymous>:9:33)\n    at async Server.<anonymous> (/private/tmp/m4sy-01a10a5b/walk/driver.mjs:143:15)"
+      }
+    }
+  ],
+  "result_checks": [
+    {
+      "run": 12,
+      "symphony_id": "01M46R4ZRYDDTTQ0BAJXJQSZXP",
+      "branch": "symphony/01M46R4ZRYDDTTQ0BAJXJQSZXP",
+      "test_exit": 0,
+      "test_output": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK\n",
+      "changed_paths": [
+        "wc12/counter.py",
+        "wc12/test_counter.py"
+      ],
+      "response_models": [
+        "openai/gpt-4.1-mini"
+      ],
+      "fault": {
+        "pid": 66620,
+        "agent_id": "01M46R4ZV24KAJYQ1813HFY9DR/root.1",
+        "path": "v1/inject/prepare",
+        "mode": "response lost after Palace created injection",
+        "injection_id": "09e6d25b-2014-41ea-b0f0-01dba776d762"
+      }
+    },
+    {
+      "run": 13,
+      "symphony_id": "01M46RCHMA23GHTFWCK65FSHAC",
+      "branch": "symphony/01M46RCHMA23GHTFWCK65FSHAC",
+      "test_exit": 0,
+      "test_output": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK\n",
+      "changed_paths": [
+        "wc13/counter.py",
+        "wc13/test_counter.py"
+      ],
+      "response_models": [
+        "openai/gpt-4.1-mini"
+      ],
+      "fault": {
+        "pid": 69819,
+        "agent_id": "01M46RCHPQXQCN327ST4GWYREP/root.1",
+        "path": "v1/inject/prepare",
+        "mode": "request lost before transport",
+        "injection_id": null
+      }
+    },
+    {
+      "run": 14,
+      "symphony_id": "01M46RNQB7XJMQDBM14WHYM6SM",
+      "branch": "symphony/01M46RNQB7XJMQDBM14WHYM6SM",
+      "test_exit": 0,
+      "test_output": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK\n",
+      "changed_paths": [
+        "wc14/counter.py",
+        "wc14/test_counter.py"
+      ],
+      "response_models": [
+        "openai/gpt-4.1-mini"
+      ],
+      "fault": {
+        "pid": 73278,
+        "agent_id": "01M46RNQD69950CC9R7PF4AQXN/root.1",
+        "path": "v1/inject/prepare",
+        "mode": "request lost before transport",
+        "injection_id": null
+      }
+    }
+  ],
+  "chat_files": {
+    "12": "SECOND-LINE M4SY-12\nDONE M4SY-12\n",
+    "13": "SECOND-LINE M4SY-13\nDONE M4SY-13\n",
+    "14": "SECOND-LINE M4SY-14\nDONE M4SY-14\n"
+  },
+  "capture_followup": "Run14 live-status feedback capture raced with completion. Retained Deck feedback was opened, captured and inspected successfully; restored-feedback14.json and captures/small-14/FL-091-feedback-retained.png."
+}

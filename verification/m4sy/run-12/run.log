@@ -1,0 +1,68 @@
+2026-10-05T19:20:05Z === run 12 M4SY-12 ['symphony', 'chat']
+2026-10-05T19:20:11Z markseen.js  OK
+2026-10-05T19:20:15Z sym-open.js  OK
+2026-10-05T19:20:19Z sym-fill.js  OK
+2026-10-05T19:20:19Z state running 0 ['authority_signed', 'execution_requested', 'step-1-round-1:workers_started'] [('round-1-attempt-1', 'running')] None
+2026-10-05T19:20:22Z cap-recipe.js const NAME='FL-122-step1', NOTE="step 1 running"; OK
+2026-10-05T19:20:24Z cap-chat.js const NAME='FL-085-status', NOTE="status card in chat while the run is unattended"; const  OK
+2026-10-05T19:20:44Z cap-deck.js const NAME='FL-085-running', NOTE="Deck while step 1 runs"; const OPEN=false; const EXTRA= OK
+2026-10-05T19:20:47Z state running 0.015790800000 ['step-1-round-1:judged', 'step-1:passed', 'step-2-round-1:workers_started'] [('round-1-attempt-1', 'running'), ('round-1-attempt-2', 'running'), ('round-1-attempt-3', 'running')] None
+2026-10-05T19:20:50Z cap-recipe.js const NAME='FL-122', NOTE="step 1 complete, step 2 running"; OK
+2026-10-05T19:20:56Z state running 0.022036800000 ['step-1-round-1:judged', 'step-1:passed', 'step-2-round-1:workers_started'] [('round-1-attempt-1', 'running'), ('round-1-attempt-2', 'running'), ('round-1-attempt-3', 'stopped')] None
+2026-10-05T19:21:16Z cap-deck.js const NAME='FL-095', NOTE="search step: attempts after the readiness check"; const OPEN=fa OK
+2026-10-05T19:21:18Z steer.js  OK
+2026-10-05T19:21:20Z cap-chat.js const NAME='FL-098-chat', NOTE="steering typed in the chat and its acknowledgement"; const OK
+2026-10-05T19:21:39Z cap-deck.js const NAME='FL-098', NOTE="the run card: the human prompt and the steering as follow-ups"; OK
+2026-10-05T19:22:07Z clips.js  OK
+2026-10-05T19:22:10Z state running 0.090856800000 ['clarified:round-1-attempt-2', 'step-2-round-1:judged', 'step-2-round-2:workers_started'] [('round-2-attempt-1', 'running'), ('round-2-attempt-2', 'running'), ('round-2-attempt-3', 'stopped')] None
+2026-10-05T19:22:32Z cap-deck.js const NAME='FL-091', NOTE="after the judges failed round 1: verdicts and the fresh round"; OK
+2026-10-05T19:22:32Z feedback.js  OK
+2026-10-05T19:22:35Z cap-recipe.js const NAME='FL-099', NOTE="round 2: step 1 still complete, step 2 running again"; OK
+2026-10-05T19:22:41Z state completed 0.139336800000 ['step-2:passed', 'judge_panel_unanimous', 'completed'] [('round-2-attempt-1', 'completed'), ('round-2-attempt-2', 'completed'), ('round-2-attempt-3', 'stopped')] None
+2026-10-05T19:22:48Z cap-chat.js const NAME='FL-085', NOTE="the result returned to the chat"; const SEL="[data-testid=\"sym OK
+2026-10-05T19:22:50Z cap-chat.js const NAME='FL-085-end', NOTE="the end of the result card"; const SEL=".symphony-result__b OK
+2026-10-05T19:23:12Z cap-deck.js const NAME='FL-085-deck', NOTE="the run card after completion with the judges' verdicts";  OK
+2026-10-05T19:23:15Z cap-recipe.js const NAME='FL-122-final', NOTE="recipe after completion"; OK
+2026-10-05T19:23:22Z workerctx.js const ATTEMPT='round-2-attempt-1'; OK
+2026-10-05T19:23:22Z audit {
+ "state": "completed",
+ "spend_usd": "0.139336800000",
+ "step1_worker_starts": 1,
+ "step2_rounds_started": [
+  "step-2-round-1:workers_started",
+  "step-2-round-2:workers_started"
+ ],
+ "beam": [
+  {
+   "child": "step-1-round-1",
+   "kept": [
+    "round-1-attempt-1"
+   ],
+   "pruned": []
+  },
+  {
+   "child": "step-2-round-1",
+   "kept": [
+    "round-1-attempt-1",
+    "round-1-attempt-2"
+   ],
+   "pruned": []
+  },
+  {
+   "child": "step-2-round-2",
+   "kept": [
+    "round-2-attempt-1",
+    "round-2-attempt-2"
+   ],
+   "pruned": []
+  }
+ ],
+ "worktrees_kb": 0
+}
+step-1-round-1 unanimous_pass winner round-1-attempt-1 | feedback 0 | [('motivation', 'pass', 3), ('implementation', 'pass', 3), ('performance', 'pass', 3)]
+step-2-round-1 failed_judgment winner None | feedback 1 | [('motivation', 'fail', 2), ('implementation', 'fail', 5), ('performance', 'fail', 6)]
+step-2-round-2 unanimous_pass winner round-2-attempt-2 | feedback 0 | [('motivation', 'pass', 5), ('implementation', 'pass', 6), ('performance', 'pass', 5)]
+registry in every worker first request: True 12 | system-prompts.jsonl lines with registry: None
+ 
+2026-10-05T19:24:09Z chatwork.js  OK
+2026-10-05T19:24:09Z === run finished

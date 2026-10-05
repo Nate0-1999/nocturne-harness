@@ -1,0 +1,14 @@
+{
+  "symphony_id": "01M46Q8215C1FDCN629FPKTWTB",
+  "selected_candidate": "0a20af60c0588beb10cc504a26b366eca581aed7",
+  "result_commit": "7da2db622b9512f80e364a73cd104d5c92e52fb4",
+  "candidate_tree": "808ac8274f90f011ee499ba3e7cb850c44615b9c",
+  "result_tree": "808ac8274f90f011ee499ba3e7cb850c44615b9c",
+  "changed_paths": [
+    "src/harness/cli.py",
+    "tests/test_cli.py"
+  ],
+  "project_status": "",
+  "run_worktrees_remaining": 0,
+  "timed_out_run_worktrees_remaining": 0
+}

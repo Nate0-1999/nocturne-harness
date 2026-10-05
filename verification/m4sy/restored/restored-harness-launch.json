@@ -1,0 +1,15 @@
+{
+ "ok": true,
+ "result": {
+  "S": "2cb2318d-450d-4b62-9bc7-265268f02060",
+  "judges": 3,
+  "defaults": {
+   "Attempts": "3",
+   "Spend USD": "10",
+   "Rounds": "3",
+   "Minutes": "30"
+  },
+  "id": null,
+  "text": "TERS\nMotivation\nRUBRIC\nREQUIRED EVIDENCE\nImplementation\nRUBRIC\nREQUIRED EVIDENCE\nPerformance\nRUBRIC\nREQUIRED EVIDENCE\nPRECALCULATED METRIC\nT2 AUTHORITY — REAL WALLS\nATTEMPTS\nSPEND USD\nROUNDS\nDEPTH\nCHILDREN / ATTEMPT\nMINUTES\nI authorize up to 2 attempts, $3, 2 rounds, depth 2, 4 children per attempt, and 20 minutes.\nSIGNED AND RUNNING. TYPE IN THIS CHAT TO STEER IT.\nSIGNED · RUNNING\nYOU\nChat + file"
+ }
+}
