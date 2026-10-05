@@ -792,7 +792,7 @@ async def test_m3fd_long_single_fact_shortens_without_splitting(
 async def test_over_cap_single_fact_uses_remaining_request_to_finish_shortening(
     invalid_draft: str,
 ) -> None:
-    """M4MW / FL-002: repair the three observed invalid drafts within two requests."""
+    """SPEC B.6 / M4MW / FL-002: repair the three observed invalid drafts within two requests."""
     source = ("The verification release color is amber. " * 30).strip()
     body = "The verification release color is amber."
     calls = []
