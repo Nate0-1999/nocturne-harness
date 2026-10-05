@@ -58,20 +58,22 @@ def _publish_result(root: Path, symphony_id: str, checkpoint: str) -> str:
 
 
 def _carry_environment(root: Path, location: Path) -> None:
-    """M3SF / M3EX-10: an attempt gets the project's ignored .venv, pointed at itself."""
+    """Share dependencies; only editable paths and launchers belong to the attempt."""
     source = root / ".venv"
     ignored = subprocess.run(["git", "-C", str(root), "check-ignore", "-q", ".venv"])
     if not source.is_dir() or ignored.returncode != 0:
         return
     target = location / ".venv"
-    clone = ("-c",) if sys.platform == "darwin" else ()  # APFS clone where the disk has it
-    subprocess.run(["cp", *clone, "-R", str(source), str(target)], check=True)
+    shutil.copytree(source, target, copy_function=os.symlink, symlinks=True)
     old, new = f"{root}/".encode(), f"{location}/".encode()
     for path in (*target.glob("bin/*"), *target.glob("lib/python*/site-packages/*.pth")):
-        if path.is_file() and not path.is_symlink():
+        original = source / path.relative_to(target)
+        if original.is_file() and not original.is_symlink():
             data = path.read_bytes()
             if old in data and b"\0" not in data:
+                path.unlink()
                 path.write_bytes(data.replace(old, new))
+                path.chmod(original.stat().st_mode)
 
 
 def _graft(graft_root: Path, commits: list[str]) -> str:
@@ -124,10 +126,17 @@ class SymphonyExecution:
         if not exclude.is_absolute():
             exclude = root / exclude
         existing = exclude.read_text() if exclude.exists() else ""
-        if "\n/.nocturne-worktrees/\n" not in "\n" + existing:
-            exclude.parent.mkdir(parents=True, exist_ok=True)
-            with exclude.open("a") as stream:
-                stream.write("\n/.nocturne-worktrees/\n")
+        exclude.parent.mkdir(parents=True, exist_ok=True)
+        with exclude.open("a") as stream:
+            for pattern in (
+                "/.nocturne-worktrees/",
+                "__pycache__/",
+                ".pytest_cache/",
+                ".ruff_cache/",
+                ".mypy_cache/",
+            ):
+                if pattern not in existing.splitlines():
+                    stream.write(f"\n{pattern}\n")
         settings_path = run_home / "env"
         # The supervised process receives only this private settings path, never a shell secret.
         from dotenv import set_key
@@ -436,13 +445,19 @@ class SymphonyExecution:
                     for brief in briefs:
                         path = outputs[brief.attempt_id] / "result.json"
                         if brief.attempt_id in state["cancelled"] or not path.exists():
+                            failure = outputs[brief.attempt_id] / "failure.json"
+                            reason = (
+                                json.loads(failure.read_text())["reason"]
+                                if failure.exists()
+                                else "Worker exited without a readiness result."
+                            )
                             _json(
                                 path,
                                 {
                                     "schema_version": 1,
                                     "status": "fail",
                                     "score": "0",
-                                    "checks": ["Worker exited without a readiness result."],
+                                    "checks": [reason],
                                     "evidence_refs": [str(brief.location)],
                                 },
                             )
@@ -455,13 +470,13 @@ class SymphonyExecution:
                     if not selected:
                         causes = "; ".join(
                             check
-                            for result in conductor.search_results(child_id)
+                            for result in conductor.search_lineage(child_id)
                             if result.smoke is not None
                             for check in result.smoke.checks
                         )
                         raise ValueError(
                             "No attempt can start. Resolve these prerequisites before retrying: "
-                            + causes
+                            + (causes or "The workers stopped before reporting readiness.")
                         )
                     await update(
                         "running",
@@ -491,13 +506,16 @@ class SymphonyExecution:
                         state["workers"][brief.attempt_id] = handle.worker_id
                     await wait(handles)
                     for brief in selected:
-                        blocked = outputs[brief.attempt_id] / "blocked.json"
-                        if blocked.exists():
-                            # WALL money / D.2 102: do not respawn a worker against the same fence.
-                            raise ValueError(json.loads(blocked.read_text())["reason"])
                         path = outputs[brief.attempt_id] / "result.json"
                         cancelled = brief.attempt_id in state["cancelled"]
                         if cancelled or not path.exists():
+                            failure = outputs[brief.attempt_id] / "failure.json"
+                            reason = (
+                                json.loads(failure.read_text())["reason"]
+                                if failure.exists()
+                                else "Worker stopped without a completed result."
+                            )
+                            commit = _git(brief.location, "rev-parse", "HEAD")
                             _json(
                                 path,
                                 {
@@ -506,13 +524,13 @@ class SymphonyExecution:
                                     "claims": [],
                                     "evidence_refs": [str(brief.location)],
                                     "uncertainties": [
-                                        "Worker stopped without a completed result; "
-                                        "partial files have not passed judges."
+                                        reason,
+                                        "Committed work still requires the judges' inspection.",
                                     ],
                                     "metrics_refs": [],
                                     "artifacts": [],
                                     "patch": None,
-                                    "product": {"kind": "commit", "commit": checkpoint},
+                                    "product": {"kind": "commit", "commit": commit},
                                 },
                             )
                             _json(outputs[brief.attempt_id] / "memories.json", [])
@@ -658,12 +676,12 @@ class SymphonyExecution:
                         )
                         await update("running", {"timeline": (f"{step.step_id}:passed",)})
                         break
-                    feedback = "\n".join(
-                        json.loads(
-                            (run_home / "feedback" / f"{packet.packet_id}.json").read_text()
-                        )["charge"]
+                    feedback_packets = [
+                        json.loads((run_home / "feedback" / f"{packet.packet_id}.json").read_text())
                         for packet in decision.feedback_packets
-                    )
+                    ]
+                    feedback = "\n".join(packet["charge"] for packet in feedback_packets)
+                    await update("running", {"evidence": [{"feedback_packets": feedback_packets}]})
                 else:
                     # M3SF: the stop carries what the judges said, so the card states the reason.
                     failures = " ".join(

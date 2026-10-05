@@ -21,6 +21,7 @@ def _repo(root: Path, ignore: str) -> None:
     (root / ".venv" / "bin" / "pytest").write_text(f"#!{root}/.venv/bin/python\n")
     (site / "_editable_project.pth").write_text(f"{root}/src")
     (site / "_editable_sibling.pth").write_text(f"{root.parent}/sibling/src")
+    (site / "dependency.py").write_text("value = 1\n")
 
 
 def test_an_attempt_carries_the_project_environment_pointed_at_itself(tmp_path: Path) -> None:
@@ -38,6 +39,9 @@ def test_an_attempt_carries_the_project_environment_pointed_at_itself(tmp_path: 
     assert (site / "_editable_sibling.pth").read_text() == f"{root.parent}/sibling/src"
     assert (attempt / ".venv" / "bin" / "pytest").read_text() == f"#!{attempt}/.venv/bin/python\n"
     assert (root / ".venv" / "bin" / "pytest").read_text() == f"#!{root}/.venv/bin/python\n"
+    dependency = site / "dependency.py"
+    assert dependency.is_symlink()
+    assert dependency.resolve() == root / ".venv/lib/python3.12/site-packages/dependency.py"
     status = subprocess.check_output(["git", "-C", str(attempt), "status", "--porcelain"])
     assert status == b""
 

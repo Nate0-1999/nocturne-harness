@@ -11,7 +11,7 @@ from pydantic_ai.models.function import DeltaToolCall, FunctionModel
 
 from harness import symphony_worker
 from harness.pydantic_harness_adapter import PydanticHarnessToolset
-from harness.spine_client import InjectPrepareResponse, MemoryAllocation
+from harness.spine_client import InjectPrepareResponse, MemoryAllocation, SpineTransportError
 from harness.symphony_context import COMPONENT_REGISTRY, WorkerContext, write_json
 from harness.toolset import AgentLocation
 
@@ -144,31 +144,29 @@ async def test_judge_retries_missing_metrics_and_writes_the_panel_return(tmp_pat
 
 
 @pytest.mark.asyncio
-async def test_worker_stops_after_two_sandbox_denials(tmp_path, monkeypatch):
-    """D.2 102 / F154: changing shell syntax cannot buy more turns against the same fence."""
-    denied = AsyncMock(return_value="fatal: cannot lock ref: Operation not permitted")
-    monkeypatch.setattr(PydanticHarnessToolset, "_bash", denied)
+async def test_pytest_cache_warnings_do_not_stop_a_worker(tmp_path, monkeypatch):
+    """F176: tool output is not a workspace-denial signal; pytest may warn and pass."""
+    tested = AsyncMock(
+        return_value="PytestCacheWarning: .pytest_cache: Operation not permitted\n19 passed"
+    )
+    monkeypatch.setattr(PydanticHarnessToolset, "_bash", tested)
 
     async def respond(messages, info):
+        if tested.call_count == 2:
+            yield _verdict("attempt-1")
+            return
         yield {
             0: DeltaToolCall(
                 name="bash",
-                json_args=json.dumps(
-                    {
-                        "command": "git commit -m retry"
-                        if denied.call_count
-                        else "git checkout -b outside"
-                    }
-                ),
+                json_args=json.dumps({"command": "python -m pytest tests/test_cli.py -q"}),
             )
         }
 
     result = await _run_judge(tmp_path, monkeypatch, respond)
 
-    assert denied.call_count == 2
-    assert result["outcome"] == "fail"
-    assert "Repeated workspace denial" in result["rationale"]
-    assert (tmp_path / "blocked.json").is_file()
+    assert tested.call_count == 2
+    assert result["outcome"] == "pass"
+    assert not (tmp_path / "blocked.json").exists()
 
 
 def _verdict(selected, feedback=()):
@@ -239,12 +237,33 @@ async def test_judge_that_cannot_return_writes_a_failed_verdict_with_its_reason(
 
     result = await _run_judge(tmp_path, monkeypatch, respond)
 
-    assert len(calls) == 4
+    assert len(calls) == 8
+    assert (tmp_path / "judge-retry.json").is_file()
     assert result["outcome"] == "fail"
     assert result["selected_attempt_id"] is None
     assert "The judge returned no valid verdict" in result["rationale"]
     assert result["metrics"][0]["passed"] is False
     assert result["feedback"][0]["evidence_refs"] == [str(tmp_path / "messages.json")]
+
+
+@pytest.mark.asyncio
+async def test_a_judge_retries_an_unusable_return_then_inspects_and_passes(tmp_path, monkeypatch):
+    calls = 0
+
+    async def respond(messages, info):
+        nonlocal calls
+        calls += 1
+        if calls <= 4:
+            yield _verdict("unknown-attempt")
+        elif calls == 5:
+            yield {0: DeltaToolCall(name="ls", json_args="{}")}
+        else:
+            yield _verdict("attempt-1")
+
+    result = await _run_judge(tmp_path, monkeypatch, respond)
+    assert result["outcome"] == "pass"
+    assert calls == 6
+    assert (tmp_path / "judge-retry.json").is_file()
 
 
 @pytest.mark.asyncio
@@ -266,7 +285,12 @@ async def test_worker_context_injects_without_a_gate_and_reacts_to_selection(tmp
             pinned_overflow_tokens=0,
         ),
     )
-    spine = SimpleNamespace(prepare_injection=AsyncMock(return_value=prepared))
+    spine = SimpleNamespace(
+        prepare_injection=AsyncMock(
+            side_effect=[SpineTransportError(), prepared, prepared],
+            __name__="prepare_injection",
+        )
+    )
     location = AgentLocation("worker", "machine", "session", tmp_path, tmp_path, False)
     context = SimpleNamespace(
         spine=spine,
@@ -293,7 +317,8 @@ async def test_worker_context_injects_without_a_gate_and_reacts_to_selection(tmp
     assert COMPONENT_REGISTRY in rendered and "UTF-8 checksum" in rendered
     assert spine.prepare_injection.call_args.args[0].mode == "gate"
     await worker.render([])
-    assert spine.prepare_injection.call_count == 1
+    assert spine.prepare_injection.call_count == 2
+    assert (tmp_path / "palace-retry.json").is_file()
     removed = "22345678-1234-5678-1234-567812345678"
     write_json(tmp_path / "memory-selection.json", {"removed": [removed], "added": []})
     await worker.render([])
@@ -303,7 +328,7 @@ async def test_worker_context_injects_without_a_gate_and_reacts_to_selection(tmp
         assignment=assignment, output=tmp_path, context=context, resolution=worker.resolution
     )
     assert "UTF-8 checksum" not in await judge.render([])
-    assert spine.prepare_injection.call_count == 2
+    assert spine.prepare_injection.call_count == 3
 
 
 @pytest.mark.asyncio
@@ -413,7 +438,7 @@ async def test_a_judge_that_never_looks_returns_a_failed_verdict(tmp_path, monke
 
     result = await _run_judge(tmp_path, monkeypatch, respond, inspect=False)
 
-    assert len(calls) == 4
+    assert len(calls) == 8
     assert result["outcome"] == "fail"
     assert "without inspecting any candidate" in result["rationale"]
 

@@ -165,6 +165,7 @@ class SymphonyExperience:
                         for attempt in current.attempts
                     )
                 if state == "blocked":
+                    changes["completed_at"] = self._clock()
                     changes["attempts"] = tuple(
                         attempt.model_copy(update={"state": "stopped"})
                         if attempt.state == "running"
@@ -216,7 +217,13 @@ class SymphonyExperience:
             )
             raise
         except Exception as exc:
-            await update("blocked", {"blocked_reason": str(exc), "timeline": ("blocked",)})
+            await update(
+                "blocked",
+                {
+                    "blocked_reason": str(exc) or f"Execution stopped with {type(exc).__name__}.",
+                    "timeline": ("blocked",),
+                },
+            )
 
     @staticmethod
     def is_trigger(prompt: str) -> bool:
@@ -319,10 +326,26 @@ class SymphonyExperience:
         async with self._lock:
             return self._stacks.get(symphony_id)
 
-    def recipe_snapshot(self) -> RecipeGraphSnapshot:
-        """Return the immutable latest signed Symphony plan for the Rack."""
-
-        return self._recipe_snapshot
+    def recipe_snapshot(self, thread_id: str | None = None) -> RecipeGraphSnapshot:
+        """Return the selected conversation's latest signed plan, or the global plan."""
+        if thread_id is None:
+            return self._recipe_snapshot
+        stacks = [stack for stack in self._stacks.values() if stack.thread_id == thread_id]
+        if stacks:
+            return snapshot_from_symphony_stack(
+                max(stacks, key=lambda stack: stack.symphony_id).model_dump(mode="python"),
+                revision=self._recipe_revision,
+                as_of=self._clock(),
+            )
+        return RecipeGraphSnapshot(
+            revision=self._recipe_revision,
+            as_of=self._clock(),
+            packet_id=None,
+            bead_id=None,
+            nodes=(),
+            edges=(),
+            ready_node_ids=(),
+        )
 
     def _new_stack(
         self,

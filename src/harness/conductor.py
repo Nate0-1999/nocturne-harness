@@ -835,7 +835,11 @@ class Conductor:
             if result.status is not DistillateStatus.CANCELLED:
                 raise ConductorError("a braked completion may settle only as cancelled")
             next_status = SearchAttemptStatus.CANCELLED
-        elif result.status is DistillateStatus.COMPLETED:
+        elif result.status is DistillateStatus.COMPLETED or (
+            result.status is DistillateStatus.FAILED
+            and result.product.kind == "commit"
+            and result.product.commit != attempt.handle.accepted_commit
+        ):
             next_status = SearchAttemptStatus.COMPLETED
         else:
             next_status = SearchAttemptStatus.FAILED
@@ -848,7 +852,7 @@ class Conductor:
             attempt_id=attempt_id,
             status=result.status.value,
             result=result.model_dump(mode="json"),
-            judge_eligible=result.status is DistillateStatus.COMPLETED,
+            judge_eligible=next_status is SearchAttemptStatus.COMPLETED,
             memory_admissible=False,
         )
         self._settle_search_parent(child_id)

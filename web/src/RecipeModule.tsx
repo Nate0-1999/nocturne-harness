@@ -7,7 +7,7 @@ import {
   type RecipeGraphSnapshot,
   type RecipeNodeState,
 } from './recipeGraph'
-import { useRackPlugin, useRackSelection } from './rack'
+import { useRackPlugin, useRackSelection, useRackSnapshot } from './rack'
 import './assets/recipe.css'
 import { Button } from './kit'
 
@@ -16,13 +16,14 @@ const POLL_INTERVAL_MS = 2_000
 export function RecipeModule() {
   const { query, selection } = useRackPlugin()
   const rackSelection = useRackSelection()
+  const rack = useRackSnapshot()
   const [snapshot, setSnapshot] = useState<RecipeGraphSnapshot | null>(null)
   const [inspectedNodeId, setInspectedNodeId] = useState<string | null>(null)
   const [failure, setFailure] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
-      const result = await query.query({ resource: 'recipe_graph', as_of: 'now' })
+      const result = await query.query({ resource: 'recipe_graph', as_of: 'now', thread_id: rack.selectedThreadId ?? undefined })
       if (result.status !== 'live' || result.data === null) {
         throw new Error('current recipe unavailable')
       }
@@ -37,7 +38,7 @@ export function RecipeModule() {
     } catch {
       setFailure('The live recipe is unavailable.')
     }
-  }, [query])
+  }, [query, rack.selectedThreadId])
 
   useEffect(() => {
     const initial = globalThis.setTimeout(() => void load(), 0)

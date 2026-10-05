@@ -303,6 +303,21 @@ export function SymphonyResultCard({ event }: { event: JsonObject }) {
   )
 }
 
+export function SymphonyFeedback({ stack }: { stack: DeckStack }) {
+  const packets = stack.evidence.flatMap((entry) => Array.isArray(entry.feedback_packets)
+    ? entry.feedback_packets.flatMap((value) => {
+        const packet = record(value)
+        return packet !== null && typeof packet.charge === 'string' ? [packet] : []
+      })
+    : [])
+  return <>{packets.map((packet) => (
+    <details key={String(packet.packet_id)}>
+      <summary>Judge feedback · {String(packet.title)}</summary>
+      <p style={{ whiteSpace: 'pre-wrap' }}>{String(packet.charge)}</p>
+    </details>
+  ))}</>
+}
+
 export function SymphonyStatusCard({ stack }: { stack: DeckStack }) {
   // M3SF / M3EX-08: the chat shows the run's live state, never a stale "running".
   const blocked = stack.state === 'blocked'
@@ -315,6 +330,7 @@ export function SymphonyStatusCard({ stack }: { stack: DeckStack }) {
       <p role={blocked ? 'alert' : 'status'}>{blocked
         ? stack.blocked_reason ?? 'The run stopped.'
         : 'Attempts and judges are working in their own worktrees. The judges release the result here.'}</p>
+      <SymphonyFeedback stack={stack} />
     </section>
   )
 }

@@ -277,6 +277,8 @@ async def test_signed_deliberation_waits_for_execution_before_releasing_result()
     assert stack.launch.authority.spend_wall_usd == 10
     assert stack.timeline[-1] == "completed"
     assert stack.attempts[1].state == "stopped"
+    assert experience.recipe_snapshot("thread-a").packet_id == stack.symphony_id
+    assert experience.recipe_snapshot("another-thread").nodes == ()
     # A later steering message can retain an older snapshot in durable history.
     restored = SymphonyExperience(id_factory=ids())
     restored._hydrate((completed.events[-2], completed.events[1]))

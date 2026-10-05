@@ -2361,7 +2361,7 @@ function ChatModule() {
   const [promptBusy, setPromptBusy] = useState(false)
   const [hasUnread, setHasUnread] = useState(false)
   const [archiveBusy, setArchiveBusy] = useState(false)
-  const [orchestration, setOrchestration] = useState<'Duet' | 'Symphony'>('Duet')
+  const [orchestrationChoice, setOrchestration] = useState<'Duet' | 'Symphony' | null>(null)
   const transcriptRef = useRef<HTMLDivElement>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
@@ -2426,6 +2426,10 @@ function ChatModule() {
   const symphonyLaunches = useMemo(() => new Map(latestDeckStacks(
     messages.filter((message): message is AssistantTranscriptMessage => message.role === 'assistant'),
   ).reverse().map((stack) => [stack.launch.draft_id, stack])), [messages])
+  const orchestration = orchestrationChoice ?? (
+    messages.some((message) => message.role === 'assistant' && message.events.some((event) =>
+      String(event.event_kind).startsWith('symphony_'))) ? 'Symphony' : 'Duet'
+  )
 
   useEffect(() => {
     followOutputRef.current = true
@@ -2649,14 +2653,16 @@ function ChatModule() {
           <Select aria-label="Orchestration mode" value={orchestration} onChange={(event) => {
             const next = event.target.value as 'Duet' | 'Symphony'
             setOrchestration(next)
-            if (next === 'Symphony') {
-              void events.dispatch({ type: 'prompt.submit', prompt: 'Take this to a Symphony.' })
-                .catch(() => setImageStatus('The deliberation could not be opened.'))
-            }
           }}>
             <option>Duet</option><option>Symphony</option>
           </Select>
         </label>
+        {orchestration === 'Symphony' && (
+          <Button type="button" disabled={composerDisabled} onClick={() => {
+            void events.dispatch({ type: 'prompt.submit', prompt: 'Take this to a Symphony.' })
+              .catch(() => setImageStatus('The deliberation could not be opened.'))
+          }}>Compose Symphony</Button>
+        )}
         <details><summary>{orchestration} configuration</summary>
           <AgentPolicies level={orchestration} />
         </details>
