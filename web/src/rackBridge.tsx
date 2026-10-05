@@ -288,7 +288,8 @@ function rackFrameUrl(
   url.searchParams.set('module_version', RACK_MANIFESTS[moduleId].version)
   url.searchParams.set('rack_host', globalThis.location.origin)
   url.searchParams.set('theme', theme)
-  if (moduleId === 'roots' && sheetMode) url.searchParams.set('sheet', 'true')
+  // F164: the Farm module also shows Roots, which must take the sheet's ground there too.
+  if ((moduleId === 'roots' || moduleId === 'farm') && sheetMode) url.searchParams.set('sheet', 'true')
   if (moduleId === 'conversation') {
     url.searchParams.set('conversation_mode', conversationMode ?? 'focused')
   }
