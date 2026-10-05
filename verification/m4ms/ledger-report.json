@@ -82,7 +82,24 @@
     "harness/verification/m4ms/final-harness-full.log": "Verification output only; no product behavior.",
     "harness/verification/m4ms/final61-memory-full.log": "Verification output only; no product behavior.",
     "harness/verification/m4ms/final-packet-canon.log": "Verification output only; no product behavior.",
-    "harness/verification/m4ms/receipt-contract-suite-mounted.log": "Verification output only; no product behavior."
+    "harness/verification/m4ms/receipt-contract-suite-mounted.log": "Verification output only; no product behavior.",
+    "harness/verification/m4ms/public-index-061.json": "Public release or cleanup verification evidence only; no product behavior.",
+    "harness/verification/m4ms/public-after-versions.json": "Public release or cleanup verification evidence only; no product behavior.",
+    "harness/verification/m4ms/public-after-walk.json": "Public release or cleanup verification evidence only; no product behavior.",
+    "harness/verification/m4ms/public-code-removal.json": "Public release or cleanup verification evidence only; no product behavior.",
+    "harness/verification/m4ms/final-palace-drop.log": "Public release or cleanup verification evidence only; no product behavior.",
+    "harness/verification/m4ms/image-cleanup-retention.json": "Public release or cleanup verification evidence only; no product behavior.",
+    "harness/tests/test_daemon.py": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-B5b7xD3-.css": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-BIOHfMTI.js": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-BTL3Atzv.js": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-Bn4u-HBu.js": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-C1LbeBdf.css": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-CqCrdfCx.js": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-DU7uYJeK.js": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-DdQXF54n.js": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-Duhc2231.css": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-DyCWPAB_.js": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -252,10 +269,10 @@
       "label": "Client and cloud versions stay sync-locked or backward compatible, following industry practice, so version differences feel seamless.",
       "walk": "Start a client whose version differs from the cloud Palace's; it either keeps working or refuses with a plain version message.",
       "protected": true,
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "screenshot": "FL-169.png",
-      "flag": "F086",
-      "observed": "Unproven impact coverage, not a claimed product defect: this complete row walk was not performed by M4MS. The fresh capture shows the current related surface, not proof of the missing action. Required walk: Start a client whose version differs from the cloud Palace's; it either keeps working or refuses with a plain version message."
+      "flag": "",
+      "observed": "Public 0.1.59 client and Memory wheels answered a real prompt against cloud Memory 0.1.61 / API 0.1.58. Then the public 0.1.61 pair passed the same-home reinstall and fresh receipt check."
     },
     "FL-171": {
       "label": "A startup and settings option: \"Back up conversation transcripts to cloud?\"",
@@ -396,10 +413,10 @@
       "label": "Record files (history, transcripts) live apart from code so code can be deleted and re-downloaded without losing history.",
       "walk": "Delete the code folder, reinstall, `nocturne up`; every thread is still there.",
       "protected": false,
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "screenshot": "FL-009.png",
-      "flag": "F086",
-      "observed": "Unproven impact coverage, not a claimed product defect: this complete row walk was not performed by M4MS. The fresh capture shows the current related surface, not proof of the missing action. Required walk: Delete the code folder, reinstall, `nocturne up`; every thread is still there."
+      "flag": "",
+      "observed": "Removed the complete disposable installed-code virtualenv, retained the separate home, installed both public 0.1.61 wheels from PyPI, and native nocturne up recovered the existing thread and answer."
     },
     "FL-118": {
       "label": "Out Loud mode: responses are read aloud and listen-triggered dictation is a primary way in, equal to typing, not an add-on.",
@@ -450,10 +467,10 @@
       "label": "A fresh reinstall that reconnects to existing files and auto-finds the cloud palace.",
       "walk": "Reinstall on the same machine and run the start command; it finds the existing cloud Palace and the old threads without being told where they are.",
       "protected": false,
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "screenshot": "FL-170.png",
-      "flag": "F086",
-      "observed": "Unproven impact coverage, not a claimed product defect: this complete row walk was not performed by M4MS. The fresh capture shows the current related surface, not proof of the missing action. Required walk: Reinstall on the same machine and run the start command; it finds the existing cloud Palace and the old threads without being told where they are."
+      "flag": "",
+      "observed": "Native nocturne up after reinstall found the stored test Palace configuration and old threads without another URL or token; the 0.1.61 client then answered a new prompt."
     },
     "FL-183": {
       "label": "Agent workflows can be set up on cron jobs.",
@@ -495,10 +512,10 @@
       "label": "Spin up new palaces easily: one command creates a fresh palace with its own database, schema and token in the owner's project, reachable by name; the app can point at any palace the owner has; a test palace is where verification agents train and is dropped whole afterwards.",
       "walk": "Run the new-palace command with a name; a fresh empty palace answers by that name; point the app at it, save a memory, then drop it whole; the owner's main palace is untouched throughout.",
       "protected": false,
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "screenshot": "FL-200.png",
-      "flag": "F086",
-      "observed": "Unproven impact coverage, not a claimed product defect: this complete row walk was not performed by M4MS. The fresh capture shows the current related surface, not proof of the missing action. Required walk: Run the new-palace command with a name; a fresh empty palace answers by that name; point the app at it, save a memory, then drop it whole; the owner's main palace is untouched throughout."
+      "flag": "",
+      "observed": "Native creation and selection of test-m4ms succeeded; saved a real memory with embedding receipts; native whole-Palace drop removed it and all three disposable memories. Owner main/home unused."
     }
   },
   "not_run": {
