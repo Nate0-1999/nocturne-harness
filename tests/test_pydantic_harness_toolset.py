@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import asyncio
 import re
 from pathlib import Path
 
@@ -639,6 +640,34 @@ async def test_repository_commands_find_the_project_environment_from_a_subfolder
     assert ran.success and "project-pytest" in ran.content
     assert str((tmp_path / ".venv").resolve()) in ran.content
     assert f"Project environment: {(tmp_path / '.venv').resolve()} comes first" in context
+
+
+@pytest.mark.asyncio
+async def test_commands_the_agent_starts_inherit_the_apps_home(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """F177: an agent-written test ran the doctor from the terminal against the owner's
+    ~/.nocturne because the terminal was not handed the app's home; the terminal and a
+    background shell now both see NOCTURNE_HOME. [ADR-013, P3]"""
+    if not Path("/usr/bin/sandbox-exec").is_file():
+        pytest.skip("the standing hard shell fence is macOS sandbox-exec")
+    home = tmp_path / "app-home"
+    monkeypatch.setenv("NOCTURNE_HOME", str(home))
+    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    try:
+        terminal = await toolset.execute("bash", {"command": 'echo "home=$NOCTURNE_HOME"'})
+        started = await toolset.execute("start_shell", {"command": 'echo "bg-home=$NOCTURNE_HOME"'})
+        command_id = started.content.split("ID: ", 1)[1].split(".", 1)[0]
+        for _ in range(100):
+            background = await toolset.execute("read_shell", {"command_id": command_id})
+            if "bg-home=" in background.content:
+                break
+            await asyncio.sleep(0.1)
+    finally:
+        await toolset.close()
+
+    assert f"home={home}" in terminal.content
+    assert f"bg-home={home}" in background.content
 
 
 @pytest.mark.asyncio

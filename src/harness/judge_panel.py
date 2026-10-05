@@ -22,7 +22,8 @@ from harness.conductor import (
 from harness.supervisor import WorkerSupervisor
 
 _MAX_JUDGE_RECORD_BYTES = 64 * 1024
-_SAFE_ENVIRONMENT = ("PATH", "LANG", "LC_ALL", "TMPDIR")
+# F177 (M4AH): workers and judges keep the app's home; it names a folder, not a secret.
+_SAFE_ENVIRONMENT = ("PATH", "LANG", "LC_ALL", "TMPDIR", "NOCTURNE_HOME")
 
 
 class JudgePanelError(RuntimeError):
