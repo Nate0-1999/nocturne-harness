@@ -393,7 +393,13 @@ class PydanticAITurnRunner:
                     for attempt in range(1, 4):
                         result = await self._agent.worker_agent.run(
                             prompt,
-                            deps=worker_context,
+                            # M3W6B-18: a sent-back worker wrote a new file though told not to;
+                            # it only shortens its return, with its tools off.
+                            deps=(
+                                worker_context
+                                if attempt == 1
+                                else replace(worker_context, toolset=None)
+                            ),
                             model=selected_model,
                             model_settings=model_settings,
                             usage=run_usage,
