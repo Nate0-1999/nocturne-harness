@@ -510,6 +510,72 @@ async def test_m3rl_private_tags_never_enter_stream_or_final_answer(opening, clo
 
 
 @pytest.mark.asyncio
+async def test_the_checkers_account_is_a_status_line_and_its_acknowledgement_is_not_shown(
+    tmp_path: Path,
+) -> None:
+    """M3W6B-22: answers ended with checker talk, "Checked." and "Checked by Nocturne, this
+    turn: not committed: ?? file". The account is an event the conversation shows under the
+    answer; the model's bare acknowledgement of it never enters the answer. [P3]"""
+    import subprocess
+
+    from pydantic_ai.messages import RetryPromptPart
+
+    for command in (["init", "-q"], ["config", "user.name", "t"], ["config", "user.email", "t@t"]):
+        subprocess.run(["git", "-C", str(tmp_path), *command], check=True)
+
+    async def stream(messages, _info):
+        latest = messages[-1].parts
+        if any(isinstance(part, RetryPromptPart) for part in latest):
+            yield "Check"
+            yield "ed."
+        elif any(isinstance(part, ToolReturnPart) for part in latest):
+            yield "I wrote note.txt."
+        else:
+            yield {
+                0: DeltaToolCall(
+                    name="write",
+                    json_args='{"path":"note.txt","content":"owner text\\n"}',
+                    tool_call_id="note",
+                )
+            }
+
+    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    emitter = RecordingEmitter()
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(toolset=toolset),
+    )
+    try:
+        outcome = await runner.run(
+            thread_id=str(THREAD_UUID),
+            prompt="Write my note.",
+            message_history=(),
+            emit=emitter,
+        )
+    finally:
+        await toolset.close()
+
+    assert outcome.stop_reason is StopReason.END_TURN
+    assert outcome.assistant_text == "I wrote note.txt."
+    assert "".join(emitter.texts) == "I wrote note.txt."
+    assert [e for e in emitter.events if e["event_kind"] == "fact_check"] == [
+        {
+            "event_kind": "fact_check",
+            "account": "Checked by Nocturne, this turn: not committed: ?? note.txt.",
+        }
+    ]
+    now = datetime.now(UTC)
+    for answer in ("Checked.", 'Checked.\n<nocturne-proposed-response>{"primary":"Checked."}'):
+        bridge = _EventBridge(RecordingEmitter())
+        assert await bridge.finalize(["Done.", answer], run_id="t", created_at=now) == "Done."
+    bridge = _EventBridge(RecordingEmitter())
+    assert (
+        await bridge.finalize(["Done.", "Checkout works."], run_id="t", created_at=now)
+        == "Done.\n\nCheckout works."
+    )
+
+
+@pytest.mark.asyncio
 async def test_m3fz_text_tool_text_keeps_the_whole_answer_and_terminal_proposal() -> None:
     """PLAN M3FZ / F068: text before a tool and its closing answer form one complete turn."""
 

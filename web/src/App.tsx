@@ -155,7 +155,7 @@ import {
   type AttunementTarget,
   type StickyAttunementPick,
 } from './attunement'
-import { ActionIcon, Button, Select, TextField, Toggle } from './kit'
+import { ActionIcon, Button, Chip, Select, TextField, Toggle } from './kit'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
 const SEAM_COLORS = (JSON.parse(seamColorsRaw) as { colors: SeamColorEntry[] }).colors
@@ -3701,6 +3701,9 @@ function MessageRow({
         <p className="message__content message__content--quiet">Working…</p>
       )}
       </div>
+      {message.events.filter((event) => event.event_kind === 'fact_check').map((event, index) => (
+        <Chip key={`fact-check-${index}`} data-testid="fact-check">{String(event.account)}</Chip>
+      ))}
       {message.thinking && (
         <details className="run-detail">
           <summary>Process signal</summary>
