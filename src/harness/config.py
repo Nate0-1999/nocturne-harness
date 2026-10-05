@@ -43,7 +43,7 @@ class HarnessSettings(BaseSettings):
     return_share_percent: float = Field(default=10.0, gt=0, le=100)
     return_share_min_percent: float = Field(default=1.0, gt=0, le=100)
     return_share_max_percent: float = Field(default=25.0, gt=0, le=100)
-    remember_split_timeout_seconds: float = Field(default=30.0, gt=0)
+    remember_split_timeout_seconds: float = Field(default=180.0, gt=0)
     extraction_idle_hours: float | None = Field(default=24.0, gt=0)
     # M3HW: the visualization recording keeps this many hours of history.
     visualization_retention_hours: float = Field(default=24.0, gt=0)

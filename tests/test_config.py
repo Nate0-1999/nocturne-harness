@@ -44,7 +44,7 @@ def test_c5_defaults_are_local_minimax_with_bounded_runs_and_spine(monkeypatch) 
     assert settings.run_total_tokens_limit == 500_000
     assert settings.label_max == 64
     assert settings.memory_max_tokens == 128
-    assert settings.remember_split_timeout_seconds == 30.0
+    assert settings.remember_split_timeout_seconds == 180.0
     assert settings.toolset_fence_reads is False
 
 

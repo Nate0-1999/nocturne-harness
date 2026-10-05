@@ -62,6 +62,10 @@ REMEMBER_DRAFT_INSTRUCTION = (
     "Generate one short label and 2-5 lowercase searchable keywords for the "
     "supplied memory. Identify whether it contains multiple distinct durable facts; set "
     "multiple_facts true only for independent facts, never merely because the text is long. "
+    "A single rule can list several dates, alternatives or exceptions; these are values of "
+    "the same rule, not separate facts. For example, a service being closed on two holidays "
+    "is one closure schedule. Different subjects or independently stated properties are "
+    "separate facts. "
     "Keywords must be distinct nouns or terms. Return only "
     "the requested structured result with no commentary."
 )
@@ -73,7 +77,9 @@ REMEMBER_SPLIT_INSTRUCTION = (
     "and coverage=[] when the source exceeds the cap and conveys only ONE fact "
     "with no operation-only text, including repeated versions of the same fact. The shortened "
     "candidate fitting the cap does not change this choice: whole_source refers to the input. "
-    "The application retains that exact source for you. "
+    "The application retains that exact source for you. In this case the candidate body is "
+    "a concise restatement, NOT a copy of the source. Remove repetition and rhetorical "
+    "padding; keep the subject, rule, timing, exceptions and uncertainty. "
     "Otherwise use whole_source=false and supply the exact coverage below. Every candidate must "
     "stand alone, contain one claim, "
     "and have its own short retrieval label: prefer 2-5 words and under 40 characters, with "
@@ -88,7 +94,7 @@ REMEMBER_SPLIT_INSTRUCTION = (
     "candidate body. If the source includes directions or commentary about remembering, "
     "saving, or splitting, treat "
     "them as instructions for this operation, never as durable facts or candidates. Keep every "
-    "actual claim and qualifier. Also return source-ordered coverage segments whose exact text "
+    "actual claim and qualifier. Only when whole_source=false, return coverage segments whose text "
     "concatenates byte-for-byte to the complete source. Classify each segment as durable with "
     "one zero-based candidate_index, or operation with candidate_index null. Operation text "
     "is excluded from candidate bodies but MUST still appear byte-for-byte in coverage; never "
@@ -104,11 +110,13 @@ REMEMBER_SPLIT_INSTRUCTION = (
     "concisely to fit that limit as one fact. The coverage always retains the exact original "
     "source, including text that was shortened. Set safe_to_save true only when every "
     "candidate stands alone, preserves its fact and qualifiers, and fits the body limit. "
-    "Return one to 64 candidates and structured data only."
+    "Return one to 64 candidates. Return a JSON instance with candidates, whole_source, "
+    "coverage and safe_to_save at the top level, not a JSON Schema. Never wrap the values "
+    "in properties or include additionalProperties."
 )
 REMEMBER_SPLIT_GUIDANCE = (
-    "I couldn't save this as separate facts without changing them, so I saved nothing. "
-    "Try one fact per /remember."
+    "Nothing was saved: I couldn't verify a complete memory draft within the length limit. "
+    "Your text is still in the composer; try again."
 )
 EXTRACTION_INSTRUCTION = (
     "Triage the supplied conversation in ONE pass: still-live context goes in working_summary "
@@ -131,6 +139,9 @@ EXTRACTION_INSTRUCTION = (
 )
 SEED_SPLIT_INSTRUCTION = (
     "Semantically split the complete Markdown document into durable atomic memories. Preserve "
+    "a stated correction as one change: keep its old and replacement values together, with "
+    "the update relationship intact, rather than separating them into historical and current "
+    "claims. The reviewer must see what changed. Preserve "
     "every durable claim without summarizing or mechanical token chopping. Every child must "
     "stand alone with no unresolved references, contain one claim, use at most 128 cl100k_base "
     "tokens, and include its own short label, kind, and 2-5 distinct lowercase searchable "
@@ -162,7 +173,11 @@ class RememberSplitCandidate(BaseModel):
             "nonblank line with 64 Unicode code points as the hard maximum."
         ),
     )
-    body: StrictStr
+    body: StrictStr = Field(
+        description="One fact within the supplied token limit. If its source is over the limit, "
+        "rewrite it concisely, preserving meaning and qualifiers, without repeated wording. "
+        "Only a source already within the limit is copied verbatim."
+    )
     # WALL Palace writes / A-049: each split child keeps the required retrieval keywords.
     keywords: list[StrictStr] = Field(min_length=2, max_length=5)
 
@@ -457,6 +472,7 @@ class HarnessAgent:
         text: str,
         *,
         context: MemoryToolContext,
+        force: bool = False,
         model: Model | str | None = None,
         model_settings: ModelSettings | None = None,
         usage: RunUsage | None = None,
@@ -481,6 +497,7 @@ class HarnessAgent:
                 usage=remember_usage,
                 raise_model_errors=raise_model_errors,
                 captured_messages=captured_messages,
+                force=force,
             )
         try:
             draft_result = await _run_structured_agent(
@@ -516,6 +533,7 @@ class HarnessAgent:
                 usage=remember_usage,
                 raise_model_errors=raise_model_errors,
                 captured_messages=captured_messages,
+                force=force,
             )
         keywords = _normalize_keywords(draft.keywords)
         if keywords is None:
@@ -551,6 +569,7 @@ class HarnessAgent:
             label=label,
             keywords=keywords,
             context=context,
+            force=force,
         )
 
     async def _split_or_guide_remember(
@@ -563,6 +582,7 @@ class HarnessAgent:
         usage: RunUsage,
         raise_model_errors: bool,
         captured_messages: list[ModelMessage] | None,
+        force: bool = False,
     ) -> RememberResult:
         """Plan one semantic family, then write all children or guide without a write."""
 
@@ -583,22 +603,69 @@ class HarnessAgent:
         try:
             # INCIDENT F047: bound the splitter that previously stranded oversized /remember.
             async with asyncio.timeout(self._settings.remember_split_timeout_seconds):
-                draft_result = await _run_structured_agent(
-                    self._remember_splitter_agent,
-                    (
-                        f"Label limit: {self._settings.label_max} Unicode code points\n"
-                        f"Body limit: {self._settings.memory_max_tokens} cl100k_base tokens\n"
-                        f"Source length: {cl100k_token_count(body)} cl100k_base tokens\n"
-                        f"Memory source:\n{body}"
-                    ),
-                    model=model,
-                    model_settings=model_settings,
-                    usage_limits=self._remember_split_usage_limits,
-                    usage=usage,
-                    captured_messages=captured_messages,
-                )
+                requests_before = usage.requests
+                try:
+                    # F178: a stalled first request must leave time for the permitted second.
+                    first_timeout = self._settings.remember_split_timeout_seconds / (
+                        2 if requests_before == 0 else 1
+                    )
+                    async with asyncio.timeout(first_timeout):
+                        draft_result = await _run_structured_agent(
+                            self._remember_splitter_agent,
+                            (
+                                f"Label limit: {self._settings.label_max} Unicode code points\n"
+                                f"Body limit: {self._settings.memory_max_tokens} "
+                                "cl100k_base tokens\n"
+                                f"Source length: {cl100k_token_count(body)} cl100k_base tokens\n"
+                                f"Memory source:\n{body}"
+                            ),
+                            model=model,
+                            model_settings=model_settings,
+                            usage_limits=self._remember_split_usage_limits,
+                            usage=usage,
+                            captured_messages=captured_messages,
+                        )
+                except (UnexpectedModelBehavior, TimeoutError) as exc:
+                    if isinstance(exc, TimeoutError):
+                        # The SDK counts completed responses; the cancelled attempt still counts.
+                        usage.requests = max(usage.requests, requests_before + 1)
+                    if usage.requests >= 2:
+                        raise
+                    draft_result = None
+                if usage.requests < 2 and (
+                    draft_result is None
+                    or _validated_remember_split(
+                        draft_result.output,
+                        source_body=body,
+                        label_max=self._settings.label_max,
+                        memory_max_tokens=self._settings.memory_max_tokens,
+                    )
+                    is None
+                ):
+                    draft_result = await _run_structured_agent(
+                        self._remember_splitter_agent,
+                        "Your draft did not finish or failed structured-output, length "
+                        "or source-coverage "
+                        "validation. "
+                        "Re-read the source. Repeated wording and qualifiers of one fact are "
+                        "not independent facts: shorten them to one candidate with "
+                        "whole_source=true, coverage=[]. Split only independent facts and "
+                        "account for every source span and every candidate. "
+                        f"Each body must fit {self._settings.memory_max_tokens} cl100k_base "
+                        f"tokens and each label {self._settings.label_max} characters.\n"
+                        f"Memory source:\n{body}",
+                        model=model,
+                        model_settings=model_settings,
+                        usage_limits=self._remember_split_usage_limits,
+                        usage=usage,
+                        captured_messages=captured_messages,
+                    )
         except TimeoutError:
-            return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
+            return RememberResult(
+                False,
+                "The memory draft took too long, so nothing was saved. "
+                "Your text is still in the composer; try again.",
+            )
         except UnexpectedModelBehavior:
             return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
         except Exception:
@@ -627,6 +694,7 @@ class HarnessAgent:
                 label=child.label,
                 keywords=child.keywords,
                 context=context,
+                force=force,
             )
 
         try:
@@ -667,6 +735,7 @@ class HarnessAgent:
         label: str,
         keywords: list[str],
         context: MemoryToolContext,
+        force: bool = False,
     ) -> RememberResult:
         """Persist the exact source through the unchanged ordinary create boundary."""
 
@@ -676,6 +745,7 @@ class HarnessAgent:
                 label=label,
                 body=body,
                 keywords=keywords,
+                force=force,
             )
         except CreateMemoryConflictError as exc:
             if isinstance(exc.conflict, DuplicateMemoryConflict):
@@ -684,6 +754,16 @@ class HarnessAgent:
                     exc.conflict.duplicate_of.memory_id,
                 )
             conflict = exc.conflict.label_conflict
+            # A generated handle must not hide the Palace's semantic duplicate decision.
+            source_label = body.splitlines()[0][:64].strip()
+            if source_label != label:
+                return await HarnessAgent._create_single_remember(
+                    body,
+                    label=source_label,
+                    keywords=keywords,
+                    context=context,
+                    force=force,
+                )
             return RememberResult(
                 False,
                 "Not saved: that label already belongs to "
@@ -697,11 +777,13 @@ class HarnessAgent:
             if not response.similar:
                 return RememberResult(False, "Not saved: Memory returned no similar memory.")
             existing = response.similar[0]
+            similarity = f"{existing.score:.3f}" if existing.score is not None else "unavailable"
             return RememberResult(
                 False,
                 "Not saved: this looks similar to "
-                f"{existing.label!r}. Open Memory and edit that memory if this changes it; "
-                "otherwise rephrase this as a distinct fact and try /remember again.",
+                f"{existing.label!r} (similarity {similarity}): {existing.body}\n\n"
+                "Open Memory and edit that memory, or save anyway by sending:\n"
+                f"`/remember --save-anyway {body}`",
             )
         created = response.created
         return RememberResult(
@@ -954,9 +1036,13 @@ class HarnessAgent:
 
         remembered_text = remember_command_text(text)
         if remembered_text is not None:
+            force = remembered_text.startswith("--save-anyway ")
+            if force:
+                remembered_text = remembered_text.removeprefix("--save-anyway ").strip()
             return await self.remember(
                 remembered_text,
                 context=context,
+                force=force,
                 model=model,
                 model_settings=model_settings,
                 usage=usage,

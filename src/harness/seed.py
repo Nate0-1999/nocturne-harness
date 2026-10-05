@@ -69,6 +69,7 @@ class SeedIngestionService:
             return existing
         split = await self._agent.split_seed(source_name, upload.markdown)
         candidates: list[ExtractionCandidate] = []
+        already_known = 0
         for item in split.candidates:
             neighbors = await self._spine.search(
                 SearchRequest(
@@ -88,6 +89,9 @@ class SeedIngestionService:
                 if neighbor.score is not None and neighbor.score >= _SEED_VERDICT_NEIGHBOR_MIN_SCORE
             ]
             verdict = await self._agent.propose_extraction_verdict(item, neighbor_payload)
+            if verdict.verdict == "already_known":
+                already_known += 1
+                continue
             candidates.append(
                 ExtractionCandidate(
                     label=item.label.strip(),
@@ -98,6 +102,8 @@ class SeedIngestionService:
                     target_ids=verdict.target_ids,
                 )
             )
+        if not candidates:
+            return SeedResponse(batch_uid=upload.batch_uid, cards=[], duplicate_count=already_known)
         request = SeedRequest(
             principal_id=self._principal_id,
             batch_uid=upload.batch_uid,
@@ -109,7 +115,10 @@ class SeedIngestionService:
             candidates=candidates,
         )
         try:
-            return await self._spine.create_seed(request)
+            response = await self._spine.create_seed(request)
+            return response.model_copy(
+                update={"duplicate_count": response.duplicate_count + already_known}
+            )
         except SpineClientError:
             existing = await self._pending_batch(
                 request.batch_uid,

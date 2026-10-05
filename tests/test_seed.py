@@ -145,6 +145,28 @@ async def test_markdown_seed_is_split_before_one_standard_queue_write() -> None:
 
 
 @pytest.mark.asyncio
+async def test_already_known_seed_is_counted_without_an_invalid_queue_verdict() -> None:
+    """M4MW / SPEC C.4: an already-known document explains its empty review queue."""
+
+    class KnownAgent(FakeAgent):
+        async def propose_extraction_verdict(self, candidate, neighbors):
+            return ExtractionVerdictDraft(verdict="already_known", target_ids=[MEMORY_ID])
+
+    spine = FakeSpine()
+    service = SeedIngestionService(
+        agent=KnownAgent(), spine=spine, principal_id="owner", machine_id="mac"
+    )
+    result = await service.ingest(
+        SeedUploadRequest(
+            batch_uid=uuid4(), source_name="garden.md", markdown="# Garden\nKnown fact."
+        )
+    )
+    assert result.cards == []
+    assert result.duplicate_count == 1
+    assert spine.request is None
+
+
+@pytest.mark.asyncio
 async def test_seed_rejects_non_markdown_before_model_work() -> None:
     """A-033 is defended by verifying that seed rejects non markdown before model work; this
     prevents drift in the seed splitting and unified-queue contract.
