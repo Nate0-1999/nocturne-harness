@@ -12,6 +12,7 @@ import {
   generationAccuracyCopy,
   learningNoticeAfterSnapshot,
   type LearningNotice,
+  type ReplayScoreView,
   type ScorerAccuracyPoint,
   type ScorerConsoleLearning,
 } from './learning'
@@ -33,7 +34,7 @@ type Config = {
   created_at: string
   status: string
   values: Values
-  replay: Record<string, unknown> | null
+  replay: { incumbent: ReplayScoreView; challenger: ReplayScoreView } | null
 }
 type Point = {
   event_uid: string
@@ -249,6 +250,7 @@ export function InjectionConsole() {
   const activeVersion = data?.active_version
   const activeConfig = data?.configurations.find((config) => config.version === activeVersion)
   const activeAccuracy = data?.accuracy.find((point) => point.version === activeVersion)
+  const latestRetrain = data?.learning.retrain_runs.at(-1)
 
   useEffect(() => {
     if (activeVersion === undefined || draft === null || !valid) return
@@ -338,7 +340,7 @@ export function InjectionConsole() {
         })
       } else if (result.status === 'not_better') {
         setRetrainNotice({
-          copy: 'Retrain checked the evidence. The current recipe still wins.',
+          copy: 'The current recipe still wins. Current values kept: the candidate did not improve the back-test enough. Compare the results below.',
           eligibleDispositions: result.eligible_dispositions,
         })
       } else {
@@ -349,6 +351,7 @@ export function InjectionConsole() {
       }
       await load(false)
     } catch {
+      setRetrainNotice(null)
       setFailure('Retraining could not be completed.')
     } finally {
       setBusy(false)
@@ -431,6 +434,18 @@ export function InjectionConsole() {
             {retrainNotice !== null && (
               <p className="console-note" role="status">{retrainNotice.copy}</p>
             )}
+            {latestRetrain?.incumbent && latestRetrain.challenger && <>
+              <table aria-label="Latest retrain comparison">
+                <caption>{latestRetrain.holdout_dispositions} held-out decisions · {latestRetrain.result === 'not_better' ? 'Current values kept' : 'Candidate proposed'}</caption>
+                <thead><tr><th>Back-test</th><th>Previous</th><th>Proposed</th></tr></thead>
+                <tbody>
+                  <tr><th>Weighted errors</th><td>{latestRetrain.incumbent.weighted_disagreements}</td><td>{latestRetrain.challenger.weighted_disagreements}</td></tr>
+                  <tr><th>Memory-share errors</th><td>{latestRetrain.incumbent.weighted_share_disagreements}</td><td>{latestRetrain.challenger.weighted_share_disagreements}</td></tr>
+                  <tr><th>Injected tokens</th><td>{latestRetrain.incumbent.injected_tokens}</td><td>{latestRetrain.challenger.injected_tokens}</td></tr>
+                </tbody>
+              </table>
+              <p className="console-note">Both sets use the same held-out decisions. Weighted errors include memory-share errors; fewer is better.</p>
+            </>}
           </div>
           {data.metrics_scope !== 'principal' && (
             <LearningTimeline learning={data.learning} accuracy={data.accuracy} />
@@ -479,6 +494,10 @@ export function InjectionConsole() {
                   <strong>Proposed {generationAccuracyCopy(point)}</strong>
                 </header>
                 <p>Previous {previous === null ? 'not recorded' : formatHumanPercent(previous)} · same held-out decisions</p>
+                {proposal.replay && <p>
+                  Weighted errors: proposed {proposal.replay.challenger.weighted_disagreements} · previous {proposal.replay.incumbent.weighted_disagreements}.
+                  {' '}Injected tokens: proposed {proposal.replay.challenger.injected_tokens} · previous {proposal.replay.incumbent.injected_tokens}.
+                </p>}
                 <p>
                   {point?.weighted_dispositions === null || point?.weighted_dispositions === undefined
                     ? 'Exact held-out weight is not recorded.'
@@ -636,12 +655,14 @@ export function InjectionConsole() {
           {data?.candidates.length === 0 && <p>Nothing measured yet.</p>}
         </section>
       </div>
-      <details><summary>Injection back-test history</summary>
+      <section aria-label="Injection back-test history">
+        <h3>Injection back-test history</h3>
         <table aria-label="Injection back-test history"><thead><tr><th>Time</th><th>Memory</th><th>Decision</th><th>Score</th></tr></thead>
-          <tbody>{(data?.candidates ?? []).flatMap((candidate) => candidate.points.filter((point) => point.outcome !== null).map((point) =>
-            <tr key={point.event_uid}><td>{point.ts}</td><th>{candidate.label}</th><td>{point.outcome?.replaceAll('_', ' ').replace(':', ' · ')}</td><td>{formatHumanScore(point.score)}</td></tr>))}</tbody>
+          <tbody>{(data?.candidates ?? []).flatMap((candidate) => candidate.points.filter((point) => point.outcome !== null).map((point) => ({ ...point, label: candidate.label })))
+            .sort((left, right) => left.ts.localeCompare(right.ts) || left.event_uid.localeCompare(right.event_uid)).map((point) =>
+              <tr key={point.event_uid}><td>{point.ts}</td><th>{point.label}</th><td>{point.outcome?.replaceAll('_', ' ').replace(':', ' · ')}</td><td>{formatHumanScore(point.score)}</td></tr>)}</tbody>
         </table>
-      </details>
+      </section>
       {data && <CreationScoreboard data={data.creation?.sources ? data.creation : undefined} />}
     </section>
   )

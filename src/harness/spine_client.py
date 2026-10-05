@@ -1444,7 +1444,7 @@ class SpineClient:
         """Invoke the owner-only manual learner trigger with this daemon's identity."""
 
         response = await self._request(
-            "POST", "retrain", params={"principal_id": self._principal_id or "local"}
+            "POST", "retrain", params={"principal_id": self._principal_id or "local"}, timeout=120.0
         )
         return _expect_metrics_success(response, adapter=_RETRAIN_RESPONSE)
 
@@ -1652,6 +1652,7 @@ class SpineClient:
         *,
         json_body: JsonObject | None = None,
         params: JsonObject | None = None,
+        timeout: float | None = None,
     ) -> httpx.Response:
         try:
             return await self._client.request(
@@ -1659,6 +1660,7 @@ class SpineClient:
                 path,
                 json=json_body,
                 params=params,
+                timeout=timeout if timeout is not None else httpx.USE_CLIENT_DEFAULT,
             )
         except httpx.RequestError as exc:
             # INCIDENT F062: typed transport failure lets optional Palace reads fail locally.
