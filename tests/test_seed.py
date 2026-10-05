@@ -152,12 +152,7 @@ async def test_already_known_seed_is_counted_without_an_invalid_queue_verdict() 
         async def propose_extraction_verdict(self, candidate, neighbors):
             return ExtractionVerdictDraft(verdict="already_known", target_ids=[MEMORY_ID])
 
-    class EmptySpine(FakeSpine):
-        async def create_seed(self, request):
-            self.request = request
-            return SeedResponse(batch_uid=request.batch_uid, cards=[], duplicate_count=0)
-
-    spine = EmptySpine()
+    spine = FakeSpine()
     service = SeedIngestionService(
         agent=KnownAgent(), spine=spine, principal_id="owner", machine_id="mac"
     )
@@ -168,8 +163,7 @@ async def test_already_known_seed_is_counted_without_an_invalid_queue_verdict() 
     )
     assert result.cards == []
     assert result.duplicate_count == 1
-    assert spine.request.candidates == []
-    assert spine.request.markdown == "# Garden\nKnown fact."
+    assert spine.request is None
 
 
 @pytest.mark.asyncio

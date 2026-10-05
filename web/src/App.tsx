@@ -3311,9 +3311,9 @@ function PalaceQueueModule() {
       }
       await load()
       setStatusText(pending > 0
-        ? `Split complete. ${pending} memories to review.${duplicates > 0 ? ` ${duplicates} already known or previously rejected.` : ''}`
+        ? `Split complete. ${pending} ${pending === 1 ? 'memory' : 'memories'} to review.${duplicates > 0 ? ` ${duplicates} already known or previously rejected.` : ''}`
         : duplicates > 0
-          ? `No memories to review: ${duplicates} facts were already known or previously rejected. Nothing new was saved.`
+          ? `No memories to review: ${duplicates} ${duplicates === 1 ? 'fact was' : 'facts were'} already known or previously rejected. Nothing new was saved.`
           : 'No memories to review: the document yielded no durable facts. Nothing new was saved.')
     } catch (error) {
       setStatusText(error instanceof Error ? error.message : 'Seed ingestion failed.')
