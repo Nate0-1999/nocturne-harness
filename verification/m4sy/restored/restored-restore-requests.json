@@ -1,0 +1,10 @@
+[
+  {
+    "httpRequest": {
+      "latency": "0.029748189s",
+      "requestUrl": "https://nocturne-palace-test-m4sy-7wq3wmgcoq-uc.a.run.app/v1/inject/threads/943fa0ca-6564-548f-9a78-ced831927a1b?principal_id=palace-agent-04eb253b-dae9-40a2-91e4-a3251b3498c1",
+      "status": 200
+    },
+    "timestamp": "2026-10-05T19:20:22.379719Z"
+  }
+]

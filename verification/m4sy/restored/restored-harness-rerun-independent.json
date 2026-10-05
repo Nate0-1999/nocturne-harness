@@ -1,0 +1,36 @@
+[
+  {
+    "attempt": "round-2-attempt-1",
+    "commit": "0a20af60c0588beb10cc504a26b366eca581aed7",
+    "base": "64e78e16efdab08e27bff327df52cec14a403724",
+    "changed_paths": [
+      "src/harness/cli.py",
+      "tests/test_cli.py"
+    ],
+    "pytest": {
+      "exit_code": 0,
+      "output": "...................                                                      [100%]\n19 passed in 0.48s\n"
+    },
+    "cli": {
+      "exit_code": 0,
+      "output": "nocturne 0.1.56\n"
+    }
+  },
+  {
+    "attempt": "round-2-attempt-2",
+    "commit": "0dc5ca786a38c701bcef6f17d9e82930bcd12154",
+    "base": "64e78e16efdab08e27bff327df52cec14a403724",
+    "changed_paths": [
+      "src/harness/cli.py",
+      "tests/test_cli.py"
+    ],
+    "pytest": {
+      "exit_code": 0,
+      "output": "...................                                                      [100%]\n19 passed in 0.29s\n"
+    },
+    "cli": {
+      "exit_code": 0,
+      "output": "nocturne 0.1.56\n"
+    }
+  }
+]

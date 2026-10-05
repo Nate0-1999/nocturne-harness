@@ -1,0 +1,25 @@
+{
+ "run": 12,
+ "mark": "M4SY-12",
+ "started": "2026-10-05T19:20:05Z",
+ "S": "fd725560-5577-4680-9fbb-dadfbc5eb5ec",
+ "symphony_id": "01M46R4ZRYDDTTQ0BAJXJQSZXP",
+ "launched": "2026-10-05T19:20:19Z",
+ "step1_started": "2026-10-05T19:20:19Z",
+ "step2_round1_started": "2026-10-05T19:20:47Z",
+ "beam_narrowed_seen": "2026-10-05T19:20:56Z",
+ "steered": "2026-10-05T19:21:18Z",
+ "clips": "2026-10-05T19:22:07Z",
+ "step2_round2_started": "2026-10-05T19:22:10Z",
+ "ended": "2026-10-05T19:22:41Z",
+ "final_state": "completed",
+ "done": [
+  "a",
+  "b",
+  "c",
+  "d"
+ ],
+ "chat_started": "2026-10-05T19:23:22Z",
+ "W": "922883fa-cf37-4274-8d23-8c6b7314a925",
+ "finished": "2026-10-05T19:24:09Z"
+}

@@ -1,0 +1,29 @@
+{
+ "ok": true,
+ "result": [
+  {
+   "n": 12,
+   "before": 0,
+   "after": 0,
+   "otherNodes": 0,
+   "restoredMode": "Symphony",
+   "ownPacket": "01M46R4ZRYDDTTQ0BAJXJQSZXP"
+  },
+  {
+   "n": 13,
+   "before": 0,
+   "after": 0,
+   "otherNodes": 0,
+   "restoredMode": "Symphony",
+   "ownPacket": "01M46RCHMA23GHTFWCK65FSHAC"
+  },
+  {
+   "n": 14,
+   "before": 0,
+   "after": 0,
+   "otherNodes": 0,
+   "restoredMode": "Symphony",
+   "ownPacket": "01M46RNQB7XJMQDBM14WHYM6SM"
+  }
+ ]
+}

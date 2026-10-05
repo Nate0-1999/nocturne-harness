@@ -15,7 +15,6 @@ from pydantic import BaseModel, create_model
 from pydantic_ai import Agent, ModelRetry, PromptedOutput, capture_run_messages
 from pydantic_ai.exceptions import AgentRunError
 from pydantic_ai.messages import (
-    FunctionToolResultEvent,
     ModelMessagesTypeAdapter,
     ModelResponse,
     ToolCallPart,
@@ -243,10 +242,7 @@ async def run(assignment_path: Path) -> None:
             purpose="judge" if stage == "judge" else "building",
         )
 
-    denied_writes = 0
-
     async def observe(_context, events):
-        nonlocal denied_writes
         async for _event in events:
             observe_worker(
                 output,
@@ -257,21 +253,6 @@ async def run(assignment_path: Path) -> None:
                 captured,
             )
             worker_context.publish(captured)
-            if isinstance(_event, FunctionToolResultEvent) and _event.part.tool_name in (
-                "bash",
-                "read_shell",
-            ):
-                content = str(_event.part.content)
-                if "operation not permitted" in content.lower():
-                    denied_writes += 1
-                    if denied_writes == 2:
-                        # WALL money / D.2 102: another model turn cannot widen the sandbox.
-                        reason = (
-                            "Repeated workspace denial; "
-                            "change the task or location before retrying."
-                        )
-                        _write(output / "blocked.json", json.dumps({"reason": reason}))
-                        raise AgentRunError(reason)
             request = receipt()
             if request is not None:
                 _write(
@@ -351,35 +332,39 @@ async def run(assignment_path: Path) -> None:
     try:
         failed_verdict = None
         with capture_run_messages() as captured:
-            try:
-                result = await agent.run(
-                    prompt,
-                    deps=context,
-                    model=router.model_for(resolution.model),
-                    model_settings=model_settings_for(resolution, assignment["thread_id"]),
-                    # M3SF: the owner's signed spend and time walls bound a worker, which the
-                    # runtime meters; the chat's per-run caps once killed attempts below them.
-                    usage_limits=UsageLimits(request_limit=None),
-                    event_stream_handler=observe,
-                    instructions=instructions,
-                )
-            except AgentRunError as exc:
-                if stage != "judge":
-                    raise
-                # M3SF: a judge that cannot return still returns a FAIL with its reason.
-                failed_verdict = stopped_verdict(
-                    session,
-                    charter=sealed.charter,
-                    reason=str(exc.__cause__ or exc),
-                    evidence_ref=str(output / "messages.json"),
-                )
+            for attempt in range(2 if stage == "judge" else 1):
+                try:
+                    result = await agent.run(
+                        prompt,
+                        deps=context,
+                        model=router.model_for(resolution.model),
+                        model_settings=model_settings_for(resolution, assignment["thread_id"]),
+                        # The signed spend and time walls bound workers, including retries.
+                        usage_limits=UsageLimits(request_limit=None),
+                        event_stream_handler=observe,
+                        instructions=instructions,
+                    )
+                    break
+                except AgentRunError as exc:
+                    if stage != "judge":
+                        raise
+                    reason = str(exc.__cause__ or exc)
+                    if attempt == 0:
+                        _write(output / "judge-retry.json", json.dumps({"reason": reason}))
+                        continue
+                    failed_verdict = stopped_verdict(
+                        session,
+                        charter=sealed.charter,
+                        reason=reason,
+                        evidence_ref=str(output / "messages.json"),
+                    )
         worker_context.publish(captured)
         if stage == "completion":
             work = result.output
             commit = (
                 _capture_product(root, base, assignment.get("step_title", "Symphony result"))
                 if work.completed
-                else base
+                else subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
             )
             # M3SF: artifacts are worktree-relative; a model may cite them by absolute path.
             artifacts = [ref.removeprefix(f"{root}/") for ref in work.evidence_refs]
@@ -411,6 +396,9 @@ async def run(assignment_path: Path) -> None:
         _write(output / "result.json", value.model_dump_json(indent=2))
         if stage == "judge":
             _write(root / "judge-verdict.json", value.model_dump_json(indent=2))
+    except Exception as exc:
+        _write(output / "failure.json", json.dumps({"reason": str(exc) or type(exc).__name__}))
+        raise
     finally:
         asyncio.get_running_loop().remove_signal_handler(signal.SIGTERM)
         observe_worker(

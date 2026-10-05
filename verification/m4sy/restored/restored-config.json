@@ -1,0 +1,9 @@
+{
+ "ok": true,
+ "result": {
+  "options": [
+   "Duet",
+   "Symphony"
+  ]
+ }
+}

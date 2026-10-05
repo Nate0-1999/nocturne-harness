@@ -1,0 +1,13 @@
+{
+ "ok": true,
+ "result": {
+  "policies": {
+   "chat": "pinned:openrouter:minimax/minimax-m3",
+   "subagent": "pinned:openrouter:openai/gpt-4.1-mini",
+   "judge": "pinned:openrouter:openai/gpt-4.1-mini",
+   "curator": "pinned:anthropic:claude-sonnet-4-6"
+  },
+  "curator_error": null,
+  "policy_errors": {}
+ }
+}

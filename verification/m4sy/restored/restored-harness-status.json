@@ -1,0 +1,134 @@
+{
+  "symphony_id": "01M46P1PT29S5HP87Y8RDC9C9N",
+  "thread_id": "2cb2318d-450d-4b62-9bc7-265268f02060",
+  "state": "blocked",
+  "execution_kind": "supervised",
+  "launch": {
+    "draft_id": "01M46P1MQJHM9WB3DXTZRNA7HH",
+    "objective": "Add a --version flag to the nocturne command line in src/harness/cli.py that prints the installed nocturne-harness version and exits 0, with one new test in tests/test_cli.py. Change only those two files. Commit on your private branch.",
+    "motivation": "The owner wants to see a real small feature built on the harness repository by parallel attempts and checked by judges.",
+    "recipe": [
+      {
+        "step_id": "step-1",
+        "title": "Add the --version flag and its test",
+        "done_when": "`.venv/bin/python -m pytest tests/test_cli.py -q` passes from the repository root, including one new test that runs the parser with --version; `git diff` against the starting commit touches only src/harness/cli.py and tests/test_cli.py.",
+        "search": true,
+        "stratagems": []
+      }
+    ],
+    "judge_charters": [
+      {
+        "seat": "motivation",
+        "rubric": [
+          "Pass only if the candidate adds a --version flag that prints the installed version and exits 0, has a new test for it that passes, and changes only src/harness/cli.py and tests/test_cli.py."
+        ],
+        "evidence_requirements": [
+          "Move into the candidate artifact_root, read the diff with git, and run the test file. Tool output is the evidence."
+        ],
+        "metrics": []
+      },
+      {
+        "seat": "implementation",
+        "rubric": [
+          "Pass only if the candidate adds a --version flag that prints the installed version and exits 0, has a new test for it that passes, and changes only src/harness/cli.py and tests/test_cli.py."
+        ],
+        "evidence_requirements": [
+          "Move into the candidate artifact_root, read the diff with git, and run the test file. Tool output is the evidence."
+        ],
+        "metrics": []
+      },
+      {
+        "seat": "performance",
+        "rubric": [
+          "Pass only if the candidate adds a --version flag that prints the installed version and exits 0, has a new test for it that passes, and changes only src/harness/cli.py and tests/test_cli.py."
+        ],
+        "evidence_requirements": [
+          "Move into the candidate artifact_root, read the diff with git, and run the test file. Tool output is the evidence."
+        ],
+        "metrics": [
+          "tests/test_cli.py passes with exit code 0 and the diff touches exactly two files."
+        ]
+      }
+    ],
+    "authority": {
+      "attempts": 2,
+      "spend_wall_usd": "3",
+      "max_rounds": 2,
+      "depth_cap": 2,
+      "children_per_attempt": 4,
+      "duration_minutes": 20,
+      "signed": true
+    },
+    "hold_for_steering": false
+  },
+  "search_step_ids": [
+    "step-1"
+  ],
+  "charter_digests": [
+    "9ea159ab8f929200c9c1cc30cfafd6effae503814923aee78137925857ac43ce",
+    "9c8462a46529b605ba17a6210bbc79b09bf9d47a2be5c1e5f4593ca361e7c78f",
+    "40685e849f1ed26581283dda0239dbb5699a10ee025f6bb8ea78eb1c744d43d2"
+  ],
+  "timeline": [
+    "deliberation_ratified",
+    "authority_signed",
+    "execution_requested",
+    "step-1-round-1:workers_started",
+    "blocked"
+  ],
+  "attempts": [
+    {
+      "attempt_id": "round-1-attempt-1",
+      "state": "stopped",
+      "cancellation": "none",
+      "follow_ups": [],
+      "partial_evidence": [
+        "/private/tmp/m4sy-01a10a5b/walk/harness-after/.nocturne-worktrees/01M46P1PT29S5HP87Y8RDC9C9N/step-1-round-1/round-1-attempt-1"
+      ],
+      "memories_admitted": false
+    },
+    {
+      "attempt_id": "round-1-attempt-2",
+      "state": "stopped",
+      "cancellation": "none",
+      "follow_ups": [],
+      "partial_evidence": [
+        "/private/tmp/m4sy-01a10a5b/walk/harness-after/.nocturne-worktrees/01M46P1PT29S5HP87Y8RDC9C9N/step-1-round-1/round-1-attempt-2"
+      ],
+      "memories_admitted": false
+    }
+  ],
+  "interventions": [],
+  "forked_from": null,
+  "forked_to": null,
+  "blocked_reason": "The Symphony reached its signed time wall.",
+  "result": null,
+  "completed_at": "2026-10-05T19:03:36.267287Z",
+  "evidence": [
+    {
+      "packet_id": "01M46P1PT29S5HP87Y8RDC9C9N",
+      "child_id": "step-1-round-1.round-1-attempt-1.smoke",
+      "worker_id": "01M46P1PT29S5HP87Y8RDC9C9N:step-1-round-1:round-1-attempt-1:smoke",
+      "attempt_id": "01M46P1XC19HHV8APEE4JXYKM5",
+      "accepted_commit": "64e78e16efdab08e27bff327df52cec14a403724",
+      "location": "/private/tmp/m4sy-01a10a5b/walk/harness-after/.nocturne-worktrees/01M46P1PT29S5HP87Y8RDC9C9N/step-1-round-1/round-1-attempt-1",
+      "model_policy": "pinned:openrouter:minimax/minimax-m3",
+      "brief_sha256": "af1884131630a18bcef12d4323536762164310ac8ee01aa2fb34342b4963776c",
+      "pid": 27471,
+      "retry_number": 0
+    },
+    {
+      "packet_id": "01M46P1PT29S5HP87Y8RDC9C9N",
+      "child_id": "step-1-round-1.round-1-attempt-2.smoke",
+      "worker_id": "01M46P1PT29S5HP87Y8RDC9C9N:step-1-round-1:round-1-attempt-2:smoke",
+      "attempt_id": "01M46P1XC8SB4ZP874W7B0ECPV",
+      "accepted_commit": "64e78e16efdab08e27bff327df52cec14a403724",
+      "location": "/private/tmp/m4sy-01a10a5b/walk/harness-after/.nocturne-worktrees/01M46P1PT29S5HP87Y8RDC9C9N/step-1-round-1/round-1-attempt-2",
+      "model_policy": "pinned:openrouter:minimax/minimax-m3",
+      "brief_sha256": "6025a7f4d3794fdbef896d1cd5ba65dc62eb9c382e6fe1a1ec83ccfb0f789dba",
+      "pid": 27473,
+      "retry_number": 0
+    }
+  ],
+  "spend_usd": "0.763324352000"
+}

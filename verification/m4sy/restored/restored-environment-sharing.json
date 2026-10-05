@@ -1,0 +1,28 @@
+{
+  "symphony_id": "01M46P1PT29S5HP87Y8RDC9C9N",
+  "source_environment": "/private/tmp/m4sy-01a10a5b/walk/harness-after/.venv",
+  "attempts": [
+    {
+      "path": "/private/tmp/m4sy-01a10a5b/walk/harness-after/.nocturne-worktrees/01M46P1PT29S5HP87Y8RDC9C9N/step-1-round-1/round-1-attempt-1/.venv",
+      "symlinks": 11645,
+      "disk_kb": "160",
+      "editable_pth": [
+        {
+          "name": "_editable_impl_nocturne_harness.pth",
+          "private_worktree_path": true
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/m4sy-01a10a5b/walk/harness-after/.nocturne-worktrees/01M46P1PT29S5HP87Y8RDC9C9N/step-1-round-1/round-1-attempt-2/.venv",
+      "symlinks": 11645,
+      "disk_kb": "160",
+      "editable_pth": [
+        {
+          "name": "_editable_impl_nocturne_harness.pth",
+          "private_worktree_path": true
+        }
+      ]
+    }
+  ]
+}

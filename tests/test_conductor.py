@@ -427,8 +427,10 @@ def test_unmarked_child_cannot_emerge_as_expensive_search(tmp_path: Path) -> Non
             conductor.explode_search("ordinary", {})
 
 
+@pytest.mark.parametrize("completion_status", ["completed", "failed"])
 def test_marked_search_explodes_three_attempts_smoke_prunes_then_narrows(
     tmp_path: Path,
+    completion_status: str,
 ) -> None:
     """SPEC D.2 114, ADR-017, and P3 require SYM7 staged search under R22 brakes."""
 
@@ -522,10 +524,15 @@ def test_marked_search_explodes_three_attempts_smoke_prunes_then_narrows(
         )
 
         completion_payload = _result(
-            status="completed",
+            status=completion_status,
             claim="risk-first completion is coherent",
             evidence="completion evidence",
         )
+        if completion_status == "failed":
+            partial = json.loads(completion_payload)
+            partial["product"] = {"kind": "commit", "commit": "committed-before-worker-stopped"}
+            partial["uncertainties"] = ["Worker stopped after committing; judge the work."]
+            completion_payload = json.dumps(partial)
         conductor.dispatch_search_completion(
             "hard-step",
             "risk",

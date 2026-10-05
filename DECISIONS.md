@@ -4058,6 +4058,7 @@ Near-miss cards carry ×, + and ×!. A confirm and the Wrong/Never chooser are a
 card's buttons (MemoryCard `prompt`), never a popover over the memory text.
 With the Palace down the first turn opens no gate (A-019) and says "Memory is unavailable";
 the same run's spend notice used to replace that line within seconds, so it now keeps it.
+
 ## M4VW — The views answer the hand [P2.1, P2.5]
 
 PRECEDENT: F181, F164, M3LV (report 259), M3EXF2, M3W6A/M3W6B findings 9, 10, 31, 34, 35, 42.
@@ -4143,3 +4144,12 @@ then saw both 30-second attempts stall on the exact 300-token fact (current-064-
 the default deadline is now 180 seconds, giving each attempt 90 seconds.
 An upload later split the old and new fees apart and lost the replacement from review;
 document splitting now keeps a correction's old-to-new relationship in one candidate.
+## M4SY — Keep stopped work judgeable [P2, P3]
+
+PRECEDENT: F176, F180, PLAN M4SY. A stopped worker's committed change reaches the
+judges with its failure and uncertainty intact. Tool-output wording is not a sandbox
+verdict; signed spend/time walls still bound work. Mode selection is local; Compose
+Symphony explicitly opens deliberation. Dependencies are shared, while editable paths
+and launchers remain specific to each worktree.
+After a lost initial response, restore any injection already created before repeating
+the one-shot prepare. Fresh attempts name their current round above historical feedback.

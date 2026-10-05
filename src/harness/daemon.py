@@ -146,7 +146,7 @@ type ScorerProposalActivator = Callable[
 ]
 type ContextWindowReader = Callable[[str | None], ContextWindowSnapshot]
 type OverwhelmReader = Callable[[str | None], OverwhelmSnapshot]
-type RecipeGraphReader = Callable[[], RecipeGraphSnapshot]
+type RecipeGraphReader = Callable[..., RecipeGraphSnapshot]
 type ToolInventoryReader = Callable[[str], ToolInventory]
 
 
@@ -434,7 +434,11 @@ def create_app(
             if recipe_graph_reader is None:
                 raise HTTPException(status_code=503, detail="The live recipe is unavailable.")
             try:
-                snapshot = recipe_graph_reader()
+                snapshot = (
+                    recipe_graph_reader(thread_id)
+                    if thread_id is not None
+                    else recipe_graph_reader()
+                )
             except ValueError:
                 raise HTTPException(
                     status_code=503,
@@ -1231,7 +1235,11 @@ def create_dev_app(
         while symphony_id in execution.live:  # its workers stop after the completed update
             await asyncio.sleep(0.5)
         completed = sorted(
-            (event for event in loop.symphony_stack_events() if event.get("state") == "completed"),
+            (
+                event
+                for event in loop.symphony_stack_events()
+                if event.get("state") in {"completed", "blocked"}
+            ),
             key=lambda event: str(event.get("completed_at")),
         )
         await asyncio.to_thread(
@@ -1243,7 +1251,7 @@ def create_dev_app(
 
     async def publish_symphony_state(thread_id: str, event: Mapping[str, object]) -> None:
         await loop.publish_symphony_state(thread_id, event)
-        if event.get("state") == "completed":  # M3HW: its result is kept, so its worktrees go
+        if event.get("state") in {"completed", "blocked"}:
             task = asyncio.create_task(remove_finished_worktrees(str(event["symphony_id"])))
             worktree_removals.add(task)
             task.add_done_callback(worktree_removals.discard)

@@ -13,6 +13,7 @@ from harness.spine_client import (
     FeedbackSignal,
     InjectCommitRequest,
     InjectPrepareRequest,
+    SpineTransportError,
 )
 
 # SPEC §2 component pointers: these describe the product, not the worker's target repository.
@@ -72,6 +73,24 @@ class WorkerContext:
         self.cards = {}
         self.sources = {}
 
+    async def _palace_request(self, call, request):
+        try:
+            return await call(request)
+        except SpineTransportError:
+            write_json(self.output / "palace-retry.json", {"request": call.__name__})
+            try:
+                if isinstance(request, InjectPrepareRequest) and request.mode == "gate":
+                    restored = await self.context.spine.restore_injection(
+                        request.thread_id, request.principal_id
+                    )
+                    if restored is not None:
+                        return restored.prepared
+                return await call(request)
+            except SpineTransportError as exc:
+                raise RuntimeError(
+                    "The Palace did not answer the worker's memory request after a retry."
+                ) from exc
+
     async def render(self, captured) -> str:
         location = self.context.toolset.location()
         self.workspace = render_workspace_context(location) + "\n\n" + COMPONENT_REGISTRY
@@ -86,7 +105,8 @@ class WorkerContext:
             )
             current.update(selection.get("added", []))
             current.difference_update(selection.get("removed", []))
-            self.prepared = await self.context.spine.prepare_injection(
+            self.prepared = await self._palace_request(
+                self.context.spine.prepare_injection,
                 InjectPrepareRequest(
                     thread_id=uuid5(NAMESPACE_URL, str(self.output)),
                     agent_id=self.context.agent_id,
@@ -101,15 +121,16 @@ class WorkerContext:
                     current_memory_ids=sorted(current),
                     confirmed_memory_ids=selection.get("added", []),
                     excluded_memory_ids=selection.get("removed", []),
-                )
+                ),
             )
             if self.prepared.final_block is None:
-                committed = await self.context.spine.commit_injection(
+                committed = await self._palace_request(
+                    self.context.spine.commit_injection,
                     InjectCommitRequest(
                         injection_id=self.prepared.injection_id,
                         removed=[],
                         added_back=[],
-                    )
+                    ),
                 )
                 self.prepared = self.prepared.model_copy(
                     update={"final_block": committed.final_block},

@@ -1,0 +1,23 @@
+{
+  "symphony_id": "01M46R4ZRYDDTTQ0BAJXJQSZXP",
+  "fault": {
+    "pid": 66620,
+    "agent_id": "01M46R4ZV24KAJYQ1813HFY9DR/root.1",
+    "path": "v1/inject/prepare",
+    "mode": "response lost after Palace created injection",
+    "injection_id": "09e6d25b-2014-41ea-b0f0-01dba776d762"
+  },
+  "restored_injection_id": "943fa0ca-6564-548f-9a78-ced831927a1b",
+  "readiness_status": "pass",
+  "restore_requests": [
+    {
+      "httpRequest": {
+        "latency": "0.029748189s",
+        "requestUrl": "https://nocturne-palace-test-m4sy-7wq3wmgcoq-uc.a.run.app/v1/inject/threads/943fa0ca-6564-548f-9a78-ced831927a1b?principal_id=palace-agent-04eb253b-dae9-40a2-91e4-a3251b3498c1",
+        "status": 200
+      },
+      "timestamp": "2026-10-05T19:20:22.379719Z"
+    }
+  ],
+  "note": "The empty-injection restore uses the thread UUID; equality with the original prepare UUID is not expected."
+}

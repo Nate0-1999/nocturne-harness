@@ -18,6 +18,7 @@ import { Button, Select, TextArea, TextField, Toggle } from './kit'
 import { formatHumanUsd } from './humanNumbers'
 import { useSeenProposals } from './deckSeen'
 import { agentColor } from './visualization'
+import { SymphonyFeedback } from './SymphonyCards'
 
 interface DeckAttempt {
   attempt_id: string
@@ -499,6 +500,7 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
       {contextAttempt !== null && <WorkerContext
         symphonyId={stack.symphony_id} attemptId={contextAttempt} />}
       <p>Measured spend: {formatHumanUsd(stack.spend_usd)} / {formatHumanUsd(String(stack.launch.authority.spend_wall_usd))}</p>
+      <SymphonyFeedback stack={stack} />
       {stack.evidence.map((entry, index) => (
         <details key={index}>
           <summary>{Array.isArray(entry.verdicts) ? 'Judge verdicts' : 'Worker evidence'}</summary>

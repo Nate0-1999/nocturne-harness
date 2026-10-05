@@ -1,0 +1,28 @@
+{
+  "symphony_id": "01M46P1PT29S5HP87Y8RDC9C9N",
+  "state": "blocked",
+  "reason": "The Symphony reached its signed time wall.",
+  "judges": [
+    {
+      "seat": "judge-performance",
+      "tool_calls": 118,
+      "pytest_success_outputs": 14,
+      "cli_success_outputs": 14,
+      "result_present": false
+    },
+    {
+      "seat": "judge-motivation",
+      "tool_calls": 129,
+      "pytest_success_outputs": 21,
+      "cli_success_outputs": 14,
+      "result_present": false
+    },
+    {
+      "seat": "judge-implementation",
+      "tool_calls": 108,
+      "pytest_success_outputs": 14,
+      "cli_success_outputs": 12,
+      "result_present": true
+    }
+  ]
+}
