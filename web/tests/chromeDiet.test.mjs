@@ -15,7 +15,7 @@ test('app settings own the live theme, transcript backup, and layout controls', 
   assert.match(app, /data-testid="app-settings-toggle"[\s\S]*aria-expanded=\{appSettingsOpen\}/u)
   assert.match(app, /data-testid="app-settings-panel"[\s\S]*data-testid="theme-control"[\s\S]*setTheme/u)
   assert.match(app, /data-testid="app-settings-panel"[\s\S]*data-testid="transcript-backup-toggle"[\s\S]*changeTranscriptBackup/u)
-  assert.match(app, /Back up transcripts to your Palace/u)
+  assert.match(app, /Back up conversation transcripts to cloud\?/u)
   assert.match(app, /data-testid="app-settings-panel"[\s\S]*data-testid="layout-save"[\s\S]*data-testid="layout-restore"[\s\S]*data-testid="layout-reset"/u)
   assert.doesNotMatch(app, /<div className="stage-toolbar"[\s\S]*data-testid="theme-control"/u)
   assert.match(rackCss, /\.app-settings-toggle\s*\{[^}]*left:\s*11\.75rem/su)

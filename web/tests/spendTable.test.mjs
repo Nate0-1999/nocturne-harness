@@ -56,7 +56,7 @@ test('keeps partial pricing explicit and rejects impossible receipt counts', () 
     }),
   }
   const row = parseSpendTableSnapshot(payload).purposes[0]
-  assert.equal(partialSpendCopy(row), '1 line awaiting a price')
+  assert.equal(partialSpendCopy(row), '1 line has no provider-reported price. No later price is pending.')
 
   payload.purposes[0].total_unpriced_lines = 5
   assert.throws(() => parseSpendTableSnapshot(payload), /impossible unpriced receipt counts/u)

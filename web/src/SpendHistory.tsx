@@ -1,11 +1,10 @@
 import { useState } from 'react'
 
 import { formatHumanQuantity, formatHumanUsd } from './humanNumbers'
-import type { SpendRateLane, SpendTableSnapshot } from './spendTable'
+import type { SpendMetrics, SpendRateLane, SpendTableSnapshot } from './spendTable'
 import { useRackPlugin } from './rack'
 import {
-  contiguousPolylineSegments, formatSignedUsd, laneChartPoints,
-  reconciliationCopy, type ReconciliationSnapshot,
+  contiguousPolylineSegments, laneChartPoints, type ReconciliationSnapshot,
 } from './vitals'
 import './assets/spend-history.css'
 import { Button, Select, TextField } from './kit'
@@ -67,7 +66,7 @@ export function SpendRates({ snapshot, compact = false }: { snapshot: SpendTable
         Number(point.cost_usd ?? 0) > Number(peak) ? point.cost_usd! : peak, '0')
       const unpriced = points.reduce((total, point) => total + point.unpriced_lines, 0)
       return <figure key={`${lane.dimension}:${lane.key}`}>
-        <figcaption>{lane.label} <small>Peak {formatHumanUsd(maximum)} / min{unpriced > 0 ? ` · ${unpriced} lines awaiting price` : ''}</small></figcaption>
+        <figcaption>{lane.label} <small>Peak {formatHumanUsd(maximum)} / min{unpriced > 0 ? ` · ${unpriced} lines with no reported price` : ''}</small></figcaption>
         <svg viewBox="0 0 100 24" preserveAspectRatio="none" role="img" aria-label={`${lane.label}, recorded dollars per minute over the last hour`}>
           <line x1="0" y1="21" x2="100" y2="21" className="spend-history__axis" />
           {contiguousPolylineSegments(chart).map((segment, i) => <polyline key={i} points={segment} fill="none" vectorEffect="non-scaling-stroke" />)}
@@ -80,18 +79,24 @@ export function SpendRates({ snapshot, compact = false }: { snapshot: SpendTable
   </section>
 }
 
-export function SpendReconciliation({ value }: { value: ReconciliationSnapshot | null }) {
-  return <section className="spend-history" aria-label="Daily broker reconciliation">
-    <h3 title="Cumulative changes from the same baseline; infrastructure bills are outside broker usage.">Daily broker reconciliation</h3>
-    {value === null ? <p>Reconciliation unavailable.</p> : <>
-      <p>{reconciliationCopy(value)}{value.checked_at && ` · Checked ${new Date(value.checked_at).toLocaleString()}`}</p>
-      <dl className="spend-history__totals">
-        <div><dt>Model ledger</dt><dd>{money(value.ledger_cost_usd)}</dd></div>
-        <div><dt>Broker usage</dt><dd>{money(value.broker_usage_usd)}</dd></div>
-        <div><dt>Drift since baseline</dt><dd>{value.drift_usd === null ? 'Not recorded' : formatSignedUsd(value.drift_usd)}</dd></div>
-      </dl>
-      {value.status === 'not_recorded' && <small>Broker totals require a recorded owner-scope reconciliation.</small>}
-    </>}
+export function SpendReconciliation({ value, snapshot }: { value: ReconciliationSnapshot | null; snapshot: SpendTableSnapshot }) {
+  function total(rows: SpendMetrics[]) {
+    const known = rows.filter((row) => row.total_usd !== null)
+    const unpriced = rows.some((row) => row.total_unpriced_lines > 0)
+    const amount = known.reduce((sum, row) => sum + Number(row.total_usd), 0)
+    return `${known.length === 0 && unpriced ? 'Price not reported' : formatHumanUsd(amount.toFixed(12))}${known.length > 0 && unpriced ? ' + unpriced receipts' : ''}`
+  }
+  return <section className="spend-history" aria-label="Spend totals">
+    <h3>Spend totals</h3>
+    <dl className="spend-history__totals">
+      <div><dt>Conversations in this view</dt><dd>{total(snapshot.threads)}</dd></div>
+      <div><dt>Other work in this view</dt><dd>{total(snapshot.purposes)}</dd></div>
+    </dl>
+    <details>
+      <summary>Key usage · all apps and Palaces</summary>
+      <p>{money(value?.broker_usage_usd ?? null)}{value?.checked_at && ` · Checked ${new Date(value.checked_at).toLocaleString()}`}</p>
+      <small>A shared key includes work outside this Palace. Its total cannot establish this view’s spend drift.</small>
+    </details>
   </section>
 }
 
@@ -102,6 +107,22 @@ export function SpendDaily({ snapshot }: { snapshot: SpendTableSnapshot }) {
       <tbody>{snapshot.days.map((day) => <tr key={day.day}><th>{day.day.slice(0, 10)}</th><td>{money(day.model_usd)}</td><td>{money(day.infrastructure_usd)}</td><td>{money(day.total_usd)}{day.unpriced_lines > 0 && ' + unpriced receipts'}</td></tr>)}</tbody>
     </table>}
     <small>Infrastructure appears on its ledger date. A missing bill is not zero spend.</small>
+  </details>
+}
+
+export function SpendReceipts({ snapshot }: { snapshot: SpendTableSnapshot }) {
+  return <details className="spend-history">
+    <summary>Spend receipts · {snapshot.receipts.length} lines</summary>
+    <p>Oldest first. Each receipt keeps its original ID and amount.</p>
+    {snapshot.receipts.length === 0 ? <p>No receipt lines available.</p> : <div className="spend-table__scroll"><table className="spend-receipts" aria-label="Spend receipts">
+      <thead><tr><th>Receipt ID · ULID</th><th>Model / purpose</th><th>Quantity</th><th>USD · basis</th></tr></thead>
+      <tbody>{snapshot.receipts.map((receipt) => <tr key={receipt.event_uid} data-receipt-id={receipt.event_uid}>
+        <th>{receipt.event_uid}<small>{new Date(receipt.ts).toLocaleString()}</small></th>
+        <td title={receipt.ref}>{receipt.model ?? receipt.purpose}<div>{receipt.quantity_type.replaceAll('_', ' ')}</div></td>
+        <td>{formatHumanQuantity(receipt.quantity)} {receipt.unit_of_measure}</td>
+        <td>{receipt.cost_usd === null ? 'Price not reported' : receipt.cost_usd}<div>{receipt.basis}</div></td>
+      </tr>)}</tbody>
+    </table></div>}
   </details>
 }
 

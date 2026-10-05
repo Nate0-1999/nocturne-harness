@@ -9,6 +9,7 @@ from uuid import uuid4
 import httpx
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import SecretStr
 from pydantic_ai.models.function import FunctionModel
 from test_daemon import GateSpine, frame, receive_until
 from test_memory_panel import memory_unit
@@ -161,6 +162,48 @@ def test_nondefault_home_env_keeps_all_daemon_files_out_of_owner_home(tmp_path, 
     assert not (fake_user / ".nocturne").exists()
 
 
+def test_single_key_refuses_unavailable_pins_and_explains_saved_pin_fallback(tmp_path):
+    """P4 / M4MS: missing provider access is surfaced before a new conversation runs."""
+    policy_file = tmp_path / "model-policies.json"
+    saved = {"chat": "pinned:openrouter:vendor/model"}
+    policy_file.write_text(json.dumps(saved))
+    settings = HarnessSettings(
+        _env_file=None,
+        nocturne_home=tmp_path,
+        chat_model="openai:gpt-4o-mini",
+        openai_api_key=SecretStr("test-key"),
+        openrouter_api_key=None,
+        model_policy_chat=None,
+    )
+
+    class Palace(GateSpine):
+        async def curator_model_policy(self, principal_id):
+            return "pinned:openai:gpt-4o-mini"
+
+    async def unused(_messages, _info):
+        yield "unused"
+
+    app = create_dev_app(
+        tmp_path,
+        settings=settings,
+        spine=Palace(),
+        agent=HarnessAgent(settings, model=FunctionModel(stream_function=unused)),
+    )
+    with TestClient(app) as client:
+        policies = client.get("/v1/model-policies").json()
+        assert policies["policies"]["chat"] == "pinned:openai:gpt-4o-mini"
+        assert "OPENROUTER_API_KEY" in policies["policy_errors"]["chat"]
+        rejected = client.put("/v1/model-policies/chat", json={"policy": saved["chat"]})
+        assert rejected.status_code == 422
+        assert "OPENROUTER_API_KEY" in rejected.json()["detail"]
+        assert json.loads(policy_file.read_text()) == saved
+        accepted = client.put(
+            "/v1/model-policies/chat", json={"policy": "pinned:openai:gpt-4o-mini"}
+        )
+        assert accepted.status_code == 200
+        assert client.get("/v1/model-policies").json()["policy_errors"] == {}
+
+
 def test_verification_init_refuses_default_or_existing_owner_home(tmp_path, monkeypatch):
     """SPEC D.2 113b / M3VI: verification must never adopt or modify an owner's home."""
     monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
@@ -185,7 +228,7 @@ def test_verification_init_refuses_default_or_existing_owner_home(tmp_path, monk
 def test_up_and_doctor_refuse_to_adopt_a_different_running_identity(tmp_path, monkeypatch):
     """PLAN M3VI / SPEC D.2 099: port reuse must not silently open the owner's rack."""
     config = initialize(tmp_path / "verification", monkeypatch)
-    monkeypatch.setattr(onboarding, "_existing_nocturne", lambda: True)
+    monkeypatch.setattr(onboarding, "_existing_nocturne", lambda _url: True)
     monkeypatch.setattr(
         onboarding.urllib.request,
         "urlopen",

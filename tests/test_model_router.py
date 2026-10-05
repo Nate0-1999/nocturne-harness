@@ -99,6 +99,9 @@ def test_each_adapter_owns_its_request_shape_without_behavior_drift() -> None:
         "temperature": 0.25,
         "extra_body": {"session_id": "thread-one"},
         "openrouter_usage": {"include": True},
+        "openrouter_cache_instructions": True,
+        "openrouter_cache_messages": True,
+        "openrouter_cache_tool_definitions": True,
         "openrouter_reasoning": {"effort": "high"},
         "openrouter_provider": {"sort": "price"},
     }
@@ -120,6 +123,27 @@ def test_top_k_reaches_openrouter_in_the_request_body() -> None:
     )
 
     assert brokered["extra_body"] == {"session_id": "thread-one", "top_k": 40}
+
+
+def test_hidden_unsupported_parameters_do_not_reach_the_model() -> None:
+    """F174: changing models may retain knobs, but cannot send unsupported ones."""
+    request = CompletionRouter(settings()).request_settings(
+        ThreadModelResolution(
+            model="openrouter:openai/gpt-4o-mini",
+            context_tokens=128_000,
+            policy="pinned:openrouter:openai/gpt-4o-mini",
+            supported_parameters=frozenset({"temperature", "max_tokens"}),
+            request_parameters=ModelRequestParameters(
+                temperature=0.4, top_k=40, top_p=0.5, effort="high"
+            ),
+        ),
+        "thread-two",
+    )
+    assert request["temperature"] == 0.4
+    assert request["extra_body"] == {"session_id": "thread-two"}
+    assert "top_k" not in request
+    assert "top_p" not in request
+    assert "openrouter_reasoning" not in request
 
 
 @pytest.mark.asyncio

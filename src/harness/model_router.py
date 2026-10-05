@@ -87,15 +87,21 @@ class OpenRouterCompletionAdapter:
         if resolution.stickiness_epoch:
             session_id = f"{thread_id}:epoch:{resolution.stickiness_epoch}"
         extra_body: dict[str, object] = {"session_id": session_id}
-        if resolution.request_parameters.top_k is not None:
+        if "top_k" in common:
             # The OpenAI-compatible client drops a top_k setting; OpenRouter reads it in the body.
-            extra_body["top_k"] = resolution.request_parameters.top_k
+            extra_body["top_k"] = common["top_k"]
         settings: OpenRouterModelSettings = {
             **common,
             "extra_body": extra_body,
             "openrouter_usage": {"include": True},
+            "openrouter_cache_instructions": True,
+            "openrouter_cache_messages": True,
+            "openrouter_cache_tool_definitions": True,
         }
-        if resolution.request_parameters.effort is not None:
+        if resolution.request_parameters.effort is not None and (
+            resolution.supported_parameters is None
+            or "reasoning" in resolution.supported_parameters
+        ):
             settings["openrouter_reasoning"] = {"effort": resolution.request_parameters.effort}
         if resolution.price_sorted:
             settings["openrouter_provider"] = {"sort": "price"}
@@ -206,7 +212,11 @@ class DirectCompletionAdapter:
             for entry in catalog.listing:
                 if entry.model_id == model_id:
                     context = entry.context_tokens or self._settings.model_context_tokens
-                    return ModelRoute(model_id=model_id, context_tokens=context), catalog.fetched_at
+                    return ModelRoute(
+                        model_id=model_id,
+                        context_tokens=context,
+                        supported_parameters=entry.supported_parameters,
+                    ), catalog.fetched_at
             self._listing = None
         raise NamedModelResolutionError(f"unknown model: {model_id}")
 
@@ -310,6 +320,10 @@ def _common_request_settings(resolution: ThreadModelResolution) -> ModelSettings
         settings["top_k"] = parameters.top_k
     if parameters.max_tokens is not None:
         settings["max_tokens"] = parameters.max_tokens
+    if resolution.supported_parameters is not None:
+        settings = {
+            key: value for key, value in settings.items() if key in resolution.supported_parameters
+        }
     return settings
 
 
