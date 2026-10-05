@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "a95e6f82198a553be4616924f03fad7cdc09acff",
-      "head": "24922b9ab60e179f0ae52f3a3bfa5f38b50a1754"
+      "head": "dbdfd55f7730769f4c547ca586984d23eb0f2fb4"
     }
   ],
   "unmapped": {
@@ -476,7 +476,10 @@
     "harness/verification/m4mw/FL-202.png": "Synthetic disposable verification evidence or generated coverage/hash accounting; no runtime feature impact.",
     "harness/verification/m4mw/SHA256SUMS": "Synthetic disposable verification evidence or generated coverage/hash accounting; no runtime feature impact.",
     "harness/verification/m4mw/acceptance-summary.json": "Synthetic disposable verification evidence or generated coverage/hash accounting; no runtime feature impact.",
+    "harness/verification/m4mw/cleanup-receipt.json": "Synthetic disposable verification evidence or generated coverage/hash accounting; no runtime feature impact.",
     "harness/verification/m4mw/ledger-report.json": "Synthetic disposable verification evidence or generated coverage/hash accounting; no runtime feature impact.",
+    "harness/verification/m4mw/public-runtime-equivalence.json": "Synthetic disposable verification evidence or generated coverage/hash accounting; no runtime feature impact.",
+    "harness/verification/m4mw/public-runtime-smoke.json": "Synthetic disposable verification evidence or generated coverage/hash accounting; no runtime feature impact.",
     "harness/verification/m4vw/FL-009.png": "Decision rationale, tests, version/dependency metadata, generated web bundle, or frozen coverage metadata for the declared memory-write changes; no additional runtime feature. Imported peer changes were merged unchanged.",
     "harness/verification/m4vw/FL-015.png": "Decision rationale, tests, version/dependency metadata, generated web bundle, or frozen coverage metadata for the declared memory-write changes; no additional runtime feature. Imported peer changes were merged unchanged.",
     "harness/verification/m4vw/FL-069.png": "Decision rationale, tests, version/dependency metadata, generated web bundle, or frozen coverage metadata for the declared memory-write changes; no additional runtime feature. Imported peer changes were merged unchanged.",
@@ -586,10 +589,7 @@
     "harness/web/src/socket.ts": "Retained draft ancestry or imported peer integration path. Charged behavior is proved by the fresh runs; other file-level rows remain explicitly unproven F086. Tests, metadata, generated assets and evidence have no additional runtime feature.",
     "harness/web/src/spendTable.ts": "Retained draft ancestry or imported peer integration path. Charged behavior is proved by the fresh runs; other file-level rows remain explicitly unproven F086. Tests, metadata, generated assets and evidence have no additional runtime feature.",
     "harness/web/dist/assets/index-94B_X1kv.js": "Retained draft ancestry or imported peer integration path. Charged behavior is proved by the fresh runs; other file-level rows remain explicitly unproven F086. Tests, metadata, generated assets and evidence have no additional runtime feature.",
-    "harness/verification/m4mw/impacted.json": "Synthetic disposable verification evidence or generated coverage/hash accounting; no runtime feature impact.",
-    "harness/verification/m4mw/public-runtime-equivalence.json": "Synthetic disposable verification evidence or generated coverage/hash accounting; no runtime feature impact.",
-    "harness/verification/m4mw/public-runtime-smoke.json": "Synthetic disposable verification evidence or generated coverage/hash accounting; no runtime feature impact.",
-    "harness/verification/m4mw/cleanup-receipt.json": "Synthetic disposable verification evidence or generated coverage/hash accounting; no runtime feature impact."
+    "harness/verification/m4mw/impacted.json": "Synthetic disposable verification evidence or generated coverage/hash accounting; no runtime feature impact."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
