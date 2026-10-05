@@ -2,12 +2,12 @@
   "packet": "M4MS",
   "mode": "builder",
   "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
-  "ledger_sha256": "d7a2b339141c13fe493af22b095bdb19446d05393b2007166b80865445b2660e",
+  "ledger_sha256": "882edbf027063299760c48fd267288cb4abe8540420becb4830cdbfd04ac2c6b",
   "diffs": [
     {
       "repo": "harness",
       "base": "a64981cebe8cdf06e15b3f0937a58ff54b34caba",
-      "head": "1c59cc33fbe31bc107834153fbf16ee5d3d537d4"
+      "head": "878d50a976e20e5428f547313d51a92bd3d9ec9b"
     }
   ],
   "unmapped": {
@@ -99,8 +99,7 @@
     "harness/web/dist/assets/index-DU7uYJeK.js": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
     "harness/web/dist/assets/index-DdQXF54n.js": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
     "harness/web/dist/assets/index-Duhc2231.css": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
-    "harness/web/dist/assets/index-DyCWPAB_.js": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
-    "harness/verification/m4ms/pre-peer-metadata-report.json": "Preserved prior report before peer-ledger synchronization; no executable behavior."
+    "harness/web/dist/assets/index-DyCWPAB_.js": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
