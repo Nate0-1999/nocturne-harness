@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRackPlugin, useRackSnapshot } from './rack'
 import {
   memoryGraphRequestKey,
@@ -36,6 +36,16 @@ export function MemoryGraph() {
   const requestIsQueryable = memoryGraphRequestIsQueryable(scope, threadId)
   const snapshot = memoryGraphSnapshotForRequest(loadedSnapshot, requestKey)
   const visibleFailure = failure?.requestKey === requestKey ? failure.message : null
+  const [aspect, setAspect] = useState(2)
+  const measure = useCallback((element: HTMLDivElement | null) => {
+    if (element === null) return
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect
+      if (width > 0 && height > 0) setAspect(width / height)
+    })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
     void events.dispatch({ type: 'rack.scope.get', module_id: 'memory_graph' }).then(setScope)
@@ -82,11 +92,15 @@ export function MemoryGraph() {
   }
 
   const nodes = snapshot?.nodes ?? []
+  // M4VW: the drawing holds active memories only; a deleted one is still found by name and restored.
+  const drawn = nodes.filter((node) => node.memory.status === 'active')
   const matches = search.trim() ? nodes.filter((node) => node.memory.label.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())) : []
-  const positions = new Map(nodes.map((node, index) => [node.memory.memory_id, {
-    x: 14 + (index % 5) * 18, y: 18 + Math.floor(index / 5) * 25,
+  // M4VW: the grid takes the canvas's shape (18 across, 25 down per node) and is scaled to fit it.
+  const columns = Math.max(1, Math.min(drawn.length, Math.round(Math.sqrt(drawn.length * aspect * 25 / 18))))
+  const positions = new Map(drawn.map((node, index) => [node.memory.memory_id, {
+    x: 14 + (index % columns) * 18, y: 18 + Math.floor(index / columns) * 25,
   }]))
-  const labels = new Map(declutterGraphLabels(nodes.map((node) => {
+  const labels = new Map(declutterGraphLabels(drawn.map((node) => {
     const position = positions.get(node.memory.memory_id)!
     return {
       id: node.memory.memory_id,
@@ -100,8 +114,8 @@ export function MemoryGraph() {
       injections: Number(node.memory.stats.injections ?? 0),
     }
   })).map((label) => [label.id, label]))
-  // M3EX-35: the view box grows with the node rows; the canvas scrolls instead of spilling.
-  const viewHeight = Math.max(76, 18 + Math.ceil(nodes.length / 5) * 25)
+  const viewWidth = 10 + columns * 18
+  const viewHeight = 18 + Math.ceil(drawn.length / columns) * 25
   return <section className="instrument instrument--graph">
     <header><h1>Memory Graph</h1></header>
     <label className="graph-search">Find a memory by name
@@ -109,18 +123,17 @@ export function MemoryGraph() {
     </label>
     {search.trim() && <ul className="graph-search-results" aria-label="Matching memories">
       {matches.length === 0 ? <li>No matching memories.</li> : matches.map((node) => <li key={node.memory.memory_id}>
-        <Button type="button" aria-pressed={selected?.memory.memory_id === node.memory.memory_id} onClick={() => inspectNode(node)}>{node.memory.label}</Button>
+        <Button type="button" aria-pressed={selected?.memory.memory_id === node.memory.memory_id} onClick={() => inspectNode(node)}>{node.memory.label}{node.memory.status === 'tombstoned' ? ' · deleted' : node.memory.status === 'active' ? '' : ` · ${node.memory.status}`}</Button>
       </li>)}
     </ul>}
     {!requestIsQueryable ? <p role="status">{rack.attunement?.kind === 'stack' ? `${rack.attunement.name} graph is not available yet.` : 'No thread is attuned.'}</p> : visibleFailure !== null ? <p role="alert">{visibleFailure}</p> : snapshot === null ? <p role="status">Loading memory graph…</p> : <div className="graph-stage">
-      <div className="graph-canvas"><svg viewBox={`0 0 100 ${viewHeight}`} style={{ '--graph-rows': viewHeight / 76 } as CSSProperties} role="img" aria-label={`${nodes.length} memories and ${snapshot?.edges.length ?? 0} relationships`}>
+      <div className="graph-canvas" ref={measure}><svg viewBox={`0 0 ${viewWidth} ${viewHeight}`} role="img" aria-label={`${drawn.length} memories and ${snapshot?.edges.length ?? 0} relationships`}>
         {(snapshot?.edges ?? []).map((edge, index) => { const a = positions.get(edge.from_memory_id); const b = positions.get(edge.to_memory_id); return a && b ? <line key={`${edge.kind}-${index}`} x1={a.x} y1={a.y} x2={b.x + (a === b ? 2 : 0)} y2={b.y + (a === b ? 2 : 0)} data-kind={edge.kind} /> : null })}
-        {nodes.map((node) => { const p = positions.get(node.memory.memory_id)!; const r = 3 + Math.min(Number(node.memory.stats.injections ?? 0), 12) / 8; const label = labels.get(node.memory.memory_id); return <g key={node.memory.memory_id}>
+        {drawn.map((node) => { const p = positions.get(node.memory.memory_id)!; const r = 3 + Math.min(Number(node.memory.stats.injections ?? 0), 12) / 8; const label = labels.get(node.memory.memory_id); return <g key={node.memory.memory_id}>
           <g className="graph-node" data-status={node.memory.status} data-current={node.in_current_context || undefined} onClick={() => inspectNode(node)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter') inspectNode(node) }}>
             <title>{node.memory.label}</title>
             {node.memory.pin && <circle className="graph-pin" cx={p.x} cy={p.y} r={r + 2} />}
             <circle cx={p.x} cy={p.y} r={r} data-kind={node.memory.kind} />
-            {node.memory.status === 'tombstoned' && <line x1={p.x-r} y1={p.y-r} x2={p.x+r} y2={p.y+r} />}
           </g>
           <text className="graph-node-label" x={label?.x ?? p.x} y={label?.y ?? p.y} data-priority={label?.priority} visibility={label === undefined ? 'hidden' : undefined}>{label?.text ?? ''}</text>
         </g>})}

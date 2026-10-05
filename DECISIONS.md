@@ -4058,3 +4058,18 @@ Near-miss cards carry ×, + and ×!. A confirm and the Wrong/Never chooser are a
 card's buttons (MemoryCard `prompt`), never a popover over the memory text.
 With the Palace down the first turn opens no gate (A-019) and says "Memory is unavailable";
 the same run's spend notice used to replace that line within seconds, so it now keeps it.
+## M4VW — The views answer the hand [P2.1, P2.5]
+
+PRECEDENT: F181, F164, M3LV (report 259), M3EXF2, M3W6A/M3W6B findings 9, 10, 31, 34, 35, 42.
+A History drag moves the knob locally and selects one moment, the one let go on; arrow keys
+still select each step. Every step of a drag had selected its own moment, so each view read
+about thirty moments per drag and the chosen one arrived seconds late behind the present.
+A hover panel is measured: it opens on the side it fits, else the roomier side, capped there;
+only a panel taller than its room takes the pointer, so it can be scrolled and otherwise still
+lets the pointer through to the next card.
+The Memory Graph draws active memories only. A deleted one is still found by name in its search
+and keeps Restore there (M3EXF's restore path); the grid takes the canvas's shape and scales to fit.
+Every time in the Jobs module reads in UTC, the zone its crons are written in; Run now is the
+row's icon button with its tip.
+The Farm module is handed the sheet ground like the Roots module, so its Roots view matches;
+the readouts sit under the drawing. The selection halo is a quarter lane wide on the sheet.

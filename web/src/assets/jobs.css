@@ -4,9 +4,12 @@
 .jobs-instrument h2 { font: 500 var(--text-xl) var(--display-font); }
 .jobs-instrument small, .jobs-instrument dt { display: block; color: var(--muted); font: var(--text-md) var(--data-font); }
 .jobs-scroll { overflow: auto; }
-.jobs-instrument table { width: 100%; border-collapse: collapse; text-align: left; }
-.jobs-instrument td, .jobs-instrument th { padding: .8rem .5rem; border-bottom: 1px solid var(--line); min-width: 5rem; }
-.jobs-instrument td:first-child { min-width: 10rem; }
+.jobs-instrument table { width: 100%; table-layout: fixed; border-collapse: collapse; text-align: left; }
+/* M4VW: the table never outgrows its module; cells wrap instead of widening it. */
+.jobs-instrument td, .jobs-instrument th { padding: .8rem .5rem; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.jobs-instrument th:first-child { width: 26%; }
+.jobs-instrument th:last-child { width: 3rem; }
+.jobs-instrument td:first-child .kit-button { max-width: 100%; white-space: normal; text-align: left; }
 .jobs-instrument td small { margin-top: .5rem; }
 .jobs-instrument [data-selected] { background: color-mix(in srgb, var(--accent) 10%, transparent); }
 .jobs-instrument [role=alert], .jobs-instrument [data-state=failed] { color: var(--accent-secondary, var(--accent)); }

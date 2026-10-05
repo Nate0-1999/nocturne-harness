@@ -166,9 +166,11 @@ function AgentRoots({ name, tubes, studio, tier, state, joins = 0, selected, pic
   useEffect(() => () => { geometry.chrome?.dispose(); geometry.fine?.dispose() }, [geometry])
   // A selected agent wears a halo in its fleet colour around every tube it owns (the growth light's shape, held), so
   // the selection reads on live chrome and stopped matte alike (FL-130); nothing changes while nothing is selected.
+  // M4VW: a hair-thin root's halo was a pixel wide, so the time-order tint went unseen; it now has a visible width
+  // (a quarter lane on the sheet, where the whole river is drawn small).
   const halo = useMemo(() => {
     if (!selected || !tubes.length) return null
-    const parts = tubes.map((tube) => tube3(tube.points, tube.radii.map((radius) => radius * 1.9 + 0.04), null, 24, 6))
+    const parts = tubes.map((tube) => tube3(tube.points, tube.radii.map((radius) => radius * 1.9 + (SHEET ? 0.5 : 0.12)), null, 24, 6))
     const merged = mergeGeometries(parts)
     parts.forEach((part) => part.dispose())
     return merged
@@ -221,7 +223,7 @@ function AgentRoots({ name, tubes, studio, tier, state, joins = 0, selected, pic
         : <meshStandardMaterial envMap={studio} vertexColors metalness={0.4} roughness={0.3} envMapIntensity={selected ? 1.8 : 1.2} />}
     </mesh>}
     {halo && <mesh geometry={halo} onClick={click}>
-      <meshBasicMaterial color={agentColor(name)} transparent opacity={SHEET ? 0.4 : 0.35} depthWrite={false} toneMapped={false}
+      <meshBasicMaterial color={agentColor(name)} transparent opacity={SHEET ? 0.6 : 0.35} depthWrite={false} toneMapped={false}
         blending={SHEET ? NormalBlending : AdditiveBlending} />
     </mesh>}
   </group>

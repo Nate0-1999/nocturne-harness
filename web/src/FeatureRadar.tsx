@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import type { MemoryFeatures } from './protocol'
 import { formatHumanScore } from './humanNumbers'
 
@@ -82,29 +82,43 @@ export function HoverReveal({ children, panel, className }: {
   className?: string
 }) {
   const anchor = useRef<HTMLDivElement>(null)
-  const [placement, setPlacement] = useState<{ x: number; y: number; above: boolean } | null>(null)
+  const reveal = useRef<HTMLDivElement>(null)
+  const [open, setOpen] = useState(false)
+  const [placement, setPlacement] = useState<{ x: number; y: number; above: boolean; room: number; scroll: boolean } | null>(null)
 
-  const show = () => {
-    const rect = anchor.current?.getBoundingClientRect()
-    if (rect === undefined) return
-    const above = rect.bottom + 340 > globalThis.innerHeight && rect.top > 340
-    setPlacement({
-      // Half the panel's width keeps it on screen; the panel is centred on the title.
-      x: Math.max(220, Math.min(globalThis.innerWidth - 220, rect.left + rect.width / 2)),
-      y: above ? rect.top - 8 : rect.bottom + 8,
-      above,
-    })
-  }
-  useEffect(() => {
-    if (placement === null) return
-    globalThis.addEventListener('scroll', show, true)
-    globalThis.addEventListener('resize', show)
-    return () => {
-      globalThis.removeEventListener('scroll', show, true)
-      globalThis.removeEventListener('resize', show)
+  // M4VW: the panel is measured, never assumed (a fixed 340 px guess ran long histories off the
+  // module): it takes the side it fits on, else the roomier side, capped there and scrollable.
+  useLayoutEffect(() => {
+    if (!open) return
+    const place = () => {
+      const rect = anchor.current?.getBoundingClientRect()
+      const panel = reveal.current
+      if (rect === undefined || panel === null) return
+      const below = globalThis.innerHeight - rect.bottom - 4
+      const above = rect.top - 4
+      const up = panel.scrollHeight > below && above > below
+      const half = Math.min(panel.offsetWidth, globalThis.innerWidth - 8) / 2 + 4
+      const room = Math.max(0, up ? above : below)
+      setPlacement({
+        // The panel is centred on the title and kept on screen by its measured half width.
+        x: Math.max(half, Math.min(globalThis.innerWidth - half, rect.left + rect.width / 2)),
+        y: up ? rect.top : rect.bottom,
+        above: up,
+        room,
+        // Only a panel taller than its room takes the pointer, so it can be scrolled.
+        scroll: panel.scrollHeight > room,
+      })
     }
-  })
-  const hide = () => setPlacement(null)
+    place()
+    globalThis.addEventListener('scroll', place, true)
+    globalThis.addEventListener('resize', place)
+    return () => {
+      globalThis.removeEventListener('scroll', place, true)
+      globalThis.removeEventListener('resize', place)
+    }
+  }, [open])
+  const show = () => setOpen(true)
+  const hide = () => { setOpen(false); setPlacement(null) }
 
   return (
     <div
@@ -116,11 +130,13 @@ export function HoverReveal({ children, panel, className }: {
       onBlur={hide}
     >
       {children}
-      {placement !== null && (
+      {open && (
         <div
+          ref={reveal}
           className="hover-reveal"
-          data-placement={placement.above ? 'above' : 'below'}
-          style={{ left: placement.x, top: placement.y }}
+          data-placement={placement === null ? undefined : placement.above ? 'above' : 'below'}
+          data-scroll={placement?.scroll || undefined}
+          style={placement === null ? undefined : { left: placement.x, top: placement.y, maxHeight: placement.room }}
         >
           {panel}
         </div>

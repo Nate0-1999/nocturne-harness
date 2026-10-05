@@ -35,7 +35,7 @@
   text-transform: uppercase;
 }
 .instrument h1,.instrument h2 { margin:.1rem 0; font-weight:460; letter-spacing:.025em; }.instrument small { color:var(--seam-5a5fbb963b2e); letter-spacing:.16em; }.scope-switch{display:flex}
-.graph-stage { display:grid; grid-template-columns:minmax(0,3fr) minmax(15rem,1fr); min-height:70vh; }.graph-canvas{max-height:70vh;overflow:auto}.graph-stage svg{display:block;width:100%;height:calc(70vh * var(--graph-rows, 1))}.graph-stage svg>line{stroke:var(--seam-a2554ec1f8a2);stroke-width:.25}.graph-stage svg>line[data-kind="lineage"]{stroke:var(--seam-4f41763edadb);stroke-dasharray:1 1}.graph-node{cursor:pointer;outline:none}.graph-node circle:not(.graph-pin){fill:var(--seam-e6b985626daa);stroke:var(--seam-bfd7ec77a10a);stroke-width:.35}.graph-node circle[data-kind="preference"]{fill:var(--seam-5f909758d42a)}.graph-node circle[data-kind="procedure"]{fill:var(--seam-2be7a20de69e)}.graph-node[data-status="quarantined"]{opacity:.42}.graph-node[data-current="true"] circle:not(.graph-pin){stroke:var(--seam-e08de713877c);stroke-width:.8}.graph-pin{fill:none;stroke:var(--seam-74334a559f1f);stroke-width:.4}.graph-node-label{font-size:2.1px;fill:var(--seam-476d40b9450f);text-anchor:middle;pointer-events:none}.graph-stage aside{border-left:1px solid var(--seam-663a186d018f);padding:1rem;overflow:auto}.graph-stage aside em{color:var(--seam-1cc748f7f308)}
+.graph-stage { display:grid; grid-template-columns:minmax(0,3fr) minmax(15rem,1fr); grid-template-rows:minmax(0,1fr); min-height:0; }.graph-canvas{min-height:0;overflow:hidden}.graph-stage svg{display:block;width:100%;height:100%}.graph-stage svg>line{stroke:var(--seam-a2554ec1f8a2);stroke-width:.25}.graph-stage svg>line[data-kind="lineage"]{stroke:var(--seam-4f41763edadb);stroke-dasharray:1 1}.graph-node{cursor:pointer;outline:none}.graph-node circle:not(.graph-pin){fill:var(--seam-e6b985626daa);stroke:var(--seam-bfd7ec77a10a);stroke-width:.35}.graph-node circle[data-kind="preference"]{fill:var(--seam-5f909758d42a)}.graph-node circle[data-kind="procedure"]{fill:var(--seam-2be7a20de69e)}.graph-node[data-status="quarantined"]{opacity:.42}.graph-node[data-current="true"] circle:not(.graph-pin){stroke:var(--seam-e08de713877c);stroke-width:.8}.graph-pin{fill:none;stroke:var(--seam-74334a559f1f);stroke-width:.4}.graph-node-label{font-size:2.1px;fill:var(--seam-476d40b9450f);text-anchor:middle;pointer-events:none}.graph-stage aside{border-left:1px solid var(--seam-663a186d018f);padding:1rem;overflow:auto}.graph-stage aside em{color:var(--seam-1cc748f7f308)}
 .graph-stage { grid-template-columns: minmax(0, 1fr) minmax(24rem, 1fr); }
 .graph-stage aside { min-width: 0; }
 .graph-search { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; padding: .75rem 0; color: var(--dim); font: var(--text-xs) var(--data-font); letter-spacing: .08em; text-transform: uppercase; }
@@ -269,7 +269,7 @@
 }
 .scorer-preview-mark{color:var(--seam-1cc748f7f308);border-left:2px solid var(--seam-1cc748f7f308);padding-left:.5rem;font-size:var(--text-md)}
 .contribution-bars{display:grid;gap:.2rem;margin-top:.55rem}.contribution-row{display:grid;grid-template-columns:2.5rem 1fr 7.5rem;align-items:center;gap:.5rem;font:var(--text-sm)/1.3 var(--data-font);color:var(--seam-a1c9bb362cd2)}.contribution-row i{height:3px;background:var(--seam-95a12bcf5755)}.contribution-row b{display:block;height:100%;background:var(--seam-9df89ba8f574)}.contribution-row b[data-negative="true"]{background:var(--seam-a294f950e499)}.contribution-row output{text-align:right}.contribution-empty{font:var(--text-sm) ui-monospace,monospace;color:var(--seam-3fe560e43623)}
-@media(max-width:760px){.instrument-launchers{display:flex;margin-left:0;gap:.15rem}.rack-overlay-module--instrument{inset:3.25rem 0 0}.graph-stage,.console-grid,.console-learning-overview{grid-template-columns:1fr}.graph-canvas{max-height:48vh}.graph-stage svg{height:calc(48vh * var(--graph-rows, 1))}.graph-stage aside{border-left:0;border-top:1px solid var(--seam-663a186d018f)}.control-bank{grid-template-columns:1fr}.control-bank .weight-ok,.control-bank .weight-bad,.enact{grid-column:1}.learning-summary:not(.learning-summary--compact){grid-template-columns:repeat(2,minmax(0,1fr))}.instrument>header{align-items:start;gap:.5rem}.instrument{padding:.8rem}}
+@media(max-width:760px){.instrument-launchers{display:flex;margin-left:0;gap:.15rem}.rack-overlay-module--instrument{inset:3.25rem 0 0}.graph-stage,.console-grid,.console-learning-overview{grid-template-columns:1fr}.graph-stage aside{border-left:0;border-top:1px solid var(--seam-663a186d018f)}.control-bank{grid-template-columns:1fr}.control-bank .weight-ok,.control-bank .weight-bad,.enact{grid-column:1}.learning-summary:not(.learning-summary--compact){grid-template-columns:repeat(2,minmax(0,1fr))}.instrument>header{align-items:start;gap:.5rem}.instrument{padding:.8rem}}
 
 @media (max-width: 760px) {
   .instrument > header {
@@ -3797,13 +3797,17 @@ details:not([open]) > .agent-policy-settings { display: none; } /* closed means 
 /* Codex 07 / M3W5B-21: the selected memory keeps a readable column; a narrow graph stacks it below. */
 .graph-stage { grid-template-columns: minmax(0, 3fr) minmax(20rem, 1fr); }
 @media (max-width: 60rem) {
-  .graph-stage { grid-template-columns: 1fr; }
-  .graph-canvas { max-height: 48vh; }
-  .graph-stage svg { height: calc(48vh * var(--graph-rows, 1)); }
+  .graph-stage { grid-template-columns: 1fr; grid-template-rows: minmax(0, 3fr) minmax(0, 2fr); }
   .graph-stage aside { border-left: 0; border-top: 1px solid var(--line); }
 }
 
 /* TASTE-06: the scoring list reads as label and value, like every module's data list. */
+.instrument--graph { display: flex; flex-direction: column; height: 100vh; }
+.instrument--graph > * { flex-shrink: 0; }
+/* M4VW: the stage takes what the frame has left, so the drawing fits and the side panel scrolls. */
+.instrument--graph > .graph-stage { flex: 1 1 0; }
+/* The selected memory's panel passes the wheel on, so Relationships below it can be scrolled to. */
+.graph-stage > aside .memory-panel__content { overscroll-behavior: auto; }
 .instrument--graph details dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-2) var(--space-5); margin: var(--space-3) 0; }
 .instrument--graph details dl > div { display: contents; }
 
