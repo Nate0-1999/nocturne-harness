@@ -1,0 +1,190 @@
+ Image harness-h2-54954-spine Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 540B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 655B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/python:3.12.13-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de
+#3 DONE 0.0s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 122B done
+#4 DONE 0.0s
+
+#5 [base 1/1] FROM docker.io/library/python:3.12.13-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de
+#5 resolve docker.io/library/python:3.12.13-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 16.65kB 0.0s done
+#6 DONE 0.0s
+
+#7 [builder 7/7] RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels .
+#7 CACHED
+
+#8 [builder 4/7] COPY Dockerfile ./
+#8 CACHED
+
+#9 [builder 3/7] COPY README.md ./
+#9 CACHED
+
+#10 [builder 1/7] WORKDIR /build
+#10 CACHED
+
+#11 [runtime 1/3] WORKDIR /app
+#11 CACHED
+
+#12 [builder 5/7] COPY src ./src
+#12 CACHED
+
+#13 [runtime 2/3] COPY --from=builder /wheels /wheels
+#13 CACHED
+
+#14 [builder 2/7] COPY pyproject.toml ./
+#14 CACHED
+
+#15 [builder 6/7] COPY infra ./infra
+#15 CACHED
+
+#16 [runtime 3/3] RUN pip install --no-cache-dir /wheels/nocturne_memory-*.whl && rm -rf /wheels
+#16 CACHED
+
+#17 exporting to image
+#17 exporting layers done
+#17 exporting manifest sha256:2af5596daa592bf4bb28c9dd7447dc2793e2d03c78160baeda2b5375db1c61fd done
+#17 exporting config sha256:9b1dbac879702a49e175a3e55fd91813768d3ffb7096ec4d4d17d1df2229a960 done
+#17 exporting attestation manifest sha256:9f6d91e9f4fb874389683a29d8fa5f5a4f15f408f19e8ad562e4fa69cb694d8c done
+#17 exporting manifest list sha256:36c4099ab9b3ea9cb818c51a2e0bae5881b4eb30bebeba474c82507108fe3901 done
+#17 naming to docker.io/library/harness-h2-54954-spine:latest done
+#17 unpacking to docker.io/library/harness-h2-54954-spine:latest
+#17 unpacking to docker.io/library/harness-h2-54954-spine:latest 0.4s done
+#17 DONE 0.4s
+
+#18 resolving provenance for metadata file
+#18 DONE 0.0s
+ Image harness-h2-54954-spine Built 
+ Network harness-h2-54954_default Creating 
+ Network harness-h2-54954_default Created 
+ Container harness-h2-54954-postgres-1 Creating 
+ Container harness-h2-54954-postgres-1 Created 
+ Container harness-h2-54954-spine-1 Creating 
+ Container harness-h2-54954-spine-1 Created 
+ Container harness-h2-54954-postgres-1 Starting 
+ Container harness-h2-54954-postgres-1 Started 
+ Container harness-h2-54954-postgres-1 Waiting 
+ Container harness-h2-54954-postgres-1 Healthy 
+ Container harness-h2-54954-spine-1 Starting 
+ Container harness-h2-54954-spine-1 Started 
+ Container harness-h2-54954-postgres-1 Waiting 
+ Container harness-h2-54954-spine-1 Waiting 
+ Container harness-h2-54954-postgres-1 Healthy 
+ Container harness-h2-54954-spine-1 Healthy 
+============================= test session starts ==============================
+platform darwin -- Python 3.12.9, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/nateoswalt/Library/Caches/nocturne-m4ms-contract-4117/tests/contract
+plugins: logfire-5.1.0, asyncio-1.4.0, anyio-4.14.2
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 3 items
+
+../../../Users/nateoswalt/Library/Caches/nocturne-m4ms-contract-4117/tests/contract/test_spine_contract.py . [ 33%]
+..                                                                       [100%]
+
+=============================== warnings summary ===============================
+../../../Users/nateoswalt/Library/Caches/nocturne-m4ms-contract-4117/tests/contract/test_spine_contract.py:30
+  /Users/nateoswalt/Library/Caches/nocturne-m4ms-contract-4117/tests/contract/test_spine_contract.py:30: PytestUnknownMarkWarning: Unknown pytest.mark.contract - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = [pytest.mark.contract, pytest.mark.asyncio]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+========================= 3 passed, 1 warning in 0.93s =========================
+spine-1     | INFO:     Started server process [1]
+postgres-1  | The files belonging to this database system will be owned by user "postgres".
+postgres-1  | This user must also own the server process.
+postgres-1  | 
+postgres-1  | The database cluster will be initialized with locale "en_US.utf8".
+postgres-1  | The default database encoding has accordingly been set to "UTF8".
+postgres-1  | The default text search configuration will be set to "english".
+postgres-1  | 
+postgres-1  | Data page checksums are disabled.
+postgres-1  | 
+postgres-1  | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+postgres-1  | creating subdirectories ... ok
+postgres-1  | selecting dynamic shared memory implementation ... posix
+postgres-1  | selecting default max_connections ... 100
+postgres-1  | selecting default shared_buffers ... 128MB
+postgres-1  | selecting default time zone ... Etc/UTC
+postgres-1  | creating configuration files ... ok
+postgres-1  | running bootstrap script ... ok
+postgres-1  | performing post-bootstrap initialization ... ok
+postgres-1  | syncing data to disk ... ok
+postgres-1  | 
+postgres-1  | 
+postgres-1  | Success. You can now start the database server using:
+postgres-1  | 
+postgres-1  |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+postgres-1  | 
+postgres-1  | initdb: warning: enabling "trust" authentication for local connections
+postgres-1  | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+spine-1     | INFO:     Waiting for application startup.
+spine-1     | INFO:     Application startup complete.
+spine-1     | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+spine-1     | INFO:     127.0.0.1:49082 - "GET /healthz HTTP/1.1" 200 OK
+postgres-1  | waiting for server to start....2026-10-05 06:39:53.820 UTC [46] LOG:  starting PostgreSQL 16.14 (Debian 16.14-1.pgdg12+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit
+postgres-1  | 2026-10-05 06:39:53.821 UTC [46] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+postgres-1  | 2026-10-05 06:39:53.823 UTC [49] LOG:  database system was shut down at 2026-10-05 06:39:53 UTC
+postgres-1  | 2026-10-05 06:39:53.824 UTC [46] LOG:  database system is ready to accept connections
+spine-1     | INFO:     172.19.0.1:37764 - "POST /v1/memories HTTP/1.1" 201 Created
+spine-1     | INFO:     172.19.0.1:37764 - "POST /v1/memories HTTP/1.1" 409 Conflict
+spine-1     | INFO:     172.19.0.1:37764 - "POST /v1/memories HTTP/1.1" 409 Conflict
+spine-1     | INFO:     172.19.0.1:37764 - "POST /v1/memories HTTP/1.1" 201 Created
+spine-1     | INFO:     172.19.0.1:37764 - "POST /v1/memories HTTP/1.1" 200 OK
+postgres-1  |  done
+postgres-1  | server started
+postgres-1  | CREATE DATABASE
+postgres-1  | 
+postgres-1  | 
+postgres-1  | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+postgres-1  | 
+postgres-1  | 2026-10-05 06:39:53.966 UTC [46] LOG:  received fast shutdown request
+postgres-1  | waiting for server to shut down....2026-10-05 06:39:53.966 UTC [46] LOG:  aborting any active transactions
+spine-1     | INFO:     172.19.0.1:37764 - "POST /v1/memories HTTP/1.1" 201 Created
+spine-1     | INFO:     172.19.0.1:37778 - "POST /v1/memories HTTP/1.1" 201 Created
+spine-1     | INFO:     172.19.0.1:37778 - "PATCH /v1/memories/8197e86c-6e8f-4dcc-9311-c21e52e5cad0 HTTP/1.1" 200 OK
+spine-1     | INFO:     172.19.0.1:37778 - "PATCH /v1/memories/8197e86c-6e8f-4dcc-9311-c21e52e5cad0 HTTP/1.1" 409 Conflict
+postgres-1  | 2026-10-05 06:39:53.967 UTC [46] LOG:  background worker "logical replication launcher" (PID 52) exited with exit code 1
+postgres-1  | 2026-10-05 06:39:53.967 UTC [47] LOG:  shutting down
+postgres-1  | 2026-10-05 06:39:53.967 UTC [47] LOG:  checkpoint starting: shutdown immediate
+postgres-1  | 2026-10-05 06:39:53.983 UTC [47] LOG:  checkpoint complete: wrote 922 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.006 s, sync=0.010 s, total=0.017 s; sync files=301, longest=0.002 s, average=0.001 s; distance=4255 kB, estimate=4255 kB; lsn=0/1912080, redo lsn=0/1912080
+postgres-1  | 2026-10-05 06:39:53.986 UTC [46] LOG:  database system is shut down
+spine-1     | INFO:     172.19.0.1:37778 - "PATCH /v1/memories/8197e86c-6e8f-4dcc-9311-c21e52e5cad0 HTTP/1.1" 200 OK
+spine-1     | INFO:     172.19.0.1:37778 - "POST /v1/memories HTTP/1.1" 201 Created
+spine-1     | INFO:     172.19.0.1:37778 - "GET /v1/memories?project_key=h2-5141a69fc2194a2a84b9ee54bfcc4415&status=active&q=CAS+MEMORY+5141A69FC2194A2A84B9EE54BFCC4415&limit=1&offset=0 HTTP/1.1" 200 OK
+spine-1     | INFO:     172.19.0.1:37778 - "GET /v1/memories?project_key=h2-5141a69fc2194a2a84b9ee54bfcc4415&status=tombstoned&q=CAS+memory+5141a69fc2194a2a84b9ee54bfcc4415&limit=1&offset=0 HTTP/1.1" 200 OK
+spine-1     | INFO:     172.19.0.1:37784 - "POST /v1/spend/events HTTP/1.1" 200 OK
+spine-1     | INFO:     172.19.0.1:37784 - "POST /v1/spend/events HTTP/1.1" 200 OK
+postgres-1  |  done
+postgres-1  | server stopped
+postgres-1  | 
+postgres-1  | PostgreSQL init process complete; ready for start up.
+spine-1     | INFO:     172.19.0.1:37784 - "POST /v1/spend/events HTTP/1.1" 409 Conflict
+postgres-1  | 
+postgres-1  | 2026-10-05 06:39:54.090 UTC [1] LOG:  starting PostgreSQL 16.14 (Debian 16.14-1.pgdg12+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit
+postgres-1  | 2026-10-05 06:39:54.090 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+postgres-1  | 2026-10-05 06:39:54.090 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+postgres-1  | 2026-10-05 06:39:54.091 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+postgres-1  | 2026-10-05 06:39:54.094 UTC [62] LOG:  database system was shut down at 2026-10-05 06:39:53 UTC
+postgres-1  | 2026-10-05 06:39:54.096 UTC [1] LOG:  database system is ready to accept connections
+ Container harness-h2-54954-spine-1 Stopping 
+ Container harness-h2-54954-spine-1 Stopped 
+ Container harness-h2-54954-spine-1 Removing 
+ Container harness-h2-54954-spine-1 Removed 
+ Container harness-h2-54954-postgres-1 Stopping 
+ Container harness-h2-54954-postgres-1 Stopped 
+ Container harness-h2-54954-postgres-1 Removing 
+ Container harness-h2-54954-postgres-1 Removed 
+ Image harness-h2-54954-spine:latest Removing 
+ Network harness-h2-54954_default Removing 
+ Image harness-h2-54954-spine:latest Removed 
+ Network harness-h2-54954_default Removed 

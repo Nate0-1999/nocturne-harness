@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "a64981cebe8cdf06e15b3f0937a58ff54b34caba",
-      "head": "d5b387d1d2d1bc1f1eb38cf85e02fb4b7219f323"
+      "head": "878d50a976e20e5428f547313d51a92bd3d9ec9b"
     }
   ],
   "unmapped": {
@@ -20,6 +20,8 @@
     "harness/tests/test_onboarding.py": "Focused regression expectations for model, spend, receipt, startup or packaging behavior; runtime impact is accounted by the mapped source rows.",
     "harness/tests/test_verification_identity.py": "Focused regression expectations for model, spend, receipt, startup or packaging behavior; runtime impact is accounted by the mapped source rows.",
     "harness/verification/m2st3/browser_check.mjs": "Existing rendered canon expectation updated for honest unreported-price wording; no production behavior.",
+    "harness/verification/m4ah/SHA256SUMS": "M4MS or merged peer verification evidence only; no product behavior.",
+    "harness/verification/m4ah/ledger-report.json": "M4MS or merged peer verification evidence only; no product behavior.",
     "harness/verification/m4ms/FL-009.png": "Generated public API contract and fingerprint for additive read-only receipt fields; spend behavior is covered by FL-155/159/197.",
     "harness/verification/m4ms/FL-016.png": "Generated public API contract and fingerprint for additive read-only receipt fields; spend behavior is covered by FL-155/159/197.",
     "harness/verification/m4ms/FL-067.png": "Generated public API contract and fingerprint for additive read-only receipt fields; spend behavior is covered by FL-155/159/197.",
@@ -76,7 +78,11 @@
     "harness/web/dist/assets/index-DYpA5U50.js": "Generated bundled web artifact rebuilt from the integrated source; no independent behavior beyond mapped UI changes.",
     "harness/web/dist/index.html": "Generated bundled web artifact rebuilt from the integrated source; no independent behavior beyond mapped UI changes.",
     "harness/web/tests/chromeDiet.test.mjs": "Focused regression expectations for model, spend, receipt, startup or packaging behavior; runtime impact is accounted by the mapped source rows.",
-    "harness/web/tests/spendTable.test.mjs": "Focused regression expectations for model, spend, receipt, startup or packaging behavior; runtime impact is accounted by the mapped source rows."
+    "harness/web/tests/spendTable.test.mjs": "Focused regression expectations for model, spend, receipt, startup or packaging behavior; runtime impact is accounted by the mapped source rows.",
+    "harness/verification/m4ms/final-harness-full.log": "Verification output only; no product behavior.",
+    "harness/verification/m4ms/final61-memory-full.log": "Verification output only; no product behavior.",
+    "harness/verification/m4ms/final-packet-canon.log": "Verification output only; no product behavior.",
+    "harness/verification/m4ms/receipt-contract-suite-mounted.log": "Verification output only; no product behavior."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
