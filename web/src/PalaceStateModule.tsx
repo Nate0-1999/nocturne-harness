@@ -156,8 +156,8 @@ export function PalaceStateModule() {
           {curatorActivity === null
             ? 'The Palace remains readable; curator cadence could not be read.'
             : curatorActivity.latest_run === null
-              ? `${curatorActivity.admitted_writes} admitted writes · first pass in ${curatorActivity.writes_until_run} writes or ${curatorActivity.pressure_until_run} removals`
-              : `Latest ${curatorActivity.latest_run.status} · next pass in ${curatorActivity.writes_until_run} writes or ${curatorActivity.pressure_until_run} removals`}
+              ? `${curatorActivity.admitted_writes} admitted writes · first pass in ${curatorActivity.writes_until_run} writes, ${curatorActivity.pressure_until_run} removals or a compaction`
+              : `Latest ${curatorActivity.latest_run.status} after ${curatorActivity.latest_run.trigger.replace('_', ' ')} · next pass in ${curatorActivity.writes_until_run} writes, ${curatorActivity.pressure_until_run} removals or a compaction`}
         </p>
         {curatorActivity?.latest_run?.review_summary && <p>
           Model: {String(curatorActivity.latest_run.review_summary.model ?? 'No call recorded')}

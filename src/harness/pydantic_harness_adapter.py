@@ -926,7 +926,7 @@ class CompactionPolicy(BaseModel):
     policy: Literal["performance", "cost"] = "performance"
     # D.2 153: the trigger is a finite fraction of the active model's window.
     fraction: float = Field(default=0.8, gt=0, lt=1, allow_inf_nan=False)
-    # v2.133: the last share of the conversation is kept word for word.
+    # D.2 177 (v2.133): the last share of the conversation is kept word for word.
     keep: float = Field(default=0.2, ge=0, lt=1, allow_inf_nan=False)
     instructions: str = COMPACTION_SUMMARY_PROMPT
 
