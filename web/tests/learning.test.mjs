@@ -114,7 +114,7 @@ test('presents server-authored learning truth in human numbers', () => {
   )
 })
 
-/** D.2 144 retired the signal stride when main-thread compaction landed. */
+/** SPEC D.2 144 retired the signal stride when main-thread compaction landed. */
 test('describes compaction-triggered retraining without promising a signal countdown', () => {
   assert.equal(
     learningCadenceCopy(learning()),
