@@ -612,6 +612,7 @@ async def test_browser_steps_sent_together_run_in_the_order_given() -> None:
     assert [name for name, _arguments in toolset.calls] == ["type", "click", "read_page"]
 
 
+@pytest.mark.asyncio
 async def test_an_answer_without_a_proposal_still_raises_its_card() -> None:
     """F179: every finished conversation gets its Deck card; with no proposal its reply is empty."""
 
