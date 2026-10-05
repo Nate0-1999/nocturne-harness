@@ -403,9 +403,7 @@ class MemoryPanelController:
                 send=send,
             )
 
-    async def delete_from_gate(
-        self, thread_id: str, memory_id: UUID, send: EnvelopeSender
-    ) -> None:
+    async def delete_from_gate(self, thread_id: str, memory_id: UUID, send: EnvelopeSender) -> None:
         """A-077 (F175): the gate's ×! is this panel's delete, at the current revision."""
 
         request_id = self._factory.new_id()
