@@ -166,7 +166,7 @@ export function proposedResponseCards(
           event.event_kind !== 'proposed_response' ||
           event.proposal_run_id !== message.run_id ||
           fired.has(message.run_id) ||
-          typeof event.primary !== 'string' || !event.primary.trim() ||
+          typeof event.primary !== 'string' ||
           !Array.isArray(event.alternatives) ||
           !event.alternatives.every((alternative) => typeof alternative === 'string') ||
           typeof event.created_at !== 'string' || Number.isNaN(Date.parse(event.created_at))
@@ -394,7 +394,7 @@ function ProposedResponseCardView({
         </div>
       )}
       <label>
-        <span>Proposed response · edit freely</span>
+        <span>{card.primary ? 'Proposed response · edit freely' : 'No reply proposed · write yours'}</span>
         <TextArea
           ref={composerRef}
           data-testid={`deck-reply-${card.proposal_run_id}`}

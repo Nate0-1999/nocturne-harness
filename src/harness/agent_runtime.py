@@ -1180,9 +1180,14 @@ class _EventBridge:
             final.feed(part)
         final.flush()
         await self._publish_visible(final.visible[len(self._answer.visible) :])
-        if final.proposal is not None:
+        proposal = final.proposal
+        if proposal is None and final.visible.strip():
+            # F179 / M3W6B-32: an answer that came without a proposed reply still raises its
+            # Deck card, its reply left for the owner to write.
+            proposal = ProposedResponse("", ())
+        if proposal is not None:
             await self._emit.event(
-                proposed_response_event(final.proposal, run_id=run_id, created_at=created_at)
+                proposed_response_event(proposal, run_id=run_id, created_at=created_at)
             )
         return final.visible
 

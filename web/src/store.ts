@@ -202,7 +202,7 @@ function catalogProposedResponse(
   const proposal = value as Record<string, unknown>
   if (
     typeof proposal.proposal_run_id !== 'string' ||
-    typeof proposal.primary !== 'string' || !proposal.primary.trim() ||
+    typeof proposal.primary !== 'string' ||
     !Array.isArray(proposal.alternatives) ||
     !proposal.alternatives.every((item) => typeof item === 'string') ||
     typeof proposal.created_at !== 'string' ||

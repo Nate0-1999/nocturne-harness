@@ -612,6 +612,34 @@ async def test_browser_steps_sent_together_run_in_the_order_given() -> None:
     assert [name for name, _arguments in toolset.calls] == ["type", "click", "read_page"]
 
 
+async def test_an_answer_without_a_proposal_still_raises_its_card() -> None:
+    """F179: every finished conversation gets its Deck card; with no proposal its reply is empty."""
+
+    async def stream(_messages: object, _info: object):
+        yield "It is ready."
+
+    emitter = RecordingEmitter()
+    instant = datetime(2026, 8, 28, 12, tzinfo=UTC)
+    runner = PydanticAITurnRunner(
+        HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+        lambda _: context(),
+        clock=lambda: instant,
+    )
+
+    outcome = await runner.run(
+        thread_id=str(THREAD_UUID), prompt="ready?", message_history=(), emit=emitter
+    )
+
+    assert outcome.usage.requests == 1
+    assert emitter.events[-1] == {
+        "event_kind": "proposed_response",
+        "proposal_run_id": emitter.run_id,
+        "primary": "",
+        "alternatives": [],
+        "created_at": instant.isoformat(),
+    }
+
+
 @pytest.mark.asyncio
 async def test_m3fz_text_tool_text_keeps_the_whole_answer_and_terminal_proposal() -> None:
     """PLAN M3FZ / F068: text before a tool and its closing answer form one complete turn."""

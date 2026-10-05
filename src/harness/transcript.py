@@ -534,7 +534,6 @@ class TranscriptJournal:
                     event.get("event_kind") != "proposed_response"
                     or event.get("proposal_run_id") != run_id
                     or not isinstance(event.get("primary"), str)
-                    or not event["primary"].strip()
                     or not isinstance(event.get("alternatives"), list)
                     or not all(isinstance(item, str) for item in event["alternatives"])
                     or not isinstance(event.get("created_at"), str)

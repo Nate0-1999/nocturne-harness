@@ -139,7 +139,6 @@ def find_proposed_response(
             alternatives = event.get("alternatives", [])
             if (
                 not isinstance(primary, str)
-                or not primary.strip()
                 or not isinstance(alternatives, list)
                 or not all(isinstance(item, str) and item.strip() for item in alternatives)
             ):
