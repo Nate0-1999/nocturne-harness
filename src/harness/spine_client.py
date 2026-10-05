@@ -1444,7 +1444,7 @@ class SpineClient:
         """Invoke the owner-only manual learner trigger with this daemon's identity."""
 
         response = await self._request(
-            "POST", "retrain", params={"principal_id": self._principal_id or "local"}, timeout=120.0
+            "POST", "retrain", params={"principal_id": self._principal_id or "local"}, timeout=360.0
         )
         return _expect_metrics_success(response, adapter=_RETRAIN_RESPONSE)
 

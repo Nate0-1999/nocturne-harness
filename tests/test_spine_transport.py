@@ -537,7 +537,7 @@ async def test_retrain_uses_the_existing_bodyless_spine_trigger() -> None:
     assert len(seen) == 1
     assert seen[0].method == "POST"
     assert seen[0].url.path == "/prefix/retrain"
-    assert seen[0].extensions["timeout"]["read"] == 120.0
+    assert seen[0].extensions["timeout"]["read"] == 360.0
     assert dict(seen[0].url.params) == {"principal_id": "local"}
     assert seen[0].content == b""
     assert "content-type" not in seen[0].headers
