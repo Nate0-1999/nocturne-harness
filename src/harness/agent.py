@@ -457,6 +457,7 @@ class HarnessAgent:
         text: str,
         *,
         context: MemoryToolContext,
+        force: bool = False,
         model: Model | str | None = None,
         model_settings: ModelSettings | None = None,
         usage: RunUsage | None = None,
@@ -481,6 +482,7 @@ class HarnessAgent:
                 usage=remember_usage,
                 raise_model_errors=raise_model_errors,
                 captured_messages=captured_messages,
+                force=force,
             )
         try:
             draft_result = await _run_structured_agent(
@@ -516,6 +518,7 @@ class HarnessAgent:
                 usage=remember_usage,
                 raise_model_errors=raise_model_errors,
                 captured_messages=captured_messages,
+                force=force,
             )
         keywords = _normalize_keywords(draft.keywords)
         if keywords is None:
@@ -551,6 +554,7 @@ class HarnessAgent:
             label=label,
             keywords=keywords,
             context=context,
+            force=force,
         )
 
     async def _split_or_guide_remember(
@@ -563,6 +567,7 @@ class HarnessAgent:
         usage: RunUsage,
         raise_model_errors: bool,
         captured_messages: list[ModelMessage] | None,
+        force: bool = False,
     ) -> RememberResult:
         """Plan one semantic family, then write all children or guide without a write."""
 
@@ -598,7 +603,11 @@ class HarnessAgent:
                     captured_messages=captured_messages,
                 )
         except TimeoutError:
-            return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
+            return RememberResult(
+                False,
+                "The memory draft took too long, so nothing was saved. "
+                "Your text is still in the composer; try again.",
+            )
         except UnexpectedModelBehavior:
             return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
         except Exception:
@@ -627,6 +636,7 @@ class HarnessAgent:
                 label=child.label,
                 keywords=child.keywords,
                 context=context,
+                force=force,
             )
 
         try:
@@ -667,6 +677,7 @@ class HarnessAgent:
         label: str,
         keywords: list[str],
         context: MemoryToolContext,
+        force: bool = False,
     ) -> RememberResult:
         """Persist the exact source through the unchanged ordinary create boundary."""
 
@@ -676,6 +687,7 @@ class HarnessAgent:
                 label=label,
                 body=body,
                 keywords=keywords,
+                force=force,
             )
         except CreateMemoryConflictError as exc:
             if isinstance(exc.conflict, DuplicateMemoryConflict):
@@ -684,6 +696,16 @@ class HarnessAgent:
                     exc.conflict.duplicate_of.memory_id,
                 )
             conflict = exc.conflict.label_conflict
+            # A generated handle must not hide the Palace's semantic duplicate decision.
+            source_label = body.splitlines()[0][:64].strip()
+            if source_label != label:
+                return await HarnessAgent._create_single_remember(
+                    body,
+                    label=source_label,
+                    keywords=keywords,
+                    context=context,
+                    force=force,
+                )
             return RememberResult(
                 False,
                 "Not saved: that label already belongs to "
@@ -697,11 +719,13 @@ class HarnessAgent:
             if not response.similar:
                 return RememberResult(False, "Not saved: Memory returned no similar memory.")
             existing = response.similar[0]
+            similarity = f"{existing.score:.3f}" if existing.score is not None else "unavailable"
             return RememberResult(
                 False,
                 "Not saved: this looks similar to "
-                f"{existing.label!r}. Open Memory and edit that memory if this changes it; "
-                "otherwise rephrase this as a distinct fact and try /remember again.",
+                f"{existing.label!r} (similarity {similarity}): {existing.body}\n\n"
+                "Open Memory and edit that memory, or save anyway by sending:\n"
+                f"`/remember --save-anyway {body}`",
             )
         created = response.created
         return RememberResult(
@@ -954,9 +978,13 @@ class HarnessAgent:
 
         remembered_text = remember_command_text(text)
         if remembered_text is not None:
+            force = remembered_text.startswith("--save-anyway ")
+            if force:
+                remembered_text = remembered_text.removeprefix("--save-anyway ").strip()
             return await self.remember(
                 remembered_text,
                 context=context,
+                force=force,
                 model=model,
                 model_settings=model_settings,
                 usage=usage,

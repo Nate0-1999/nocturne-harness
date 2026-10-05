@@ -3290,21 +3290,31 @@ function PalaceQueueModule() {
     if (files.length === 0 || busy) return
     setBusy(true)
     try {
+      let pending = 0
+      let duplicates = 0
       for (const file of files) {
         const lower = file.name.toLowerCase()
         if ((!lower.endsWith('.md') && !lower.endsWith('.markdown')) || file.size > 24 * 1024) {
           throw new Error(`${file.name} must be Markdown and no larger than 24 KiB.`)
         }
         setStatusText(`Splitting ${file.name} without losing its claims…`)
-        await events.dispatch({
+        const result = await events.dispatch({
           type: 'seed.upload',
           batch_uid: globalThis.crypto.randomUUID(),
           source_name: file.name,
           markdown: await file.text(),
         })
+        pending += queueCardsFrom(result).length
+        if (isObject(result) && typeof result.duplicate_count === 'number') {
+          duplicates += result.duplicate_count
+        }
       }
       await load()
-      setStatusText('Split complete. Review each document before it enters your Palace.')
+      setStatusText(pending > 0
+        ? `Split complete. ${pending} memories to review.${duplicates > 0 ? ` ${duplicates} already known or previously rejected.` : ''}`
+        : duplicates > 0
+          ? `No memories to review: ${duplicates} facts were already known or previously rejected. Nothing new was saved.`
+          : 'No memories to review: the document yielded no durable facts. Nothing new was saved.')
     } catch (error) {
       setStatusText(error instanceof Error ? error.message : 'Seed ingestion failed.')
     } finally {
