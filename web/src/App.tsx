@@ -2649,20 +2649,22 @@ function ChatModule() {
   return (
     <main className="chat-panel" aria-labelledby="thread-title">
       <header className="chat-header">
-        <label>Orchestration
-          <Select aria-label="Orchestration mode" value={orchestration} onChange={(event) => {
-            const next = event.target.value as 'Duet' | 'Symphony'
-            setOrchestration(next)
-          }}>
-            <option>Duet</option><option>Symphony</option>
-          </Select>
-        </label>
-        {orchestration === 'Symphony' && (
-          <Button type="button" disabled={composerDisabled} onClick={() => {
-            void events.dispatch({ type: 'prompt.submit', prompt: 'Take this to a Symphony.' })
-              .catch(() => setImageStatus('The deliberation could not be opened.'))
-          }}>Compose Symphony</Button>
-        )}
+        <div className="chat-header__orchestration">
+          <label>Orchestration
+            <Select aria-label="Orchestration mode" value={orchestration} onChange={(event) => {
+              const next = event.target.value as 'Duet' | 'Symphony'
+              setOrchestration(next)
+            }}>
+              <option>Duet</option><option>Symphony</option>
+            </Select>
+          </label>
+          {orchestration === 'Symphony' && (
+            <Button type="button" disabled={composerDisabled} onClick={() => {
+              void events.dispatch({ type: 'prompt.submit', prompt: 'Take this to a Symphony.' })
+                .catch(() => setImageStatus('The deliberation could not be opened.'))
+            }}>Compose Symphony</Button>
+          )}
+        </div>
         <details><summary>{orchestration} configuration</summary>
           <AgentPolicies level={orchestration} />
         </details>

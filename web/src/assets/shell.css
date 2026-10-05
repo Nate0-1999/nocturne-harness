@@ -332,6 +332,13 @@
   min-width: 0;
 }
 
+.chat-header__orchestration {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 /* M3SF / M3EX-12: an open configuration takes its own row, never the mode select's width. */
 .chat-header > details[open] {
   grid-column: 1 / -1;
