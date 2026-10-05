@@ -619,7 +619,8 @@ class HarnessAgent:
                 ):
                     draft_result = await _run_structured_agent(
                         self._remember_splitter_agent,
-                        "Your draft failed structured-output, length or source-coverage validation. "
+                        "Your draft failed structured-output, length or source-coverage "
+                        "validation. "
                         "Re-read the source. Repeated wording and qualifiers of one fact are "
                         "not independent facts: shorten them to one candidate with "
                         "whole_source=true, coverage=[]. Split only independent facts and "
