@@ -61,13 +61,28 @@ export function VisualizationToolbar({ data, loading, moduleId, tier, setTier }:
   }, [events, selection, oldest, selected?.id, selected?.as_of, timeOrdered])
   const index = selected?.as_of ? Math.max(0, timeline.indexOf(selected.as_of)) : Math.max(0, timeline.length - 1)
   const scrub = (as_of: string | null) => selection.select({ ...(selected ?? { kind: 'module', id: moduleId }), as_of })
+  // F181: a drag moves the knob here and asks the scene for one moment, the one let go on. Every step of a drag
+  // asked each view for its own moment (90 reads a drag), so the chosen moment came seconds late, behind the present.
+  const grip = useRef<number | null>(null)
+  const [held, setHeld] = useState<number | null>(null)
+  const letGo = (value: number) => {
+    if (grip.current === null) return
+    const moved = value !== grip.current
+    grip.current = null
+    setHeld(null)
+    if (moved) scrub(timeline[value])
+  }
   return <div className="work-viz__toolbar">
     <label>Detail<Select aria-label="Visualization detail" data-tooltip-detail="Full draws everything; Efficient is lighter on the machine." value={tier} onChange={(event) => setTier(event.target.value as DetailTier)}>
       <option value="full">Full</option><option value="efficient">Efficient</option>
     </Select></label>
     <Button type="button" data-tooltip-detail="Order the scene by time so the newest work stands out." aria-pressed={timeOrdered} onClick={() => selection.select({ ...(selected ?? { kind: 'module', id: moduleId }), time_order: !timeOrdered })}>Time order</Button>
     <label className="work-viz__scrub">History<input aria-label="Visualization history" data-tooltip-detail="Scrub the scene back to an earlier moment." type="range" min="0" max={Math.max(0, timeline.length - 1)}
-      value={index} disabled={!timeline.length} onChange={(event) => scrub(timeline[Number(event.target.value)])} /></label>
+      value={held ?? index} disabled={!timeline.length}
+      onPointerDown={(event) => { grip.current = index; setHeld(index); event.currentTarget.setPointerCapture(event.pointerId) }}
+      onChange={(event) => grip.current === null ? scrub(timeline[Number(event.target.value)]) : setHeld(Number(event.target.value))}
+      onPointerUp={(event) => letGo(Number(event.currentTarget.value))}
+      onLostPointerCapture={(event) => letGo(Number(event.currentTarget.value))} /></label>
     <Button type="button" data-tooltip-detail="Return to the present." aria-pressed={!selected?.as_of} onClick={() => scrub(null)}>Live</Button>
     <time>{data ? new Date(data.as_of).toLocaleTimeString() : 'Waiting for first observation'}</time>
     {loading && data && <span role="status">Loading {selected?.as_of ? new Date(selected.as_of).toLocaleTimeString() : 'the present'}…</span>}
