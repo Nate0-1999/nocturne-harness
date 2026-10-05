@@ -4037,8 +4037,9 @@ body beside the session id; direct providers keep the plain setting.
 ## M4MW — Memory refusals keep a usable next step [P1.5]
 
 PRECEDENT: F178, F153, M3P1/F165, A-033, SPEC C.4, PLAN M4MW.
-An over-cap single fact may use the remaining request in the existing two-request budget
-to shorten one draft; the default deadline is 60 seconds. Similarity refusals show the score
+An invalid length or source-coverage draft may use the remaining request in the existing
+two-request budget for repair; the default deadline is 60 seconds. Refusal explains that the
+draft could not be verified, without claiming a single fact contains several. Similarity refusals show the score
 and an explicit `/remember --save-anyway` command; only that command sends force. A generated
 label collision retries with the fact's first 64 characters so content dedup can decide.
 Rejected saves show the service's explanation. Seed uploads count already-known facts and

@@ -788,8 +788,11 @@ async def test_m3fd_long_single_fact_shortens_without_splitting(
 
 
 @pytest.mark.asyncio
-async def test_over_cap_single_fact_uses_remaining_request_to_finish_shortening() -> None:
-    """M4MW / FL-002 / SPEC B.6: a too-long first draft still saves one capped fact."""
+@pytest.mark.parametrize("invalid_coverage", [False, True])
+async def test_over_cap_single_fact_uses_remaining_request_to_finish_shortening(
+    invalid_coverage: bool,
+) -> None:
+    """M4MW / FL-002: repair an over-cap or unaccounted first draft within two requests."""
     source = ("The verification release color is amber. " * 30).strip()
     body = "The verification release color is amber."
     calls = []
@@ -804,6 +807,9 @@ async def test_over_cap_single_fact_uses_remaining_request_to_finish_shortening(
         }
         for text in (source, body)
     ]
+    if invalid_coverage:
+        drafts[0]["whole_source"] = False
+        drafts[0]["candidates"] *= 3
     spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
     agent = HarnessAgent(settings(), model=structured_sequence_model(drafts, calls))
     result = await agent.remember(source, context=context(spine))
@@ -1076,9 +1082,7 @@ async def test_a049_overlong_label_single_claim_reuses_exact_source_through_ordi
 
 @pytest.mark.asyncio
 async def test_a049_single_atomic_oversized_claim_guides_without_any_write() -> None:
-    """F027, A-049, ADR-022, and SPEC B.6 rule 12 are defended here.
-    One oversized indivisible claim is never shortened and receives enacted owner guidance.
-    """
+    """F027 / M4MW: two unsafe drafts exhaust the budget without writing a lossy fact."""
     source = ("The complete indivisible claim retains this qualifier. " * 80).strip()
     calls: list[tuple[list[ModelMessage], AgentInfo]] = []
     model = structured_sequence_model(
@@ -1109,7 +1113,7 @@ async def test_a049_single_atomic_oversized_claim_guides_without_any_write() -> 
     result = await agent.remember(source, context=context(spine))
 
     assert result == RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
-    assert len(calls) == 1
+    assert len(calls) == 2
     assert spine.create_requests == []
     assert spine.split_requests == []
 

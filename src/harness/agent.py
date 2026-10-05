@@ -107,8 +107,8 @@ REMEMBER_SPLIT_INSTRUCTION = (
     "Return one to 64 candidates and structured data only."
 )
 REMEMBER_SPLIT_GUIDANCE = (
-    "I couldn't save this as separate facts without changing them, so I saved nothing. "
-    "Try one fact per /remember."
+    "Nothing was saved: I couldn't verify a complete memory draft within the length limit. "
+    "Your text is still in the composer; try again."
 )
 EXTRACTION_INSTRUCTION = (
     "Triage the supplied conversation in ONE pass: still-live context goes in working_summary "
@@ -604,19 +604,24 @@ class HarnessAgent:
                 )
                 draft = draft_result.output
                 if (
-                    draft.safe_to_save
-                    and len(draft.candidates) == 1
-                    and cl100k_token_count(body) > self._settings.memory_max_tokens
-                    and cl100k_token_count(draft.candidates[0].body)
-                    > self._settings.memory_max_tokens
-                    and usage.requests < 2
+                    usage.requests < 2
+                    and _validated_remember_split(
+                        draft,
+                        source_body=body,
+                        label_max=self._settings.label_max,
+                        memory_max_tokens=self._settings.memory_max_tokens,
+                    )
+                    is None
                 ):
                     draft_result = await _run_structured_agent(
                         self._remember_splitter_agent,
-                        f"Your one-fact draft used {cl100k_token_count(draft.candidates[0].body)} "
-                        f"tokens. Rewrite it within {self._settings.memory_max_tokens} "
-                        "cl100k_base tokens. Keep the fact and its qualifiers; remove repeated "
-                        "explanations. Return one candidate, whole_source=true, coverage=[].\n"
+                        "Your draft failed length or exact source-coverage validation. "
+                        "Re-read the source. Repeated wording and qualifiers of one fact are "
+                        "not independent facts: shorten them to one candidate with "
+                        "whole_source=true, coverage=[]. Split only independent facts and "
+                        "account for every source span and every candidate. "
+                        f"Each body must fit {self._settings.memory_max_tokens} cl100k_base "
+                        f"tokens and each label {self._settings.label_max} characters.\n"
                         f"Memory source:\n{body}",
                         model=model,
                         model_settings=model_settings,
