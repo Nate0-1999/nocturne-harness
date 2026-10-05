@@ -58,3 +58,22 @@ test('a refused /remember hands its text back to an empty composer', () => {
   assert.match(effect, /setDraft\(sent\)/u)
   assert.match(effect, /type: 'draft\.update', thread_id: selectedThreadId, draft: sent/u)
 })
+
+/** A-019 / F158 (FL-018): with the Palace down, the run's later spend notice replaced "Memory is
+ * unavailable", so the answer finished with no word that the memory check was skipped. */
+test('a later notice of the same run keeps the memory-unavailable sentence', () => {
+  const store = readFileSync(new URL('../src/store.ts', import.meta.url), 'utf8')
+  const start = store.indexOf('function keepMemoryNotice(')
+  const source = store.slice(start, store.indexOf('\nfunction replaceThread(', start))
+  const js = ts.transpileModule(`${source}\nresult = keepMemoryNotice`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+  const context = { result: null }
+  vm.runInNewContext(js, context)
+  const keep = context.result
+  const memory = { message: 'Memory is unavailable; continuing without injected context.', detail: { code: 'memory_unavailable', run_id: 'r1' } }
+  const spend = { message: 'Answer delivered; 6 spend receipt line(s) are waiting for the ledger.', detail: { code: 'spend_pending', run_id: 'r1' } }
+
+  assert.equal(keep(memory, spend).message, `${memory.message} ${spend.message}`)
+  assert.equal(keep(memory, spend).detail, spend.detail)
+  assert.equal(keep(memory, { ...spend, detail: { code: 'spend_pending', run_id: 'r2' } }).message, spend.message)
+  assert.equal(keep(null, spend), spend)
+})
