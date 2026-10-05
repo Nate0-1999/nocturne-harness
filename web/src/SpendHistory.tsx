@@ -110,6 +110,24 @@ export function SpendDaily({ snapshot }: { snapshot: SpendTableSnapshot }) {
   </details>
 }
 
+export function SpendReceipts({ snapshot }: { snapshot: SpendTableSnapshot }) {
+  return <details className="spend-history">
+    <summary>Spend receipts · {snapshot.receipts.length} lines</summary>
+    <p>Oldest first. Each receipt keeps its original ID and amount.</p>
+    {snapshot.receipts.length === 0 ? <p>No receipt lines available.</p> : <table aria-label="Spend receipts">
+      <thead><tr><th>Receipt ID · ULID</th><th>Time</th><th>Model / purpose</th><th>Quantity</th><th>USD</th><th>Basis</th></tr></thead>
+      <tbody>{snapshot.receipts.map((receipt) => <tr key={receipt.event_uid} data-receipt-id={receipt.event_uid}>
+        <th>{receipt.event_uid}</th>
+        <td>{new Date(receipt.ts).toLocaleString()}</td>
+        <td title={receipt.ref}>{receipt.model ?? receipt.purpose}</td>
+        <td>{formatHumanQuantity(receipt.quantity)} {receipt.unit_of_measure} · {receipt.quantity_type.replaceAll('_', ' ')}</td>
+        <td>{receipt.cost_usd === null ? 'Price not reported' : receipt.cost_usd}</td>
+        <td>{receipt.basis}</td>
+      </tr>)}</tbody>
+    </table>}
+  </details>
+}
+
 export function CacheHistory({ snapshot, threadNames }: { snapshot: SpendTableSnapshot; threadNames: ReadonlyMap<string, string> }) {
   const [selected, setSelected] = useState('')
   const threads = [...new Set(snapshot.messages.map((message) => message.thread_id))]

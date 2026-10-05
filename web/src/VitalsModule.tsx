@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 
 import { formatHumanQuantity, formatHumanUsd } from './humanNumbers'
 import { useRackPlugin, useRackSnapshot } from './rack'
-import { CacheHistory, InfrastructureInvoiceForm, SpendDaily, SpendRates, SpendReconciliation } from './SpendHistory'
+import { CacheHistory, InfrastructureInvoiceForm, SpendDaily, SpendRates, SpendReceipts, SpendReconciliation } from './SpendHistory'
 import { parseVitalsSnapshot, type ReconciliationSnapshot } from './vitals'
 import {
   parseSpendTableSnapshot,
@@ -169,6 +169,7 @@ export function VitalsModule() {
         </div>
       )}
       <SpendDaily snapshot={snapshot} />
+      <SpendReceipts snapshot={snapshot} />
       <CacheHistory snapshot={snapshot} threadNames={threadNames} />
     </section>
   )

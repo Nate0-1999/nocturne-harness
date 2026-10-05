@@ -1344,6 +1344,7 @@ def test_dev_app_wires_the_real_streaming_agent_adapter(
     agent = HarnessAgent(settings, model=FunctionModel(stream_function=stream))
     state_home = tmp_path / "state"
     monkeypatch.setenv("NOCTURNE_HOME", str(state_home))
+    settings.nocturne_home = state_home
     app = create_dev_app(
         tmp_path,
         settings=settings,

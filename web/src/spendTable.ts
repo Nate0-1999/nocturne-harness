@@ -34,6 +34,21 @@ export interface SpendTableSnapshot {
   rates: SpendRateLane[]
   messages: MessageCache[]
   days: DailySpend[]
+  receipts: SpendReceipt[]
+}
+
+export interface SpendReceipt {
+  event_uid: string
+  ts: string
+  thread_id: string | null
+  model: string | null
+  purpose: string
+  quantity_type: string
+  unit_of_measure: string
+  quantity: string
+  cost_usd: string | null
+  basis: string
+  ref: string
 }
 
 export interface SpendRateLane {
@@ -82,6 +97,22 @@ export function parseSpendTableSnapshot(value: unknown): SpendTableSnapshot {
     window_minutes: 60,
     threads,
     purposes,
+    receipts: array(root.receipts ?? [], 'receipts').map((value) => {
+      const receipt = record(value, 'receipt')
+      return {
+        event_uid: nonblank(receipt.event_uid, 'event_uid'),
+        ts: timestamp(receipt.ts, 'ts'),
+        thread_id: receipt.thread_id === null ? null : nonblank(receipt.thread_id, 'thread_id'),
+        model: receipt.model === null ? null : nonblank(receipt.model, 'model'),
+        purpose: nonblank(receipt.purpose, 'purpose'),
+        quantity_type: nonblank(receipt.quantity_type, 'quantity_type'),
+        unit_of_measure: nonblank(receipt.unit_of_measure, 'unit_of_measure'),
+        quantity: decimal(receipt.quantity, 'quantity'),
+        cost_usd: receipt.cost_usd === null ? null : decimal(receipt.cost_usd, 'cost_usd'),
+        basis: nonblank(receipt.basis, 'basis'),
+        ref: nonblank(receipt.ref, 'ref'),
+      }
+    }),
     rates: array(root.rates ?? [], 'rates').map((value, index) => {
       const lane = record(value, 'rate')
       if (!['total', 'agent', 'subagent', 'model', 'curation'].includes(String(lane.dimension))) {

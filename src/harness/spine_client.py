@@ -718,6 +718,20 @@ class PurposeSpendRow(SpendTableMetrics):
     label: NonBlankString
 
 
+class SpendReceipt(ContractModel):
+    event_uid: ULID
+    ts: datetime
+    thread_id: UUID | None
+    model: str | None
+    purpose: str
+    quantity_type: str
+    unit_of_measure: str
+    quantity: NonNegativeDecimalString
+    cost_usd: NonNegativeDecimalString | None
+    basis: Literal["measured", "allocated", "estimated"]
+    ref: str
+
+
 class SpendTableSnapshot(ContractModel):
     can_record_invoice: bool = False
     as_of: datetime
@@ -728,6 +742,7 @@ class SpendTableSnapshot(ContractModel):
     rate_source: Literal["v_spend_rate+spend_event", "spend_event"] = "spend_event"
     messages: list[MessageCache] = Field(default_factory=list)
     days: list[DailySpend] = Field(default_factory=list)
+    receipts: list[SpendReceipt] = Field(default_factory=list)
 
 
 class SpendRateLane(ContractModel):
