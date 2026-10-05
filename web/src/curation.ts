@@ -6,7 +6,7 @@ export interface CuratorActivityView {
   writes_until_run: number
   pressure_until_run: number
   pending_cards: number
-  latest_run: { status: 'completed' | 'failed'; completed_at: string } | null
+  latest_run: { status: 'completed' | 'failed'; completed_at: string; review_summary: Record<string, JsonValue> | null } | null
   growth: Array<{ at: string; active_units: number; curator_removals: number }>
 }
 
@@ -21,6 +21,9 @@ export function curatorActivityFrom(value: JsonValue): CuratorActivityView | nul
   const normalizedLatest = latest === null ? null : {
     status: latest.status === 'completed' ? 'completed' as const : 'failed' as const,
     completed_at: String(latest.completed_at),
+    review_summary: isObject(latest.report) && isObject(latest.report.review_summary)
+      && typeof latest.report.review_summary.pair_limit === 'number'
+      ? latest.report.review_summary as Record<string, JsonValue> : null,
   }
   return {
     admitted_writes: value.admitted_writes,

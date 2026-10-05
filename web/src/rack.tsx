@@ -345,7 +345,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     version: '1.0.0',
     class: 'visualizer',
     slot: 'strip',
-    streams: [],
+    streams: ['memory.panel.update'],
     actions: ['curation.load'],
     bounds: stageGridBounds(STRIP_RACK_BOUNDS.context_bars.preferred),
     movable: true,
@@ -529,6 +529,8 @@ function snapshotFromState(state: ReturnType<typeof useHarnessStore.getState>): 
   }
 }
 
+let observedCuratorRun: string | null | undefined
+
 function dispatchRackAction<Action extends RackAction>(
   action: Action,
 ): RackActionResult<Action> | Promise<RackActionResult<Action>> {
@@ -655,7 +657,10 @@ function dispatchRackAction<Action extends RackAction>(
               ...(action.amended_body === undefined ? {} : { amended_body: action.amended_body }),
             })),
           },
-        ) as Promise<RackActionResult<Action>>
+        ).then((result) => {
+          harnessClient.refreshMemoryPanelIfIdle()
+          return result as RackActionResult<Action>
+        })
       case 'queue.feedback':
         return fetchJson(`/v1/approval-queue/${encodeURIComponent(action.item_uid)}/feedback`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -669,7 +674,14 @@ function dispatchRackAction<Action extends RackAction>(
         return fetchJson(`/v1/approval-queue${query}`) as Promise<RackActionResult<Action>>
       }
       case 'curation.load':
-        return fetchJson('/v1/curation') as Promise<RackActionResult<Action>>
+        return fetchJson('/v1/curation').then((result) => {
+          const next = (result as { latest_run?: { run_uid: string } | null } | null)?.latest_run?.run_uid ?? null
+          if (observedCuratorRun !== undefined && next !== observedCuratorRun) {
+            harnessClient.refreshMemoryPanelIfIdle()
+          }
+          observedCuratorRun = next
+          return result as RackActionResult<Action>
+        })
       case 'seed.jump-start.load':
         return fetchJson('/v1/seeds/jump-start') as Promise<RackActionResult<Action>>
       case 'seed.upload':

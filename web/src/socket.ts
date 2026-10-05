@@ -405,7 +405,7 @@ export class HarnessSocketClient {
     return envelope.id
   }
 
-  private refreshMemoryPanelIfIdle(): void {
+  refreshMemoryPanelIfIdle(): void {
     const runtime = selectedRuntime(useHarnessStore.getState())
     // WALL Palace writes / C.6: a refresh must not replace a pending decision's response.
     if (

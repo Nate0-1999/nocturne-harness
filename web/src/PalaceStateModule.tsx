@@ -80,6 +80,24 @@ export function PalaceStateModule() {
     return () => globalThis.clearInterval(interval)
   }, [])
 
+  useEffect(() => {
+    let active = true
+    let pending = false
+    const unsubscribe = events.subscribe((event) => {
+      if (event.direction === 'inbound' && event.envelope.type === 'memory.panel.update') {
+        setSequence((value) => value + 1)
+      }
+    })
+    const interval = globalThis.setInterval(() => {
+      if (pending) return
+      pending = true
+      void events.dispatch({ type: 'curation.load' }).then((result) => {
+        if (active) setCuratorActivity(curatorActivityFrom(result))
+      }).catch(() => null).finally(() => { pending = false })
+    }, 5000)
+    return () => { active = false; unsubscribe(); globalThis.clearInterval(interval) }
+  }, [events])
+
   function refresh() {
     setRefreshing(true)
     setSequence((value) => value + 1)
@@ -141,6 +159,13 @@ export function PalaceStateModule() {
               ? `${curatorActivity.admitted_writes} admitted writes · first pass in ${curatorActivity.writes_until_run} writes or ${curatorActivity.pressure_until_run} removals`
               : `Latest ${curatorActivity.latest_run.status} · next pass in ${curatorActivity.writes_until_run} writes or ${curatorActivity.pressure_until_run} removals`}
         </p>
+        {curatorActivity?.latest_run?.review_summary && <p>
+          Model: {String(curatorActivity.latest_run.review_summary.model ?? 'No call recorded')}
+          {' · '}{String(curatorActivity.latest_run.review_summary.reviewed_pairs)} pairs reviewed
+          {' · '}{String(curatorActivity.latest_run.review_summary.skipped_unchanged)} unchanged skipped
+          {' · '}{String(curatorActivity.latest_run.review_summary.skipped_limit)} deferred
+          {' (limit '}{String(curatorActivity.latest_run.review_summary.pair_limit)}{')'}
+        </p>}
       </div>
 
       {telemetry !== null && (

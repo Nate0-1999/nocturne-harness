@@ -4078,3 +4078,11 @@ PRECEDENT: F177, F170, M3W6A (form, image), M3W6B findings 13, 16–18, 22, 60.
   that is only "Checked." is not shown.
 - A sent-back worker runs with its tools off; the oversized-result notice ends "[the rest was
   not delivered for its size]" instead of upstream's "truncated" marker.
+
+## M4CU — Refresh the existing memory surfaces after curation [P1.3, P2.5]
+
+PRECEDENT: PLAN M4CU, ADR-023's event/query surfaces; M3MQ and M3LF.
+Approval and a newly observed curator pass request the existing memory-panel refresh;
+Graph and Palace State subscribe to that authoritative update. A five-second activity
+read notices automatic passes without repeating the full Vitals/scorer reads each time.
+The pass summary shows its recorded model, reviewed pairs and skipped/deferred counts.
