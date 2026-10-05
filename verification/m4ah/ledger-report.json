@@ -2,12 +2,12 @@
   "packet": "M4AH",
   "mode": "builder",
   "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
-  "ledger_sha256": "3d858d14dce31f8beb017f4c256d7c14756632598aefa08540e4986efcf48258",
+  "ledger_sha256": "8dd95b630fceef27b198347a6cada65973dcb97d432450649850be52b9548e88",
   "diffs": [
     {
       "repo": "harness",
-      "base": "589e1eb540284ec5d9235a61f3ee317b0c940e0a",
-      "head": "433b278db1c70bfde65a71ad05c264a6f14897bd"
+      "base": "3394901564af25ba66914a31159670a73735498e",
+      "head": "8a8967c318ace8d41b5858083dfcfd9f0f3186c0"
     }
   ],
   "unmapped": {
@@ -19,11 +19,6 @@
     "harness/tests/test_daemon.py": "every daemon test starts in a scratch home (F170, M3W6B-60); test only.",
     "harness/tests/test_model_policy.py": "a pinned pick keeps its image input; confirmed image input survives an unreachable catalog; test only.",
     "harness/tests/test_pydantic_harness_toolset.py": "the terminal and a background shell inherit NOCTURNE_HOME (F177); test only.",
-    "harness/web/dist/assets/index-DYpA5U50.js": "the committed web bundle rebuilt from the M4AH sources (an old asset removed or its replacement added); built output, no hand edits.",
-    "harness/web/dist/assets/index-KjLPaFlz.js": "the committed web bundle rebuilt from the M4AH sources (an old asset removed or its replacement added); built output, no hand edits.",
-    "harness/web/dist/index.html": "the committed web bundle rebuilt from the M4AH sources (an old asset removed or its replacement added); built output, no hand edits.",
-    "harness/verification/m4ah/ledger-report.json": "M4AH evidence: coverage report, captures and checksums.",
-    "harness/verification/m4ah/SHA256SUMS": "M4AH evidence: coverage report, captures and checksums.",
     "harness/verification/m4ah/FL-009.png": "M4AH evidence: coverage report, captures and checksums.",
     "harness/verification/m4ah/FL-028.png": "M4AH evidence: coverage report, captures and checksums.",
     "harness/verification/m4ah/FL-029.png": "M4AH evidence: coverage report, captures and checksums.",
@@ -70,7 +65,12 @@
     "harness/verification/m4ah/FL-194.png": "M4AH evidence: coverage report, captures and checksums.",
     "harness/verification/m4ah/FL-198.png": "M4AH evidence: coverage report, captures and checksums.",
     "harness/verification/m4ah/FL-199.png": "M4AH evidence: coverage report, captures and checksums.",
-    "harness/verification/m4ah/FL-201.png": "M4AH evidence: coverage report, captures and checksums."
+    "harness/verification/m4ah/FL-201.png": "M4AH evidence: coverage report, captures and checksums.",
+    "harness/verification/m4ah/SHA256SUMS": "M4AH evidence: coverage report, captures and checksums.",
+    "harness/verification/m4ah/ledger-report.json": "M4AH evidence: coverage report, captures and checksums.",
+    "harness/web/dist/assets/index-DYpA5U50.js": "the committed web bundle rebuilt from the M4AH sources (an old asset removed or its replacement added); built output, no hand edits.",
+    "harness/web/dist/assets/index-KjLPaFlz.js": "the committed web bundle rebuilt from the M4AH sources (an old asset removed or its replacement added); built output, no hand edits.",
+    "harness/web/dist/index.html": "the committed web bundle rebuilt from the M4AH sources (an old asset removed or its replacement added); built output, no hand edits."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
