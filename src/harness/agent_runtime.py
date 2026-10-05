@@ -279,12 +279,17 @@ class PydanticAITurnRunner:
                 await emit.text(message)
                 usage = _usage_snapshot(run_usage)
                 await bridge.publish_usage(usage)
+                # M3W6B-13: after a typed /move the agent answered from its earlier folder four
+                # times in four; the move and its result stay in what the model reads next.
                 return TurnOutcome(
                     StopReason("end_turn"),
-                    prior_history,
+                    (
+                        *prior_history,
+                        ModelRequest(parts=[UserPromptPart(prompt)]),
+                        ModelResponse(parts=[TextPart(message)]),
+                    ),
                     usage,
                     assistant_text=message,
-                    model_visible=False,
                 )
             if prompt == "/compact" or prompt.startswith("/compact "):
                 if compaction is None:

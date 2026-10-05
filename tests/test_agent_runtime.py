@@ -2247,7 +2247,9 @@ async def test_tool_cleanup_exception_cannot_mask_cancelled_history_repair() -> 
 @pytest.mark.asyncio
 async def test_a_bare_move_command_moves_or_says_why_without_the_model(tmp_path: Path) -> None:
     """Codex M3W5A-03: two bare /move requests got 'Moved' prose while WHERE stayed put. The
-    command now moves through the tool layer, or says why it cannot; no model request runs. [P3]"""
+    command now moves through the tool layer, or says why it cannot; no model request runs.
+    M3W6B-13: after a typed /move the agent still answered its earlier folder; the move and its
+    result now stay in the history the model reads next. [P3]"""
 
     workspace = tmp_path / "workspace"
     (workspace / "docs").mkdir(parents=True)
@@ -2280,6 +2282,10 @@ async def test_a_bare_move_command_moves_or_says_why_without_the_model(tmp_path:
     assert bare == "Use /move <folder> with a folder inside this thread's workspace."
     assert where == (workspace / "docs").resolve()
     assert all(outcome.usage.requests == 0 for outcome in outcomes)
+    assert [part.content for message in outcomes[0].message_history for part in message.parts] == [
+        "/move docs",
+        moved,
+    ]
 
 
 @pytest.mark.asyncio
