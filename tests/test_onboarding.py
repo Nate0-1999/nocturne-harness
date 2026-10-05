@@ -1278,7 +1278,7 @@ def test_remote_backup_uses_the_verified_owner_cloud_path(
 
 
 def test_start_refuses_read_only_working_folder(tmp_path, monkeypatch) -> None:
-    """FL-166: a writable home does not make a read-only working folder usable."""
+    """P2.4 / FL-166: a writable home does not make a read-only working folder usable."""
     folder = tmp_path / "project"
     folder.mkdir()
     folder.chmod(0o500)

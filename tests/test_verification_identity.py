@@ -163,7 +163,7 @@ def test_nondefault_home_env_keeps_all_daemon_files_out_of_owner_home(tmp_path, 
 
 
 def test_single_key_refuses_unavailable_pins_and_explains_saved_pin_fallback(tmp_path):
-    """M4MS: missing provider access is surfaced before a new conversation runs."""
+    """P4 / M4MS: missing provider access is surfaced before a new conversation runs."""
     policy_file = tmp_path / "model-policies.json"
     saved = {"chat": "pinned:openrouter:vendor/model"}
     policy_file.write_text(json.dumps(saved))

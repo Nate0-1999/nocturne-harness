@@ -728,7 +728,7 @@ async def test_named_resolution_refetches_models_without_benchmark_dependency() 
 
 @pytest.mark.asyncio
 async def test_known_named_model_survives_catalog_outage_without_inventing_unknown_routes() -> None:
-    """M4MS: a failed refresh retains a known exact route and its capability metadata."""
+    """A-021 / M4MS: a failed refresh retains a known exact route and its capabilities."""
     offline = False
 
     def handler(request: httpx.Request) -> httpx.Response:
