@@ -57,10 +57,10 @@ try {
   await vitals.getByRole('rowheader').getByText('Memory curation', { exact: true }).waitFor()
   await vitals.getByText('Owner app', { exact: true }).waitFor()
   const vitalsText = await vitals.locator('body').innerText()
-  for (const forbidden of ['0.084555772000', '11.1111111111111111%', 'Not recorded yet']) {
+  for (const forbidden of ['0.084555772000', '11.1111111111111111%', 'Not recorded yet', 'Awaiting price']) {
     if (vitalsText.includes(forbidden)) throw new Error(`raw Vitals copy leaked: ${forbidden}`)
   }
-  for (const expected of ['1,200.5', '400', '72', '180', '$0.08', '$0.01', 'Awaiting price']) {
+  for (const expected of ['1,200.5', '400', '72', '180', '$0.08', '$0.01', 'Price not reported']) {
     if (!vitalsText.includes(expected)) throw new Error(`human Vitals copy missing: ${expected}`)
   }
   const cellCollisions = await vitals.locator('tr').evaluateAll((rows) => rows.flatMap((row, rowIndex) => {
@@ -72,7 +72,7 @@ try {
     })
   }))
   if (cellCollisions.length !== 0) throw new Error(`spend cell collision: ${cellCollisions.join(', ')}`)
-  const partialPrices = await vitals.getByText('Awaiting price', { exact: true }).count()
+  const partialPrices = await vitals.getByText('Price not reported', { exact: true }).count()
   if (partialPrices !== 2) throw new Error(`partial spend should expose two unpriced windows, got ${partialPrices}`)
   observations.vitals = { cell_collisions: cellCollisions, partial_prices: partialPrices }
   observations.human_number_scan = await assertNoPrecisionLeaks(page, 'work')

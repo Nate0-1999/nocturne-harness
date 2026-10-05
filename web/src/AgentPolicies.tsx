@@ -15,7 +15,8 @@ export function AgentPolicies({ level }: { level?: 'Duet' | 'Symphony' }) {
   useEffect(() => {
     events.dispatch({ type: 'policies.load' }).then((value) => {
       setPolicies((value as { policies: Record<string, string> }).policies)
-      setStatus((value as { curator_error?: string }).curator_error ?? '')
+      const errors = value as { curator_error?: string; policy_errors?: Record<string, string> }
+      setStatus([...Object.values(errors.policy_errors ?? {}), errors.curator_error].filter(Boolean).join(' '))
     }).catch((error: Error) => setStatus(error.message))
   }, [events])
   async function save(role: string) {

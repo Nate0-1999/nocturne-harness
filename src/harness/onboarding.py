@@ -100,6 +100,11 @@ class NocturneConfig:
     local_embedding_model: str = "qwen3-embedding:4b"
     local_model_url: str = "http://127.0.0.1:11434/v1"
     palace_name: str = "main"
+    daemon_port: int = 8765
+
+    @property
+    def local_url(self) -> str:
+        return f"http://127.0.0.1:{self.daemon_port}"
 
     @property
     def path(self) -> Path:
@@ -128,6 +133,7 @@ class NocturneConfig:
                 "SPINE_URL": self.spine_url,
                 "NOCTURNE_PALACE_NAME": self.palace_name,
                 "NOCTURNE_HOME": str(self.home),
+                "NOCTURNE_PORT": str(self.daemon_port),
                 "PRINCIPAL_ID": self.principal_id,
                 "MACHINE_ID": self.machine_id,
                 "AGENT_ID": "nocturne",
@@ -263,7 +269,7 @@ def init_nocturne(
             )
     postgres_port = _parse_port(values.get("NOCTURNE_POSTGRES_PORT", "5432"))
     transcript_backup = not offline and prompt(
-        "Back up conversation transcripts to your cloud Palace? [y/N] "
+        "Back up conversation transcripts to cloud? [y/N] "
     ).strip().lower() in {"y", "yes"}
     from harness.palaces import palace_for_url
 
@@ -276,6 +282,7 @@ def init_nocturne(
         palace_mode=palace_mode,
         spine_url=spine_url,
         postgres_port=postgres_port,
+        daemon_port=_parse_port(values.get("NOCTURNE_PORT", "8765"), "NOCTURNE_PORT"),
         transcript_backup=transcript_backup,
         principal_id=f"nocturne-verification-{uuid.uuid4()}" if verification else "local",
         local_model=local_model if offline else "",
@@ -367,6 +374,7 @@ def load_config(*, home: Path | None = None) -> NocturneConfig:
         palace_mode=palace_mode,
         spine_url=spine_url,
         postgres_port=port,
+        daemon_port=_parse_port(values.get("NOCTURNE_PORT", "8765"), "NOCTURNE_PORT"),
         backup_generations=backup_generations,
         postgres_volume=postgres_volume,
         transcript_backup=transcript_backup,
@@ -396,11 +404,12 @@ def up_nocturne(
 
     config = load_config(home=home)
     _warn_if_low_disk(config.home, stdout=stdout)
+    require_writable_working_folder()
     preflight = _daemon_preflight(config)
     if preflight.existing:
-        print(f"Nocturne is already running at {LOCAL_URL}; using it.", file=stdout)
+        print(f"Nocturne is already running at {config.local_url}; using it.", file=stdout)
         if open_browser:
-            _open_browser(LOCAL_URL, stdout=stdout)
+            _open_browser(config.local_url, stdout=stdout)
         return 0
     if preflight.failures:
         raise OnboardingError(preflight.failures[0])
@@ -447,13 +456,13 @@ def up_nocturne(
         _restore_transcripts_from_palace(config, stdout=stdout)
         harness = _start_service(
             "harness.packaged:create_app",
-            port=8765,
+            port=config.daemon_port,
             environment=environment,
         )
-        _wait_for_url(LOCAL_URL, process=harness, stop_on_refusal=True)
-        print(f"Nocturne is running at {LOCAL_URL}. Press Ctrl-C to stop it.", file=stdout)
+        _wait_for_url(config.local_url, process=harness, stop_on_refusal=True)
+        print(f"Nocturne is running at {config.local_url}. Press Ctrl-C to stop it.", file=stdout)
         if open_browser:
-            _open_browser(LOCAL_URL, stdout=stdout)
+            _open_browser(config.local_url, stdout=stdout)
         _supervise((spine, harness))
         return 0
     finally:
@@ -565,14 +574,14 @@ def _up_remote(
     _restore_transcripts_from_palace(config, stdout=stdout)
     harness = _start_service(
         "harness.packaged:create_app",
-        port=8765,
+        port=config.daemon_port,
         environment=config.process_environment(),
     )
     try:
-        _wait_for_url(LOCAL_URL, process=harness, stop_on_refusal=True)
-        print(f"Nocturne is running at {LOCAL_URL}. Press Ctrl-C to stop it.", file=stdout)
+        _wait_for_url(config.local_url, process=harness, stop_on_refusal=True)
+        print(f"Nocturne is running at {config.local_url}. Press Ctrl-C to stop it.", file=stdout)
         if open_browser:
-            _open_browser(LOCAL_URL, stdout=stdout)
+            _open_browser(config.local_url, stdout=stdout)
         _supervise((harness,))
         return 0
     finally:
@@ -683,12 +692,16 @@ def _app_older_refusal() -> str:
     )
 
 
-def open_nocturne(*, stdout: TextIO = sys.stdout) -> int:
+def open_nocturne(*, home: Path | None = None, stdout: TextIO = sys.stdout) -> int:
     """Open the running local Nocturne UI after a bounded reachability check."""
 
-    if not _existing_nocturne():
+    config = load_config(home=home)
+    preflight = _daemon_preflight(config)
+    if not preflight.existing:
+        if "Another Nocturne identity" in " ".join(preflight.failures):
+            raise OnboardingError(" ".join(preflight.failures))
         raise OnboardingError("Nocturne isn't running — run `nocturne up`.")
-    _open_browser(LOCAL_URL, stdout=stdout)
+    _open_browser(config.local_url, stdout=stdout)
     return 0
 
 
@@ -722,7 +735,7 @@ def restore_nocturne(
     config = load_config(home=home)
     _require_local_palace(config, operation="Restore")
     _require_command("docker")
-    if _service_reachable(LOCAL_URL) or _service_reachable(
+    if _service_reachable(config.local_url) or _service_reachable(
         f"{SPINE_URL}/healthz", token=config.spine_token
     ):
         raise OnboardingError("Stop `nocturne up` before restoring the local Palace.")
@@ -946,6 +959,7 @@ def _write_config(config: NocturneConfig) -> None:
         "SPINE_TOKEN": config.spine_token,
         "NOCTURNE_DB_PASSWORD": config.database_password,
         "NOCTURNE_POSTGRES_PORT": str(config.postgres_port),
+        "NOCTURNE_PORT": str(config.daemon_port),
         "NOCTURNE_BACKUP_GENERATIONS": str(config.backup_generations),
         "NOCTURNE_POSTGRES_VOLUME": config.active_postgres_volume,
         "NOCTURNE_TRANSCRIPT_BACKUP": "true" if config.transcript_backup else "false",
@@ -1329,9 +1343,9 @@ def _require_command(command: str) -> None:
 def _daemon_preflight(config: NocturneConfig) -> DaemonPreflight:
     """Inspect every local daemon startup dependency without mutating it."""
 
-    if _existing_nocturne():
+    if _existing_nocturne(config.local_url):
         try:
-            with urllib.request.urlopen(f"{LOCAL_URL}/v1/identity", timeout=0.5) as response:
+            with urllib.request.urlopen(f"{config.local_url}/v1/identity", timeout=0.5) as response:
                 identity = json.loads(response.read())
             matches = identity.get("principal_id") == config.principal_id and identity.get(
                 "home"
@@ -1342,10 +1356,10 @@ def _daemon_preflight(config: NocturneConfig) -> DaemonPreflight:
             return DaemonPreflight(
                 existing=False,
                 web_assets="served by another Nocturne daemon",
-                port="8765 belongs to a different or unidentified home",
+                port=f"{config.daemon_port} belongs to a different or unidentified home",
                 toolchain="already running",
                 failures=(
-                    "Another Nocturne identity is running on port 8765. "
+                    f"Another Nocturne identity is running on port {config.daemon_port}. "
                     "Use that daemon's home or a separate port for verification.",
                 ),
             )
@@ -1353,7 +1367,7 @@ def _daemon_preflight(config: NocturneConfig) -> DaemonPreflight:
         return DaemonPreflight(
             existing=True,
             web_assets=f"served by {config.principal_id} at {config.home}",
-            port="8765 is owned by the running Nocturne daemon",
+            port=f"{config.daemon_port} is owned by the running Nocturne daemon",
             toolchain="already running",
             failures=(),
             memory_bytes=current_rss_bytes(pid) if isinstance(pid, int) else None,
@@ -1374,13 +1388,13 @@ def _daemon_preflight(config: NocturneConfig) -> DaemonPreflight:
             or "Nocturne's web app is unavailable; reinstall Nocturne, then run `nocturne up`."
         )
 
-    if _port_available(8765):
-        port = "8765 is available"
+    if _port_available(config.daemon_port):
+        port = f"{config.daemon_port} is available"
     else:
-        port = "8765 is occupied by another process"
+        port = f"{config.daemon_port} is occupied by another process"
         failures.append(
-            "Port 8765 is occupied by another process; stop that process, then run "
-            "`nocturne up` again."
+            f"Port {config.daemon_port} is occupied by another process; "
+            "stop that process, then run `nocturne up` again."
         )
 
     if config.palace_mode == "local":
@@ -1402,6 +1416,17 @@ def _daemon_preflight(config: NocturneConfig) -> DaemonPreflight:
         toolchain=toolchain,
         failures=tuple(failures),
     )
+
+
+def require_writable_working_folder() -> None:
+    folder = Path.cwd()
+    try:
+        with tempfile.TemporaryFile(dir=folder):
+            pass
+    except OSError as exc:
+        raise OnboardingError(
+            f"Working folder is not writable: {folder}. Start Nocturne in a writable folder."
+        ) from exc
 
 
 def _require_writable_journal(home: Path) -> None:
@@ -1448,8 +1473,8 @@ def _port_available(port: int) -> bool:
     return True
 
 
-def _existing_nocturne() -> bool:
-    request = urllib.request.Request(f"{LOCAL_URL}/openapi.json")
+def _existing_nocturne(url: str = LOCAL_URL) -> bool:
+    request = urllib.request.Request(f"{url}/openapi.json")
     try:
         with urllib.request.urlopen(request, timeout=0.5) as response:
             payload = json.loads(response.read())
@@ -1459,13 +1484,13 @@ def _existing_nocturne() -> bool:
     return isinstance(info, Mapping) and info.get("title") == "NOCTURNE"
 
 
-def _parse_port(value: str) -> int:
+def _parse_port(value: str, name: str = "NOCTURNE_POSTGRES_PORT") -> int:
     try:
         port = int(value)
     except ValueError as exc:
-        raise OnboardingError("NOCTURNE_POSTGRES_PORT must be an integer.") from exc
+        raise OnboardingError(f"{name} must be an integer.") from exc
     if not 1 <= port <= 65535:
-        raise OnboardingError("NOCTURNE_POSTGRES_PORT must be between 1 and 65535.")
+        raise OnboardingError(f"{name} must be between 1 and 65535.")
     return port
 
 
