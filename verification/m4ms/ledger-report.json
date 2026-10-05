@@ -88,7 +88,18 @@
     "harness/verification/m4ms/public-after-walk.json": "Public release or cleanup verification evidence only; no product behavior.",
     "harness/verification/m4ms/public-code-removal.json": "Public release or cleanup verification evidence only; no product behavior.",
     "harness/verification/m4ms/final-palace-drop.log": "Public release or cleanup verification evidence only; no product behavior.",
-    "harness/verification/m4ms/image-cleanup-retention.json": "Public release or cleanup verification evidence only; no product behavior."
+    "harness/verification/m4ms/image-cleanup-retention.json": "Public release or cleanup verification evidence only; no product behavior.",
+    "harness/tests/test_daemon.py": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-B5b7xD3-.css": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-BIOHfMTI.js": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-BTL3Atzv.js": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-Bn4u-HBu.js": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-C1LbeBdf.css": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-CqCrdfCx.js": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-DU7uYJeK.js": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-DdQXF54n.js": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-Duhc2231.css": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows.",
+    "harness/web/dist/assets/index-DyCWPAB_.js": "Historical M4MS regression expectation or generated web/evidence artifact; runtime behavior is covered by the mapped source rows."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
