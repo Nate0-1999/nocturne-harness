@@ -4120,7 +4120,7 @@ miss was the scaled Stage moving the pointer off the button, so nothing changed 
 
 PRECEDENT: F178, F153, M3P1/F165, A-033, SPEC C.4, PLAN M4MW.
 An invalid structured output, length or source-coverage draft may use the remaining request in the existing
-two-request budget for repair; the default deadline is 60 seconds. Refusal explains that the
+two-request budget for repair; the default deadline is 180 seconds. Refusal explains that the
 draft could not be verified, without claiming a single fact contains several. Similarity refusals show the score
 and an explicit `/remember --save-anyway` command; only that command sends force. A generated
 label collision retries with the fact's first 64 characters so content dedup can decide.
@@ -4137,8 +4137,9 @@ to document ingestion. No additional extraction-verdict prompt change was needed
 Two-fact replays also copied the JSON Schema's `properties` wrapper around valid values;
 the splitter now asks for the result fields at the root, not a schema, without another request.
 Repeated live first-request stalls consumed the whole deadline without a response. When both
-requests remain, the first gets half the same 60-second deadline; cancellation counts as an
-attempt, leaving one retry without increasing the request or time budget.
+requests remain, the first gets half the configured deadline; cancellation counts as an
+attempt, leaving one retry without increasing the request budget. The integrated audit
+then saw both 30-second attempts stall on the exact 300-token fact (current-064-2);
+the default deadline is now 180 seconds, giving each attempt 90 seconds.
 An upload later split the old and new fees apart and lost the replacement from review;
 document splitting now keeps a correction's old-to-new relationship in one candidate.
-
