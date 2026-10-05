@@ -10,7 +10,7 @@ from contextlib import suppress
 from dataclasses import asdict
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 import uvicorn
@@ -1569,6 +1569,11 @@ def create_dev_app(
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                     detail=f"Thread extraction failed: {exc}",
                 ) from exc
+
+        @app.get("/v1/threads/{thread_id}/compactions")
+        async def thread_compactions(thread_id: UUID) -> dict[str, list[dict[str, Any]]]:
+            # v2.133: the owner's check on extraction quality — the span beside its facts.
+            return {"compactions": journal.compaction_records(str(thread_id))}
 
         @app.get("/v1/threads/{thread_id}/thread-end")
         async def thread_end(thread_id: UUID) -> ThreadEndResult:

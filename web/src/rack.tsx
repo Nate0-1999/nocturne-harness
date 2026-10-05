@@ -124,6 +124,7 @@ export type RackAction =
   | { type: 'run.cancel'; run_id?: Ulid }
   | { type: 'thread.archive'; thread_id?: string }
   | { type: 'thread.rewind'; thread_id: string; prompt_id: string; scope: 'conversation' | 'files' | 'both' }
+  | { type: 'thread.compactions'; thread_id: string }
   | { type: 'queue.load'; thread_id?: string; birthplace?: 'thread' | 'seed' | 'symphony' | 'curator' }
   | { type: 'curation.load' }
   | { type: 'seed.jump-start.load' }
@@ -244,7 +245,7 @@ export type RackActionResult<Action extends RackAction> =
       ? number
     : Action['type'] extends 'thread.select' | 'thread.rename_project' | 'thread.bind_workspace' | 'draft.update'
       ? void
-      : Action['type'] extends 'policies.load' | 'policies.save' | 'models.load' | 'models.pin' | 'prompt.interject' | 'symphony.context' | 'symphony.memory' | 'spend.invoice' | 'thread.archive' | 'thread.rewind' | 'queue.load' | 'curation.load' | 'queue.decide' | 'queue.feedback' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
+      : Action['type'] extends 'policies.load' | 'policies.save' | 'models.load' | 'models.pin' | 'prompt.interject' | 'symphony.context' | 'symphony.memory' | 'spend.invoice' | 'thread.archive' | 'thread.rewind' | 'thread.compactions' | 'queue.load' | 'curation.load' | 'queue.decide' | 'queue.feedback' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
         ? JsonValue
         : Action['type'] extends 'rack.scope.get' | 'rack.scope.set'
           ? RackScope
@@ -304,7 +305,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     actions: [
       'project.select', 'prompt.submit', 'prompt.interject', 'draft.update', 'run.cancel', 'thread.archive',
       'queue.load', 'queue.decide', 'thread.select', 'symphony.intervene', 'thread.rename_project',
-      'thread.rewind',
+      'thread.rewind', 'thread.compactions',
       'symphony.context', 'symphony.memory',
       'policies.load', 'policies.save', 'models.load',
     ],
@@ -733,6 +734,10 @@ function dispatchRackAction<Action extends RackAction>(
             value: action.value,
           }),
         }) as Promise<RackActionResult<Action>>
+      case 'thread.compactions':
+        return fetchJson(
+          `/v1/threads/${encodeURIComponent(action.thread_id)}/compactions`,
+        ) as Promise<RackActionResult<Action>>
       case 'thread.rewind':
         return fetchJson(`/v1/threads/${encodeURIComponent(action.thread_id)}/rewind`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },

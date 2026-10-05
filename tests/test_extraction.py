@@ -218,8 +218,9 @@ async def test_archive_exposes_only_compact_image_metadata_to_extraction(tmp_pat
 
 
 @pytest.mark.asyncio
-async def test_extraction_skips_assistant_answers_and_already_known_facts(tmp_path: Path) -> None:
-    """ADR-022 / M3MQ: an answer is not evidence; a rephrase needs no new approval card."""
+async def test_extraction_checks_agent_found_facts_and_skips_already_known(tmp_path: Path) -> None:
+    """SPEC C.6 / v2.133 (amends M3MQ): a fact the agent found is kept for a continuing agent,
+    the prompt marks it unverified; ADR-022: a rephrase of a known fact needs no new card."""
     thread_id = uuid4()
     journal = _journal(tmp_path / "transcripts", str(thread_id), datetime.now(UTC))
     user_id, assistant_id = [m["message_id"] for m in journal.read_messages(str(thread_id))]
@@ -255,8 +256,9 @@ async def test_extraction_skips_assistant_answers_and_already_known_facts(tmp_pa
 
     result = await service.archive(thread_id)
 
-    assert len(checked) == 1 and checked[0].source_message_ids == [user_id]
-    assert result.cards == [] and result.duplicate_count == 1
+    assert [item.source_message_ids for item in checked] == [[assistant_id], [user_id]]
+    assert result.cards == [] and result.duplicate_count == 2
+    assert [fact["verdict"] for fact in result.facts] == ["already_known", "already_known"]
     assert spine.requests[0].candidates == []
 
 
@@ -434,13 +436,14 @@ async def test_archive_gives_each_memory_the_folder_its_facts_came_from(tmp_path
     assert [
         (request.origin_location, [candidate.label for candidate in request.candidates])
         for request in spine.requests
-    ] == [(str(web), ["Web"]), (str(docs), ["Docs"]), (str(root), ["Both"])]
+    ] == [(str(web), ["Web"]), (str(docs), ["Docs", "None"]), (str(root), ["Both"])]
     candidates = [candidate for request in spine.requests for candidate in request.candidates]
     assert {candidate.project_key for candidate in candidates} == {str(root)}
     assert {c.label: c.origin_locations for c in candidates} == {
         "Web": [],
         "Docs": [],
         "Both": [str(docs), str(web)],
+        "None": [],
     }
 
 

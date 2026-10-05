@@ -4163,3 +4163,28 @@ deadline, and the expanded walk took 154 seconds; the retrain call permits 360 s
 The console shows both held-out error and token totals, explains retained values,
 and exposes chronological feedback history. Its cadence copy names main-conversation
 compaction (D.2 144), replacing the obsolete signal-count promise.
+
+## M4IN — Compaction the way an agent would do it [P1.5]
+
+PRECEDENT: v2.133 / SD-083, SPEC C.6, v2.118a, A-049/A-050, M3EX-22, M3MQ, PLAN M4IN.
+The extraction prompt is the owner's shape: what a continuing agent would want, as
+self-contained fact sentences carrying the problem and its solution, broken at the cleanest
+place, user statements kept, secrets/progress/common knowledge left out, unverified claims
+marked. No count cap in the prompt or schema. One code check runs before the Palace for
+compaction, /remember and seed ingest: fits the cap, does not open on a bare pronoun (the
+code's reading of "names its own subject"), is not a list of claims. A failure goes back
+through the same agent with the rule it broke ("this memory is too long, break it down into
+finer pieces"), up to three rounds; a piece still over the cap after that is saved as its
+longest whole-word opening that fits (whole sentences where one closes past halfway), so
+nothing is dropped and the journal keeps the original. This replaces three refusals: the
+archive's "not proposed, over the cap", compaction's "history kept" failure, and the
+seed splitter's over-cap error. /remember's A-050 coverage witness leaves the prompt: the
+Palace already stores the exact source beside a split family, so code needs only to
+dedupe repeats and repair labels/keywords. M3MQ's rule that a fact must cite a user message
+is removed: a fact the agent found is what a continuing agent wants, and the prompt marks it
+unverified instead. memories-then-drop now keeps the last `keep` share of the conversation
+word for word (default 20%, `/compact keep <percent>`) and replaces the rest with the
+triage summary — the same engine as summarize, which now differs only in name. Each
+compaction journals a record (the span with its mN ids, which messages were kept, every fact
+with its source ids and verdict), served at GET /v1/threads/{id}/compactions and opened from
+the "Conversation compacted" line.

@@ -41,6 +41,7 @@ import { VitalsModule } from './VitalsModule'
 import { PalaceStateModule } from './PalaceStateModule'
 import { CuratorProposal } from './CuratorProposal'
 import { ContextBars } from './ContextBars'
+import { CompactionRecord } from './CompactionRecord'
 import {
   IMAGE_ACCEPT,
   ImageInputError,
@@ -3731,9 +3732,7 @@ function MessageRow({
         <p key={`steering-${index}`}><strong>You interjected:</strong> {String(event.instruction)}</p>
       ))}
       {message.events.some((event) => event.event_kind === 'compaction_completed') && (
-        <p className="message__content message__content--quiet" data-testid="compaction-completed">
-          Conversation compacted · full history kept in the journal
-        </p>
+        <CompactionRecord threadId={threadId} runId={message.run_id} />
       )}
       {message.events.filter((event) => event.event_kind === 'worker_return').map((event, index) => (
         <p key={`worker-return-${index}`} className="message__content message__content--quiet" data-testid="worker-return">
