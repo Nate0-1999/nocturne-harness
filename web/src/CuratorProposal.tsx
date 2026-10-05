@@ -63,7 +63,7 @@ export function CuratorProposal({ card, onChanged }: {
     <label>Feedback for the curator
       <TextArea value={feedback} onChange={(event) => setFeedback(event.target.value)} disabled={busy} />
     </label>
-    <Button type="button" disabled={busy || !feedback.trim()} onClick={() => void sendFeedback()}>Send feedback</Button>
+    <Button action="send" type="button" disabled={busy || !feedback.trim()} onClick={() => void sendFeedback()}>Send feedback</Button>
     {status && <p role="status">{status}</p>}
   </article>
 }

@@ -83,8 +83,11 @@ export function MemoryGraph() {
     }
     refresh()
     const timer = globalThis.setInterval(refresh, 5000)
-    return () => { active = false; globalThis.clearInterval(timer) }
-  }, [query, requestIsQueryable, requestKey, threadId])
+    const unsubscribe = events.subscribe((event) => {
+      if (event.direction === 'inbound' && event.envelope.type === 'memory.panel.update') refresh()
+    })
+    return () => { active = false; globalThis.clearInterval(timer); unsubscribe() }
+  }, [events, query, requestIsQueryable, requestKey, threadId])
 
   function inspectNode(node: Node) {
     setSelected(node)
