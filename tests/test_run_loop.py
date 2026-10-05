@@ -2667,6 +2667,75 @@ async def test_rewind_restores_files_and_chat_retaining_branches_and_real_git(
 
 
 @pytest.mark.asyncio
+async def test_rewind_names_commits_made_since_its_turn(tmp_path: Path) -> None:
+    """M3W6B-49 / ADR-016: real Git history stays, so a rewind names the commits it leaves."""
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "note.txt").write_text("original")
+
+    def git(*args: str) -> str:
+        return subprocess.check_output(
+            [
+                "git",
+                "-C",
+                str(workspace),
+                "-c",
+                "user.name=Test",
+                "-c",
+                "user.email=t@localhost",
+                "-c",
+                "commit.gpgsign=false",
+                *args,
+            ],
+            text=True,
+        ).strip()
+
+    git("init", "--quiet")
+    git("add", ".")
+    git("commit", "--quiet", "-m", "Original")
+    sink = Sink()
+    loop = RunLoop(
+        ImmediateHistoryRunner(),
+        factory(Ids()),
+        transcript_journal=TranscriptJournal(tmp_path / "journal"),
+        checkpoints=WorkspaceCheckpoints(tmp_path / "checkpoints"),
+    )
+    await loop.request_snapshot("thread-1", sink, workspace_root=str(workspace))
+    await loop.submit(thread_id="thread-1", prompt_id=ulid(1), prompt="first", sink=sink)
+    await _wait_for_done_count(sink, 1)
+    (workspace / "note.txt").write_text("agent change")
+    git("commit", "--quiet", "-am", "Agent change")
+    result = await loop.rewind("thread-1", ulid(1), "both")
+    assert result["commits_kept"] == [f"{git('rev-parse', '--short', 'HEAD')} Agent change"]
+    assert (workspace / "note.txt").read_text() == "original"
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_running_thread_ids_lists_a_thread_only_while_it_runs(tmp_path: Path) -> None:
+    """F179: the catalog tells a page which threads it cannot hear are still running."""
+    control = TurnControl()
+    sink = Sink()
+    loop = RunLoop(
+        ControlledRunner({"working": control}),
+        factory(Ids()),
+        transcript_journal=TranscriptJournal(tmp_path / "journal"),
+    )
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    await loop.request_snapshot("thread-1", sink, workspace_root=str(workspace))
+    assert loop.running_thread_ids() == []
+    await loop.submit(thread_id="thread-1", prompt_id=ulid(1), prompt="working", sink=sink)
+    await control.entered.wait()
+    assert loop.running_thread_ids() == ["thread-1"]
+    control.release.set()
+    control.cleanup_release.set()
+    await _wait_for_done_count(sink, 1)
+    assert loop.running_thread_ids() == []
+    await loop.close()
+
+
+@pytest.mark.asyncio
 async def test_rewind_refuses_to_restore_under_live_writers(tmp_path: Path) -> None:
     """ADR-016 preserves the live continuation when another turn still writes the workspace."""
     control = TurnControl()

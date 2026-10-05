@@ -26,7 +26,7 @@
 .tool-inventory__panel ul { list-style: none; padding: 0; margin: 0; }
 .tool-inventory__panel li { padding: .75rem 0; border-bottom: 1px solid var(--line-strong); }
 .tool-inventory__panel p { margin: .4rem 0; }
-.rewind-control { display: inline-flex; flex-wrap: wrap; gap: .3rem; align-items: center; }
+.rewind-control { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: .3rem; align-items: center; }
 .topbar {
   position: relative;
   z-index: 30;
@@ -417,11 +417,20 @@
 }
 
 .thread-workspace__location {
+  display: flex;
+  gap: 0.3em;
   max-width: min(28rem, 72vw);
   overflow: hidden;
   color: var(--accent);
-  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* M3W6B-14: clipped from the start, so the end of the path stays in view. */
+.thread-workspace__path {
+  min-width: 0;
+  overflow: hidden;
+  direction: rtl;
+  text-overflow: ellipsis;
 }
 
 .chat-header__model {
@@ -812,7 +821,8 @@
   background: var(--surface-raised);
   color: var(--accent);
   font-family: var(--data-font);
-  font-size: 0.86em;
+  /* M3W6A FL-201: inline code is the size of the message's code blocks, on the one scale. */
+  font-size: var(--text-base);
   overflow-wrap: normal;
   word-break: normal;
 }
@@ -864,6 +874,25 @@
   background: var(--surface);
   line-height: 1.55;
   white-space: pre-wrap;
+}
+
+/* M3W6B-19: one plain line per tool call; the raw events are the nested disclosure. */
+.tool-calls {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0.7rem 0 0;
+  padding: 0 0 0 1.4rem;
+  overflow-wrap: anywhere;
+}
+
+.tool-calls strong {
+  color: var(--ink);
+  font-family: var(--data-font);
+  font-weight: 400;
+}
+
+.run-detail .run-detail {
+  margin-top: 0.5rem;
 }
 
 .browser-screenshot {
@@ -2322,9 +2351,9 @@
     display: none;
   }
 
+  /* M3W6B TASTE-3: the conversation title keeps the module title's size in a narrow frame. */
   .chat-header h1 {
     max-width: 48vw;
-    font-size: var(--text-base);
   }
 
   .chat-header__model {

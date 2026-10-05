@@ -17,7 +17,7 @@ import {
 
 import { AssistantMarkdown } from './AssistantMarkdown'
 import { OutLoud } from './OutLoud'
-import { browserScreenshotDataUrl, elideBinaryPayload } from './runEventDisplay'
+import { browserScreenshotDataUrl, elideBinaryPayload, toolCallLines } from './runEventDisplay'
 import { SymphonyDeliberationCard, SymphonyResultCard, SymphonyStatusCard } from './SymphonyCards'
 import { MemoryGate } from './MemoryGate'
 import { MemoryPanel } from './MemoryPanel'
@@ -124,7 +124,7 @@ import {
   rackResizeDirections,
   type RackResizeDirection,
 } from './rackModuleTemplate'
-import { isLegacyFixtureTitle, visibleThreadTitle } from './threadTitles'
+import { distinctThreadTitles, isLegacyFixtureTitle, visibleThreadTitle } from './threadTitles'
 import { ProjectSelector } from './ProjectSelector'
 import {
   THEMES,
@@ -2038,6 +2038,7 @@ function ThreadsModule() {
       .sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
     [snapshot.catalog, jobThreadIds],
   )
+  const titles = useMemo(() => distinctThreadTitles(sortedCatalog), [sortedCatalog])
   const fixtureThreadCount = snapshot.catalog.filter((entry) => isLegacyFixtureTitle(entry.title)).length
   const createThreadAtDraft = () => {
     const workspaceRoot = workspaceDraft.trim()
@@ -2208,6 +2209,7 @@ function ThreadsModule() {
         {sortedCatalog.map((entry) => {
           const runtime = snapshot.threads[entry.thread_id]
           const isSelected = entry.thread_id === snapshot.selectedThreadId
+          const title = titles.get(entry.thread_id) ?? visibleThreadTitle(entry.title)
           const liveState = runtime?.activeRun?.state
           const queueCount = runtime?.queuedPrompts.length ?? 0
           const outboundCount = runtime?.outboundPrompts.length ?? 0
@@ -2236,7 +2238,7 @@ function ThreadsModule() {
               <Button variant="bare"
                 className="thread-item__select"
                 type="button"
-                data-tooltip={visibleThreadTitle(entry.title)}
+                data-tooltip={title}
                 data-tooltip-detail="Open this thread."
                 aria-current={isSelected ? 'page' : undefined}
                 onClick={() => {
@@ -2246,7 +2248,7 @@ function ThreadsModule() {
                     .catch(() => undefined)
                 }}
               >
-                <span className="thread-item__title">{visibleThreadTitle(entry.title)}</span>
+                <span className="thread-item__title">{title}</span>
                 <span className="thread-item__meta">
                   <span>{detail}</span>
                   <span>{shortId(entry.thread_id)}</span>
@@ -2260,8 +2262,8 @@ function ThreadsModule() {
               <Button action="archive" iconOnly
                 className="thread-item__archive"
                 type="button"
-                aria-label={`Archive ${visibleThreadTitle(entry.title)}`}
-                data-tooltip={`Archive ${visibleThreadTitle(entry.title)}`}
+                aria-label={`Archive ${title}`}
+                data-tooltip={`Archive ${title}`}
                 data-tooltip-detail="Extract its memories for review, then close the thread."
                 disabled={archiveDisabled}
                 onClick={() => {
@@ -2335,7 +2337,8 @@ function ThreadWorkspaceContext({
         data-testid="thread-location"
         title={entry.current_location ?? undefined}
       >
-        WHERE · {entry.current_location ?? 'Location unavailable'}
+        WHERE · {/* M3W6B-14: a long path keeps its end, the folder the agent stands in. */}
+        <span className="thread-workspace__path"><bdi dir="ltr">{entry.current_location ?? 'Location unavailable'}</bdi></span>
       </span>
       <span className="project-selector__status" aria-live="polite">{status}</span>
     </form>
@@ -2353,6 +2356,7 @@ function ChatModule() {
     selectedThreadId === null ? '' : snapshot.drafts[selectedThreadId] ?? '')
   const [pendingImage, setPendingImage] = useState<PendingImage | null>(null)
   const [imageStatus, setImageStatus] = useState('')
+  const [steeredRunId, setSteeredRunId] = useState<string | null>(null)
   const [imageBusy, setImageBusy] = useState(false)
   const [promptBusy, setPromptBusy] = useState(false)
   const [hasUnread, setHasUnread] = useState(false)
@@ -2384,7 +2388,7 @@ function ChatModule() {
       : [...selectedThread.messages, ...optimistic]
   }, [selectedThread])
   const activeRun = selectedThread?.activeRun ?? null
-  const lastAnswer = messages.filter((message) => message.role === 'assistant').at(-1)
+  const lastAnswer =messages.filter((message) => message.role === 'assistant').at(-1)
   const requestLimit = lastAnswer?.role === 'assistant'
     ? lastAnswer.events.filter((event) => event.event_kind === 'turn_limit').map((event) => event.request_limit).find((value) => typeof value === 'number') ?? null
     : null
@@ -2406,6 +2410,9 @@ function ChatModule() {
     !imageBusy &&
     !promptBusy &&
     draft.trim().length > 0
+  // F162: only the opening snapshot stands between this draft and a send.
+  const opening = awaitingSnapshot && snapshot.connection === 'connected' && openGate === null &&
+    selectedThread?.workspaceMissing !== true && !imageBusy && !promptBusy && draft.trim().length > 0
   const runStates = useMemo(() => {
     const states = new Map<string, UserMessageState>()
     for (const message of messages) {
@@ -2484,8 +2491,38 @@ function ChatModule() {
 
   function transmitPrompt() {
     if (!canSend) {
+      if (opening) void transmitOnceOpen()
       return
     }
+    submitDraft()
+  }
+
+  // F162: Enter in a thread that is still opening is held, said so, and sent once it opens.
+  async function transmitOnceOpen() {
+    const threadId = selectedThreadId
+    setPromptBusy(true)
+    setImageStatus('Sends as soon as this thread finishes opening.')
+    let why = 'the thread did not finish opening'
+    for (let waited = 0; waited < 120_000; waited += 250) {
+      const current = events.getSnapshot()
+      const thread = threadId === null ? undefined : current.threads[threadId]
+      if (current.selectedThreadId !== threadId) { why = 'another thread was opened'; break }
+      if (current.connection !== 'connected') { why = 'Nocturne is not connected'; break }
+      if (thread?.awaitingSnapshot === false) {
+        why = thread.workspaceMissing ? "this thread's folder moved" : thread.openGate !== null ? 'a memory review is open' : ''
+        break
+      }
+      await new Promise((resolve) => globalThis.setTimeout(resolve, 250))
+    }
+    setPromptBusy(false)
+    if (why !== '') {
+      setImageStatus(`Not sent: ${why}. Your prompt is still here.`)
+      return
+    }
+    submitDraft()
+  }
+
+  function submitDraft() {
     const prompt = draft.trim()
     const image = pendingImage
     sentRememberRef.current = /^\/remember(?:\s|$)/u.test(prompt) ? prompt : null
@@ -2517,6 +2554,15 @@ function ChatModule() {
     setHasUnread(false)
   }
 
+  // M3W6B-21: the rewound turn's control leaves with it, so the conversation says what happened
+  // and hands the removed prompt back to the message box.
+  function onRewound(notice: string, returnedPrompt: string | null) {
+    setImageStatus(notice)
+    if (returnedPrompt === null || selectedThreadId === null) return
+    setDraft(returnedPrompt)
+    void events.dispatch({ type: 'draft.update', thread_id: selectedThreadId, draft: returnedPrompt })
+  }
+
   async function interjectPrompt() {
     if (!canSend || activeRun === null || pendingImage !== null) return
     setPromptBusy(true)
@@ -2526,7 +2572,8 @@ function ChatModule() {
       if (selectedThreadId !== null) {
         await events.dispatch({ type: 'draft.update', thread_id: selectedThreadId, draft: '' })
       }
-      setImageStatus('Steering accepted for the next model request in this run.')
+      setImageStatus('')
+      setSteeredRunId(activeRun.run_id)
     } catch (error) {
       setImageStatus(error instanceof Error ? error.message : 'Steering was not sent.')
     } finally { setPromptBusy(false) }
@@ -2636,7 +2683,7 @@ function ChatModule() {
           <AgentPolicies level={orchestration} />
         </details>
         <h1 id="thread-title">
-          {selectedMeta === undefined ? 'Opening thread' : visibleThreadTitle(selectedMeta.title)}
+          {selectedMeta === undefined ? 'Opening thread' : distinctThreadTitles(snapshot.catalog.filter((entry) => !entry.archived)).get(selectedMeta.thread_id) ?? visibleThreadTitle(selectedMeta.title)}
         </h1>
         <div className="run-metrics" aria-label="Run status">
           {activeRun !== null && (
@@ -2749,6 +2796,7 @@ function ChatModule() {
                     activeState={activeRun?.state}
                     symphonyLaunches={symphonyLaunches}
                     rewindDisabled={activeRun !== null || queuedPrompts.length > 0}
+                    onRewound={onRewound}
                   />
                   {message.message_id === compactionPostId && <ThreadEndModule inline />}
                 </Fragment>
@@ -2862,7 +2910,10 @@ function ChatModule() {
               aria-live="polite"
               aria-atomic="true"
             >
-              {imageStatus}
+              {/* M3W6B-23: the steering note belongs to its run and leaves when that run ends. */}
+              {steeredRunId !== null && steeredRunId === activeRun?.run_id
+                ? 'Steering accepted for the next model request in this run.'
+                : imageStatus}
             </p>
           </div>
           <p className="composer__hint">
@@ -3596,6 +3647,7 @@ interface MessageRowProps {
   activeState: string | undefined
   symphonyLaunches: ReadonlyMap<string, DeckStack>
   rewindDisabled: boolean
+  onRewound: (notice: string, returnedPrompt: string | null) => void
 }
 
 function MessageRow({
@@ -3607,6 +3659,7 @@ function MessageRow({
   activeState,
   symphonyLaunches,
   rewindDisabled,
+  onRewound,
 }: MessageRowProps) {
   if (message.role === 'user') {
     const status = message.state === 'submitting'
@@ -3620,7 +3673,8 @@ function MessageRow({
           <span>You</span>
           {status !== null && <span>{status}</span>}
           {'checkpoint' in message && message.checkpoint !== undefined && <RewindControl
-            threadId={threadId} promptId={message.message_id} disabled={rewindDisabled}
+            threadId={threadId} promptId={message.message_id} prompt={message.content} disabled={rewindDisabled}
+            onRewound={onRewound}
           />}
         </header>
         <div className="message__user-body">
@@ -3665,6 +3719,7 @@ function MessageRow({
   const diagnosticEvents = message.events.filter((event) =>
     typeof event.event_kind !== 'string' || !event.event_kind.startsWith('symphony_')
   )
+  const toolCalls = toolCallLines(diagnosticEvents)
   const latestBrowserScreenshot = diagnosticEvents
     .map(browserScreenshotDataUrl)
     .filter((value): value is string => value !== null)
@@ -3732,8 +3787,18 @@ function MessageRow({
       )}
       {diagnosticEvents.length > 0 && (
         <details className="run-detail">
-          <summary>Tools · {diagnosticEvents.length} run event{diagnosticEvents.length === 1 ? '' : 's'}</summary>
-          <pre>{JSON.stringify(diagnosticEvents, elideBinaryPayload, 2)}</pre>
+          <summary>Tools · {toolCalls.length} call{toolCalls.length === 1 ? '' : 's'}</summary>
+          {toolCalls.length === 0 ? <p className="tool-calls__none">No tool calls in this answer.</p> : (
+            <ol className="tool-calls">
+              {toolCalls.map((call) => (
+                <li key={call.id}><strong>{call.tool}</strong> <span>{call.detail}</span> <small>{call.outcome}</small></li>
+              ))}
+            </ol>
+          )}
+          <details className="run-detail">
+            <summary>Raw events · {diagnosticEvents.length}</summary>
+            <pre>{JSON.stringify(diagnosticEvents, elideBinaryPayload, 2)}</pre>
+          </details>
         </details>
       )}
     </article>

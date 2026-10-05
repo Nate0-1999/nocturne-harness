@@ -47,3 +47,23 @@ class WorkspaceCheckpoints:
         abandoned = self.capture(workspace, "Before rewind")
         self._git(workspace, "read-tree", "--reset", "-u", checkpoint)
         return abandoned
+
+    @staticmethod
+    def repository_head(workspace: str) -> str | None:
+        """M3W6B-49: the real repository's HEAD, so a rewind can name commits it leaves in place."""
+        result = subprocess.run(
+            ["git", "-C", workspace, "rev-parse", "--verify", "--quiet", "HEAD"],
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout.strip() or None if result.returncode == 0 else None
+
+    @staticmethod
+    def commits_since(workspace: str, head: str) -> list[str]:
+        """The real repository's commits after `head`, newest first, as `<short sha> <subject>`."""
+        result = subprocess.run(
+            ["git", "-C", workspace, "log", "--format=%h %s", f"{head}..HEAD"],
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout.splitlines() if result.returncode == 0 else []

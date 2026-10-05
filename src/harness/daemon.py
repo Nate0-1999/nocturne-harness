@@ -1512,6 +1512,8 @@ def create_dev_app(
             root = discovery_root if discovery_root.is_dir() else None
             return {
                 "threads": journal.catalog(),
+                # F179: a page hears only its selected thread (H7); this names the others running.
+                "running": loop.running_thread_ids(),
                 "identity": {"principal_id": principal_id, "home": str(home)},
                 "default_workspace": None
                 if root is None

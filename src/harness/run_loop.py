@@ -492,6 +492,15 @@ class RunLoop:
             return None
         return state.workspace_root, state.current_location
 
+    def running_thread_ids(self) -> list[str]:
+        """F179: the threads with a run in flight or queued, read by every page's catalog poll."""
+
+        return [
+            thread_id
+            for thread_id, state in self._threads.items()
+            if state.active is not None or state.queued
+        ]
+
     def record_thread_location(self, thread_id: str, current_location: str) -> None:
         """Persist movement for one thread without touching any sibling."""
 
@@ -525,7 +534,7 @@ class RunLoop:
         thread_id: str,
         prompt_id: str,
         scope: Literal["conversation", "files", "both"],
-    ) -> dict[str, str | None]:
+    ) -> dict[str, str | list[str] | None]:
         """ADR-016: return to a human turn without destroying its abandoned continuation."""
         async with self._lock:
             state = self._state_for_locked(thread_id)
@@ -571,7 +580,15 @@ class RunLoop:
                 state.cached_prefix_tokens = 0
                 self.record_thread_location(thread_id, checkpoint["location"])
                 await self._publish_locked(thread_id, self._snapshot_envelope(thread_id, state))
-            return {"checkpoint": checkpoint["commit"], "abandoned_checkpoint": abandoned}
+            # M3W6B-49: real Git history stays (ADR-016); commits made since are named, not undone.
+            head = checkpoint.get("head")
+            return {
+                "checkpoint": checkpoint["commit"],
+                "abandoned_checkpoint": abandoned,
+                "commits_kept": []
+                if head is None
+                else self._checkpoints.commits_since(workspace, head),
+            }
 
     async def publish_symphony_state(self, thread_id: str, event: Mapping[str, object]) -> None:
         """Journal a supervised stack after its launch turn has returned. [ADR-012]"""
@@ -939,6 +956,7 @@ class RunLoop:
                 ),
                 "parent_id": turn.parent_id,
                 "location": state.current_location,
+                "head": self._checkpoints.repository_head(state.workspace_root),
             }
         turn.user_message["state"] = "running"
         self._capture_message(

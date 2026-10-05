@@ -10,6 +10,10 @@ const CONTROL_SELECTOR = [
   '[role="tab"]',
 ].join(',')
 
+// M3W6B-37: every module frame keeps its own tip, and a frame the pointer jumps out of may
+// never hear it leave. The document the pointer enters says so; every other one closes its tip.
+const POINTER_HERE = 'nocturne.control-tooltip.pointer-here'
+
 interface TooltipState {
   title: string
   detail: string
@@ -25,6 +29,23 @@ export function ControlTooltip() {
 
   useEffect(() => {
     let activeControl: HTMLElement | null = null
+    let pointerHere = false
+    const inFrame = window.parent !== window
+    const frames = () => Array.from(document.querySelectorAll('iframe'), (frame) => frame.contentWindow)
+
+    // The shell relays a frame's word to every other frame; a frame tells only the shell.
+    function announce(except: MessageEventSource | null) {
+      if (inFrame) window.parent.postMessage({ type: POINTER_HERE }, '*')
+      else for (const frame of frames()) if (frame !== null && frame !== except) frame.postMessage({ type: POINTER_HERE }, '*')
+    }
+
+    function onMessage(event: MessageEvent) {
+      if (event.data?.type !== POINTER_HERE) return
+      if (inFrame ? event.source !== window.parent : !frames().includes(event.source as Window)) return
+      if (!inFrame) announce(event.source)
+      pointerHere = false
+      hide(activeControl)
+    }
 
     function show(control: HTMLElement) {
       activeControl = control
@@ -40,12 +61,17 @@ export function ControlTooltip() {
     // M3EX-26: a tip never outlives the pointer. Over no control, leaving this
     // document (a module frame) or this window losing focus all hide it.
     function onPointerOver(event: PointerEvent) {
+      if (!pointerHere) {
+        pointerHere = true
+        announce(null)
+      }
       const control = closestControl(event.target)
       if (control === null) hide(activeControl)
       else if (control !== activeControl) show(control)
     }
 
     function onLeave() {
+      pointerHere = false
       hide(activeControl)
     }
 
@@ -82,6 +108,7 @@ export function ControlTooltip() {
     document.addEventListener('click', onActivate, true)
     document.documentElement.addEventListener('pointerleave', onLeave)
     globalThis.addEventListener('blur', onLeave)
+    globalThis.addEventListener('message', onMessage)
     globalThis.addEventListener('resize', reposition)
     globalThis.addEventListener('scroll', reposition, true)
     return () => {
@@ -92,6 +119,7 @@ export function ControlTooltip() {
       document.removeEventListener('click', onActivate, true)
       document.documentElement.removeEventListener('pointerleave', onLeave)
       globalThis.removeEventListener('blur', onLeave)
+      globalThis.removeEventListener('message', onMessage)
       globalThis.removeEventListener('resize', reposition)
       globalThis.removeEventListener('scroll', reposition, true)
     }

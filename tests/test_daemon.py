@@ -906,6 +906,7 @@ def test_catalog_answers_after_the_launch_folder_moves(tmp_path, monkeypatch) ->
 
     assert response.status_code == 200
     assert response.json()["default_workspace"] is None
+    assert response.json()["running"] == []  # F179: no thread is running
 
 
 def test_dev_app_wires_the_owned_spine_into_the_public_rack_query(

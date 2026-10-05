@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
 
 /* eslint-disable react-refresh/only-export-components -- durable event parsers are tested beside their owning Deck */
 
@@ -17,6 +17,7 @@ import { OutLoud } from './OutLoud'
 import { Button, Select, TextArea, TextField, Toggle } from './kit'
 import { formatHumanUsd } from './humanNumbers'
 import { useSeenProposals } from './deckSeen'
+import { agentColor } from './visualization'
 
 interface DeckAttempt {
   attempt_id: string
@@ -372,6 +373,8 @@ function ProposedResponseCardView({
       className="deck-proposal"
       data-primary={primary ? 'true' : 'false'}
       data-testid={`deck-proposal-${card.proposal_run_id}`}
+      // FL-102 / F179: each card wears its agent's colour, the one the work views draw it in.
+      style={{ '--kit-edge': agentColor(card.thread_id) } as CSSProperties}
     >
       <header>
         <div>

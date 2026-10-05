@@ -44,7 +44,7 @@ test('thread-list archive targets the existing extraction action by thread ident
   assert.match(rack, /action\.thread_id \?\? getRackSnapshot\(\)\.selectedThreadId/u)
   assert.match(rack, /\/v1\/threads\/\$\{encodeURIComponent\(threadId\)\}\/archive/u)
   assert.match(rack, /rackSelectionSurface\.select\(\{ kind: 'module', id: 'thread_end' \}\)/u)
-  assert.match(app, /aria-label=\{`Archive \$\{visibleThreadTitle\(entry\.title\)\}`\}/u)
+  assert.match(app, /aria-label=\{`Archive \$\{title\}`\}/u)
   assert.match(app, /type: 'thread\.archive', thread_id: entry\.thread_id/u)
 })
 

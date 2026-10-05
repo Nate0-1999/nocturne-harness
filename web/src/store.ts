@@ -114,7 +114,7 @@ export interface HarnessStoreState extends PersistedHarnessState {
   daemonMachineId: string | null
   globalError: HarnessError | null
   createThread: (binding?: string | null | ThreadWorkspaceBinding) => string
-  hydrateCatalog: (catalog: ThreadCatalogEntry[]) => void
+  hydrateCatalog: (catalog: ThreadCatalogEntry[], running?: string[]) => void
   removeFixtureThreads: () => number
   selectThread: (threadId: string) => void
   beginPrompt: (
@@ -749,7 +749,7 @@ export const useHarnessStore = create<HarnessStoreState>()(
         return threadId
       },
 
-      hydrateCatalog: (incoming) => {
+      hydrateCatalog: (incoming, running) => {
         const restored = restoredState({ catalog: incoming, selectedThreadId: null }).catalog
         set((state) => {
           const restoredIds = new Set(restored.map((entry) => entry.thread_id))
@@ -757,16 +757,27 @@ export const useHarnessStore = create<HarnessStoreState>()(
             ...restored,
             ...state.catalog.filter((entry) => !restoredIds.has(entry.thread_id)),
           ]
+          // M3W6B-36: an archived thread is never the one the Conversation module opens on.
           const selectedThreadId = state.selectedThreadId !== null &&
-            catalog.some((entry) => entry.thread_id === state.selectedThreadId)
+            catalog.some((entry) => entry.thread_id === state.selectedThreadId && !entry.archived)
             ? state.selectedThreadId
-            : catalog[0]?.thread_id ?? null
+            : catalog.filter((entry) => !entry.archived)
+              .sort((left, right) => right.updated_at.localeCompare(left.updated_at))[0]?.thread_id ?? null
+          // F179: only the selected thread's events reach this page (H7), so a thread left
+          // mid-run keeps its last run until the daemon says it stopped; then it reads as after
+          // a reload, and its card comes from the catalog.
+          const stopped = running === undefined ? [] : Object.keys(state.threads).filter((threadId) => (
+            threadId !== selectedThreadId &&
+            state.threads[threadId].activeRun !== null &&
+            !running.includes(threadId)
+          ))
           return {
             catalog,
             selectedThreadId,
             threads: {
               ...runtimeForCatalog(restored),
               ...state.threads,
+              ...runtimeForCatalog(catalog.filter((entry) => stopped.includes(entry.thread_id))),
             },
           }
         })

@@ -632,9 +632,16 @@ function dispatchRackAction<Action extends RackAction>(
         return fetchJson(`/v1/threads/${encodeURIComponent(threadId)}/archive`, {
           method: 'POST',
         }).then((result) => {
+          const archived = getRackSnapshot().catalog.find((entry) => entry.thread_id === threadId)
           useHarnessStore.getState().hydrateCatalog(getRackSnapshot().catalog.map((entry) => (
             entry.thread_id === threadId ? { ...entry, archived: true } : entry
           )))
+          // M3W6B-36: the archived thread leaves the Conversation module for the next open one.
+          const next = useHarnessStore.getState().selectedThreadId
+          if (next !== null && next !== threadId) harnessClient.selectThread(next)
+          else if (next === null && archived?.workspace_root) {
+            harnessClient.createThread({ workspaceRoot: archived.workspace_root, projectLabel: archived.project_label })
+          }
           // M3W5B-34: an empty thread (no answer, nothing to review) archives without the review.
           const view = result as { cards?: unknown, final_post?: unknown } | null
           if ((Array.isArray(view?.cards) && view.cards.length > 0) ||
@@ -1229,7 +1236,8 @@ export function RackRuntime({ children }: { children: ReactNode }) {
       if (!active) return
       harnessClient.connect()
       const state = useHarnessStore.getState()
-      if (state.catalog.length === 0) {
+      const open = state.catalog.filter((entry) => !entry.archived)
+      if (open.length === 0) {
         if (defaultWorkspace !== null) {
           harnessClient.createThread({
             workspaceRoot: defaultWorkspace.path,
@@ -1237,13 +1245,29 @@ export function RackRuntime({ children }: { children: ReactNode }) {
           })
         }
       } else if (state.selectedThreadId === null) {
-        harnessClient.selectThread(state.catalog[0].thread_id)
+        harnessClient.selectThread(open[0].thread_id)
       } else {
         harnessClient.requestSnapshot(state.selectedThreadId)
       }
     })
+    // F179: the other threads' answers reach this page only through the catalog, so it is read
+    // again every two seconds; the selected thread stays on its own events.
+    const poll = globalThis.setInterval(() => {
+      void globalThis.fetch('/v1/transcripts/catalog', { cache: 'no-store', credentials: 'same-origin' })
+        .then((response) => response.ok ? response.json() as Promise<{ threads?: ThreadCatalogEntry[], running?: string[] }> : null)
+        .then((payload) => {
+          if (!active || !Array.isArray(payload?.threads) || !Array.isArray(payload.running)) return
+          const store = useHarnessStore.getState()
+          const before = store.selectedThreadId
+          store.hydrateCatalog(payload.threads.filter((entry) => entry.thread_id !== before), payload.running)
+          const after = useHarnessStore.getState().selectedThreadId
+          if (after !== null && after !== before) harnessClient.selectThread(after)
+        })
+        .catch(() => undefined)
+    }, 2_000)
     return () => {
       active = false
+      globalThis.clearInterval(poll)
       harnessClient.disconnect()
     }
   }, [])

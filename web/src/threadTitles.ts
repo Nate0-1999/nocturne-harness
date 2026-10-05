@@ -49,3 +49,17 @@ export function visibleThreadTitle(title: string): string {
     ? 'Verification thread'
     : title
 }
+
+/** M3W6B-53: open threads that share a title are numbered by age, so each reads apart. */
+export function distinctThreadTitles(
+  entries: readonly { thread_id: string, title: string, created_at: string }[],
+): Map<string, string> {
+  const groups = new Map<string, { thread_id: string, created_at: string }[]>()
+  for (const entry of entries) {
+    const title = visibleThreadTitle(entry.title)
+    groups.set(title, [...(groups.get(title) ?? []), entry])
+  }
+  return new Map([...groups].flatMap(([title, group]) => group
+    .sort((left, right) => left.created_at.localeCompare(right.created_at) || left.thread_id.localeCompare(right.thread_id))
+    .map((entry, index): [string, string] => [entry.thread_id, group.length === 1 ? title : `${title} · ${index + 1}`])))
+}
