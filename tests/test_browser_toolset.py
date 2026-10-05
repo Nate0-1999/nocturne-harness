@@ -73,6 +73,57 @@ def test_browser_tool_surface_stays_small() -> None:
 
 
 @pytest.mark.asyncio
+async def test_a_page_file_opens_by_its_path_and_a_missed_field_names_the_real_ones(
+    tmp_path: Path,
+) -> None:
+    """M3W6B-16: asked to open page.html "in your browser", the agent read the file instead.
+    M3W6A: asked to fill a form, it guessed input[name='Marker'] three runs in three, because
+    read_page showed the field only as "Marker". A path opens as the folder's file URL;
+    read_page and a missed selector list the page's fields and buttons. [SPEC C.7]"""
+    from harness.browser_toolset import _ThreadBrowser
+
+    project = tmp_path / "project"
+    project.mkdir()
+    controls = ['- text field "Marker": #marker', '- button "Reveal": button >> nth=0']
+
+    class Missing:
+        async def fill(self, _value: str) -> None:
+            raise TimeoutError("Locator.fill: Timeout 10000ms exceeded.")
+
+    class Page:
+        url = "about:blank"
+
+        async def goto(self, url: str, wait_until: str):
+            self.url = url
+            return type("Response", (), {"status": 200})()
+
+        def locator(self, selector: str):
+            return Missing() if selector == "input[name='Marker']" else self
+
+        async def title(self) -> str:
+            return "Disposable browser verification"
+
+        async def inner_text(self) -> str:
+            return "Browser walk\nMarker Reveal"
+
+        async def evaluate(self, _script: str) -> list[str]:
+            return controls
+
+    toolset = BrowserToolset(location=lambda: _location(tmp_path))
+    toolset._threads["thread"] = _ThreadBrowser(context=None, page=Page())  # type: ignore[arg-type]
+    opened = await toolset.execute("navigate", {"_thread_id": "thread", "url": "page.html"})
+    read = await toolset.execute("read_page", {"_thread_id": "thread"})
+    missed = await toolset.execute(
+        "type", {"_thread_id": "thread", "selector": "input[name='Marker']", "text": "CEDAR"}
+    )
+
+    assert opened.success and opened.content == f"Opened {(project / 'page.html').as_uri()} (200)"
+    assert read.content.endswith("selectors for type and click):\n" + "\n".join(controls))
+    assert not missed.success and "Timeout" in missed.content
+    assert missed.content.endswith("\n".join(controls))
+
+
+@pytest.mark.asyncio
 async def test_screenshot_becomes_native_model_image_content() -> None:
     """SPEC C.7 delivers the browser's actual image through the model's image channel."""
 

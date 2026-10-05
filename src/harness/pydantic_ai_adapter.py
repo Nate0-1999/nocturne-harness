@@ -441,22 +441,27 @@ async def _execute_browser_tool(
 
 
 async def navigate(ctx: RunContext[MemoryToolContext], url: str) -> str | ToolReturn:
-    """Open an allowed URL in this thread's headless browser."""
+    """Open a page in this thread's headless browser: an allowed URL, or a file in the current
+    folder by its path (page.html). When the user asks to open or view something in the
+    browser, use this; reading the file with the file tool is not opening it."""
     return await _execute_browser_tool(ctx, "navigate", {"url": url})
 
 
 async def click(ctx: RunContext[MemoryToolContext], selector: str) -> str | ToolReturn:
-    """Click one element selected with a Playwright locator string."""
+    """Click one element: a selector from read_page's fields and buttons, or any Playwright
+    locator string."""
     return await _execute_browser_tool(ctx, "click", {"selector": selector})
 
 
 async def type(ctx: RunContext[MemoryToolContext], selector: str, text: str) -> str | ToolReturn:
-    """Replace the value of one selected form field."""
+    """Replace the value of one form field: a selector from read_page's fields and buttons, or
+    any Playwright locator string."""
     return await _execute_browser_tool(ctx, "type", {"selector": selector, "text": text})
 
 
 async def read_page(ctx: RunContext[MemoryToolContext]) -> str | ToolReturn:
-    """Read the current page URL, title, and visible body text."""
+    """Read the current page URL, title, visible body text, and its fields and buttons with the
+    selectors type and click take."""
     return await _execute_browser_tool(ctx, "read_page", {})
 
 
