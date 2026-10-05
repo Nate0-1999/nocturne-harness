@@ -4033,3 +4033,15 @@ still carries it, and OpenRouter ignores what a model does not support.
 Top K never reached OpenRouter: the OpenAI-compatible client sends only the settings OpenAI
 defines, so a journaled top_k left as null. The OpenRouter adapter now puts it in the request
 body beside the session id; direct providers keep the plain setting.
+
+## M4MW — Memory refusals keep a usable next step [P1.5]
+
+PRECEDENT: F178, F153, M3P1/F165, A-033, SPEC C.4, PLAN M4MW.
+An over-cap single fact may use the remaining request in the existing two-request budget
+to shorten one draft; the default deadline is 60 seconds. Similarity refusals show the score
+and an explicit `/remember --save-anyway` command; only that command sends force. A generated
+label collision retries with the fact's first 64 characters so content dedup can decide.
+Rejected saves show the service's explanation. Seed uploads count already-known facts and
+explain an empty queue; an empty candidate list never reaches the nonempty seed endpoint.
+The 0.80/0.92 write bands remain unchanged: the required Larkspur rewording scores 0.7751,
+so semantic review below that band awaits an owner ruling under F153.

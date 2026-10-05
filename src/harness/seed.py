@@ -102,6 +102,8 @@ class SeedIngestionService:
                     target_ids=verdict.target_ids,
                 )
             )
+        if not candidates:
+            return SeedResponse(batch_uid=upload.batch_uid, cards=[], duplicate_count=already_known)
         request = SeedRequest(
             principal_id=self._principal_id,
             batch_uid=upload.batch_uid,
