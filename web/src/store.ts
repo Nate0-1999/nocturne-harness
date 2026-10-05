@@ -236,6 +236,21 @@ function errorFromPayload(payload: JsonValue): HarnessError {
   return { message, detail: payload }
 }
 
+/** M4GA (FL-018): with the Palace down, the spend notice arrived 8 s after "Memory is
+ * unavailable" and replaced it, so the finished answer no longer said the memory check was
+ * skipped. A later notice of the same run keeps that sentence in front of its own. */
+function keepMemoryNotice(previous: HarnessError | null, incoming: HarnessError): HarnessError {
+  const field = (error: HarnessError | null, key: string) =>
+    typeof error?.detail === 'object' && error.detail !== null && !Array.isArray(error.detail)
+      ? error.detail[key]
+      : undefined
+  return field(previous, 'code') === 'memory_unavailable' &&
+    field(incoming, 'code') !== 'memory_unavailable' &&
+    field(previous, 'run_id') === field(incoming, 'run_id')
+    ? { ...incoming, message: `${previous?.message} ${incoming.message}` }
+    : incoming
+}
+
 function replaceThread(
   threads: Record<string, ThreadState>,
   threadId: string,
@@ -609,7 +624,7 @@ function applyEvent(thread: ThreadState, event: DecodedServerEvent): ThreadState
       return { ...thread, resolvedModel: event.payload.new_model }
     case 'error':
       {
-        const lastError = errorFromPayload(event.payload)
+        const lastError = keepMemoryNotice(thread.lastError, errorFromPayload(event.payload))
         return {
           ...thread,
           lastError,

@@ -7,7 +7,7 @@ import { formatHumanScore } from './humanNumbers'
  * spider web and the provenance pop up on hover; the actions are small buttons. */
 export function MemoryCard({
   memoryId, label, body, score, pin, features, contributions, provenance,
-  status, actions, tone = 'stored', testId = 'memory-card', children,
+  status, actions, prompt, tone = 'stored', testId = 'memory-card', children,
 }: {
   memoryId: string
   label: string
@@ -19,6 +19,8 @@ export function MemoryCard({
   provenance?: ReactNode
   status?: ReactNode
   actions?: ReactNode
+  /** A confirm the actions opened: its own row under the header, never over the text. */
+  prompt?: ReactNode
   tone?: 'injected' | 'removed' | 'near-miss' | 'added' | 'stored' | 'context' | 'unavailable'
   testId?: string
   children?: ReactNode
@@ -47,6 +49,7 @@ export function MemoryCard({
         )}
         {actions !== undefined && <div className="memory-card__decision">{actions}</div>}
       </header>
+      {prompt}
       {status !== undefined && <p className="memory-card__status">{status}</p>}
       <p className="memory-card__body">{body}</p>
       {children}

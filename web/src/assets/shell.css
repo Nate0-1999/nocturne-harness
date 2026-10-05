@@ -1848,37 +1848,24 @@
   color: var(--ink);
 }
 
+/* M4GA (TASTE-5): a confirm is its own row under the buttons it answers, never over
+   the memory text: the question, then the answers side by side. */
 .memory-card__modifier {
-  position: absolute;
-  z-index: 10;
-  top: calc(100% + 0.35rem);
-  right: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  width: 15.5rem;
-  max-width: calc(100vw - 3rem);
-  padding: 0.55rem;
-  border: 1px solid var(--seam-6ea56d5029ac);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding: var(--space-2);
   background: var(--seam-b9b5dc7768ae);
-  box-shadow: 0 0.8rem 2rem var(--seam-6ad401756512);
 }
 
 .memory-card__modifier > span {
-  grid-column: 1 / -1;
-  padding: 0.3rem 0.4rem 0.5rem;
   color: var(--muted);
   font-family: var(--data-font);
   font-size: var(--text-sm);
   text-transform: uppercase;
-}
-
-.memory-card__modifier button:last-child {
-  grid-column: 1 / -1;
-}
-
-/* The yes/no confirmation is one row: the question, then the two answers side by side. */
-.memory-card__modifier[data-testid="memory-delete-confirm"] button:last-child {
-  grid-column: auto;
 }
 
 .memory-card__body {
@@ -2518,10 +2505,6 @@
 
   .memory-card__body {
     font-size: var(--text-base);
-  }
-
-  .memory-card__modifier {
-    width: min(15.5rem, calc(100vw - 2rem));
   }
 
   .wrong-resolution__metadata code {

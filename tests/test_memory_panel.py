@@ -753,6 +753,38 @@ async def test_delete_tombstones_owned_memory_and_preserves_frozen_context(reaso
 
 
 @pytest.mark.asyncio
+async def test_gate_delete_is_the_panel_delete_at_the_current_revision() -> None:
+    """F175 / A-077: the gate's ×! tombstones through the panel's own PATCH and reason, at the
+    revision the Palace holds now, and the panel refreshes without the memory.
+    """
+    original = memory_unit(MEMORY_A, revision=4)
+    tombstone = original.model_copy(update={"status": MemoryStatus.TOMBSTONED, "revision": 5})
+    spine = FakeSpine([original], patch_outcomes=[tombstone])
+    sent: list[Envelope] = []
+
+    async def record(message: Envelope) -> None:
+        sent.append(message)
+
+    await controller(spine).delete_from_gate(THREAD_ID, MEMORY_A, record)
+
+    assert spine.patch_requests == [
+        (
+            MEMORY_A,
+            PatchMemoryRequest(
+                expected_revision=4,
+                status=MemoryStatus.TOMBSTONED,
+                editor="user",
+                reason="panel/delete/no_longer_needed",
+                machine_id="trusted-machine",
+            ),
+        )
+    ]
+    assert len(sent) == 1
+    assert sent[0].payload.result == "deleted"
+    assert sent[0].payload.items == []
+
+
+@pytest.mark.asyncio
 async def test_delete_refuses_another_principals_memory() -> None:
     """SPEC C.4: a forged browser action never tombstones a peer's memory."""
     spine = FakeSpine([memory_unit(MEMORY_A, principal_id="peer")])

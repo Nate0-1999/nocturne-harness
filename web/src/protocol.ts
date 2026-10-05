@@ -359,6 +359,8 @@ export type GateCommitPayload = JsonObject & {
   removed: RemovedMemoryDecision[]
   added_back: string[]
   wrong_resolution?: WrongResolutionDecision
+  /** A-077: memories ×! deletes through the memory panel's path after the commit. */
+  deleted?: string[]
 }
 
 export interface ThreadSnapshotPayload {

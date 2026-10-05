@@ -1606,6 +1606,26 @@ async def test_gate_blocks_reconnects_validates_once_and_resumes_only_after_dism
                 added_back=[NEAR_MISS_ID, NEAR_MISS_ID],
             ),
         ),
+        (
+            "thread-1",
+            GateCommitPayload(
+                run_id=run_id,
+                injection_id=INJECTION_ID,
+                removed=[{"memory_id": INJECTED_ID, "reason": "not_relevant"}],
+                added_back=[],
+                deleted=[INJECTED_ID],
+            ),
+        ),
+        (
+            "thread-1",
+            GateCommitPayload(
+                run_id=run_id,
+                injection_id=INJECTION_ID,
+                removed=[{"memory_id": NEAR_MISS_ID, "reason": "never"}],
+                added_back=[],
+                deleted=[NEAR_MISS_ID, NEAR_MISS_ID],
+            ),
+        ),
     ]
     for count, (thread_id, decision) in enumerate(invalid, start=1):
         await loop.commit_gate(thread_id=thread_id, decision=decision, sink=reconnected)
@@ -1620,6 +1640,7 @@ async def test_gate_blocks_reconnects_validates_once_and_resumes_only_after_dism
             {"memory_id": NEAR_MISS_ID, "reason": "never"},
         ],
         added_back=[],
+        deleted=[NEAR_MISS_ID],
     )
     await loop.commit_gate(thread_id="thread-1", decision=decision, sink=reconnected)
     await _wait(runner.accepted)
