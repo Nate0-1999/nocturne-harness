@@ -110,7 +110,9 @@ REMEMBER_SPLIT_INSTRUCTION = (
     "concisely to fit that limit as one fact. The coverage always retains the exact original "
     "source, including text that was shortened. Set safe_to_save true only when every "
     "candidate stands alone, preserves its fact and qualifiers, and fits the body limit. "
-    "Return one to 64 candidates and structured data only."
+    "Return one to 64 candidates. Return a JSON instance with candidates, whole_source, "
+    "coverage and safe_to_save at the top level, not a JSON Schema. Never wrap the values "
+    "in properties or include additionalProperties."
 )
 REMEMBER_SPLIT_GUIDANCE = (
     "Nothing was saved: I couldn't verify a complete memory draft within the length limit. "
