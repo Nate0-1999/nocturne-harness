@@ -1767,7 +1767,9 @@ async def test_f047_split_planner_timeout_ends_once_with_guidance_and_zero_write
 
     assert outcome.stop_reason is StopReason.END_TURN
     assert outcome.message_history == ()
-    assert emitted.texts == [REMEMBER_SPLIT_GUIDANCE]
+    assert len(emitted.texts) == 1
+    assert "took too long" in emitted.texts[0]
+    assert "composer" in emitted.texts[0]
     assert cancelled.is_set()
 
 

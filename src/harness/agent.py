@@ -602,6 +602,28 @@ class HarnessAgent:
                     usage=usage,
                     captured_messages=captured_messages,
                 )
+                draft = draft_result.output
+                if (
+                    draft.safe_to_save
+                    and len(draft.candidates) == 1
+                    and cl100k_token_count(body) > self._settings.memory_max_tokens
+                    and cl100k_token_count(draft.candidates[0].body)
+                    > self._settings.memory_max_tokens
+                    and usage.requests < 2
+                ):
+                    draft_result = await _run_structured_agent(
+                        self._remember_splitter_agent,
+                        f"Your one-fact draft used {cl100k_token_count(draft.candidates[0].body)} "
+                        f"tokens. Rewrite it within {self._settings.memory_max_tokens} "
+                        "cl100k_base tokens. Keep the fact and its qualifiers; remove repeated "
+                        "explanations. Return one candidate, whole_source=true, coverage=[].\n"
+                        f"Memory source:\n{body}",
+                        model=model,
+                        model_settings=model_settings,
+                        usage_limits=self._remember_split_usage_limits,
+                        usage=usage,
+                        captured_messages=captured_messages,
+                    )
         except TimeoutError:
             return RememberResult(
                 False,

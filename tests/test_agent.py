@@ -788,6 +788,32 @@ async def test_m3fd_long_single_fact_shortens_without_splitting(
 
 
 @pytest.mark.asyncio
+async def test_over_cap_single_fact_uses_remaining_request_to_finish_shortening() -> None:
+    """M4MW / FL-002 / SPEC B.6: a too-long first draft still saves one capped fact."""
+    source = ("The verification release color is amber. " * 30).strip()
+    body = "The verification release color is amber."
+    calls = []
+    drafts = [
+        {
+            "safe_to_save": True,
+            "whole_source": True,
+            "coverage": [],
+            "candidates": [
+                {"label": "Release color", "body": text, "keywords": ["release", "amber"]}
+            ],
+        }
+        for text in (source, body)
+    ]
+    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
+    agent = HarnessAgent(settings(), model=structured_sequence_model(drafts, calls))
+    result = await agent.remember(source, context=context(spine))
+    assert result.ok
+    assert len(calls) == 2
+    assert [request.body for request in spine.create_requests] == [body]
+    assert spine.split_requests == []
+
+
+@pytest.mark.asyncio
 async def test_m3fd_two_short_facts_split_even_below_body_cap() -> None:
     """SPEC B.6 / SD-062: fact count, not paragraph length, determines a split."""
     source = "Release color is amber. Review day is Tuesday."
