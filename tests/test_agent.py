@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from copy import deepcopy
 from dataclasses import dataclass, field, replace
@@ -788,6 +789,92 @@ async def test_m3fd_long_single_fact_shortens_without_splitting(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("invalid_draft", ["over-cap", "coverage", "malformed"])
+async def test_over_cap_single_fact_uses_remaining_request_to_finish_shortening(
+    invalid_draft: str,
+) -> None:
+    """SPEC B.6 / M4MW / FL-002: repair the three observed invalid drafts within two requests."""
+    source = ("The verification release color is amber. " * 30).strip()
+    body = "The verification release color is amber."
+    calls = []
+    drafts = [
+        {
+            "safe_to_save": True,
+            "whole_source": True,
+            "coverage": [],
+            "candidates": [
+                {"label": "Release color", "body": text, "keywords": ["release", "amber"]}
+            ],
+        }
+        for text in (source, body)
+    ]
+    if invalid_draft == "coverage":
+        drafts[0]["whole_source"] = False
+        drafts[0]["candidates"] *= 3
+    elif invalid_draft == "malformed":
+        drafts[0] = {}
+    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
+    agent = HarnessAgent(settings(), model=structured_sequence_model(drafts, calls))
+    result = await agent.remember(source, context=context(spine))
+    assert result.ok
+    assert len(calls) == 2
+    assert [request.body for request in spine.create_requests] == [body]
+    assert spine.split_requests == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("stalled_requests", [1, 2])
+async def test_long_remember_retries_a_stall_without_exceeding_its_budget(
+    stalled_requests: int,
+) -> None:
+    """SPEC B.6 / F178: a live first-request stall must not consume both permitted attempts."""
+    body = "The verification release color is amber."
+    calls = []
+
+    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        calls.append((messages, info))
+        if len(calls) <= stalled_requests:
+            await asyncio.Event().wait()
+        return ModelResponse(
+            parts=[
+                TextPart(
+                    json.dumps(
+                        {
+                            "safe_to_save": True,
+                            "whole_source": True,
+                            "coverage": [],
+                            "candidates": [
+                                {
+                                    "label": "Release color",
+                                    "body": body,
+                                    "keywords": ["release", "amber"],
+                                }
+                            ],
+                        }
+                    )
+                )
+            ]
+        )
+
+    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
+    usage = RunUsage()
+    agent = HarnessAgent(settings(remember_split_timeout_seconds=0.2), model=FunctionModel(respond))
+    result = await asyncio.wait_for(
+        agent.remember((body + " ") * 30, context=context(spine), usage=usage),
+        timeout=1,
+    )
+    assert len(calls) == 2
+    assert result.ok == (stalled_requests == 1)
+    assert [request.body for request in spine.create_requests] == (
+        [body] if stalled_requests == 1 else []
+    )
+    if stalled_requests == 1:
+        assert usage.requests == 2
+    else:
+        assert "took too long" in result.message
+
+
+@pytest.mark.asyncio
 async def test_m3fd_two_short_facts_split_even_below_body_cap() -> None:
     """SPEC B.6 / SD-062: fact count, not paragraph length, determines a split."""
     source = "Release color is amber. Review day is Tuesday."
@@ -1050,9 +1137,7 @@ async def test_a049_overlong_label_single_claim_reuses_exact_source_through_ordi
 
 @pytest.mark.asyncio
 async def test_a049_single_atomic_oversized_claim_guides_without_any_write() -> None:
-    """F027, A-049, ADR-022, and SPEC B.6 rule 12 are defended here.
-    One oversized indivisible claim is never shortened and receives enacted owner guidance.
-    """
+    """F027 / M4MW: two unsafe drafts exhaust the budget without writing a lossy fact."""
     source = ("The complete indivisible claim retains this qualifier. " * 80).strip()
     calls: list[tuple[list[ModelMessage], AgentInfo]] = []
     model = structured_sequence_model(
@@ -1083,7 +1168,7 @@ async def test_a049_single_atomic_oversized_claim_guides_without_any_write() -> 
     result = await agent.remember(source, context=context(spine))
 
     assert result == RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
-    assert len(calls) == 1
+    assert len(calls) == 2
     assert spine.create_requests == []
     assert spine.split_requests == []
 
@@ -1535,7 +1620,7 @@ def problem_error() -> SpineProblemError:
     [
         (similar_response(), "looks similar"),
         (label_conflict(), "label already belongs"),
-        (problem_error(), "Spine unavailable: try later"),
+        (problem_error(), "try later"),
         (SpineTransportError(), "memory service unavailable"),
     ],
     ids=["similar", "label", "problem", "transport"],
@@ -1563,7 +1648,7 @@ async def test_remember_failures_are_truthful_visible_non_success(
     assert not result.message.startswith("Remembered ")
     assert result.memory_id is None
     assert result.label is None
-    assert len(spine.create_requests) == 1
+    assert len(spine.create_requests) == (2 if expected == "label already belongs" else 1)
 
 
 @pytest.mark.asyncio
@@ -1633,8 +1718,8 @@ async def test_two_clause_resave_reinforces_whole_before_splitting() -> None:
 
 @pytest.mark.asyncio
 async def test_remember_near_duplicate_guides_edit_without_transport_details() -> None:
-    """F038, SPEC C.4, and B.6 r12 require a near duplicate to guide the owner
-    toward the existing edit boundary without scores, JSON, or an automatic force write.
+    """M4MW and SPEC C.4 require the similarity and explicit save-anyway choice;
+    displaying the choice must never itself authorize a force write.
     """
     spine = FakeSpine(similar_response())
     agent = HarnessAgent(
@@ -1649,10 +1734,20 @@ async def test_remember_near_duplicate_guides_edit_without_transport_details() -
 
     assert result.ok is False
     assert "Open Memory and edit" in result.message
-    assert "0.86" not in result.message
+    assert "0.860" in result.message
+    assert "/remember --save-anyway A durable fact." in result.message
     assert "force=true" not in result.message
     assert str(MEMORY_ID) not in result.message
     assert spine.patch_requests == []
+    assert spine.create_requests[0].force is False
+
+    spine.outcome = CreatedMemoryResponse(created=memory_unit(body="A durable fact."))
+    confirmed = await agent.dispatch(
+        "/remember --save-anyway A durable fact.", context=context(spine)
+    )
+    assert confirmed.ok
+    assert spine.create_requests[-1].body == "A durable fact."
+    assert spine.create_requests[-1].force is True
 
 
 @pytest.mark.asyncio

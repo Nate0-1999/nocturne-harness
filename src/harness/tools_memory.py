@@ -244,6 +244,7 @@ async def create_remembered_memory(
     label: str,
     body: str,
     keywords: list[str],
+    force: bool = False,
 ) -> CreateMemoryResponse:
     """Create the user-authored fact in the thread's authoritative project."""
 
@@ -261,7 +262,7 @@ async def create_remembered_memory(
             origin_location=context.current_origin_location(),
             editor="user",
             machine_id=context.machine_id,
-            force=False,
+            force=force,
         )
     )
 
@@ -428,8 +429,11 @@ def render_spine_error(action: str, exc: SpineClientError) -> str:
     if isinstance(exc, SpineTransportError):
         detail = "memory service unavailable"
     elif isinstance(exc, SpineProblemError):
-        fields = [value for value in (exc.problem.title, exc.problem.detail) if value]
-        detail = ": ".join(fields) if fields else f"memory service returned HTTP {exc.status_code}"
+        detail = (
+            exc.problem.detail
+            or exc.problem.title
+            or f"memory service returned HTTP {exc.status_code}"
+        )
     elif isinstance(exc, SpineResponseError):
         detail = f"memory service returned an invalid HTTP {exc.status_code} response"
     else:
