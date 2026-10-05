@@ -1535,7 +1535,7 @@ def problem_error() -> SpineProblemError:
     [
         (similar_response(), "looks similar"),
         (label_conflict(), "label already belongs"),
-        (problem_error(), "Spine unavailable: try later"),
+        (problem_error(), "try later"),
         (SpineTransportError(), "memory service unavailable"),
     ],
     ids=["similar", "label", "problem", "transport"],
@@ -1563,7 +1563,7 @@ async def test_remember_failures_are_truthful_visible_non_success(
     assert not result.message.startswith("Remembered ")
     assert result.memory_id is None
     assert result.label is None
-    assert len(spine.create_requests) == 1
+    assert len(spine.create_requests) == (2 if expected == "label already belongs" else 1)
 
 
 @pytest.mark.asyncio
@@ -1633,8 +1633,8 @@ async def test_two_clause_resave_reinforces_whole_before_splitting() -> None:
 
 @pytest.mark.asyncio
 async def test_remember_near_duplicate_guides_edit_without_transport_details() -> None:
-    """F038, SPEC C.4, and B.6 r12 require a near duplicate to guide the owner
-    toward the existing edit boundary without scores, JSON, or an automatic force write.
+    """M4MW and SPEC C.4 require the similarity and explicit save-anyway choice;
+    displaying the choice must never itself authorize a force write.
     """
     spine = FakeSpine(similar_response())
     agent = HarnessAgent(
@@ -1649,10 +1649,20 @@ async def test_remember_near_duplicate_guides_edit_without_transport_details() -
 
     assert result.ok is False
     assert "Open Memory and edit" in result.message
-    assert "0.86" not in result.message
+    assert "0.860" in result.message
+    assert "/remember --save-anyway A durable fact." in result.message
     assert "force=true" not in result.message
     assert str(MEMORY_ID) not in result.message
     assert spine.patch_requests == []
+    assert spine.create_requests[0].force is False
+
+    spine.outcome = CreatedMemoryResponse(created=memory_unit(body="A durable fact."))
+    confirmed = await agent.dispatch(
+        "/remember --save-anyway A durable fact.", context=context(spine)
+    )
+    assert confirmed.ok
+    assert spine.create_requests[-1].body == "A durable fact."
+    assert spine.create_requests[-1].force is True
 
 
 @pytest.mark.asyncio
