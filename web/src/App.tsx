@@ -3689,6 +3689,11 @@ function MessageRow({
           Worker returned {String(event.returned_bytes)} bytes{event.capped ? ' · cut' : ''}{Number(event.send_backs) > 0 ? ` · sent back ×${String(event.send_backs)}` : ''} · full result kept in the journal
         </p>
       ))}
+      {message.events.filter((event) => event.event_kind === 'context_cut' && event.kind === 'query').map((event, index) => (
+        <p key={`context-cut-${index}`} className="message__content message__content--quiet" data-testid="context-cut">
+          {String(event.source)} result not delivered for its size · {Number(event.size_tokens).toLocaleString()} tokens, share {Number((event.share as { tokens?: unknown } | undefined)?.tokens).toLocaleString()} · full result kept in the journal
+        </p>
+      ))}
       {spendBoundary?.decision === 'owner_action' && (
         <section aria-label="Spend boundary · paused">
           <p>{String(spendBoundary.reason)}</p>

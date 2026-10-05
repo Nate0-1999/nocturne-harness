@@ -29,7 +29,10 @@ WORKSPACE_INSTRUCTIONS = (
     "before following its instructions or reading its bundled resources. "
     "Never ask a permission question in chat. The PermissionJudge handles outside-file requests. "
     "Reserved owner decisions go to the Deck. Never retry around a refused wall."
-    " Browser tools are headless and default to localhost or files beneath the current location."
+    # M4AH walk: gpt-4.1-mini looked for a "browser" capability to load and ended the turn.
+    " The browser tools (navigate, read_page, type, click, screenshot) are always loaded, not a"
+    " capability to load. They are headless and default to localhost or files beneath the"
+    " current location."
     " Never ask the owner for consent inside a tool call; a refused open-web request must wait"
     " for the owner's exact `/browser allow-web` command."
     # M3W5B-06, Codex M3W5A-03 and -13: no invented results, no plan in place of a change.
