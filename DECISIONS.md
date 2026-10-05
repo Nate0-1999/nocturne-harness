@@ -4097,3 +4097,20 @@ Approval and a newly observed curator pass request the existing memory-panel ref
 Graph and Palace State subscribe to that authoritative update. A five-second activity
 read notices automatic passes without repeating the full Vitals/scorer reads each time.
 The pass summary shows its recorded model, reviewed pairs and skipped/deferred counts.
+
+## M4CD — The conversation and the Deck tell the truth at once [P2, P2.3, P3]
+
+PRECEDENT: F179, F162, M3W6B findings 14, 19–23, 36, 37, 49, 53 and TASTE-3..5, M3W6A FL-201,
+M3EXF2, M3UI2. A page hears only its selected thread (H7), so it re-reads the catalog every
+2 s and the catalog names the threads with a run in flight or queued; a thread left mid-run
+that has stopped reads as after a reload, and its card comes from the catalog. A Deck card
+wears its agent's colour from the work views. An archived thread leaves the Conversation
+module for the newest open thread (a fresh one in its folder if none); its review reads the
+selected thread, so the move waits for Back to stage. Rewind keeps real Git history
+(ADR-016): each turn's checkpoint records the repository's HEAD and a rewind names the
+commits made since, beside a line saying what was rewound; the prompt returns to the
+composer. Module frames tell each other where the pointer is, so one tip shows at a time.
+A prompt sent while its thread is still opening waits in the host, one per thread, and the
+composer says so (F162). Same-titled open threads are numbered by age. Inline code in an
+answer is its code blocks' size. Hovering Transmit already showed its tip; the scouts'
+miss was the scaled Stage moving the pointer off the button, so nothing changed there.
