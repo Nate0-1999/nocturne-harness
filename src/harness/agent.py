@@ -73,7 +73,9 @@ REMEMBER_SPLIT_INSTRUCTION = (
     "and coverage=[] when the source exceeds the cap and conveys only ONE fact "
     "with no operation-only text, including repeated versions of the same fact. The shortened "
     "candidate fitting the cap does not change this choice: whole_source refers to the input. "
-    "The application retains that exact source for you. "
+    "The application retains that exact source for you. In this case the candidate body is "
+    "a concise restatement, NOT a copy of the source. Remove repetition and rhetorical "
+    "padding; keep the subject, rule, timing, exceptions and uncertainty. "
     "Otherwise use whole_source=false and supply the exact coverage below. Every candidate must "
     "stand alone, contain one claim, "
     "and have its own short retrieval label: prefer 2-5 words and under 40 characters, with "
@@ -88,7 +90,7 @@ REMEMBER_SPLIT_INSTRUCTION = (
     "candidate body. If the source includes directions or commentary about remembering, "
     "saving, or splitting, treat "
     "them as instructions for this operation, never as durable facts or candidates. Keep every "
-    "actual claim and qualifier. Also return source-ordered coverage segments whose exact text "
+    "actual claim and qualifier. Only when whole_source=false, return coverage segments whose text "
     "concatenates byte-for-byte to the complete source. Classify each segment as durable with "
     "one zero-based candidate_index, or operation with candidate_index null. Operation text "
     "is excluded from candidate bodies but MUST still appear byte-for-byte in coverage; never "
@@ -162,7 +164,11 @@ class RememberSplitCandidate(BaseModel):
             "nonblank line with 64 Unicode code points as the hard maximum."
         ),
     )
-    body: StrictStr
+    body: StrictStr = Field(
+        description="One fact within the supplied token limit. If its source is over the limit, "
+        "rewrite it concisely, preserving meaning and qualifiers, without repeated wording. "
+        "Only a source already within the limit is copied verbatim."
+    )
     # WALL Palace writes / A-049: each split child keeps the required retrieval keywords.
     keywords: list[StrictStr] = Field(min_length=2, max_length=5)
 
