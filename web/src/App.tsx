@@ -2215,7 +2215,7 @@ function ThreadsModule() {
         {/* FL-205: the project is named once, over its threads, never as a path. */}
         {projectGroups(sortedCatalog).map((group) => (
         <section className="thread-group" key={group.key} aria-label={group.name} data-testid="thread-group">
-          <h3 className="thread-group__name">{group.name}</h3>
+          <div className="thread-group__name">{group.name}</div>
         {group.entries.map((entry) => {
           const runtime = snapshot.threads[entry.thread_id]
           const isSelected = entry.thread_id === snapshot.selectedThreadId
