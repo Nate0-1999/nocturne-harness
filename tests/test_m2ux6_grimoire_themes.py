@@ -81,10 +81,20 @@ def test_conjurations_are_state_bound_and_data_surfaces_remain_still() -> None:
     assert "rack-ambient::after" in css
     assert ".rack-module:hover .rack-module__content::after" in css
     assert ".composer:focus-within::before" in css
-    assert "flex: 0 1000 7.5rem" in css
+    assert "flex: 0 1000000 auto" in css
     assert "min-width: 0" in css
-    assert ".rack-module__chrome > :not(.rack-module__drag)" in css
+    assert ".rack-module__drag > .rack-module__attunement" in css
     assert "width: 7.5rem" in css
+
+
+def test_module_names_read_whole_beside_the_head_strip() -> None:
+    """SPEC D.2 115 and ADR-018 clause 7: a theme styles meaning, never cuts the module name."""
+    css = CSS_PATH.read_text()
+    rack = (WEB / "src" / "assets" / "rack.css").read_text()
+    assert ".rack-module__chrome::before" not in css
+    assert "html[data-theme=\"wizard-mode\"] .rack-module__drag::after" in css
+    name_rule = rack.split(".rack-module__drag strong {", maxsplit=1)[1].split("}", maxsplit=1)[0]
+    assert "flex-shrink: 0;" in name_rule
 
 
 def test_reduced_motion_stops_every_grimoire_loop_and_conjuration() -> None:
@@ -93,7 +103,7 @@ def test_reduced_motion_stops_every_grimoire_loop_and_conjuration() -> None:
     reduced = css.split("@media (prefers-reduced-motion: reduce)", maxsplit=1)[1]
     assert "animation: none !important" in reduced
     for surface in (
-        ".rack-module__chrome::before",
+        ".rack-module__drag::after",
         ".rack-module__content::after",
         ".rack-module__content::before",
         ".message__label::after",
