@@ -920,7 +920,7 @@ class CompactionPolicy(BaseModel):
     """Per-thread strategy and model-portable fill policy, persisted in the journal."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
-    strategy: Literal["truncate", "summarize", "memories-then-drop", "human-and-final-only"] = (
+    strategy: Literal["truncate", "memories-then-drop", "human-and-final-only"] = (
         "memories-then-drop"
     )
     policy: Literal["performance", "cost"] = "performance"
@@ -994,7 +994,7 @@ class _MemoryStrategy:
         )
         strategy = owner.policy.strategy
         # v2.133 amends v2.118a: memories first, then the rest summarized, the tail kept.
-        summarized = strategy in ("summarize", "memories-then-drop")
+        summarized = strategy == "memories-then-drop"
         engine = (
             _PreparedSummary(**options)
             if summarized
@@ -1027,6 +1027,14 @@ class _MemoryStrategy:
             model_settings=owner.model_settings,
             summary_prompt=owner.policy.instructions,
             locations=locations,
+            verifying_ids={
+                f"m{index}"
+                for index, message in enumerate(history)
+                if isinstance(message, ModelRequest)
+                and any(
+                    isinstance(part, (UserPromptPart, ToolReturnPart)) for part in message.parts
+                )
+            },
         )
         # Admission must finish before any drop; a failed queue write leaves history intact.
         if summarized:

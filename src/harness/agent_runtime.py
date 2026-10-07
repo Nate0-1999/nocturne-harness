@@ -329,7 +329,7 @@ class PydanticAITurnRunner:
                         )
                     except ValueError:
                         message = (
-                            "Use /compact, /compact strategy truncate|summarize|memories-then-drop|"
+                            "Use /compact, /compact strategy truncate|memories-then-drop|"
                             "human-and-final-only, /compact policy performance|cost [fraction], "
                             "/compact keep <percent>, "
                             "or /compact instructions <summary prompt containing {messages}>."

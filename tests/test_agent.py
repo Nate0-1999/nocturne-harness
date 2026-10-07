@@ -1647,7 +1647,8 @@ def test_compaction_prompt_has_the_owners_shape_and_no_count_cap() -> None:
     assert "self-contained fact sentence" in EXTRACTION_INSTRUCTION
     assert "break it at the cleanest place" in EXTRACTION_INSTRUCTION
     assert "Keep what the user stated, decided or corrected" in EXTRACTION_INSTRUCTION
-    assert "unverified" in EXTRACTION_INSTRUCTION
+    assert "tool result that verified it" in EXTRACTION_INSTRUCTION
+    assert "begins with 'Unverified:'" in EXTRACTION_INSTRUCTION
     assert "not even to say that one was shared" in EXTRACTION_INSTRUCTION
     assert "at most five" not in EXTRACTION_INSTRUCTION
     assert "Prefer zero" not in EXTRACTION_INSTRUCTION

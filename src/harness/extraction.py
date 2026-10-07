@@ -9,7 +9,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Literal
 from uuid import UUID
 
-from harness.agent import ExtractionCandidateDraft, ExtractionDraft, HarnessAgent
+from harness.agent import ExtractionCandidateDraft, ExtractionDraft, HarnessAgent, _within_cap
 from harness.spine_client import (
     ExtractionCandidate,
     ExtractionRequest,
@@ -81,6 +81,7 @@ class ExtractionService:
             tail=tail,
             final_post=final_post,
             locations={message["message_id"]: message.get("location") for message in messages},
+            verifying_ids={m["message_id"] for m in messages if m["role"] == "user"},
         )
 
     async def triage(
@@ -97,6 +98,7 @@ class ExtractionService:
         model_settings=None,
         summary_prompt=None,
         locations=None,
+        verifying_ids=None,
     ):
         """D.2 153: compaction and close run the same summarizer and admission path."""
         options = (
@@ -123,6 +125,7 @@ class ExtractionService:
             on_result=on_result,
             model_settings=model_settings,
             locations=locations,
+            verifying_ids=verifying_ids,
         )
 
     async def admit(
@@ -138,6 +141,7 @@ class ExtractionService:
         on_result=None,
         model_settings=None,
         locations=None,
+        verifying_ids=None,
     ) -> ThreadEndResult:
         """The shared compaction/close queue door; the summarizer already did triage."""
         text_id = str(thread_id)
@@ -146,6 +150,19 @@ class ExtractionService:
         duplicate_count = 0
         facts: list[dict[str, object]] = []
         for item in draft.candidates:
+            # Owner 2026-10-07 (v2.133): a fact no user message or tool result verified says so.
+            if (
+                verifying_ids is not None
+                and not verifying_ids.intersection(item.source_message_ids)
+                and not item.body.lower().startswith("unverified")
+            ):
+                item = item.model_copy(
+                    update={
+                        "body": _within_cap(
+                            f"Unverified: {item.body}", self._agent.memory_max_tokens
+                        )
+                    }
+                )
             neighbors = await self._spine.search(
                 SearchRequest(
                     principal_id=self._principal_id,

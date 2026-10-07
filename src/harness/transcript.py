@@ -636,6 +636,9 @@ class TranscriptJournal:
             for line in reversed(path.read_text(encoding="utf-8").splitlines()):
                 row = json.loads(line)
                 if row.get("record_type") == "compaction_policy":
+                    # Owner 2026-10-07: summarize became the default; a saved choice keeps it.
+                    if row["policy"].get("strategy") == "summarize":
+                        return {**row["policy"], "strategy": "memories-then-drop"}
                     return row["policy"]
         return {}
 

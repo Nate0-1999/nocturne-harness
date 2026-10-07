@@ -110,9 +110,7 @@ async def test_over_cap_fact_is_repaired_or_saved_within_the_cap(corrected):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "strategy", ["truncate", "summarize", "memories-then-drop", "human-and-final-only"]
-)
+@pytest.mark.parametrize("strategy", ["truncate", "memories-then-drop", "human-and-final-only"])
 async def test_real_runner_compacts_once_and_keeps_resumable_history(tmp_path, strategy):
     """SPEC D.2 153 / v2.133: triage removes old content without losing the next response; the
     default keeps the last share word for word and records the span beside its facts."""
@@ -188,9 +186,7 @@ async def test_real_runner_compacts_once_and_keeps_resumable_history(tmp_path, s
     assert len(outcome.message_history) < len(history)
     assert outcome.assistant_text == "The final page is checked."
     assert any(e["event_kind"] == "compaction_completed" for e in emit.events)
-    assert ("Finish the copper notebook" in str(requests[0])) == (
-        strategy in {"summarize", "memories-then-drop"}
-    )
+    assert ("Finish the copper notebook" in str(requests[0])) == (strategy == "memories-then-drop")
     assert ("Page 0:" in str(requests[0])) == (strategy == "human-and-final-only")
     if strategy == "memories-then-drop":
         prompts = [
@@ -543,6 +539,12 @@ async def test_policy_commands_survive_restart_and_manual_compaction_bypasses_fi
 
     with pytest.raises(ValueError, match="Unknown compaction control"):
         _configure_compaction(CompactionPolicy(), "unsupported setting")
+    # Owner 2026-10-07: summarize and the default are one strategy under one name.
+    with pytest.raises(ValueError):
+        _configure_compaction(CompactionPolicy(), "strategy summarize")
+    legacy = TranscriptJournal(tmp_path / "legacy")
+    legacy.append_compaction_policy("thread-1", {"strategy": "summarize"})
+    assert legacy.compaction_policy("thread-1") == {"strategy": "memories-then-drop"}
 
     def extract(messages, info):
         return ModelResponse(

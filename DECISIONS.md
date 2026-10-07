@@ -4180,11 +4180,15 @@ nothing is dropped and the journal keeps the original. This replaces three refus
 archive's "not proposed, over the cap", compaction's "history kept" failure, and the
 seed splitter's over-cap error. /remember's A-050 coverage witness leaves the prompt: the
 Palace already stores the exact source beside a split family, so code needs only to
-dedupe repeats and repair labels/keywords. M3MQ's rule that a fact must cite a user message
-is removed: a fact the agent found is what a continuing agent wants, and the prompt marks it
-unverified instead. memories-then-drop now keeps the last `keep` share of the conversation
-word for word (default 20%, `/compact keep <percent>`) and replaces the rest with the
-triage summary — the same engine as summarize, which now differs only in name. Each
+dedupe repeats and repair labels/keywords (owner, 2026-10-07: the old coverage proof is
+retired). M3MQ's drop of facts without a user source is replaced by the owner's 2026-10-07
+ruling: an agent-derived fact cites the message or tool result that verified it; one whose
+sources hold no user message or tool result is saved with "Unverified:" in front. The
+default strategy now keeps the last `keep` share of the conversation word for word (default
+20%, `/compact keep <percent>`) and replaces the rest with the triage summary; the owner
+ruled summarize and the default one strategy, so the name summarize is gone (a journal that
+saved it reads as the default). A trial fact quoted a planted token; the prompt now forbids
+any secret in any field, even to say one was shared. Each
 compaction journals a record (the span with its mN ids, which messages were kept, every fact
 with its source ids and verdict), served at GET /v1/threads/{id}/compactions and opened from
 the "Conversation compacted" line.

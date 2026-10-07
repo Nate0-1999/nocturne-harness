@@ -94,7 +94,9 @@ EXTRACTION_INSTRUCTION = (
     "facts that each stand alone. Keep what the user stated, decided or corrected unless it "
     "only mattered for the moment. Leave out step-by-step progress and common knowledge. "
     "Never write a secret, credential, token, password or key into any field, not even to "
-    "say that one was shared. Mark a claim that was not verified as unverified. Give "
+    "say that one was shared. A fact you derived lists in source_message_ids the message or "
+    "tool result that verified it; a claim nothing in the conversation verified begins "
+    "with 'Unverified:'. Give "
     "each candidate a label of at most 64 characters and 2-5 distinct lowercase keywords. "
     "Every transcript message has an id (its message_id or its [mN] label); list in each "
     "candidate's source_message_ids the ids of the messages its fact was drawn from."
@@ -350,6 +352,12 @@ class HarnessAgent:
     @property
     def usage_limits(self) -> UsageLimits:
         return self._usage_limits
+
+    @property
+    def memory_max_tokens(self) -> int:
+        """The Palace's body cap, for code that marks a fact after the check loop."""
+
+        return self._settings.memory_max_tokens
 
     @property
     def return_share_bounds(self) -> ReturnShareBounds:
