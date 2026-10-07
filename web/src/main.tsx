@@ -13,6 +13,10 @@ import './themes/grimoire.generated.css'
 
 const isRackModuleDocument = new URLSearchParams(globalThis.location.search).has('rack_module')
 document.documentElement.toggleAttribute('data-rack-module-document', isRackModuleDocument)
+// SD-080: the Stage rain rests while the tab is hidden.
+const markPageHidden = () => document.documentElement.toggleAttribute('data-page-hidden', document.hidden)
+document.addEventListener('visibilitychange', markPageHidden)
+markPageHidden()
 const initialTheme = isRackModuleDocument
   ? themeFromSearch(globalThis.location.search) ?? DEFAULT_THEME
   : loadTheme(globalThis.localStorage)
