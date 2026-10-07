@@ -70,6 +70,9 @@ class TranscriptCatalogEntry:
     current_location: str | None = None
     proposed_response: Mapping[str, Any] | None = None
     archived: bool = False
+    # FL-205: the model and thinking level in force, filled from the run loop where it is served.
+    model: str | None = None
+    effort: str | None = None
 
 
 class TranscriptJournal:

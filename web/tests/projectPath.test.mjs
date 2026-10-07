@@ -8,7 +8,10 @@ import {
   canonicalProjectPath,
   initialProjectControlState,
   knownProjectPaths,
+  locationInProject,
   newestProjectThread,
+  projectGroups,
+  projectName,
   projectPathEditValue,
   projectPathError,
   projectScopeLabel,
@@ -124,4 +127,34 @@ test('chooses the newest existing thread for a project and no thread from anothe
 
   assert.equal(newestProjectThread(entries, 'build-test')?.thread_id, 'newer')
   assert.equal(newestProjectThread(entries, 'missing'), null)
+})
+
+/** P2.1: a thread names its project by name — its given name, else its folder's — never a path. */
+test('names a project by its label or its folder, never by its path', () => {
+  assert.equal(projectName({ project_key: '/tmp/work/atlas-api', project_label: 'Atlas' }), 'Atlas')
+  assert.equal(projectName({ project_key: '/tmp/work/atlas-api', project_label: null }), 'atlas-api')
+  assert.equal(projectName({ project_key: 'build-test', project_label: '  ' }), 'build-test')
+  assert.equal(projectName({ project_key: null, project_label: null }), UNSCOPED_PROJECT_LABEL)
+})
+
+/** P2.1: the list names each project once, over its threads, in the order of their activity. */
+test('groups threads by project in the order of each project\'s newest thread', () => {
+  const entry = (id, key, label) => ({ thread_id: id, project_key: key, project_label: label })
+  const groups = projectGroups([
+    entry('a', '/w/atlas', 'atlas'), entry('b', '/w/beacon', 'beacon'),
+    entry('c', '/w/atlas', 'atlas'), entry('d', null, null),
+  ])
+  assert.deepEqual(groups.map((group) => [group.name, group.entries.map((item) => item.thread_id)]),
+    [['atlas', ['a', 'c']], ['beacon', ['b']], [UNSCOPED_PROJECT_LABEL, ['d']]])
+})
+
+/** P2.1: where the agent stands reads from the project down; outside it, the whole path. */
+test('reads a location from the project down', () => {
+  const at = (location) => locationInProject({
+    project_key: '/w/atlas', project_label: 'atlas', workspace_root: '/w/atlas', current_location: location,
+  })
+  assert.equal(at('/w/atlas'), 'atlas')
+  assert.equal(at('/w/atlas/src/api'), 'atlas/src/api')
+  assert.equal(at('/w/atlas-two'), '/w/atlas-two')
+  assert.equal(at(null), null)
 })

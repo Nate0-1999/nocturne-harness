@@ -5,7 +5,7 @@ import { RACK_MANIFESTS, useRackPlugin, useRackSnapshot } from './rack'
 import { Button, Select, TextField } from './kit'
 import { formatHumanCount } from './humanNumbers'
 import {
-  browseOrder, chipParts, formatPrice, modelLabel, parseBrowser, policyInForce, policyName, shortName, takesParameter,
+  browseOrder, currentEffort, formatPrice, modelLabel, modelMark, parseBrowser, policyName, shortName, takesParameter,
   type Configuration, type ModelBrowser, type SortKey,
 } from './modelBrowser'
 
@@ -40,8 +40,9 @@ interface ParameterSnapshot {
   changes: Change[]
 }
 
-/** FL-202: the conversation's model chip; it opens the browser (the Model Device). */
-export function ModelChip({ threadId, model }: { threadId: string | null, model: string | null }) {
+/** FL-205: the model list, the policies and this conversation's model, read again on every change. */
+// eslint-disable-next-line react-refresh/only-export-components -- the chip's read, shared with the thread list and the Deck
+export function useModelBrowser(threadId: string | null, model: string | null): ModelBrowser | null {
   const { events } = useRackPlugin()
   const [browser, setBrowser] = useState<ModelBrowser | null>(null)
   const [refresh, setRefresh] = useState(0)
@@ -56,13 +57,13 @@ export function ModelChip({ threadId, model }: { threadId: string | null, model:
       .catch(() => { if (live) setBrowser(null) })
     return () => { live = false }
   }, [events, threadId, model, refresh])
-  // SD-077: before the first answer the chip names what this conversation will start on.
-  const policy = browser === null ? null : policyInForce(browser, model)
-  const shown = model ?? policy?.model ?? null
-  const entry = browser?.models.find((item) => item.model === shown)
-  const effort = browser?.current?.model === shown ? browser.current.effort : null
-  const parts = chipParts(shown, entry, effort)
-  return (policy === null ? parts : [policyName(policy.policy), ...parts]).join(' · ')
+  return browser
+}
+
+/** FL-202: the conversation's model chip; it opens the browser (the Model Device). */
+export function ModelChip({ threadId, model }: { threadId: string | null, model: string | null }) {
+  const browser = useModelBrowser(threadId, model)
+  return modelMark(browser, model, currentEffort(browser, model), true)
 }
 
 export function ModelDevice() {

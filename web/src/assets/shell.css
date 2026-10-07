@@ -190,6 +190,24 @@
   scrollbar-color: var(--line-strong) transparent;
 }
 
+.thread-group {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* FL-205: the project, named once over its threads (the column-head role). */
+.thread-group__name {
+  padding: var(--space-4) var(--space-4) 0;
+  color: var(--muted);
+  font-family: var(--data-font);
+  font-size: var(--text-xs);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .thread-item {
   position: relative;
   flex: none; /* M3W5B-33: a row in the scrolling list never shrinks under its wrapped title */
@@ -284,20 +302,18 @@
   overflow-wrap: anywhere;
 }
 
-.thread-item--selected .thread-item__meta {
+.thread-item--selected .thread-item__meta,
+.thread-item--selected .thread-item__model {
   color: var(--muted);
 }
 
-.thread-item__location {
+/* FL-205: the conversation chip's model mark, whole words only. */
+.thread-item__model {
   grid-column: 1 / -1;
-  display: block;
   min-width: 0;
-  overflow: hidden;
-  color: var(--accent);
+  color: var(--dim);
   font-family: var(--data-font);
-  font-size: var(--text-xs);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: var(--text-sm);
 }
 
 .catalog-note {
@@ -482,9 +498,7 @@
 
 .chat-header__model-value {
   min-width: 0;
-  overflow: hidden;
   color: var(--muted);
-  text-overflow: ellipsis;
 }
 
 .chat-header__model-action {

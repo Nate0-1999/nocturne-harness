@@ -36,7 +36,8 @@ import { RecipeModule } from './RecipeModule'
 import { JobsModule } from './JobsModule'
 import { SecurityModule } from './SecurityModule'
 import { SymphonyDeck, latestDeckStacks, type DeckStack } from './SymphonyDeck'
-import { ModelChip, ModelDevice } from './ModelDevice'
+import { ModelChip, ModelDevice, useModelBrowser } from './ModelDevice'
+import { threadModelMark } from './modelBrowser'
 import { VitalsModule } from './VitalsModule'
 import { PalaceStateModule } from './PalaceStateModule'
 import { CuratorProposal } from './CuratorProposal'
@@ -126,6 +127,7 @@ import {
 } from './rackModuleTemplate'
 import { distinctThreadTitles, isLegacyFixtureTitle, visibleThreadTitle } from './threadTitles'
 import { ProjectSelector } from './ProjectSelector'
+import { locationInProject, projectGroups } from './projectPath'
 import {
   THEMES,
   applyTheme,
@@ -2039,6 +2041,10 @@ function ThreadsModule() {
     [snapshot.catalog, jobThreadIds],
   )
   const titles = useMemo(() => distinctThreadTitles(sortedCatalog), [sortedCatalog])
+  const selectedModel = snapshot.selectedThreadId === null
+    ? null
+    : snapshot.threads[snapshot.selectedThreadId]?.resolvedModel ?? selectedEntry?.model ?? null
+  const browser = useModelBrowser(snapshot.selectedThreadId, selectedModel)
   const fixtureThreadCount = snapshot.catalog.filter((entry) => isLegacyFixtureTitle(entry.title)).length
   const createThreadAtDraft = () => {
     const workspaceRoot = workspaceDraft.trim()
@@ -2206,7 +2212,11 @@ function ThreadsModule() {
           )}
 
       <nav className="thread-list" data-testid="thread-list" aria-label="Known threads">
-        {sortedCatalog.map((entry) => {
+        {/* FL-205: the project is named once, over its threads, never as a path. */}
+        {projectGroups(sortedCatalog).map((group) => (
+        <section className="thread-group" key={group.key} aria-label={group.name} data-testid="thread-group">
+          <h3 className="thread-group__name">{group.name}</h3>
+        {group.entries.map((entry) => {
           const runtime = snapshot.threads[entry.thread_id]
           const isSelected = entry.thread_id === snapshot.selectedThreadId
           const title = titles.get(entry.thread_id) ?? visibleThreadTitle(entry.title)
@@ -2229,6 +2239,8 @@ function ThreadsModule() {
                         ? `${runtime.messages.length} messages`
                         : 'Empty'
           const archiveDisabled = archiveBusyThreadId !== null || liveState !== undefined
+          // FL-205: the path lives in the tip.
+          const location = entry.current_location ?? entry.workspace_root
           return (
             <div
               key={entry.thread_id}
@@ -2239,7 +2251,7 @@ function ThreadsModule() {
                 className="thread-item__select"
                 type="button"
                 data-tooltip={title}
-                data-tooltip-detail="Open this thread."
+                data-tooltip-detail={location === null ? 'Open this thread.' : `Open this thread · ${location}`}
                 aria-current={isSelected ? 'page' : undefined}
                 onClick={() => {
                   selection.select({ kind: 'thread', id: entry.thread_id })
@@ -2249,15 +2261,10 @@ function ThreadsModule() {
                 }}
               >
                 <span className="thread-item__title">{title}</span>
-                <span className="thread-item__meta">
-                  <span>{detail}</span>
-                  <span>{shortId(entry.thread_id)}</span>
+                <span className="thread-item__meta">{detail}</span>
+                <span className="thread-item__model" data-testid="thread-model">
+                  {threadModelMark(browser, entry, isSelected ? { model: selectedModel } : null)}
                 </span>
-                {entry.current_location !== null && (
-                  <span className="thread-item__location" title={entry.current_location}>
-                    {entry.current_location}
-                  </span>
-                )}
               </Button>
               <Button action="archive" iconOnly
                 className="thread-item__archive"
@@ -2279,6 +2286,8 @@ function ThreadsModule() {
             </div>
           )
         })}
+        </section>
+        ))}
       </nav>
 
       {archiveFailure !== null && <p className="thread-archive-error" role="alert">{archiveFailure}</p>}
@@ -2337,8 +2346,8 @@ function ThreadWorkspaceContext({
         data-testid="thread-location"
         title={entry.current_location ?? undefined}
       >
-        WHERE · {/* M3W6B-14: a long path keeps its end, the folder the agent stands in. */}
-        <span className="thread-workspace__path"><bdi dir="ltr">{entry.current_location ?? 'Location unavailable'}</bdi></span>
+        WHERE · {/* M3W6B-14: a long path keeps its end; FL-205: it starts at the project, not a scratch path. */}
+        <span className="thread-workspace__path"><bdi dir="ltr">{locationInProject(entry) ?? 'Location unavailable'}</bdi></span>
       </span>
       <span className="project-selector__status" aria-live="polite">{status}</span>
     </form>

@@ -501,6 +501,19 @@ class RunLoop:
             if state.active is not None or state.queued
         ]
 
+    def thread_models(self) -> dict[str, dict[str, str | None]]:
+        """FL-205: each thread's model and thinking level in force, for the thread list."""
+
+        return {
+            thread_id: {
+                "model": state.resolved_model,
+                "effort": None
+                if state.model_resolution is None
+                else state.model_resolution.request_parameters.effort,
+            }
+            for thread_id, state in self._threads.items()
+        }
+
     def record_thread_location(self, thread_id: str, current_location: str) -> None:
         """Persist movement for one thread without touching any sibling."""
 
