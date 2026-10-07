@@ -9,7 +9,9 @@ letting decoration compete with owner data.
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
+from urllib.parse import quote, unquote
 
 from sigil_forge import elvish_strip, strip_svg
 
@@ -21,9 +23,92 @@ PARCHMENT = "#9a8768"
 PHOSPHOR = "#4be08a"
 ULTRAVIOLET = "#b46cf0"
 
+# SD-080: two layers of eight falling columns each — the glyph count is capped by the columns.
+RAIN_COLUMNS = (
+    ((2, 0.0), (15, 0.55), (28, 0.2), (41, 0.75), (54, 0.4), (67, 0.9), (80, 0.15), (93, 0.6)),
+    ((8, 0.3), (21, 0.85), (34, 0.1), (47, 0.65), (60, 0.45), (73, 0.05), (86, 0.7), (99, 0.35)),
+)
+RAIN_SPEEDS = (2.0, 1.4)  # rem per second, the near layer faster
+
+
+def rain_tile(strip: str) -> tuple[str, float]:
+    """One falling column: the strip brightens toward its head, then falls silent."""
+    match = re.search(r'width="(\d+)" height="(\d+)"', unquote(strip))
+    assert match is not None
+    width, height = (int(value) for value in match.groups())
+    tile = round(height * 1.5)
+    svg = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{tile}" '
+        f'viewBox="0 0 {width} {tile}"><defs><linearGradient id="t" x2="0" y2="1">'
+        '<stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff"/>'
+        f'</linearGradient><mask id="m"><rect width="{width}" height="{height}" fill="url(#t)"/>'
+        f'</mask></defs><image href="{strip}" width="{width}" height="{height}" '
+        'mask="url(#m)"/></svg>'
+    )
+    return "data:image/svg+xml," + quote(svg, safe=""), tile / width
+
+
+def stage_rain(theme: str, tiles: tuple[tuple[str, float], tuple[str, float]]) -> str:
+    """The scripts run down the Stage behind the modules, never over a data surface."""
+    viewport = ".stage-viewport:not(.stage-viewport--sheet)"
+    stage = f'html[data-theme="{theme}"] {viewport}'
+    blocks = [
+        f'html[data-theme="{theme}"] {{\n'
+        + "".join(
+            f'  --grimoire-stage-rain-{layer}: url("{uri}");\n'
+            for layer, (uri, _) in zip(("one", "two"), tiles, strict=True)
+        )
+        + "}",
+        f"{stage} {{\n  isolation: isolate;\n}}",
+    ]
+    for (_, ratio), columns, speed, pseudo, layer in zip(
+        tiles, RAIN_COLUMNS, RAIN_SPEEDS, ("::before", "::after"), ("one", "two"), strict=True
+    ):
+        height = round(ratio * 1.2, 4)  # the tile drawn 1.2rem wide
+        images = ", ".join(f"var(--grimoire-stage-rain-{layer})" for _ in columns)
+        positions = ", ".join(f"{x}% {round(offset * height, 3)}rem" for x, offset in columns)
+        name = f"grimoire-stage-rain-{theme}-{pseudo[2:]}"
+        blocks.append(
+            f"""{stage}{pseudo} {{
+  position: absolute;
+  z-index: -1;
+  top: -{height}rem;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-image: {images};
+  background-position: {positions};
+  background-repeat: repeat-y;
+  background-size: 1.2rem {height}rem;
+  content: "";
+  opacity: 0.5;
+  pointer-events: none;
+  animation: {name} {round(height / speed, 2)}s linear infinite;
+}}
+
+html[data-page-hidden][data-theme="{theme}"] {viewport}{pseudo} {{
+  animation-play-state: paused;
+}}
+
+@keyframes {name} {{
+  to {{ transform: translateY({height}rem); }}
+}}"""
+        )
+    return "\n\n".join(blocks)
+
 
 def render() -> str:
     """Render the frozen kit's strips as Rack-safe decorative CSS."""
+    rain = {
+        "wizard-mode": (
+            rain_tile(elvish_strip(9, AMBER, "wiz-rain1", vertical=True)),
+            rain_tile(elvish_strip(7, PARCHMENT, "wiz-rain2", vertical=True)),
+        ),
+        "technomancer": (
+            rain_tile(strip_svg(12, PHOSPHOR, "tec-rain1", vertical=True)),
+            rain_tile(strip_svg(10, ULTRAVIOLET, "tec-rain2", vertical=True)),
+        ),
+    }
     strips = {
         "wizard_head": elvish_strip(16, AMBER, "wiz-head"),
         "wizard_margin": elvish_strip(6, PARCHMENT, "wiz-margin", vertical=True),
@@ -260,6 +345,10 @@ html[data-theme="technomancer"] .rack-ambient::after {{
   animation: grimoire-scan 9s linear infinite;
 }}
 
+{stage_rain("wizard-mode", rain["wizard-mode"])}
+
+{stage_rain("technomancer", rain["technomancer"])}
+
 @keyframes grimoire-rune-inscribe {{
   from {{ width: 0; opacity: 0; }}
   35% {{ opacity: 0.95; }}
@@ -339,7 +428,11 @@ html[data-theme="technomancer"] .rack-ambient::after {{
   html[data-theme="wizard-mode"] .transcript__inner:has(.thread-empty)::before,
   html[data-theme="technomancer"] .transcript__inner:has(.thread-empty)::after,
   html[data-theme="technomancer"] .transcript__inner:has(.thread-empty)::before,
-  html[data-theme="technomancer"] .rack-ambient::after {{
+  html[data-theme="technomancer"] .rack-ambient::after,
+  html[data-theme="wizard-mode"] .stage-viewport::before,
+  html[data-theme="wizard-mode"] .stage-viewport::after,
+  html[data-theme="technomancer"] .stage-viewport::before,
+  html[data-theme="technomancer"] .stage-viewport::after {{
     animation: none !important;
   }}
 
