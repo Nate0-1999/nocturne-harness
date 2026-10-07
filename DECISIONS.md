@@ -4030,6 +4030,7 @@ parameter the model in use lists in the source's supported_parameters; a model w
 publishes no list (single-key endpoints) keeps all four. A value journaled while one model was
 in use stays journaled when the thread moves to a model that does not take it; the request
 still carries it, and OpenRouter ignores what a model does not support.
+
 Top K never reached OpenRouter: the OpenAI-compatible client sends only the settings OpenAI
 defines, so a journaled top_k left as null. The OpenRouter adapter now puts it in the request
 body beside the session id; direct providers keep the plain setting.
@@ -4144,6 +4145,7 @@ then saw both 30-second attempts stall on the exact 300-token fact (current-064-
 the default deadline is now 180 seconds, giving each attempt 90 seconds.
 An upload later split the old and new fees apart and lost the replacement from review;
 document splitting now keeps a correction's old-to-new relationship in one candidate.
+
 ## M4SY — Keep stopped work judgeable [P2, P3]
 
 PRECEDENT: F176, F180, PLAN M4SY. A stopped worker's committed change reaches the
@@ -4153,3 +4155,11 @@ Symphony explicitly opens deliberation. Dependencies are shared, while editable 
 and launchers remain specific to each worktree.
 After a lost initial response, restore any injection already created before repeating
 the one-shot prepare. Fresh attempts name their current round above historical feedback.
+
+## M4LN — Show the comparison and keep retrains observable [P1.2, P2.4]
+
+PRECEDENT: F152, M3LF, M3W6A/B. Real retrains completed after the client's 30-second
+deadline, and the expanded walk took 154 seconds; the retrain call permits 360 seconds.
+The console shows both held-out error and token totals, explains retained values,
+and exposes chronological feedback history. Its cadence copy names main-conversation
+compaction (D.2 144), replacing the obsolete signal-count promise.

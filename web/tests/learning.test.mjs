@@ -114,15 +114,15 @@ test('presents server-authored learning truth in human numbers', () => {
   )
 })
 
-/** A-051 distinguishes floor readiness from a completed retrain receipt. */
-test('describes the first background retrain honestly before a durable run exists', () => {
+/** SPEC D.2 144 retired the signal stride when main-thread compaction landed. */
+test('describes compaction-triggered retraining without promising a signal countdown', () => {
   assert.equal(
     learningCadenceCopy(learning()),
-    '7 authentic signals until the first background retrain',
+    'Background retraining runs when a main conversation compacts; 7 more authentic signals needed first.',
   )
   assert.equal(
     learningCadenceCopy(learning({ floor_met: true, remaining_to_floor: 0, signals_until_next_run: 0 })),
-    'Floor met · waiting for the first background retrain',
+    'Background retraining runs when a main conversation compacts. Current values keep serving until you activate a proposal.',
   )
   assert.equal(
     learningCadenceCopy(learning({
@@ -132,7 +132,7 @@ test('describes the first background retrain honestly before a durable run exist
       signals_since_last_run: 4,
       signals_until_next_run: 21,
     })),
-    '4 / 25 since the last retrain · 21 to next',
+    'Background retraining runs when a main conversation compacts. Current values keep serving until you activate a proposal.',
   )
 })
 

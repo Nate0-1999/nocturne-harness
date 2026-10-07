@@ -132,12 +132,9 @@ export function learningFloorCopy(learning: ScorerConsoleLearning): string {
 
 export function learningCadenceCopy(learning: ScorerConsoleLearning): string {
   if (!learning.floor_met) {
-    return `${learning.signals_until_next_run} authentic signals until the first background retrain`
+    return `Background retraining runs when a main conversation compacts; ${learning.remaining_to_floor} more authentic signals needed first.`
   }
-  if (learning.evaluated_through === null) {
-    return `Floor met · waiting for the first background retrain`
-  }
-  return `${learning.signals_since_last_run} / ${learning.retrain_signal_stride} since the last retrain · ${learning.signals_until_next_run} to next`
+  return 'Background retraining runs when a main conversation compacts. Current values keep serving until you activate a proposal.'
 }
 
 export function learningHygieneCopy(learning: ScorerConsoleLearning): string {
