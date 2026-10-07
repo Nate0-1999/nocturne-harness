@@ -19,36 +19,29 @@ html[data-theme="technomancer"] {
 }
 
 /* State-change conjurations are finite: mount, hover, focus, and message arrival. */
-html[data-theme="wizard-mode"] .rack-module__chrome,
-html[data-theme="technomancer"] .rack-module__chrome {
-  overflow: hidden;
-}
-
-html[data-theme="wizard-mode"] .rack-module__chrome::before,
-html[data-theme="technomancer"] .rack-module__chrome::before {
-  position: relative;
-  z-index: 0;
+/* The head strip follows the module name and yields first: the name reads whole (SD-078). */
+html[data-theme="wizard-mode"] .rack-module__drag::after,
+html[data-theme="technomancer"] .rack-module__drag::after {
   order: 1;
-  flex: 0 1000 7.5rem;
+  flex: 0 1000000 auto;
   min-width: 0;
   width: 7.5rem;
-  margin-right: 0.6rem;
   height: 1.15rem;
   content: "";
   pointer-events: none;
 }
 
-html[data-theme="wizard-mode"] .rack-module__chrome > :not(.rack-module__drag),
-html[data-theme="technomancer"] .rack-module__chrome > :not(.rack-module__drag) {
+html[data-theme="wizard-mode"] .rack-module__drag > .rack-module__attunement,
+html[data-theme="technomancer"] .rack-module__drag > .rack-module__attunement {
   order: 2;
 }
 
-html[data-theme="wizard-mode"] .rack-module__chrome::before {
+html[data-theme="wizard-mode"] .rack-module__drag::after {
   background: var(--grimoire-wizard-head) left center / auto 100% repeat-x;
   animation: grimoire-rune-inscribe 1.35s ease-out both;
 }
 
-html[data-theme="technomancer"] .rack-module__chrome::before {
+html[data-theme="technomancer"] .rack-module__drag::after {
   background: var(--grimoire-tech-head) left center / auto 100% repeat-x;
   filter: drop-shadow(0 0 4px #4be08a);
   animation: grimoire-glitch-in 950ms steps(12) both;
@@ -301,8 +294,8 @@ html[data-theme="technomancer"] .rack-ambient::after {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html[data-theme="wizard-mode"] .rack-module__chrome::before,
-  html[data-theme="technomancer"] .rack-module__chrome::before,
+  html[data-theme="wizard-mode"] .rack-module__drag::after,
+  html[data-theme="technomancer"] .rack-module__drag::after,
   html[data-theme="wizard-mode"] .rack-module__content::after,
   html[data-theme="technomancer"] .rack-module__content::before,
   html[data-theme="wizard-mode"] .message__label::after,
@@ -318,8 +311,8 @@ html[data-theme="technomancer"] .rack-ambient::after {
     animation: none !important;
   }
 
-  html[data-theme="wizard-mode"] .rack-module__chrome::before,
-  html[data-theme="technomancer"] .rack-module__chrome::before {
+  html[data-theme="wizard-mode"] .rack-module__drag::after,
+  html[data-theme="technomancer"] .rack-module__drag::after {
     width: 7.5rem;
     opacity: 0.42;
     clip-path: none;
