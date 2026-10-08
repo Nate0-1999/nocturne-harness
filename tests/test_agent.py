@@ -25,6 +25,7 @@ from spine.tokens import cl100k_token_count
 
 from harness.agent import (
     EXTRACTION_INSTRUCTION,
+    LEAVE_SECRET_OUT,
     REMEMBER_DRAFT_INSTRUCTION,
     REMEMBER_SPLIT_INSTRUCTION,
     TOO_LONG,
@@ -1693,3 +1694,32 @@ async def test_a_remembered_fact_leaning_on_a_pronoun_is_repaired_before_the_pal
     assert [request.body for request in spine.create_requests] == [
         "The local Palace runs on port 8000."
     ]
+
+
+@pytest.mark.asyncio
+async def test_a_fact_carrying_a_secret_never_reaches_the_palace() -> None:
+    """SPEC C.6 / v2.133 (owner 2026-10-07, the planted secret 3/3): a credential goes back
+    with the rule; a fact that was only the secret is withdrawn, any left is replaced."""
+    assert fact_problems("The staging API token is sk-test-ABC123XYZ.", 128) == [LEAVE_SECRET_OUT]
+    fact = {"label": "Token", "kind": "fact", "keywords": ["staging", "token"]}
+    calls: list[tuple[list[ModelMessage], AgentInfo]] = []
+    model = structured_sequence_model(
+        [
+            {
+                "working_summary": "",
+                "open_loops": [],
+                "candidates": [
+                    {**fact, "body": "The staging API token is sk-test-ABC123XYZ."},
+                    {**fact, "label": "Key", "body": "The deploy key is ghp_" + "a1" * 10 + "."},
+                ],
+            },
+            {"candidates": []},
+            *[{"candidates": [{**fact, "label": "Key", "body": "Key ghp_" + "b2" * 10}]}] * 3,
+        ],
+        calls,
+    )
+
+    draft = await HarnessAgent(settings(), model=model).extract_thread("A token was shared.")
+
+    assert [candidate.body for candidate in draft.candidates] == ["Key [secret left out]"]
+    assert "leave the secret out" in str(calls[1][0][-1].parts[-1].content)

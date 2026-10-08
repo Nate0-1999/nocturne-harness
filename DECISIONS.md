@@ -4187,8 +4187,10 @@ sources hold no user message or tool result is saved with "Unverified:" in front
 default strategy now keeps the last `keep` share of the conversation word for word (default
 20%, `/compact keep <percent>`) and replaces the rest with the triage summary; the owner
 ruled summarize and the default one strategy, so the name summarize is gone (a journal that
-saved it reads as the default). A trial fact quoted a planted token; the prompt now forbids
-any secret in any field, even to say one was shared. Each
+saved it reads as the default). Trial facts quoted a planted token on both models, so the
+prompt forbids any secret in any field and the code check adds a fourth rule: a credential-
+shaped token sends the fact back to leave it out (a fact that was only the secret may be
+withdrawn); one still present after three rounds is replaced before the Palace. Each
 compaction journals a record (the span with its mN ids, which messages were kept, every fact
 with its source ids and verdict), served at GET /v1/threads/{id}/compactions and opened from
 the "Conversation compacted" line.

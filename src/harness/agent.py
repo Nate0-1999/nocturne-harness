@@ -91,7 +91,9 @@ EXTRACTION_INSTRUCTION = (
     "to know: write each as a self-contained fact sentence that names its own subject and "
     "gets at the problem and its solution concisely. If the information will not fit in one "
     "fact of at most 128 cl100k_base tokens, break it at the cleanest place into two or more "
-    "facts that each stand alone. Keep what the user stated, decided or corrected unless it "
+    "facts that each stand alone. Give each independent fact its own candidate, even when "
+    "several would fit together under the cap. Keep what the user stated, decided or "
+    "corrected unless it "
     "only mattered for the moment. Leave out step-by-step progress and common knowledge. "
     "Never write a secret, credential, token, password or key into any field, not even to "
     "say that one was shared. A fact you derived lists in source_message_ids the message or "
@@ -895,7 +897,8 @@ class HarnessAgent:
     ) -> list[Any]:
         """v2.133: one loop for compaction, /remember and seeds. A fact that fails a check goes
         back through the SAME prompt with the rule it broke, up to three rounds; then the
-        shortest valid form is saved. Never a silent drop, never a bare refusal."""
+        shortest valid form is saved, any secret replaced. Never a silent drop, never a bare
+        refusal; only a fact that was nothing but a secret may be withdrawn."""
 
         limit = self._settings.memory_max_tokens
         checked: list[Any] = []
@@ -929,12 +932,19 @@ class HarnessAgent:
                         continue
                     if on_result is not None:
                         await on_result(result.all_messages())
-                    repaired.extend(
-                        [_with_sources(item, piece) for item in result.output.candidates] or [piece]
-                    )
+                    replacements = [_with_sources(item, piece) for item in result.output.candidates]
+                    # A fact that was only a secret is withdrawn; any other is never dropped.
+                    if replacements or LEAVE_SECRET_OUT not in problems:
+                        repaired.extend(replacements or [piece])
                 pieces = repaired
             checked.extend(
-                piece.model_copy(update={"body": _within_cap(piece.body.strip(), limit)})
+                piece.model_copy(
+                    update={
+                        "body": _within_cap(
+                            _SECRET.sub("[secret left out]", piece.body.strip()), limit
+                        )
+                    }
+                )
                 for piece in pieces
             )
         return checked
@@ -1104,6 +1114,13 @@ _BARE_PRONOUNS = frozenset(
     {"it", "its", "they", "them", "their", "theirs", "he", "him", "his", "she", "her", "hers"}
 )
 _LIST_ITEM = re.compile(r"(?m)^\s*(?:[-*\u2022]|\d+[.)])\s")
+# v2.133 "secrets left out": the credential shapes a fact must never carry to the Palace.
+_SECRET = re.compile(
+    r"\b(?:(?:sk|pk|rk)-[A-Za-z0-9_-]{8,}|gh[pousr]_[A-Za-z0-9]{16,}|github_pat_\w{20,}"
+    r"|xox[abprs]-[A-Za-z0-9-]{10,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}"
+    r"|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,})"
+)
+LEAVE_SECRET_OUT = "this memory contains a secret; leave the secret out"
 
 
 def fact_problems(body: str, memory_max_tokens: int) -> list[str]:
@@ -1119,6 +1136,8 @@ def fact_problems(body: str, memory_max_tokens: int) -> list[str]:
         )
     if len(_LIST_ITEM.findall(body)) > 1:
         problems.append("this memory lists several claims; give each claim its own memory")
+    if _SECRET.search(body):
+        problems.append(LEAVE_SECRET_OUT)
     return problems
 
 
