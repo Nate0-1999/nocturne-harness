@@ -66,7 +66,11 @@ export function policyName(policy: string): string {
 export function policyInForce(
   browser: Pick<ModelBrowser, 'chat_policy' | 'configurations'>, model: string | null,
 ): Configuration | null {
-  const configuration = browser.configurations.find((item) => item.policy === browser.chat_policy)
+  // FL-205: the Pinned card keeps the browsed conversation's model; a pinned policy picks its own.
+  const configuration = browser.configurations.find((item) => item.policy === browser.chat_policy) ??
+    (browser.chat_policy.startsWith('pinned:')
+      ? { policy: browser.chat_policy, model: browser.chat_policy.slice('pinned:'.length), reason: 'keeps this model' }
+      : undefined)
   return configuration !== undefined && (model === null || configuration.model === model) ? configuration : null
 }
 
@@ -86,6 +90,43 @@ export function modelLabel(model: string | null): string {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+/** FL-205: one model mark wherever a thread is named — the policy in force, the model and its
+ * thinking level; the conversation chip (`full`) adds the context window and the price. */
+export function modelMark(
+  browser: Pick<ModelBrowser, 'chat_policy' | 'configurations' | 'models'> | null,
+  model: string | null,
+  effort: string | null,
+  full = false,
+): string {
+  // SD-077: before the first answer a conversation names what it will start on.
+  const policy = browser === null ? null : policyInForce(browser, model)
+  const shown = model ?? policy?.model ?? null
+  const entry = browser?.models.find((item) => item.model === shown)
+  const parts = chipParts(shown, entry, effort)
+  const mark = full ? parts : parts.slice(0, entry?.reasoning ? 2 : 1)
+  return (policy === null ? mark : [policyName(policy.policy), ...mark]).join(' · ')
+}
+
+/** The thinking level the browser read for one conversation, when it names the model shown. */
+export function currentEffort(browser: ModelBrowser | null, model: string | null): string | null {
+  const shown = model ?? (browser === null ? null : policyInForce(browser, model)?.model ?? null)
+  return browser?.current?.model === shown ? browser.current.effort : null
+}
+
+/** FL-205: a listed thread's mark — the selected one from its live model and the browser's read
+ * (the catalog poll skips it), every other one from the catalog. */
+export function threadModelMark(
+  browser: ModelBrowser | null,
+  entry: { model?: string | null, effort?: string | null },
+  selected: { model: string | null } | null,
+): string {
+  const model = selected === null ? entry.model ?? null : selected.model
+  const effort = selected !== null && browser?.current != null
+    ? currentEffort(browser, model)
+    : entry.effort ?? null
+  return modelMark(browser, model, effort)
 }
 
 /** FL-202: the conversation chip reads model · thinking level · context window · price. */
