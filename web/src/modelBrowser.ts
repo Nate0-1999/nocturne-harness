@@ -66,7 +66,11 @@ export function policyName(policy: string): string {
 export function policyInForce(
   browser: Pick<ModelBrowser, 'chat_policy' | 'configurations'>, model: string | null,
 ): Configuration | null {
-  const configuration = browser.configurations.find((item) => item.policy === browser.chat_policy)
+  // FL-205: the Pinned card keeps the browsed conversation's model; a pinned policy picks its own.
+  const configuration = browser.configurations.find((item) => item.policy === browser.chat_policy) ??
+    (browser.chat_policy.startsWith('pinned:')
+      ? { policy: browser.chat_policy, model: browser.chat_policy.slice('pinned:'.length), reason: 'keeps this model' }
+      : undefined)
   return configuration !== undefined && (model === null || configuration.model === model) ? configuration : null
 }
 

@@ -44,6 +44,16 @@ test('the chip names the policy in force, never one this conversation left', () 
   assert.equal(policyInForce({ ...browser, chat_policy: 'elbow' }, 'openrouter:top'), null)
 })
 
+/** A-021 / P2: the browser's Pinned card keeps the open conversation's model, so a pinned policy
+ * names its own pick — a thread on it reads Pinned whichever conversation is open. */
+test('a pinned policy is in force on its own model while another conversation is open', () => {
+  const openOnMid = { policy: 'pinned:openrouter:mid', model: 'openrouter:mid', reason: 'keeps this model' }
+  const browser = { chat_policy: 'pinned:openrouter:top', configurations: [openOnMid] }
+  assert.equal(policyInForce(browser, 'openrouter:top')?.model, 'openrouter:top')
+  assert.equal(policyInForce(browser, null)?.model, 'openrouter:top')
+  assert.equal(policyInForce(browser, 'openrouter:mid'), null)
+})
+
 /** ADR-023 clause 3: the dialog offers only what the model takes; an unpublished list hides nothing. */
 test('the parameter dialog shows only the parameters the model takes', () => {
   const gpt = ['max_tokens', 'temperature', 'top_p']
