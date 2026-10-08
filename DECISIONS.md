@@ -4194,3 +4194,13 @@ withdrawn); one still present after three rounds is replaced before the Palace. 
 compaction journals a record (the span with its mN ids, which messages were kept, every fact
 with its source ids and verdict), served at GET /v1/threads/{id}/compactions and opened from
 the "Conversation compacted" line.
+
+## M4IN — A lost Palace request is tried again where resending is safe [P1.1]
+
+PRECEDENT: PLAN M4IN ALSO (owner 2026-10-07), FL-173, F062. Walks on a lossy network lost
+one Palace request in 20-40; each loss failed a whole step. The Palace client, the one path
+every call takes, now tries a lost request (cannot connect, timed out, dropped) twice more
+after 1 s and 3 s for GETs, the read-only POSTs (search, scores, graph, console, Symphony
+memory query) and the two writes the Palace treats as idempotent (approval decisions and a
+compaction's fact batch, whose resend is a hard duplicate). A refusal fails at once, and so
+does every other write: /remember's save, a split and a prepare stay loud.

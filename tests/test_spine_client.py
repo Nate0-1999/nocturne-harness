@@ -496,3 +496,64 @@ def test_search_default_is_literal_c4_value() -> None:
     assert SearchRequest(principal_id="principal-1", query="tabs", k=50).k == 50
     with pytest.raises(ValidationError):
         SearchRequest(principal_id="principal-1", query="tabs", k=True)
+
+
+@pytest.mark.asyncio
+async def test_a_lost_request_is_retried_only_where_resending_is_safe(monkeypatch) -> None:
+    """F062 / FL-173 (owner 2026-10-07, PLAN M4IN ALSO): reads and the idempotent writes are
+    tried twice more after a lost request; a refusal and /remember fail at once."""
+    import httpx
+
+    from harness import spine_client
+    from harness.spine_client import SpineClient, SpineProblemError, SpineTransportError
+
+    sleeps: list[float] = []
+
+    async def no_wait(delay: float) -> None:
+        sleeps.append(delay)
+
+    monkeypatch.setattr(spine_client.asyncio, "sleep", no_wait)
+    calls: list[str] = []
+    lost = {"count": 0}
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        calls.append(f"{request.method} {request.url.path}")
+        if lost["count"] > 0:
+            lost["count"] -= 1
+            raise httpx.ConnectError("lost", request=request)
+        if request.url.path.endswith("/v1/memories"):
+            return httpx.Response(
+                409,
+                headers={"Content-Type": "application/problem+json"},
+                json={"type": "about:blank", "title": "Conflict", "status": 409, "detail": "x"},
+            )
+        return httpx.Response(200, json={"results": []})
+
+    client = SpineClient("http://palace.test", "t", transport=httpx.MockTransport(respond))
+    lost["count"] = 2
+    response = await client._request("POST", "v1/search", json_body={})
+    assert response.status_code == 200 and sleeps == [1.0, 3.0] and len(calls) == 3
+
+    calls.clear(), sleeps.clear()
+    lost["count"] = 3
+    with pytest.raises(SpineTransportError):
+        await client._request("GET", "v1/curation")
+    assert len(calls) == 3
+
+    calls.clear(), sleeps.clear()
+    lost["count"] = 1
+    with pytest.raises(SpineTransportError):
+        await client._request("POST", "v1/memories", json_body={})
+    assert len(calls) == 1 and sleeps == []
+
+    calls.clear()
+    with pytest.raises(SpineProblemError):
+        spine_client._raise_problem(await client._request("POST", "v1/memories", json_body={}))
+    assert len(calls) == 1
+
+    for path in ("v1/extractions", "v1/approval-queue/01ABC/decisions"):
+        calls.clear()
+        lost["count"] = 1
+        await client._request("POST", path, json_body={})
+        assert len(calls) == 2
+    await client.aclose()
