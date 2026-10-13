@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import re
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -22,6 +22,7 @@ from spine.tokens import cl100k_token_count
 from harness.commands import remember_command_text
 from harness.config import HarnessSettings
 from harness.context_window import ReturnShareBounds, bounds_from
+from harness.memory_outbox import QueuedForPalace, never_reached_palace
 from harness.model_router import (
     CompletionRouter,
 )
@@ -37,9 +38,11 @@ from harness.pydantic_ai_adapter import (
 from harness.pydantic_harness_adapter import COMPACTION_SUMMARY_PROMPT
 from harness.spine_client import (
     CreateMemoryConflictError,
+    CreateMemoryRequest,
     DuplicateMemoryConflict,
     ListMemoriesParams,
     MemorySplitChild,
+    MemorySplitRequest,
     MemorySplitResponse,
     MemoryStatus,
     MemoryUnit,
@@ -545,10 +548,14 @@ class HarnessAgent:
                     SearchRequest(principal_id=context.principal_id, query=body, k=5)
                 )
             except SpineClientError as exc:
-                return RememberResult(
-                    False, f"Could not remember: {render_spine_error('search', exc)}"
-                )
-            for neighbor in neighbors.results:
+                # M4BW: unreached, the split still runs and waits in the outbox; the Palace
+                # dedups the family when it arrives.
+                if context.outbox is None or not never_reached_palace(exc):
+                    return RememberResult(
+                        False, f"Could not remember: {render_spine_error('search', exc)}"
+                    )
+                neighbors = None
+            for neighbor in neighbors.results if neighbors is not None else ():
                 if neighbor.body == body:
                     return await self._reinforce_duplicate_remember(context, neighbor.memory_id)
 
@@ -652,15 +659,32 @@ class HarnessAgent:
                 force=force,
             )
 
+        return await self._create_split_remember(body, children, context=context)
+
+    @staticmethod
+    async def _create_split_remember(
+        body: str,
+        children: list[MemorySplitChild],
+        *,
+        context: MemoryToolContext,
+        queued: MemorySplitRequest | None = None,
+    ) -> RememberResult:
+        """Write one split family, or say why none of it was saved."""
+
         try:
             response = await create_remembered_memory_split(
                 context,
                 source_body=body,
                 children=children,
+                queued=queued,
             )
+        except QueuedForPalace as waiting:
+            return RememberResult(True, str(waiting))
         except CreateMemoryConflictError as exc:
             return RememberResult(False, f"Could not remember: {render_create_conflict(exc)}")
         except SpineClientError as exc:
+            if queued is not None:
+                raise
             return RememberResult(False, f"Could not remember: {render_spine_error('save', exc)}")
 
         if not isinstance(response, MemorySplitResponse):
@@ -684,6 +708,32 @@ class HarnessAgent:
         )
 
     @staticmethod
+    async def replay_remember(
+        context: MemoryToolContext, payload: Mapping[str, object]
+    ) -> str | None:
+        """M4BW: a queued /remember meets the Palace's create law now (reinforce, ask, refuse).
+
+        Returns what it did not accept, in its own words, or None when it was saved.
+        """
+
+        if payload["shape"] == "split":
+            split = MemorySplitRequest.model_validate(payload["request"])
+            result = await HarnessAgent._create_split_remember(
+                split.source_body, split.children, context=context, queued=split
+            )
+        else:
+            single = CreateMemoryRequest.model_validate(payload["request"])
+            result = await HarnessAgent._create_single_remember(
+                single.body,
+                label=single.label,
+                keywords=single.keywords,
+                context=context,
+                force=single.force,
+                queued=single,
+            )
+        return None if result.ok else result.message
+
+    @staticmethod
     async def _create_single_remember(
         body: str,
         *,
@@ -691,6 +741,7 @@ class HarnessAgent:
         keywords: list[str],
         context: MemoryToolContext,
         force: bool = False,
+        queued: CreateMemoryRequest | None = None,
     ) -> RememberResult:
         """Persist the exact source through the unchanged ordinary create boundary."""
 
@@ -701,7 +752,10 @@ class HarnessAgent:
                 body=body,
                 keywords=keywords,
                 force=force,
+                queued=queued,
             )
+        except QueuedForPalace as waiting:
+            return RememberResult(True, str(waiting))
         except CreateMemoryConflictError as exc:
             if isinstance(exc.conflict, DuplicateMemoryConflict):
                 return await HarnessAgent._reinforce_duplicate_remember(
@@ -718,6 +772,9 @@ class HarnessAgent:
                     keywords=keywords,
                     context=context,
                     force=force,
+                    queued=None
+                    if queued is None
+                    else queued.model_copy(update={"label": source_label}),
                 )
             return RememberResult(
                 False,
@@ -726,6 +783,8 @@ class HarnessAgent:
                 "/remember again with a more specific fact.",
             )
         except SpineClientError as exc:
+            if queued is not None:
+                raise  # an outbox replay stops here and keeps its place in the queue
             return RememberResult(False, f"Could not remember: {render_spine_error('save', exc)}")
 
         if isinstance(response, SimilarMemoriesResponse):

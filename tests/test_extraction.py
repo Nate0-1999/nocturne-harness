@@ -532,3 +532,53 @@ async def test_a_fact_verified_by_a_tool_result_stays_unmarked(tmp_path: Path) -
         "The mock server listens on port 4317.",
         "Unverified: The mock server restarts on file changes.",
     ]
+
+
+@pytest.mark.asyncio
+async def test_unreached_palace_queues_the_facts_and_replays_them_on_reconnect(
+    tmp_path: Path,
+) -> None:
+    """ADR-003 / A-079: with the Palace unreached, admission finishes into the outbox (the
+    facts as plain new candidates, verdicts left to the Palace) and replays unchanged.
+    """
+    import httpx
+
+    from harness.envelope import EnvelopeFactory
+    from harness.memory_outbox import MemoryOutbox
+
+    thread_id = uuid4()
+    journal = _journal(tmp_path / "transcripts", str(thread_id), datetime.now(UTC))
+    spine = FakeSpine()
+    verdicts = []
+
+    async def unreached_search(request):
+        error = SpineTransportError()
+        error.__cause__ = httpx.ConnectError("refused")
+        raise error
+
+    class Agent(FakeAgent):
+        async def propose_extraction_verdict(self, candidate, neighbors):
+            verdicts.append(candidate)
+            return await super().propose_extraction_verdict(candidate, neighbors)
+
+    spine.search = unreached_search
+    outbox = MemoryOutbox(tmp_path / "outbox", ids=EnvelopeFactory(machine_id="mac"))
+    service = ExtractionService(
+        journal=journal,
+        agent=Agent(),
+        spine=spine,
+        principal_id="owner",
+        machine_id="mac",
+        outbox=outbox,
+    )
+
+    result = await service.archive(thread_id)
+
+    assert result.cards == [] and verdicts == [] and spine.requests == []
+    [item] = outbox.waiting()
+    assert (item.kind, item.label) == ("extraction", "1 fact from a compaction")
+    await service.replay(item.payload)
+    [sent] = spine.requests
+    assert [(c.verdict, c.body) for c in sent.candidates] == [
+        ("new", "Thread-born memory candidates require owner consent.")
+    ]
