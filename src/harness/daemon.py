@@ -3,6 +3,7 @@
 import argparse
 import asyncio
 import json
+import logging
 import os
 import subprocess
 from collections.abc import Awaitable, Callable, Mapping, Sequence
@@ -54,6 +55,7 @@ from harness.extraction import ExtractionIdleScheduler, ExtractionService, Threa
 from harness.jobs import JobScheduler, WorkflowModelResolver, WorkflowTurnRunner
 from harness.lifecycle import discard_prepared_restore, prepare_local_restore
 from harness.memory_gate import MemoryGateTurnRunner
+from harness.memory_outbox import MemoryOutbox, QueuedWrite
 from harness.memory_panel import MemoryPanelController, ThreadMemoryContextRegistry
 from harness.model_policy import (
     ModelCatalogUnavailable,
@@ -65,6 +67,7 @@ from harness.model_policy import (
 )
 from harness.model_router import CompletionRouter, ModelConfigurationError
 from harness.onboarding import load_config, nocturne_home, set_transcript_backup
+from harness.palace_mirror import LocalCopySnapshot, PalaceMirror
 from harness.parameter_registry import (
     ParameterSnapshot,
     ParameterWriteRequest,
@@ -123,6 +126,10 @@ from harness.transcript import TranscriptJournal, TranscriptJournalUnavailable
 from harness.transcript_sync import TranscriptSyncEngine
 
 DEFAULT_WEB_DIST = Path(__file__).resolve().parents[2] / "web" / "dist"
+# M4BW: how often the local Palace copy refreshes while connected, and retries while not.
+LOCAL_COPY_REFRESH_SECONDS = 60
+LOCAL_COPY_RETRY_SECONDS = 15
+logger = logging.getLogger(__name__)
 DEFAULT_WEB_ROOT = DEFAULT_WEB_DIST.parent
 MISSING_WEB_BUILD_MESSAGE = (
     "Nocturne's web app is missing. Build it with `npm ci && npm run build` in the "
@@ -1016,6 +1023,8 @@ def create_dev_app(
     context_windows = ContextWindowTracker()
     overwhelm = OverwhelmTracker(owned_agent.return_share_bounds, home / "overwhelm-cuts.jsonl")
     receipt_queue = SpendReceiptQueue(home / "receipt-queue")
+    local_copy = PalaceMirror(home / "local-copy.sqlite3")
+    outbox = MemoryOutbox(home / "memory-outbox", ids=factory)
     spend_walls = SpendWalls(
         home / "spend-walls.json", owned_spine, lambda: owned_spine.spend_table()
     )
@@ -1112,6 +1121,8 @@ def create_dev_app(
         contexts=memory_contexts,
         on_context_changed=publish_ambient_memory_panel,
         delete_memory=delete_memory_from_gate,
+        mirror=local_copy,
+        outbox=outbox,
     )
 
     def browser_consent_was_journaled(thread_id: str) -> bool:
@@ -1554,7 +1565,60 @@ def create_dev_app(
         async def flush_receipt_queue() -> None:
             await receipt_queue.flush(owned_spine)
 
+        async def push_queued_write(item: QueuedWrite) -> str | None:
+            if item.kind == "delete":
+                return await panel.delete_queued(UUID(str(item.payload["memory_id"])))
+            raise ValueError(f"unknown outbox write {item.kind!r}")
+
+        async def keep_local_copy() -> None:
+            """M4BW: push the outbox oldest first, then refresh the copy, while the daemon runs."""
+            while True:
+                reachable = False
+                try:
+                    await outbox.flush(push_queued_write)
+                    await local_copy.refresh(owned_spine, principal_id)
+                    reachable = True
+                except SpineClientError:
+                    pass
+                except Exception:
+                    logger.warning("local Palace copy refresh failed", exc_info=True)
+                waiting = bool(outbox.waiting())
+                await asyncio.sleep(
+                    LOCAL_COPY_REFRESH_SECONDS
+                    if reachable and not waiting
+                    else LOCAL_COPY_RETRY_SECONDS
+                )
+
+        local_copy_task: asyncio.Task[None] | None = None
+
+        async def start_local_copy() -> None:
+            nonlocal local_copy_task
+            local_copy_task = asyncio.create_task(keep_local_copy())
+
+        async def stop_local_copy() -> None:
+            if local_copy_task is not None:
+                local_copy_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await local_copy_task
+
+        @app.get("/v1/local-copy")
+        async def read_local_copy() -> LocalCopySnapshot:
+            return LocalCopySnapshot(
+                as_of=local_copy.as_of(),
+                memories=local_copy.memory_count(),
+                waiting=outbox.waiting(),
+                returned=outbox.returned(),
+            )
+
+        @app.post("/v1/local-copy/returned/{uid}/dismiss")
+        async def dismiss_returned_write(uid: str) -> dict[str, bool]:
+            if not outbox.dismiss(uid):
+                raise HTTPException(404, "That card is already gone.")
+            return {"dismissed": True}
+
         app.router.add_event_handler("startup", flush_receipt_queue)
+        app.router.add_event_handler("startup", start_local_copy)
+        app.router.add_event_handler("shutdown", stop_local_copy)
         app.router.add_event_handler("startup", restore_symphonies)
         app.router.add_event_handler("startup", extraction.backfill_projects)
         if idle_extraction is not None:

@@ -244,8 +244,10 @@ function keepMemoryNotice(previous: HarnessError | null, incoming: HarnessError)
     typeof error?.detail === 'object' && error.detail !== null && !Array.isArray(error.detail)
       ? error.detail[key]
       : undefined
-  return field(previous, 'code') === 'memory_unavailable' &&
-    field(incoming, 'code') !== 'memory_unavailable' &&
+  const memory = (error: HarnessError | null) =>
+    ['memory_unavailable', 'memory_local_copy'].includes(String(field(error, 'code')))
+  return memory(previous) &&
+    !memory(incoming) &&
     field(previous, 'run_id') === field(incoming, 'run_id')
     ? { ...incoming, message: `${previous?.message} ${incoming.message}` }
     : incoming
