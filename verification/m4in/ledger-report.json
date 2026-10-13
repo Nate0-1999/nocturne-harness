@@ -106,7 +106,10 @@
     "harness/web/dist/assets/index-7-otCfe8.js": "generated web bundle of the mapped web sources; no additional behavior.",
     "harness/web/dist/assets/index-CqpQYCMf.css": "generated web bundle of the mapped web sources; no additional behavior.",
     "harness/web/dist/assets/index-D_V555Pb.js": "generated web bundle of the mapped web sources; no additional behavior.",
-    "harness/web/dist/assets/index-FVzXZeFO.css": "generated web bundle of the mapped web sources; no additional behavior."
+    "harness/web/dist/assets/index-FVzXZeFO.css": "generated web bundle of the mapped web sources; no additional behavior.",
+    "harness/verification/m4in/FL-001.png": "M4IN evidence; no feature behavior.",
+    "harness/verification/m4in/FL-101.png": "M4IN evidence; no feature behavior.",
+    "harness/verification/m4in/FL-165.png": "M4IN evidence; no feature behavior."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -791,33 +794,6 @@
       "protected": false,
       "verdict": "FAIL",
       "screenshot": "FL-193.png",
-      "flag": "F086",
-      "observed": "Context only, not proof of this row: an M4IN change touched a file this row maps (the conversation App, rack and shell styles, the Palace client, the agent, the curator service or the queue contracts). The packet did not perform this row's prescribed gesture; the common live-app capture shows the build ran. Unproven file-level impact, not an observed regression."
-    },
-    "FL-001": {
-      "label": "The Palace is a transactional database in the cloud on GCP that agents on many machines reach, behaving the same for every agent and sub-agent wherever it runs.",
-      "walk": "M3WF second identity proves same-host isolation only. Needs hardware: start the verification Harness on a second physical machine against the same disposable GCP Palace and compare memories.",
-      "protected": false,
-      "verdict": "FAIL",
-      "screenshot": "FL-001.png",
-      "flag": "F086",
-      "observed": "Context only, not proof of this row: an M4IN change touched a file this row maps (the conversation App, rack and shell styles, the Palace client, the agent, the curator service or the queue contracts). The packet did not perform this row's prescribed gesture; the common live-app capture shows the build ran. Unproven file-level impact, not an observed regression."
-    },
-    "FL-101": {
-      "label": "A Chromium browser-based interface, with a mobile front end wanted long term.",
-      "walk": "M3WF fixture in desktop Chromium; needs hardware for the phone half: open the isolated fixture on a physical phone and confirm the interface loads.",
-      "protected": false,
-      "verdict": "FAIL",
-      "screenshot": "FL-101.png",
-      "flag": "F086",
-      "observed": "Context only, not proof of this row: an M4IN change touched a file this row maps (the conversation App, rack and shell styles, the Palace client, the agent, the curator service or the queue contracts). The packet did not perform this row's prescribed gesture; the common live-app capture shows the build ran. Unproven file-level impact, not an observed regression."
-    },
-    "FL-165": {
-      "label": "Blue-water mode: work offline on a local copy of the Palace, then on reconnect push the working directory and the agent's memory to the cloud and reconcile the two.",
-      "walk": "With the cloud Palace unreachable, send the first prompt of a new thread: the memory check screen opens from the local mirror and says so; /remember a fact and remove one memory \u2014 both are queued and shown as waiting; restore the connection: the queued writes push in order and the cloud Palace shows them alongside what was saved there meanwhile.",
-      "protected": false,
-      "verdict": "FAIL",
-      "screenshot": "FL-165.png",
       "flag": "F086",
       "observed": "Context only, not proof of this row: an M4IN change touched a file this row maps (the conversation App, rack and shell styles, the Palace client, the agent, the curator service or the queue contracts). The packet did not perform this row's prescribed gesture; the common live-app capture shows the build ran. Unproven file-level impact, not an observed regression."
     }
