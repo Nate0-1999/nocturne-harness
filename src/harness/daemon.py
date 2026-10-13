@@ -999,6 +999,7 @@ def create_dev_app(
                 thread_id=parsed_thread_id,
                 project_key=project_key,
                 toolset_enabled=False,
+                outbox=outbox,
             )
         workspace_toolset = workspace_toolset_for(thread_id)
         location = workspace_toolset.location()
@@ -1017,6 +1018,7 @@ def create_dev_app(
             ),
             memory_enabled=workflow.memory_scope != "none" if workflow else True,
             skill_directories=discover_skill_libraries(location.workspace_root, location.cwd),
+            outbox=outbox,
         )
 
     memory_contexts = ThreadMemoryContextRegistry()
@@ -1104,6 +1106,7 @@ def create_dev_app(
         spine=owned_spine,
         principal_id=principal_id,
         machine_id=machine_id,
+        outbox=outbox,
     )
     runner = MemoryGateTurnRunner(
         PydanticAITurnRunner(
@@ -1568,6 +1571,19 @@ def create_dev_app(
         async def push_queued_write(item: QueuedWrite) -> str | None:
             if item.kind == "delete":
                 return await panel.delete_queued(UUID(str(item.payload["memory_id"])))
+            if item.kind == "extraction":
+                await extraction.replay(item.payload)
+                return None
+            if item.kind == "remember":
+                return await HarnessAgent.replay_remember(
+                    MemoryToolContext(
+                        spine=owned_spine,
+                        principal_id=principal_id,
+                        machine_id=machine_id,
+                        agent_id=agent_id,
+                    ),
+                    item.payload,
+                )
             raise ValueError(f"unknown outbox write {item.kind!r}")
 
         async def keep_local_copy() -> None:

@@ -41,6 +41,8 @@ from harness.agent import (
     resolve_model,
 )
 from harness.config import HarnessSettings
+from harness.envelope import EnvelopeFactory
+from harness.memory_outbox import MemoryOutbox
 from harness.spine_client import (
     CreatedMemoryResponse,
     CreateMemoryConflictError,
@@ -1723,3 +1725,68 @@ async def test_a_fact_carrying_a_secret_never_reaches_the_palace() -> None:
 
     assert [candidate.body for candidate in draft.candidates] == ["Key [secret left out]"]
     assert "leave the secret out" in str(calls[1][0][-1].parts[-1].content)
+
+
+def unreached(cause: Exception) -> SpineTransportError:
+    error = SpineTransportError()
+    error.__cause__ = cause
+    return error
+
+
+def label_model() -> TestModel:
+    return TestModel(
+        call_tools=[],
+        custom_output_text=json.dumps({"label": "Boat mooring", "keywords": ["boat", "pier"]}),
+    )
+
+
+@pytest.mark.asyncio
+async def test_unreached_remember_waits_in_the_outbox_and_replays_through_the_palace(
+    tmp_path,
+) -> None:
+    """ADR-003 / A-079: a /remember the Palace never received is saved locally and shown
+    waiting; on reconnect the same request meets the Palace's create law.
+    """
+    spine = FakeSpine(unreached(httpx.ConnectError("refused")))
+    outbox = MemoryOutbox(tmp_path, ids=EnvelopeFactory(machine_id="machine-1"))
+    held = replace(context(spine), outbox=outbox)
+
+    result = await HarnessAgent(settings(), model=label_model()).remember(
+        "The keeper's boat is moored at pier four.", context=held
+    )
+
+    assert result.ok and result.message.startswith("Saved on this machine")
+    assert "1 queued write" in result.message
+    [item] = outbox.waiting()
+    assert (item.kind, item.label, item.payload["shape"]) == ("remember", "Boat mooring", "single")
+
+    spine.outcome = CreatedMemoryResponse(created=memory_unit())
+    assert await HarnessAgent.replay_remember(context(spine), item.payload) is None
+    assert spine.create_requests[1] == spine.create_requests[0]
+
+    spine.outcome = similar_response()
+    refusal = await HarnessAgent.replay_remember(context(spine), item.payload)
+    assert refusal is not None and refusal.startswith("Not saved: this looks similar to")
+
+
+@pytest.mark.asyncio
+async def test_a_remember_that_may_have_landed_still_fails_loudly(tmp_path) -> None:
+    """A-079 / F165: after a timeout the Palace may hold the fact, so a resend could count it
+    twice (owner, FL-173); the outbox takes only what never reached the Palace.
+    """
+    spine = FakeSpine(unreached(httpx.ReadTimeout("sent, no answer")))
+    outbox = MemoryOutbox(tmp_path, ids=EnvelopeFactory(machine_id="machine-1"))
+
+    result = await HarnessAgent(settings(), model=label_model()).remember(
+        "The keeper's boat is moored at pier four.", context=replace(context(spine), outbox=outbox)
+    )
+
+    assert not result.ok and result.message.startswith("Could not remember")
+    assert outbox.waiting() == []
+
+    spine.outcome = unreached(httpx.ConnectError("refused"))
+    with pytest.raises(SpineTransportError):
+        await HarnessAgent.replay_remember(
+            context(spine),
+            {"shape": "single", "request": spine.create_requests[0].model_dump(mode="json")},
+        )

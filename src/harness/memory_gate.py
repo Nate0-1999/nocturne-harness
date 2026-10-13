@@ -474,6 +474,7 @@ class MemoryGateTurnRunner:
         scores, so the choices shape this conversation only, and ×! deletes wait in the outbox.
         """
 
+        # A-079: run() reaches here only when it holds both the copy and the outbox.
         assert self._mirror is not None and self._outbox is not None
         removed, added_back, deleted = [], [], []
         if prepared.injected or prepared.near_misses:

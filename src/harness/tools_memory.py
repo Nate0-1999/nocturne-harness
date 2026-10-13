@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from harness.context_window import ContextCut, ReturnShare
     from harness.toolset import StandardToolset
 
+from harness.memory_outbox import MemoryOutbox, QueuedForPalace, never_reached_palace
 from harness.progressive_prompt import workspace_location_path
 from harness.spine_client import (
     CreatedMemoryResponse,
@@ -91,6 +92,7 @@ class MemoryToolContext:
     delegate: Callable[[str, float | None], Awaitable[str]] | None = None
     return_share: ReturnShare | None = None
     record_cut: Callable[[ContextCut, str], Awaitable[None]] | None = None
+    outbox: MemoryOutbox | None = None
     _run_state: _MemoryToolRunState = field(
         default_factory=_MemoryToolRunState,
         repr=False,
@@ -245,26 +247,33 @@ async def create_remembered_memory(
     body: str,
     keywords: list[str],
     force: bool = False,
+    queued: CreateMemoryRequest | None = None,
 ) -> CreateMemoryResponse:
-    """Create the user-authored fact in the thread's authoritative project."""
+    """Create the user-authored fact in the thread's authoritative project.
 
-    return await context.spine.create_memory(
-        CreateMemoryRequest(
-            principal_id=context.principal_id,
-            label=label,
-            body=body,
-            kind=MemoryKind.FACT,
-            keywords=keywords,
-            project_key=context.project_key,
-            thread_origin=str(context.thread_id) if context.thread_id is not None else None,
-            origin_thread_id=context.thread_id,
-            origin_path=context.current_origin_path(),
-            origin_location=context.current_origin_location(),
-            editor="user",
-            machine_id=context.machine_id,
-            force=force,
-        )
+    ``queued`` replays an outbox request exactly as it was made (M4BW).
+    """
+
+    request = queued or CreateMemoryRequest(
+        principal_id=context.principal_id,
+        label=label,
+        body=body,
+        kind=MemoryKind.FACT,
+        keywords=keywords,
+        project_key=context.project_key,
+        thread_origin=str(context.thread_id) if context.thread_id is not None else None,
+        origin_thread_id=context.thread_id,
+        origin_path=context.current_origin_path(),
+        origin_location=context.current_origin_location(),
+        editor="user",
+        machine_id=context.machine_id,
+        force=force,
     )
+    try:
+        return await context.spine.create_memory(request)
+    except SpineClientError as exc:
+        _queue_unreached(context, exc, queued, label, "single", request)
+        raise
 
 
 async def create_remembered_memory_split(
@@ -272,23 +281,49 @@ async def create_remembered_memory_split(
     *,
     source_body: str,
     children: list[MemorySplitChild],
+    queued: MemorySplitRequest | None = None,
 ) -> CreateMemorySplitResponse:
     """Atomically create one user-authored split family in the thread's project."""
 
-    return await context.spine.create_memory_split(
-        MemorySplitRequest(
-            principal_id=context.principal_id,
-            source_body=source_body,
-            project_key=context.project_key,
-            children=children,
-            thread_origin=str(context.thread_id) if context.thread_id is not None else None,
-            origin_thread_id=context.thread_id,
-            origin_path=context.current_origin_path(),
-            origin_location=context.current_origin_location(),
-            editor="user",
-            machine_id=context.machine_id,
-        )
+    request = queued or MemorySplitRequest(
+        principal_id=context.principal_id,
+        source_body=source_body,
+        project_key=context.project_key,
+        children=children,
+        thread_origin=str(context.thread_id) if context.thread_id is not None else None,
+        origin_thread_id=context.thread_id,
+        origin_path=context.current_origin_path(),
+        origin_location=context.current_origin_location(),
+        editor="user",
+        machine_id=context.machine_id,
     )
+    try:
+        return await context.spine.create_memory_split(request)
+    except SpineClientError as exc:
+        label = ", ".join(child.label for child in request.children)
+        _queue_unreached(context, exc, queued, label, "split", request)
+        raise
+
+
+def _queue_unreached(
+    context: MemoryToolContext,
+    exc: SpineClientError,
+    queued: object | None,
+    label: str,
+    shape: str,
+    request: CreateMemoryRequest | MemorySplitRequest,
+) -> None:
+    """A-079: a /remember the Palace provably never received waits in the outbox.
+
+    A request that may have landed (a timeout) still fails loudly: a resend must never make
+    the Palace count the fact twice (owner, FL-173).
+    """
+
+    if queued is None and context.outbox is not None and never_reached_palace(exc):
+        context.outbox.enqueue(
+            "remember", label, {"shape": shape, "request": request.model_dump(mode="json")}
+        )
+        raise QueuedForPalace(len(context.outbox.waiting())) from exc
 
 
 async def _resolve_active_memory(

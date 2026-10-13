@@ -31,6 +31,18 @@ from harness.spine_client import (
 type OutboxKind = Literal["delete", "remember", "extraction"]
 
 
+class QueuedForPalace(Exception):  # noqa: N818 - a signal, not a failure
+    """A write the Palace never received now waits in the outbox; the reply says so."""
+
+    def __init__(self, waiting: int) -> None:
+        self.waiting = waiting
+        super().__init__(
+            "Saved on this machine: the Palace is unreachable, so this waits with "
+            f"{waiting} queued write{'s' if waiting != 1 else ''} and goes to the Palace when it "
+            "is back."
+        )
+
+
 class QueuedWrite(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -166,6 +178,7 @@ class MemoryOutbox:
 
 __all__ = [
     "MemoryOutbox",
+    "QueuedForPalace",
     "QueuedWrite",
     "ReturnedWrite",
     "never_reached_palace",
