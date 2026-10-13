@@ -10,6 +10,7 @@ import './assets/shell.css'
 import './assets/rack.css'
 import './themes/materials.css'
 import './themes/grimoire.generated.css'
+import './themes/ornament.generated.css'
 
 const isRackModuleDocument = new URLSearchParams(globalThis.location.search).has('rack_module')
 document.documentElement.toggleAttribute('data-rack-module-document', isRackModuleDocument)
