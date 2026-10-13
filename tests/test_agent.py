@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-from copy import deepcopy
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import Path
@@ -22,18 +21,23 @@ from pydantic_ai.messages import (
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 from pydantic_ai.models.test import TestModel
 from pydantic_ai.usage import RunUsage
+from spine.tokens import cl100k_token_count
 
 from harness.agent import (
+    EXTRACTION_INSTRUCTION,
+    LEAVE_SECRET_OUT,
     REMEMBER_DRAFT_INSTRUCTION,
-    REMEMBER_SPLIT_GUIDANCE,
     REMEMBER_SPLIT_INSTRUCTION,
+    TOO_LONG,
     ChatResult,
     ExtractionCandidateDraft,
+    ExtractionDraft,
     HarnessAgent,
     ModelConfigurationError,
     RememberDraft,
     RememberResult,
     RememberSplitDraft,
+    fact_problems,
     resolve_model,
 )
 from harness.config import HarnessSettings
@@ -582,26 +586,18 @@ async def test_label_agent_is_separate_and_has_no_tools() -> None:
 
 @pytest.mark.asyncio
 async def test_a049_remember_splitter_is_tools_free_and_lossless_by_instruction() -> None:
-    """F027, A-049, A-050, ADR-022, and SPEC B.6 rule 12 are defended here.
-    The semantic splitter must be a separate tools-free boundary that preserves complete claims.
+    """F027, A-049, v2.133 and SPEC B.6 rule 12 are defended here.
+    The semantic splitter is a separate tools-free boundary; the application keeps the source.
     """
     calls: list[tuple[list[ModelMessage], AgentInfo]] = []
     model = structured_sequence_model(
         [
             {
-                "safe_to_save": True,
                 "candidates": [
                     {
                         "label": "Garden cadence",
                         "body": "The garden review happens weekly.",
                         "keywords": ["garden", "cadence"],
-                    }
-                ],
-                "coverage": [
-                    {
-                        "text": "The garden review happens weekly.",
-                        "classification": "durable",
-                        "candidate_index": 0,
                     }
                 ],
             }
@@ -618,25 +614,17 @@ async def test_a049_remember_splitter_is_tools_free_and_lossless_by_instruction(
     assert calls[0][1].output_tools == []
     assert calls[0][1].instructions is not None
     assert calls[0][1].instructions.startswith(REMEMBER_SPLIT_INSTRUCTION)
-    assert "Shorten an over-cap fact into one concise" in calls[0][1].instructions
-    assert "Split only when there is more than one distinct fact" in calls[0][1].instructions
+    assert "self-contained fact sentence that names its own subject" in calls[0][1].instructions
+    assert "Split only where there is more than one distinct fact" in calls[0][1].instructions
+    assert "broken at its cleanest seam into finer facts" in calls[0][1].instructions
+    assert "only repetition is shortened" in calls[0][1].instructions
     assert "prefer 2-5 words and under 40 characters" in calls[0][1].instructions
-    assert "at most 128 cl100k_base tokens" in calls[0][1].instructions
-    assert "never as durable facts or candidates" in calls[0][1].instructions
-    assert "concatenates byte-for-byte to the complete source" in calls[0][1].instructions
-    assert "never emit a blank or whitespace-only segment" in calls[0][1].instructions
-    assert "internal reference is resolved" in calls[0][1].instructions
-    assert "First, Second, and Third" in calls[0][1].instructions
-    assert "MUST still appear byte-for-byte in coverage" in calls[0][1].instructions
-    assert "coverage segment that fits the cap" in calls[0][1].instructions
-    assert "JSON strings must never trim it" in calls[0][1].instructions
-    assert "safe_to_save true only" in calls[0][1].instructions
+    assert "never facts" in calls[0][1].instructions
+    assert "The application keeps the exact source" in calls[0][1].instructions
+    assert "coverage" not in calls[0][1].instructions
     schema = RememberSplitDraft.model_json_schema()
-    candidate_label = schema["$defs"]["RememberSplitCandidate"]["properties"]["label"]
-    coverage_text = schema["$defs"]["RememberCoverageSegment"]["properties"]["text"]
-    assert candidate_label["maxLength"] == 64
-    assert "Never whitespace-only" in coverage_text["description"]
-    assert "Never trim it" in coverage_text["description"]
+    assert set(schema["properties"]) == {"candidates"}
+    assert schema["$defs"]["RememberSplitCandidate"]["properties"]["label"]["maxLength"] == 64
 
 
 @pytest.mark.asyncio
@@ -749,32 +737,16 @@ async def test_remember_uses_selected_model_once_without_tools_and_maps_project_
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "whole_source,redundant_coverage",
-    [(False, False), (True, False), (True, True)],
-)
-async def test_m3fd_long_single_fact_shortens_without_splitting(
-    whole_source: bool,
-    redundant_coverage: bool,
-) -> None:
+async def test_m3fd_long_single_fact_shortens_without_splitting() -> None:
     """SPEC B.6 / SD-062: length alone never turns one fact into a split family."""
     source = ("The verification release color is amber. " * 30).strip()
     body = "The verification release color is amber."
     model = structured_sequence_model(
         [
             {
-                "safe_to_save": True,
-                "whole_source": whole_source,
                 "candidates": [
                     {"label": "Release color", "body": body, "keywords": ["release", "amber"]}
                 ],
-                "coverage": (
-                    [{"text": body, "classification": "durable", "candidate_index": 0}]
-                    if redundant_coverage
-                    else []
-                    if whole_source
-                    else [{"text": source, "classification": "durable", "candidate_index": 0}]
-                ),
             }
         ],
         [],
@@ -789,35 +761,33 @@ async def test_m3fd_long_single_fact_shortens_without_splitting(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("invalid_draft", ["over-cap", "coverage", "malformed"])
+@pytest.mark.parametrize("invalid_draft", ["over-cap", "malformed"])
 async def test_over_cap_single_fact_uses_remaining_request_to_finish_shortening(
     invalid_draft: str,
 ) -> None:
-    """SPEC B.6 / M4MW / FL-002: repair the three observed invalid drafts within two requests."""
+    """SPEC C.6 / v2.133 / FL-002: an over-cap draft goes back with the owner's words; a
+    malformed one is retried; either way the fact is saved."""
     source = ("The verification release color is amber. " * 30).strip()
     body = "The verification release color is amber."
     calls = []
     drafts = [
         {
-            "safe_to_save": True,
-            "whole_source": True,
-            "coverage": [],
             "candidates": [
                 {"label": "Release color", "body": text, "keywords": ["release", "amber"]}
             ],
         }
         for text in (source, body)
     ]
-    if invalid_draft == "coverage":
-        drafts[0]["whole_source"] = False
-        drafts[0]["candidates"] *= 3
-    elif invalid_draft == "malformed":
+    if invalid_draft == "malformed":
         drafts[0] = {}
     spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
     agent = HarnessAgent(settings(), model=structured_sequence_model(drafts, calls))
     result = await agent.remember(source, context=context(spine))
     assert result.ok
     assert len(calls) == 2
+    if invalid_draft == "over-cap":
+        repair = calls[1][0][-1].parts[-1].content
+        assert repair.startswith("This memory is too long, break it down into finer pieces.")
     assert [request.body for request in spine.create_requests] == [body]
     assert spine.split_requests == []
 
@@ -840,9 +810,6 @@ async def test_long_remember_retries_a_stall_without_exceeding_its_budget(
                 TextPart(
                     json.dumps(
                         {
-                            "safe_to_save": True,
-                            "whole_source": True,
-                            "coverage": [],
                             "candidates": [
                                 {
                                     "label": "Release color",
@@ -882,7 +849,6 @@ async def test_m3fd_two_short_facts_split_even_below_body_cap() -> None:
         [
             {"label": "Release facts", "keywords": ["release", "review"], "multiple_facts": True},
             {
-                "safe_to_save": True,
                 "candidates": [
                     {
                         "label": "Release color",
@@ -893,18 +859,6 @@ async def test_m3fd_two_short_facts_split_even_below_body_cap() -> None:
                         "label": "Review day",
                         "body": "Review day is Tuesday.",
                         "keywords": ["review", "tuesday"],
-                    },
-                ],
-                "coverage": [
-                    {
-                        "text": "Release color is amber. ",
-                        "classification": "durable",
-                        "candidate_index": 0,
-                    },
-                    {
-                        "text": "Review day is Tuesday.",
-                        "classification": "durable",
-                        "candidate_index": 1,
                     },
                 ],
             },
@@ -932,7 +886,6 @@ async def test_two_short_facts_joined_by_a_semicolon_are_saved() -> None:
         [
             {"label": "Test commands", "keywords": ["tests", "npm"], "multiple_facts": True},
             {
-                "safe_to_save": True,
                 "candidates": [
                     {
                         "label": "Web test command",
@@ -943,18 +896,6 @@ async def test_two_short_facts_joined_by_a_semicolon_are_saved() -> None:
                         "label": "Python test command",
                         "body": "Python tests run with pytest -q.",
                         "keywords": ["python", "pytest"],
-                    },
-                ],
-                "coverage": [
-                    {
-                        "text": "Web tests run with npm test",
-                        "classification": "durable",
-                        "candidate_index": 0,
-                    },
-                    {
-                        "text": "; Python tests run with pytest -q.",
-                        "classification": "durable",
-                        "candidate_index": 1,
                     },
                 ],
             },
@@ -984,7 +925,6 @@ async def test_a049_oversized_multi_claim_uses_one_atomic_split_with_exact_sourc
     model = structured_sequence_model(
         [
             {
-                "safe_to_save": True,
                 "candidates": [
                     {
                         "label": "Observatory ledger duty",
@@ -1000,33 +940,6 @@ async def test_a049_oversized_multi_claim_uses_one_atomic_split_with_exact_sourc
                         "label": "North-wind calibration pause",
                         "body": LIVE_FACT_THREE.strip(),
                         "keywords": ["weather", "calibration"],
-                    },
-                ],
-                "coverage": [
-                    {
-                        "text": LIVE_OPERATION_HEAD,
-                        "classification": "operation",
-                        "candidate_index": None,
-                    },
-                    {
-                        "text": LIVE_FACT_ONE,
-                        "classification": "durable",
-                        "candidate_index": 0,
-                    },
-                    {
-                        "text": LIVE_FACT_TWO,
-                        "classification": "durable",
-                        "candidate_index": 1,
-                    },
-                    {
-                        "text": LIVE_FACT_THREE,
-                        "classification": "durable",
-                        "candidate_index": 2,
-                    },
-                    {
-                        "text": LIVE_OPERATION_TAIL,
-                        "classification": "operation",
-                        "candidate_index": None,
                     },
                 ],
             }
@@ -1098,19 +1011,11 @@ async def test_a049_overlong_label_single_claim_reuses_exact_source_through_ordi
         [
             {"label": "L" * 65, "keywords": ["garden", "cadence"]},
             {
-                "safe_to_save": True,
                 "candidates": [
                     {
                         "label": "Garden cadence",
                         "body": source,
                         "keywords": ["Garden", "cadence"],
-                    }
-                ],
-                "coverage": [
-                    {
-                        "text": source,
-                        "classification": "durable",
-                        "candidate_index": 0,
                     }
                 ],
             },
@@ -1136,54 +1041,46 @@ async def test_a049_overlong_label_single_claim_reuses_exact_source_through_ordi
 
 
 @pytest.mark.asyncio
-async def test_a049_single_atomic_oversized_claim_guides_without_any_write() -> None:
-    """F027 / M4MW: two unsafe drafts exhaust the budget without writing a lossy fact."""
+async def test_a049_single_atomic_oversized_claim_is_saved_after_three_repairs() -> None:
+    """SPEC C.6 / v2.133 / FL-002: repairs that never fit still save the shortest valid form; the
+    fact is never refused."""
     source = ("The complete indivisible claim retains this qualifier. " * 80).strip()
     calls: list[tuple[list[ModelMessage], AgentInfo]] = []
-    model = structured_sequence_model(
-        [
+    draft = {
+        "candidates": [
             {
-                "safe_to_save": False,
-                "candidates": [
-                    {
-                        "label": "Indivisible claim",
-                        "body": source,
-                        "keywords": ["indivisible", "qualifier"],
-                    }
-                ],
-                "coverage": [
-                    {
-                        "text": source,
-                        "classification": "durable",
-                        "candidate_index": 0,
-                    }
-                ],
+                "label": "Indivisible claim",
+                "body": source,
+                "keywords": ["indivisible", "qualifier"],
             }
         ],
-        calls,
-    )
+    }
+    model = structured_sequence_model([draft] * 4, calls)
     spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
     agent = HarnessAgent(settings(), model=model)
 
     result = await agent.remember(source, context=context(spine))
 
-    assert result == RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
-    assert len(calls) == 2
-    assert spine.create_requests == []
-    assert spine.split_requests == []
+    assert result.ok
+    assert len(calls) == 4
+    assert all(
+        "this memory is too long, break it down into finer pieces"
+        in str(call[0][-1].parts[-1].content).lower()
+        for call in calls[1:]
+    )
+    [saved] = [request.body for request in spine.create_requests]
+    assert cl100k_token_count(saved) <= 128
+    assert source.startswith(saved.removesuffix("\u2026"))
 
 
 @pytest.mark.asyncio
 async def test_a050_single_fitting_candidate_never_persists_excluded_operation_text() -> None:
-    """F027, A-050, ADR-022, and SPEC B.6 rule 12 are defended here.
-    Exact-source fallback may create only when the sole durable extract equals the whole source.
-    """
+    """F027, A-050, v2.133: the saved fact leaves out the directions about remembering it."""
     source = "Remember this: The observatory ledger has a silver cover."
     model = structured_sequence_model(
         [
             {"label": "L" * 65, "keywords": ["ledger", "silver"]},
             {
-                "safe_to_save": True,
                 "candidates": [
                     {
                         "label": "Observatory ledger cover",
@@ -1191,18 +1088,6 @@ async def test_a050_single_fitting_candidate_never_persists_excluded_operation_t
                         "keywords": ["ledger", "silver"],
                     }
                 ],
-                "coverage": [
-                    {
-                        "text": "Remember this: ",
-                        "classification": "operation",
-                        "candidate_index": None,
-                    },
-                    {
-                        "text": "The observatory ledger has a silver cover.",
-                        "classification": "durable",
-                        "candidate_index": 0,
-                    },
-                ],
             },
         ],
         [],
@@ -1212,22 +1097,21 @@ async def test_a050_single_fitting_candidate_never_persists_excluded_operation_t
 
     result = await agent.remember(source, context=context(spine))
 
-    assert result == RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
-    assert spine.create_requests == []
+    assert result.ok
+    assert [request.body for request in spine.create_requests] == [
+        "The observatory ledger has a silver cover."
+    ]
     assert spine.split_requests == []
 
 
 @pytest.mark.asyncio
-async def test_a050_label_triggered_unsafe_single_candidate_guides_without_write() -> None:
-    """F027, A-050, ADR-022, and SPEC B.6 rule 12 are defended here.
-    A fitting extractive draft that cannot satisfy standalone semantics must never be created.
-    """
+async def test_a050_label_triggered_single_candidate_is_saved_not_refused() -> None:
+    """SPEC C.6 / v2.133: a draft the code checks pass is saved; never a bare refusal."""
     source = "The lantern is east, and the separate ledger is silver."
     model = structured_sequence_model(
         [
             {"label": "L" * 65, "keywords": ["lantern", "ledger"]},
             {
-                "safe_to_save": False,
                 "candidates": [
                     {
                         "label": "Unsafe combined facts",
@@ -1235,13 +1119,6 @@ async def test_a050_label_triggered_unsafe_single_candidate_guides_without_write
                         "keywords": ["lantern", "ledger"],
                     }
                 ],
-                "coverage": [
-                    {
-                        "text": source,
-                        "classification": "durable",
-                        "candidate_index": 0,
-                    }
-                ],
             },
         ],
         [],
@@ -1251,9 +1128,8 @@ async def test_a050_label_triggered_unsafe_single_candidate_guides_without_write
 
     result = await agent.remember(source, context=context(spine))
 
-    assert result == RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
-    assert spine.create_requests == []
-    assert spine.split_requests == []
+    assert result.ok
+    assert [request.body for request in spine.create_requests] == [source]
 
 
 @pytest.mark.asyncio
@@ -1265,22 +1141,9 @@ async def test_a049_split_near_similar_copy_never_offers_nonexistent_force() -> 
     model = structured_sequence_model(
         [
             {
-                "safe_to_save": True,
                 "candidates": [
                     {"label": "First", "body": "Fact one.", "keywords": ["fact", "one"]},
                     {"label": "Second", "body": "Fact two.", "keywords": ["fact", "two"]},
-                ],
-                "coverage": [
-                    {
-                        "text": "Fact one. ",
-                        "classification": "durable",
-                        "candidate_index": 0,
-                    },
-                    {
-                        "text": "Fact two.",
-                        "classification": "durable",
-                        "candidate_index": 1,
-                    },
                 ],
             }
         ],
@@ -1326,17 +1189,6 @@ async def test_a049_split_near_similar_copy_never_offers_nonexistent_force() -> 
         ),
         pytest.param(
             [
-                {
-                    "label": "First",
-                    "body": "one two three four five six",
-                    "keywords": ["fact", "one"],
-                },
-                {"label": "Second", "body": "Fact two.", "keywords": ["fact", "two"]},
-            ],
-            id="over-limit-child",
-        ),
-        pytest.param(
-            [
                 {"label": "First\nline", "body": "Fact one.", "keywords": ["fact", "one"]},
                 {"label": "Second", "body": "Fact two.", "keywords": ["fact", "two"]},
             ],
@@ -1355,129 +1207,33 @@ async def test_a049_split_near_similar_copy_never_offers_nonexistent_force() -> 
         ),
     ],
 )
-async def test_a049_invalid_split_draft_uses_safe_guidance_and_zero_writes(
+async def test_a049_imperfect_split_draft_is_repaired_in_code_and_saved(
     candidates: list[dict[str, object]],
 ) -> None:
-    """F027, A-049, ADR-022, and SPEC B.6 rule 12 are defended here.
-    Invalid split drafts cannot become partial writes, mechanical chunks, or raw limit errors.
-    """
-    coverage = [
-        {
-            "text": str(candidate["body"]) + (" " if index + 1 < len(candidates) else ""),
-            "classification": "durable",
-            "candidate_index": index,
-        }
-        for index, candidate in enumerate(candidates)
-    ]
-    source = "".join(str(segment["text"]) for segment in coverage)
-    model = structured_sequence_model(
-        [{"candidates": candidates, "coverage": coverage, "safe_to_save": True}],
-        [],
+    """SPEC C.6 / v2.133 / A-049: label, keyword and repeat slips are repaired in code and the
+    facts are saved beside their exact source; never a refusal."""
+    source = " ".join(str(candidate["body"]) for candidate in candidates)
+    model = structured_sequence_model([{"candidates": candidates}], [])
+    spine = FakeSpine(
+        CreatedMemoryResponse(created=memory_unit()), split_outcome=split_response(source)
     )
-    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
     agent = HarnessAgent(settings(memory_max_tokens=5), model=model)
 
     result = await agent.remember(source, context=context(spine))
 
-    assert result == RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
-    assert spine.create_requests == []
-    assert spine.split_requests == []
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "case",
-    [
-        "missing",
-        "reordered",
-        "duplicated",
-        "blank",
-        "operation-index",
-        "durable-no-index",
-        "out-of-range",
-        "decreasing",
-        "uncovered",
-        "body-mismatch",
-        "non-exact",
-        "whole-source-multi-fact",
-    ],
-)
-async def test_a050_invalid_coverage_witness_guides_before_any_write(case: str) -> None:
-    """F027, A-050, ADR-022, and SPEC B.6 rule 12 are defended here.
-    Every malformed, incomplete, or body-inconsistent exact-source witness must fail closed.
-    """
-    source = "Fact one. Fact two."
-    draft: dict[str, object] = {
-        "safe_to_save": True,
-        "candidates": [
-            {"label": "First", "body": "Fact one.", "keywords": ["fact", "one"]},
-            {"label": "Second", "body": "Fact two.", "keywords": ["fact", "two"]},
-        ],
-        "coverage": [
-            {
-                "text": "Fact one. ",
-                "classification": "durable",
-                "candidate_index": 0,
-            },
-            {
-                "text": "Fact two.",
-                "classification": "durable",
-                "candidate_index": 1,
-            },
-        ],
-    }
-    coverage = deepcopy(draft["coverage"])
-    assert isinstance(coverage, list)
-    candidates = deepcopy(draft["candidates"])
-    assert isinstance(candidates, list)
-    if case == "missing":
-        draft.pop("coverage")
-    elif case == "whole-source-multi-fact":
-        draft.update(whole_source=True, coverage=[])
-    elif case == "reordered":
-        draft["coverage"] = list(reversed(coverage))
-    elif case == "duplicated":
-        draft["coverage"] = [coverage[0], coverage[0], coverage[1]]
-    elif case == "blank":
-        draft["coverage"] = [
-            {"text": "Fact one.", "classification": "durable", "candidate_index": 0},
-            {"text": " ", "classification": "operation", "candidate_index": None},
-            coverage[1],
-        ]
-    elif case == "operation-index":
-        coverage[0]["classification"] = "operation"
-        draft["coverage"] = coverage
-    elif case == "durable-no-index":
-        coverage[0]["candidate_index"] = None
-        draft["coverage"] = coverage
-    elif case == "out-of-range":
-        coverage[1]["candidate_index"] = 2
-        draft["coverage"] = coverage
-    elif case == "decreasing":
-        coverage[0]["candidate_index"] = 1
-        coverage[1]["candidate_index"] = 0
-        draft["coverage"] = coverage
-    elif case == "uncovered":
-        coverage[1]["candidate_index"] = 0
-        candidates[0]["body"] = source
-        draft["coverage"] = coverage
-        draft["candidates"] = candidates
-    elif case == "body-mismatch":
-        candidates[0]["body"] = "A hallucinated fact."
-        draft["candidates"] = candidates
-    elif case == "non-exact":
-        coverage[1]["text"] = "Fact three."
-        draft["coverage"] = coverage
-
-    model = structured_sequence_model([draft], [])
-    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
-    agent = HarnessAgent(settings(memory_max_tokens=4), model=model)
-
-    result = await agent.remember(source, context=context(spine))
-
-    assert result == RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
-    assert spine.create_requests == []
-    assert spine.split_requests == []
+    assert result.ok
+    children = (
+        spine.split_requests[0].children
+        if spine.split_requests
+        else [request for request in spine.create_requests]
+    )
+    assert len({child.body for child in children}) == len(children)
+    assert len({child.label for child in children}) == len(children)
+    assert all("\n" not in child.label for child in children)
+    assert all(child.keywords == [word.lower() for word in child.keywords] for child in children)
+    assert all(len(set(child.keywords)) == len(child.keywords) for child in children)
+    if spine.split_requests:
+        assert spine.split_requests[0].source_body == source
 
 
 @pytest.mark.asyncio
@@ -1823,15 +1579,13 @@ async def test_extraction_cannot_invent_write_targets(verdict, targets) -> None:
     "update,message",
     [
         ({"label": " "}, "seed splitter produced an invalid label"),
-        ({"body": "word " * 200}, "seed splitter produced a child above the 128-token limit"),
         ({"keywords": ["same", "SAME"]}, "seed splitter produced invalid keywords"),
     ],
 )
 async def test_seed_draft_walls_fail_before_returning_a_write_batch(update, message: str) -> None:
     """A-033 / ADR-022: an invalid generated seed must not become an approved write batch. M3GD /
-    SPEC B.6 r14: exercised refusals: "seed splitter produced a child above the 128-token
-    limit"; "seed splitter produced an invalid label"; "seed splitter produced invalid
-    keywords".
+    SPEC B.6 r14: exercised refusals: "seed splitter produced an invalid label"; "seed
+    splitter produced invalid keywords". An over-cap child is repaired instead (v2.133).
     """
     candidate = {"label": "Fact", "body": "A fact", "kind": "fact", "keywords": ["fact", "test"]}
     agent = HarnessAgent(
@@ -1843,3 +1597,129 @@ async def test_seed_draft_walls_fail_before_returning_a_write_batch(update, mess
     )
     with pytest.raises(ValueError, match=message):
         await agent.split_seed("test.md", "A fact")
+
+
+@pytest.mark.asyncio
+async def test_an_over_cap_seed_child_goes_back_through_the_seed_prompt() -> None:
+    """SPEC C.6 / v2.133: document ingest shares the check loop; an over-cap child is split
+    finer."""
+    calls: list[tuple[list[ModelMessage], AgentInfo]] = []
+    child = {"label": "Fact", "kind": "fact", "keywords": ["fact", "test"]}
+    model = structured_sequence_model(
+        [
+            {"candidates": [{**child, "body": "The seed fact repeats. " * 60}]},
+            {
+                "candidates": [
+                    {**child, "label": "First", "body": "The seed fact has a first part."},
+                    {**child, "label": "Second", "body": "The seed fact has a second part."},
+                ]
+            },
+        ],
+        calls,
+    )
+    agent = HarnessAgent(settings(), model=model)
+
+    draft = await agent.split_seed("test.md", "A long fact")
+
+    assert [candidate.label for candidate in draft.candidates] == ["First", "Second"]
+    assert calls[1][1].instructions == calls[0][1].instructions.split("\n\n")[0] or (
+        calls[1][1].instructions.startswith(calls[0][1].instructions.split("\n")[0])
+    )
+    assert "too long, break it down into finer pieces" in str(calls[1][0][-1].parts[-1].content)
+
+
+def test_the_code_check_names_each_rule_a_fact_breaks() -> None:
+    """SPEC C.6 / v2.133: fits the cap, names its own subject, one claim — checked in code."""
+    assert fact_problems("The release color is amber.", 128) == []
+    assert fact_problems("This repository uses uv.", 128) == []
+    assert fact_problems("amber " * 200, 128) == [TOO_LONG]
+    assert fact_problems("It runs on port 8000.", 128) == [
+        "this memory does not name its own subject; begin it with the thing it is about"
+    ]
+    assert fact_problems("The rules:\n- tabs\n- no semicolons", 128) == [
+        "this memory lists several claims; give each claim its own memory"
+    ]
+
+
+def test_compaction_prompt_has_the_owners_shape_and_no_count_cap() -> None:
+    """SPEC C.6 / v2.133 / SD-083: a normal agentic compaction prompt; the five-fact cap and
+    'prefer zero candidates' are gone."""
+    assert "an agent continuing this problem in the future would want" in EXTRACTION_INSTRUCTION
+    assert "self-contained fact sentence" in EXTRACTION_INSTRUCTION
+    assert "break it at the cleanest place" in EXTRACTION_INSTRUCTION
+    assert "Keep what the user stated, decided or corrected" in EXTRACTION_INSTRUCTION
+    assert "tool result that verified it" in EXTRACTION_INSTRUCTION
+    assert "begins with 'Unverified:'" in EXTRACTION_INSTRUCTION
+    assert "not even to say that one was shared" in EXTRACTION_INSTRUCTION
+    assert "at most five" not in EXTRACTION_INSTRUCTION
+    assert "Prefer zero" not in EXTRACTION_INSTRUCTION
+    fact = {"label": "Fact", "body": "The fact holds.", "kind": "fact", "keywords": ["a", "b"]}
+    draft = ExtractionDraft(working_summary="", open_loops=[], candidates=[fact] * 9)
+    assert len(draft.candidates) == 9
+
+
+@pytest.mark.asyncio
+async def test_a_remembered_fact_leaning_on_a_pronoun_is_repaired_before_the_palace() -> None:
+    """SPEC C.6 / v2.133: /remember shares the check; the rule it broke goes back to the
+    splitter and the repaired fact is saved."""
+    calls: list[tuple[list[ModelMessage], AgentInfo]] = []
+    model = structured_sequence_model(
+        [
+            {"label": "Port", "keywords": ["port", "server"]},
+            {
+                "candidates": [
+                    {"label": "Port", "body": "It runs on 8000.", "keywords": ["port", "server"]}
+                ]
+            },
+            {
+                "candidates": [
+                    {
+                        "label": "Palace port",
+                        "body": "The local Palace runs on port 8000.",
+                        "keywords": ["port", "palace"],
+                    }
+                ]
+            },
+        ],
+        calls,
+    )
+    spine = FakeSpine(CreatedMemoryResponse(created=memory_unit()))
+
+    result = await HarnessAgent(settings(), model=model).remember(
+        "It runs on port 8000.", context=context(spine)
+    )
+
+    assert result.ok
+    assert "does not name its own subject" in str(calls[2][0][-1].parts[-1].content)
+    assert [request.body for request in spine.create_requests] == [
+        "The local Palace runs on port 8000."
+    ]
+
+
+@pytest.mark.asyncio
+async def test_a_fact_carrying_a_secret_never_reaches_the_palace() -> None:
+    """SPEC C.6 / v2.133 (owner 2026-10-07, the planted secret 3/3): a credential goes back
+    with the rule; a fact that was only the secret is withdrawn, any left is replaced."""
+    assert fact_problems("The staging API token is sk-test-ABC123XYZ.", 128) == [LEAVE_SECRET_OUT]
+    fact = {"label": "Token", "kind": "fact", "keywords": ["staging", "token"]}
+    calls: list[tuple[list[ModelMessage], AgentInfo]] = []
+    model = structured_sequence_model(
+        [
+            {
+                "working_summary": "",
+                "open_loops": [],
+                "candidates": [
+                    {**fact, "body": "The staging API token is sk-test-ABC123XYZ."},
+                    {**fact, "label": "Key", "body": "The deploy key is ghp_" + "a1" * 10 + "."},
+                ],
+            },
+            {"candidates": []},
+            *[{"candidates": [{**fact, "label": "Key", "body": "Key ghp_" + "b2" * 10}]}] * 3,
+        ],
+        calls,
+    )
+
+    draft = await HarnessAgent(settings(), model=model).extract_thread("A token was shared.")
+
+    assert [candidate.body for candidate in draft.candidates] == ["Key [secret left out]"]
+    assert "leave the secret out" in str(calls[1][0][-1].parts[-1].content)

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import re
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from enum import StrEnum
@@ -1140,6 +1142,16 @@ _TRANSCRIPT_STATUS_RESPONSE = TypeAdapter(TranscriptStatus)
 _PROBLEM_DETAIL = TypeAdapter(ProblemDetail)
 
 
+# Owner 2026-10-07 (PLAN M4IN ALSO, FL-173): a LOST request is tried twice more for reads and
+# for the writes the Palace treats as idempotent; a refusal and /remember fail at once.
+_RETRY_DELAYS = (1.0, 3.0)
+_RETRYABLE_POSTS = re.compile(
+    r"v1/(?:search|memories/scores|memory-graph/query|scorer-console/query"
+    r"|symphony/memories/query|extractions|approval-queue/(?:batches/)?[^/]+/decisions)"
+)
+_LOST = (httpx.TimeoutException, httpx.NetworkError, httpx.RemoteProtocolError)
+
+
 class SpineClient:
     """Own one HTTP transport and validate every Spine response by status."""
 
@@ -1654,17 +1666,27 @@ class SpineClient:
         params: JsonObject | None = None,
         timeout: float | None = None,
     ) -> httpx.Response:
-        try:
-            return await self._client.request(
-                method,
-                path,
-                json=json_body,
-                params=params,
-                timeout=timeout if timeout is not None else httpx.USE_CLIENT_DEFAULT,
-            )
-        except httpx.RequestError as exc:
-            # INCIDENT F062: typed transport failure lets optional Palace reads fail locally.
-            raise SpineTransportError from exc
+        retryable = method == "GET" or (
+            method == "POST" and _RETRYABLE_POSTS.fullmatch(path) is not None
+        )
+        delays = list(_RETRY_DELAYS) if retryable else []
+        while True:
+            try:
+                return await self._client.request(
+                    method,
+                    path,
+                    json=json_body,
+                    params=params,
+                    timeout=timeout if timeout is not None else httpx.USE_CLIENT_DEFAULT,
+                )
+            except _LOST as exc:
+                if not delays:
+                    # INCIDENT F062: typed transport failure lets optional reads fail locally.
+                    raise SpineTransportError from exc
+                await asyncio.sleep(delays.pop(0))
+            except httpx.RequestError as exc:
+                # INCIDENT F062: a request that cannot be sent at all is not retried.
+                raise SpineTransportError from exc
 
 
 def _request_body(request: ContractModel) -> JsonObject:

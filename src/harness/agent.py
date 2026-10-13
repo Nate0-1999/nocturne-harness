@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from pydantic_ai import Agent, PromptedOutput, UsageLimits, capture_run_messages
 from pydantic_ai.exceptions import UnexpectedModelBehavior
 from pydantic_ai.messages import ModelMessage
@@ -70,72 +70,38 @@ REMEMBER_DRAFT_INSTRUCTION = (
     "the requested structured result with no commentary."
 )
 REMEMBER_SPLIT_INSTRUCTION = (
-    "Semantically divide the complete /remember source into durable atomic facts in source "
-    "order. Split only when there is more than one distinct fact, never to satisfy a length "
-    "limit. Preserve every claim and qualifier. Shorten an over-cap fact into one concise "
-    "memory without changing its meaning; never mechanically chop it. Use whole_source=true "
-    "and coverage=[] when the source exceeds the cap and conveys only ONE fact "
-    "with no operation-only text, including repeated versions of the same fact. The shortened "
-    "candidate fitting the cap does not change this choice: whole_source refers to the input. "
-    "The application retains that exact source for you. In this case the candidate body is "
-    "a concise restatement, NOT a copy of the source. Remove repetition and rhetorical "
-    "padding; keep the subject, rule, timing, exceptions and uncertainty. "
-    "Otherwise use whole_source=false and supply the exact coverage below. Every candidate must "
-    "stand alone, contain one claim, "
-    "and have its own short retrieval label: prefer 2-5 words and under 40 characters, with "
-    "64 Unicode code points as the hard maximum. Also return 2-5 "
-    "distinct lowercase searchable keywords. Every split candidate body must be at most 128 "
-    "cl100k_base tokens. If the "
-    "candidate itself names an object before referring back to it, that internal reference is "
-    "resolved and the candidate can still stand alone (for example, 'the ledger ... its cover' "
-    "or 'the eastern shelf ... returned there'). Source-order words such as First, Second, and "
-    "Third do not by themselves make otherwise independent facts unsafe; when they are part "
-    "of a durable coverage segment that fits the cap, retain them byte-for-byte in that "
-    "candidate body. If the source includes directions or commentary about remembering, "
-    "saving, or splitting, treat "
-    "them as instructions for this operation, never as durable facts or candidates. Keep every "
-    "actual claim and qualifier. Only when whole_source=false, return coverage segments whose text "
-    "concatenates byte-for-byte to the complete source. Classify each segment as durable with "
-    "one zero-based candidate_index, or operation with candidate_index null. Operation text "
-    "is excluded from candidate bodies but MUST still appear byte-for-byte in coverage; never "
-    "drop an instruction-only introduction, transition, or ending from the witness. "
-    "Boundary whitespace is source text: preserve it inside an adjacent coverage text value. "
-    "For example, when the source boundary is '. ' the preceding text must end with that space "
-    "or the following text must begin with it; JSON strings must never trim it. "
-    "Attach whitespace and separators to a neighboring nonblank segment; never emit a blank "
-    "or whitespace-only segment. Durable candidate "
-    "indices must be nondecreasing, every candidate must own durable text, and each candidate "
-    "body must equal its assigned durable text concatenated in source order with outer "
-    "whitespace trimmed only, except that assigned text over the body limit must be rewritten "
-    "concisely to fit that limit as one fact. The coverage always retains the exact original "
-    "source, including text that was shortened. Set safe_to_save true only when every "
-    "candidate stands alone, preserves its fact and qualifiers, and fits the body limit. "
-    "Return one to 64 candidates. Return a JSON instance with candidates, whole_source, "
-    "coverage and safe_to_save at the top level, not a JSON Schema. Never wrap the values "
-    "in properties or include additionalProperties."
+    "Divide the complete /remember source into durable facts in source order. Write each as a "
+    "self-contained fact sentence that names its own subject and keeps every claim and "
+    "qualifier. Split only where there is more than one distinct fact; a fact over the body "
+    "limit is broken at its cleanest seam into finer facts that each stand alone, and only "
+    "repetition is shortened. Directions about remembering, saving or splitting are "
+    "instructions for this operation, never facts. Give each candidate a short retrieval "
+    "label (prefer 2-5 words and under 40 characters; 64 Unicode code points at most), 2-5 "
+    "distinct lowercase searchable keywords, and a body within the supplied cl100k_base "
+    "token limit. The application keeps the exact source; return only the candidates."
 )
 REMEMBER_SPLIT_GUIDANCE = (
-    "Nothing was saved: I couldn't verify a complete memory draft within the length limit. "
+    "Nothing was saved: the memory draft could not be completed. "
     "Your text is still in the composer; try again."
 )
 EXTRACTION_INSTRUCTION = (
-    "Triage the supplied conversation in ONE pass: still-live context goes in working_summary "
-    "and open_loops; important information no longer needed for the current work goes in "
-    "candidates; transient or unimportant details remain only in the original journal. "
-    "Follow the supplied summary strategy. Propose at most five durable memories, each one "
-    "standalone fact of at most 128 cl100k_base tokens, a label of at most 64 characters, "
-    "and 2-5 distinct lowercase keywords. Preserve uncertainty. Never extract secrets or "
-    "credentials. Do not treat sub-agent bulk or verification instructions as durable facts."
-    " Shorten an over-cap fact to the cap as ONE memory; split only independent facts."
-    " Prefer zero candidates over weak ones. Never memorize arithmetic, common knowledge, "
-    "scratch data, generated narratives, task progress, completion, or the existence of an "
-    "answer. Only user-established facts useful beyond this task belong in candidates. "
-    "Separate independent specifications into separate memories, even when they fit together "
-    "under the size cap. Active tasks and their answers belong only in working_summary."
-    " Every transcript message has an id (its message_id or its [mN] label); list in each "
+    "Compact the supplied conversation in ONE pass, following the supplied summary strategy. "
+    "Still-live context for the current work goes in working_summary and open_loops. In "
+    "candidates, keep the things an agent continuing this problem in the future would want "
+    "to know: write each as a self-contained fact sentence that names its own subject and "
+    "gets at the problem and its solution concisely. If the information will not fit in one "
+    "fact of at most 128 cl100k_base tokens, break it at the cleanest place into two or more "
+    "facts that each stand alone. Give each independent fact its own candidate, even when "
+    "several would fit together under the cap. Keep what the user stated, decided or "
+    "corrected unless it "
+    "only mattered for the moment. Leave out step-by-step progress and common knowledge. "
+    "Never write a secret, credential, token, password or key into any field, not even to "
+    "say that one was shared. A fact you derived lists in source_message_ids the message or "
+    "tool result that verified it; a claim nothing in the conversation verified begins "
+    "with 'Unverified:'. Give "
+    "each candidate a label of at most 64 characters and 2-5 distinct lowercase keywords. "
+    "Every transcript message has an id (its message_id or its [mN] label); list in each "
     "candidate's source_message_ids the ids of the messages its fact was drawn from."
-    " Include the user message that states or endorses the fact. A question does not "
-    "establish its answer, and the assistant's own answer is never a source of user facts."
 )
 SEED_SPLIT_INSTRUCTION = (
     "Semantically split the complete Markdown document into durable atomic memories. Preserve "
@@ -174,43 +140,19 @@ class RememberSplitCandidate(BaseModel):
         ),
     )
     body: StrictStr = Field(
-        description="One fact within the supplied token limit. If its source is over the limit, "
-        "rewrite it concisely, preserving meaning and qualifiers, without repeated wording. "
-        "Only a source already within the limit is copied verbatim."
+        description="One self-contained fact within the supplied token limit, keeping its "
+        "meaning and qualifiers; a source fact within the limit is copied verbatim."
     )
     # WALL Palace writes / A-049: each split child keeps the required retrieval keywords.
     keywords: list[StrictStr] = Field(min_length=2, max_length=5)
 
 
-class RememberCoverageSegment(BaseModel):
-    """One exact source span proving durable ownership or operation-only text."""
-
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
-    # WALL Palace writes / A-050: empty witness spans cannot account for source content.
-    text: StrictStr = Field(
-        min_length=1,
-        description=(
-            "Exact source text. Never whitespace-only: attach every separator to the previous "
-            "or following nonblank segment so all segments still concatenate byte-for-byte. "
-            "Preserve leading and trailing boundary whitespace inside this string; for a '. ' "
-            "source boundary, one adjacent segment must carry the space. Never trim it."
-        ),
-    )
-    classification: Literal["durable", "operation"]
-    candidate_index: StrictInt | None
-
-
 class RememberSplitDraft(BaseModel):
-    """The complete source-ordered A-049/A-050 split proposal and witness."""
+    """The source-ordered facts of a multi-fact or oversized `/remember`."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     candidates: list[RememberSplitCandidate]
-    whole_source: StrictBool = False
-    # WALL Palace writes / A-050: saving requires an exact source witness.
-    coverage: list[RememberCoverageSegment] = Field(default_factory=list)
-    safe_to_save: StrictBool
 
 
 class ExtractionCandidateDraft(BaseModel):
@@ -235,8 +177,8 @@ class ExtractionDraft(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     working_summary: StrictStr
     open_loops: list[StrictStr]
-    # WALL attention / ADR-022: one thread may place at most five decisions in the owner queue.
-    candidates: list[ExtractionCandidateDraft] = Field(max_length=5)
+    # v2.133: no count cap; the curator, not the extractor, limits the Palace's growth.
+    candidates: list[ExtractionCandidateDraft]
 
 
 class SeedSplitDraft(BaseModel):
@@ -355,7 +297,7 @@ class HarnessAgent:
             output_type=PromptedOutput(RememberSplitDraft),
             instructions=REMEMBER_SPLIT_INSTRUCTION,
             name="harness-remember-splitter",
-            # INCIDENT F047 / A-050: an invalid losslessness witness returns guidance, no write.
+            # INCIDENT F047: a malformed draft is retried once, then guidance; never a write.
             retries=0,
         )
         self._extraction_agent = Agent(
@@ -412,6 +354,12 @@ class HarnessAgent:
     @property
     def usage_limits(self) -> UsageLimits:
         return self._usage_limits
+
+    @property
+    def memory_max_tokens(self) -> int:
+        """The Palace's body cap, for code that marks a fact after the check loop."""
+
+        return self._settings.memory_max_tokens
 
     @property
     def return_share_bounds(self) -> ReturnShareBounds:
@@ -524,7 +472,11 @@ class HarnessAgent:
                 False,
                 "Could not remember: the generated label was not one line.",
             )
-        if draft.multiple_facts or len(label) > self._settings.label_max:
+        if (
+            draft.multiple_facts
+            or len(label) > self._settings.label_max
+            or fact_problems(body, self._settings.memory_max_tokens)
+        ):
             return await self._split_or_guide_remember(
                 body,
                 context=context,
@@ -633,27 +585,14 @@ class HarnessAgent:
                         raise
                     draft_result = None
                 if usage.requests < 2 and (
-                    draft_result is None
-                    or _validated_remember_split(
-                        draft_result.output,
-                        source_body=body,
-                        label_max=self._settings.label_max,
-                        memory_max_tokens=self._settings.memory_max_tokens,
-                    )
-                    is None
+                    draft_result is None or not draft_result.output.candidates
                 ):
                     draft_result = await _run_structured_agent(
                         self._remember_splitter_agent,
-                        "Your draft did not finish or failed structured-output, length "
-                        "or source-coverage "
-                        "validation. "
-                        "Re-read the source. Repeated wording and qualifiers of one fact are "
-                        "not independent facts: shorten them to one candidate with "
-                        "whole_source=true, coverage=[]. Split only independent facts and "
-                        "account for every source span and every candidate. "
-                        f"Each body must fit {self._settings.memory_max_tokens} cl100k_base "
-                        f"tokens and each label {self._settings.label_max} characters.\n"
-                        f"Memory source:\n{body}",
+                        "Your draft did not finish or returned no candidates. Re-read the "
+                        f"source. Each body must fit {self._settings.memory_max_tokens} "
+                        f"cl100k_base tokens and each label {self._settings.label_max} "
+                        f"characters.\nMemory source:\n{body}",
                         model=model,
                         model_settings=model_settings,
                         usage_limits=self._remember_split_usage_limits,
@@ -673,22 +612,38 @@ class HarnessAgent:
                 raise
             return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
 
-        if draft_result.response.state != "complete":
+        if draft_result.response.state != "complete" or not draft_result.output.candidates:
             return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
-        draft = draft_result.output
-        children = _validated_remember_split(
-            draft,
-            source_body=body,
-            label_max=self._settings.label_max,
-            memory_max_tokens=self._settings.memory_max_tokens,
-        )
+        try:
+            async with asyncio.timeout(self._settings.remember_split_timeout_seconds):
+                checked = await self._checked_facts(
+                    self._remember_splitter_agent,
+                    draft_result.output.candidates,
+                    pieces_type=RememberSplitDraft,
+                    model=model,
+                    usage=usage,
+                    model_settings=model_settings,
+                    captured_messages=captured_messages,
+                )
+        except TimeoutError:
+            return RememberResult(
+                False,
+                "The memory draft took too long, so nothing was saved. "
+                "Your text is still in the composer; try again.",
+            )
+        except Exception:
+            if raise_model_errors:
+                raise
+            return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
+        children = _split_children(checked, label_max=self._settings.label_max)
         if children is None:
-            return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
+            return RememberResult(
+                False,
+                "Could not remember: add a few words to the fact so it can be found again.",
+            )
 
         if len(children) == 1:
             child = children[0]
-            if cl100k_token_count(body) <= self._settings.memory_max_tokens and child.body != body:
-                return RememberResult(False, REMEMBER_SPLIT_GUIDANCE)
             return await self._create_single_remember(
                 child.body,
                 label=child.label,
@@ -899,7 +854,6 @@ class HarnessAgent:
         model_settings: ModelSettings | None = None,
         on_result=None,
         summary_prompt: str = COMPACTION_SUMMARY_PROMPT,
-        leave_over_cap: bool = False,
     ) -> ExtractionDraft:
         """Run the tools-free cheap-model extraction pass over one durable transcript."""
 
@@ -917,43 +871,83 @@ class HarnessAgent:
         )
         if on_result is not None:
             await on_result(result.all_messages())
-        # INCIDENT M3EX-22: one shortening pass left a fact over the cap and failed the archive.
-        for _ in range(3):
-            if not any(cl100k_token_count(item.body) > 128 for item in result.output.candidates):
-                break
-            result = await self._extraction_agent.run(
-                "Keep the working summary and open loops. Shorten each over-cap fact into "
-                "ONE memory of at most 128 cl100k_base tokens; split only independent facts. "
-                "Preserve all qualifiers and return the complete corrected draft:\n"
-                + result.output.model_dump_json(),
-                model=self._select_model(model),
-                usage=usage,
-                usage_limits=self._usage_limits,
-                model_settings=extraction_settings,
+        # INCIDENT M3EX-22: one shortening pass left a fact over the cap; v2.133 repairs instead.
+        candidates = await self._checked_facts(
+            self._extraction_agent,
+            result.output.candidates,
+            pieces_type=SeedSplitDraft,
+            model=self._select_model(model),
+            usage=usage if usage is not None else RunUsage(),
+            model_settings=extraction_settings,
+            on_result=on_result,
+        )
+        return result.output.model_copy(update={"candidates": candidates})
+
+    async def _checked_facts(
+        self,
+        agent: Agent[Any, Any],
+        facts: Sequence[Any],
+        *,
+        pieces_type: type[BaseModel],
+        model: Model,
+        usage: RunUsage,
+        model_settings: ModelSettings | None,
+        on_result=None,
+        captured_messages: list[ModelMessage] | None = None,
+    ) -> list[Any]:
+        """v2.133: one loop for compaction, /remember and seeds. A fact that fails a check goes
+        back through the SAME prompt with the rule it broke, up to three rounds; then the
+        shortest valid form is saved, any secret replaced. Never a silent drop, never a bare
+        refusal; only a fact that was nothing but a secret may be withdrawn."""
+
+        limit = self._settings.memory_max_tokens
+        checked: list[Any] = []
+        for fact in facts:
+            pieces = [fact]
+            for _ in range(3):
+                if not any(fact_problems(piece.body, limit) for piece in pieces):
+                    break
+                repaired: list[Any] = []
+                for piece in pieces:
+                    problems = fact_problems(piece.body, limit)
+                    if not problems:
+                        repaired.append(piece)
+                        continue
+                    try:
+                        result = await _run_structured_agent(
+                            agent,
+                            "; ".join(problems).capitalize()
+                            + ". Split it finer first and shorten only repetition. Return the "
+                            "memories that replace it, each standing alone:\n"
+                            + piece.model_dump_json(exclude={"source_message_ids"}),
+                            model=model,
+                            model_settings=model_settings,
+                            usage_limits=self._usage_limits,
+                            usage=usage,
+                            captured_messages=captured_messages,
+                            output_type=pieces_type,
+                        )
+                    except UnexpectedModelBehavior:
+                        repaired.append(piece)
+                        continue
+                    if on_result is not None:
+                        await on_result(result.all_messages())
+                    replacements = [_with_sources(item, piece) for item in result.output.candidates]
+                    # A fact that was only a secret is withdrawn; any other is never dropped.
+                    if replacements or LEAVE_SECRET_OUT not in problems:
+                        repaired.extend(replacements or [piece])
+                pieces = repaired
+            checked.extend(
+                piece.model_copy(
+                    update={
+                        "body": _within_cap(
+                            _SECRET.sub("[secret left out]", piece.body.strip()), limit
+                        )
+                    }
+                )
+                for piece in pieces
             )
-            if on_result is not None:
-                await on_result(result.all_messages())
-        over_cap = [
-            item for item in result.output.candidates if cl100k_token_count(item.body) > 128
-        ]
-        if over_cap and leave_over_cap:
-            # INCIDENT M3EX-22: archive keeps the journal whole, so a fact that will not fit
-            # is named for the owner instead of failing the archive.
-            return result.output.model_copy(
-                update={
-                    "candidates": [c for c in result.output.candidates if c not in over_cap],
-                    "open_loops": [
-                        *result.output.open_loops,
-                        *(f"Not proposed, over the memory cap: {c.label}" for c in over_cap),
-                    ],
-                }
-            )
-        if over_cap:
-            # D.2 153 / SD-062: failed shortening must retain the uncompacted history.
-            raise ValueError(
-                "Compaction could not preserve a fact within the memory cap; history kept."
-            )
-        return result.output
+        return checked
 
     async def propose_extraction_verdict(
         self,
@@ -1012,13 +1006,18 @@ class HarnessAgent:
             if invalid_label:
                 # WALL Palace writes / A-033: validate a whole seed batch before creating any child.
                 raise ValueError("seed splitter produced an invalid label")
-            if cl100k_token_count(candidate.body.strip()) > 128:
-                # WALL Palace writes / A-033: validate a whole seed batch before creating any child.
-                raise ValueError("seed splitter produced a child above the 128-token limit")
             if _normalize_keywords(candidate.keywords) is None:
                 # WALL Palace writes / A-033: validate a whole seed batch before creating any child.
                 raise ValueError("seed splitter produced invalid keywords")
-        return result.output
+        candidates = await self._checked_facts(
+            self._seed_splitter_agent,
+            result.output.candidates,
+            pieces_type=SeedSplitDraft,
+            model=self._select_model(model),
+            usage=RunUsage(),
+            model_settings=None,
+        )
+        return result.output.model_copy(update={"candidates": candidates})
 
     async def dispatch(
         self,
@@ -1086,6 +1085,7 @@ async def _run_structured_agent(
     usage_limits: UsageLimits,
     usage: RunUsage,
     captured_messages: list[ModelMessage] | None,
+    output_type: Any = None,
 ) -> Any:
     """Run one structured pass and append its complete messages to a caller-owned turn sink."""
 
@@ -1096,6 +1096,7 @@ async def _run_structured_agent(
             model_settings=model_settings,
             usage_limits=usage_limits,
             usage=usage,
+            **({} if output_type is None else {"output_type": PromptedOutput(output_type)}),
         )
 
     if captured_messages is None:
@@ -1107,82 +1108,95 @@ async def _run_structured_agent(
             captured_messages.extend(call_messages)
 
 
-def _validated_remember_split(
-    draft: RememberSplitDraft,
-    *,
-    source_body: str,
-    label_max: int,
-    memory_max_tokens: int,
+TOO_LONG = "this memory is too long, break it down into finer pieces"
+# v2.133: a fact opening on a bare pronoun leans on context it does not carry.
+_BARE_PRONOUNS = frozenset(
+    {"it", "its", "they", "them", "their", "theirs", "he", "him", "his", "she", "her", "hers"}
+)
+_LIST_ITEM = re.compile(r"(?m)^\s*(?:[-*\u2022]|\d+[.)])\s")
+# v2.133 "secrets left out": the credential shapes a fact must never carry to the Palace.
+_SECRET = re.compile(
+    r"\b(?:(?:sk|pk|rk)-[A-Za-z0-9_-]{8,}|gh[pousr]_[A-Za-z0-9]{16,}|github_pat_\w{20,}"
+    r"|xox[abprs]-[A-Za-z0-9-]{10,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}"
+    r"|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,})"
+)
+LEAVE_SECRET_OUT = "this memory contains a secret; leave the secret out"
+
+
+def fact_problems(body: str, memory_max_tokens: int) -> list[str]:
+    """v2.133 THE CHECK BEFORE THE PALACE: fits the cap, names its own subject, one claim."""
+
+    problems = []
+    if cl100k_token_count(body) > memory_max_tokens:
+        problems.append(TOO_LONG)
+    opener = re.match(r"\W*(\w+)", body)
+    if opener is None or opener.group(1).lower() in _BARE_PRONOUNS:
+        problems.append(
+            "this memory does not name its own subject; begin it with the thing it is about"
+        )
+    if len(_LIST_ITEM.findall(body)) > 1:
+        problems.append("this memory lists several claims; give each claim its own memory")
+    if _SECRET.search(body):
+        problems.append(LEAVE_SECRET_OUT)
+    return problems
+
+
+def _within_cap(body: str, memory_max_tokens: int) -> str:
+    """The form saved when three repairs still leave a fact over the cap: its longest
+    whole-word opening that fits, ended at a sentence where one closes past halfway."""
+
+    if cl100k_token_count(body) <= memory_max_tokens:
+        return body
+    words = body.split()
+    low, high = 1, len(words)
+    while low < high:
+        middle = (low + high + 1) // 2
+        if cl100k_token_count(" ".join(words[:middle]) + "\u2026") <= memory_max_tokens:
+            low = middle
+        else:
+            high = middle - 1
+    opening = " ".join(words[:low])
+    sentence_end = max(opening.rfind(". "), opening.rfind("; "))
+    if sentence_end > len(opening) // 2:
+        return opening[: sentence_end + 1]
+    return opening + "\u2026"
+
+
+def _with_sources(piece: Any, parent: Any) -> Any:
+    """A repaired piece keeps the messages its parent fact was drawn from."""
+
+    if getattr(piece, "source_message_ids", None) == [] and getattr(
+        parent, "source_message_ids", None
+    ):
+        return piece.model_copy(update={"source_message_ids": list(parent.source_message_ids)})
+    return piece
+
+
+def _split_children(
+    candidates: Sequence[RememberSplitCandidate], *, label_max: int
 ) -> list[MemorySplitChild] | None:
-    """Validate one exact A-050 coverage witness or reject it before any write."""
+    """v2.133: checked facts become one family; the Palace keeps the exact source beside it."""
 
     children: list[MemorySplitChild] = []
     labels: set[str] = set()
     bodies: set[str] = set()
-    is_split = len(draft.candidates) >= 2
-    # WALL Palace writes / A-050: account for every exact source span before any child is saved.
-    if not draft.safe_to_save:
-        return None
-    coverage = draft.coverage
-    if draft.whole_source:
-        if len(draft.candidates) != 1 or (cl100k_token_count(source_body) <= memory_max_tokens):
-            return None
-        coverage = [
-            RememberCoverageSegment(
-                text=source_body,
-                classification="durable",
-                candidate_index=0,
-            )
-        ]
-    if "".join(segment.text for segment in coverage) != source_body:
-        return None
-
-    assigned_text: list[list[str]] = [[] for _ in draft.candidates]
-    last_durable_index = -1
-    for segment in coverage:
-        if not segment.text.strip():
-            return None
-        if segment.classification == "operation":
-            if segment.candidate_index is not None:
-                return None
-            continue
-        index = segment.candidate_index
-        if index is None or index < 0 or index >= len(draft.candidates):
-            return None
-        if index < last_durable_index:
-            return None
-        last_durable_index = index
-        assigned_text[index].append(segment.text)
-
-    for index, candidate in enumerate(draft.candidates):
-        label = candidate.label.strip()
+    for candidate in candidates:
         body = candidate.body.strip()
-        keywords = _normalize_keywords(candidate.keywords)
-        expected_body = "".join(assigned_text[index]).strip()
-        # M3EX-16: "a; b." splits into "a." and "b." — the separator may sit at either end
-        # of a segment and the child may end its sentence there; every other character
-        # must still match.
-        same_claim = body.strip(" .;,") == expected_body.strip(" .;,")
-        invalid = (
-            not label
-            or "\n" in label
-            or "\r" in label
-            or len(label) > label_max
-            or not body
-            or not expected_body
-            or (not same_claim and cl100k_token_count(expected_body) <= memory_max_tokens)
-            or keywords is None
-            or len(keywords) != len(candidate.keywords)
-            or cl100k_token_count(body) > memory_max_tokens
+        if not body or body in bodies:
+            continue  # an exact repeat adds nothing the family does not already hold
+        label = (candidate.label.strip().splitlines() or [""])[0][:label_max].strip()
+        if not label or label in labels:
+            label = f"{label or body.splitlines()[0]}"[: label_max - 4].strip()
+            label = f"{label} ({len(children) + 1})"
+        keywords = _normalize_keywords(candidate.keywords) or _repaired_keywords(
+            candidate.keywords, label, body
         )
-        if invalid:
-            return None
-        if is_split and (label in labels or body in bodies):
+        if keywords is None:
             return None
         labels.add(label)
         bodies.add(body)
         children.append(MemorySplitChild(label=label, body=body, keywords=keywords))
-    return children
+    return children or None
 
 
 def _normalize_keywords(values: Sequence[str]) -> list[str] | None:

@@ -2625,3 +2625,61 @@
     max-width: 42vw;
   }
 }
+
+/* v2.133: the compaction record — the compacted span beside the facts drawn from it. */
+.compaction-record__columns {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.compaction-record h4 {
+  margin: 0 0 4px;
+  color: var(--dim);
+  font-family: var(--data-font);
+  font-size: var(--text-sm);
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.compaction-record ol {
+  display: grid;
+  gap: 4px;
+  max-height: 24rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.compaction-record li {
+  padding: 4px 8px;
+  border-left: 1px solid var(--line-strong);
+  background: var(--surface);
+}
+
+.compaction-record li[data-source],
+.compaction-record li[data-fact]:focus,
+.compaction-record li[data-fact]:hover {
+  border-left-color: var(--accent);
+  outline: none;
+}
+
+.compaction-record li p {
+  max-height: 6rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+
+@media (max-width: 720px) {
+  .compaction-record__columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

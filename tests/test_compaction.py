@@ -1,6 +1,7 @@
 """SPEC D.2 101/144/153: the one memory creation event preserves live work."""
 
 import json
+import re
 from dataclasses import replace
 
 import pytest
@@ -70,8 +71,9 @@ async def test_extraction_retries_a_label_that_exceeds_the_palace_limit():
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("corrected", [True, False])
-async def test_over_cap_fact_is_shortened_once_or_refused(corrected):
-    """SPEC D.2 / SD-062: shorten one fact atomically; failed shortening prevents admission."""
+async def test_over_cap_fact_is_repaired_or_saved_within_the_cap(corrected):
+    """SPEC C.6 / v2.133 / SD-083: an over-cap fact goes back through the same prompt with the
+    owner's words, up to three rounds; then its shortest valid form is kept, never dropped."""
     calls = []
     receipts = []
 
@@ -79,91 +81,39 @@ async def test_over_cap_fact_is_shortened_once_or_refused(corrected):
         calls.append(messages)
         assert info.model_settings["temperature"] == 0
         assert info.model_settings["openrouter_usage"] == {"include": True}
-        body = "The notebook is copper." if corrected and len(calls) == 2 else "copper " * 200
-        return ModelResponse(
-            [
-                TextPart(
-                    json.dumps(
-                        {
-                            "working_summary": "Finish the notebook.",
-                            "open_loops": [],
-                            "candidates": [
-                                {
-                                    "label": "Notebook",
-                                    "body": body,
-                                    "kind": "fact",
-                                    "keywords": ["notebook", "copper"],
-                                }
-                            ],
-                        }
-                    )
-                )
-            ]
-        )
+        fact = {"label": "Notebook", "kind": "fact", "keywords": ["notebook", "copper"]}
+        if len(calls) == 1:
+            output = {
+                "working_summary": "Finish the notebook.",
+                "open_loops": [],
+                "candidates": [{**fact, "body": "copper " * 200}],
+            }
+        else:
+            prompt = messages[-1].parts[-1].content
+            assert prompt.startswith("This memory is too long, break it down into finer pieces.")
+            body = "The notebook is copper." if corrected else "copper " * 200
+            output = {"candidates": [{**fact, "body": body}]}
+        return ModelResponse([TextPart(json.dumps(output))])
 
     async def receipt(messages):
         receipts.append(messages)
 
     agent = HarnessAgent(settings(), model=FunctionModel(function=extract))
+    draft = await agent.extract_thread("One notebook fact.", on_result=receipt)
+    [candidate] = draft.candidates
     if corrected:
-        draft = await agent.extract_thread("One notebook fact.", on_result=receipt)
-        assert len(draft.candidates) == 1
-        assert draft.candidates[0].body == "The notebook is copper."
+        assert candidate.body == "The notebook is copper."
     else:
-        with pytest.raises(
-            ValueError,
-            match="Compaction could not preserve a fact within the memory cap; history kept.",
-        ):
-            await agent.extract_thread("One notebook fact.", on_result=receipt)
-    # INCIDENT M3EX-22: up to three shortening passes before the history is kept.
+        assert cl100k_token_count(candidate.body) <= 128
+        assert candidate.body.startswith("copper copper")
     assert len(calls) == len(receipts) == (2 if corrected else 4)
 
 
 @pytest.mark.asyncio
-async def test_archive_names_a_fact_that_will_not_fit_instead_of_failing() -> None:
-    """SPEC D.2 153 / SD-062 (M3EX-22): archive keeps the journal whole, so a fact that stays over
-    the cap is left out and named; the facts that fit are still proposed."""
-
-    def extract(messages, info):
-        return ModelResponse(
-            [
-                TextPart(
-                    json.dumps(
-                        {
-                            "working_summary": "Finish the notebook.",
-                            "open_loops": [],
-                            "candidates": [
-                                {
-                                    "label": "Notebook",
-                                    "body": "copper " * 200,
-                                    "kind": "fact",
-                                    "keywords": ["notebook", "copper"],
-                                },
-                                {
-                                    "label": "Pen",
-                                    "body": "The pen is blue.",
-                                    "kind": "fact",
-                                    "keywords": ["pen", "blue"],
-                                },
-                            ],
-                        }
-                    )
-                )
-            ]
-        )
-
-    agent = HarnessAgent(settings(), model=FunctionModel(function=extract))
-    draft = await agent.extract_thread("Two facts.", leave_over_cap=True)
-    assert [candidate.label for candidate in draft.candidates] == ["Pen"]
-    assert draft.open_loops == ["Not proposed, over the memory cap: Notebook"]
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "strategy", ["truncate", "summarize", "memories-then-drop", "human-and-final-only"]
-)
+@pytest.mark.parametrize("strategy", ["truncate", "memories-then-drop", "human-and-final-only"])
 async def test_real_runner_compacts_once_and_keeps_resumable_history(tmp_path, strategy):
-    """SPEC D.2 153: triage removes old content without losing the next response."""
+    """SPEC D.2 153 / v2.133: triage removes old content without losing the next response; the
+    default keeps the last share word for word and records the span beside its facts."""
     summaries = []
     requests = []
 
@@ -200,7 +150,7 @@ async def test_real_runner_compacts_once_and_keeps_resumable_history(tmp_path, s
     journal = TranscriptJournal(tmp_path / "journal")
     journal.append_thread_context(str(deps.thread_id), "project-1")
     journal.append_compaction_policy(
-        str(deps.thread_id), CompactionPolicy(strategy=strategy).model_dump()
+        str(deps.thread_id), CompactionPolicy(strategy=strategy, keep=0.5).model_dump()
     )
     service = ExtractionService(
         journal=journal,
@@ -236,10 +186,25 @@ async def test_real_runner_compacts_once_and_keeps_resumable_history(tmp_path, s
     assert len(outcome.message_history) < len(history)
     assert outcome.assistant_text == "The final page is checked."
     assert any(e["event_kind"] == "compaction_completed" for e in emit.events)
-    assert ("Finish the copper notebook" in str(requests[0])) == (strategy == "summarize")
-    assert ("Page 0:" in str(requests[0])) == (
-        strategy in {"memories-then-drop", "human-and-final-only"}
-    )
+    assert ("Finish the copper notebook" in str(requests[0])) == (strategy == "memories-then-drop")
+    assert ("Page 0:" in str(requests[0])) == (strategy == "human-and-final-only")
+    if strategy == "memories-then-drop":
+        prompts = [
+            part.content
+            for message in requests[0]
+            if isinstance(message, ModelRequest)
+            for part in message.parts
+            if isinstance(part, UserPromptPart)
+        ]
+        assert "Page 11: " + "old detail " * 100 in prompts
+        [record] = journal.compaction_records(str(deps.thread_id))
+        kept = {
+            page.group(): entry["kept"]
+            for entry in record["span"]
+            if (page := re.search(r"Page \d+", entry["text"]))
+        }
+        assert record["run_id"] == emit.run_id and record["facts"] == []
+        assert kept["Page 0"] is False and kept["Page 11"] is True
     assert "Pinned task: finish the notebook." in str(requests[0])
     assert "History before this point" in str(requests[0])
     restored = journal.hydrate_threads()[0]
@@ -574,6 +539,12 @@ async def test_policy_commands_survive_restart_and_manual_compaction_bypasses_fi
 
     with pytest.raises(ValueError, match="Unknown compaction control"):
         _configure_compaction(CompactionPolicy(), "unsupported setting")
+    # Owner 2026-10-07: summarize and the default are one strategy under one name.
+    with pytest.raises(ValueError):
+        _configure_compaction(CompactionPolicy(), "strategy summarize")
+    legacy = TranscriptJournal(tmp_path / "legacy")
+    legacy.append_compaction_policy("thread-1", {"strategy": "summarize"})
+    assert legacy.compaction_policy("thread-1") == {"strategy": "memories-then-drop"}
 
     def extract(messages, info):
         return ModelResponse(
@@ -608,7 +579,11 @@ async def test_policy_commands_survive_restart_and_manual_compaction_bypasses_fi
         principal_id="principal-1",
         machine_id="machine-1",
     )
-    for command in ("/compact policy cost 0.45", "/compact strategy human-and-final-only"):
+    for command in (
+        "/compact policy cost 0.45",
+        "/compact keep 30%",
+        "/compact strategy human-and-final-only",
+    ):
         runner = PydanticAITurnRunner(agent, lambda _: deps, extraction=service)
         outcome = await runner.run(
             thread_id=str(deps.thread_id),
@@ -622,6 +597,8 @@ async def test_policy_commands_survive_restart_and_manual_compaction_bypasses_fi
     assert restored["policy"] == "cost"
     assert restored["fraction"] == 0.45
     assert restored["strategy"] == "human-and-final-only"
+    # v2.133: the kept share of the conversation is the owner's setting, 20% unless changed.
+    assert restored["keep"] == 0.3 and CompactionPolicy().keep == 0.2
     history = (
         ModelRequest([UserPromptPart("First")]),
         ModelResponse([TextPart("Old answer")]),

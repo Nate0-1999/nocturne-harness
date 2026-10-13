@@ -43,10 +43,9 @@ from pydantic_ai_harness.compaction import (
     estimate_context_tokens,
     estimate_token_count,
     reinject_pinned,
-    resolve_context_window,
 )
 from pydantic_ai_harness.compaction._receipts import is_receipt_part
-from pydantic_ai_harness.compaction._shared import find_safe_cutoff
+from pydantic_ai_harness.compaction._shared import find_safe_cutoff, find_token_cutoff
 from pydantic_ai_harness.compaction._summarizing_compaction import (
     _DEFAULT_SUMMARY_PROMPT as COMPACTION_SUMMARY_PROMPT,
 )
@@ -921,12 +920,14 @@ class CompactionPolicy(BaseModel):
     """Per-thread strategy and model-portable fill policy, persisted in the journal."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
-    strategy: Literal["truncate", "summarize", "memories-then-drop", "human-and-final-only"] = (
+    strategy: Literal["truncate", "memories-then-drop", "human-and-final-only"] = (
         "memories-then-drop"
     )
     policy: Literal["performance", "cost"] = "performance"
     # D.2 153: the trigger is a finite fraction of the active model's window.
     fraction: float = Field(default=0.8, gt=0, lt=1, allow_inf_nan=False)
+    # D.2 177 (v2.133): the last share of the conversation is kept word for word.
+    keep: float = Field(default=0.2, ge=0, lt=1, allow_inf_nan=False)
     instructions: str = COMPACTION_SUMMARY_PROMPT
 
 
@@ -983,28 +984,32 @@ class _MemoryStrategy:
         owner = self.owner
         if owner.completed:
             return messages
-        window = owner.context_window or resolve_context_window(ctx.model) or 200_000
+        before = estimate_context_tokens(messages, cl100k_token_count)
         options = dict(
             max_messages=1,
-            keep_tokens=max(1, window // 5),
+            keep_tokens=max(1, int(before * owner.policy.keep)),
             tokenizer=cl100k_token_count,
             receipts=True,
             preserve_first_user_message=False,
         )
         strategy = owner.policy.strategy
+        # v2.133 amends v2.118a: memories first, then the rest summarized, the tail kept.
+        summarized = strategy == "memories-then-drop"
         engine = (
             _PreparedSummary(**options)
-            if strategy == "summarize"
+            if summarized
             else SlidingWindowCompaction(**options)
             if strategy == "truncate"
             else _HumanFinalCompaction(**options)
         )
         # A no-op must not manufacture extraction events on every subsequent tool step.
-        if strategy != "summarize":
+        if summarized:
+            if find_token_cutoff(messages, options["keep_tokens"], cl100k_token_count) <= 0:
+                return messages
+        else:
             proposed = await engine.compact(messages, ctx)
             if proposed == messages:
                 return messages
-        before = estimate_context_tokens(messages, cl100k_token_count)
         owner.original_history = list(messages)
         await owner.emit.event(
             {"event_kind": "compaction_started", "before_tokens": before, "strategy": strategy}
@@ -1022,15 +1027,17 @@ class _MemoryStrategy:
             model_settings=owner.model_settings,
             summary_prompt=owner.policy.instructions,
             locations=locations,
-            user_message_ids={
+            verifying_ids={
                 f"m{index}"
                 for index, message in enumerate(history)
                 if isinstance(message, ModelRequest)
-                and any(isinstance(part, UserPromptPart) for part in message.parts)
+                and any(
+                    isinstance(part, (UserPromptPart, ToolReturnPart)) for part in message.parts
+                )
             },
         )
         # Admission must finish before any drop; a failed queue write leaves history intact.
-        if strategy == "summarize":
+        if summarized:
             engine.summary = result.working_summary + "\n\n" + "\n".join(result.open_loops)
             proposed = await engine.compact(messages, ctx)
         if proposed == messages:
@@ -1042,6 +1049,21 @@ class _MemoryStrategy:
             str(ctx.deps.thread_id),
             owner.emit.run_id,
             to_jsonable_python(proposed),
+        )
+        owner.service._journal.append_compaction_record(
+            str(ctx.deps.thread_id),
+            {
+                "run_id": owner.emit.run_id,
+                "event_uid": event_uid,
+                "strategy": strategy,
+                "span": [
+                    {"id": f"m{index}", "text": text, "kept": message in proposed}
+                    for index, message in enumerate(history)
+                    if (text := _format_messages([message]))
+                ],
+                "facts": result.facts,
+                "working_summary": result.working_summary,
+            },
         )
         await owner.emit.event(
             {

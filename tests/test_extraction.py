@@ -26,6 +26,8 @@ NOW = datetime(2026, 8, 8, 22, tzinfo=UTC)
 
 
 class FakeAgent:
+    memory_max_tokens = 128
+
     def __init__(self) -> None:
         self.calls: list[str] = []
 
@@ -218,8 +220,9 @@ async def test_archive_exposes_only_compact_image_metadata_to_extraction(tmp_pat
 
 
 @pytest.mark.asyncio
-async def test_extraction_skips_assistant_answers_and_already_known_facts(tmp_path: Path) -> None:
-    """ADR-022 / M3MQ: an answer is not evidence; a rephrase needs no new approval card."""
+async def test_extraction_checks_agent_found_facts_and_skips_already_known(tmp_path: Path) -> None:
+    """SPEC C.6 / v2.133 (amends M3MQ): a fact the agent found is kept; one no user message or
+    tool result verified is marked unverified; ADR-022: a known fact needs no new card."""
     thread_id = uuid4()
     journal = _journal(tmp_path / "transcripts", str(thread_id), datetime.now(UTC))
     user_id, assistant_id = [m["message_id"] for m in journal.read_messages(str(thread_id))]
@@ -255,8 +258,11 @@ async def test_extraction_skips_assistant_answers_and_already_known_facts(tmp_pa
 
     result = await service.archive(thread_id)
 
-    assert len(checked) == 1 and checked[0].source_message_ids == [user_id]
-    assert result.cards == [] and result.duplicate_count == 1
+    assert [item.source_message_ids for item in checked] == [[assistant_id], [user_id]]
+    assert checked[0].body.startswith("Unverified: ")
+    assert not checked[1].body.startswith("Unverified")
+    assert result.cards == [] and result.duplicate_count == 2
+    assert [fact["verdict"] for fact in result.facts] == ["already_known", "already_known"]
     assert spine.requests[0].candidates == []
 
 
@@ -434,13 +440,14 @@ async def test_archive_gives_each_memory_the_folder_its_facts_came_from(tmp_path
     assert [
         (request.origin_location, [candidate.label for candidate in request.candidates])
         for request in spine.requests
-    ] == [(str(web), ["Web"]), (str(docs), ["Docs"]), (str(root), ["Both"])]
+    ] == [(str(web), ["Web"]), (str(docs), ["Docs", "None"]), (str(root), ["Both"])]
     candidates = [candidate for request in spine.requests for candidate in request.candidates]
     assert {candidate.project_key for candidate in candidates} == {str(root)}
     assert {c.label: c.origin_locations for c in candidates} == {
         "Web": [],
         "Docs": [],
         "Both": [str(docs), str(web)],
+        "None": [],
     }
 
 
@@ -489,3 +496,39 @@ async def test_startup_backfill_sends_each_thread_project_and_survives_an_older_
         journal=journal, agent=FakeAgent(), spine=older, principal_id="owner", machine_id="mac"
     ).backfill_projects()
     assert len(older.requests) == 1
+
+
+@pytest.mark.asyncio
+async def test_a_fact_verified_by_a_tool_result_stays_unmarked(tmp_path: Path) -> None:
+    """SPEC C.6 / v2.133 (owner 2026-10-07): an agent-derived fact cites the message or tool
+    result that verified it; one that cites neither is marked unverified, never dropped."""
+    thread_id = uuid4()
+    journal = _journal(tmp_path / "transcripts", str(thread_id), datetime.now(UTC))
+    spine = FakeSpine()
+    service = ExtractionService(
+        journal=journal, agent=FakeAgent(), spine=spine, principal_id="owner", machine_id="mac"
+    )
+
+    def fact(body: str, source: str) -> ExtractionCandidateDraft:
+        return ExtractionCandidateDraft(
+            label=body[:20],
+            body=body,
+            kind="fact",
+            keywords=["mock", "port"],
+            source_message_ids=[source],
+        )
+
+    draft = ExtractionDraft(
+        working_summary="",
+        open_loops=[],
+        candidates=[
+            fact("The mock server listens on port 4317.", "m3"),
+            fact("The mock server restarts on file changes.", "m4"),
+        ],
+    )
+    result = await service.admit(thread_id, draft, tail="run-1", verifying_ids={"m1", "m3"})
+
+    assert [fact["body"] for fact in result.facts] == [
+        "The mock server listens on port 4317.",
+        "Unverified: The mock server restarts on file changes.",
+    ]

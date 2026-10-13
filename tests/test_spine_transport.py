@@ -1202,11 +1202,17 @@ async def test_create_status_and_body_cannot_be_swapped() -> None:
 
 
 @pytest.mark.asyncio
-async def test_transport_failure_is_wrapped_without_request_secrets() -> None:
+async def test_transport_failure_is_wrapped_without_request_secrets(monkeypatch) -> None:
     """SPEC C.4 is defended by verifying that transport failure is wrapped without request
-    secrets; this prevents drift in the authenticated Spine transport contract.
+    secrets; this prevents drift in the authenticated Spine transport contract. FL-173: a lost
+    read is tried twice more first.
     """
     calls = 0
+
+    async def no_wait(_: float) -> None:
+        pass
+
+    monkeypatch.setattr("harness.spine_client.asyncio.sleep", no_wait)
 
     async def handler(request: httpx.Request) -> httpx.Response:
         nonlocal calls
@@ -1225,7 +1231,7 @@ async def test_transport_failure_is_wrapped_without_request_secrets() -> None:
 
     assert isinstance(caught.value.__cause__, httpx.ConnectError)
     assert "secret-token" not in str(caught.value)
-    assert calls == 1
+    assert calls == 3
 
 
 @pytest.mark.asyncio

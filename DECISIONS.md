@@ -4164,6 +4164,47 @@ The console shows both held-out error and token totals, explains retained values
 and exposes chronological feedback history. Its cadence copy names main-conversation
 compaction (D.2 144), replacing the obsolete signal-count promise.
 
+## M4IN — Compaction the way an agent would do it [P1.5]
+
+PRECEDENT: v2.133 / SD-083, SPEC C.6, v2.118a, A-049/A-050, M3EX-22, M3MQ, PLAN M4IN.
+The extraction prompt is the owner's shape: what a continuing agent would want, as
+self-contained fact sentences carrying the problem and its solution, broken at the cleanest
+place, user statements kept, secrets/progress/common knowledge left out, unverified claims
+marked. No count cap in the prompt or schema. One code check runs before the Palace for
+compaction, /remember and seed ingest: fits the cap, does not open on a bare pronoun (the
+code's reading of "names its own subject"), is not a list of claims. A failure goes back
+through the same agent with the rule it broke ("this memory is too long, break it down into
+finer pieces"), up to three rounds; a piece still over the cap after that is saved as its
+longest whole-word opening that fits (whole sentences where one closes past halfway), so
+nothing is dropped and the journal keeps the original. This replaces three refusals: the
+archive's "not proposed, over the cap", compaction's "history kept" failure, and the
+seed splitter's over-cap error. /remember's A-050 coverage witness leaves the prompt: the
+Palace already stores the exact source beside a split family, so code needs only to
+dedupe repeats and repair labels/keywords (owner, 2026-10-07: the old coverage proof is
+retired). M3MQ's drop of facts without a user source is replaced by the owner's 2026-10-07
+ruling: an agent-derived fact cites the message or tool result that verified it; one whose
+sources hold no user message or tool result is saved with "Unverified:" in front. The
+default strategy now keeps the last `keep` share of the conversation word for word (default
+20%, `/compact keep <percent>`) and replaces the rest with the triage summary; the owner
+ruled summarize and the default one strategy, so the name summarize is gone (a journal that
+saved it reads as the default). Trial facts quoted a planted token on both models, so the
+prompt forbids any secret in any field and the code check adds a fourth rule: a credential-
+shaped token sends the fact back to leave it out (a fact that was only the secret may be
+withdrawn); one still present after three rounds is replaced before the Palace. Each
+compaction journals a record (the span with its mN ids, which messages were kept, every fact
+with its source ids and verdict), served at GET /v1/threads/{id}/compactions and opened from
+the "Conversation compacted" line.
+
+## M4IN — A lost Palace request is tried again where resending is safe [P1.1]
+
+PRECEDENT: PLAN M4IN ALSO (owner 2026-10-07), FL-173, F062. Walks on a lossy network lost
+one Palace request in 20-40; each loss failed a whole step. The Palace client, the one path
+every call takes, now tries a lost request (cannot connect, timed out, dropped) twice more
+after 1 s and 3 s for GETs, the read-only POSTs (search, scores, graph, console, Symphony
+memory query) and the two writes the Palace treats as idempotent (approval decisions and a
+compaction's fact batch, whose resend is a hard duplicate). A refusal fails at once, and so
+does every other write: /remember's save, a split and a prepare stay loud.
+
 ## M4UX — The thread list says where and how [P2, P2.1]
 
 PRECEDENT: SD-084, FL-205, M4CD (numbered titles; WHERE keeps its end), M3SK (the chip).

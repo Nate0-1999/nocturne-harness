@@ -49,7 +49,7 @@ test('curator proposals expose Palace activity and use only explicit queue decis
   assert.match(rack, /case 'curation\.load':[\s\S]*fetchJson\('\/v1\/curation'\)/u)
   assert.match(rack, /palace_state:[\s\S]*actions: \['curation\.load'\]/u)
   assert.match(palaceState, /aria-label="Curator activity"/u)
-  assert.match(palaceState, /writes or.*removals/u)
+  assert.match(palaceState, /writes, .*removals or a compaction/u)
   assert.match(app, /Curators never change memories without this queue/u)
   assert.match(proposal, /card\.proposal_payload\?\.rationale/u)
   assert.match(proposal, /approval_mode: 'explicit'/u)

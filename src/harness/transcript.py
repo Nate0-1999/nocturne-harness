@@ -616,6 +616,20 @@ class TranscriptJournal:
                 },
             )
 
+    def append_compaction_record(self, thread_id: str, record: dict[str, Any]) -> None:
+        """v2.133: a compaction's original span beside the facts drawn from it."""
+        with self._lock:
+            self._append(thread_id, {"version": 1, "record_type": "compaction_record", **record})
+
+    def compaction_records(self, thread_id: str) -> list[dict[str, Any]]:
+        """Every compaction record of a thread, oldest first."""
+        path = self.path_for_thread(thread_id)
+        if not path.exists():
+            return []
+        with self._lock:
+            rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+        return [row for row in rows if row.get("record_type") == "compaction_record"]
+
     def compaction_policy(self, thread_id: str) -> dict[str, Any]:
         """Restore the owner's latest compaction choices from this thread's journal."""
         path = self.path_for_thread(thread_id)
@@ -625,6 +639,9 @@ class TranscriptJournal:
             for line in reversed(path.read_text(encoding="utf-8").splitlines()):
                 row = json.loads(line)
                 if row.get("record_type") == "compaction_policy":
+                    # Owner 2026-10-07: summarize became the default; a saved choice keeps it.
+                    if row["policy"].get("strategy") == "summarize":
+                        return {**row["policy"], "strategy": "memories-then-drop"}
                     return row["policy"]
         return {}
 

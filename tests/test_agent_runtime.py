@@ -1632,7 +1632,7 @@ async def test_remember_uses_dispatch_and_emits_its_visible_result() -> None:
 
 @pytest.mark.asyncio
 async def test_a049_label_and_split_share_one_two_request_runtime_usage_wall() -> None:
-    """F027, A-049, A-050, ADR-022, and SPEC B.6 rule 12 are defended here.
+    """F027, A-049, ADR-022, and SPEC B.6 rule 12 are defended here.
     Label fallback and semantic split share usage, emit once, and stop at two model requests.
     """
     source_id = UUID("52345678-1234-5678-1234-567812345678")
@@ -1682,22 +1682,9 @@ async def test_a049_label_and_split_share_one_two_request_runtime_usage_wall() -
     outputs = [
         {"label": "L" * 65, "keywords": ["fact", "garden"]},
         {
-            "safe_to_save": True,
             "candidates": [
                 {"label": "First fact", "body": "Fact one.", "keywords": ["fact", "one"]},
                 {"label": "Second fact", "body": "Fact two.", "keywords": ["fact", "two"]},
-            ],
-            "coverage": [
-                {
-                    "text": "Fact one. ",
-                    "classification": "durable",
-                    "candidate_index": 0,
-                },
-                {
-                    "text": "Fact two.",
-                    "classification": "durable",
-                    "candidate_index": 1,
-                },
             ],
         },
     ]
@@ -1811,14 +1798,9 @@ async def test_f047_nonterminal_split_outcome_uses_the_same_guidance_matrix_row(
     provider state to converge on the same one-voice, zero-write outcome.
     """
     output = {
-        "safe_to_save": True,
         "candidates": [
             {"label": "First fact", "body": "Fact one.", "keywords": ["fact", "one"]},
             {"label": "Second fact", "body": "Fact two.", "keywords": ["fact", "two"]},
-        ],
-        "coverage": [
-            {"text": "Fact one. ", "classification": "durable", "candidate_index": 0},
-            {"text": "Fact two.", "classification": "durable", "candidate_index": 1},
         ],
     }
 

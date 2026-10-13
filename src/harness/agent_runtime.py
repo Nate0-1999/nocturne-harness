@@ -104,6 +104,9 @@ def _configure_compaction(policy: CompactionPolicy, argument: str) -> Compaction
         values.update(
             policy=name, fraction=float(fraction) if fraction else 0.5 if name == "cost" else 0.8
         )
+    elif command == "keep":
+        # v2.133: the share of the conversation kept word for word, as a percent.
+        values["keep"] = float(value.removesuffix("%")) / 100
     elif command == "instructions" and "{messages}" in value:
         values["instructions"] = value
     else:
@@ -321,12 +324,14 @@ class PydanticAITurnRunner:
                         compaction.policy = policy
                         message = (
                             f"Compaction: {policy.strategy}; {policy.policy} policy at "
-                            f"{policy.fraction:.1%} of the model window."
+                            f"{policy.fraction:.1%} of the model window; the last "
+                            f"{policy.keep:.0%} of the conversation kept word for word."
                         )
                     except ValueError:
                         message = (
-                            "Use /compact, /compact strategy truncate|summarize|memories-then-drop|"
+                            "Use /compact, /compact strategy truncate|memories-then-drop|"
                             "human-and-final-only, /compact policy performance|cost [fraction], "
+                            "/compact keep <percent>, "
                             "or /compact instructions <summary prompt containing {messages}>."
                         )
                 await emit.text(message)

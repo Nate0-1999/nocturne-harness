@@ -4,12 +4,12 @@ import asyncio
 import json
 import logging
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Literal
 from uuid import UUID
 
-from harness.agent import ExtractionCandidateDraft, ExtractionDraft, HarnessAgent
+from harness.agent import ExtractionCandidateDraft, ExtractionDraft, HarnessAgent, _within_cap
 from harness.spine_client import (
     ExtractionCandidate,
     ExtractionRequest,
@@ -36,6 +36,8 @@ class ThreadEndResult:
     cards: list[QueueCard]
     duplicate_count: int
     already_extracted: bool
+    # v2.133: every fact drawn, with its source messages, for the compaction record.
+    facts: list[dict[str, object]] = field(default_factory=list)
 
 
 class ExtractionService:
@@ -78,11 +80,8 @@ class ExtractionService:
             transcript,
             tail=tail,
             final_post=final_post,
-            leave_over_cap=True,
             locations={message["message_id"]: message.get("location") for message in messages},
-            user_message_ids={
-                message["message_id"] for message in messages if message["role"] == "user"
-            },
+            verifying_ids={m["message_id"] for m in messages if m["role"] == "user"},
         )
 
     async def triage(
@@ -98,9 +97,8 @@ class ExtractionService:
         on_result=None,
         model_settings=None,
         summary_prompt=None,
-        leave_over_cap=False,
         locations=None,
-        user_message_ids=None,
+        verifying_ids=None,
     ):
         """D.2 153: compaction and close run the same summarizer and admission path."""
         options = (
@@ -115,8 +113,6 @@ class ExtractionService:
         )
         if summary_prompt is not None:
             options["summary_prompt"] = summary_prompt
-        if leave_over_cap:
-            options["leave_over_cap"] = True
         draft = await self._agent.extract_thread(transcript, **options)
         return await self.admit(
             thread_id,
@@ -129,7 +125,7 @@ class ExtractionService:
             on_result=on_result,
             model_settings=model_settings,
             locations=locations,
-            user_message_ids=user_message_ids,
+            verifying_ids=verifying_ids,
         )
 
     async def admit(
@@ -145,18 +141,28 @@ class ExtractionService:
         on_result=None,
         model_settings=None,
         locations=None,
-        user_message_ids=None,
+        verifying_ids=None,
     ) -> ThreadEndResult:
         """The shared compaction/close queue door; the summarizer already did triage."""
         text_id = str(thread_id)
         project_key, fallback = self._journal.thread_feet(text_id)
         groups: dict[str | None, list[ExtractionCandidate]] = {}
         duplicate_count = 0
+        facts: list[dict[str, object]] = []
         for item in draft.candidates:
-            if user_message_ids is not None and not user_message_ids.intersection(
-                item.source_message_ids
+            # Owner 2026-10-07 (v2.133): a fact no user message or tool result verified says so.
+            if (
+                verifying_ids is not None
+                and not verifying_ids.intersection(item.source_message_ids)
+                and not item.body.lower().startswith("unverified")
             ):
-                continue
+                item = item.model_copy(
+                    update={
+                        "body": _within_cap(
+                            f"Unverified: {item.body}", self._agent.memory_max_tokens
+                        )
+                    }
+                )
             neighbors = await self._spine.search(
                 SearchRequest(
                     principal_id=self._principal_id,
@@ -187,6 +193,14 @@ class ExtractionService:
                 item,
                 neighbor_payload,
                 **options,
+            )
+            facts.append(
+                {
+                    "label": item.label,
+                    "body": item.body,
+                    "source_message_ids": list(item.source_message_ids),
+                    "verdict": verdict.verdict,
+                }
             )
             if verdict.verdict == "already_known":
                 duplicate_count += 1
@@ -225,6 +239,7 @@ class ExtractionService:
             cards,
             duplicate_count,
             False,
+            facts,
         )
 
     async def backfill_projects(self) -> None:
