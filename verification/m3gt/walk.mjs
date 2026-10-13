@@ -124,7 +124,8 @@ for (const face of ['dark', 'light']) {
       modules += 1
       if (module.theme !== theme || module.ground !== rgb(GROUNDS[theme][face])) fail('FL-203', `${where}: a module wears ${JSON.stringify(module)}`)
     }
-    if (modules < 8 || seen.names.length < 8 || seen.frames.length < 8) fail('FL-203', `${where}: too little seen (${modules} module documents, ${seen.names.length} names, ${seen.frames.length} frames)`)
+    // Every template module on the layer is seen: one name and one frame each (seven on Work).
+    if (modules < 7 || seen.names.length < 7 || seen.frames.length !== seen.names.length) fail('FL-203', `${where}: too little seen (${modules} module documents, ${seen.names.length} names, ${seen.frames.length} frames)`)
     checked[where] = { modules, names: seen.names.length, frames: seen.frames.length, strips: seen.strips.length }
     if (!seen.stage[0].image.startsWith('url("data:image/svg') || seen.stage[0].zIndex !== '-1' || seen.stage[0].pointer !== 'none') fail('FL-203', `${where}: the Stage ornament ${JSON.stringify(seen.stage[0])}`)
     if (seen.strips.length === 0 || seen.strips.some((strip) => !strip.image.startsWith('url("data:image/svg'))) fail('FL-203', `${where}: head strips ${JSON.stringify(seen.strips)}`)
@@ -147,7 +148,7 @@ for (const face of ['dark', 'light']) {
     await page.getByTestId('stage-fit').click().catch(() => {})
     await page.waitForTimeout(3500)
     const seen = await page.evaluate(inspect)
-    if (seen.names.length < 8) fail('FL-147', `${theme}: only ${seen.names.length} names seen`)
+    if (seen.names.length < 7) fail('FL-147', `${theme}: only ${seen.names.length} names seen`)
     checked[theme] = { names: seen.names.length, strips: seen.strips.length, stage: seen.stage.map((layer) => layer.animation) }
     for (const name of seen.names.filter((candidate) => !candidate.whole)) fail('FL-147', `${theme}: ${name.name} is cut`)
     if (seen.strips.some((strip) => !/^grimoire-(rune-inscribe|glitch-in)$/.test(strip.animation))) fail('FL-147', `${theme}: head strips ${JSON.stringify(seen.strips)}`)
