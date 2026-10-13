@@ -11,8 +11,9 @@ import httpx
 import pytest
 from pydantic_ai.messages import BinaryContent
 
-from harness.envelope import GateCommitPayload, StopReason, WrongResolution
+from harness.envelope import EnvelopeFactory, GateCommitPayload, StopReason, WrongResolution
 from harness.memory_gate import MemoryGateTurnRunner
+from harness.memory_outbox import MemoryOutbox
 from harness.memory_panel import EMPTY_MEMORY_BLOCK, ThreadMemoryContextRegistry
 from harness.model_policy import ThreadModelResolution
 from harness.run_protocol import (
@@ -1277,6 +1278,84 @@ async def test_spine_failure_is_visible_and_fails_open_without_instructions(phas
         assert emitted.events == ["error:prepare"]
     else:
         assert emitted.events == ["gate.open", "error:commit", "gate.dismiss"]
+
+
+class LocalCopyStub:
+    """The M4BW copy's surface the gate uses, returning a fixed local check."""
+
+    def __init__(self, prepared: InjectPrepareResponse) -> None:
+        self.prepared = prepared
+        self.excluded: frozenset[UUID] | None = None
+
+    def prepare(self, request, *, excluded):
+        self.excluded = excluded
+        return self.prepared
+
+    def final_block(self, prepared, *, removed, added_back):
+        return final_block(*[card for card in prepared.injected if card.memory_id not in removed])
+
+    def as_of(self) -> datetime:
+        return datetime(2026, 10, 13, 9, 0, tzinfo=UTC)
+
+
+@pytest.mark.asyncio
+async def test_unreachable_palace_opens_the_gate_from_the_local_copy_and_queues_deletes(
+    tmp_path: Path,
+) -> None:
+    """ADR-003 / F175: with a local copy the first-turn check still opens and says so; nothing
+    is committed to the Palace, the context cites no Palace events, and ×! waits in the outbox.
+    """
+    kept_id = UUID("92345678-1234-5678-1234-567812345678")
+    deleted_id = UUID("a2345678-1234-5678-1234-567812345678")
+    kept = scored_card(kept_id, label="Keep", body="Keep this body.", rank=1)
+    gone = scored_card(deleted_id, label="Gone", body="Delete this body.", rank=2)
+    spine = RecordingSpine(fail_prepare=True)
+    local = LocalCopyStub(
+        spine.prepare_response.model_copy(update={"injected": [kept, gone], "near_misses": []})
+    )
+    outbox = MemoryOutbox(tmp_path, ids=EnvelopeFactory(machine_id="machine-1"))
+    outbox.enqueue("delete", "Earlier", {"memory_id": "b2345678-1234-5678-1234-567812345678"})
+    delegate = RecordingDelegate()
+    contexts = ThreadMemoryContextRegistry()
+    runner = MemoryGateTurnRunner(
+        delegate,
+        spine,
+        context_factory(spine),
+        model_context_tokens=1_000_000,
+        contexts=contexts,
+        mirror=local,
+        outbox=outbox,  # type: ignore[arg-type]
+    )
+    emitted = RecordingEmitter()
+    turn = asyncio.create_task(
+        runner.run(thread_id=THREAD_ID, prompt="hello", message_history=(), emit=emitted)
+    )
+    await asyncio.wait_for(emitted.opened.wait(), 1)
+    assert emitted.gate_values[0]["local_copy_as_of"] == local.prepared.snapshot_ts.isoformat()
+    assert emitted.decision is not None
+    emitted.decision.set_result(
+        GateCommitPayload(
+            run_id=RUN_ID,
+            injection_id=INJECTION_ID,
+            removed=[{"memory_id": deleted_id, "reason": "never"}],
+            added_back=[],
+            deleted=[deleted_id],
+        )
+    )
+    await asyncio.wait_for(turn, 1)
+
+    assert local.excluded == {UUID("b2345678-1234-5678-1234-567812345678")}
+    assert spine.commit_requests == []
+    assert [(item.kind, item.label) for item in outbox.waiting()] == [
+        ("delete", "Earlier"),
+        ("delete", "Gone"),
+    ]
+    snapshot = contexts.snapshot(THREAD_ID)
+    assert snapshot is not None and snapshot.from_local_copy and snapshot.event_sources == {}
+    assert delegate.calls == [(THREAD_ID, "hello", (), final_block(kept), frozenset({deleted_id}))]
+    assert [error["code"] for error in emitted.errors] == ["memory_local_copy"]
+    assert "from the local copy, as of" in str(emitted.errors[0]["message"])
+    assert emitted.events == ["gate.open", "error:prepare", "gate.dismiss"]
 
 
 @pytest.mark.asyncio

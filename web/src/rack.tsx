@@ -126,6 +126,8 @@ export type RackAction =
   | { type: 'thread.rewind'; thread_id: string; prompt_id: string; scope: 'conversation' | 'files' | 'both' }
   | { type: 'queue.load'; thread_id?: string; birthplace?: 'thread' | 'seed' | 'symphony' | 'curator' }
   | { type: 'curation.load' }
+  | { type: 'local_copy.load' }
+  | { type: 'local_copy.dismiss'; uid: string }
   | { type: 'seed.jump-start.load' }
   | { type: 'seed.upload'; batch_uid: string; source_name: string; markdown: string }
   | { type: 'queue.batch.decide'; batch_uid: string; decision: 'approve' | 'deny' }
@@ -244,7 +246,7 @@ export type RackActionResult<Action extends RackAction> =
       ? number
     : Action['type'] extends 'thread.select' | 'thread.rename_project' | 'thread.bind_workspace' | 'draft.update'
       ? void
-      : Action['type'] extends 'policies.load' | 'policies.save' | 'models.load' | 'models.pin' | 'prompt.interject' | 'symphony.context' | 'symphony.memory' | 'spend.invoice' | 'thread.archive' | 'thread.rewind' | 'queue.load' | 'curation.load' | 'queue.decide' | 'queue.feedback' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
+      : Action['type'] extends 'policies.load' | 'policies.save' | 'models.load' | 'models.pin' | 'prompt.interject' | 'symphony.context' | 'symphony.memory' | 'spend.invoice' | 'thread.archive' | 'thread.rewind' | 'queue.load' | 'curation.load' | 'local_copy.load' | 'local_copy.dismiss' | 'queue.decide' | 'queue.feedback' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
         ? JsonValue
         : Action['type'] extends 'rack.scope.get' | 'rack.scope.set'
           ? RackScope
@@ -347,7 +349,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'visualizer',
     slot: 'strip',
     streams: ['memory.panel.update'],
-    actions: ['curation.load'],
+    actions: ['curation.load', 'local_copy.load', 'local_copy.dismiss'],
     bounds: stageGridBounds(STRIP_RACK_BOUNDS.context_bars.preferred),
     movable: true,
     law_bound: true,
@@ -687,6 +689,12 @@ function dispatchRackAction<Action extends RackAction>(
           observedCuratorRun = next
           return result as RackActionResult<Action>
         })
+      case 'local_copy.load':
+        return fetchJson('/v1/local-copy') as Promise<RackActionResult<Action>>
+      case 'local_copy.dismiss':
+        return fetchJson(`/v1/local-copy/returned/${encodeURIComponent(action.uid)}/dismiss`, {
+          method: 'POST',
+        }) as Promise<RackActionResult<Action>>
       case 'seed.jump-start.load':
         return fetchJson('/v1/seeds/jump-start') as Promise<RackActionResult<Action>>
       case 'seed.upload':

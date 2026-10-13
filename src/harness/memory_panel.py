@@ -91,6 +91,7 @@ class ThreadMemorySnapshot:
     event_sources: Mapping[UUID, UUID]
     memory_bodies: Mapping[UUID, str]
     memory_allocation: MemoryAllocation
+    from_local_copy: bool = False
 
 
 @dataclass(slots=True)
@@ -105,6 +106,7 @@ class _ThreadMemoryState:
     pinned_memory_ids: set[UUID]
     memory_context_share: float
     share_tokens: int
+    from_local_copy: bool = False
 
     def snapshot(self) -> ThreadMemorySnapshot:
         return ThreadMemorySnapshot(
@@ -117,6 +119,7 @@ class _ThreadMemoryState:
             event_sources=dict(self.event_sources),
             memory_bodies=dict(self.memory_bodies),
             memory_allocation=self._allocation(),
+            from_local_copy=self.from_local_copy,
         )
 
     def _allocation(self) -> MemoryAllocation:
@@ -159,8 +162,12 @@ class ThreadMemoryContextRegistry:
         removed_memory_ids: frozenset[UUID],
         added_back: Sequence[UUID],
         final_block: str,
+        from_local_copy: bool = False,
     ) -> ThreadMemorySnapshot:
-        """Bind canonical final-block fragments to the committed event membership."""
+        """Bind canonical final-block fragments to the committed event membership.
+
+        M4BW: a context scored from the local copy has no Palace injection events to cite.
+        """
 
         if thread_id in self._threads:
             raise ValueError("thread already has a committed memory context")
@@ -198,13 +205,16 @@ class ThreadMemoryContextRegistry:
             excluded_memory_ids=set(removed_memory_ids),
             confirmed_memory_ids={card.memory_id for card in selected},
             near_miss_ids=set(near_misses) - removed_memory_ids - set(added_back),
-            event_sources={
+            event_sources={}
+            if from_local_copy
+            else {
                 memory_id: prepared.injection_id for memory_id in prepared_ids - removed_memory_ids
             },
             memory_bodies={card.memory_id: card.body for card in selected},
             pinned_memory_ids={card.memory_id for card in selected if card.pin},
             memory_context_share=prepared.memory_allocation.memory_context_share,
             share_tokens=prepared.memory_allocation.share_tokens,
+            from_local_copy=from_local_copy,
         )
         self._threads[thread_id] = state
         return state.snapshot()
@@ -290,6 +300,7 @@ class ThreadMemoryContextRegistry:
         state.memory_context_share = prepared.memory_allocation.memory_context_share
         state.share_tokens = prepared.memory_allocation.share_tokens
         state.injection_id = prepared.injection_id
+        state.from_local_copy = False
         state.near_miss_ids = {
             card.memory_id for card in prepared.near_misses
         } - state.excluded_memory_ids
@@ -425,6 +436,28 @@ class MemoryPanelController:
             result="deleted",
             send=send,
         )
+
+    async def delete_queued(self, memory_id: UUID) -> str | None:
+        """M4BW: an outbox delete, the panel's delete at the Palace's current revision.
+
+        Returns why nothing was deleted, in plain words, or None when it was.
+        """
+
+        listed = await self._active_principal_memories()
+        current = next((item for item in listed if item.memory_id == memory_id), None)
+        if current is None:
+            return "It was no longer active in the Palace, so nothing was deleted."
+        await self._spine.patch_memory(
+            memory_id,
+            PatchMemoryRequest(
+                expected_revision=current.revision,
+                status=MemoryStatus.TOMBSTONED,
+                editor="user",
+                reason="panel/delete/no_longer_needed",
+                machine_id=self._machine_id,
+            ),
+        )
+        return None
 
     async def publish_ambient(self, thread_id: str, send: EnvelopeSender) -> None:
         """Publish an unsolicited authoritative panel refresh after re-scoring."""
