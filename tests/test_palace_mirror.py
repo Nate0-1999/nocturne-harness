@@ -61,9 +61,7 @@ class FakePalace:
     def __init__(self, *, console_fails: bool = False) -> None:
         self.console_fails = console_fails
         self.units = [
-            unit(
-                FERRY, "Cobble Quay ferry", "The Cobble Quay ferry rests on Christmas Day."
-            ),
+            unit(FERRY, "Cobble Quay ferry", "The Cobble Quay ferry rests on Christmas Day."),
             unit(BELL, "Vela bell", "The Vela observatory rings a bell at noon.", project=None),
             unit(PEER, "Cobble Quay ferry", "A peer's memory.", principal="someone-else"),
         ]
