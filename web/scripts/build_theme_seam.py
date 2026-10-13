@@ -219,6 +219,122 @@ def grimoire_transform(rgb: tuple[float, float, float], theme: str) -> tuple[flo
     return colorsys.hls_to_rgb(target / 360, lightness, changed_saturation)
 
 
+# M3GT (SD-078): authored themes with two faces. Each face maps the neo-noir seam by role:
+# grounds, lines and inks ride the face's neutral ramp (by source lightness); each hue family
+# lands on the face's anchor, keeping its lightness offset (inverted on a light face).
+FAMILY_ANCHORS = {
+    "accent": (0.61, 1.0),
+    "secondary": (0.61, 0.87),
+    "danger": (0.63, 1.0),
+    "warm": (0.63, 0.75),
+    "jade": (0.64, 0.65),
+}
+DECO_DARK_RAMP = (
+    (0.0, "#040302"), (0.03, "#0a0907"), (0.05, "#0f0d0a"), (0.07, "#15120d"), (0.10, "#1e1912"),
+    (0.46, "#7f7259"), (0.66, "#b8a882"), (0.95, "#f3ebd9"), (1.0, "#fffaf0"),
+)
+DECO_LIGHT_RAMP = (
+    (0.0, "#e3d8bf"), (0.03, "#efe7d3"), (0.05, "#f5efe1"), (0.07, "#faf6ed"), (0.10, "#fffdf8"),
+    (0.46, "#6b5f4c"), (0.66, "#463d30"), (0.95, "#15120d"), (1.0, "#000000"),
+)
+GLASS_DARK_RAMP = (
+    (0.0, "#030304"), (0.03, "#08070a"), (0.05, "#0c0b0f"), (0.07, "#121116"), (0.10, "#1a181f"),
+    (0.46, "#7b7369"), (0.66, "#b7ad9e"), (0.95, "#f7eedf"), (1.0, "#fffaf2"),
+)
+GLASS_LIGHT_RAMP = (
+    (0.0, "#e8dabd"), (0.03, "#f3e9d5"), (0.05, "#f7efe0"), (0.07, "#fbf6ec"), (0.10, "#fffdf8"),
+    (0.46, "#786856"), (0.66, "#55463a"), (0.95, "#24180f"), (1.0, "#000000"),
+)
+JEWEL_DARK_RAMP = (
+    (0.0, "#040302"), (0.03, "#0a0806"), (0.05, "#0f0c09"), (0.07, "#15110d"), (0.10, "#1e1913"),
+    (0.46, "#7d6f5c"), (0.66, "#b9aa92"), (0.95, "#f5e9d3"), (1.0, "#fff8ec"),
+)
+JEWEL_LIGHT_RAMP = (
+    (0.0, "#dccaa6"), (0.03, "#e8d9bb"), (0.05, "#efe3ca"), (0.07, "#f5ecd9"), (0.10, "#fbf5e8"),
+    (0.46, "#6f5d45"), (0.66, "#4d3e2c"), (0.95, "#1f150c"), (1.0, "#000000"),
+)
+FACES: dict[str, dict[str, dict[str, object]]] = {
+    # Art Deco: gold on black by night, black on ivory by day; jade the second voice.
+    "art-deco-a1": {
+        "dark": {"ramp": DECO_DARK_RAMP, "accent": "#d6b04a", "secondary": "#3aa585",
+                 "danger": "#d9483b", "warm": "#f0e2b6", "jade": "#3aa585"},
+        "light": {"ramp": DECO_LIGHT_RAMP, "accent": "#7e5f14", "secondary": "#1d6b53",
+                  "danger": "#a8203f", "warm": "#1f3a7a", "jade": "#1d6b53", "light": True},
+    },
+    "art-deco-a3": {
+        "dark": {"ramp": DECO_DARK_RAMP, "accent": "#cfd3d8", "secondary": "#d6b04a",
+                 "danger": "#d9483b", "warm": "#e3bb5a", "jade": "#3aa585"},
+        "light": {"ramp": DECO_LIGHT_RAMP, "accent": "#2c3036", "secondary": "#7e5f14",
+                  "danger": "#a8203f", "warm": "#7a5a12", "jade": "#1d6b53", "light": True},
+    },
+    "bellagio-a1": {
+        "dark": {"ramp": GLASS_DARK_RAMP, "accent": "#5b8cff", "secondary": "#b77cff",
+                 "danger": "#ff4a5c", "warm": "#ffc23d", "jade": "#4fd17f"},
+        "light": {"ramp": GLASS_LIGHT_RAMP, "accent": "#1f55c0", "secondary": "#7a3aa8",
+                  "danger": "#c41f37", "warm": "#9a6400", "jade": "#1d7d42", "light": True},
+    },
+    "bellagio-a4": {
+        "dark": {"ramp": JEWEL_DARK_RAMP, "accent": "#6f97ff", "secondary": "#c08cff",
+                 "danger": "#ff5468", "warm": "#ffb43a", "jade": "#3ccf86"},
+        "light": {"ramp": JEWEL_LIGHT_RAMP, "accent": "#143c9c", "secondary": "#5a2384",
+                  "danger": "#a3122e", "warm": "#8a5200", "jade": "#0f6a3a", "light": True},
+    },
+}
+for _name in ("art-deco-s1", "art-deco-s2", "art-deco-s3", "art-deco-s4"):
+    FACES[_name] = FACES["art-deco-a1"]
+for _name in ("bellagio-g1", "bellagio-g2", "bellagio-g3", "bellagio-g4"):
+    FACES[_name] = FACES["bellagio-a4"]
+for _name in ("art-deco-a1", "art-deco-a3", "bellagio-a1", "bellagio-a4"):
+    del FACES[_name]
+
+
+def hex_rgb(value: str) -> tuple[float, float, float]:
+    return tuple(int(value[index : index + 2], 16) / 255 for index in (1, 3, 5))  # type: ignore[return-value]
+
+
+def face_transform(
+    rgb: tuple[float, float, float], face: dict[str, object]
+) -> tuple[float, float, float]:
+    hue, lightness, saturation = colorsys.rgb_to_hls(*rgb)
+    degrees = hue * 360
+    if saturation < 0.3 or lightness < 0.13 or lightness > 0.88:
+        stops = face["ramp"]
+        assert isinstance(stops, tuple)
+        for (low, low_color), (high, high_color) in zip(stops, stops[1:], strict=False):
+            if lightness <= high:
+                share = 0.0 if high == low else max(0.0, (lightness - low) / (high - low))
+                return tuple(  # type: ignore[return-value]
+                    left + (right - left) * share
+                    for left, right in zip(hex_rgb(low_color), hex_rgb(high_color), strict=True)
+                )
+        return hex_rgb(stops[-1][1])
+    if 165 <= degrees <= 275:
+        family = "accent"
+    elif 275 < degrees <= 345:
+        family = "secondary"
+    elif degrees > 345 or degrees <= 15:
+        family = "danger"
+    elif degrees <= 65:
+        family = "warm"
+    else:
+        family = "jade"
+    anchor_lightness, anchor_saturation = FAMILY_ANCHORS[family]
+    target = str(face[family])
+    target_hue, target_lightness, target_saturation = colorsys.rgb_to_hls(*hex_rgb(target))
+    direction = -1 if face.get("light") else 1
+    changed_lightness = min(0.94, max(0.06, target_lightness + direction * (lightness - anchor_lightness)))
+    changed_saturation = min(1.0, target_saturation * saturation / anchor_saturation)
+    return colorsys.hls_to_rgb(target_hue, changed_lightness, changed_saturation)
+
+
+def theme_transform(rgb: tuple[float, float, float], theme: str) -> tuple[float, float, float]:
+    """A grimoire theme's frozen transform, or one face of an authored two-face theme."""
+    name, _, face = theme.partition(":")
+    if name in FACES:
+        return face_transform(rgb, FACES[name][face or "dark"])
+    return grimoire_transform(rgb, theme)
+
+
 def grimoire_mapped(value: str, theme: str) -> str:
     """Apply the reference kit's exact hex/comma-rgb rewrite behavior."""
 
@@ -227,7 +343,7 @@ def grimoire_mapped(value: str, theme: str) -> str:
         if len(digits) == 3:
             digits = "".join(character * 2 for character in digits)
         source = tuple(int(digits[index : index + 2], 16) / 255 for index in (0, 2, 4))
-        changed = grimoire_transform(source, theme)  # type: ignore[arg-type]
+        changed = theme_transform(source, theme)  # type: ignore[arg-type]
         return "#" + "".join(
             f"{max(0, min(255, round(channel * 255))):02x}" for channel in changed
         )
@@ -240,12 +356,21 @@ def grimoire_mapped(value: str, theme: str) -> str:
             source = tuple(float(part.split("/")[0]) / 255 for part in parts[:3])
         except ValueError:
             return match.group(0)
-        changed = grimoire_transform(source, theme)  # type: ignore[arg-type]
+        changed = theme_transform(source, theme)  # type: ignore[arg-type]
         alpha = parts[3] if len(parts) == 4 else None
         values = ", ".join(str(round(channel * 255)) for channel in changed)
         return f"rgba({values}, {alpha})" if alpha else f"rgb({values})"
 
     return GRIMOIRE_RGBA.sub(replace_rgb, GRIMOIRE_HEX.sub(replace_hex, value))
+
+
+def face_columns(value: str) -> dict[str, str]:
+    columns = {}
+    for theme in FACES:
+        key = theme.replace("-", "_")
+        columns[key] = grimoire_mapped(value, theme)
+        columns[f"{key}_light"] = grimoire_mapped(value, f"{theme}:light")
+    return columns
 
 
 def manifest_from_literals(literals: list[str]) -> dict[str, object]:
@@ -262,6 +387,7 @@ def manifest_from_literals(literals: list[str]) -> dict[str, object]:
                 "technomancer": grimoire_mapped(value, "technomancer"),
                 "variable": variable(value),
                 "wizard_mode": grimoire_mapped(value, "wizard-mode"),
+                **face_columns(value),
             }
         )
     return {
@@ -289,6 +415,16 @@ def css_from_manifest(manifest: dict[str, object]) -> str:
         for entry in colors:
             assert isinstance(entry, dict)
             blocks.append(f"  {entry['variable']}: {entry[key]};")
+        blocks.append("}")
+    for theme in FACES:
+        key = theme.replace("-", "_")
+        blocks.append(f':root[data-theme="{theme}"] {{')
+        blocks.extend(f"  {entry['variable']}: {entry[key]};" for entry in colors)
+        blocks.append("}")
+        blocks.append("@media (prefers-color-scheme: light) {")
+        blocks.append(f'  :root[data-theme="{theme}"] {{')
+        blocks.extend(f"    {entry['variable']}: {entry[f'{key}_light']};" for entry in colors)
+        blocks.append("  }")
         blocks.append("}")
     return "\n".join(blocks) + "\n"
 
@@ -349,6 +485,10 @@ def refresh() -> None:
         entry["gold_lines"] = mapped(value, hex_map=GOLD_HEX, rgb_map=GOLD_RGB, theme_index=1)
         entry["wizard_mode"] = grimoire_mapped(value, "wizard-mode")
         entry["technomancer"] = grimoire_mapped(value, "technomancer")
+        for key in [name for name in entry if name not in {"variable", "neo_noir"}]:
+            if key not in {"seraph_dressed", "gold_lines", "wizard_mode", "technomancer"}:
+                del entry[key]
+        entry.update(face_columns(value))
     MANIFEST.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     THEMES_CSS.write_text(css_from_manifest(manifest))
 

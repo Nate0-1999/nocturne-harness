@@ -10,6 +10,14 @@ export const THEMES = [
   { id: 'gold-lines', label: 'GOLD LINES' },
   { id: 'wizard-mode', label: 'WIZARD MODE' },
   { id: 'technomancer', label: 'TECHNOMANCER' },
+  { id: 'art-deco-s1', label: 'ART DECO · S1' },
+  { id: 'art-deco-s2', label: 'ART DECO · S2' },
+  { id: 'art-deco-s3', label: 'ART DECO · S3' },
+  { id: 'art-deco-s4', label: 'ART DECO · S4' },
+  { id: 'bellagio-g1', label: 'BELLAGIO · G1' },
+  { id: 'bellagio-g2', label: 'BELLAGIO · G2' },
+  { id: 'bellagio-g3', label: 'BELLAGIO · G3' },
+  { id: 'bellagio-g4', label: 'BELLAGIO · G4' },
 ] as const
 
 export type BuiltinThemeId = (typeof THEMES)[number]['id']
