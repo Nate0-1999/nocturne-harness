@@ -46,6 +46,39 @@ PALETTES = {
         "danger": "#f54a66",
         "fleet": ["#3dfa7c", "#7c8cff", "#c747f2", "#f54a66"],
     },
+    # M3GT / D.2 180: the two-face themes, each face checked on its own grounds.
+    "art-deco": {
+        "ground": "#0a0907",
+        "ink": "#f4ecdb",
+        "muted": "#b8a882",
+        "accent": "#d6b04a",
+        "danger": "#d94639",
+        "fleet": ["#3ba686", "#d6b04a", "#f3e8c5", "#d94639"],
+    },
+    "art-deco-light": {
+        "ground": "#efe7d3",
+        "ink": "#13100c",
+        "muted": "#463d30",
+        "accent": "#7e5f14",
+        "danger": "#aa2040",
+        "fleet": ["#1d6a52", "#7e5f14", "#1c336b", "#aa2040"],
+    },
+    "bellagio": {
+        "ground": "#0a0806",
+        "ink": "#f6ead5",
+        "muted": "#b9aa92",
+        "accent": "#6f97ff",
+        "danger": "#ff5266",
+        "fleet": ["#3dcf87", "#6f97ff", "#febb4d", "#ff5266"],
+    },
+    "bellagio-light": {
+        "ground": "#e8d9bb",
+        "ink": "#1c130b",
+        "muted": "#4d3e2c",
+        "accent": "#143c9c",
+        "danger": "#a5122f",
+        "fleet": ["#0f6839", "#143c9c", "#784701", "#a5122f"],
+    },
 }
 
 

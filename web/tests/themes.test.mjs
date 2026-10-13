@@ -12,8 +12,8 @@ import {
   themeFromSearch,
 } from '../src/themes.ts'
 
-/** P2 and D.2 115 require the five curated themes with NEO-NOIR still worn by default. */
-test('five theme identities remain closed with NEO-NOIR as the safe default', () => {
+/** P2, D.2 115 and D.2 180 require the seven curated themes with NEO-NOIR still worn by default. */
+test('seven theme identities remain closed with NEO-NOIR as the safe default', () => {
   assert.equal(DEFAULT_THEME, 'neo-noir')
   assert.deepEqual(THEMES.map((theme) => theme.id), [
     'neo-noir',
@@ -21,7 +21,11 @@ test('five theme identities remain closed with NEO-NOIR as the safe default', ()
     'gold-lines',
     'wizard-mode',
     'technomancer',
+    'art-deco',
+    'bellagio',
   ])
+  assert.equal(isThemeId('art-deco'), true)
+  assert.equal(isThemeId('bellagio'), true)
   assert.equal(isThemeId('gold-lines'), true)
   assert.equal(isThemeId('wizard-mode'), true)
   assert.equal(isThemeId('technomancer'), true)
