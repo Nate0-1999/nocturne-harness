@@ -2953,6 +2953,36 @@ async def test_refused_named_model_and_legacy_root_preserve_prior_authority(tmp_
 
 
 @pytest.mark.asyncio
+async def test_thread_models_name_the_model_and_thinking_level_in_force() -> None:
+    """P2 / ADR-023: the thread list names each thread's model and thinking level, the ones its
+    next turn will use, and a thread nothing has resolved yet names neither.
+    """
+    resolution = ThreadModelResolution(
+        model="openrouter:vendor/model",
+        context_tokens=1000,
+        policy="pinned:openrouter:vendor/model",
+    )
+    loop = RunLoop(
+        NeverStartsRunner(),
+        factory(Ids()),
+        model_resolver=RecordingResolver({"thread": resolution}),
+    )
+    await loop.request_snapshot("untouched", Sink())
+    await loop.parameter_snapshot("thread")
+    await loop.write_parameter(
+        module_id="model_device",
+        thread_id="thread",
+        parameter_id="model.effort",
+        value="low",
+    )
+    assert loop.thread_models() == {
+        "untouched": {"model": None, "effort": None},
+        "thread": {"model": "openrouter:vendor/model", "effort": "low"},
+    }
+    await loop.close()
+
+
+@pytest.mark.asyncio
 async def test_busy_parameter_write_keeps_running_model_unchanged() -> None:
     """ADR-023 quotes 'busy': an in-flight paid run retains its accepted parameters."""
     resolution = ThreadModelResolution(

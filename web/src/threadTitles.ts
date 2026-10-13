@@ -45,9 +45,10 @@ export function isLegacyFixtureTitle(title: string): boolean {
 
 export function visibleThreadTitle(title: string): string {
   const normalized = normalizedThreadTitle(title)
+  // FL-205: the journal's title is cut at 80 characters, mid-word; shown, it ends on a whole word.
   return LEGACY_FIXTURE_TITLE_FINGERPRINTS.has(titleFingerprint(normalized))
     ? 'Verification thread'
-    : title
+    : normalized
 }
 
 /** M3W6B-53: open threads that share a title are numbered by age, so each reads apart. */

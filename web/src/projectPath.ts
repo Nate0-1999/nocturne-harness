@@ -10,6 +10,43 @@ export function projectScopeLabel(projectKey: string | null): string | null {
   return projectKey === null ? UNSCOPED_PROJECT_LABEL : null
 }
 
+type ProjectNamed = { project_key: string | null, project_label: string | null }
+
+/** FL-205: a thread's project by its name — the name it was given, else its folder's — never a path. */
+export function projectName(entry: ProjectNamed): string {
+  const label = entry.project_label?.trim()
+  if (label) return label
+  if (entry.project_key === null) return UNSCOPED_PROJECT_LABEL
+  const parts = entry.project_key.split('/').filter((part) => part !== '')
+  return parts[parts.length - 1] ?? entry.project_key
+}
+
+/** FL-205: threads in the order given, gathered under their project; each project is named once,
+ * by its first thread, and the groups keep the order of their first threads. */
+export function projectGroups<T extends ProjectNamed>(
+  entries: readonly T[],
+): { key: string, name: string, entries: T[] }[] {
+  const groups = new Map<string, { key: string, name: string, entries: T[] }>()
+  for (const entry of entries) {
+    const key = entry.project_key ?? ''
+    const group = groups.get(key)
+    if (group === undefined) groups.set(key, { key, name: projectName(entry), entries: [entry] })
+    else group.entries.push(entry)
+  }
+  return [...groups.values()]
+}
+
+/** FL-205: where a thread's agent stands, from its project's name down; a place outside the
+ * project keeps its whole path. */
+export function locationInProject(
+  entry: ProjectNamed & { workspace_root: string | null, current_location: string | null },
+): string | null {
+  const { workspace_root: root, current_location: location } = entry
+  if (location === null) return null
+  if (root === null || (location !== root && !location.startsWith(`${root}/`))) return location
+  return `${projectName(entry)}${location.slice(root.length)}`
+}
+
 export function authoritativeProjectPath(
   projectKey: string | null,
   awaitingSnapshot: boolean,

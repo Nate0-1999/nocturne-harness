@@ -4204,3 +4204,14 @@ after 1 s and 3 s for GETs, the read-only POSTs (search, scores, graph, console,
 memory query) and the two writes the Palace treats as idempotent (approval decisions and a
 compaction's fact batch, whose resend is a hard duplicate). A refusal fails at once, and so
 does every other write: /remember's save, a split and a prepare stay loud.
+
+## M4UX — The thread list says where and how [P2, P2.1]
+
+PRECEDENT: SD-084, FL-205, M4CD (numbered titles; WHERE keeps its end), M3SK (the chip).
+The catalog carries each thread's model and thinking level as the run loop holds them.
+The list names a project once, over its threads (the column-head role), never as a path;
+a row shows title, state and the chip's leading marks — policy in force · model · thinking
+level — and its tip carries the folder. The thinking level keeps the chip's words
+("low thinking", FL-202), so the list, the Deck and the chip read alike. The journal cuts
+titles at 80 characters mid-word; shown titles end on a whole word. WHERE reads from the
+project down.
