@@ -19,6 +19,10 @@ import { formatHumanUsd } from './humanNumbers'
 import { useSeenProposals } from './deckSeen'
 import { agentColor } from './visualization'
 import { SymphonyFeedback } from './SymphonyCards'
+import { distinctThreadTitles, visibleThreadTitle } from './threadTitles'
+import { projectName } from './projectPath'
+import { useModelBrowser } from './ModelDevice'
+import { threadModelMark } from './modelBrowser'
 
 interface DeckAttempt {
   attempt_id: string
@@ -132,14 +136,15 @@ export function latestDeckStacks(messages: AssistantTranscriptMessage[]): DeckSt
 export function proposedResponseCards(
   snapshot: ReturnType<typeof useRackSnapshot>,
 ): ProposedResponseCard[] {
-  const titles = new Map(snapshot.catalog.map((entry) => [entry.thread_id, entry.title]))
+  // FL-205: a card names its thread as the thread list does.
+  const titles = distinctThreadTitles(snapshot.catalog.filter((entry) => !entry.archived))
   const latest = new Map(snapshot.catalog.flatMap((entry): [string, ProposedResponseCard][] => {
     const proposal = entry.proposed_response
     // M3W5B-38: an archived thread is closed; its last answer no longer waits on the Deck.
     if (proposal === null || proposal === undefined || entry.archived) return []
     return [[entry.thread_id, {
       thread_id: entry.thread_id,
-      thread_title: entry.title,
+      thread_title: titles.get(entry.thread_id) ?? visibleThreadTitle(entry.title),
       proposal_run_id: proposal.proposal_run_id,
       primary: proposal.primary,
       alternatives: proposal.alternatives,
@@ -202,6 +207,16 @@ export function SymphonyDeck() {
     ),
   ), [selected?.messages])
   const seen = useSeenProposals()
+  const selectedModel = snapshot.selectedThreadId === null ? null : selected?.resolvedModel ??
+    snapshot.catalog.find((entry) => entry.thread_id === snapshot.selectedThreadId)?.model ?? null
+  const browser = useModelBrowser(snapshot.selectedThreadId, selectedModel)
+  // FL-205: the project and model marks the thread list shows for the same thread.
+  const marks = (threadId: string) => {
+    const entry = snapshot.catalog.find((candidate) => candidate.thread_id === threadId)
+    return entry === undefined ? null : `${projectName(entry)} · ${threadModelMark(
+      browser, entry, threadId === snapshot.selectedThreadId ? { model: selectedModel } : null,
+    )}`
+  }
   const cards = useMemo(() => proposedResponseCards(snapshot).filter((card) => !seen.has(card.proposal_run_id)), [snapshot, seen])
   const blockedCount = stacks.filter((stack) => stack.state === 'blocked').length
   const boundaries = (selected?.messages ?? []).flatMap((message) => (
@@ -317,6 +332,7 @@ export function SymphonyDeck() {
             <ProposedResponseCardView
               key={card.proposal_run_id}
               card={card}
+              marks={marks(card.thread_id)}
               primary={index === 0}
               draft={drafts[card.proposal_run_id] ?? card.primary}
               fireDisabled={undo !== null || opening}
@@ -349,6 +365,7 @@ export function SymphonyDeck() {
 
 function ProposedResponseCardView({
   card,
+  marks,
   primary,
   draft,
   fireDisabled,
@@ -356,6 +373,7 @@ function ProposedResponseCardView({
   onFire,
 }: {
   card: ProposedResponseCard
+  marks: string | null
   primary: boolean
   draft: string
   fireDisabled: boolean
@@ -381,6 +399,7 @@ function ProposedResponseCardView({
         <div>
           <span>{primary ? 'Longest waiting' : 'Waiting'}</span>
           <h2>{card.thread_title}</h2>
+          {marks !== null && <p className="deck-proposal__marks" data-testid="deck-marks">{marks}</p>}
         </div>
         <time dateTime={card.created_at}>{new Date(card.created_at).toLocaleTimeString()}</time>
       </header>

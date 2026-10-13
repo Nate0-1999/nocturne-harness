@@ -4163,3 +4163,14 @@ deadline, and the expanded walk took 154 seconds; the retrain call permits 360 s
 The console shows both held-out error and token totals, explains retained values,
 and exposes chronological feedback history. Its cadence copy names main-conversation
 compaction (D.2 144), replacing the obsolete signal-count promise.
+
+## M4UX — The thread list says where and how [P2, P2.1]
+
+PRECEDENT: SD-084, FL-205, M4CD (numbered titles; WHERE keeps its end), M3SK (the chip).
+The catalog carries each thread's model and thinking level as the run loop holds them.
+The list names a project once, over its threads (the column-head role), never as a path;
+a row shows title, state and the chip's leading marks — policy in force · model · thinking
+level — and its tip carries the folder. The thinking level keeps the chip's words
+("low thinking", FL-202), so the list, the Deck and the chip read alike. The journal cuts
+titles at 80 characters mid-word; shown titles end on a whole word. WHERE reads from the
+project down.

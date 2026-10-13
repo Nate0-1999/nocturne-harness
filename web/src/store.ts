@@ -680,6 +680,8 @@ function restoredState(value: unknown): PersistedHarnessState {
         project_label: typeof entry.project_label === 'string' ? entry.project_label : null,
         workspace_root: typeof entry.workspace_root === 'string' ? entry.workspace_root : null,
         current_location: typeof entry.current_location === 'string' ? entry.current_location : null,
+        model: typeof entry.model === 'string' ? entry.model : null,
+        effort: typeof entry.effort === 'string' ? entry.effort : null,
         proposed_response: catalogProposedResponse(entry.proposed_response),
         ...(entry.archived === true ? { archived: true } : {}),
       })

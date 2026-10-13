@@ -286,9 +286,10 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     version: '1.0.0',
     class: 'visualizer',
     slot: 'panel',
-    streams: ['thread.snapshot', 'run.started', 'run.done', 'prompt.queued'],
+    streams: ['thread.snapshot', 'run.started', 'run.done', 'prompt.queued', 'parameter.change', 'model.change'],
+    // FL-205: each row names its model and thinking level from the model list.
     actions: ['thread.create', 'thread.select', 'thread.archive',
-      'thread.bind_workspace', 'catalog.cleanup-fixtures'],
+      'thread.bind_workspace', 'catalog.cleanup-fixtures', 'models.load'],
     bounds: stageGridBounds(RACK_BOUNDS.threads.preferred),
     movable: true,
     law_bound: false,

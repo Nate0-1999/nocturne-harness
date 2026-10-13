@@ -7,7 +7,7 @@ import os
 import subprocess
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from contextlib import suppress
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Literal
@@ -1518,8 +1518,11 @@ def create_dev_app(
         async def transcript_catalog():
             # F135 (M3EX-14): a moved launch folder must not hide every thread.
             root = discovery_root if discovery_root.is_dir() else None
+            models = loop.thread_models()
             return {
-                "threads": journal.catalog(),
+                "threads": [
+                    replace(entry, **models.get(entry.thread_id, {})) for entry in journal.catalog()
+                ],
                 # F179: a page hears only its selected thread (H7); this names the others running.
                 "running": loop.running_thread_ids(),
                 "identity": {"principal_id": principal_id, "home": str(home)},

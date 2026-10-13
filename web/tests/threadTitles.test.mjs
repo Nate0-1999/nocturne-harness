@@ -32,3 +32,9 @@ test('shortens a long generated title only at a complete-word boundary', () => {
     'Explain the mechanical no-overlap and…',
   )
 })
+
+/** P2 / SPEC B.6: a title cut short by the journal ends on a whole word wherever it is shown. */
+test('shows a journal title cut mid-word only up to its last whole word', () => {
+  const journal = 'Walk the release checklist for the harness and memory packages and their changelo'
+  assert.equal(visibleThreadTitle(journal), 'Walk the release checklist for the harness and…')
+})
