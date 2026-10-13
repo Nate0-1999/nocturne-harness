@@ -4163,3 +4163,15 @@ deadline, and the expanded walk took 154 seconds; the retrain call permits 360 s
 The console shows both held-out error and token totals, explains retained values,
 and exposes chronological feedback history. Its cadence copy names main-conversation
 compaction (D.2 144), replacing the obsolete signal-count promise.
+
+## M3GT — Names read whole; the scripts rain; two themes by audition [P2.5]
+
+PRECEDENT: D.2 112, 115–119, M3TM, TASTE-09, SD-078, SD-080. M3TM's shrinking
+strip never shrank: the title's zero flex basis left the strip its full 7.5rem.
+The strip now sits inside the title area after the name with the largest shrink
+weight, and the module name never shrinks in any theme, so the thread badge and
+then the strip give up room first. The Stage rain is two layers of forge glyph
+columns under the canvas: compositor transforms only, paused while the page is
+hidden, at rest under reduced motion. New themes have two faces chosen by the
+system's light/dark appearance (owner, 2026-10-08), one switcher entry each; the
+seam maps neo-noir by role onto each face, and ornaments are seeded SVG.

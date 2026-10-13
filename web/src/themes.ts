@@ -10,14 +10,14 @@ export const THEMES = [
   { id: 'gold-lines', label: 'GOLD LINES' },
   { id: 'wizard-mode', label: 'WIZARD MODE' },
   { id: 'technomancer', label: 'TECHNOMANCER' },
-  { id: 'art-deco-s1', label: 'ART DECO · S1' },
-  { id: 'art-deco-s2', label: 'ART DECO · S2' },
-  { id: 'art-deco-s3', label: 'ART DECO · S3' },
-  { id: 'art-deco-s4', label: 'ART DECO · S4' },
-  { id: 'bellagio-g1', label: 'BELLAGIO · G1' },
-  { id: 'bellagio-g2', label: 'BELLAGIO · G2' },
-  { id: 'bellagio-g3', label: 'BELLAGIO · G3' },
-  { id: 'bellagio-g4', label: 'BELLAGIO · G4' },
+  { id: 'art-deco-e1', label: 'ART DECO · E1' },
+  { id: 'art-deco-e2', label: 'ART DECO · E2' },
+  { id: 'art-deco-e3', label: 'ART DECO · E3' },
+  { id: 'art-deco-e4', label: 'ART DECO · E4' },
+  { id: 'bellagio-l1', label: 'BELLAGIO · L1' },
+  { id: 'bellagio-l2', label: 'BELLAGIO · L2' },
+  { id: 'bellagio-l3', label: 'BELLAGIO · L3' },
+  { id: 'bellagio-l4', label: 'BELLAGIO · L4' },
 ] as const
 
 export type BuiltinThemeId = (typeof THEMES)[number]['id']

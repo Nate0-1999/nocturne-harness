@@ -849,7 +849,7 @@
   --seam-4063e5c77a52: rgba(9, 4, 14, 0.88);
   --seam-df8ec2608c9e: rgba(16, 8, 26, 0.97);
 }
-:root[data-theme="art-deco-s1"] {
+:root[data-theme="art-deco-e1"] {
   --seam-1b9a29d92971: #f4ecdb;
   --seam-0a820a82e969: #0a0907;
   --seam-ee6623f1a8b4: #0e0c0a;
@@ -1020,7 +1020,7 @@
   --seam-df8ec2608c9e: rgba(20, 17, 12, 0.97);
 }
 @media (prefers-color-scheme: light) {
-  :root[data-theme="art-deco-s1"] {
+  :root[data-theme="art-deco-e1"] {
     --seam-1b9a29d92971: #13100c;
     --seam-0a820a82e969: #efe7d3;
     --seam-ee6623f1a8b4: #f4eedf;
@@ -1191,7 +1191,7 @@
     --seam-df8ec2608c9e: rgba(249, 245, 235, 0.97);
   }
 }
-:root[data-theme="art-deco-s2"] {
+:root[data-theme="art-deco-e2"] {
   --seam-1b9a29d92971: #f4ecdb;
   --seam-0a820a82e969: #0a0907;
   --seam-ee6623f1a8b4: #0e0c0a;
@@ -1362,7 +1362,7 @@
   --seam-df8ec2608c9e: rgba(20, 17, 12, 0.97);
 }
 @media (prefers-color-scheme: light) {
-  :root[data-theme="art-deco-s2"] {
+  :root[data-theme="art-deco-e2"] {
     --seam-1b9a29d92971: #13100c;
     --seam-0a820a82e969: #efe7d3;
     --seam-ee6623f1a8b4: #f4eedf;
@@ -1533,7 +1533,7 @@
     --seam-df8ec2608c9e: rgba(249, 245, 235, 0.97);
   }
 }
-:root[data-theme="art-deco-s3"] {
+:root[data-theme="art-deco-e3"] {
   --seam-1b9a29d92971: #f4ecdb;
   --seam-0a820a82e969: #0a0907;
   --seam-ee6623f1a8b4: #0e0c0a;
@@ -1704,7 +1704,7 @@
   --seam-df8ec2608c9e: rgba(20, 17, 12, 0.97);
 }
 @media (prefers-color-scheme: light) {
-  :root[data-theme="art-deco-s3"] {
+  :root[data-theme="art-deco-e3"] {
     --seam-1b9a29d92971: #13100c;
     --seam-0a820a82e969: #efe7d3;
     --seam-ee6623f1a8b4: #f4eedf;
@@ -1875,7 +1875,7 @@
     --seam-df8ec2608c9e: rgba(249, 245, 235, 0.97);
   }
 }
-:root[data-theme="art-deco-s4"] {
+:root[data-theme="art-deco-e4"] {
   --seam-1b9a29d92971: #f4ecdb;
   --seam-0a820a82e969: #0a0907;
   --seam-ee6623f1a8b4: #0e0c0a;
@@ -2046,7 +2046,7 @@
   --seam-df8ec2608c9e: rgba(20, 17, 12, 0.97);
 }
 @media (prefers-color-scheme: light) {
-  :root[data-theme="art-deco-s4"] {
+  :root[data-theme="art-deco-e4"] {
     --seam-1b9a29d92971: #13100c;
     --seam-0a820a82e969: #efe7d3;
     --seam-ee6623f1a8b4: #f4eedf;
@@ -2217,7 +2217,7 @@
     --seam-df8ec2608c9e: rgba(249, 245, 235, 0.97);
   }
 }
-:root[data-theme="bellagio-g1"] {
+:root[data-theme="bellagio-l1"] {
   --seam-1b9a29d92971: #f6ead5;
   --seam-0a820a82e969: #0a0806;
   --seam-ee6623f1a8b4: #0e0b09;
@@ -2388,7 +2388,7 @@
   --seam-df8ec2608c9e: rgba(20, 16, 12, 0.97);
 }
 @media (prefers-color-scheme: light) {
-  :root[data-theme="bellagio-g1"] {
+  :root[data-theme="bellagio-l1"] {
     --seam-1b9a29d92971: #1c130b;
     --seam-0a820a82e969: #e8d9bb;
     --seam-ee6623f1a8b4: #eee2c8;
@@ -2559,7 +2559,7 @@
     --seam-df8ec2608c9e: rgba(244, 235, 214, 0.97);
   }
 }
-:root[data-theme="bellagio-g2"] {
+:root[data-theme="bellagio-l2"] {
   --seam-1b9a29d92971: #f6ead5;
   --seam-0a820a82e969: #0a0806;
   --seam-ee6623f1a8b4: #0e0b09;
@@ -2730,7 +2730,7 @@
   --seam-df8ec2608c9e: rgba(20, 16, 12, 0.97);
 }
 @media (prefers-color-scheme: light) {
-  :root[data-theme="bellagio-g2"] {
+  :root[data-theme="bellagio-l2"] {
     --seam-1b9a29d92971: #1c130b;
     --seam-0a820a82e969: #e8d9bb;
     --seam-ee6623f1a8b4: #eee2c8;
@@ -2901,7 +2901,7 @@
     --seam-df8ec2608c9e: rgba(244, 235, 214, 0.97);
   }
 }
-:root[data-theme="bellagio-g3"] {
+:root[data-theme="bellagio-l3"] {
   --seam-1b9a29d92971: #f6ead5;
   --seam-0a820a82e969: #0a0806;
   --seam-ee6623f1a8b4: #0e0b09;
@@ -3072,7 +3072,7 @@
   --seam-df8ec2608c9e: rgba(20, 16, 12, 0.97);
 }
 @media (prefers-color-scheme: light) {
-  :root[data-theme="bellagio-g3"] {
+  :root[data-theme="bellagio-l3"] {
     --seam-1b9a29d92971: #1c130b;
     --seam-0a820a82e969: #e8d9bb;
     --seam-ee6623f1a8b4: #eee2c8;
@@ -3243,7 +3243,7 @@
     --seam-df8ec2608c9e: rgba(244, 235, 214, 0.97);
   }
 }
-:root[data-theme="bellagio-g4"] {
+:root[data-theme="bellagio-l4"] {
   --seam-1b9a29d92971: #f6ead5;
   --seam-0a820a82e969: #0a0806;
   --seam-ee6623f1a8b4: #0e0b09;
@@ -3414,7 +3414,7 @@
   --seam-df8ec2608c9e: rgba(20, 16, 12, 0.97);
 }
 @media (prefers-color-scheme: light) {
-  :root[data-theme="bellagio-g4"] {
+  :root[data-theme="bellagio-l4"] {
     --seam-1b9a29d92971: #1c130b;
     --seam-0a820a82e969: #e8d9bb;
     --seam-ee6623f1a8b4: #eee2c8;

@@ -81,7 +81,7 @@ def sunburst(color: str, opacity: float, rays: int, rings: tuple[int, ...], crow
 
 
 def deco_sun(color: str, opacity: float, rays: int, disc: int, style: str, full: bool = False,
-             metal: str | None = None, wedges: float = 0.0) -> str:
+             metal: str | None = None, wedges: float = 0.0, steps: bool = True) -> str:
     """The sun with its disc: rays from the disc's edge, stepped rings, a solid, ringed or
     striped disc — rising from the foot of the Stage, or whole in its middle."""
     width, height = 1600, 1000
@@ -105,7 +105,7 @@ def deco_sun(color: str, opacity: float, rays: int, disc: int, style: str, full:
                 f"L{cx - outer * math.cos(following):.1f},{cy - outer * math.sin(following):.1f} "
                 f"L{cx - inner * math.cos(following):.1f},{cy - inner * math.sin(following):.1f}Z"
             )
-    for radius in (disc + 60, disc + 150, disc + 270):
+    for radius in (disc + 60, disc + 150, disc + 270) if steps else ():
         steps, points = (40 if full else 18), []
         for step in range(steps + 1):
             angle = sweep * step / steps
@@ -127,7 +127,14 @@ def deco_sun(color: str, opacity: float, rays: int, disc: int, style: str, full:
         )
         defs += f'<mask id="bands"><rect width="{width}" height="{height}" fill="#fff"/>{bands}</mask>'
     defs += "</defs>"
-    if style == "rings":
+    if style.startswith("empty"):
+        rings = (1, 0.93) if style == "empty-double" else (1,)
+        orb = "".join(
+            f'<circle cx="{cx}" cy="{cy}" r="{disc * share:.1f}" fill="none" stroke="{fill}" '
+            f'stroke-opacity="{min(1.0, opacity + 0.35):.2f}" stroke-width="{3 if share == 1 else 1.4}"/>'
+            for share in rings
+        )
+    elif style == "rings":
         orb = "".join(
             f'<circle cx="{cx}" cy="{cy}" r="{disc * share:.1f}" fill="none" stroke="{fill}" '
             f'stroke-opacity="{opacity + 0.2:.2f}" stroke-width="{2.4 if share == 1 else 1.4}"/>'
@@ -294,6 +301,8 @@ def persian(rng: random.Random, color: int, lip: int) -> str:
         f'<polygon points="{rim}" fill="url(#g{color})" stroke="url(#g{lip})" stroke-width="3"/>'
         f'<polygon points="{inner}" fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="1.5"/>'
         f'<g stroke="#000000" stroke-opacity="0.18" stroke-width="1.2">{striae}</g>'
+        f'<polygon points="{inner}" fill="none" stroke="url(#g{lip})" stroke-opacity="0.7" '
+        'stroke-width="5" transform="scale(1.22)"/>'
         f'<circle r="8" fill="url(#g{lip})"/>'
         '<path d="M-30,-22 Q-12,-38 14,-36" fill="none" stroke="#ffffff" stroke-opacity="0.55" '
         'stroke-width="3" stroke-linecap="round"/>'
@@ -321,6 +330,33 @@ def horn(rng: random.Random, color: int) -> str:
     )
 
 
+def tendril(rng: random.Random, color: int) -> str:
+    """A long glass tendril: a tapering rod that sways and ends in a curl."""
+    outer, inner, spine = [], [], []
+    sway = rng.uniform(18, 28)
+    for step in range(48):
+        share = step / 47
+        if share < 0.7:
+            along = share / 0.7
+            x, y = -58 + 96 * along, sway * math.sin(along * math.pi * 1.2)
+            heading = math.atan2(sway * math.pi * 1.2 / 96 * math.cos(along * math.pi * 1.2), 1)
+        else:
+            turn = (share - 0.7) / 0.3 * 1.6 * math.pi
+            radius = 14 * (1 - (share - 0.7) / 0.3 * 0.6)
+            x, y = 38 + radius * math.sin(turn), sway * math.sin(math.pi * 1.2) - radius + radius * math.cos(turn)
+            heading = -turn
+        width = 8 * (1 - share * 0.8)
+        nx, ny = -math.sin(heading), math.cos(heading)
+        outer.append(f"{x + nx * width:.1f},{y + ny * width:.1f}")
+        inner.append(f"{x - nx * width:.1f},{y - ny * width:.1f}")
+        spine.append(f"{x + nx * width * 0.4:.1f},{y + ny * width * 0.4:.1f}")
+    return (
+        f'<polygon points="{" ".join(outer + inner[::-1])}" fill="url(#g{color})"/>'
+        f'<polyline points="{" ".join(spine)}" fill="none" stroke="#ffffff" stroke-opacity="0.45" '
+        'stroke-width="1.6" stroke-linecap="round"/>'
+    )
+
+
 def bloom(rng: random.Random, color: int, lip: int) -> str:
     """A ruffled trumpet seen from below: broad overlapping petals around a bright throat."""
     petals, turn, parts = rng.randint(5, 7), rng.uniform(0, math.tau), []
@@ -342,9 +378,9 @@ def glass_kit(petals: tuple[str, ...], glow: bool, body: str, lucent: float = 0.
     for index, color in enumerate(petals):
         defs.append(
             f'<radialGradient id="g{index}" cx="0.4" cy="0.35" r="0.75">'
-            f'<stop offset="0" stop-color="{mix(color, "#ffffff", 0.6)}" stop-opacity="{1 - lucent * 0.5:.2f}"/>'
+            f'<stop offset="0" stop-color="{mix(color, "#ffffff", 0.35)}" stop-opacity="{1 - lucent * 0.5:.2f}"/>'
             f'<stop offset="0.5" stop-color="{color}" stop-opacity="{1 - lucent * 0.25:.2f}"/>'
-            f'<stop offset="1" stop-color="{mix(color, "#000000", 0.4)}"/></radialGradient>'
+            f'<stop offset="1" stop-color="{mix(color, "#000000", 0.45)}"/></radialGradient>'
         )
     count = len(petals)
     for index in range(count):
@@ -353,6 +389,7 @@ def glass_kit(petals: tuple[str, ...], glow: bool, body: str, lucent: float = 0.
             ("p", persian(rng, index, lip)),
             ("h", horn(rng, index)),
             ("b", bloom(rng, index, lip)),
+            ("t", tendril(rng, index)),
         ):
             if f'href="#{kind}{index}"' in body:
                 defs.append(
@@ -364,11 +401,29 @@ def glass_kit(petals: tuple[str, ...], glow: bool, body: str, lucent: float = 0.
             '<filter id="glow" x="-20%" y="-20%" width="140%" height="140%">'
             '<feGaussianBlur stdDeviation="9"/></filter>'
         )
+    if 'filter="url(#gloss)"' in body:
+        # One light for the whole ceiling, high at the top-left: a specular sheen across each
+        # piece's swell and a bright edge where the glass turns away — what reads as glass.
+        defs.append(
+            '<filter id="gloss" x="-10%" y="-10%" width="120%" height="120%" '
+            'color-interpolation-filters="sRGB">'
+            '<feGaussianBlur in="SourceAlpha" stdDeviation="5" result="swell"/>'
+            '<feSpecularLighting in="swell" surfaceScale="6" specularConstant="1.3" '
+            'specularExponent="42" lighting-color="#ffffff" result="sheen">'
+            '<feDistantLight azimuth="225" elevation="52"/></feSpecularLighting>'
+            '<feComposite in="sheen" in2="SourceAlpha" operator="in" result="lit"/>'
+            '<feMorphology in="SourceAlpha" operator="erode" radius="1" result="core"/>'
+            '<feComposite in="SourceAlpha" in2="core" operator="out" result="edge"/>'
+            '<feFlood flood-color="#ffffff" flood-opacity="0.38"/>'
+            '<feComposite in2="edge" operator="in" result="rim"/>'
+            '<feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="rim"/>'
+            '<feMergeNode in="lit"/></feMerge></filter>'
+        )
     return "<defs>" + "".join(defs) + "</defs>"
 
 
 def placements(rng: random.Random, count: int, width: float, height: float, scale: float,
-               corner: bool = False) -> list[str]:
+               corner: bool = False, kinds: str = "phb", gloss: bool = False) -> list[str]:
     """Where the glass hangs: a jittered canopy, or a bouquet gathered into the bottom-right."""
     uses = []
     columns = max(1, round(math.sqrt(count * width / height)))
@@ -385,19 +440,23 @@ def placements(rng: random.Random, count: int, width: float, height: float, scal
             x = (column + rng.uniform(0, 1)) * width / columns
             y = (row + rng.uniform(0, 1)) * height / rows
             size = scale * rng.uniform(0.6, 1.15)
-        kind = rng.choices("phb", weights=(5, 3, 2))[0]
-        uses.append(
-            (size, f'<use href="#{kind}{rng.randrange(6)}" width="120" height="120" '
-             f'transform="translate({x:.0f} {y:.0f}) rotate({rng.randrange(360)}) '
-             f'scale({size / 100:.2f}) translate(-60 -60)"/>')
+        kind = rng.choices(kinds, weights=(6, 3, 1, 3)[: len(kinds)])[0]
+        use = (
+            f'<use href="#{kind}{rng.randrange(6)}" width="120" height="120" '
+            f'transform="translate({x:.0f} {y:.0f}) rotate({rng.randrange(360)}) '
+            f'scale({size / 100:.2f}) translate(-60 -60)"/>'
         )
+        uses.append((size, f'<g filter="url(#gloss)">{use}</g>' if gloss else use))
     return [use for _, use in sorted(uses, key=lambda item: -item[0])]
 
 
 def glass_field(seed: str, petals: tuple[str, ...], glow: bool, count: int, scale: float,
                 width: int = 1600, height: int = 1000, corner: bool = False, alpha: float = 1.0,
-                blend: str = "normal", shadow: bool = False, lucent: float = 0.0) -> str:
-    uses = "".join(placements(random.Random(seed), count, width, height, scale, corner))
+                blend: str = "normal", shadow: bool = False, lucent: float = 0.0,
+                kinds: str = "phb", gloss: bool = False) -> str:
+    uses = "".join(
+        placements(random.Random(seed), count, width, height, scale, corner, kinds, gloss)
+    )
     halo = f'<g filter="url(#glow)" opacity="0.8">{uses}</g>' if glow else ""
     style = f' opacity="{alpha}" style="mix-blend-mode:{blend}"' if alpha < 1 or blend != "normal" else ""
     depth = ' filter="url(#shadow)"' if shadow else ""
@@ -684,82 +743,87 @@ PETALS_JEWEL_DAY = ("#a3122e", "#c98a00", "#143c9c", "#0f6a3a", "#5a2384", "#b84
 
 
 def render() -> str:
+    leaf_bands = GLASS_RIM + FULL_DECO.split("}", 2)[2]
     blocks = [
         "/* Generated by web/scripts/build_ornament_motifs.py; do not edit. */",
-        "/* M3GT / SD-078: audition round 3 — Deco narrowed to A1/A4 with a sun disc; Bellagio wide. */",
-        # S1 — gold leaf with a solid disc: A1's leafed rims and filled rays around a gold sun.
+        "/* M3GT / SD-078: audition round 4 — Deco's empty disc; Bellagio's glass, lit. */",
+        # E1 — gold leaf around an empty disc: S1's leafed rims and filled rays, the sun hollow.
         deco(
-            "art-deco-s1", GOLD, INK,
-            deco_sun(GOLD, 0.4, 64, 150, "solid", wedges=0.07),
-            deco_sun(INK, 0.24, 64, 150, "solid", metal="#8a6a1c", wedges=0.06),
+            "art-deco-e1", GOLD, INK,
+            deco_sun(GOLD, 0.4, 64, 170, "empty", wedges=0.07),
+            deco_sun(INK, 0.24, 64, 170, "empty", metal="#8a6a1c", wedges=0.06),
             chevrons, GLASS_RIM,
             {"rim": LEAF_NIGHT}, {"rim": LEAF_DAY},
         ),
-        # S2 — full deco with a ringed disc: A4's double rules and chevron bands, concentric sun.
+        # E2 — full deco around a double empty disc: double rules, chevron bands, two rings.
         deco(
-            "art-deco-s2", GOLD, INK,
-            deco_sun(GOLD, 0.45, 96, 170, "rings", wedges=0.04),
-            deco_sun(INK, 0.28, 96, 170, "rings", wedges=0.03),
+            "art-deco-e2", GOLD, INK,
+            deco_sun(GOLD, 0.45, 96, 180, "empty-double", wedges=0.04),
+            deco_sun(INK, 0.28, 96, 180, "empty-double", wedges=0.03),
             fans, FULL_DECO,
             {"band": uri(zigzag(GOLD))}, {"band": uri(zigzag(INK))},
         ),
-        # S3 — the rising sun: A1 and A4 together — leafed rims, chevron bands, a striped disc.
+        # E3 — A1 and A4 together: leafed rims, chevron bands, an empty disc in stepped rings.
         deco(
-            "art-deco-s3", GOLD, INK,
-            deco_sun(GOLD, 0.42, 72, 190, "striped", wedges=0.05),
-            deco_sun(INK, 0.26, 72, 190, "striped", metal="#8a6a1c", wedges=0.04),
-            chevrons, GLASS_RIM + FULL_DECO.split("}", 2)[2],
+            "art-deco-e3", GOLD, INK,
+            deco_sun(GOLD, 0.42, 72, 190, "empty", wedges=0.05),
+            deco_sun(INK, 0.26, 72, 190, "empty", metal="#8a6a1c", wedges=0.04),
+            chevrons, leaf_bands,
             {"rim": LEAF_NIGHT, "band": uri(zigzag(GOLD))},
             {"rim": LEAF_DAY, "band": uri(zigzag(INK))},
         ),
-        # S4 — the whole sun: a full circle in the middle of the Stage, rays all round, leafed rims.
+        # E4 — the great ring: a large empty disc rising above the lower modules, long rays.
         deco(
-            "art-deco-s4", GOLD, INK,
-            deco_sun(GOLD, 0.36, 96, 130, "solid", full=True, wedges=0.05),
-            deco_sun(INK, 0.22, 96, 130, "solid", full=True, metal="#8a6a1c", wedges=0.04),
+            "art-deco-e4", GOLD, INK,
+            deco_sun(GOLD, 0.38, 48, 320, "empty-double", wedges=0.06, steps=False),
+            deco_sun(INK, 0.24, 48, 320, "empty-double", metal="#8a6a1c", wedges=0.05, steps=False),
             fans, GLASS_RIM,
             {"rim": LEAF_NIGHT}, {"rim": LEAF_DAY},
         ),
-        # G1 — lit from within: translucent jewel glass, colours deepening where pieces cross.
+        # L1 — the lit canopy: every piece shaded by one light, the whole Stage a ceiling of glass.
         glass(
-            "bellagio-g1",
-            glass_field("canopy-g1", PETALS_JEWEL_NIGHT, True, 140, 160, blend="screen", lucent=0.8),
-            glass_field("canopy-g1", PETALS_JEWEL_DAY, False, 140, 160, blend="multiply", lucent=0.8),
-            glass_strip("strip-g1", PETALS_JEWEL_NIGHT, "p", 6),
-            glass_strip("strip-g1", PETALS_JEWEL_DAY, "p", 6),
+            "bellagio-l1",
+            glass_field("canopy-l1", PETALS_JEWEL_NIGHT, True, 120, 190, lucent=0.25,
+                        kinds="phbt", gloss=True),
+            glass_field("canopy-l1", PETALS_JEWEL_DAY, False, 120, 190, blend="multiply",
+                        lucent=0.25, kinds="phbt", gloss=True),
+            glass_strip("strip-l1", PETALS_JEWEL_NIGHT, "p", 6),
+            glass_strip("strip-l1", PETALS_JEWEL_DAY, "p", 6),
             SINGLE_RULE,
         ),
-        # G2 — the calm ceiling: the same glass only overhead, thinning fast; the work stays clear.
+        # L2 — the big pieces: fewer, larger forms, so the glass itself is what you see.
         glass(
-            "bellagio-g2",
-            glass_field("canopy-g2", PETALS_JEWEL_NIGHT, True, 90, 150, blend="screen", lucent=0.8),
-            glass_field("canopy-g2", PETALS_JEWEL_DAY, False, 90, 150, blend="multiply", lucent=0.8),
-            glass_strip("strip-g2", PETALS_JEWEL_NIGHT, "b", 6),
-            glass_strip("strip-g2", PETALS_JEWEL_DAY, "b", 6),
-            SINGLE_RULE + HEADER_BAND,
-            {"stage-mask": "linear-gradient(black 0%, transparent 45%)", "band": band(PETALS_JEWEL_NIGHT)},
-            {"stage-mask": "linear-gradient(black 0%, transparent 45%)", "band": band(PETALS_JEWEL_DAY)},
+            "bellagio-l2",
+            glass_field("canopy-l2", PETALS_JEWEL_NIGHT, True, 34, 340, lucent=0.25,
+                        kinds="phbt", gloss=True),
+            glass_field("canopy-l2", PETALS_JEWEL_DAY, False, 34, 340, blend="multiply",
+                        lucent=0.25, kinds="phbt", gloss=True),
+            glass_strip("strip-l2", PETALS_JEWEL_NIGHT, "ph", 6),
+            glass_strip("strip-l2", PETALS_JEWEL_DAY, "ph", 6),
+            SINGLE_RULE,
         ),
-        # G3 — the bouquet: one luminous gathering in the corner, glass-edged frames.
+        # L3 — the bouquet: one lit gathering in the corner, glass-edged frames.
         glass(
-            "bellagio-g3",
-            glass_field("bouquet-g3", PETALS_JEWEL_NIGHT, True, 60, 230, 900, 640, corner=True,
-                        blend="screen", lucent=0.7),
-            glass_field("bouquet-g3", PETALS_JEWEL_DAY, False, 60, 230, 900, 640, corner=True,
-                        blend="multiply", lucent=0.7),
-            glass_strip("strip-g3", PETALS_JEWEL_NIGHT, "pb", 6),
-            glass_strip("strip-g3", PETALS_JEWEL_DAY, "pb", 6),
+            "bellagio-l3",
+            glass_field("bouquet-l3", PETALS_JEWEL_NIGHT, True, 70, 250, 900, 640, corner=True,
+                        lucent=0.25, kinds="phbt", gloss=True),
+            glass_field("bouquet-l3", PETALS_JEWEL_DAY, False, 70, 250, 900, 640, corner=True,
+                        blend="multiply", lucent=0.25, kinds="phbt", gloss=True),
+            glass_strip("strip-l3", PETALS_JEWEL_NIGHT, "pb", 6),
+            glass_strip("strip-l3", PETALS_JEWEL_DAY, "pb", 6),
             GLASS_RIM,
             {"rim": rim(PETALS_JEWEL_NIGHT), "stage-place": "right bottom / 60rem auto no-repeat"},
             {"rim": rim(PETALS_JEWEL_DAY), "stage-place": "right bottom / 60rem auto no-repeat"},
         ),
-        # G4 — the night garden: glass that glows hard against black, softly against cream.
+        # L4 — the night garden: the lit glass glowing hard on black, glass-edged frames.
         glass(
-            "bellagio-g4",
-            glass_field("canopy-g4", PETALS_JEWEL_NIGHT, True, 110, 190, blend="screen", lucent=0.9),
-            glass_field("canopy-g4", PETALS_JEWEL_DAY, True, 110, 190, blend="multiply", lucent=0.6),
-            glass_strip("strip-g4", PETALS_JEWEL_NIGHT, "h", 6),
-            glass_strip("strip-g4", PETALS_JEWEL_DAY, "h", 6),
+            "bellagio-l4",
+            glass_field("canopy-l4", PETALS_JEWEL_NIGHT, True, 100, 210, lucent=0.15,
+                        kinds="phbt", gloss=True),
+            glass_field("canopy-l4", PETALS_JEWEL_DAY, True, 100, 210, blend="multiply",
+                        lucent=0.3, kinds="phbt", gloss=True),
+            glass_strip("strip-l4", PETALS_JEWEL_NIGHT, "h", 6),
+            glass_strip("strip-l4", PETALS_JEWEL_DAY, "h", 6),
             GLASS_RIM,
             {"rim": rim(PETALS_JEWEL_NIGHT)}, {"rim": rim(PETALS_JEWEL_DAY)},
         ),

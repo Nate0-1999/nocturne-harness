@@ -280,9 +280,9 @@ FACES: dict[str, dict[str, dict[str, object]]] = {
                   "danger": "#a3122e", "warm": "#8a5200", "jade": "#0f6a3a", "light": True},
     },
 }
-for _name in ("art-deco-s1", "art-deco-s2", "art-deco-s3", "art-deco-s4"):
+for _name in ("art-deco-e1", "art-deco-e2", "art-deco-e3", "art-deco-e4"):
     FACES[_name] = FACES["art-deco-a1"]
-for _name in ("bellagio-g1", "bellagio-g2", "bellagio-g3", "bellagio-g4"):
+for _name in ("bellagio-l1", "bellagio-l2", "bellagio-l3", "bellagio-l4"):
     FACES[_name] = FACES["bellagio-a4"]
 for _name in ("art-deco-a1", "art-deco-a3", "bellagio-a1", "bellagio-a4"):
     del FACES[_name]
