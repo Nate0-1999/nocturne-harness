@@ -1756,7 +1756,7 @@ async def test_unreached_remember_waits_in_the_outbox_and_replays_through_the_pa
     )
 
     assert result.ok and result.message.startswith("Saved on this machine")
-    assert "1 queued write" in result.message
+    assert "1 waiting for the Palace" in result.message
     [item] = outbox.waiting()
     assert (item.kind, item.label, item.payload["shape"]) == ("remember", "Boat mooring", "single")
 

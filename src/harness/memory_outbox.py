@@ -37,9 +37,8 @@ class QueuedForPalace(Exception):  # noqa: N818 - a signal, not a failure
     def __init__(self, waiting: int) -> None:
         self.waiting = waiting
         super().__init__(
-            "Saved on this machine: the Palace is unreachable, so this waits with "
-            f"{waiting} queued write{'s' if waiting != 1 else ''} and goes to the Palace when it "
-            "is back."
+            f"Saved on this machine: the Palace is unreachable. {waiting} waiting for the "
+            "Palace; they go to it in order when it is back."
         )
 
 
