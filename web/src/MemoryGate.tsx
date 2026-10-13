@@ -65,6 +65,7 @@ export function MemoryGate({
 }: MemoryGateProps) {
   const wrongUnit =
     gate.stage === 'wrong_resolution' ? (gate.wrong_removed[0] ?? null) : null
+  const localCopy = gate.local_copy_as_of === undefined ? null : clockTime(gate.local_copy_as_of)
   const dialogRef = useRef<HTMLDialogElement>(null)
   const longPressTimerRef = useRef<number | null>(null)
   const longPressStartRef = useRef<{
@@ -352,6 +353,7 @@ export function MemoryGate({
         card={card}
         reason={removed[card.memory_id]}
         deleted={deleted.includes(card.memory_id)}
+        deferred={localCopy !== null}
         added={nearMiss ? addedBack.includes(card.memory_id) : undefined}
         onAdd={nearMiss ? toggleAddBack : undefined}
         modifierOpen={modifierFor === card.memory_id}
@@ -386,10 +388,12 @@ export function MemoryGate({
       <div className="memory-gate__surface">
         <header className="memory-gate__header">
           <div>
-            <p className="eyebrow">
-              {gate.stage === 'review'
-                ? 'First-turn memory check'
-                : 'Wrong memory resolution'}
+            <p className="eyebrow" data-testid="memory-gate-source">
+              {gate.stage !== 'review'
+                ? 'Wrong memory resolution'
+                : localCopy === null
+                  ? 'First-turn memory check'
+                  : `First-turn memory check · from the local copy, as of ${localCopy}`}
             </p>
             <h2 id="memory-gate-title">
               {gate.stage === 'review'
@@ -397,9 +401,11 @@ export function MemoryGate({
                 : 'Correct or expire this memory'}
             </h2>
             <p id="memory-gate-description">
-              {gate.stage === 'review'
-                ? 'The model has not started. Keep, remove, or add memories, then continue.'
-                : 'The model is still stopped. Edit the current body or expire the memory before continuing.'}
+              {gate.stage !== 'review'
+                ? 'The model is still stopped. Edit the current body or expire the memory before continuing.'
+                : localCopy === null
+                  ? 'The model has not started. Keep, remove, or add memories, then continue.'
+                  : 'The Palace is unreachable. Your choices shape this conversation; deletions wait until the Palace is back.'}
             </p>
             {gate.stage === 'review' && <GateAudition injectionId={gate.injection_id} />}
           </div>
@@ -631,6 +637,8 @@ interface GateCardProps {
   card: ScoredMemoryCard
   reason: RemovalReason | undefined
   deleted: boolean
+  /** M4BW: from the local copy, a delete waits in the outbox until the Palace is back. */
+  deferred: boolean
   /** Near misses only: whether the card is added back, and the + toggle. */
   added?: boolean
   onAdd?: (memoryId: string) => void
@@ -657,6 +665,7 @@ function GateCard({
   card,
   reason,
   deleted,
+  deferred,
   added,
   onAdd,
   modifierOpen,
@@ -693,7 +702,7 @@ function GateCard({
     <MemoryCardFrame
       card={card}
       tone={added ? 'added' : removed ? 'removed' : nearMiss ? 'near-miss' : 'injected'}
-      status={deleted ? 'Will be deleted' : removed ? `Removed · ${reason.replace('_', ' ')}` : undefined}
+      status={deleted ? (deferred ? 'Will be deleted when the Palace is back' : 'Will be deleted') : removed ? `Removed · ${reason.replace('_', ' ')}` : undefined}
       action={
         <>
           {onAdd !== undefined && (
@@ -851,6 +860,10 @@ function MemoryCardFrame({ card, tone, status, action, prompt }: MemoryCardFrame
       {audition !== undefined && <p className="scorer-preview-mark">Current {formatHumanScore(audition.incumbent_score)} · Proposed {formatHumanScore(audition.preview_score)} · #{audition.preview_rank} {audition.disposition.replaceAll('_', ' ')}</p>}
     </MemoryCard>
   )
+}
+
+function clockTime(value: string): string {
+  return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(new Date(value))
 }
 
 function GateAudition({ injectionId }: { injectionId: string }) {
