@@ -1790,3 +1790,35 @@ async def test_a_remember_that_may_have_landed_still_fails_loudly(tmp_path) -> N
             context(spine),
             {"shape": "single", "request": spine.create_requests[0].model_dump(mode="json")},
         )
+
+
+@pytest.mark.asyncio
+async def test_a_queued_remember_has_passed_the_check_and_carries_no_secret(tmp_path) -> None:
+    """A-079 / v2.133: the outbox holds only what the check before the Palace let through, so
+    a credential the check withdrew never waits on this machine for the Palace.
+    """
+    entry = {"label": "Staging host", "keywords": ["staging", "host"]}
+    model = structured_sequence_model(
+        [
+            {**entry, "multiple_facts": False},
+            {
+                "candidates": [
+                    {**entry, "body": "The staging host is build-7; token sk-test-ABC123XYZ."}
+                ]
+            },
+            {"candidates": [{**entry, "body": "The staging host is build-7."}]},
+        ],
+        [],
+    )
+    spine = FakeSpine(unreached(httpx.ConnectError("refused")))
+    outbox = MemoryOutbox(tmp_path, ids=EnvelopeFactory(machine_id="machine-1"))
+
+    result = await HarnessAgent(settings(), model=model).remember(
+        "The staging host is build-7; token sk-test-ABC123XYZ.",
+        context=replace(context(spine), outbox=outbox),
+    )
+
+    assert result.ok and result.message.startswith("Saved on this machine")
+    [item] = outbox.waiting()
+    assert item.payload["request"]["body"] == "The staging host is build-7."
+    assert "sk-test" not in json.dumps(item.payload)
