@@ -2,12 +2,12 @@
   "packet": "M5SY",
   "mode": "builder",
   "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
-  "ledger_sha256": "4060c5bed1e1c5bb8f5b2f48b7dc43ab4f7eaa586edecb604eb5c7d2a23a0f86",
+  "ledger_sha256": "797511980941adc38182d074e16e8009f64cc013615eac1af706efd24651872a",
   "diffs": [
     {
       "repo": "harness",
-      "base": "78302f4bb462a33d5abb11e26fecd780e92a2632",
-      "head": "e9790ac5543289461cc37dd4d5c5a1f2c14ec493"
+      "base": "9e99cecf4cc1a4ea963a3d150326214202dd117d",
+      "head": "ad1c9c2360e9d3575cfdc40177ec1f1cee2c28b6"
     }
   ],
   "unmapped": {
@@ -15,13 +15,6 @@
     "harness/src/harness/__init__.py": "paired release version 0.1.75; no feature behavior.",
     "harness/tests/test_daemon.py": "a prompt is read while a routed request waits (F193); test only.",
     "harness/tests/test_run_loop.py": "a re-sent prompt id runs once (F193); test only.",
-    "harness/web/dist/assets/index-Dd7EMVxx.js": "the committed web bundle built from this packet's web sources; behavior walked under FL-098.",
-    "harness/web/dist/assets/index-pORLboCz.js": "the committed web bundle built from this packet's web sources; behavior walked under FL-098.",
-    "harness/web/dist/index.html": "the committed web bundle built from this packet's web sources; behavior walked under FL-098.",
-    "harness/web/tests/promptRedelivery.test.mjs": "the page re-sends an unacknowledged prompt after a reconnect (F193); test only.",
-    "harness/web/tests/symphonyDeckSource.test.mjs": "the Deck calls a clarification logged only when recorded (F193); test only.",
-    "harness/verification/m5sy/ledger-report.json": "M5SY evidence: coverage report, captures and checksums.",
-    "harness/verification/m5sy/SHA256SUMS": "M5SY evidence: coverage report, captures and checksums.",
     "harness/verification/m5sy/FL-009.png": "M5SY evidence: coverage report, captures and checksums.",
     "harness/verification/m5sy/FL-017.png": "M5SY evidence: coverage report, captures and checksums.",
     "harness/verification/m5sy/FL-018.png": "M5SY evidence: coverage report, captures and checksums.",
@@ -57,7 +50,14 @@
     "harness/verification/m5sy/FL-194.png": "M5SY evidence: coverage report, captures and checksums.",
     "harness/verification/m5sy/FL-199.png": "M5SY evidence: coverage report, captures and checksums.",
     "harness/verification/m5sy/FL-201.png": "M5SY evidence: coverage report, captures and checksums.",
-    "harness/verification/m5sy/FL-205.png": "M5SY evidence: coverage report, captures and checksums."
+    "harness/verification/m5sy/FL-205.png": "M5SY evidence: coverage report, captures and checksums.",
+    "harness/verification/m5sy/SHA256SUMS": "M5SY evidence: coverage report, captures and checksums.",
+    "harness/verification/m5sy/ledger-report.json": "M5SY evidence: coverage report, captures and checksums.",
+    "harness/web/dist/assets/index-D-A9qSrX.js": "the committed web bundle built from this packet's web sources; behavior walked under FL-098.",
+    "harness/web/dist/assets/index-DVcBDB2W.js": "the committed web bundle built from this packet's web sources; behavior walked under FL-098.",
+    "harness/web/dist/index.html": "the committed web bundle built from this packet's web sources; behavior walked under FL-098.",
+    "harness/web/tests/promptRedelivery.test.mjs": "the page re-sends an unacknowledged prompt after a reconnect (F193); test only.",
+    "harness/web/tests/symphonyDeckSource.test.mjs": "the Deck calls a clarification logged only when recorded (F193); test only."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
