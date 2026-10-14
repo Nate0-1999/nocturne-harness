@@ -4238,6 +4238,13 @@ reinforce, ask and refuse stay the Palace's; what it does not accept comes back 
 Palace State. Queueing happens after the check before the Palace, so a queued fact carries no
 withdrawn credential.
 
+## M5RM — One claim stays one memory; Palace refusals keep their reason [P1.2, P1.5]
+
+F208 replayed as five linked memories for one duty. The existing draft and repair prompts
+now shorten one claim, split only independent claims, and retain schedule wording. F194's
+structured Palace problems pass through with their status and reason; transport outages
+retain their existing message. No new writer or repair loop.
+
 ## M5HD — The hands on a fresh clone [P4.2, P3]
 
 PRECEDENT: F197 F198 F199 F201, M4AH, M3CL2 (the parse guard), ADR-015, v2.125 (git from any

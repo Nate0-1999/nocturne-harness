@@ -90,7 +90,9 @@ async def test_over_cap_fact_is_repaired_or_saved_within_the_cap(corrected):
             }
         else:
             prompt = messages[-1].parts[-1].content
-            assert prompt.startswith("This memory is too long, break it down into finer pieces.")
+            assert prompt.startswith(
+                "This memory is too long; shorten one claim, split only independent claims."
+            )
             body = "The notebook is copper." if corrected else "copper " * 200
             output = {"candidates": [{**fact, "body": body}]}
         return ModelResponse([TextPart(json.dumps(output))])
