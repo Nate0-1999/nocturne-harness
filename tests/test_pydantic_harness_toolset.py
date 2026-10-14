@@ -828,6 +828,29 @@ async def test_an_edit_that_stops_a_python_file_parsing_is_refused(tmp_path: Pat
 
 
 @pytest.mark.asyncio
+async def test_a_new_python_file_that_does_not_parse_is_not_written(tmp_path: Path) -> None:
+    """F199: in the M4W1B hour a new test file with an unterminated string was written and
+    committed; the guard covered edits to files that already parsed."""
+
+    broken = 'def test_json():\n    assert out == "{\n'
+    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    try:
+        refused = await toolset.execute("write", {"path": "test_new.py", "content": broken})
+        notes = await toolset.execute("write", {"path": "notes.txt", "content": broken})
+    finally:
+        await toolset.close()
+
+    with pytest.raises(SyntaxError) as error:
+        ast.parse(broken)
+    assert not refused.success and notes.success
+    assert refused.content == (
+        f"Refused: test_new.py would not parse as Python ({error.value.msg}, line "
+        f"{error.value.lineno}); nothing was written. Fix that line and write it again."
+    )
+    assert not (tmp_path / "test_new.py").exists()
+
+
+@pytest.mark.asyncio
 async def test_a_file_search_ignores_its_glob_and_a_missed_anchor_names_the_closest_line(
     tmp_path: Path,
 ) -> None:

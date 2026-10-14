@@ -179,21 +179,28 @@ def _refuse_destruction(target: Path, original: str, revised: str, said_replace:
     )
 
 
-def _refuse_broken_python(target: Path, original: str, revised: str) -> None:
+def _refuse_broken_python(target: Path, original: str | None, revised: str) -> None:
     """M3CL2 walk: an anchor that ended inside a call put gpt-4.1-mini's new test in the middle
-    of an existing one; the file stopped parsing and the agent blamed "leftover code" for it."""
+    of an existing one; the file stopped parsing and the agent blamed "leftover code" for it.
+    F199: a new file (original None) that does not parse is not written either."""
 
     if target.suffix != ".py":
         return
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         try:
-            ast.parse(original)
+            ast.parse(original or "")
         except (SyntaxError, ValueError):
             return
         try:
             ast.parse(revised)
         except SyntaxError as error:
+            if original is None:
+                # F199 (M4W1B hour): a new test file with an unterminated string was committed.
+                raise ToolsetError(
+                    f"Refused: {target.name} would not parse as Python ({error.msg}, line "
+                    f"{error.lineno}); nothing was written. Fix that line and write it again."
+                ) from None
             # INCIDENT M3CL2-walk: a new test landed inside an existing one and broke the file.
             raise ToolsetError(
                 f"Refused: after this change {target.name} would not parse as Python "
@@ -554,10 +561,11 @@ class PydanticHarnessToolset:
     async def _write(self, arguments: Mapping[str, object]) -> str:
         target = self._preflight("write", arguments.get("path"))
         content = arguments.get("content")
+        original = None
         if target.is_file():
             original = target.read_text(encoding="utf-8", errors="replace")
             _refuse_destruction(target, original, content, arguments.get("replace"))
-            _refuse_broken_python(target, original, content)
+        _refuse_broken_python(target, original, content)
         relative = target.relative_to(self._location.cwd)
         result = await self._filesystem(self._location.cwd).write_file(str(relative), content)
         self._emit("write", target)

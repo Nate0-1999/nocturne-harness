@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import ast
 import asyncio
 import json
 import logging
 import re
+import warnings
 from collections.abc import AsyncIterable, Callable, Mapping, Sequence
 from dataclasses import replace
 from datetime import UTC, datetime
@@ -1309,6 +1311,18 @@ def _no_account(_answer: str) -> None:
 _MENTIONED_PATH = re.compile(r"[\w.-]+(?:/[\w.-]+)*\.[A-Za-z0-9]{1,8}")
 
 
+def _does_not_parse(path: Path) -> bool:
+    if path.suffix != ".py" or not path.is_file():
+        return False
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            ast.parse(path.read_bytes())
+        except (SyntaxError, ValueError):
+            return True
+    return False
+
+
 def turn_account(context: MemoryToolContext) -> Callable[[str], str | None]:
     """M3CL2 (the gate's 2026-10-01 ruling, never a claim the loop did not check): the loop's
     account of what this turn changed in the repository, naming files an answer mentions that
@@ -1336,10 +1350,13 @@ def turn_account(context: MemoryToolContext) -> Callable[[str], str | None]:
             for path in named
             if path not in changed and not any(item.endswith(f"/{path}") for item in changed)
         )
+        # F199 (M4W1B hour): a committed test file that did not parse read as fine here.
+        broken = sorted(path for path in changed if _does_not_parse(root / path))
         parts = [
             *([f"committed {', '.join(committed)}"] if committed else []),
             *([f"not committed: {', '.join(uncommitted)}"] if uncommitted else []),
             *([f"not changed: {', '.join(unchanged)}"] if unchanged else []),
+            *([f"does not parse: {', '.join(broken)}"] if broken else []),
         ]
         return "Checked by Nocturne, this turn: " + "; ".join(parts) + "."
 

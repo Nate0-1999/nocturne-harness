@@ -2595,3 +2595,42 @@ async def test_a_turn_that_changed_the_repository_is_checked_against_the_loops_a
         await check.after_model_request(ctx, request_context=tools, response=answer)
     ctx.usage.tool_calls += 1
     assert await check.after_model_request(ctx, request_context=tools, response=answer) is answer
+
+
+@pytest.mark.asyncio
+async def test_the_loops_account_names_a_changed_python_file_that_does_not_parse(
+    tmp_path: Path,
+) -> None:
+    """F199: in the M4W1B hour a new test file that did not parse was committed and the account
+    line named it as committed only; it now says the file does not parse."""
+
+    import subprocess
+
+    from harness.agent_runtime import turn_account
+
+    repository = tmp_path / "repo"
+    (repository / "tests").mkdir(parents=True)
+    (repository / "tests" / "test_a.py").write_text("def test_a():\n    pass\n")
+    for command in (
+        ["init", "-q"],
+        ["config", "user.name", "t"],
+        ["config", "user.email", "t@t"],
+        ["add", "."],
+        ["commit", "-qm", "start"],
+    ):
+        subprocess.run(["git", "-C", str(repository), *command], check=True)
+    toolset = await open_standard_toolset(cwd=repository, workspace_root=repository)
+    try:
+        account = turn_account(context(toolset=toolset))
+        (repository / "tests" / "test_new.py").write_text('def test_new():\n    x = "open\n')
+        subprocess.run(["git", "-C", str(repository), "add", "."], check=True)
+        subprocess.run(["git", "-C", str(repository), "commit", "-qm", "new"], check=True)
+        (repository / "tests" / "test_a.py").write_text("def test_a():\n    assert True\n")
+        said = account("I added tests/test_new.py and the tests pass.")
+    finally:
+        await toolset.close()
+
+    assert said == (
+        "Checked by Nocturne, this turn: committed tests/test_new.py; "
+        "not committed: M tests/test_a.py; does not parse: tests/test_new.py."
+    )
