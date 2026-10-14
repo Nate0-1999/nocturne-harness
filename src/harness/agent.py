@@ -23,6 +23,7 @@ from harness.commands import remember_command_text
 from harness.config import HarnessSettings
 from harness.context_window import ReturnShareBounds, bounds_from
 from harness.memory_outbox import QueuedForPalace, never_reached_palace
+from harness.model_policy import ModelPolicyResolver
 from harness.model_router import (
     CompletionRouter,
 )
@@ -927,6 +928,8 @@ class HarnessAgent:
     ) -> ExtractionDraft:
         """Run the tools-free cheap-model extraction pass over one durable transcript."""
 
+        if model is None:
+            model = await self._background_memory_model()
         extraction_settings = {
             **(model_settings or {}),
             "openrouter_usage": {"include": True},
@@ -1036,6 +1039,8 @@ class HarnessAgent:
     ) -> ExtractionVerdictDraft:
         """Give the thread-aware extractor the corpus neighborhood before queue birth."""
 
+        if model is None:
+            model = await self._background_memory_model()
         result = await self._extraction_verdict_agent.run(
             f"Candidate: {candidate.model_dump_json()}\nNeighbors: {neighbors!r}",
             model=self._select_model(model),
@@ -1068,6 +1073,8 @@ class HarnessAgent:
     ) -> SeedSplitDraft:
         """Produce a lossless semantic split or fail before any queue write."""
 
+        if model is None:
+            model = await self._background_memory_model()
         result = await self._seed_splitter_agent.run(
             f"Source: {source_name}\n\n{markdown}",
             model=self._select_model(model),
@@ -1093,6 +1100,17 @@ class HarnessAgent:
             model_settings=None,
         )
         return result.output.model_copy(update={"candidates": candidates})
+
+    async def _background_memory_model(self) -> str:
+        # F196: these chat-owned memory jobs have no live turn to supply its resolution.
+        # Read the current role policy, including edits made since the daemon started.
+        resolver = ModelPolicyResolver(
+            policy=self._settings.effective_model_policy_chat,
+            static_model=self._settings.chat_model,
+            static_context_tokens=self._settings.model_context_tokens,
+            catalog=self._router.catalog,
+        )
+        return (await resolver.resolve("background-memory")).model
 
     async def dispatch(
         self,

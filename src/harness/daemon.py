@@ -1102,6 +1102,7 @@ def create_dev_app(
         principal_id=principal_id,
         machine_id=machine_id,
         enrich=enrich_memory_panel,
+        outbox=outbox,
     )
 
     async def publish_ambient_memory_panel(thread_id: str) -> None:
@@ -1274,6 +1275,25 @@ def create_dev_app(
         spend_walls=spend_walls,
         checkpoints=WorkspaceCheckpoints(home / "checkpoints"),
     )
+
+    async def palace_busy(state: str) -> None:
+        message = {
+            "retrying": "The Palace is busy, retrying.",
+            "ready": "The Palace is ready.",
+            "failed": "The Palace is still busy. Try again shortly.",
+        }[state]
+        for thread_id in loop.thread_models():
+            await loop.publish(
+                thread_id,
+                factory.create(
+                    MessageType.ERROR,
+                    {"code": f"palace_{state}", "message": message},
+                    thread_id=thread_id,
+                ),
+            )
+
+    if hasattr(owned_spine, "on_busy"):
+        owned_spine.on_busy = palace_busy
 
     execution = SymphonyExecution(settings=configured, home=home, context_factory=context_factory)
     worktree_removals: set[asyncio.Task] = set()
