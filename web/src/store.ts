@@ -244,8 +244,10 @@ function keepMemoryNotice(previous: HarnessError | null, incoming: HarnessError)
     typeof error?.detail === 'object' && error.detail !== null && !Array.isArray(error.detail)
       ? error.detail[key]
       : undefined
-  return field(previous, 'code') === 'memory_unavailable' &&
-    field(incoming, 'code') !== 'memory_unavailable' &&
+  const memory = (error: HarnessError | null) =>
+    ['memory_unavailable', 'memory_local_copy'].includes(String(field(error, 'code')))
+  return memory(previous) &&
+    !memory(incoming) &&
     field(previous, 'run_id') === field(incoming, 'run_id')
     ? { ...incoming, message: `${previous?.message} ${incoming.message}` }
     : incoming
@@ -624,6 +626,11 @@ function applyEvent(thread: ThreadState, event: DecodedServerEvent): ThreadState
       return { ...thread, resolvedModel: event.payload.new_model }
     case 'error':
       {
+        if ((event.payload as { code?: string } | null)?.code === 'palace_ready') {
+          const detail = thread.lastError?.detail as { code?: string } | null
+          return detail?.code === 'palace_retrying'
+            ? { ...thread, lastError: null } : thread
+        }
         const lastError = keepMemoryNotice(thread.lastError, errorFromPayload(event.payload))
         return {
           ...thread,

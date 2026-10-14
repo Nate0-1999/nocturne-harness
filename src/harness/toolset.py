@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Literal, Protocol
@@ -18,9 +18,10 @@ class ToolsetError(RuntimeError):
 class WorkspaceBoundaryError(ValueError):
     """A refusal by an existing owner-file, credential, or remote-state wall. [ADR-015]"""
 
-    def __init__(self, message: str, wall: str) -> None:
+    def __init__(self, message: str, wall: str, target: Path | None = None) -> None:
         super().__init__(message)
         self.wall = wall
+        self.target = target  # F198: the folder a workspace card would let the agent write
 
 
 class PermissionJudge:
@@ -33,6 +34,37 @@ class PermissionJudge:
         if wall in {"workspace", "credentials", "remote"}:
             return True
         raise ValueError(f"Unknown workspace wall: {wall}")
+
+
+@dataclass(slots=True)
+class Crossings:
+    """What the owner let this thread cross from a boundary card, for the current request
+    (Allow once) or for every request in the thread (Allow for this thread): a wall
+    ("remote", "credentials") or one outside folder the agent may write. [ADR-015, F198]"""
+
+    turn: set[str] = field(default_factory=set)
+    thread: set[str] = field(default_factory=set)
+    journaled: Callable[[], set[str]] | None = None
+
+    @staticmethod
+    def entry(wall: str, folder: Path | None = None) -> str:
+        return f"workspace:{folder}" if wall == "workspace" and folder is not None else wall
+
+    def entries(self) -> set[str]:
+        return self.turn | self.thread | (self.journaled() if self.journaled else set())
+
+    def allowed(self, wall: str) -> bool:
+        return wall in self.entries()
+
+    def folders(self) -> tuple[Path, ...]:
+        return tuple(
+            Path(entry.removeprefix("workspace:"))
+            for entry in sorted(self.entries())
+            if entry.startswith("workspace:")
+        )
+
+    def writable(self, path: Path) -> bool:
+        return any(path == folder or path.is_relative_to(folder) for folder in self.folders())
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,6 +124,7 @@ class ToolExecutionResult:
     image: bytes | None = None
     media_type: str | None = None
     boundary: str | None = None
+    boundary_target: Path | None = None
 
 
 class StandardToolset(Protocol):
@@ -121,6 +154,7 @@ async def open_standard_toolset(
     session_id: str | None = None,
     fence_reads: bool = False,
     presence_sink: PresenceSink | None = None,
+    crossings: Crossings | None = None,
 ) -> StandardToolset:
     """Open the selected standard toolset without leaking its protocol to callers."""
 
@@ -134,4 +168,5 @@ async def open_standard_toolset(
         session_id=session_id or generate_ulid(),
         fence_reads=fence_reads,
         presence_sink=presence_sink,
+        crossings=crossings,
     )

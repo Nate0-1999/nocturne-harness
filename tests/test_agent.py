@@ -41,6 +41,8 @@ from harness.agent import (
     resolve_model,
 )
 from harness.config import HarnessSettings
+from harness.envelope import EnvelopeFactory
+from harness.memory_outbox import MemoryOutbox
 from harness.spine_client import (
     CreatedMemoryResponse,
     CreateMemoryConflictError,
@@ -294,6 +296,35 @@ def structured_sequence_model(
         return ModelResponse(parts=[TextPart(json.dumps(outputs.pop(0)))])
 
     return FunctionModel(respond, model_name="local:remember-sequence")
+
+
+@pytest.mark.asyncio
+async def test_background_memory_jobs_follow_the_live_chat_policy() -> None:
+    """F196 / FL-154: archive, comparison and seed requests must not escape the role pin."""
+    configured = settings(model_policy_chat="pinned:openai:chosen")
+    calls = []
+    agent = HarnessAgent(configured)
+    agent._models_by_name["openai:chosen"] = structured_sequence_model(
+        [
+            {"working_summary": "A project fact.", "open_loops": [], "candidates": []},
+            {"verdict": "new", "target_ids": []},
+            {"candidates": []},
+        ],
+        calls,
+    )
+    await agent.extract_thread("A project fact.")
+    await agent.propose_extraction_verdict(
+        ExtractionCandidateDraft(
+            label="Stage name", body="The stage is lark.", kind="fact", keywords=["stage", "lark"]
+        ),
+        [],
+    )
+    await agent.split_seed("seed.md", "The stage is lark.")
+    assert len(calls) == 3
+    configured.model_policy_chat = "pinned:openai:changed"
+    agent._models_by_name["openai:changed"] = structured_sequence_model([{"candidates": []}], calls)
+    await agent.split_seed("next.md", "Another project.")
+    assert len(calls) == 4
 
 
 def split_response(source: str) -> MemorySplitResponse:
@@ -615,9 +646,11 @@ async def test_a049_remember_splitter_is_tools_free_and_lossless_by_instruction(
     assert calls[0][1].instructions is not None
     assert calls[0][1].instructions.startswith(REMEMBER_SPLIT_INSTRUCTION)
     assert "self-contained fact sentence that names its own subject" in calls[0][1].instructions
-    assert "Split only where there is more than one distinct fact" in calls[0][1].instructions
-    assert "broken at its cleanest seam into finer facts" in calls[0][1].instructions
-    assert "only repetition is shortened" in calls[0][1].instructions
+    assert "SHORTEN it to ONE candidate" in calls[0][1].instructions
+    assert (
+        "SPLIT only when the source contains multiple independently changeable facts"
+        in calls[0][1].instructions
+    )
     assert "prefer 2-5 words and under 40 characters" in calls[0][1].instructions
     assert "never facts" in calls[0][1].instructions
     assert "The application keeps the exact source" in calls[0][1].instructions
@@ -787,7 +820,9 @@ async def test_over_cap_single_fact_uses_remaining_request_to_finish_shortening(
     assert len(calls) == 2
     if invalid_draft == "over-cap":
         repair = calls[1][0][-1].parts[-1].content
-        assert repair.startswith("This memory is too long, break it down into finer pieces.")
+        assert repair.startswith(
+            "This memory is too long; shorten one claim, split only independent claims."
+        )
     assert [request.body for request in spine.create_requests] == [body]
     assert spine.split_requests == []
 
@@ -1064,7 +1099,7 @@ async def test_a049_single_atomic_oversized_claim_is_saved_after_three_repairs()
     assert result.ok
     assert len(calls) == 4
     assert all(
-        "this memory is too long, break it down into finer pieces"
+        "this memory is too long; shorten one claim, split only independent claims"
         in str(call[0][-1].parts[-1].content).lower()
         for call in calls[1:]
     )
@@ -1625,7 +1660,9 @@ async def test_an_over_cap_seed_child_goes_back_through_the_seed_prompt() -> Non
     assert calls[1][1].instructions == calls[0][1].instructions.split("\n\n")[0] or (
         calls[1][1].instructions.startswith(calls[0][1].instructions.split("\n")[0])
     )
-    assert "too long, break it down into finer pieces" in str(calls[1][0][-1].parts[-1].content)
+    assert "too long; shorten one claim, split only independent claims" in str(
+        calls[1][0][-1].parts[-1].content
+    )
 
 
 def test_the_code_check_names_each_rule_a_fact_breaks() -> None:
@@ -1646,7 +1683,7 @@ def test_compaction_prompt_has_the_owners_shape_and_no_count_cap() -> None:
     'prefer zero candidates' are gone."""
     assert "an agent continuing this problem in the future would want" in EXTRACTION_INSTRUCTION
     assert "self-contained fact sentence" in EXTRACTION_INSTRUCTION
-    assert "break it at the cleanest place" in EXTRACTION_INSTRUCTION
+    assert "Shorten a single fact" in EXTRACTION_INSTRUCTION
     assert "Keep what the user stated, decided or corrected" in EXTRACTION_INSTRUCTION
     assert "tool result that verified it" in EXTRACTION_INSTRUCTION
     assert "begins with 'Unverified:'" in EXTRACTION_INSTRUCTION
@@ -1723,3 +1760,100 @@ async def test_a_fact_carrying_a_secret_never_reaches_the_palace() -> None:
 
     assert [candidate.body for candidate in draft.candidates] == ["Key [secret left out]"]
     assert "leave the secret out" in str(calls[1][0][-1].parts[-1].content)
+
+
+def unreached(cause: Exception) -> SpineTransportError:
+    error = SpineTransportError()
+    error.__cause__ = cause
+    return error
+
+
+def label_model() -> TestModel:
+    return TestModel(
+        call_tools=[],
+        custom_output_text=json.dumps({"label": "Boat mooring", "keywords": ["boat", "pier"]}),
+    )
+
+
+@pytest.mark.asyncio
+async def test_unreached_remember_waits_in_the_outbox_and_replays_through_the_palace(
+    tmp_path,
+) -> None:
+    """ADR-003 / A-079: a /remember the Palace never received is saved locally and shown
+    waiting; on reconnect the same request meets the Palace's create law.
+    """
+    spine = FakeSpine(unreached(httpx.ConnectError("refused")))
+    outbox = MemoryOutbox(tmp_path, ids=EnvelopeFactory(machine_id="machine-1"))
+    held = replace(context(spine), outbox=outbox)
+
+    result = await HarnessAgent(settings(), model=label_model()).remember(
+        "The keeper's boat is moored at pier four.", context=held
+    )
+
+    assert result.ok and result.message.startswith("Saved on this machine")
+    assert "1 waiting for the Palace" in result.message
+    [item] = outbox.waiting()
+    assert (item.kind, item.label, item.payload["shape"]) == ("remember", "Boat mooring", "single")
+
+    spine.outcome = CreatedMemoryResponse(created=memory_unit())
+    assert await HarnessAgent.replay_remember(context(spine), item.payload) is None
+    assert spine.create_requests[1] == spine.create_requests[0]
+
+    spine.outcome = similar_response()
+    refusal = await HarnessAgent.replay_remember(context(spine), item.payload)
+    assert refusal is not None and refusal.startswith("Not saved: this looks similar to")
+
+
+@pytest.mark.asyncio
+async def test_a_remember_that_may_have_landed_still_fails_loudly(tmp_path) -> None:
+    """A-079 / F165: after a timeout the Palace may hold the fact, so a resend could count it
+    twice (owner, FL-173); the outbox takes only what never reached the Palace.
+    """
+    spine = FakeSpine(unreached(httpx.ReadTimeout("sent, no answer")))
+    outbox = MemoryOutbox(tmp_path, ids=EnvelopeFactory(machine_id="machine-1"))
+
+    result = await HarnessAgent(settings(), model=label_model()).remember(
+        "The keeper's boat is moored at pier four.", context=replace(context(spine), outbox=outbox)
+    )
+
+    assert not result.ok and result.message.startswith("Could not remember")
+    assert outbox.waiting() == []
+
+    spine.outcome = unreached(httpx.ConnectError("refused"))
+    with pytest.raises(SpineTransportError):
+        await HarnessAgent.replay_remember(
+            context(spine),
+            {"shape": "single", "request": spine.create_requests[0].model_dump(mode="json")},
+        )
+
+
+@pytest.mark.asyncio
+async def test_a_queued_remember_has_passed_the_check_and_carries_no_secret(tmp_path) -> None:
+    """A-079 / v2.133: the outbox holds only what the check before the Palace let through, so
+    a credential the check withdrew never waits on this machine for the Palace.
+    """
+    entry = {"label": "Staging host", "keywords": ["staging", "host"]}
+    model = structured_sequence_model(
+        [
+            {**entry, "multiple_facts": False},
+            {
+                "candidates": [
+                    {**entry, "body": "The staging host is build-7; token sk-test-ABC123XYZ."}
+                ]
+            },
+            {"candidates": [{**entry, "body": "The staging host is build-7."}]},
+        ],
+        [],
+    )
+    spine = FakeSpine(unreached(httpx.ConnectError("refused")))
+    outbox = MemoryOutbox(tmp_path, ids=EnvelopeFactory(machine_id="machine-1"))
+
+    result = await HarnessAgent(settings(), model=model).remember(
+        "The staging host is build-7; token sk-test-ABC123XYZ.",
+        context=replace(context(spine), outbox=outbox),
+    )
+
+    assert result.ok and result.message.startswith("Saved on this machine")
+    [item] = outbox.waiting()
+    assert item.payload["request"]["body"] == "The staging host is build-7."
+    assert "sk-test" not in json.dumps(item.payload)

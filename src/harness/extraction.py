@@ -4,12 +4,14 @@ import asyncio
 import json
 import logging
 import os
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Literal
 from uuid import UUID
 
 from harness.agent import ExtractionCandidateDraft, ExtractionDraft, HarnessAgent, _within_cap
+from harness.memory_outbox import MemoryOutbox, never_reached_palace
 from harness.spine_client import (
     ExtractionCandidate,
     ExtractionRequest,
@@ -49,12 +51,18 @@ class ExtractionService:
         spine: SpineClient,
         principal_id: str,
         machine_id: str,
+        outbox: MemoryOutbox | None = None,
     ) -> None:
         self._journal = journal
         self._agent = agent
         self._spine = spine
         self._principal_id = principal_id
         self._machine_id = machine_id
+        self._outbox = outbox
+
+    async def replay(self, payload: Mapping[str, object]) -> None:
+        """M4BW: a queued compaction batch reaches the Palace's queue now, through its law."""
+        await self._create_extraction(ExtractionRequest.model_validate(payload["request"]))
 
     async def archive(self, thread_id: UUID) -> ThreadEndResult:
         text_id = str(thread_id)
@@ -149,6 +157,7 @@ class ExtractionService:
         groups: dict[str | None, list[ExtractionCandidate]] = {}
         duplicate_count = 0
         facts: list[dict[str, object]] = []
+        offline = False  # A-079: once the Palace is unreached, verdicts wait for it
         for item in draft.candidates:
             # Owner 2026-10-07 (v2.133): a fact no user message or tool result verified says so.
             if (
@@ -163,65 +172,89 @@ class ExtractionService:
                         )
                     }
                 )
-            neighbors = await self._spine.search(
-                SearchRequest(
-                    principal_id=self._principal_id,
-                    query=item.body,
-                    k=5,
-                    project_key=None,
+            verdict, target_ids = "new", []
+            if not offline:
+                try:
+                    neighbors = await self._spine.search(
+                        SearchRequest(
+                            principal_id=self._principal_id,
+                            query=item.body,
+                            k=5,
+                            project_key=None,
+                        )
+                    )
+                except SpineClientError as exc:
+                    if self._outbox is None or not never_reached_palace(exc):
+                        raise
+                    offline = True
+            if not offline:
+                neighbor_payload = [
+                    {
+                        "memory_id": str(neighbor.memory_id),
+                        "label": neighbor.label,
+                        "body": neighbor.body,
+                    }
+                    for neighbor in neighbors.results
+                ]
+                options = (
+                    {}
+                    if model is None
+                    else {
+                        "model": model,
+                        "usage": usage,
+                        "on_result": on_result,
+                        "model_settings": model_settings,
+                    }
                 )
-            )
-            neighbor_payload = [
-                {
-                    "memory_id": str(neighbor.memory_id),
-                    "label": neighbor.label,
-                    "body": neighbor.body,
-                }
-                for neighbor in neighbors.results
-            ]
-            options = (
-                {}
-                if model is None
-                else {
-                    "model": model,
-                    "usage": usage,
-                    "on_result": on_result,
-                    "model_settings": model_settings,
-                }
-            )
-            verdict = await self._agent.propose_extraction_verdict(
-                item,
-                neighbor_payload,
-                **options,
-            )
+                proposed = await self._agent.propose_extraction_verdict(
+                    item,
+                    neighbor_payload,
+                    **options,
+                )
+                verdict, target_ids = proposed.verdict, proposed.target_ids
             facts.append(
                 {
                     "label": item.label,
                     "body": item.body,
                     "source_message_ids": list(item.source_message_ids),
-                    "verdict": verdict.verdict,
+                    "verdict": verdict,
                 }
             )
-            if verdict.verdict == "already_known":
+            if verdict == "already_known":
                 duplicate_count += 1
                 continue
             location, folders = _origin_location(item.source_message_ids, locations or {}, fallback)
             groups.setdefault(location, []).append(
-                _candidate(item, verdict.verdict, verdict.target_ids, project_key, folders)
+                _candidate(item, verdict, target_ids, project_key, folders)
             )
         cards: list[QueueCard] = []
         # SD-072: the Palace stamps one location per request, so each birth folder sends its own.
         for location, candidates in (groups or {fallback: []}).items():
-            response = await self._create_extraction(
-                ExtractionRequest(
-                    principal_id=self._principal_id,
-                    thread_id=thread_id,
-                    machine_id=self._machine_id,
-                    editor=origin,
-                    origin_location=location,
-                    candidates=candidates,
-                )
+            request = ExtractionRequest(
+                principal_id=self._principal_id,
+                thread_id=thread_id,
+                machine_id=self._machine_id,
+                editor=origin,
+                origin_location=location,
+                candidates=candidates,
             )
+            response = None
+            if not offline:
+                try:
+                    response = await self._create_extraction(request)
+                except SpineClientError as exc:
+                    if self._outbox is None or not never_reached_palace(exc):
+                        raise
+            if response is None:
+                # A-079: the batch waits in the outbox; its cards arrive on reconnect.
+                if candidates:
+                    count = len(candidates)
+                    self._outbox.enqueue(
+                        "extraction",
+                        f"{count} fact{'s' if count != 1 else ''} from a compaction",
+                        {"request": request.model_dump(mode="json")},
+                    )
+                response = ExtractionResponse(cards=[], duplicate_count=0)
             cards.extend(response.cards)
             duplicate_count += response.duplicate_count
         self._journal.append_extraction(

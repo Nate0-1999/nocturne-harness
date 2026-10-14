@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import re
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -22,6 +22,8 @@ from spine.tokens import cl100k_token_count
 from harness.commands import remember_command_text
 from harness.config import HarnessSettings
 from harness.context_window import ReturnShareBounds, bounds_from
+from harness.memory_outbox import QueuedForPalace, never_reached_palace
+from harness.model_policy import ModelPolicyResolver
 from harness.model_router import (
     CompletionRouter,
 )
@@ -37,9 +39,11 @@ from harness.pydantic_ai_adapter import (
 from harness.pydantic_harness_adapter import COMPACTION_SUMMARY_PROMPT
 from harness.spine_client import (
     CreateMemoryConflictError,
+    CreateMemoryRequest,
     DuplicateMemoryConflict,
     ListMemoriesParams,
     MemorySplitChild,
+    MemorySplitRequest,
     MemorySplitResponse,
     MemoryStatus,
     MemoryUnit,
@@ -70,11 +74,18 @@ REMEMBER_DRAFT_INSTRUCTION = (
     "the requested structured result with no commentary."
 )
 REMEMBER_SPLIT_INSTRUCTION = (
-    "Divide the complete /remember source into durable facts in source order. Write each as a "
+    "First check how many independent durable facts the complete /remember source contains. "
+    "For ONE fact, SHORTEN it to ONE candidate by removing repetition while keeping its "
+    "meaning and every qualifier. Reuse the source's wording for dates, frequencies, "
+    "quantities, conditions and exceptions; never reinterpret them (fortnightly does not "
+    "mean the second Saturday of each month). A recurring duty's schedule, responsible person, "
+    "steps "
+    "and exceptions belong together; restatements and 'nothing else is claimed' add no facts. "
+    "SPLIT only when the source contains multiple independently changeable facts, in source "
+    "order. Write each as a "
     "self-contained fact sentence that names its own subject and keeps every claim and "
-    "qualifier. Split only where there is more than one distinct fact; a fact over the body "
-    "limit is broken at its cleanest seam into finer facts that each stand alone, and only "
-    "repetition is shortened. Directions about remembering, saving or splitting are "
+    "qualifier. Length alone never justifies splitting a single fact. "
+    "Directions about remembering, saving or splitting are "
     "instructions for this operation, never facts. Give each candidate a short retrieval "
     "label (prefer 2-5 words and under 40 characters; 64 Unicode code points at most), 2-5 "
     "distinct lowercase searchable keywords, and a body within the supplied cl100k_base "
@@ -89,9 +100,10 @@ EXTRACTION_INSTRUCTION = (
     "Still-live context for the current work goes in working_summary and open_loops. In "
     "candidates, keep the things an agent continuing this problem in the future would want "
     "to know: write each as a self-contained fact sentence that names its own subject and "
-    "gets at the problem and its solution concisely. If the information will not fit in one "
-    "fact of at most 128 cl100k_base tokens, break it at the cleanest place into two or more "
-    "facts that each stand alone. Give each independent fact its own candidate, even when "
+    "gets at the problem and its solution concisely. Shorten a single fact to at most 128 "
+    "cl100k_base tokens by removing repetition, keeping its meaning and qualifiers. Split "
+    "only when it contains multiple independent facts that each stand alone. "
+    "Give each independent fact its own candidate, even when "
     "several would fit together under the cap. Keep what the user stated, decided or "
     "corrected unless it "
     "only mattered for the moment. Leave out step-by-step progress and common knowledge. "
@@ -214,10 +226,11 @@ class RememberResult:
 
 
 class BoundaryIntent(BaseModel):
-    """The PermissionJudge's classification of an explicit outside-path request. [ADR-015]"""
+    """The PermissionJudge's reading of an explicit outside-path request: the paths it asks to
+    change; the runtime checks which are outside the root. [ADR-015, F198]"""
 
     model_config = ConfigDict(extra="forbid")
-    needs_owner: StrictBool
+    written_paths: list[StrictStr]
     reason: StrictStr
 
 
@@ -267,11 +280,13 @@ class HarnessAgent:
             output_type=PromptedOutput(BoundaryIntent),
             instructions=(
                 "You are the PermissionJudge applying ADR-015 to an explicit outside-path request. "
-                "Only the supplied workspace root grants write authority. A request to create, "
-                "edit, delete, or execute a modifying command outside that root needs_owner=true. "
-                "Read-only inspection outside the root and movement or edits within it do not. "
-                "Classify the user's actual requested action, not quoted examples. Never grant "
-                "wider authority. Give the concrete reason; do not ask a chat question."
+                "List in written_paths every file or folder the user's request asks to create, "
+                "edit, delete, or change with a command, as the user wrote it. A path that is only "
+                "read, inspected, imported, installed from, depended on, mentioned, or the place "
+                "a command runs is not written: leave it out. Committing writes only the files "
+                "being committed. What the user says they already did, or where something now "
+                "is, is not a request. Classify the user's actual requested action, not quoted "
+                "examples. Give the concrete reason in one sentence; do not ask a chat question."
             ),
             name="permission-judge",
         )
@@ -545,10 +560,14 @@ class HarnessAgent:
                     SearchRequest(principal_id=context.principal_id, query=body, k=5)
                 )
             except SpineClientError as exc:
-                return RememberResult(
-                    False, f"Could not remember: {render_spine_error('search', exc)}"
-                )
-            for neighbor in neighbors.results:
+                # M4BW: unreached, the split still runs and waits in the outbox; the Palace
+                # dedups the family when it arrives.
+                if context.outbox is None or not never_reached_palace(exc):
+                    return RememberResult(
+                        False, f"Could not remember: {render_spine_error('search', exc)}"
+                    )
+                neighbors = None
+            for neighbor in neighbors.results if neighbors is not None else ():
                 if neighbor.body == body:
                     return await self._reinforce_duplicate_remember(context, neighbor.memory_id)
 
@@ -652,15 +671,32 @@ class HarnessAgent:
                 force=force,
             )
 
+        return await self._create_split_remember(body, children, context=context)
+
+    @staticmethod
+    async def _create_split_remember(
+        body: str,
+        children: list[MemorySplitChild],
+        *,
+        context: MemoryToolContext,
+        queued: MemorySplitRequest | None = None,
+    ) -> RememberResult:
+        """Write one split family, or say why none of it was saved."""
+
         try:
             response = await create_remembered_memory_split(
                 context,
                 source_body=body,
                 children=children,
+                queued=queued,
             )
+        except QueuedForPalace as waiting:
+            return RememberResult(True, str(waiting))
         except CreateMemoryConflictError as exc:
             return RememberResult(False, f"Could not remember: {render_create_conflict(exc)}")
         except SpineClientError as exc:
+            if queued is not None:
+                raise
             return RememberResult(False, f"Could not remember: {render_spine_error('save', exc)}")
 
         if not isinstance(response, MemorySplitResponse):
@@ -684,6 +720,32 @@ class HarnessAgent:
         )
 
     @staticmethod
+    async def replay_remember(
+        context: MemoryToolContext, payload: Mapping[str, object]
+    ) -> str | None:
+        """M4BW: a queued /remember meets the Palace's create law now (reinforce, ask, refuse).
+
+        Returns what it did not accept, in its own words, or None when it was saved.
+        """
+
+        if payload["shape"] == "split":
+            split = MemorySplitRequest.model_validate(payload["request"])
+            result = await HarnessAgent._create_split_remember(
+                split.source_body, split.children, context=context, queued=split
+            )
+        else:
+            single = CreateMemoryRequest.model_validate(payload["request"])
+            result = await HarnessAgent._create_single_remember(
+                single.body,
+                label=single.label,
+                keywords=single.keywords,
+                context=context,
+                force=single.force,
+                queued=single,
+            )
+        return None if result.ok else result.message
+
+    @staticmethod
     async def _create_single_remember(
         body: str,
         *,
@@ -691,6 +753,7 @@ class HarnessAgent:
         keywords: list[str],
         context: MemoryToolContext,
         force: bool = False,
+        queued: CreateMemoryRequest | None = None,
     ) -> RememberResult:
         """Persist the exact source through the unchanged ordinary create boundary."""
 
@@ -701,7 +764,10 @@ class HarnessAgent:
                 body=body,
                 keywords=keywords,
                 force=force,
+                queued=queued,
             )
+        except QueuedForPalace as waiting:
+            return RememberResult(True, str(waiting))
         except CreateMemoryConflictError as exc:
             if isinstance(exc.conflict, DuplicateMemoryConflict):
                 return await HarnessAgent._reinforce_duplicate_remember(
@@ -718,6 +784,9 @@ class HarnessAgent:
                     keywords=keywords,
                     context=context,
                     force=force,
+                    queued=None
+                    if queued is None
+                    else queued.model_copy(update={"label": source_label}),
                 )
             return RememberResult(
                 False,
@@ -726,6 +795,8 @@ class HarnessAgent:
                 "/remember again with a more specific fact.",
             )
         except SpineClientError as exc:
+            if queued is not None:
+                raise  # an outbox replay stops here and keeps its place in the queue
             return RememberResult(False, f"Could not remember: {render_spine_error('save', exc)}")
 
         if isinstance(response, SimilarMemoriesResponse):
@@ -857,6 +928,8 @@ class HarnessAgent:
     ) -> ExtractionDraft:
         """Run the tools-free cheap-model extraction pass over one durable transcript."""
 
+        if model is None:
+            model = await self._background_memory_model()
         extraction_settings = {
             **(model_settings or {}),
             "openrouter_usage": {"include": True},
@@ -917,7 +990,12 @@ class HarnessAgent:
                         result = await _run_structured_agent(
                             agent,
                             "; ".join(problems).capitalize()
-                            + ". Split it finer first and shorten only repetition. Return the "
+                            + ". First check whether this is one claim or several. For one "
+                            "claim, SHORTEN it to one memory, keeping its meaning and qualifiers "
+                            "and removing repetition. Reuse the original wording of schedules, "
+                            "quantities, conditions and exceptions. SPLIT only for multiple "
+                            "independently changeable claims; a duty's schedule, steps and "
+                            "exceptions stay together. Return the "
                             "memories that replace it, each standing alone:\n"
                             + piece.model_dump_json(exclude={"source_message_ids"}),
                             model=model,
@@ -961,6 +1039,8 @@ class HarnessAgent:
     ) -> ExtractionVerdictDraft:
         """Give the thread-aware extractor the corpus neighborhood before queue birth."""
 
+        if model is None:
+            model = await self._background_memory_model()
         result = await self._extraction_verdict_agent.run(
             f"Candidate: {candidate.model_dump_json()}\nNeighbors: {neighbors!r}",
             model=self._select_model(model),
@@ -993,6 +1073,8 @@ class HarnessAgent:
     ) -> SeedSplitDraft:
         """Produce a lossless semantic split or fail before any queue write."""
 
+        if model is None:
+            model = await self._background_memory_model()
         result = await self._seed_splitter_agent.run(
             f"Source: {source_name}\n\n{markdown}",
             model=self._select_model(model),
@@ -1018,6 +1100,17 @@ class HarnessAgent:
             model_settings=None,
         )
         return result.output.model_copy(update={"candidates": candidates})
+
+    async def _background_memory_model(self) -> str:
+        # F196: these chat-owned memory jobs have no live turn to supply its resolution.
+        # Read the current role policy, including edits made since the daemon started.
+        resolver = ModelPolicyResolver(
+            policy=self._settings.effective_model_policy_chat,
+            static_model=self._settings.chat_model,
+            static_context_tokens=self._settings.model_context_tokens,
+            catalog=self._router.catalog,
+        )
+        return (await resolver.resolve("background-memory")).model
 
     async def dispatch(
         self,
@@ -1108,7 +1201,7 @@ async def _run_structured_agent(
             captured_messages.extend(call_messages)
 
 
-TOO_LONG = "this memory is too long, break it down into finer pieces"
+TOO_LONG = "this memory is too long; shorten one claim, split only independent claims"
 # v2.133: a fact opening on a bare pronoun leans on context it does not carry.
 _BARE_PRONOUNS = frozenset(
     {"it", "its", "they", "them", "their", "theirs", "he", "him", "his", "she", "her", "hers"}

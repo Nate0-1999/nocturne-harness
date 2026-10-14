@@ -4216,6 +4216,72 @@ level — and its tip carries the folder. The thinking level keeps the chip's wo
 titles at 80 characters mid-word; shown titles end on a whole word. WHERE reads from the
 project down.
 
+## M4BW — Blue-water, the first slice [P1.2.1a, P1.3]
+
+PRECEDENT: SD-082, FL-165, ADR-003 (degraded offline mode), A-019 (amended by A-079), the
+receipt queue, M4GA, M4IN (the check before the Palace; the client's retry), F175.
+The local copy (`palace_mirror.py`) is one SQLite file holding the principal's active memories
+and the active recipe as the scorer console reports it, rebuilt whole every minute while the
+Palace answers and kept as is when it does not. The C.4 list carries no embeddings, so offline
+scoring follows ADR-003 literally: the Palace's own `score_and_select` with f_sem zero and the
+other five weights renormalized; location, thread and where weights and learned offsets, which
+the console does not return, count as zero. On the walk this left every memory just under the
+line for long questions, so the person adds back what they want; embeddings in the copy would
+need a Palace read and are the next slice's question, not this one's.
+The gate from the copy commits nothing and trains nothing (ADR-003); its ×! deletes and every
+/remember or compaction batch the Palace provably never received go to the outbox
+(`memory_outbox.py`), ordered files pushed oldest first by the same loop that refreshes the
+copy. "Provably never received" is a refused or failed connection or a non-Palace front-end
+answer; a timeout still fails loudly, so a resend never counts a fact twice (the owner's FL-173
+ruling, which this keeps). Replays go through the same create, extraction and delete code, so
+reinforce, ask and refuse stay the Palace's; what it does not accept comes back as a card in
+Palace State. Queueing happens after the check before the Palace, so a queued fact carries no
+withdrawn credential.
+
+## M5RT — Busy Palace requests and background model pins [P1.3, P4]
+
+F195/F196/F209: retry 429/503 twice at the common client boundary, retaining typed Palace
+refusals and the existing narrower rules for lost requests. Confirmed deletions rejected
+before processing join the existing durable outbox. Background extraction, comparison and
+seed splitting use their existing chat role's current policy; an explicit turn model wins.
+The release guard describes the release tag and matching source tag concurrently under one
+six-second deadline. Two exact reads preserve the source-match check without listing the
+registry; the installed gcloud image description omits the other tags on that image.
+
+## M5RM — One claim stays one memory; Palace refusals keep their reason [P1.2, P1.5]
+
+F208 replayed as five linked memories for one duty. The existing draft and repair prompts
+now shorten one claim, split only independent claims, and retain schedule wording. F194's
+structured Palace problems pass through with their status and reason; transport outages
+retain their existing message. No new writer or repair loop.
+
+## M5HD — The hands on a fresh clone [P4.2, P3]
+
+PRECEDENT: F197 F198 F199 F201, M4AH, M3CL2 (the parse guard), ADR-015, v2.125 (git from any
+folder), the open-web consent (thread-scoped, journal-restored).
+- The shell's caches (`XDG_CACHE_HOME`) live in its scratch, and the project's `.venv` (beside
+  the nearest pyproject.toml) is writable from any folder inside the workspace, as git's folder
+  is. The shell still has no network: the network allowlist ADR-015 names cannot be drawn by host
+  in Seatbelt, so a failed download says, in plain words, which command the person runs once in
+  their own terminal; after that `uv run` works offline.
+- A boundary card is a question the owner answers: the run waits on it (the spend wall's
+  waiting state), and Allow once (this request), Allow for this thread (journaled, restored like
+  open-web consent) or Deny answers it. Allow lifts that wall only: `remote` gives the shell
+  network and the boundary commands, `credentials` the credential reads, and a workspace card
+  names the outside folder its writes may reach by full path. The agent never moves outside its
+  workspace (on the walk that broke every later turn's location). Deny ends the turn as before.
+- The PermissionJudge lists the paths a request writes; the runtime checks them against the
+  root, so a request that only reads ../spine is not judged a write.
+- The parse guard covers new .py files, and the turn's account names changed .py files that do
+  not parse. A file URL with a host part is refused as malformed, with its corrected form.
+
+## M5LN — Show the retrain's eventual receipt [P1.2, P2]
+
+F212's ruling moves the console to a start-and-poll job API; a lost status read
+keeps polling the same job, never resubmitting the fit. Both Palace deployment
+paths allocate CPU between requests so the existing worker can finish after the
+start response. Scale-to-zero remains; durable pending jobs resume on startup.
+
 ## M3GT — Names read whole; the scripts rain; two themes by audition [P2.5]
 
 PRECEDENT: D.2 112, 115–119, 180, M3TM, TASTE-09, SD-078, SD-080. M3TM's shrinking

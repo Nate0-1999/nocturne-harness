@@ -47,7 +47,9 @@ test('curator proposals expose Palace activity and use only explicit queue decis
   ])
 
   assert.match(rack, /case 'curation\.load':[\s\S]*fetchJson\('\/v1\/curation'\)/u)
-  assert.match(rack, /palace_state:[\s\S]*actions: \['curation\.load'\]/u)
+  // A-079: Palace State also reads the local copy and dismisses its returned cards; no corpus write.
+  assert.match(rack, /palace_state:[\s\S]*actions: \['curation\.load', 'local_copy\.load', 'local_copy\.dismiss'\]/u)
+  assert.match(rack, /case 'local_copy\.dismiss':[\s\S]*\/v1\/local-copy\/returned\//u)
   assert.match(palaceState, /aria-label="Curator activity"/u)
   assert.match(palaceState, /writes, .*removals or a compaction/u)
   assert.match(app, /Curators never change memories without this queue/u)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable, Sequence
+from datetime import datetime
 from typing import Protocol, cast
 from uuid import UUID
 
@@ -10,8 +11,10 @@ from pydantic_ai.messages import BinaryContent
 
 from harness.citation import cited_memory_ids
 from harness.commands import browser_open_web_command, remember_command_text
+from harness.memory_outbox import MemoryOutbox
 from harness.memory_panel import ThreadMemoryContextRegistry, ThreadMemorySnapshot
 from harness.model_policy import ThreadModelResolution
+from harness.palace_mirror import PalaceMirror
 from harness.progressive_prompt import render_workspace_context, workspace_location_path
 from harness.run_protocol import (
     DynamicSystemInstructions,
@@ -44,6 +47,15 @@ type ContextChanged = Callable[[str], Awaitable[None]]
 type DeleteMemory = Callable[[str, UUID], Awaitable[None]]
 
 _MEMORY_UNAVAILABLE_MESSAGE = "Memory is unavailable; continuing without injected context."
+
+
+def _human_time(value: datetime | None) -> str:
+    if value is None:
+        return "an unknown time"
+    local = value.astimezone()
+    if local.date() == datetime.now().astimezone().date():
+        return local.strftime("%H:%M")
+    return local.strftime("%b %-d, %H:%M")
 
 
 def _live_location_path(context: MemoryToolContext) -> str | None:
@@ -196,6 +208,8 @@ class MemoryGateTurnRunner:
         contexts: ThreadMemoryContextRegistry | None = None,
         on_context_changed: ContextChanged | None = None,
         delete_memory: DeleteMemory | None = None,
+        mirror: PalaceMirror | None = None,
+        outbox: MemoryOutbox | None = None,
     ) -> None:
         self._delegate = delegate
         self._spine = spine
@@ -204,6 +218,8 @@ class MemoryGateTurnRunner:
         self._contexts = contexts or ThreadMemoryContextRegistry()
         self._on_context_changed = on_context_changed
         self._delete_memory = delete_memory
+        self._mirror = mirror
+        self._outbox = outbox
         self._attempted_threads: set[str] = set()
 
     async def run_workflow(self, *, memory_scope: str, **kwargs) -> TurnOutcome:
@@ -294,6 +310,22 @@ class MemoryGateTurnRunner:
         # surprise the human with a later first-turn gate in this process.
         self._attempted_threads.add(thread_id)
         context = self._context_factory(thread_id)
+        prepare_request = InjectPrepareRequest(
+            thread_id=context.thread_id,
+            agent_id=context.agent_id,
+            machine_id=context.machine_id,
+            principal_id=context.principal_id,
+            project_key=context.project_key,
+            location_path=_live_location_path(context),
+            current_location=_live_current_location(context),
+            agent_kind=None,
+            prompt=prompt,
+            model_context_tokens=(
+                model_resolution.context_tokens
+                if model_resolution is not None
+                else self._model_context_tokens
+            ),
+        )
 
         try:
             restored = (
@@ -314,26 +346,24 @@ class MemoryGateTurnRunner:
             prepared = (
                 restored.prepared
                 if restored
-                else await self._spine.prepare_injection(
-                    InjectPrepareRequest(
-                        thread_id=context.thread_id,
-                        agent_id=context.agent_id,
-                        machine_id=context.machine_id,
-                        principal_id=context.principal_id,
-                        project_key=context.project_key,
-                        location_path=_live_location_path(context),
-                        current_location=_live_current_location(context),
-                        agent_kind=None,
-                        prompt=prompt,
-                        model_context_tokens=(
-                            model_resolution.context_tokens
-                            if model_resolution is not None
-                            else self._model_context_tokens
-                        ),
-                    )
-                )
+                else await self._spine.prepare_injection(prepare_request)
             )
         except SpineClientError:
+            local = (
+                self._mirror.prepare(prepare_request, excluded=self._outbox.pending_delete_ids())
+                if self._mirror is not None and self._outbox is not None
+                else None
+            )
+            if local is not None:
+                return await self._run_local_copy_gate(
+                    thread_id=thread_id,
+                    prompt=prompt,
+                    prepared=local,
+                    message_history=message_history,
+                    emit=emit,
+                    model_resolution=model_resolution,
+                    image=image,
+                )
             await self._memory_unavailable(emit, phase="prepare")
             return await self._run_model(
                 thread_id=thread_id,
@@ -423,6 +453,64 @@ class MemoryGateTurnRunner:
             message_history=message_history,
             emit=emit,
             additional_excluded_memory_ids=excluded_memory_ids,
+            model_resolution=model_resolution,
+            image=image,
+        )
+
+    async def _run_local_copy_gate(
+        self,
+        *,
+        thread_id: str,
+        prompt: str,
+        prepared: InjectPrepareResponse,
+        message_history: Sequence[object],
+        emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None,
+        image: BinaryContent | None,
+    ) -> TurnOutcome:
+        """M4BW: the Palace is unreachable, so the memory check runs from the local copy.
+
+        Nothing is committed to the Palace: SPEC's offline mode trains nothing on degraded
+        scores, so the choices shape this conversation only, and ×! deletes wait in the outbox.
+        """
+
+        # A-079: run() reaches here only when it holds both the copy and the outbox.
+        assert self._mirror is not None and self._outbox is not None
+        removed, added_back, deleted = [], [], []
+        if prepared.injected or prepared.near_misses:
+            decision = await emit.open_gate(
+                {
+                    "injection_id": prepared.injection_id,
+                    "snapshot_ts": prepared.snapshot_ts,
+                    "scorer_version": prepared.scorer_version,
+                    "injected": prepared.injected,
+                    "near_misses": prepared.near_misses,
+                    "local_copy_as_of": prepared.snapshot_ts.isoformat(),
+                }
+            )
+            removed, added_back, deleted = decision.removed, decision.added_back, decision.deleted
+        excluded = frozenset(item.memory_id for item in removed)
+        self._contexts.install(
+            thread_id,
+            prepared=prepared,
+            removed_memory_ids=excluded,
+            added_back=added_back,
+            final_block=self._mirror.final_block(prepared, removed=excluded, added_back=added_back),
+            from_local_copy=True,
+        )
+        labels = {
+            card.memory_id: card.label for card in (*prepared.injected, *prepared.near_misses)
+        }
+        for memory_id in deleted:
+            self._outbox.enqueue("delete", labels[memory_id], {"memory_id": str(memory_id)})
+        await self._local_copy_notice(emit, phase="prepare")
+        await emit.dismiss_gate()
+        return await self._run_model(
+            thread_id=thread_id,
+            prompt=prompt,
+            message_history=message_history,
+            emit=emit,
+            additional_excluded_memory_ids=excluded,
             model_resolution=model_resolution,
             image=image,
         )
@@ -585,7 +673,10 @@ class MemoryGateTurnRunner:
                     prepared=prepared,
                 )
             except SpineClientError:
-                await self._memory_unavailable(emit, phase="rescore")
+                if snapshot.from_local_copy:
+                    await self._local_copy_notice(emit, phase="rescore")
+                else:
+                    await self._memory_unavailable(emit, phase="rescore")
                 current = snapshot
                 changed = False
             except ValueError:
@@ -679,6 +770,19 @@ class MemoryGateTurnRunner:
                 failed = True
         if failed:
             await self._memory_unavailable(emit, phase="citation")
+
+    async def _local_copy_notice(self, emit: RunEmitter, *, phase: str) -> None:
+        as_of = self._mirror.as_of() if self._mirror is not None else None
+        await emit.error(
+            {
+                "code": "memory_local_copy",
+                "phase": phase,
+                "message": (
+                    "The Palace is unreachable; memory is from the local copy, "
+                    f"as of {_human_time(as_of)}."
+                ),
+            }
+        )
 
     @staticmethod
     async def _memory_unavailable(emit: RunEmitter, *, phase: str) -> None:

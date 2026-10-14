@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { LearningSummary, LearningTimeline } from './LearningTelemetry'
-import { type CuratorActivityView, curatorActivityFrom } from './curation'
+import { type CuratorActivityView, type HealthReportView, curatorActivityFrom } from './curation'
 import { CuratorGrowth } from './CuratorGrowth'
 import { scorerConsoleTelemetry, type ScorerConsoleTelemetry } from './learning'
 import { formatHumanQuantity } from './humanNumbers'
@@ -43,6 +43,7 @@ export function PalaceStateModule() {
   const [failed, setFailed] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [collapsed, setCollapsed] = useState(() => globalThis.innerHeight < 120)
+  const [localCopy, setLocalCopy] = useState<LocalCopyView | null>(null)
   useEffect(() => events.subscribeResize((event) => setCollapsed(event.grid_height === 1)), [events])
 
   useEffect(() => {
@@ -88,7 +89,12 @@ export function PalaceStateModule() {
         setSequence((value) => value + 1)
       }
     })
+    const readLocalCopy = () => void events.dispatch({ type: 'local_copy.load' }).then((result) => {
+      if (active) setLocalCopy(result as unknown as LocalCopyView)
+    }).catch(() => null)
+    readLocalCopy()
     const interval = globalThis.setInterval(() => {
+      readLocalCopy()
       if (pending) return
       pending = true
       void events.dispatch({ type: 'curation.load' }).then((result) => {
@@ -97,6 +103,12 @@ export function PalaceStateModule() {
     }, 5000)
     return () => { active = false; unsubscribe(); globalThis.clearInterval(interval) }
   }, [events])
+
+  function dismiss(uid: string) {
+    void events.dispatch({ type: 'local_copy.dismiss', uid }).then(() => {
+      setLocalCopy((current) => current && { ...current, returned: current.returned.filter((card) => card.uid !== uid) })
+    }).catch(() => null)
+  }
 
   function refresh() {
     setRefreshing(true)
@@ -110,6 +122,7 @@ export function PalaceStateModule() {
           {failed ? 'Palace state couldn’t refresh. Chat is still available.' : 'Reading Palace state…'}
         </p>
         {failed && <Button action="refresh" type="button" data-tooltip-detail="Read Palace state again." onClick={refresh}>Try again</Button>}
+        {localCopy !== null && <LocalCopy copy={localCopy} onDismiss={dismiss} />}
       </section>
     )
   }
@@ -120,6 +133,7 @@ export function PalaceStateModule() {
         <strong>{snapshot.palace_counts.find((item) => item.metric === 'active_units')?.count ?? '—'}</strong>
         <span>active memories</span>
         <small>{snapshot.resources.warning === 'low_disk' ? 'Storage running low' : 'Palace ready'}</small>
+        {localCopy !== null && localCopy.waiting.length > 0 && <small data-testid="local-copy-waiting">{localCopy.waiting.length} waiting</small>}
         {failed && <em role="alert">Couldn’t refresh</em>}
       </section>
     )
@@ -147,6 +161,8 @@ export function PalaceStateModule() {
         )}
       </div>
 
+      {localCopy !== null && <LocalCopy copy={localCopy} onDismiss={dismiss} />}
+
       <div className="palace-state__curators" aria-label="Curator activity" data-testid="curator-state">
         <div>
           <span>Curators</span>
@@ -167,6 +183,9 @@ export function PalaceStateModule() {
           {' (limit '}{String(curatorActivity.latest_run.review_summary.pair_limit)}{')'}
         </p>}
       </div>
+
+      {curatorActivity?.latest_run?.error && <p>{curatorActivity.latest_run.error}</p>}
+      {curatorActivity?.latest_run?.report && <HealthReport report={curatorActivity.latest_run.report} />}
 
       {telemetry !== null && (
         <div className="palace-state__learning" aria-label="Learning state">
@@ -194,6 +213,68 @@ export function PalaceStateModule() {
         ))}
       </div>
     </section>
+  )
+}
+
+function HealthReport({ report }: { report: HealthReportView }) {
+  return <details className="palace-health-report" data-testid="palace-health-report">
+    <summary>Health report · {report.findings.length} findings</summary>
+    <p>Read before the pass at {new Date(report.as_of).toLocaleString()} · version {report.version}</p>
+    <p>{report.active_units} active memories · {report.clusters.length} clusters · {report.keyword_coverage_percent}% keyword coverage</p>
+    <h3>Changes since the previous pass</h3>
+    <dl>{Object.entries(report.stats_delta).map(([name, count]) => <div key={name}>
+      <dt>{name.replaceAll('_', ' ')}</dt><dd>{count}</dd>
+    </div>)}</dl>
+    <h3>Findings the curator read</h3>
+    {report.findings.length === 0 && <p>No problems found.</p>}
+    {report.findings.map((finding) => {
+      const memories = (Array.isArray(finding.evidence.memories) ? finding.evidence.memories
+        : finding.evidence.memory ? [finding.evidence.memory] : []) as Array<{ label: string; body: string }>
+      return <details key={finding.ordinal}>
+        <summary>{finding.kind.replaceAll('_', ' ')} · {memories.map((memory) => memory.label).join(' / ')}</summary>
+        {memories.map((memory, index) => <p key={index}><strong>{memory.label}</strong><br />{memory.body}</p>)}
+        <details><summary>Recorded evidence</summary><pre>{JSON.stringify(finding.evidence, null, 2)}</pre></details>
+      </details>
+    })}
+  </details>
+}
+
+interface LocalCopyView {
+  as_of: string | null
+  memories: number
+  waiting: { uid: string; kind: string; label: string }[]
+  returned: { uid: string; kind: string; label: string; reason: string }[]
+}
+
+const WRITE_KINDS: Record<string, string> = { delete: 'Delete', remember: 'Remember', extraction: 'Facts from a compaction' }
+
+/** M4BW: the local copy's age, the writes waiting for the Palace, and the ones it returned. */
+function LocalCopy({ copy, onDismiss }: { copy: LocalCopyView; onDismiss: (uid: string) => void }) {
+  return (
+    <div className="palace-state__curators" aria-label="Local copy" data-testid="local-copy">
+      <div>
+        <span>Local copy</span>
+        <strong>{copy.as_of === null ? 'Not made yet' : `As of ${formatTime(copy.as_of)} · ${copy.memories} memories`}</strong>
+      </div>
+      {copy.waiting.length > 0 && (
+        <p data-testid="local-copy-waiting">
+          {copy.waiting.length} waiting for the Palace: {copy.waiting.map((item) => `${WRITE_KINDS[item.kind] ?? item.kind} “${item.label}”`).join(', ')}
+        </p>
+      )}
+      {copy.returned.map((card) => (
+        <article key={card.uid} className="memory-card memory-card--removed" data-testid="returned-write">
+          <header className="memory-card__header">
+            <div className="memory-card__title"><h4>{WRITE_KINDS[card.kind] ?? card.kind} “{card.label}” came back</h4></div>
+            <div className="memory-card__decision">
+              <Button action="close" iconOnly type="button" data-tooltip="Dismiss" data-tooltip-detail="Remove this card; the Palace already decided." aria-label={`Dismiss ${card.label}`} onClick={() => onDismiss(card.uid)}>
+                <span aria-hidden="true">×</span>
+              </Button>
+            </div>
+          </header>
+          <p className="memory-card__body">{card.reason}</p>
+        </article>
+      ))}
+    </div>
   )
 }
 

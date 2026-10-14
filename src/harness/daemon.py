@@ -3,6 +3,7 @@
 import argparse
 import asyncio
 import json
+import logging
 import os
 import subprocess
 from collections.abc import Awaitable, Callable, Mapping, Sequence
@@ -54,6 +55,7 @@ from harness.extraction import ExtractionIdleScheduler, ExtractionService, Threa
 from harness.jobs import JobScheduler, WorkflowModelResolver, WorkflowTurnRunner
 from harness.lifecycle import discard_prepared_restore, prepare_local_restore
 from harness.memory_gate import MemoryGateTurnRunner
+from harness.memory_outbox import MemoryOutbox, QueuedWrite
 from harness.memory_panel import MemoryPanelController, ThreadMemoryContextRegistry
 from harness.model_policy import (
     ModelCatalogUnavailable,
@@ -65,6 +67,7 @@ from harness.model_policy import (
 )
 from harness.model_router import CompletionRouter, ModelConfigurationError
 from harness.onboarding import load_config, nocturne_home, set_transcript_backup
+from harness.palace_mirror import LocalCopySnapshot, PalaceMirror
 from harness.parameter_registry import (
     ParameterSnapshot,
     ParameterWriteRequest,
@@ -98,6 +101,7 @@ from harness.spine_client import (
     RackScorerAuditionRequest,
     RackScorerForceRequest,
     RackScorerSimulationRequest,
+    RetrainJobView,
     RetrainResponse,
     ScorerAuditionRequest,
     ScorerAuditionResponse,
@@ -110,6 +114,7 @@ from harness.spine_client import (
     SpineClient,
     SpineClientError,
     SpineOwnershipError,
+    SpineProblemError,
     SpineResponseError,
     VitalsAccounting,
     VitalsSnapshot,
@@ -118,11 +123,16 @@ from harness.symphony_experience import SymphonyExperience
 from harness.symphony_runtime import SymphonyExecution, remove_kept_worktrees
 from harness.tool_inventory import ToolInventory, ToolsetSelection, inventory
 from harness.tools_memory import MemoryToolContext
+from harness.toolset import Crossings
 from harness.toolset_runtime import LazyStandardToolset
 from harness.transcript import TranscriptJournal, TranscriptJournalUnavailable
 from harness.transcript_sync import TranscriptSyncEngine
 
 DEFAULT_WEB_DIST = Path(__file__).resolve().parents[2] / "web" / "dist"
+# M4BW: how often the local Palace copy refreshes while connected, and retries while not.
+LOCAL_COPY_REFRESH_SECONDS = 60
+LOCAL_COPY_RETRY_SECONDS = 15
+logger = logging.getLogger(__name__)
 DEFAULT_WEB_ROOT = DEFAULT_WEB_DIST.parent
 MISSING_WEB_BUILD_MESSAGE = (
     "Nocturne's web app is missing. Build it with `npm ci && npm run build` in the "
@@ -171,6 +181,13 @@ class ModelPinUpdate(BaseModel):
 class InterjectionRequest(BaseModel):
     run_id: str
     prompt: str
+
+
+class BoundaryDecisionRequest(BaseModel):
+    """F198: the owner's answer to a waiting boundary card."""
+
+    run_id: str
+    decision: Literal["allowed_once", "allowed_thread", "denied"]
 
 
 class WorkerMemorySelection(BaseModel):
@@ -324,6 +341,8 @@ def create_app(
     scorer_simulator: ScorerSimulator | None = None,
     scorer_auditioner: ScorerAuditioner | None = None,
     scorer_retrainer: ScorerRetrainer | None = None,
+    scorer_job_starter: Callable[[], Awaitable[RetrainJobView]] | None = None,
+    scorer_job_reader: Callable[[str], Awaitable[RetrainJobView]] | None = None,
     scorer_proposal_activator: ScorerProposalActivator | None = None,
     context_window_reader: ContextWindowReader | None = None,
     overwhelm_reader: OverwhelmReader | None = None,
@@ -334,6 +353,13 @@ def create_app(
 ) -> FastAPI:
     """Create the daemon with process-scoped H7 state and extensible routing."""
     app = FastAPI(title="NOCTURNE", version=__version__)
+
+    @app.exception_handler(SpineProblemError)
+    async def palace_problem(_request: Request, exc: SpineProblemError) -> JSONResponse:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.problem.detail or exc.problem.title},
+        )
 
     @app.exception_handler(SpineClientError)
     async def palace_failure(_request: Request, exc: SpineClientError) -> JSONResponse:
@@ -565,6 +591,30 @@ def create_app(
             return await scorer_auditioner(body)
         except SpineClientError:
             raise HTTPException(status_code=503, detail="Scorer audition is unavailable.") from None
+
+    @app.post("/v1/rack/scorers/retrain-jobs", status_code=202, response_model=RetrainJobView)
+    async def start_retrain_job() -> RetrainJobView:
+        if scorer_job_starter is None:
+            raise HTTPException(status_code=503, detail="Scorer retraining is unavailable.")
+        try:
+            return await scorer_job_starter()
+        except SpineOwnershipError:
+            raise
+        except SpineClientError:
+            raise HTTPException(
+                status_code=503, detail="Retraining could not be started."
+            ) from None
+
+    @app.get("/v1/rack/scorers/retrain-jobs/{job_id}", response_model=RetrainJobView)
+    async def retrain_job(job_id: str) -> RetrainJobView:
+        if scorer_job_reader is None:
+            raise HTTPException(status_code=503, detail="Scorer retraining is unavailable.")
+        try:
+            return await scorer_job_reader(job_id)
+        except SpineOwnershipError:
+            raise
+        except SpineClientError:
+            raise HTTPException(status_code=503, detail="Retrain status is unavailable.") from None
 
     @app.post("/v1/rack/scorers/retrain", response_model=RetrainResponse)
     async def retrain_scorer() -> RetrainResponse:
@@ -972,6 +1022,7 @@ def create_dev_app(
             on_move=record_move,
         )
         toolset.set_browser_consent_check(browser_consent_was_journaled)
+        toolset.crossings.journaled = lambda: journaled_crossings(thread_id)
         workspace_toolsets[thread_id] = toolset
         return toolset
 
@@ -992,6 +1043,7 @@ def create_dev_app(
                 thread_id=parsed_thread_id,
                 project_key=project_key,
                 toolset_enabled=False,
+                outbox=outbox,
             )
         workspace_toolset = workspace_toolset_for(thread_id)
         location = workspace_toolset.location()
@@ -1010,12 +1062,15 @@ def create_dev_app(
             ),
             memory_enabled=workflow.memory_scope != "none" if workflow else True,
             skill_directories=discover_skill_libraries(location.workspace_root, location.cwd),
+            outbox=outbox,
         )
 
     memory_contexts = ThreadMemoryContextRegistry()
     context_windows = ContextWindowTracker()
     overwhelm = OverwhelmTracker(owned_agent.return_share_bounds, home / "overwhelm-cuts.jsonl")
     receipt_queue = SpendReceiptQueue(home / "receipt-queue")
+    local_copy = PalaceMirror(home / "local-copy.sqlite3")
+    outbox = MemoryOutbox(home / "memory-outbox", ids=factory)
     spend_walls = SpendWalls(
         home / "spend-walls.json", owned_spine, lambda: owned_spine.spend_table()
     )
@@ -1074,6 +1129,7 @@ def create_dev_app(
         principal_id=principal_id,
         machine_id=machine_id,
         enrich=enrich_memory_panel,
+        outbox=outbox,
     )
 
     async def publish_ambient_memory_panel(thread_id: str) -> None:
@@ -1095,6 +1151,7 @@ def create_dev_app(
         spine=owned_spine,
         principal_id=principal_id,
         machine_id=machine_id,
+        outbox=outbox,
     )
     runner = MemoryGateTurnRunner(
         PydanticAITurnRunner(
@@ -1112,7 +1169,25 @@ def create_dev_app(
         contexts=memory_contexts,
         on_context_changed=publish_ambient_memory_panel,
         delete_memory=delete_memory_from_gate,
+        mirror=local_copy,
+        outbox=outbox,
     )
+
+    def journaled_crossings(thread_id: str) -> set[str]:
+        """F198: Allow for this thread holds for the thread across restarts."""
+        try:
+            return {
+                Crossings.entry(str(event.get("wall")), Path(target) if target else None)
+                for message in journal.read_messages(thread_id)
+                if message.get("role") == "assistant"
+                for event in message.get("events") or ()
+                if isinstance(event, dict)
+                and event.get("event_kind") == "boundary_card"
+                and event.get("decision") == "allowed_thread"
+                for target in (event.get("targets") or [None])
+            }
+        except TranscriptJournalUnavailable:
+            return set()
 
     def browser_consent_was_journaled(thread_id: str) -> bool:
         try:
@@ -1201,6 +1276,12 @@ def create_dev_app(
     async def retrain_scorer() -> RetrainResponse:
         return await owned_spine.retrain()
 
+    async def start_retrain_job() -> RetrainJobView:
+        return await owned_spine.start_retrain_job()
+
+    async def read_retrain_job(job_id: str) -> RetrainJobView:
+        return await owned_spine.retrain_job(job_id)
+
     async def activate_scorer(
         version: str, body: RackScorerActivateRequest
     ) -> ScorerConfigurationView:
@@ -1227,6 +1308,25 @@ def create_dev_app(
         spend_walls=spend_walls,
         checkpoints=WorkspaceCheckpoints(home / "checkpoints"),
     )
+
+    async def palace_busy(state: str) -> None:
+        message = {
+            "retrying": "The Palace is busy, retrying.",
+            "ready": "The Palace is ready.",
+            "failed": "The Palace is still busy. Try again shortly.",
+        }[state]
+        for thread_id in loop.thread_models():
+            await loop.publish(
+                thread_id,
+                factory.create(
+                    MessageType.ERROR,
+                    {"code": f"palace_{state}", "message": message},
+                    thread_id=thread_id,
+                ),
+            )
+
+    if hasattr(owned_spine, "on_busy"):
+        owned_spine.on_busy = palace_busy
 
     execution = SymphonyExecution(settings=configured, home=home, context_factory=context_factory)
     worktree_removals: set[asyncio.Task] = set()
@@ -1485,6 +1585,16 @@ def create_dev_app(
             except ValueError as exc:
                 raise HTTPException(409, str(exc)) from exc
 
+        @app.post("/v1/threads/{thread_id}/boundary")
+        async def decide_thread_boundary(thread_id: UUID, body: BoundaryDecisionRequest):
+            try:
+                await loop.decide_boundary(
+                    thread_id=str(thread_id), run_id=body.run_id, decision=body.decision
+                )
+            except ValueError as exc:
+                raise HTTPException(409, str(exc)) from exc
+            return {"accepted": True}
+
         @app.post("/v1/threads/{thread_id}/interject")
         async def interject_thread(thread_id: UUID, body: InterjectionRequest):
             try:
@@ -1554,7 +1664,73 @@ def create_dev_app(
         async def flush_receipt_queue() -> None:
             await receipt_queue.flush(owned_spine)
 
+        async def push_queued_write(item: QueuedWrite) -> str | None:
+            if item.kind == "delete":
+                return await panel.delete_queued(UUID(str(item.payload["memory_id"])))
+            if item.kind == "extraction":
+                await extraction.replay(item.payload)
+                return None
+            if item.kind == "remember":
+                return await HarnessAgent.replay_remember(
+                    MemoryToolContext(
+                        spine=owned_spine,
+                        principal_id=principal_id,
+                        machine_id=machine_id,
+                        agent_id=agent_id,
+                    ),
+                    item.payload,
+                )
+            raise ValueError(f"unknown outbox write {item.kind!r}")
+
+        async def keep_local_copy() -> None:
+            """M4BW: push the outbox oldest first, then refresh the copy, while the daemon runs."""
+            while True:
+                reachable = False
+                try:
+                    await outbox.flush(push_queued_write)
+                    await local_copy.refresh(owned_spine, principal_id)
+                    reachable = True
+                except SpineClientError:
+                    pass
+                except Exception:
+                    logger.warning("local Palace copy refresh failed", exc_info=True)
+                waiting = bool(outbox.waiting())
+                await asyncio.sleep(
+                    LOCAL_COPY_REFRESH_SECONDS
+                    if reachable and not waiting
+                    else LOCAL_COPY_RETRY_SECONDS
+                )
+
+        local_copy_task: asyncio.Task[None] | None = None
+
+        async def start_local_copy() -> None:
+            nonlocal local_copy_task
+            local_copy_task = asyncio.create_task(keep_local_copy())
+
+        async def stop_local_copy() -> None:
+            if local_copy_task is not None:
+                local_copy_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await local_copy_task
+
+        @app.get("/v1/local-copy")
+        async def read_local_copy() -> LocalCopySnapshot:
+            return LocalCopySnapshot(
+                as_of=local_copy.as_of(),
+                memories=local_copy.memory_count(),
+                waiting=outbox.waiting(),
+                returned=outbox.returned(),
+            )
+
+        @app.post("/v1/local-copy/returned/{uid}/dismiss")
+        async def dismiss_returned_write(uid: str) -> dict[str, bool]:
+            if not outbox.dismiss(uid):
+                raise HTTPException(404, "That card is already gone.")
+            return {"dismissed": True}
+
         app.router.add_event_handler("startup", flush_receipt_queue)
+        app.router.add_event_handler("startup", start_local_copy)
+        app.router.add_event_handler("shutdown", stop_local_copy)
         app.router.add_event_handler("startup", restore_symphonies)
         app.router.add_event_handler("startup", extraction.backfill_projects)
         if idle_extraction is not None:
@@ -1705,6 +1881,8 @@ def create_dev_app(
         scorer_simulator=simulate_scorer,
         scorer_auditioner=audition_scorer,
         scorer_retrainer=retrain_scorer,
+        scorer_job_starter=start_retrain_job,
+        scorer_job_reader=read_retrain_job,
         scorer_proposal_activator=activate_scorer,
         context_window_reader=context_windows.snapshot,
         overwhelm_reader=overwhelm.snapshot,

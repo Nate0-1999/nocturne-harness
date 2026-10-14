@@ -9,6 +9,7 @@ from pathlib import Path
 from harness.browser_toolset import BrowserToolset
 from harness.toolset import (
     AgentLocation,
+    Crossings,
     PresenceEvent,
     StandardToolset,
     ToolExecutionResult,
@@ -38,6 +39,8 @@ class LazyStandardToolset:
         self._on_move = on_move
         self._toolset: StandardToolset | None = None
         self._browser = BrowserToolset(location=self.location)
+        # F198: what the owner allowed on this thread's boundary cards outlives a reopened toolset.
+        self.crossings = Crossings()
         self._lock = asyncio.Lock()
 
     async def _owned(self) -> StandardToolset:
@@ -51,6 +54,7 @@ class LazyStandardToolset:
                     agent_id=self._agent_id,
                     machine_id=self._machine_id,
                     fence_reads=self._fence_reads,
+                    crossings=self.crossings,
                 )
             return self._toolset
 
