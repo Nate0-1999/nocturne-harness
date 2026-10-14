@@ -1706,11 +1706,12 @@ class SpineClient:
                         if self.on_busy is not None:
                             await self.on_busy("retrying")
                     if not delays:
-                        # INCIDENT F195: bounded busy retries end plainly, preserving typed refusals.
                         try:
                             problem = _PROBLEM_DETAIL.validate_json(response.content, strict=True)
                         except ValueError:
+                            # INCIDENT F195: exhausted cloud busy responses need a plain message.
                             raise SpineBusyError(response) from None
+                        # INCIDENT F195: preserve the typed refusal after bounded retries.
                         raise SpineProblemError(response, problem)
                 except _LOST as exc:
                     if not retryable or not delays:
