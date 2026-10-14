@@ -86,6 +86,7 @@ export interface NebulaCreatureFamily {
   split_events: number
   merge_events: number
   phase: number
+  color: readonly [number, number, number]
 }
 
 export const NEBULA_EVENT_COLORS: Record<NebulaEventClass, readonly [number, number, number]> = {
@@ -222,6 +223,8 @@ export function buildNebulaFilaments(
   axis: NebulaAxis = 'keyword',
 ): NebulaFilament[] {
   const positions = new Map(bodies.map((body) => [body.id, body.position]))
+  // A shared-trait filament carries its family's hue, lifted toward white so the thin line reads.
+  const hues = new Map(bodies.map((body) => [body.id, body.color.map((channel) => channel * 0.65 + 0.35) as unknown as readonly [number, number, number]]))
   const filaments: NebulaFilament[] = (snapshot.edges ?? []).flatMap((edge, index) => {
     const drawn = edge.kind === 'lineage' || (edge.kind === 'similarity' && axis === 'similarity')
     if (!drawn || edge.from_memory_id === edge.to_memory_id) return []
@@ -233,7 +236,7 @@ export function buildNebulaFilaments(
       kind: edge.kind === 'lineage' ? 'lineage' : 'similarity',
       from,
       to,
-      color: edge.kind === 'lineage' ? [0.96, 0.86, 0.74] : [0.72, 0.68, 0.96],
+      color: edge.kind === 'lineage' ? [0.96, 0.86, 0.74] : hues.get(edge.from_memory_id)!,
     } satisfies NebulaFilament]
   })
   const seen = new Set<string>()
@@ -250,7 +253,7 @@ export function buildNebulaFilaments(
         seen.add(pair)
         const kind = key.startsWith('thread:') ? 'thread' : 'keyword'
         filaments.push({ id: `${kind}:${pair}`, kind, from, to: positions.get(other)!,
-          color: kind === 'thread' ? [0.65, 0.72, 0.92] : [0.78, 0.8, 0.88] })
+          color: hues.get(id)! })
       }
     }
   }
@@ -333,6 +336,7 @@ export function buildNebulaCreatureFamilies(
       split_events: familyEvents.filter((event) => event.event_class === 'split').length,
       merge_events: familyEvents.filter((event) => event.event_class === 'merge').length,
       phase: ((stableHash(familyId) % 10_001) / 10_000) * Math.PI * 2,
+      color: bodies.find((body) => members.includes(body.id))?.color ?? [0.9, 0.94, 1],
     })
   }
   return families
