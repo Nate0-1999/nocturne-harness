@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "e1011fae90457ca4e239fd8ab250cd5e22b037f2",
-      "head": "e500ab52f542567c27b5aa18c99bf5b09ba53c71"
+      "head": "da454db8a254acf3eabf012505df9d496ef7adb7"
     }
   ],
   "unmapped": {
@@ -417,7 +417,11 @@
     "harness/web/dist/assets/index-D91Xr2jk.css": "Generated bundle of mapped source; no independent feature.",
     "harness/web/dist/index.html": "Generated bundle of mapped source; no independent feature.",
     "harness/web/tests/boundaryCardSource.test.mjs": "Regression or installed-wheel verification only; no shipped behavior.",
-    "harness/verification/m5ln/impacted.json": "Packet evidence or coverage declaration; no runtime behavior."
+    "harness/verification/m5ln/impacted.json": "Packet evidence or coverage declaration; no runtime behavior.",
+    "harness/verification/m5ln/resume/public-walk.json": "Packet evidence or coverage declaration; no runtime behavior.",
+    "harness/verification/m5ln/resume/spend-final.json": "Packet evidence or coverage declaration; no runtime behavior.",
+    "harness/verification/m5ln/resume/cleanup.json": "Packet evidence or coverage declaration; no runtime behavior.",
+    "harness/verification/m5ln/resume/public-install.json": "Packet evidence or coverage declaration; no runtime behavior."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
