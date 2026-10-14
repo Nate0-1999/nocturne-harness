@@ -95,8 +95,10 @@ export function MemoryGraph() {
   }
 
   const nodes = snapshot?.nodes ?? []
-  // M4VW: the drawing holds active memories only; a deleted one is still found by name and restored.
-  const drawn = nodes.filter((node) => node.memory.status === 'active')
+  const relatives = new Set((snapshot?.edges ?? [])
+    .filter((edge) => ['merged_from', 'supersedes'].includes(edge.edge_type ?? edge.kind))
+    .flatMap((edge) => [edge.from_memory_id, edge.to_memory_id]))
+  const drawn = nodes.filter((node) => node.memory.status === 'active' || relatives.has(node.memory.memory_id))
   const matches = search.trim() ? nodes.filter((node) => node.memory.label.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())) : []
   // M4VW: the grid takes the canvas's shape (18 across, 25 down per node) and is scaled to fit it.
   const columns = Math.max(1, Math.min(drawn.length, Math.round(Math.sqrt(drawn.length * aspect * 25 / 18))))
@@ -131,8 +133,8 @@ export function MemoryGraph() {
     </ul>}
     {!requestIsQueryable ? <p role="status">{rack.attunement?.kind === 'stack' ? `${rack.attunement.name} graph is not available yet.` : 'No thread is attuned.'}</p> : visibleFailure !== null ? <p role="alert">{visibleFailure}</p> : snapshot === null ? <p role="status">Loading memory graph…</p> : <div className="graph-stage">
       <div className="graph-canvas" ref={measure}><svg viewBox={`0 0 ${viewWidth} ${viewHeight}`} role="img" aria-label={`${drawn.length} memories and ${snapshot?.edges.length ?? 0} relationships`}>
-        {(snapshot?.edges ?? []).map((edge, index) => { const a = positions.get(edge.from_memory_id); const b = positions.get(edge.to_memory_id); return a && b ? <line key={`${edge.kind}-${index}`} x1={a.x} y1={a.y} x2={b.x + (a === b ? 2 : 0)} y2={b.y + (a === b ? 2 : 0)} data-kind={edge.kind} /> : null })}
-        {drawn.map((node) => { const p = positions.get(node.memory.memory_id)!; const r = 3 + Math.min(Number(node.memory.stats.injections ?? 0), 12) / 8; const label = labels.get(node.memory.memory_id); return <g key={node.memory.memory_id}>
+        {(snapshot?.edges ?? []).map((edge, index) => { const a = positions.get(edge.from_memory_id); const b = positions.get(edge.to_memory_id); return a && b ? <line key={`${edge.kind}-${index}`} x1={a.x} y1={a.y} x2={b.x + (a === b ? 2 : 0)} y2={b.y + (a === b ? 2 : 0)} data-kind={edge.kind} data-edge-type={edge.edge_type ?? edge.kind}><title>{edge.edge_type ?? edge.kind}</title></line> : null })}
+        {drawn.map((node) => { const p = positions.get(node.memory.memory_id)!; const r = 3 + Math.min(Number(node.memory.stats.injections ?? 0), 12) / 8; const label = labels.get(node.memory.memory_id); return <g key={node.memory.memory_id} opacity={node.memory.status === 'active' ? 1 : 0.42}>
           <g className="graph-node" data-status={node.memory.status} data-current={node.in_current_context || undefined} onClick={() => inspectNode(node)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter') inspectNode(node) }}>
             <title>{node.memory.label}</title>
             {node.memory.pin && <circle className="graph-pin" cx={p.x} cy={p.y} r={r + 2} />}
