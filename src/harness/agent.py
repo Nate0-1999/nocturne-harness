@@ -283,7 +283,8 @@ class HarnessAgent:
                 "edit, delete, or change with a command, as the user wrote it. A path that is only "
                 "read, inspected, imported, installed from, depended on, mentioned, or the place "
                 "a command runs is not written: leave it out. Committing writes only the files "
-                "being committed. Classify the user's actual requested action, not quoted "
+                "being committed. What the user says they already did, or where something now "
+                "is, is not a request. Classify the user's actual requested action, not quoted "
                 "examples. Give the concrete reason in one sentence; do not ask a chat question."
             ),
             name="permission-judge",
