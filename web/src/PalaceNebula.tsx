@@ -431,7 +431,7 @@ function NebulaMemoryBody({ body, share, arriving, tier, onSelect }: {
     next.colorNode = tint.mul(0.04)
     next.emissiveNode = tint.mul(facing.pow(3).mul(glowLevel))
       .add(tslColor('#cfe0ff').mul(facing.oneMinus().pow(6).mul(rimLevel)))
-      .add(tint.mix(tslColor('#f2f6ff'), 0.3).mul(facing.pow(3).mul(pointLevel)))
+      .add(tint.mul(2.4).mul(facing.pow(3).mul(pointLevel)))
     return { material: next, tint, glowLevel, rimLevel, pointLevel }
   }, [])
   useLayoutEffect(() => { lightGlass(glass, [red, green, blue], glow, rim, point) }, [glass, red, green, blue, glow, rim, point])
