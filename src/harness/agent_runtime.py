@@ -248,6 +248,7 @@ class PydanticAITurnRunner:
                 {**card, "decision": decision, "created_at": self._clock().isoformat()}
             )
             if decision == "denied":
+                # F198: Deny ends the turn with nothing done across the wall.
                 raise _BoundaryCardReleased(
                     "You denied this crossing on the Deck. Nothing was done across the wall."
                 )
