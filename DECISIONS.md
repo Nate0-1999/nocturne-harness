@@ -4244,3 +4244,17 @@ F208 replayed as five linked memories for one duty. The existing draft and repai
 now shorten one claim, split only independent claims, and retain schedule wording. F194's
 structured Palace problems pass through with their status and reason; transport outages
 retain their existing message. No new writer or repair loop.
+
+## M5SY — A steering line reaches the running Symphony [P2, P2.3]
+
+F193 replayed only under load (a slow Palace and a busy page, as on the scout's shared
+palace): the page sent the line, but the daemon's socket loop sat in the memory panel's
+Palace refresh, which the page asks for after every snapshot (about one a second while a
+Symphony runs); the socket dropped and the unread line went with it. Routed requests now run
+in order on their own task, so a prompt is read at once; a request already read still
+finishes when the socket closes. A panel change and a prompt sent right after it are no longer
+strictly ordered; the prompt's memory check reads the context when its turn starts. The page
+keeps each prompt the daemon has not acknowledged and sends it again, under its own id, once
+the reconnected thread's snapshot lacks it; the run loop runs a prompt id once. The Deck says
+"Clarification logged" only when the stack's interventions hold the line, and shows the
+steering beside the prompt, so it survives the next round replacing the attempts.
