@@ -44,7 +44,7 @@ test('radial placement binds inverse injection count, family creation order and 
   assert.deepEqual(buildNebulaBodies(source).map((body) => body.position), reordered.reverse().map((body) => body.position))
   const reversedCreation = buildNebulaBodies({ ...source, nodes: [
     node('a', { created_at: '2026-09-01T00:00:00Z' }), node('b', { created_at: '2026-01-01T00:00:00Z' }),
-  ] })
+  ] }, undefined, 'similarity')
   assert.ok(reversedCreation[0].position[0] < reversedCreation[1].position[0])
   assert.match(NEBULA_BINDINGS.radial[0], /inverse|8 \/ \(1 \+ injections\)/u)
   assert.equal(NEBULA_BINDINGS.shared.length, 5)
@@ -92,10 +92,12 @@ test('lineage, shared threads and keywords create only evidenced filaments', () 
   const events = buildNebulaEvents(source)
   const filaments = buildNebulaFilaments(source, bodies)
   const families = buildNebulaCreatureFamilies(source, bodies, events)
-  assert.deepEqual(filaments.map((item) => item.kind).sort(), ['keyword', 'lineage', 'thread'])
+  assert.deepEqual(filaments.map((item) => item.kind).sort(), ['keyword', 'lineage'])
+  assert.deepEqual(buildNebulaFilaments(source, bodies, 'thread').map((item) => item.kind).sort(), ['lineage', 'thread'])
+  assert.deepEqual(buildNebulaFilaments(source, bodies, 'similarity').map((item) => item.kind).sort(), ['lineage', 'similarity'])
   assert.deepEqual(families.map((item) => item.memory_ids), [['a', 'b', 'c']])
   assert.equal(families[0].stipple_count, 144)
-  assert.equal(buildNebulaCreatureFamilies({ ...source, edges: [] }, bodies, events).length, 1)
+  assert.equal(buildNebulaCreatureFamilies({ ...source, edges: [] }, bodies, events).length, 2)
   assert.deepEqual(buildNebulaFilaments({ ...source, nodes: [node('a'), node('b')], edges: [] }, bodies), [])
 })
 
@@ -108,9 +110,9 @@ test('historical similarity families anchor to their latest real events', () => 
     nodes: [absorbed, survivor],
     edges: [{ kind: 'similarity', from_memory_id: 'absorbed', to_memory_id: 'survivor', similarity: '0.93' }],
   }
-  const bodies = buildNebulaBodies(source)
-  const events = buildNebulaEvents(source)
-  const families = buildNebulaCreatureFamilies(source, bodies, events)
+  const bodies = buildNebulaBodies(source, undefined, 'similarity')
+  const events = buildNebulaEvents(source, 'similarity')
+  const families = buildNebulaCreatureFamilies(source, bodies, events, 'similarity')
 
   assert.deepEqual(bodies.map((body) => body.id), ['survivor'])
   assert.deepEqual(families.map((family) => family.memory_ids), [['absorbed', 'survivor']])
@@ -122,7 +124,7 @@ test('shared-thread filaments bind the released Palace thread_origin compatibili
   const legacy = node('legacy', { thread_origin: 'released-thread', origin_thread_id: undefined })
   const current = node('current', { origin_thread_id: 'released-thread' })
   const source = { as_of: snapshot.as_of, nodes: [legacy, current] }
-  assert.equal(buildNebulaFilaments(source, buildNebulaBodies(source))[0].kind, 'thread')
+  assert.equal(buildNebulaFilaments(source, buildNebulaBodies(source, undefined, 'thread'), 'thread')[0].kind, 'thread')
 })
 
 /** ADR-018/023 and D.2 130: Three/r3f/TSL replace PlayCanvas without moving text into the scene. */

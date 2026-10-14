@@ -49,8 +49,10 @@ export function VisualizationToolbar({ data, loading, moduleId, tier, setTier }:
 }) {
   const { selection, events } = useRackPlugin()
   const selected = useRackSelection()
+  const { catalog } = useRackSnapshot()
   const timeline = data?.timeline ?? []
-  const oldest = data ? longestWaiting(data.agents) : undefined
+  // F202: time order moves the panels to the longest-waiting OPEN thread; an archived one is closed (as on the Deck).
+  const oldest = data ? longestWaiting(data.agents.filter((agent) => !archivedThreads(catalog).has(agent.thread_id))) : undefined
   const timeOrdered = selected?.time_order ?? false
   useEffect(() => {
     if (!timeOrdered || !oldest || selected?.id === oldest.id) return
@@ -98,6 +100,7 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
   const [tier, setTier] = useState<DetailTier>('full')
   const [projectRoot, setProjectRoot] = useState<string | null>(null)
   const [scope, setScope] = useState<'GLOBAL' | 'ATTUNED'>('GLOBAL')
+  const [closedNote, setClosedNote] = useState<string | null>(null)
   useEffect(() => { void events.dispatch({ type: 'rack.scope.get', module_id: initialView }).then(setScope) }, [events, initialView])
   const agents = (data?.agents ?? []).filter((agent) => scope === 'GLOBAL' || agent.thread_id === rack.selectedThreadId)
   // A top-level agent enters as a ringed root; a forked one leaves its parent as a limb.
@@ -127,6 +130,10 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
   const width = view === 'farm' ? (reach + 1) * 2 : 20
   const pick = (agent: WorkAgent) => {
     setProjectRoot(agent.root)
+    // F202: an archived thread cannot be opened from here (a recorded moment can still show one); say so, never hang.
+    const closed = archivedThreads(rack.catalog).has(agent.thread_id)
+    setClosedNote(closed ? `${agent.label} is archived; its conversation is closed.` : null)
+    if (closed) return
     void events.dispatch({ type: 'thread.select', thread_id: agent.thread_id }).then(() => {
       selection.select({ kind: 'agent', id: agent.id, thread_id: agent.thread_id, as_of: selected?.as_of ?? null, time_order: false })
     })
@@ -168,6 +175,7 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
           <span title={`radius = hair + ${WIDTH}·√$ (a fork divides its cross-section by dollars; unpriced = hair; a parent whose trail rolled up less than a fork's price is drawn at its own spend plus its forks' prices) · across = ln(1 + gap / 0.5 s)^1.2 (a longer gap is always a longer bare stretch) · leaf = ${LEAF}·(compressed wait)^0.75 (or its own spend window, if longer), so a longer wait is always a longer reach`}>
             width = dollars · across = time between events · blue = live · pink = a branch leaving · matte = stopped</span></>}
         {focused && <span style={{ color: agentColor(focused.id) }}>{focused.label} · {focused.location}</span>}
+        {closedNote && <span role="status">{closedNote}</span>}
       </aside>
       {(!data || error) && <p className="work-viz__notice" role="status">{error ?? 'Recording the first real state…'}</p>}
     </div>
@@ -187,6 +195,10 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
     </details>
     {view !== 'farm' && project && <DirectoryTree nodes={project.nodes} select={(path) => selection.select({ kind: 'path', id: `${project.root}${path === '.' ? '' : '/' + path}`, as_of: selected?.as_of ?? null })} />}
   </section>
+}
+
+function archivedThreads(catalog: readonly { thread_id: string; archived?: boolean }[]): Set<string> {
+  return new Set(catalog.filter((entry) => entry.archived).map((entry) => entry.thread_id))
 }
 
 /** M3HW: the whole tree, listed a hundred entries at a time and only while open; every poll
