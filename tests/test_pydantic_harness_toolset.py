@@ -388,26 +388,33 @@ async def test_a_fresh_clone_shell_keeps_tool_caches_in_scratch_and_names_the_do
     tmp_path: Path,
 ) -> None:
     """F197: in the M4W1B hour `uv run` failed writing ~/.cache/uv, then on downloads, and the
-    agent could not tell the person what to run. Caches live in the shell's scratch; a failed
-    download names the command to run once in the person's own terminal."""
+    agent could not tell the person what to run, and from tests/ it could not create the
+    project's .venv. Caches live in the shell's scratch; the project's .venv is writable from any
+    folder inside it; a failed download names the command for the person's own terminal."""
     if not Path("/usr/bin/sandbox-exec").is_file():
         pytest.skip("the standing hard shell fence is macOS sandbox-exec")
 
-    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    (tmp_path / "pyproject.toml").write_text("[project]\nname = 'clone'\n")
+    (tmp_path / "tests").mkdir()
+    toolset = await open_standard_toolset(cwd=tmp_path / "tests", workspace_root=tmp_path)
     lookup = "python3 -c \"import socket; socket.getaddrinfo('pypi.org', 443)\""
     try:
         cached = await toolset.execute(
             "bash", {"command": 'mkdir -p "$XDG_CACHE_HOME/uv" && echo cache-ok'}
         )
+        venv = await toolset.execute("bash", {"command": "mkdir ../.venv && echo venv-ok"})
+        other = await toolset.execute("bash", {"command": "mkdir ../other"})
         offline = await toolset.execute("bash", {"command": lookup})
     finally:
         await toolset.close()
 
     assert "cache-ok" in cached.content and "not permitted" not in cached.content, cached.content
+    assert "venv-ok" in venv.content and (tmp_path / ".venv").is_dir(), venv.content
+    assert "Operation not permitted" in other.content and not (tmp_path / "other").exists()
     assert offline.content.endswith(
         "Nocturne's shell has no network access, so this command could not download what it "
         "needs. Tell the person to run it once in their own terminal, where downloads work: "
-        f"cd {tmp_path.resolve()} && {lookup}"
+        f"cd {(tmp_path / 'tests').resolve()} && {lookup}"
     ), offline.content
 
 

@@ -111,6 +111,18 @@ _SHELL_NETWORK_REMEDY = (
 )
 
 
+def _project_venv(folder: Path, workspace_root: Path) -> Path | None:
+    """F197: where uv creates a project's .venv — beside the nearest pyproject.toml from folder
+    up to the workspace root."""
+
+    for candidate in (folder, *folder.parents):
+        if (candidate / "pyproject.toml").is_file():
+            return candidate / ".venv"
+        if candidate == workspace_root:
+            return None
+    return None
+
+
 def _kill_command_group(marker: str) -> None:
     """Kill the process group whose shell carries marker as its $0."""
 
@@ -870,11 +882,22 @@ class PydanticHarnessToolset:
                     )
                 )
             git_writes = "".join(f"(subpath {json.dumps(str(path))}) " for path in paths)
+        environment_dir = project_environment(self._location.cwd, self._location.workspace_root)
+        # F197 (M4W1B hour): from tests/ the agent could not create the project's .venv; like
+        # git's folder, the project's environment is writable from any folder inside it.
+        environment_target = environment_dir or _project_venv(
+            self._location.cwd, self._location.workspace_root
+        )
+        environment_writes = (
+            ""
+            if environment_target is None
+            else f"(subpath {json.dumps(str(environment_target))}) "
+        )
         profile = (
             "(version 1) (deny default) (allow process*) (allow file-read*) "
             "(allow sysctl-read) (allow mach-lookup) "
             f"(allow file-write* (literal {quoted_location}) (subpath {quoted_location}) "
-            f"{git_writes}"
+            f"{git_writes}{environment_writes}"
             '(literal "/dev/null"))'
             f" (allow file-write* (subpath {json.dumps(str(self._scratch))}))"
             # F198: the owner allowed this thread's remote crossing on its card.
@@ -883,7 +906,6 @@ class PydanticHarnessToolset:
         # F135 (M3EX-13): the EXIT trap keeps zsh as the group's parent, named by its $0
         # marker, so a cancelled turn can stop exactly this command.
         marker = f"nocturne-command-{generate_ulid()}"
-        environment_dir = project_environment(self._location.cwd, self._location.workspace_root)
         # M3W5B-02: from a subfolder, python and pytest still resolve to the project's .venv;
         # set after the login profile, which reorders PATH on macOS.
         activate = (
