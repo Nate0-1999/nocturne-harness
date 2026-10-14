@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { LearningSummary, LearningTimeline } from './LearningTelemetry'
-import { type CuratorActivityView, curatorActivityFrom } from './curation'
+import { type CuratorActivityView, type HealthReportView, curatorActivityFrom } from './curation'
 import { CuratorGrowth } from './CuratorGrowth'
 import { scorerConsoleTelemetry, type ScorerConsoleTelemetry } from './learning'
 import { formatHumanQuantity } from './humanNumbers'
@@ -184,6 +184,9 @@ export function PalaceStateModule() {
         </p>}
       </div>
 
+      {curatorActivity?.latest_run?.error && <p>{curatorActivity.latest_run.error}</p>}
+      {curatorActivity?.latest_run?.report && <HealthReport report={curatorActivity.latest_run.report} />}
+
       {telemetry !== null && (
         <div className="palace-state__learning" aria-label="Learning state">
           <LearningSummary learning={telemetry.learning} scope={telemetry.metrics_scope} compact />
@@ -211,6 +214,29 @@ export function PalaceStateModule() {
       </div>
     </section>
   )
+}
+
+function HealthReport({ report }: { report: HealthReportView }) {
+  return <details className="palace-health-report" data-testid="palace-health-report">
+    <summary>Health report · {report.findings.length} findings</summary>
+    <p>Read before the pass at {new Date(report.as_of).toLocaleString()} · version {report.version}</p>
+    <p>{report.active_units} active memories · {report.clusters.length} clusters · {report.keyword_coverage_percent}% keyword coverage</p>
+    <h3>Changes since the previous pass</h3>
+    <dl>{Object.entries(report.stats_delta).map(([name, count]) => <div key={name}>
+      <dt>{name.replaceAll('_', ' ')}</dt><dd>{count}</dd>
+    </div>)}</dl>
+    <h3>Findings the curator read</h3>
+    {report.findings.length === 0 && <p>No problems found.</p>}
+    {report.findings.map((finding) => {
+      const memories = (Array.isArray(finding.evidence.memories) ? finding.evidence.memories
+        : finding.evidence.memory ? [finding.evidence.memory] : []) as Array<{ label: string; body: string }>
+      return <details key={finding.ordinal}>
+        <summary>{finding.kind.replaceAll('_', ' ')} · {memories.map((memory) => memory.label).join(' / ')}</summary>
+        {memories.map((memory, index) => <p key={index}><strong>{memory.label}</strong><br />{memory.body}</p>)}
+        <details><summary>Recorded evidence</summary><pre>{JSON.stringify(finding.evidence, null, 2)}</pre></details>
+      </details>
+    })}
+  </details>
 }
 
 interface LocalCopyView {
