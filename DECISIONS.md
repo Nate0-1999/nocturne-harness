@@ -4237,3 +4237,10 @@ ruling, which this keeps). Replays go through the same create, extraction and de
 reinforce, ask and refuse stay the Palace's; what it does not accept comes back as a card in
 Palace State. Queueing happens after the check before the Palace, so a queued fact carries no
 withdrawn credential.
+
+## M5RM — One claim stays one memory; Palace refusals keep their reason [P1.2, P1.5]
+
+F208 replayed as five linked memories for one duty. The existing draft and repair prompts
+now shorten one claim, split only independent claims, and retain schedule wording. F194's
+structured Palace problems pass through with their status and reason; transport outages
+retain their existing message. No new writer or repair loop.
