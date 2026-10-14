@@ -4275,6 +4275,13 @@ folder), the open-web consent (thread-scoped, journal-restored).
 - The parse guard covers new .py files, and the turn's account names changed .py files that do
   not parse. A file URL with a host part is refused as malformed, with its corrected form.
 
+## M5LN — Show the retrain's eventual receipt [P1.2, P2]
+
+F212's ruling moves the console to a start-and-poll job API; a lost status read
+keeps polling the same job, never resubmitting the fit. Both Palace deployment
+paths allocate CPU between requests so the existing worker can finish after the
+start response. Scale-to-zero remains; durable pending jobs resume on startup.
+
 ## M5VW — The Farm follows the living threads [P2, P2.5]
 
 PRECEDENT: F202, F155, F131, M4VW (report 272), M3VL GRANTS (a), M3GE (the axis switch re-binds
