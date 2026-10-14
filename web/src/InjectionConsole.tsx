@@ -330,25 +330,10 @@ export function InjectionConsole() {
     try {
       const result = await events.dispatch({ type: 'scorer.retrain' }) as unknown as RetrainResponse
       setFailure(null)
-      if (result.status === 'insufficient_data') {
-        const minimum = dataRef.current?.learning.minimum_dispositions
-        setRetrainNotice({
-          copy: minimum === undefined
-            ? `Not enough authentic signals yet: ${result.eligible_dispositions} available.`
-            : `Not enough authentic signals yet: ${result.eligible_dispositions} / ${minimum} available.`,
-          eligibleDispositions: result.eligible_dispositions,
-        })
-      } else if (result.status === 'not_better') {
-        setRetrainNotice({
-          copy: 'The current recipe still wins. Current values kept: the candidate did not improve the back-test enough. Compare the results below.',
-          eligibleDispositions: result.eligible_dispositions,
-        })
-      } else {
-        setRetrainNotice({
-          copy: `Proposal ${result.proposal_version ?? 'ready'} is ready to audition.`,
-          eligibleDispositions: result.eligible_dispositions,
-        })
-      }
+      setRetrainNotice({
+        copy: result.reason,
+        eligibleDispositions: result.eligible_dispositions,
+      })
       await load(false)
     } catch {
       setRetrainNotice(null)
