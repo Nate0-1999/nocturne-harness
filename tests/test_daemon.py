@@ -43,6 +43,7 @@ from harness.spine_client import (
     MemoryStatus,
     MemoryUnit,
     PagedMemoryListResponse,
+    ProblemDetail,
     RackScorerAuditionRequest,
     RackScorerForceRequest,
     RackScorerSimulationRequest,
@@ -54,6 +55,7 @@ from harness.spine_client import (
     SpendEventsRequest,
     SpendEventsResponse,
     SpendTableSnapshot,
+    SpineProblemError,
     SpineResponseError,
     SpineTransportError,
     VitalsSnapshot,
@@ -627,6 +629,24 @@ def test_rack_spend_table_passes_global_and_attuned_scope_to_one_optional_reader
     assert [global_response.status_code, attuned_response.status_code] == [200, 200]
     assert global_response.json()["data"] == spend_table_snapshot().model_dump(mode="json")
     assert seen == [None, [UUID(first), UUID(second)]]
+
+
+def test_palace_problem_keeps_its_reason_instead_of_reporting_an_outage() -> None:
+    """M5RM / F194 / FL-044: a healthy Palace's refusal reaches the person unchanged."""
+
+    async def problem_fixture():
+        raise SpineProblemError(
+            httpx.Response(409),
+            ProblemDetail(status=409, title="Conflict", detail="Queue item already decided."),
+        )
+
+    app = create_app(
+        before_static_mount=lambda app: app.add_api_route("/problem-fixture", problem_fixture)
+    )
+    with TestClient(app) as client:
+        response = client.get("/problem-fixture")
+    assert response.status_code == 409
+    assert response.json() == {"detail": "Queue item already decided."}
 
 
 def test_busy_palace_preserves_retry_status_and_recovers_spend() -> None:

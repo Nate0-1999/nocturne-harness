@@ -617,9 +617,11 @@ async def test_a049_remember_splitter_is_tools_free_and_lossless_by_instruction(
     assert calls[0][1].instructions is not None
     assert calls[0][1].instructions.startswith(REMEMBER_SPLIT_INSTRUCTION)
     assert "self-contained fact sentence that names its own subject" in calls[0][1].instructions
-    assert "Split only where there is more than one distinct fact" in calls[0][1].instructions
-    assert "broken at its cleanest seam into finer facts" in calls[0][1].instructions
-    assert "only repetition is shortened" in calls[0][1].instructions
+    assert "SHORTEN it to ONE candidate" in calls[0][1].instructions
+    assert (
+        "SPLIT only when the source contains multiple independently changeable facts"
+        in calls[0][1].instructions
+    )
     assert "prefer 2-5 words and under 40 characters" in calls[0][1].instructions
     assert "never facts" in calls[0][1].instructions
     assert "The application keeps the exact source" in calls[0][1].instructions
@@ -789,7 +791,9 @@ async def test_over_cap_single_fact_uses_remaining_request_to_finish_shortening(
     assert len(calls) == 2
     if invalid_draft == "over-cap":
         repair = calls[1][0][-1].parts[-1].content
-        assert repair.startswith("This memory is too long, break it down into finer pieces.")
+        assert repair.startswith(
+            "This memory is too long; shorten one claim, split only independent claims."
+        )
     assert [request.body for request in spine.create_requests] == [body]
     assert spine.split_requests == []
 
@@ -1066,7 +1070,7 @@ async def test_a049_single_atomic_oversized_claim_is_saved_after_three_repairs()
     assert result.ok
     assert len(calls) == 4
     assert all(
-        "this memory is too long, break it down into finer pieces"
+        "this memory is too long; shorten one claim, split only independent claims"
         in str(call[0][-1].parts[-1].content).lower()
         for call in calls[1:]
     )
@@ -1627,7 +1631,9 @@ async def test_an_over_cap_seed_child_goes_back_through_the_seed_prompt() -> Non
     assert calls[1][1].instructions == calls[0][1].instructions.split("\n\n")[0] or (
         calls[1][1].instructions.startswith(calls[0][1].instructions.split("\n")[0])
     )
-    assert "too long, break it down into finer pieces" in str(calls[1][0][-1].parts[-1].content)
+    assert "too long; shorten one claim, split only independent claims" in str(
+        calls[1][0][-1].parts[-1].content
+    )
 
 
 def test_the_code_check_names_each_rule_a_fact_breaks() -> None:
@@ -1648,7 +1654,7 @@ def test_compaction_prompt_has_the_owners_shape_and_no_count_cap() -> None:
     'prefer zero candidates' are gone."""
     assert "an agent continuing this problem in the future would want" in EXTRACTION_INSTRUCTION
     assert "self-contained fact sentence" in EXTRACTION_INSTRUCTION
-    assert "break it at the cleanest place" in EXTRACTION_INSTRUCTION
+    assert "Shorten a single fact" in EXTRACTION_INSTRUCTION
     assert "Keep what the user stated, decided or corrected" in EXTRACTION_INSTRUCTION
     assert "tool result that verified it" in EXTRACTION_INSTRUCTION
     assert "begins with 'Unverified:'" in EXTRACTION_INSTRUCTION
