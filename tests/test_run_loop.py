@@ -218,6 +218,52 @@ async def test_interjection_steers_active_run_without_starting_or_reordering_a_t
     await loop.close()
 
 
+class BoundaryRunner:
+    def __init__(self) -> None:
+        self.decision: str | None = None
+
+    async def run(
+        self,
+        *,
+        thread_id: str,
+        prompt: str,
+        message_history: Sequence[object],
+        emit: RunEmitter,
+        model_resolution: ThreadModelResolution | None = None,
+    ) -> TurnOutcome:
+        del thread_id, model_resolution
+        self.decision = await emit.boundary_decision(
+            {"event_kind": "boundary_card", "decision": "owner_action", "wall": "workspace"}
+        )
+        await emit.event(
+            {"event_kind": "boundary_card", "decision": self.decision, "wall": "workspace"}
+        )
+        return TurnOutcome(StopReason.END_TURN, (*message_history, f"{prompt}:complete"))
+
+
+@pytest.mark.asyncio
+async def test_a_boundary_card_pauses_its_run_until_the_owner_answers() -> None:
+    """F198 / ADR-015: the run waits at its boundary card; only that run's answer resumes it."""
+    runner = BoundaryRunner()
+    loop = RunLoop(runner, factory(Ids()))
+    sink = Sink()
+    run_id = await loop.submit(thread_id="thread-1", prompt_id=ulid(1), prompt="go", sink=sink)
+    for _ in range(200):
+        active = loop._threads["thread-1"].active
+        if active is not None and active.boundary_decision is not None:
+            break
+        await asyncio.sleep(0.01)
+    assert loop._threads["thread-1"].active.state == "waiting_gate"
+    with pytest.raises(ValueError, match="No boundary card is waiting on this run."):
+        await loop.decide_boundary(thread_id="thread-1", run_id=ulid(999), decision="denied")
+    await loop.decide_boundary(thread_id="thread-1", run_id=run_id, decision="allowed_once")
+    await _wait_for_done_count(sink, 1)
+    assert runner.decision == "allowed_once"
+    with pytest.raises(ValueError, match="No boundary card is waiting on this run."):
+        await loop.decide_boundary(thread_id="thread-1", run_id=run_id, decision="denied")
+    await loop.close()
+
+
 class NeverStartsRunner:
     async def run(
         self,

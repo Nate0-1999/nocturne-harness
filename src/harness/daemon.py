@@ -122,6 +122,7 @@ from harness.symphony_experience import SymphonyExperience
 from harness.symphony_runtime import SymphonyExecution, remove_kept_worktrees
 from harness.tool_inventory import ToolInventory, ToolsetSelection, inventory
 from harness.tools_memory import MemoryToolContext
+from harness.toolset import Crossings
 from harness.toolset_runtime import LazyStandardToolset
 from harness.transcript import TranscriptJournal, TranscriptJournalUnavailable
 from harness.transcript_sync import TranscriptSyncEngine
@@ -179,6 +180,13 @@ class ModelPinUpdate(BaseModel):
 class InterjectionRequest(BaseModel):
     run_id: str
     prompt: str
+
+
+class BoundaryDecisionRequest(BaseModel):
+    """F198: the owner's answer to a waiting boundary card."""
+
+    run_id: str
+    decision: Literal["allowed_once", "allowed_thread", "denied"]
 
 
 class WorkerMemorySelection(BaseModel):
@@ -987,6 +995,7 @@ def create_dev_app(
             on_move=record_move,
         )
         toolset.set_browser_consent_check(browser_consent_was_journaled)
+        toolset.crossings.journaled = lambda: journaled_crossings(thread_id)
         workspace_toolsets[thread_id] = toolset
         return toolset
 
@@ -1135,6 +1144,22 @@ def create_dev_app(
         mirror=local_copy,
         outbox=outbox,
     )
+
+    def journaled_crossings(thread_id: str) -> set[str]:
+        """F198: Allow for this thread holds for the thread across restarts."""
+        try:
+            return {
+                Crossings.entry(str(event.get("wall")), Path(target) if target else None)
+                for message in journal.read_messages(thread_id)
+                if message.get("role") == "assistant"
+                for event in message.get("events") or ()
+                if isinstance(event, dict)
+                and event.get("event_kind") == "boundary_card"
+                and event.get("decision") == "allowed_thread"
+                for target in (event.get("targets") or [None])
+            }
+        except TranscriptJournalUnavailable:
+            return set()
 
     def browser_consent_was_journaled(thread_id: str) -> bool:
         try:
@@ -1506,6 +1531,16 @@ def create_dev_app(
                 )
             except ValueError as exc:
                 raise HTTPException(409, str(exc)) from exc
+
+        @app.post("/v1/threads/{thread_id}/boundary")
+        async def decide_thread_boundary(thread_id: UUID, body: BoundaryDecisionRequest):
+            try:
+                await loop.decide_boundary(
+                    thread_id=str(thread_id), run_id=body.run_id, decision=body.decision
+                )
+            except ValueError as exc:
+                raise HTTPException(409, str(exc)) from exc
+            return {"accepted": True}
 
         @app.post("/v1/threads/{thread_id}/interject")
         async def interject_thread(thread_id: UUID, body: InterjectionRequest):
