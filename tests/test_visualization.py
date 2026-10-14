@@ -307,6 +307,7 @@ def test_root_branches_project_turn_and_tool_call_times_without_content(tmp_path
         workspace_root=str(tmp_path),
         current_location=None,
         proposed_response=None,
+        archived=False,
         title="Thread",
         created_at="t0",
         updated_at="t3",
@@ -363,6 +364,34 @@ def test_samples_read_only_what_the_journal_appended(tmp_path):
     assert json.dumps(grown) == json.dumps(
         work_observation(journal, tmp_path, tmp_path)["agents"][0]
     )
+
+
+def test_archived_threads_leave_the_work_agents(tmp_path):
+    """F202 / P2: the Farm listed archived threads as waiting agents, so time order moved the
+    panels to closed conversations; an archived thread leaves the agents as it leaves the Deck."""
+    from harness.transcript import TranscriptJournal
+    from harness.visualization import work_observation
+
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    ids = ["00000000-0000-0000-0000-000000005201", "00000000-0000-0000-0000-000000005202"]
+    for index, thread_id in enumerate(ids):
+        journal.append_thread_context(
+            thread_id, str(tmp_path), workspace_root=str(tmp_path), current_location=str(tmp_path)
+        )
+        journal.append_message(
+            thread_id,
+            {
+                "message_id": f"01ARZ3NDEKTSV4RRFFQ69G5FA{index}",
+                "run_id": f"01ARZ3NDEKTSV4RRFFQ69G5FA{index}",
+                "role": "user",
+                "content": "first",
+                "state": "complete",
+            },
+            parent_id=None,
+        )
+    journal.append_archive(ids[0])
+    agents = work_observation(journal, tmp_path, tmp_path)["agents"]
+    assert [agent["thread_id"] for agent in agents] == [ids[1]]
 
 
 def test_live_history_reads_fold_only_new_rows(tmp_path):
