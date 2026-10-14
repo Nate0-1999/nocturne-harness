@@ -352,6 +352,8 @@ async def test_curator_activity_contains_only_an_older_palace_404() -> None:
         response(200, curator_activity_payload()),
         response(404, {}),
         response(503, problem_payload(), PROBLEM_JSON),
+        response(503, problem_payload(), PROBLEM_JSON),
+        response(503, problem_payload(), PROBLEM_JSON),
     ]
 
     async def handler(request: httpx.Request) -> httpx.Response:
@@ -373,6 +375,8 @@ async def test_curator_activity_contains_only_an_older_palace_404() -> None:
     assert missing is None
     assert failure.value.status_code == 503
     assert [request.url.path for request in seen] == [
+        "/prefix/v1/curation",
+        "/prefix/v1/curation",
         "/prefix/v1/curation",
         "/prefix/v1/curation",
         "/prefix/v1/curation",
@@ -1154,7 +1158,7 @@ async def test_response_contract_violations_are_not_silently_accepted(
 @pytest.mark.asyncio
 async def test_rfc7807_optional_members_preserve_the_server_refusal() -> None:
     """M3GD / F076: a missing optional title must not obscure the actual server refusal."""
-    payloads = [{}, {"title": None}]
+    payloads = [{}, {}, {}, {"title": None}, {"title": None}, {"title": None}]
 
     async def handler(_: httpx.Request) -> httpx.Response:
         return response(503, payloads.pop(0), PROBLEM_JSON)

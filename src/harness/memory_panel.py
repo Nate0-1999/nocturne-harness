@@ -27,6 +27,7 @@ from harness.envelope import (
     MemoryPanelStatePayload,
     MessageType,
 )
+from harness.memory_outbox import MemoryOutbox, QueuedForPalace, never_reached_palace
 from harness.spine_client import (
     FeedbackRequest,
     FeedbackResponse,
@@ -44,6 +45,7 @@ from harness.spine_client import (
     RestoredInjection,
     RevisionConflict,
     ScoredMemoryCard,
+    SpineBusyError,
     SpineClientError,
     SpineProblemError,
     SpineResponseError,
@@ -340,6 +342,7 @@ class MemoryPanelController:
         principal_id: str,
         machine_id: str,
         enrich: PanelEnricher | None = None,
+        outbox: MemoryOutbox | None = None,
     ) -> None:
         if not principal_id.strip() or not machine_id.strip():
             raise ValueError("panel identities must not be blank")
@@ -349,6 +352,7 @@ class MemoryPanelController:
         self._principal_id = principal_id
         self._machine_id = machine_id
         self._enrich = enrich
+        self._outbox = outbox
 
     async def handle(self, message: Envelope, send: EnvelopeSender) -> None:
         """Handle one validated C→D request and emit exactly one correlated result."""
@@ -421,7 +425,9 @@ class MemoryPanelController:
         try:
             listed = await self._active_principal_memories()
         except SpineClientError as exc:
-            await self._send_spine_error(thread_id, request_id, "delete", exc, send)
+            await self._send_spine_error(
+                thread_id, request_id, "delete", exc, send, memory_id=memory_id
+            )
             return
         current = next((item for item in listed if item.memory_id == memory_id), None)
         await self._patch(
@@ -616,7 +622,14 @@ class MemoryPanelController:
                 include_memory_ids=frozenset({payload.memory_id}) if restoring else frozenset()
             )
         except SpineClientError as exc:
-            await self._send_spine_error(thread_id, request_id, operation, exc, send)
+            await self._send_spine_error(
+                thread_id,
+                request_id,
+                operation,
+                exc,
+                send,
+                memory_id=payload.memory_id if operation == "delete" else None,
+            )
             return
         current = next((item for item in listed if item.memory_id == payload.memory_id), None)
         active = [item for item in listed if item.status is MemoryStatus.ACTIVE]
@@ -709,7 +722,14 @@ class MemoryPanelController:
                 )
             return
         except SpineClientError as exc:
-            await self._send_spine_error(thread_id, request_id, operation, exc, send)
+            await self._send_spine_error(
+                thread_id,
+                request_id,
+                operation,
+                exc,
+                send,
+                memory_id=payload.memory_id if operation == "delete" else None,
+            )
             return
 
         if (
@@ -825,8 +845,15 @@ class MemoryPanelController:
         operation: PanelOperation,
         exc: SpineClientError,
         send: EnvelopeSender,
+        *,
+        memory_id: UUID | None = None,
     ) -> None:
         code, message = _safe_spine_error(exc)
+        if memory_id is not None and self._outbox is not None and never_reached_palace(exc):
+            self._outbox.enqueue(
+                "delete", "Confirmed memory deletion", {"memory_id": str(memory_id)}
+            )
+            code, message = "memory_queued", str(QueuedForPalace(len(self._outbox.waiting())))
         await self._send_error(
             thread_id=thread_id,
             request_id=request_id,
@@ -933,6 +960,8 @@ def _escape_body(value: str) -> str:
 
 
 def _safe_spine_error(exc: SpineClientError) -> tuple[str, str]:
+    if isinstance(exc, SpineBusyError):
+        return "memory_busy", "The Palace is still busy. Try again shortly."
     if isinstance(exc, SpineTransportError):
         return "memory_unavailable", "The memory service is unavailable. Try again."
     if isinstance(exc, SpineProblemError):

@@ -785,6 +785,47 @@ async def test_gate_delete_is_the_panel_delete_at_the_current_revision() -> None
 
 
 @pytest.mark.asyncio
+async def test_confirmed_gate_delete_survives_busy_and_a_restart(tmp_path) -> None:
+    """F195: the cloud rejecting a confirmed delete must leave a durable, replayable intent."""
+    from harness.memory_outbox import MemoryOutbox
+    from harness.spine_client import SpineBusyError
+
+    ids = EnvelopeFactory(machine_id="trusted-machine")
+    queue = MemoryOutbox(tmp_path, ids=ids)
+    original = memory_unit(MEMORY_A, revision=4)
+    spine = FakeSpine(
+        [original],
+        patch_outcomes=[
+            SpineBusyError(httpx.Response(429)),
+            original.model_copy(update={"status": MemoryStatus.TOMBSTONED, "revision": 5}),
+        ],
+    )
+    panel = MemoryPanelController(
+        spine,
+        ThreadMemoryContextRegistry(),
+        ids,
+        principal_id=original.principal_id,
+        machine_id="trusted-machine",
+        outbox=queue,
+    )
+    sent = []
+
+    async def record(message):
+        sent.append(message)
+
+    await panel.delete_from_gate(THREAD_ID, MEMORY_A, record)
+    assert sent[-1].payload.code == "memory_queued"
+    restarted = MemoryOutbox(tmp_path, ids=ids)
+    assert restarted.pending_delete_ids() == {MEMORY_A}
+    assert (
+        await restarted.flush(lambda item: panel.delete_queued(UUID(item.payload["memory_id"])))
+        == 1
+    )
+    assert restarted.waiting() == []
+    assert spine.memories[0].status is MemoryStatus.TOMBSTONED
+
+
+@pytest.mark.asyncio
 async def test_delete_refuses_another_principals_memory() -> None:
     """SPEC C.4: a forged browser action never tombstones a peer's memory."""
     spine = FakeSpine([memory_unit(MEMORY_A, principal_id="peer")])

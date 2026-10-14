@@ -549,7 +549,7 @@ def _up_remote(
             )
         except DeployError as exc:
             raise OnboardingError(
-                "The Palace update guard could not be checked. Run "
+                f"The Palace update guard could not be checked: {exc}. Run "
                 "`nocturne deploy --dry-run`, fix the reported problem, then run "
                 "`nocturne up` again."
             ) from exc
