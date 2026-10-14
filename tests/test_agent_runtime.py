@@ -232,6 +232,43 @@ async def test_a_boundary_card_waits_for_the_owners_answer(tmp_path: Path, decis
 
 
 @pytest.mark.asyncio
+async def test_a_folder_allowed_for_the_thread_draws_no_second_card(tmp_path: Path) -> None:
+    """F198: after Allow for this thread, a later request writing the same outside folder runs
+    without a card (the M5HD walk drew one for every request). [ADR-015]"""
+    workspace, spine = tmp_path / "workspace", tmp_path / "spine"
+    workspace.mkdir()
+    spine.mkdir()
+
+    async def respond(_messages, _info):
+        written = {"written_paths": [str(spine / "README.md")], "reason": "Appends a line."}
+        return ModelResponse(parts=[TextPart(json.dumps(written))])
+
+    async def stream(_messages, _info):
+        yield "Appended."
+
+    toolset = await open_standard_toolset(cwd=workspace, workspace_root=workspace)
+    toolset.crossings.thread.add(f"workspace:{spine.resolve()}")
+    emitter = DecidingEmitter()  # no answers: a card would fail the turn
+    try:
+        runner = PydanticAITurnRunner(
+            HarnessAgent(settings(), model=FunctionModel(respond, stream_function=stream)),
+            lambda _: context(toolset=toolset),
+        )
+        outcome = await runner.run(
+            thread_id=str(THREAD_UUID),
+            prompt=f"Append probe to {spine}/README.md",
+            message_history=(),
+            emit=emitter,
+        )
+    finally:
+        await toolset.close()
+
+    assert outcome.assistant_text == "Appended." and emitter.cards == []
+    judged = [event for event in emitter.events if event["event_kind"] == "boundary_judgment"]
+    assert [event["needs_owner"] for event in judged] == [False]
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("written", "needs_owner"),
     [("{outside}/a.txt", True), (None, False), ("src/cli.py", False)],

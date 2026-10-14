@@ -543,11 +543,7 @@ class PydanticAITurnRunner:
             crossings = getattr(context.toolset, "crossings", None)
             if crossings is not None:
                 crossings.turn.clear()  # F198: Allow once covers one request.
-            if (
-                context.toolset is not None
-                and not (crossings is not None and crossings.allowed("workspace"))
-                and _explicit_outside_path(prompt, context)
-            ):
+            if context.toolset is not None and _explicit_outside_path(prompt, context):
                 location = context.toolset.location()
                 with capture_run_messages() as boundary_messages:
                     judged = await self._agent.judge_boundary(
@@ -569,6 +565,8 @@ class PydanticAITurnRunner:
                 folders = []
                 for path in outside:
                     resolved = (location.cwd / Path(path).expanduser()).resolve()
+                    if crossings is not None and crossings.writable(resolved):
+                        continue  # F198: allowed for this thread already; no second card.
                     folders.append(resolved if resolved.is_dir() else resolved.parent)
                 await emit.event(
                     {
@@ -576,10 +574,10 @@ class PydanticAITurnRunner:
                         "judge": "PermissionJudge",
                         "model": selected_model.model_name,
                         **judged.output.model_dump(),
-                        "needs_owner": bool(outside),
+                        "needs_owner": bool(folders),
                     }
                 )
-                if outside:
+                if folders:
                     await review_boundary(
                         "workspace",
                         f"{judged.output.reason} Writes outside {location.workspace_root}: "

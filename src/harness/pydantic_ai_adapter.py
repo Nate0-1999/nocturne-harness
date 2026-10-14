@@ -303,9 +303,11 @@ async def _execute_workspace_tool(
     except (ToolsetError, OSError, ValueError) as exc:
         return f"{tool_name} refused: {str(exc).strip() or type(exc).__name__}"
     if result.boundary is not None and ctx.deps.boundary_review is not None:
+        command = arguments.get("command")
         reviewed = await ctx.deps.boundary_review(
             result.boundary,
-            result.content,
+            # F198: the owner decides on the card, so it names the command it would allow.
+            result.content if not command else f"{result.content} Command: {command}",
             () if result.boundary_target is None else (result.boundary_target,),
         )
         if reviewed is not None:
