@@ -2,58 +2,62 @@
  "packet": "M3GT",
  "mode": "builder",
  "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
- "ledger_sha256": "7baff053d5273729047f8e3956b9fd78a0a2651537655cd47956369f67b07bba",
+ "ledger_sha256": "797511980941adc38182d074e16e8009f64cc013615eac1af706efd24651872a",
  "diffs": [
   {
    "repo": "harness",
-   "base": "636256558fb35600ea260ea3c39e7dbe63f85922",
-   "head": "9c293b2e02a0dd1aa14fbbe996d293d3d4bccd1c"
+   "base": "9e99cecf4cc1a4ea963a3d150326214202dd117d",
+   "head": "83729d5d6bd99d1dfd300f549ada8d71ca1f83c1"
   }
  ],
  "unmapped": {
   "harness/DECISIONS.md": "M3GT decision journal; no feature behavior.",
-  "harness/src/harness/__init__.py": "paired release version 0.1.69; no feature behavior.",
+  "harness/src/harness/__init__.py": "paired release version 0.1.81; no feature behavior.",
   "harness/tests/test_m2ux4_themes.py": "the palette validator now names the two new themes' faces (D.2 180); test only.",
   "harness/tests/test_m2ux6_grimoire_themes.py": "the grimoire head strip yields and the Stage rain rests (FL-147); test only.",
   "harness/tests/test_m3gt_ornament_themes.py": "the two new themes regenerate, pass the six checks per face, and keep ornaments off data (FL-203); test only.",
+  "harness/verification/m3gt/FL-009.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/FL-069.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/FL-111.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/FL-112.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/FL-113.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/FL-124.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/FL-143.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/FL-145.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/FL-146.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/FL-147.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/FL-148.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/FL-170.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/FL-186.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/FL-187.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/FL-190.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/FL-191.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/FL-192.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/FL-193.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/FL-194.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/FL-201.png": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/SHA256SUMS": "M3GT evidence: coverage report, row captures and checksums.",
   "harness/verification/m3gt/contact-sheet.mjs": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
   "harness/verification/m3gt/headers.mjs": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
+  "harness/verification/m3gt/ledger-report.json": "M3GT evidence: coverage report, row captures and checksums.",
   "harness/verification/m3gt/rain-check.mjs": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
   "harness/verification/m3gt/receipts/serve.py": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
   "harness/verification/m3gt/seed.mjs": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
   "harness/verification/m3gt/shoot.mjs": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
   "harness/verification/m3gt/walk.mjs": "M3GT walk tooling (FL-147, FL-203): run against the real app; no product behavior.",
-  "harness/web/dist/assets/index--UUmODvC.js": "the committed web bundle rebuilt from the M3GT sources (an old asset removed or its replacement added); built output, no feature behavior of its own.",
-  "harness/web/dist/assets/index-C0N8kvXO.js": "the committed web bundle rebuilt from the M3GT sources (an old asset removed or its replacement added); built output, no feature behavior of its own.",
-  "harness/web/dist/assets/index-C2tHlmzx.css": "the committed web bundle rebuilt from the M3GT sources (an old asset removed or its replacement added); built output, no feature behavior of its own.",
-  "harness/web/dist/assets/index-D91Xr2jk.css": "the committed web bundle rebuilt from the M3GT sources (an old asset removed or its replacement added); built output, no feature behavior of its own.",
+  "harness/web/dist/assets/index-CHbUNMNR.js": "the committed web bundle rebuilt from the M3GT sources (an old asset removed or its replacement added); built output, no feature behavior of its own.",
+  "harness/web/dist/assets/index-CVZIxBtT.css": "the committed web bundle rebuilt from the M3GT sources (an old asset removed or its replacement added); built output, no feature behavior of its own.",
+  "harness/web/dist/assets/index-D-A9qSrX.js": "the committed web bundle rebuilt from the M3GT sources (an old asset removed or its replacement added); built output, no feature behavior of its own.",
+  "harness/web/dist/assets/index-N9zpZrca.css": "the committed web bundle rebuilt from the M3GT sources (an old asset removed or its replacement added); built output, no feature behavior of its own.",
   "harness/web/dist/index.html": "the committed web bundle rebuilt from the M3GT sources (an old asset removed or its replacement added); built output, no feature behavior of its own.",
   "harness/web/scripts/build_ornament_motifs.py": "generator of the two new themes' ornaments (FL-203, no ledger surface yet); its output is walked in FL-203 and pinned by test_m3gt_ornament_themes.py.",
   "harness/web/scripts/build_theme_seam.py": "generator of the theme colour seam, now with two-face themes (FL-203); its output is walked in FL-203 and checked by build_theme_seam.py's own check.",
   "harness/web/scripts/validate_theme_palettes.py": "the six palette checks now cover both faces of the two new themes (ADR-018 clause 7); a check, no product behavior.",
   "harness/web/tests/themes.test.mjs": "the closed theme list now holds seven themes (D.2 180); test only.",
-  "harness/verification/m3gt/ledger-report.json": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/SHA256SUMS": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-069.png": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-111.png": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-112.png": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-113.png": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-124.png": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-143.png": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-145.png": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-146.png": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-187.png": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-190.png": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-191.png": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-194.png": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-201.png": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-009.png": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-147.png": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-148.png": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-170.png": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-186.png": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-192.png": "M3GT evidence: coverage report, row captures and checksums.",
-  "harness/verification/m3gt/FL-193.png": "M3GT evidence: coverage report, row captures and checksums."
+  "harness/web/dist/assets/index--UUmODvC.js": "the committed web bundle from an earlier M3GT build (0.1.69, before main was merged in), since replaced; built output, no feature behavior of its own.",
+  "harness/web/dist/assets/index-C0N8kvXO.js": "the committed web bundle from an earlier M3GT build (0.1.69, before main was merged in), since replaced; built output, no feature behavior of its own.",
+  "harness/web/dist/assets/index-C2tHlmzx.css": "the committed web bundle from an earlier M3GT build (0.1.69, before main was merged in), since replaced; built output, no feature behavior of its own.",
+  "harness/web/dist/assets/index-D91Xr2jk.css": "the committed web bundle from an earlier M3GT build (0.1.69, before main was merged in), since replaced; built output, no feature behavior of its own."
  },
  "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
  "rows": {
@@ -64,7 +68,7 @@
    "verdict": "FAIL",
    "screenshot": "FL-069.png",
    "flag": "F086",
-   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.69 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.69 build on test-m3gt."
+   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.81 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.81 build on test-m3gt."
   },
   "FL-111": {
    "label": "One standard module template that can be dragged and grown or shrunk as much as you want, with a dialogue box for its internal settings, on a very large canvas you can pan and zoom while modules stay the same size.",
@@ -73,7 +77,7 @@
    "verdict": "FAIL",
    "screenshot": "FL-111.png",
    "flag": "F086",
-   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.69 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.69 build on test-m3gt."
+   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.81 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.81 build on test-m3gt."
   },
   "FL-112": {
    "label": "Tabs as layers of the same stage; Injection and Graph as ordinary modules; a gear beside the title for rarely changed options.",
@@ -82,7 +86,7 @@
    "verdict": "FAIL",
    "screenshot": "FL-112.png",
    "flag": "F086",
-   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.69 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.69 build on test-m3gt."
+   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.81 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.81 build on test-m3gt."
   },
   "FL-113": {
    "label": "A finer, near-continuous background grid, more descriptive well-formatted hover tips, an easy way to create tabs, a much smaller archive button, a model device that is obviously clickable.",
@@ -91,7 +95,7 @@
    "verdict": "FAIL",
    "screenshot": "FL-113.png",
    "flag": "F086",
-   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.69 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.69 build on test-m3gt."
+   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.81 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.81 build on test-m3gt."
   },
   "FL-124": {
    "label": "Threads removable or archivable; a back-to-the-stage control on every view.",
@@ -100,7 +104,7 @@
    "verdict": "FAIL",
    "screenshot": "FL-124.png",
    "flag": "F086",
-   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.69 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.69 build on test-m3gt."
+   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.81 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.81 build on test-m3gt."
   },
   "FL-143": {
    "label": "Neo-noir as the default style, with other configurations easily uploadable.",
@@ -109,7 +113,7 @@
    "verdict": "FAIL",
    "screenshot": "FL-143.png",
    "flag": "F086",
-   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.69 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.69 build on test-m3gt."
+   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.81 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.81 build on test-m3gt."
   },
   "FL-145": {
    "label": "Two alternate themes derived from your reference picture (Seraph Dressed, Gold Lines) added beside the current color scheme.",
@@ -118,7 +122,7 @@
    "verdict": "FAIL",
    "screenshot": "FL-145.png",
    "flag": "F086",
-   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.69 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.69 build on test-m3gt."
+   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.81 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.81 build on test-m3gt."
   },
   "FL-146": {
    "label": "The reference picture's exact colors are pulled out and applied to the Harness algorithmically in the picture's proportions, possibly by assigning colors to parts of the module templates.",
@@ -127,7 +131,7 @@
    "verdict": "FAIL",
    "screenshot": "FL-146.png",
    "flag": "F086",
-   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.69 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.69 build on test-m3gt."
+   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.81 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.81 build on test-m3gt."
   },
   "FL-187": {
    "label": "Two repos, the spine (memory) and the Harness, not a mono repo.",
@@ -136,7 +140,7 @@
    "verdict": "FAIL",
    "screenshot": "FL-187.png",
    "flag": "F086",
-   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.69 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.69 build on test-m3gt."
+   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.81 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.81 build on test-m3gt."
   },
   "FL-190": {
    "label": "The Harness can use skills and has the best and most common tools available, compiled from a list.",
@@ -145,7 +149,7 @@
    "verdict": "FAIL",
    "screenshot": "FL-190.png",
    "flag": "F086",
-   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.69 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.69 build on test-m3gt."
+   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.81 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.81 build on test-m3gt."
   },
   "FL-191": {
    "label": "The tools and skills Claude Code and Codex use on this machine, pinned to versioned open-source sources.",
@@ -154,7 +158,7 @@
    "verdict": "FAIL",
    "screenshot": "FL-191.png",
    "flag": "F086",
-   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.69 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.69 build on test-m3gt."
+   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.81 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.81 build on test-m3gt."
   },
   "FL-194": {
    "label": "The Pydantic toolset and skills as the tool layer.",
@@ -163,7 +167,7 @@
    "verdict": "FAIL",
    "screenshot": "FL-194.png",
    "flag": "F086",
-   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.69 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.69 build on test-m3gt."
+   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.81 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.81 build on test-m3gt."
   },
   "FL-201": {
    "label": "One scale across modules: an icon reused anywhere is one size, text of one role is one size and one font, and a box belongs only to an icon that is a button.",
@@ -180,7 +184,7 @@
    "verdict": "FAIL",
    "screenshot": "FL-009.png",
    "flag": "F086",
-   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.69 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.69 build on test-m3gt."
+   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.81 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.81 build on test-m3gt."
   },
   "FL-147": {
    "label": "Wizard Mode and Technomancer themes with our own glyph scripts, runes appearing and disappearing.",
@@ -188,7 +192,7 @@
    "protected": false,
    "verdict": "PASS",
    "screenshot": "FL-147.png",
-   "observed": "Three consecutive fresh runs on the 0.1.69 build on test-m3gt (garden verification/m3gt/runs/run-1..3): in Wizard Mode and Technomancer every module name on the Work layer measured whole in its header (the name's box holds its text), the head strips conjure (grimoire-rune-inscribe, grimoire-glitch-in), the elder scripts fall in two layers under the Stage canvas (grimoire-stage-rain, z-index -1, no pointer events) and the reading surface stays still. The header check also measured 364 names across 13 themes, both faces, Stage and Sheet: none cut."
+   "observed": "Three consecutive fresh runs on the 0.1.81 build on test-m3gt (garden verification/m3gt/runs/run-1..3): in Wizard Mode and Technomancer every module name on the Work layer measured whole in its header (the name's box holds its text), the head strips conjure (grimoire-rune-inscribe, grimoire-glitch-in), the elder scripts fall in two layers under the Stage canvas (grimoire-stage-rain, z-index -1, no pointer events) and the reading surface stays still. The header check also measured 364 names across 13 themes, both faces, Stage and Sheet: none cut."
   },
   "FL-148": {
    "label": "Liquid, shiny, white chrome on borders, not on buttons.",
@@ -197,7 +201,7 @@
    "verdict": "FAIL",
    "screenshot": "FL-148.png",
    "flag": "F086",
-   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.69 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.69 build on test-m3gt."
+   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.81 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.81 build on test-m3gt."
   },
   "FL-170": {
    "label": "A fresh reinstall that reconnects to existing files and auto-finds the cloud palace.",
@@ -206,7 +210,7 @@
    "verdict": "FAIL",
    "screenshot": "FL-170.png",
    "flag": "F086",
-   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.69 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.69 build on test-m3gt."
+   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.81 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.81 build on test-m3gt."
   },
   "FL-186": {
    "label": "Build on Pydantic AI in a way that lets us modify and extend without waiting on them, passing features back and forth with their library.",
@@ -215,7 +219,7 @@
    "verdict": "FAIL",
    "screenshot": "FL-186.png",
    "flag": "F086",
-   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.69 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.69 build on test-m3gt."
+   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.81 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.81 build on test-m3gt."
   },
   "FL-192": {
    "label": "Swappable seams: router, model policy with an off-switch, toolset as a unit, memory system.",
@@ -224,7 +228,7 @@
    "verdict": "FAIL",
    "screenshot": "FL-192.png",
    "flag": "F086",
-   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.69 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.69 build on test-m3gt."
+   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.81 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.81 build on test-m3gt."
   },
   "FL-193": {
    "label": "The common core of terminal-agent tools (skills, progressive prompting, model switching, compaction, app interactions) in one piece that pulls upstream updates.",
@@ -233,7 +237,7 @@
    "verdict": "FAIL",
    "screenshot": "FL-193.png",
    "flag": "F086",
-   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.69 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.69 build on test-m3gt."
+   "observed": "Context only: an M3GT change touched a file this row maps (the shared header rule in rack.css, the theme switcher and seam, main.tsx's stylesheet list, or the 0.1.81 release pin), so the row is required. Its own gesture was not repeated in this packet; no new feature PASS or regression is claimed. The capture is the 0.1.81 build on test-m3gt."
   }
  },
  "not_run": {
@@ -391,7 +395,7 @@
   "FL-162": "outside diff",
   "FL-163": "outside diff",
   "FL-164": "outside diff",
-  "FL-165": "not built",
+  "FL-165": "outside diff",
   "FL-166": "outside diff",
   "FL-167": "outside diff",
   "FL-168": "outside diff",
