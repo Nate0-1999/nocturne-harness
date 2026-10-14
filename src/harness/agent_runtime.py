@@ -598,6 +598,8 @@ class PydanticAITurnRunner:
                 blocks = []
                 if dynamic_instructions is not None:
                     blocks.append(await dynamic_instructions.render())
+                if crossings is not None and (allowed := _crossing_instruction(crossings)):
+                    blocks.append(allowed)
                 steering = getattr(emit, "steering_instructions", lambda: "")()
                 if steering and steering != applied_steering:
                     run_context.messages[-1].parts.append(
@@ -1364,6 +1366,27 @@ def _no_account(_answer: str) -> None:
 
 
 _MENTIONED_PATH = re.compile(r"[\w.-]+(?:/[\w.-]+)*\.[A-Za-z0-9]{1,8}")
+
+
+def _crossing_instruction(crossings) -> str | None:
+    """F198 (M5HD walk): after Allow, gpt-4.1-mini wrote a same-named file inside the workspace;
+    the agent is told what the owner allowed and how to reach it."""
+
+    folders = crossings.folders()
+    walls = sorted(entry for entry in crossings.entries() if not entry.startswith("workspace:"))
+    if not folders and not walls:
+        return None
+    lines = ["The owner allowed on a boundary card:"]
+    if folders:
+        lines.append(
+            "writes in " + ", ".join(str(folder) for folder in folders) + " — write or edit those "
+            "files by their full path from where you are; do not move there."
+        )
+    if "remote" in walls:
+        lines.append("remote commands (network and git push) for this thread or request.")
+    if "credentials" in walls:
+        lines.append("reading credential files for this thread or request.")
+    return " ".join(lines)
 
 
 def _does_not_parse(path: Path) -> bool:

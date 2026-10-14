@@ -188,7 +188,10 @@ async def test_a_boundary_card_waits_for_the_owners_answer(tmp_path: Path, decis
     target.write_text("untouched")
     steps = [("write", {"path": "../spine/outside.txt", "content": "changed"})]
 
+    seen_instructions: list[str] = []
+
     async def stream(messages, _info):
+        seen_instructions.append(str(messages[-1].instructions))
         done = sum(isinstance(message, ModelResponse) for message in messages)
         if done < len(steps):
             name, arguments = steps[done]
@@ -229,6 +232,12 @@ async def test_a_boundary_card_waits_for_the_owners_answer(tmp_path: Path, decis
         assert toolset.crossings.turn == (allowed if decision == "allowed_once" else set())
         assert toolset.crossings.thread == (allowed if decision == "allowed_thread" else set())
         assert toolset.location().cwd == workspace  # the agent never left its workspace
+        # The next request names the allowed folder (M5HD walk: the agent wrote inside instead).
+        assert (
+            f"writes in {target.parent} — write or edit those files by their full path"
+            in (seen_instructions[-1])
+        )
+        assert "The owner allowed" not in seen_instructions[0]
 
 
 @pytest.mark.asyncio
