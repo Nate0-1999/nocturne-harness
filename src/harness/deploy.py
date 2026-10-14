@@ -23,6 +23,7 @@ import sys
 import tempfile
 import time
 from collections.abc import Callable, Iterator, Mapping, Sequence
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -1868,7 +1869,53 @@ class GcloudDeployBackend:
     def release_guard_preflight(self) -> ReleaseGuardPreflight:
         """Probe only the immutable image/source tags used by the release guard."""
 
-        return ReleaseGuardPreflight(self._image_state(self._artifact_images()))
+        def tag_version(tag: str) -> str | None:
+            # F209: exact tag lookups stay constant-size as test images accumulate.
+            argv = (
+                "gcloud",
+                "artifacts",
+                "docker",
+                "images",
+                "describe",
+                f"{IMAGE_PACKAGE}:{tag}",
+                f"--project={PROJECT_ID}",
+                "--format=json",
+            )
+            completed = self._runner(
+                argv,
+                capture_output=True,
+                text=True,
+                check=False,
+                shell=False,
+            )
+            if completed.returncode:
+                cause = completed.stderr.strip()
+                if (
+                    "NOT_FOUND" in cause
+                    or "(gcloud.artifacts.docker.images.describe) Image not found." in cause
+                ):
+                    return None
+                raise DeployError(f"Could not read image tag {tag}: {cause}")
+            try:
+                version = json.loads(completed.stdout)["image_summary"]["digest"]
+                if not isinstance(version, str) or not version:
+                    raise ValueError("missing version")
+                return version
+            except (ValueError, KeyError, TypeError) as exc:
+                raise DeployError(f"Image tag {tag} returned no valid version") from exc
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            image = pool.submit(tag_version, self.image_tag)
+            source = pool.submit(tag_version, self.source_tag) if self.source_tag else None
+            released = image.result()
+            matched = source is None or source.result() == released
+        if released is None:
+            state = ResourceState.ABSENT
+        elif matched:
+            state = ResourceState.EXACT
+        else:
+            state = ResourceState.SOURCE_CHANGED
+        return ReleaseGuardPreflight(state)
 
     @staticmethod
     def _service_env(container: Mapping[str, Any]) -> tuple[dict[str, str], dict[str, str]]:
@@ -3474,11 +3521,13 @@ def preflight_release_guard(
 
     from spine import __version__ as spine_version
 
+    deadline = time.monotonic() + STARTUP_RELEASE_GUARD_TIMEOUT_SECONDS
+
     def bounded_runner(argv: Sequence[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
         try:
             return runner(
                 argv,
-                timeout=STARTUP_RELEASE_GUARD_TIMEOUT_SECONDS,
+                timeout=max(0.001, deadline - time.monotonic()),
                 **kwargs,
             )
         except subprocess.TimeoutExpired as exc:

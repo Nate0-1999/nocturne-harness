@@ -22,6 +22,8 @@ from pydantic import BaseModel, ConfigDict, JsonValue
 
 from harness.envelope import EnvelopeFactory
 from harness.spine_client import (
+    ProblemDetail,
+    SpineBusyError,
     SpineClientError,
     SpineProblemError,
     SpineResponseError,
@@ -73,10 +75,17 @@ def never_reached_palace(exc: SpineClientError) -> bool:
 
     if isinstance(exc, SpineTransportError):
         return isinstance(exc.__cause__, (httpx.ConnectError, httpx.ConnectTimeout))
+    if isinstance(exc, SpineBusyError) and exc.status_code == 503:
+        try:
+            ProblemDetail.model_validate_json(exc.response.content, strict=True)
+        except ValueError:
+            pass
+        else:
+            return False
     return (
         isinstance(exc, SpineResponseError)
         and not isinstance(exc, SpineProblemError)
-        and exc.status_code in {403, 404, 503}
+        and exc.status_code in {403, 404, 429, 503}
     )
 
 

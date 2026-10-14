@@ -241,7 +241,7 @@ export interface RackPluginApi {
 }
 
 export type RackActionResult<Action extends RackAction> =
-  Action['type'] extends 'jobs.save' | 'jobs.run' | 'jobs.stop'
+  Action['type'] extends 'jobs.save' | 'jobs.run' | 'jobs.stop' | 'scorer.retrain.status'
     ? JsonValue
     : Action['type'] extends 'thread.create' | 'project.select'
     ? string

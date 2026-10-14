@@ -4238,6 +4238,16 @@ reinforce, ask and refuse stay the Palace's; what it does not accept comes back 
 Palace State. Queueing happens after the check before the Palace, so a queued fact carries no
 withdrawn credential.
 
+## M5RT — Busy Palace requests and background model pins [P1.3, P4]
+
+F195/F196/F209: retry 429/503 twice at the common client boundary, retaining typed Palace
+refusals and the existing narrower rules for lost requests. Confirmed deletions rejected
+before processing join the existing durable outbox. Background extraction, comparison and
+seed splitting use their existing chat role's current policy; an explicit turn model wins.
+The release guard describes the release tag and matching source tag concurrently under one
+six-second deadline. Two exact reads preserve the source-match check without listing the
+registry; the installed gcloud image description omits the other tags on that image.
+
 ## M5RM — One claim stays one memory; Palace refusals keep their reason [P1.2, P1.5]
 
 F208 replayed as five linked memories for one duty. The existing draft and repair prompts

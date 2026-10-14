@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import re
+from collections.abc import Awaitable, Callable
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from enum import StrEnum
@@ -1089,7 +1090,19 @@ class SpineProblemError(SpineResponseError):
     def __init__(self, response: httpx.Response, problem: ProblemDetail) -> None:
         self.problem = problem
         detail = f": {problem.detail}" if problem.detail else ""
-        super().__init__(response, f"Spine returned an RFC 7807 problem{detail}")
+        message = (
+            "The Palace is still busy. Try again shortly."
+            if response.status_code in {429, 503}
+            else "Spine returned an RFC 7807 problem"
+        )
+        super().__init__(response, f"{message}{detail}")
+
+
+class SpineBusyError(SpineResponseError):
+    """The Palace or its cloud front end remained busy after bounded retries."""
+
+    def __init__(self, response: httpx.Response) -> None:
+        super().__init__(response, "The Palace is still busy. Try again shortly.")
 
 
 class CreateMemoryConflictError(SpineResponseError):
@@ -1177,6 +1190,8 @@ class SpineClient:
         self._metrics_scope: str | None = None
         self._owned_queue_items: set[str] = set()
         self._owned_queue_batches: set[UUID] = set()
+        self.on_busy: Callable[[str], Awaitable[None]] | None = None
+        self._busy_requests = 0
         self._client = httpx.AsyncClient(
             base_url=normalized_url,
             headers={
@@ -1692,24 +1707,46 @@ class SpineClient:
         retryable = method == "GET" or (
             method == "POST" and _RETRYABLE_POSTS.fullmatch(path) is not None
         )
-        delays = list(_RETRY_DELAYS) if retryable else []
-        while True:
-            try:
-                return await self._client.request(
-                    method,
-                    path,
-                    json=json_body,
-                    params=params,
-                    timeout=timeout if timeout is not None else httpx.USE_CLIENT_DEFAULT,
-                )
-            except _LOST as exc:
-                if not delays:
-                    # INCIDENT F062: typed transport failure lets optional reads fail locally.
+        delays = list(_RETRY_DELAYS)
+        busy = False
+        recovered = False
+        try:
+            while True:
+                try:
+                    response = await self._client.request(
+                        method,
+                        path,
+                        json=json_body,
+                        params=params,
+                        timeout=timeout if timeout is not None else httpx.USE_CLIENT_DEFAULT,
+                    )
+                    if response.status_code not in {429, 503}:
+                        recovered = True
+                        return response
+                    if not busy:
+                        busy = True
+                        self._busy_requests += 1
+                        if self.on_busy is not None:
+                            await self.on_busy("retrying")
+                    if not delays:
+                        try:
+                            problem = _PROBLEM_DETAIL.validate_json(response.content, strict=True)
+                        except ValueError:
+                            # INCIDENT F195: exhausted cloud busy responses need a plain message.
+                            raise SpineBusyError(response) from None
+                        # INCIDENT F195: preserve the typed refusal after bounded retries.
+                        raise SpineProblemError(response, problem)
+                except _LOST as exc:
+                    if not retryable or not delays:
+                        raise SpineTransportError from exc
+                except httpx.RequestError as exc:
                     raise SpineTransportError from exc
                 await asyncio.sleep(delays.pop(0))
-            except httpx.RequestError as exc:
-                # INCIDENT F062: a request that cannot be sent at all is not retried.
-                raise SpineTransportError from exc
+        finally:
+            if busy:
+                self._busy_requests -= 1
+                if self.on_busy is not None and not self._busy_requests:
+                    await self.on_busy("ready" if recovered else "failed")
 
 
 def _request_body(request: ContractModel) -> JsonObject:
