@@ -633,6 +633,7 @@ def test_rack_spend_table_passes_global_and_attuned_scope_to_one_optional_reader
 
 def test_palace_problem_keeps_its_reason_instead_of_reporting_an_outage() -> None:
     """M5RM / F194 / FL-044: a healthy Palace's refusal reaches the person unchanged."""
+
     async def problem_fixture():
         raise SpineProblemError(
             httpx.Response(409),
