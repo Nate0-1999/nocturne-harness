@@ -1533,14 +1533,21 @@ def test_startup_release_guard_reads_exact_tags_with_one_shared_deadline() -> No
         assert 0 < timeout <= STARTUP_RELEASE_GUARD_TIMEOUT_SECONDS
 
 
-@pytest.mark.parametrize("missing", [True, False])
-def test_release_tag_lookup_distinguishes_absence_from_access_failure(missing: bool) -> None:
+@pytest.mark.parametrize(
+    ("cause", "missing"),
+    [
+        ("NOT_FOUND: tag missing", True),
+        ("ERROR: (gcloud.artifacts.docker.images.describe) Image not found.", True),
+        ("PERMISSION_DENIED: no access", False),
+    ],
+)
+def test_release_tag_lookup_distinguishes_absence_from_access_failure(
+    cause: str, missing: bool
+) -> None:
     """F209: an absent release may deploy; a failed observation must carry its cause."""
 
     def runner(argv, **kwargs):
-        return subprocess.CompletedProcess(
-            argv, 1, "", "NOT_FOUND: tag missing" if missing else "PERMISSION_DENIED: no access"
-        )
+        return subprocess.CompletedProcess(argv, 1, "", cause)
 
     backend = GcloudDeployBackend(image_tag="0.1.0", openrouter_key="fixture", runner=runner)
     if missing:

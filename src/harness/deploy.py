@@ -1890,7 +1890,10 @@ class GcloudDeployBackend:
             )
             if completed.returncode:
                 cause = completed.stderr.strip()
-                if "NOT_FOUND" in cause:
+                if (
+                    "NOT_FOUND" in cause
+                    or "(gcloud.artifacts.docker.images.describe) Image not found." in cause
+                ):
                     return None
                 raise DeployError(f"Could not read image tag {tag}: {cause}")
             try:
