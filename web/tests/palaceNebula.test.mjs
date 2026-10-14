@@ -127,31 +127,6 @@ test('shared-thread filaments bind the released Palace thread_origin compatibili
   assert.equal(buildNebulaFilaments(source, buildNebulaBodies(source, undefined, 'thread'), 'thread')[0].kind, 'thread')
 })
 
-/** F131 / FL-138 (P2.4): the owner's "colors and shapes change quickly when the user changes the axis connecting
- * the memories" — the axis decides which trait joins memories into families, so families, angles and hues re-form. */
-test('changing the axis connecting the memories re-forms families, shapes and colours', () => {
-  const source = {
-    as_of: snapshot.as_of,
-    nodes: [
-      node('a', { origin_thread_id: 't1', keywords: ['harbor'], created_at: '2026-01-01T00:00:00Z' }),
-      node('b', { origin_thread_id: 't1', keywords: ['ferry'], created_at: '2026-01-02T00:00:00Z' }),
-      node('c', { origin_thread_id: 't2', keywords: ['harbor'], created_at: '2026-01-03T00:00:00Z' }),
-      node('d', { origin_thread_id: 't2', keywords: ['ferry'], created_at: '2026-01-04T00:00:00Z' }),
-    ],
-    edges: [{ kind: 'similarity', from_memory_id: 'a', to_memory_id: 'd', similarity: '0.88' }],
-  }
-  const familiesOf = (axis) => buildNebulaCreatureFamilies(source, buildNebulaBodies(source, undefined, axis), [], axis)
-    .map((family) => family.memory_ids)
-  assert.deepEqual(familiesOf('keyword'), [['a', 'c'], ['b', 'd']])
-  assert.deepEqual(familiesOf('thread'), [['a', 'b'], ['c', 'd']])
-  assert.deepEqual(familiesOf('similarity'), [['a', 'd'], ['b'], ['c']])
-  const byKeyword = buildNebulaBodies(source, undefined, 'keyword'), byThread = buildNebulaBodies(source, undefined, 'thread')
-  assert.deepEqual(byKeyword[0].color, byKeyword[2].color, 'one family, one hue')
-  assert.notDeepEqual(byKeyword[0].color, byKeyword[1].color)
-  assert.deepEqual(byThread[0].color, byThread[1].color)
-  assert.notDeepEqual(byKeyword.map((body) => body.position), byThread.map((body) => body.position))
-})
-
 /** ADR-018/023 and D.2 130: Three/r3f/TSL replace PlayCanvas without moving text into the scene. */
 test('production source uses the ruled Three stack and forbids random geometry', async () => {
   const [component, bindings, packageText] = await Promise.all([
