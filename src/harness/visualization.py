@@ -162,7 +162,8 @@ def work_observation(
     roots = {str(default_root.resolve())}
     folds = {} if folds is None else folds
     for entry in journal.catalog():
-        # F202: an archived thread is closed, as on the Deck; listed as a waiting agent, time order sent people to it.
+        # F202: an archived thread is closed, as on the Deck; listed as a waiting agent, time order
+        # sent people to it.
         if entry.workspace_root is None or entry.archived:
             continue
         roots.add(entry.workspace_root)
