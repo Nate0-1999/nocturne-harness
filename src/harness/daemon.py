@@ -113,6 +113,7 @@ from harness.spine_client import (
     SpineClient,
     SpineClientError,
     SpineOwnershipError,
+    SpineProblemError,
     SpineResponseError,
     VitalsAccounting,
     VitalsSnapshot,
@@ -341,6 +342,13 @@ def create_app(
 ) -> FastAPI:
     """Create the daemon with process-scoped H7 state and extensible routing."""
     app = FastAPI(title="NOCTURNE", version=__version__)
+
+    @app.exception_handler(SpineProblemError)
+    async def palace_problem(_request: Request, exc: SpineProblemError) -> JSONResponse:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.problem.detail or exc.problem.title},
+        )
 
     @app.exception_handler(SpineClientError)
     async def palace_failure(_request: Request, exc: SpineClientError) -> JSONResponse:

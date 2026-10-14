@@ -3738,6 +3738,24 @@ button.rack-module__resize-handle--nw {
   text-align: right;
 }
 
+.palace-health-report {
+  margin: 0.55rem 0.65rem;
+  overflow-wrap: anywhere;
+}
+
+.palace-health-report details {
+  margin: 0.5rem 0 0.5rem 0.7rem;
+}
+
+.palace-health-report dl > div {
+  display: flex;
+  gap: 0.7rem;
+}
+
+.palace-health-report pre {
+  white-space: pre-wrap;
+}
+
 .palace-state__gauges {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));

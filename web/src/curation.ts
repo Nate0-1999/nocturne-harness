@@ -6,8 +6,18 @@ export interface CuratorActivityView {
   writes_until_run: number
   pressure_until_run: number
   pending_cards: number
-  latest_run: { status: 'completed' | 'failed'; trigger: string; completed_at: string; review_summary: Record<string, JsonValue> | null } | null
+  latest_run: { status: 'completed' | 'failed'; trigger: string; completed_at: string; review_summary: Record<string, JsonValue> | null; report: HealthReportView | null; error: string | null } | null
   growth: Array<{ at: string; active_units: number; curator_removals: number }>
+}
+
+export interface HealthReportView {
+  version: string
+  as_of: string
+  active_units: number
+  keyword_coverage_percent: string
+  clusters: string[][]
+  stats_delta: Record<string, number>
+  findings: Array<{ ordinal: number; kind: string; evidence: Record<string, JsonValue> }>
 }
 
 export function curatorActivityFrom(value: JsonValue): CuratorActivityView | null {
@@ -22,6 +32,8 @@ export function curatorActivityFrom(value: JsonValue): CuratorActivityView | nul
     status: latest.status === 'completed' ? 'completed' as const : 'failed' as const,
     trigger: typeof latest.trigger === 'string' ? latest.trigger : 'writes',
     completed_at: String(latest.completed_at),
+    report: isObject(latest.report) ? latest.report as unknown as HealthReportView : null,
+    error: typeof latest.error === 'string' ? latest.error : null,
     review_summary: isObject(latest.report) && isObject(latest.report.review_summary)
       && typeof latest.report.review_summary.pair_limit === 'number'
       ? latest.report.review_summary as Record<string, JsonValue> : null,
