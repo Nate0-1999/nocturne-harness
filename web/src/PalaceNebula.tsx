@@ -27,8 +27,10 @@ import {
   buildNebulaCreatureFamilies,
   buildNebulaEvents,
   buildNebulaFilaments,
+  NEBULA_AXES,
   NEBULA_BINDINGS,
   NEBULA_EVENT_COLORS,
+  type NebulaAxis,
   type NebulaBody,
   type NebulaCreatureFamily,
   type NebulaFilament,
@@ -69,6 +71,7 @@ export function PalaceNebula() {
   const rack = useRackSnapshot()
   const visualization = useVisualization()
   const [tier, setTier] = useState<NebulaHardwareTier>('full')
+  const [axis, setAxis] = useState<NebulaAxis>('keyword')
   const [scope, setScope] = useState<'GLOBAL' | 'ATTUNED'>('GLOBAL')
   const [load, setLoad] = useState<LoadState>({ kind: 'loading' })
   // A first live reading slower than 3 s (or failed) lets the recording stand in, so a slow Palace still draws its last
@@ -126,17 +129,17 @@ export function PalaceNebula() {
     if (scope === 'ATTUNED') palace.nodes = palace.nodes.filter((node) => node.memory.origin_thread_id === threadId)
     return palace
   }, [visualization.data, selected?.as_of, scope, threadId, load, patient])
-  const bodies = useMemo(() => sceneSnapshot ? buildNebulaBodies(sceneSnapshot).map((body) => {
+  const bodies = useMemo(() => sceneSnapshot ? buildNebulaBodies(sceneSnapshot, undefined, axis).map((body) => {
     const memory = sceneSnapshot.nodes.find((node) => node.memory.memory_id === body.id)?.memory
     const focused = selected?.kind === 'memory' ? selected.id === body.id
       : selected?.kind === 'agent' ? memory?.origin_thread_id === selected.thread_id
         : selected?.kind === 'thread' ? memory?.origin_thread_id === selected.id
           : selected?.kind === 'path' ? (memory?.origin_location ?? memory?.origin_path) === selected.id : body.in_current_context
     return { ...body, in_current_context: focused }
-  }) : [], [sceneSnapshot, selected])
-  const memoryEvents = useMemo(() => sceneSnapshot ? buildNebulaEvents(sceneSnapshot) : [], [sceneSnapshot])
-  const filaments = useMemo(() => sceneSnapshot ? buildNebulaFilaments(sceneSnapshot, bodies) : [], [sceneSnapshot, bodies])
-  const families = useMemo(() => sceneSnapshot ? buildNebulaCreatureFamilies(sceneSnapshot, bodies, memoryEvents) : [], [sceneSnapshot, bodies, memoryEvents])
+  }) : [], [sceneSnapshot, selected, axis])
+  const memoryEvents = useMemo(() => sceneSnapshot ? buildNebulaEvents(sceneSnapshot, axis) : [], [sceneSnapshot, axis])
+  const filaments = useMemo(() => sceneSnapshot ? buildNebulaFilaments(sceneSnapshot, bodies, axis) : [], [sceneSnapshot, bodies, axis])
+  const families = useMemo(() => sceneSnapshot ? buildNebulaCreatureFamilies(sceneSnapshot, bodies, memoryEvents, axis) : [], [sceneSnapshot, bodies, memoryEvents, axis])
   const curatorProgress = visualization.data?.progress?.events.at(-1)
   const curatorTargets = new Set(curatorProgress?.memory_ids ?? [])
   const ghosts = bodies.filter((body) => curatorTargets.has(body.id))
@@ -160,7 +163,7 @@ export function PalaceNebula() {
   const learning = load.kind === 'ready' ? load.scorer?.learning : undefined
   const contextName = scope === 'GLOBAL' ? 'Whole Palace' : rack.attunement?.name ?? 'Unattuned'
 
-  return <section className="palace-nebula" data-testid="palace-nebula" data-axis="radial" data-tier={tier} data-grammar="torrent-constellation">
+  return <section className="palace-nebula" data-testid="palace-nebula" data-axis={axis} data-tier={tier} data-grammar="torrent-constellation">
     <header className="palace-nebula__header">
       <div className="palace-nebula__title">
         <small>Palace current · {contextName}</small>
@@ -168,6 +171,9 @@ export function PalaceNebula() {
         <p>Every point is a recorded memory event. The graph is the instrument.</p>
       </div>
       <div className="palace-nebula__controls">
+        <label>Axis<Select aria-label="Nebula axis" data-tooltip-detail="What connects the memories: families, colours and links re-form at once." value={axis} onChange={(event) => setAxis(event.target.value as NebulaAxis)}>
+          {(Object.keys(NEBULA_AXES) as NebulaAxis[]).map((key) => <option key={key} value={key}>{NEBULA_AXES[key]}</option>)}
+        </Select></label>
         <label>Render<Select aria-label="Nebula hardware tier" value={tier} onChange={(event) => { setFps(0); setBackend('starting'); setTier(event.target.value as NebulaHardwareTier) }}>
           <option value="full">Full</option><option value="efficient">Efficient</option>
         </Select></label>

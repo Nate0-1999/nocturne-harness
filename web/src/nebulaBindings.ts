@@ -72,7 +72,7 @@ export interface NebulaMemoryEvent {
 
 export interface NebulaFilament {
   id: string
-  kind: 'lineage' | 'thread' | 'keyword'
+  kind: 'lineage' | 'thread' | 'keyword' | 'similarity'
   from: readonly [number, number, number]
   to: readonly [number, number, number]
   color: readonly [number, number, number]
@@ -96,20 +96,29 @@ export const NEBULA_EVENT_COLORS: Record<NebulaEventClass, readonly [number, num
   split: [0.98, 0.42, 0.68],
 }
 
+/** FL-138: the axis connecting the memories — which shared trait joins them into families; switching it re-binds
+ * the families, their angles, colors and filaments at once (the M3GE axis switch, on the radial grant). */
+export type NebulaAxis = 'keyword' | 'thread' | 'similarity'
+export const NEBULA_AXES: Record<NebulaAxis, string> = {
+  keyword: 'Shared keyword',
+  thread: 'Shared thread',
+  similarity: 'Similar meaning',
+}
+
 export const NEBULA_BINDINGS = {
   radial: [
     'Radius · 8 / (1 + injections); most-injected memories gather centrally',
-    'Angle · related family, then creation order within that family',
+    'Angle · family under the chosen axis, then creation order within that family',
     'Depth · memory.revision (linear scale)',
-    'Color · memory.kind (deterministic palette)',
+    'Color · family under the chosen axis (deterministic hue)',
     'Shape · memory.revision (vertical stretch)',
   ],
   shared: [
     'Size · memory.stats.injections (log scale)',
     'Inner glow and bright rim · injections (log), dimmed by age since memory.updated_at',
     'Brighter still · memory.pin or current-context membership; point of light · barely injected',
-    'Filament · lineage; nearest links sharing an origin thread or keyword',
-    'Family · connected by similarity, thread or keyword; curator streams join visited families',
+    'Filament · lineage; nearest links sharing the chosen axis (similar meaning: the Palace similarity edges)',
+    'Family · memories joined by the chosen axis; curator streams join visited families',
   ],
   current: [
     'Particle · one memory revision event (never decorative)',
@@ -124,17 +133,22 @@ export const NEBULA_BINDINGS = {
 export function buildNebulaBodies(
   snapshot: PalaceNebulaSnapshot,
   asOfMs = timestamp(snapshot.as_of),
+  axis: NebulaAxis = 'keyword',
 ): NebulaBody[] {
   const active = snapshot.nodes.filter((node) => node.memory.status === 'active')
   const injections = active.map(injectionCount)
   const revisions = active.map((node) => Math.max(0, node.memory.revision))
-  const families = memoryFamilies(snapshot).map((members) => active
+  const families = memoryFamilies(snapshot, axis).map((members) => active
     .filter((node) => members.includes(node.memory.memory_id))
     .sort((a, b) => timestamp(a.memory.created_at) - timestamp(b.memory.created_at)
       || a.memory.memory_id.localeCompare(b.memory.memory_id))).filter((members) => members.length)
+  // Each family keeps its sector; its members fill the middle 70%, so neighbouring families stand apart.
   const angles = new Map(families.flatMap((members, family) => members.map((node, order) => [
     node.memory.memory_id,
-    -Math.PI / 2 + (family + (order + 0.5) / members.length) / families.length * Math.PI * 2,
+    -Math.PI / 2 + (family + 0.15 + 0.7 * (order + 0.5) / members.length) / families.length * Math.PI * 2,
+  ] as const)))
+  const hues = new Map(families.flatMap((members) => members.map((node) => [
+    node.memory.memory_id, familyColor(members[0].memory.memory_id),
   ] as const)))
 
   return active.map((node, index) => {
@@ -155,7 +169,7 @@ export function buildNebulaBodies(
       kind: node.memory.kind,
       position,
       scale: [radius, radius * stretch, radius],
-      color: colorForKind(node.memory.kind),
+      color: hues.get(node.memory.memory_id)!,
       recency_glow: 0.18 + 0.82 / (1 + ageDays / 14),
       injections: injection,
       pinned: node.memory.pin,
@@ -164,11 +178,12 @@ export function buildNebulaBodies(
   })
 }
 
-export function buildNebulaEvents(snapshot: PalaceNebulaSnapshot): NebulaMemoryEvent[] {
+export function buildNebulaEvents(snapshot: PalaceNebulaSnapshot, axis: NebulaAxis = 'keyword'): NebulaMemoryEvent[] {
+  const asOf = timestamp(snapshot.as_of)
   const anchors = new Map(buildNebulaBodies({ ...snapshot, nodes: snapshot.nodes.map((node) => ({
     ...node, memory: { ...node.memory, status: 'active' },
-  })) }).map((body) => [body.id, body]))
-  for (const body of buildNebulaBodies(snapshot)) anchors.set(body.id, body)
+  })) }, asOf, axis).map((body) => [body.id, body]))
+  for (const body of buildNebulaBodies(snapshot, asOf, axis)) anchors.set(body.id, body)
   const raw = snapshot.nodes.flatMap((node) => node.revisions.map((revision) => ({
     node,
     revision,
@@ -204,23 +219,25 @@ export function buildNebulaEvents(snapshot: PalaceNebulaSnapshot): NebulaMemoryE
 export function buildNebulaFilaments(
   snapshot: PalaceNebulaSnapshot,
   bodies: readonly NebulaBody[],
+  axis: NebulaAxis = 'keyword',
 ): NebulaFilament[] {
   const positions = new Map(bodies.map((body) => [body.id, body.position]))
   const filaments: NebulaFilament[] = (snapshot.edges ?? []).flatMap((edge, index) => {
-    if (edge.kind !== 'lineage' || edge.from_memory_id === edge.to_memory_id) return []
+    const drawn = edge.kind === 'lineage' || (edge.kind === 'similarity' && axis === 'similarity')
+    if (!drawn || edge.from_memory_id === edge.to_memory_id) return []
     const from = positions.get(edge.from_memory_id)
     const to = positions.get(edge.to_memory_id)
     if (from === undefined || to === undefined) return []
     return [{
       id: `${edge.kind}:${edge.from_memory_id}:${edge.to_memory_id}:${index}`,
-      kind: edge.kind,
+      kind: edge.kind === 'lineage' ? 'lineage' : 'similarity',
       from,
       to,
-      color: [0.96, 0.86, 0.74],
+      color: edge.kind === 'lineage' ? [0.96, 0.86, 0.74] : [0.72, 0.68, 0.96],
     } satisfies NebulaFilament]
   })
   const seen = new Set<string>()
-  for (const [key, nodes] of sharedMemoryGroups(snapshot)) {
+  for (const [key, nodes] of sharedMemoryGroups(snapshot, axis)) {
     const members = nodes.filter((node) => positions.has(node.memory.memory_id))
       .sort((a, b) => injectionCount(b) - injectionCount(a) || a.memory.memory_id.localeCompare(b.memory.memory_id))
     for (let index = 1; index < members.length; index++) {
@@ -240,27 +257,29 @@ export function buildNebulaFilaments(
   return filaments
 }
 
-function sharedMemoryGroups(snapshot: PalaceNebulaSnapshot): Map<string, PalaceMemoryNode[]> {
+function sharedMemoryGroups(snapshot: PalaceNebulaSnapshot, axis: NebulaAxis): Map<string, PalaceMemoryNode[]> {
   const groups = new Map<string, PalaceMemoryNode[]>()
   for (const node of snapshot.nodes) {
     const thread = node.memory.origin_thread_id ?? node.memory.thread_origin
-    const keys = (node.memory.keywords ?? []).map((keyword) => keyword.trim().toLowerCase())
+    const keys = axis !== 'keyword' ? [] : (node.memory.keywords ?? []).map((keyword) => keyword.trim().toLowerCase())
       .filter(Boolean).map((keyword) => `keyword:${keyword}`)
-    if (thread) keys.unshift(`thread:${thread}`)
+    if (thread && axis === 'thread') keys.unshift(`thread:${thread}`)
     for (const key of new Set(keys)) groups.set(key, [...(groups.get(key) ?? []), node])
   }
   return groups
 }
 
-function memoryFamilies(snapshot: PalaceNebulaSnapshot): string[][] {
+function memoryFamilies(snapshot: PalaceNebulaSnapshot, axis: NebulaAxis): string[][] {
   const graphIds = new Set(snapshot.nodes.map((node) => node.memory.memory_id))
   const adjacency = new Map([...graphIds].map((id) => [id, new Set<string>()]))
   for (const edge of snapshot.edges ?? []) {
-    if (edge.kind !== 'similarity' || !graphIds.has(edge.from_memory_id) || !graphIds.has(edge.to_memory_id)) continue
+    // Lineage always joins a family (a merge keeps its absorbed relatives); similarity only on its own axis.
+    const joins = edge.kind === 'lineage' || (edge.kind === 'similarity' && axis === 'similarity')
+    if (!joins || !graphIds.has(edge.from_memory_id) || !graphIds.has(edge.to_memory_id)) continue
     adjacency.get(edge.from_memory_id)?.add(edge.to_memory_id)
     adjacency.get(edge.to_memory_id)?.add(edge.from_memory_id)
   }
-  for (const members of sharedMemoryGroups(snapshot).values()) {
+  for (const members of sharedMemoryGroups(snapshot, axis).values()) {
     for (let index = 1; index < members.length; index++) {
       const a = members[index - 1].memory.memory_id, b = members[index].memory.memory_id
       adjacency.get(a)?.add(b); adjacency.get(b)?.add(a)
@@ -289,12 +308,13 @@ export function buildNebulaCreatureFamilies(
   snapshot: PalaceNebulaSnapshot,
   bodies: readonly NebulaBody[],
   events: readonly NebulaMemoryEvent[],
+  axis: NebulaAxis = 'keyword',
 ): NebulaCreatureFamily[] {
   const positions = new Map<string, readonly [number, number, number]>()
   for (const event of events) positions.set(event.memory_id, event.position)
   for (const body of bodies) positions.set(body.id, body.position)
   const families: NebulaCreatureFamily[] = []
-  for (const members of memoryFamilies(snapshot)) {
+  for (const members of memoryFamilies(snapshot, axis)) {
     const anchors = members.flatMap((member) => {
       const position = positions.get(member)
       return position === undefined ? [] : [position]
@@ -353,8 +373,9 @@ function spread(value: number, extent: number): number {
   return (value - 0.5) * extent
 }
 
-function colorForKind(kind: string): readonly [number, number, number] {
-  const hue = (200 + stableHash(kind) % 65) / 360
+/** A family's hue, from its first member's id: the plate's blue-violet range, wide enough that neighbours differ. */
+function familyColor(id: string): readonly [number, number, number] {
+  const hue = (190 + stableHash(id) % 130) / 360
   return hslToRgb(hue, 0.82, 0.36)
 }
 
