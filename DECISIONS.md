@@ -4253,7 +4253,7 @@ Palace refresh, which the page asks for after every snapshot (about one a second
 Symphony runs); the socket dropped and the unread line went with it. Routed requests now run
 in order on their own task, so a prompt is read at once; a request already read still
 finishes when the socket closes. A panel change and a prompt sent right after it are no longer
-strictly ordered; the prompt's memory check reads the context when its turn starts. The page
+strictly ordered (accepted: the panel answers in its own time; a prompt must not wait). The page
 keeps each prompt the daemon has not acknowledged and sends it again, under its own id, once
 the reconnected thread's snapshot lacks it; the run loop runs a prompt id once. The Deck says
 "Clarification logged" only when the stack's interventions hold the line, and shows the
