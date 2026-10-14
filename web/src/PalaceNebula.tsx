@@ -421,18 +421,22 @@ function NebulaMemoryBody({ body, share, arriving, tier, onSelect }: {
   const glow = (0.1 + 0.9 * share) * (0.55 + 0.45 * body.recency_glow) * (focused ? 1.35 : 1)
   const rim = (0.6 + 1.8 * share) * (focused ? 1.6 : 1)
   const point = 1.6 * (1 - share) ** 10
-  const material = useMemo(() => {
+  // FL-138: one material per body for its life; a new axis or count only moves its uniforms. A new material per
+  // change recompiled every body's pipeline, so an axis switch dropped the scene to ~6 fps.
+  const glass = useMemo(() => {
     // Glass: a dark family-tinted body whose reflections come from the studio environment, strongest at the rim.
     const next = new MeshPhysicalNodeMaterial({ metalness: 0, roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1 })
     const facing = normalView.dot(positionViewDirection).abs()
-    const tint = uniform(new Color(red, green, blue))
+    const tint = uniform(new Color()), glowLevel = uniform(0), rimLevel = uniform(0), pointLevel = uniform(0)
     next.colorNode = tint.mul(0.04)
-    next.emissiveNode = tint.mul(facing.pow(3).mul(uniform(glow)))
-      .add(tslColor('#cfe0ff').mul(facing.oneMinus().pow(6).mul(uniform(rim))))
-      .add(tint.mix(tslColor('#f2f6ff'), 0.3).mul(facing.pow(3).mul(uniform(point))))
-    return next
-  }, [red, green, blue, glow, rim, point])
-  useEffect(() => () => material.dispose(), [material])
+    next.emissiveNode = tint.mul(facing.pow(3).mul(glowLevel))
+      .add(tslColor('#cfe0ff').mul(facing.oneMinus().pow(6).mul(rimLevel)))
+      .add(tint.mix(tslColor('#f2f6ff'), 0.3).mul(facing.pow(3).mul(pointLevel)))
+    return { material: next, tint, glowLevel, rimLevel, pointLevel }
+  }, [])
+  useLayoutEffect(() => { lightGlass(glass, [red, green, blue], glow, rim, point) }, [glass, red, green, blue, glow, rim, point])
+  useEffect(() => () => glass.material.dispose(), [glass])
+  const material = glass.material
   return <>
     <mesh ref={meshRef} name={body.label} position={body.position} scale={body.scale} material={material}
       onClick={(event) => { event.stopPropagation(); onSelect(body.id) }}>
@@ -442,6 +446,14 @@ function NebulaMemoryBody({ body, share, arriving, tier, onSelect }: {
       <torusGeometry args={[1, 0.02, 6, 64]} />
     </mesh>
   </>
+}
+
+type GlassUniforms = { tint: { value: Color }; glowLevel: { value: number }; rimLevel: { value: number }; pointLevel: { value: number } }
+function lightGlass(glass: GlassUniforms, [red, green, blue]: readonly number[], glow: number, rim: number, point: number) {
+  glass.tint.value.setRGB(red, green, blue)
+  glass.glowLevel.value = glow
+  glass.rimLevel.value = rim
+  glass.pointLevel.value = point
 }
 
 function NebulaEventTorrent({ events, tier }: { events: readonly NebulaMemoryEvent[]; tier: NebulaHardwareTier }) {
