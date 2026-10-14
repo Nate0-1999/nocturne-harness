@@ -945,6 +945,13 @@ class RetrainResponse(ContractModel):
     reason: StrictStr
 
 
+class RetrainJobView(ContractModel):
+    job_id: NonBlankString
+    status: Literal["pending", "completed", "failed"]
+    result: RetrainResponse | None = None
+    error: StrictStr | None = None
+
+
 class ScorerConfigurationView(ContractModel):
     axes: JsonObject = Field(default_factory=dict)
     project_offsets: JsonObject = Field(default_factory=dict)
@@ -1459,6 +1466,22 @@ class SpineClient:
             "POST", "retrain", params={"principal_id": self._principal_id or "local"}, timeout=360.0
         )
         return _expect_metrics_success(response, adapter=_RETRAIN_RESPONSE)
+
+    async def start_retrain_job(self) -> RetrainJobView:
+        response = await self._request(
+            "POST", "v1/retrain-jobs", params={"principal_id": self._principal_id or "local"}
+        )
+        if response.status_code != 202:
+            _raise_problem(response)
+        return TypeAdapter(RetrainJobView).validate_json(response.content)
+
+    async def retrain_job(self, job_id: str) -> RetrainJobView:
+        response = await self._request(
+            "GET",
+            f"v1/retrain-jobs/{job_id}",
+            params={"principal_id": self._principal_id or "local"},
+        )
+        return _expect_metrics_success(response, adapter=TypeAdapter(RetrainJobView))
 
     async def notify_compaction(self, event_uid: str, thread_id: UUID) -> None:
         response = await self._request(

@@ -4264,3 +4264,10 @@ folder), the open-web consent (thread-scoped, journal-restored).
   root, so a request that only reads ../spine is not judged a write.
 - The parse guard covers new .py files, and the turn's account names changed .py files that do
   not parse. A file URL with a host part is refused as malformed, with its corrected form.
+
+## M5LN — Show the retrain's eventual receipt [P1.2, P2]
+
+F212's ruling moves the console to a start-and-poll job API; a lost status read
+keeps polling the same job, never resubmitting the fit. Both Palace deployment
+paths allocate CPU between requests so the existing worker can finish after the
+start response. Scale-to-zero remains; durable pending jobs resume on startup.

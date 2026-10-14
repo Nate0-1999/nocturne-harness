@@ -139,6 +139,7 @@ export type RackAction =
   | { type: 'scorer.simulate'; injection_id?: string; base_version: string; values: JsonValue; slice_parameter_id: string }
   | { type: 'scorer.force'; event_uid: string; base_version: string; values: JsonValue; simulation_digest: string }
   | { type: 'scorer.retrain' }
+  | { type: 'scorer.retrain.status'; job_id: string }
   | { type: 'scorer.audition'; injection_id: string; proposal_version: string }
   | { type: 'scorer.activate'; event_uid: string; version: string }
   | {
@@ -456,7 +457,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
   injection_console: {
     id: 'injection_console', name: 'Injection Console', version: '1.0.0', class: 'control',
     slot: 'panel', streams: ['scorer.change'],
-    actions: ['scorer.simulate', 'scorer.force', 'scorer.retrain', 'scorer.audition', 'scorer.activate', 'rack.scope.get', 'rack.scope.set'],
+    actions: ['scorer.simulate', 'scorer.force', 'scorer.retrain', 'scorer.retrain.status', 'scorer.audition', 'scorer.activate', 'rack.scope.get', 'rack.scope.set'],
     bindings: [
       'scorer.tau', 'scorer.memory_context_share',
       'scorer.half_life_time_days', 'scorer.half_life_hist_days',
@@ -786,9 +787,11 @@ function dispatchRackAction<Action extends RackAction>(
           }),
         }) as Promise<RackActionResult<Action>>
       case 'scorer.retrain':
-        return fetchJson('/v1/rack/scorers/retrain', {
+        return fetchJson('/v1/rack/scorers/retrain-jobs', {
           method: 'POST',
         }) as Promise<RackActionResult<Action>>
+      case 'scorer.retrain.status':
+        return fetchJson(`/v1/rack/scorers/retrain-jobs/${encodeURIComponent(action.job_id)}`) as Promise<RackActionResult<Action>>
       case 'scorer.audition': {
         return fetchJson('/v1/rack/scorers/audition', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },

@@ -86,6 +86,12 @@ type RetrainResponse = {
   training_pairs: number
   reason: string
 }
+type RetrainJob = {
+  job_id: string
+  status: 'pending' | 'completed' | 'failed'
+  result: RetrainResponse | null
+  error: string | null
+}
 type Snapshot = {
   trainables?: { parameter: string; loop: string; floor: number | null; status: string }[]
   creation?: CreationSummary
@@ -166,6 +172,7 @@ export function InjectionConsole() {
   const [audition, setAudition] = useState<Audition | null>(null)
   const [sliceParameter, setSliceParameter] = useState('scorer.tau')
   const [busy, setBusy] = useState(false)
+  const [retrainJob, setRetrainJob] = useState<string | null>(null)
   const [failure, setFailure] = useState<string | null>(null)
   const [retrainNotice, setRetrainNotice] = useState<LearningNotice | null>(null)
 
@@ -324,20 +331,48 @@ export function InjectionConsole() {
     }
   }
 
+  useEffect(() => {
+    if (retrainJob === null) return
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout>
+    async function poll() {
+      try {
+        const job = await events.dispatch({ type: 'scorer.retrain.status', job_id: retrainJob! }) as unknown as RetrainJob
+        if (cancelled) return
+        if (job.status === 'completed' && job.result !== null) {
+          setRetrainNotice({ copy: job.result.reason, eligibleDispositions: job.result.eligible_dispositions })
+          setFailure(null)
+          setRetrainJob(null)
+          await load(false)
+          return
+        }
+        if (job.status === 'failed') {
+          setRetrainNotice(null)
+          setFailure(job.error ?? 'Retraining failed.')
+          setRetrainJob(null)
+          return
+        }
+        setFailure(null)
+      } catch {
+        if (cancelled) return
+        setFailure('Retrain status is temporarily unavailable. Checking again; the job continues.')
+      }
+      if (!cancelled) timer = globalThis.setTimeout(() => void poll(), POLL_INTERVAL_MS)
+    }
+    void poll()
+    return () => { cancelled = true; globalThis.clearTimeout(timer) }
+  }, [retrainJob, events, load])
+
   async function forceRetrain() {
     setBusy(true)
     setRetrainNotice({ copy: 'Retraining in the background. The current recipe keeps serving.', eligibleDispositions: null })
     try {
-      const result = await events.dispatch({ type: 'scorer.retrain' }) as unknown as RetrainResponse
+      const job = await events.dispatch({ type: 'scorer.retrain' }) as unknown as RetrainJob
       setFailure(null)
-      setRetrainNotice({
-        copy: result.reason,
-        eligibleDispositions: result.eligible_dispositions,
-      })
-      await load(false)
+      setRetrainJob(job.job_id)
     } catch {
       setRetrainNotice(null)
-      setFailure('Retraining could not be completed.')
+      setFailure('Retraining could not be started.')
     } finally {
       setBusy(false)
     }
@@ -411,7 +446,7 @@ export function InjectionConsole() {
               className="retrain-control"
               type="button"
               data-tooltip-detail="Refit the scorer from your gate signals now."
-              disabled={busy}
+              disabled={busy || retrainJob !== null}
               onClick={() => void forceRetrain()}
             >
               {FORCE_RETRAIN_LABEL}

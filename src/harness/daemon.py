@@ -101,6 +101,7 @@ from harness.spine_client import (
     RackScorerAuditionRequest,
     RackScorerForceRequest,
     RackScorerSimulationRequest,
+    RetrainJobView,
     RetrainResponse,
     ScorerAuditionRequest,
     ScorerAuditionResponse,
@@ -340,6 +341,8 @@ def create_app(
     scorer_simulator: ScorerSimulator | None = None,
     scorer_auditioner: ScorerAuditioner | None = None,
     scorer_retrainer: ScorerRetrainer | None = None,
+    scorer_job_starter: Callable[[], Awaitable[RetrainJobView]] | None = None,
+    scorer_job_reader: Callable[[str], Awaitable[RetrainJobView]] | None = None,
     scorer_proposal_activator: ScorerProposalActivator | None = None,
     context_window_reader: ContextWindowReader | None = None,
     overwhelm_reader: OverwhelmReader | None = None,
@@ -588,6 +591,30 @@ def create_app(
             return await scorer_auditioner(body)
         except SpineClientError:
             raise HTTPException(status_code=503, detail="Scorer audition is unavailable.") from None
+
+    @app.post("/v1/rack/scorers/retrain-jobs", status_code=202, response_model=RetrainJobView)
+    async def start_retrain_job() -> RetrainJobView:
+        if scorer_job_starter is None:
+            raise HTTPException(status_code=503, detail="Scorer retraining is unavailable.")
+        try:
+            return await scorer_job_starter()
+        except SpineOwnershipError:
+            raise
+        except SpineClientError:
+            raise HTTPException(
+                status_code=503, detail="Retraining could not be started."
+            ) from None
+
+    @app.get("/v1/rack/scorers/retrain-jobs/{job_id}", response_model=RetrainJobView)
+    async def retrain_job(job_id: str) -> RetrainJobView:
+        if scorer_job_reader is None:
+            raise HTTPException(status_code=503, detail="Scorer retraining is unavailable.")
+        try:
+            return await scorer_job_reader(job_id)
+        except SpineOwnershipError:
+            raise
+        except SpineClientError:
+            raise HTTPException(status_code=503, detail="Retrain status is unavailable.") from None
 
     @app.post("/v1/rack/scorers/retrain", response_model=RetrainResponse)
     async def retrain_scorer() -> RetrainResponse:
@@ -1248,6 +1275,12 @@ def create_dev_app(
     async def retrain_scorer() -> RetrainResponse:
         return await owned_spine.retrain()
 
+    async def start_retrain_job() -> RetrainJobView:
+        return await owned_spine.start_retrain_job()
+
+    async def read_retrain_job(job_id: str) -> RetrainJobView:
+        return await owned_spine.retrain_job(job_id)
+
     async def activate_scorer(
         version: str, body: RackScorerActivateRequest
     ) -> ScorerConfigurationView:
@@ -1828,6 +1861,8 @@ def create_dev_app(
         scorer_simulator=simulate_scorer,
         scorer_auditioner=audition_scorer,
         scorer_retrainer=retrain_scorer,
+        scorer_job_starter=start_retrain_job,
+        scorer_job_reader=read_retrain_job,
         scorer_proposal_activator=activate_scorer,
         context_window_reader=context_windows.snapshot,
         overwhelm_reader=overwhelm.snapshot,
