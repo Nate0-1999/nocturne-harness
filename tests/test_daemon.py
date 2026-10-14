@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
+import threading
+import time
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
@@ -2002,6 +2004,47 @@ def test_ws_custom_route_overrides_known_loop_handler(tmp_path: Path) -> None:
     assert response["type"] == "error"
     assert response["payload"] == "routed"
     assert routed == [MessageType.PROMPT_SUBMIT]
+
+
+def test_ws_reads_a_prompt_while_a_routed_request_waits_on_the_palace(tmp_path: Path) -> None:
+    """INCIDENT F193: a steering line typed while the memory panel's refresh waited on the
+    Palace sat unread behind it until the socket dropped, and was lost; the prompt now starts
+    while the routed request is still waiting, and the routed request still finishes.
+    """
+    release = threading.Event()
+    routed: list[str] = []
+
+    async def palace_bound(message: Envelope, send: EnvelopeSender) -> None:
+        while not release.is_set():
+            await asyncio.sleep(0.01)
+        routed.append(message.id)
+
+    factory = EnvelopeFactory(machine_id="daemon-test")
+    app = create_app(
+        tmp_path,
+        run_loop=RunLoop(CancellableRunner(), factory),
+        envelope_factory=factory,
+        routes={MessageType.MEMORY_PANEL_UPDATE: palace_bound},
+    )
+
+    with TestClient(app) as client, client.websocket_connect("/ws") as websocket:
+        # The Palace answers a second later; the prompt must not wait for it.
+        threading.Timer(1.0, release.set).start()
+        websocket.send_json(
+            frame("memory.panel.update", {"action": "refresh"}, message_id=SECOND_PROMPT_ID)
+        )
+        websocket.send_json(frame("prompt.submit", {"prompt": "steer"}))
+        started = websocket.receive_json()
+        assert started["type"] == "run.started"
+        assert started["payload"]["prompt_id"] == PROMPT_ID
+        assert routed == []
+        receive_until(websocket, "run.done")
+        for _ in range(300):
+            if routed:
+                break
+            time.sleep(0.01)
+
+    assert routed == [SECOND_PROMPT_ID]
 
 
 def test_ws_handler_may_stream_multiple_valid_envelopes(tmp_path: Path) -> None:

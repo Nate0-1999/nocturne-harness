@@ -218,6 +218,40 @@ async def test_interjection_steers_active_run_without_starting_or_reordering_a_t
     await loop.close()
 
 
+@pytest.mark.asyncio
+async def test_a_resent_prompt_id_runs_once_whether_active_queued_or_finished():
+    """INCIDENT F193: the page re-sends a prompt a dropped connection may have lost; a prompt
+    id the daemon already holds starts no second run, at any point in its life."""
+    control = TurnControl()
+    queued = TurnControl()
+    runner = ControlledRunner({"work": control, "later": queued})
+    loop = RunLoop(runner, factory(Ids()))
+    sink = Sink()
+    run_id = await loop.submit(thread_id="thread-1", prompt_id=ulid(1), prompt="work", sink=sink)
+    await asyncio.wait_for(control.entered.wait(), TEST_TIMEOUT)
+    later_id = await loop.submit(thread_id="thread-1", prompt_id=ulid(2), prompt="later", sink=sink)
+    assert (
+        await loop.submit(thread_id="thread-1", prompt_id=ulid(1), prompt="work", sink=sink)
+        == run_id
+    )
+    assert (
+        await loop.submit(thread_id="thread-1", prompt_id=ulid(2), prompt="later", sink=sink)
+        == later_id
+    )
+    control.release.set()
+    await asyncio.wait_for(queued.entered.wait(), TEST_TIMEOUT)
+    queued.release.set()
+    await _wait_for_done_count(sink, 2)
+    assert (
+        await loop.submit(thread_id="thread-1", prompt_id=ulid(1), prompt="work", sink=sink)
+        == run_id
+    )
+    assert [call[1] for call in runner.calls] == ["work", "later"]
+    users = [m for m in loop._threads["thread-1"].messages if m["role"] == "user"]
+    assert [m["message_id"] for m in users] == [ulid(1), ulid(2)]
+    await loop.close()
+
+
 class BoundaryRunner:
     def __init__(self) -> None:
         self.decision: str | None = None
