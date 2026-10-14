@@ -40,6 +40,7 @@ from harness.spine_client import (
     SearchResponse,
     SimilarityMemoryCard,
     SimilarMemoriesResponse,
+    SpineBusyError,
     SpineClientError,
     SpineProblemError,
     SpineResponseError,
@@ -461,7 +462,9 @@ def _render_unit(unit: MemoryUnit) -> str:
 
 
 def render_spine_error(action: str, exc: SpineClientError) -> str:
-    if isinstance(exc, SpineTransportError):
+    if isinstance(exc, SpineBusyError):
+        detail = "The Palace is still busy. Try again shortly."
+    elif isinstance(exc, SpineTransportError):
         detail = "memory service unavailable"
     elif isinstance(exc, SpineProblemError):
         detail = (

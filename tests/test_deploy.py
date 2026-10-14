@@ -1508,7 +1508,7 @@ def test_released_image_requires_the_matching_packaged_source_tag() -> None:
     assert step.detail == "this version is already released; bump the spine version to ship changes"
 
 
-def test_startup_release_guard_uses_exactly_one_artifact_registry_probe() -> None:
+def test_startup_release_guard_reads_exact_tags_with_one_shared_deadline() -> None:
     """M2LC2, SPEC D.2 112, and B.6 rule 12 limit startup to the one
     immutable-image fact needed after the Palace health probe; it must not enter the
     20-stage deploy observation.
@@ -1518,28 +1518,36 @@ def test_startup_release_guard_uses_exactly_one_artifact_registry_probe() -> Non
 
     def runner(argv: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
         calls.append((tuple(argv), float(kwargs["timeout"])))
-        return subprocess.CompletedProcess(argv, 0, "[]", "")
+        return subprocess.CompletedProcess(
+            argv, 0, json.dumps({"image_summary": {"digest": "sha256:fixture"}}), ""
+        )
 
     actual = preflight_release_guard(openrouter_key="fixture", runner=runner)
 
-    assert actual == ReleaseGuardPreflight(ResourceState.ABSENT)
+    assert actual == ReleaseGuardPreflight(ResourceState.EXACT)
     assert actual.blocked is False
-    assert calls == [
-        (
-            (
-                "gcloud",
-                "artifacts",
-                "docker",
-                "images",
-                "list",
-                IMAGE_PACKAGE,
-                "--include-tags",
-                f"--project={PROJECT_ID}",
-                "--format=json",
-            ),
-            STARTUP_RELEASE_GUARD_TIMEOUT_SECONDS,
+    assert len(calls) == 2
+    for argv, timeout in calls:
+        assert argv[:5] == ("gcloud", "artifacts", "docker", "images", "describe")
+        assert argv[5].startswith(f"{IMAGE_PACKAGE}:")
+        assert 0 < timeout <= STARTUP_RELEASE_GUARD_TIMEOUT_SECONDS
+
+
+@pytest.mark.parametrize("missing", [True, False])
+def test_release_tag_lookup_distinguishes_absence_from_access_failure(missing: bool) -> None:
+    """F209: an absent release may deploy; a failed observation must carry its cause."""
+
+    def runner(argv, **kwargs):
+        return subprocess.CompletedProcess(
+            argv, 1, "", "NOT_FOUND: tag missing" if missing else "PERMISSION_DENIED: no access"
         )
-    ]
+
+    backend = GcloudDeployBackend(image_tag="0.1.0", openrouter_key="fixture", runner=runner)
+    if missing:
+        assert backend.release_guard_preflight().image_state is ResourceState.ABSENT
+    else:
+        with pytest.raises(DeployError, match="PERMISSION_DENIED"):
+            backend.release_guard_preflight()
 
 
 def test_startup_release_guard_timeout_is_a_plain_read_failure() -> None:
