@@ -2,22 +2,18 @@
   "packet": "M5VW",
   "mode": "builder",
   "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
-  "ledger_sha256": "2b5b419689417ba5d774c56c23128230b85e2c4ddc8ff765a7f2ffeaeb0d855c",
+  "ledger_sha256": "dec8a59cf6fa8ad65fdd6475f8ce51b47e55474637d94500ff3b1946ba4112fa",
   "diffs": [
     {
       "repo": "harness",
-      "base": "6412f6d7dea5a1667138d47703ef03fc00629b37",
-      "head": "e86918da71a951b869b49d5086fffda9e7a9e396"
+      "base": "80eb19256561a8cda7d5dde0a5d23424f5ae5c02",
+      "head": "4333e2e49a9f3f5b30c62afe468beef21fcb737e"
     }
   ],
   "unmapped": {
     "harness/DECISIONS.md": "M5VW decision journal; no feature behavior.",
     "harness/src/harness/__init__.py": "paired release version 0.1.79; no feature behavior.",
     "harness/tests/test_visualization.py": "an existing visualization test adapted to the open-threads catalog entry; no feature behavior.",
-    "harness/web/dist/assets/index-B1wEpAOO.js": "the built web bundle of the M5VW source changes (an older bundle removed); the rows its sources map carry the evidence.",
-    "harness/web/dist/assets/index-DcKBRdTm.js": "the built web bundle of the M5VW source changes (an older bundle removed); the rows its sources map carry the evidence.",
-    "harness/web/dist/index.html": "the built web bundle of the M5VW source changes (an older bundle removed); the rows its sources map carry the evidence.",
-    "harness/web/tests/palaceNebula.test.mjs": "existing nebula tests adapted to the axis; no feature behavior.",
     "harness/verification/m5vw/FL-009.png": "M5VW evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m5vw/FL-046.png": "M5VW evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m5vw/FL-069.png": "M5VW evidence (report, captures, receipts, checksums); no feature behavior.",
@@ -46,8 +42,12 @@
     "harness/verification/m5vw/FL-199.png": "M5VW evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m5vw/FL-201.png": "M5VW evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m5vw/SHA256SUMS": "M5VW evidence (report, captures, receipts, checksums); no feature behavior.",
-    "harness/verification/m5vw/impacted.json": "M5VW evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m5vw/ledger-report.json": "M5VW evidence (report, captures, receipts, checksums); no feature behavior.",
+    "harness/web/dist/assets/index-B-SubKUS.js": "the built web bundle of the M5VW source changes (an older bundle removed); the rows its sources map carry the evidence.",
+    "harness/web/dist/assets/index-D-A9qSrX.js": "the built web bundle of the M5VW source changes (an older bundle removed); the rows its sources map carry the evidence.",
+    "harness/web/dist/index.html": "the built web bundle of the M5VW source changes (an older bundle removed); the rows its sources map carry the evidence.",
+    "harness/web/tests/palaceNebula.test.mjs": "existing nebula tests adapted to the axis; no feature behavior.",
+    "harness/verification/m5vw/impacted.json": "M5VW evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/web/dist/assets/index-DETrAK3_.js": "an intermediate web bundle an earlier M5VW commit built (later replaced); the rows its sources map carry the evidence.",
     "harness/web/dist/assets/index-DK7RNskZ.js": "an intermediate web bundle an earlier M5VW commit built (later replaced); the rows its sources map carry the evidence.",
     "harness/web/dist/assets/index-Dd7EMVxx.js": "an intermediate web bundle an earlier M5VW commit built (later replaced); the rows its sources map carry the evidence.",
@@ -89,7 +89,7 @@
       "verdict": "PASS",
       "screenshot": "FL-132.png",
       "flag": "",
-      "observed": "Three consecutive fresh runs (fix-11, fix-12, fix-13) of the scout's own scripts (garden verification/m4w1b/helpers/f deck.js + viz.js; helpers/e ga1.js and fl138.js, the axis gesture added) on the final build (Harness 1a53d2a9 merged with main at 0.1.76), on test-m5vw through real OpenRouter, every role pinned to gpt-4.1-mini. Each run: two threads (atlas, beacon) left waiting, earlier runs' threads archived with their replies still waiting; the Farm started on the other agent, Time order moved the Conversation and the Farm's marked row to the longest-waiting OPEN reply (Beacon) and the Roots tint followed. /v1/visualization listed 2 waiting agents each run; on public 0.1.70 the same script listed 4 and moved to an archived thread (before/fl132-run-2). No 'Restoring thread'. An agent picked at a recorded moment whose thread was archived since says '\u2026 is archived; its conversation is closed.' and the Conversation stays where it was (neighbours/F202-archived-pick.png)."
+      "observed": "Three consecutive fresh runs (fix-11, fix-12, fix-13) of the scout's own scripts (garden verification/m4w1b/helpers/f deck.js + viz.js; helpers/e ga1.js and fl138.js, the axis gesture added) on the final build (Harness 1a53d2a9 merged with main at 0.1.76), on test-m5vw through real OpenRouter, every role pinned to gpt-4.1-mini. Each run: two threads (atlas, beacon) left waiting, earlier runs' threads archived with their replies still waiting; the Farm started on the other agent, Time order moved the Conversation and the Farm's marked row to the longest-waiting OPEN reply (Beacon) and the Roots tint followed. /v1/visualization listed 2 waiting agents each run; on public 0.1.70 the same script listed 4 and moved to an archived thread (before/fl132-run-2). No 'Restoring thread'. An agent picked at a recorded moment whose thread was archived since says '\u2026 is archived; its conversation is closed.' and the Conversation stays where it was (neighbours/F202-archived-pick.png). The public pair installed from PyPI (nocturne-harness and nocturne-memory 0.1.79, 2026-10-14T15:31Z) carries the change: visualization.py skips archived threads and the shipped bundle holds the Nebula axis select and the archived-pick note (receipts/public-install.log)."
     },
     "FL-134": {
       "label": "A way to see things being added or removed over time, as SolidWorks does, the project growing like an organic object.",
@@ -144,15 +144,6 @@
       "screenshot": "FL-194.png",
       "flag": "F086",
       "observed": "Context only: the paired release's Memory pin in harness/pyproject.toml maps this row, so it is required; M5VW changed only the version there. Its own gesture was not repeated in this packet; no new PASS or regression is claimed. The capture is the final build on test-m5vw."
-    },
-    "FL-196": {
-      "label": "The rules machine checks citations, frozen law, product vocabulary, seed states and packet precedents.",
-      "walk": "Remove a guard citation on a disposable branch and observe CI fail; change a frozen axiom and observe the freeze step fail; restore both and observe Rules pass. The master ADR check remains red until the owner applies the citation patch.",
-      "protected": true,
-      "verdict": "FAIL",
-      "screenshot": "FL-196.png",
-      "flag": "F086",
-      "observed": "Context only: F213 frozen into harness/docs/frozen-law.json maps this row. The rules machine ran green locally on the release head (check_rules Product rules PASS, guard citations PASS, test motivations PASS, the rules node tests 12/12); the gate's audit judges the row. The capture is the final build's Sheet."
     },
     "FL-199": {
       "label": "Icons on buttons for the common things people would understand: a button whose meaning has a known icon (send, stop, add, remove, delete, refresh, open, settings, play, pause) carries it; primary actions show icon and word, row actions the icon alone with a tip; unusual actions keep their word; one icon set across every module and theme.",
@@ -233,7 +224,7 @@
       "verdict": "PASS",
       "screenshot": "FL-138.png",
       "flag": "",
-      "observed": "Three consecutive fresh runs (fix-11, fix-12, fix-13) of the scout's own scripts (garden verification/m4w1b/helpers/f deck.js + viz.js; helpers/e ga1.js and fl138.js, the axis gesture added) on the final build (Harness 1a53d2a9 merged with main at 0.1.76), on test-m5vw through real OpenRouter, every role pinned to gpt-4.1-mini. fl138.js found the control the scout looked for (select 'Nebula axis': Shared keyword / Shared thread / Similar meaning) and switched it three ways each run: the scene reported the new axis in 15-59 ms, the families re-formed (e.g. 99 \u2192 14 \u2192 286 \u2192 99) and the colours with them (each family one hue; points, clouds and filaments carry it), and the frame rate stayed 55-74 fps in the three seconds after each switch (on the pre-final build a switch dropped it to ~6 fps; one material per memory fixed it). Whether it reads 'super liquid and smooth' at the upper end stays with the owner's eye."
+      "observed": "Three consecutive fresh runs (fix-11, fix-12, fix-13) of the scout's own scripts (garden verification/m4w1b/helpers/f deck.js + viz.js; helpers/e ga1.js and fl138.js, the axis gesture added) on the final build (Harness 1a53d2a9 merged with main at 0.1.76), on test-m5vw through real OpenRouter, every role pinned to gpt-4.1-mini. fl138.js found the control the scout looked for (select 'Nebula axis': Shared keyword / Shared thread / Similar meaning) and switched it three ways each run: the scene reported the new axis in 15-59 ms, the families re-formed (e.g. 99 \u2192 14 \u2192 286 \u2192 99) and the colours with them (each family one hue; points, clouds and filaments carry it), and the frame rate stayed 55-74 fps in the three seconds after each switch (on the pre-final build a switch dropped it to ~6 fps; one material per memory fixed it). Whether it reads 'super liquid and smooth' at the upper end stays with the owner's eye. The public pair installed from PyPI (nocturne-harness and nocturne-memory 0.1.79, 2026-10-14T15:31Z) carries the change: visualization.py skips archived threads and the shipped bundle holds the Nebula axis select and the archived-pick note (receipts/public-install.log)."
     },
     "FL-139": {
       "label": "The 3D memory palace shows curation as it happens: curators combining and separating memories in real time, tied to live feeds.",
@@ -288,6 +279,15 @@
       "screenshot": "FL-193.png",
       "flag": "F086",
       "observed": "Context only: the paired release's Memory pin in harness/pyproject.toml maps this row, so it is required; M5VW changed only the version there. Its own gesture was not repeated in this packet; no new PASS or regression is claimed. The capture is the final build on test-m5vw."
+    },
+    "FL-196": {
+      "label": "The rules machine checks citations, frozen law, product vocabulary, seed states and packet precedents.",
+      "walk": "Remove a guard citation on a disposable branch and observe CI fail; change a frozen axiom and observe the freeze step fail; restore both and observe Rules pass. The master ADR check remains red until the owner applies the citation patch.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-196.png",
+      "flag": "F086",
+      "observed": "Context only: F213 frozen into harness/docs/frozen-law.json maps this row. The rules machine ran green locally on the release head (check_rules Product rules PASS, guard citations PASS, test motivations PASS, the rules node tests 12/12); the gate's audit judges the row. The capture is the final build's Sheet."
     }
   },
   "not_run": {
@@ -464,6 +464,7 @@
     "FL-188": "unverified",
     "FL-189": "dropped",
     "FL-195": "outside diff",
+    "FL-196": "outside diff",
     "FL-198": "outside diff",
     "FL-200": "outside diff",
     "FL-202": "outside diff",
