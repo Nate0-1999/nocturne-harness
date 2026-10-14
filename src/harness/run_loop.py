@@ -824,6 +824,7 @@ class RunLoop:
             active = None if state is None else state.active
             waiting = None if active is None else active.boundary_decision
             if active is None or active.turn.run_id != run_id or waiting is None or waiting.done():
+                # F198: an answer belongs to the card its own run still waits on.
                 raise ValueError("No boundary card is waiting on this run.")
             waiting.set_result(decision)
 

@@ -447,7 +447,10 @@ async def test_an_allowed_crossing_opens_only_its_own_wall(tmp_path: Path) -> No
     assert refused.boundary == "workspace" and refused.boundary_target == other.resolve()
     assert crossed.success and "curl" in crossed.content, crossed.content
     assert (other / "notes.txt").read_text() == "probe\n", appended.content
-    assert not stayed.success and "write or edit its files by full path" in stayed.content
+    assert not stayed.success and stayed.content == (
+        f"{other.resolve()} is outside this workspace; the owner allowed writes there, so "
+        "write or edit its files by full path, or run commands on them from here."
+    )
     assert toolset.location().cwd == workspace.resolve()
     assert secret.boundary == "credentials"
 
