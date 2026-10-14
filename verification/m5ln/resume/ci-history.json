@@ -1242,5 +1242,11 @@
       }
     ]
   },
-  "preserved_failures": "Earlier failure entries and saved logs remain authoritative for failed attempts even where a successful rerun replaces the API conclusion."
+  "preserved_failures": "Earlier failure entries and saved logs remain authoritative for failed attempts even where a successful rerun replaces the API conclusion.",
+  "final_handoff_initial_failure": {
+    "run": 38536896268,
+    "job": 115761849318,
+    "cause": "DONE history includes intermediate generated bundles absent from the net diff; explicit no-runtime-impact declarations added for those historical generated paths.",
+    "log": "checks/final-harness-impact-initial.log"
+  }
 }
