@@ -383,6 +383,34 @@ async def test_worktree_worker_creates_a_folder_and_commits_without_touching_par
     assert not (root / "scratch").exists()
 
 
+@pytest.mark.asyncio
+async def test_a_fresh_clone_shell_keeps_tool_caches_in_scratch_and_names_the_download_step(
+    tmp_path: Path,
+) -> None:
+    """F197: in the M4W1B hour `uv run` failed writing ~/.cache/uv, then on downloads, and the
+    agent could not tell the person what to run. Caches live in the shell's scratch; a failed
+    download names the command to run once in the person's own terminal."""
+    if not Path("/usr/bin/sandbox-exec").is_file():
+        pytest.skip("the standing hard shell fence is macOS sandbox-exec")
+
+    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    lookup = "python3 -c \"import socket; socket.getaddrinfo('pypi.org', 443)\""
+    try:
+        cached = await toolset.execute(
+            "bash", {"command": 'mkdir -p "$XDG_CACHE_HOME/uv" && echo cache-ok'}
+        )
+        offline = await toolset.execute("bash", {"command": lookup})
+    finally:
+        await toolset.close()
+
+    assert "cache-ok" in cached.content and "not permitted" not in cached.content, cached.content
+    assert offline.content.endswith(
+        "Nocturne's shell has no network access, so this command could not download what it "
+        "needs. Tell the person to run it once in their own terminal, where downloads work: "
+        f"cd {tmp_path.resolve()} && {lookup}"
+    ), offline.content
+
+
 def test_upstream_skills_gain_model_visible_bundled_resources(tmp_path: Path) -> None:
     """D.2 136 closes M3PV's resource gap without patching the dependency. [ADR-013, ADR-015]"""
 

@@ -98,6 +98,16 @@ _SHELL_WRITE_REMEDY = (
     "The shell writes only inside {location}. Move to the folder you need to change and "
     "run the command there; git commands on this repository work from any folder inside it."
 )
+_NO_NETWORK = re.compile(
+    r"nodename nor servname|could not resolve host|getaddrinfo|name resolution|"
+    r"network is unreachable",
+    re.IGNORECASE,
+)
+_SHELL_NETWORK_REMEDY = (
+    "Nocturne's shell has no network access, so this command could not download what it "
+    "needs. Tell the person to run it once in their own terminal, where downloads work: "
+    "cd {location} && {command}"
+)
 
 
 def _kill_command_group(marker: str) -> None:
@@ -717,6 +727,11 @@ class PydanticHarnessToolset:
         if "operation not permitted" in result.lower():
             # F134 (M3EX-02): the sandbox's refusal names the movement remedy.
             result += "\n" + _SHELL_WRITE_REMEDY.format(location=self._location.cwd)
+        if _NO_NETWORK.search(result):
+            # F197 (M4W1B hour): a fresh clone's first test run needs downloads; say who can.
+            result += "\n" + _SHELL_NETWORK_REMEDY.format(
+                location=self._location.cwd, command=arguments.get("command")
+            )
         root = self._location.workspace_root
         for missing in (
             found.group(1) for pattern in _MISSING_PATHS for found in pattern.finditer(result)
@@ -867,6 +882,8 @@ class PydanticHarnessToolset:
             "LANG": os.environ.get("LANG", "en_US.UTF-8"),
             "TMPDIR": str(self._scratch),
             "NO_COLOR": os.environ.get("NO_COLOR", "1"),
+            # F197 (M4W1B hour): uv's cache in ~/.cache is outside the walls; the scratch is not.
+            "XDG_CACHE_HOME": str(self._scratch / "cache"),
         }
         # F177 (M4AH): code the agent runs reads the app's home, never the owner's ~/.nocturne.
         for optional in ("LC_ALL", "TERM", "NOCTURNE_HOME"):
