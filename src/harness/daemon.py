@@ -121,6 +121,7 @@ from harness.symphony_experience import SymphonyExperience
 from harness.symphony_runtime import SymphonyExecution, remove_kept_worktrees
 from harness.tool_inventory import ToolInventory, ToolsetSelection, inventory
 from harness.tools_memory import MemoryToolContext
+from harness.toolset import Crossings
 from harness.toolset_runtime import LazyStandardToolset
 from harness.transcript import TranscriptJournal, TranscriptJournalUnavailable
 from harness.transcript_sync import TranscriptSyncEngine
@@ -986,7 +987,7 @@ def create_dev_app(
             on_move=record_move,
         )
         toolset.set_browser_consent_check(browser_consent_was_journaled)
-        toolset.crossings.journaled = lambda wall: crossing_was_journaled(thread_id, wall)
+        toolset.crossings.journaled = lambda: journaled_crossings(thread_id)
         workspace_toolsets[thread_id] = toolset
         return toolset
 
@@ -1136,20 +1137,21 @@ def create_dev_app(
         outbox=outbox,
     )
 
-    def crossing_was_journaled(thread_id: str, wall: str) -> bool:
+    def journaled_crossings(thread_id: str) -> set[str]:
         """F198: Allow for this thread holds for the thread across restarts."""
         try:
-            return any(
-                event.get("event_kind") == "boundary_card"
-                and event.get("decision") == "allowed_thread"
-                and event.get("wall") == wall
+            return {
+                Crossings.entry(str(event.get("wall")), Path(target) if target else None)
                 for message in journal.read_messages(thread_id)
                 if message.get("role") == "assistant"
                 for event in message.get("events") or ()
                 if isinstance(event, dict)
-            )
+                and event.get("event_kind") == "boundary_card"
+                and event.get("decision") == "allowed_thread"
+                for target in (event.get("targets") or [None])
+            }
         except TranscriptJournalUnavailable:
-            return False
+            return set()
 
     def browser_consent_was_journaled(thread_id: str) -> bool:
         try:

@@ -424,18 +424,31 @@ async def test_an_allowed_crossing_opens_only_its_own_wall(tmp_path: Path) -> No
     if not Path("/usr/bin/sandbox-exec").is_file():
         pytest.skip("the standing hard shell fence is macOS sandbox-exec")
 
-    (tmp_path / ".env").write_text("KEY=1\n")
-    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    workspace, other = tmp_path / "workspace", tmp_path / "other"
+    workspace.mkdir()
+    other.mkdir()
+    (workspace / ".env").write_text("KEY=1\n")
+    append = {"command": f"echo probe >> {other}/notes.txt"}
+    toolset = await open_standard_toolset(cwd=workspace, workspace_root=workspace)
     try:
         walled = await toolset.execute("bash", {"command": "echo curl"})
-        toolset.crossings.turn.add("remote")
+        fenced = await toolset.execute("bash", append)
+        refused = await toolset.execute("move", {"path": "../other"})
+        toolset.crossings.turn.update({"remote", f"workspace:{other.resolve()}"})
         crossed = await toolset.execute("bash", {"command": "echo curl"})
+        appended = await toolset.execute("bash", append)
+        stayed = await toolset.execute("move", {"path": "../other"})
         secret = await toolset.execute("read", {"path": ".env"})
     finally:
         await toolset.close()
 
     assert walled.boundary == "remote" and not walled.success
+    assert "operation not permitted" in fenced.content.lower()
+    assert refused.boundary == "workspace" and refused.boundary_target == other.resolve()
     assert crossed.success and "curl" in crossed.content, crossed.content
+    assert (other / "notes.txt").read_text() == "probe\n", appended.content
+    assert not stayed.success and "write or edit its files by full path" in stayed.content
+    assert toolset.location().cwd == workspace.resolve()
     assert secret.boundary == "credentials"
 
 

@@ -211,7 +211,9 @@ class PydanticAITurnRunner:
         )
         model_settings = _model_settings(model_resolution, thread_id)
 
-        async def review_boundary(wall: str, reason: str) -> str | None:
+        async def review_boundary(
+            wall: str, reason: str, targets: Sequence[Path] = ()
+        ) -> str | None:
             """None once the owner allowed the crossing; otherwise what the model reads."""
             if not PermissionJudge.needs_owner(wall):
                 return reason + " The PermissionJudge says to move within the existing workspace."
@@ -224,6 +226,7 @@ class PydanticAITurnRunner:
                 "reason": reason,
                 "run_id": emit.run_id,
                 "card_id": generate_ulid(),
+                "targets": [str(target) for target in targets],
                 "created_at": self._clock().isoformat(),
                 "action": "Use a separate thread rooted at the required folder."
                 if wall == "workspace"
@@ -248,7 +251,9 @@ class PydanticAITurnRunner:
                 raise _BoundaryCardReleased(
                     "You denied this crossing on the Deck. Nothing was done across the wall."
                 )
-            (crossings.thread if decision == "allowed_thread" else crossings.turn).add(wall)
+            (crossings.thread if decision == "allowed_thread" else crossings.turn).update(
+                [crossings.entry(wall, target) for target in targets] or [wall]
+            )
             return None
 
         async def record_extraction(messages):
@@ -561,6 +566,10 @@ class PydanticAITurnRunner:
                     .resolve()
                     .is_relative_to(location.workspace_root)
                 ]
+                folders = []
+                for path in outside:
+                    resolved = (location.cwd / Path(path).expanduser()).resolve()
+                    folders.append(resolved if resolved.is_dir() else resolved.parent)
                 await emit.event(
                     {
                         "event_kind": "boundary_judgment",
@@ -575,6 +584,7 @@ class PydanticAITurnRunner:
                         "workspace",
                         f"{judged.output.reason} Writes outside {location.workspace_root}: "
                         f"{', '.join(outside)}.",
+                        tuple(dict.fromkeys(folders)),
                     )
 
             prior_history = _strip_all_proposed_response_blocks(

@@ -303,7 +303,11 @@ async def _execute_workspace_tool(
     except (ToolsetError, OSError, ValueError) as exc:
         return f"{tool_name} refused: {str(exc).strip() or type(exc).__name__}"
     if result.boundary is not None and ctx.deps.boundary_review is not None:
-        reviewed = await ctx.deps.boundary_review(result.boundary, result.content)
+        reviewed = await ctx.deps.boundary_review(
+            result.boundary,
+            result.content,
+            () if result.boundary_target is None else (result.boundary_target,),
+        )
         if reviewed is not None:
             return reviewed
         # F198: the owner allowed the crossing on its card; the call runs as asked.

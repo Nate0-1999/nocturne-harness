@@ -179,17 +179,14 @@ async def test_workspace_crossing_is_judge_released_to_deck(
 @pytest.mark.parametrize("decision", ["allowed_once", "allowed_thread", "denied"])
 async def test_a_boundary_card_waits_for_the_owners_answer(tmp_path: Path, decision: str) -> None:
     """F198: in the M4W1B hour the card said "owner action required" and offered none. The run
-    waits on the card; Allow once lets this request cross, Allow for this thread every request,
-    and Deny ends the turn with nothing done across the wall. [ADR-015]"""
+    waits on the card; Allow once lets this request write in the card's folder, Allow for this
+    thread every request, and Deny ends the turn with nothing done across the wall. [ADR-015]"""
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     (tmp_path / "spine").mkdir()
     target = tmp_path / "spine" / "outside.txt"
     target.write_text("untouched")
-    steps = [
-        ("move", {"path": "../spine"}),
-        ("write", {"path": "outside.txt", "content": "changed"}),
-    ]
+    steps = [("write", {"path": "../spine/outside.txt", "content": "changed"})]
 
     async def stream(messages, _info):
         done = sum(isinstance(message, ModelResponse) for message in messages)
@@ -213,7 +210,8 @@ async def test_a_boundary_card_waits_for_the_owners_answer(tmp_path: Path, decis
         await toolset.close()
 
     assert [card["decision"] for card in emitter.cards] == ["owner_action"]
-    assert emitter.cards[0]["reason"] == f"Cannot move outside the workspace {workspace}."
+    assert emitter.cards[0]["reason"] == f"That path is outside this workspace: {target}."
+    assert emitter.cards[0]["targets"] == [str(target.parent)]
     answered = [event for event in emitter.events if event["event_kind"] == "boundary_card"]
     assert [(event["decision"], event["card_id"]) for event in answered] == [
         (decision, emitter.cards[0]["card_id"])
@@ -227,10 +225,10 @@ async def test_a_boundary_card_waits_for_the_owners_answer(tmp_path: Path, decis
     else:
         assert target.read_text() == "changed"
         assert outcome.assistant_text == "Done."
-        assert toolset.crossings.turn == ({"workspace"} if decision == "allowed_once" else set())
-        assert toolset.crossings.thread == (
-            {"workspace"} if decision == "allowed_thread" else set()
-        )
+        allowed = {f"workspace:{target.parent}"}
+        assert toolset.crossings.turn == (allowed if decision == "allowed_once" else set())
+        assert toolset.crossings.thread == (allowed if decision == "allowed_thread" else set())
+        assert toolset.location().cwd == workspace  # the agent never left its workspace
 
 
 @pytest.mark.asyncio

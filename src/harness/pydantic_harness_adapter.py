@@ -438,11 +438,18 @@ class PydanticHarnessToolset:
                 f"{target} is above this thread's workspace. Its root is {root}; "
                 f"move('{root}') goes there."
             )
-        if not _inside(root, target) and not self.crossings.allowed("workspace"):
-            # WALL owner files / ADR015: movement cannot enlarge the write grant
-            # (F198: unless the owner allowed the crossing on its card).
+        if not _inside(root, target):
+            if self.crossings.writable(target):
+                # F198: an allowed outside folder is written by full path; the agent stays put.
+                raise ToolsetError(
+                    f"{target} is outside this workspace; the owner allowed writes there, so "
+                    "write or edit its files by full path, or run commands on them from here."
+                )
+            # WALL owner files / ADR015: movement cannot enlarge the write grant.
             raise WorkspaceBoundaryError(
-                f"Cannot move outside the workspace {self._location.workspace_root}.", "workspace"
+                f"Cannot move outside the workspace {self._location.workspace_root}.",
+                "workspace",
+                target,
             )
         self._location = AgentLocation(
             agent_id=self._location.agent_id,
@@ -480,7 +487,11 @@ class PydanticHarnessToolset:
                 }[tool_name](arguments)
         except WorkspaceBoundaryError as exc:
             return ToolExecutionResult(
-                tool_name=tool_name, content=str(exc), success=False, boundary=exc.wall
+                tool_name=tool_name,
+                content=str(exc),
+                success=False,
+                boundary=exc.wall,
+                boundary_target=exc.target,
             )
         except (ToolsetError, ModelRetry, OSError, ValueError) as exc:
             return ToolExecutionResult(tool_name=tool_name, content=str(exc), success=False)
@@ -531,14 +542,12 @@ class PydanticHarnessToolset:
             raise WorkspaceBoundaryError(
                 "That path may contain credentials. Ask the owner before reading it.", "credentials"
             )
-        if (
-            tool_name in _WRITE_TOOLS
-            and not _inside(self._location.workspace_root, target)
-            and not self.crossings.allowed("workspace")
-        ):
+        if tool_name in _WRITE_TOOLS and not _inside(self._location.workspace_root, target):
+            if self.crossings.writable(target):
+                return target  # F198: the owner allowed this outside folder on its card.
             # WALL owner files / F083: route outside-workspace writes to the Deck.
             raise WorkspaceBoundaryError(
-                f"That path is outside this workspace: {target}.", "workspace"
+                f"That path is outside this workspace: {target}.", "workspace", target.parent
             )
         if tool_name in _WRITE_TOOLS and target.parent != self._location.cwd:
             create = (
@@ -602,8 +611,8 @@ class PydanticHarnessToolset:
             original = target.read_text(encoding="utf-8", errors="replace")
             _refuse_destruction(target, original, content, arguments.get("replace"))
         _refuse_broken_python(target, original, content)
-        relative = target.relative_to(self._location.cwd)
-        result = await self._filesystem(self._location.cwd).write_file(str(relative), content)
+        # Presence (or an allowed outside folder, F198) makes the file's folder the root.
+        result = await self._filesystem(target.parent).write_file(target.name, content)
         self._emit("write", target)
         return result
 
@@ -657,9 +666,8 @@ class PydanticHarnessToolset:
         _refuse_destruction(target, original, revised, arguments.get("replace"))
         _refuse_broken_python(target, original, revised)
         expected_hash = hashlib.sha256(original.encode()).hexdigest()[:12]
-        relative = target.relative_to(self._location.cwd)
-        result = await self._filesystem(self._location.cwd).edit_file(
-            str(relative), original, revised, expected_hash=expected_hash
+        result = await self._filesystem(target.parent).edit_file(
+            target.name, original, revised, expected_hash=expected_hash
         )
         self._emit("write", target)
         return result
@@ -893,11 +901,15 @@ class PydanticHarnessToolset:
             if environment_target is None
             else f"(subpath {json.dumps(str(environment_target))}) "
         )
+        # F198: outside folders the owner allowed on a boundary card.
+        crossed_writes = "".join(
+            f"(subpath {json.dumps(str(folder))}) " for folder in self.crossings.folders()
+        )
         profile = (
             "(version 1) (deny default) (allow process*) (allow file-read*) "
             "(allow sysctl-read) (allow mach-lookup) "
             f"(allow file-write* (literal {quoted_location}) (subpath {quoted_location}) "
-            f"{git_writes}{environment_writes}"
+            f"{git_writes}{environment_writes}{crossed_writes}"
             '(literal "/dev/null"))'
             f" (allow file-write* (subpath {json.dumps(str(self._scratch))}))"
             # F198: the owner allowed this thread's remote crossing on its card.

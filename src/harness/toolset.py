@@ -18,9 +18,10 @@ class ToolsetError(RuntimeError):
 class WorkspaceBoundaryError(ValueError):
     """A refusal by an existing owner-file, credential, or remote-state wall. [ADR-015]"""
 
-    def __init__(self, message: str, wall: str) -> None:
+    def __init__(self, message: str, wall: str, target: Path | None = None) -> None:
         super().__init__(message)
         self.wall = wall
+        self.target = target  # F198: the folder a workspace card would let the agent write
 
 
 class PermissionJudge:
@@ -37,19 +38,33 @@ class PermissionJudge:
 
 @dataclass(slots=True)
 class Crossings:
-    """Walls the owner let this thread cross from a boundary card: for the current request
-    (Allow once) or for every request in the thread (Allow for this thread). [ADR-015, F198]"""
+    """What the owner let this thread cross from a boundary card, for the current request
+    (Allow once) or for every request in the thread (Allow for this thread): a wall
+    ("remote", "credentials") or one outside folder the agent may write. [ADR-015, F198]"""
 
     turn: set[str] = field(default_factory=set)
     thread: set[str] = field(default_factory=set)
-    journaled: Callable[[str], bool] | None = None
+    journaled: Callable[[], set[str]] | None = None
+
+    @staticmethod
+    def entry(wall: str, folder: Path | None = None) -> str:
+        return f"workspace:{folder}" if wall == "workspace" and folder is not None else wall
+
+    def entries(self) -> set[str]:
+        return self.turn | self.thread | (self.journaled() if self.journaled else set())
 
     def allowed(self, wall: str) -> bool:
-        return (
-            wall in self.turn
-            or wall in self.thread
-            or (self.journaled is not None and self.journaled(wall))
+        return wall in self.entries()
+
+    def folders(self) -> tuple[Path, ...]:
+        return tuple(
+            Path(entry.removeprefix("workspace:"))
+            for entry in sorted(self.entries())
+            if entry.startswith("workspace:")
         )
+
+    def writable(self, path: Path) -> bool:
+        return any(path == folder or path.is_relative_to(folder) for folder in self.folders())
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,6 +124,7 @@ class ToolExecutionResult:
     image: bytes | None = None
     media_type: str | None = None
     boundary: str | None = None
+    boundary_target: Path | None = None
 
 
 class StandardToolset(Protocol):
