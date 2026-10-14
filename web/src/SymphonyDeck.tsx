@@ -45,6 +45,8 @@ export interface DeckStack {
   blocked_reason: string | null
   evidence: Record<string, unknown>[]
   spend_usd: string
+  // F193: what the owner steered, kept beside the prompt when a later round replaces the attempts.
+  steering: string[]
 }
 
 export interface ProposedResponseCard {
@@ -115,6 +117,10 @@ export function parseDeckStack(value: JsonObject): DeckStack | null {
       return parsed === null ? [] : [parsed]
     }) : [],
     spend_usd: typeof value.spend_usd === 'string' ? value.spend_usd : '0',
+    steering: [...new Set((Array.isArray(value.interventions) ? value.interventions : []).flatMap((item) => {
+      const parsed = record(item)
+      return parsed?.kind === 'clarification' && typeof parsed.instruction === 'string' ? [parsed.instruction] : []
+    }))],
   }
 }
 
@@ -465,13 +471,25 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
     setSigned(false)
   }
 
+  // F193: a clarification is called logged only once the conductor's own record holds it.
+  const [logging, setLogging] = useState<{ instruction: string; success: string } | null>(null)
+  const shownStatus = logging === null ? status
+    : stack.steering.includes(logging.instruction) ? logging.success
+      : stack.state !== 'running' ? 'Not logged: the Symphony ended before the conductor read the clarification.'
+        : 'Sent; waiting for the conductor to log it…'
+
   async function intervene(intervention: SymphonyIntervention, success: string) {
     if (busy) return
     setBusy(true)
+    setLogging(null)
     setStatus('Sending to the conductor…')
     try {
       await events.dispatch({ type: 'symphony.intervene', intervention })
-      setStatus(success)
+      if (intervention.kind === 'clarification') {
+        setLogging({ instruction: intervention.instruction, success })
+      } else {
+        setStatus(success)
+      }
       setInstruction('')
     } catch {
       setStatus('The intervention stayed local. Check the connection and try again.')
@@ -486,6 +504,11 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
         <div><span>{stack.state}</span><h2>{stack.launch.objective}</h2></div>
         <code>{stack.symphony_id}</code>
       </header>
+      {stack.steering.length > 0 && (
+        <dl className="deck-lineage" aria-label="Steering">
+          {stack.steering.map((line, index) => <div key={index}><dt>Steering</dt><dd>{line}</dd></div>)}
+        </dl>
+      )}
       {(stack.forked_from !== null || stack.forked_to !== null) && (
         <dl className="deck-lineage">
           {stack.forked_from !== null && <div><dt>Forked from</dt><dd>{stack.forked_from}</dd></div>}
@@ -565,7 +588,7 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
           <p>The judges release completion after inspecting the work.</p>
         </div>
       )}
-      <p className="deck-status" role="status">{status}</p>
+      <p className="deck-status" role="status">{shownStatus}</p>
     </article>
   )
 }
