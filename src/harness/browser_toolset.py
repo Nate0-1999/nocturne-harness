@@ -202,9 +202,21 @@ class BrowserToolset:
         if scheme in {"about", "data", "blob"}:
             return
         if scheme == "file":
+            if parsed.netloc not in {"", "localhost"}:
+                # F201 (M4W1B FL-078): file://Users/... reads "Users" as a host; the refusal
+                # named the folder as off limits and the agent gave up.
+                corrected = (
+                    f"{parsed.netloc}{parsed.path}"  # file://./app.html meant a relative path
+                    if parsed.netloc in {".", ".."}
+                    else f"file:///{parsed.netloc}{parsed.path}"
+                )
+                raise ToolsetError(
+                    f"malformed file URL: {url} names a host ({parsed.netloc}); a file URL "
+                    f"has three slashes. Use {corrected}"
+                )
             path = Path(unquote(parsed.path)).resolve()
             cwd = self._location().cwd.resolve()
-            if parsed.netloc not in {"", "localhost"} or not path.is_relative_to(cwd):
+            if not path.is_relative_to(cwd):
                 raise ToolsetError(f"file URL is outside the current agent location: {url}")
             return
         if scheme in {"http", "https"}:

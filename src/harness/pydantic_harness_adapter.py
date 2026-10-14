@@ -61,6 +61,7 @@ from harness.project_path import project_environment, repository_root
 from harness.spine_client import SpineClientError
 from harness.toolset import (
     AgentLocation,
+    Crossings,
     PresenceEvent,
     PresenceSink,
     ToolExecutionResult,
@@ -98,6 +99,28 @@ _SHELL_WRITE_REMEDY = (
     "The shell writes only inside {location}. Move to the folder you need to change and "
     "run the command there; git commands on this repository work from any folder inside it."
 )
+_NO_NETWORK = re.compile(
+    r"nodename nor servname|could not resolve host|getaddrinfo|name resolution|"
+    r"network is unreachable",
+    re.IGNORECASE,
+)
+_SHELL_NETWORK_REMEDY = (
+    "Nocturne's shell has no network access, so this command could not download what it "
+    "needs. Tell the person to run it once in their own terminal, where downloads work: "
+    "cd {location} && {command}"
+)
+
+
+def _project_venv(folder: Path, workspace_root: Path) -> Path | None:
+    """F197: where uv creates a project's .venv — beside the nearest pyproject.toml from folder
+    up to the workspace root."""
+
+    for candidate in (folder, *folder.parents):
+        if (candidate / "pyproject.toml").is_file():
+            return candidate / ".venv"
+        if candidate == workspace_root:
+            return None
+    return None
 
 
 def _kill_command_group(marker: str) -> None:
@@ -179,21 +202,28 @@ def _refuse_destruction(target: Path, original: str, revised: str, said_replace:
     )
 
 
-def _refuse_broken_python(target: Path, original: str, revised: str) -> None:
+def _refuse_broken_python(target: Path, original: str | None, revised: str) -> None:
     """M3CL2 walk: an anchor that ended inside a call put gpt-4.1-mini's new test in the middle
-    of an existing one; the file stopped parsing and the agent blamed "leftover code" for it."""
+    of an existing one; the file stopped parsing and the agent blamed "leftover code" for it.
+    F199: a new file (original None) that does not parse is not written either."""
 
     if target.suffix != ".py":
         return
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         try:
-            ast.parse(original)
+            ast.parse(original or "")
         except (SyntaxError, ValueError):
             return
         try:
             ast.parse(revised)
         except SyntaxError as error:
+            if original is None:
+                # F199 (M4W1B hour): a new test file with an unterminated string was committed.
+                raise ToolsetError(
+                    f"Refused: {target.name} would not parse as Python ({error.msg}, line "
+                    f"{error.lineno}); nothing was written. Fix that line and write it again."
+                ) from None
             # INCIDENT M3CL2-walk: a new test landed inside an existing one and broke the file.
             raise ToolsetError(
                 f"Refused: after this change {target.name} would not parse as Python "
@@ -350,9 +380,11 @@ class PydanticHarnessToolset:
         *,
         location: AgentLocation,
         presence_sink: PresenceSink | None,
+        crossings: Crossings | None = None,
     ) -> None:
         self._location = location
         self._presence_sink = presence_sink
+        self.crossings = crossings or Crossings()
         self._presence_events: list[PresenceEvent] = []
         self._closed = False
         self._background_shells: dict[str, ShellToolset] = {}
@@ -370,6 +402,7 @@ class PydanticHarnessToolset:
         session_id: str,
         fence_reads: bool = False,
         presence_sink: PresenceSink | None = None,
+        crossings: Crossings | None = None,
     ) -> Self:
         initial_location = (cwd or Path.cwd()).resolve(strict=True)
         root = (workspace_root or initial_location).resolve(strict=True)
@@ -386,6 +419,7 @@ class PydanticHarnessToolset:
                 fence_reads=fence_reads,
             ),
             presence_sink=presence_sink,
+            crossings=crossings,
         )
 
     def location(self) -> AgentLocation:
@@ -405,9 +439,17 @@ class PydanticHarnessToolset:
                 f"move('{root}') goes there."
             )
         if not _inside(root, target):
+            if self.crossings.writable(target):
+                # F198: an allowed outside folder is written by full path; the agent stays put.
+                raise ToolsetError(
+                    f"{target} is outside this workspace; the owner allowed writes there, so "
+                    "write or edit its files by full path, or run commands on them from here."
+                )
             # WALL owner files / ADR015: movement cannot enlarge the write grant.
             raise WorkspaceBoundaryError(
-                f"Cannot move outside the workspace {self._location.workspace_root}.", "workspace"
+                f"Cannot move outside the workspace {self._location.workspace_root}.",
+                "workspace",
+                target,
             )
         self._location = AgentLocation(
             agent_id=self._location.agent_id,
@@ -445,7 +487,11 @@ class PydanticHarnessToolset:
                 }[tool_name](arguments)
         except WorkspaceBoundaryError as exc:
             return ToolExecutionResult(
-                tool_name=tool_name, content=str(exc), success=False, boundary=exc.wall
+                tool_name=tool_name,
+                content=str(exc),
+                success=False,
+                boundary=exc.wall,
+                boundary_target=exc.target,
             )
         except (ToolsetError, ModelRetry, OSError, ValueError) as exc:
             return ToolExecutionResult(tool_name=tool_name, content=str(exc), success=False)
@@ -487,15 +533,21 @@ class PydanticHarnessToolset:
 
     def _preflight(self, tool_name: str, raw_path: object, *, default: str | None = None) -> Path:
         target = self._target(raw_path, default=default)
-        if tool_name in _READ_TOOLS and _credential_path(target):
+        if (
+            tool_name in _READ_TOOLS
+            and _credential_path(target)
+            and not self.crossings.allowed("credentials")
+        ):
             # WALL credentials / ADR015: do not expose credential files through reads.
             raise WorkspaceBoundaryError(
                 "That path may contain credentials. Ask the owner before reading it.", "credentials"
             )
         if tool_name in _WRITE_TOOLS and not _inside(self._location.workspace_root, target):
+            if self.crossings.writable(target):
+                return target  # F198: the owner allowed this outside folder on its card.
             # WALL owner files / F083: route outside-workspace writes to the Deck.
             raise WorkspaceBoundaryError(
-                f"That path is outside this workspace: {target}.", "workspace"
+                f"That path is outside this workspace: {target}.", "workspace", target.parent
             )
         if tool_name in _WRITE_TOOLS and target.parent != self._location.cwd:
             create = (
@@ -554,12 +606,13 @@ class PydanticHarnessToolset:
     async def _write(self, arguments: Mapping[str, object]) -> str:
         target = self._preflight("write", arguments.get("path"))
         content = arguments.get("content")
+        original = None
         if target.is_file():
             original = target.read_text(encoding="utf-8", errors="replace")
             _refuse_destruction(target, original, content, arguments.get("replace"))
-            _refuse_broken_python(target, original, content)
-        relative = target.relative_to(self._location.cwd)
-        result = await self._filesystem(self._location.cwd).write_file(str(relative), content)
+        _refuse_broken_python(target, original, content)
+        # Presence (or an allowed outside folder, F198) makes the file's folder the root.
+        result = await self._filesystem(target.parent).write_file(target.name, content)
         self._emit("write", target)
         return result
 
@@ -613,9 +666,8 @@ class PydanticHarnessToolset:
         _refuse_destruction(target, original, revised, arguments.get("replace"))
         _refuse_broken_python(target, original, revised)
         expected_hash = hashlib.sha256(original.encode()).hexdigest()[:12]
-        relative = target.relative_to(self._location.cwd)
-        result = await self._filesystem(self._location.cwd).edit_file(
-            str(relative), original, revised, expected_hash=expected_hash
+        result = await self._filesystem(target.parent).edit_file(
+            target.name, original, revised, expected_hash=expected_hash
         )
         self._emit("write", target)
         return result
@@ -709,6 +761,11 @@ class PydanticHarnessToolset:
         if "operation not permitted" in result.lower():
             # F134 (M3EX-02): the sandbox's refusal names the movement remedy.
             result += "\n" + _SHELL_WRITE_REMEDY.format(location=self._location.cwd)
+        if _NO_NETWORK.search(result):
+            # F197 (M4W1B hour): a fresh clone's first test run needs downloads; say who can.
+            result += "\n" + _SHELL_NETWORK_REMEDY.format(
+                location=self._location.cwd, command=arguments.get("command")
+            )
         root = self._location.workspace_root
         for missing in (
             found.group(1) for pattern in _MISSING_PATHS for found in pattern.finditer(result)
@@ -773,14 +830,15 @@ class PydanticHarnessToolset:
         if not isinstance(command, str) or not command.strip():
             # A-069: the saved or interactive shell must name actual work.
             raise ToolsetError("A shell command is required.")
-        if _BOUNDARY_COMMAND.search(command):
+        remote = self.crossings.allowed("remote")
+        if _BOUNDARY_COMMAND.search(command) and not remote:
             # WALL owner files / ADR015: shell tools cannot publish or escape the project grant.
             raise WorkspaceBoundaryError(
                 "That command may leave this project or change remote state. "
                 "Ask the owner to run it explicitly outside Nocturne.",
                 "remote",
             )
-        if _CREDENTIAL_COMMAND.search(command):
+        if _CREDENTIAL_COMMAND.search(command) and not self.crossings.allowed("credentials"):
             # WALL credentials / ADR015: shell output must not read credential stores.
             raise WorkspaceBoundaryError(
                 "That command may expose credentials. Ask the owner before reading them.",
@@ -832,18 +890,34 @@ class PydanticHarnessToolset:
                     )
                 )
             git_writes = "".join(f"(subpath {json.dumps(str(path))}) " for path in paths)
+        environment_dir = project_environment(self._location.cwd, self._location.workspace_root)
+        # F197 (M4W1B hour): from tests/ the agent could not create the project's .venv; like
+        # git's folder, the project's environment is writable from any folder inside it.
+        environment_target = environment_dir or _project_venv(
+            self._location.cwd, self._location.workspace_root
+        )
+        environment_writes = (
+            ""
+            if environment_target is None
+            else f"(subpath {json.dumps(str(environment_target))}) "
+        )
+        # F198: outside folders the owner allowed on a boundary card.
+        crossed_writes = "".join(
+            f"(subpath {json.dumps(str(folder))}) " for folder in self.crossings.folders()
+        )
         profile = (
             "(version 1) (deny default) (allow process*) (allow file-read*) "
             "(allow sysctl-read) (allow mach-lookup) "
             f"(allow file-write* (literal {quoted_location}) (subpath {quoted_location}) "
-            f"{git_writes}"
+            f"{git_writes}{environment_writes}{crossed_writes}"
             '(literal "/dev/null"))'
             f" (allow file-write* (subpath {json.dumps(str(self._scratch))}))"
+            # F198: the owner allowed this thread's remote crossing on its card.
+            + (" (allow network*)" if remote else "")
         )
         # F135 (M3EX-13): the EXIT trap keeps zsh as the group's parent, named by its $0
         # marker, so a cancelled turn can stop exactly this command.
         marker = f"nocturne-command-{generate_ulid()}"
-        environment_dir = project_environment(self._location.cwd, self._location.workspace_root)
         # M3W5B-02: from a subfolder, python and pytest still resolve to the project's .venv;
         # set after the login profile, which reorders PATH on macOS.
         activate = (
@@ -859,6 +933,8 @@ class PydanticHarnessToolset:
             "LANG": os.environ.get("LANG", "en_US.UTF-8"),
             "TMPDIR": str(self._scratch),
             "NO_COLOR": os.environ.get("NO_COLOR", "1"),
+            # F197 (M4W1B hour): uv's cache in ~/.cache is outside the walls; the scratch is not.
+            "XDG_CACHE_HOME": str(self._scratch / "cache"),
         }
         # F177 (M4AH): code the agent runs reads the app's home, never the owner's ~/.nocturne.
         for optional in ("LC_ALL", "TERM", "NOCTURNE_HOME"):

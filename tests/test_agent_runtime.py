@@ -176,12 +176,120 @@ async def test_workspace_crossing_is_judge_released_to_deck(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("needs_owner", [True, False])
+@pytest.mark.parametrize("decision", ["allowed_once", "allowed_thread", "denied"])
+async def test_a_boundary_card_waits_for_the_owners_answer(tmp_path: Path, decision: str) -> None:
+    """F198: in the M4W1B hour the card said "owner action required" and offered none. The run
+    waits on the card; Allow once lets this request write in the card's folder, Allow for this
+    thread every request, and Deny ends the turn with nothing done across the wall. [ADR-015]"""
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (tmp_path / "spine").mkdir()
+    target = tmp_path / "spine" / "outside.txt"
+    target.write_text("untouched")
+    steps = [("write", {"path": "../spine/outside.txt", "content": "changed"})]
+
+    seen_instructions: list[str] = []
+
+    async def stream(messages, _info):
+        seen_instructions.append(str(messages[-1].instructions))
+        done = sum(isinstance(message, ModelResponse) for message in messages)
+        if done < len(steps):
+            name, arguments = steps[done]
+            yield {0: DeltaToolCall(name=name, json_args=json.dumps(arguments), tool_call_id=name)}
+        else:
+            yield "Done."
+
+    toolset = await open_standard_toolset(cwd=workspace, workspace_root=workspace)
+    emitter = DecidingEmitter(decisions=[decision])
+    try:
+        runner = PydanticAITurnRunner(
+            HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+            lambda _: context(toolset=toolset),
+        )
+        outcome = await runner.run(
+            thread_id=str(THREAD_UUID), prompt="Edit outside.txt.", message_history=(), emit=emitter
+        )
+    finally:
+        await toolset.close()
+
+    assert [card["decision"] for card in emitter.cards] == ["owner_action"]
+    assert emitter.cards[0]["reason"] == f"That path is outside this workspace: {target}."
+    assert emitter.cards[0]["targets"] == [str(target.parent)]
+    answered = [event for event in emitter.events if event["event_kind"] == "boundary_card"]
+    assert [(event["decision"], event["card_id"]) for event in answered] == [
+        (decision, emitter.cards[0]["card_id"])
+    ]
+    if decision == "denied":
+        assert target.read_text() == "untouched"
+        assert outcome.assistant_text == (
+            "You denied this crossing on the Deck. Nothing was done across the wall."
+        )
+        assert toolset.crossings.allowed("workspace") is False
+    else:
+        assert target.read_text() == "changed"
+        assert outcome.assistant_text == "Done."
+        allowed = {f"workspace:{target.parent}"}
+        assert toolset.crossings.turn == (allowed if decision == "allowed_once" else set())
+        assert toolset.crossings.thread == (allowed if decision == "allowed_thread" else set())
+        assert toolset.location().cwd == workspace  # the agent never left its workspace
+        # The next request names the allowed folder (M5HD walk: the agent wrote inside instead).
+        assert (
+            f"writes in {target.parent} — write or edit those files by their full path"
+            in (seen_instructions[-1])
+        )
+        assert "The owner allowed" not in seen_instructions[0]
+
+
+@pytest.mark.asyncio
+async def test_a_folder_allowed_for_the_thread_draws_no_second_card(tmp_path: Path) -> None:
+    """F198: after Allow for this thread, a later request writing the same outside folder runs
+    without a card (the M5HD walk drew one for every request). [ADR-015]"""
+    workspace, spine = tmp_path / "workspace", tmp_path / "spine"
+    workspace.mkdir()
+    spine.mkdir()
+
+    async def respond(_messages, _info):
+        written = {"written_paths": [str(spine / "README.md")], "reason": "Appends a line."}
+        return ModelResponse(parts=[TextPart(json.dumps(written))])
+
+    async def stream(_messages, _info):
+        yield "Appended."
+
+    toolset = await open_standard_toolset(cwd=workspace, workspace_root=workspace)
+    toolset.crossings.thread.add(f"workspace:{spine.resolve()}")
+    emitter = DecidingEmitter()  # no answers: a card would fail the turn
+    try:
+        runner = PydanticAITurnRunner(
+            HarnessAgent(settings(), model=FunctionModel(respond, stream_function=stream)),
+            lambda _: context(toolset=toolset),
+        )
+        outcome = await runner.run(
+            thread_id=str(THREAD_UUID),
+            prompt=f"Append probe to {spine}/README.md",
+            message_history=(),
+            emit=emitter,
+        )
+    finally:
+        await toolset.close()
+
+    assert outcome.assistant_text == "Appended." and emitter.cards == []
+    judged = [event for event in emitter.events if event["event_kind"] == "boundary_judgment"]
+    assert [event["needs_owner"] for event in judged] == [False]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("written", "needs_owner"),
+    [("{outside}/a.txt", True), (None, False), ("src/cli.py", False)],
+)
 async def test_explicit_outside_path_gets_fresh_judge_before_chat(
     tmp_path: Path,
+    written: str | None,
     needs_owner: bool,
 ) -> None:
-    """PLAN M3SK / F083: explicit outside writes card before chat; outside reads stay autonomous."""
+    """PLAN M3SK / F083: explicit outside writes card before chat; outside reads stay autonomous.
+    F198: the judge names the written paths and the runtime checks the root, so a request that
+    only reads ../spine and commits files inside the root is never judged a write."""
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     calls = []
@@ -194,7 +302,9 @@ async def test_explicit_outside_path_gets_fresh_judge_before_chat(
                 TextPart(
                     json.dumps(
                         {
-                            "needs_owner": needs_owner,
+                            "written_paths": []
+                            if written is None
+                            else [written.format(outside=tmp_path)],
                             "reason": "Outside write"
                             if needs_owner
                             else "Read-only inspection is already allowed",
@@ -275,6 +385,18 @@ class RecordingEmitter:
 
     async def error(self, value: Mapping[str, object]) -> None:
         self.errors.append(value)
+
+
+@dataclass
+class DecidingEmitter(RecordingEmitter):
+    """F198: answers each waiting boundary card with the next decision, as the owner would."""
+
+    decisions: list[str] = field(default_factory=list)
+    cards: list[Mapping[str, object]] = field(default_factory=list)
+
+    async def boundary_decision(self, card: Mapping[str, object]) -> str:
+        self.cards.append(card)
+        return self.decisions.pop(0)
 
 
 @dataclass
@@ -2595,3 +2717,42 @@ async def test_a_turn_that_changed_the_repository_is_checked_against_the_loops_a
         await check.after_model_request(ctx, request_context=tools, response=answer)
     ctx.usage.tool_calls += 1
     assert await check.after_model_request(ctx, request_context=tools, response=answer) is answer
+
+
+@pytest.mark.asyncio
+async def test_the_loops_account_names_a_changed_python_file_that_does_not_parse(
+    tmp_path: Path,
+) -> None:
+    """F199: in the M4W1B hour a new test file that did not parse was committed and the account
+    line named it as committed only; it now says the file does not parse."""
+
+    import subprocess
+
+    from harness.agent_runtime import turn_account
+
+    repository = tmp_path / "repo"
+    (repository / "tests").mkdir(parents=True)
+    (repository / "tests" / "test_a.py").write_text("def test_a():\n    pass\n")
+    for command in (
+        ["init", "-q"],
+        ["config", "user.name", "t"],
+        ["config", "user.email", "t@t"],
+        ["add", "."],
+        ["commit", "-qm", "start"],
+    ):
+        subprocess.run(["git", "-C", str(repository), *command], check=True)
+    toolset = await open_standard_toolset(cwd=repository, workspace_root=repository)
+    try:
+        account = turn_account(context(toolset=toolset))
+        (repository / "tests" / "test_new.py").write_text('def test_new():\n    x = "open\n')
+        subprocess.run(["git", "-C", str(repository), "add", "."], check=True)
+        subprocess.run(["git", "-C", str(repository), "commit", "-qm", "new"], check=True)
+        (repository / "tests" / "test_a.py").write_text("def test_a():\n    assert True\n")
+        said = account("I added tests/test_new.py and the tests pass.")
+    finally:
+        await toolset.close()
+
+    assert said == (
+        "Checked by Nocturne, this turn: committed tests/test_new.py; "
+        "not committed: M tests/test_a.py; does not parse: tests/test_new.py."
+    )
