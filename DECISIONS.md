@@ -4247,3 +4247,30 @@ seed splitting use their existing chat role's current policy; an explicit turn m
 The release guard describes the release tag and matching source tag concurrently under one
 six-second deadline. Two exact reads preserve the source-match check without listing the
 registry; the installed gcloud image description omits the other tags on that image.
+
+## M5RM — One claim stays one memory; Palace refusals keep their reason [P1.2, P1.5]
+
+F208 replayed as five linked memories for one duty. The existing draft and repair prompts
+now shorten one claim, split only independent claims, and retain schedule wording. F194's
+structured Palace problems pass through with their status and reason; transport outages
+retain their existing message. No new writer or repair loop.
+
+## M5HD — The hands on a fresh clone [P4.2, P3]
+
+PRECEDENT: F197 F198 F199 F201, M4AH, M3CL2 (the parse guard), ADR-015, v2.125 (git from any
+folder), the open-web consent (thread-scoped, journal-restored).
+- The shell's caches (`XDG_CACHE_HOME`) live in its scratch, and the project's `.venv` (beside
+  the nearest pyproject.toml) is writable from any folder inside the workspace, as git's folder
+  is. The shell still has no network: the network allowlist ADR-015 names cannot be drawn by host
+  in Seatbelt, so a failed download says, in plain words, which command the person runs once in
+  their own terminal; after that `uv run` works offline.
+- A boundary card is a question the owner answers: the run waits on it (the spend wall's
+  waiting state), and Allow once (this request), Allow for this thread (journaled, restored like
+  open-web consent) or Deny answers it. Allow lifts that wall only: `remote` gives the shell
+  network and the boundary commands, `credentials` the credential reads, and a workspace card
+  names the outside folder its writes may reach by full path. The agent never moves outside its
+  workspace (on the walk that broke every later turn's location). Deny ends the turn as before.
+- The PermissionJudge lists the paths a request writes; the runtime checks them against the
+  root, so a request that only reads ../spine is not judged a write.
+- The parse guard covers new .py files, and the turn's account names changed .py files that do
+  not parse. A file URL with a host part is refused as malformed, with its corrected form.

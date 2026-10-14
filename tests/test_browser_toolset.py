@@ -42,6 +42,25 @@ def test_browser_fence_defaults_to_loopback_and_current_location(tmp_path: Path)
         toolset._require_allowed_url("https://example.com", "thread")
 
 
+def test_a_two_slash_file_url_is_refused_as_malformed_with_its_corrected_form(
+    tmp_path: Path,
+) -> None:
+    """F201: file://Users/... is a malformed address, not a folder outside the location."""
+    (tmp_path / "project").mkdir()
+    toolset = BrowserToolset(location=lambda: _location(tmp_path))
+
+    with pytest.raises(ToolsetError) as refused:
+        toolset._require_allowed_url("file://Users/walk/project/app.html", "thread")
+
+    assert str(refused.value) == (
+        "malformed file URL: file://Users/walk/project/app.html names a host (Users); a file "
+        "URL has three slashes. Use file:///Users/walk/project/app.html"
+    )
+    # M5HD replay on 0.1.70: after that refusal the agent tried file://./app.html.
+    with pytest.raises(ToolsetError, match=r"three slashes\. Use \./app\.html$"):
+        toolset._require_allowed_url("file://./app.html", "thread")
+
+
 def test_open_web_consent_is_thread_scoped_and_restorable(tmp_path: Path) -> None:
     """SPEC C.7 consent survives reload but never grants another thread access."""
     (tmp_path / "project").mkdir()

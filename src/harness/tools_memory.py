@@ -88,7 +88,7 @@ class MemoryToolContext:
     toolset_enabled: bool = True
     memory_enabled: bool = True
     skill_directories: tuple[Path, ...] = ()
-    boundary_review: Callable[[str, str], Awaitable[str]] | None = None
+    boundary_review: Callable[..., Awaitable[str | None]] | None = None
     excluded_memory_ids: frozenset[UUID] = frozenset()
     delegate: Callable[[str, float | None], Awaitable[str]] | None = None
     return_share: ReturnShare | None = None
