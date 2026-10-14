@@ -183,6 +183,7 @@ class PalaceCloud(GcloudDeployBackend):
             "--execution-environment=gen2",
             "--port=8000",
             "--min-instances=0",
+            "--no-cpu-throttling",
             "--max-instances=1",
             f"--service-account={RUNTIME_SERVICE_ACCOUNT_EMAIL}",
             f"--add-cloudsql-instances={SQL_CONNECTION_NAME}",
