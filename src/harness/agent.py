@@ -23,6 +23,7 @@ from harness.commands import remember_command_text
 from harness.config import HarnessSettings
 from harness.context_window import ReturnShareBounds, bounds_from
 from harness.memory_outbox import QueuedForPalace, never_reached_palace
+from harness.model_policy import ModelPolicyResolver
 from harness.model_router import (
     CompletionRouter,
 )
@@ -225,10 +226,11 @@ class RememberResult:
 
 
 class BoundaryIntent(BaseModel):
-    """The PermissionJudge's classification of an explicit outside-path request. [ADR-015]"""
+    """The PermissionJudge's reading of an explicit outside-path request: the paths it asks to
+    change; the runtime checks which are outside the root. [ADR-015, F198]"""
 
     model_config = ConfigDict(extra="forbid")
-    needs_owner: StrictBool
+    written_paths: list[StrictStr]
     reason: StrictStr
 
 
@@ -278,11 +280,13 @@ class HarnessAgent:
             output_type=PromptedOutput(BoundaryIntent),
             instructions=(
                 "You are the PermissionJudge applying ADR-015 to an explicit outside-path request. "
-                "Only the supplied workspace root grants write authority. A request to create, "
-                "edit, delete, or execute a modifying command outside that root needs_owner=true. "
-                "Read-only inspection outside the root and movement or edits within it do not. "
-                "Classify the user's actual requested action, not quoted examples. Never grant "
-                "wider authority. Give the concrete reason; do not ask a chat question."
+                "List in written_paths every file or folder the user's request asks to create, "
+                "edit, delete, or change with a command, as the user wrote it. A path that is only "
+                "read, inspected, imported, installed from, depended on, mentioned, or the place "
+                "a command runs is not written: leave it out. Committing writes only the files "
+                "being committed. What the user says they already did, or where something now "
+                "is, is not a request. Classify the user's actual requested action, not quoted "
+                "examples. Give the concrete reason in one sentence; do not ask a chat question."
             ),
             name="permission-judge",
         )
@@ -924,6 +928,8 @@ class HarnessAgent:
     ) -> ExtractionDraft:
         """Run the tools-free cheap-model extraction pass over one durable transcript."""
 
+        if model is None:
+            model = await self._background_memory_model()
         extraction_settings = {
             **(model_settings or {}),
             "openrouter_usage": {"include": True},
@@ -1033,6 +1039,8 @@ class HarnessAgent:
     ) -> ExtractionVerdictDraft:
         """Give the thread-aware extractor the corpus neighborhood before queue birth."""
 
+        if model is None:
+            model = await self._background_memory_model()
         result = await self._extraction_verdict_agent.run(
             f"Candidate: {candidate.model_dump_json()}\nNeighbors: {neighbors!r}",
             model=self._select_model(model),
@@ -1065,6 +1073,8 @@ class HarnessAgent:
     ) -> SeedSplitDraft:
         """Produce a lossless semantic split or fail before any queue write."""
 
+        if model is None:
+            model = await self._background_memory_model()
         result = await self._seed_splitter_agent.run(
             f"Source: {source_name}\n\n{markdown}",
             model=self._select_model(model),
@@ -1090,6 +1100,17 @@ class HarnessAgent:
             model_settings=None,
         )
         return result.output.model_copy(update={"candidates": candidates})
+
+    async def _background_memory_model(self) -> str:
+        # F196: these chat-owned memory jobs have no live turn to supply its resolution.
+        # Read the current role policy, including edits made since the daemon started.
+        resolver = ModelPolicyResolver(
+            policy=self._settings.effective_model_policy_chat,
+            static_model=self._settings.chat_model,
+            static_context_tokens=self._settings.model_context_tokens,
+            catalog=self._router.catalog,
+        )
+        return (await resolver.resolve("background-memory")).model
 
     async def dispatch(
         self,

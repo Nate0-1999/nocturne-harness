@@ -225,14 +225,25 @@ export function SymphonyDeck() {
   }
   const cards = useMemo(() => proposedResponseCards(snapshot).filter((card) => !seen.has(card.proposal_run_id)), [snapshot, seen])
   const blockedCount = stacks.filter((stack) => stack.state === 'blocked').length
+  const waiting = selected?.activeRun?.state === 'waiting_gate' ? selected.activeRun.run_id : null
   const boundaries = (selected?.messages ?? []).flatMap((message) => (
     message.role === 'assistant' ? message.events.filter((event, index, all) => (
       event.event_kind === 'boundary_card' && event.decision === 'owner_action' &&
-      (event.wall !== 'spend' || !all.slice(index + 1).some((later) => (
+      (event.wall !== 'spend' ? (
+        // F198: a wall card shows while its run waits on it; answered, it leaves the Deck.
+        event.run_id === waiting && !all.slice(index + 1).some((later) => later.card_id === event.card_id)
+      ) : !all.slice(index + 1).some((later) => (
         later.event_kind === 'boundary_card' && later.wall === 'spend' && later.run_id === event.run_id
       )))
     )) : []
   ))
+  const [deciding, setDeciding] = useState(false)
+  const decide = (card: (typeof boundaries)[number], decision: 'allowed_once' | 'allowed_thread' | 'denied') => {
+    setDeciding(true)
+    void events.dispatch({ type: 'boundary.decide', run_id: String(card.run_id), decision })
+      .catch((error: unknown) => setStatus(`Not answered: ${error instanceof Error ? error.message : 'the answer failed'}.`))
+      .finally(() => setDeciding(false))
+  }
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [locallyFired, setLocallyFired] = useState<Set<string>>(() => new Set())
   const [undo, setUndo] = useState<{ card: ProposedResponseCard; text: string } | null>(null)
@@ -326,8 +337,25 @@ export function SymphonyDeck() {
         <article className="deck-proposal-card" data-testid="boundary-card" key={String(card.run_id)}>
           <h2>{card.wall === 'spend' ? 'Spend boundary · paused' : `Workspace boundary · ${String(card.wall)}`}</h2>
           <p>{String(card.reason)}</p>
-          <p>{String(card.action)}</p>
-          <small>{String(card.judge)} · {String(card.policy)} · owner action required</small>
+          {card.wall === 'spend' ? (
+            <>
+              <p>{String(card.action)}</p>
+              <small>{String(card.judge)} · {String(card.policy)} · owner action required</small>
+            </>
+          ) : (
+            <footer>
+              <small>{String(card.judge)} · {String(card.policy)}</small>
+              <Button action="confirm" type="button" disabled={deciding} data-testid="boundary-allow-once"
+                data-tooltip-detail="Let this request cross this wall; the next one asks again."
+                onClick={() => decide(card, 'allowed_once')}>Allow once</Button>
+              <Button action="confirm" type="button" disabled={deciding} data-testid="boundary-allow-thread"
+                data-tooltip-detail="Let every request in this thread cross this wall."
+                onClick={() => decide(card, 'allowed_thread')}>Allow for this thread</Button>
+              <Button action="close" type="button" disabled={deciding} data-testid="boundary-deny"
+                data-tooltip-detail="Stop this request; nothing crosses the wall."
+                onClick={() => decide(card, 'denied')}>Deny</Button>
+            </footer>
+          )}
         </article>
       ))}
       {visibleCards.length === 0 ? (

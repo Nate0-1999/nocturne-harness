@@ -40,6 +40,7 @@ from harness.spine_client import (
     SearchResponse,
     SimilarityMemoryCard,
     SimilarMemoriesResponse,
+    SpineBusyError,
     SpineClientError,
     SpineProblemError,
     SpineResponseError,
@@ -87,7 +88,7 @@ class MemoryToolContext:
     toolset_enabled: bool = True
     memory_enabled: bool = True
     skill_directories: tuple[Path, ...] = ()
-    boundary_review: Callable[[str, str], Awaitable[str]] | None = None
+    boundary_review: Callable[..., Awaitable[str | None]] | None = None
     excluded_memory_ids: frozenset[UUID] = frozenset()
     delegate: Callable[[str, float | None], Awaitable[str]] | None = None
     return_share: ReturnShare | None = None
@@ -461,7 +462,9 @@ def _render_unit(unit: MemoryUnit) -> str:
 
 
 def render_spine_error(action: str, exc: SpineClientError) -> str:
-    if isinstance(exc, SpineTransportError):
+    if isinstance(exc, SpineBusyError):
+        detail = "The Palace is still busy. Try again shortly."
+    elif isinstance(exc, SpineTransportError):
         detail = "memory service unavailable"
     elif isinstance(exc, SpineProblemError):
         detail = (

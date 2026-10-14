@@ -119,6 +119,7 @@ class _ActiveRun:
     usage_emitted: bool = False
     task: asyncio.Task[None] | None = None
     gate_decision: asyncio.Future[GateCommitPayload] | None = None
+    boundary_decision: asyncio.Future[str] | None = None
     gate_committing: bool = False
     model_candidate: ThreadModelResolution | None = None
     model_error: str | None = None
@@ -198,6 +199,16 @@ class _Emitter(RunEmitter):
 
     async def open_gate(self, value: Mapping[str, object]) -> GateCommitPayload:
         return await self._loop._emit_gate(self._thread_id, self._active, value)
+
+    async def boundary_decision(self, card: Mapping[str, object]) -> str:
+        """F198: publish a boundary card and wait for the owner's answer on the Deck."""
+        decision: asyncio.Future[str] = asyncio.get_running_loop().create_future()
+        self._active.boundary_decision = decision
+        try:
+            await self._loop._emit_event(self._thread_id, self._active, card)
+            return await decision
+        finally:
+            self._active.boundary_decision = None
 
     async def dismiss_gate(self) -> None:
         await self._loop._dismiss_gate(self._thread_id, self._active)
@@ -810,6 +821,17 @@ class RunLoop:
                 self._discard_pending_capture_locked(thread_id, turn)
             raise
         return run_id
+
+    async def decide_boundary(self, *, thread_id: str, run_id: str, decision: str) -> None:
+        """F198: the owner's Allow once / Allow for this thread / Deny on a waiting card."""
+        async with self._lock:
+            state = self._threads.get(thread_id)
+            active = None if state is None else state.active
+            waiting = None if active is None else active.boundary_decision
+            if active is None or active.turn.run_id != run_id or waiting is None or waiting.done():
+                # F198: an answer belongs to the card its own run still waits on.
+                raise ValueError("No boundary card is waiting on this run.")
+            waiting.set_result(decision)
 
     async def interject(self, *, thread_id: str, run_id: str, prompt: str) -> None:
         """Steer the next model request in the same solo run. [ADR-012, FL-075]"""
@@ -1699,7 +1721,8 @@ class RunLoop:
         value: Mapping[str, object],
     ) -> None:
         event = dict(value)
-        spend_boundary = event.get("event_kind") == "boundary_card" and event.get("wall") == "spend"
+        # F198: every boundary card pauses its run until it is answered, not only spend's.
+        boundary = event.get("event_kind") == "boundary_card"
         delta = RunDeltaEventPayload(
             run_id=active.turn.run_id,
             kind="event",
@@ -1709,7 +1732,7 @@ class RunLoop:
             state = self._live_state_locked(thread_id, active)
             if state is None:
                 return
-            if spend_boundary and active.state != "cancelling":
+            if boundary and active.state != "cancelling":
                 active.state = (
                     "waiting_gate" if event.get("decision") == "owner_action" else "running"
                 )
@@ -1722,7 +1745,7 @@ class RunLoop:
                     thread_id=thread_id,
                 ),
             )
-        if spend_boundary:
+        if boundary:
             await self.publish_thread_snapshot(thread_id)
 
     async def _emit_usage(

@@ -222,6 +222,13 @@ function terminalCopy(reason: UserMessageState): string | null {
   }
 }
 
+/** F198: a run paused without a memory gate waits at a spend wall or on a Deck boundary card. */
+function pausedAt(messages: ChatMessage[]): string {
+  const card = messages.flatMap((message) => message.role === 'assistant' ? message.events : [])
+    .filter((event) => event.event_kind === 'boundary_card').at(-1)
+  return card !== undefined && card.wall !== 'spend' ? 'On the Deck' : 'Spend paused'
+}
+
 function messageStatus(
   message: AssistantTranscriptMessage,
   state: UserMessageState | undefined,
@@ -233,9 +240,10 @@ function messageStatus(
       return 'Stopping'
     }
     if (activeState === 'waiting_gate') {
-      return message.events.some((event) => event.event_kind === 'boundary_card' && event.wall === 'spend')
-        ? 'Paused at spend wall'
-        : 'Waiting for memory review'
+      const card = message.events.filter((event) => event.event_kind === 'boundary_card').at(-1)
+      return card === undefined
+        ? 'Waiting for memory review'
+        : card.wall === 'spend' ? 'Paused at spend wall' : 'Waiting on the Deck'
     }
     return 'Streaming'
   }
@@ -2229,7 +2237,7 @@ function ThreadsModule() {
             : liveState === 'cancelling'
               ? 'Stopping'
               : liveState === 'waiting_gate'
-                ? runtime?.openGate ? 'Review memory' : 'Spend paused'
+                ? runtime?.openGate ? 'Review memory' : pausedAt(runtime?.messages ?? [])
                 : liveState !== undefined
                   ? 'Live'
                   : outboundCount > 0
@@ -2687,7 +2695,7 @@ function ChatModule() {
               {activeRun.state === 'cancelling'
                 ? 'Stopping'
                 : activeRun.state === 'waiting_gate'
-                  ? openGate ? 'Memory review' : 'Spend paused'
+                  ? openGate ? 'Memory review' : pausedAt(selectedThread?.messages ?? [])
                   : 'Run active'}
             </span>
           )}

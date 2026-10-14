@@ -383,6 +383,78 @@ async def test_worktree_worker_creates_a_folder_and_commits_without_touching_par
     assert not (root / "scratch").exists()
 
 
+@pytest.mark.asyncio
+async def test_a_fresh_clone_shell_keeps_tool_caches_in_scratch_and_names_the_download_step(
+    tmp_path: Path,
+) -> None:
+    """F197: in the M4W1B hour `uv run` failed writing ~/.cache/uv, then on downloads, and the
+    agent could not tell the person what to run, and from tests/ it could not create the
+    project's .venv. Caches live in the shell's scratch; the project's .venv is writable from any
+    folder inside it; a failed download names the command for the person's own terminal."""
+    if not Path("/usr/bin/sandbox-exec").is_file():
+        pytest.skip("the standing hard shell fence is macOS sandbox-exec")
+
+    (tmp_path / "pyproject.toml").write_text("[project]\nname = 'clone'\n")
+    (tmp_path / "tests").mkdir()
+    toolset = await open_standard_toolset(cwd=tmp_path / "tests", workspace_root=tmp_path)
+    lookup = "python3 -c \"import socket; socket.getaddrinfo('pypi.org', 443)\""
+    try:
+        cached = await toolset.execute(
+            "bash", {"command": 'mkdir -p "$XDG_CACHE_HOME/uv" && echo cache-ok'}
+        )
+        venv = await toolset.execute("bash", {"command": "mkdir ../.venv && echo venv-ok"})
+        other = await toolset.execute("bash", {"command": "mkdir ../other"})
+        offline = await toolset.execute("bash", {"command": lookup})
+    finally:
+        await toolset.close()
+
+    assert "cache-ok" in cached.content and "not permitted" not in cached.content, cached.content
+    assert "venv-ok" in venv.content and (tmp_path / ".venv").is_dir(), venv.content
+    assert "Operation not permitted" in other.content and not (tmp_path / "other").exists()
+    assert offline.content.endswith(
+        "Nocturne's shell has no network access, so this command could not download what it "
+        "needs. Tell the person to run it once in their own terminal, where downloads work: "
+        f"cd {(tmp_path / 'tests').resolve()} && {lookup}"
+    ), offline.content
+
+
+@pytest.mark.asyncio
+async def test_an_allowed_crossing_opens_only_its_own_wall(tmp_path: Path) -> None:
+    """F198 / ADR-015: what the owner allows on a boundary card lifts that wall and no other."""
+    if not Path("/usr/bin/sandbox-exec").is_file():
+        pytest.skip("the standing hard shell fence is macOS sandbox-exec")
+
+    workspace, other = tmp_path / "workspace", tmp_path / "other"
+    workspace.mkdir()
+    other.mkdir()
+    (workspace / ".env").write_text("KEY=1\n")
+    append = {"command": f"echo probe >> {other}/notes.txt"}
+    toolset = await open_standard_toolset(cwd=workspace, workspace_root=workspace)
+    try:
+        walled = await toolset.execute("bash", {"command": "echo curl"})
+        fenced = await toolset.execute("bash", append)
+        refused = await toolset.execute("move", {"path": "../other"})
+        toolset.crossings.turn.update({"remote", f"workspace:{other.resolve()}"})
+        crossed = await toolset.execute("bash", {"command": "echo curl"})
+        appended = await toolset.execute("bash", append)
+        stayed = await toolset.execute("move", {"path": "../other"})
+        secret = await toolset.execute("read", {"path": ".env"})
+    finally:
+        await toolset.close()
+
+    assert walled.boundary == "remote" and not walled.success
+    assert "operation not permitted" in fenced.content.lower()
+    assert refused.boundary == "workspace" and refused.boundary_target == other.resolve()
+    assert crossed.success and "curl" in crossed.content, crossed.content
+    assert (other / "notes.txt").read_text() == "probe\n", appended.content
+    assert not stayed.success and stayed.content == (
+        f"{other.resolve()} is outside this workspace; the owner allowed writes there, so "
+        "write or edit its files by full path, or run commands on them from here."
+    )
+    assert toolset.location().cwd == workspace.resolve()
+    assert secret.boundary == "credentials"
+
+
 def test_upstream_skills_gain_model_visible_bundled_resources(tmp_path: Path) -> None:
     """D.2 136 closes M3PV's resource gap without patching the dependency. [ADR-013, ADR-015]"""
 
@@ -825,6 +897,29 @@ async def test_an_edit_that_stops_a_python_file_parsing_is_refused(tmp_path: Pat
         "a statement, so newText does not land inside one."
     )
     assert (tmp_path / "test_a.py").read_text() == source
+
+
+@pytest.mark.asyncio
+async def test_a_new_python_file_that_does_not_parse_is_not_written(tmp_path: Path) -> None:
+    """F199: in the M4W1B hour a new test file with an unterminated string was written and
+    committed; the guard covered edits to files that already parsed."""
+
+    broken = 'def test_json():\n    assert out == "{\n'
+    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    try:
+        refused = await toolset.execute("write", {"path": "test_new.py", "content": broken})
+        notes = await toolset.execute("write", {"path": "notes.txt", "content": broken})
+    finally:
+        await toolset.close()
+
+    with pytest.raises(SyntaxError) as error:
+        ast.parse(broken)
+    assert not refused.success and notes.success
+    assert refused.content == (
+        f"Refused: test_new.py would not parse as Python ({error.value.msg}, line "
+        f"{error.value.lineno}); nothing was written. Fix that line and write it again."
+    )
+    assert not (tmp_path / "test_new.py").exists()
 
 
 @pytest.mark.asyncio

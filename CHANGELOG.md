@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.78 - 2026-10-14
+
+- Force retrain starts a durable background job and polls its saved result, so a
+  long fit can finish after the request returns. The console shows the exact
+  recorded reason. Pair with Memory 0.1.78; fitting and selection are unchanged.
+
 ## 0.1.51 - 2026-10-03
 
 - One scale in every module: an icon is one size wherever it appears, and text

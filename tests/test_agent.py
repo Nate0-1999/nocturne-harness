@@ -298,6 +298,35 @@ def structured_sequence_model(
     return FunctionModel(respond, model_name="local:remember-sequence")
 
 
+@pytest.mark.asyncio
+async def test_background_memory_jobs_follow_the_live_chat_policy() -> None:
+    """F196 / FL-154: archive, comparison and seed requests must not escape the role pin."""
+    configured = settings(model_policy_chat="pinned:openai:chosen")
+    calls = []
+    agent = HarnessAgent(configured)
+    agent._models_by_name["openai:chosen"] = structured_sequence_model(
+        [
+            {"working_summary": "A project fact.", "open_loops": [], "candidates": []},
+            {"verdict": "new", "target_ids": []},
+            {"candidates": []},
+        ],
+        calls,
+    )
+    await agent.extract_thread("A project fact.")
+    await agent.propose_extraction_verdict(
+        ExtractionCandidateDraft(
+            label="Stage name", body="The stage is lark.", kind="fact", keywords=["stage", "lark"]
+        ),
+        [],
+    )
+    await agent.split_seed("seed.md", "The stage is lark.")
+    assert len(calls) == 3
+    configured.model_policy_chat = "pinned:openai:changed"
+    agent._models_by_name["openai:changed"] = structured_sequence_model([{"candidates": []}], calls)
+    await agent.split_seed("next.md", "Another project.")
+    assert len(calls) == 4
+
+
 def split_response(source: str) -> MemorySplitResponse:
     return MemorySplitResponse(
         source=memory_unit(

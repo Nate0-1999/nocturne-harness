@@ -139,6 +139,8 @@ def test_client_exposes_all_spine_routes() -> None:
         "memory_scores",
         "scorer_console",
         "retrain",
+        "start_retrain_job",
+        "retrain_job",
         "notify_compaction",
         "create_scorer_config",
         "simulate_scorer",
@@ -557,3 +559,59 @@ async def test_a_lost_request_is_retried_only_where_resending_is_safe(monkeypatc
         await client._request("POST", path, json_body={})
         assert len(calls) == 2
     await client.aclose()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "method,path",
+    [
+        ("GET", "v1/jobs"),
+        ("POST", "v1/search"),
+        ("POST", "v1/memories"),
+        ("PATCH", "v1/memories/id"),
+        ("POST", "v1/symphony/runs"),
+    ],
+)
+@pytest.mark.parametrize("status", [429, 503])
+async def test_cloud_busy_retries_every_operation_and_keeps_a_plain_terminal_error(
+    monkeypatch, method, path, status
+) -> None:
+    """F195 / FL-173: cloud HTML must not bypass bounded retry or hide a confirmed write."""
+    import httpx
+
+    from harness import spine_client
+    from harness.memory_outbox import never_reached_palace
+
+    sleeps, notices, calls = [], [], []
+
+    async def sleep(delay):
+        sleeps.append(delay)
+
+    async def notice(state):
+        notices.append(state)
+
+    monkeypatch.setattr(spine_client.asyncio, "sleep", sleep)
+    remaining = 2
+
+    def respond(request):
+        nonlocal remaining
+        calls.append(request)
+        remaining -= 1
+        return (
+            httpx.Response(status, text="no available instance")
+            if remaining >= 0
+            else httpx.Response(200)
+        )
+
+    async with SpineClient(
+        "http://palace.test", "t", transport=httpx.MockTransport(respond)
+    ) as client:
+        client.on_busy = notice
+        assert (await client._request(method, path)).status_code == 200
+        assert len(calls) == 3 and sleeps == [1.0, 3.0]
+        assert notices == ["retrying", "ready"]
+        remaining = 99
+        with pytest.raises(spine_client.SpineBusyError, match="Palace is still busy") as failed:
+            await client._request(method, path)
+        assert len(calls) == 6 and notices[-1] == "failed"
+        assert never_reached_palace(failed.value)

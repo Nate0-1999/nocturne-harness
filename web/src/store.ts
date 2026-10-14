@@ -626,6 +626,11 @@ function applyEvent(thread: ThreadState, event: DecodedServerEvent): ThreadState
       return { ...thread, resolvedModel: event.payload.new_model }
     case 'error':
       {
+        if ((event.payload as { code?: string } | null)?.code === 'palace_ready') {
+          const detail = thread.lastError?.detail as { code?: string } | null
+          return detail?.code === 'palace_retrying'
+            ? { ...thread, lastError: null } : thread
+        }
         const lastError = keepMemoryNotice(thread.lastError, errorFromPayload(event.payload))
         return {
           ...thread,

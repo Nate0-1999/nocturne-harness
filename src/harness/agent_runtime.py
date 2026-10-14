@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import ast
 import asyncio
 import json
 import logging
 import re
+import warnings
 from collections.abc import AsyncIterable, Callable, Mapping, Sequence
 from dataclasses import replace
 from datetime import UTC, datetime
@@ -127,6 +129,12 @@ _MAX_PROVIDER_MESSAGE = 1_000
 class _BoundaryCardReleased(Exception):
     """End a boundary turn after the judge releases its durable Deck card."""
 
+    def __init__(
+        self, message: str = "Boundary review is on the Deck. No action was taken across the wall."
+    ) -> None:
+        super().__init__(message)
+        self.message = message
+
 
 _CONTEXT_CODES = frozenset(
     {
@@ -203,26 +211,51 @@ class PydanticAITurnRunner:
         )
         model_settings = _model_settings(model_resolution, thread_id)
 
-        async def review_boundary(wall: str, reason: str) -> str:
+        async def review_boundary(
+            wall: str, reason: str, targets: Sequence[Path] = ()
+        ) -> str | None:
+            """None once the owner allowed the crossing; otherwise what the model reads."""
             if not PermissionJudge.needs_owner(wall):
                 return reason + " The PermissionJudge says to move within the existing workspace."
-            await emit.event(
-                {
-                    "event_kind": "boundary_card",
-                    "judge": "PermissionJudge",
-                    "policy": "ADR-015 boundary list",
-                    "decision": "owner_action",
-                    "wall": wall,
-                    "reason": reason,
-                    "run_id": emit.run_id,
-                    "created_at": self._clock().isoformat(),
-                    "action": "Use a separate thread rooted at the required folder."
-                    if wall == "workspace"
-                    else "Perform this action explicitly outside Nocturne.",
-                }
+            card = {
+                "event_kind": "boundary_card",
+                "judge": "PermissionJudge",
+                "policy": "ADR-015 boundary list",
+                "decision": "owner_action",
+                "wall": wall,
+                "reason": reason,
+                "run_id": emit.run_id,
+                "card_id": generate_ulid(),
+                "targets": [str(target) for target in targets],
+                "created_at": self._clock().isoformat(),
+                "action": "Use a separate thread rooted at the required folder."
+                if wall == "workspace"
+                else "Perform this action explicitly outside Nocturne.",
+            }
+            decide = getattr(emit, "boundary_decision", None)
+            crossings = getattr(context.toolset, "crossings", None)
+            if decide is None or crossings is None:
+                await emit.event(card)
+                # WALL workspace / F083: stop the turn after releasing its boundary card.
+                raise _BoundaryCardReleased()
+            # F198 (M4W1B hour): the card is a question the owner can answer; the run waits.
+            card["action"] = (
+                "Allow once lets this request cross; Allow for this thread lets every request "
+                "in this thread cross; Deny stops it."
             )
-            # WALL workspace / F083: stop the turn after releasing its boundary card.
-            raise _BoundaryCardReleased()
+            decision = await decide(card)
+            await emit.event(
+                {**card, "decision": decision, "created_at": self._clock().isoformat()}
+            )
+            if decision == "denied":
+                # F198: Deny ends the turn with nothing done across the wall.
+                raise _BoundaryCardReleased(
+                    "You denied this crossing on the Deck. Nothing was done across the wall."
+                )
+            (crossings.thread if decision == "allowed_thread" else crossings.turn).update(
+                [crossings.entry(wall, target) for target in targets] or [wall]
+            )
+            return None
 
         async def record_extraction(messages):
             await self._record_spend(
@@ -508,6 +541,9 @@ class PydanticAITurnRunner:
                 await bridge.publish_usage(usage)
                 return TurnOutcome(StopReason("end_turn"), prior_history, usage)
 
+            crossings = getattr(context.toolset, "crossings", None)
+            if crossings is not None:
+                crossings.turn.clear()  # F198: Allow once covers one request.
             if context.toolset is not None and _explicit_outside_path(prompt, context):
                 location = context.toolset.location()
                 with capture_run_messages() as boundary_messages:
@@ -518,16 +554,37 @@ class PydanticAITurnRunner:
                         usage=run_usage,
                         model_settings=model_settings,
                     )
+                # F198 (M4W1B hour): the judge names what the request writes; whether that is
+                # outside the root is checked here, so a read is never judged a write.
+                outside = [
+                    path
+                    for path in judged.output.written_paths
+                    if not (location.cwd / Path(path).expanduser())
+                    .resolve()
+                    .is_relative_to(location.workspace_root)
+                ]
+                folders = []
+                for path in outside:
+                    resolved = (location.cwd / Path(path).expanduser()).resolve()
+                    if crossings is not None and crossings.writable(resolved):
+                        continue  # F198: allowed for this thread already; no second card.
+                    folders.append(resolved if resolved.is_dir() else resolved.parent)
                 await emit.event(
                     {
                         "event_kind": "boundary_judgment",
                         "judge": "PermissionJudge",
                         "model": selected_model.model_name,
                         **judged.output.model_dump(),
+                        "needs_owner": bool(folders),
                     }
                 )
-                if judged.output.needs_owner:
-                    await review_boundary("workspace", judged.output.reason)
+                if folders:
+                    await review_boundary(
+                        "workspace",
+                        f"{judged.output.reason} Writes outside {location.workspace_root}: "
+                        f"{', '.join(outside)}.",
+                        tuple(dict.fromkeys(folders)),
+                    )
 
             prior_history = _strip_all_proposed_response_blocks(
                 _strip_all_memory_blocks(prior_history)
@@ -541,6 +598,8 @@ class PydanticAITurnRunner:
                 blocks = []
                 if dynamic_instructions is not None:
                     blocks.append(await dynamic_instructions.render())
+                if crossings is not None and (allowed := _crossing_instruction(crossings)):
+                    blocks.append(allowed)
                 steering = getattr(emit, "steering_instructions", lambda: "")()
                 if steering and steering != applied_steering:
                     run_context.messages[-1].parts.append(
@@ -625,10 +684,10 @@ class PydanticAITurnRunner:
                 cacheable_prefix_tokens=_cacheable_prefix_tokens(history),
                 assistant_text=visible_output,
             )
-        except _BoundaryCardReleased:
+        except _BoundaryCardReleased as released:
             usage = _failure_usage(run_usage, captured, prior_history)
             await bridge.publish_usage(usage)
-            message = "Boundary review is on the Deck. No action was taken across the wall."
+            message = released.message
             await emit.text(message)
             return TurnOutcome(
                 StopReason("end_turn"),
@@ -1309,6 +1368,39 @@ def _no_account(_answer: str) -> None:
 _MENTIONED_PATH = re.compile(r"[\w.-]+(?:/[\w.-]+)*\.[A-Za-z0-9]{1,8}")
 
 
+def _crossing_instruction(crossings) -> str | None:
+    """F198 (M5HD walk): after Allow, gpt-4.1-mini wrote a same-named file inside the workspace;
+    the agent is told what the owner allowed and how to reach it."""
+
+    folders = crossings.folders()
+    walls = sorted(entry for entry in crossings.entries() if not entry.startswith("workspace:"))
+    if not folders and not walls:
+        return None
+    lines = ["The owner allowed on a boundary card:"]
+    if folders:
+        lines.append(
+            "writes in " + ", ".join(str(folder) for folder in folders) + " — write or edit those "
+            "files by their full path from where you are; do not move there."
+        )
+    if "remote" in walls:
+        lines.append("remote commands (network and git push) for this thread or request.")
+    if "credentials" in walls:
+        lines.append("reading credential files for this thread or request.")
+    return " ".join(lines)
+
+
+def _does_not_parse(path: Path) -> bool:
+    if path.suffix != ".py" or not path.is_file():
+        return False
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            ast.parse(path.read_bytes())
+        except (SyntaxError, ValueError):
+            return True
+    return False
+
+
 def turn_account(context: MemoryToolContext) -> Callable[[str], str | None]:
     """M3CL2 (the gate's 2026-10-01 ruling, never a claim the loop did not check): the loop's
     account of what this turn changed in the repository, naming files an answer mentions that
@@ -1336,10 +1428,13 @@ def turn_account(context: MemoryToolContext) -> Callable[[str], str | None]:
             for path in named
             if path not in changed and not any(item.endswith(f"/{path}") for item in changed)
         )
+        # F199 (M4W1B hour): a committed test file that did not parse read as fine here.
+        broken = sorted(path for path in changed if _does_not_parse(root / path))
         parts = [
             *([f"committed {', '.join(committed)}"] if committed else []),
             *([f"not committed: {', '.join(uncommitted)}"] if uncommitted else []),
             *([f"not changed: {', '.join(unchanged)}"] if unchanged else []),
+            *([f"does not parse: {', '.join(broken)}"] if broken else []),
         ]
         return "Checked by Nocturne, this turn: " + "; ".join(parts) + "."
 
