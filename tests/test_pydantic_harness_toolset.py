@@ -411,6 +411,27 @@ async def test_a_fresh_clone_shell_keeps_tool_caches_in_scratch_and_names_the_do
     ), offline.content
 
 
+@pytest.mark.asyncio
+async def test_an_allowed_crossing_opens_only_its_own_wall(tmp_path: Path) -> None:
+    """F198 / ADR-015: what the owner allows on a boundary card lifts that wall and no other."""
+    if not Path("/usr/bin/sandbox-exec").is_file():
+        pytest.skip("the standing hard shell fence is macOS sandbox-exec")
+
+    (tmp_path / ".env").write_text("KEY=1\n")
+    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    try:
+        walled = await toolset.execute("bash", {"command": "echo curl"})
+        toolset.crossings.turn.add("remote")
+        crossed = await toolset.execute("bash", {"command": "echo curl"})
+        secret = await toolset.execute("read", {"path": ".env"})
+    finally:
+        await toolset.close()
+
+    assert walled.boundary == "remote" and not walled.success
+    assert crossed.success and "curl" in crossed.content, crossed.content
+    assert secret.boundary == "credentials"
+
+
 def test_upstream_skills_gain_model_visible_bundled_resources(tmp_path: Path) -> None:
     """D.2 136 closes M3PV's resource gap without patching the dependency. [ADR-013, ADR-015]"""
 

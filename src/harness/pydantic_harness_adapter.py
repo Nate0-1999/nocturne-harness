@@ -61,6 +61,7 @@ from harness.project_path import project_environment, repository_root
 from harness.spine_client import SpineClientError
 from harness.toolset import (
     AgentLocation,
+    Crossings,
     PresenceEvent,
     PresenceSink,
     ToolExecutionResult,
@@ -367,9 +368,11 @@ class PydanticHarnessToolset:
         *,
         location: AgentLocation,
         presence_sink: PresenceSink | None,
+        crossings: Crossings | None = None,
     ) -> None:
         self._location = location
         self._presence_sink = presence_sink
+        self.crossings = crossings or Crossings()
         self._presence_events: list[PresenceEvent] = []
         self._closed = False
         self._background_shells: dict[str, ShellToolset] = {}
@@ -387,6 +390,7 @@ class PydanticHarnessToolset:
         session_id: str,
         fence_reads: bool = False,
         presence_sink: PresenceSink | None = None,
+        crossings: Crossings | None = None,
     ) -> Self:
         initial_location = (cwd or Path.cwd()).resolve(strict=True)
         root = (workspace_root or initial_location).resolve(strict=True)
@@ -403,6 +407,7 @@ class PydanticHarnessToolset:
                 fence_reads=fence_reads,
             ),
             presence_sink=presence_sink,
+            crossings=crossings,
         )
 
     def location(self) -> AgentLocation:
@@ -421,8 +426,9 @@ class PydanticHarnessToolset:
                 f"{target} is above this thread's workspace. Its root is {root}; "
                 f"move('{root}') goes there."
             )
-        if not _inside(root, target):
-            # WALL owner files / ADR015: movement cannot enlarge the write grant.
+        if not _inside(root, target) and not self.crossings.allowed("workspace"):
+            # WALL owner files / ADR015: movement cannot enlarge the write grant
+            # (F198: unless the owner allowed the crossing on its card).
             raise WorkspaceBoundaryError(
                 f"Cannot move outside the workspace {self._location.workspace_root}.", "workspace"
             )
@@ -504,12 +510,20 @@ class PydanticHarnessToolset:
 
     def _preflight(self, tool_name: str, raw_path: object, *, default: str | None = None) -> Path:
         target = self._target(raw_path, default=default)
-        if tool_name in _READ_TOOLS and _credential_path(target):
+        if (
+            tool_name in _READ_TOOLS
+            and _credential_path(target)
+            and not self.crossings.allowed("credentials")
+        ):
             # WALL credentials / ADR015: do not expose credential files through reads.
             raise WorkspaceBoundaryError(
                 "That path may contain credentials. Ask the owner before reading it.", "credentials"
             )
-        if tool_name in _WRITE_TOOLS and not _inside(self._location.workspace_root, target):
+        if (
+            tool_name in _WRITE_TOOLS
+            and not _inside(self._location.workspace_root, target)
+            and not self.crossings.allowed("workspace")
+        ):
             # WALL owner files / F083: route outside-workspace writes to the Deck.
             raise WorkspaceBoundaryError(
                 f"That path is outside this workspace: {target}.", "workspace"
@@ -796,14 +810,15 @@ class PydanticHarnessToolset:
         if not isinstance(command, str) or not command.strip():
             # A-069: the saved or interactive shell must name actual work.
             raise ToolsetError("A shell command is required.")
-        if _BOUNDARY_COMMAND.search(command):
+        remote = self.crossings.allowed("remote")
+        if _BOUNDARY_COMMAND.search(command) and not remote:
             # WALL owner files / ADR015: shell tools cannot publish or escape the project grant.
             raise WorkspaceBoundaryError(
                 "That command may leave this project or change remote state. "
                 "Ask the owner to run it explicitly outside Nocturne.",
                 "remote",
             )
-        if _CREDENTIAL_COMMAND.search(command):
+        if _CREDENTIAL_COMMAND.search(command) and not self.crossings.allowed("credentials"):
             # WALL credentials / ADR015: shell output must not read credential stores.
             raise WorkspaceBoundaryError(
                 "That command may expose credentials. Ask the owner before reading them.",
@@ -862,6 +877,8 @@ class PydanticHarnessToolset:
             f"{git_writes}"
             '(literal "/dev/null"))'
             f" (allow file-write* (subpath {json.dumps(str(self._scratch))}))"
+            # F198: the owner allowed this thread's remote crossing on its card.
+            + (" (allow network*)" if remote else "")
         )
         # F135 (M3EX-13): the EXIT trap keeps zsh as the group's parent, named by its $0
         # marker, so a cancelled turn can stop exactly this command.

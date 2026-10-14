@@ -129,6 +129,12 @@ _MAX_PROVIDER_MESSAGE = 1_000
 class _BoundaryCardReleased(Exception):
     """End a boundary turn after the judge releases its durable Deck card."""
 
+    def __init__(
+        self, message: str = "Boundary review is on the Deck. No action was taken across the wall."
+    ) -> None:
+        super().__init__(message)
+        self.message = message
+
 
 _CONTEXT_CODES = frozenset(
     {
@@ -205,26 +211,45 @@ class PydanticAITurnRunner:
         )
         model_settings = _model_settings(model_resolution, thread_id)
 
-        async def review_boundary(wall: str, reason: str) -> str:
+        async def review_boundary(wall: str, reason: str) -> str | None:
+            """None once the owner allowed the crossing; otherwise what the model reads."""
             if not PermissionJudge.needs_owner(wall):
                 return reason + " The PermissionJudge says to move within the existing workspace."
-            await emit.event(
-                {
-                    "event_kind": "boundary_card",
-                    "judge": "PermissionJudge",
-                    "policy": "ADR-015 boundary list",
-                    "decision": "owner_action",
-                    "wall": wall,
-                    "reason": reason,
-                    "run_id": emit.run_id,
-                    "created_at": self._clock().isoformat(),
-                    "action": "Use a separate thread rooted at the required folder."
-                    if wall == "workspace"
-                    else "Perform this action explicitly outside Nocturne.",
-                }
+            card = {
+                "event_kind": "boundary_card",
+                "judge": "PermissionJudge",
+                "policy": "ADR-015 boundary list",
+                "decision": "owner_action",
+                "wall": wall,
+                "reason": reason,
+                "run_id": emit.run_id,
+                "card_id": generate_ulid(),
+                "created_at": self._clock().isoformat(),
+                "action": "Use a separate thread rooted at the required folder."
+                if wall == "workspace"
+                else "Perform this action explicitly outside Nocturne.",
+            }
+            decide = getattr(emit, "boundary_decision", None)
+            crossings = getattr(context.toolset, "crossings", None)
+            if decide is None or crossings is None:
+                await emit.event(card)
+                # WALL workspace / F083: stop the turn after releasing its boundary card.
+                raise _BoundaryCardReleased()
+            # F198 (M4W1B hour): the card is a question the owner can answer; the run waits.
+            card["action"] = (
+                "Allow once lets this request cross; Allow for this thread lets every request "
+                "in this thread cross; Deny stops it."
             )
-            # WALL workspace / F083: stop the turn after releasing its boundary card.
-            raise _BoundaryCardReleased()
+            decision = await decide(card)
+            await emit.event(
+                {**card, "decision": decision, "created_at": self._clock().isoformat()}
+            )
+            if decision == "denied":
+                raise _BoundaryCardReleased(
+                    "You denied this crossing on the Deck. Nothing was done across the wall."
+                )
+            (crossings.thread if decision == "allowed_thread" else crossings.turn).add(wall)
+            return None
 
         async def record_extraction(messages):
             await self._record_spend(
@@ -510,7 +535,14 @@ class PydanticAITurnRunner:
                 await bridge.publish_usage(usage)
                 return TurnOutcome(StopReason("end_turn"), prior_history, usage)
 
-            if context.toolset is not None and _explicit_outside_path(prompt, context):
+            crossings = getattr(context.toolset, "crossings", None)
+            if crossings is not None:
+                crossings.turn.clear()  # F198: Allow once covers one request.
+            if (
+                context.toolset is not None
+                and not (crossings is not None and crossings.allowed("workspace"))
+                and _explicit_outside_path(prompt, context)
+            ):
                 location = context.toolset.location()
                 with capture_run_messages() as boundary_messages:
                     judged = await self._agent.judge_boundary(
@@ -520,16 +552,30 @@ class PydanticAITurnRunner:
                         usage=run_usage,
                         model_settings=model_settings,
                     )
+                # F198 (M4W1B hour): the judge names what the request writes; whether that is
+                # outside the root is checked here, so a read is never judged a write.
+                outside = [
+                    path
+                    for path in judged.output.written_paths
+                    if not (location.cwd / Path(path).expanduser())
+                    .resolve()
+                    .is_relative_to(location.workspace_root)
+                ]
                 await emit.event(
                     {
                         "event_kind": "boundary_judgment",
                         "judge": "PermissionJudge",
                         "model": selected_model.model_name,
                         **judged.output.model_dump(),
+                        "needs_owner": bool(outside),
                     }
                 )
-                if judged.output.needs_owner:
-                    await review_boundary("workspace", judged.output.reason)
+                if outside:
+                    await review_boundary(
+                        "workspace",
+                        f"{judged.output.reason} Writes outside {location.workspace_root}: "
+                        f"{', '.join(outside)}.",
+                    )
 
             prior_history = _strip_all_proposed_response_blocks(
                 _strip_all_memory_blocks(prior_history)
@@ -627,10 +673,10 @@ class PydanticAITurnRunner:
                 cacheable_prefix_tokens=_cacheable_prefix_tokens(history),
                 assistant_text=visible_output,
             )
-        except _BoundaryCardReleased:
+        except _BoundaryCardReleased as released:
             usage = _failure_usage(run_usage, captured, prior_history)
             await bridge.publish_usage(usage)
-            message = "Boundary review is on the Deck. No action was taken across the wall."
+            message = released.message
             await emit.text(message)
             return TurnOutcome(
                 StopReason("end_turn"),

@@ -103,6 +103,7 @@ export type RackAction =
   | { type: 'models.pin'; model: string; pinned: boolean }
   | { type: 'policies.save'; role: string; policy: string }
   | { type: 'prompt.interject'; run_id: string; prompt: string }
+  | { type: 'boundary.decide'; run_id: string; decision: 'allowed_once' | 'allowed_thread' | 'denied' }
   | { type: 'symphony.context'; symphony_id: string }
   | { type: 'symphony.memory'; symphony_id: string; worker_id: string; memory_id: string; added: boolean }
   | { type: 'spend.invoice'; amount_usd: string; invoice_date: string; invoice_id: string }
@@ -247,7 +248,7 @@ export type RackActionResult<Action extends RackAction> =
       ? number
     : Action['type'] extends 'thread.select' | 'thread.rename_project' | 'thread.bind_workspace' | 'draft.update'
       ? void
-      : Action['type'] extends 'policies.load' | 'policies.save' | 'models.load' | 'models.pin' | 'prompt.interject' | 'symphony.context' | 'symphony.memory' | 'spend.invoice' | 'thread.archive' | 'thread.rewind' | 'thread.compactions' | 'queue.load' | 'curation.load' | 'local_copy.load' | 'local_copy.dismiss' | 'queue.decide' | 'queue.feedback' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
+      : Action['type'] extends 'policies.load' | 'policies.save' | 'models.load' | 'models.pin' | 'prompt.interject' | 'boundary.decide' | 'symphony.context' | 'symphony.memory' | 'spend.invoice' | 'thread.archive' | 'thread.rewind' | 'thread.compactions' | 'queue.load' | 'curation.load' | 'local_copy.load' | 'local_copy.dismiss' | 'queue.decide' | 'queue.feedback' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
         ? JsonValue
         : Action['type'] extends 'rack.scope.get' | 'rack.scope.set'
           ? RackScope
@@ -306,7 +307,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     slot: 'panel',
     streams: ['thread.snapshot', 'run.*', 'error', 'parameter.change', 'model.change'],
     actions: [
-      'project.select', 'prompt.submit', 'prompt.interject', 'draft.update', 'run.cancel', 'thread.archive',
+      'project.select', 'prompt.submit', 'prompt.interject', 'boundary.decide', 'draft.update', 'run.cancel', 'thread.archive',
       'queue.load', 'queue.decide', 'thread.select', 'symphony.intervene', 'thread.rename_project',
       'thread.rewind', 'thread.compactions',
       'symphony.context', 'symphony.memory',
@@ -593,6 +594,15 @@ function dispatchRackAction<Action extends RackAction>(
         return fetchJson(`/v1/threads/${encodeURIComponent(threadId)}/interject`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ run_id: action.run_id, prompt: action.prompt }),
+        }) as Promise<RackActionResult<Action>>
+      }
+      case 'boundary.decide': {
+        // F198: the owner's answer to the boundary card its run waits on.
+        const threadId = getRackSnapshot().selectedThreadId
+        if (threadId === null) throw new Error('Select a thread first.')
+        return fetchJson(`/v1/threads/${encodeURIComponent(threadId)}/boundary`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ run_id: action.run_id, decision: action.decision }),
         }) as Promise<RackActionResult<Action>>
       }
       case 'policies.load':

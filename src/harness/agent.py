@@ -217,10 +217,11 @@ class RememberResult:
 
 
 class BoundaryIntent(BaseModel):
-    """The PermissionJudge's classification of an explicit outside-path request. [ADR-015]"""
+    """The PermissionJudge's reading of an explicit outside-path request: the paths it asks to
+    change; the runtime checks which are outside the root. [ADR-015, F198]"""
 
     model_config = ConfigDict(extra="forbid")
-    needs_owner: StrictBool
+    written_paths: list[StrictStr]
     reason: StrictStr
 
 
@@ -270,11 +271,12 @@ class HarnessAgent:
             output_type=PromptedOutput(BoundaryIntent),
             instructions=(
                 "You are the PermissionJudge applying ADR-015 to an explicit outside-path request. "
-                "Only the supplied workspace root grants write authority. A request to create, "
-                "edit, delete, or execute a modifying command outside that root needs_owner=true. "
-                "Read-only inspection outside the root and movement or edits within it do not. "
-                "Classify the user's actual requested action, not quoted examples. Never grant "
-                "wider authority. Give the concrete reason; do not ask a chat question."
+                "List in written_paths every file or folder the user's request asks to create, "
+                "edit, delete, or change with a command, as the user wrote it. A path that is only "
+                "read, inspected, imported, installed from, depended on, mentioned, or the place "
+                "a command runs is not written: leave it out. Committing writes only the files "
+                "being committed. Classify the user's actual requested action, not quoted "
+                "examples. Give the concrete reason in one sentence; do not ask a chat question."
             ),
             name="permission-judge",
         )

@@ -176,12 +176,76 @@ async def test_workspace_crossing_is_judge_released_to_deck(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("needs_owner", [True, False])
+@pytest.mark.parametrize("decision", ["allowed_once", "allowed_thread", "denied"])
+async def test_a_boundary_card_waits_for_the_owners_answer(tmp_path: Path, decision: str) -> None:
+    """F198: in the M4W1B hour the card said "owner action required" and offered none. The run
+    waits on the card; Allow once lets this request cross, Allow for this thread every request,
+    and Deny ends the turn with nothing done across the wall. [ADR-015]"""
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (tmp_path / "spine").mkdir()
+    target = tmp_path / "spine" / "outside.txt"
+    target.write_text("untouched")
+    steps = [
+        ("move", {"path": "../spine"}),
+        ("write", {"path": "outside.txt", "content": "changed"}),
+    ]
+
+    async def stream(messages, _info):
+        done = sum(isinstance(message, ModelResponse) for message in messages)
+        if done < len(steps):
+            name, arguments = steps[done]
+            yield {0: DeltaToolCall(name=name, json_args=json.dumps(arguments), tool_call_id=name)}
+        else:
+            yield "Done."
+
+    toolset = await open_standard_toolset(cwd=workspace, workspace_root=workspace)
+    emitter = DecidingEmitter(decisions=[decision])
+    try:
+        runner = PydanticAITurnRunner(
+            HarnessAgent(settings(), model=FunctionModel(stream_function=stream)),
+            lambda _: context(toolset=toolset),
+        )
+        outcome = await runner.run(
+            thread_id=str(THREAD_UUID), prompt="Edit outside.txt.", message_history=(), emit=emitter
+        )
+    finally:
+        await toolset.close()
+
+    assert [card["decision"] for card in emitter.cards] == ["owner_action"]
+    assert emitter.cards[0]["reason"] == f"Cannot move outside the workspace {workspace}."
+    answered = [event for event in emitter.events if event["event_kind"] == "boundary_card"]
+    assert [(event["decision"], event["card_id"]) for event in answered] == [
+        (decision, emitter.cards[0]["card_id"])
+    ]
+    if decision == "denied":
+        assert target.read_text() == "untouched"
+        assert outcome.assistant_text == (
+            "You denied this crossing on the Deck. Nothing was done across the wall."
+        )
+        assert toolset.crossings.allowed("workspace") is False
+    else:
+        assert target.read_text() == "changed"
+        assert outcome.assistant_text == "Done."
+        assert toolset.crossings.turn == ({"workspace"} if decision == "allowed_once" else set())
+        assert toolset.crossings.thread == (
+            {"workspace"} if decision == "allowed_thread" else set()
+        )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("written", "needs_owner"),
+    [("{outside}/a.txt", True), (None, False), ("src/cli.py", False)],
+)
 async def test_explicit_outside_path_gets_fresh_judge_before_chat(
     tmp_path: Path,
+    written: str | None,
     needs_owner: bool,
 ) -> None:
-    """PLAN M3SK / F083: explicit outside writes card before chat; outside reads stay autonomous."""
+    """PLAN M3SK / F083: explicit outside writes card before chat; outside reads stay autonomous.
+    F198: the judge names the written paths and the runtime checks the root, so a request that
+    only reads ../spine and commits files inside the root is never judged a write."""
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     calls = []
@@ -194,7 +258,9 @@ async def test_explicit_outside_path_gets_fresh_judge_before_chat(
                 TextPart(
                     json.dumps(
                         {
-                            "needs_owner": needs_owner,
+                            "written_paths": []
+                            if written is None
+                            else [written.format(outside=tmp_path)],
                             "reason": "Outside write"
                             if needs_owner
                             else "Read-only inspection is already allowed",
@@ -275,6 +341,18 @@ class RecordingEmitter:
 
     async def error(self, value: Mapping[str, object]) -> None:
         self.errors.append(value)
+
+
+@dataclass
+class DecidingEmitter(RecordingEmitter):
+    """F198: answers each waiting boundary card with the next decision, as the owner would."""
+
+    decisions: list[str] = field(default_factory=list)
+    cards: list[Mapping[str, object]] = field(default_factory=list)
+
+    async def boundary_decision(self, card: Mapping[str, object]) -> str:
+        self.cards.append(card)
+        return self.decisions.pop(0)
 
 
 @dataclass

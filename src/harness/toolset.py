@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Literal, Protocol
@@ -33,6 +33,23 @@ class PermissionJudge:
         if wall in {"workspace", "credentials", "remote"}:
             return True
         raise ValueError(f"Unknown workspace wall: {wall}")
+
+
+@dataclass(slots=True)
+class Crossings:
+    """Walls the owner let this thread cross from a boundary card: for the current request
+    (Allow once) or for every request in the thread (Allow for this thread). [ADR-015, F198]"""
+
+    turn: set[str] = field(default_factory=set)
+    thread: set[str] = field(default_factory=set)
+    journaled: Callable[[str], bool] | None = None
+
+    def allowed(self, wall: str) -> bool:
+        return (
+            wall in self.turn
+            or wall in self.thread
+            or (self.journaled is not None and self.journaled(wall))
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -121,6 +138,7 @@ async def open_standard_toolset(
     session_id: str | None = None,
     fence_reads: bool = False,
     presence_sink: PresenceSink | None = None,
+    crossings: Crossings | None = None,
 ) -> StandardToolset:
     """Open the selected standard toolset without leaking its protocol to callers."""
 
@@ -134,4 +152,5 @@ async def open_standard_toolset(
         session_id=session_id or generate_ulid(),
         fence_reads=fence_reads,
         presence_sink=presence_sink,
+        crossings=crossings,
     )
