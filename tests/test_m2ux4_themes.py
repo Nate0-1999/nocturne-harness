@@ -79,6 +79,10 @@ def test_css_seam_and_built_in_palette_checks_are_closed() -> None:
         "gold-lines",
         "wizard-mode",
         "technomancer",
+        "art-deco",
+        "art-deco-light",
+        "bellagio",
+        "bellagio-light",
     }
     assert all(theme["passed"] for theme in result["themes"].values())
 
