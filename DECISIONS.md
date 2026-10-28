@@ -4282,6 +4282,24 @@ keeps polling the same job, never resubmitting the fit. Both Palace deployment
 paths allocate CPU between requests so the existing worker can finish after the
 start response. Scale-to-zero remains; durable pending jobs resume on startup.
 
+## M5VW — The Farm follows the living threads [P2, P2.5]
+
+PRECEDENT: F202, F155, F131, M4VW (report 272), M3VL GRANTS (a), M3GE (the axis switch re-binds
+live), FL-132 133 138.
+The Farm's agents come from the open threads only: an archived thread is closed, as on the Deck,
+so time order moves the panels to the longest-waiting open reply. A recorded moment can still
+show an agent whose thread was archived since; picking it says its conversation is closed and
+opens nothing, where it used to bounce between the closed thread and the newest open one under
+"Restoring thread".
+The Palace's axis is the trait that connects memories into families — shared keyword (the
+default), shared thread or similar meaning (the Palace's own similarity edges) — and the owner's
+FL-138 words ask that colors and shapes change with it, so a family's hue replaces the kind's
+(nearly every memory is one kind, "fact"). Within the M3VL radial grant the axis re-forms the
+families, and with them each memory's angle, hue and the shared-trait filaments; radius stays
+inverse injections and depth revision. Lineage always joins a family. The old single family was
+the union of all three traits, which on a palace of one thread's facts was one family: one ring,
+one stipple disc.
+
 ## M3GT — Names read whole; the scripts rain; two themes by audition [P2.5]
 
 PRECEDENT: D.2 112, 115–119, 180, M3TM, TASTE-09, SD-078, SD-080. M3TM's shrinking

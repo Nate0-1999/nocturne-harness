@@ -27,8 +27,10 @@ import {
   buildNebulaCreatureFamilies,
   buildNebulaEvents,
   buildNebulaFilaments,
+  NEBULA_AXES,
   NEBULA_BINDINGS,
   NEBULA_EVENT_COLORS,
+  type NebulaAxis,
   type NebulaBody,
   type NebulaCreatureFamily,
   type NebulaFilament,
@@ -69,6 +71,7 @@ export function PalaceNebula() {
   const rack = useRackSnapshot()
   const visualization = useVisualization()
   const [tier, setTier] = useState<NebulaHardwareTier>('full')
+  const [axis, setAxis] = useState<NebulaAxis>('keyword')
   const [scope, setScope] = useState<'GLOBAL' | 'ATTUNED'>('GLOBAL')
   const [load, setLoad] = useState<LoadState>({ kind: 'loading' })
   // A first live reading slower than 3 s (or failed) lets the recording stand in, so a slow Palace still draws its last
@@ -126,17 +129,17 @@ export function PalaceNebula() {
     if (scope === 'ATTUNED') palace.nodes = palace.nodes.filter((node) => node.memory.origin_thread_id === threadId)
     return palace
   }, [visualization.data, selected?.as_of, scope, threadId, load, patient])
-  const bodies = useMemo(() => sceneSnapshot ? buildNebulaBodies(sceneSnapshot).map((body) => {
+  const bodies = useMemo(() => sceneSnapshot ? buildNebulaBodies(sceneSnapshot, undefined, axis).map((body) => {
     const memory = sceneSnapshot.nodes.find((node) => node.memory.memory_id === body.id)?.memory
     const focused = selected?.kind === 'memory' ? selected.id === body.id
       : selected?.kind === 'agent' ? memory?.origin_thread_id === selected.thread_id
         : selected?.kind === 'thread' ? memory?.origin_thread_id === selected.id
           : selected?.kind === 'path' ? (memory?.origin_location ?? memory?.origin_path) === selected.id : body.in_current_context
     return { ...body, in_current_context: focused }
-  }) : [], [sceneSnapshot, selected])
-  const memoryEvents = useMemo(() => sceneSnapshot ? buildNebulaEvents(sceneSnapshot) : [], [sceneSnapshot])
-  const filaments = useMemo(() => sceneSnapshot ? buildNebulaFilaments(sceneSnapshot, bodies) : [], [sceneSnapshot, bodies])
-  const families = useMemo(() => sceneSnapshot ? buildNebulaCreatureFamilies(sceneSnapshot, bodies, memoryEvents) : [], [sceneSnapshot, bodies, memoryEvents])
+  }) : [], [sceneSnapshot, selected, axis])
+  const memoryEvents = useMemo(() => sceneSnapshot ? buildNebulaEvents(sceneSnapshot, axis) : [], [sceneSnapshot, axis])
+  const filaments = useMemo(() => sceneSnapshot ? buildNebulaFilaments(sceneSnapshot, bodies, axis) : [], [sceneSnapshot, bodies, axis])
+  const families = useMemo(() => sceneSnapshot ? buildNebulaCreatureFamilies(sceneSnapshot, bodies, memoryEvents, axis) : [], [sceneSnapshot, bodies, memoryEvents, axis])
   const curatorProgress = visualization.data?.progress?.events.at(-1)
   const curatorTargets = new Set(curatorProgress?.memory_ids ?? [])
   const ghosts = bodies.filter((body) => curatorTargets.has(body.id))
@@ -160,7 +163,7 @@ export function PalaceNebula() {
   const learning = load.kind === 'ready' ? load.scorer?.learning : undefined
   const contextName = scope === 'GLOBAL' ? 'Whole Palace' : rack.attunement?.name ?? 'Unattuned'
 
-  return <section className="palace-nebula" data-testid="palace-nebula" data-axis="radial" data-tier={tier} data-grammar="torrent-constellation">
+  return <section className="palace-nebula" data-testid="palace-nebula" data-axis={axis} data-tier={tier} data-grammar="torrent-constellation">
     <header className="palace-nebula__header">
       <div className="palace-nebula__title">
         <small>Palace current · {contextName}</small>
@@ -168,6 +171,9 @@ export function PalaceNebula() {
         <p>Every point is a recorded memory event. The graph is the instrument.</p>
       </div>
       <div className="palace-nebula__controls">
+        <label>Axis<Select aria-label="Nebula axis" data-tooltip-detail="What connects the memories: families, colours and links re-form at once." value={axis} onChange={(event) => setAxis(event.target.value as NebulaAxis)}>
+          {(Object.keys(NEBULA_AXES) as NebulaAxis[]).map((key) => <option key={key} value={key}>{NEBULA_AXES[key]}</option>)}
+        </Select></label>
         <label>Render<Select aria-label="Nebula hardware tier" value={tier} onChange={(event) => { setFps(0); setBackend('starting'); setTier(event.target.value as NebulaHardwareTier) }}>
           <option value="full">Full</option><option value="efficient">Efficient</option>
         </Select></label>
@@ -284,7 +290,7 @@ function ThreeNebula({
     <directionalLight color="#dbe5ee" intensity={tier === 'full' ? 2.1 : 1.45} position={[5, 8, 7]} />
     <NebulaEventTorrent events={events} tier={tier} />
     <NebulaFilaments filaments={filaments} ghosts={ghosts} tier={tier} />
-    <CuratorStream route={curatorRoute} tier={tier} />
+    <CuratorStream route={curatorRoute} resting={ghosts.length === 0} tier={tier} />
     {families.filter((family) => family.stipple_count > 0).map((family) => <NebulaCreatureCluster key={family.id} family={family} tier={tier} />)}
     {bodies.map((body) => <NebulaMemoryBody key={body.id} body={body} arriving={!present.has(body.id)}
       share={mostInjected > 0 ? Math.log2(1 + body.injections) / Math.log2(1 + mostInjected) : 0}
@@ -310,17 +316,18 @@ function curatorArc(from: readonly number[], to: readonly number[], strand = 0) 
     start.clone().lerp(end, 0.7).add(bow.clone().multiplyScalar(0.75)), end])
 }
 
-function CuratorStream({ route, tier }: { route: readonly [number, number, number][]; tier: NebulaHardwareTier }) {
+/** The latest pass's recorded visits; between passes they rest as faint trails, so the families' own light shows (F155). */
+function CuratorStream({ route, resting, tier }: { route: readonly [number, number, number][]; resting: boolean; tier: NebulaHardwareTier }) {
   const seen = new Map<string, number>()
   return <group name="recorded-curator-route">{route.slice(1).map((to, index) => {
     const pair = [route[index], to].map((point) => point.join(',')).sort().join('|')
     const strand = seen.get(pair) ?? 0
     seen.set(pair, strand + 1)
-    return <CuratorStreamArc key={index} from={route[index]} to={to} strand={strand} tier={tier} />
+    return <CuratorStreamArc key={index} from={route[index]} to={to} strand={strand} resting={resting} tier={tier} />
   })}</group>
 }
 
-function CuratorStreamArc({ from, to, strand, tier }: { from: readonly number[]; to: readonly number[]; strand: number; tier: NebulaHardwareTier }) {
+function CuratorStreamArc({ from, to, strand, resting, tier }: { from: readonly number[]; to: readonly number[]; strand: number; resting: boolean; tier: NebulaHardwareTier }) {
   const [fx, fy, fz] = from, [tx, ty, tz] = to
   const geometry = useMemo(() => {
     const curve = curatorArc([fx, fy, fz], [tx, ty, tz], strand)
@@ -340,8 +347,8 @@ function CuratorStreamArc({ from, to, strand, tier }: { from: readonly number[];
   useEffect(() => () => { geometry.tube.dispose(); geometry.halo.dispose() }, [geometry])
   return <group>
     {/* A new geometry gets a new mesh: swapping geometry under a live WebGPU render object drops its colour buffer. */}
-    <mesh key={geometry.tube.uuid} geometry={geometry.tube}><meshBasicMaterial vertexColors toneMapped={false} transparent opacity={0.85} depthWrite={false} blending={AdditiveBlending} /></mesh>
-    <mesh key={geometry.halo.uuid} geometry={geometry.halo}><meshBasicMaterial vertexColors toneMapped={false} transparent opacity={0.1} depthWrite={false} blending={AdditiveBlending} /></mesh>
+    <mesh key={geometry.tube.uuid} geometry={geometry.tube}><meshBasicMaterial vertexColors toneMapped={false} transparent opacity={resting ? 0.05 : 0.85} depthWrite={false} blending={AdditiveBlending} /></mesh>
+    <mesh key={geometry.halo.uuid} geometry={geometry.halo}><meshBasicMaterial vertexColors toneMapped={false} transparent opacity={resting ? 0 : 0.1} depthWrite={false} blending={AdditiveBlending} /></mesh>
   </group>
 }
 
@@ -414,18 +421,22 @@ function NebulaMemoryBody({ body, share, arriving, tier, onSelect }: {
   const glow = (0.1 + 0.9 * share) * (0.55 + 0.45 * body.recency_glow) * (focused ? 1.35 : 1)
   const rim = (0.6 + 1.8 * share) * (focused ? 1.6 : 1)
   const point = 1.6 * (1 - share) ** 10
-  const material = useMemo(() => {
-    // Glass: a dark kind-tinted body whose reflections come from the studio environment, strongest at the rim.
+  // FL-138: one material per body for its life; a new axis or count only moves its uniforms. A new material per
+  // change recompiled every body's pipeline, so an axis switch dropped the scene to ~6 fps.
+  const glass = useMemo(() => {
+    // Glass: a dark family-tinted body whose reflections come from the studio environment, strongest at the rim.
     const next = new MeshPhysicalNodeMaterial({ metalness: 0, roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1 })
     const facing = normalView.dot(positionViewDirection).abs()
-    const tint = uniform(new Color(red, green, blue))
+    const tint = uniform(new Color()), glowLevel = uniform(0), rimLevel = uniform(0), pointLevel = uniform(0)
     next.colorNode = tint.mul(0.04)
-    next.emissiveNode = tint.mul(facing.pow(3).mul(uniform(glow)))
-      .add(tslColor('#cfe0ff').mul(facing.oneMinus().pow(6).mul(uniform(rim))))
-      .add(tint.mix(tslColor('#f2f6ff'), 0.6).mul(facing.pow(3).mul(uniform(point))))
-    return next
-  }, [red, green, blue, glow, rim, point])
-  useEffect(() => () => material.dispose(), [material])
+    next.emissiveNode = tint.mul(facing.pow(3).mul(glowLevel))
+      .add(tslColor('#cfe0ff').mul(facing.oneMinus().pow(6).mul(rimLevel)))
+      .add(tint.mul(2.4).mul(facing.pow(3).mul(pointLevel)))
+    return { material: next, tint, glowLevel, rimLevel, pointLevel }
+  }, [])
+  useLayoutEffect(() => { lightGlass(glass, [red, green, blue], glow, rim, point) }, [glass, red, green, blue, glow, rim, point])
+  useEffect(() => () => glass.material.dispose(), [glass])
+  const material = glass.material
   return <>
     <mesh ref={meshRef} name={body.label} position={body.position} scale={body.scale} material={material}
       onClick={(event) => { event.stopPropagation(); onSelect(body.id) }}>
@@ -435,6 +446,14 @@ function NebulaMemoryBody({ body, share, arriving, tier, onSelect }: {
       <torusGeometry args={[1, 0.02, 6, 64]} />
     </mesh>
   </>
+}
+
+type GlassUniforms = { tint: { value: Color }; glowLevel: { value: number }; rimLevel: { value: number }; pointLevel: { value: number } }
+function lightGlass(glass: GlassUniforms, [red, green, blue]: readonly number[], glow: number, rim: number, point: number) {
+  glass.tint.value.setRGB(red, green, blue)
+  glass.glowLevel.value = glow
+  glass.rimLevel.value = rim
+  glass.pointLevel.value = point
 }
 
 function NebulaEventTorrent({ events, tier }: { events: readonly NebulaMemoryEvent[]; tier: NebulaHardwareTier }) {
@@ -502,6 +521,7 @@ function NebulaFilaments({ filaments, ghosts, tier }: {
 function NebulaCreatureCluster({ family, tier }: { family: NebulaCreatureFamily; tier: NebulaHardwareTier }) {
   const [x, y, z] = family.center
   const { stipple_count: stippleCount, phase } = family
+  const [red, green, blue] = family.color
   const memberCount = family.memory_ids.length
   const geometry = useMemo(() => {
     const positions: [number, number, number][] = []
@@ -517,10 +537,11 @@ function NebulaCreatureCluster({ family, tier }: { family: NebulaCreatureFamily;
         y + latitude * radius,
         z + Math.sin(theta) * ring * radius,
       ])
-      colors.push([0.9, 0.94, 1])
+      // The family's hue, lifted toward white: the cloud is light around the family's glass.
+      colors.push([red * 0.6 + 0.4, green * 0.6 + 0.4, blue * 0.6 + 0.4])
     }
     return pointGeometry(positions, colors)
-  }, [x, y, z, stippleCount, phase, memberCount, tier])
+  }, [x, y, z, stippleCount, phase, memberCount, tier, red, green, blue])
   const material = useMemo(() => new PointsMaterial({ size: 0.7, sizeAttenuation: false, transparent: true, opacity: 0.18, vertexColors: true }), [])
   useEffect(() => () => geometry.dispose(), [geometry])
   useEffect(() => () => material.dispose(), [material])
