@@ -307,6 +307,7 @@ def test_root_branches_project_turn_and_tool_call_times_without_content(tmp_path
         workspace_root=str(tmp_path),
         current_location=None,
         proposed_response=None,
+        archived=False,
         title="Thread",
         created_at="t0",
         updated_at="t3",
