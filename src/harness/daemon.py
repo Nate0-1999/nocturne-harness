@@ -53,7 +53,7 @@ from harness.envelope import (
 )
 from harness.extraction import ExtractionIdleScheduler, ExtractionService, ThreadEndResult
 from harness.jobs import JobScheduler, WorkflowModelResolver, WorkflowTurnRunner
-from harness.lifecycle import discard_prepared_restore, prepare_local_restore
+from harness.lifecycle import discard_prepared_restore, list_local_backups, prepare_local_restore
 from harness.memory_gate import MemoryGateTurnRunner
 from harness.memory_outbox import MemoryOutbox, QueuedWrite
 from harness.memory_panel import MemoryPanelController, ThreadMemoryContextRegistry
@@ -1640,6 +1640,14 @@ def create_dev_app(
                 if root is None
                 else {"path": str(root.resolve()), "label": root.resolve().name},
             }
+
+        @app.get("/v1/restore/backups")
+        async def restore_backups():
+            """FL-168: the restore pop-up picks from these instead of asking for an ID."""
+            config = load_config(home=home)
+            if config.palace_mode != "local":
+                raise HTTPException(409, "Cloud Palace restore is a human Cloud SQL operation.")
+            return {"backups": await asyncio.to_thread(list_local_backups, config)}
 
         @app.post("/v1/restore/{backup_id}/preview")
         async def restore_preview(backup_id: str):

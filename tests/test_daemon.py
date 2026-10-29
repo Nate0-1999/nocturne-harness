@@ -1325,7 +1325,7 @@ def test_restore_preview_discards_candidate_and_refuses_cloud(
         "backup-fixture",
         "former-fixture",
         "candidate-fixture",
-        RollbackManifest((), (ManifestMemory("memory-fixture", "Compass", 2, 1),), (), ()),
+        RollbackManifest((), (), (ManifestMemory("memory-fixture", "Compass", 2, 1),), (), ()),
     )
     discarded = []
     config = SimpleNamespace(palace_mode="local")

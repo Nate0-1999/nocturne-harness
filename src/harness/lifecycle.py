@@ -54,7 +54,7 @@ _INVENTORY_SQL = """
 SELECT json_build_object(
   'memories', COALESCE((
     SELECT json_agg(json_build_object(
-      'id', id::text, 'label', label, 'pin', pin, 'revision', revision,
+      'id', id::text, 'label', label, 'pin', pin, 'revision', revision, 'status', status,
       'digest', md5(to_jsonb(memory_unit)::text)
     ) ORDER BY id) FROM memory_unit
   ), '[]'::json),
@@ -117,6 +117,7 @@ class EventCount:
 
 @dataclass(frozen=True)
 class RollbackManifest:
+    memories_returned: tuple[ManifestMemory, ...]
     memories_lost: tuple[ManifestMemory, ...]
     edits_reverted: tuple[ManifestMemory, ...]
     pins_undone: tuple[ManifestMemory, ...]
@@ -515,6 +516,20 @@ def backup_permissions_are_private(path: Path) -> bool:
     )
 
 
+def list_local_backups(config: object) -> list[dict[str, object]]:
+    """FL-168: the generations a person can restore, newest first, so nobody types an ID."""
+
+    backups = Path(getattr(config, "home")) / "backups"
+    if not backups.is_dir():
+        return []
+    listed = []
+    for generation in reversed(_valid_generations(backups)):
+        receipt = _read_valid_receipt(generation, verify_digest=False)
+        if receipt is not None:
+            listed.append({key: receipt[key] for key in ("backup_id", "created_at", "reason")})
+    return listed
+
+
 def prepare_local_restore(config: object, backup_id: str) -> PreparedRestore:
     """Restore one verified generation beside the live Palace and compute its manifest."""
 
@@ -788,6 +803,15 @@ def _rollback_manifest(
             candidate_revision=None if other is None else int(other["revision"]),
         )
 
+    # FL-168: a memory deleted since the backup comes back active; say so, not "edit reverted".
+    returned = tuple(
+        item(row, candidate_rows[memory_id])
+        for memory_id, row in sorted(current_rows.items())
+        if row["status"] != "active"
+        and memory_id in candidate_rows
+        and candidate_rows[memory_id]["status"] == "active"
+    )
+    returned_ids = {memory.memory_id for memory in returned}
     lost = tuple(
         item(row, None)
         for memory_id, row in sorted(current_rows.items())
@@ -796,7 +820,9 @@ def _rollback_manifest(
     edits = tuple(
         item(row, candidate_rows[memory_id])
         for memory_id, row in sorted(current_rows.items())
-        if memory_id in candidate_rows and row != candidate_rows[memory_id]
+        if memory_id in candidate_rows
+        and row != candidate_rows[memory_id]
+        and memory_id not in returned_ids
     )
     pins = tuple(
         item(row, candidate_rows.get(memory_id))
@@ -817,6 +843,7 @@ def _rollback_manifest(
         for table in _EVENT_TABLES
     )
     return RollbackManifest(
+        memories_returned=returned,
         memories_lost=lost,
         edits_reverted=edits,
         pins_undone=pins,
@@ -837,6 +864,7 @@ def _write_rollback_receipt(config: object, prepared: PreparedRestore) -> Path:
         "former_volume": prepared.former_volume,
         "active_volume": prepared.candidate_volume,
         "manifest": {
+            "memories_returned": len(prepared.manifest.memories_returned),
             "memories_lost": len(prepared.manifest.memories_lost),
             "edits_reverted": len(prepared.manifest.edits_reverted),
             "pins_undone": len(prepared.manifest.pins_undone),

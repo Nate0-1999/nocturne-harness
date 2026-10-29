@@ -906,6 +906,7 @@ def _print_rollback_manifest(prepared: PreparedRestore, *, stdout: TextIO) -> No
     manifest = prepared.manifest
     print(f"Rollback manifest for backup {prepared.backup_id}", file=stdout)
     for heading, memories in (
+        ("Memories that come back", manifest.memories_returned),
         ("Memories lost", manifest.memories_lost),
         ("Edits reverted", manifest.edits_reverted),
         ("Pins undone", manifest.pins_undone),
