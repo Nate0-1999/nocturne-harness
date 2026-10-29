@@ -59,7 +59,9 @@
     "harness/web/tests/promptRedelivery.test.mjs": "the page re-sends an unacknowledged prompt after a reconnect (F193); test only.",
     "harness/web/tests/symphonyDeckSource.test.mjs": "the Deck calls a clarification logged only when recorded (F193); test only.",
     "harness/web/dist/assets/index-Dd7EMVxx.js": "the committed web bundle built from this packet's web sources; behavior walked under FL-098.",
-    "harness/web/dist/assets/index-pORLboCz.js": "the committed web bundle built from this packet's web sources; behavior walked under FL-098."
+    "harness/web/dist/assets/index-pORLboCz.js": "the committed web bundle built from this packet's web sources; behavior walked under FL-098.",
+    "harness/web/dist/assets/index-D-A9qSrX.js": "the committed web bundle built from this packet's web sources; behavior walked under FL-098.",
+    "harness/web/dist/assets/index-DVcBDB2W.js": "the committed web bundle built from this packet's web sources; behavior walked under FL-098."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
