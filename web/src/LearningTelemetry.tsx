@@ -16,7 +16,27 @@ import {
 import { Canvas } from '@react-three/fiber'
 import { useMemo, useState } from 'react'
 
-export type TerrainPoint = { tau: number; share: number; agreement: number }
+export type TerrainPoint = { tau: number; share: number; x?: number; y?: number; agreement: number }
+export type FitPoint = { phase: string; iteration: number; objective?: number; projects?: number; tau?: number; share?: number; observed_at: string }
+
+export function FitProgress({ points, pending }: { points: FitPoint[]; pending: boolean }) {
+  const measured = points.filter((point) => point.objective !== undefined)
+  const maximum = Math.max(...measured.map((point) => point.objective!), 0.000001)
+  const iterations = Math.max(...measured.map((point) => point.iteration), 1)
+  const latest = points.at(-1)
+  if (!pending && points.length === 0) return null
+  return <section aria-label="Measured optimization progress">
+    <h3>{pending ? 'Fitting in progress' : 'Last fit'}</h3>
+    <p>{latest ? `${latest.phase} · iteration ${latest.iteration} · observed ${latest.observed_at}` : 'Waiting for the worker’s first measurement.'}</p>
+    {measured.length > 0 && <figure className="learning-timeline">
+      <svg viewBox="0 0 100 100" role="img" aria-label="Measured training loss by iteration">
+        <polyline className="learning-timeline__line learning-timeline__line--live" points={measured.map((point) => `${8 + 84 * point.iteration / iterations},${88 - 76 * point.objective! / maximum}`).join(' ')} />
+      </svg>
+      <figcaption>Training loss {measured.at(-1)!.objective!.toPrecision(5)} · lower is better · sampled every 100 iterations</figcaption>
+    </figure>}
+    <p>Observed worker steps; a last observation alone does not prove the worker is still running.</p>
+  </section>
+}
 export type CreationSummary = {
   sources: { source: string; created: number; surviving: number; used: number; survival_rate: number | null }[]
   hygiene_excluded_events: number
@@ -40,17 +60,21 @@ export function CreationScoreboard({ data }: { data?: CreationSummary }) {
   </section>
 }
 
-export function ScoreTerrain({ points }: { points: TerrainPoint[] }) {
+export function ScoreTerrain({ points, labels = ['Minimum match', 'Memory share'] }: { points: TerrainPoint[]; labels?: string[] }) {
   const [angle, setAngle] = useState(25)
   const mesh = useMemo(() => {
     const vertices: number[] = [], colors: number[] = []
+    const xs = points.map((point) => point.x ?? point.tau)
+    const ys = points.map((point) => point.y ?? point.share)
+    const minX = Math.min(...xs), minY = Math.min(...ys)
+    const rangeX = Math.max(...xs) - minX || 1, rangeY = Math.max(...ys) - minY || 1
     const steps = Math.round(Math.sqrt(points.length))
     for (let x = 0; x < steps - 1; x++) for (let y = 0; y < steps - 1; y++) {
       const indices = [x * steps + y, (x + 1) * steps + y, x * steps + y + 1,
         x * steps + y + 1, (x + 1) * steps + y, (x + 1) * steps + y + 1]
       for (const index of indices) {
         const point = points[index]
-        vertices.push(point.tau - 0.5, point.agreement / 100, (point.share - 0.01) / 0.49 - 0.5)
+        vertices.push((xs[index] - minX) / rangeX - 0.5, point.agreement / 100, (ys[index] - minY) / rangeY - 0.5)
         colors.push(0.15 + 0.7 * point.agreement / 100, 0.65, 0.95)
       }
     }
@@ -58,7 +82,7 @@ export function ScoreTerrain({ points }: { points: TerrainPoint[] }) {
   }, [points])
   return <section aria-label="Replay score terrain">
     <h3>Score terrain</h3>
-    <p>Held-out decision agreement across minimum match × memory share. Height is agreement; the surface interpolates measured grid points.</p>
+    <p>Held-out decision agreement across {labels.join(' × ')}. Height is agreement; the surface interpolates measured grid points.</p>
     {points.length === 0 ? <p>No replayable held-out gates yet.</p> : <>
       <div className="score-terrain">
         <Canvas camera={{ position: [1.8, 1.5, 1.8], fov: 42 }} frameloop="demand">
@@ -74,9 +98,9 @@ export function ScoreTerrain({ points }: { points: TerrainPoint[] }) {
         </Canvas>
       </div>
       <label>Rotate terrain<input type="range" min="0" max="360" value={angle} onChange={(event) => setAngle(Number(event.target.value))} /></label>
-      <p>X: minimum match 0–1 · depth: memory share 1–50% · height: agreement 0–100%</p>
-      <details><summary>Measured grid values</summary><table><thead><tr><th>Minimum match</th><th>Memory share</th><th>Agreement</th></tr></thead><tbody>
-        {points.map((point) => <tr key={`${point.tau}-${point.share}`}><td>{point.tau.toFixed(3)}</td><td>{(point.share * 100).toFixed(2)}%</td><td>{point.agreement.toFixed(1)}%</td></tr>)}
+      <p>X: {labels[0]} · depth: {labels[1]} · height: agreement 0–100%</p>
+      <details><summary>Measured grid values</summary><table><thead><tr><th>{labels[0]}</th><th>{labels[1]}</th><th>Agreement</th></tr></thead><tbody>
+        {points.map((point, index) => <tr key={index}><td>{(point.x ?? point.tau).toPrecision(4)}</td><td>{(point.y ?? point.share).toPrecision(4)}</td><td>{point.agreement.toFixed(1)}%</td></tr>)}
       </tbody></table></details>
     </>}
   </section>
@@ -239,7 +263,7 @@ export function LearningTimeline({
         </svg>
       )}
       <figcaption>
-        {showLive && <span className="learning-timeline__legend learning-timeline__legend--live">Active live</span>}
+        {showLive && <span className="learning-timeline__legend learning-timeline__legend--live">Live agreement history</span>}
         <span className="learning-timeline__legend learning-timeline__legend--generation">Held-out generations</span>
         {model.unmeasuredGenerations > 0 && (
           <small>{model.unmeasuredGenerations} legacy {model.unmeasuredGenerations === 1 ? 'generation' : 'generations'} not recorded</small>

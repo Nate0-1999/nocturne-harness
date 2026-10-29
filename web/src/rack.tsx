@@ -136,7 +136,7 @@ export type RackAction =
   | { type: 'rack.scope.get'; module_id: RackModuleId; instance_id?: string }
   | { type: 'rack.scope.set'; module_id: RackModuleId; instance_id?: string; scope: RackScope }
   | { type: 'parameter.write'; thread_id: string; parameter_id: string; value: string | number | null }
-  | { type: 'scorer.simulate'; injection_id?: string; base_version: string; values: JsonValue; slice_parameter_id: string }
+  | { type: 'scorer.simulate'; injection_id?: string; base_version: string; values: JsonValue; slice_parameter_id: string; terrain_parameters?: [string, string] }
   | { type: 'scorer.force'; event_uid: string; base_version: string; values: JsonValue; simulation_digest: string }
   | { type: 'scorer.retrain' }
   | { type: 'scorer.retrain.status'; job_id: string }
@@ -776,6 +776,7 @@ function dispatchRackAction<Action extends RackAction>(
             base_version: action.base_version,
             values: action.values,
             slice_parameter_id: action.slice_parameter_id,
+            terrain_parameters: action.terrain_parameters,
           }),
         }) as Promise<RackActionResult<Action>>
       case 'scorer.force':

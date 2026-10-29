@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ContributionBars } from './ContributionBars'
 import { formatHumanPercent, formatHumanScore } from './humanNumbers.ts'
-import { CreationScoreboard, ScoreTerrain, LearningSummary, LearningTimeline, type CreationSummary, type TerrainPoint } from './LearningTelemetry'
+import { CreationScoreboard, ScoreTerrain, FitProgress, LearningSummary, LearningTimeline, type CreationSummary, type TerrainPoint, type FitPoint } from './LearningTelemetry'
 import {
   ACTIVATE_LABEL,
   AUDITION_LABEL,
@@ -30,6 +30,7 @@ type Values = {
 type Config = {
   axes?: Record<string, { label: string; inputs: string[]; weight: number; action: string; rationale: string; provenance: Record<string, unknown> }>
   project_offsets?: Record<string, Record<string, number>>
+  project_weights?: Record<string, Record<string, number>>
   version: string
   created_at: string
   status: string
@@ -65,6 +66,7 @@ type Slice = {
 }
 type Simulation = {
   terrain?: TerrainPoint[]
+  terrain_parameters?: [string, string]
   simulation_digest: string
   base_version: string
   values: Values
@@ -91,6 +93,7 @@ type RetrainJob = {
   status: 'pending' | 'completed' | 'failed'
   result: RetrainResponse | null
   error: string | null
+  progress: FitPoint[]
 }
 type Snapshot = {
   trainables?: { parameter: string; loop: string; floor: number | null; status: string }[]
@@ -171,6 +174,8 @@ export function InjectionConsole() {
   const [receipt, setReceipt] = useState<Simulation | null>(null)
   const [audition, setAudition] = useState<Audition | null>(null)
   const [sliceParameter, setSliceParameter] = useState('scorer.tau')
+  const [terrainParameters, setTerrainParameters] = useState<[string, string]>(['scorer.tau', 'scorer.memory_context_share'])
+  const [fitProgress, setFitProgress] = useState<FitPoint[]>([])
   const [busy, setBusy] = useState(false)
   const [retrainJob, setRetrainJob] = useState<string | null>(null)
   const [failure, setFailure] = useState<string | null>(null)
@@ -300,6 +305,7 @@ export function InjectionConsole() {
         base_version: data.active_version,
         values: draft as unknown as never,
         slice_parameter_id: sliceParameter,
+        terrain_parameters: terrainParameters,
       }) as unknown as Simulation
       setReceipt(result)
       setPreview(result.instant)
@@ -339,6 +345,7 @@ export function InjectionConsole() {
       try {
         const job = await events.dispatch({ type: 'scorer.retrain.status', job_id: retrainJob! }) as unknown as RetrainJob
         if (cancelled) return
+        setFitProgress(job.progress ?? [])
         if (job.status === 'completed' && job.result !== null) {
           setRetrainNotice({ copy: job.result.reason, eligibleDispositions: job.result.eligible_dispositions })
           setFailure(null)
@@ -365,6 +372,7 @@ export function InjectionConsole() {
 
   async function forceRetrain() {
     setBusy(true)
+    setFitProgress([])
     setRetrainNotice({ copy: 'Retraining in the background. The current recipe keeps serving.', eligibleDispositions: null })
     try {
       const job = await events.dispatch({ type: 'scorer.retrain' }) as unknown as RetrainJob
@@ -470,6 +478,7 @@ export function InjectionConsole() {
           {data.metrics_scope !== 'principal' && (
             <LearningTimeline learning={data.learning} accuracy={data.accuracy} />
           )}
+          <FitProgress points={fitProgress} pending={retrainJob !== null} />
         </div>
       )}
       <div className="console-grid">
@@ -488,7 +497,13 @@ export function InjectionConsole() {
               <h3>{config.version} · {config.status}</h3>
               {Object.values(config.axes ?? {}).length === 0 && <p>No curator-grown axes in this generation.</p>}
               {Object.entries(config.axes ?? {}).map(([name, axis]) => <div key={name}><strong>{axis.label}</strong><p>{axis.inputs.join(' × ')} · weight {axis.weight.toFixed(4)} · {axis.action.replaceAll('_', ' ')}</p><p>{axis.rationale}</p><details><summary>Provenance</summary><pre>{JSON.stringify(axis.provenance, null, 2)}</pre></details></div>)}
-              <p>Unseen projects start with zero offsets from global weights.</p>
+              <p>Projects start at global weights. Offsets fit after global weights, from zero, with at least {data?.learning.minimum_dispositions ?? 25} training signals per project.</p>
+              <table aria-label={`Effective project weights for ${config.version}`}>
+                <thead><tr><th>Project</th>{Object.values(WEIGHT_LABELS).map((label) => <th key={label}>{label}</th>)}</tr></thead>
+                <tbody><tr><th>Global</th>{Object.keys(WEIGHT_LABELS).map((key) => <td key={key} title={String(config.values.weights[key])}>{formatHumanScore(config.values.weights[key])}</td>)}</tr>
+                  {Object.entries(config.project_weights ?? {}).map(([project, weights]) => <tr key={project}><th>{project}</th>{Object.keys(WEIGHT_LABELS).map((key) => <td key={key} title={String(weights[key])}>{formatHumanScore(weights[key])}</td>)}</tr>)}
+                </tbody>
+              </table>
               {Object.keys(config.project_offsets ?? {}).length === 0 ? <p>No project offsets learned yet.</p> :
                 <table aria-label={`Project offsets for ${config.version}`}><thead><tr><th>Project</th>{Object.values(WEIGHT_LABELS).map((label) => <th key={label}>{label}</th>)}</tr></thead>
                   <tbody>{Object.entries(config.project_offsets ?? {}).map(([project, offsets]) => <tr key={project}><th>{project}</th>{Object.keys(WEIGHT_LABELS).map((key) => <td key={key}>{(offsets[key] ?? 0).toPrecision(4)}</td>)}</tr>)}</tbody>
@@ -627,6 +642,19 @@ export function InjectionConsole() {
                   {FORCE_VALUES_LABEL}
                 </Button>
               </div>
+              <div aria-label="Terrain parameters">
+                {(['X', 'Depth'] as const).map((label, index) => <label key={label}>{label}
+                  <Select aria-label={`Terrain ${label}`} data-tooltip-detail="Choose a parameter for the measured score surface." value={terrainParameters[index]} onChange={(event) => {
+                    const next: [string, string] = [...terrainParameters]
+                    next[index] = event.target.value
+                    setTerrainParameters(next)
+                    setReceipt(null)
+                  }}>
+                    {Object.entries(CONTROL_LABELS).filter(([key]) => key !== 'top_k').map(([key, name]) => <option key={key} value={`scorer.${key}`} disabled={terrainParameters[1 - index] === `scorer.${key}`}>{name}</option>)}
+                  </Select>
+                </label>)}
+                <p>Run DEEP to measure this surface.</p>
+              </div>
               {receipt && (
                 <div className="simulation-receipt" aria-label="Deep simulation receipt">
                   <strong>{receipt.accuracy_percent === null ? 'Not scored' : `${formatHumanPercent(receipt.accuracy_percent)} accuracy`}</strong>
@@ -639,7 +667,7 @@ export function InjectionConsole() {
                     {receipt.holdout_dispositions} held-out dispositions · {receipt.simulation_digest.slice(0, 12)}
                   </small>
                   <AccuracyCurve slice={receipt.slice} />
-                  <ScoreTerrain points={receipt.terrain ?? []} />
+                  <ScoreTerrain points={receipt.terrain ?? []} labels={(receipt.terrain_parameters ?? terrainParameters).map((key) => CONTROL_LABELS[key.replace('scorer.', '')] ?? key)} />
                 </div>
               )}
               {scope === 'GLOBAL' && (
