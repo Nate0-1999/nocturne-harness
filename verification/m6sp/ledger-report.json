@@ -7,20 +7,13 @@
     {
       "repo": "harness",
       "base": "320d1e37585acb692278d3ac89afe6b2733bdaf0",
-      "head": "d85c9adcb444af9d31df3714cef586650b218b0f"
+      "head": "d1f37270d12f9c277a7f8b07efc21610ccf5b55c"
     }
   ],
   "unmapped": {
     "harness/DECISIONS.md": "M6SP decision journal; no feature behavior.",
     "harness/src/harness/__init__.py": "paired release version 0.1.84; no feature behavior.",
     "harness/tests/test_spine_client.py": "the client route list gains the reconcile route; no feature behavior.",
-    "harness/web/dist/assets/index-2bHj0uW-.js": "the built web bundle of the strip and spend module (FL-160/161/156; older bundles removed); those rows carry the evidence.",
-    "harness/web/dist/assets/index-B-SubKUS.js": "the built web bundle of the strip and spend module (FL-160/161/156; older bundles removed); those rows carry the evidence.",
-    "harness/web/dist/assets/index-CVZIxBtT.css": "the built web bundle of the strip and spend module (FL-160/161/156; older bundles removed); those rows carry the evidence.",
-    "harness/web/dist/assets/index-K_pVmD1k.css": "the built web bundle of the strip and spend module (FL-160/161/156; older bundles removed); those rows carry the evidence.",
-    "harness/web/dist/index.html": "the built web bundle of the strip and spend module (FL-160/161/156; older bundles removed); those rows carry the evidence.",
-    "harness/web/tests/spendTable.test.mjs": "guards that an unpriced minute breaks a strip line (C.10); no feature behavior.",
-    "harness/web/tests/vitals.test.mjs": "removes the tests of two chart helpers the strip replaced; no feature behavior.",
     "harness/verification/m6sp/FL-009.png": "M6SP evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m6sp/FL-067.png": "M6SP evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m6sp/FL-069.png": "M6SP evidence (report, captures, receipts, checksums); no feature behavior.",
@@ -70,7 +63,18 @@
     "harness/verification/m6sp/FL-201.png": "M6SP evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m6sp/FL-205.png": "M6SP evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m6sp/SHA256SUMS": "M6SP evidence (report, captures, receipts, checksums); no feature behavior.",
-    "harness/verification/m6sp/ledger-report.json": "M6SP evidence (report, captures, receipts, checksums); no feature behavior."
+    "harness/verification/m6sp/ledger-report.json": "M6SP evidence (report, captures, receipts, checksums); no feature behavior.",
+    "harness/web/dist/assets/index-2bHj0uW-.js": "the built web bundle of the strip and spend module (FL-160/161/156; older bundles removed); those rows carry the evidence.",
+    "harness/web/dist/assets/index-B-SubKUS.js": "the built web bundle of the strip and spend module (FL-160/161/156; older bundles removed); those rows carry the evidence.",
+    "harness/web/dist/assets/index-CVZIxBtT.css": "the built web bundle of the strip and spend module (FL-160/161/156; older bundles removed); those rows carry the evidence.",
+    "harness/web/dist/assets/index-K_pVmD1k.css": "the built web bundle of the strip and spend module (FL-160/161/156; older bundles removed); those rows carry the evidence.",
+    "harness/web/dist/index.html": "the built web bundle of the strip and spend module (FL-160/161/156; older bundles removed); those rows carry the evidence.",
+    "harness/web/tests/spendTable.test.mjs": "guards that an unpriced minute breaks a strip line (C.10); no feature behavior.",
+    "harness/web/tests/vitals.test.mjs": "removes the tests of two chart helpers the strip replaced; no feature behavior.",
+    "harness/web/dist/assets/index-Cx4MOfFN.js": "the built web bundle of the strip and spend module (FL-160/161/156; older bundles removed); those rows carry the evidence.",
+    "harness/web/dist/assets/index-DkXWfeuJ.js": "the built web bundle of the strip and spend module (FL-160/161/156; older bundles removed); those rows carry the evidence.",
+    "harness/web/dist/assets/index-Vc-b-ri9.js": "the built web bundle of the strip and spend module (FL-160/161/156; older bundles removed); those rows carry the evidence.",
+    "harness/web/dist/assets/index-Zc47kA3Z.css": "the built web bundle of the strip and spend module (FL-160/161/156; older bundles removed); those rows carry the evidence."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
