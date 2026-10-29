@@ -189,7 +189,7 @@ def test_doctor_fails_closed_on_a_corrupt_recognized_backup(
 
 def _inventory(memories: list[dict[str, object]], *, base_count: int) -> dict[str, object]:
     return {
-        "memories": memories,
+        "memories": [{"status": "active", **memory} for memory in memories],
         "event_counts": {
             table: base_count + index for index, table in enumerate(lifecycle._EVENT_TABLES)
         },
@@ -203,6 +203,13 @@ def test_rollback_manifest_names_loss_reversion_pins_and_event_deltas() -> None:
             {"id": "a", "label": "Born later", "revision": 1, "pin": True},
             {"id": "b", "label": "Edited", "revision": 3, "pin": False},
             {"id": "c", "label": "Unpinned there", "revision": 2, "pin": True},
+            {
+                "id": "d",
+                "label": "Deleted since",
+                "revision": 2,
+                "pin": False,
+                "status": "tombstoned",
+            },
         ],
         base_count=10,
     )
@@ -210,12 +217,15 @@ def test_rollback_manifest_names_loss_reversion_pins_and_event_deltas() -> None:
         [
             {"id": "b", "label": "Edited", "revision": 1, "pin": False},
             {"id": "c", "label": "Unpinned there", "revision": 2, "pin": False},
+            {"id": "d", "label": "Deleted since", "revision": 1, "pin": False},
         ],
         base_count=4,
     )
 
     manifest = lifecycle._rollback_manifest(current, candidate)
 
+    # FL-168: a memory deleted since the backup is named as coming back, not as an edit.
+    assert [item.memory_id for item in manifest.memories_returned] == ["d"]
     assert [item.memory_id for item in manifest.memories_lost] == ["a"]
     assert [item.memory_id for item in manifest.edits_reverted] == ["b", "c"]
     assert [item.memory_id for item in manifest.pins_undone] == ["a", "c"]
@@ -224,6 +234,7 @@ def test_rollback_manifest_names_loss_reversion_pins_and_event_deltas() -> None:
 
 def _prepared_restore(tmp_path: Path) -> lifecycle.PreparedRestore:
     manifest = lifecycle.RollbackManifest(
+        memories_returned=(),
         memories_lost=(lifecycle.ManifestMemory("a", "Born later", 1, None),),
         edits_reverted=(lifecycle.ManifestMemory("b", "Edited", 3, 1),),
         pins_undone=(),
