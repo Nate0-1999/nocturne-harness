@@ -28,6 +28,10 @@ class HarnessSettings(BaseSettings):
     openai_api_key: SecretStr | None = None
     openai_base_url: str | None = None
     openrouter_api_key: SecretStr | None = None
+    local_model_url: str | None = None
+    local_model: str | None = None
+    local_when_offline: bool = False
+    local_model_context_tokens: int = Field(default=32768, ge=1)
     chat_model: str = "openrouter:minimax/minimax-m3"
     model_policy_chat: str | None = None
     model_policy_subagent: str | None = None

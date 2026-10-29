@@ -100,6 +100,7 @@ export type RackAction =
   | { type: 'jobs.stop'; run_id: string }
   | { type: 'policies.load' }
   | { type: 'models.load'; thread_id: string | null }
+  | { type: 'models.local'; url: string | null; model: string | null; when_offline: boolean }
   | { type: 'models.pin'; model: string; pinned: boolean }
   | { type: 'policies.save'; role: string; policy: string }
   | { type: 'prompt.interject'; run_id: string; prompt: string }
@@ -410,7 +411,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'control',
     slot: 'overlay',
     streams: ['parameter.change', 'parameter.refused', 'model.change'],
-    actions: ['parameter.write', 'rack.scope.get', 'rack.scope.set', 'models.load', 'models.pin',
+    actions: ['parameter.write', 'rack.scope.get', 'rack.scope.set', 'models.load', 'models.pin', 'models.local',
       'policies.save'],
     bindings: [
       'model.slug', 'model.temperature', 'model.top_p', 'model.top_k',
@@ -616,6 +617,11 @@ function dispatchRackAction<Action extends RackAction>(
         return fetchJson('/v1/model-pins', {
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ model: action.model, pinned: action.pinned }),
+        }) as Promise<RackActionResult<Action>>
+      case 'models.local':
+        return fetchJson('/v1/local-model', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: action.url, model: action.model, when_offline: action.when_offline }),
         }) as Promise<RackActionResult<Action>>
       case 'policies.save':
         return fetchJson(`/v1/model-policies/${encodeURIComponent(action.role)}`, {

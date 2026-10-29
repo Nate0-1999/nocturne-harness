@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import time
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Any, Protocol, cast
@@ -10,7 +12,9 @@ from typing import Any, Protocol, cast
 import httpx
 from pydantic_ai.exceptions import UserError
 from pydantic_ai.models import Model, infer_model
+from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.models.openrouter import OpenRouterModelSettings
+from pydantic_ai.models.wrapper import WrapperModel
 from pydantic_ai.providers import Provider, infer_provider
 from pydantic_ai.providers.anthropic import AnthropicProvider
 from pydantic_ai.providers.openai import OpenAIProvider
@@ -154,7 +158,7 @@ class DirectCompletionAdapter:
         )
 
     def accepts(self, model: str) -> bool:
-        return not model.startswith("openrouter:")
+        return not model.startswith(("openrouter:", "local:"))
 
     def build_model(self, model: str) -> Model:
         return infer_model(model, provider_factory=self._provider)
@@ -233,10 +237,116 @@ class DirectCompletionAdapter:
 _OPENAI_PROVIDERS = frozenset({"openai", "openai-chat", "openai-responses"})
 
 
+class LocalProvider(OpenAIProvider):
+    @property
+    def name(self) -> str:
+        return "local"
+
+
+class LocalCompletionAdapter:
+    """FL-188: discover an existing OpenAI-compatible server; never start or install one."""
+
+    def __init__(self, settings: HarnessSettings) -> None:
+        self.settings = settings
+        self._listing: tuple[float, ModelCatalog] | None = None
+        self._urls: dict[str, str] = {}
+
+    def accepts(self, model: str) -> bool:
+        return model.startswith("local:")
+
+    async def load(self) -> ModelCatalog:
+        if self._listing and time.monotonic() - self._listing[0] < 10:
+            return self._listing[1]
+        urls = (
+            (self.settings.local_model_url,)
+            if self.settings.local_model_url
+            else ("http://127.0.0.1:11434/v1", "http://127.0.0.1:8080/v1")
+        )
+        listing = {}
+        routes = {}
+        async with httpx.AsyncClient(timeout=1.0, trust_env=False) as client:
+            for url in urls:
+                base = url.rstrip("/")
+                try:
+                    response = await client.get(f"{base}/models")
+                    response.raise_for_status()
+                    entries = parse_model_listing(response.json())
+                except (httpx.HTTPError, ValueError, ModelCatalogUnavailable):
+                    continue
+                for entry in entries:
+                    name = f"local:{entry.model_id}"
+                    if name in listing:
+                        continue
+                    self._urls[name] = base
+                    context = entry.context_tokens or self.settings.local_model_context_tokens
+                    listing[name] = replace(
+                        entry,
+                        model_id=name,
+                        name=f"Local · {entry.name}",
+                        context_tokens=context,
+                        prompt_price=None,
+                        completion_price=None,
+                        intelligence_index=None,
+                        reasoning=False,
+                    )
+                    routes[name] = ModelRoute(
+                        name, context, supported_parameters=entry.supported_parameters
+                    )
+        catalog = ModelCatalog((), routes, datetime.now(UTC), tuple(listing.values()))
+        self._listing = time.monotonic(), catalog
+        return catalog
+
+    async def load_named_route(self, model: str) -> tuple[ModelRoute, datetime]:
+        catalog = await self.load()
+        if model not in catalog.model_routes:
+            raise NamedModelResolutionError(
+                f"Local model {model} is unavailable; start its server."
+            )
+        return catalog.model_routes[model], catalog.fetched_at
+
+    def build_model(self, model: str) -> Model:
+        return LocalModel(self, model)
+
+    def request_settings(self, resolution: ThreadModelResolution, thread_id: str) -> ModelSettings:
+        return _common_request_settings(resolution)
+
+
+class LocalModel(WrapperModel):
+    """Resolve the server before calling it, including saved pins after an app restart."""
+
+    def __init__(self, adapter: LocalCompletionAdapter, model: str) -> None:
+        self.adapter, self.local_name = adapter, model
+        super().__init__(
+            self._build(adapter.settings.local_model_url or "http://127.0.0.1:11434/v1")
+        )
+
+    def _build(self, url: str) -> Model:
+        return OpenAIChatModel(
+            self.local_name.removeprefix("local:"),
+            provider=LocalProvider(base_url=url, api_key="local"),
+            settings={"timeout": self.adapter.settings.model_request_timeout_seconds},
+        )
+
+    async def _resolve(self) -> None:
+        await self.adapter.load_named_route(self.local_name)
+        self.wrapped = self._build(self.adapter._urls[self.local_name])
+
+    async def request(self, *args: Any, **kwargs: Any):
+        await self._resolve()
+        return await self.wrapped.request(*args, **kwargs)
+
+    @asynccontextmanager
+    async def request_stream(self, *args: Any, **kwargs: Any) -> AsyncIterator[Any]:
+        await self._resolve()
+        async with self.wrapped.request_stream(*args, **kwargs) as response:
+            yield response
+
+
 class CompletionRouter:
     """Own adapter selection while callers depend on one stable internal interface."""
 
     def __init__(self, settings: HarnessSettings) -> None:
+        self.settings = settings
         openrouter_key = (
             settings.openrouter_api_key.get_secret_value()
             if settings.openrouter_api_key is not None
@@ -246,15 +356,84 @@ class CompletionRouter:
             openrouter_key, settings.model_request_timeout_seconds
         )
         self._direct = DirectCompletionAdapter(settings)
-        self._adapters: tuple[CompletionAdapter, ...] = (self._openrouter, self._direct)
+        self.local = LocalCompletionAdapter(settings)
+        self._adapters: tuple[CompletionAdapter, ...] = (self._openrouter, self._direct, self.local)
 
     @property
     def catalog(self) -> ModelCatalogLoader | None:
-        """Expose catalog capability only when its adapter has a key."""
+        return self
 
+    @property
+    def remote_catalog(self):
         if self._openrouter.catalog_available:
             return self._openrouter
         return self._direct if self._direct.catalog_available else None
+
+    async def load(self) -> ModelCatalog:
+        local = await self.local.load()
+        remote = self.remote_catalog
+        if remote is None:
+            return local
+        try:
+            catalog = await remote.load()
+        except ModelCatalogUnavailable:
+            if local.listing:
+                return local
+            raise
+        return replace(catalog, listing=catalog.listing + local.listing)
+
+    def qualify_model(self, model: str) -> str:
+        if model.startswith("local:"):
+            return model
+        remote = self.remote_catalog
+        return remote.qualify_model(model) if remote else model
+
+    def parse_named_model(self, model: str) -> str:
+        if model.startswith("local:") and model.removeprefix("local:"):
+            return model
+        remote = self.remote_catalog
+        if remote is None:
+            raise NamedModelResolutionError("No remote model source is configured.")
+        return remote.parse_named_model(model)
+
+    async def load_named_route(self, model: str) -> tuple[ModelRoute, datetime]:
+        if model.startswith("local:"):
+            return await self.local.load_named_route(model)
+        remote = self.remote_catalog
+        if remote is None:
+            raise ModelCatalogUnavailable("No remote model source is configured.")
+        return await remote.load_named_route(model)
+
+    async def offline_resolution(self, resolution: ThreadModelResolution) -> ThreadModelResolution:
+        """Switch at a turn boundary only when the opted-in broker cannot be reached."""
+        if not self.settings.local_when_offline or not resolution.uses_openrouter:
+            return resolution
+        try:
+            async with httpx.AsyncClient(timeout=2.0) as client:
+                await client.get("https://openrouter.ai/api/v1/models")
+            # An HTTP refusal (including a spent key) is reachable, never an offline signal.
+            return resolution
+        except httpx.TransportError:
+            catalog = await self.local.load()
+            model = self.settings.local_model
+            if model and not model.startswith("local:"):
+                model = f"local:{model}"
+            if not model and catalog.listing:
+                model = catalog.listing[0].model_id
+            if model is None:
+                raise ModelConfigurationError(
+                    "OpenRouter is unreachable and no local model is running."
+                )
+            route, fetched_at = await self.local.load_named_route(model)
+            return ThreadModelResolution(
+                model=model,
+                context_tokens=route.context_tokens,
+                policy="local_when_offline",
+                stickiness_epoch=resolution.stickiness_epoch + 1,
+                supported_parameters=route.supported_parameters,
+                catalog_fetched_at=fetched_at,
+                request_parameters=resolution.request_parameters,
+            )
 
     def model_for(self, model: str) -> Model:
         """Build a model through the first adapter that owns its route."""

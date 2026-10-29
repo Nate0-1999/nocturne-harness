@@ -768,6 +768,7 @@ def doctor_nocturne(*, home: Path | None = None, stdout: TextIO = sys.stdout) ->
     config = load_config(home=home)
     preflight = _daemon_preflight(config)
     print(f"Identity: {config.principal_id}; home: {config.home}", file=stdout)
+    _print_local_models(config, stdout=stdout)
     print(
         f"Conversation transcript backup: {'on' if config.transcript_backup else 'off'}",
         file=stdout,
@@ -780,6 +781,31 @@ def doctor_nocturne(*, home: Path | None = None, stdout: TextIO = sys.stdout) ->
     report = inspect_local_palace(config)
     _print_doctor_report(report, preflight=preflight, stdout=stdout)
     return 2 if preflight.failures else report.exit_code
+
+
+def _print_local_models(config: NocturneConfig, *, stdout: TextIO) -> None:
+    import asyncio
+
+    from harness.config import HarnessSettings
+    from harness.model_router import LocalCompletionAdapter
+
+    path = config.home / "local-model.json"
+    saved = json.loads(path.read_text()) if path.exists() else {}
+    settings = HarnessSettings(
+        _env_file=None,
+        local_model_url=saved.get("url")
+        or (config.local_model_url if config.local_model else None),
+    )
+    catalog = asyncio.run(LocalCompletionAdapter(settings).load())
+    print(
+        "Local models: "
+        + (
+            ", ".join(entry.model_id for entry in catalog.listing)
+            or "none detected; start Ollama or llama.cpp, or set a URL in Models"
+        ),
+        file=stdout,
+    )
+    print(f"Local when offline: {'on' if saved.get('when_offline') else 'off'}", file=stdout)
 
 
 def _print_cloud_breaker(config: NocturneConfig, *, stdout: TextIO) -> None:
