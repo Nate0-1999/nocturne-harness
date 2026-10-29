@@ -322,11 +322,15 @@ export function ModelDevice() {
             when_offline: browser?.local?.when_offline ?? false,
           }).then(loadBrowser).catch((error) => setBrowserError(String(error))) }}>Find local models</Button>
           <label><input type="checkbox" checked={browser?.local?.when_offline ?? false}
-            onChange={(event) => { void events.dispatch({
-              type: 'models.local', url: browser?.local?.url ?? null,
-              model: resolved?.startsWith('local:') ? resolved : browser?.local?.model ?? null,
-              when_offline: event.target.checked,
-            }).then(loadBrowser).catch((error) => setBrowserError(String(error))) }} /> Local when offline</label>
+            onChange={(event) => {
+              const local = { url: browser?.local?.url ?? null,
+                model: resolved?.startsWith('local:') ? resolved : browser?.local?.model ?? null,
+                when_offline: event.target.checked }
+              setBrowser((current) => current === null ? current : { ...current, local })
+              void events.dispatch({ type: 'models.local', ...local }).then(loadBrowser).catch((error) => {
+                setBrowserError(String(error)); void loadBrowser()
+              })
+            }} /> Local when offline</label>
         </div>
         <ul data-testid="model-browser-list">
           {listed.map((item) => {
