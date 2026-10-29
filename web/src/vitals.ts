@@ -178,6 +178,11 @@ export function dayDrift(value: ReconciliationSnapshot | null): { ledger: number
   return { ledger, broker, percent, drifting: percent === null ? ledger > 0 : Math.abs(percent) > 5 }
 }
 
+/** Today's totals are often cents apart: three significant figures keep a 20% gap visible. */
+export function formatDayUsd(value: number): string {
+  return value < 1 ? `$${Number(value.toPrecision(3))}` : `$${value.toFixed(2)}`
+}
+
 export function accountingCopy(value: AccountingSnapshot): string {
   if (value.status === 'clear') {
     return 'Receipt queue · Clear'

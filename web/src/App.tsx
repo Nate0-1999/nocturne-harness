@@ -306,14 +306,14 @@ function initialSavedRackSet(): StageLayoutSet | null {
 // M3EX-27: Sheet or Stage is the owner's choice and survives a reload.
 const SHEET_MODE_STORAGE_KEY = 'nocturne.stage.sheet-mode.v1'
 
-// FL-160: the spend strip's open or collapsed state survives a reload.
+// FL-160: the spend strip opens to its graphs on demand (one summary line at a glance) and stays as left.
 const SPEND_STRIP_STORAGE_KEY = 'nocturne.spend-strip.open.v1'
 
 function initialSpendStripOpen(): boolean {
   try {
-    return globalThis.localStorage.getItem(SPEND_STRIP_STORAGE_KEY) !== 'false'
+    return globalThis.localStorage.getItem(SPEND_STRIP_STORAGE_KEY) === 'true'
   } catch {
-    return true
+    return false
   }
 }
 

@@ -2973,6 +2973,11 @@ button.rack-module__resize-handle--nw {
   height: 7.6rem;
 }
 
+/* A Stage pan that crosses the strip keeps moving, as it does across module frames. */
+.rack-shell--stage:has(.stage-viewport[data-pointer-active="true"]) .rack-stage-strip iframe {
+  pointer-events: none;
+}
+
 .rack-stage-strip__toggle {
   position: absolute;
   top: 0.2rem;
@@ -2991,6 +2996,14 @@ button.rack-module__resize-handle--nw {
 .rack-stage-strip__toggle:focus-visible {
   border-color: var(--line-strong);
   color: var(--ink);
+}
+
+/* At phone width the Stage's drawers anchor to its canvas, which the strip's row would push under
+   the toolbar; the strip is a desk instrument and stays off phones. */
+@media (max-width: 48.9rem) {
+  .rack-stage-strip {
+    display: none;
+  }
 }
 
 .rack-stage-header {

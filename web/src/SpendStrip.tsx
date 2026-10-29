@@ -4,7 +4,7 @@ import { formatHumanPercent, formatHumanUsd } from './humanNumbers'
 import { useRackPlugin } from './rack'
 import { SpendLines } from './SpendHistory'
 import { parseSpendTableSnapshot, spendSeries, type SpendTableSnapshot, type SpendWindow } from './spendTable'
-import { dayDrift, parseVitalsSnapshot, type ReconciliationSnapshot } from './vitals'
+import { dayDrift, formatDayUsd, parseVitalsSnapshot, type ReconciliationSnapshot } from './vitals'
 import './assets/spend-history.css'
 
 /** FL-160: the bottom strip — spend per minute for agents, sub-agents, models, memory curation and total. */
@@ -51,7 +51,7 @@ export function SpendStrip() {
       </>}
     {day?.drifting && <span className="spend-strip__drift" role="status" data-testid="spend-drift-banner"
       title="Today's ledger (UTC) against OpenRouter's bill for the key. The key may also pay for other Palaces and apps.">
-      Ledger {formatHumanUsd(day.ledger.toFixed(12))} vs bill {formatHumanUsd(day.broker.toFixed(12))} today
+      Ledger {formatDayUsd(day.ledger)} vs bill {formatDayUsd(day.broker)} today
       {day.percent === null ? ' · no bill yet' : ` · ${day.percent > 0 ? '+' : ''}${formatHumanPercent(day.percent)} drift`}
     </span>}
   </>

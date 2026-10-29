@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react'
 import { formatHumanPercent, formatHumanQuantity, formatHumanUsd } from './humanNumbers'
 import { SPEND_WINDOWS, spendPolylines, spendSeries, type SpendMetrics, type SpendTableSnapshot, type SpendWindow } from './spendTable'
 import { useRackPlugin } from './rack'
-import { dayDrift, type ReconciliationSnapshot } from './vitals'
+import { dayDrift, formatDayUsd, type ReconciliationSnapshot } from './vitals'
 import './assets/spend-history.css'
 import { Button, Select, TextField } from './kit'
 
@@ -105,8 +105,8 @@ function DayReconciliation({ value, canCheck }: { value: ReconciliationSnapshot 
   }
   return <div className={`spend-reconciliation${day?.drifting ? ' spend-reconciliation--drift' : ''}`} data-testid="spend-reconciliation">
     <dl className="spend-history__totals">
-      <div><dt>Ledger today · UTC</dt><dd>{day === null ? 'Not checked' : formatHumanUsd(day.ledger.toFixed(12))}</dd></div>
-      <div><dt>OpenRouter bill today</dt><dd>{day === null ? 'Not checked' : formatHumanUsd(day.broker.toFixed(12))}</dd></div>
+      <div><dt>Ledger today · UTC</dt><dd>{day === null ? 'Not checked' : formatDayUsd(day.ledger)}</dd></div>
+      <div><dt>OpenRouter bill today</dt><dd>{day === null ? 'Not checked' : formatDayUsd(day.broker)}</dd></div>
       <div><dt>Drift</dt><dd>{day === null ? '—' : day.percent === null ? (day.ledger > 0 ? 'No bill yet' : 'None') : `${day.percent > 0 ? '+' : ''}${formatHumanPercent(day.percent)}`}</dd></div>
     </dl>
     <p>
