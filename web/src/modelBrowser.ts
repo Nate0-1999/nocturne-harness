@@ -20,6 +20,7 @@ export interface Configuration {
 }
 
 export interface ModelBrowser {
+  local?: { url: string | null, model: string | null, when_offline: boolean }
   models: ListedModel[]
   configurations: Configuration[]
   pins: string[]

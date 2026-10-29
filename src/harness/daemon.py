@@ -178,6 +178,12 @@ class ModelPinUpdate(BaseModel):
     pinned: bool
 
 
+class LocalModelSettings(BaseModel):
+    url: str | None = None
+    model: str | None = None
+    when_offline: bool = False
+
+
 class InterjectionRequest(BaseModel):
     run_id: str
     prompt: str
@@ -914,6 +920,12 @@ def create_dev_app(
     home = (configured.nocturne_home or nocturne_home()).expanduser().resolve()
     role_policy_path = home / "model-policies.json"
     model_pin_path = home / "model-pins.json"
+    local_model_path = home / "local-model.json"
+    if local_model_path.exists():
+        local_settings = LocalModelSettings.model_validate_json(local_model_path.read_text())
+        configured.local_model_url = local_settings.url
+        configured.local_model = local_settings.model
+        configured.local_when_offline = local_settings.when_offline
 
     def model_pins() -> list[str]:
         return json.loads(model_pin_path.read_text()) if model_pin_path.exists() else []
@@ -980,6 +992,8 @@ def create_dev_app(
     def explain_model_policy(snapshot: ParameterSnapshot) -> str:
         if not isinstance(model_resolver, ModelPolicyResolver):
             return "Model selected by the configured resolver."
+        if snapshot.resolved_model.startswith("local:"):
+            return "Local model running on this machine."
         return model_resolver.explain(
             snapshot.thread_id,
             snapshot.resolved_model,
@@ -1304,6 +1318,7 @@ def create_dev_app(
             completion_router.catalog,
         ),
         transcript_journal=journal,
+        offline_resolution=completion_router.offline_resolution,
         symphony_experience=owned_symphony_experience,
         spend_walls=spend_walls,
         checkpoints=WorkspaceCheckpoints(home / "checkpoints"),
@@ -1515,14 +1530,33 @@ def create_dev_app(
                         current_model=None if current is None else current["model"],
                         fallback_model=configured.chat_model,
                     )
+                    if not browser["models"] and completion_router.remote_catalog is None:
+                        browser["unavailable"] = "This model source publishes no model list."
                 except ModelCatalogUnavailable as exc:
                     raise HTTPException(503, f"The model list is unavailable: {exc}.") from None
             return {
                 **browser,
+                "local": {
+                    "url": configured.local_model_url,
+                    "model": configured.local_model,
+                    "when_offline": configured.local_when_offline,
+                },
                 "pins": model_pins(),
                 "chat_policy": role_policies["chat"],
                 "current": current,
             }
+
+        @app.put("/v1/local-model")
+        async def local_model_settings(body: LocalModelSettings):
+            home.mkdir(parents=True, exist_ok=True)
+            temporary = local_model_path.with_suffix(".tmp")
+            temporary.write_text(body.model_dump_json() + "\n")
+            temporary.replace(local_model_path)
+            configured.local_model_url = body.url or None
+            configured.local_model = body.model or None
+            configured.local_when_offline = body.when_offline
+            completion_router.local._listing = None
+            return body
 
         @app.put("/v1/model-pins")
         async def pin_model(body: ModelPinUpdate):

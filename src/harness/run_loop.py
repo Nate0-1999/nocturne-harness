@@ -233,6 +233,8 @@ class RunLoop:
         run_id_factory: Callable[[], str] | None = None,
         resolved_model: str | None = None,
         model_resolver: ThreadModelResolver | None = None,
+        offline_resolution: Callable[[ThreadModelResolution], Awaitable[ThreadModelResolution]]
+        | None = None,
         clock: Callable[[], datetime] | None = None,
         transcript_journal: TranscriptJournal | None = None,
         parameter_registry: ParameterRegistry | None = None,
@@ -245,6 +247,7 @@ class RunLoop:
         self._run_id_factory = run_id_factory or factory.new_id
         self._initial_resolved_model = resolved_model
         self._model_resolver = model_resolver
+        self._offline_resolution = offline_resolution
         self._clock = clock or (lambda: datetime.now(UTC))
         self._transcript_journal = transcript_journal
         self._parameter_registry = parameter_registry or ParameterRegistry()
@@ -1086,6 +1089,23 @@ class RunLoop:
         )
         spend_scope.__enter__()
         try:
+            if model_resolution is not None and self._offline_resolution is not None:
+                available = await self._offline_resolution(model_resolution)
+                if available.model != model_resolution.model:
+                    async with self._lock:
+                        state = self._live_state_locked(thread_id, active)
+                        state.model_resolution = available
+                        state.resolved_model = available.model
+                        await self._publish_model_change_locked(
+                            thread_id=thread_id,
+                            state=state,
+                            previous=model_resolution,
+                            resolution=available,
+                            changed_at=self._aware_clock(),
+                            reason="OpenRouter is unreachable; local when offline is enabled.",
+                            sacrificed_cached_prefix_tokens=state.cached_prefix_tokens,
+                        )
+                    model_resolution = available
             if self._symphony_experience is not None and (
                 active.turn.symphony is not None
                 or active.turn.symphony_intervention is not None

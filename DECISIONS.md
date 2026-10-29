@@ -4299,3 +4299,12 @@ families, and with them each memory's angle, hue and the shared-trait filaments;
 inverse injections and depth revision. Lineage always joins a family. The old single family was
 the union of all three traits, which on a palace of one thread's facts was one family: one ring,
 one stipple disc.
+
+## M6LM — Local models through the existing provider seam [P1.3.1, P4]
+
+Discover existing Ollama/llama.cpp endpoints or the configured OpenAI-compatible URL;
+never start or install a runtime. Local models have no advertised price. The opt-in
+offline policy checks broker reachability before a turn, records a model-change event
+and new cache epoch, and keeps the local choice until changed explicitly. HTTP refusals
+do not trigger fallback. Local requests use a placeholder key, never a cloud credential.
+The existing memory copy, receipt queue and journal carry disconnected turns.

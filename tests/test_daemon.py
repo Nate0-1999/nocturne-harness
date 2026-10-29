@@ -2495,6 +2495,8 @@ def test_model_browser_lists_the_source_and_pins_persist_in_the_home(
     """
 
     def handler(_request: httpx.Request) -> httpx.Response:
+        if _request.url.host == "127.0.0.1":
+            raise httpx.ConnectError("No local server", request=_request)
         return httpx.Response(200, json={"data": [{"id": "gpt-4.1-mini"}, {"id": "gpt-4.1"}]})
 
     real_client = httpx.AsyncClient
