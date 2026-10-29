@@ -52,6 +52,8 @@ export class HarnessSocketClient {
   private intentionallyClosed = true
   private generation = 0
   private snapshotBarrier: { threadId: string; requestId: Ulid } | null = null
+  // INCIDENT F193: each prompt still waiting for the daemon, with the socket that carried it.
+  private unacknowledged = new Map<Ulid, { generation: number; envelope: Envelope }>()
 
   connect(): void {
     this.intentionallyClosed = false
@@ -181,6 +183,7 @@ export class HarnessSocketClient {
     if (proposedResponse !== undefined) payload.proposed_response = proposedResponse
     const envelope = this.send('prompt.submit', payload, threadId)
     useHarnessStore.getState().beginPrompt(threadId, envelope.id, prompt, image)
+    this.unacknowledged.set(envelope.id, { generation: this.generation, envelope })
     return envelope.id
   }
 
@@ -333,6 +336,7 @@ export class HarnessSocketClient {
         }
         if (store.receiveEnvelope(envelope)) {
           this.snapshotBarrier = null
+          this.resendUnacknowledged(envelope.thread_id)
           this.refreshMemoryPanelIfIdle()
         }
         return
@@ -386,6 +390,23 @@ export class HarnessSocketClient {
       this.reconnectTimer = null
       this.openSocket(true)
     }, delay)
+  }
+
+  /** INCIDENT F193: a prompt sent on a socket that dropped before the daemon read it was lost,
+   * and stayed "Sending" for good. Once the reconnected thread's snapshot is in, each prompt it
+   * does not hold is sent again under its own id; the daemon runs a prompt id once. */
+  private resendUnacknowledged(threadId: string | undefined): void {
+    const thread = threadId === undefined ? undefined : useHarnessStore.getState().threads[threadId]
+    for (const [promptId, sent] of this.unacknowledged) {
+      if (sent.envelope.thread_id !== threadId) continue
+      if (thread === undefined || !thread.outboundPrompts.some((outbound) => outbound.prompt_id === promptId)) {
+        this.unacknowledged.delete(promptId)
+      } else if (sent.generation !== this.generation && this.isOpen() && this.socket !== null) {
+        this.socket.send(JSON.stringify(sent.envelope))
+        publishRackEnvelope({ direction: 'outbound', envelope: sent.envelope })
+        sent.generation = this.generation
+      }
+    }
   }
 
   private isOpen(): boolean {
