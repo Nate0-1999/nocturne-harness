@@ -83,6 +83,7 @@ from harness.run_loop import ProjectBindingConflict, RunLoop, ThreadWorkspaceMov
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.seed import SeedIngestionService, SeedUploadRequest
 from harness.seed_jump_start import AgentFileOffers, discover_agent_files
+from harness.spend import cache_savings
 from harness.spend_walls import SpendLimits, SpendWalls
 from harness.spine_client import (
     ActivateScorerConfigRequest,
@@ -218,6 +219,7 @@ _RACK_FRAME_HOST = "rack.localhost"
 _RACK_MODULE_IDS = frozenset(
     {
         "header",
+        "spend_strip",
         "threads",
         "conversation",
         "memory",
@@ -1229,7 +1231,15 @@ def create_dev_app(
     async def read_spend_table_snapshot(
         thread_ids: list[UUID] | None,
     ) -> SpendTableSnapshot | None:
-        return await owned_spine.spend_table(thread_ids)
+        snapshot = await owned_spine.spend_table(thread_ids)
+        catalog = completion_router.catalog
+        if snapshot is None or not snapshot.messages or catalog is None:
+            return snapshot
+        try:
+            listing = (await catalog.load()).listing
+        except ModelCatalogUnavailable:
+            return snapshot  # FL-161: the saving stays unpriced, never guessed.
+        return snapshot.model_copy(update={"messages": cache_savings(snapshot.messages, listing)})
 
     async def read_memory_graph(thread_id: str | None) -> MemoryGraphSnapshot:
         memory_ids = None
@@ -1426,6 +1436,15 @@ def create_dev_app(
                     raise HTTPException(
                         409, "This invoice ID already has a different amount or date."
                     ) from error
+                raise
+
+        @app.post("/v1/spend/reconciliation")
+        async def reconcile_spend():
+            try:
+                return await owned_spine.reconcile_spend()
+            except SpineResponseError as error:
+                if error.status_code == 404:
+                    raise HTTPException(503, "Checking the bill needs a newer Palace.") from error
                 raise
 
         @app.put("/v1/spend-walls", response_model=SpendLimits)

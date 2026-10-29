@@ -2954,8 +2954,43 @@ button.rack-module__resize-handle--nw {
 /* M2ST1: the host is a camera over a persistent grid-unit stage. */
 .rack-shell--stage {
   display: grid;
-  grid-template-rows: 3.35rem 2.65rem auto minmax(0, 1fr);
+  grid-template-rows: 3.35rem 2.65rem auto minmax(0, 1fr) auto;
   overflow: hidden;
+}
+
+/* FL-160: the spend strip sits under the Stage, collapsed to one line or open to its graphs. */
+.rack-stage-strip {
+  position: relative;
+  z-index: 50;
+  grid-row: 5;
+  height: 1.9rem;
+  margin: 0 0.42rem 0.42rem;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-deep);
+}
+
+.rack-stage-strip[data-open] {
+  height: 7.6rem;
+}
+
+.rack-stage-strip__toggle {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.3rem;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--dim);
+}
+
+.rack-stage-strip__toggle:hover,
+.rack-stage-strip__toggle:focus-visible {
+  border-color: var(--line-strong);
+  color: var(--ink);
 }
 
 .rack-stage-header {
@@ -3450,7 +3485,7 @@ button.rack-module__resize-handle--nw {
 
 @media (max-width: 48.9rem) {
   .rack-shell--stage {
-    grid-template-rows: 3.25rem auto auto minmax(0, 1fr);
+    grid-template-rows: 3.25rem auto auto minmax(0, 1fr) auto;
   }
 
   .rack-stage-header {

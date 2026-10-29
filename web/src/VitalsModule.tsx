@@ -2,13 +2,14 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 
 import { formatHumanQuantity, formatHumanUsd } from './humanNumbers'
 import { useRackPlugin, useRackSnapshot } from './rack'
-import { CacheHistory, InfrastructureInvoiceForm, SpendDaily, SpendRates, SpendReceipts, SpendReconciliation } from './SpendHistory'
+import { CacheHistory, InfrastructureInvoiceForm, SpendDaily, SpendLines, SpendReceipts, SpendReconciliation } from './SpendHistory'
 import { parseVitalsSnapshot, type ReconciliationSnapshot } from './vitals'
 import {
   parseSpendTableSnapshot,
   partialSpendCopy,
   type SpendMetrics,
   type SpendTableSnapshot,
+  type SpendWindow,
 } from './spendTable'
 import './assets/honest-display.css'
 import { Button } from './kit'
@@ -27,6 +28,7 @@ export function VitalsModule() {
   const [reconciliation, setReconciliation] = useState<ReconciliationSnapshot | null>(null)
   const [expandedThreads, setExpandedThreads] = useState<ReadonlySet<string>>(new Set())
   const [collapsed, setCollapsed] = useState(() => globalThis.innerHeight < 120)
+  const [window, setWindow] = useState<SpendWindow>('1h')
   const attunedWithoutTarget = scope === 'ATTUNED' && rack.attunement === null
 
   useEffect(() => {
@@ -94,7 +96,7 @@ export function VitalsModule() {
   if (collapsed) {
     return (
       <section className="spend-table spend-table--collapsed" aria-label="Spend">
-        <SpendRates snapshot={snapshot} compact />
+        <SpendLines snapshot={snapshot} window={window} onWindowChange={setWindow} />
         {phase === 'failed' && <em role="alert">Couldn’t refresh</em>}
       </section>
     )
@@ -110,7 +112,7 @@ export function VitalsModule() {
           <Button action="refresh" type="button" data-tooltip-detail="Read the latest spend now." onClick={refresh}>Refresh</Button>
         </div>
       </div>
-      <SpendRates snapshot={snapshot} />
+      <SpendLines snapshot={snapshot} window={window} onWindowChange={setWindow} />
       <SpendReconciliation value={reconciliation} snapshot={snapshot} />
       {scope === 'GLOBAL' && snapshot.can_record_invoice && <InfrastructureInvoiceForm onSaved={refresh} />}
       {rowCount === 0 ? (

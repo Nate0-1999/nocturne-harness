@@ -39,6 +39,7 @@ import { SymphonyDeck, latestDeckStacks, type DeckStack } from './SymphonyDeck'
 import { ModelChip, ModelDevice, useModelBrowser } from './ModelDevice'
 import { threadModelMark } from './modelBrowser'
 import { VitalsModule } from './VitalsModule'
+import { SpendStrip } from './SpendStrip'
 import { PalaceStateModule } from './PalaceStateModule'
 import { CuratorProposal } from './CuratorProposal'
 import { ContextBars } from './ContextBars'
@@ -305,6 +306,17 @@ function initialSavedRackSet(): StageLayoutSet | null {
 // M3EX-27: Sheet or Stage is the owner's choice and survives a reload.
 const SHEET_MODE_STORAGE_KEY = 'nocturne.stage.sheet-mode.v1'
 
+// FL-160: the spend strip's open or collapsed state survives a reload.
+const SPEND_STRIP_STORAGE_KEY = 'nocturne.spend-strip.open.v1'
+
+function initialSpendStripOpen(): boolean {
+  try {
+    return globalThis.localStorage.getItem(SPEND_STRIP_STORAGE_KEY) !== 'false'
+  } catch {
+    return true
+  }
+}
+
 function initialSheetMode(): boolean {
   try {
     return globalThis.localStorage.getItem(SHEET_MODE_STORAGE_KEY) === 'true'
@@ -433,6 +445,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   const [pointerActive, setPointerActive] = useState(false)
   const [libraryOpen, setLibraryOpen] = useState(false)
   const [sheetMode, setSheetMode] = useState(initialSheetMode)
+  const [spendStripOpen, setSpendStripOpen] = useState(initialSpendStripOpen)
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 })
   const viewportRef = useRef<HTMLDivElement>(null)
   const initialAttunementPicks = useMemo(() => initialStickyAttunements(), [])
@@ -644,6 +657,14 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
       // The rack remains usable when a hardened browser denies local storage.
     }
   }, [sheetMode])
+
+  useEffect(() => {
+    try {
+      globalThis.localStorage.setItem(SPEND_STRIP_STORAGE_KEY, String(spendStripOpen))
+    } catch {
+      // The strip still opens and closes when a hardened browser denies local storage.
+    }
+  }, [spendStripOpen])
 
   useEffect(() => {
     try {
@@ -1123,6 +1144,25 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             ))}
           </nav>
         )}
+      </div>
+
+      <div className="rack-stage-strip" data-rack-module="spend_strip" data-open={spendStripOpen || undefined}>
+        <Button action={spendStripOpen ? 'collapse' : 'expand'} iconOnly variant="bare"
+          className="rack-stage-strip__toggle"
+          type="button"
+          data-testid="spend-strip-toggle"
+          aria-expanded={spendStripOpen}
+          aria-label={spendStripOpen ? 'Collapse spend strip' : 'Expand spend strip'}
+          data-tooltip-detail="Show or hide the spend graphs."
+          onClick={() => setSpendStripOpen((open) => !open)}
+        >
+          {spendStripOpen ? 'Collapse' : 'Expand'}
+        </Button>
+        <RackPluginIframe
+          manifest={RACK_MANIFESTS.spend_strip}
+          theme={theme}
+          isRegressionFixture={isRegressionFixture}
+        />
       </div>
 
       {libraryOpen && (
@@ -1804,6 +1844,8 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
     >
       {moduleId === 'header' ? (
         <HeaderModule />
+      ) : moduleId === 'spend_strip' ? (
+        <SpendStrip />
       ) : moduleId === 'threads' ? (
         <ThreadsModule />
       ) : moduleId === 'conversation' ? (
