@@ -20,3 +20,25 @@
 .spend-history form { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; margin-block: 0.75rem; }
 .spend-history form label { display: grid; gap: 0.25rem; }
 .spend-history input { min-width: 0; width: 100%; }
+/* FL-160: spend per minute, one graph per series on one scale. */
+.spend-lines { display: grid; gap: 0.35rem; padding: 0.35rem 0.6rem 0.5rem; }
+.spend-lines__controls { display: flex; gap: 0.75rem; align-items: center; font-size: var(--text-sm); color: var(--muted); }
+.spend-lines__graphs { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.6rem; }
+.spend-lines figure { margin: 0; min-width: 0; }
+.spend-lines figcaption { display: flex; justify-content: space-between; gap: 0.5rem; font-size: var(--text-sm); color: var(--muted); font-variant-numeric: tabular-nums; }
+.spend-lines figcaption span:last-child { color: var(--ink); }
+.spend-lines svg { display: block; width: 100%; height: 3.2rem; }
+.spend-lines polyline { stroke-width: 1.5px; stroke-linejoin: round; }
+.spend-lines__axis { stroke: var(--line); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.spend-lines__line--0 { stroke: var(--accent); }
+.spend-lines__line--1 { stroke: var(--accent-secondary); }
+.spend-lines__line--2 { stroke: var(--ink); }
+.spend-lines__line--3 { stroke: var(--muted); }
+.spend-strip { height: 100%; overflow: hidden; }
+.spend-strip .spend-lines { padding-right: 2.4rem; }
+.spend-strip__summary { display: flex; flex: 1; gap: 1rem; align-items: center; min-width: 0; font-size: var(--text-sm); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+header.spend-strip__summary { height: 100%; padding: 0 2.4rem 0 0.6rem; }
+.spend-strip__summary strong { color: var(--ink); letter-spacing: 0.08em; text-transform: uppercase; }
+.spend-strip__drift { overflow: hidden; text-overflow: ellipsis; color: var(--danger); }
+.spend-reconciliation p { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+.spend-reconciliation--drift dd { color: var(--danger); }

@@ -4299,3 +4299,15 @@ families, and with them each memory's angle, hue and the shared-trait filaments;
 inverse injections and depth revision. Lineage always joins a family. The old single family was
 the union of all three traits, which on a palace of one thread's facts was one family: one ring,
 one stipple disc.
+
+## M6SP — Spend on the bottom strip [P4.1, P2.4]
+
+PRECEDENT: PLAN M6SP; FL-160 161 156; A-080; SD-075; M3SR, M4MS.
+A fixed strip under the Stage draws spend per minute for agents, sub-agents, models, memory
+curation and total, one graph each on one shared scale, over 10 minutes, an hour or today
+(local midnight). Every receipt names a model, so a summed Models line would repeat Total:
+that graph draws one line per model. The Spend module's graphs are the same component.
+The saving from cache reads is priced at the model list's prompt minus cache-read price,
+because receipts split one native cost pro rata across token classes. Drift compares today's
+UTC ledger with the key's bill for today; past 5% of the bill the strip says so. M4MS's
+caution stands in the tooltip: the key can also pay for other Palaces and apps.

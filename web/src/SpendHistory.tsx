@@ -1,16 +1,11 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 
-import { formatHumanQuantity, formatHumanUsd } from './humanNumbers'
-import type { SpendMetrics, SpendRateLane, SpendTableSnapshot } from './spendTable'
+import { formatHumanPercent, formatHumanQuantity, formatHumanUsd } from './humanNumbers'
+import { SPEND_WINDOWS, spendPolylines, spendSeries, type SpendMetrics, type SpendTableSnapshot, type SpendWindow } from './spendTable'
 import { useRackPlugin } from './rack'
-import {
-  contiguousPolylineSegments, laneChartPoints, type ReconciliationSnapshot,
-} from './vitals'
+import { dayDrift, formatDayUsd, type ReconciliationSnapshot } from './vitals'
 import './assets/spend-history.css'
 import { Button, Select, TextField } from './kit'
-
-const DIMENSIONS = ['total', 'agent', 'subagent', 'model', 'curation'] as const
-const LABELS = { total: 'Total', agent: 'Agents', subagent: 'Sub-agents', model: 'Models', curation: 'Memory curation' }
 
 export function InfrastructureInvoiceForm({ onSaved }: { onSaved: () => void }) {
   const { events } = useRackPlugin()
@@ -43,39 +38,34 @@ export function InfrastructureInvoiceForm({ onSaved }: { onSaved: () => void }) 
   </details>
 }
 
-/** ADR-024 / M3SR: recorded money and tokens; unknown prices never plot as zero. */
-export function SpendRates({ snapshot, compact = false }: { snapshot: SpendTableSnapshot; compact?: boolean }) {
-  const [dimension, setDimension] = useState<SpendRateLane['dimension']>('total')
-  const lanes = snapshot.rates.filter((lane) => lane.dimension === dimension)
-  return <section className={`spend-history${compact ? ' spend-history--compact' : ''}`} aria-label="Spend over time">
-    <div className="spend-history__controls">
-      <strong>Recorded USD / minute</strong>
-      <Select aria-label="Spend graph grouping" data-tooltip-detail="Split the last hour's spend by agent, model or purpose." value={dimension} onChange={(event) => setDimension(event.target.value as SpendRateLane['dimension'])}>
-        {DIMENSIONS.map((value) => <option key={value} value={value}>{LABELS[value]}</option>)}
+/** FL-160 / ADR-024: spend per minute, one graph per series on one shared scale. */
+export function SpendLines({ snapshot, window, onWindowChange, lead }: { snapshot: SpendTableSnapshot; window: SpendWindow; onWindowChange: (window: SpendWindow) => void; lead?: ReactNode }) {
+  const { minutes, series, peak } = spendSeries(snapshot, window)
+  const first = minutes[0]
+  const last = minutes.at(-1)!
+  return <section className="spend-lines" aria-label="Spend per minute">
+    <div className="spend-lines__controls">
+      {lead}
+      <Select aria-label="Spend window" data-tooltip-detail="How far back the graphs reach; today starts at midnight." value={window} onChange={(event) => onWindowChange(event.target.value as SpendWindow)}>
+        {Object.entries(SPEND_WINDOWS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </Select>
-      <small>Last hour</small>
+      <small title="Every graph shares this scale.">Top {formatDayUsd(peak)} / min</small>
     </div>
-    {lanes.length === 0 ? <p>No {LABELS[dimension].toLowerCase()} receipts in this hour.</p> : lanes.map((lane) => {
-      const start = Math.ceil((Date.parse(snapshot.as_of) - 3_600_000) / 60_000) * 60_000
-      const recorded = new Map(lane.points.map((point) => [Date.parse(point.minute), point]))
-      const points = Array.from({ length: 60 }, (_, i) => recorded.get(start + i * 60_000) ?? {
-        minute: new Date(start + i * 60_000).toISOString(), cost_usd: '0', receipt_lines: 0, unpriced_lines: 0,
-      })
-      const chart = laneChartPoints({ points }, snapshot.as_of)
-      const maximum = points.reduce((peak, point) =>
-        Number(point.cost_usd ?? 0) > Number(peak) ? point.cost_usd! : peak, '0')
-      const unpriced = points.reduce((total, point) => total + point.unpriced_lines, 0)
-      return <figure key={`${lane.dimension}:${lane.key}`}>
-        <figcaption>{lane.label} <small>Peak {formatHumanUsd(maximum)} / min{unpriced > 0 ? ` · ${unpriced} lines with no reported price` : ''}</small></figcaption>
-        <svg viewBox="0 0 100 24" preserveAspectRatio="none" role="img" aria-label={`${lane.label}, recorded dollars per minute over the last hour`}>
-          <line x1="0" y1="21" x2="100" y2="21" className="spend-history__axis" />
-          {contiguousPolylineSegments(chart).map((segment, i) => <polyline key={i} points={segment} fill="none" vectorEffect="non-scaling-stroke" />)}
-          {chart.filter((point) => point.y !== null && point.point.receipt_lines > 0).map((point) => <circle key={point.point.minute} cx={point.x} cy={point.y!} r="0.5">
-            <title>{point.point.minute}: {formatHumanUsd(point.point.cost_usd!)}{point.point.unpriced_lines ? ' (partial price)' : ''}</title>
-          </circle>)}
+    <div className="spend-lines__graphs">
+      {series.map((entry) => <figure key={entry.dimension} data-series={entry.dimension}>
+        <figcaption title={entry.lines.length > 1 ? entry.lines.map((item) => item.label).join('\n') : undefined}>
+          <span>{entry.label}{entry.lines.length > 1 ? ` · ${entry.lines.length}` : ''}</span>
+          <span>{formatDayUsd(entry.sum)}{entry.unpriced > 0 ? ' + unpriced' : ''}</span>
+        </figcaption>
+        <svg viewBox="0 0 100 24" preserveAspectRatio="none" role="img" aria-label={`${entry.label}, dollars per minute, ${SPEND_WINDOWS[window].toLowerCase()}`}>
+          <line x1="0" y1="22" x2="100" y2="22" className="spend-lines__axis" />
+          {entry.lines.map((item, index) => <g key={item.key} className={`spend-lines__line spend-lines__line--${index % 4}`}>
+            <title>{item.label}</title>
+            {spendPolylines(item.values, first, last, peak).map((points, i) => <polyline key={i} points={points} fill="none" vectorEffect="non-scaling-stroke" />)}
+          </g>)}
         </svg>
-      </figure>
-    })}
+      </figure>)}
+    </div>
   </section>
 }
 
@@ -92,12 +82,42 @@ export function SpendReconciliation({ value, snapshot }: { value: Reconciliation
       <div><dt>Conversations in this view</dt><dd>{total(snapshot.threads)}</dd></div>
       <div><dt>Other work in this view</dt><dd>{total(snapshot.purposes)}</dd></div>
     </dl>
-    <details>
-      <summary>Key usage · all apps and Palaces</summary>
-      <p>{money(value?.broker_usage_usd ?? null)}{value?.checked_at && ` · Checked ${new Date(value.checked_at).toLocaleString()}`}</p>
-      <small>A shared key includes work outside this Palace. Its total cannot establish this view’s spend drift.</small>
-    </details>
+    <DayReconciliation value={value} canCheck={snapshot.can_record_invoice === true} />
   </section>
+}
+
+/** FL-156 / A-080: today's ledger beside the broker's bill for today (UTC), checked daily or on demand. */
+function DayReconciliation({ value, canCheck }: { value: ReconciliationSnapshot | null; canCheck: boolean }) {
+  const { events } = useRackPlugin()
+  const [latest, setLatest] = useState<ReconciliationSnapshot | null>(null)
+  const [status, setStatus] = useState('')
+  const [pending, setPending] = useState(false)
+  const shown = latest ?? value
+  const day = dayDrift(shown)
+  async function check() {
+    setPending(true)
+    try {
+      setLatest(await events.dispatch({ type: 'spend.reconcile' }) as unknown as ReconciliationSnapshot)
+      setStatus('')
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'The bill could not be checked.')
+    } finally { setPending(false) }
+  }
+  return <div className={`spend-reconciliation${day?.drifting ? ' spend-reconciliation--drift' : ''}`} data-testid="spend-reconciliation">
+    <dl className="spend-history__totals">
+      <div><dt>Ledger today · UTC</dt><dd>{day === null ? 'Not checked' : formatDayUsd(day.ledger)}</dd></div>
+      <div><dt>OpenRouter bill today</dt><dd>{day === null ? 'Not checked' : formatDayUsd(day.broker)}</dd></div>
+      <div><dt>Drift</dt><dd>{day === null ? '—' : day.percent === null ? (day.ledger > 0 ? 'No bill yet' : 'None') : `${day.percent > 0 ? '+' : ''}${formatHumanPercent(day.percent)}`}</dd></div>
+    </dl>
+    <p>
+      <small title="The key may also pay for other Palaces and apps, and its bill can trail the ledger by a few minutes.">
+        {shown?.checked_at ? `Checked ${new Date(shown.checked_at).toLocaleString()}` : 'Checked once a day'}
+        {shown?.status === 'unavailable' && ' · OpenRouter did not answer'}
+      </small>
+      {canCheck && <Button action="refresh" type="button" disabled={pending} data-tooltip-detail="Read OpenRouter's bill for today now and compare it with the ledger." onClick={() => void check()}>{pending ? 'Checking…' : 'Check now'}</Button>}
+    </p>
+    {status && <p role="status">{status}</p>}
+  </div>
 }
 
 export function SpendDaily({ snapshot }: { snapshot: SpendTableSnapshot }) {
@@ -131,20 +151,24 @@ export function CacheHistory({ snapshot, threadNames }: { snapshot: SpendTableSn
   const threads = [...new Set(snapshot.messages.map((message) => message.thread_id))]
   const thread = threads.includes(selected) ? selected : threads[0] ?? ''
   const messages = snapshot.messages.filter((message) => message.thread_id === thread)
+  const priced = messages.filter((message) => message.saved_usd !== null)
+  const saved = priced.reduce((total, message) => total + Number(message.saved_usd), 0)
   return <section className="spend-history" aria-label="Cache efficiency">
     <h3>Cache efficiency by message</h3>
     {threads.length === 0 ? <p>No message receipts recorded.</p> : <>
       <Select aria-label="Cache conversation" data-tooltip-detail="Pick the conversation whose cache reads and writes to show." value={thread} onChange={(event) => setSelected(event.target.value)}>
         {threads.map((id) => <option key={id} value={id}>{threadNames.get(id) ?? `Conversation ${id.slice(0, 8)}`}</option>)}
       </Select>
-      <table><thead><tr><th>Message</th><th>Fresh</th><th>Cached</th><th>Cache writes</th><th>Reuse</th></tr></thead>
+      {priced.length > 0 && <p data-testid="cache-saved"><strong>Saved {formatHumanUsd(saved.toFixed(12))}</strong> <small title="Cached tokens priced at the model's fresh prompt price minus its cache-read price, from today's model list.">by cache reads{priced.length < messages.length ? ` · ${messages.length - priced.length} unpriced` : ''}</small></p>}
+      <table><thead><tr><th>Message</th><th>Fresh</th><th>Cached</th><th>Cache writes</th><th>Reuse</th><th>Saved</th></tr></thead>
         <tbody>{messages.map((message, index) => {
           const denominator = Number(message.fresh_tokens) + Number(message.cached_tokens)
           const percent = denominator > 0 ? Number(message.cached_tokens) / denominator * 100 : null
-          return <tr key={message.prompt_id ?? 'unattributed'}>
-            <th title={message.prompt_id ?? 'Prompt identity not recorded'}>{message.prompt_id === null ? 'Unattributed' : index + 1} · {new Date(message.first_request_at).toLocaleTimeString()}</th>
+          return <tr key={`${message.prompt_id ?? 'unattributed'}:${message.model ?? ''}`}>
+            <th title={`${message.prompt_id ?? 'Prompt identity not recorded'}${message.model ? ` · ${message.model}` : ''}`}>{message.prompt_id === null ? 'Unattributed' : index + 1} · {new Date(message.first_request_at).toLocaleTimeString()}</th>
             <td>{formatHumanQuantity(message.fresh_tokens)}</td><td>{formatHumanQuantity(message.cached_tokens)}</td><td>{formatHumanQuantity(message.cache_write_tokens)}</td>
             <td>{percent === null ? 'No input' : <><meter min="0" max="100" value={percent} aria-label={`Message ${index + 1} cache reuse`} /> {percent.toFixed(1)}%</>}</td>
+            <td>{message.saved_usd === null ? '—' : formatHumanUsd(message.saved_usd)}</td>
           </tr>
         })}</tbody>
       </table>

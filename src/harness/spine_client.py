@@ -758,10 +758,13 @@ class SpendRateLane(ContractModel):
 class MessageCache(ContractModel):
     thread_id: UUID
     prompt_id: str | None
+    model: str | None = None
     first_request_at: datetime
     fresh_tokens: NonNegativeDecimalString
     cached_tokens: NonNegativeDecimalString
     cache_write_tokens: NonNegativeDecimalString
+    # FL-161: Harness-priced at the source's list prices; null when a price is unpublished.
+    saved_usd: NonNegativeDecimalString | None = None
 
 
 class DailySpend(ContractModel):
@@ -836,6 +839,9 @@ class VitalsReconciliation(ContractModel):
     ledger_since_baseline_usd: NonNegativeDecimalString | None
     drift_usd: SignedDecimalString | None
     tolerance_usd: NonNegativeDecimalString | None
+    # A-080: today's (UTC) bill and ledger; an older Palace sends neither.
+    broker_day_usd: NonNegativeDecimalString | None = None
+    ledger_day_usd: NonNegativeDecimalString | None = None
     unpriced_lines: int = Field(strict=True)
     source: Literal["openrouter:/api/v1/key"] | None
     error_code: Literal["broker_unavailable", "invalid_broker_response"] | None
@@ -1139,6 +1145,7 @@ _SPEND_EVENTS_RESPONSE = TypeAdapter(SpendEventsResponse)
 _SPEND_TABLE_SNAPSHOT = TypeAdapter(SpendTableSnapshot)
 _PALACE_IDENTITY = TypeAdapter(PalaceIdentity)
 _VITALS_SNAPSHOT = TypeAdapter(VitalsSnapshot)
+_VITALS_RECONCILIATION = TypeAdapter(VitalsReconciliation)
 _MEMORY_GRAPH_SNAPSHOT = TypeAdapter(MemoryGraphSnapshot)
 _SCORER_CONSOLE_SNAPSHOT = TypeAdapter(ScorerConsoleSnapshot)
 _RETRAIN_RESPONSE = TypeAdapter(RetrainResponse)
@@ -1426,6 +1433,19 @@ class SpineClient:
             identity = _expect_success(response, status=200, adapter=_PALACE_IDENTITY)
             self._metrics_scope = "palace" if identity.is_owner else "principal"
         return {"principal_id": principal_id, "scope": self._metrics_scope}
+
+    async def reconcile_spend(self) -> VitalsReconciliation:
+        """A-080: run the owner's broker reconciliation now."""
+
+        response = await self._request(
+            "POST",
+            "v1/spend/reconciliation",
+            params={"principal_id": self._principal_id or "local"},
+        )
+        # WALL owner authority / A-080: the shared key's bill is the owner's to read.
+        if response.status_code == 403:
+            raise SpineOwnershipError(response.json().get("detail", "Reconciliation was refused."))
+        return _expect_success(response, status=200, adapter=_VITALS_RECONCILIATION)
 
     async def record_invoice(self, invoice: InfrastructureInvoice) -> SpendEventsResponse:
         response = await self._request(

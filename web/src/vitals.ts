@@ -42,6 +42,8 @@ export interface ReconciliationSnapshot {
   ledger_since_baseline_usd: string | null
   drift_usd: string | null
   tolerance_usd: string | null
+  broker_day_usd: string | null
+  ledger_day_usd: string | null
   unpriced_lines: number
   source: 'openrouter:/api/v1/key' | null
   error_code: 'broker_unavailable' | 'invalid_broker_response' | null
@@ -79,12 +81,6 @@ export interface VitalsSnapshot {
   resources: ResourceSnapshot
   lifecycle_rates: LifecycleRate[]
   palace_counts: PalaceCount[]
-}
-
-export interface LaneChartPoint {
-  point: SpendPoint
-  x: number
-  y: number | null
 }
 
 const DECIMAL = /^(?:0|[1-9]\d*)(?:\.\d+)?$/
@@ -173,6 +169,21 @@ export function reconciliationCopy(value: ReconciliationSnapshot): string {
   }
 }
 
+/** A-080: today's ledger against today's bill; past 5% of the bill (or any ledger spend on a zero bill) is drift. */
+export function dayDrift(value: ReconciliationSnapshot | null): { ledger: number; broker: number; percent: number | null; drifting: boolean } | null {
+  if (value === null || value.ledger_day_usd === null || value.broker_day_usd === null) return null
+  const ledger = Number(value.ledger_day_usd)
+  const broker = Number(value.broker_day_usd)
+  const percent = broker > 0 ? (ledger - broker) / broker * 100 : null
+  return { ledger, broker, percent, drifting: percent === null ? ledger > 0 : Math.abs(percent) > 5 }
+}
+
+/** Spend here is often cents apart: three significant figures keep a 20% gap and small series visible. */
+const threeFigures = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumSignificantDigits: 3 })
+export function formatDayUsd(value: number): string {
+  return value === 0 ? '$0.00' : value < 1 ? threeFigures.format(value) : `$${value.toFixed(2)}`
+}
+
 export function accountingCopy(value: AccountingSnapshot): string {
   if (value.status === 'clear') {
     return 'Receipt queue · Clear'
@@ -217,60 +228,6 @@ export function nearestSpendPoint(
     const candidateDistance = Math.abs(Date.parse(candidate.minute) - target)
     return candidateDistance < nearestDistance ? candidate : nearest
   })
-}
-
-export function laneChartPoints(
-  lane: { points: SpendPoint[] },
-  asOf: string,
-  windowMinutes = 60,
-): LaneChartPoint[] {
-  const end = Date.parse(asOf)
-  const start = end - windowMinutes * 60_000
-  const priced = lane.points
-    .map((point) => point.cost_usd === null ? null : Number(point.cost_usd))
-    .filter((value): value is number => value !== null && Number.isFinite(value))
-  const maximum = Math.max(...priced, 0)
-  return lane.points.map((point) => {
-    const x = clamp(((Date.parse(point.minute) - start) / (end - start)) * 100, 0, 100)
-    const numericCost = point.cost_usd === null ? null : Number(point.cost_usd)
-    const y = numericCost === null || !Number.isFinite(numericCost)
-      ? null
-      : maximum === 0
-        ? 18
-        : 21 - (numericCost / maximum) * 17
-    return { point, x, y }
-  })
-}
-
-export function contiguousPolylineSegments(
-  points: readonly LaneChartPoint[],
-  maximumGapMilliseconds = 60_000,
-): string[] {
-  const segments: string[] = []
-  let current: string[] = []
-  let previousMinute: number | null = null
-  for (const point of points) {
-    const minute = Date.parse(point.point.minute)
-    if (
-      point.y === null ||
-      (previousMinute !== null && minute - previousMinute > maximumGapMilliseconds)
-    ) {
-      if (current.length > 0) {
-        segments.push(current.join(' '))
-      }
-      current = []
-    }
-    if (point.y === null) {
-      previousMinute = null
-      continue
-    }
-    current.push(`${point.x},${point.y}`)
-    previousMinute = minute
-  }
-  if (current.length > 0) {
-    segments.push(current.join(' '))
-  }
-  return segments
 }
 
 function parseSpendLane(value: unknown, index: number): SpendLane {
@@ -376,7 +333,7 @@ function parseReconciliation(value: unknown): ReconciliationSnapshot {
   }
   const decimal = (field: string, signed = false): string | null => {
     const candidate = item[field]
-    if (candidate === null) return null
+    if (candidate === null || (candidate === undefined && field.endsWith('_day_usd'))) return null
     if (typeof candidate !== 'string' || !(signed ? SIGNED_DECIMAL : DECIMAL).test(candidate)) {
       throw new TypeError(`reconciliation.${field} must be an exact decimal string or null`)
     }
@@ -404,6 +361,8 @@ function parseReconciliation(value: unknown): ReconciliationSnapshot {
     ledger_since_baseline_usd: decimal('ledger_since_baseline_usd'),
     drift_usd: decimal('drift_usd', true),
     tolerance_usd: decimal('tolerance_usd'),
+    broker_day_usd: decimal('broker_day_usd'),
+    ledger_day_usd: decimal('ledger_day_usd'),
     unpriced_lines: nonnegativeInteger(item.unpriced_lines, 'reconciliation.unpriced_lines'),
     source: item.source as 'openrouter:/api/v1/key' | null,
     error_code: item.error_code as 'broker_unavailable' | 'invalid_broker_response' | null,
