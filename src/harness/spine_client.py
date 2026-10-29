@@ -1442,6 +1442,7 @@ class SpineClient:
             "v1/spend/reconciliation",
             params={"principal_id": self._principal_id or "local"},
         )
+        # WALL owner authority / A-080: the shared key's bill is the owner's to read.
         if response.status_code == 403:
             raise SpineOwnershipError(response.json().get("detail", "Reconciliation was refused."))
         return _expect_success(response, status=200, adapter=_VITALS_RECONCILIATION)
