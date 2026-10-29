@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { formatHumanPercent, formatHumanUsd } from './humanNumbers'
+import { formatHumanPercent } from './humanNumbers'
 import { useRackPlugin } from './rack'
 import { SpendLines } from './SpendHistory'
 import { parseSpendTableSnapshot, spendSeries, type SpendTableSnapshot, type SpendWindow } from './spendTable'
@@ -46,8 +46,8 @@ export function SpendStrip() {
     {snapshot === null
       ? <span>{failed ? 'Spend is unavailable.' : 'Reading spend…'}</span>
       : <>
-        <span title="Recorded spend since local midnight.">Today {formatHumanUsd((today?.sum ?? 0).toFixed(12))}</span>
-        <span title="The last full minute's recorded spend.">Last minute {latest?.cost == null ? '—' : formatHumanUsd(latest.cost.toFixed(12))}</span>
+        <span title="Recorded spend since local midnight.">Today {formatDayUsd(today?.sum ?? 0)}</span>
+        <span title="The last full minute's recorded spend.">Last minute {latest?.cost == null ? '—' : formatDayUsd(latest.cost)}</span>
       </>}
     {day?.drifting && <span className="spend-strip__drift" role="status" data-testid="spend-drift-banner"
       title="Today's ledger (UTC) against OpenRouter's bill for the key. The key may also pay for other Palaces and apps.">

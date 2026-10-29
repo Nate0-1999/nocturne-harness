@@ -49,13 +49,13 @@ export function SpendLines({ snapshot, window, onWindowChange, lead }: { snapsho
       <Select aria-label="Spend window" data-tooltip-detail="How far back the graphs reach; today starts at midnight." value={window} onChange={(event) => onWindowChange(event.target.value as SpendWindow)}>
         {Object.entries(SPEND_WINDOWS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </Select>
-      <small title="Every graph shares this scale.">Top {formatHumanUsd(peak.toFixed(12))} / min</small>
+      <small title="Every graph shares this scale.">Top {formatDayUsd(peak)} / min</small>
     </div>
     <div className="spend-lines__graphs">
       {series.map((entry) => <figure key={entry.dimension} data-series={entry.dimension}>
         <figcaption title={entry.lines.length > 1 ? entry.lines.map((item) => item.label).join('\n') : undefined}>
           <span>{entry.label}{entry.lines.length > 1 ? ` · ${entry.lines.length}` : ''}</span>
-          <span>{formatHumanUsd(entry.sum.toFixed(12))}{entry.unpriced > 0 ? ' + unpriced' : ''}</span>
+          <span>{formatDayUsd(entry.sum)}{entry.unpriced > 0 ? ' + unpriced' : ''}</span>
         </figcaption>
         <svg viewBox="0 0 100 24" preserveAspectRatio="none" role="img" aria-label={`${entry.label}, dollars per minute, ${SPEND_WINDOWS[window].toLowerCase()}`}>
           <line x1="0" y1="22" x2="100" y2="22" className="spend-lines__axis" />
