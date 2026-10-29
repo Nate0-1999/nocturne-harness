@@ -54,7 +54,7 @@ export function SpendLines({ snapshot, window, onWindowChange, lead }: { snapsho
     <div className="spend-lines__graphs">
       {series.map((entry) => <figure key={entry.dimension} data-series={entry.dimension}>
         <figcaption title={entry.lines.length > 1 ? entry.lines.map((item) => item.label).join('\n') : undefined}>
-          <span>{entry.label}</span>
+          <span>{entry.label}{entry.lines.length > 1 ? ` · ${entry.lines.length}` : ''}</span>
           <span>{formatHumanUsd(entry.sum.toFixed(12))}{entry.unpriced > 0 ? ' + unpriced' : ''}</span>
         </figcaption>
         <svg viewBox="0 0 100 24" preserveAspectRatio="none" role="img" aria-label={`${entry.label}, dollars per minute, ${SPEND_WINDOWS[window].toLowerCase()}`}>
@@ -155,11 +155,11 @@ export function CacheHistory({ snapshot, threadNames }: { snapshot: SpendTableSn
   const saved = priced.reduce((total, message) => total + Number(message.saved_usd), 0)
   return <section className="spend-history" aria-label="Cache efficiency">
     <h3>Cache efficiency by message</h3>
-    {priced.length > 0 && <p data-testid="cache-saved"><strong>Saved {formatHumanUsd(saved.toFixed(12))}</strong> <small title="Cached tokens priced at the model's fresh prompt price minus its cache-read price, from today's model list.">by cache reads{priced.length < messages.length ? ` · ${messages.length - priced.length} unpriced` : ''}</small></p>}
     {threads.length === 0 ? <p>No message receipts recorded.</p> : <>
       <Select aria-label="Cache conversation" data-tooltip-detail="Pick the conversation whose cache reads and writes to show." value={thread} onChange={(event) => setSelected(event.target.value)}>
         {threads.map((id) => <option key={id} value={id}>{threadNames.get(id) ?? `Conversation ${id.slice(0, 8)}`}</option>)}
       </Select>
+      {priced.length > 0 && <p data-testid="cache-saved"><strong>Saved {formatHumanUsd(saved.toFixed(12))}</strong> <small title="Cached tokens priced at the model's fresh prompt price minus its cache-read price, from today's model list.">by cache reads{priced.length < messages.length ? ` · ${messages.length - priced.length} unpriced` : ''}</small></p>}
       <table><thead><tr><th>Message</th><th>Fresh</th><th>Cached</th><th>Cache writes</th><th>Reuse</th><th>Saved</th></tr></thead>
         <tbody>{messages.map((message, index) => {
           const denominator = Number(message.fresh_tokens) + Number(message.cached_tokens)
