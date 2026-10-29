@@ -4299,3 +4299,10 @@ families, and with them each memory's angle, hue and the shared-trait filaments;
 inverse injections and depth revision. Lineage always joins a family. The old single family was
 the union of all three traits, which on a palace of one thread's facts was one family: one ring,
 one stipple disc.
+
+## M6LP — Show the learner's observations [P1.2, P2.5]
+
+The Injection Console keeps its history, terrain and controls together. Terrain axes use
+the existing continuous controls; DEEP measures the selected pair. Fit progress plots
+server-observed training loss, with timestamps and no invented percentage complete.
+Global and effective project weights are displayed together, with residuals below.
