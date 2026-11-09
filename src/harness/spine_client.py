@@ -951,11 +951,13 @@ class RetrainJobView(ContractModel):
     status: Literal["pending", "completed", "failed"]
     result: RetrainResponse | None = None
     error: StrictStr | None = None
+    progress: list[JsonObject] = Field(default_factory=list)
 
 
 class ScorerConfigurationView(ContractModel):
     axes: JsonObject = Field(default_factory=dict)
     project_offsets: JsonObject = Field(default_factory=dict)
+    project_weights: JsonObject = Field(default_factory=dict)
     version: NonBlankString
     created_at: datetime
     status: Literal["active", "proposed", "inactive"]
@@ -986,10 +988,12 @@ class ScorerSimulationRequest(ContractModel):
     base_version: NonBlankString
     values: ScorerValues
     slice_parameter_id: NonBlankString
+    terrain_parameters: tuple[str, str] = ("scorer.tau", "scorer.memory_context_share")
 
 
 class ScorerSimulationResponse(ContractModel):
     terrain: list[dict[str, float]] = Field(default_factory=list)
+    terrain_parameters: tuple[str, str] = ("scorer.tau", "scorer.memory_context_share")
     simulation_digest: Annotated[StrictStr, Field()]
     base_version: NonBlankString
     values: ScorerValues
@@ -1032,6 +1036,7 @@ class RackScorerSimulationRequest(ContractModel):
     base_version: NonBlankString
     values: ScorerValues
     slice_parameter_id: NonBlankString
+    terrain_parameters: tuple[str, str] = ("scorer.tau", "scorer.memory_context_share")
 
 
 class RackScorerAuditionRequest(ContractModel):

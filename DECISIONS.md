@@ -4346,3 +4346,12 @@ The console reads generation lineage from the existing optimization ledger. Size
 previewable; its adoption remains pending the joint tau/share/size fit (F216), so the
 pair is a draft. Local Palace verification replaces GCP staging under the owner's F214
 instruction. Three fresh browser threads passed the question/answer path on gpt-4.1-mini.
+
+## M6LP — Show the learner's observations [P1.2, P2.5]
+
+The Injection Console keeps its history, terrain and controls together. Terrain axes use
+the existing continuous controls; DEEP measures the selected pair. Fit progress plots
+server-observed training loss, with timestamps and no invented percentage complete.
+Global and effective project weights are displayed together, with residuals below.
+Resume (lp09): the weights tables name a project by its folder, the path on hover (FL-205); a
+whole path widened the table into the next column on the real walk.
