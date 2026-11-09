@@ -7,16 +7,13 @@
     {
       "repo": "harness",
       "base": "0069c7ee44f677bab47109248bab34895b4858a1",
-      "head": "e0ee65ac7dd7337af08fb29841d0d1917698eb87"
+      "head": "70241798bfdf0046f67c04ab128ab171fd3af374"
     }
   ],
   "unmapped": {
     "harness/DECISIONS.md": "M6LP decision journal; no feature behavior.",
     "harness/src/harness/__init__.py": "paired release version 0.1.88; no feature behavior.",
     "harness/tests/test_spine_transport.py": "the transport fixture gains the progress field; no feature behavior.",
-    "harness/web/dist/assets/index-CcIzWcuF.js": "the built web bundle of the console's weights, progress and terrain (FL-064/137; older bundles removed); those rows carry the evidence.",
-    "harness/web/dist/assets/index-D81AQNoC.js": "the built web bundle of the console's weights, progress and terrain (FL-064/137; older bundles removed); those rows carry the evidence.",
-    "harness/web/dist/index.html": "the built web bundle of the console's weights, progress and terrain (FL-064/137; older bundles removed); those rows carry the evidence.",
     "harness/verification/m6lp/FL-004.png": "M6LP evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m6lp/FL-009.png": "M6LP evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m6lp/FL-012.png": "M6LP evidence (report, captures, receipts, checksums); no feature behavior.",
@@ -67,6 +64,9 @@
     "harness/verification/m6lp/FL-201.png": "M6LP evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m6lp/SHA256SUMS": "M6LP evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m6lp/ledger-report.json": "M6LP evidence (report, captures, receipts, checksums); no feature behavior.",
+    "harness/web/dist/assets/index-CcIzWcuF.js": "the built web bundle of the console's weights, progress and terrain (FL-064/137; older bundles removed); those rows carry the evidence.",
+    "harness/web/dist/assets/index-D81AQNoC.js": "the built web bundle of the console's weights, progress and terrain (FL-064/137; older bundles removed); those rows carry the evidence.",
+    "harness/web/dist/index.html": "the built web bundle of the console's weights, progress and terrain (FL-064/137; older bundles removed); those rows carry the evidence.",
     "harness/web/dist/assets/index-BDau5NLB.js": "the built web bundle of the console's weights, progress and terrain (FL-064/137; older bundles removed); those rows carry the evidence."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
