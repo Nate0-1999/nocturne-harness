@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "0069c7ee44f677bab47109248bab34895b4858a1",
-      "head": "4437b557c6993722d982197e14ffbc11cdc98f17"
+      "head": "c3b04d59054752dbd868ba6a382abb23b9c20e37"
     }
   ],
   "unmapped": {
@@ -17,9 +17,6 @@
     "harness/tests/test_config.py": "the grammar test now accepts budget (A-082); no feature behavior.",
     "harness/tests/test_daemon.py": "a fake Palace answers the spend table as an older Palace; no feature behavior.",
     "harness/tests/test_model_policy.py": "the frozen-catalog test and the grammar and readout assertions (FL-152/153 carry the evidence).",
-    "harness/web/dist/assets/index-CcIzWcuF.js": "the built web bundle of AgentPolicies.tsx and modelBrowser.ts (FL-152; an older bundle removed); FL-152 carries the evidence.",
-    "harness/web/dist/assets/index-DD9pWth4.js": "the built web bundle of AgentPolicies.tsx and modelBrowser.ts (FL-152; an older bundle removed); FL-152 carries the evidence.",
-    "harness/web/dist/index.html": "the built web bundle of AgentPolicies.tsx and modelBrowser.ts (FL-152; an older bundle removed); FL-152 carries the evidence.",
     "harness/verification/m6cr/FL-009.png": "M6CR evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m6cr/FL-067.png": "M6CR evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m6cr/FL-069.png": "M6CR evidence (report, captures, receipts, checksums); no feature behavior.",
@@ -53,8 +50,11 @@
     "harness/verification/m6cr/FL-201.png": "M6CR evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m6cr/FL-202.png": "M6CR evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m6cr/SHA256SUMS": "M6CR evidence (report, captures, receipts, checksums); no feature behavior.",
-    "harness/verification/m6cr/impacted.json": "M6CR evidence (report, captures, receipts, checksums); no feature behavior.",
-    "harness/verification/m6cr/ledger-report.json": "M6CR evidence (report, captures, receipts, checksums); no feature behavior."
+    "harness/verification/m6cr/ledger-report.json": "M6CR evidence (report, captures, receipts, checksums); no feature behavior.",
+    "harness/web/dist/assets/index-CcIzWcuF.js": "the built web bundle of AgentPolicies.tsx and modelBrowser.ts (FL-152; an older bundle removed); FL-152 carries the evidence.",
+    "harness/web/dist/assets/index-DD9pWth4.js": "the built web bundle of AgentPolicies.tsx and modelBrowser.ts (FL-152; an older bundle removed); FL-152 carries the evidence.",
+    "harness/web/dist/index.html": "the built web bundle of AgentPolicies.tsx and modelBrowser.ts (FL-152; an older bundle removed); FL-152 carries the evidence.",
+    "harness/verification/m6cr/impacted.json": "M6CR evidence (report, captures, receipts, checksums); no feature behavior."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
