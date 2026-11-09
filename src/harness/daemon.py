@@ -63,6 +63,7 @@ from harness.model_policy import (
     ThreadModelResolution,
     ThreadModelResolver,
     browse_models,
+    measured_token_burn,
     parse_model_policy,
 )
 from harness.model_router import CompletionRouter, ModelConfigurationError
@@ -994,6 +995,7 @@ def create_dev_app(
         static_model=configured.chat_model,
         static_context_tokens=configured.model_context_tokens,
         catalog=completion_router.catalog,
+        burn=lambda: measured_token_burn(owned_spine),
     )
 
     def explain_model_policy(snapshot: ParameterSnapshot) -> str:
@@ -1321,6 +1323,7 @@ def create_dev_app(
             workflow_definitions,
             configured,
             completion_router.catalog,
+            burn=lambda: measured_token_burn(owned_spine),
         ),
         transcript_journal=journal,
         symphony_experience=owned_symphony_experience,
@@ -1533,6 +1536,7 @@ def create_dev_app(
                         chat_policy=role_policies["chat"],
                         current_model=None if current is None else current["model"],
                         fallback_model=configured.chat_model,
+                        burn=await measured_token_burn(owned_spine),
                     )
                 except ModelCatalogUnavailable as exc:
                     raise HTTPException(503, f"The model list is unavailable: {exc}.") from None
