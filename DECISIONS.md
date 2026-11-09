@@ -4336,3 +4336,20 @@ keeps each prompt the daemon has not acknowledged and sends it again, under its 
 the reconnected thread's snapshot lacks it; the run loop runs a prompt id once. The Deck says
 "Clarification logged" only when the stack's interventions hold the line, and shows the
 steering beside the prompt, so it survives the next round replacing the attempts.
+
+## M6CR — The elbow says why; a budget buys the most intelligence an hour allows [P4]
+
+PRECEDENT: PLAN M6CR; FL-152 153 154; A-020, A-021, A-082; M3EL, M3MD, M3SR.
+FL-153: the elbow already had one exact rule, A-021's signed offset (the owner's pen,
+2026-07-28); a person could not read it. The readout now names the pick, its offset below the
+frontier's price chord and the next model up, and the computation is written once, in Memory's
+`elbow_offsets`. The charge's "first model below the densest pocket where the slope exceeds 0.5"
+contradicts A-021's text (no hand-set slope, density is not a selection signal), so it is not
+built; F215 asks the owner. FL-152: "cheapest above a threshold" is the existing `floor:<n>`.
+`budget:<dollars per hour>` (A-082) picks the most intelligent model whose cost at the agents'
+measured burn fits: building receipts' input and output tokens over the last day, per working
+hour (a clock hour with a receipt), read from the Palace's spend table. No measured burn, or
+nothing fitting, fails open to the static model (A-020 f) — never a blind pick. New threads,
+workflows and Symphony workers price at the same burn; delegate_task helpers keep their thread's
+model; the Palace curator has no burn, so the dialog leaves Budget off its role. The browser's
+Budget card defaults to what the current model costs an hour (as costly as this, smartest).

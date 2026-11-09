@@ -59,7 +59,7 @@ export function formatPrice(item: Pick<ListedModel, 'prompt_price' | 'completion
 export function policyName(policy: string): string {
   const [kind, value] = [policy.split(':')[0], policy.slice(policy.indexOf(':') + 1)]
   const name = kind.charAt(0).toUpperCase() + kind.slice(1)
-  return kind === 'floor' ? `${name} ${value}` : name
+  return kind === 'floor' ? `${name} ${value}` : kind === 'budget' ? `${name} $${value}/h` : name
 }
 
 /** SD-077: the agent policy is in force here while this conversation runs on its pick (or has none yet). */

@@ -270,6 +270,9 @@ class FailingPrepareSpine:
     async def record_spend_events(self, request: SpendEventsRequest) -> SpendEventsResponse:
         return SpendEventsResponse(accepted=len(request.events))
 
+    async def spend_table(self, thread_ids: list[UUID] | None = None) -> None:
+        return None  # an older Palace: the model browser offers no budget card
+
 
 class GateSpine:
     def __init__(self) -> None:
