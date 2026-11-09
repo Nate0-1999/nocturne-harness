@@ -1877,6 +1877,13 @@ def create_dev_app(
                 ) from exc
 
     def configure_visualization_routes(app: FastAPI) -> None:
+        @app.post("/v1/rack/compaction-backtest")
+        async def backtest_compaction(request: Request) -> dict:
+            body = await request.json()
+            return await owned_spine.compaction_backtest(
+                body.get("memory_size"), body.get("preview", False)
+            )
+
         from harness.visualization import mount_visualization_routes
 
         configure_extraction_routes(app)
@@ -1918,13 +1925,6 @@ def create_dev_app(
         before_static_mount=configure_visualization_routes,
         palace_name=configured.nocturne_palace_name,
     )
-
-    @app.post("/v1/rack/compaction-backtest")
-    async def backtest_compaction(request: Request) -> dict:
-        body = await request.json()
-        return await owned_spine.compaction_backtest(
-            body.get("memory_size"), body.get("preview", False)
-        )
 
     app.router.add_event_handler("startup", transcript_sync.start)
     app.router.add_event_handler("shutdown", transcript_sync.stop)

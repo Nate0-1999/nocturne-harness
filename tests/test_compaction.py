@@ -627,7 +627,7 @@ async def test_policy_commands_survive_restart_and_manual_compaction_bypasses_fi
 
 @pytest.mark.asyncio
 async def test_plan_compaction_keeps_history_until_answer_after_restart(tmp_path):
-    """FL-084: a model's clarification cannot drop a plan before the person's answer."""
+    """SPEC D.2 177 / PLAN M6CP: model clarification cannot drop a plan before its answer."""
     from harness.pydantic_harness_adapter import MemoryCompaction, PlanCompactionQuestions
 
     class Agent:

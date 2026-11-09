@@ -1130,8 +1130,16 @@ class _MemoryStrategy:
             "id": "baseline",
             "parent": None,
             "instructions": owner.policy.instructions,
-            "memory_size": 128,
+            "memory_size": min(128, getattr(owner.service._agent, "memory_max_tokens", 128)),
         }
+        if owner.policy.instructions != COMPACTION_SUMMARY_PROMPT:
+            generation = {
+                **generation,
+                "id": "manual-"
+                + hashlib.sha256(owner.policy.instructions.encode()).hexdigest()[:16],
+                "parent": generation["id"],
+                "instructions": owner.policy.instructions,
+            }
         result = await owner.service.triage(
             ctx.deps.thread_id,
             transcript,

@@ -4336,3 +4336,13 @@ keeps each prompt the daemon has not acknowledged and sends it again, under its 
 the reconnected thread's snapshot lacks it; the run loop runs a prompt id once. The Deck says
 "Clarification logged" only when the stack's interventions hold the line, and shows the
 steering beside the prompt, so it survives the next round replacing the attempts.
+
+## M6CP — Ask before a plan loses context [P1.2, P2.5]
+
+PRECEDENT: FL-061/084; M4IN; M5LN; D.2 144/153/177; A-083.
+`/compact plan on` journals the summarizer's questions, waits for the next answer and
+passes both to triage; the default strategy and admission-before-drop path stay intact.
+The console reads generation lineage from the existing optimization ledger. Size is
+previewable; its adoption remains pending the joint tau/share/size fit (F216), so the
+pair is a draft. Local Palace verification replaces GCP staging under the owner's F214
+instruction. Three fresh browser threads passed the question/answer path on gpt-4.1-mini.

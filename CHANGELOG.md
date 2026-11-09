@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.86 - candidate, not released
+
+- Plan compaction asks before dropping context and retains the answer in the journal.
+- The learning console previews compaction instructions and memory sizes with generation
+  lineage. Joint size training remains incomplete (F216); pair with Memory 0.1.86.
+
 ## 0.1.78 - 2026-10-14
 
 - Force retrain starts a durable background job and polls its saved result, so a

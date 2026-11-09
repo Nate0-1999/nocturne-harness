@@ -15,7 +15,6 @@ import {
 } from './humanNumbers'
 import { Canvas } from '@react-three/fiber'
 import { useMemo, useState } from 'react'
-import { Button, TextField } from './kit'
 
 export type TerrainPoint = { tau: number; share: number; agreement: number }
 export type CreationSummary = {
@@ -23,6 +22,7 @@ export type CreationSummary = {
   hygiene_excluded_events: number
   events: { event_key: string; source: string; outcome: string; reason: string; ts: string }[]
   compaction?: {
+    last_backtest?: string | null
     active: { id: string; memory_size: number } | null
     generations: { id: string; parent: string | null; instructions: string; memory_size: number;
       date: string; adopted: boolean; verdict?: string;
@@ -31,40 +31,19 @@ export type CreationSummary = {
 }
 
 export function CreationScoreboard({ data }: { data?: CreationSummary }) {
-  const [size, setSize] = useState(128)
-  const [preview, setPreview] = useState(false)
-  const [result, setResult] = useState('')
-  const [busy, setBusy] = useState(false)
-  async function backtest(instructions = false) {
-    setBusy(true)
-    try {
-      const response = await fetch('/v1/rack/compaction-backtest', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ memory_size: instructions ? null : size, preview }),
-      })
-      if (!response.ok) throw new Error(`Back-test failed (${response.status}).`)
-      const value = await response.json()
-      setResult(`${value.verdict.replaceAll('_', ' ')}${value.scores?.candidate
-        ? ` · current ${value.scores.incumbent.score} · candidate ${value.scores.candidate.score}` : ''}`)
-    } catch (error) { setResult(String(error)) }
-    finally { setBusy(false) }
-  }
   return <section aria-label="Memory creation outcomes" className="learning-summary">
     <h2>Memory creation</h2>
-    <p>Compaction instructions and memory size replay the same recent source spans. Only a higher score is adopted; used facts earn one, removed facts cost one, new facts stay neutral.</p>
+    <p>Compaction instructions replay recent source spans. Used facts earn one, removed facts cost one, new facts stay neutral; fewer or smaller facts win an equal score.</p>
+    <p>Verification previews leave the active instructions and size unchanged.</p>
     <p>Active memory size: {data?.compaction?.active?.memory_size ?? 128} tokens.</p>
-    <label>Memory size (tokens)<TextField aria-label="Memory size (tokens)" type="number" min="16" max="128" value={size} onChange={(event) => setSize(Number(event.target.value))} /></label>
-    <label><input type="checkbox" checked={preview} onChange={(event) => setPreview(event.target.checked)} />Preview verification records (never adopted)</label>
-    <Button variant="bare" disabled={busy || size < 16 || size > 128} onClick={() => void backtest()}>{busy ? 'Back-testing…' : 'Back-test memory size'}</Button>
-    <Button variant="bare" disabled={busy} onClick={() => void backtest(true)}>Back-test new instructions</Button>
-    {result && <p role="status">{result}</p>}
+    {data?.compaction?.last_backtest === 'failed' && <p role="status">The last instruction back-test did not complete. Current instructions remain active.</p>}
     <details><summary>Compaction instruction generations</summary>
       {!data?.compaction?.generations.length ? <p>No compaction generation recorded yet.</p> :
         data.compaction.generations.map((generation) => <article key={generation.id}>
           <h3>{generation.id} · {generation.adopted ? 'adopted' : generation.verdict?.replaceAll('_', ' ')}</h3>
           <p>Parent {generation.parent ?? 'none'} · {generation.date} · {generation.memory_size} tokens</p>
           <p>{generation.scores ? `Current ${generation.scores.incumbent.score} · candidate ${generation.scores.candidate.score}` : 'Baseline; no back-test yet.'}</p>
-          <pre>{generation.instructions}</pre>
+          <details><summary>Instructions</summary><pre>{generation.instructions}</pre></details>
         </article>)}
     </details>
     {!data ? <p>Creation history needs the current Palace release.</p> : <>
