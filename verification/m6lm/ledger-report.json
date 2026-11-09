@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "320d1e37585acb692278d3ac89afe6b2733bdaf0",
-      "head": "5ef63f10a823490f0ad7fd6b3a03fdd0710fc371"
+      "head": "a9864a1cd65e349fc6feeeecc76ba1ba46ba5d3a"
     }
   ],
   "unmapped": {
@@ -210,6 +210,8 @@
     "harness/web/tests/promptRedelivery.test.mjs": "Existing transport fixtures distinguish optional loopback discovery from broker transport; Memory packaging assertion follows the paired release version. No new unit tests.",
     "harness/web/tests/symphonyDeckSource.test.mjs": "Existing transport fixtures distinguish optional loopback discovery from broker transport; Memory packaging assertion follows the paired release version. No new unit tests.",
     "harness/web/tests/themes.test.mjs": "Existing transport fixtures distinguish optional loopback discovery from broker transport; Memory packaging assertion follows the paired release version. No new unit tests.",
+    "harness/web/dist/assets/index-BiTRjhnq.js": "Generated bundle/index rebuilt from the mapped Model Device and rack source after current-main integration; inherits their impact.",
+    "harness/web/dist/assets/index-epiYopqv.js": "Generated bundle/index rebuilt from the mapped Model Device and rack source after current-main integration; inherits their impact.",
     "harness/web/dist/assets/index-CcIzWcuF.js": "Generated bundle/index rebuilt from the mapped Model Device and rack source after current-main integration; inherits their impact.",
     "harness/verification/m6lm/impacted.json": "Evidence inherited by the current-main merge or this packet evidence. No peer evidence is authored or modified; it has no independent runtime behavior."
   },
