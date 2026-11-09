@@ -4343,3 +4343,5 @@ The Injection Console keeps its history, terrain and controls together. Terrain 
 the existing continuous controls; DEEP measures the selected pair. Fit progress plots
 server-observed training loss, with timestamps and no invented percentage complete.
 Global and effective project weights are displayed together, with residuals below.
+Resume (lp09): the weights tables name a project by its folder, the path on hover (FL-205); a
+whole path widened the table into the next column on the real walk.
