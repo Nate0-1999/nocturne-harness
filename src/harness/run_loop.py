@@ -727,6 +727,11 @@ class RunLoop:
         )
         async with self._lock:
             self._require_open()
+            known = self._prompt_run_locked(thread_id, prompt_id)
+            if known is not None:
+                # INCIDENT F193: the page re-sends a prompt a dropped connection may have
+                # lost; one the daemon already holds runs once.
+                return known
             if self._workspace_missing_locked(thread_id, self._state_for_locked(thread_id)):
                 # INCIDENT F135 (M3EX-14): a moved folder asks for its new place, never hangs.
                 raise ThreadWorkspaceMoved(
@@ -2070,6 +2075,21 @@ class RunLoop:
         if self._closing:
             # WALL owner files / D.2 082: shutdown has released the capture resources.
             raise RuntimeError("run loop is closed")
+
+    def _prompt_run_locked(self, thread_id: str, prompt_id: str) -> str | None:
+        state = self._threads.get(thread_id)
+        turns = list(self._pending_captured.get(thread_id, ()))
+        if state is not None:
+            turns.extend(state.queued)
+            if state.active is not None:
+                turns.append(state.active.turn)
+        for turn in turns:
+            if turn.prompt_id == prompt_id:
+                return turn.run_id
+        for message in state.messages if state is not None else ():
+            if message.get("role") == "user" and message.get("message_id") == prompt_id:
+                return str(message.get("run_id") or "")
+        return None
 
     def _state_for_locked(self, thread_id: str) -> _ThreadState:
         state = self._threads.get(thread_id)

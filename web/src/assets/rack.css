@@ -444,6 +444,7 @@
   flex: 1;
   min-width: 0;
   height: 100%;
+  overflow: hidden;
   gap: 0.45rem;
   padding: 0 0.55rem;
   cursor: grab;
@@ -469,7 +470,9 @@
   font-size: var(--text-md);
 }
 
+/* The module name reads whole; the thread badge beside it yields first (SD-078). */
 .rack-module__drag strong {
+  flex-shrink: 0;
   overflow: hidden;
   color: var(--muted);
   font-weight: 600;

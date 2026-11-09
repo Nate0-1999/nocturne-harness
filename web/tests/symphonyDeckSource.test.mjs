@@ -39,3 +39,18 @@ test('the Deck drops answers already seen in Focused and answers of archived thr
   assert.match(app, /<SlashCommandHint \/>\s*<DeckSeenMarker \/>/u)
   assert.match(app, /markProposalSeen\(latest\)/u)
 })
+
+/** INCIDENT F193: the Deck said "Clarification logged" when the request left the page, though
+ * nothing was recorded; it now says so only once the conductor's record holds the line, and the
+ * steering stays on the run card beside the prompt after a later round replaces the attempts. */
+test('the Deck calls a clarification logged only when the stack records it', async () => {
+  const deck = await readFile(new URL('../src/SymphonyDeck.tsx', import.meta.url), 'utf8')
+  const intervene = deck.slice(deck.indexOf('async function intervene('), deck.indexOf('return (', deck.indexOf('async function intervene(')))
+  assert.match(intervene, /intervention\.kind === 'clarification'[\s\S]*?setLogging\(\{ instruction: intervention\.instruction, success \}\)/u)
+  assert.doesNotMatch(intervene.slice(0, intervene.indexOf("intervention.kind === 'clarification'")), /setStatus\(success\)/u)
+  assert.match(deck, /stack\.steering\.includes\(logging\.instruction\) \? logging\.success/u)
+  assert.match(deck, /role="status">\{shownStatus\}</u)
+  assert.match(deck, /Not logged: the Symphony ended before the conductor read the clarification\./u)
+  assert.match(deck, /parsed\?\.kind === 'clarification' && typeof parsed\.instruction === 'string'/u)
+  assert.match(deck, /<dt>Steering<\/dt><dd>\{line\}<\/dd>/u)
+})
