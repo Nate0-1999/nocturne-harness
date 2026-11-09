@@ -1220,9 +1220,11 @@ class _MemoryStrategy:
             }
         )
         try:
-            await owner.service._spine.notify_compaction(
-                event_uid, ctx.deps.thread_id, record=record
+            # Older Palace adapters still support the event-only notification.
+            details = (
+                {"record": record} if hasattr(owner.service._spine, "compaction_policy") else {}
             )
+            await owner.service._spine.notify_compaction(event_uid, ctx.deps.thread_id, **details)
         except SpineClientError:
             await owner.emit.event(
                 {
