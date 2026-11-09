@@ -674,9 +674,8 @@ async def test_nonpinned_resolution_joins_context_and_remains_stable_per_thread(
 
     resolver.set_policy("floor:10")
     explanation = resolver.explain("thread-1", first.model)
-    assert "the highest intelligence score" in explanation
-    assert "Score 52" in explanation
-    assert "$1/M" in explanation
+    # FL-206 / F173: the readout is the reason alone; the summary quotes the listing's price.
+    assert explanation == "Max: vendor/model-v1, the highest intelligence score in the catalog."
     assert "original policy evidence is unavailable" in resolver.explain("restored", first.model)
     assert "Explicit model choice" in resolver.explain(
         "thread-1", first.model, explicitly_selected=True

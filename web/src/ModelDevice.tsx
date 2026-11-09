@@ -5,8 +5,8 @@ import { RACK_MANIFESTS, useRackPlugin, useRackSnapshot } from './rack'
 import { Button, Select, TextField } from './kit'
 import { formatHumanCount } from './humanNumbers'
 import {
-  browseOrder, currentEffort, formatPrice, modelLabel, modelMark, parseBrowser, policyName, shortName, takesParameter,
-  type Configuration, type ModelBrowser, type SortKey,
+  browseOrder, currentEffort, currentStrategy, formatPrice, modelLabel, modelMark, modelSummary, parseBrowser,
+  policyName, shortName, strategyMeaning, takesParameter, type Configuration, type ModelBrowser, type SortKey,
 } from './modelBrowser'
 
 type ParameterValue = string | number | null
@@ -60,10 +60,9 @@ export function useModelBrowser(threadId: string | null, model: string | null): 
   return browser
 }
 
-/** FL-202: the conversation's model chip; it opens the browser (the Model Device). */
-export function ModelChip({ threadId, model }: { threadId: string | null, model: string | null }) {
-  const browser = useModelBrowser(threadId, model)
-  return modelMark(browser, model, currentEffort(browser, model), true)
+/** FL-202 / FL-206: the conversation's model chip, strategy first; it opens the Model Device. */
+export function ModelChip({ browser, model }: { browser: ModelBrowser | null, model: string | null }) {
+  return modelMark(browser, model, currentEffort(browser, model), true, currentStrategy(browser, model))
 }
 
 export function ModelDevice() {
@@ -186,6 +185,19 @@ export function ModelDevice() {
     [descriptors, inUse?.parameters],
   )
   const pins = useMemo(() => browser?.pins ?? [], [browser?.pins])
+  // FL-206: the summary's "since" is the last model change here, else when the thread began (M3SK).
+  const since = view?.changes.filter((change) => change.parameter_id === 'model.slug').at(-1)?.timestamp
+    ?? snapshot.catalog.find((entry) => entry.thread_id === threadId)?.created_at ?? null
+  const summary = modelSummary({
+    model: resolved, entry: inUse, models: browser?.models ?? [],
+    effort: view?.values['model.effort'] == null ? null : String(view.values['model.effort']),
+    policy: currentStrategy(browser, resolved), explanation: view?.policy_explanation,
+    since: since === null ? null : formatSince(since),
+  })
+  const localModel = browser?.local?.model == null ? null
+    : browser.local.model.startsWith('local:') ? browser.local.model : `local:${browser.local.model}`
+  const localPick = browser?.models.find((item) => item.model === localModel)
+    ?? browser?.models.find((item) => item.model.startsWith('local:'))
   const listed = useMemo(
     () => browseOrder(browser?.models ?? [], pins, search, sort),
     [browser?.models, pins, search, sort],
@@ -254,12 +266,16 @@ export function ModelDevice() {
             Parameters
           </Button>
         )}
-        {view?.policy_explanation && <p>{view.policy_explanation}</p>}
+        {threadId !== null && <p className="model-summary" data-testid="model-summary">{summary}</p>}
         <small>{scope === 'GLOBAL' ? 'Provider defaults · read only' : status}</small>
       </div>
 
+      <div className="model-panel">
+      {/* FL-206: the strategies rail — each one's meaning and the model it picks now; the one in
+          force is marked; picking one is the same act as before (policies.save for the chat role). */}
       {browser !== null && browser.configurations.length > 0 && (
-        <div className="model-configs" role="group" aria-label="Standard configurations">
+        <section className="model-configs" aria-label="Strategies">
+          <div className="model-row--head" aria-hidden="true"><span>Strategy</span><span>Picks now</span></div>
           {browser.configurations.map((configuration) => {
             const entry = browser.models.find((item) => item.model === configuration.model)
             return (
@@ -276,6 +292,7 @@ export function ModelDevice() {
                 onClick={() => { void configure(configuration) }}
               >
                 <span className="model-config__name">{policyName(configuration.policy)}</span>
+                <span className="model-config__meaning">{strategyMeaning(configuration.policy)}</span>
                 <span className="model-config__model">{entry?.name ?? modelLabel(configuration.model)}</span>
                 <span className="model-config__price">
                   {configuration.reason.startsWith('falls back') ? 'fallback · ' : ''}
@@ -284,7 +301,30 @@ export function ModelDevice() {
               </Button>
             )
           })}
-        </div>
+          {browser.local !== undefined && (
+            <label
+              className={`model-config model-config--toggle${resolved?.startsWith('local:') ? ' model-config--active' : ''}`}
+              data-testid="model-config-local_when_offline"
+              data-tooltip="Local when offline"
+              data-tooltip-detail="Only while OpenRouter cannot be reached; a reachable refusal never switches."
+            >
+              <input type="checkbox" checked={browser.local.when_offline}
+                onChange={(event) => {
+                  const local = { url: browser.local?.url ?? null,
+                    model: resolved?.startsWith('local:') ? resolved : browser.local?.model ?? null,
+                    when_offline: event.target.checked }
+                  setBrowser((current) => current === null ? current : { ...current, local })
+                  void events.dispatch({ type: 'models.local', ...local }).then(loadBrowser).catch((error) => {
+                    setBrowserError(String(error)); void loadBrowser()
+                  })
+                }} />
+              <span className="model-config__name">Local when offline</span>
+              <span className="model-config__meaning">{strategyMeaning('local_when_offline')}</span>
+              <span className="model-config__model">{localPick?.name ?? 'No local model running'}</span>
+              <span className="model-config__price">{localPick === undefined ? '—' : formatPrice(localPick)}</span>
+            </label>
+          )}
+        </section>
       )}
 
       <section className="model-browser" aria-label="Models">
@@ -321,16 +361,6 @@ export function ModelDevice() {
             type: 'models.local', url: (localUrl ?? browser?.local?.url) || null, model: browser?.local?.model ?? null,
             when_offline: browser?.local?.when_offline ?? false,
           }).then(loadBrowser).catch((error) => setBrowserError(String(error))) }}>Find local models</Button>
-          <label><input type="checkbox" checked={browser?.local?.when_offline ?? false}
-            onChange={(event) => {
-              const local = { url: browser?.local?.url ?? null,
-                model: resolved?.startsWith('local:') ? resolved : browser?.local?.model ?? null,
-                when_offline: event.target.checked }
-              setBrowser((current) => current === null ? current : { ...current, local })
-              void events.dispatch({ type: 'models.local', ...local }).then(loadBrowser).catch((error) => {
-                setBrowserError(String(error)); void loadBrowser()
-              })
-            }} /> Local when offline</label>
         </div>
         <ul data-testid="model-browser-list">
           {listed.map((item) => {
@@ -369,6 +399,7 @@ export function ModelDevice() {
           })}
         </ul>
       </section>
+      </div>
 
       <dialog
         ref={parameterDialog}
@@ -449,4 +480,11 @@ function isRecord(value: unknown): value is Record<string, JsonValue> {
 function formatTime(value: string): string {
   const parsed = new Date(value)
   return Number.isNaN(parsed.valueOf()) ? value : parsed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+}
+
+function formatSince(value: string): string {
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.valueOf())) return value
+  const today = parsed.toDateString() === new Date().toDateString()
+  return parsed.toLocaleString([], { ...(today ? {} : { month: 'short', day: 'numeric' }), hour: '2-digit', minute: '2-digit' })
 }

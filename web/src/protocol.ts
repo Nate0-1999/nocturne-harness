@@ -45,9 +45,10 @@ export interface ThreadCatalogEntry {
   project_label: string | null
   workspace_root: string | null
   current_location: string | null
-  /** FL-205: the model and thinking level in force, as the daemon's run loop holds them. */
+  /** FL-205 / FL-206: the model, thinking level and strategy in force, as the run loop holds them. */
   model?: string | null
   effort?: string | null
+  policy?: string | null
   proposed_response?: {
     proposal_run_id: string
     primary: string

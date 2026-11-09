@@ -3056,8 +3056,12 @@ async def test_thread_models_name_the_model_and_thinking_level_in_force() -> Non
         value="low",
     )
     assert loop.thread_models() == {
-        "untouched": {"model": None, "effort": None},
-        "thread": {"model": "openrouter:vendor/model", "effort": "low"},
+        "untouched": {"model": None, "effort": None, "policy": None},
+        "thread": {
+            "model": "openrouter:vendor/model",
+            "effort": "low",
+            "policy": "pinned:openrouter:vendor/model",
+        },
     }
     await loop.close()
 
