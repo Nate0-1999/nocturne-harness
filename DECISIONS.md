@@ -4300,6 +4300,17 @@ inverse injections and depth revision. Lineage always joins a family. The old si
 the union of all three traits, which on a palace of one thread's facts was one family: one ring,
 one stipple disc.
 
+## M6MM — The memory module's hands [P1.3, P4]
+
+PRECEDENT: FL-121, FL-168, D.2 092 (informed restore), M3MU, M3UI, M3EXF, M4GA, M4BW.
+FL-121's icons (edit, pin), its delete icon with the yes/no that names the memory, and the
+outbox delete were already on main (M3MU through M4GA); this packet walked them and changed
+none. The restore pop-up picks from this home's verified backups, newest first, instead of
+asking for an ID, and the rollback manifest names the memories that come back (active in the
+backup, deleted now) apart from edits reverted. Rolling back stays the stopped-app
+`nocturne restore`, which prints the same list and asks: D.2 092 refuses a restore while the
+Harness runs, so the pop-up does not switch Palaces itself. A cloud Palace still refuses (a human
+Cloud SQL operation).
 ## M3GT — Names read whole; the scripts rain; two themes by audition [P2.5]
 
 PRECEDENT: D.2 112, 115–119, 180, M3TM, TASTE-09, SD-078, SD-080. M3TM's shrinking
