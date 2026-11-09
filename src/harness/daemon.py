@@ -735,6 +735,21 @@ def create_app(
 
         resync_closer = asyncio.create_task(close_for_resync())
 
+        # INCIDENT F193: a routed request (the memory panel's Palace refresh after each
+        # snapshot) runs in order on its own task; inline, a steering line sat unread behind
+        # it until the socket dropped and was lost.
+        routed: asyncio.Queue[tuple[EnvelopeHandler, Envelope] | None] = asyncio.Queue()
+
+        async def run_routes() -> None:
+            while (item := await routed.get()) is not None:
+                handler, request = item
+                try:
+                    await handler(request, send)
+                except Exception:
+                    logger.exception("routed %s request failed", request.type)
+
+        router = asyncio.create_task(run_routes())
+
         try:
             await loop.attach(send, on_overflow=resync_required.set)
             while True:
@@ -755,7 +770,7 @@ def create_app(
 
                 custom_route = route_table.get(message.type)
                 if custom_route is not None:
-                    await custom_route(message, send)
+                    routed.put_nowait((custom_route, message))
                     continue
 
                 if message.type is MessageType.PROMPT_SUBMIT:
@@ -866,6 +881,10 @@ def create_app(
             resync_closer.cancel()
             with suppress(asyncio.CancelledError, WebSocketDisconnect, RuntimeError):
                 await writer
+            # A request already read still finishes, as it did inline.
+            routed.put_nowait(None)
+            with suppress(asyncio.CancelledError):
+                await router
             with suppress(asyncio.CancelledError, WebSocketDisconnect, RuntimeError):
                 await resync_closer
 
