@@ -186,6 +186,7 @@ class ExtractionCandidateDraft(BaseModel):
 
 
 class CompactionQuestions(BaseModel):
+    # WALL attention / PLAN M6CP (FL-084): ask the charged one to four questions.
     questions: list[str] = Field(min_length=1, max_length=4)
 
 

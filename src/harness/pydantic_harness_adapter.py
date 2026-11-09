@@ -1117,10 +1117,12 @@ class _MemoryStrategy:
                 journal.append_plan_compaction(
                     str(ctx.deps.thread_id), status="waiting", questions=questions
                 )
+            # WALL attention / PLAN M6CP: preserve the plan until its questions are answered.
             raise PlanCompactionQuestions(questions)
         if owner.policy.plan:
             transcript += "\nPlan clarification before compaction:\n" + json.dumps(pending)
         learned = None
+        # WALL availability / A-083: an old or disconnected Palace keeps the incumbent.
         if hasattr(owner.service._spine, "compaction_policy"):
             try:
                 learned = (await owner.service._spine.compaction_policy()).get("active")
