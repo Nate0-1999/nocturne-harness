@@ -10,6 +10,8 @@ export const THEMES = [
   { id: 'gold-lines', label: 'GOLD LINES' },
   { id: 'wizard-mode', label: 'WIZARD MODE' },
   { id: 'technomancer', label: 'TECHNOMANCER' },
+  { id: 'art-deco', label: 'ART DECO' },
+  { id: 'bellagio', label: 'BELLAGIO LOBBY CEILING' },
 ] as const
 
 export type BuiltinThemeId = (typeof THEMES)[number]['id']
