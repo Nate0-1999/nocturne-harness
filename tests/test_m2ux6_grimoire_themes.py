@@ -76,15 +76,41 @@ def test_conjurations_are_state_bound_and_data_surfaces_remain_still() -> None:
     assert ".message__content" not in css
     assert ".memory-card" not in css
     assert ".thread-row" not in css
-    assert css.count(" infinite;") == 5
+    assert css.count(" infinite;") == 9
     assert css.count(":has(.thread-empty)") >= 8
     assert "rack-ambient::after" in css
     assert ".rack-module:hover .rack-module__content::after" in css
     assert ".composer:focus-within::before" in css
-    assert "flex: 0 1000 7.5rem" in css
+    assert "flex: 0 1000000 auto" in css
     assert "min-width: 0" in css
-    assert ".rack-module__chrome > :not(.rack-module__drag)" in css
+    assert ".rack-module__drag > .rack-module__attunement" in css
     assert "width: 7.5rem" in css
+
+
+def test_module_names_read_whole_beside_the_head_strip() -> None:
+    """SPEC D.2 115 and ADR-018 clause 7: a theme styles meaning, never cuts the module name."""
+    css = CSS_PATH.read_text()
+    rack = (WEB / "src" / "assets" / "rack.css").read_text()
+    assert ".rack-module__chrome::before" not in css
+    assert 'html[data-theme="wizard-mode"] .rack-module__drag::after' in css
+    name_rule = rack.split(".rack-module__drag strong {", maxsplit=1)[1].split("}", maxsplit=1)[0]
+    assert "flex-shrink: 0;" in name_rule
+
+
+def test_stage_rain_falls_behind_the_modules_and_rests() -> None:
+    """SPEC D.2 115 and 117: the elder scripts fall behind the Stage modules, off data surfaces."""
+    css = CSS_PATH.read_text()
+    main = (WEB / "src" / "main.tsx").read_text()
+    for theme in ("wizard-mode", "technomancer"):
+        stage = f'html[data-theme="{theme}"] .stage-viewport:not(.stage-viewport--sheet)'
+        assert f"{stage} {{\n  isolation: isolate;\n}}" in css
+        for pseudo in ("::before", "::after"):
+            rule = css.split(f"{stage}{pseudo} {{", maxsplit=1)[1].split("}", maxsplit=1)[0]
+            assert "z-index: -1;" in rule
+            assert "pointer-events: none;" in rule
+            assert rule.count("var(--grimoire-stage-rain-") == 8
+            assert f'html[data-page-hidden][data-theme="{theme}"]' in css
+    assert "toggleAttribute('data-page-hidden', document.hidden)" in main
 
 
 def test_reduced_motion_stops_every_grimoire_loop_and_conjuration() -> None:
@@ -93,7 +119,7 @@ def test_reduced_motion_stops_every_grimoire_loop_and_conjuration() -> None:
     reduced = css.split("@media (prefers-reduced-motion: reduce)", maxsplit=1)[1]
     assert "animation: none !important" in reduced
     for surface in (
-        ".rack-module__chrome::before",
+        ".rack-module__drag::after",
         ".rack-module__content::after",
         ".rack-module__content::before",
         ".message__label::after",
@@ -102,5 +128,7 @@ def test_reduced_motion_stops_every_grimoire_loop_and_conjuration() -> None:
         ".transcript__inner:has(.thread-empty)::after",
         ".transcript__inner:has(.thread-empty)::before",
         ".rack-ambient::after",
+        ".stage-viewport::before",
+        ".stage-viewport::after",
     ):
         assert surface in reduced
