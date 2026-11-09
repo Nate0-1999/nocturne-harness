@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ContributionBars } from './ContributionBars'
 import { formatHumanPercent, formatHumanScore } from './humanNumbers.ts'
 import { projectName } from './projectPath'
-import { CreationScoreboard, ScoreTerrain, FitProgress, LearningSummary, LearningTimeline, type CreationSummary, type TerrainPoint, type FitPoint } from './LearningTelemetry'
+import { CreationScoreboard, ScoreTerrain, FitProgress, LearningSummary, LearningTimeline, type CreationSummary, type CompactionBacktestResult, type TerrainPoint, type FitPoint } from './LearningTelemetry'
 import {
   ACTIVATE_LABEL,
   AUDITION_LABEL,
@@ -712,7 +712,12 @@ export function InjectionConsole() {
               <tr key={point.event_uid}><td>{point.ts}</td><th>{point.label}</th><td>{point.outcome?.replaceAll('_', ' ').replace(':', ' · ')}</td><td>{formatHumanScore(point.score)}</td></tr>)}</tbody>
         </table>
       </section>
-      {data && <CreationScoreboard data={data.creation?.sources ? data.creation : undefined} />}
+      {data && <CreationScoreboard data={data.creation?.sources ? data.creation : undefined}
+        onBacktest={async (memory_size, preview) => {
+          const result = await events.dispatch({ type: 'compaction.backtest', memory_size, preview })
+          await load()
+          return result as unknown as CompactionBacktestResult
+        }} />}
     </section>
   )
 }
