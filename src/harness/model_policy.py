@@ -119,7 +119,9 @@ def standard_configurations(
             hourly = burn.hourly_cost(
                 BenchmarkModel(here.model_id, Decimal(0), here.prompt_price, here.completion_price)
             )
-            budget = max(Decimal("0.01"), (hourly * 100).to_integral_value(ROUND_CEILING) / 100)
+            if hourly > 0:  # two significant figures, rounded up: cents hide a low burn
+                step = Decimal(1).scaleb(hourly.adjusted() - 1)
+                budget = (hourly / step).to_integral_value(ROUND_CEILING) * step
     if isinstance(budget, Decimal):
         label = format(budget.normalize(), "f")
         configurations.append(
