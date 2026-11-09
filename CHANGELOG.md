@@ -1,10 +1,11 @@
 # Changelog
 
-## 0.1.86 - candidate, not released
+## 0.1.89 - candidate, not released
 
 - Plan compaction asks before dropping context and retains the answer in the journal.
-- The learning console previews compaction instructions and memory sizes with generation
-  lineage. Joint size training remains incomplete (F216); pair with Memory 0.1.86.
+- The learning console back-tests memory size and shows instruction generations and scores.
+  Instructions and size join the scorer's shared fit and activation; previews leave active
+  values unchanged. Pair with Memory 0.1.89, following the 0.1.88 learning changes.
 
 ## 0.1.78 - 2026-10-14
 
