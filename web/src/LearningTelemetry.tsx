@@ -81,9 +81,9 @@ export function CreationScoreboard({ data, onBacktest }: {
     <p>Active memory size: {data?.compaction?.active?.memory_size ?? 128} tokens.</p>
     <div className="control-bank"><label>Memory size to back-test<TextField type="number" min={1} max={128} step={1} value={size}
       onChange={(event) => setSize(Number(event.target.value))} /></label>
-    <label><input type="checkbox" checked={verification} onChange={(event) => setVerification(event.target.checked)} />Include verification history in this preview</label>
     <Button disabled={!onBacktest || busy || !Number.isInteger(size) || size < 1 || size > 128}
       onClick={() => void backtest()}>{busy ? 'Back-testing…' : 'Back-test size'}</Button></div>
+    <label><input type="checkbox" checked={verification} onChange={(event) => setVerification(event.target.checked)} />Include verification history in this preview</label>
     <p>Back-tests save a receipt and leave active values unchanged. Size tuning needs 100 graded signals.</p>
     {failure && <p role="status">{failure}</p>}
     {result && <div role="status">
@@ -99,7 +99,7 @@ export function CreationScoreboard({ data, onBacktest }: {
           <h3>{generation.id} · {generation.adopted ? 'adopted' : generation.verdict?.replaceAll('_', ' ')}</h3>
           <p>Parent {generation.parent ?? 'none'} · {generation.date} · {generation.memory_size} tokens</p>
           <p>{generation.scores ? `Current ${generation.scores.incumbent.score} · candidate ${generation.scores.candidate.score}` : 'Baseline; no back-test yet.'}</p>
-          <details><summary>Instructions</summary><pre>{generation.instructions}</pre></details>
+          <details><summary>Instructions</summary><pre className="compaction-instructions">{generation.instructions}</pre></details>
         </article>)}
     </details>
     {!data ? <p>Creation history needs the current Palace release.</p> : <>

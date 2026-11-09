@@ -55,6 +55,7 @@
   align-content: start;
   gap: .65rem;
 }
+.compaction-instructions { white-space: pre-wrap; overflow-wrap: anywhere; }
 .learning-summary:not(.learning-summary--compact) {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
