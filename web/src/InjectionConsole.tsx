@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ContributionBars } from './ContributionBars'
 import { formatHumanPercent, formatHumanScore } from './humanNumbers.ts'
+import { projectName } from './projectPath'
 import { CreationScoreboard, ScoreTerrain, FitProgress, LearningSummary, LearningTimeline, type CreationSummary, type TerrainPoint, type FitPoint } from './LearningTelemetry'
 import {
   ACTIVATE_LABEL,
@@ -501,12 +502,12 @@ export function InjectionConsole() {
               <table aria-label={`Effective project weights for ${config.version}`}>
                 <thead><tr><th>Project</th>{Object.values(WEIGHT_LABELS).map((label) => <th key={label}>{label}</th>)}</tr></thead>
                 <tbody><tr><th>Global</th>{Object.keys(WEIGHT_LABELS).map((key) => <td key={key} title={String(config.values.weights[key])}>{formatHumanScore(config.values.weights[key])}</td>)}</tr>
-                  {Object.entries(config.project_weights ?? {}).map(([project, weights]) => <tr key={project}><th>{project}</th>{Object.keys(WEIGHT_LABELS).map((key) => <td key={key} title={String(weights[key])}>{formatHumanScore(weights[key])}</td>)}</tr>)}
+                  {Object.entries(config.project_weights ?? {}).map(([project, weights]) => <tr key={project}><th title={project}>{projectName({ project_key: project, project_label: null })}</th>{Object.keys(WEIGHT_LABELS).map((key) => <td key={key} title={String(weights[key])}>{formatHumanScore(weights[key])}</td>)}</tr>)}
                 </tbody>
               </table>
               {Object.keys(config.project_offsets ?? {}).length === 0 ? <p>No project offsets learned yet.</p> :
                 <table aria-label={`Project offsets for ${config.version}`}><thead><tr><th>Project</th>{Object.values(WEIGHT_LABELS).map((label) => <th key={label}>{label}</th>)}</tr></thead>
-                  <tbody>{Object.entries(config.project_offsets ?? {}).map(([project, offsets]) => <tr key={project}><th>{project}</th>{Object.keys(WEIGHT_LABELS).map((key) => <td key={key}>{(offsets[key] ?? 0).toPrecision(4)}</td>)}</tr>)}</tbody>
+                  <tbody>{Object.entries(config.project_offsets ?? {}).map(([project, offsets]) => <tr key={project}><th title={project}>{projectName({ project_key: project, project_label: null })}</th>{Object.keys(WEIGHT_LABELS).map((key) => <td key={key}>{(offsets[key] ?? 0).toPrecision(4)}</td>)}</tr>)}</tbody>
                 </table>}
             </article>)}
           </details>
