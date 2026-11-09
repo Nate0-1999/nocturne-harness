@@ -140,7 +140,7 @@ async def test_real_runner_compacts_once_and_keeps_resumable_history(tmp_path, s
         yield "The final page is checked."
 
     class Palace:
-        async def notify_compaction(self, event_uid, thread_id):
+        async def notify_compaction(self, event_uid, thread_id, *, record=None):
             pass
 
         async def create_extraction(self, request):
@@ -489,7 +489,7 @@ async def test_failure_keeps_the_correct_history_before_or_after_admission(
                 raise RuntimeError("queue unavailable")
             return ExtractionResponse(cards=[], duplicate_count=0)
 
-        async def notify_compaction(self, event_uid, thread_id):
+        async def notify_compaction(self, event_uid, thread_id, *, record=None):
             pass
 
     model = FunctionModel(function=extract, stream_function=fail)
@@ -567,7 +567,7 @@ async def test_policy_commands_survive_restart_and_manual_compaction_bypasses_fi
         async def create_extraction(self, request):
             return ExtractionResponse(cards=[], duplicate_count=0)
 
-        async def notify_compaction(self, event_uid, thread_id):
+        async def notify_compaction(self, event_uid, thread_id, *, record=None):
             pass
 
     agent = HarnessAgent(settings(), model=FunctionModel(function=extract))
@@ -626,6 +626,64 @@ async def test_policy_commands_survive_restart_and_manual_compaction_bypasses_fi
 
 
 @pytest.mark.asyncio
+async def test_plan_compaction_keeps_history_until_answer_after_restart(tmp_path):
+    """FL-084: a model's clarification cannot drop a plan before the person's answer."""
+    from harness.pydantic_harness_adapter import MemoryCompaction, PlanCompactionQuestions
+
+    class Agent:
+        async def compaction_questions(self, *args, **kwargs):
+            return ["Which decision must survive?", "What remains open?"]
+
+    class Palace:
+        async def notify_compaction(self, *args, **kwargs):
+            pass
+
+    class Service:
+        _agent, _spine, _machine_id = Agent(), Palace(), "studio"
+
+        async def triage(self, thread_id, transcript, **kwargs):
+            assert "Keep the copper notebook" in transcript
+            from harness.extraction import ThreadEndResult
+
+            return ThreadEndResult(thread_id, "", "Keep the copper notebook.", [], [], 0, False)
+
+    deps = context()
+    service = Service()
+    service._journal = TranscriptJournal(tmp_path)
+    history = [
+        ModelRequest([UserPromptPart("Plan the notebook.")]),
+        ModelResponse([TextPart("copper " * 1000)]),
+        ModelRequest([UserPromptPart("Continue the plan.")]),
+    ]
+    compaction = MemoryCompaction(service, RecordingEmitter(), policy=CompactionPolicy(plan=True))
+    from pydantic_ai.usage import RunUsage
+
+    with pytest.raises(PlanCompactionQuestions):
+        await compaction.manual(
+            history, model=FunctionModel(function=lambda *_: None), deps=deps, usage=RunUsage()
+        )
+    assert not compaction.completed
+    assert compaction.original_history == history
+    service._journal = TranscriptJournal(tmp_path)
+    pending = service._journal.plan_compaction(str(deps.thread_id))
+    assert pending["status"] == "waiting" and len(pending["questions"]) == 2
+    service._journal.append_plan_compaction(
+        str(deps.thread_id),
+        status="answered",
+        questions=pending["questions"],
+        answer="Keep the copper notebook",
+    )
+    resumed = MemoryCompaction(service, RecordingEmitter(), policy=CompactionPolicy(plan=True))
+    await resumed.manual(
+        history, model=FunctionModel(function=lambda *_: None), deps=deps, usage=RunUsage()
+    )
+    assert resumed.completed
+    assert service._journal.plan_compaction(str(deps.thread_id))["status"] == "completed"
+    record = service._journal.compaction_records(str(deps.thread_id))[-1]
+    assert record["plan_clarification"]["answer"] == "Keep the copper notebook"
+
+
+@pytest.mark.asyncio
 async def test_compaction_memories_are_born_in_the_folders_their_facts_were_worked(tmp_path):
     """ADR-010 (SD-072): at compaction each memory carries the folder the agent stood in for
     the messages it came from — read from each request's workspace context, or a restored
@@ -675,7 +733,7 @@ async def test_compaction_memories_are_born_in_the_folders_their_facts_were_work
         def __init__(self):
             self.requests = []
 
-        async def notify_compaction(self, event_uid, thread_id):
+        async def notify_compaction(self, event_uid, thread_id, *, record=None):
             pass
 
         async def search(self, request):

@@ -1498,12 +1498,36 @@ class SpineClient:
         )
         return _expect_metrics_success(response, adapter=TypeAdapter(RetrainJobView))
 
-    async def notify_compaction(self, event_uid: str, thread_id: UUID) -> None:
+    async def compaction_policy(self) -> dict:
+        response = await self._request(
+            "GET", "v1/compaction-policy", params={"principal_id": self._principal_id or "local"}
+        )
+        if response.status_code != 200:
+            _raise_problem(response)
+        return response.json()
+
+    async def compaction_backtest(self, memory_size: int | None, preview: bool) -> dict:
+        response = await self._request(
+            "POST",
+            "v1/compaction-backtest",
+            params={"principal_id": self._principal_id or "local"},
+            json_body={"memory_size": memory_size, "preview": preview},
+            timeout=360.0,
+        )
+        if response.status_code != 200:
+            _raise_problem(response)
+        return response.json()
+
+    async def notify_compaction(self, event_uid: str, thread_id: UUID, *, record=None) -> None:
         response = await self._request(
             "POST",
             "v1/compactions",
             params={"principal_id": self._principal_id or "local"},
-            json_body={"event_uid": event_uid, "thread_id": str(thread_id)},
+            json_body={
+                "event_uid": event_uid,
+                "thread_id": str(thread_id),
+                **({"record": record} if record else {}),
+            },
         )
         if response.status_code != 202:
             _raise_problem(response)

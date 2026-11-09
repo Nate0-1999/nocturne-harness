@@ -1919,6 +1919,13 @@ def create_dev_app(
         palace_name=configured.nocturne_palace_name,
     )
 
+    @app.post("/v1/rack/compaction-backtest")
+    async def backtest_compaction(request: Request) -> dict:
+        body = await request.json()
+        return await owned_spine.compaction_backtest(
+            body.get("memory_size"), body.get("preview", False)
+        )
+
     app.router.add_event_handler("startup", transcript_sync.start)
     app.router.add_event_handler("shutdown", transcript_sync.stop)
     app.router.add_event_handler("shutdown", owned_symphony_experience.close)

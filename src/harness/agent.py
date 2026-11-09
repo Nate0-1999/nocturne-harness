@@ -185,6 +185,10 @@ class ExtractionCandidateDraft(BaseModel):
     )
 
 
+class CompactionQuestions(BaseModel):
+    questions: list[str] = Field(min_length=1, max_length=4)
+
+
 class ExtractionDraft(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     working_summary: StrictStr
@@ -916,6 +920,26 @@ class HarnessAgent:
                 return None
             offset += len(page.items)
 
+    async def compaction_questions(self, transcript, *, model, usage, model_settings, on_result):
+        agent = Agent(
+            self._default_model,
+            output_type=PromptedOutput(CompactionQuestions),
+            instructions="Before compacting this plan, ask the person one to four concise "
+            "questions about what to keep, what is decided and what remains open. "
+            "Do not answer them or extract memories yet. Never repeat credentials.",
+            name="harness-compaction-questions",
+        )
+        result = await agent.run(
+            transcript,
+            model=model,
+            usage=usage,
+            model_settings=model_settings,
+            usage_limits=self._usage_limits,
+        )
+        if on_result is not None:
+            await on_result(result.all_messages())
+        return result.output.questions
+
     async def extract_thread(
         self,
         transcript: str,
@@ -925,6 +949,7 @@ class HarnessAgent:
         model_settings: ModelSettings | None = None,
         on_result=None,
         summary_prompt: str = COMPACTION_SUMMARY_PROMPT,
+        memory_size: int = 128,
     ) -> ExtractionDraft:
         """Run the tools-free cheap-model extraction pass over one durable transcript."""
 
@@ -936,7 +961,8 @@ class HarnessAgent:
             "temperature": 0,
         }
         result = await self._extraction_agent.run(
-            summary_prompt.replace("{messages}", transcript),
+            f"Each memory must fit {memory_size} cl100k tokens.\n"
+            + summary_prompt.replace("{messages}", transcript),
             model=self._select_model(model),
             usage_limits=self._usage_limits,
             usage=usage,
@@ -953,6 +979,7 @@ class HarnessAgent:
             usage=usage if usage is not None else RunUsage(),
             model_settings=extraction_settings,
             on_result=on_result,
+            memory_size=memory_size,
         )
         return result.output.model_copy(update={"candidates": candidates})
 
@@ -967,13 +994,16 @@ class HarnessAgent:
         model_settings: ModelSettings | None,
         on_result=None,
         captured_messages: list[ModelMessage] | None = None,
+        memory_size: int | None = None,
     ) -> list[Any]:
         """v2.133: one loop for compaction, /remember and seeds. A fact that fails a check goes
         back through the SAME prompt with the rule it broke, up to three rounds; then the
         shortest valid form is saved, any secret replaced. Never a silent drop, never a bare
         refusal; only a fact that was nothing but a secret may be withdrawn."""
 
-        limit = self._settings.memory_max_tokens
+        limit = min(
+            memory_size or self._settings.memory_max_tokens, self._settings.memory_max_tokens
+        )
         checked: list[Any] = []
         for fact in facts:
             pieces = [fact]
