@@ -192,7 +192,11 @@ export function modelSummary(input: {
   if (entry?.reasoning) facts.push(`${effort ?? 'default'} thinking`)
   const sentences = [`${name}${provider === null ? '' : ` by ${provider}`}${facts.length === 0 ? '' : `: ${facts.join(', ')}`}.`]
   const strategy = strategyName(policy)
-  const why = explanation?.trim().replace(/\.$/u, '')
+  let why = explanation?.trim().replace(/\.$/u, '') ?? ''
+  // The readout opens with the strategy's own name ("Elbow: …", "Pinned model …"); said once.
+  if (strategy !== null && why.toLowerCase().startsWith(strategy.split(' ')[0].toLowerCase())) {
+    why = why.includes(': ') ? why.slice(why.indexOf(': ') + 2) : ''
+  }
   if (strategy !== null) sentences.push(`Chosen by ${strategy}${why ? ` — ${why}` : ''}${since === null ? '' : `, since ${since}`}.`)
   else if (why) sentences.push(`${why}${since === null ? '' : `, since ${since}`}.`)
   return sentences.join(' ')

@@ -266,7 +266,7 @@ export function ModelDevice() {
             Parameters
           </Button>
         )}
-        {threadId !== null && <p className="model-summary" data-testid="model-summary">{summary}</p>}
+        {threadId !== null && browser !== null && <p className="model-summary" data-testid="model-summary">{summary}</p>}
         <small>{scope === 'GLOBAL' ? 'Provider defaults · read only' : status}</small>
       </div>
 
@@ -302,27 +302,29 @@ export function ModelDevice() {
             )
           })}
           {browser.local !== undefined && (
-            <label
-              className={`model-config model-config--toggle${resolved?.startsWith('local:') ? ' model-config--active' : ''}`}
+            <Button
+              variant="bare"
+              type="button"
+              className="model-config"
+              aria-pressed={browser.local.when_offline}
               data-testid="model-config-local_when_offline"
               data-tooltip="Local when offline"
-              data-tooltip-detail="Only while OpenRouter cannot be reached; a reachable refusal never switches."
+              data-tooltip-detail="Switch on or off. Only while OpenRouter cannot be reached; a reachable refusal never switches."
+              onClick={() => {
+                const local = { url: browser.local?.url ?? null,
+                  model: resolved?.startsWith('local:') ? resolved : browser.local?.model ?? null,
+                  when_offline: !browser.local?.when_offline }
+                setBrowser((current) => current === null ? current : { ...current, local })
+                void events.dispatch({ type: 'models.local', ...local }).then(loadBrowser).catch((error) => {
+                  setBrowserError(String(error)); void loadBrowser()
+                })
+              }}
             >
-              <input type="checkbox" checked={browser.local.when_offline}
-                onChange={(event) => {
-                  const local = { url: browser.local?.url ?? null,
-                    model: resolved?.startsWith('local:') ? resolved : browser.local?.model ?? null,
-                    when_offline: event.target.checked }
-                  setBrowser((current) => current === null ? current : { ...current, local })
-                  void events.dispatch({ type: 'models.local', ...local }).then(loadBrowser).catch((error) => {
-                    setBrowserError(String(error)); void loadBrowser()
-                  })
-                }} />
               <span className="model-config__name">Local when offline</span>
               <span className="model-config__meaning">{strategyMeaning('local_when_offline')}</span>
               <span className="model-config__model">{localPick?.name ?? 'No local model running'}</span>
               <span className="model-config__price">{localPick === undefined ? '—' : formatPrice(localPick)}</span>
-            </label>
+            </Button>
           )}
         </section>
       )}
@@ -350,9 +352,6 @@ export function ModelDevice() {
           </Select>
           <span>{browserError ?? browser?.unavailable ?? `${listed.length} models`}</span>
         </div>
-        <div className="model-row model-row--head" aria-hidden="true">
-          <span>Model</span><span>Score</span><span>$/M in · out</span><span>Context</span><span />
-        </div>
         <div className="model-browser__tools">
           <TextField aria-label="Local model server" placeholder="Local server URL (automatic when blank)"
             value={localUrl ?? browser?.local?.url ?? ''}
@@ -361,6 +360,9 @@ export function ModelDevice() {
             type: 'models.local', url: (localUrl ?? browser?.local?.url) || null, model: browser?.local?.model ?? null,
             when_offline: browser?.local?.when_offline ?? false,
           }).then(loadBrowser).catch((error) => setBrowserError(String(error))) }}>Find local models</Button>
+        </div>
+        <div className="model-row model-row--head" aria-hidden="true">
+          <span>Model</span><span>Score</span><span>$/M in · out</span><span>Context</span><span />
         </div>
         <ul data-testid="model-browser-list">
           {listed.map((item) => {

@@ -689,6 +689,7 @@ function restoredState(value: unknown): PersistedHarnessState {
         current_location: typeof entry.current_location === 'string' ? entry.current_location : null,
         model: typeof entry.model === 'string' ? entry.model : null,
         effort: typeof entry.effort === 'string' ? entry.effort : null,
+        policy: typeof entry.policy === 'string' ? entry.policy : null,
         proposed_response: catalogProposedResponse(entry.proposed_response),
         ...(entry.archived === true ? { archived: true } : {}),
       })

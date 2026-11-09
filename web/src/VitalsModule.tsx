@@ -12,8 +12,8 @@ import {
 } from './spendTable'
 import './assets/honest-display.css'
 import { Button } from './kit'
-import { modelLabel, strategyName } from './modelBrowser'
-import type { ThreadCatalogEntry } from './protocol'
+import { useModelBrowser } from './ModelDevice'
+import { currentStrategy, modelLabel, strategyName } from './modelBrowser'
 
 type LoadPhase = 'loading' | 'live' | 'refreshing' | 'failed'
 
@@ -72,10 +72,17 @@ export function VitalsModule() {
     () => new Map(rack.catalog.map((entry) => [entry.thread_id, entry.title])),
     [rack.catalog],
   )
+  // FL-206: each conversation's model and the strategy that chose it — the selected one from its
+  // live model and the browser's read (the catalog poll skips it, FL-205), the rest from the catalog.
   const threadEntries = useMemo(
     () => new Map(rack.catalog.map((entry) => [entry.thread_id, entry])),
     [rack.catalog],
   )
+  const selectedModel = rack.selectedThreadId === null ? null : rack.threads[rack.selectedThreadId]?.resolvedModel ?? null
+  const browser = useModelBrowser(rack.selectedThreadId, selectedModel)
+  const markOf = (threadId: string) => threadId === rack.selectedThreadId
+    ? { model: selectedModel, policy: currentStrategy(browser, selectedModel) }
+    : threadEntries.get(threadId)
 
   function refresh() {
     setPhase(snapshot === null ? 'loading' : 'refreshing')
@@ -160,7 +167,7 @@ export function VitalsModule() {
                   ...(expanded ? row.models.map((model, index) => (
                     <SpendRow
                       key={`${row.thread_id}:${model.model ?? 'unreported'}:${index}`}
-                      name={modelRowName(threadEntries.get(row.thread_id), model.model)}
+                      name={modelRowName(markOf(row.thread_id), model.model)}
                       metrics={model}
                       nested
                     />
@@ -221,9 +228,9 @@ function SpendRow({
 }
 
 /** FL-206: the strategy that chose a conversation's current model, named beside it. */
-function modelRowName(entry: ThreadCatalogEntry | undefined, model: string | null): string {
+function modelRowName(mark: { model?: string | null, policy?: string | null } | undefined, model: string | null): string {
   if (model === null) return 'Model not reported'
-  const strategy = entry?.model != null && modelLabel(entry.model) === model ? strategyName(entry.policy) : null
+  const strategy = mark?.model != null && modelLabel(mark.model) === model ? strategyName(mark.policy) : null
   return strategy === null ? model : `${strategy} · ${model}`
 }
 
