@@ -74,16 +74,16 @@ export function CreationScoreboard({ data, onBacktest }: {
     catch { setFailure('The compaction back-test did not complete. Current values remain active.') }
     finally { setBusy(false) }
   }
-  return <section aria-label="Memory creation outcomes" className="learning-summary">
+  return <section aria-label="Memory creation outcomes">
     <h2>Memory creation</h2>
     <p>Compaction instructions replay recent source spans. Used facts earn one, removed facts cost one, new facts stay neutral; fewer or smaller facts win an equal score.</p>
     <p>Retraining evaluates instructions and size with minimum match and memory share. The winning proposal uses the existing scorer activation.</p>
     <p>Active memory size: {data?.compaction?.active?.memory_size ?? 128} tokens.</p>
-    <label>Memory size to back-test<TextField type="number" min={1} max={128} step={1} value={size}
+    <div className="control-bank"><label>Memory size to back-test<TextField type="number" min={1} max={128} step={1} value={size}
       onChange={(event) => setSize(Number(event.target.value))} /></label>
     <label><input type="checkbox" checked={verification} onChange={(event) => setVerification(event.target.checked)} />Include verification history in this preview</label>
     <Button disabled={!onBacktest || busy || !Number.isInteger(size) || size < 1 || size > 128}
-      onClick={() => void backtest()}>{busy ? 'Back-testing…' : 'Back-test size'}</Button>
+      onClick={() => void backtest()}>{busy ? 'Back-testing…' : 'Back-test size'}</Button></div>
     <p>Back-tests save a receipt and leave active values unchanged. Size tuning needs 100 graded signals.</p>
     {failure && <p role="status">{failure}</p>}
     {result && <div role="status">
