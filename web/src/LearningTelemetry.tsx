@@ -87,7 +87,9 @@ export function CreationScoreboard({ data, onBacktest }: {
     <p>Back-tests save a receipt and leave active values unchanged. Size tuning needs 100 graded signals.</p>
     {failure && <p role="status">{failure}</p>}
     {result && <div role="status">
-      <p>Preview only · {result.fit.status.replaceAll('_', ' ')} · {result.fit.reason}</p>
+      <p>Preview only · {result.id
+        ? result.fit.status === 'proposed' ? 'The joint replay would propose improved values.' : 'The joint replay kept current values.'
+        : result.fit.status === 'insufficient_data' ? result.fit.reason : 'The model replay did not complete. Current values remain active.'}</p>
       {result.joint_fit && <p>Tested size {result.joint_fit.memory_size} tokens · minimum match {result.joint_fit.tau.toPrecision(4)} · memory share {(100 * result.joint_fit.memory_context_share).toFixed(2)}% · {result.joint_fit.resized_memories} matched memories replayed. {result.joint_fit.proposal_eligible ? 'Creation candidate improved.' : 'Current creation policy kept.'}</p>}
     </div>}
     {data?.compaction?.last_backtest === 'failed' && <p role="status">The last instruction back-test did not complete. Current instructions remain active.</p>}
