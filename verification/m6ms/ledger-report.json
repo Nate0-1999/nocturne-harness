@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "da37650d1db809a90a0f66ee85aba572e44edf94",
-      "head": "e12e83c901ccce322b638907ce8bca7f215ada8b"
+      "head": "5c04870f31ea3169132d8517c309c10106cd4d61"
     }
   ],
   "unmapped": {
@@ -133,11 +133,6 @@
     "harness/verification/m6lm/FL-205.png": "Inherited from the merged M6CR (claude/m6cr, pair 0.1.85) or M6LM (codex/m6lm-lm28, pair 0.1.87) branch this packet is stacked on (report 301's pattern); not an M6MS change. Its own packet's report carries its evidence.",
     "harness/verification/m6lm/SHA256SUMS": "Inherited from the merged M6CR (claude/m6cr, pair 0.1.85) or M6LM (codex/m6lm-lm28, pair 0.1.87) branch this packet is stacked on (report 301's pattern); not an M6MS change. Its own packet's report carries its evidence.",
     "harness/verification/m6lm/ledger-report.json": "Inherited from the merged M6CR (claude/m6cr, pair 0.1.85) or M6LM (codex/m6lm-lm28, pair 0.1.87) branch this packet is stacked on (report 301's pattern); not an M6MS change. Its own packet's report carries its evidence.",
-    "harness/web/dist/assets/index-CO9yKoMm.js": "the built web bundle of ModelDevice.tsx, modelBrowser.ts, App.tsx, AgentPolicies.tsx, VitalsModule.tsx and store.ts (FL-206; older bundles removed); FL-206 carries the evidence.",
-    "harness/web/dist/assets/index-CQr6-3lE.css": "the built web bundle of ModelDevice.tsx, modelBrowser.ts, App.tsx, AgentPolicies.tsx, VitalsModule.tsx and store.ts (FL-206; older bundles removed); FL-206 carries the evidence.",
-    "harness/web/dist/assets/index-CcIzWcuF.js": "the built web bundle of ModelDevice.tsx, modelBrowser.ts, App.tsx, AgentPolicies.tsx, VitalsModule.tsx and store.ts (FL-206; older bundles removed); FL-206 carries the evidence.",
-    "harness/web/dist/assets/index-N9zpZrca.css": "the built web bundle of ModelDevice.tsx, modelBrowser.ts, App.tsx, AgentPolicies.tsx, VitalsModule.tsx and store.ts (FL-206; older bundles removed); FL-206 carries the evidence.",
-    "harness/web/dist/index.html": "the built web bundle of ModelDevice.tsx, modelBrowser.ts, App.tsx, AgentPolicies.tsx, VitalsModule.tsx and store.ts (FL-206; older bundles removed); FL-206 carries the evidence.",
     "harness/verification/m6ms/FL-007.png": "M6MS evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m6ms/FL-008.png": "M6MS evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m6ms/FL-009.png": "M6MS evidence (report, captures, receipts, checksums); no feature behavior.",
@@ -219,8 +214,21 @@
     "harness/verification/m6ms/FL-205.png": "M6MS evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m6ms/FL-206.png": "M6MS evidence (report, captures, receipts, checksums); no feature behavior.",
     "harness/verification/m6ms/SHA256SUMS": "M6MS evidence (report, captures, receipts, checksums); no feature behavior.",
+    "harness/verification/m6ms/ledger-report.json": "M6MS evidence (report, captures, receipts, checksums); no feature behavior.",
+    "harness/web/dist/assets/index-CO9yKoMm.js": "the built web bundle of ModelDevice.tsx, modelBrowser.ts, App.tsx, AgentPolicies.tsx, VitalsModule.tsx and store.ts (FL-206; older bundles removed); FL-206 carries the evidence.",
+    "harness/web/dist/assets/index-CQr6-3lE.css": "the built web bundle of ModelDevice.tsx, modelBrowser.ts, App.tsx, AgentPolicies.tsx, VitalsModule.tsx and store.ts (FL-206; older bundles removed); FL-206 carries the evidence.",
+    "harness/web/dist/assets/index-CcIzWcuF.js": "the built web bundle of ModelDevice.tsx, modelBrowser.ts, App.tsx, AgentPolicies.tsx, VitalsModule.tsx and store.ts (FL-206; older bundles removed); FL-206 carries the evidence.",
+    "harness/web/dist/assets/index-N9zpZrca.css": "the built web bundle of ModelDevice.tsx, modelBrowser.ts, App.tsx, AgentPolicies.tsx, VitalsModule.tsx and store.ts (FL-206; older bundles removed); FL-206 carries the evidence.",
+    "harness/web/dist/index.html": "the built web bundle of ModelDevice.tsx, modelBrowser.ts, App.tsx, AgentPolicies.tsx, VitalsModule.tsx and store.ts (FL-206; older bundles removed); FL-206 carries the evidence.",
     "harness/verification/m6ms/impacted.json": "M6MS evidence (report, captures, receipts, checksums); no feature behavior.",
-    "harness/verification/m6ms/ledger-report.json": "M6MS evidence (report, captures, receipts, checksums); no feature behavior."
+    "harness/web/dist/assets/index-B-SubKUS.js": "the built web bundle of ModelDevice.tsx, modelBrowser.ts, App.tsx, AgentPolicies.tsx, VitalsModule.tsx and store.ts (FL-206; older bundles removed); FL-206 carries the evidence.",
+    "harness/web/dist/assets/index-B50f0p5O.css": "the built web bundle of ModelDevice.tsx, modelBrowser.ts, App.tsx, AgentPolicies.tsx, VitalsModule.tsx and store.ts (FL-206; older bundles removed); FL-206 carries the evidence.",
+    "harness/web/dist/assets/index-BiTRjhnq.js": "the built web bundle of ModelDevice.tsx, modelBrowser.ts, App.tsx, AgentPolicies.tsx, VitalsModule.tsx and store.ts (FL-206; older bundles removed); FL-206 carries the evidence.",
+    "harness/web/dist/assets/index-CxES2dUQ.js": "the built web bundle of ModelDevice.tsx, modelBrowser.ts, App.tsx, AgentPolicies.tsx, VitalsModule.tsx and store.ts (FL-206; older bundles removed); FL-206 carries the evidence.",
+    "harness/web/dist/assets/index-DD9pWth4.js": "the built web bundle of ModelDevice.tsx, modelBrowser.ts, App.tsx, AgentPolicies.tsx, VitalsModule.tsx and store.ts (FL-206; older bundles removed); FL-206 carries the evidence.",
+    "harness/web/dist/assets/index-DQREleJh.js": "the built web bundle of ModelDevice.tsx, modelBrowser.ts, App.tsx, AgentPolicies.tsx, VitalsModule.tsx and store.ts (FL-206; older bundles removed); FL-206 carries the evidence.",
+    "harness/web/dist/assets/index-P215phDp.js": "the built web bundle of ModelDevice.tsx, modelBrowser.ts, App.tsx, AgentPolicies.tsx, VitalsModule.tsx and store.ts (FL-206; older bundles removed); FL-206 carries the evidence.",
+    "harness/web/dist/assets/index-epiYopqv.js": "the built web bundle of ModelDevice.tsx, modelBrowser.ts, App.tsx, AgentPolicies.tsx, VitalsModule.tsx and store.ts (FL-206; older bundles removed); FL-206 carries the evidence."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
