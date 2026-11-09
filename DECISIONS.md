@@ -4362,3 +4362,22 @@ nothing fitting, fails open to the static model (A-020 f) — never a blind pick
 workflows and Symphony workers price at the same burn; delegate_task helpers keep their thread's
 model; the Palace curator has no burn, so the dialog leaves Budget off its role. The browser's
 Budget card defaults to what the current model costs an hour (as costly as this, smartest).
+
+## M6MS — Strategies and models: the rail, the summary, the strategy named with the model [P4]
+
+PRECEDENT: PLAN M6MS; SD-090; FL-202 205 206; A-020, A-021, A-082; M3MD, M3SK, M6CR, M6LM; F173.
+The Model Device showed a row of "Standard configurations" over a model list; nothing called them
+strategies and no surface said in words what model a conversation was on or why. The device is
+now one panel: the strategies rail (each A-021 policy, M6CR's budget, M6LM's local-when-offline,
+each with a one-sentence meaning and the model it picks now, the one in force marked) beside the
+model list. Picking is unchanged — a card saves the chat policy and switches here; a row click
+pins (A-020: no new selection mechanism, no per-prompt routing). The model in use gets one plain
+paragraph: price in and out from the listing (the chip's price), context, rank, thinking level,
+"chosen by <strategy> — <readout>" and since when (the last model change here, else the thread's
+start; M3SK). The run loop names each thread's strategy beside its model (the resolution's
+policy: a policy string, "human_command" reads Pinned, M6LM's "local_when_offline" reads Local
+when offline, a hydrated model names none), so the chip, the thread list, the Deck, the
+conversation's configuration legend and the spend module's model row read strategy · model. The
+local-model tools moved up beside the list's search; the offline toggle became a rail card.
+Placement follows the charge's recipe (the full panel in the Model Device, a strategy name in the
+spend module, system settings unchanged); the owner may still rule otherwise.
