@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { parseSpendTableSnapshot, partialSpendCopy } from '../src/spendTable.ts'
+import { parseSpendTableSnapshot, partialSpendCopy, spendPolylines, spendSeries } from '../src/spendTable.ts'
 
 const metrics = (overrides = {}) => ({
   input_tokens: '1200.5',
@@ -71,4 +71,22 @@ test('accepts an empty attuned slice and rejects duplicate conversation rows', (
   const payload = snapshot()
   payload.threads.push(structuredClone(payload.threads[0]))
   assert.throws(() => parseSpendTableSnapshot(payload), /thread rows must be unique/u)
+})
+
+/** SPEC C.10 / ADR-024: an unpriced minute is a gap, never a zero, so the strip cannot invent spend history. */
+test('the strip breaks a line at an unpriced minute and shares one scale', () => {
+  const point = (minute, cost, unpriced = 0) => ({ minute: `2026-08-31T16:${minute}:00Z`, cost_usd: cost, receipt_lines: 1, unpriced_lines: unpriced })
+  const lane = (dimension, key, points) => ({ dimension, key, label: dimension, points })
+  const { series, peak, minutes } = spendSeries({
+    ...parseSpendTableSnapshot(snapshot()),
+    rates: [
+      lane('total', null, [point('51', '0.004'), point('53', null, 1), point('55', '0.002')]),
+      lane('curation', 'curation', [point('55', '0.001')]),
+    ],
+  }, '10m')
+  const total = series.find((entry) => entry.dimension === 'total')
+  assert.equal(minutes.length, 10)
+  assert.equal(peak, 0.004)
+  assert.equal(total.unpriced, 1)
+  assert.equal(spendPolylines(total.lines[0].values, minutes[0], minutes.at(-1), peak).length, 2)
 })

@@ -4309,6 +4309,17 @@ and new cache epoch, and keeps the local choice until changed explicitly. HTTP r
 do not trigger fallback. Local requests use a placeholder key, never a cloud credential.
 The existing memory copy, receipt queue and journal carry disconnected turns.
 
+## M6SP — Spend on the bottom strip [P4.1, P2.4]
+
+PRECEDENT: PLAN M6SP; FL-160 161 156; A-080; SD-075; M3SR, M4MS.
+A fixed strip under the Stage draws spend per minute for agents, sub-agents, models, memory
+curation and total, one graph each on one shared scale, over 10 minutes, an hour or today
+(local midnight). Every receipt names a model, so a summed Models line would repeat Total:
+that graph draws one line per model. The Spend module's graphs are the same component.
+The saving from cache reads is priced at the model list's prompt minus cache-read price,
+because receipts split one native cost pro rata across token classes. Drift compares today's
+UTC ledger with the key's bill for today; past 5% of the bill the strip says so. M4MS's
+caution stands in the tooltip: the key can also pay for other Palaces and apps.
 ## M6MM — The memory module's hands [P1.3, P4]
 
 PRECEDENT: FL-121, FL-168, D.2 092 (informed restore), M3MU, M3UI, M3EXF, M4GA, M4BW.
@@ -4345,3 +4356,20 @@ keeps each prompt the daemon has not acknowledged and sends it again, under its 
 the reconnected thread's snapshot lacks it; the run loop runs a prompt id once. The Deck says
 "Clarification logged" only when the stack's interventions hold the line, and shows the
 steering beside the prompt, so it survives the next round replacing the attempts.
+
+## M6CR — The elbow says why; a budget buys the most intelligence an hour allows [P4]
+
+PRECEDENT: PLAN M6CR; FL-152 153 154; A-020, A-021, A-082; M3EL, M3MD, M3SR.
+FL-153: the elbow already had one exact rule, A-021's signed offset (the owner's pen,
+2026-07-28); a person could not read it. The readout now names the pick, its offset below the
+frontier's price chord and the next model up, and the computation is written once, in Memory's
+`elbow_offsets`. The charge's "first model below the densest pocket where the slope exceeds 0.5"
+contradicts A-021's text (no hand-set slope, density is not a selection signal), so it is not
+built; F215 asks the owner. FL-152: "cheapest above a threshold" is the existing `floor:<n>`.
+`budget:<dollars per hour>` (A-082) picks the most intelligent model whose cost at the agents'
+measured burn fits: building receipts' input and output tokens over the last day, per working
+hour (a clock hour with a receipt), read from the Palace's spend table. No measured burn, or
+nothing fitting, fails open to the static model (A-020 f) — never a blind pick. New threads,
+workflows and Symphony workers price at the same burn; delegate_task helpers keep their thread's
+model; the Palace curator has no burn, so the dialog leaves Budget off its role. The browser's
+Budget card defaults to what the current model costs an hour (as costly as this, smartest).

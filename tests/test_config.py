@@ -119,7 +119,7 @@ def test_configured_runtime_identities_cannot_be_empty(field: str) -> None:
 
 @pytest.mark.parametrize(
     "value",
-    ["", " max", "MAX", "pinned:", "slope:0", "floor:NaN", "budget:10"],
+    ["", " max", "MAX", "pinned:", "slope:0", "floor:NaN", "budget:0"],
 )
 def test_model_policy_chat_rejects_values_outside_a021(value: str) -> None:
     """SPEC C.5 is defended by verifying that model policy chat rejects values outside a021;
