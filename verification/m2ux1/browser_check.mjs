@@ -163,7 +163,12 @@ async function assertCleanState(targetPage, width, state) {
 async function collectNodes(targetPage) {
   const nodes = await collectDocumentNodes(targetPage, 'shell', 0, 0)
   for (const childFrame of targetPage.frames().filter((candidate) => candidate !== targetPage.mainFrame())) {
-    const frameElement = await childFrame.frameElement()
+    // A module frame removed between the listing and this call has no layout to audit.
+    const frameElement = await childFrame.frameElement().catch((error) => {
+      if (childFrame.isDetached()) return null
+      throw error
+    })
+    if (frameElement === null) continue
     const box = await frameElement.boundingBox()
     const inert = await frameElement.evaluate((element) => Boolean(element.closest('[inert]')))
     if (box === null || inert) continue
