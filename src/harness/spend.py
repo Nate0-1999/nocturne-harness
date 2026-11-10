@@ -10,9 +10,10 @@ from uuid import UUID
 
 from pydantic_ai.messages import ModelResponse
 from pydantic_core import to_jsonable_python
+from spine.model_policy import ListedModel
 
 from harness.envelope import generate_ulid
-from harness.spine_client import SpendEvent, SpendEventsRequest, SpendEventsResponse
+from harness.spine_client import MessageCache, SpendEvent, SpendEventsRequest, SpendEventsResponse
 
 type SpendPurpose = Literal[
     "building",
@@ -205,6 +206,29 @@ def _allocated_costs(total: Decimal | None, quantities: Sequence[int]) -> list[D
     return allocated
 
 
+def cache_savings(
+    messages: Sequence[MessageCache], listing: Sequence[ListedModel]
+) -> list[MessageCache]:
+    """FL-161: what each message's cache reads saved against the fresh prompt price.
+
+    Receipts split one native cost across token classes pro rata, so the saving is priced from the
+    source's published prompt and cache-read prices (USD per million tokens), not from receipts.
+    """
+
+    prices = {entry.model_id: entry for entry in listing}
+    priced: list[MessageCache] = []
+    for message in messages:
+        entry = prices.get(message.model or "")
+        saved = None
+        if entry is not None and None not in (entry.prompt_price, entry.cache_read_price):
+            discount = max(Decimal(0), entry.prompt_price - entry.cache_read_price)  # type: ignore[operator]
+            saved = format(
+                (Decimal(message.cached_tokens) * discount / 1_000_000).quantize(_COST_QUANTUM), "f"
+            )
+        priced.append(message.model_copy(update={"saved_usd": saved}))
+    return priced
+
+
 def _optional_text(value: object) -> str | None:
     if not isinstance(value, str):
         return None
@@ -214,6 +238,7 @@ def _optional_text(value: object) -> str | None:
 
 __all__ = [
     "SpendGateway",
+    "cache_savings",
     "SpendLineage",
     "SpendPurpose",
     "model_response_receipts",

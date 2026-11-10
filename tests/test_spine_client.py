@@ -132,6 +132,7 @@ def test_client_exposes_all_spine_routes() -> None:
         "search",
         "record_spend_events",
         "record_invoice",
+        "reconcile_spend",
         "spend_table",
         "vitals_snapshot",
         "thread_vitals_snapshot",
