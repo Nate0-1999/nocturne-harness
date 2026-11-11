@@ -594,7 +594,7 @@ async def test_shell_does_not_fall_through_a_wall(
     toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
     original = Path.is_file
     monkeypatch.setattr(
-        Path, "is_file", lambda p: False if str(p) == "/usr/bin/sandbox-exec" else original(p)
+        Path, "is_file", lambda p: False if p.name in {"sandbox-exec", "bwrap"} else original(p)
     )
     try:
         result = await toolset.execute("bash", {"command": command})

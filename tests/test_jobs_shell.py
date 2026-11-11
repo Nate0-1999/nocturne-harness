@@ -1,10 +1,10 @@
 """SD-059 / PLAN M3SJ background shell lifetime and inherited fences."""
 
 import asyncio
-from pathlib import Path
 
 import pytest
 
+from harness.shell_fence import fence_status
 from harness.toolset_runtime import LazyStandardToolset
 
 
@@ -16,7 +16,7 @@ async def test_background_shell_survives_other_calls_and_stops(tmp_path):
     )
     try:
         started = await tools.execute("start_shell", {"command": "echo ready; sleep 30"})
-        if not Path("/usr/bin/sandbox-exec").is_file():
+        if not fence_status()[0]:
             assert not started.success
             assert started.content == (
                 "Secure shell is unavailable on this host; use read, edit, and write instead."

@@ -4435,3 +4435,15 @@ Decisions the charge left open, each the smallest that keeps its promises:
   job, so a recipe imported in the Jobs module cannot widen its own walls.
 - `workflow new` starts a recipe with `memory_scope: none`: F138 (a job with a memory scope
   does not run) stands and is not this packet's.
+
+## M7LF — the Linux shell fence (2026-11-11)
+
+P4.2 / ADR-015, D.2 103, A-084, F217; PRECEDENT: PLAN M7LF, M7WB, M3TH.
+Linux uses bubblewrap with a read-only root, the existing write exceptions, private user/PID/
+network namespaces and no capabilities. The vault and credential masks follow the writable
+binds, including grants. A libseccomp socket filter also denies pathname Unix sockets without
+`remote`: the live probe showed that a network namespace alone still reaches those sockets.
+The policy itself is read-only in every shell. Nested user namespaces are disabled. macOS
+keeps Seatbelt; both hosts run one rule table. Doctor probes the actual Linux fence and names
+the install/namespace remedy without changing startup refusals. A-084's sealed tool path still
+runs before the shell fence. Package pair 0.1.92; Memory API contract stays 0.1.92.

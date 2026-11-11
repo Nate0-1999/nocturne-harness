@@ -1,7 +1,6 @@
 """SPEC C.7 / M3SJ: workflow completion crosses the real typed envelope boundary."""
 
 import asyncio
-from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -14,6 +13,7 @@ from harness.jobs import JobScheduler
 from harness.model_policy import ThreadModelResolution
 from harness.run_loop import RunLoop
 from harness.run_protocol import TurnOutcome
+from harness.shell_fence import fence_status
 from harness.toolset_runtime import LazyStandardToolset
 
 
@@ -90,7 +90,7 @@ async def test_workflow_receives_typed_events_and_finishes_exit_check(tmp_path):
             ),
             timeout=10,
         )
-        has_fence = Path("/usr/bin/sandbox-exec").is_file()
+        has_fence, _ = fence_status()
         assert palace.finished == [
             {
                 "machine_id": "test",

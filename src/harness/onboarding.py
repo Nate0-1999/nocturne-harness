@@ -768,6 +768,10 @@ def doctor_nocturne(*, home: Path | None = None, stdout: TextIO = sys.stdout) ->
     config = load_config(home=home)
     preflight = _daemon_preflight(config)
     print(f"Identity: {config.principal_id}; home: {config.home}", file=stdout)
+    from harness.shell_fence import fence_status
+
+    _, shell_status = fence_status()
+    print(f"Shell fence: {shell_status}", file=stdout)
     _print_local_models(config, stdout=stdout)
     print(
         f"Conversation transcript backup: {'on' if config.transcript_backup else 'off'}",
