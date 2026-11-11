@@ -1,0 +1,14 @@
+Impact bell: M7LF -> /Users/nateoswalt/relay/m7lf/spine/verification/m7lf/impacted.json
+  FL-195: The feature ledger generates coverage reports and requires evidence for the rows affected by a build. [PROTECTED: flagged corner only]
+  FL-196: The rules machine checks citations, frozen law, product vocabulary, seed states and packet precedents. [PROTECTED: flagged corner only]
+  Unmapped: spine/openapi.json (add a row or declare no feature impact)
+  Unmapped: spine/src/spine/__init__.py (add a row or declare no feature impact)
+  Unmapped: spine/tests/test_packaging.py (add a row or declare no feature impact)
+  Unmapped: spine/verification/m7lf/FL-195.png (add a row or declare no feature impact)
+  Unmapped: spine/verification/m7lf/FL-196.png (add a row or declare no feature impact)
+  Unmapped: spine/verification/m7lf/SHA256SUMS (add a row or declare no feature impact)
+  Unmapped: spine/verification/m7lf/ledger-report.json (add a row or declare no feature impact)
+  Unmapped: spine/verification/m7lf/receipts/ruff-spine.log (add a row or declare no feature impact)
+  Unmapped: spine/verification/m7lf/receipts/suite-spine-final.log (add a row or declare no feature impact)
+  Unmapped: spine/verification/m7lf/receipts/test-motivations-spine.log (add a row or declare no feature impact)
+Ledger coverage PASS: 2 required rows

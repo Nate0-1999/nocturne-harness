@@ -1,0 +1,315 @@
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	﻿2026-11-11T18:38:55.9430296Z ##[group]Run actions/checkout@v4
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9430547Z with:
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9430747Z   repository: Nate0-1999/nocturne-memory
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9430985Z   ref: v0.1.92
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9431178Z   path: _canon/spine
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9431377Z   persist-credentials: false
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9433623Z   token: ***
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9433809Z   ssh-strict: true
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9434000Z   ssh-user: git
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9434171Z   clean: true
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9434365Z   sparse-checkout-cone-mode: true
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9434588Z   fetch-depth: 1
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9434766Z   fetch-tags: false
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9434959Z   show-progress: true
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9435147Z   lfs: false
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9435312Z   submodules: false
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9435503Z   set-safe-directory: true
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9435712Z   allow-unsafe-pr-checkout: false
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9435924Z env:
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9436147Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.16/x64
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9436563Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib/pkgconfig
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9436915Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9437231Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9437532Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9437842Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:55.9438110Z ##[endgroup]
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0171135Z Syncing repository: Nate0-1999/nocturne-memory
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0175789Z ##[group]Getting Git version info
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0176556Z Working directory is '/home/runner/work/nocturne-harness/nocturne-harness/_canon/spine'
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0207557Z [command]/usr/bin/git version
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0249513Z git version 2.56.0
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0267668Z ##[endgroup]
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0281279Z Temporarily overriding HOME='/home/runner/work/_temp/fc62c825-22f7-471c-8e4e-c3a18addd709' before making global git config changes
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0282125Z Adding repository directory to the temporary git global config as a safe directory
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0286978Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/nocturne-harness/nocturne-harness/_canon/spine
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0518142Z ##[group]Initializing the repository
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0523847Z [command]/usr/bin/git init /home/runner/work/nocturne-harness/nocturne-harness/_canon/spine
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0608798Z hint: Using 'master' as the name for the initial branch. This default branch name
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0613805Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0617068Z hint: to use in all of your new repositories, which will suppress this warning,
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0617789Z hint: call:
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0618148Z hint:
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0619093Z hint: 	git config --global init.defaultBranch <name>
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0619595Z hint:
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0620118Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0620850Z hint: 'development'. The just-created branch can be renamed via this command:
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0621326Z hint:
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0621600Z hint: 	git branch -m <name>
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0621980Z hint:
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0622479Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0623478Z Initialized empty Git repository in /home/runner/work/nocturne-harness/nocturne-harness/_canon/spine/.git/
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0624796Z [command]/usr/bin/git remote add origin https://github.com/Nate0-1999/nocturne-memory
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0729193Z ##[endgroup]
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0729759Z ##[group]Disabling automatic garbage collection
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.0730504Z [command]/usr/bin/git config --local gc.auto 0
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.1318423Z ##[endgroup]
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.1318792Z ##[group]Setting up auth
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.1328642Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.1371023Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.1641287Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.1680186Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.1952372Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.1989743Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.2259193Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.2405460Z ##[endgroup]
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.2405998Z ##[group]Fetching the repository
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.2415128Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/v0.1.92*:refs/remotes/origin/v0.1.92* +refs/tags/v0.1.92*:refs/tags/v0.1.92*
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.4935735Z The process '/usr/bin/git' failed with exit code 1
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:38:56.4936190Z Waiting 12 seconds before trying again
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:39:08.4968270Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/v0.1.92*:refs/remotes/origin/v0.1.92* +refs/tags/v0.1.92*:refs/tags/v0.1.92*
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:39:08.7409955Z The process '/usr/bin/git' failed with exit code 1
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:39:08.7410395Z Waiting 16 seconds before trying again
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:39:24.7431277Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/v0.1.92*:refs/remotes/origin/v0.1.92* +refs/tags/v0.1.92*:refs/tags/v0.1.92*
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:39:25.0420236Z ##[group]Removing auth
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:39:25.0424114Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:39:25.0455388Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:39:25.0696324Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:39:25.0718851Z http.https://github.com/.extraheader
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:39:25.0726096Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:39:25.0756333Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:39:25.0996945Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:39:25.1024495Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:39:25.1261695Z ##[endgroup]
+Web lint, build, and UI canon	Checkout lockstep Spine for the UI canon	2026-11-11T18:39:25.1284153Z ##[error]The process '/usr/bin/git' failed with exit code 1
+Python lint and tests	Checkout lockstep Spine	﻿2026-11-11T18:38:44.6454937Z ##[group]Run actions/checkout@v4
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6455088Z with:
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6455222Z   repository: Nate0-1999/nocturne-memory
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6455374Z   ref: v0.1.92
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6455489Z   path: _d3/spine
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6455614Z   persist-credentials: false
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6456819Z   token: ***
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6456936Z   ssh-strict: true
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6457051Z   ssh-user: git
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6457163Z   clean: true
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6457285Z   sparse-checkout-cone-mode: true
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6457427Z   fetch-depth: 1
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6457540Z   fetch-tags: false
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6457664Z   show-progress: true
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6457781Z   lfs: false
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6457886Z   submodules: false
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6458003Z   set-safe-directory: true
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6458146Z   allow-unsafe-pr-checkout: false
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6458302Z ##[endgroup]
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6969458Z Syncing repository: Nate0-1999/nocturne-memory
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6970084Z ##[group]Getting Git version info
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6970477Z Working directory is '/home/runner/work/nocturne-harness/nocturne-harness/_d3/spine'
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.6986784Z [command]/usr/bin/git version
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7018036Z git version 2.56.0
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7027975Z ##[endgroup]
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7035696Z Temporarily overriding HOME='/home/runner/work/_temp/0a43298e-7e3d-4497-9050-25f7177cbcfb' before making global git config changes
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7036352Z Adding repository directory to the temporary git global config as a safe directory
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7038081Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/nocturne-harness/nocturne-harness/_d3/spine
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7065148Z ##[group]Initializing the repository
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7068364Z [command]/usr/bin/git init /home/runner/work/nocturne-harness/nocturne-harness/_d3/spine
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7101017Z hint: Using 'master' as the name for the initial branch. This default branch name
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7101573Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7102148Z hint: to use in all of your new repositories, which will suppress this warning,
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7102679Z hint: call:
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7103037Z hint:
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7103310Z hint: 	git config --global init.defaultBranch <name>
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7103583Z hint:
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7103831Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7104228Z hint: 'development'. The just-created branch can be renamed via this command:
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7104538Z hint:
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7104718Z hint: 	git branch -m <name>
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7104922Z hint:
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7105192Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7105709Z Initialized empty Git repository in /home/runner/work/nocturne-harness/nocturne-harness/_d3/spine/.git/
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7110068Z [command]/usr/bin/git remote add origin https://github.com/Nate0-1999/nocturne-memory
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7144747Z ##[endgroup]
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7145150Z ##[group]Disabling automatic garbage collection
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7147654Z [command]/usr/bin/git config --local gc.auto 0
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7173285Z ##[endgroup]
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7173610Z ##[group]Setting up auth
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7177239Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7200911Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7462253Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7494017Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7717647Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7743597Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7947235Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7978485Z ##[endgroup]
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7978726Z ##[group]Fetching the repository
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:44.7984047Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/v0.1.92*:refs/remotes/origin/v0.1.92* +refs/tags/v0.1.92*:refs/tags/v0.1.92*
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:45.0513548Z The process '/usr/bin/git' failed with exit code 1
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:38:45.0513811Z Waiting 19 seconds before trying again
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:39:04.0547532Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/v0.1.92*:refs/remotes/origin/v0.1.92* +refs/tags/v0.1.92*:refs/tags/v0.1.92*
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:39:04.3328888Z The process '/usr/bin/git' failed with exit code 1
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:39:04.3329156Z Waiting 15 seconds before trying again
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:39:19.3349157Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/v0.1.92*:refs/remotes/origin/v0.1.92* +refs/tags/v0.1.92*:refs/tags/v0.1.92*
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:39:19.5958606Z ##[group]Removing auth
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:39:19.5961338Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:39:19.5989942Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:39:19.6194614Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:39:19.6212228Z http.https://github.com/.extraheader
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:39:19.6218685Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:39:19.6249078Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:39:19.6450766Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:39:19.6482767Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:39:19.6670910Z ##[endgroup]
+Python lint and tests	Checkout lockstep Spine	2026-11-11T18:39:19.6688009Z ##[error]The process '/usr/bin/git' failed with exit code 1
+Live Spine contract tests	Checkout pinned Spine	﻿2026-11-11T18:38:46.4361735Z ##[group]Run actions/checkout@v4
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4362009Z with:
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4362265Z   repository: Nate0-1999/nocturne-memory
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4362535Z   ref: v0.1.92
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4362755Z   path: _contract/spine
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4363001Z   persist-credentials: false
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4364718Z   token: ***
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4365272Z   ssh-strict: true
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4365526Z   ssh-user: git
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4365753Z   clean: true
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4365988Z   sparse-checkout-cone-mode: true
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4366242Z   fetch-depth: 1
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4366504Z   fetch-tags: false
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4366732Z   show-progress: true
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4366954Z   lfs: false
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4367169Z   submodules: false
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4367388Z   set-safe-directory: true
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4367878Z   allow-unsafe-pr-checkout: false
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4368213Z ##[endgroup]
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4982909Z Syncing repository: Nate0-1999/nocturne-memory
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4984222Z ##[group]Getting Git version info
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.4984953Z Working directory is '/home/runner/work/nocturne-harness/nocturne-harness/_contract/spine'
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5005422Z [command]/usr/bin/git version
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5032626Z git version 2.56.0
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5045062Z ##[endgroup]
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5053529Z Temporarily overriding HOME='/home/runner/work/_temp/ab024125-75ac-42d3-9c1c-3d935a46368b' before making global git config changes
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5054581Z Adding repository directory to the temporary git global config as a safe directory
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5056042Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/nocturne-harness/nocturne-harness/_contract/spine
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5081256Z ##[group]Initializing the repository
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5084791Z [command]/usr/bin/git init /home/runner/work/nocturne-harness/nocturne-harness/_contract/spine
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5121341Z hint: Using 'master' as the name for the initial branch. This default branch name
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5121929Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5122317Z hint: to use in all of your new repositories, which will suppress this warning,
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5122674Z hint: call:
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5122861Z hint:
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5123092Z hint: 	git config --global init.defaultBranch <name>
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5123374Z hint:
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5123810Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5124282Z hint: 'development'. The just-created branch can be renamed via this command:
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5124622Z hint:
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5124813Z hint: 	git branch -m <name>
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5125063Z hint:
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5125467Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5126151Z Initialized empty Git repository in /home/runner/work/nocturne-harness/nocturne-harness/_contract/spine/.git/
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5127199Z [command]/usr/bin/git remote add origin https://github.com/Nate0-1999/nocturne-memory
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5157945Z ##[endgroup]
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5158540Z ##[group]Disabling automatic garbage collection
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5162061Z [command]/usr/bin/git config --local gc.auto 0
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5190341Z ##[endgroup]
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5190905Z ##[group]Setting up auth
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5195027Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5219700Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5411318Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5450832Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5636421Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5660332Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5833686Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5977536Z ##[endgroup]
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5978134Z ##[group]Fetching the repository
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.5984061Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/v0.1.92*:refs/remotes/origin/v0.1.92* +refs/tags/v0.1.92*:refs/tags/v0.1.92*
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.8450521Z The process '/usr/bin/git' failed with exit code 1
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:38:46.8450960Z Waiting 16 seconds before trying again
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:39:02.8454859Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/v0.1.92*:refs/remotes/origin/v0.1.92* +refs/tags/v0.1.92*:refs/tags/v0.1.92*
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:39:03.0869492Z The process '/usr/bin/git' failed with exit code 1
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:39:03.0869983Z Waiting 10 seconds before trying again
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:39:13.0889492Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/v0.1.92*:refs/remotes/origin/v0.1.92* +refs/tags/v0.1.92*:refs/tags/v0.1.92*
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:39:13.4093223Z ##[group]Removing auth
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:39:13.4096759Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:39:13.4124726Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:39:13.4312491Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:39:13.4328445Z http.https://github.com/.extraheader
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:39:13.4340937Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:39:13.4392079Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:39:13.4564310Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:39:13.4584140Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:39:13.4748283Z ##[endgroup]
+Live Spine contract tests	Checkout pinned Spine	2026-11-11T18:39:13.4773216Z ##[error]The process '/usr/bin/git' failed with exit code 1
+Linux shell fence	Run actions/checkout@v4	﻿2026-11-11T18:38:47.5552093Z ##[group]Run actions/checkout@v4
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.5552324Z with:
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.5552503Z   repository: Nate0-1999/nocturne-memory
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.5552719Z   ref: v0.1.92
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.5552883Z   path: _fence/spine
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.5553073Z   persist-credentials: false
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.5554900Z   token: ***
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.5555073Z   ssh-strict: true
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.5555240Z   ssh-user: git
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.5555401Z   clean: true
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.5555579Z   sparse-checkout-cone-mode: true
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.5555783Z   fetch-depth: 1
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.5555953Z   fetch-tags: false
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.5556301Z   show-progress: true
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.5556476Z   lfs: false
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.5556631Z   submodules: false
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.5556803Z   set-safe-directory: true
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.5557001Z   allow-unsafe-pr-checkout: false
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.5557205Z ##[endgroup]
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6218955Z Syncing repository: Nate0-1999/nocturne-memory
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6229244Z ##[group]Getting Git version info
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6230004Z Working directory is '/home/runner/work/nocturne-harness/nocturne-harness/_fence/spine'
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6259639Z [command]/usr/bin/git version
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6299684Z git version 2.56.0
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6315314Z ##[endgroup]
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6326309Z Temporarily overriding HOME='/home/runner/work/_temp/a8018f85-efc4-4a28-9870-014813d7b266' before making global git config changes
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6327343Z Adding repository directory to the temporary git global config as a safe directory
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6330075Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/nocturne-harness/nocturne-harness/_fence/spine
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6363692Z ##[group]Initializing the repository
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6368693Z [command]/usr/bin/git init /home/runner/work/nocturne-harness/nocturne-harness/_fence/spine
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6409387Z hint: Using 'master' as the name for the initial branch. This default branch name
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6410283Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6411218Z hint: to use in all of your new repositories, which will suppress this warning,
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6412019Z hint: call:
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6412271Z hint:
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6412596Z hint: 	git config --global init.defaultBranch <name>
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6412984Z hint:
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6413253Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6413651Z hint: 'development'. The just-created branch can be renamed via this command:
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6414178Z hint:
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6414349Z hint: 	git branch -m <name>
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6414538Z hint:
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6414832Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6415428Z Initialized empty Git repository in /home/runner/work/nocturne-harness/nocturne-harness/_fence/spine/.git/
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6424458Z [command]/usr/bin/git remote add origin https://github.com/Nate0-1999/nocturne-memory
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6973532Z ##[endgroup]
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6974200Z ##[group]Disabling automatic garbage collection
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.6979035Z [command]/usr/bin/git config --local gc.auto 0
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.7011607Z ##[endgroup]
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.7012070Z ##[group]Setting up auth
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.7017700Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.7046260Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.7287658Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.7315794Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.7548607Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.7577589Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.7812324Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.7847305Z ##[endgroup]
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.7847660Z ##[group]Fetching the repository
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:47.7855796Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/v0.1.92*:refs/remotes/origin/v0.1.92* +refs/tags/v0.1.92*:refs/tags/v0.1.92*
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:48.1335626Z The process '/usr/bin/git' failed with exit code 1
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:38:48.1336284Z Waiting 14 seconds before trying again
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:39:02.1346816Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/v0.1.92*:refs/remotes/origin/v0.1.92* +refs/tags/v0.1.92*:refs/tags/v0.1.92*
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:39:02.4615591Z The process '/usr/bin/git' failed with exit code 1
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:39:02.4616110Z Waiting 19 seconds before trying again
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:39:21.4624719Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/v0.1.92*:refs/remotes/origin/v0.1.92* +refs/tags/v0.1.92*:refs/tags/v0.1.92*
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:39:21.8144363Z ##[group]Removing auth
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:39:21.8146981Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:39:21.8178954Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:39:21.8431466Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:39:21.8454218Z http.https://github.com/.extraheader
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:39:21.8462864Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:39:21.8505659Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:39:21.8756577Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:39:21.8784663Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:39:21.9024949Z ##[endgroup]
+Linux shell fence	Run actions/checkout@v4	2026-11-11T18:39:21.9050335Z ##[error]The process '/usr/bin/git' failed with exit code 1

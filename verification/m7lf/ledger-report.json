@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "4b6004a784aa59edac9f675f41dd8869e1bdde81",
-      "head": "abb4491c1003d0d0525ad0efdd29d88a2a424971"
+      "head": "79aa0f3618513ae3ff04108b1b370b30bf25d7d1"
     }
   ],
   "unmapped": {
@@ -81,6 +81,8 @@
     "harness/verification/m7lf/receipts/checks/initial-ledger-report.json": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
     "harness/verification/m7lf/receipts/checks/jobs-final-state.json": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
     "harness/verification/m7lf/receipts/checks/key-usage.json": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
+    "harness/verification/m7lf/receipts/checks/ledger-ci-harness.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
+    "harness/verification/m7lf/receipts/checks/ledger-ci-spine.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
     "harness/verification/m7lf/receipts/checks/ledger-spend.txt": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
     "harness/verification/m7lf/receipts/checks/linux-app-final.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
     "harness/verification/m7lf/receipts/checks/linux-app.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
@@ -110,6 +112,7 @@
     "harness/verification/m7lf/receipts/checks/releases-memory.txt": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
     "harness/verification/m7lf/receipts/checks/ruff-harness-final.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
     "harness/verification/m7lf/receipts/checks/ruff-harness.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
+    "harness/verification/m7lf/receipts/checks/ruff-last.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
     "harness/verification/m7lf/receipts/checks/ruff-spine.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
     "harness/verification/m7lf/receipts/checks/rules-export.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
     "harness/verification/m7lf/receipts/checks/rules-garden.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
@@ -125,6 +128,8 @@
     "harness/verification/m7lf/receipts/checks/suite-spine.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
     "harness/verification/m7lf/receipts/checks/test-motivations-harness-final.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
     "harness/verification/m7lf/receipts/checks/test-motivations-harness.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
+    "harness/verification/m7lf/receipts/checks/test-motivations-last.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
+    "harness/verification/m7lf/receipts/checks/test-motivations-spine-final.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
     "harness/verification/m7lf/receipts/checks/test-motivations-spine.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
     "harness/verification/m7lf/receipts/checks/ui-canon-packet.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
     "harness/verification/m7lf/receipts/checks/ui-canon.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
@@ -194,11 +199,13 @@
     "harness/verification/m7lf/trials/run-trial4/tool-events.json": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
     "harness/verification/m7lf/trials/run-trial4/walk.json": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
     "harness/verification/m7lf/impacted.json": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
-    "harness/verification/m7lf/receipts/checks/test-motivations-spine-final.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
-    "harness/verification/m7lf/receipts/checks/test-motivations-last.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
-    "harness/verification/m7lf/receipts/checks/ruff-last.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
-    "harness/verification/m7lf/receipts/checks/ledger-ci-spine.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
-    "harness/verification/m7lf/receipts/checks/ledger-ci-harness.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior."
+    "harness/verification/m7lf/receipts/checks/rules-final-export.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
+    "harness/verification/m7lf/receipts/checks/ledger-ci-spine-last.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
+    "harness/verification/m7lf/receipts/checks/ledger-ci-harness-last.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
+    "harness/verification/m7lf/receipts/checks/hosted-harness-failures.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
+    "harness/verification/m7lf/receipts/checks/push-spine.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
+    "harness/verification/m7lf/receipts/checks/push-harness.log": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior.",
+    "harness/verification/m7lf/receipts/checks/hosted-memory-checks.txt": "M7LF's own evidence, coverage, handoff or coordination record; no feature behavior."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {

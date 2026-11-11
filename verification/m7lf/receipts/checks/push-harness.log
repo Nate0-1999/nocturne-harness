@@ -1,0 +1,239 @@
+Impact bell: M7LF -> /Users/nateoswalt/relay/m7lf/harness/verification/m7lf/impacted.json
+  FL-016: All conversation history is kept the way Codex and Claude Code keep it; a conversation without history is not supported. [PROTECTED: flagged corner only]
+  FL-067: Agents move through the file structure of the machine they live in, and the interface shows where every agent is. [PROTECTED: flagged corner only]
+  FL-069: The core tools every modern harness has: files, terminal, Chrome, skills, changing models, compaction (our own take), and interactions with common apps, taken from the most modular standard source. [PROTECTED: flagged corner only]
+  FL-071: The location fence: an agent can edit only files in the exact directory it stands in, and its shell is kept to that subtree, enforced deterministically. [PROTECTED: flagged corner only]
+  FL-072: The progressive prompting protocol is dynamic to the agent's moves: a move re-prompts the agent for its new location. [PROTECTED: flagged corner only]
+  FL-074: A new thread starts in a project folder with the location rule in effect; how a thread's project is specified was his open question (maybe configuration). [PROTECTED: flagged corner only]
+  FL-079: Full conversation history kept, the way Codex and Claude Code do. [PROTECTED: flagged corner only]
+  FL-081: A suite of compaction strategies: truncation; summarization; make the compaction memories first, wait for them to land, then drop everything else; keep only the human's messages and each agent turn's final answer. [PROTECTED: flagged corner only]
+  FL-166: A prompt when the app's memory use passes a threshold of the local system's memory, memory-leak guards, and no proceeding without write access at startup. [PROTECTED: flagged corner only]
+  FL-169: Client and cloud versions stay sync-locked or backward compatible, following industry practice, so version differences feel seamless. [PROTECTED: flagged corner only]
+  FL-171: A startup and settings option: "Back up conversation transcripts to cloud?" [PROTECTED: flagged corner only]
+  FL-173: Constitution: a warming retry when the Palace is asleep, a "busy, retrying" banner on rate limits, and the banner clears on recovery (gate-day). [PROTECTED: flagged corner only]
+  FL-174: Constitution: a doctor readout naming which identity the running daemon is (gate verification-identity work). [PROTECTED: flagged corner only]
+  FL-175: Constitution: a sandbox whose boundary crossings are surfaced as cards on the Deck (Invariant 14). [PROTECTED: flagged corner only]
+  FL-178: Constitution: a verification identity with its own account and home for tests and scouts (gate verification-identity work). [PROTECTED: flagged corner only]
+  FL-179: Constitution: a plain ownership refusal when one identity tries to decide another identity's approval queue item (gate verification-identity work). [PROTECTED: flagged corner only]
+  FL-187: Two repos, the spine (memory) and the Harness, not a mono repo. [PROTECTED: flagged corner only]
+  FL-190: The Harness can use skills and has the best and most common tools available, compiled from a list. [PROTECTED: flagged corner only]
+  FL-191: The tools and skills Claude Code and Codex use on this machine, pinned to versioned open-source sources. [PROTECTED: flagged corner only]
+  FL-194: The Pydantic toolset and skills as the tool layer. [PROTECTED: flagged corner only]
+  FL-195: The feature ledger generates coverage reports and requires evidence for the rows affected by a build. [PROTECTED: flagged corner only]
+  FL-196: The rules machine checks citations, frozen law, product vocabulary, seed states and packet precedents. [PROTECTED: flagged corner only]
+  FL-001: The Palace is a transactional database in the cloud on GCP that agents on many machines reach, behaving the same for every agent and sub-agent wherever it runs.
+  FL-009: Record files (history, transcripts) live apart from code so code can be deleted and re-downloaded without losing history.
+  FL-061: Compaction instructions tuned by back-test; memory size as a tunable beside the threshold and allotments.
+  FL-068: Injected memories refreshed on every move.
+  FL-073: The location rule written into Nocturne's own system prompt.
+  FL-080: Compaction triggered by fill percentage against the model's best working range and max, which vary by model.
+  FL-082: A compaction policy that decides when to compact by optimal performance or by cost management.
+  FL-084: Plan-mode compaction: the summarizer asks the user one to four questions before compacting. (seed SD-040)
+  FL-162: Easy onboarding from a single splash repo, needing only two secrets: a GCP credential and an OpenRouter key.
+  FL-164: Local mode with no internet, cloud mode, and a way to mirror our cloud setup into your own provider.
+  FL-167: One obvious start command with an update prompt; update, deploy, launch and doctor as one or two commands.
+  FL-168: A restore popup that asks whether to roll back these memories and lists them.
+  FL-170: A fresh reinstall that reconnects to existing files and auto-finds the cloud palace.
+  FL-181: Constitution: scheduled runs and background long-running shells in the agent's tool set (gate-day).
+  FL-186: Build on Pydantic AI in a way that lets us modify and extend without waiting on them, passing features back and forth with their library.
+  FL-192: Swappable seams: router, model policy with an off-switch, toolset as a unit, memory system.
+  FL-193: The common core of terminal-agent tools (skills, progressive prompting, model switching, compaction, app interactions) in one piece that pulls upstream updates.
+  FL-200: Spin up new palaces easily: one command creates a fresh palace with its own database, schema and token in the owner's project, reachable by name; the app can point at any palace the owner has; a test palace is where verification agents train and is dropped whole afterwards.
+  FL-208: The vault: one owner-only env file per workflow holds the keys its tools need; a value is never printed, logged, journaled or packed, and no agent can read it.
+  FL-209: A tool runs with its keys and the agent never sees them: `nocturne tool run <name>` executes the bundle's own code with the vault's variables; in a saved job that is not a boundary crossing, and the walls a recipe declares are crossed unattended once the owner confirmed them at save.
+  FL-210: The agent's shell works on Linux behind the same location and network walls: bubblewrap fences ordinary bash and job exit checks; the vault stays denied and saved bundle tools run outside the fence.
+  Unmapped: harness/DECISIONS.md (add a row or declare no feature impact)
+  Unmapped: harness/src/harness/__init__.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/golden/test_workspace_tool_outputs.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_bundle.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_jobs_shell.py (add a row or declare no feature impact)
+  Unmapped: harness/tests/test_pydantic_harness_toolset.py (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-009.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-016.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-061.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-067.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-068.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-069.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-071.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-072.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-073.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-074.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-079.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-080.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-081.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-082.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-084.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-162.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-164.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-166.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-167.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-168.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-169.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-170.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-171.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-173.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-174.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-175.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-178.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-179.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-181.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-186.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-187.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-190.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-191.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-192.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-193.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-194.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-195.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-196.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-200.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-208.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-209.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/FL-210.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/SHA256SUMS (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/ledger-report.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/captures.py (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/baseline-harness-host.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/baseline-harness.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/baseline-spine.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/captures.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/cleanup.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/docker-host-config.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/doctor-linux-missing.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/doctor-linux-unusable.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/doctor-linux.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/doctor-macos.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/grants-g1.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/grants-g2.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/grants-g3.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/grants-trial1.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/guard-citations-final.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/guard-citations.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/initial-ledger-report.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/jobs-final-state.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/key-usage.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/ledger-ci-harness.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/ledger-ci-spine.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/ledger-spend.txt (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/linux-app-final.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/linux-app.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/linux-browser-setup.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/linux-fence-accepted.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/linux-fence-final.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/linux-fence.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/linux-host.txt (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/linux-inner-status.txt (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/linux-metadata-sync.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/linux-remove.txt (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/linux-setup.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/linux-stop.txt (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/macos-app.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/macos-fence-final.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/macos-fence-table.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/macos-fence.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/metadata-sync.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/npm-install.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/open-prs-harness.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/open-prs-memory.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/palace.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/policies.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/pre-freeze-ledger.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/pypi-reservation.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/releases-harness.txt (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/releases-memory.txt (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/ruff-harness-final.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/ruff-harness.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/ruff-last.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/ruff-spine.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/rules-export.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/rules-garden.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/rules-spine-freeze.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/rules-spine.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/rung-setup.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/secret-scan-final.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/secret-scan.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/suite-harness-accepted.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/suite-harness-final.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/suite-harness.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/suite-spine-final.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/suite-spine.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/test-motivations-harness-final.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/test-motivations-harness.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/test-motivations-last.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/test-motivations-spine-final.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/test-motivations-spine.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/ui-canon-packet.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/ui-canon.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/walk-1.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/walk-2.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/walk-3.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/walk-startup-race.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/walk-trial1.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/walk-trial2.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/walk-trial3.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/walk-trial4.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/web-build.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/web-lint.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/checks/web-unit.log (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/declare.py (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/grants.py (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/rung.py (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/receipts/walk.py (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-1/FL-185-detail.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-1/FL-185.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-1/FL-209-grants.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-1/FL-209.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-1/FL-210.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-1/fixture.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-1/grants.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-1/page-text.txt (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-1/tool-events.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-1/walk.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-2/FL-185-detail.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-2/FL-185.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-2/FL-209.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-2/FL-210.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-2/fixture.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-2/page-text.txt (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-2/tool-events.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-2/walk.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-3/FL-185-detail.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-3/FL-185.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-3/FL-209.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-3/FL-210.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-3/fixture.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-3/page-text.txt (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-3/tool-events.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-3/walk.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-g1/FL-209-detail.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-g1/FL-209-grants.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-g1/grants.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-g2/FL-209-detail.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-g2/FL-209-grants.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-g2/grants.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-g3/FL-209-detail.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-g3/FL-209-grants.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/run-g3/grants.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/trials/run-trial2/walk.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/trials/run-trial3/FL-185.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/trials/run-trial3/FL-209.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/trials/run-trial3/FL-210.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/trials/run-trial3/fixture.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/trials/run-trial3/page-text.txt (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/trials/run-trial3/tool-events.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/trials/run-trial3/walk.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/trials/run-trial4/FL-185.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/trials/run-trial4/FL-209.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/trials/run-trial4/FL-210.png (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/trials/run-trial4/fixture.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/trials/run-trial4/page-text.txt (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/trials/run-trial4/tool-events.json (add a row or declare no feature impact)
+  Unmapped: harness/verification/m7lf/trials/run-trial4/walk.json (add a row or declare no feature impact)
+  [BLACK: needs a word] harness/.github/workflows/ci.yml
+remote: 
+remote: Create a pull request for 'codex/m7lf' on GitHub by visiting:        
+remote:      https://github.com/Nate0-1999/nocturne-harness/pull/new/codex/m7lf        
+remote: 
+To https://github.com/Nate0-1999/nocturne-harness.git
+ * [new branch]        codex/m7lf -> codex/m7lf
+branch 'codex/m7lf' set up to track 'origin/codex/m7lf'.
