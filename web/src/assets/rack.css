@@ -1037,11 +1037,36 @@ button.rack-module__resize-handle--nw {
   gap: .5rem;
 }
 
+/* FL-206: strategies and models — one panel, the rail beside the list. */
+.model-panel {
+  display: grid;
+  grid-template-columns: minmax(16rem, 2fr) minmax(0, 3fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
 .model-configs {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-  gap: 0 1.2rem;
-  margin: 0 0 1.5rem;
+  grid-template-columns: 1fr;
+  margin: 0;
+}
+
+.model-configs > .model-row--head {
+  grid-template-columns: 1fr auto;
+  padding: .3rem 0;
+}
+
+.model-config__meaning {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  white-space: normal;
+}
+
+.model-summary {
+  flex: 1 1 100%;
+  margin: .25rem 0 0;
+  font-family: var(--body-font);
+  line-height: 1.45;
 }
 
 .model-config {
@@ -1068,7 +1093,7 @@ button.rack-module__resize-handle--nw {
   text-transform: uppercase;
 }
 
-.model-config > svg { grid-row: span 3; }
+.model-config > svg { grid-row: span 4; }
 .model-config > span { grid-column: 2; max-width: 100%; }
 
 .model-config__model,
@@ -1146,6 +1171,10 @@ button.rack-module__resize-handle--nw {
 }
 
 .model-row__name { font-family: var(--body-font); }
+
+@media (max-width: 63.99rem) {
+  .model-panel { grid-template-columns: 1fr; }
+}
 
 @media (max-width: 47.99rem) {
   .model-device {

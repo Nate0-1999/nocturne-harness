@@ -1357,6 +1357,9 @@ export function RackRuntime({ children }: { children: ReactNode }) {
           const store = useHarnessStore.getState()
           const before = store.selectedThreadId
           store.hydrateCatalog(payload.threads.filter((entry) => entry.thread_id !== before), payload.running)
+          // FL-206: its model, thinking level and strategy are the run loop's truth, read with the rest.
+          const live = payload.threads.find((entry) => entry.thread_id === before)
+          if (before !== null && live !== undefined) store.markThread(before, live)
           const after = useHarnessStore.getState().selectedThreadId
           if (after !== null && after !== before) harnessClient.selectThread(after)
           const review = rackSelectionSurface.getSnapshot()

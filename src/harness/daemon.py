@@ -1554,6 +1554,8 @@ def create_dev_app(
                     current = {
                         "model": snapshot.resolved_model,
                         "effort": snapshot.values.get("model.effort"),
+                        # FL-206: the strategy that chose it, named beside the model.
+                        "policy": loop.thread_models().get(thread_id, {}).get("policy"),
                     }
                 except ParameterWriteViolation:
                     pass

@@ -13,6 +13,7 @@ import {
 } from './spendTable'
 import './assets/honest-display.css'
 import { Button } from './kit'
+import { modelLabel, strategyName } from './modelBrowser'
 
 type LoadPhase = 'loading' | 'live' | 'refreshing' | 'failed'
 
@@ -70,6 +71,11 @@ export function VitalsModule() {
 
   const threadNames = useMemo(
     () => new Map(rack.catalog.map((entry) => [entry.thread_id, entry.title])),
+    [rack.catalog],
+  )
+  // FL-206: each conversation's model and the strategy that chose it, from the catalog.
+  const threadEntries = useMemo(
+    () => new Map(rack.catalog.map((entry) => [entry.thread_id, entry])),
     [rack.catalog],
   )
 
@@ -156,7 +162,7 @@ export function VitalsModule() {
                   ...(expanded ? row.models.map((model, index) => (
                     <SpendRow
                       key={`${row.thread_id}:${model.model ?? 'unreported'}:${index}`}
-                      name={model.model ?? 'Model not reported'}
+                      name={modelRowName(threadEntries.get(row.thread_id), model.model)}
                       metrics={model}
                       nested
                     />
@@ -214,6 +220,13 @@ function SpendRow({
       <td title={metrics.hourly_unpriced_lines > 0 ? 'The provider did not report a price. No later price is pending.' : undefined}>{money(metrics.spend_per_hour_usd, metrics.hourly_receipt_lines)}{metrics.spend_per_hour_usd !== null && metrics.hourly_unpriced_lines > 0 && ' + unpriced'}</td>
     </tr>
   )
+}
+
+/** FL-206: the strategy that chose a conversation's current model, named beside it. */
+function modelRowName(mark: { model?: string | null, policy?: string | null } | undefined, model: string | null): string {
+  if (model === null) return 'Model not reported'
+  const strategy = mark?.model != null && modelLabel(mark.model) === model ? strategyName(mark.policy) : null
+  return strategy === null ? model : `${strategy} · ${model}`
 }
 
 function Metric({ value }: { value: string }) {

@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { createHostPluginApi, RACK_MANIFESTS, useOptionalRackPlugin } from './rack'
 import { Button, Select, TextArea } from './kit'
+import { modelLabel, policyName, shortName, type ModelBrowser } from './modelBrowser'
 
 const hostPolicies = createHostPluginApi(RACK_MANIFESTS.conversation)
 
 const ROLES = { chat: 'Agent', subagent: 'Sub-agent', judge: 'Judge', curator: 'Curator' } as const
 
 /** A-021 / FL-154: the same token-cost policy type, independently bound to each role. */
-export function AgentPolicies({ level }: { level?: 'Duet' | 'Symphony' }) {
+export function AgentPolicies({ level, browser }: { level?: 'Duet' | 'Symphony', browser?: ModelBrowser | null }) {
   const plugin = useOptionalRackPlugin()
   const events = plugin?.events ?? hostPolicies.events
   const [policies, setPolicies] = useState<Record<string, string>>({})
@@ -36,8 +37,12 @@ export function AgentPolicies({ level }: { level?: 'Duet' | 'Symphony' }) {
       const separator = value.indexOf(':')
       const kind = separator < 0 ? value : value.slice(0, separator)
       const argument = separator < 0 ? '' : value.slice(separator + 1)
+      // FL-206: in a conversation the legend reads strategy · the model it picks now.
+      const now = browser?.configurations.find((item) => item.policy === value)?.model ?? (kind === 'pinned' && argument ? argument : null)
+      const pick = level === undefined ? null : [policyName(value), now === null ? null
+        : shortName(browser?.models.find((item) => item.model === now)?.name ?? modelLabel(now))].filter(Boolean).join(' · ')
       return <fieldset key={role}>
-        <legend>{label}</legend>
+        <legend>{label}{pick !== null && <span className="agent-policy__pick"> · {pick}</span>}</legend>
         <label className="theme-control">Token-cost policy
           <Select aria-label={`${label} token-cost policy`} data-tooltip-detail={role === 'curator' ? 'How the Palace chooses its curator model. Applies to future passes.' : 'How this role\'s model is chosen. Applies to new threads and future rounds; existing choices stay fixed.'} value={kind} onChange={(event) => {
             const next = event.target.value

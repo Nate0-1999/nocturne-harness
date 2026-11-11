@@ -2412,6 +2412,8 @@ function ChatModule() {
   const selectedThreadId = snapshot.selectedThreadId
   const selectedThread = selectedThreadId === null ? null : snapshot.threads[selectedThreadId]
   const selectedMeta = snapshot.catalog.find((entry) => entry.thread_id === selectedThreadId)
+  // FL-206: one read of the model list for the chip and the configuration disclosure.
+  const browser = useModelBrowser(selectedThreadId, selectedThread?.resolvedModel ?? null)
   const [draft, setDraft] = useState(() =>
     selectedThreadId === null ? '' : snapshot.drafts[selectedThreadId] ?? '')
   const [pendingImage, setPendingImage] = useState<PendingImage | null>(null)
@@ -2726,7 +2728,7 @@ function ChatModule() {
           )}
         </div>
         <details><summary>{orchestration} configuration</summary>
-          <AgentPolicies level={orchestration} />
+          <AgentPolicies level={orchestration} browser={browser} />
         </details>
         <h1 id="thread-title">
           {selectedMeta === undefined ? 'Opening thread' : distinctThreadTitles(snapshot.catalog.filter((entry) => !entry.archived)).get(selectedMeta.thread_id) ?? visibleThreadTitle(selectedMeta.title)}
@@ -2789,7 +2791,7 @@ function ChatModule() {
           >
             <span aria-hidden="true">Model</span>
             <span className="chat-header__model-value" data-testid="active-model-detail">
-              <ModelChip threadId={selectedThreadId} model={selectedThread?.resolvedModel ?? null} />
+              <ModelChip browser={browser} model={selectedThread?.resolvedModel ?? null} />
             </span>
           <span className="chat-header__model-action" aria-hidden="true">Open</span>
           </Button>

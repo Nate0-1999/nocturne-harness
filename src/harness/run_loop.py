@@ -516,7 +516,7 @@ class RunLoop:
         ]
 
     def thread_models(self) -> dict[str, dict[str, str | None]]:
-        """FL-205: each thread's model and thinking level in force, for the thread list."""
+        """FL-205 / FL-206: each thread's model, thinking level and the strategy that chose it."""
 
         return {
             thread_id: {
@@ -524,6 +524,7 @@ class RunLoop:
                 "effort": None
                 if state.model_resolution is None
                 else state.model_resolution.request_parameters.effort,
+                "policy": None if state.model_resolution is None else state.model_resolution.policy,
             }
             for thread_id, state in self._threads.items()
         }

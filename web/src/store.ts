@@ -115,6 +115,8 @@ export interface HarnessStoreState extends PersistedHarnessState {
   globalError: HarnessError | null
   createThread: (binding?: string | null | ThreadWorkspaceBinding) => string
   hydrateCatalog: (catalog: ThreadCatalogEntry[], running?: string[]) => void
+  /** FL-206: the selected thread's model mark is daemon truth too, though the poll leaves the rest of its entry alone. */
+  markThread: (threadId: string, mark: Pick<ThreadCatalogEntry, 'model' | 'effort' | 'policy'>) => void
   removeFixtureThreads: () => number
   selectThread: (threadId: string) => void
   beginPrompt: (
@@ -689,6 +691,7 @@ function restoredState(value: unknown): PersistedHarnessState {
         current_location: typeof entry.current_location === 'string' ? entry.current_location : null,
         model: typeof entry.model === 'string' ? entry.model : null,
         effort: typeof entry.effort === 'string' ? entry.effort : null,
+        policy: typeof entry.policy === 'string' ? entry.policy : null,
         proposed_response: catalogProposedResponse(entry.proposed_response),
         ...(entry.archived === true ? { archived: true } : {}),
       })
@@ -788,6 +791,15 @@ export const useHarnessStore = create<HarnessStoreState>()(
             },
           }
         })
+      },
+
+      markThread: (threadId, mark) => {
+        set((state) => ({
+          catalog: state.catalog.map((entry) => entry.thread_id === threadId
+            && (entry.model !== mark.model || entry.effort !== mark.effort || entry.policy !== mark.policy)
+            ? { ...entry, model: mark.model ?? null, effort: mark.effort ?? null, policy: mark.policy ?? null }
+            : entry),
+        }))
       },
 
       removeFixtureThreads: () => {
