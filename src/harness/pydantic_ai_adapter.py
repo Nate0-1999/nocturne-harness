@@ -283,6 +283,25 @@ def adopted_skill_capabilities(
     )
 
 
+def bundle_tool_capabilities(
+    tools: Sequence[tuple[str, str]],
+) -> tuple[Capability[MemoryToolContext], ...]:
+    """A-084: one line per tool of the job's bundle, in the thread like a skill's."""
+
+    return tuple(
+        Capability[MemoryToolContext](
+            id=f"tool-{name}",
+            instructions=[
+                f"Tool {name}: {summary} The owner built it for this workflow; run it as the "
+                f"whole bash command `nocturne tool run {name} [args]` instead of writing your "
+                "own code for that work."
+            ],
+            defer_loading=False,
+        )
+        for name, summary in tools
+    )
+
+
 class EditReplacement(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

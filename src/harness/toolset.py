@@ -6,9 +6,12 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Literal, Protocol
+from typing import TYPE_CHECKING, Literal, Protocol
 
 from harness.envelope import generate_ulid
+
+if TYPE_CHECKING:
+    from harness.bundle import SealedTools
 
 
 class ToolsetError(RuntimeError):
@@ -45,6 +48,8 @@ class Crossings:
     turn: set[str] = field(default_factory=set)
     thread: set[str] = field(default_factory=set)
     journaled: Callable[[], set[str]] | None = None
+    # A-084: a saved job's bundle tools; running one is the owner's code, not a crossing.
+    tools: SealedTools | None = None
 
     @staticmethod
     def entry(wall: str, folder: Path | None = None) -> str:

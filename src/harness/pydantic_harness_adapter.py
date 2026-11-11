@@ -56,6 +56,7 @@ from pydantic_core import to_jsonable_python
 from spine.tokens import cl100k_token_count
 
 from harness.envelope import generate_ulid
+from harness.onboarding import nocturne_home
 from harness.progressive_prompt import rendered_location
 from harness.project_path import project_environment, repository_root
 from harness.spine_client import SpineClientError
@@ -242,6 +243,11 @@ def _unique_ending(original: str) -> str:
         ),
         ending[-1] if ending else "",
     )
+
+
+def _vault(target: Path) -> bool:
+    vault = (nocturne_home() / "vault").resolve()
+    return target == vault or vault in target.parents
 
 
 def _credential_path(target: Path) -> bool:
@@ -533,6 +539,9 @@ class PydanticHarnessToolset:
 
     def _preflight(self, tool_name: str, raw_path: object, *, default: str | None = None) -> Path:
         target = self._target(raw_path, default=default)
+        if tool_name in _READ_TOOLS and _vault(target):
+            # WALL credentials / A-084: no card opens the vault; only a bundle's tools read it.
+            raise ToolsetError("The vault holds workflow keys; only a bundle's own tools read it.")
         if (
             tool_name in _READ_TOOLS
             and _credential_path(target)
@@ -740,8 +749,19 @@ class PydanticHarnessToolset:
         return result
 
     async def _bash(self, arguments: Mapping[str, object]) -> str:
-        shell, wrapped = self._shell_command(arguments)
         timeout = arguments.get("timeout")
+        tools = self.crossings.tools
+        if tools is not None and (call := tools.call(arguments.get("command"))):
+            # A-084: a tool the saved bundle declares is the owner's code, not a crossing; it
+            # runs outside this fence with its vault's keys. Every other command meets the walls.
+            result = await tools.run(
+                call,
+                cwd=self._location.cwd,
+                timeout=float(timeout) if timeout is not None else None,
+            )
+            self._emit("write", self._location.cwd)
+            return result
+        shell, wrapped = self._shell_command(arguments)
         run = asyncio.ensure_future(
             shell.run_command(
                 wrapped, timeout_seconds=float(timeout) if timeout is not None else None
@@ -912,6 +932,8 @@ class PydanticHarnessToolset:
             f"{git_writes}{environment_writes}{crossed_writes}"
             '(literal "/dev/null"))'
             f" (allow file-write* (subpath {json.dumps(str(self._scratch))}))"
+            # WALL credentials / A-084: workflow key values are read by bundle tools only.
+            f" (deny file-read* (subpath {json.dumps(str((nocturne_home() / 'vault').resolve()))}))"
             # F198: the owner allowed this thread's remote crossing on its card.
             + (" (allow network*)" if remote else "")
         )

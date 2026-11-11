@@ -88,6 +88,7 @@ class MemoryToolContext:
     toolset_enabled: bool = True
     memory_enabled: bool = True
     skill_directories: tuple[Path, ...] = ()
+    bundle_tools: tuple[tuple[str, str], ...] = ()  # A-084: a saved job's (name, summary) pairs
     boundary_review: Callable[..., Awaitable[str | None]] | None = None
     excluded_memory_ids: frozenset[UUID] = frozenset()
     delegate: Callable[[str, float | None], Awaitable[str]] | None = None

@@ -91,15 +91,44 @@ def build_parser() -> argparse.ArgumentParser:
   memory_scope                         "workspace" (default) or "none"
   cron                                 five-field cron line in UTC, or omit
   trigger, trigger_path                "file" + path, "queue" or "palace", or omit
+  allow                                walls a run may cross unattended: "remote",
+                                       "credentials", "workspace:<folder>"; asked once at save
 example:
   {"name": "Nightly tests", "prompt": "Run the tests and fix what fails.",
    "folder": "~/code/app", "model_policy": "elbow", "budget_usd": 0.5,
    "exit_condition": "npm test", "cron": "0 3 * * *"}""",
     )
     jobs.add_argument("action", choices=["list", "save", "run", "stop"])
-    jobs.add_argument("target", nargs="?", help="recipe JSON file, job ID or run ID")
+    jobs.add_argument("target", nargs="?", help="recipe JSON file, bundle folder, job ID or run ID")
     jobs.add_argument("--job-id", help="update this saved recipe when using save")
+    jobs.add_argument("--yes", action="store_true", help="confirm the recipe's declared grants")
     jobs.add_argument("--daemon-url", default="http://127.0.0.1:8765")
+    workflow = commands.add_parser(
+        "workflow",
+        help="make, check and pack a workflow bundle folder",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""a bundle folder:
+  workflow.json     the recipe (see `nocturne jobs --help`), with "folder": "."
+  .agents/skills/   SKILL.md folders the workflow's agent can load
+  tools/            your executables; the agent runs one as `nocturne tool run <name> [args]`
+  keys.example      the NAMES of the keys the tools need; values go in the vault
+check: the recipe is valid, every tool runs --help, every named key is in the vault.
+pack:  one .tar in the current folder and its sha256 digest, the bundle's identity.""",
+    )
+    workflow.add_argument("action", choices=["new", "check", "pack"])
+    workflow.add_argument("folder", type=Path)
+    vault = commands.add_parser(
+        "vault", help="store one key for a workflow's tools; the value is read from stdin"
+    )
+    vault.add_argument("action", choices=["set"])
+    vault.add_argument("workflow", help="the workflow's name")
+    vault.add_argument("name", help="the key's name, as keys.example lists it")
+    tool = commands.add_parser(
+        "tool", help="run a tool of the bundle in the current folder with its vault keys"
+    )
+    tool.add_argument("action", choices=["run"])
+    tool.add_argument("name")
+    tool.add_argument("arguments", nargs=argparse.REMAINDER)
     deploy = commands.add_parser("deploy", help="reconcile the fixed D1 cloud foundation")
     deploy.add_argument(
         "--dry-run",
@@ -218,6 +247,10 @@ def main(
             from harness.jobs_cli import jobs_nocturne
 
             return jobs_nocturne(args, stdout=stdout)
+        elif args.command in {"workflow", "vault", "tool"}:
+            from harness.jobs_cli import bundle_nocturne
+
+            return bundle_nocturne(args, stdout=stdout)
         elif args.command == "deploy":
             config = load_config()
             if config.palace_name != "main":

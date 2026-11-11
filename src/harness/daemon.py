@@ -1099,6 +1099,10 @@ def create_dev_app(
             ),
             memory_enabled=workflow.memory_scope != "none" if workflow else True,
             skill_directories=discover_skill_libraries(location.workspace_root, location.cwd),
+            bundle_tools=tuple(
+                (tool.name, tool.summary)
+                for tool in (workflow.bundle.tools if workflow and workflow.bundle else ())
+            ),
             outbox=outbox,
         )
 

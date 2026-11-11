@@ -35,6 +35,7 @@ from harness.pydantic_ai_adapter import (
     ReturnShareCapability,
     WorkspaceCapability,
     adopted_skill_capabilities,
+    bundle_tool_capabilities,
 )
 from harness.pydantic_harness_adapter import COMPACTION_SUMMARY_PROMPT
 from harness.spine_client import (
@@ -398,6 +399,7 @@ class HarnessAgent:
         return [
             WorkspaceCapability(),
             *adopted_skill_capabilities(context.skill_directories or self._skill_directories),
+            *bundle_tool_capabilities(context.bundle_tools),
         ]
 
     async def judge_boundary(self, prompt: str, *, model, usage, model_settings):
