@@ -9,6 +9,8 @@
 .jobs-instrument td, .jobs-instrument th { padding: .8rem .5rem; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
 .jobs-instrument th:first-child { width: 26%; }
 .jobs-instrument th:last-child { width: 3rem; }
+.jobs-instrument table[aria-label="Workflow tiers"] th { width: 25%; }
+.jobs-instrument table[aria-label="Workflow tiers"] .kit-button { max-width: 100%; white-space: normal; }
 .jobs-instrument td:first-child .kit-button { max-width: 100%; white-space: normal; text-align: left; }
 .jobs-instrument td small { margin-top: .5rem; }
 .jobs-instrument [data-selected] { background: color-mix(in srgb, var(--accent) 10%, transparent); }

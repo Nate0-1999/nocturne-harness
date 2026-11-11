@@ -4447,3 +4447,15 @@ The policy itself is read-only in every shell. Nested user namespaces are disabl
 keeps Seatbelt; both hosts run one rule table. Doctor probes the actual Linux fence and names
 the install/namespace remedy without changing startup refusals. A-084's sealed tool path still
 runs before the shell fence. Package pair 0.1.92; Memory API contract stays 0.1.92.
+
+## M7TG — Prove the candidate before replacing an enabled release [P4, P4.2]
+
+PRECEDENT: PLAN M7TG; SD-092; A-084, A-085; M7WB, M7LF, M3SJ, M3OB.
+The sender uses SSH to the host CLI, never a remote daemon API. Each target owns its
+local Palace and the exact package pair. A disabled candidate job preserves the run's
+bundle digest; a passing exit proof replaces one stable enabled job. A failed proof
+leaves that job unchanged. An append-only host release log names proof and activation,
+so promotion fetches stage's proven tar and rollback checks its prior bytes before
+re-enabling. The Jobs tier table uses localhost routes in Harness; Memory's API stays
+0.1.92. Config 6 adds the SSH map, preserving version 5 settings. Linux services use
+systemd (system for root, user otherwise); the VPS page names the host prerequisites.

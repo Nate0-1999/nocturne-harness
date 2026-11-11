@@ -305,6 +305,10 @@ class JobScheduler:
                 self.error = f"Run result awaiting recovery: {exc}"
 
     def mount(self, app: FastAPI):
+        from harness.targets import mount_targets
+
+        mount_targets(app)
+
         @app.get("/v1/jobs")
         async def read_jobs():
             try:

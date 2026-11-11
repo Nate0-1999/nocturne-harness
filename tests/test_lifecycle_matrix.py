@@ -307,3 +307,54 @@ def test_each_historical_lifecycle_incident_is_a_named_reachable_row() -> None:
     assert len(ALL_STATES) == 768
     assert len(REACHABLE_STATES) == 384
     assert len(UNREACHABLE_STATES) == 384
+
+
+@pytest.mark.parametrize("state", ["unreachable", "older", "newer", "missing-vault-key"])
+def test_target_preflight_refuses_before_release_mutation(tmp_path, monkeypatch, state):
+    """A-085 / ADR-019: an SSH/network, version or vault failure cannot replace a release."""
+    from harness import targets
+    from harness.onboarding import NocturneConfig, OnboardingError
+
+    config = NocturneConfig(tmp_path, "fixture", "fixture", "fixture", "test")
+    monkeypatch.setattr(targets, "version", lambda _: targets.__version__)
+    sender = targets.__version__
+    keys = []
+    if state in {"older", "newer"}:
+        sender = "0.1.1" if state == "older" else "0.1.999"
+    elif state == "missing-vault-key":
+        keys = ["FIXTURE_API_KEY"]
+    else:
+
+        def unavailable(*args):
+            raise OnboardingError("Nocturne is unavailable")
+
+        monkeypatch.setattr(targets, "_jobs", unavailable)
+    with pytest.raises(OnboardingError):
+        targets._preflight(config, sender, "forecast", keys)
+    assert not (tmp_path / "releases").exists()
+
+
+def test_target_rollback_refuses_unproven_or_changed_bytes(tmp_path, monkeypatch):
+    """A-085 / ADR-019: losing or changing a proven archive must never enable different code."""
+    from harness import targets
+    from harness.onboarding import NocturneConfig, OnboardingError
+
+    config = NocturneConfig(tmp_path, "fixture", "fixture", "fixture", "test")
+    digest = "sha256:" + "a" * 64
+    with pytest.raises(OnboardingError, match="no passing proof"):
+        targets._activate(config, "forecast", digest, "test")
+    (tmp_path / "releases").mkdir()
+    targets._append(
+        config,
+        workflow="forecast",
+        digest=digest,
+        verdict="PASS",
+        source="test",
+        action="proof",
+        job_id="fixture",
+        proof_run_id="fixture",
+    )
+    monkeypatch.setattr(targets, "pack", lambda _: b"changed")
+    with pytest.raises(OnboardingError, match="proven bundle changed"):
+        targets._activate(config, "forecast", digest, "test")
+    assert len(targets._records(config)) == 1

@@ -29,7 +29,7 @@ def test_v1_config_upgrades_atomically_without_replacing_owner_values(tmp_path: 
     upgraded = path.read_text()
 
     assert config.backup_generations == 5
-    assert 'NOCTURNE_CONFIG_VERSION="5"' in upgraded
+    assert 'NOCTURNE_CONFIG_VERSION="6"' in upgraded
     assert 'NOCTURNE_BACKUP_GENERATIONS="5"' in upgraded
     assert f'NOCTURNE_POSTGRES_VOLUME="{config.active_postgres_volume}"' in upgraded
     assert 'NOCTURNE_PALACE_MODE="local"' in upgraded
@@ -68,7 +68,7 @@ def test_v2_config_adds_the_existing_compose_volume_without_changing_owner_value
 
     assert config.backup_generations == 7
     assert config.active_postgres_volume == f"{config.compose_project}_nocturne_postgres"
-    assert 'NOCTURNE_CONFIG_VERSION="5"' in path.read_text()
+    assert 'NOCTURNE_CONFIG_VERSION="6"' in path.read_text()
     assert 'NOCTURNE_TRANSCRIPT_BACKUP="false"' in path.read_text()
     assert "owner-secret" in path.read_text()
 
@@ -89,7 +89,7 @@ def test_v3_config_makes_its_existing_local_palace_explicit(tmp_path: Path) -> N
 
     assert config.palace_mode == "local"
     assert config.spine_url == onboarding.SPINE_URL
-    assert 'NOCTURNE_CONFIG_VERSION="5"' in path.read_text()
+    assert 'NOCTURNE_CONFIG_VERSION="6"' in path.read_text()
     assert 'NOCTURNE_TRANSCRIPT_BACKUP="false"' in path.read_text()
 
 

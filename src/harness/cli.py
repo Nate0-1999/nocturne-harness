@@ -38,6 +38,9 @@ def build_parser() -> argparse.ArgumentParser:
         description="NOCTURNE local harness and Memory Palace",
     )
     commands = parser.add_subparsers(dest="command", required=True)
+    from harness.targets import add_commands
+
+    add_commands(commands)
     init = commands.add_parser("init", help="initialize a local or remote Palace")
     init.add_argument(
         "--verification", action="store_true", help="create a disposable verification identity"
@@ -247,6 +250,10 @@ def main(
             from harness.jobs_cli import jobs_nocturne
 
             return jobs_nocturne(args, stdout=stdout)
+        elif args.command in {"target", "targets", "push", "promote", "rollback"}:
+            from harness.targets import targets_nocturne
+
+            return targets_nocturne(args, stdout=stdout)
         elif args.command in {"workflow", "vault", "tool"}:
             from harness.jobs_cli import bundle_nocturne
 
