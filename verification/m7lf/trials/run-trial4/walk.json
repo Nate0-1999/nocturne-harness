@@ -1,0 +1,130 @@
+{
+  "run": "1",
+  "started": "2026-11-11T18:20:23.918326+00:00",
+  "checks": [
+    {
+      "row": "FL-210",
+      "name": "Linux agent uses fenced bash; outside write and vault read refused; exit passes",
+      "ok": false,
+      "detail": {
+        "state": "failed",
+        "verdict": "Exit check failed: [stderr]\ngrep: forecast.md: No such file or directory\n\n[exit code: 2]",
+        "note": "The command to write to /root/m7lf-walk/outside-1.txt failed with \"Read-only file system\" error.\nThe command to read /root/m7lf-home/vault/forecast-lf-1-182024.env failed with \"Permission denied\" error.\nNo key values were revealed.\n"
+      }
+    },
+    {
+      "row": "FL-209",
+      "name": "declared sealed tool reaches the service with its key outside the network fence",
+      "ok": false,
+      "detail": {
+        "requests": [
+          {
+            "path": "/forecast",
+            "authorized": true
+          }
+        ],
+        "output": ""
+      }
+    },
+    {
+      "row": "FL-185",
+      "name": "Linux cron runs the saved bundle unattended and its fenced exit passes",
+      "ok": false,
+      "detail": {
+        "trigger": "2026-11-11T18:21:00+00:00",
+        "state": "failed",
+        "verdict": "Exit check failed: [stderr]\ngrep: forecast.md: No such file or directory\n\n[exit code: 2]"
+      }
+    },
+    {
+      "row": "FL-209",
+      "name": "fixture key absent from transcripts and captures' page text",
+      "ok": true,
+      "detail": {
+        "transcript_hits": 0
+      }
+    }
+  ],
+  "key_usage_before": 84.739844799,
+  "job_id": "01M75XDY63P7R4ACCA7GMSMZ8A",
+  "bundle_digest": "sha256:99751d0a0c12c7aa705af1ffe1b9952e2ab05889ec2e9523063698e51dcf5fb5",
+  "runs": [
+    {
+      "run_id": "01M75XE4FYNK8QKDRB5J32PG65",
+      "job_id": "01M75XDY63P7R4ACCA7GMSMZ8A",
+      "thread_id": "f6bd9f9d-c563-4d19-877f-18bf64629839",
+      "trigger_key": "01M75XE4FYNK8QKDRB5J32PG65",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-1-182024",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:99751d0a0c12c7aa705af1ffe1b9952e2ab05889ec2e9523063698e51dcf5fb5"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-1-182024",
+        "prompt": "Load the forecast skill and follow its five steps for Austin.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-1.txt"
+      },
+      "state": "failed",
+      "verdict": "Exit check failed: [stderr]\ngrep: forecast.md: No such file or directory\n\n[exit code: 2]",
+      "started_at": "2026-11-11T18:20:32.130321+00:00",
+      "finished_at": "2026-11-11T18:20:39.818211+00:00",
+      "spend_usd": "0.003481600000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75XF3ZWJKXA53G34S2VT34K",
+      "job_id": "01M75XDY63P7R4ACCA7GMSMZ8A",
+      "thread_id": "be756e38-695f-483d-b784-cbe23353cd0c",
+      "trigger_key": "2026-11-11T18:21:00+00:00",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-1-182024",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:99751d0a0c12c7aa705af1ffe1b9952e2ab05889ec2e9523063698e51dcf5fb5"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-1-182024",
+        "prompt": "Load the forecast skill and follow its five steps for Austin.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-1.txt"
+      },
+      "state": "failed",
+      "verdict": "Exit check failed: [stderr]\ngrep: forecast.md: No such file or directory\n\n[exit code: 2]",
+      "started_at": "2026-11-11T18:21:04.390753+00:00",
+      "finished_at": "2026-11-11T18:21:13.900959+00:00",
+      "spend_usd": "0.002575600000",
+      "unpriced_lines": 0
+    }
+  ],
+  "finished": "2026-11-11T18:21:24.387738+00:00"
+}

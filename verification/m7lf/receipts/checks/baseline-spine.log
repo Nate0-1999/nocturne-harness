@@ -1,0 +1,22 @@
+Using CPython 3.12.9
+Creating virtual environment at: .venv
+Downloading pygments (1.2MiB)
+Downloading uvloop (1.3MiB)
+Downloading pydantic-core (1.9MiB)
+Downloading sqlalchemy (2.1MiB)
+Downloading ruff (10.0MiB)
+ Downloaded pygments
+ Downloaded pydantic-core
+ Downloaded uvloop
+ Downloaded sqlalchemy
+ Downloaded ruff
+Installed 49 packages in 41ms
+........................................................................ [ 20%]
+........................................................................ [ 40%]
+........................................................................ [ 60%]
+........................................................................ [ 80%]
+.............................................................ss......    [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_unbuilt_rules.py:6: r11-2: shared Palaces and revocable principal grants are horizon work
+SKIPPED [1] tests/test_unbuilt_rules.py:12: r9-9: worker/local cost stores have not converged into the spend ledger
+355 passed, 2 skipped in 35.11s

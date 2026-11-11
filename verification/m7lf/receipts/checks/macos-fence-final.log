@@ -1,0 +1,100 @@
+......FF..........                                                       [100%]
+=================================== FAILURES ===================================
+_____________________ test_shell_fence_rules[unix-network] _____________________
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-1314/test_shell_fence_rules_unix_ne0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1211be660>
+rule = 'unix-network'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "rule",
+        [
+            "location",
+            "outside",
+            "symlink",
+            "scratch",
+            "network",
+            "remote",
+            "unix-network",
+            "unix-remote",
+            "vault",
+            "credentials",
+        ],
+    )
+    async def test_shell_fence_rules(tmp_path: Path, monkeypatch, rule: str):
+        """ADR-015, D.2 103, A-084: prevent wrong writes, secret disclosure and network escapes.
+        The same table runs on macOS Seatbelt and Linux bubblewrap, without mocked shell results.
+        """
+        ready, message = fence_status()
+        if not ready:
+            pytest.skip(message)
+        current, outside, home = (tmp_path / name for name in ("current", "outside", "home"))
+        for path in (current, outside, home / "vault"):
+            path.mkdir(parents=True)
+        monkeypatch.setenv("NOCTURNE_HOME", str(home))
+        (home / "vault/key.env").write_text("VAULT_MARKER_617")
+        (current / ".env").write_text("CREDENTIAL_MARKER_617")
+        (current / "link").symlink_to(outside, target_is_directory=True)
+        crossings = Crossings(
+            thread={"remote", "credentials", f"workspace:{home}"} if rule == "vault" else set()
+        )
+        if rule in {"remote", "unix-remote"}:
+            crossings.thread.add("remote")
+        unix = rule.startswith("unix-")
+        listener = socket.socket(socket.AF_UNIX if unix else socket.AF_INET)
+>       listener.bind(str(tmp_path / "host.sock") if unix else ("127.0.0.1", 0))
+E       OSError: AF_UNIX path too long
+
+tests/test_shell_fence.py:51: OSError
+_____________________ test_shell_fence_rules[unix-remote] ______________________
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-1314/test_shell_fence_rules_unix_re0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1212423c0>
+rule = 'unix-remote'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "rule",
+        [
+            "location",
+            "outside",
+            "symlink",
+            "scratch",
+            "network",
+            "remote",
+            "unix-network",
+            "unix-remote",
+            "vault",
+            "credentials",
+        ],
+    )
+    async def test_shell_fence_rules(tmp_path: Path, monkeypatch, rule: str):
+        """ADR-015, D.2 103, A-084: prevent wrong writes, secret disclosure and network escapes.
+        The same table runs on macOS Seatbelt and Linux bubblewrap, without mocked shell results.
+        """
+        ready, message = fence_status()
+        if not ready:
+            pytest.skip(message)
+        current, outside, home = (tmp_path / name for name in ("current", "outside", "home"))
+        for path in (current, outside, home / "vault"):
+            path.mkdir(parents=True)
+        monkeypatch.setenv("NOCTURNE_HOME", str(home))
+        (home / "vault/key.env").write_text("VAULT_MARKER_617")
+        (current / ".env").write_text("CREDENTIAL_MARKER_617")
+        (current / "link").symlink_to(outside, target_is_directory=True)
+        crossings = Crossings(
+            thread={"remote", "credentials", f"workspace:{home}"} if rule == "vault" else set()
+        )
+        if rule in {"remote", "unix-remote"}:
+            crossings.thread.add("remote")
+        unix = rule.startswith("unix-")
+        listener = socket.socket(socket.AF_UNIX if unix else socket.AF_INET)
+>       listener.bind(str(tmp_path / "host.sock") if unix else ("127.0.0.1", 0))
+E       OSError: AF_UNIX path too long
+
+tests/test_shell_fence.py:51: OSError
+=========================== short test summary info ============================
+FAILED tests/test_shell_fence.py::test_shell_fence_rules[unix-network] - OSEr...
+FAILED tests/test_shell_fence.py::test_shell_fence_rules[unix-remote] - OSErr...
+2 failed, 16 passed in 4.11s

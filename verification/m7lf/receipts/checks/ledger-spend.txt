@@ -1,0 +1,2 @@
+openai/gpt-4.1-mini 0.05190440
+total 0.05190440

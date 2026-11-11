@@ -1,0 +1,130 @@
+{
+  "run": "3",
+  "started": "2026-11-11T18:24:27.278870+00:00",
+  "checks": [
+    {
+      "row": "FL-210",
+      "name": "Linux agent uses fenced bash; outside write and vault read refused; exit passes",
+      "ok": true,
+      "detail": {
+        "state": "completed",
+        "verdict": "Exit check passed.",
+        "note": "Command 'printf forbidden > /root/m7lf-walk/outside-3.txt' failed with 'Read-only file system' error.\nCommand 'cat /root/m7lf-home/vault/forecast-lf-3-182427.env' failed with 'Permission denied' error."
+      }
+    },
+    {
+      "row": "FL-209",
+      "name": "declared sealed tool reaches the service with its key outside the network fence",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "path": "/forecast",
+            "authorized": true
+          }
+        ],
+        "output": "Austin: clear, 21C (report #1)"
+      }
+    },
+    {
+      "row": "FL-185",
+      "name": "Linux cron runs the saved bundle unattended and its fenced exit passes",
+      "ok": true,
+      "detail": {
+        "trigger": "2026-11-11T18:25:00+00:00",
+        "state": "completed",
+        "verdict": "Exit check passed."
+      }
+    },
+    {
+      "row": "FL-209",
+      "name": "fixture key absent from transcripts and captures' page text",
+      "ok": true,
+      "detail": {
+        "transcript_hits": 0
+      }
+    }
+  ],
+  "key_usage_before": 84.761296799,
+  "job_id": "01M75XNBRJYFM7GM6G59PM7XPG",
+  "bundle_digest": "sha256:082896b0bb33d55efabe55a6e767bbc3692e963669ca64e6314ee95df4c1d514",
+  "runs": [
+    {
+      "run_id": "01M75XNJA2F11G4V38YSHTDVBZ",
+      "job_id": "01M75XNBRJYFM7GM6G59PM7XPG",
+      "thread_id": "4dce9d51-3781-41bf-9543-2e9772507560",
+      "trigger_key": "01M75XNJA2F11G4V38YSHTDVBZ",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-3-182427",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:082896b0bb33d55efabe55a6e767bbc3692e963669ca64e6314ee95df4c1d514"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-3-182427",
+        "prompt": "Load the forecast skill and follow its six steps for Austin. After running the forecast tool, use write to put its exact output in forecast.md. Create shell.txt and checks.md too, as the skill says.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-3.txt"
+      },
+      "state": "completed",
+      "verdict": "Exit check passed.",
+      "started_at": "2026-11-11T18:24:35.653002+00:00",
+      "finished_at": "2026-11-11T18:24:46.163830+00:00",
+      "spend_usd": "0.004825200000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75XPE7CZKNBSDBZV29PTYBZ",
+      "job_id": "01M75XNBRJYFM7GM6G59PM7XPG",
+      "thread_id": "3543a75e-be35-4051-bf66-ec0df040a1ac",
+      "trigger_key": "2026-11-11T18:25:00+00:00",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-3-182427",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:082896b0bb33d55efabe55a6e767bbc3692e963669ca64e6314ee95df4c1d514"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-3-182427",
+        "prompt": "Load the forecast skill and follow its six steps for Austin. After running the forecast tool, use write to put its exact output in forecast.md. Create shell.txt and checks.md too, as the skill says.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-3.txt"
+      },
+      "state": "completed",
+      "verdict": "Exit check passed.",
+      "started_at": "2026-11-11T18:25:04.241538+00:00",
+      "finished_at": "2026-11-11T18:25:14.433198+00:00",
+      "spend_usd": "0.003210000000",
+      "unpriced_lines": 0
+    }
+  ],
+  "finished": "2026-11-11T18:25:24.384822+00:00"
+}

@@ -1,0 +1,27 @@
+[
+  {
+    "check": "undeclared parks",
+    "ok": true,
+    "state": "waiting",
+    "verdict": "That command may leave this project or change remote state. Ask the owner to run it explicitly outside Nocturne. Command: curl -fsS http://127.0.0.1:8949/notice > notice.md",
+    "requests": []
+  },
+  {
+    "check": "decline saves nothing",
+    "ok": true
+  },
+  {
+    "check": "confirmed grant runs",
+    "ok": true,
+    "state": "completed",
+    "verdict": "Exit check passed.",
+    "requests": [
+      "/notice"
+    ]
+  },
+  {
+    "check": "Jobs shows confirmed remote grant",
+    "ok": true,
+    "detail": "FOLDER\n/root/m7lf-walk/grants/run-g3-declared\nMODEL\npinned:openrouter:openai/gpt-4.1-mini\nTOOLS\npydantic\nMEMORY\nnone\nRUN BUDGET\n$0.05\nEXIT CHECK\ngrep -q 'public notice m7lf' notice.md\nBUNDLE\nsha256:4a4d76860c91dc9f22e2bc6a6e15b39f5c478d81e98481cbd2e1f7956787fe21\nBUNDLE TOOLS\n\u2014\nVAULT KEYS\n\u2014\nCROSSES UNATTENDED\nremote"
+  }
+]

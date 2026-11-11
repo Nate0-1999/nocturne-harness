@@ -1,0 +1,37 @@
+[
+  {
+    "at": "2026-11-11T18:10:31.875387+00:00",
+    "label": "start",
+    "usage": 84.727208799,
+    "limit": 100,
+    "limit_remaining": 98.04217582
+  },
+  {
+    "at": "2026-11-11T18:21:31.667625+00:00",
+    "label": "after-trials",
+    "usage": 84.743326399,
+    "limit": 100,
+    "limit_remaining": 98.02605822
+  },
+  {
+    "at": "2026-11-11T18:25:17.689875+00:00",
+    "label": "before-grants-g2",
+    "usage": 84.771275999,
+    "limit": 100,
+    "limit_remaining": 97.99810862
+  },
+  {
+    "at": "2026-11-11T18:25:57.501387+00:00",
+    "label": "before-grants-g3",
+    "usage": 84.773884399,
+    "limit": 100,
+    "limit_remaining": 97.99550022
+  },
+  {
+    "at": "2026-11-11T18:27:23.324869+00:00",
+    "label": "final-walks",
+    "usage": 84.779113199,
+    "limit": 100,
+    "limit_remaining": 97.99027142
+  }
+]

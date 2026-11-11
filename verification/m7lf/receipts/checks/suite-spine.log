@@ -1,0 +1,43 @@
+.............F.......................................................... [ 20%]
+........................................................................ [ 40%]
+........................................................................ [ 60%]
+........................................................................ [ 80%]
+..........F..................................................ss......    [100%]
+=================================== FAILURES ===================================
+______________________ test_committed_openapi_is_current _______________________
+
+app = <fastapi.applications.FastAPI object at 0x10d9e63c0>
+
+    def test_committed_openapi_is_current(app: FastAPI) -> None:
+        """A-044 keeps the committed public Vitals schema literal and current."""
+        committed = json.loads((ROOT / "openapi.json").read_text(encoding="utf-8"))
+>       assert committed == app.openapi()
+E       AssertionError: assert {'components'..., ...}}, ...}} == {'components'..., ...}}, ...}}
+E         
+E         Omitting 3 identical items, use -vv to show
+E         Differing items:
+E         {'info': {'title': 'N8 Spine', 'version': '0.1.91'}} != {'info': {'title': 'N8 Spine', 'version': '0.1.92'}}
+E         Use -v to get more diff
+
+tests/test_api.py:287: AssertionError
+_____________ test_distribution_metadata_uses_the_package_version ______________
+
+    def test_distribution_metadata_uses_the_package_version() -> None:
+        """P4 is defended by verifying that distribution metadata uses the package version; this
+        prevents drift in the reproducible and least-surprise packaging boundary.
+        """
+>       assert version("nocturne-memory") == __version__ == "0.1.91"
+E       AssertionError: assert '0.1.91' == '0.1.92'
+E         
+E         - 0.1.92
+E         ?      ^
+E         + 0.1.91
+E         ?      ^
+
+tests/test_packaging.py:51: AssertionError
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_unbuilt_rules.py:6: r11-2: shared Palaces and revocable principal grants are horizon work
+SKIPPED [1] tests/test_unbuilt_rules.py:12: r9-9: worker/local cost stores have not converged into the spend ledger
+FAILED tests/test_api.py::test_committed_openapi_is_current - AssertionError:...
+FAILED tests/test_packaging.py::test_distribution_metadata_uses_the_package_version
+2 failed, 353 passed, 2 skipped in 34.87s

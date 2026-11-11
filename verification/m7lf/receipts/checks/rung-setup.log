@@ -1,0 +1,13 @@
+Preparing Nocturne's headless browser…
+ Network nocturne-210e9074_default Creating 
+ Network nocturne-210e9074_default Created 
+ Volume nocturne-210e9074_nocturne_postgres Creating 
+ Volume nocturne-210e9074_nocturne_postgres Created 
+ Container nocturne-210e9074-postgres-1 Creating 
+ Container nocturne-210e9074-postgres-1 Created 
+ Container nocturne-210e9074-postgres-1 Starting 
+ Container nocturne-210e9074-postgres-1 Started 
+ Container nocturne-210e9074-postgres-1 Waiting 
+ Container nocturne-210e9074-postgres-1 Healthy 
+Initialized Nocturne at /Users/nateoswalt/relay/m7lf/home-local. Run `nocturne up`.
+Disposable local Palace ready; verification identity only.

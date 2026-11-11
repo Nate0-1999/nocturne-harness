@@ -1,0 +1,139 @@
+........................................................................ [  3%]
+........................................................................ [  7%]
+........................................................................ [ 10%]
+........................................................................ [ 14%]
+........................................................................ [ 18%]
+........................................................................ [ 21%]
+........................................................................ [ 25%]
+........................................................................ [ 29%]
+........................................................................ [ 32%]
+........................................................................ [ 36%]
+........................................................................ [ 40%]
+........................................................................ [ 43%]
+........................................................................ [ 47%]
+........................................................................ [ 50%]
+........................................................................ [ 54%]
+........................................................................ [ 58%]
+........................................................................ [ 61%]
+........................................................................ [ 65%]
+........................................................................ [ 69%]
+........................................................................ [ 72%]
+........................................................................ [ 76%]
+........................................................................ [ 80%]
+........................................................................ [ 83%]
+.....................................................................FF. [ 87%]
+........................................................................ [ 90%]
+........................................................................ [ 94%]
+........................................................................ [ 98%]
+..ssss.............................                                      [100%]
+=================================== FAILURES ===================================
+_____________________ test_shell_fence_rules[unix-network] _____________________
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-1315/test_shell_fence_rules_unix_ne0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x160f5dcd0>
+rule = 'unix-network'
+
+    
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "rule",
+        [
+            "location",
+            "outside",
+            "symlink",
+            "scratch",
+            "network",
+            "remote",
+            "unix-network",
+            "unix-remote",
+            "vault",
+            "credentials",
+        ],
+    )
+    async def test_shell_fence_rules(tmp_path: Path, monkeypatch, rule: str):
+        """ADR-015, D.2 103, A-084: prevent wrong writes, secret disclosure and network escapes.
+        The same table runs on macOS Seatbelt and Linux bubblewrap, without mocked shell results.
+        """
+        ready, message = fence_status()
+        if not ready:
+            pytest.skip(message)
+        current, outside, home = (tmp_path / name for name in ("current", "outside", "home"))
+        for path in (current, outside, home / "vault"):
+            path.mkdir(parents=True)
+        monkeypatch.setenv("NOCTURNE_HOME", str(home))
+        (home / "vault/key.env").write_text("VAULT_MARKER_617")
+        (current / ".env").write_text("CREDENTIAL_MARKER_617")
+        (current / "link").symlink_to(outside, target_is_directory=True)
+        crossings = Crossings(
+            thread={"remote", "credentials", f"workspace:{home}"} if rule == "vault" else set()
+        )
+        if rule in {"remote", "unix-remote"}:
+            crossings.thread.add("remote")
+        unix = rule.startswith("unix-")
+>       socket_home = tempfile.TemporaryDirectory(prefix="nocturne-fence-", dir="/tmp")
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       OSError: AF_UNIX path too long
+
+tests/test_shell_fence.py:51: OSError
+_____________________ test_shell_fence_rules[unix-remote] ______________________
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-1315/test_shell_fence_rules_unix_re0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x160f7a840>
+rule = 'unix-remote'
+
+    
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "rule",
+        [
+            "location",
+            "outside",
+            "symlink",
+            "scratch",
+            "network",
+            "remote",
+            "unix-network",
+            "unix-remote",
+            "vault",
+            "credentials",
+        ],
+    )
+    async def test_shell_fence_rules(tmp_path: Path, monkeypatch, rule: str):
+        """ADR-015, D.2 103, A-084: prevent wrong writes, secret disclosure and network escapes.
+        The same table runs on macOS Seatbelt and Linux bubblewrap, without mocked shell results.
+        """
+        ready, message = fence_status()
+        if not ready:
+            pytest.skip(message)
+        current, outside, home = (tmp_path / name for name in ("current", "outside", "home"))
+        for path in (current, outside, home / "vault"):
+            path.mkdir(parents=True)
+        monkeypatch.setenv("NOCTURNE_HOME", str(home))
+        (home / "vault/key.env").write_text("VAULT_MARKER_617")
+        (current / ".env").write_text("CREDENTIAL_MARKER_617")
+        (current / "link").symlink_to(outside, target_is_directory=True)
+        crossings = Crossings(
+            thread={"remote", "credentials", f"workspace:{home}"} if rule == "vault" else set()
+        )
+        if rule in {"remote", "unix-remote"}:
+            crossings.thread.add("remote")
+        unix = rule.startswith("unix-")
+>       socket_home = tempfile.TemporaryDirectory(prefix="nocturne-fence-", dir="/tmp")
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       OSError: AF_UNIX path too long
+
+tests/test_shell_fence.py:51: OSError
+=============================== warnings summary ===============================
+tests/test_agent_runtime.py::test_sd023_openrouter_usage_only_chunks_price_every_build_request
+  /Users/nateoswalt/relay/m7lf/harness/tests/test_agent_runtime.py:984: PydanticAIDeprecationWarning: `httpx.AsyncClient` support for OpenAI-compatible providers is deprecated and will be removed in v3; use `httpx2.AsyncClient` instead.
+    provider=OpenRouterProvider(api_key="test", http_client=http_client),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_unbuilt_rules.py:6: r7-16: edge-on terminal stack mode is unbuilt
+SKIPPED [1] tests/test_unbuilt_rules.py:12: r9-6: per-role strongest/leaf model policies await SD-018
+SKIPPED [1] tests/test_unbuilt_rules.py:18: r8-3: R10 superseded the Cube; flat focus camera awaits owner ruling
+SKIPPED [1] tests/test_unbuilt_rules.py:24: r8-7: hue-band validator is unbuilt; owner has not defined numeric bands
+FAILED tests/test_shell_fence.py::test_shell_fence_rules[unix-network] - OSEr...
+FAILED tests/test_shell_fence.py::test_shell_fence_rules[unix-remote] - OSErr...
+2 failed, 1973 passed, 4 skipped, 3 deselected, 1 warning in 99.28s (0:01:39)

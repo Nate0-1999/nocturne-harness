@@ -1,0 +1,4 @@
+PASS FL-210: Linux agent uses fenced bash; outside write and vault read refused; exit passes
+PASS FL-209: declared sealed tool reaches the service with its key outside the network fence
+PASS FL-185: Linux cron runs the saved bundle unattended and its fenced exit passes
+PASS FL-209: fixture key absent from transcripts and captures' page text

@@ -1,0 +1,11 @@
+INFO:     Started server process [6546]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8899 (Press CTRL+C to quit)
+INFO:     127.0.0.1:61362 - "PUT /v1/model-policies/curator HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61363 - "PUT /v1/model-policies/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61364 - "PUT /v1/model-policies/subagent HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61365 - "PUT /v1/model-policies/judge HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61366 - "GET /v1/model-policies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64744 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64745 - "GET /v1/identity HTTP/1.1" 200 OK
