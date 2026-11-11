@@ -1,0 +1,10 @@
+[
+  {
+    "path": "/forecast",
+    "authorized": true
+  },
+  {
+    "path": "/forecast",
+    "authorized": true
+  }
+]

@@ -12,6 +12,7 @@ import shlex
 import shutil
 import signal
 import subprocess
+import sys
 import tempfile
 import unicodedata
 import warnings
@@ -59,6 +60,7 @@ from harness.envelope import generate_ulid
 from harness.onboarding import nocturne_home
 from harness.progressive_prompt import rendered_location
 from harness.project_path import project_environment, repository_root
+from harness.shell_fence import deny_paths, linux_fence, network_filter
 from harness.spine_client import SpineClientError
 from harness.toolset import (
     AgentLocation,
@@ -778,7 +780,7 @@ class PydanticHarnessToolset:
         finally:
             await shell.__aexit__()
         self._emit("write", self._location.cwd)
-        if "operation not permitted" in result.lower():
+        if "operation not permitted" in result.lower() or "read-only file system" in result.lower():
             # F134 (M3EX-02): the sandbox's refusal names the movement remedy.
             result += "\n" + _SHELL_WRITE_REMEDY.format(location=self._location.cwd)
         if _NO_NETWORK.search(result):
@@ -877,7 +879,12 @@ class PydanticHarnessToolset:
                 f"Stay inside {self._location.workspace_root}.",
                 "location",
             )
-        sandbox = Path("/usr/bin/sandbox-exec")
+        linux = sys.platform == "linux"
+        sandbox = (
+            Path(shutil.which("bwrap") or "/usr/bin/bwrap")
+            if linux
+            else Path("/usr/bin/sandbox-exec")
+        )
         if not sandbox.is_file():
             # WALL owner files / ADR015: never run an unfenced shell when sandboxing is absent.
             raise ToolsetError(
@@ -891,6 +898,7 @@ class PydanticHarnessToolset:
         # v2.125: git on the enclosing repository works from any folder inside it; _bash
         # logs it with WHERE like every action.
         git_writes = ""
+        paths: list[Path] = []
         if repository is not None:
             git_dir = Path(
                 subprocess.check_output(
@@ -950,6 +958,44 @@ class PydanticHarnessToolset:
         )
         script = shlex.quote(f"trap : EXIT; {activate}{command}")
         wrapped = f"{sandbox} -p {shlex.quote(profile)} /bin/zsh -lc {script} {marker}"
+        if linux:
+            # WALL owner files / ADR-015, F217: the same location exceptions as Seatbelt.
+            writable = [self._location.cwd, self._scratch, *paths, *self.crossings.folders()]
+            if environment_target is not None:
+                writable.append(environment_target)
+            arguments = linux_fence(writable=writable, remote=remote)
+            home = nocturne_home().resolve()
+            credentials = {home / "vault", home / "env"}
+            credentials.update(Path.home() / name for name in _CREDENTIAL_SEGMENTS)
+            credentials.add(Path.home() / ".config/gcloud")
+            # F217: a command assembled at runtime cannot bypass the credential-path wall.
+            for root, dirs, files in os.walk(self._location.workspace_root):
+                for name in [*dirs, *files]:
+                    target = Path(root) / name
+                    if _credential_path(target):
+                        credentials.add(target)
+                dirs[:] = [name for name in dirs if not _credential_path(Path(root) / name)]
+            deny_paths(arguments, credentials, scratch=self._scratch)
+            redirect = ""
+            policy = self._scratch / "network.bpf"
+            if not policy.exists():
+                network_filter(policy)
+            arguments.extend(("--ro-bind", str(policy), str(policy)))
+            if not remote:
+                arguments.extend(("--seccomp", "3"))
+                redirect = f"3<{shlex.quote(str(policy))} "
+            wrapped = shlex.join(
+                [
+                    *arguments,
+                    "/bin/bash",
+                    "--noprofile",
+                    "--norc",
+                    "-c",
+                    f"trap : EXIT; {activate}{command}",
+                    marker,
+                ]
+            )
+            wrapped = redirect + wrapped
         environment = {
             "PATH": os.environ.get("PATH", "/usr/bin:/bin:/usr/sbin:/sbin"),
             "LANG": os.environ.get("LANG", "en_US.UTF-8"),

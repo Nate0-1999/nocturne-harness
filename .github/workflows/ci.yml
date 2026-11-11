@@ -103,6 +103,36 @@ jobs:
           cd /tmp
           /tmp/nocturne-wheel/bin/python "$GITHUB_WORKSPACE/scripts/verify_wheel.py"
 
+  shell-fence:
+    name: Linux shell fence
+    needs: companion
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Nate0-1999/nocturne-memory
+          ref: ${{ needs.companion.outputs.ref }}
+          path: _fence/spine
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Linux fence
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bubblewrap
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - name: Install fence tests
+        run: |
+          python -m pip install uv
+          uv export --frozen --extra dev --no-emit-project --no-emit-package nocturne-memory --no-hashes -o /tmp/fence-constraints.txt
+          python -m pip install -c /tmp/fence-constraints.txt ./_fence/spine -e ".[dev]"
+      - name: Exercise the shared shell rules on Linux
+        run: |
+          python -c 'from harness.shell_fence import fence_status; ready, message = fence_status(); assert ready, message'
+          pytest -q tests/test_shell_fence.py
+
   web:
     name: Web lint, build, and UI canon
     needs: companion

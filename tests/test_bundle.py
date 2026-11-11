@@ -9,6 +9,7 @@ from spine.jobs import WorkflowDefinition
 from harness.bundle import SealedTools, bundle_record, digest, pack, set_vault
 from harness.jobs import JobScheduler, WorkflowSave
 from harness.onboarding import OnboardingError
+from harness.shell_fence import fence_status
 from harness.toolset import open_standard_toolset
 
 SECRET = "fixture-key-7f3a9c"
@@ -60,9 +61,11 @@ async def test_the_agent_never_reads_the_vault_and_a_saved_tool_runs_with_its_ke
         assert read.content == "The vault holds workflow keys; only a bundle's own tools read it."
         undeclared = await toolset.execute("bash", {"command": "nocturne tool run show one"})
         assert SECRET not in undeclared.content
-        if Path("/usr/bin/sandbox-exec").is_file():
+        if fence_status()[0]:
             shell = await toolset.execute("bash", {"command": f"cat {vault}"})
-            assert SECRET not in shell.content and "not permitted" in shell.content
+            assert SECRET not in shell.content and (
+                "not permitted" in shell.content or "Permission denied" in shell.content
+            )
         toolset.crossings.tools = sealed
         ran = await toolset.execute("bash", {"command": "nocturne tool run show one 'two words'"})
         assert ran.success and ran.content == "key=[vault:SHOW_KEY] args=one two words\n"

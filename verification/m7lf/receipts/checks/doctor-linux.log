@@ -1,0 +1,15 @@
+Identity: nocturne-verification-cfa46bcb-6eea-41e0-b1e6-ac367db67037; home: /root/m7lf-home
+Shell fence: bubblewrap ready (user, mount, PID and network namespaces)
+Local models: none detected; start Ollama or llama.cpp, or set a URL in Models
+Local when offline: off
+Conversation transcript backup: off
+Palace doctor: failed
+Database: unavailable
+Conversation journal: 1.7 MiB
+Backups: 0 verified, 0.0 B
+Disk: 8.4 GiB free of 29.4 GiB
+Web app: served by nocturne-verification-cfa46bcb-6eea-41e0-b1e6-ac367db67037 at /root/m7lf-home
+Port: 8898 is owned by the running Nocturne daemon
+Startup toolchain: already running
+Nocturne memory: 334.6 MiB; warning above 390.5 MiB (10% of this machine's 3.8 GiB)
+Problem: Doctor could not reach the local Palace database.

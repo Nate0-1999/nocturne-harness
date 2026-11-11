@@ -1,0 +1,8 @@
+Resolved 127 packages in 2ms
+   Building nocturne-memory @ file:///opt/nocturne/spine
+      Built nocturne-memory @ file:///opt/nocturne/spine
+Prepared 1 package in 359ms
+Uninstalled 1 package in 0.68ms
+Installed 1 package in 0.37ms
+ - nocturne-memory==0.1.91 (from file:///opt/nocturne/spine)
+ + nocturne-memory==0.1.92 (from file:///opt/nocturne/spine)

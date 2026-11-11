@@ -1,0 +1,14 @@
+Identity: nocturne-verification-cfa46bcb-6eea-41e0-b1e6-ac367db67037; home: /Users/nateoswalt/relay/m7lf/home-local
+Shell fence: Seatbelt ready
+Local models: none detected; start Ollama or llama.cpp, or set a URL in Models
+Local when offline: off
+Conversation transcript backup: off
+Palace doctor: healthy
+Database: 9.8 MiB
+Conversation journal: 0.0 B
+Backups: 0 verified, 0.0 B
+Disk: 374.8 GiB free of 926.4 GiB
+Web app: served by nocturne-verification-cfa46bcb-6eea-41e0-b1e6-ac367db67037 at /Users/nateoswalt/relay/m7lf/home-local
+Port: 8899 is owned by the running Nocturne daemon
+Startup toolchain: already running
+Nocturne memory: not running; warning above 3.6 GiB (10% of this machine's 36.0 GiB)

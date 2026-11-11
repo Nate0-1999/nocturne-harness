@@ -1,0 +1,11 @@
+{
+  "linux_container_removed": true,
+  "local_palace_project_removed": "nocturne-210e9074",
+  "active_runs_before_stop": 0,
+  "enabled_cron_jobs_before_stop": 0,
+  "host_services_stopped": true,
+  "browsers_closed": true,
+  "final_sweep": "nothing to stop",
+  "scratch_home_and_fixture_vault_copy_removed": true,
+  "cloud_resources_created": 0
+}

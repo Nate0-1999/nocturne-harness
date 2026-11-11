@@ -1,0 +1,1 @@
+(False, "unusable; install libseccomp2, enable user namespaces and permit bubblewrap's namespace/mount operations in the host or container policy; then run nocturne doctor again")

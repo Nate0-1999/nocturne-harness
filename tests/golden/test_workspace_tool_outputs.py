@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from harness.pydantic_ai_adapter import WORKSPACE_INSTRUCTIONS
+from harness.shell_fence import fence_status
 from harness.toolset import open_standard_toolset
 
 
@@ -73,7 +74,7 @@ async def test_seven_coding_tool_outputs_are_explicit(tmp_path: Path) -> None:
     assert not refused_edit.success and refused_edit.content == exact_refusal
     assert not (sub / "new.txt").exists()
     assert (sub / "deep.txt").read_text() == "before\n"
-    if Path("/usr/bin/sandbox-exec").is_file():
+    if fence_status()[0]:
         assert shell.success
         assert shell.content == "[stdout]\nshell-output"
     else:

@@ -1,0 +1,9 @@
+{
+  "run": "trial2",
+  "started": "2026-11-11T18:14:52.308937+00:00",
+  "checks": [],
+  "key_usage_before": 84.727208799,
+  "job_id": "01M75X3TQ288S49F6FCJYWGF1G",
+  "bundle_digest": "sha256:2f24d6f1505acb0711dda127921f752271ec279e4ce36d04db1d0f0f65958998",
+  "finished": "2026-11-11T18:15:28.244665+00:00"
+}

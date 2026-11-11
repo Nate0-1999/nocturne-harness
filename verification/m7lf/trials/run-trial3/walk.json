@@ -1,0 +1,130 @@
+{
+  "run": "trial3",
+  "started": "2026-11-11T18:16:00.541708+00:00",
+  "checks": [
+    {
+      "row": "FL-210",
+      "name": "Linux agent uses fenced bash; outside write and vault read refused; exit passes",
+      "ok": true,
+      "detail": {
+        "state": "completed",
+        "verdict": "Exit check passed.",
+        "note": "The attempt to write to /root/m7lf-walk/outside-trial3.txt was refused with a read-only file system error.\nThe attempt to read /root/m7lf-home/vault/forecast-lf-trial3-181600.env was refused with a permission denied error."
+      }
+    },
+    {
+      "row": "FL-209",
+      "name": "declared sealed tool reaches the service with its key outside the network fence",
+      "ok": true,
+      "detail": {
+        "requests": [
+          {
+            "path": "/forecast",
+            "authorized": true
+          }
+        ],
+        "output": "Austin: clear, 21C (report #1)\n"
+      }
+    },
+    {
+      "row": "FL-185",
+      "name": "Linux cron runs the saved bundle unattended and its fenced exit passes",
+      "ok": true,
+      "detail": {
+        "trigger": "2026-11-11T18:17:00+00:00",
+        "state": "completed",
+        "verdict": "Exit check passed."
+      }
+    },
+    {
+      "row": "FL-209",
+      "name": "fixture key absent from transcripts and captures' page text",
+      "ok": true,
+      "detail": {
+        "transcript_hits": 0
+      }
+    }
+  ],
+  "key_usage_before": 84.727208799,
+  "job_id": "01M75X5X6F3GYS55D0BRZB3437",
+  "bundle_digest": "sha256:5ddcb5b944406a11233bef4de3c7511e863db96ad9a6102a5227bc6b1d59b892",
+  "runs": [
+    {
+      "run_id": "01M75X63GSJTJK58KWD0RD2KW9",
+      "job_id": "01M75X5X6F3GYS55D0BRZB3437",
+      "thread_id": "26cf9c5f-289b-4c24-a64e-27c46490343e",
+      "trigger_key": "01M75X63GSJTJK58KWD0RD2KW9",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-trial3-181600",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:5ddcb5b944406a11233bef4de3c7511e863db96ad9a6102a5227bc6b1d59b892"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-trial3-181600",
+        "prompt": "Load the forecast skill and follow its five steps for Austin.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-trial3.txt"
+      },
+      "state": "completed",
+      "verdict": "Exit check passed.",
+      "started_at": "2026-11-11T18:16:08.987732+00:00",
+      "finished_at": "2026-11-11T18:16:19.267953+00:00",
+      "spend_usd": "0.004813600000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75X7T6JPXGNM756BXKXMAHX",
+      "job_id": "01M75X5X6F3GYS55D0BRZB3437",
+      "thread_id": "f8ccdce5-51b1-4f91-ae10-3a856f7102c9",
+      "trigger_key": "2026-11-11T18:17:00+00:00",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-trial3-181600",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:5ddcb5b944406a11233bef4de3c7511e863db96ad9a6102a5227bc6b1d59b892"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-trial3-181600",
+        "prompt": "Load the forecast skill and follow its five steps for Austin.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-trial3.txt"
+      },
+      "state": "completed",
+      "verdict": "Exit check passed.",
+      "started_at": "2026-11-11T18:17:04.984098+00:00",
+      "finished_at": "2026-11-11T18:17:17.564954+00:00",
+      "spend_usd": "0.003807600000",
+      "unpriced_lines": 0
+    }
+  ],
+  "finished": "2026-11-11T18:17:29.069474+00:00"
+}
