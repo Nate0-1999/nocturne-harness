@@ -15,7 +15,6 @@ import sys
 import tarfile
 import tempfile
 import time
-from dataclasses import replace
 from datetime import UTC, datetime
 from importlib.metadata import version
 from pathlib import Path
@@ -26,7 +25,7 @@ from harness import __version__
 from harness.bundle import check, pack, read_vault
 from harness.envelope import generate_ulid
 from harness.jobs_cli import _request
-from harness.onboarding import OnboardingError, _write_config, load_config
+from harness.onboarding import OnboardingError, _atomic_write_config, load_config
 
 
 def add_commands(commands):
@@ -523,7 +522,15 @@ def targets_nocturne(args, *, stdout):
             or any(c.isspace() for c in args.address)
         ):
             raise OnboardingError("Supply one SSH address, for example user@host.")
-        _write_config(replace(config, targets={**config.targets, args.name: args.address}))
+        value = json.dumps(json.dumps({**config.targets, args.name: args.address}))
+        lines = config.path.read_text().splitlines(keepends=True)
+        _atomic_write_config(
+            config.path,
+            "".join(
+                f"NOCTURNE_TARGETS={value}\n" if line.startswith("NOCTURNE_TARGETS=") else line
+                for line in lines
+            ),
+        )
         print(f"{args.name}: {args.address}", file=stdout)
         return 0
     elif args.action == "init":
