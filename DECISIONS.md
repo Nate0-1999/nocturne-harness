@@ -4309,6 +4309,17 @@ and new cache epoch, and keeps the local choice until changed explicitly. HTTP r
 do not trigger fallback. Local requests use a placeholder key, never a cloud credential.
 The existing memory copy, receipt queue and journal carry disconnected turns.
 
+## M6SP — Spend on the bottom strip [P4.1, P2.4]
+
+PRECEDENT: PLAN M6SP; FL-160 161 156; A-080; SD-075; M3SR, M4MS.
+A fixed strip under the Stage draws spend per minute for agents, sub-agents, models, memory
+curation and total, one graph each on one shared scale, over 10 minutes, an hour or today
+(local midnight). Every receipt names a model, so a summed Models line would repeat Total:
+that graph draws one line per model. The Spend module's graphs are the same component.
+The saving from cache reads is priced at the model list's prompt minus cache-read price,
+because receipts split one native cost pro rata across token classes. Drift compares today's
+UTC ledger with the key's bill for today; past 5% of the bill the strip says so. M4MS's
+caution stands in the tooltip: the key can also pay for other Palaces and apps.
 ## M6MM — The memory module's hands [P1.3, P4]
 
 PRECEDENT: FL-121, FL-168, D.2 092 (informed restore), M3MU, M3UI, M3EXF, M4GA, M4BW.
@@ -4346,6 +4357,24 @@ the reconnected thread's snapshot lacks it; the run loop runs a prompt id once. 
 "Clarification logged" only when the stack's interventions hold the line, and shows the
 steering beside the prompt, so it survives the next round replacing the attempts.
 
+## M6CP — Ask before a plan loses context [P1.2, P2.5]
+
+PRECEDENT: FL-061/084; M4IN; M5LN; D.2 144/153/177; A-083.
+`/compact plan on` journals the summarizer's questions, waits for the next answer and
+passes both to triage; the default strategy and admission-before-drop path stay intact.
+The console reads generation lineage from the existing optimization ledger and sends
+size back-tests through its rack action. Instructions and size join the scorer proposal
+and its existing activation; previews retain only a receipt. Local Palace verification
+replaces GCP staging under the owner's F214 instruction.
+
+## M6LP — Show the learner's observations [P1.2, P2.5]
+
+The Injection Console keeps its history, terrain and controls together. Terrain axes use
+the existing continuous controls; DEEP measures the selected pair. Fit progress plots
+server-observed training loss, with timestamps and no invented percentage complete.
+Global and effective project weights are displayed together, with residuals below.
+Resume (lp09): the weights tables name a project by its folder, the path on hover (FL-205); a
+whole path widened the table into the next column on the real walk.
 ## M6CR — The elbow says why; a budget buys the most intelligence an hour allows [P4]
 
 PRECEDENT: PLAN M6CR; FL-152 153 154; A-020, A-021, A-082; M3EL, M3MD, M3SR.

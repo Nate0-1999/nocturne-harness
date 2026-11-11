@@ -758,10 +758,13 @@ class SpendRateLane(ContractModel):
 class MessageCache(ContractModel):
     thread_id: UUID
     prompt_id: str | None
+    model: str | None = None
     first_request_at: datetime
     fresh_tokens: NonNegativeDecimalString
     cached_tokens: NonNegativeDecimalString
     cache_write_tokens: NonNegativeDecimalString
+    # FL-161: Harness-priced at the source's list prices; null when a price is unpublished.
+    saved_usd: NonNegativeDecimalString | None = None
 
 
 class DailySpend(ContractModel):
@@ -836,6 +839,9 @@ class VitalsReconciliation(ContractModel):
     ledger_since_baseline_usd: NonNegativeDecimalString | None
     drift_usd: SignedDecimalString | None
     tolerance_usd: NonNegativeDecimalString | None
+    # A-080: today's (UTC) bill and ledger; an older Palace sends neither.
+    broker_day_usd: NonNegativeDecimalString | None = None
+    ledger_day_usd: NonNegativeDecimalString | None = None
     unpriced_lines: int = Field(strict=True)
     source: Literal["openrouter:/api/v1/key"] | None
     error_code: Literal["broker_unavailable", "invalid_broker_response"] | None
@@ -951,11 +957,13 @@ class RetrainJobView(ContractModel):
     status: Literal["pending", "completed", "failed"]
     result: RetrainResponse | None = None
     error: StrictStr | None = None
+    progress: list[JsonObject] = Field(default_factory=list)
 
 
 class ScorerConfigurationView(ContractModel):
     axes: JsonObject = Field(default_factory=dict)
     project_offsets: JsonObject = Field(default_factory=dict)
+    project_weights: JsonObject = Field(default_factory=dict)
     version: NonBlankString
     created_at: datetime
     status: Literal["active", "proposed", "inactive"]
@@ -986,10 +994,12 @@ class ScorerSimulationRequest(ContractModel):
     base_version: NonBlankString
     values: ScorerValues
     slice_parameter_id: NonBlankString
+    terrain_parameters: tuple[str, str] = ("scorer.tau", "scorer.memory_context_share")
 
 
 class ScorerSimulationResponse(ContractModel):
     terrain: list[dict[str, float]] = Field(default_factory=list)
+    terrain_parameters: tuple[str, str] = ("scorer.tau", "scorer.memory_context_share")
     simulation_digest: Annotated[StrictStr, Field()]
     base_version: NonBlankString
     values: ScorerValues
@@ -1032,6 +1042,7 @@ class RackScorerSimulationRequest(ContractModel):
     base_version: NonBlankString
     values: ScorerValues
     slice_parameter_id: NonBlankString
+    terrain_parameters: tuple[str, str] = ("scorer.tau", "scorer.memory_context_share")
 
 
 class RackScorerAuditionRequest(ContractModel):
@@ -1139,6 +1150,7 @@ _SPEND_EVENTS_RESPONSE = TypeAdapter(SpendEventsResponse)
 _SPEND_TABLE_SNAPSHOT = TypeAdapter(SpendTableSnapshot)
 _PALACE_IDENTITY = TypeAdapter(PalaceIdentity)
 _VITALS_SNAPSHOT = TypeAdapter(VitalsSnapshot)
+_VITALS_RECONCILIATION = TypeAdapter(VitalsReconciliation)
 _MEMORY_GRAPH_SNAPSHOT = TypeAdapter(MemoryGraphSnapshot)
 _SCORER_CONSOLE_SNAPSHOT = TypeAdapter(ScorerConsoleSnapshot)
 _RETRAIN_RESPONSE = TypeAdapter(RetrainResponse)
@@ -1427,6 +1439,19 @@ class SpineClient:
             self._metrics_scope = "palace" if identity.is_owner else "principal"
         return {"principal_id": principal_id, "scope": self._metrics_scope}
 
+    async def reconcile_spend(self) -> VitalsReconciliation:
+        """A-080: run the owner's broker reconciliation now."""
+
+        response = await self._request(
+            "POST",
+            "v1/spend/reconciliation",
+            params={"principal_id": self._principal_id or "local"},
+        )
+        # WALL owner authority / A-080: the shared key's bill is the owner's to read.
+        if response.status_code == 403:
+            raise SpineOwnershipError(response.json().get("detail", "Reconciliation was refused."))
+        return _expect_success(response, status=200, adapter=_VITALS_RECONCILIATION)
+
     async def record_invoice(self, invoice: InfrastructureInvoice) -> SpendEventsResponse:
         response = await self._request(
             "POST",
@@ -1498,12 +1523,36 @@ class SpineClient:
         )
         return _expect_metrics_success(response, adapter=TypeAdapter(RetrainJobView))
 
-    async def notify_compaction(self, event_uid: str, thread_id: UUID) -> None:
+    async def compaction_policy(self) -> dict:
+        response = await self._request(
+            "GET", "v1/compaction-policy", params={"principal_id": self._principal_id or "local"}
+        )
+        if response.status_code != 200:
+            _raise_problem(response)
+        return response.json()
+
+    async def compaction_backtest(self, memory_size: int | None, preview: bool) -> dict:
+        response = await self._request(
+            "POST",
+            "v1/compaction-backtest",
+            params={"principal_id": self._principal_id or "local"},
+            json_body={"memory_size": memory_size, "preview": preview},
+            timeout=360.0,
+        )
+        if response.status_code != 200:
+            _raise_problem(response)
+        return response.json()
+
+    async def notify_compaction(self, event_uid: str, thread_id: UUID, *, record=None) -> None:
         response = await self._request(
             "POST",
             "v1/compactions",
             params={"principal_id": self._principal_id or "local"},
-            json_body={"event_uid": event_uid, "thread_id": str(thread_id)},
+            json_body={
+                "event_uid": event_uid,
+                "thread_id": str(thread_id),
+                **({"record": record} if record else {}),
+            },
         )
         if response.status_code != 202:
             _raise_problem(response)

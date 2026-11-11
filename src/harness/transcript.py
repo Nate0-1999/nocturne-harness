@@ -647,6 +647,20 @@ class TranscriptJournal:
                     return row["policy"]
         return {}
 
+    def plan_compaction(self, thread_id: str) -> dict[str, Any]:
+        path = self.path_for_thread(thread_id)
+        if path.exists():
+            with self._lock:
+                for line in reversed(path.read_text(encoding="utf-8").splitlines()):
+                    row = json.loads(line)
+                    if row.get("record_type") == "plan_compaction":
+                        return row
+        return {}
+
+    def append_plan_compaction(self, thread_id: str, **record) -> None:
+        with self._lock:
+            self._append(thread_id, {"version": 1, "record_type": "plan_compaction", **record})
+
     def append_compaction_policy(self, thread_id: str, policy: dict[str, Any]) -> None:
         """Version compaction controls without changing or deleting prior choices."""
         with self._lock:

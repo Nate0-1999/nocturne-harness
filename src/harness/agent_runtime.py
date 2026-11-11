@@ -73,7 +73,11 @@ from harness.pydantic_ai_adapter import (
     PendingSteering,
     TurnBudgetNotice,
 )
-from harness.pydantic_harness_adapter import CompactionPolicy, MemoryCompaction
+from harness.pydantic_harness_adapter import (
+    CompactionPolicy,
+    MemoryCompaction,
+    PlanCompactionQuestions,
+)
 from harness.receipt_queue import SpendReceiptQueue
 from harness.run_protocol import (
     DynamicSystemInstructions,
@@ -111,6 +115,8 @@ def _configure_compaction(policy: CompactionPolicy, argument: str) -> Compaction
         values["keep"] = float(value.removesuffix("%")) / 100
     elif command == "instructions" and "{messages}" in value:
         values["instructions"] = value
+    elif command == "plan" and value in {"on", "off"}:
+        values["plan"] = value == "on"
     else:
         # D.2 153: reject unsupported controls without changing the saved policy.
         raise ValueError("Unknown compaction control")
@@ -281,6 +287,13 @@ class PydanticAITurnRunner:
             if self._extraction is not None
             else None
         )
+        if compaction is not None and compaction.policy.plan and not prompt.startswith("/compact"):
+            journal = self._extraction._journal
+            pending = journal.plan_compaction(thread_id)
+            if pending.get("status") == "waiting":
+                journal.append_plan_compaction(
+                    thread_id, status="answered", questions=pending["questions"], answer=prompt
+                )
 
         def failed_history():
             if is_remember:
@@ -358,13 +371,14 @@ class PydanticAITurnRunner:
                         message = (
                             f"Compaction: {policy.strategy}; {policy.policy} policy at "
                             f"{policy.fraction:.1%} of the model window; the last "
-                            f"{policy.keep:.0%} of the conversation kept word for word."
+                            f"{policy.keep:.0%} of the conversation kept word for word. "
+                            f"Plan mode {'on' if policy.plan else 'off'}."
                         )
                     except ValueError:
                         message = (
                             "Use /compact, /compact strategy truncate|memories-then-drop|"
                             "human-and-final-only, /compact policy performance|cost [fraction], "
-                            "/compact keep <percent>, "
+                            "/compact keep <percent>, /compact plan on|off, "
                             "or /compact instructions <summary prompt containing {messages}>."
                         )
                 await emit.text(message)
@@ -684,6 +698,15 @@ class PydanticAITurnRunner:
                 cacheable_prefix_tokens=_cacheable_prefix_tokens(history),
                 assistant_text=visible_output,
             )
+        except PlanCompactionQuestions as questions:
+            message = str(questions)
+            await emit.text(message)
+            usage = _usage_snapshot(run_usage)
+            await bridge.publish_usage(usage)
+            history = tuple(compaction.original_history) + (
+                ModelResponse(parts=[TextPart(message)]),
+            )
+            return TurnOutcome(StopReason("end_turn"), history, usage, assistant_text=message)
         except _BoundaryCardReleased as released:
             usage = _failure_usage(run_usage, captured, prior_history)
             await bridge.publish_usage(usage)

@@ -105,6 +105,7 @@ class ExtractionService:
         on_result=None,
         model_settings=None,
         summary_prompt=None,
+        memory_size=None,
         locations=None,
         verifying_ids=None,
     ):
@@ -121,6 +122,8 @@ class ExtractionService:
         )
         if summary_prompt is not None:
             options["summary_prompt"] = summary_prompt
+        if memory_size is not None:
+            options["memory_size"] = memory_size
         draft = await self._agent.extract_thread(transcript, **options)
         return await self.admit(
             thread_id,

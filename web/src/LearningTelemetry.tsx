@@ -15,18 +15,93 @@ import {
 } from './humanNumbers'
 import { Canvas } from '@react-three/fiber'
 import { useMemo, useState } from 'react'
+import { Button, TextField } from './kit'
 
-export type TerrainPoint = { tau: number; share: number; agreement: number }
+export type TerrainPoint = { tau: number; share: number; x?: number; y?: number; agreement: number }
+export type FitPoint = { phase: string; iteration: number; objective?: number; projects?: number; tau?: number; share?: number; observed_at: string }
+
+export function FitProgress({ points, pending }: { points: FitPoint[]; pending: boolean }) {
+  const measured = points.filter((point) => point.objective !== undefined)
+  const maximum = Math.max(...measured.map((point) => point.objective!), 0.000001)
+  const iterations = Math.max(...measured.map((point) => point.iteration), 1)
+  const latest = points.at(-1)
+  if (!pending && points.length === 0) return null
+  return <section aria-label="Measured optimization progress">
+    <h3>{pending ? 'Fitting in progress' : 'Last fit'}</h3>
+    <p>{latest ? `${latest.phase} · iteration ${latest.iteration} · observed ${latest.observed_at}` : 'Waiting for the worker’s first measurement.'}</p>
+    {measured.length > 0 && <figure className="learning-timeline">
+      <svg viewBox="0 0 100 100" role="img" aria-label="Measured training loss by iteration">
+        <polyline className="learning-timeline__line learning-timeline__line--live" points={measured.map((point) => `${8 + 84 * point.iteration / iterations},${88 - 76 * point.objective! / maximum}`).join(' ')} />
+      </svg>
+      <figcaption>Training loss {measured.at(-1)!.objective!.toPrecision(5)} · lower is better · sampled every 100 iterations</figcaption>
+    </figure>}
+    <p>Observed worker steps; a last observation alone does not prove the worker is still running.</p>
+  </section>
+}
 export type CreationSummary = {
   sources: { source: string; created: number; surviving: number; used: number; survival_rate: number | null }[]
   hygiene_excluded_events: number
   events: { event_key: string; source: string; outcome: string; reason: string; ts: string }[]
+  compaction?: {
+    last_backtest?: string | null
+    active: { id: string; memory_size: number } | null
+    generations: { id: string; parent: string | null; instructions: string; memory_size: number;
+      date: string; adopted: boolean; verdict?: string;
+      scores: { incumbent: { score: number }; candidate: { score: number } } | null }[]
+  }
 }
 
-export function CreationScoreboard({ data }: { data?: CreationSummary }) {
-  return <section aria-label="Memory creation outcomes" className="learning-summary">
+export type CompactionBacktestResult = {
+  verdict: string; id: string | null; fit: { status: string; reason: string };
+  joint_fit: { tau: number; memory_context_share: number; memory_size: number; candidate_memory_size: number;
+    proposal_eligible: boolean; size_tuning_active: boolean; resized_memories: number } | null
+}
+
+export function CreationScoreboard({ data, onBacktest }: {
+  data?: CreationSummary;
+  onBacktest?: (size: number, preview: boolean) => Promise<CompactionBacktestResult>
+}) {
+  const [size, setSize] = useState(data?.compaction?.active?.memory_size ?? 128)
+  const [verification, setVerification] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [result, setResult] = useState<CompactionBacktestResult | null>(null)
+  const [failure, setFailure] = useState<string | null>(null)
+  async function backtest() {
+    if (!onBacktest) return
+    setBusy(true)
+    setFailure(null)
+    try { setResult(await onBacktest(size, verification)) }
+    catch { setFailure('The compaction back-test did not complete. Current values remain active.') }
+    finally { setBusy(false) }
+  }
+  return <section aria-label="Memory creation outcomes">
     <h2>Memory creation</h2>
-    <p>Logged outcomes; creation instructions are not being trained yet.</p>
+    <p>Compaction instructions replay recent source spans. Used facts earn one, removed facts cost one, new facts stay neutral; fewer or smaller facts win an equal score.</p>
+    <p>Retraining evaluates instructions and size with minimum match and memory share. The winning proposal uses the existing scorer activation.</p>
+    <p>Active memory size: {data?.compaction?.active?.memory_size ?? 128} tokens.</p>
+    <div className="control-bank"><label>Memory size to back-test<TextField type="number" min={1} max={128} step={1} value={size}
+      onChange={(event) => setSize(Number(event.target.value))} /></label>
+    <Button disabled={!onBacktest || busy || !Number.isInteger(size) || size < 1 || size > 128}
+      onClick={() => void backtest()}>{busy ? 'Back-testing…' : 'Back-test size'}</Button></div>
+    <label><input type="checkbox" checked={verification} onChange={(event) => setVerification(event.target.checked)} />Include verification history in this preview</label>
+    <p>Back-tests save a receipt and leave active values unchanged. Size tuning needs 100 graded signals.</p>
+    {failure && <p role="status">{failure}</p>}
+    {result && <div role="status">
+      <p>Preview only · {result.id
+        ? result.fit.status === 'proposed' ? 'The joint replay would propose improved values.' : 'The joint replay kept current values.'
+        : result.fit.status === 'insufficient_data' ? result.fit.reason : 'The model replay did not complete. Current values remain active.'}</p>
+      {result.joint_fit && <p>Tested size {result.joint_fit.memory_size} tokens · minimum match {result.joint_fit.tau.toPrecision(4)} · memory share {(100 * result.joint_fit.memory_context_share).toFixed(2)}% · {result.joint_fit.resized_memories} matched memories replayed. {result.joint_fit.proposal_eligible ? 'Creation candidate improved.' : 'Current creation policy kept.'}</p>}
+    </div>}
+    {data?.compaction?.last_backtest === 'failed' && <p role="status">The last instruction back-test did not complete. Current instructions remain active.</p>}
+    <details><summary>Compaction instruction generations</summary>
+      {!data?.compaction?.generations.length ? <p>No compaction generation recorded yet.</p> :
+        data.compaction.generations.map((generation) => <article key={generation.id}>
+          <h3>{generation.id} · {generation.adopted ? 'adopted' : generation.verdict?.replaceAll('_', ' ')}</h3>
+          <p>Parent {generation.parent ?? 'none'} · {generation.date} · {generation.memory_size} tokens</p>
+          <p>{generation.scores ? `Current ${generation.scores.incumbent.score} · candidate ${generation.scores.candidate.score}` : 'Baseline; no back-test yet.'}</p>
+          <details><summary>Instructions</summary><pre className="compaction-instructions">{generation.instructions}</pre></details>
+        </article>)}
+    </details>
     {!data ? <p>Creation history needs the current Palace release.</p> : <>
       <p>{data.hygiene_excluded_events} verification or fixture events excluded.</p>
       {data.sources.length === 0 ? <p>No authentic creation outcomes yet.</p> :
@@ -40,17 +115,21 @@ export function CreationScoreboard({ data }: { data?: CreationSummary }) {
   </section>
 }
 
-export function ScoreTerrain({ points }: { points: TerrainPoint[] }) {
+export function ScoreTerrain({ points, labels = ['Minimum match', 'Memory share'] }: { points: TerrainPoint[]; labels?: string[] }) {
   const [angle, setAngle] = useState(25)
   const mesh = useMemo(() => {
     const vertices: number[] = [], colors: number[] = []
+    const xs = points.map((point) => point.x ?? point.tau)
+    const ys = points.map((point) => point.y ?? point.share)
+    const minX = Math.min(...xs), minY = Math.min(...ys)
+    const rangeX = Math.max(...xs) - minX || 1, rangeY = Math.max(...ys) - minY || 1
     const steps = Math.round(Math.sqrt(points.length))
     for (let x = 0; x < steps - 1; x++) for (let y = 0; y < steps - 1; y++) {
       const indices = [x * steps + y, (x + 1) * steps + y, x * steps + y + 1,
         x * steps + y + 1, (x + 1) * steps + y, (x + 1) * steps + y + 1]
       for (const index of indices) {
         const point = points[index]
-        vertices.push(point.tau - 0.5, point.agreement / 100, (point.share - 0.01) / 0.49 - 0.5)
+        vertices.push((xs[index] - minX) / rangeX - 0.5, point.agreement / 100, (ys[index] - minY) / rangeY - 0.5)
         colors.push(0.15 + 0.7 * point.agreement / 100, 0.65, 0.95)
       }
     }
@@ -58,7 +137,7 @@ export function ScoreTerrain({ points }: { points: TerrainPoint[] }) {
   }, [points])
   return <section aria-label="Replay score terrain">
     <h3>Score terrain</h3>
-    <p>Held-out decision agreement across minimum match × memory share. Height is agreement; the surface interpolates measured grid points.</p>
+    <p>Held-out decision agreement across {labels.join(' × ')}. Height is agreement; the surface interpolates measured grid points.</p>
     {points.length === 0 ? <p>No replayable held-out gates yet.</p> : <>
       <div className="score-terrain">
         <Canvas camera={{ position: [1.8, 1.5, 1.8], fov: 42 }} frameloop="demand">
@@ -74,9 +153,9 @@ export function ScoreTerrain({ points }: { points: TerrainPoint[] }) {
         </Canvas>
       </div>
       <label>Rotate terrain<input type="range" min="0" max="360" value={angle} onChange={(event) => setAngle(Number(event.target.value))} /></label>
-      <p>X: minimum match 0–1 · depth: memory share 1–50% · height: agreement 0–100%</p>
-      <details><summary>Measured grid values</summary><table><thead><tr><th>Minimum match</th><th>Memory share</th><th>Agreement</th></tr></thead><tbody>
-        {points.map((point) => <tr key={`${point.tau}-${point.share}`}><td>{point.tau.toFixed(3)}</td><td>{(point.share * 100).toFixed(2)}%</td><td>{point.agreement.toFixed(1)}%</td></tr>)}
+      <p>X: {labels[0]} · depth: {labels[1]} · height: agreement 0–100%</p>
+      <details><summary>Measured grid values</summary><table><thead><tr><th>{labels[0]}</th><th>{labels[1]}</th><th>Agreement</th></tr></thead><tbody>
+        {points.map((point, index) => <tr key={index}><td>{(point.x ?? point.tau).toPrecision(4)}</td><td>{(point.y ?? point.share).toPrecision(4)}</td><td>{point.agreement.toFixed(1)}%</td></tr>)}
       </tbody></table></details>
     </>}
   </section>
@@ -239,7 +318,7 @@ export function LearningTimeline({
         </svg>
       )}
       <figcaption>
-        {showLive && <span className="learning-timeline__legend learning-timeline__legend--live">Active live</span>}
+        {showLive && <span className="learning-timeline__legend learning-timeline__legend--live">Live agreement history</span>}
         <span className="learning-timeline__legend learning-timeline__legend--generation">Held-out generations</span>
         {model.unmeasuredGenerations > 0 && (
           <small>{model.unmeasuredGenerations} legacy {model.unmeasuredGenerations === 1 ? 'generation' : 'generations'} not recorded</small>

@@ -58,12 +58,13 @@ import {
   type ThreadState,
 } from './store'
 
-export type RackModuleId = CustomRackModuleId | 'header' | 'threads' | 'conversation' | 'memory' | 'vitals' | 'palace_state' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'farm' | 'roots' | 'injection_console' | 'recipe' | 'jobs' | 'security'
+export type RackModuleId = CustomRackModuleId | 'header' | 'spend_strip' | 'threads' | 'conversation' | 'memory' | 'vitals' | 'palace_state' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'farm' | 'roots' | 'injection_console' | 'recipe' | 'jobs' | 'security'
 export type RackModuleSlot = 'header' | 'panel' | 'strip' | 'overlay'
 export type RackMemoryPanelState = MemoryPanelState
 
 export function isRackModuleId(value: unknown): value is RackModuleId {
   return installedRackPlugins.some((plugin) => plugin.id === value) || value === 'header' ||
+    value === 'spend_strip' ||
     value === 'threads' ||
     value === 'conversation' ||
     value === 'memory' ||
@@ -108,6 +109,7 @@ export type RackAction =
   | { type: 'symphony.context'; symphony_id: string }
   | { type: 'symphony.memory'; symphony_id: string; worker_id: string; memory_id: string; added: boolean }
   | { type: 'spend.invoice'; amount_usd: string; invoice_date: string; invoice_id: string }
+  | { type: 'spend.reconcile' }
   | { type: 'draft.update'; thread_id: string; draft: string }
   | { type: 'thread.create'; workspace_root: string; project_label?: string }
   | { type: 'thread.select'; thread_id: string }
@@ -137,7 +139,8 @@ export type RackAction =
   | { type: 'rack.scope.get'; module_id: RackModuleId; instance_id?: string }
   | { type: 'rack.scope.set'; module_id: RackModuleId; instance_id?: string; scope: RackScope }
   | { type: 'parameter.write'; thread_id: string; parameter_id: string; value: string | number | null }
-  | { type: 'scorer.simulate'; injection_id?: string; base_version: string; values: JsonValue; slice_parameter_id: string }
+  | { type: 'scorer.simulate'; injection_id?: string; base_version: string; values: JsonValue; slice_parameter_id: string; terrain_parameters?: [string, string] }
+  | { type: 'compaction.backtest'; memory_size: number; preview: boolean }
   | { type: 'scorer.force'; event_uid: string; base_version: string; values: JsonValue; simulation_digest: string }
   | { type: 'scorer.retrain' }
   | { type: 'scorer.retrain.status'; job_id: string }
@@ -242,7 +245,7 @@ export interface RackPluginApi {
 }
 
 export type RackActionResult<Action extends RackAction> =
-  Action['type'] extends 'jobs.save' | 'jobs.run' | 'jobs.stop' | 'scorer.retrain.status'
+  Action['type'] extends 'jobs.save' | 'jobs.run' | 'jobs.stop' | 'scorer.retrain.status' | 'compaction.backtest'
     ? JsonValue
     : Action['type'] extends 'thread.create' | 'project.select'
     ? string
@@ -250,7 +253,7 @@ export type RackActionResult<Action extends RackAction> =
       ? number
     : Action['type'] extends 'thread.select' | 'thread.rename_project' | 'thread.bind_workspace' | 'draft.update'
       ? void
-      : Action['type'] extends 'policies.load' | 'policies.save' | 'models.load' | 'models.pin' | 'prompt.interject' | 'boundary.decide' | 'symphony.context' | 'symphony.memory' | 'spend.invoice' | 'thread.archive' | 'thread.rewind' | 'thread.compactions' | 'queue.load' | 'curation.load' | 'local_copy.load' | 'local_copy.dismiss' | 'queue.decide' | 'queue.feedback' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
+      : Action['type'] extends 'policies.load' | 'policies.save' | 'models.load' | 'models.pin' | 'prompt.interject' | 'boundary.decide' | 'symphony.context' | 'symphony.memory' | 'spend.invoice' | 'spend.reconcile' | 'thread.archive' | 'thread.rewind' | 'thread.compactions' | 'queue.load' | 'curation.load' | 'local_copy.load' | 'local_copy.dismiss' | 'queue.decide' | 'queue.feedback' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
         ? JsonValue
         : Action['type'] extends 'rack.scope.get' | 'rack.scope.set'
           ? RackScope
@@ -276,6 +279,24 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'visualizer',
     slot: 'header',
     streams: ['connection', 'thread.snapshot'],
+    actions: [],
+    bounds: {
+      min: { w: 12, h: 1 },
+      preferred: { w: 12, h: 1 },
+      max: { w: 12, h: 1 },
+    },
+    movable: false,
+    law_bound: false,
+    default_scope: 'GLOBAL',
+  },
+  // FL-160: the bottom strip, fixed under the Stage like the header above it.
+  spend_strip: {
+    id: 'spend_strip',
+    name: 'Spend Strip',
+    version: '1.0.0',
+    class: 'visualizer',
+    slot: 'strip',
+    streams: [],
     actions: [],
     bounds: {
       min: { w: 12, h: 1 },
@@ -340,7 +361,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'visualizer',
     slot: 'strip',
     streams: [],
-    actions: ['spend.invoice', 'rack.scope.get', 'rack.scope.set'],
+    actions: ['spend.invoice', 'spend.reconcile', 'rack.scope.get', 'rack.scope.set'],
     bounds: stageGridBounds(VITALS_RACK_BOUNDS.preferred),
     movable: true,
     law_bound: false,
@@ -458,7 +479,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
   injection_console: {
     id: 'injection_console', name: 'Injection Console', version: '1.0.0', class: 'control',
     slot: 'panel', streams: ['scorer.change'],
-    actions: ['scorer.simulate', 'scorer.force', 'scorer.retrain', 'scorer.retrain.status', 'scorer.audition', 'scorer.activate', 'rack.scope.get', 'rack.scope.set'],
+    actions: ['scorer.simulate', 'scorer.force', 'scorer.retrain', 'scorer.retrain.status', 'scorer.audition', 'scorer.activate', 'compaction.backtest', 'rack.scope.get', 'rack.scope.set'],
     bindings: [
       'scorer.tau', 'scorer.memory_context_share',
       'scorer.half_life_time_days', 'scorer.half_life_hist_days',
@@ -774,6 +795,8 @@ function dispatchRackAction<Action extends RackAction>(
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ amount_usd: action.amount_usd, invoice_date: action.invoice_date, invoice_id: action.invoice_id }),
         }) as Promise<RackActionResult<Action>>
+      case 'spend.reconcile':
+        return fetchJson('/v1/spend/reconciliation', { method: 'POST' }) as Promise<RackActionResult<Action>>
       case 'scorer.simulate':
         return fetchJson('/v1/rack/scorers/simulate', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -782,7 +805,13 @@ function dispatchRackAction<Action extends RackAction>(
             base_version: action.base_version,
             values: action.values,
             slice_parameter_id: action.slice_parameter_id,
+            terrain_parameters: action.terrain_parameters,
           }),
+        }) as Promise<RackActionResult<Action>>
+      case 'compaction.backtest':
+        return fetchJson('/v1/rack/compaction-backtest', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ memory_size: action.memory_size, preview: action.preview }),
         }) as Promise<RackActionResult<Action>>
       case 'scorer.force':
         return fetchJson('/v1/rack/scorers', {

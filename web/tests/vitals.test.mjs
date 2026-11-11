@@ -2,11 +2,9 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import {
-  contiguousPolylineSegments,
   formatExactUsd,
   formatBytes,
   formatUptime,
-  laneChartPoints,
   nearestSpendPoint,
   accountingCopy,
   parseVitalsSnapshot,
@@ -170,33 +168,11 @@ test('rejects unavailable gauges masquerading as measured zeroes', () => {
 })
 
 /** SPEC C.10 requires scrubbing to retain server-provided values while presentation geometry may use numbers. */
-test('finds scrub buckets and uses decimals only for SVG geometry', () => {
+test('finds the scrub bucket nearest a position', () => {
   const lane = parseVitalsSnapshot(snapshot()).spend.lanes[0]
   const nearest = nearestSpendPoint(lane.points, '2026-08-02T13:00:00Z', 0.99)
-  const chart = laneChartPoints(lane, '2026-08-02T13:00:00Z')
 
   assert.equal(nearest?.minute, MINUTE_B)
-  assert.equal(chart[0].point.cost_usd, '0.035000000000')
-  assert.equal(chart[1].y, null)
-  assert.ok(chart[0].x >= 0 && chart[0].x <= 100)
-})
-
-/** SPEC C.10 makes missing and unpriced buckets discontinuities so the rack cannot invent spend history. */
-test('does not invent a trend line across empty or unpriced minute buckets', () => {
-  const point = (minute, x, y) => ({
-    point: { minute, cost_usd: y === null ? null : '1', receipt_lines: 1, unpriced_lines: 0 },
-    x,
-    y,
-  })
-  const segments = contiguousPolylineSegments([
-    point('2026-08-02T12:00:00Z', 0, 20),
-    point('2026-08-02T12:01:00Z', 10, 10),
-    point('2026-08-02T12:03:00Z', 30, 5),
-    point('2026-08-02T12:04:00Z', 40, null),
-    point('2026-08-02T12:05:00Z', 50, 8),
-  ])
-
-  assert.deepEqual(segments, ['0,20 10,10', '30,5', '50,8'])
 })
 
 /** SPEC B.6 responsive law requires a collapsed rack to preserve rather than obscure the primary chat surface. */
