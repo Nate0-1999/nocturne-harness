@@ -1005,6 +1005,16 @@ class CompactionPolicy(BaseModel):
     # D.2 177 (v2.133): the last share of the conversation is kept word for word.
     keep: float = Field(default=0.2, ge=0, lt=1, allow_inf_nan=False)
     instructions: str = COMPACTION_SUMMARY_PROMPT
+    plan: bool = False
+
+
+class PlanCompactionQuestions(Exception):
+    def __init__(self, questions):
+        self.questions = questions
+        super().__init__(
+            "Before I compact this plan:\n"
+            + "\n".join(f"{index}. {question}" for index, question in enumerate(questions, 1))
+        )
 
 
 class _HumanFinalCompaction(SlidingWindowCompaction):
@@ -1092,6 +1102,46 @@ class _MemoryStrategy:
         )
         history = own_history(messages)
         transcript, locations = located_transcript(history)
+        journal = owner.service._journal
+        pending = journal.plan_compaction(str(ctx.deps.thread_id))
+        if owner.policy.plan and pending.get("status") != "answered":
+            questions = pending.get("questions") if pending.get("status") == "waiting" else None
+            if questions is None:
+                questions = await owner.service._agent.compaction_questions(
+                    transcript,
+                    model=ctx.model,
+                    usage=ctx.usage,
+                    model_settings=owner.model_settings,
+                    on_result=owner.on_result,
+                )
+                journal.append_plan_compaction(
+                    str(ctx.deps.thread_id), status="waiting", questions=questions
+                )
+            # WALL attention / PLAN M6CP: preserve the plan until its questions are answered.
+            raise PlanCompactionQuestions(questions)
+        if owner.policy.plan:
+            transcript += "\nPlan clarification before compaction:\n" + json.dumps(pending)
+        learned = None
+        # WALL availability / A-083: an old or disconnected Palace keeps the incumbent.
+        if hasattr(owner.service._spine, "compaction_policy"):
+            try:
+                learned = (await owner.service._spine.compaction_policy()).get("active")
+            except SpineClientError:
+                pass  # A disconnected Palace keeps the thread's current instructions.
+        generation = learned or {
+            "id": "baseline",
+            "parent": None,
+            "instructions": owner.policy.instructions,
+            "memory_size": min(128, getattr(owner.service._agent, "memory_max_tokens", 128)),
+        }
+        if owner.policy.instructions != COMPACTION_SUMMARY_PROMPT:
+            generation = {
+                **generation,
+                "id": "manual-"
+                + hashlib.sha256(owner.policy.instructions.encode()).hexdigest()[:16],
+                "parent": generation["id"],
+                "instructions": owner.policy.instructions,
+            }
         result = await owner.service.triage(
             ctx.deps.thread_id,
             transcript,
@@ -1101,7 +1151,8 @@ class _MemoryStrategy:
             usage=ctx.usage,
             on_result=owner.on_result,
             model_settings=owner.model_settings,
-            summary_prompt=owner.policy.instructions,
+            summary_prompt=generation["instructions"],
+            memory_size=generation["memory_size"],
             locations=locations,
             verifying_ids={
                 f"m{index}"
@@ -1126,6 +1177,17 @@ class _MemoryStrategy:
             owner.emit.run_id,
             to_jsonable_python(proposed),
         )
+        record = {
+            "policy": generation,
+            "machine_id": owner.service._machine_id,
+            "source": transcript,
+            "facts": [
+                {**fact, "memory_id": str(card.candidate.memory_id)}
+                for fact in result.facts
+                for card in result.cards
+                if card.candidate.body == fact["body"]
+            ],
+        }
         owner.service._journal.append_compaction_record(
             str(ctx.deps.thread_id),
             {
@@ -1139,8 +1201,17 @@ class _MemoryStrategy:
                 ],
                 "facts": result.facts,
                 "working_summary": result.working_summary,
+                "policy": generation,
+                "plan_clarification": pending if owner.policy.plan else None,
             },
         )
+        if owner.policy.plan:
+            journal.append_plan_compaction(
+                str(ctx.deps.thread_id),
+                status="completed",
+                questions=pending["questions"],
+                answer=pending["answer"],
+            )
         await owner.emit.event(
             {
                 "event_kind": "compaction_memories",
@@ -1159,7 +1230,11 @@ class _MemoryStrategy:
             }
         )
         try:
-            await owner.service._spine.notify_compaction(event_uid, ctx.deps.thread_id)
+            # Older Palace adapters still support the event-only notification.
+            details = (
+                {"record": record} if hasattr(owner.service._spine, "compaction_policy") else {}
+            )
+            await owner.service._spine.notify_compaction(event_uid, ctx.deps.thread_id, **details)
         except SpineClientError:
             await owner.emit.event(
                 {

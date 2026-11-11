@@ -143,6 +143,8 @@ def test_client_exposes_all_spine_routes() -> None:
         "start_retrain_job",
         "retrain_job",
         "notify_compaction",
+        "compaction_policy",
+        "compaction_backtest",
         "create_scorer_config",
         "simulate_scorer",
         "audition_scorer",

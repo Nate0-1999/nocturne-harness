@@ -15,6 +15,7 @@ import {
 } from './humanNumbers'
 import { Canvas } from '@react-three/fiber'
 import { useMemo, useState } from 'react'
+import { Button, TextField } from './kit'
 
 export type TerrainPoint = { tau: number; share: number; x?: number; y?: number; agreement: number }
 export type FitPoint = { phase: string; iteration: number; objective?: number; projects?: number; tau?: number; share?: number; observed_at: string }
@@ -41,12 +42,66 @@ export type CreationSummary = {
   sources: { source: string; created: number; surviving: number; used: number; survival_rate: number | null }[]
   hygiene_excluded_events: number
   events: { event_key: string; source: string; outcome: string; reason: string; ts: string }[]
+  compaction?: {
+    last_backtest?: string | null
+    active: { id: string; memory_size: number } | null
+    generations: { id: string; parent: string | null; instructions: string; memory_size: number;
+      date: string; adopted: boolean; verdict?: string;
+      scores: { incumbent: { score: number }; candidate: { score: number } } | null }[]
+  }
 }
 
-export function CreationScoreboard({ data }: { data?: CreationSummary }) {
-  return <section aria-label="Memory creation outcomes" className="learning-summary">
+export type CompactionBacktestResult = {
+  verdict: string; id: string | null; fit: { status: string; reason: string };
+  joint_fit: { tau: number; memory_context_share: number; memory_size: number; candidate_memory_size: number;
+    proposal_eligible: boolean; size_tuning_active: boolean; resized_memories: number } | null
+}
+
+export function CreationScoreboard({ data, onBacktest }: {
+  data?: CreationSummary;
+  onBacktest?: (size: number, preview: boolean) => Promise<CompactionBacktestResult>
+}) {
+  const [size, setSize] = useState(data?.compaction?.active?.memory_size ?? 128)
+  const [verification, setVerification] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [result, setResult] = useState<CompactionBacktestResult | null>(null)
+  const [failure, setFailure] = useState<string | null>(null)
+  async function backtest() {
+    if (!onBacktest) return
+    setBusy(true)
+    setFailure(null)
+    try { setResult(await onBacktest(size, verification)) }
+    catch { setFailure('The compaction back-test did not complete. Current values remain active.') }
+    finally { setBusy(false) }
+  }
+  return <section aria-label="Memory creation outcomes">
     <h2>Memory creation</h2>
-    <p>Logged outcomes; creation instructions are not being trained yet.</p>
+    <p>Compaction instructions replay recent source spans. Used facts earn one, removed facts cost one, new facts stay neutral; fewer or smaller facts win an equal score.</p>
+    <p>Retraining evaluates instructions and size with minimum match and memory share. The winning proposal uses the existing scorer activation.</p>
+    <p>Active memory size: {data?.compaction?.active?.memory_size ?? 128} tokens.</p>
+    <div className="control-bank"><label>Memory size to back-test<TextField type="number" min={1} max={128} step={1} value={size}
+      onChange={(event) => setSize(Number(event.target.value))} /></label>
+    <Button disabled={!onBacktest || busy || !Number.isInteger(size) || size < 1 || size > 128}
+      onClick={() => void backtest()}>{busy ? 'Back-testing…' : 'Back-test size'}</Button></div>
+    <label><input type="checkbox" checked={verification} onChange={(event) => setVerification(event.target.checked)} />Include verification history in this preview</label>
+    <p>Back-tests save a receipt and leave active values unchanged. Size tuning needs 100 graded signals.</p>
+    {failure && <p role="status">{failure}</p>}
+    {result && <div role="status">
+      <p>Preview only · {result.id
+        ? result.fit.status === 'proposed' ? 'The joint replay would propose improved values.' : 'The joint replay kept current values.'
+        : result.fit.status === 'insufficient_data' ? result.fit.reason : 'The model replay did not complete. Current values remain active.'}</p>
+      {result.joint_fit && <p>Tested size {result.joint_fit.memory_size} tokens · minimum match {result.joint_fit.tau.toPrecision(4)} · memory share {(100 * result.joint_fit.memory_context_share).toFixed(2)}% · {result.joint_fit.resized_memories} matched memories replayed. {result.joint_fit.proposal_eligible ? 'Creation candidate improved.' : 'Current creation policy kept.'}</p>}
+    </div>}
+    {data?.compaction?.last_backtest === 'failed' && <p role="status">The last instruction back-test did not complete. Current instructions remain active.</p>}
+    <details><summary>Compaction instruction generations</summary>
+      {!data?.compaction?.generations.length ? <p>No compaction generation recorded yet.</p> :
+        data.compaction.generations.map((generation) => <article key={generation.id}>
+          <h3>{generation.id} · {generation.adopted ? 'adopted' : generation.verdict?.replaceAll('_', ' ')}</h3>
+          <p>Parent {generation.parent ?? 'none'} · {generation.date} · {generation.memory_size} tokens</p>
+          <p>{generation.scores ? `Current ${generation.scores.incumbent.score} · candidate ${generation.scores.candidate.score}` : 'Baseline; no back-test yet.'}</p>
+          <details><summary>Instructions</summary><pre className="compaction-instructions">{generation.instructions}</pre></details>
+        </article>)}
+    </details>
     {!data ? <p>Creation history needs the current Palace release.</p> : <>
       <p>{data.hygiene_excluded_events} verification or fixture events excluded.</p>
       {data.sources.length === 0 ? <p>No authentic creation outcomes yet.</p> :

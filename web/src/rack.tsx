@@ -140,6 +140,7 @@ export type RackAction =
   | { type: 'rack.scope.set'; module_id: RackModuleId; instance_id?: string; scope: RackScope }
   | { type: 'parameter.write'; thread_id: string; parameter_id: string; value: string | number | null }
   | { type: 'scorer.simulate'; injection_id?: string; base_version: string; values: JsonValue; slice_parameter_id: string; terrain_parameters?: [string, string] }
+  | { type: 'compaction.backtest'; memory_size: number; preview: boolean }
   | { type: 'scorer.force'; event_uid: string; base_version: string; values: JsonValue; simulation_digest: string }
   | { type: 'scorer.retrain' }
   | { type: 'scorer.retrain.status'; job_id: string }
@@ -244,7 +245,7 @@ export interface RackPluginApi {
 }
 
 export type RackActionResult<Action extends RackAction> =
-  Action['type'] extends 'jobs.save' | 'jobs.run' | 'jobs.stop' | 'scorer.retrain.status'
+  Action['type'] extends 'jobs.save' | 'jobs.run' | 'jobs.stop' | 'scorer.retrain.status' | 'compaction.backtest'
     ? JsonValue
     : Action['type'] extends 'thread.create' | 'project.select'
     ? string
@@ -478,7 +479,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
   injection_console: {
     id: 'injection_console', name: 'Injection Console', version: '1.0.0', class: 'control',
     slot: 'panel', streams: ['scorer.change'],
-    actions: ['scorer.simulate', 'scorer.force', 'scorer.retrain', 'scorer.retrain.status', 'scorer.audition', 'scorer.activate', 'rack.scope.get', 'rack.scope.set'],
+    actions: ['scorer.simulate', 'scorer.force', 'scorer.retrain', 'scorer.retrain.status', 'scorer.audition', 'scorer.activate', 'compaction.backtest', 'rack.scope.get', 'rack.scope.set'],
     bindings: [
       'scorer.tau', 'scorer.memory_context_share',
       'scorer.half_life_time_days', 'scorer.half_life_hist_days',
@@ -806,6 +807,11 @@ function dispatchRackAction<Action extends RackAction>(
             slice_parameter_id: action.slice_parameter_id,
             terrain_parameters: action.terrain_parameters,
           }),
+        }) as Promise<RackActionResult<Action>>
+      case 'compaction.backtest':
+        return fetchJson('/v1/rack/compaction-backtest', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ memory_size: action.memory_size, preview: action.preview }),
         }) as Promise<RackActionResult<Action>>
       case 'scorer.force':
         return fetchJson('/v1/rack/scorers', {
