@@ -3,6 +3,7 @@
 import shlex
 import socket
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -47,8 +48,10 @@ async def test_shell_fence_rules(tmp_path: Path, monkeypatch, rule: str):
     if rule in {"remote", "unix-remote"}:
         crossings.thread.add("remote")
     unix = rule.startswith("unix-")
+    socket_home = tempfile.TemporaryDirectory(prefix="nocturne-fence-", dir="/tmp")
+    socket_path = str(Path(socket_home.name) / "host.sock")
     listener = socket.socket(socket.AF_UNIX if unix else socket.AF_INET)
-    listener.bind(str(tmp_path / "host.sock") if unix else ("127.0.0.1", 0))
+    listener.bind(socket_path if unix else ("127.0.0.1", 0))
     listener.listen()
     port = listener.getsockname()[1] if not unix else None
     network = (
@@ -58,7 +61,7 @@ async def test_shell_fence_rules(tmp_path: Path, monkeypatch, rule: str):
     if unix:
         network = (
             f"import socket; s=socket.socket(socket.AF_UNIX); "
-            f"s.connect({str(tmp_path / 'host.sock')!r}); print('NETWORK_REACHED')"
+            f"s.connect({socket_path!r}); print('NETWORK_REACHED')"
         )
 
     def python(code):
@@ -97,4 +100,5 @@ async def test_shell_fence_rules(tmp_path: Path, monkeypatch, rule: str):
             assert not result.success and "CREDENTIAL_MARKER_617" not in result.content
     finally:
         listener.close()
+        socket_home.cleanup()
         await tools.close()
