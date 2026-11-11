@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
+from pathlib import Path
 
 import httpx
 import pytest
@@ -19,8 +21,10 @@ from harness.model_policy import (
     NamedModelResolutionError,
     OpenRouterCatalogClient,
     ThreadModelResolution,
+    TokenBurn,
     _parse_model_routes,
     browse_models,
+    explain_choice,
     lower_convex_hull,
     pareto_frontier,
     parse_model_listing,
@@ -52,11 +56,12 @@ def row(
         ("elbow", ModelPolicy("elbow")),
         ("slope:0.05", ModelPolicy("slope", Decimal("0.05"))),
         ("floor:52", ModelPolicy("floor", Decimal(52))),
+        ("budget:2.5", ModelPolicy("budget", Decimal("2.5"))),
     ],
 )
-def test_policy_grammar_accepts_exact_five_forms(raw: str, expected: ModelPolicy) -> None:
-    """A-021 is defended by verifying that policy grammar accepts exact five forms; this
-    prevents drift in the deterministic model policy contract.
+def test_policy_grammar_accepts_exact_six_forms(raw: str, expected: ModelPolicy) -> None:
+    """A-021 and A-082 are defended by verifying that policy grammar accepts exact six forms;
+    this prevents drift in the deterministic model policy contract.
     """
     assert parse_model_policy(raw) == expected
 
@@ -73,7 +78,8 @@ def test_policy_grammar_accepts_exact_five_forms(raw: str, expected: ModelPolicy
         "slope:-1",
         "slope:NaN",
         "floor:Infinity",
-        "budget:10",
+        "budget:0",
+        "budget:-1",
     ],
 )
 def test_policy_grammar_rejects_every_other_form(raw: str) -> None:
@@ -112,6 +118,40 @@ def test_all_policy_algorithms_follow_one_golden_table() -> None:
     assert select_model(ModelPolicy("slope", Decimal(".10")), rows).permaslug == "dup-a"
     assert select_model(ModelPolicy("slope", Decimal(".20")), rows).permaslug == "good"
     assert select_model(ModelPolicy("slope", Decimal("1.20")), rows).permaslug == "apex"
+
+
+def test_frozen_catalog_pins_what_elbow_floor_and_budget_buy() -> None:
+    """A-021, A-082 and SPEC C.5 are defended on a frozen copy of the live catalog
+    (2026-11-09), so no code change can quietly route a new thread to a dearer model; a budget
+    with no measured burn never routes blind (A-020 f fails open to the static model).
+    """
+    fixture = Path(__file__).parent / "fixtures" / "model-catalog-2026-11-09.json"
+    rows = tuple(
+        BenchmarkModel(
+            permaslug=item["permaslug"],
+            intelligence_index=Decimal(item["intelligence_index"]),
+            prompt_price=Decimal(item["prompt_price"]),
+            completion_price=Decimal(item["completion_price"]),
+        )
+        for item in json.loads(fixture.read_text())["rows"]
+    )
+    burn = TokenBurn(Decimal(400_000), Decimal(20_000), hours=3)
+
+    def pick(policy: ModelPolicy) -> str:
+        return select_model(policy, rows, burn).permaslug
+
+    flash, haiku = "deepseek/deepseek-v4.1-flash-20261017", "anthropic/claude-haiku-5.5-20261007"
+    assert pick(ModelPolicy("elbow")) == flash
+    assert pick(ModelPolicy("floor", Decimal(30))) == haiku
+    assert pick(ModelPolicy("budget", Decimal("0.05"))) == flash
+    assert pick(ModelPolicy("budget", Decimal(1))) == "openai/gpt-6.1-sol-20260929"
+    elbow = ModelPolicy("elbow")
+    assert explain_choice(elbow, rows, select_model(elbow, rows)) == (
+        f"Elbow: {flash}, the largest offset below the frontier's price chord (0.452); "
+        f"next up, {haiku}, adds 7.9 points for 10.0x the input price"
+    )
+    with pytest.raises(ModelCatalogUnavailable, match="no measured token burn"):
+        select_model(ModelPolicy("budget", Decimal(1)), rows)
 
 
 def test_elbow_matches_the_a021_worked_example_and_small_frontier_max_rule() -> None:
@@ -634,7 +674,7 @@ async def test_nonpinned_resolution_joins_context_and_remains_stable_per_thread(
 
     resolver.set_policy("floor:10")
     explanation = resolver.explain("thread-1", first.model)
-    assert "Highest intelligence" in explanation
+    assert "the highest intelligence score" in explanation
     assert "Score 52" in explanation
     assert "$1/M" in explanation
     assert "original policy evidence is unavailable" in resolver.explain("restored", first.model)
@@ -958,7 +998,11 @@ def test_standard_configurations_say_what_each_policy_selects_now() -> None:
         ("elbow", "openrouter:cheap/mid"),
         ("floor:30", "openrouter:cheap/mid"),
     ]
-    assert configurations[2].reason == "score 30; free models count at the $0.2/M price floor"
+    assert configurations[2].reason == (
+        "Elbow: cheap/mid-1, the largest offset below the frontier's price chord (0.156); "
+        "next up, dear/top-1, adds 27 points for 20.0x the input price; "
+        "free models count at the $0.2/M price floor"
+    )
     assert configurations[1].reason == "score 57"
     unscored = standard_configurations(
         browser_catalog(),

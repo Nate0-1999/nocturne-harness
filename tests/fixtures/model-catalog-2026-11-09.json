@@ -1,0 +1,318 @@
+{
+ "source": "OpenRouter /benchmarks?source=artificial-analysis, prices USD per M tokens",
+ "fetched_at": "2026-11-09T06:42:48.933263+00:00",
+ "rows": [
+  {
+   "permaslug": "anthropic/claude-opus-5.5-20260921",
+   "intelligence_index": "59.1",
+   "prompt_price": "4.4000000",
+   "completion_price": "22.000000"
+  },
+  {
+   "permaslug": "openai/gpt-6-astra-20260903",
+   "intelligence_index": "56.9",
+   "prompt_price": "10.00000",
+   "completion_price": "50.00000"
+  },
+  {
+   "permaslug": "openai/gpt-6.1-sol-20260929",
+   "intelligence_index": "54.6",
+   "prompt_price": "2.000000",
+   "completion_price": "10.00000"
+  },
+  {
+   "permaslug": "anthropic/claude-sonnet-5.5-20260928",
+   "intelligence_index": "54.5",
+   "prompt_price": "2.2000000",
+   "completion_price": "11.000000"
+  },
+  {
+   "permaslug": "openai/gpt-6.1-terra-20261026",
+   "intelligence_index": "51.3",
+   "prompt_price": "1.2000000",
+   "completion_price": "6.000000"
+  },
+  {
+   "permaslug": "google/gemini-4-argon-20261013",
+   "intelligence_index": "50.4",
+   "prompt_price": "2.2000000",
+   "completion_price": "11.000000"
+  },
+  {
+   "permaslug": "anthropic/claude-fable-5.1-20260831",
+   "intelligence_index": "50",
+   "prompt_price": "5.000000",
+   "completion_price": "25.000000"
+  },
+  {
+   "permaslug": "moonshotai/kimi-k3.1-pro-20261023",
+   "intelligence_index": "46.5",
+   "prompt_price": "2.000000",
+   "completion_price": "10.00000"
+  },
+  {
+   "permaslug": "anthropic/claude-opus-5-20260723",
+   "intelligence_index": "44.2",
+   "prompt_price": "5.5000000",
+   "completion_price": "27.5000000"
+  },
+  {
+   "permaslug": "openai/gpt-6-sol-20260922",
+   "intelligence_index": "44.2",
+   "prompt_price": "2.000000",
+   "completion_price": "10.00000"
+  },
+  {
+   "permaslug": "meta/muse-wonder-20261012",
+   "intelligence_index": "43.6",
+   "prompt_price": "4.000000",
+   "completion_price": "20.00000"
+  },
+  {
+   "permaslug": "meta/muse-spark-1.3-20260902",
+   "intelligence_index": "36.6",
+   "prompt_price": "1.25000000",
+   "completion_price": "4.25000000"
+  },
+  {
+   "permaslug": "anthropic/claude-haiku-5.5-20261007",
+   "intelligence_index": "36.5",
+   "prompt_price": "0.11000000",
+   "completion_price": "0.55000000"
+  },
+  {
+   "permaslug": "x-ai/grok-4.7-20260916",
+   "intelligence_index": "35.5",
+   "prompt_price": "1.6000000",
+   "completion_price": "4.8000000"
+  },
+  {
+   "permaslug": "tencent/hy4-20261104",
+   "intelligence_index": "34.6",
+   "prompt_price": "0.417000000",
+   "completion_price": "1.2505000000"
+  },
+  {
+   "permaslug": "qwen/qwen3.8-max-20260902",
+   "intelligence_index": "33.7",
+   "prompt_price": "2.000000",
+   "completion_price": "6.000000"
+  },
+  {
+   "permaslug": "openai/gpt-5.6-terra-20260709",
+   "intelligence_index": "32.3",
+   "prompt_price": "4.000000",
+   "completion_price": "24.000000"
+  },
+  {
+   "permaslug": "z-ai/glm-5.3-20260816",
+   "intelligence_index": "31.7",
+   "prompt_price": "0.623000000",
+   "completion_price": "1.271000000"
+  },
+  {
+   "permaslug": "x-ai/grok-4.6-20260810",
+   "intelligence_index": "31",
+   "prompt_price": "1.6000000",
+   "completion_price": "4.8000000"
+  },
+  {
+   "permaslug": "google/gemini-3.8-flash-20260902",
+   "intelligence_index": "30.8",
+   "prompt_price": "0.825000000",
+   "completion_price": "4.125000000"
+  },
+  {
+   "permaslug": "xiaomi/mimo-v2.6-pro-20260921",
+   "intelligence_index": "29.9",
+   "prompt_price": "4.000000",
+   "completion_price": "8.000000"
+  },
+  {
+   "permaslug": "minimax/minimax-m3.1-flash-20261019",
+   "intelligence_index": "29.1",
+   "prompt_price": "0.135000000",
+   "completion_price": "0.54000000"
+  },
+  {
+   "permaslug": "deepseek/deepseek-v4.1-flash-20261017",
+   "intelligence_index": "28.6",
+   "prompt_price": "0.011000000",
+   "completion_price": "0.2000000"
+  },
+  {
+   "permaslug": "stepfun/step-5-preview-20261008",
+   "intelligence_index": "28.5",
+   "prompt_price": "1.000000",
+   "completion_price": "2.7000000"
+  },
+  {
+   "permaslug": "upstage/solar-pro4-20260810",
+   "intelligence_index": "28.2",
+   "prompt_price": "0.15000000",
+   "completion_price": "0.6000000"
+  },
+  {
+   "permaslug": "openai/gpt-6-luna-20260922",
+   "intelligence_index": "27.9",
+   "prompt_price": "0.1000000",
+   "completion_price": "0.5000000"
+  },
+  {
+   "permaslug": "z-ai/glm-5.3-flash-20260826",
+   "intelligence_index": "27.8",
+   "prompt_price": "0.15000000",
+   "completion_price": "0.5000000"
+  },
+  {
+   "permaslug": "xiaomi/mimo-v2.6-flash-20260921",
+   "intelligence_index": "26.7",
+   "prompt_price": "0.14000000",
+   "completion_price": "0.28000000"
+  },
+  {
+   "permaslug": "mistralai/mistral-large-4-0-20261006",
+   "intelligence_index": "26.1",
+   "prompt_price": "0.77000000",
+   "completion_price": "2.31000000"
+  },
+  {
+   "permaslug": "meta/muse-spark-open-20261015",
+   "intelligence_index": "24.9",
+   "prompt_price": "1.25000000",
+   "completion_price": "4.25000000"
+  },
+  {
+   "permaslug": "openai/gpt-5.6-luna-20260709",
+   "intelligence_index": "23.8",
+   "prompt_price": "0.2000000",
+   "completion_price": "1.2000000"
+  },
+  {
+   "permaslug": "deepseek/deepseek-v4-pro-20260813",
+   "intelligence_index": "23.1",
+   "prompt_price": "1.98000000",
+   "completion_price": "5.94000000"
+  },
+  {
+   "permaslug": "qwen/qwen3.8-27b-20260814",
+   "intelligence_index": "20.1",
+   "prompt_price": "0.16000000",
+   "completion_price": "2.000000"
+  },
+  {
+   "permaslug": "minimax/minimax-m3-20260531",
+   "intelligence_index": "18.9",
+   "prompt_price": "0.224000000",
+   "completion_price": "0.88000000"
+  },
+  {
+   "permaslug": "reflection/beam-1.0-501b-a23b-20261016",
+   "intelligence_index": "17.7",
+   "prompt_price": "0.4000000",
+   "completion_price": "1.2000000"
+  },
+  {
+   "permaslug": "moonshotai/kimi-k3-20260715",
+   "intelligence_index": "17.4",
+   "prompt_price": "0.917000000",
+   "completion_price": "6.000000"
+  },
+  {
+   "permaslug": "nvidia/nemotron-3.5-super-vl-20261015",
+   "intelligence_index": "13.6",
+   "prompt_price": "0.15000000",
+   "completion_price": "0.5000000"
+  },
+  {
+   "permaslug": "thinkingmachines/inkling-small-20260730",
+   "intelligence_index": "12.9",
+   "prompt_price": "0.36000000",
+   "completion_price": "0.96000000"
+  },
+  {
+   "permaslug": "deepseek/deepseek-v4-pro-20260423",
+   "intelligence_index": "12.6",
+   "prompt_price": "1.75000000",
+   "completion_price": "3.5000000"
+  },
+  {
+   "permaslug": "thinkingmachines/inkling-20260715",
+   "intelligence_index": "12.5",
+   "prompt_price": "1.000000",
+   "completion_price": "4.05000000"
+  },
+  {
+   "permaslug": "nvidia/nemotron-3-ultra-550b-a55b-20260604",
+   "intelligence_index": "11.8",
+   "prompt_price": "0.4000000",
+   "completion_price": "1.76000000"
+  },
+  {
+   "permaslug": "google/gemini-3.5-flash-lite-20260721",
+   "intelligence_index": "11.7",
+   "prompt_price": "0.54000000",
+   "completion_price": "4.5000000"
+  },
+  {
+   "permaslug": "anthropic/claude-4.5-haiku-20251001",
+   "intelligence_index": "7.4",
+   "prompt_price": "1.1000000",
+   "completion_price": "5.5000000"
+  },
+  {
+   "permaslug": "meta/muse-glimmer-30b-20260810",
+   "intelligence_index": "6.3",
+   "prompt_price": "0.24000000",
+   "completion_price": "0.96000000"
+  },
+  {
+   "permaslug": "google/gemini-3.1-flash-lite-preview-20260303",
+   "intelligence_index": "6.2",
+   "prompt_price": "0.45000000",
+   "completion_price": "2.7000000"
+  },
+  {
+   "permaslug": "cohere/command-a-plus-05-2026",
+   "intelligence_index": "6.2",
+   "prompt_price": "0.3000000",
+   "completion_price": "1.5000000"
+  },
+  {
+   "permaslug": "nvidia/nemotron-3.5-lightning-20260807",
+   "intelligence_index": "5.5",
+   "prompt_price": "0.05000000",
+   "completion_price": "0.2000000"
+  },
+  {
+   "permaslug": "ibm-granite/granite-4.2-8b-20260831",
+   "intelligence_index": "5.1",
+   "prompt_price": "0.06000000",
+   "completion_price": "0.25000000"
+  },
+  {
+   "permaslug": "mistralai/mistral-medium-3.5-20260430",
+   "intelligence_index": "4.6",
+   "prompt_price": "0.75000000",
+   "completion_price": "3.75000000"
+  },
+  {
+   "permaslug": "google/gemma-4-31b-it-20260402",
+   "intelligence_index": "4.4",
+   "prompt_price": "0.34000000",
+   "completion_price": "0.1000000"
+  },
+  {
+   "permaslug": "mistralai/mistral-small-2603",
+   "intelligence_index": "4.3",
+   "prompt_price": "0.165000000",
+   "completion_price": "0.66000000"
+  },
+  {
+   "permaslug": "cohere/north-mini-code-20260617",
+   "intelligence_index": "3.4",
+   "prompt_price": "0",
+   "completion_price": "0"
+  }
+ ]
+}

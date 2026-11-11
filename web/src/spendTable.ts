@@ -61,10 +61,12 @@ export interface SpendRateLane {
 export interface MessageCache {
   thread_id: string
   prompt_id: string | null
+  model: string | null
   first_request_at: string
   fresh_tokens: string
   cached_tokens: string
   cache_write_tokens: string
+  saved_usd: string | null
 }
 
 export interface DailySpend {
@@ -77,6 +79,71 @@ export interface DailySpend {
 
 const DECIMAL = /^(?:0|[1-9]\d*)(?:\.\d+)?$/
 const OFFSET_TIMESTAMP = /(?:Z|[+-]\d{2}:\d{2})$/
+
+/** FL-160: one graph per series, in the order the owner named them. */
+const SERIES = [
+  ['agent', 'Agents'], ['subagent', 'Sub-agents'], ['model', 'Models'], ['curation', 'Memory curation'], ['total', 'Total'],
+] as const satisfies readonly (readonly [SpendRateLane['dimension'], string])[]
+export type SpendWindow = '10m' | '1h' | 'today'
+export const SPEND_WINDOWS: Record<SpendWindow, string> = { '10m': '10 min', '1h': '1 hour', today: 'Today' }
+
+export interface MinuteValue { minute: number; cost: number | null; lines: number; unpriced: number }
+export interface SpendLine { key: string; label: string; values: MinuteValue[] }
+export interface SpendSeries { dimension: SpendRateLane['dimension']; label: string; lines: SpendLine[]; sum: number; unpriced: number }
+
+/** Minutes of the chosen window; "today" starts at local midnight (the Palace keeps a day of minutes). */
+export function spendWindowMinutes(asOf: string, window: SpendWindow): number[] {
+  const end = Math.floor(Date.parse(asOf) / 60_000) * 60_000
+  const midnight = new Date(end).setHours(0, 0, 0, 0)
+  const start = window === '10m' ? end - 9 * 60_000 : window === '1h' ? end - 59 * 60_000 : Math.max(midnight, end - 1439 * 60_000)
+  return Array.from({ length: (end - start) / 60_000 + 1 }, (_, i) => start + i * 60_000)
+}
+
+/** ADR-024: a minute whose receipts all lack a price is unknown (a gap), never zero. */
+export function spendSeries(snapshot: SpendTableSnapshot, window: SpendWindow): { minutes: number[]; series: SpendSeries[]; peak: number } {
+  const minutes = spendWindowMinutes(snapshot.as_of, window)
+  const line = (key: string, label: string, lanes: SpendRateLane[]): SpendLine => {
+    const byMinute = new Map<number, MinuteValue>()
+    for (const lane of lanes) for (const point of lane.points) {
+      const minute = Date.parse(point.minute)
+      const current = byMinute.get(minute) ?? { minute, cost: null, lines: 0, unpriced: 0 }
+      byMinute.set(minute, {
+        minute,
+        cost: point.cost_usd === null ? current.cost : (current.cost ?? 0) + Number(point.cost_usd),
+        lines: current.lines + point.receipt_lines,
+        unpriced: current.unpriced + point.unpriced_lines,
+      })
+    }
+    return { key, label, values: minutes.map((minute) => byMinute.get(minute) ?? { minute, cost: 0, lines: 0, unpriced: 0 }) }
+  }
+  const series = SERIES.map(([dimension, label]) => {
+    const lanes = snapshot.rates.filter((lane) => lane.dimension === dimension)
+    // Every receipt has a model, so one summed Models line would repeat Total: each model is its own line.
+    const lines = dimension === 'model'
+      ? lanes.map((lane) => line(lane.key ?? 'unreported', lane.key ?? 'Model not reported', [lane]))
+      : [line(dimension, label, lanes)]
+    const values = lines.flatMap((entry) => entry.values)
+    return {
+      dimension, label, lines,
+      sum: values.reduce((total, value) => total + (value.cost ?? 0), 0),
+      unpriced: values.reduce((total, value) => total + value.unpriced, 0),
+    }
+  })
+  const peak = Math.max(0, ...series.flatMap((entry) => entry.lines.flatMap((item) => item.values.map((value) => value.cost ?? 0))))
+  return { minutes, series, peak }
+}
+
+/** C.10: an unpriced minute breaks the line; the rack never invents spend history across it. */
+export function spendPolylines(values: MinuteValue[], first: number, last: number, peak: number): string[] {
+  const segments: string[][] = [[]]
+  for (const value of values) {
+    if (value.cost === null) { segments.push([]); continue }
+    const x = last === first ? 100 : (value.minute - first) / (last - first) * 100
+    const y = 22 - (peak > 0 ? value.cost / peak * 20 : 0)
+    segments.at(-1)!.push(`${x.toFixed(2)},${y.toFixed(2)}`)
+  }
+  return segments.filter((segment) => segment.length > 0).map((segment) => segment.length === 1 ? `${segment[0]} ${segment[0]}` : segment.join(' '))
+}
 
 /** PLAN M3SP / ADR-024 keeps the browser a strict reader of one server-authored ledger projection. */
 export function parseSpendTableSnapshot(value: unknown): SpendTableSnapshot {
@@ -130,10 +197,12 @@ export function parseSpendTableSnapshot(value: unknown): SpendTableSnapshot {
       return {
         thread_id: nonblank(message.thread_id, 'thread_id'),
         prompt_id: message.prompt_id === null ? null : nonblank(message.prompt_id, 'prompt_id'),
+        model: message.model == null ? null : nonblank(message.model, 'model'),
         first_request_at: timestamp(message.first_request_at, 'first_request_at'),
         fresh_tokens: decimal(message.fresh_tokens, 'fresh_tokens'),
         cached_tokens: decimal(message.cached_tokens, 'cached_tokens'),
         cache_write_tokens: decimal(message.cache_write_tokens, 'cache_write_tokens'),
+        saved_usd: message.saved_usd == null ? null : decimal(message.saved_usd, 'saved_usd'),
       }
     }),
     days: array(root.days ?? [], 'days').map((value) => {
