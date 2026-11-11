@@ -503,6 +503,7 @@ async def test_global_instrument_requests_preserve_required_null_scope_fields() 
         "base_version": "v0",
         "values": values,
         "slice_parameter_id": "scorer.tau",
+        "terrain_parameters": ["scorer.tau", "scorer.memory_context_share"],
     }
     assert console.learning["minimum_dispositions"] == 25
 

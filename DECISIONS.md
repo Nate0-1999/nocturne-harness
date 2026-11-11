@@ -4357,6 +4357,14 @@ the reconnected thread's snapshot lacks it; the run loop runs a prompt id once. 
 "Clarification logged" only when the stack's interventions hold the line, and shows the
 steering beside the prompt, so it survives the next round replacing the attempts.
 
+## M6LP — Show the learner's observations [P1.2, P2.5]
+
+The Injection Console keeps its history, terrain and controls together. Terrain axes use
+the existing continuous controls; DEEP measures the selected pair. Fit progress plots
+server-observed training loss, with timestamps and no invented percentage complete.
+Global and effective project weights are displayed together, with residuals below.
+Resume (lp09): the weights tables name a project by its folder, the path on hover (FL-205); a
+whole path widened the table into the next column on the real walk.
 ## M6CR — The elbow says why; a budget buys the most intelligence an hour allows [P4]
 
 PRECEDENT: PLAN M6CR; FL-152 153 154; A-020, A-021, A-082; M3EL, M3MD, M3SR.
