@@ -33,7 +33,7 @@ from harness.judge_panel import (
     stopped_verdict,
     validate_judge_verdict,
 )
-from harness.model_policy import ModelPolicyResolver
+from harness.model_policy import ModelPolicyResolver, measured_token_burn
 from harness.model_router import CompletionRouter, model_settings_for
 from harness.pydantic_ai_adapter import WorkspaceCapability, adopted_skill_capabilities
 from harness.receipt_queue import SpendReceiptQueue
@@ -149,11 +149,18 @@ async def run(assignment_path: Path) -> None:
         else None
     )
     router = CompletionRouter(settings)
+    spine = SpineClient(
+        settings.spine_url,
+        settings.spine_token.get_secret_value(),
+        principal_id=settings.principal_id,
+    )
     resolver = ModelPolicyResolver(
         policy=assignment["model_policy"],
         static_model=settings.chat_model,
         static_context_tokens=settings.model_context_tokens,
         catalog=router.catalog,
+        # FL-152: a sub-agent's budget policy prices models at the same measured burn.
+        burn=lambda: measured_token_burn(spine),
     )
     resolution = await resolver.resolve(assignment["thread_id"])
     output_type = {
@@ -201,11 +208,6 @@ async def run(assignment_path: Path) -> None:
         machine_id=settings.machine_id,
         # M3SF / M3EX-10: a worker's tool calls stay inside its worktree.
         fence_reads=True,
-    )
-    spine = SpineClient(
-        settings.spine_url,
-        settings.spine_token.get_secret_value(),
-        principal_id=settings.principal_id,
     )
     context = MemoryToolContext(
         spine=spine,

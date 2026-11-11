@@ -63,6 +63,7 @@ from harness.model_policy import (
     ThreadModelResolution,
     ThreadModelResolver,
     browse_models,
+    measured_token_burn,
     parse_model_policy,
 )
 from harness.model_router import CompletionRouter, ModelConfigurationError
@@ -83,6 +84,7 @@ from harness.run_loop import ProjectBindingConflict, RunLoop, ThreadWorkspaceMov
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.seed import SeedIngestionService, SeedUploadRequest
 from harness.seed_jump_start import AgentFileOffers, discover_agent_files
+from harness.spend import cache_savings
 from harness.spend_walls import SpendLimits, SpendWalls
 from harness.spine_client import (
     ActivateScorerConfigRequest,
@@ -178,6 +180,12 @@ class ModelPinUpdate(BaseModel):
     pinned: bool
 
 
+class LocalModelSettings(BaseModel):
+    url: str | None = None
+    model: str | None = None
+    when_offline: bool = False
+
+
 class InterjectionRequest(BaseModel):
     run_id: str
     prompt: str
@@ -218,6 +226,7 @@ _RACK_FRAME_HOST = "rack.localhost"
 _RACK_MODULE_IDS = frozenset(
     {
         "header",
+        "spend_strip",
         "threads",
         "conversation",
         "memory",
@@ -933,6 +942,12 @@ def create_dev_app(
     home = (configured.nocturne_home or nocturne_home()).expanduser().resolve()
     role_policy_path = home / "model-policies.json"
     model_pin_path = home / "model-pins.json"
+    local_model_path = home / "local-model.json"
+    if local_model_path.exists():
+        local_settings = LocalModelSettings.model_validate_json(local_model_path.read_text())
+        configured.local_model_url = local_settings.url
+        configured.local_model = local_settings.model
+        configured.local_when_offline = local_settings.when_offline
 
     def model_pins() -> list[str]:
         return json.loads(model_pin_path.read_text()) if model_pin_path.exists() else []
@@ -994,11 +1009,14 @@ def create_dev_app(
         static_model=configured.chat_model,
         static_context_tokens=configured.model_context_tokens,
         catalog=completion_router.catalog,
+        burn=lambda: measured_token_burn(owned_spine),
     )
 
     def explain_model_policy(snapshot: ParameterSnapshot) -> str:
         if not isinstance(model_resolver, ModelPolicyResolver):
             return "Model selected by the configured resolver."
+        if snapshot.resolved_model.startswith("local:"):
+            return "Local model running on this machine."
         return model_resolver.explain(
             snapshot.thread_id,
             snapshot.resolved_model,
@@ -1248,7 +1266,15 @@ def create_dev_app(
     async def read_spend_table_snapshot(
         thread_ids: list[UUID] | None,
     ) -> SpendTableSnapshot | None:
-        return await owned_spine.spend_table(thread_ids)
+        snapshot = await owned_spine.spend_table(thread_ids)
+        catalog = completion_router.catalog
+        if snapshot is None or not snapshot.messages or catalog is None:
+            return snapshot
+        try:
+            listing = (await catalog.load()).listing
+        except ModelCatalogUnavailable:
+            return snapshot  # FL-161: the saving stays unpriced, never guessed.
+        return snapshot.model_copy(update={"messages": cache_savings(snapshot.messages, listing)})
 
     async def read_memory_graph(thread_id: str | None) -> MemoryGraphSnapshot:
         memory_ids = None
@@ -1321,8 +1347,10 @@ def create_dev_app(
             workflow_definitions,
             configured,
             completion_router.catalog,
+            burn=lambda: measured_token_burn(owned_spine),
         ),
         transcript_journal=journal,
+        offline_resolution=completion_router.offline_resolution,
         symphony_experience=owned_symphony_experience,
         spend_walls=spend_walls,
         checkpoints=WorkspaceCheckpoints(home / "checkpoints"),
@@ -1447,6 +1475,15 @@ def create_dev_app(
                     ) from error
                 raise
 
+        @app.post("/v1/spend/reconciliation")
+        async def reconcile_spend():
+            try:
+                return await owned_spine.reconcile_spend()
+            except SpineResponseError as error:
+                if error.status_code == 404:
+                    raise HTTPException(503, "Checking the bill needs a newer Palace.") from error
+                raise
+
         @app.put("/v1/spend-walls", response_model=SpendLimits)
         async def update_spend_walls(limits: SpendLimits):
             await spend_walls.configure(limits)
@@ -1533,15 +1570,35 @@ def create_dev_app(
                         chat_policy=role_policies["chat"],
                         current_model=None if current is None else current["model"],
                         fallback_model=configured.chat_model,
+                        burn=await measured_token_burn(owned_spine),
                     )
+                    if not browser["models"] and completion_router.remote_catalog is None:
+                        browser["unavailable"] = "This model source publishes no model list."
                 except ModelCatalogUnavailable as exc:
                     raise HTTPException(503, f"The model list is unavailable: {exc}.") from None
             return {
                 **browser,
+                "local": {
+                    "url": configured.local_model_url,
+                    "model": configured.local_model,
+                    "when_offline": configured.local_when_offline,
+                },
                 "pins": model_pins(),
                 "chat_policy": role_policies["chat"],
                 "current": current,
             }
+
+        @app.put("/v1/local-model")
+        async def local_model_settings(body: LocalModelSettings):
+            home.mkdir(parents=True, exist_ok=True)
+            temporary = local_model_path.with_suffix(".tmp")
+            temporary.write_text(body.model_dump_json() + "\n")
+            temporary.replace(local_model_path)
+            configured.local_model_url = body.url or None
+            configured.local_model = body.model or None
+            configured.local_when_offline = body.when_offline
+            completion_router.local._listing = None
+            return body
 
         @app.put("/v1/model-pins")
         async def pin_model(body: ModelPinUpdate):
