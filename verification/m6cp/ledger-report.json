@@ -2,12 +2,12 @@
   "packet": "M6CP",
   "mode": "builder",
   "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
-  "ledger_sha256": "c4194e9004df54ab624353ba2b2b2761ac1e2a48c02ab709aee76e12b71e4f75",
+  "ledger_sha256": "66f333892c4e3016be15bf0ab97f051b3e5ba369bdc95c7f1dd989da16248472",
   "diffs": [
     {
       "repo": "harness",
-      "base": "0069c7ee44f677bab47109248bab34895b4858a1",
-      "head": "bdd7be5a21cc1c9528ce90eaf67a14373f067987"
+      "base": "6779f58711a5d0317a2456d48b6041e378693cf7",
+      "head": "ad332c9a23accf315c543b800231822889ca07db"
     }
   ],
   "unmapped": {
@@ -425,7 +425,12 @@
     "harness/verification/m6cp/receipts/resume304/ledger-harness.log": "New evidence of the authorized FL-061 acceptance resumption and cleanup; no product behavior or frozen-law change.",
     "harness/verification/m6cp/receipts/resume304/cleanup.json": "New evidence of the authorized FL-061 acceptance resumption and cleanup; no product behavior or frozen-law change.",
     "harness/verification/m6cp/receipts/resume304/ledger-spine.log": "New evidence of the authorized FL-061 acceptance resumption and cleanup; no product behavior or frozen-law change.",
-    "harness/verification/m6cp/receipts/resume304/secret-scan.json": "New evidence of the authorized FL-061 acceptance resumption and cleanup; no product behavior or frozen-law change."
+    "harness/verification/m6cp/receipts/resume304/secret-scan.json": "New evidence of the authorized FL-061 acceptance resumption and cleanup; no product behavior or frozen-law change.",
+    "harness/web/dist/assets/index-BtZ3D_Oq.js": "Bundled web asset replaced between main and this stacked branch's rebuild; generated from the mapped sources, no separate feature change is claimed.",
+    "harness/web/dist/assets/index-BwqRjgMa.css": "Bundled web asset replaced between main and this stacked branch's rebuild; generated from the mapped sources, no separate feature change is claimed.",
+    "harness/web/dist/assets/index-D17qOEMs.css": "Bundled web asset replaced between main and this stacked branch's rebuild; generated from the mapped sources, no separate feature change is claimed.",
+    "harness/web/dist/assets/index-DPisKoLY.js": "Bundled web asset replaced between main and this stacked branch's rebuild; generated from the mapped sources, no separate feature change is claimed.",
+    "harness/verification/m6cp/FL-206.png": "Evidence of the cp11c acceptance resumption (report 305): fixture, three accepted joint fits, console walk, spend and cleanup; no product behavior or frozen-law change."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -915,24 +920,6 @@
       "flag": "F086",
       "observed": "Context only: a shared or inherited path maps here. Its own gesture was not repeated. This final local-Palace readout is not row-specific proof or a new PASS/regression claim. Additional coverage remains unproven under F086."
     },
-    "FL-195": {
-      "label": "The feature ledger generates coverage reports and requires evidence for the rows affected by a build.",
-      "walk": "Compute the composer fix's impact with --paths and see attunement rows; push a branch touching socket.ts and observe the hook print rows and write impacted.json; observe a DONE handoff without screenshots fail CI, then verify complete evidence passes.",
-      "protected": true,
-      "verdict": "FAIL",
-      "screenshot": "FL-195.png",
-      "flag": "F086",
-      "observed": "Context only: a shared or inherited path maps here. Its own gesture was not repeated. This final local-Palace readout is not row-specific proof or a new PASS/regression claim. Additional coverage remains unproven under F086."
-    },
-    "FL-196": {
-      "label": "The rules machine checks citations, frozen law, product vocabulary, seed states and packet precedents.",
-      "walk": "Remove a guard citation on a disposable branch and observe CI fail; change a frozen axiom and observe the freeze step fail; restore both and observe Rules pass. The master ADR check remains red until the owner applies the citation patch.",
-      "protected": true,
-      "verdict": "FAIL",
-      "screenshot": "FL-196.png",
-      "flag": "F086",
-      "observed": "Context only: a shared or inherited path maps here. Its own gesture was not repeated. This final local-Palace readout is not row-specific proof or a new PASS/regression claim. Additional coverage remains unproven under F086."
-    },
     "FL-198": {
       "label": "Context overwhelm protections: a query or a sub-agent return may take up at most n% of the compaction limit, the share chosen by the sending agent within bounds that are system parameters; a security module shows it.",
       "walk": "Make a query return more than its share of the compaction limit; the agent gets an error naming the size and a very brief head of the response. Make a sub-agent return more than its share; it is sent back the exact amount to shorten by and returns under the share. The security module shows both.",
@@ -1045,10 +1032,10 @@
       "label": "Compaction instructions tuned by back-test; memory size as a tunable beside the threshold and allotments.",
       "walk": "In the Injection Console, change Memory size to back-test and inspect the joint replay with minimum match and memory share. Instruction generations retain text, parent, date, size and scores. A winning production fit carries instructions and size in the scorer proposal and its existing activation; previews retain only a receipt. Verification feedback is excluded from production training.",
       "protected": false,
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "screenshot": "FL-061.png",
-      "flag": "F169",
-      "observed": "Report 304: 0/3 fresh accepted joint fits. Rebuilt six compaction spans and 198 graded dispositions; normal training excludes all verification history. One setup stream stall retried once after 317.114 seconds and completed; the first joint fit then hit httpx.ReadTimeout during model replay, so work stopped. HTTP 200 carried only a scorer diagnostic: joint_fit/id/scores absent. The failed optimization and every trial remain in receipts/resume304; all scorer configs unchanged and no proposal persisted. FL-084 prior PASS preserved."
+      "flag": "",
+      "observed": "Report 305: 3/3 fresh accepted joint fits on the F214 local Palace rung, gpt-4.1-mini on every role, Memory f4a6616 (a stalled back-test request now goes back once). Fresh fixture: six compaction spans, 22 facts approved and 5 kettle details denied in the queue, 15 Palace gates, 125 graded dispositions. Generated-instruction previews 01M75SDCSWZG7X7F6RXFBF7TDA (creation 1 to 6), 01M75SH2CH6PXQQBG99VT03JZZ (1 to 2) and 01M75SJP9Z2PRCG30HN5QGQXY6 (1 to 2) each proposed size 64, minimum match 0.38, share 1%, held-out errors 15 to 8. The console's Back-test size 96 (01M75SMEZCF3GT40K9MRH3A03K, this capture) also completed. Two of the four fits met one 60-second ReadTimeout in a replay; each went back once and finished, receipted once. Lineage shows text, parent, date, size and scores. Active scorer and size 128 unchanged; no proposal persisted; production training counted 0 verification signals. Receipts: garden verification/m6cp/receipts/cp11c/."
     },
     "FL-068": {
       "label": "Injected memories refreshed on every move.",
@@ -1193,6 +1180,15 @@
       "screenshot": "FL-193.png",
       "flag": "F086",
       "observed": "Context only: a shared or inherited path maps here. Its own gesture was not repeated. This final local-Palace readout is not row-specific proof or a new PASS/regression claim. Additional coverage remains unproven under F086."
+    },
+    "FL-206": {
+      "label": "Strategies and models: the strategies rail beside the model list, each strategy with its one-sentence meaning and the model it picks now; one plain summary of the model in use; the strategy named wherever the model is.",
+      "walk": "Open the Model Device from the conversation's model chip: the strategies (Pinned, Max, Elbow, Floor, Budget once the ledger has a burn, Local when offline) stand beside the ranked model list, each with what it means and the model it picks now, the one in force marked; the model in use has one paragraph naming its price in and out (the price the chip quotes), context, rank, thinking level, which strategy chose it and why, and since when. Click Elbow; a new thread's header chip, thread-list row, conversation configuration legend and spend-module model row all read 'Elbow · <model>'. Pick Floor and Budget from the rail the same way.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-206.png",
+      "flag": "F086",
+      "observed": "Inherited context only: the current Garden mapping added this row after report 302. Its model-strategy gesture was not re-walked by this evidence-only FL-061 resumption; no new PASS or regression claim."
     }
   },
   "not_run": {
@@ -1311,6 +1307,8 @@
     "FL-185": "horizon",
     "FL-188": "unverified",
     "FL-189": "dropped",
+    "FL-195": "outside diff",
+    "FL-196": "outside diff",
     "FL-200": "outside diff",
     "FL-202": "outside diff",
     "FL-203": "outside diff",
