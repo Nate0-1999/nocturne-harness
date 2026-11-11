@@ -13,8 +13,10 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from spine.jobs import WorkflowDefinition
 
+from harness.bundle import SealedTools, bundle_definition, bundle_record
 from harness.envelope import MessageType, generate_ulid
 from harness.model_policy import ModelPolicyResolver, parse_model_policy
+from harness.onboarding import OnboardingError
 from harness.spend_walls import workflow_budget
 from harness.spine_client import MemoryGraphQuery, SpineClientError
 
@@ -61,6 +63,7 @@ class WorkflowSave(BaseModel):
     definition: WorkflowDefinition
     expected_revision: int = 0
     enabled: bool = True
+    grants_confirmed: bool = False
 
 
 class JobScheduler:
@@ -124,6 +127,24 @@ class JobScheduler:
             raise ValueError("Choose an existing workflow folder.")
         parse_model_policy(definition.model_policy)
         definition = definition.model_copy(update={"folder": str(root)})
+        if body.expected_revision == 0:
+            if definition.bundle is not None:
+                raise ValueError("A recipe never carries `bundle`; save its folder to record it.")
+            if definition.allow and not body.grants_confirmed:
+                # ADR-015 / A-084: a declared grant escalates only once the owner confirms it.
+                raise ValueError(
+                    f"This workflow asks to cross {', '.join(definition.allow)} unattended. "
+                    "Confirm it once with `nocturne jobs save`."
+                )
+        if (
+            definition.bundle is None
+            and (root / "workflow.json").is_file()
+            and bundle_definition(root) == definition
+        ):
+            # A-084: the folder's own recipe is a bundle; its digest, tools and key names ride it.
+            definition = definition.model_copy(
+                update={"bundle": await asyncio.to_thread(bundle_record, root)}
+            )
         return await self.spine.job_write(
             "PUT",
             f"v1/jobs/{job_id}",
@@ -225,8 +246,18 @@ class JobScheduler:
                     self.active[run_id] = {"state": "waiting", "verdict": event.get("reason")}
 
         state, verdict = "failed", "Workflow did not complete."
+        crossings = sealed = None
         try:
+            if definition.bundle:
+                sealed = SealedTools.seal(
+                    Path(definition.folder), definition.bundle, definition.name
+                )
             await self.loop.request_snapshot(thread_id, observe, workspace_root=definition.folder)
+            if definition.allow or sealed:
+                # A-084: the walls the owner declared at save, and the bundle's tools, for this run.
+                crossings = self.toolset_for(thread_id).crossings
+                crossings.thread.update(definition.allow)
+                crossings.tools = sealed
             prompt = (
                 definition.prompt
                 + "\n\nComplete the work so this exit check succeeds:\n"
@@ -261,6 +292,11 @@ class JobScheduler:
         except Exception as exc:
             verdict = f"Workflow failed: {exc}"
         finally:
+            if crossings is not None:
+                crossings.thread.difference_update(definition.allow)
+                crossings.tools = None
+            if sealed is not None:
+                sealed.close()
             await self.loop.detach(observe)
             self.active.pop(run_id, None)
             try:
@@ -280,7 +316,7 @@ class JobScheduler:
         async def save_job(job_id: str, body: WorkflowSave):
             try:
                 return await self.save(job_id, body)
-            except (ValueError, OSError, SpineClientError) as exc:
+            except (ValueError, OSError, SpineClientError, OnboardingError) as exc:
                 raise HTTPException(409, str(exc)) from exc
 
         @app.post("/v1/jobs")

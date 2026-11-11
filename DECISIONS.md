@@ -4410,3 +4410,28 @@ conversation's configuration legend and the spend module's model row read strate
 local-model tools moved up beside the list's search; the offline toggle became a rail card.
 Placement follows the charge's recipe (the full panel in the Model Device, a strategy name in the
 spend module, system settings unchanged); the owner may still rule otherwise.
+
+## M7WB — The workflow bundle: a folder, a vault, a tool that runs with its keys [P4, P4.2]
+
+PRECEDENT: PLAN M7WB; SD-092, SD-087; A-069, A-084; ADR-015; M3SJ, M3SK, M3TH; FL-185; F138.
+A workflow was one Palace row: nothing carried its skills, the owner's code or the names of its
+keys, so it could not be handed to another machine, and an unattended run stalled at the first
+card. A bundle is the workflow's own folder (`bundle.py`): `workflow.json`, `.agents/skills/`
+(the existing discovery, since the recipe's folder is the bundle), `tools/` and `keys.example`.
+Decisions the charge left open, each the smallest that keeps its promises:
+- The digest is the sha256 of a plain tar (no compression, no owner, no time) of those four
+  parts only, so the run's own output never changes it and another machine computes the same.
+- Save records `{digest, tools, keys}` inside the A-069 definition rather than a new column: the
+  run's frozen definition then keeps the digest it ran (M7TG reads it), with no migration.
+- "The agent never sees the keys" needs more than the `.env` regex: the vault folder is refused
+  by the read tools with no card and denied to the shell by the sandbox profile.
+- A declared tool runs from a copy taken at launch, after the folder is checked against the
+  saved digest. Without both, an agent could rewrite `tools/<name>` mid-run and have its own
+  code run with the keys (ADR-015 (4): the workspace is untrusted).
+- Only the whole command `nocturne tool run <name> [args]` in a saved job's thread takes that
+  path; with a pipe or redirect it is refused with the remedy. A vault value a tool prints
+  returns as `[vault:NAME]`.
+- `allow` is confirmed once at `nocturne jobs save` and the daemon refuses an unconfirmed new
+  job, so a recipe imported in the Jobs module cannot widen its own walls.
+- `workflow new` starts a recipe with `memory_scope: none`: F138 (a job with a memory scope
+  does not run) stands and is not this packet's.
