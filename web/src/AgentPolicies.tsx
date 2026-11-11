@@ -41,14 +41,16 @@ export function AgentPolicies({ level }: { level?: 'Duet' | 'Symphony' }) {
         <label className="theme-control">Token-cost policy
           <Select aria-label={`${label} token-cost policy`} data-tooltip-detail={role === 'curator' ? 'How the Palace chooses its curator model. Applies to future passes.' : 'How this role\'s model is chosen. Applies to new threads and future rounds; existing choices stay fixed.'} value={kind} onChange={(event) => {
             const next = event.target.value
-            setPolicies({ ...policies, [role]: next === 'pinned' ? 'pinned:' : next === 'floor' || next === 'slope' ? `${next}:1` : next })
+            setPolicies({ ...policies, [role]: next === 'pinned' ? 'pinned:' : next === 'floor' || next === 'slope' || next === 'budget' ? `${next}:1` : next })
           }}>
             <option value="pinned">Pinned</option><option value="max">Max</option>
             <option value="elbow">Elbow</option><option value="floor">Floor</option><option value="slope">Slope</option>
+            {/* FL-152: priced at the agents' measured burn, which the Palace's curator does not have. */}
+            {role !== 'curator' && <option value="budget">Budget</option>}
           </Select>
         </label>
-        {separator >= 0 && <label>{kind === 'pinned' ? 'Model' : kind === 'floor' ? 'Intelligence floor' : 'Price slope'}
-          <TextArea rows={2} aria-label={`${label} policy value`} data-tooltip-detail="The model id, intelligence floor or price slope this policy uses." value={argument} onChange={(event) => setPolicies({ ...policies, [role]: `${kind}:${event.target.value}` })} />
+        {separator >= 0 && <label>{kind === 'pinned' ? 'Model' : kind === 'floor' ? 'Intelligence floor' : kind === 'budget' ? 'Dollars per hour' : 'Price slope'}
+          <TextArea rows={2} aria-label={`${label} policy value`} data-tooltip-detail="The model id, intelligence floor, dollars per hour or price slope this policy uses. Floor: the cheapest model at or above that score. Budget: the most intelligent model the agents' measured hourly token burn can buy for that much." value={argument} onChange={(event) => setPolicies({ ...policies, [role]: `${kind}:${event.target.value}` })} />
         </label>}
         <div className="app-settings-actions"><Button action="save" variant="primary" type="button" data-tooltip-detail={role === 'curator' ? 'Save the curator policy in the Palace for future passes.' : 'Save this role\'s policy for new threads.'} onClick={() => void save(role)}>Save {label.toLowerCase()} policy</Button></div>
       </fieldset>

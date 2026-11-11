@@ -34,9 +34,9 @@ class WorkflowTurnRunner:
 class WorkflowModelResolver:
     """Resolve a saved policy before the ordinary loop opens its new thread."""
 
-    def __init__(self, delegate, definitions, settings, catalog):
+    def __init__(self, delegate, definitions, settings, catalog, burn=None):
         self.delegate, self.definitions = delegate, definitions
-        self.settings, self.catalog = settings, catalog
+        self.settings, self.catalog, self.burn = settings, catalog, burn
         self.resolvers = {}
 
     def __getattr__(self, name):
@@ -52,6 +52,7 @@ class WorkflowModelResolver:
                 static_model=self.settings.chat_model,
                 static_context_tokens=self.settings.model_context_tokens,
                 catalog=self.catalog,
+                burn=self.burn,
             )
         return await self.resolvers[thread_id].resolve(thread_id)
 

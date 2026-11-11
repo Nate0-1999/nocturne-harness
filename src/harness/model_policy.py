@@ -3,7 +3,8 @@ model browser's read path (FL-202), which only the Harness serves."""
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from decimal import Decimal
+from datetime import timedelta
+from decimal import ROUND_CEILING, Decimal
 
 from spine.model_policy import (  # noqa: F401
     BenchmarkModel,
@@ -20,16 +21,20 @@ from spine.model_policy import (  # noqa: F401
     OpenRouterCatalogClient,
     ThreadModelResolution,
     ThreadModelResolver,
+    TokenBurn,
     _parse_model_routes,
     _parse_named_model,
     _qualify_model,
     elbow_price_floor,
+    explain_choice,
     lower_convex_hull,
     pareto_frontier,
     parse_model_listing,
     parse_model_policy,
     select_model,
 )
+
+from harness.spine_client import SpineClient, SpineClientError
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,13 +53,17 @@ def standard_configurations(
     current_model_id: str | None,
     fallback_model: str,
     qualify: Callable[[str], str],
+    burn: TokenBurn | None = None,
 ) -> tuple[StandardConfiguration, ...]:
-    """Pinned, max, elbow and floor, each resolved now; single-key catalogs have none.
+    """Pinned, max, elbow, floor and budget, each resolved now; single-key catalogs have none.
 
     Pinned keeps the conversation's model. Floor uses the configured floor, else the score of
     the current model (as smart as this, cheapest), else of the configured model, else the
-    elbow's. A policy the table cannot resolve shows the static model it fails open to
-    (A-020(f)); elbow names the price floor it gave a free model (SPEC C.5, v2.129).
+    elbow's. Budget (FL-152) uses the configured dollars per hour, else what the current or
+    configured model costs an hour at the measured burn (as costly as this, smartest); with no
+    measured burn and none configured it is not offered. A policy the table cannot resolve shows
+    the static model it fails open to (A-020(f)); elbow names the price floor it gave a free
+    model (SPEC C.5, v2.129).
     """
 
     if not catalog.rows:
@@ -64,17 +73,16 @@ def standard_configurations(
 
     def pick(policy: ModelPolicy) -> tuple[str, str, Decimal | None]:
         try:
-            selected = select_model(policy, catalog.rows)
+            selected = select_model(policy, catalog.rows, burn)
             route = catalog.model_routes.get(selected.permaslug)
             if route is None:
                 raise ModelCatalogUnavailable("the selected model has no unambiguous route")
         except ModelCatalogUnavailable as exc:
             return fallback_model, f"falls back to the configured model: {exc}", None
-        return (
-            qualify(route.model_id),
-            f"score {selected.intelligence_index}",
-            (selected.intelligence_index),
-        )
+        reason = f"score {selected.intelligence_index}"
+        if policy.kind in {"elbow", "budget"}:
+            reason = explain_choice(policy, catalog.rows, selected, burn)
+        return qualify(route.model_id), reason, selected.intelligence_index
 
     elbow_model, elbow_reason, elbow_score = pick(ModelPolicy("elbow"))
     price_floor = elbow_price_floor(pareto_frontier(catalog.rows), catalog.rows)
@@ -103,7 +111,51 @@ def standard_configurations(
         configurations.append(
             StandardConfiguration(f"floor:{floor}", *pick(ModelPolicy("floor", floor))[:2])
         )
+    budget = configured.value if configured.kind == "budget" else None
+    if budget is None and burn is not None:
+        prices = {entry.model_id: entry for entry in catalog.listing}
+        here = prices.get(current_model_id or "") or prices.get(fallback_model.split(":", 1)[1])
+        if here is not None and None not in (here.prompt_price, here.completion_price):
+            hourly = burn.hourly_cost(
+                BenchmarkModel(here.model_id, Decimal(0), here.prompt_price, here.completion_price)
+            )
+            if hourly > 0:  # two significant figures, rounded up: cents hide a low burn
+                step = Decimal(1).scaleb(hourly.adjusted() - 1)
+                budget = (hourly / step).to_integral_value(ROUND_CEILING) * step
+    if isinstance(budget, Decimal):
+        label = format(budget.normalize(), "f")
+        configurations.append(
+            StandardConfiguration(f"budget:{label}", *pick(ModelPolicy("budget", budget))[:2])
+        )
     return tuple(configurations)
+
+
+async def measured_token_burn(spine: SpineClient) -> TokenBurn | None:
+    """FL-152 / A-082: the agents' tokens per working hour over the last day of the ledger.
+
+    Building receipts only (agents and sub-agents, not memory upkeep); a working hour is a clock
+    hour with at least one receipt. None when the Palace has no such receipts or cannot answer.
+    """
+    try:
+        table = await spine.spend_table()
+    except SpineClientError:
+        return None
+    if table is None:
+        return None
+    since = table.as_of - timedelta(hours=24)
+    sums = {"input": Decimal(0), "output": Decimal(0)}
+    sides = {"input_fresh": "input", "input_cached": "input", "cache_write": "input"}
+    sides |= {"output": "output", "reasoning": "output"}
+    hours = set()
+    for receipt in table.receipts:
+        side = sides.get(receipt.quantity_type)
+        if receipt.ts < since or receipt.purpose != "building" or side is None:
+            continue
+        sums[side] += Decimal(receipt.quantity)
+        hours.add(receipt.ts.replace(minute=0, second=0, microsecond=0))
+    if not hours:
+        return None
+    return TokenBurn(sums["input"] / len(hours), sums["output"] / len(hours), len(hours))
 
 
 async def browse_models(
@@ -112,6 +164,7 @@ async def browse_models(
     chat_policy: str,
     current_model: str | None,
     fallback_model: str,
+    burn: TokenBurn | None = None,
 ) -> dict[str, object]:
     """FL-202's read path: the listing in qualified ids plus the configurations now."""
 
@@ -154,6 +207,7 @@ async def browse_models(
                 current_model_id=current_id,
                 fallback_model=fallback_model,
                 qualify=qualify,
+                burn=burn,
             )
         ],
     }
